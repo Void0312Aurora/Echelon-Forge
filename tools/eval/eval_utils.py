@@ -7,7 +7,7 @@ import numpy as np
 from python.testing.runtime import ensure_repo_imports
 
 
-ACTION_MODE_CHOICES = ("full", "takeoff2", "takeoff4", "naval_station3")
+ACTION_MODE_CHOICES = ("full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1")
 
 
 def bootstrap_repo_imports() -> str:

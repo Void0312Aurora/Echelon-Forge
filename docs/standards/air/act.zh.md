@@ -4,7 +4,7 @@ Language:
 - English canonical: `act.md`
 - Chinese companion: [act.zh.md](act.zh.md)
 
-状态：`2026-05-18`，当前维护中的 air action input 特化基线。
+状态：`2026-06-02`，当前维护中的 air action input 特化基线。
 
 本文档定义仓库当前维护中的 air action surface。它是一份接口合同，不是座舱控件百科。
 
@@ -31,8 +31,13 @@ Language:
 | `full` | 17 | 完整维护中的动作面 |
 | `takeoff2` | 2 | 起飞课程用简化动作面 |
 | `takeoff4` | 4 | 带横侧向控制的起飞简化动作面 |
+| `air_combat_hybrid_v1` | 12 | `1v1` 空战训练面：连续飞行轴 + hybrid 作战命令语义 |
 
 `takeoff2` 与 `takeoff4` 是训练导向的 reduced interface，并不直接暴露完整 `PilotAction`。
+
+`air_combat_hybrid_v1` 同样是训练导向的动作面。它为了兼容 PPO/runtime 仍保留 flat
+numeric transport vector，但 policy 合同是 hybrid：部分维度按 Bernoulli 开关、
+单步 pulse 或 categorical selector 采样和解释，而不是当成原始连续座舱轴。
 
 ## `full` 模式映射
 
@@ -54,6 +59,27 @@ Language:
 - `14`: `fire_weapon`
 - `15`: `fire_gun`
 - `16`: `weapon_select_id`
+
+## `air_combat_hybrid_v1` 模式映射
+
+当前维护中的 `air_combat_hybrid_v1` transport vector 映射如下：
+
+- `0`: `stick_pitch` 连续轴
+- `1`: `stick_roll` 连续轴
+- `2`: `rudder` 连续轴
+- `3`: `throttle` 连续轴
+- `4`: `radar_scan_az`，映射为 `+/-60 deg`
+- `5`: `radar_scan_el`，映射为 `+/-30 deg`
+- `6`: `radar_active` Bernoulli 开关状态
+- `7`: `tms_up`，由 policy command 上升沿生成单步 pulse
+- `8`: `master_arm` Bernoulli 开关状态
+- `9`: `fire_weapon`，由 policy command 上升沿生成单步 pulse
+- `10`: `fire_gun`，由 policy command 上升沿生成单步 pulse
+- `11`: `weapon_select_id`，`[0, 7]` 范围内的 categorical selector
+
+该模式下 `proprio` 与 `proprio_history` 记录送往 `PilotAction` 的 effective
+transport action，而不是 raw policy intent。因此对于 pulse 维度，policy command
+持续为高时只有上升沿步骤显示为 `1`，后续 held 步骤显示为 `0`。
 
 ## 规范的 `PilotAction` 字段
 
@@ -96,6 +122,9 @@ Language:
 - `flaps`、`speedbrake`、`brake` 在进入 `PilotAction` 前会经过 helper 逻辑规范化。
 - `radar_scan_az` 与 `radar_scan_el` 在环境层是归一化输入，进入内核前再映射为角度值。
 - `weapon_select_id` 是选择器，不是连续控制轴。
+- 在 `air_combat_hybrid_v1` 中，`tms_up`、`fire_weapon` 与 `fire_gun`
+  是 policy-facing pulse command。policy command 持续为高不会让对应的
+  `PilotAction` trigger 在首个 effective 步骤之后继续保持为高。
 
 ## Reduced Mode 的自动覆盖
 

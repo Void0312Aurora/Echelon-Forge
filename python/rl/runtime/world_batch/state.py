@@ -25,6 +25,7 @@ class BatchWorldHandle:
     max_steps: int = 1000
     steps: int = 0
     last_action: np.ndarray | None = None
+    last_policy_action_intent: np.ndarray | None = None
     last_inst: Any = None
     last_truth: Any = None
     temporal_history: Any = None

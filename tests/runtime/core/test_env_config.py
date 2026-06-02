@@ -156,6 +156,13 @@ class EnvConfigTests(unittest.TestCase):
         )
         self.assertEqual(resolved["action_mode"], "naval_station3")
 
+    def test_resolve_env_settings_accepts_air_combat_hybrid_action_mode(self) -> None:
+        resolved = resolve_env_settings(
+            {"env": {"action_mode": "air_combat_hybrid_v1"}},
+            _make_args(),
+        )
+        self.assertEqual(resolved["action_mode"], "air_combat_hybrid_v1")
+
     def test_resolve_env_settings_rejects_invalid_optional_runtime_mode(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):
             resolve_env_settings(

@@ -54,7 +54,7 @@
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - 维护的 Leader 层吞吐量探测，支持 `auto/subproc/shared/dummy`。
 - [air_combat_stage0_process_probe.py](diagnostics/air_combat_stage0_process_probe.py)
-  - 受限 air-combat stage-0 process probe，用于 compatibility env path 上的武器使用/debug trace。
+  - 受限 air-combat stage-0/stage-1 process probe，用于 compatibility env path 上的武器使用/debug trace 与 hybrid action metrics。
 - [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler；用于数值卫生检查，不是训练 runner。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
@@ -65,7 +65,7 @@
 ## 运行器
 
 - [run_scenario_contract.py](runners/run_scenario_contract.py)
-  - 运行来自 `tests/contracts/` 的一个或多个 JSON 契约。
+  - 运行来自 `tests/contracts/` 的一个或多个 JSON 契约，或运行 `tests/smoke/ci_contract_suite.json` 这类已签入 suite manifest。
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - 运行已签入的 pytest suite manifest，例如 `tests/smoke/ci_smoke_suite.json`，并在路径过期时提前失败。
 - [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)

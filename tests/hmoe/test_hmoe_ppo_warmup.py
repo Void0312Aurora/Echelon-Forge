@@ -12,6 +12,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
+from gym_envs.universal_env_parts import make_action_space
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from stable_baselines3.common.callbacks import BaseCallback
@@ -86,6 +87,44 @@ class _TinyHoldEnv(gym.Env):
         return {
             "instruments": np.zeros((4,), dtype=np.float32),
             "mission": np.zeros((3,), dtype=np.float32),
+        }
+
+
+class _TinyHybridAirCombatEnv(gym.Env):
+    metadata = {}
+
+    def __init__(self) -> None:
+        self.observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=np.float32),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=np.float32),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=np.float32),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(21,), dtype=np.float32),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=np.float32),
+            }
+        )
+        self.action_space = make_action_space("air_combat_hybrid_v1")
+        self._steps = 0
+
+    def reset(self, *, seed=None, options=None):
+        self._steps = 0
+        return self._obs(), {}
+
+    def step(self, action):
+        self._steps += 1
+        action_arr = np.asarray(action, dtype=np.float32).reshape(-1)
+        reward = -float(np.mean(np.square(action_arr[:6])))
+        terminated = self._steps >= 1
+        truncated = False
+        return self._obs(), reward, terminated, truncated, {}
+
+    def _obs(self):
+        return {
+            "instruments": np.zeros((42,), dtype=np.float32),
+            "contacts": np.zeros((10, 5), dtype=np.float32),
+            "rwr": np.zeros((4, 4), dtype=np.float32),
+            "mission": np.zeros((21,), dtype=np.float32),
+            "proprio": np.zeros((12,), dtype=np.float32),
         }
 
 
@@ -185,6 +224,45 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         after_abs = float(np.mean(np.abs(after)))
 
         self.assertLess(after_abs, before_abs)
+
+    def test_air_combat_hybrid_policy_collects_and_trains_one_rollout(self) -> None:
+        env = DummyVecEnv([_TinyHybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        model.train()
+
+        obs = env.reset()
+        action, _ = model.predict(obs, deterministic=True)
+        self.assertEqual(tuple(action.shape), (1, 12))
+        self.assertTrue(np.isfinite(action).all())
 
 
 if __name__ == "__main__":

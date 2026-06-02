@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 import torch as th
 import torch.nn as nn
+from torch.distributions import Bernoulli, Categorical, Normal
 from gymnasium import spaces
 
 from stable_baselines3.common.distributions import SquashedDiagGaussianDistribution
@@ -109,6 +110,159 @@ class _HMoEHeadBank(nn.Module):
         return out
 
 
+class _HybridActionLayout:
+    def __init__(
+        self,
+        *,
+        name: str,
+        action_dim: int,
+        continuous_indices: tuple[int, ...],
+        binary_indices: tuple[int, ...],
+        categorical_indices: tuple[tuple[int, int], ...],
+    ) -> None:
+        self.name = str(name)
+        self.action_dim = int(action_dim)
+        self.continuous_indices = tuple(int(i) for i in continuous_indices)
+        self.binary_indices = tuple(int(i) for i in binary_indices)
+        self.categorical_indices = tuple((int(i), int(n)) for i, n in categorical_indices)
+        self.continuous_count = int(len(self.continuous_indices))
+        self.binary_count = int(len(self.binary_indices))
+        self.categorical_logit_count = int(sum(n for _, n in self.categorical_indices))
+        self.param_dim = int(self.continuous_count + self.binary_count + self.categorical_logit_count)
+
+
+def _normalize_hybrid_action_layout(spec: Any, action_space) -> _HybridActionLayout | None:
+    if spec is None:
+        return None
+    if isinstance(spec, str):
+        name = spec.strip()
+        if name == "" or name.lower() in {"none", "off", "false", "0"}:
+            return None
+    elif isinstance(spec, dict):
+        name = str(spec.get("name", spec.get("mode", ""))).strip()
+    else:
+        raise TypeError(f"hybrid_action_spec must be a string, dict or None, got {type(spec)}")
+
+    if name != "air_combat_hybrid_v1":
+        raise ValueError(f"Unknown hybrid_action_spec: {name!r}")
+    action_dim = int(get_action_dim(action_space))
+    if action_dim != 12:
+        raise ValueError(
+            "hybrid_action_spec='air_combat_hybrid_v1' requires a 12D transport action space, "
+            f"got {action_dim}D."
+        )
+    return _HybridActionLayout(
+        name=name,
+        action_dim=12,
+        continuous_indices=(0, 1, 2, 3, 4, 5),
+        binary_indices=(6, 7, 8, 9, 10),
+        categorical_indices=((11, 8),),
+    )
+
+
+class _HybridActionDistribution:
+    def __init__(
+        self,
+        *,
+        layout: _HybridActionLayout,
+        params: th.Tensor,
+        log_std: th.Tensor,
+        action_low,
+        action_high,
+    ) -> None:
+        self.layout = layout
+        self.params = params
+        self.log_std = log_std
+        device = params.device
+        dtype = params.dtype
+        self.action_low = th.as_tensor(action_low, dtype=dtype, device=device).reshape(-1)
+        self.action_high = th.as_tensor(action_high, dtype=dtype, device=device).reshape(-1)
+        self.continuous_indices = th.as_tensor(layout.continuous_indices, dtype=th.long, device=device)
+        self.binary_indices = th.as_tensor(layout.binary_indices, dtype=th.long, device=device)
+        self._split_params()
+
+    def _split_params(self) -> None:
+        offset = 0
+        cont_n = self.layout.continuous_count
+        bin_n = self.layout.binary_count
+        self.continuous_mean = self.params[:, offset : offset + cont_n]
+        offset += cont_n
+        self.binary_logits = self.params[:, offset : offset + bin_n]
+        offset += bin_n
+        self.categorical_logits: list[tuple[int, th.Tensor]] = []
+        for action_index, category_count in self.layout.categorical_indices:
+            logits = self.params[:, offset : offset + int(category_count)]
+            offset += int(category_count)
+            self.categorical_logits.append((int(action_index), logits))
+
+    def _continuous_bounds(self) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
+        low = self.action_low[self.continuous_indices].reshape(1, -1)
+        high = self.action_high[self.continuous_indices].reshape(1, -1)
+        scale = th.clamp((high - low) * 0.5, min=1.0e-6)
+        return low, high, scale
+
+    @staticmethod
+    def _atanh(x: th.Tensor) -> th.Tensor:
+        x = th.clamp(x, -1.0 + 1.0e-6, 1.0 - 1.0e-6)
+        return 0.5 * (th.log1p(x) - th.log1p(-x))
+
+    def _transform_continuous(self, raw: th.Tensor) -> th.Tensor:
+        low, _high, scale = self._continuous_bounds()
+        return low + (th.tanh(raw) + 1.0) * scale
+
+    def _inverse_continuous(self, actions: th.Tensor) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
+        low, _high, scale = self._continuous_bounds()
+        y = th.clamp((actions - low) / scale - 1.0, -1.0 + 1.0e-6, 1.0 - 1.0e-6)
+        return self._atanh(y), y, scale
+
+    def mode(self) -> th.Tensor:
+        batch = int(self.params.shape[0])
+        actions = self.params.new_zeros((batch, self.layout.action_dim))
+        if self.layout.continuous_count > 0:
+            actions[:, self.continuous_indices] = self._transform_continuous(self.continuous_mean)
+        if self.layout.binary_count > 0:
+            actions[:, self.binary_indices] = (self.binary_logits >= 0.0).to(dtype=self.params.dtype)
+        for action_index, logits in self.categorical_logits:
+            actions[:, action_index] = th.argmax(logits, dim=1).to(dtype=self.params.dtype)
+        return actions
+
+    def get_actions(self, deterministic: bool = False) -> th.Tensor:
+        if deterministic:
+            return self.mode()
+        batch = int(self.params.shape[0])
+        actions = self.params.new_zeros((batch, self.layout.action_dim))
+        if self.layout.continuous_count > 0:
+            std = th.exp(self.log_std).reshape(1, -1).expand_as(self.continuous_mean)
+            raw = self.continuous_mean + std * th.randn_like(self.continuous_mean)
+            actions[:, self.continuous_indices] = self._transform_continuous(raw)
+        if self.layout.binary_count > 0:
+            actions[:, self.binary_indices] = Bernoulli(logits=self.binary_logits).sample()
+        for action_index, logits in self.categorical_logits:
+            actions[:, action_index] = Categorical(logits=logits).sample().to(dtype=self.params.dtype)
+        return actions
+
+    def log_prob(self, actions: th.Tensor) -> th.Tensor:
+        actions = actions.reshape((-1, self.layout.action_dim)).to(device=self.params.device, dtype=self.params.dtype)
+        total = self.params.new_zeros((int(actions.shape[0]),))
+        if self.layout.continuous_count > 0:
+            cont_actions = actions[:, self.continuous_indices]
+            raw, y, scale = self._inverse_continuous(cont_actions)
+            std = th.exp(self.log_std).reshape(1, -1).expand_as(self.continuous_mean)
+            normal = Normal(self.continuous_mean, std)
+            correction = th.log(scale) + th.log(th.clamp(1.0 - y.pow(2), min=1.0e-6))
+            total = total + (normal.log_prob(raw) - correction).sum(dim=1)
+        if self.layout.binary_count > 0:
+            binary_actions = th.clamp(actions[:, self.binary_indices], 0.0, 1.0).round()
+            total = total + Bernoulli(logits=self.binary_logits).log_prob(binary_actions).sum(dim=1)
+        for action_index, logits in self.categorical_logits:
+            categorical_action = th.clamp(actions[:, action_index].round().long(), 0, int(logits.shape[1]) - 1)
+            total = total + Categorical(logits=logits).log_prob(categorical_action)
+        return total
+
+    def entropy(self):
+        return None
+
+
 class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     """
     Shared-backbone execution policy with explicit hierarchical semantic routing.
@@ -131,6 +285,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hmoe_head_lr_scale: float = 0.35,
         hmoe_residual_warmup_fraction: float = 0.15,
         hmoe_residual_start_factor: float = 0.0,
+        hybrid_action_spec: Any | None = None,
         **kwargs: Any,
     ):
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
@@ -140,14 +295,25 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
+        self._hybrid_action_spec_config = hybrid_action_spec
+        self._hybrid_action_layout: _HybridActionLayout | None = None
+        if hybrid_action_spec is not None:
+            kwargs["squash_output"] = False
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
         if not isinstance(self.action_space, spaces.Box):
             raise TypeError(
                 f"HierarchicalMoEExecutionPolicy only supports Box action spaces, got {type(self.action_space)}"
             )
+        self._hybrid_action_layout = _normalize_hybrid_action_layout(hybrid_action_spec, self.action_space)
+        hmoe_output_dim = int(get_action_dim(self.action_space))
+        if self._hybrid_action_layout is not None:
+            hmoe_output_dim = int(self._hybrid_action_layout.param_dim)
+            self.action_net = nn.Linear(int(self.mlp_extractor.latent_dim_pi), hmoe_output_dim).to(self.device)
+            self.log_std = nn.Parameter(th.zeros(int(self._hybrid_action_layout.continuous_count), device=self.device))
+            self._squash_output = False
         self.hmoe_head_bank = _HMoEHeadBank(
             latent_dim=int(self.mlp_extractor.latent_dim_pi),
-            action_dim=int(get_action_dim(self.action_space)),
+            action_dim=hmoe_output_dim,
             family_subexpert_counts=self._hmoe_family_subexpert_counts,
         ).to(self.device)
         # SB3 builds the optimizer inside `super().__init__()`. Rebuild it once the HMoE heads
@@ -163,6 +329,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hmoe_head_lr_scale"] = float(self._hmoe_head_lr_scale)
         data["hmoe_residual_warmup_fraction"] = float(self._hmoe_residual_warmup_fraction)
         data["hmoe_residual_start_factor"] = float(self._hmoe_residual_start_factor)
+        data["hybrid_action_spec"] = self._hybrid_action_spec_config
         return data
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
@@ -355,6 +522,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["hmoe/resid_gate"] = float(self._hmoe_residual_gate)
         self._last_hmoe_route_stats["hmoe/resid_effective_scale"] = float(effective_scale)
 
+        if self._hybrid_action_layout is not None:
+            return _HybridActionDistribution(
+                layout=self._hybrid_action_layout,
+                params=mean_actions,
+                log_std=self.log_std,
+                action_low=self.action_space.low,
+                action_high=self.action_space.high,
+            )
         if isinstance(self.action_dist, SquashedDiagGaussianDistribution):
             return self.action_dist.proba_distribution(mean_actions, self.log_std)
         return super()._get_action_dist_from_latent(latent_pi)

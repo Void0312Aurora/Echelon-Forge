@@ -124,7 +124,12 @@ def add_common_sb3_eval_args(
     parser.add_argument("--visual_downsample", type=int, default=None)
     parser.add_argument("--visual_update_interval", type=int, default=None)
     parser.add_argument("--temporal_history_len", type=int, default=None)
-    parser.add_argument("--action_mode", type=str, default=None, choices=["full", "takeoff2", "takeoff4", "naval_station3"])
+    parser.add_argument(
+        "--action_mode",
+        type=str,
+        default=None,
+        choices=["full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"],
+    )
     if include_runtime_overrides:
         parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled", "legacy"])
         parser.add_argument("--step_info_mode", type=str, default=None, choices=["full", "terminal", "off"])

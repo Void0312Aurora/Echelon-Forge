@@ -33,7 +33,7 @@
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
 - [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
-  - 受限 air-combat stage-0 process probe，用于 raw `UniversalEnv` compatibility path 上的武器使用/debug trace。
+  - 受限 air-combat stage-0/stage-1 process probe，用于 raw `UniversalEnv` compatibility path 上的武器使用/debug trace 与 hybrid action metrics。
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)

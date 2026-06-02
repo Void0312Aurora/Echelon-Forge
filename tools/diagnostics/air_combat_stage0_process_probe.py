@@ -40,17 +40,38 @@ DEFAULT_TRAIN_CONFIG = resolve_repo_path(
 )
 
 
-ACTION_COLUMNS = {
+FULL_ACTION_COLUMNS = {
     "pitch": 0,
     "roll": 1,
     "rudder": 2,
     "throttle": 3,
+    "tms_up": 12,
     "radar_active": 9,
     "master_arm": 13,
     "fire_weapon": 14,
     "fire_gun": 15,
     "weapon_select": 16,
 }
+HYBRID_ACTION_COLUMNS = {
+    "pitch": 0,
+    "roll": 1,
+    "rudder": 2,
+    "throttle": 3,
+    "radar_active": 6,
+    "tms_up": 7,
+    "master_arm": 8,
+    "fire_weapon": 9,
+    "fire_gun": 10,
+    "weapon_select": 11,
+}
+ACTION_SIGNAL_NAMES = tuple(FULL_ACTION_COLUMNS.keys())
+
+
+def _action_columns_for_mode(action_mode: str) -> dict[str, int]:
+    mode = str(action_mode)
+    if mode == "air_combat_hybrid_v1":
+        return HYBRID_ACTION_COLUMNS
+    return FULL_ACTION_COLUMNS
 
 
 def _finite_float(value: Any, default: float = float("nan")) -> float:
@@ -103,38 +124,64 @@ def _health_current(sim, entity_id: int) -> float:
     return float("nan")
 
 
-def _weapon_select_id(action: np.ndarray) -> int:
-    if action.size <= ACTION_COLUMNS["weapon_select"]:
+def _weapon_select_id(action: np.ndarray, *, action_mode: str) -> int:
+    columns = _action_columns_for_mode(action_mode)
+    weapon_select_idx = int(columns["weapon_select"])
+    if action.size <= weapon_select_idx:
         return 0
-    return int(np.clip(float(action[ACTION_COLUMNS["weapon_select"]]), 0.0, 1.0) * 7.0)
+    if str(action_mode) == "air_combat_hybrid_v1":
+        return int(np.clip(round(float(action[weapon_select_idx])), 0, 7))
+    return int(np.clip(float(action[weapon_select_idx]), 0.0, 1.0) * 7.0)
 
 
-def _base_action() -> np.ndarray:
-    action = np.zeros((17,), dtype=np.float32)
-    action[ACTION_COLUMNS["pitch"]] = 0.02
-    action[ACTION_COLUMNS["throttle"]] = 0.65
-    action[ACTION_COLUMNS["weapon_select"]] = 1.0 / 7.0
+def _base_action(action_mode: str) -> np.ndarray:
+    columns = _action_columns_for_mode(action_mode)
+    action_dim = 12 if str(action_mode) == "air_combat_hybrid_v1" else 17
+    action = np.zeros((action_dim,), dtype=np.float32)
+    action[columns["pitch"]] = 0.02
+    action[columns["throttle"]] = 0.65
+    if str(action_mode) == "air_combat_hybrid_v1":
+        action[columns["weapon_select"]] = 1.0
+    else:
+        action[columns["weapon_select"]] = 1.0 / 7.0
     return action
 
 
-def _forced_fire_action(_obs: dict[str, Any], _rng: np.random.Generator, _step: int) -> np.ndarray:
-    action = _base_action()
-    action[ACTION_COLUMNS["radar_active"]] = 1.0
-    action[ACTION_COLUMNS["master_arm"]] = 1.0
-    action[ACTION_COLUMNS["fire_weapon"]] = 1.0
+def _forced_fire_action(_obs: dict[str, Any], _rng: np.random.Generator, _step: int, *, action_mode: str) -> np.ndarray:
+    columns = _action_columns_for_mode(action_mode)
+    action = _base_action(action_mode)
+    action[columns["radar_active"]] = 1.0
+    action[columns["tms_up"]] = 1.0
+    action[columns["master_arm"]] = 1.0
+    action[columns["fire_weapon"]] = 1.0
     return action
 
 
-def _switch_explore_action(_obs: dict[str, Any], rng: np.random.Generator, _step: int) -> np.ndarray:
-    action = _base_action()
-    action[ACTION_COLUMNS["pitch"]] = float(np.clip(rng.normal(0.02, 0.04), -0.15, 0.18))
-    action[ACTION_COLUMNS["roll"]] = float(np.clip(rng.normal(0.0, 0.05), -0.18, 0.18))
-    action[ACTION_COLUMNS["rudder"]] = float(np.clip(rng.normal(0.0, 0.03), -0.12, 0.12))
-    action[ACTION_COLUMNS["throttle"]] = float(np.clip(rng.normal(0.65, 0.08), 0.45, 0.85))
-    action[ACTION_COLUMNS["radar_active"]] = float(rng.random() < 0.75)
-    action[ACTION_COLUMNS["master_arm"]] = float(rng.random() < 0.45)
-    action[ACTION_COLUMNS["fire_weapon"]] = float(rng.random() < 0.35)
-    action[ACTION_COLUMNS["weapon_select"]] = float(rng.random())
+def _range_gate_fire_action(*, fire: bool, action_mode: str) -> np.ndarray:
+    columns = _action_columns_for_mode(action_mode)
+    action = _base_action(action_mode)
+    action[columns["radar_active"]] = 1.0
+    action[columns["tms_up"]] = 1.0
+    action[columns["master_arm"]] = 1.0
+    action[columns["fire_weapon"]] = 1.0 if bool(fire) else 0.0
+    return action
+
+
+def _switch_explore_action(_obs: dict[str, Any], rng: np.random.Generator, _step: int, *, action_mode: str) -> np.ndarray:
+    columns = _action_columns_for_mode(action_mode)
+    action = _base_action(action_mode)
+    action[columns["pitch"]] = float(np.clip(rng.normal(0.02, 0.04), -0.15, 0.18))
+    action[columns["roll"]] = float(np.clip(rng.normal(0.0, 0.05), -0.18, 0.18))
+    action[columns["rudder"]] = float(np.clip(rng.normal(0.0, 0.03), -0.12, 0.12))
+    action[columns["throttle"]] = float(np.clip(rng.normal(0.65, 0.08), 0.45, 0.85))
+    action[columns["radar_active"]] = float(rng.random() < 0.75)
+    action[columns["tms_up"]] = float(rng.random() < 0.35)
+    action[columns["master_arm"]] = float(rng.random() < 0.45)
+    action[columns["fire_weapon"]] = float(rng.random() < 0.35)
+    if str(action_mode) == "air_combat_hybrid_v1":
+        action[columns["weapon_select"]] = float(rng.integers(0, 8))
+    else:
+        action[columns["weapon_select"]] = float(rng.random())
     return action
 
 
@@ -160,6 +207,7 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None) -> Unive
         mission_obs_mode=str(env_cfg.get("mission_obs_mode", "basic")),
         visual_downsample=int(env_cfg.get("visual_downsample", 1)),
         visual_update_interval=int(env_cfg.get("visual_update_interval", 1)),
+        temporal_history_len=int(env_cfg.get("temporal_history_len", 1)),
         execution_step_runtime_mode=str(env_cfg.get("execution_step_runtime_mode", "compiled")),
         flight_shaping_backend=str(env_cfg.get("flight_shaping_backend", "compiled")),
         step_info_mode="full",
@@ -195,6 +243,11 @@ def _snapshot_row(
     range_track = _finite_float(getattr(target_track, "range", float("nan"))) if target_track is not None else float("nan")
     reward_terms = info.get("reward_terms", {}) if isinstance(info, dict) else {}
     release = prev_missiles is not None and missiles_remaining >= 0 and missiles_remaining < int(prev_missiles)
+    engagement_events = sim.export_recent_engagement_events()
+    effects_events = list(getattr(engagement_events, "effects_events", []) or [])
+    damage_reports = list(getattr(engagement_events, "damage_reports", []) or [])
+    last_effect = effects_events[-1] if effects_events else None
+    last_report = damage_reports[-1] if damage_reports else None
 
     row: dict[str, Any] = {
         "episode": int(episode),
@@ -229,19 +282,89 @@ def _snapshot_row(
         "target_track_age_s": (
             _finite_float(getattr(target_track, "time_since_update", float("nan"))) if target_track is not None else float("nan")
         ),
+        "effects_event_count": int(len(effects_events)),
+        "damage_report_count": int(len(damage_reports)),
+        "last_effect_miss_distance_m": (
+            _finite_float(getattr(last_effect, "miss_distance_m", float("nan"))) if last_effect is not None else float("nan")
+        ),
+        "last_effect_detonation_local_forward_m": (
+            _finite_float(getattr(last_effect, "detonation_local_forward_m", float("nan")))
+            if last_effect is not None
+            else float("nan")
+        ),
+        "last_effect_detonation_local_right_m": (
+            _finite_float(getattr(last_effect, "detonation_local_right_m", float("nan")))
+            if last_effect is not None
+            else float("nan")
+        ),
+        "last_effect_detonation_local_up_m": (
+            _finite_float(getattr(last_effect, "detonation_local_up_m", float("nan")))
+            if last_effect is not None
+            else float("nan")
+        ),
+        "last_effect_direct_hitbox_intersection": int(
+            bool(getattr(last_effect, "direct_hitbox_intersection", False)) if last_effect is not None else False
+        ),
+        "last_effect_projected_hitbox_count": int(
+            getattr(last_effect, "projected_hitbox_count", 0) if last_effect is not None else 0
+        ),
+        "last_effect_component_hit_count": int(
+            getattr(last_effect, "component_hit_count", 0) if last_effect is not None else 0
+        ),
+        "last_effect_fuze_type": str(getattr(last_effect, "fuze_type", "") or "") if last_effect is not None else "",
+        "last_damage_report_id": int(getattr(last_report, "report_id", 0) or 0) if last_report is not None else 0,
+        "last_damage_loss_state": str(getattr(last_report, "loss_state_to", "") or "") if last_report is not None else "",
+        "last_damage_system_health_delta": (
+            _finite_float(getattr(last_report, "system_health_delta", float("nan")))
+            if last_report is not None
+            else float("nan")
+        ),
+        "last_damage_mission_kill": int(
+            bool(getattr(last_report, "mission_kill", False)) if last_report is not None else False
+        ),
+        "last_damage_mobility_kill": int(
+            bool(getattr(last_report, "mobility_kill", False)) if last_report is not None else False
+        ),
+        "last_damage_sensor_kill": int(
+            bool(getattr(last_report, "sensor_kill", False)) if last_report is not None else False
+        ),
+        "last_damage_destroyed": int(
+            bool(getattr(last_report, "destroyed", False)) if last_report is not None else False
+        ),
     }
+    action_mode = str(getattr(env, "action_mode", "full"))
+    columns = _action_columns_for_mode(action_mode)
+    effective_action = getattr(env, "_last_action", None)
     if action is None:
-        for name in ACTION_COLUMNS:
+        for name in ACTION_SIGNAL_NAMES:
             row[f"action_{name}"] = float("nan")
+            row[f"effective_action_{name}"] = float("nan")
         row["action_weapon_select_id"] = float("nan")
+        row["effective_action_weapon_select_id"] = float("nan")
     else:
         flat = np.asarray(action, dtype=np.float32).reshape(-1)
-        for name, idx in ACTION_COLUMNS.items():
+        effective_flat = (
+            np.asarray(effective_action, dtype=np.float32).reshape(-1)
+            if effective_action is not None
+            else flat
+        )
+        for name in ACTION_SIGNAL_NAMES:
+            idx = int(columns[name])
             row[f"action_{name}"] = _finite_float(flat[idx]) if flat.size > idx else float("nan")
-        row["action_radar_on"] = int(flat.size > 9 and flat[9] > 0.5)
-        row["action_master_arm_on"] = int(flat.size > 13 and flat[13] > 0.5)
-        row["action_fire_weapon_on"] = int(flat.size > 14 and flat[14] > 0.5)
-        row["action_weapon_select_id"] = _weapon_select_id(flat)
+            row[f"effective_action_{name}"] = (
+                _finite_float(effective_flat[idx]) if effective_flat.size > idx else float("nan")
+            )
+        row["action_weapon_select_id"] = _weapon_select_id(flat, action_mode=action_mode)
+        row["effective_action_weapon_select_id"] = _weapon_select_id(effective_flat, action_mode=action_mode)
+        radar_idx = int(columns["radar_active"])
+        master_idx = int(columns["master_arm"])
+        fire_idx = int(columns["fire_weapon"])
+        row["policy_action_radar_on"] = int(flat.size > radar_idx and flat[radar_idx] > 0.5)
+        row["policy_action_master_arm_on"] = int(flat.size > master_idx and flat[master_idx] > 0.5)
+        row["policy_action_fire_weapon_on"] = int(flat.size > fire_idx and flat[fire_idx] > 0.5)
+        row["action_radar_on"] = int(effective_flat.size > radar_idx and effective_flat[radar_idx] > 0.5)
+        row["action_master_arm_on"] = int(effective_flat.size > master_idx and effective_flat[master_idx] > 0.5)
+        row["action_fire_weapon_on"] = int(effective_flat.size > fire_idx and effective_flat[fire_idx] > 0.5)
     return row
 
 
@@ -261,7 +384,52 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         for row in rows
         if math.isfinite(float(row.get("target_range_geom_m", float("nan"))))
     ]
+    initial_target_health = float(rows[0].get("target_health", float("nan")))
+    detonation_local = (
+        float(final.get("last_effect_detonation_local_forward_m", float("nan"))),
+        float(final.get("last_effect_detonation_local_right_m", float("nan"))),
+        float(final.get("last_effect_detonation_local_up_m", float("nan"))),
+    )
+    detonation_local_norm = (
+        math.sqrt(sum(value * value for value in detonation_local))
+        if all(math.isfinite(value) for value in detonation_local)
+        else float("nan")
+    )
     fire_steps = [int(row["step"]) for row in rows if int(row.get("action_fire_weapon_on", 0)) > 0]
+    fire_switch_steps: list[int] = []
+    release_steps: list[int] = []
+    prev_fire_on = False
+    for row in rows:
+        step = int(row.get("step", 0))
+        fire_on = int(row.get("action_fire_weapon_on", 0)) > 0
+        if step > 0 and fire_on and not prev_fire_on:
+            fire_switch_steps.append(step)
+        if int(row.get("missile_release", 0)) > 0:
+            release_steps.append(step)
+        prev_fire_on = fire_on
+    release_step_set = set(release_steps)
+    invalid_fire_attempt_steps = [step for step in fire_switch_steps if step not in release_step_set]
+    release_intervals = [
+        release_steps[idx] - release_steps[idx - 1]
+        for idx in range(1, len(release_steps))
+    ]
+    fire_switch_intervals = [
+        fire_switch_steps[idx] - fire_switch_steps[idx - 1]
+        for idx in range(1, len(fire_switch_steps))
+    ]
+
+    def action_stat(name: str, reducer, default: float = float("nan")) -> float:
+        key = str(name) if str(name).startswith("effective_action_") else f"action_{name}"
+        values = [
+            float(row.get(key, float("nan")))
+            for row in rows
+            if int(row.get("step", 0)) > 0
+            and math.isfinite(float(row.get(key, float("nan"))))
+        ]
+        if not values:
+            return float(default)
+        return float(reducer(np.asarray(values, dtype=np.float64)))
+
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
     )
@@ -276,7 +444,15 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "first_can_fire_step": first_step(lambda row: int(row.get("can_fire", 0)) > 0),
         "first_fire_switch_step": fire_steps[0] if fire_steps else None,
         "first_release_step": first_step(lambda row: int(row.get("missile_release", 0)) > 0),
-        "first_target_health_drop_step": first_step(lambda row: float(row.get("target_health", 100.0)) < 99.9),
+        "first_effects_event_step": first_step(lambda row: int(row.get("effects_event_count", 0)) > 0),
+        "first_damage_report_step": first_step(lambda row: int(row.get("damage_report_count", 0)) > 0),
+        "first_damage_progress_step": first_step(
+            lambda row: float(row.get("last_damage_system_health_delta", 0.0)) < 0.0
+        ),
+        "first_target_health_drop_step": first_step(
+            lambda row: math.isfinite(initial_target_health)
+            and float(row.get("target_health", initial_target_health)) < initial_target_health - 1.0e-3
+        ),
         "target_kill_step": first_step(lambda row: int(row.get("target_active", 1)) <= 0),
         "initial_missiles": int(rows[0].get("missiles_remaining", -1)),
         "final_missiles": int(final.get("missiles_remaining", -1)),
@@ -289,7 +465,52 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "fire_weapon_on_frac": float(
             np.mean([int(row.get("action_fire_weapon_on", 0)) for row in rows if int(row["step"]) > 0] or [0])
         ),
+        "fire_high_step_count": int(len(fire_steps)),
+        "fire_attempt_count": int(len(fire_switch_steps)),
+        "fire_switch_count": int(len(fire_switch_steps)),
+        "fire_switch_steps": fire_switch_steps,
+        "invalid_fire_attempt_count": int(len(invalid_fire_attempt_steps)),
+        "invalid_fire_attempt_steps": invalid_fire_attempt_steps,
+        "invalid_fire_attempt_rate": (
+            float(len(invalid_fire_attempt_steps)) / float(len(fire_switch_steps)) if fire_switch_steps else 0.0
+        ),
+        "min_fire_switch_interval_steps": min(fire_switch_intervals) if fire_switch_intervals else None,
+        "action_radar_active_mean": action_stat("radar_active", np.mean),
+        "action_radar_active_max": action_stat("radar_active", np.max),
+        "action_master_arm_mean": action_stat("master_arm", np.mean),
+        "action_master_arm_max": action_stat("master_arm", np.max),
+        "action_fire_weapon_mean": action_stat("fire_weapon", np.mean),
+        "action_fire_weapon_max": action_stat("fire_weapon", np.max),
+        "effective_action_fire_weapon_mean": action_stat("effective_action_fire_weapon", np.mean),
+        "effective_action_fire_weapon_max": action_stat("effective_action_fire_weapon", np.max),
         "release_count": int(sum(int(row.get("missile_release", 0)) for row in rows)),
+        "release_steps": release_steps,
+        "min_release_interval_steps": min(release_intervals) if release_intervals else None,
+        "effects_event_count": int(final.get("effects_event_count", 0)),
+        "damage_report_count": int(final.get("damage_report_count", 0)),
+        "last_effect_miss_distance_m": float(final.get("last_effect_miss_distance_m", float("nan"))),
+        "last_effect_detonation_local_forward_m": float(
+            final.get("last_effect_detonation_local_forward_m", float("nan"))
+        ),
+        "last_effect_detonation_local_right_m": float(
+            final.get("last_effect_detonation_local_right_m", float("nan"))
+        ),
+        "last_effect_detonation_local_up_m": float(
+            final.get("last_effect_detonation_local_up_m", float("nan"))
+        ),
+        "last_effect_detonation_local_norm_m": detonation_local_norm,
+        "last_effect_direct_hitbox_intersection": bool(
+            int(final.get("last_effect_direct_hitbox_intersection", 0))
+        ),
+        "last_effect_projected_hitbox_count": int(final.get("last_effect_projected_hitbox_count", 0)),
+        "last_effect_component_hit_count": int(final.get("last_effect_component_hit_count", 0)),
+        "last_effect_fuze_type": str(final.get("last_effect_fuze_type", "")),
+        "last_damage_loss_state": str(final.get("last_damage_loss_state", "")),
+        "last_damage_system_health_delta": float(final.get("last_damage_system_health_delta", float("nan"))),
+        "last_damage_mission_kill": bool(int(final.get("last_damage_mission_kill", 0))),
+        "last_damage_mobility_kill": bool(int(final.get("last_damage_mobility_kill", 0))),
+        "last_damage_sensor_kill": bool(int(final.get("last_damage_sensor_kill", 0))),
+        "last_damage_destroyed": bool(int(final.get("last_damage_destroyed", 0))),
     }
 
 
@@ -303,6 +524,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
 
     env = _build_env(scenario_path, train_config)
+    action_mode = str(getattr(env, "action_mode", "full"))
     rows: list[dict[str, Any]] = []
     episode_summaries: list[dict[str, Any]] = []
     try:
@@ -312,6 +534,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             max_steps = int(args.max_steps) if int(args.max_steps) > 0 else int(getattr(env, "max_steps", 0) or 1200)
             initial_units = _unit_id_set(env.sim)
             prev_missiles = int(getattr(env.sim.get_agent_observation(env.agent_id), "missiles_remaining", -1))
+            range_gate_fired = False
             ep_rows: list[dict[str, Any]] = []
             initial_row = _snapshot_row(
                 episode=ep,
@@ -329,9 +552,21 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             ep_rows.append(initial_row)
             for step in range(1, max_steps + 1):
                 if args.mode == "forced_fire":
-                    action = _forced_fire_action(obs, rng, step)
+                    action = _forced_fire_action(obs, rng, step, action_mode=action_mode)
+                elif args.mode == "range_gate_fire":
+                    target_id = int(env.loader.primary_target_id or 0)
+                    own_obs = env.sim.get_agent_observation(env.agent_id)
+                    fire = (
+                        not bool(range_gate_fired)
+                        and target_id > 0
+                        and bool(getattr(own_obs, "can_fire", False))
+                        and _distance_m(env.sim, env.agent_id, target_id) <= float(args.fire_range_m)
+                    )
+                    action = _range_gate_fire_action(fire=fire, action_mode=action_mode)
+                    if fire:
+                        range_gate_fired = True
                 elif args.mode == "switch_explore":
-                    action = _switch_explore_action(obs, rng, step)
+                    action = _switch_explore_action(obs, rng, step, action_mode=action_mode)
                 elif args.mode == "uniform":
                     action = _uniform_action(env, obs, rng, step)
                 elif args.mode == "model":
@@ -367,6 +602,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     reasons = Counter(str(row.get("termination_reason", "")) for row in episode_summaries)
     payload = {
         "scenario": scenario_path,
+        "train_config": os.path.abspath(args.train_config) if args.train_config else None,
+        "action_mode": action_mode,
         "mode": str(args.mode),
         "model": os.path.abspath(args.model) if args.model else None,
         "seed": int(args.seed),
@@ -448,10 +685,15 @@ def plot_rows(rows: list[dict[str, Any]], path: str) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Trace Stage 0 air-combat weapon-employment process.")
+    parser = argparse.ArgumentParser(description="Trace stage-0/stage-1 air-combat weapon-employment process.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
-    parser.add_argument("--mode", choices=["forced_fire", "switch_explore", "uniform", "model"], default="forced_fire")
+    parser.add_argument(
+        "--mode",
+        choices=["forced_fire", "range_gate_fire", "switch_explore", "uniform", "model"],
+        default="forced_fire",
+    )
+    parser.add_argument("--fire_range_m", type=float, default=12000.0)
     parser.add_argument("--model", default="", help="SB3 model path for --mode model.")
     parser.add_argument("--algo", default="auto")
     parser.add_argument("--device", default="auto")

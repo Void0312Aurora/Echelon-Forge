@@ -7,13 +7,29 @@ from python.mission_obs_taxonomy import mission_observation_dim as shared_missio
 from .common import spaces
 
 NAVAL_STATION3_ACTION_MODE = "naval_station3"
-_ACTION_DIMS = {"full": 17, "takeoff2": 2, "takeoff4": 4, NAVAL_STATION3_ACTION_MODE: 3}
+AIR_COMBAT_HYBRID_V1_ACTION_MODE = "air_combat_hybrid_v1"
+AIR_COMBAT_HYBRID_V1_ACTION_DIM = 12
+_ACTION_DIMS = {
+    "full": 17,
+    "takeoff2": 2,
+    "takeoff4": 4,
+    NAVAL_STATION3_ACTION_MODE: 3,
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE: AIR_COMBAT_HYBRID_V1_ACTION_DIM,
+}
 _FULL_ACTION_LOW = np.array(
     [-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     dtype=np.float32,
 )
 _FULL_ACTION_HIGH = np.array(
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    dtype=np.float32,
+)
+_AIR_COMBAT_HYBRID_V1_ACTION_LOW = np.array(
+    [-1.0, -1.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    dtype=np.float32,
+)
+_AIR_COMBAT_HYBRID_V1_ACTION_HIGH = np.array(
+    [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 7.0],
     dtype=np.float32,
 )
 
@@ -34,6 +50,12 @@ def make_action_space(action_mode: str):
         raise ModuleNotFoundError("gymnasium is required to build action spaces.")
     if action_mode == "full":
         return spaces.Box(low=_FULL_ACTION_LOW, high=_FULL_ACTION_HIGH, dtype=np.float32)
+    if action_mode == AIR_COMBAT_HYBRID_V1_ACTION_MODE:
+        return spaces.Box(
+            low=_AIR_COMBAT_HYBRID_V1_ACTION_LOW,
+            high=_AIR_COMBAT_HYBRID_V1_ACTION_HIGH,
+            dtype=np.float32,
+        )
     if action_mode == "takeoff2":
         return spaces.Box(
             low=np.array([-1.0, 0.0], dtype=np.float32),
@@ -128,6 +150,8 @@ def make_observation_space(
 
 
 __all__ = [
+    "AIR_COMBAT_HYBRID_V1_ACTION_DIM",
+    "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
     "expected_action_dim",
     "make_action_space",
     "make_observation_space",

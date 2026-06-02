@@ -45,7 +45,7 @@ Current diagnostics and probes:
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
 - [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
-  - Scoped air-combat stage-0 process probe for weapon-employment/debug traces on the raw-`UniversalEnv` compatibility path.
+  - Scoped air-combat stage-0/stage-1 process probe for weapon-employment/debug traces and hybrid action metrics on the raw-`UniversalEnv` compatibility path.
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)

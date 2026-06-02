@@ -15,6 +15,9 @@ Current route:
 
 - Target architecture: Path C, sequence-native causal Transformer HMoE/PPO.
 - First validation package: Path A, observation-window temporal HMoE.
+- Action interface: on `2026-06-02`, the M1 air-combat action-interface split
+  accepted the `air_combat_hybrid_v1` training surface; this releases only the
+  action interface, not learned-policy acceptance or M2.
 - Release rule: Path C implementation starts only after Path A shows useful
   improvement on stage-0 / stage-1 air-combat curricula.
 - Path B recurrent HMoE remains a comparison/fallback, not the mainline.
@@ -23,6 +26,7 @@ Start here:
 
 - [Temporal HMoE Policy Plan](temporal_hmoe_policy_plan_20260525.md)
 - [M1 Temporal Window HMoE](m1_temporal_window_hmoe/README.zh.md)
+- [M1 Air-Combat Action Interface Split](m1_action_interface_split/README.md)
 - [M2 Causal Transformer HMoE](m2_causal_transformer_hmoe/README.zh.md)
 - Chinese companion:
   [Temporal HMoE Policy Plan.zh](temporal_hmoe_policy_plan_20260525.zh.md)

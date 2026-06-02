@@ -25,6 +25,7 @@ from gym_envs.scenario_loader import (
 )
 from gym_envs.universal_env import (
     append_temporal_history,
+    air_combat_hybrid_effective_action,
     apply_naval_station_action,
     attach_temporal_history,
     bind_naval_station_eval_reference,
@@ -38,6 +39,7 @@ from gym_envs.universal_env import (
     naval_station_action_command,
     normalize_action,
     reset_naval_station_action_state,
+    is_air_combat_hybrid_action_mode,
     is_naval_station_action_mode,
     temporal_history_enabled,
     validate_naval_action_mode_for_loader,
@@ -1439,6 +1441,7 @@ class WorldBatchVecEnv(VecEnv):
         handle.last_leader_intent_snapshot = None
         handle.last_pilot_report_snapshot = None
         handle.last_action = None
+        handle.last_policy_action_intent = None
         reset_naval_station_action_state(handle.loader)
         bind_naval_station_eval_reference(handle.loader)
         handle.last_inst = initial_inst
@@ -1560,6 +1563,14 @@ class WorldBatchVecEnv(VecEnv):
                 handle.last_action = action.astype(np.float32, copy=True)
                 if apply_naval_station_action(handle.loader, action):
                     naval_action_sync_indices.append(env_idx)
+            elif is_air_combat_hybrid_action_mode(self.action_mode):
+                policy_intent = action.astype(np.float32, copy=True)
+                action = air_combat_hybrid_effective_action(
+                    action,
+                    previous_intent=handle.last_policy_action_intent,
+                )
+                handle.last_policy_action_intent = policy_intent
+                handle.last_action = action.astype(np.float32, copy=True)
             else:
                 handle.last_action = action.astype(np.float32, copy=True)
             assign = ef_py.WorldPilotActionAssignment()

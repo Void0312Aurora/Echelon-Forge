@@ -9,11 +9,14 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
     - Used by the scripted-red `F-16C` smoke and 8k probe entries.
   - [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
     - Used by the Stage-0 drone weapon-employment reactive and temporal world-batch probe entries.
+  - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
+    - Used by the Stage-1 BVR non-maneuvering target world-batch probe entry.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
-  - Red opponent: scenario-declared scripted `F-16C_Block50`
+  - Early curriculum target: unarmed `MQ-9_Reaper` surrogate for Stage 0 and Stage 1
+  - Scripted-red smoke opponent: scenario-declared `F-16C_Block50`
   - Policy architecture: `HierarchicalMoEExecutionPolicy`
-- Stage-1 through Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config in this directory is paired to them yet.
+- Stage-2 and Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config in this directory is paired to them yet.
 
 ## Entries
 
@@ -39,6 +42,24 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Enables `temporal_history_len=16` plus `TemporalTransformerExtractor` while keeping the main hyperparameters close to the reactive baseline.
   - This is a validation entry before Path C, not the final sequence-native causal policy.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json)
+  - Stage-1 BVR-like range-expansion probe against the unarmed non-maneuvering target.
+  - Keeps the same HMoE execution surface as Stage 0 while increasing rollout horizon pressure with longer contact persistence and missile time-of-flight.
+  - This is the first post-damage-model continuation entry; it is still an active probe, not a fixed-fire win gate or frozen baseline.
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json)
+  - Stage-1 M1 temporal HMoE probe.
+  - Enables `temporal_history_len=16` plus `TemporalTransformerExtractor` while keeping the main hyperparameters close to the Stage-1 reactive baseline.
+  - Used after restoring the live damage chain to compare whether the temporal window improves repeat-fire, launch interval, and fixed diagnostic metrics.
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json)
+  - Stage-1 M1 action-interface probe using `action_mode=air_combat_hybrid_v1`.
+  - Flight controls remain continuous, while radar / TMS / master-arm / fire / weapon-select use policy-side hybrid action semantics.
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json)
+  - Stage-1 M1 action-interface plus temporal probe.
+  - Used to compare action-reachability repair separately from observation-window temporal evidence.
+
 ## Design Notes
 
 - These smoke entries are intentionally non-visual.
@@ -55,3 +76,5 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Promote only after `1v1` reward/termination/eval behavior is stable enough to compare across runs.
 - Temporal entries only expose short history to the policy.
   - They do not change missile physics, ammunition, cooldown, or environment-side tactical memory.
+- Hybrid entries only change the training-facing action interface.
+  - They expose `fire_weapon` as policy-facing pulse/effective transport semantics; they do not change the weapon-release kernel, launch envelope, or damage model.

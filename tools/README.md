@@ -54,7 +54,7 @@
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - Maintained leader-layer throughput probe for `auto/subproc/shared/dummy`.
 - [air_combat_stage0_process_probe.py](diagnostics/air_combat_stage0_process_probe.py)
-  - Scoped air-combat stage-0 process probe for weapon-employment/debug traces on the compatibility env path.
+  - Scoped air-combat stage-0/stage-1 process probe for weapon-employment/debug traces and hybrid action metrics on the compatibility env path.
 - [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene, not a training runner.
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
@@ -65,7 +65,7 @@
 ## Runners
 
 - [run_scenario_contract.py](runners/run_scenario_contract.py)
-  - Runs one or more JSON contracts from `tests/contracts/`.
+  - Runs one or more JSON contracts from `tests/contracts/`, or a checked-in suite manifest such as `tests/smoke/ci_contract_suite.json`.
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - Runs a checked-in pytest suite manifest such as `tests/smoke/ci_smoke_suite.json` and fails early on stale path entries.
 - [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)

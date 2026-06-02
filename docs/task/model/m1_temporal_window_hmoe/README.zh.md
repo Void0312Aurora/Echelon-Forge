@@ -1,6 +1,7 @@
 # M1 观测窗口 HMoE 验证
 
-状态：`2026-05-25` 已进入 M1-A2/A3 实现验证；M1-A4 已有阶段零 temporal probe 入口。
+状态：`2026-06-02` 已进入 M1-A4 证据采集；M1-A4 已有 Stage-0 与 Stage-1
+reactive/temporal probe 入口。
 
 M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证据包：
 用最小侵入方式把近期时间窗口暴露给当前 HMoE PPO，观察空战 stage-0 / stage-1
@@ -10,6 +11,7 @@ M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证
 
 - [时间 HMoE 策略计划](../temporal_hmoe_policy_plan_20260525.zh.md)
 - [空战 1v1 真实度梯度课程](../../air_combat/a1_1v1_realism_gradient/README.zh.md)
+- [M1-A4 Stage-1 短程证据 - 2026-06-02](m1_a4_stage1_evidence_20260602.zh.md)
 - 当前空战训练配置：
   `examples/config/training/active/air_combat/`
 - 当前 PPO/HMoE 代码：
@@ -89,7 +91,7 @@ M1 不允许：
 | `M1-A1 源码盘点与 shape 设计` | accepted | 确认 observation space、world-batch tensor bridge、config 注册点和 extractor 注册点。 | 文档为主，必要时加只读 probe | 训练、算法改造 | shape probe 计划 | 形成具体 patch 列表 |
 | `M1-A2 temporal window runtime 实现` | in validation | 实现非视觉 observation history，覆盖单 env、world-batch 与 cooperative 参数兼容。 | env/runtime/observation 相关文件、focused tests | PPO sequence buffer、causal policy | shape/reset/done 测试 | 两条 runtime 路径 shape 稳定 |
 | `M1-A3 TemporalTransformerExtractor 实现` | in validation | 增加可配置 temporal extractor。 | `python/models/**`、注册/配置文件、focused tests | checkpoint 破坏、visual history | extractor forward + non-finite probe | 可用当前 HMoE policy 训练 |
-| `M1-A4 空战 temporal probe` | open | 在 stage-0 / stage-1 对比 reactive 与 temporal HMoE。 | air_combat training config、结果记录 | 正式长训、自博弈、路径 C 实现 | 短程 PPO + 固定诊断 | 形成改善/无改善结论 |
+| `M1-A4 空战 temporal probe` | in evidence | 在 stage-0 / stage-1 对比 reactive 与 temporal HMoE。 | air_combat training config、结果记录 | 正式长训、自博弈、路径 C 实现 | 短程 PPO + 固定诊断 | 形成改善/无改善结论 |
 | `M1-A5 路径 C release vote` | held | 判断是否进入 M2 实现。 | docs/task/model/** | 代码实现 | M1 结果复盘 | 接受、延迟或拒绝 M2 |
 
 ## 验收信号
@@ -121,13 +123,21 @@ bash tools/maintenance/cmo_env.sh python train.py \
 
 当前 M1-A4 入口：
 
-- reactive 对照：
+- Stage-0 reactive 对照：
   `examples/config/training/active/air_combat/air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json`
-- temporal probe：
+- Stage-0 temporal probe：
   `examples/config/training/active/air_combat/air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json`
 
 二者应使用同一 stage-0 场景：
 `scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json`
+
+- Stage-1 reactive 对照：
+  `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json`
+- Stage-1 temporal probe：
+  `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json`
+
+二者应使用同一 stage-1 场景：
+`scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
 
 ## 退出状态
 

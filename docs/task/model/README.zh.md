@@ -11,6 +11,8 @@
 
 - 目标架构：路径 C，sequence-native causal Transformer HMoE/PPO。
 - 先行验证：路径 A，observation-window temporal HMoE。
+- 动作接口：`2026-06-02` 已接受 `M1 空战动作接口拆分` 的 `air_combat_hybrid_v1`
+  训练表面；这只释放动作接口，不释放 learned policy 或 M2。
 - 释放原则：只有当路径 A 在 stage-0 / stage-1 空战课程中显示时间信息能改善
   重复发射、可达性或策略稳定性后，才展开路径 C 的实现。
 - 路径 B recurrent HMoE 只作为对照/备用，不作为正式主线。
@@ -19,6 +21,7 @@
 
 - [时间 HMoE 策略计划](temporal_hmoe_policy_plan_20260525.zh.md)
 - [M1 观测窗口 HMoE 验证](m1_temporal_window_hmoe/README.zh.md)
+- [M1 空战动作接口拆分](m1_action_interface_split/README.zh.md)
 - [M2 Causal Transformer HMoE 目标架构](m2_causal_transformer_hmoe/README.zh.md)
 - 英文主文：
   [Temporal HMoE Policy Plan](temporal_hmoe_policy_plan_20260525.md)

@@ -9,11 +9,14 @@
     - 由 scripted-red `F-16C` smoke 和 8k probe 条目使用。
   - [air_combat_1v1_stage0_drone_weapon_employment_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage0_drone_weapon_employment_v1.json)
     - 由 Stage-0 drone weapon-employment reactive 和 temporal world-batch probe 条目使用。
+  - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
+    - 由 Stage-1 BVR non-maneuvering target world-batch probe 条目使用。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
-  - 红方对手：场景声明的脚本化 `F-16C_Block50`
+  - 早期课程目标：Stage 0 和 Stage 1 使用无武器 `MQ-9_Reaper` 替身
+  - scripted-red smoke 对手：场景声明的 `F-16C_Block50`
   - 策略架构：`HierarchicalMoEExecutionPolicy`
-- Stage-1 到 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但本目录目前还没有与它们配对的 active training config。
+- Stage-2 和 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但本目录目前还没有与它们配对的 active training config。
 
 ## 条目
 
@@ -39,6 +42,24 @@
   - 它启用 `temporal_history_len=16` 与 `TemporalTransformerExtractor`，其余主要超参贴近 reactive 对照。
   - 这是路径 C 前的验证入口，不代表正式 sequence-native 因果策略。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json)
+  - Stage-1 类 BVR 距离扩展探针，对手仍是无武器、非机动目标。
+  - 保持与 Stage 0 相同的 HMoE execution surface，同时用更长接触保持和导弹飞行时间增加 rollout horizon 压力。
+  - 这是杀伤模型完成后的第一个继续推进入口；仍是 active probe，不是 fixed-fire win gate 或 frozen baseline。
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json)
+  - Stage-1 的 M1 temporal HMoE 探针。
+  - 它启用 `temporal_history_len=16` 与 `TemporalTransformerExtractor`，其余主要超参贴近 Stage-1 reactive 对照。
+  - 用于在杀伤链路恢复后比较 temporal window 是否改善重复发射、发射间隔和固定诊断指标。
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_world_batch_probe_v1.json)
+  - Stage-1 的 M1 action-interface probe，使用 `action_mode=air_combat_hybrid_v1`。
+  - 飞行控制仍是连续轴，雷达 / TMS / master-arm / fire / weapon-select 在 policy 侧使用 hybrid action 语义。
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json)
+  - Stage-1 的 M1 action-interface + temporal probe。
+  - 用于把动作可达性修复和 observation-window temporal 证据分开比较。
+
 ## 设计说明
 
 - 这些烟雾测试条目有意设为非可视化。
@@ -55,3 +76,5 @@
   - 仅在 `1v1` 奖励/终止/评估行为足够稳定（可跨运行比较）之后才进行提升。
 - temporal 条目只增加策略可见的短历史。
   - 它不改变导弹物理、弹药、冷却或环境侧战术记忆。
+- hybrid 条目只改变训练侧动作接口。
+  - 它把 `fire_weapon` 暴露为 policy-facing pulse/effective transport 语义；不改变武器释放内核、发射包线或杀伤模型。

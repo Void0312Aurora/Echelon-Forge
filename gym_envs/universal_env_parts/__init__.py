@@ -1,4 +1,10 @@
-from .actions import build_pilot_action, half_to_unit, normalize_action
+from .actions import (
+    air_combat_hybrid_effective_action,
+    build_pilot_action,
+    half_to_unit,
+    is_air_combat_hybrid_action_mode,
+    normalize_action,
+)
 from .info import build_step_info, build_step_info_minimal
 from .naval_actions import (
     NAVAL_STATION3_ACTION_FAMILY,
@@ -26,9 +32,19 @@ from .history import (
     temporal_history_enabled,
 )
 from .observations import build_universal_observation, downsample_visual_mean, naval_policy_instruments
-from .spaces import expected_action_dim, make_action_space, make_observation_space, mission_observation_dim
+from .spaces import (
+    AIR_COMBAT_HYBRID_V1_ACTION_DIM,
+    AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+    expected_action_dim,
+    make_action_space,
+    make_observation_space,
+    mission_observation_dim,
+)
 
 __all__ = [
+    "AIR_COMBAT_HYBRID_V1_ACTION_DIM",
+    "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
+    "air_combat_hybrid_effective_action",
     "build_pilot_action",
     "build_step_info",
     "build_step_info_minimal",
@@ -42,6 +58,7 @@ __all__ = [
     "build_naval_station_action_transport",
     "build_neutral_ship_pilot_action",
     "half_to_unit",
+    "is_air_combat_hybrid_action_mode",
     "is_naval_station_action_mode",
     "make_action_space",
     "make_observation_space",

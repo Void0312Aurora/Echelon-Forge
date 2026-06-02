@@ -4,7 +4,7 @@ Language:
 - English canonical: `act.md`
 - Chinese companion: [act.zh.md](act.zh.md)
 
-Status: `2026-05-18` specialization baseline for maintained air action input.
+Status: `2026-06-02` specialization baseline for maintained air action input.
 
 This document defines the maintained air action surface for the current
 repository. It is an interface contract, not a cockpit encyclopedia.
@@ -32,9 +32,16 @@ The maintained environment modes are:
 | `full` | 17 | full maintained action surface |
 | `takeoff2` | 2 | reduced takeoff curriculum surface |
 | `takeoff4` | 4 | reduced takeoff surface with lateral controls |
+| `air_combat_hybrid_v1` | 12 | `1v1` air-combat training surface with continuous flight axes plus hybrid combat-command semantics |
 
 `takeoff2` and `takeoff4` are training-oriented reduced interfaces. They do not
 expose the full `PilotAction` surface directly.
+
+`air_combat_hybrid_v1` is also a training-oriented surface. It keeps a flat
+numeric transport vector for PPO/runtime compatibility, but its policy contract
+is hybrid: selected dimensions are sampled and interpreted as Bernoulli switches,
+one-step pulses, or categorical selectors rather than raw continuous cockpit
+axes.
 
 ## `full` Mode Mapping
 
@@ -56,6 +63,28 @@ The maintained `full` action vector maps as follows:
 - `14`: `fire_weapon`
 - `15`: `fire_gun`
 - `16`: `weapon_select_id`
+
+## `air_combat_hybrid_v1` Mode Mapping
+
+The maintained `air_combat_hybrid_v1` transport vector maps as follows:
+
+- `0`: `stick_pitch` continuous axis
+- `1`: `stick_roll` continuous axis
+- `2`: `rudder` continuous axis
+- `3`: `throttle` continuous axis
+- `4`: `radar_scan_az`, mapped to `+/-60 deg`
+- `5`: `radar_scan_el`, mapped to `+/-30 deg`
+- `6`: `radar_active` Bernoulli switch state
+- `7`: `tms_up` one-step pulse generated from policy-command rising edge
+- `8`: `master_arm` Bernoulli switch state
+- `9`: `fire_weapon` one-step pulse generated from policy-command rising edge
+- `10`: `fire_gun` one-step pulse generated from policy-command rising edge
+- `11`: `weapon_select_id` categorical selector in `[0, 7]`
+
+The `proprio` and `proprio_history` observations for this mode record the
+effective transport action sent toward `PilotAction`, not the raw policy intent.
+For pulse dimensions, a held policy command therefore appears as `1` only on the
+rising-edge step and `0` on subsequent held steps.
 
 ## Canonical `PilotAction` Fields
 
@@ -100,6 +129,9 @@ The kernel-facing `PilotAction` fields currently exposed are grouped as:
 - `radar_scan_az` and `radar_scan_el` are environment-normalized inputs mapped
   into angle values for the kernel-facing action.
 - `weapon_select_id` is a selector, not a continuous control axis.
+- In `air_combat_hybrid_v1`, `tms_up`, `fire_weapon`, and `fire_gun` are
+  policy-facing pulse commands. Holding the policy command high does not keep the
+  corresponding `PilotAction` trigger high after the first effective step.
 
 ## Reduced-Mode Overrides
 

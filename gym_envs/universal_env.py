@@ -17,6 +17,7 @@ from gym_envs.universal_env_parts import (
     build_step_info_minimal,
     build_universal_observation,
     downsample_visual_mean,
+    air_combat_hybrid_effective_action,
     expected_action_dim,
     half_to_unit,
     make_action_space,
@@ -33,6 +34,7 @@ from gym_envs.universal_env_parts import (
     bind_naval_station_eval_reference,
     reset_temporal_history,
     reset_naval_station_action_state,
+    is_air_combat_hybrid_action_mode,
     is_naval_station_action_mode,
     temporal_history_enabled,
     validate_naval_action_mode_for_loader,
@@ -142,6 +144,7 @@ else:
             self._last_inst = None
             self._last_truth = None
             self._last_action = None
+            self._last_policy_action_intent = None
             self._temporal_history = make_temporal_history_buffer(self.temporal_history_len)
             self._visual_cache = None
             self._visual_cache_step = -1
@@ -198,6 +201,7 @@ else:
             self._last_inst = None
             self._last_truth = None
             self._last_action = None
+            self._last_policy_action_intent = None
             self._temporal_history.clear()
             self._visual_cache = None
             self.loader = None
@@ -231,6 +235,7 @@ else:
 
             self.steps = 0
             self._last_action = None
+            self._last_policy_action_intent = None
             reset_naval_station_action_state(self.loader)
             bind_naval_station_eval_reference(self.loader)
             self._temporal_history.clear()
@@ -273,6 +278,14 @@ else:
                 self._last_action = action.astype(np.float32, copy=True)
                 apply_naval_station_action(self.loader, action)
                 self.loader._sync_kernel_mission_command()
+            elif is_air_combat_hybrid_action_mode(self.action_mode):
+                policy_intent = action.astype(np.float32, copy=True)
+                action = air_combat_hybrid_effective_action(
+                    action,
+                    previous_intent=self._last_policy_action_intent,
+                )
+                self._last_policy_action_intent = policy_intent
+                self._last_action = action.astype(np.float32, copy=True)
             else:
                 self._last_action = action.astype(np.float32, copy=True)
 
@@ -432,6 +445,7 @@ else:
 __all__ = [
     "UniversalEnv",
     "_configure_sim_log_level",
+    "air_combat_hybrid_effective_action",
     "build_pilot_action",
     "build_step_info",
     "build_step_info_minimal",
@@ -439,6 +453,7 @@ __all__ = [
     "downsample_visual_mean",
     "expected_action_dim",
     "half_to_unit",
+    "is_air_combat_hybrid_action_mode",
     "make_action_space",
     "make_observation_space",
     "mission_observation_dim",

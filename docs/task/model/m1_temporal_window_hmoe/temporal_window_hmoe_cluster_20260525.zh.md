@@ -1,6 +1,7 @@
 # M1 观测窗口 HMoE 任务簇 - 2026-05-25
 
-状态：`M1-A2/A3` 已完成首版实现并通过聚焦测试；`M1-A4` 已完成一次 stage-0 temporal smoke。
+状态：`M1-A2/A3` 已完成首版实现并通过聚焦测试；`M1-A4` 已进入 Stage-0 /
+Stage-1 reactive-vs-temporal 证据采集。
 
 ## 决策
 
@@ -63,6 +64,8 @@ M1 不应触碰：
 - 新增 `TemporalTransformerExtractor`，每帧复用当前非视觉 token 结构，再做 causal temporal attention；
 - 新增 stage-0 temporal 训练配置：
   `examples/config/training/active/air_combat/air_combat_1v1_stage0_drone_weapon_employment_temporal_world_batch_probe_v1.json`。
+- 在 S1 live damage 链路恢复后，新增 stage-1 temporal 训练配置：
+  `examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json`。
 
 验证结果：
 
@@ -75,11 +78,23 @@ M1 不应触碰：
 - stage-0 temporal PPO smoke 完成 `4096` timesteps，final model 保存到
   `experiments/temporal_stage0_smoke_20260525/final_model.zip`；
 - test-only deterministic rollout 使用同一 world-batch temporal 配置加载 final model 并执行 `1000` 步，无 runtime/shape/non-finite 报错。
+- 2026-06-02 Stage-1 temporal 入口验证：
+  `tests/training/test_air_combat_active_training_entries.py` 通过，覆盖 reactive/temporal 配置配对与 train bootstrap；
+  `tests/hmoe/test_hmoe_policy.py -k "temporal or transformer"` 通过；
+  `tests/world_batch/test_world_batch_vec_env.py -k "temporal_history"` 通过；
+  使用 Stage-1 temporal 配置运行 range-gate 固定诊断，单枚导弹产生 `effects_event_count=1`、
+  `damage_report_count=1`、`projected_hitbox_count=3`、`component_hit_count=4`、
+  `system_health_delta=-0.449619135218419`。
 
 当前解释：
 
 - “能正常训练”已成立：temporal observation、HMoE、CUDA rollout buffer、world-batch compiled runtime 链路可达；
 - “行为已经改善”尚未成立：短烟测末尾 value loss 有明显抬升，test-only rollout 的粗粒度奖励打印仍为 `0.00`，需要后续与 reactive baseline 做同 seed、同指标对照；
+- Stage-1 的 S1 probe 现在应优先记录 live-fire damage 是否稳定出现，以及 temporal window 是否改善重复发射、发射间隔和固定诊断指标；
+- 2026-06-02 第一轮 Stage-1 8192-step 同 seed 对照记录为
+  [M1-A4 Stage-1 短程证据](m1_a4_stage1_evidence_20260602.zh.md)：reactive 与 temporal 均能训练和加载，
+  但 deterministic 策略均为 `combat_timeout`、`release_total=0`，stochastic 策略均为
+  `failfast_deep_stall`、`release_total=0`，action-stat probe 显示武器开关动作均值约 `0.018`；
 - 因此 M2 路径 C 仍保持 held，等待 A4 evidence review。
 
 ## 指标

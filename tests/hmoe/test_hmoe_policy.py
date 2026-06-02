@@ -17,6 +17,7 @@ from python.models.transformer import (
     preprocess_mission_tensor,
     preprocess_transformer_observations,
 )
+from gym_envs.universal_env_parts import make_action_space
 from python.mission_obs_taxonomy import mission_observation_field_index
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
@@ -219,6 +220,95 @@ class HMoEPolicyTests(unittest.TestCase):
 
         self.assertTrue(th.allclose(policy.action_net.weight.detach(), th.zeros_like(policy.action_net.weight)))
         self.assertTrue(th.allclose(policy.action_net.bias.detach(), th.zeros_like(policy.action_net.bias)))
+
+    def test_air_combat_hybrid_policy_uses_mixed_distribution_over_flat_transport(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(21,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        action_space = make_action_space("air_combat_hybrid_v1")
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            action_space,
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+        )
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": th.zeros((2, 21), dtype=th.float32),
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+
+        with th.no_grad():
+            actions, values, log_prob = policy.forward(obs, deterministic=True)
+            eval_values, eval_log_prob, entropy = policy.evaluate_actions(obs, actions)
+
+        self.assertEqual(int(policy.action_net.out_features), 19)
+        self.assertEqual(int(policy.log_std.shape[0]), 6)
+        self.assertEqual(tuple(actions.shape), (2, 12))
+        self.assertEqual(tuple(values.shape), (2, 1))
+        self.assertEqual(tuple(log_prob.shape), (2,))
+        self.assertEqual(tuple(eval_values.shape), (2, 1))
+        self.assertEqual(tuple(eval_log_prob.shape), (2,))
+        self.assertTrue(th.isfinite(actions).all())
+        self.assertTrue(th.isfinite(log_prob).all())
+        self.assertTrue(th.isfinite(eval_log_prob).all())
+        self.assertIsNone(entropy)
+        for idx in (6, 7, 8, 9, 10):
+            self.assertTrue(th.all((actions[:, idx] == 0.0) | (actions[:, idx] == 1.0)))
+        self.assertTrue(th.all(actions[:, 11] == th.round(actions[:, 11])))
+        self.assertTrue(th.all(actions[:, 11] >= 0.0))
+        self.assertTrue(th.all(actions[:, 11] <= 7.0))
+
+    def test_safe_action_bias_initializes_air_combat_hybrid_switch_logits(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(21,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+        )
+
+        class _Model:
+            pass
+
+        model = _Model()
+        model.policy = policy
+        apply_safe_action_bias(
+            model,
+            "air_combat_hybrid_v1",
+            "scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json",
+        )
+
+        bias = policy.action_net.bias.detach().cpu()
+        self.assertGreater(float(bias[6]), 0.0)
+        self.assertGreater(float(bias[8]), 0.0)
+        self.assertLess(float(bias[9]), 0.0)
+        self.assertLess(float(bias[10]), 0.0)
+        self.assertGreater(float(bias[12]), float(bias[11]))
+        for head in policy.hmoe_head_bank.family_heads:
+            self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 
     def test_initialize_hmoe_from_shared_action_head_preserves_zero_residual_bootstrap(self) -> None:
         policy = self._make_policy()

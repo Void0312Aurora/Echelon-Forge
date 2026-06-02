@@ -11,6 +11,21 @@ from python.training import build_train_arg_parser, prepare_training_bootstrap
 
 
 class TrainBootstrapTests(unittest.TestCase):
+    def test_train_cli_accepts_air_combat_hybrid_action_override(self) -> None:
+        parser = build_train_arg_parser()
+        args = parser.parse_args(
+            [
+                "--scenario",
+                "scenario.json",
+                "--train_config",
+                "train.json",
+                "--action_mode",
+                "air_combat_hybrid_v1",
+            ]
+        )
+
+        self.assertEqual(args.action_mode, "air_combat_hybrid_v1")
+
     def test_p3_frozen_execution_entry_uses_maintained_world_batch_path(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         config_path = repo_root / "examples" / "config" / "training" / "frozen" / "execution" / "p3_takeoff_to_cruise_retrain_v1.json"
