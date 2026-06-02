@@ -110,6 +110,30 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["hmoe_params/family/nonzero_frac"], 0.25, places=6)
         self.assertAlmostEqual(logger.records["hmoe_params/sub/nonzero_frac"], 0.5, places=6)
 
+    def test_hybrid_air_combat_actions_are_not_logged_as_full_action_brakes(self) -> None:
+        cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
+        logger = _DummyLogger()
+        cb.model = _DummyModel(logger)
+        cb.locals = {
+            "new_obs": {"instruments": [[0.0] * 42]},
+            "actions": [[0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]],
+            "rewards": [0.0],
+            "infos": [{}],
+            "dones": [False],
+        }
+        cb.num_timesteps = 1
+        cb._histories = []
+        cb._next_log_t = 1
+
+        self.assertTrue(cb._on_step())
+
+        self.assertNotIn("diag/action_brake_any_frac", logger.records)
+        self.assertNotIn("diag/action_brake_amt_mean", logger.records)
+        self.assertAlmostEqual(logger.records["diag/action_radar_active_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_master_arm_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_fire_weapon_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_weapon_select_id_mean"], 1.0, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

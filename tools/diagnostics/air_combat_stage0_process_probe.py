@@ -21,6 +21,7 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from gym_envs.universal_env import UniversalEnv
+from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 
 
@@ -196,10 +197,14 @@ def _model_action(model, obs: dict[str, Any], *, deterministic: bool) -> np.ndar
     return np.asarray(action, dtype=np.float32).reshape(-1)
 
 
-def _build_env(scenario_path: str, train_config: dict[str, Any] | None) -> UniversalEnv:
+def _base_env(env):
+    return getattr(env, "unwrapped", env)
+
+
+def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
     env_cfg = train_config.get("env", {}) if isinstance(train_config, dict) else {}
     env_cfg = env_cfg if isinstance(env_cfg, dict) else {}
-    return UniversalEnv(
+    env = UniversalEnv(
         os.path.abspath(scenario_path),
         include_visual=bool(env_cfg.get("include_visual", False)),
         include_proprio=bool(env_cfg.get("include_proprio", True)),
@@ -213,6 +218,10 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None) -> Unive
         step_info_mode="full",
         runtime_compatibility_enabled=True,
     )
+    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+    if wrapper_class is MultiTimescaleActionWrapper:
+        return wrapper_class(env, **dict(wrapper_kwargs or {}))
+    return env
 
 
 def _snapshot_row(
@@ -228,9 +237,10 @@ def _snapshot_row(
     initial_units: set[int],
     prev_missiles: int | None,
 ) -> dict[str, Any]:
-    sim = env.sim
-    blue_id = int(env.agent_id)
-    target_id = int(env.loader.primary_target_id or 0)
+    base = _base_env(env)
+    sim = base.sim
+    blue_id = int(base.agent_id)
+    target_id = int(base.loader.primary_target_id or 0)
     truth = sim.get_agent_observation(blue_id)
     inst = sim.get_instrument_state(blue_id)
     target_track = _target_track(truth, target_id)
@@ -332,9 +342,9 @@ def _snapshot_row(
             bool(getattr(last_report, "destroyed", False)) if last_report is not None else False
         ),
     }
-    action_mode = str(getattr(env, "action_mode", "full"))
+    action_mode = str(getattr(base, "action_mode", "full"))
     columns = _action_columns_for_mode(action_mode)
-    effective_action = getattr(env, "_last_action", None)
+    effective_action = getattr(base, "_last_action", None)
     if action is None:
         for name in ACTION_SIGNAL_NAMES:
             row[f"action_{name}"] = float("nan")
@@ -524,16 +534,18 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         model = load_sb3_policy(os.path.abspath(args.model), algo=str(args.algo), device=str(args.device))
 
     env = _build_env(scenario_path, train_config)
-    action_mode = str(getattr(env, "action_mode", "full"))
+    base_env = _base_env(env)
+    action_mode = str(getattr(base_env, "action_mode", "full"))
     rows: list[dict[str, Any]] = []
     episode_summaries: list[dict[str, Any]] = []
     try:
         for ep in range(int(args.episodes)):
             rng = np.random.default_rng(int(args.seed) + ep)
             obs, _info = env.reset(seed=int(args.seed) + ep)
-            max_steps = int(args.max_steps) if int(args.max_steps) > 0 else int(getattr(env, "max_steps", 0) or 1200)
-            initial_units = _unit_id_set(env.sim)
-            prev_missiles = int(getattr(env.sim.get_agent_observation(env.agent_id), "missiles_remaining", -1))
+            base_env = _base_env(env)
+            max_steps = int(args.max_steps) if int(args.max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
+            initial_units = _unit_id_set(base_env.sim)
+            prev_missiles = int(getattr(base_env.sim.get_agent_observation(base_env.agent_id), "missiles_remaining", -1))
             range_gate_fired = False
             ep_rows: list[dict[str, Any]] = []
             initial_row = _snapshot_row(
@@ -554,13 +566,14 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 if args.mode == "forced_fire":
                     action = _forced_fire_action(obs, rng, step, action_mode=action_mode)
                 elif args.mode == "range_gate_fire":
-                    target_id = int(env.loader.primary_target_id or 0)
-                    own_obs = env.sim.get_agent_observation(env.agent_id)
+                    base_env = _base_env(env)
+                    target_id = int(base_env.loader.primary_target_id or 0)
+                    own_obs = base_env.sim.get_agent_observation(base_env.agent_id)
                     fire = (
                         not bool(range_gate_fired)
                         and target_id > 0
                         and bool(getattr(own_obs, "can_fire", False))
-                        and _distance_m(env.sim, env.agent_id, target_id) <= float(args.fire_range_m)
+                        and _distance_m(base_env.sim, base_env.agent_id, target_id) <= float(args.fire_range_m)
                     )
                     action = _range_gate_fire_action(fire=fire, action_mode=action_mode)
                     if fire:

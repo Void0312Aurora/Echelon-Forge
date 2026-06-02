@@ -11,6 +11,8 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
     - Used by the Stage-0 drone weapon-employment reactive and temporal world-batch probe entries.
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
     - Used by the Stage-1 BVR non-maneuvering target world-batch probe entry.
+  - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json)
+    - Used by the Stage-1 M1 hybrid shaped training probe after the live damage chain and hybrid action interface are both available.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Early curriculum target: unarmed `MQ-9_Reaper` surrogate for Stage 0 and Stage 1
@@ -60,6 +62,12 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Stage-1 M1 action-interface plus temporal probe.
   - Used to compare action-reachability repair separately from observation-window temporal evidence.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json)
+  - Stage-1 M1 hybrid shaped training probe.
+  - Uses the training-shaped Stage-1 scenario with stable-flight shaping and first-release reward while preserving the canonical Stage-1 geometry and weapon/damage runtime.
+  - Enables a narrow stable-flight residual wrapper only on flight-control axes `[0, 1, 2, 3]`; hybrid combat commands remain unlocked and unsnapped.
+  - This is the maintained entry for checking whether the repaired action interface can recover release exploration before moving to longer M1 evidence runs.
+
 ## Design Notes
 
 - These smoke entries are intentionally non-visual.
@@ -69,9 +77,9 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 - Current `1v1` smoke still uses `mission_obs_mode=basic`.
   - So the HMoE policy is active, but the maintained route semantics exposed to the policy are still minimal.
   - In current smoke logs this means routing stays on the navigation family/subexpert, which is acceptable for chain validation but not yet a fully differentiated combat-routing setup.
-- These smoke entries intentionally do not enable the maintained scripted-residual action wrapper.
-  - The current stable-flight residual presets lock several switch dimensions that are useful in air combat, including weapon-related controls.
-  - For first `1v1` smoke we want the learner to retain the raw `full` action surface.
+- The raw `full`, hybrid, and temporal smoke entries intentionally do not enable the maintained scripted-residual action wrapper.
+  - The shaped hybrid training probe is the exception: it blends only the first four flight-control axes against stable flight and leaves radar / master-arm / fire / weapon-select policy commands untouched.
+  - For first `1v1` smoke we still want the learner to retain the raw action surface.
 - These entries are not acceptance/frozen baselines yet.
   - Promote only after `1v1` reward/termination/eval behavior is stable enough to compare across runs.
 - Temporal entries only expose short history to the policy.

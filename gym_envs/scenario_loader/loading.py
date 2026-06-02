@@ -207,6 +207,8 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader.last_reward_breakdown = {}
     loader.last_termination_reason = "running"
     loader._air_combat_reward_last_report_id = 0
+    loader._air_combat_reward_prev_missiles = None
+    loader._air_combat_reward_release_count = 0
     loader._approach_prev_dme_m = None
     loader._approach_prev_loc_abs = None
     loader._approach_prev_gs_abs = None
@@ -254,6 +256,10 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     if loader.agent_id is not None:
         truth = initial_truth if initial_truth is not None else get_policy_agent_observation(loader)
         loader.prev_alt = truth.z
+        try:
+            loader._air_combat_reward_prev_missiles = int(getattr(truth, "missiles_remaining", -1))
+        except Exception:
+            loader._air_combat_reward_prev_missiles = None
         loader._waypoint_leg_origin_x = float(getattr(truth, "x", 0.0))
         loader._waypoint_leg_origin_y = float(getattr(truth, "y", 0.0))
         try:

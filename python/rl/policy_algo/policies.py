@@ -295,6 +295,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
+        self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
         self._hybrid_action_spec_config = hybrid_action_spec
         self._hybrid_action_layout: _HybridActionLayout | None = None
         if hybrid_action_spec is not None:
@@ -309,7 +310,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         if self._hybrid_action_layout is not None:
             hmoe_output_dim = int(self._hybrid_action_layout.param_dim)
             self.action_net = nn.Linear(int(self.mlp_extractor.latent_dim_pi), hmoe_output_dim).to(self.device)
-            self.log_std = nn.Parameter(th.zeros(int(self._hybrid_action_layout.continuous_count), device=self.device))
+            self.log_std = nn.Parameter(
+                th.full(
+                    (int(self._hybrid_action_layout.continuous_count),),
+                    float(self._hybrid_log_std_init),
+                    device=self.device,
+                )
+            )
             self._squash_output = False
         self.hmoe_head_bank = _HMoEHeadBank(
             latent_dim=int(self.mlp_extractor.latent_dim_pi),

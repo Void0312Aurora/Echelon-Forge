@@ -1573,6 +1573,8 @@ class WorldBatchVecEnv(VecEnv):
                 handle.last_action = action.astype(np.float32, copy=True)
             else:
                 handle.last_action = action.astype(np.float32, copy=True)
+            handle.loader._last_action_mode = str(self.action_mode)
+            handle.loader._last_effective_action = handle.last_action.astype(np.float32, copy=True)
             assign = ef_py.WorldPilotActionAssignment()
             assign.world_index = int(env_idx)
             assign.entity_id = int(handle.agent_id)

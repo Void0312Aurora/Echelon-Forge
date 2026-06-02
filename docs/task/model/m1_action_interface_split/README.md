@@ -139,6 +139,9 @@ This subproject can be marked accepted only when:
 - The 32-step smoke model deterministic probe still does not fire:
   `fire_attempt_count=0`, `release_count=0`, ending with `failfast_deep_stall`.
   That proves action-interface reachability, not learned-policy quality.
+- The 65k shaped hybrid follow-up restores training flight stability:
+  deterministic final-model probe reaches `combat_timeout` with no release, and
+  stochastic final-model probes can release but still fire early/repeatedly.
 - Tactical memory for "one missile already in flight against this target" stays
   deferred to a later policy/memory package.
 

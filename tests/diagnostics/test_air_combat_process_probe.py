@@ -14,6 +14,41 @@ from tools.diagnostics import air_combat_stage0_process_probe as probe  # noqa: 
 
 
 class AirCombatProcessProbeTests(unittest.TestCase):
+    def test_build_env_applies_multi_timescale_wrapper_from_train_config(self) -> None:
+        class DummyEnv:
+            def __init__(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+                self.unwrapped = self
+
+        class DummyWrapper:
+            def __init__(self, env, **kwargs):
+                self.env = env
+                self.kwargs = kwargs
+                self.unwrapped = env.unwrapped
+
+        old_env = probe.UniversalEnv
+        old_wrapper = probe.MultiTimescaleActionWrapper
+        old_get_spec = probe.get_action_wrapper_spec
+        try:
+            probe.UniversalEnv = DummyEnv
+            probe.MultiTimescaleActionWrapper = DummyWrapper
+            probe.get_action_wrapper_spec = lambda _cfg: (DummyWrapper, {"scripted_blend_indices": [0, 1, 2, 3]})
+
+            env = probe._build_env(
+                "scenarios/air_combat/1v1/dummy.json",
+                {"env": {"action_mode": "air_combat_hybrid_v1"}},
+            )
+
+            self.assertIsInstance(env, DummyWrapper)
+            self.assertEqual(env.kwargs["scripted_blend_indices"], [0, 1, 2, 3])
+            self.assertIs(probe._base_env(env), env.env)
+            self.assertEqual(env.env.kwargs["action_mode"], "air_combat_hybrid_v1")
+        finally:
+            probe.UniversalEnv = old_env
+            probe.MultiTimescaleActionWrapper = old_wrapper
+            probe.get_action_wrapper_spec = old_get_spec
+
     def test_hybrid_forced_fire_action_uses_hybrid_layout(self) -> None:
         action = probe._forced_fire_action(
             {},

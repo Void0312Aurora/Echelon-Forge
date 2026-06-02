@@ -240,6 +240,7 @@ class HMoEPolicyTests(unittest.TestCase):
             features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
             net_arch={"pi": [32], "vf": [32]},
             hybrid_action_spec="air_combat_hybrid_v1",
+            log_std_init=-1.2,
         )
         obs = {
             "instruments": th.zeros((2, 42), dtype=th.float32),
@@ -255,6 +256,7 @@ class HMoEPolicyTests(unittest.TestCase):
 
         self.assertEqual(int(policy.action_net.out_features), 19)
         self.assertEqual(int(policy.log_std.shape[0]), 6)
+        self.assertTrue(th.allclose(policy.log_std.detach(), th.full_like(policy.log_std.detach(), -1.2)))
         self.assertEqual(tuple(actions.shape), (2, 12))
         self.assertEqual(tuple(values.shape), (2, 1))
         self.assertEqual(tuple(log_prob.shape), (2,))
@@ -289,6 +291,9 @@ class HMoEPolicyTests(unittest.TestCase):
             net_arch={"pi": [32], "vf": [32]},
             hybrid_action_spec="air_combat_hybrid_v1",
         )
+        with th.no_grad():
+            policy.action_net.weight.fill_(0.25)
+            policy.action_net.bias.fill_(0.1)
 
         class _Model:
             pass
@@ -302,8 +307,11 @@ class HMoEPolicyTests(unittest.TestCase):
         )
 
         bias = policy.action_net.bias.detach().cpu()
+        self.assertTrue(th.allclose(policy.action_net.weight.detach(), th.zeros_like(policy.action_net.weight)))
         self.assertGreater(float(bias[6]), 0.0)
         self.assertGreater(float(bias[8]), 0.0)
+        self.assertLess(float(bias[7]), -3.0)
+        self.assertLess(float(bias[9]), -5.0)
         self.assertLess(float(bias[9]), 0.0)
         self.assertLess(float(bias[10]), 0.0)
         self.assertGreater(float(bias[12]), float(bias[11]))

@@ -11,6 +11,8 @@
     - 由 Stage-0 drone weapon-employment reactive 和 temporal world-batch probe 条目使用。
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json)
     - 由 Stage-1 BVR non-maneuvering target world-batch probe 条目使用。
+  - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json)
+    - 在杀伤链和 hybrid 动作接口都可用后，由 Stage-1 M1 hybrid shaped 训练探针使用。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
   - 早期课程目标：Stage 0 和 Stage 1 使用无武器 `MQ-9_Reaper` 替身
@@ -60,6 +62,12 @@
   - Stage-1 的 M1 action-interface + temporal probe。
   - 用于把动作可达性修复和 observation-window temporal 证据分开比较。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json)
+  - Stage-1 的 M1 hybrid shaped 训练探针。
+  - 使用 training-shaped Stage-1 场景，加入稳定飞行塑形和首枚有效发射奖励，同时保留 canonical Stage-1 的几何、武器和毁伤 runtime。
+  - 启用一个很窄的稳定飞行残差 wrapper，只 blend 飞控轴 `[0, 1, 2, 3]`；hybrid 作战命令不锁定、不 snap。
+  - 这是检查修复后的动作接口能否恢复 release exploration 的维护入口，再往后才进入更长 M1 evidence run。
+
 ## 设计说明
 
 - 这些烟雾测试条目有意设为非可视化。
@@ -69,9 +77,9 @@
 - 当前 `1v1` 烟雾测试仍使用 `mission_obs_mode=basic`。
   - 因此 HMoE 策略处于活跃状态，但暴露给策略的维护路线语义仍然最小化。
   - 在当前烟雾日志中，这意味着路由停留在导航族/子专家上，这对于链路验证是可接受的，但尚未形成完全差异化的作战路由配置。
-- 这些烟雾测试条目有意不启用维护中的脚本化残差动作封装。
-  - 当前稳定飞行残差预设锁定了几个在空战中有用的开关维度，包括武器相关控制。
-  - 在首次 `1v1` 烟雾测试中，我们希望学习者保留原始的 `full` 动作表面。
+- raw `full`、hybrid 和 temporal 烟雾测试条目有意不启用维护中的脚本化残差动作封装。
+  - shaped hybrid 训练探针是例外：它只把前四个飞控轴和 stable-flight baseline 做残差混合，雷达 / master-arm / fire / weapon-select 仍保持策略直接控制。
+  - 在首次 `1v1` 烟雾测试中，我们仍希望学习者保留原始动作表面。
 - 这些条目尚未成为验收/冻结基线。
   - 仅在 `1v1` 奖励/终止/评估行为足够稳定（可跨运行比较）之后才进行提升。
 - temporal 条目只增加策略可见的短历史。

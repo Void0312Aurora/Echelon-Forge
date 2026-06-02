@@ -127,6 +127,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop python tools/diagnostic
 - 32-step smoke 模型 deterministic probe 仍没有发射：`fire_attempt_count=0`、
   `release_count=0`，并以 `failfast_deep_stall` 结束；这证明动作接口已可达，但 learned policy
   质量未验收。
+- 65k shaped hybrid 后续训练已恢复飞行稳定性：deterministic final-model probe 到达
+  `combat_timeout` 但不发射，stochastic final-model probe 能发射但仍早发/多发。
 - “同一目标已有己方导弹在飞时是否再打一枚”的战术记忆问题，推迟到后续 policy/memory package。
 
 ## Archive

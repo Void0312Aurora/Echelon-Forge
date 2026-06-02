@@ -289,6 +289,8 @@ else:
             else:
                 self._last_action = action.astype(np.float32, copy=True)
 
+            self.loader._last_action_mode = str(self.action_mode)
+            self.loader._last_effective_action = self._last_action.astype(np.float32, copy=True)
             inst_now = None if self.action_mode == "full" else self.sim.get_instrument_state(self.agent_id)
             pilot_act = build_pilot_action(action, action_mode=self.action_mode, inst_now=inst_now)
             action_prepare_ms = (time.perf_counter() - action_t0) * 1000.0 if self.collect_step_timing else 0.0

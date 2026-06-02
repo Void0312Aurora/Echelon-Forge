@@ -190,7 +190,7 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                     b[3] = throttle_default
                 # Keep lateral controls neutral at initialization so the early rollout explores
                 # "accelerate straight" before searching over crosswind corrections.
-                b[0] = 0.0
+                b[0] = 0.02
                 b[1] = 0.0
                 b[2] = 0.0
             elif action_mode == "naval_station3":
@@ -213,11 +213,11 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[5] = 0.0
                 # Hybrid layout params: 0-5 continuous means, 6-10 binary logits,
                 # 11-18 weapon-select categorical logits.
-                b[6] = 1.0   # radar_active
-                b[7] = -2.0  # tms_up pulse
-                b[8] = 1.0   # master_arm
-                b[9] = -3.0  # fire_weapon pulse
-                b[10] = -3.0  # fire_gun pulse
+                b[6] = 3.0   # radar_active held on
+                b[7] = -4.0  # tms_up pulse, sparse but reachable
+                b[8] = 3.0   # master_arm held on
+                b[9] = -6.0  # fire_weapon pulse, sparse but reachable
+                b[10] = -8.0  # fire_gun pulse
                 b[11:19] = -0.5
                 b[12] = 1.0  # prefer station 1 over "no selected station" at startup
 
@@ -229,9 +229,9 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
         with torch.no_grad():
             if has_standard_bias:
                 _apply_bias_vector(action_net.bias)
-                if action_mode == "naval_station3":
+                if action_mode in {"naval_station3", "air_combat_hybrid_v1"}:
                     weight = getattr(action_net, "weight", None)
-                    if weight is not None and int(weight.shape[0]) >= 3:
+                    if weight is not None:
                         weight.zero_()
             if has_hmoe_bias:
                 for head in getattr(hmoe_head_bank, "family_heads", []):

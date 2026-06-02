@@ -106,6 +106,21 @@ def air_combat_damage_shaping_enabled(loader: Any) -> bool:
     return is_air_combat_profile(loader)
 
 
+def air_combat_release_shaping_enabled(loader: Any) -> bool:
+    explicit = _cfg_value(loader, "air_combat_release_shaping_enabled", None)
+    if explicit is not None:
+        return _as_bool(explicit, False)
+    return any(
+        abs(_cfg_float(loader, key, 0.0)) > 0.0
+        for key in (
+            "air_combat_first_release_bonus",
+            "air_combat_release_bonus",
+            "air_combat_repeat_release_penalty",
+            "air_combat_invalid_fire_penalty",
+        )
+    )
+
+
 def _terminal_damage_states(loader: Any) -> set[str]:
     raw = _cfg_value(loader, "air_combat_terminal_damage_states", None)
     if raw is None:
@@ -209,6 +224,80 @@ def _report_target_id(report: Any) -> int:
         return 0
 
 
+def _truth_missiles_remaining(truth: Any) -> int | None:
+    try:
+        value = int(getattr(truth, "missiles_remaining", -1))
+    except Exception:
+        return None
+    return value if value >= 0 else None
+
+
+def _last_fire_attempted(loader: Any) -> bool:
+    action = getattr(loader, "_last_effective_action", None)
+    if action is None:
+        return False
+    try:
+        values = [float(v) for v in action]
+    except Exception:
+        return False
+    mode = str(getattr(loader, "_last_action_mode", "") or "")
+    fire_idx = 9 if mode == "air_combat_hybrid_v1" else 14
+    if len(values) <= fire_idx:
+        return False
+    return bool(values[fire_idx] > 0.5)
+
+
+def _apply_release_shaping(loader: Any, rb: dict[str, float], truth: Any) -> tuple[float, bool]:
+    current_missiles = _truth_missiles_remaining(truth)
+    if current_missiles is None:
+        return 0.0, False
+
+    previous_missiles = getattr(loader, "_air_combat_reward_prev_missiles", None)
+    try:
+        previous_missiles = None if previous_missiles is None else int(previous_missiles)
+    except Exception:
+        previous_missiles = None
+
+    release_count = 0
+    if previous_missiles is not None and previous_missiles >= 0:
+        release_count = max(0, previous_missiles - int(current_missiles))
+    setattr(loader, "_air_combat_reward_prev_missiles", int(current_missiles))
+
+    total = 0.0
+    if release_count > 0:
+        previous_release_count = int(getattr(loader, "_air_combat_reward_release_count", 0) or 0)
+        first_release_count = 1 if previous_release_count <= 0 else 0
+        first_release_count = min(first_release_count, int(release_count))
+        repeat_release_count = int(release_count) - int(first_release_count)
+
+        first_bonus = _cfg_float(loader, "air_combat_first_release_bonus", 0.0)
+        release_bonus = _cfg_float(loader, "air_combat_release_bonus", 0.0)
+        repeat_penalty = _cfg_float(loader, "air_combat_repeat_release_penalty", 0.0)
+
+        if first_release_count > 0 and first_bonus != 0.0:
+            total += _add_term(rb, "air_combat_first_release_bonus", first_bonus * first_release_count)
+        if release_bonus != 0.0:
+            total += _add_term(rb, "air_combat_release_bonus", release_bonus * int(release_count))
+        if repeat_release_count > 0 and repeat_penalty != 0.0:
+            total += _add_term(
+                rb,
+                "air_combat_repeat_release_penalty",
+                repeat_penalty * int(repeat_release_count),
+            )
+
+        setattr(
+            loader,
+            "_air_combat_reward_release_count",
+            int(previous_release_count) + int(release_count),
+        )
+        return total, True
+
+    invalid_fire_penalty = _cfg_float(loader, "air_combat_invalid_fire_penalty", 0.0)
+    if invalid_fire_penalty != 0.0 and _last_fire_attempted(loader):
+        total += _add_term(rb, "air_combat_invalid_fire_penalty", invalid_fire_penalty)
+    return total, False
+
+
 def _apply_report_shaping(
     loader: Any,
     rb: dict[str, float],
@@ -273,7 +362,9 @@ def apply_air_combat_reward_surface(
 ) -> tuple[float, bool, bool, list[float], dict[str, float], str | None]:
     _ = truth
     rb = {str(key): float(value) for key, value in dict(reward_breakdown or {}).items()}
-    if not air_combat_damage_shaping_enabled(loader):
+    release_shaping_enabled = air_combat_release_shaping_enabled(loader)
+    damage_shaping_enabled = air_combat_damage_shaping_enabled(loader)
+    if not release_shaping_enabled and not damage_shaping_enabled:
         return float(reward), bool(terminated), bool(truncated), status, rb, None
 
     reports = _recent_damage_reports(sim)
@@ -284,6 +375,9 @@ def apply_air_combat_reward_surface(
         last_report_id = 0
 
     if bool(terminated):
+        current_missiles = _truth_missiles_remaining(truth)
+        if current_missiles is not None:
+            setattr(loader, "_air_combat_reward_prev_missiles", int(current_missiles))
         if max_report_id > last_report_id:
             setattr(loader, "_air_combat_reward_last_report_id", int(max_report_id))
         return float(reward), bool(terminated), bool(truncated), status, rb, None
@@ -292,6 +386,13 @@ def apply_air_combat_reward_surface(
     target_id = int(getattr(loader, "primary_target_id", 0) or 0)
     next_reward = float(reward)
     consumed_max_report_id = last_report_id
+
+    if release_shaping_enabled:
+        release_delta, _released = _apply_release_shaping(loader, rb, truth)
+        next_reward += float(release_delta)
+
+    if not damage_shaping_enabled:
+        return next_reward, bool(terminated), bool(truncated), status, rb, None
 
     for report in reports:
         report_id = _report_id(report)

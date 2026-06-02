@@ -51,6 +51,36 @@ class CMODiagnosticsCallback(BaseCallback):
         "mode_change_penalty",
     )
 
+    @staticmethod
+    def _action_mode_from_width(width: int) -> str:
+        if int(width) == 12:
+            return "air_combat_hybrid_v1"
+        if int(width) >= 17:
+            return "full"
+        return "other"
+
+    @staticmethod
+    def _combat_action_columns(mode: str) -> dict[str, int] | None:
+        if mode == "air_combat_hybrid_v1":
+            return {
+                "radar_active": 6,
+                "tms_up": 7,
+                "master_arm": 8,
+                "fire_weapon": 9,
+                "fire_gun": 10,
+                "weapon_select": 11,
+            }
+        if mode == "full":
+            return {
+                "radar_active": 9,
+                "tms_up": 12,
+                "master_arm": 13,
+                "fire_weapon": 14,
+                "fire_gun": 15,
+                "weapon_select": 16,
+            }
+        return None
+
     def __init__(self, log_every_timesteps: int = 50_000, preterm_window_steps: int = 32, verbose: int = 0):
         super().__init__(verbose=verbose)
         self.log_every_timesteps = int(log_every_timesteps)
@@ -235,15 +265,21 @@ class CMODiagnosticsCallback(BaseCallback):
                 a = None
             if a is not None and a.size > 3:
                 snap["throttle"] = float(a[3])
-            if a is not None and a.size > 8:
+            mode = self._action_mode_from_width(0 if a is None else int(a.size))
+            if a is not None and mode == "full" and a.size > 8:
                 brake_raw = float(max(float(a[7]), float(a[8])))
                 snap["brake"] = float(np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0))
-            if a is not None and a.size > 16:
-                snap["radar_active"] = float(a[9] > 0.5)
-                snap["master_arm"] = float(a[13] > 0.5)
-                snap["fire_weapon"] = float(a[14] > 0.5)
-                snap["fire_gun"] = float(a[15] > 0.5)
-                snap["weapon_select_id"] = float(int(np.clip(float(a[16]), 0.0, 1.0) * 7.0))
+            columns = self._combat_action_columns(mode)
+            if a is not None and columns is not None and a.size > max(columns.values()):
+                snap["radar_active"] = float(a[columns["radar_active"]] > 0.5)
+                snap["master_arm"] = float(a[columns["master_arm"]] > 0.5)
+                snap["fire_weapon"] = float(a[columns["fire_weapon"]] > 0.5)
+                snap["fire_gun"] = float(a[columns["fire_gun"]] > 0.5)
+                snap["tms_up"] = float(a[columns["tms_up"]] > 0.5)
+                if mode == "air_combat_hybrid_v1":
+                    snap["weapon_select_id"] = float(int(np.clip(round(float(a[columns["weapon_select"]])), 0, 7)))
+                else:
+                    snap["weapon_select_id"] = float(int(np.clip(float(a[columns["weapon_select"]]), 0.0, 1.0) * 7.0))
 
         if reward_scalar is not None:
             try:
@@ -817,17 +853,35 @@ class CMODiagnosticsCallback(BaseCallback):
                 self.logger.record("diag/action_roll_mean", float(a[:, 1].mean()))
                 self.logger.record("diag/action_rudder_mean", float(a[:, 2].mean()))
                 self.logger.record("diag/action_throttle_mean", float(a[:, 3].mean()))
-            if a.ndim == 2 and a.shape[1] >= 9:
+            mode = self._action_mode_from_width(int(a.shape[1])) if a.ndim == 2 else "other"
+            if a.ndim == 2 and mode == "full" and a.shape[1] >= 9:
                 self.logger.record("diag/action_brake_any_frac", float((np.maximum(a[:, 7], a[:, 8]) > 0.5).mean()))
                 brake_raw = np.maximum(a[:, 7], a[:, 8])
                 brake_amt = np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0)
                 self.logger.record("diag/action_brake_amt_mean", float(brake_amt.mean()))
-            if a.ndim == 2 and a.shape[1] >= 17:
-                self.logger.record("diag/action_radar_active_frac", float((a[:, 9] > 0.5).mean()))
-                self.logger.record("diag/action_master_arm_frac", float((a[:, 13] > 0.5).mean()))
-                self.logger.record("diag/action_fire_weapon_frac", float((a[:, 14] > 0.5).mean()))
-                self.logger.record("diag/action_fire_gun_frac", float((a[:, 15] > 0.5).mean()))
-                weapon_select_id = np.floor(np.clip(a[:, 16], 0.0, 1.0) * 7.0)
+            columns = self._combat_action_columns(mode)
+            if a.ndim == 2 and columns is not None and a.shape[1] > max(columns.values()):
+                self.logger.record(
+                    "diag/action_radar_active_frac",
+                    float((a[:, columns["radar_active"]] > 0.5).mean()),
+                )
+                self.logger.record("diag/action_tms_up_frac", float((a[:, columns["tms_up"]] > 0.5).mean()))
+                self.logger.record(
+                    "diag/action_master_arm_frac",
+                    float((a[:, columns["master_arm"]] > 0.5).mean()),
+                )
+                self.logger.record(
+                    "diag/action_fire_weapon_frac",
+                    float((a[:, columns["fire_weapon"]] > 0.5).mean()),
+                )
+                self.logger.record(
+                    "diag/action_fire_gun_frac",
+                    float((a[:, columns["fire_gun"]] > 0.5).mean()),
+                )
+                if mode == "air_combat_hybrid_v1":
+                    weapon_select_id = np.clip(np.rint(a[:, columns["weapon_select"]]), 0.0, 7.0)
+                else:
+                    weapon_select_id = np.floor(np.clip(a[:, columns["weapon_select"]], 0.0, 1.0) * 7.0)
                 self.logger.record("diag/action_weapon_select_id_mean", float(weapon_select_id.mean()))
 
         if isinstance(infos, (list, tuple)) and infos:

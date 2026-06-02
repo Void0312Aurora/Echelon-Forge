@@ -21,7 +21,17 @@ STAGE1_HYBRID_CONFIG = (
 STAGE1_HYBRID_TEMPORAL_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_world_batch_probe_v1.json"
 )
+STAGE1_HYBRID_SHAPED_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
+STAGE1_SHAPED_SCENARIO = (
+    REPO_ROOT
+    / "scenarios"
+    / "air_combat"
+    / "1v1"
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json"
+)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -158,21 +168,62 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         )
         self.assertEqual(hybrid_temporal_policy_kwargs.get("net_arch"), hybrid_policy_kwargs.get("net_arch"))
 
+    def test_stage1_bvr_hybrid_shaped_probe_uses_training_shaped_scenario_contract(self) -> None:
+        hybrid = _load_json(STAGE1_HYBRID_CONFIG)
+        shaped = _load_json(STAGE1_HYBRID_SHAPED_CONFIG)
+        scenario = _load_json(STAGE1_SHAPED_SCENARIO)
+
+        for key in ("agent_layer", "algo", "policy", "n_envs"):
+            self.assertEqual(shaped.get(key), hybrid.get(key), key)
+        self.assertEqual(int(shaped.get("total_timesteps")), 32768)
+        self.assertEqual(int(shaped.get("save_freq")), 8192)
+        self.assertEqual(shaped.get("runtime"), hybrid.get("runtime"))
+        self.assertEqual(shaped.get("env"), hybrid.get("env"))
+        self.assertEqual(shaped.get("early_stop"), hybrid.get("early_stop"))
+        self.assertEqual(shaped.get("diagnostics"), hybrid.get("diagnostics"))
+        self.assertEqual(shaped.get("hmoe"), hybrid.get("hmoe"))
+        wrapper_cfg = shaped.get("wrappers", {}).get("multi_timescale_action", {})
+        self.assertTrue(bool(wrapper_cfg.get("enabled")))
+        self.assertEqual(wrapper_cfg.get("scripted_baseline_mode"), "stable_flight")
+        self.assertEqual(wrapper_cfg.get("scripted_blend_indices"), [0, 1, 2, 3])
+        self.assertEqual(wrapper_cfg.get("scripted_lock_indices"), [])
+        self.assertEqual(wrapper_cfg.get("low_freq_indices"), [])
+        self.assertEqual(wrapper_cfg.get("snap_binary_indices"), [])
+        self.assertEqual(wrapper_cfg.get("binary_hysteresis_indices"), [])
+
+        shaped_policy_kwargs = dict(shaped.get("hyperparameters", {}).get("policy_kwargs", {}))
+        hybrid_policy_kwargs = dict(hybrid.get("hyperparameters", {}).get("policy_kwargs", {}))
+        self.assertLess(
+            float(shaped_policy_kwargs.pop("log_std_init")),
+            float(hybrid_policy_kwargs.pop("log_std_init")),
+        )
+        self.assertEqual(shaped_policy_kwargs, hybrid_policy_kwargs)
+
+        self.assertIn("training_shaped", scenario.get("realism_gradient", {}).get("stage_name", ""))
+        rewards = scenario.get("rewards", {})
+        self.assertTrue(bool(rewards.get("air_combat_release_shaping_enabled")))
+        self.assertGreater(float(rewards.get("air_combat_first_release_bonus", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_invalid_fire_penalty", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_repeat_release_penalty", 0.0)), 0.0)
+        self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
+        self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
+
     def test_stage1_bvr_probe_bootstraps_on_current_execution_path(self) -> None:
         entries = [
-            ("reactive", STAGE1_CONFIG),
-            ("temporal", STAGE1_TEMPORAL_CONFIG),
-            ("hybrid", STAGE1_HYBRID_CONFIG),
-            ("hybrid_temporal", STAGE1_HYBRID_TEMPORAL_CONFIG),
+            ("reactive", STAGE1_CONFIG, STAGE1_SCENARIO),
+            ("temporal", STAGE1_TEMPORAL_CONFIG, STAGE1_SCENARIO),
+            ("hybrid", STAGE1_HYBRID_CONFIG, STAGE1_SCENARIO),
+            ("hybrid_temporal", STAGE1_HYBRID_TEMPORAL_CONFIG, STAGE1_SCENARIO),
+            ("hybrid_shaped", STAGE1_HYBRID_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
         ]
-        for label, config_path in entries:
+        for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
                 proc = subprocess.run(
                     [
                         sys.executable,
                         str(REPO_ROOT / "train.py"),
                         "--scenario",
-                        str(STAGE1_SCENARIO),
+                        str(scenario_path),
                         "--train_config",
                         str(config_path),
                         "--output_base",
@@ -193,7 +244,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             self.assertIn("world_batch_vec_env=True", proc.stdout)
             self.assertIn("World batch runtime:", proc.stdout)
             self.assertIn("Execution reward runtime: requested_backend=compiled effective_backend=compiled", proc.stdout)
-            if label in {"hybrid", "hybrid_temporal"}:
+            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped"}:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {"temporal", "hybrid_temporal"}:
                 self.assertIn("temporal_history_len=16", proc.stdout)
