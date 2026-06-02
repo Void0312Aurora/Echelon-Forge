@@ -1,6 +1,6 @@
 # Default Effects Modularization Current Status
 
-Status: `2026-06-02 paused / DFM-P3E mission-combat helper pass / DFM-P4 early-return fixture pass`.
+Status: `2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`.
 
 Subproject:
 
@@ -67,6 +67,15 @@ Subproject:
 - Darwin returned `pass` for read-only `DFM-P3E` diagnostics and confirmed that
   the aircraft structure-spatial block and platform-level mission/combat
   consequence remain outside the aircraft-only helper.
+- `DFM-P3F` resumed the paused line on the main thread and verified that the
+  current source already contains the aircraft structure-spatial consequence
+  helper `apply_default_effects_aircraft_structure_spatial_consequence_block`,
+  with coefficients, formula inputs, RNG handling, result fields, authority
+  strings, and public contracts preserved.
+- Linux validation exposed a debug-only early-return fixture abort after target
+  destruct; integration fixed `simulation_kernel_damage_debug_api.cpp` to build
+  debug event records from pre-hit target `Transform` and `Velocity` snapshots
+  instead of reading components from a destructed Flecs entity.
 
 ## Maturity Matrix
 
@@ -75,51 +84,53 @@ Subproject:
 | Translation-unit split | accepted-for-structure | `ef_core` build passed. | `.inc` files must be tracked with the source change. |
 | Existing runtime guard | accepted-for-current-guard | `155 passed` in `test_weapon_guidance_realism_guards.py`. | Guard is broad, not a golden path-by-path fixture. |
 | Direct/spatial helper equivalence | accepted-for-round-1 | Subagent read-only review plus build/test plus DFM-P4 fixtures. | Platform-loss early-return fixture is now covered by the accepted DFM-P4 fixture. |
-| Air-platform internals | paused-partial | Mechanism-load, scale, platform-only consequence, aircraft sensor/avionics consequence, aircraft propulsion/fuel consequence, aircraft control/hydraulic consequence, aircraft crew-role consequence, aircraft mission/combat consequence, aircraft fire-zone consequence, and finalize helpers extracted. | Aircraft structure-spatial consequence block remains inline and held for later dispatch. |
+| Air-platform internals | accepted-for-current-structure | Mechanism-load, scale, platform-only consequence, aircraft sensor/avionics consequence, aircraft propulsion/fuel consequence, aircraft control/hydraulic consequence, aircraft crew-role consequence, aircraft mission/combat consequence, aircraft structure-spatial consequence, aircraft fire-zone consequence, and finalize helpers extracted. | No remaining aircraft consequence helper residual is held in this subproject. |
 | DFM-P4 fixture hardening | pass | 5 targeted fixtures integrated; `dfm_p4` selector passed. | None for current fixture scope. |
 | DFM-P5 diagnostics | pass | Lovelace packet reviewed and applied to assertion style. | None for round 1. |
-| DFM-P6 closure sync | pass | [closure sync](default_effects_modularization_closure_sync_20260602.md) | Subproject remains active because DFM-P3 and early-return fixture residuals remain. |
+| DFM-P3F structure-spatial split | pass | Source review found the helper already present; `ef_core`, `ef_py`, `dfm_p4`, and full runtime guard passed after the debug guard fix. | Further air-platform restructuring must be re-scoped as a new finite task. |
+| Debug early-return snapshot guard | pass | Structured platform-loss/destruct fixture now passes on Linux. | Debug API change is limited to event-record snapshots; default effects formulas are unchanged. |
+| DFM-P6 closure sync | pass / updated | [closure sync](default_effects_modularization_closure_sync_20260602.md) | Historical DFM-P6 sync is updated with DFM-P3F evidence; no authority claim added. |
 | C++ test harness | deferred | No project-level C++ unit suite exists. | Separate project-wide initiative needed. |
 
 ## Evidence
 
 ```bash
-cmake --build build-local-win --target ef_core -j2
+cmake --build build --target ef_core -j2
 # passed
 
-cmake --build build-local-win --target ef_py -j2
+cmake --build build --target ef_py -j2
 # passed
 
-CMO_BUILD_DIR=D:\workshop\Research\Echelon-Forge\build-local-win \
-PYTHONPATH=D:\workshop\Research\Echelon-Forge\build-local-win;D:\workshop\Research\Echelon-Forge \
-.\.venv\Scripts\python.exe -m pytest -q tests\runtime\air_combat\test_weapon_guidance_realism_guards.py -k dfm_p4
-# 5 passed, 150 deselected in 1.35s
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_dfm_p4_structured_air_platform_loss_early_return_populates_effect_fields --tb=short
+# 1 passed in 0.17s
 
-CMO_BUILD_DIR=D:\workshop\Research\Echelon-Forge\build-local-win \
-PYTHONPATH=D:\workshop\Research\Echelon-Forge\build-local-win;D:\workshop\Research\Echelon-Forge \
-.\.venv\Scripts\python.exe -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py --tb=short -ra
-# 155 passed in 44.88s
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k dfm_p4
+# 5 passed, 150 deselected in 0.42s
 
-git diff --check -- src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc tests/runtime/air_combat/weapon_guidance_realism/default_effects_modularization.py docs/task/air_combat/a2_high_fidelity_damage_model/default_effects_modularization src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/a2_high_fidelity_damage_model/README.zh.md
-# passed; LF/CRLF conversion warnings only
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+# 155 passed in 33.24s
+
+git diff --check -- src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc src/core/engine/simulation_kernel_damage_debug_api.cpp docs/task/air_combat/a2_high_fidelity_damage_model/default_effects_modularization src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/a2_high_fidelity_damage_model/README.zh.md
+# passed
 ```
 
 ## Residual Register
 
 Immediate:
 
-- Keep the accepted DFM-P3 / DFM-P3B / DFM-P3C / DFM-P3D / DFM-P3E platform,
+- Keep the accepted DFM-P3 / DFM-P3B / DFM-P3C / DFM-P3D / DFM-P3E / DFM-P3F platform,
   sensor/avionics, propulsion/fuel, control/hydraulic, crew-role,
-  mission/combat, and fire-zone helpers plus the DFM-P4 early-return fixture
-  covered by build and runtime guard verification.
-- Do not continue the current `DFM-P3`, `DFM-P3B`, `DFM-P3C`, `DFM-P3D`, or
-  `DFM-P3E` rows with more implementation workers; the current task is paused
-  with the structure-spatial block held.
+  mission/combat, structure-spatial, and fire-zone helpers plus the DFM-P4
+  early-return fixture covered by build and runtime guard verification.
+- Do not continue the current `DFM-P3`, `DFM-P3B`, `DFM-P3C`, `DFM-P3D`,
+  `DFM-P3E`, or `DFM-P3F` rows with more implementation workers; `DFM-P3F`
+  has consumed the previously held structure-spatial split.
 
 Near-term:
 
-- If this line resumes, create a new `DFM-P3F` row for the aircraft
-  structure-spatial helper slice only if build and runtime guard remain green.
+- No near-term default-effects air-platform consequence split remains in this
+  subproject. Any further source split should be opened as a new finite row with
+  a fresh validation budget.
 
 Held:
 
@@ -129,9 +140,9 @@ Held:
 
 ## Recommended Next Action Order
 
-1. Pause after `DFM-P3E` and commit the accepted DFM changes.
-2. On a later resume, consider `DFM-P3F` for the aircraft structure-spatial
-   block only.
+1. Pause after `DFM-P3F` and commit the accepted DFM changes.
+2. Keep the structured early-return fixture green because it exercises the
+   debug target snapshot guard.
 
 ## Explicitly Refused Overclaims
 

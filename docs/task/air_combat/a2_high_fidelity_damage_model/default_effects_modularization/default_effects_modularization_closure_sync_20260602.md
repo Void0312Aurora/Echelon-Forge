@@ -1,6 +1,6 @@
 # Default Effects Modularization Closure Sync
 
-Status: `2026-06-02 DFM-P6 closure sync / Ramanujan mission-combat helper pass / paused`.
+Status: `2026-06-02 DFM-P6 closure sync / DFM-P3F structure-spatial helper pass / paused`.
 
 Subproject:
 
@@ -48,6 +48,13 @@ fixture hardening:
 - Darwin returned `pass` for read-only `DFM-P3E` diagnostics and confirmed that
   the aircraft structure-spatial block and platform-level mission/combat
   consequence remained outside the aircraft-only helper.
+- `DFM-P3F` resumed the paused line on the main thread and verified that the
+  current source already contains the named
+  `apply_default_effects_aircraft_structure_spatial_consequence_block` helper
+  for the remaining aircraft-side structure-spatial block.
+- Linux validation exposed that the debug early-return fixture could destruct
+  the target before debug event construction read target `Velocity`; the debug
+  API now records from pre-hit target `Transform` and `Velocity` snapshots.
 - Cicero (`019e840c-e0a9-7c91-937d-226f388d4912`) returned `pass` for the
   tests-only `DFM-P4` held-fixture probe, adding a structured air-platform
   loss/destruct early-return runtime fixture.
@@ -56,38 +63,33 @@ fixture hardening:
 - `DFM-P6` status, parent links, and residual wording were synchronized to the
   current verified state.
 
-This does not close the whole subproject. `DFM-P3E` is accepted for the current
-implementation budget, and the line is paused with the aircraft
-structure-spatial consequence block held for any later `DFM-P3F` dispatch.
+This does not promote any wider A2 fidelity authority. `DFM-P3F` is accepted
+for the current implementation budget, and the line is paused with no remaining
+aircraft consequence helper residual held inside this subproject.
 
 ## Validation
 
 ```bash
-cmake -S . -B build-local-win "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-# passed; required because CMake 4 rejects vendored doctest's old policy floor
-
-cmake --build build-local-win --target ef_core -j2
+cmake --build build --target ef_core -j2
 # passed
 
-cmake --build build-local-win --target ef_py -j2
+cmake --build build --target ef_py -j2
 # passed
 
-CMO_BUILD_DIR=D:\workshop\Research\Echelon-Forge\build-local-win \
-PYTHONPATH=D:\workshop\Research\Echelon-Forge\build-local-win;D:\workshop\Research\Echelon-Forge \
-.\.venv\Scripts\python.exe -m pytest -q tests\runtime\air_combat\test_weapon_guidance_realism_guards.py -k dfm_p4
-# 5 passed, 150 deselected in 1.35s
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_dfm_p4_structured_air_platform_loss_early_return_populates_effect_fields --tb=short
+# 1 passed in 0.17s
 
-CMO_BUILD_DIR=D:\workshop\Research\Echelon-Forge\build-local-win \
-PYTHONPATH=D:\workshop\Research\Echelon-Forge\build-local-win;D:\workshop\Research\Echelon-Forge \
-.\.venv\Scripts\python.exe -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py --tb=short -ra
-# 155 passed in 44.88s
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k dfm_p4
+# 5 passed, 150 deselected in 0.42s
+
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+# 155 passed in 33.24s
 ```
 
 ## Residuals
 
-- Pause after `DFM-P3E`; if this line resumes, extract the remaining
-  aircraft-side structure-spatial helper stage only if the guard suite remains
-  green.
+- Pause after `DFM-P3F`; any further source split must open a new finite task
+  row with a fresh validation budget.
 - Keep the accepted structured platform-loss/destruct early-return fixture as a
   regression guard for future structure-only edits.
 - Keep C++ unit-test framework adoption as a separate project-wide test-system

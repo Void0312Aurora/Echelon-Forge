@@ -1,6 +1,6 @@
 # Default Effects Modularization
 
-Status: `2026-06-02 paused / DFM-P3E mission-combat helper pass / DFM-P4 early-return fixture pass`.
+Status: `2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`.
 
 Language:
 
@@ -34,8 +34,8 @@ code-structure and regression task surface for the default effects model.
 | Direct hit helper | pass | `detail/default_effects_direct_hit_detail.inc`; `DFM-P4` runtime fixtures | Fixed-RNG direct component and protected-system fallback routes are covered by runtime fixtures, not by a C++ golden harness. |
 | Spatial projection helper | pass | `detail/default_effects_spatial_projection_detail.inc`; `DFM-P4` runtime fixtures | Broad and non-broad near-miss routes are covered by runtime fixtures. |
 | System effect helper | pass | `detail/default_effects_system_effect_detail.inc` | Extracted behavior has build/runtime guard coverage, not line-by-line golden comparison. |
-| Air platform resolution helper | partial | `detail/default_effects_air_platform_resolution_detail.inc` | Platform-only, aircraft sensor/avionics, aircraft propulsion/fuel, aircraft control/hydraulic, aircraft crew-role, aircraft mission/combat, and aircraft fire-zone consequence blocks now have named helpers; the aircraft structure-spatial block remains inline. |
-| Verification | pass-for-current-slice | `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `155 passed` runtime guard | No dedicated C++ unit suite exists for this model yet. |
+| Air platform resolution helper | pass-for-structure | `detail/default_effects_air_platform_resolution_detail.inc` | Platform-only, aircraft sensor/avionics, aircraft propulsion/fuel, aircraft control/hydraulic, aircraft crew-role, aircraft mission/combat, aircraft structure-spatial, and aircraft fire-zone consequence blocks now have named helpers. |
+| Verification | pass-for-current-slice | `cmake --build build --target ef_core -j2`; `cmake --build build --target ef_py -j2`; `155 passed` runtime guard | No dedicated C++ unit suite exists for this model yet. |
 
 ## Scope
 
@@ -67,7 +67,7 @@ Out of scope:
 | `P0 Boundary` | Freeze scope, authority, and task list. | A2 assessment flags `default_effects_model.cpp` as oversized. | README and task clusters exist and parent index links them. | pass |
 | `P1 Extraction` | Move monolithic helper logic into local detail fragments. | Buildable baseline. | Direct, spatial, system-effect, result, state, warhead, geometry, component, legacy helpers compile. | pass |
 | `P2 Internal Cleanup` | Reduce duplicate formulas and scratch updates. | P1 helper boundaries compile. | Shared component-scale and warhead-sample helpers are used. | pass |
-| `P3 Air Resolution Split` | Thin air-platform consequence internals without formula drift. | P2 pass. | Mechanism-load, scale aggregation, platform-only, sensor/avionics, propulsion/fuel, control/hydraulic, crew-role, mission/combat, fire-zone, finalize, and future consequence blocks are named helpers. | partial / mission-combat helper pass |
+| `P3 Air Resolution Split` | Thin air-platform consequence internals without formula drift. | P2 pass. | Mechanism-load, scale aggregation, platform-only, sensor/avionics, propulsion/fuel, control/hydraulic, crew-role, mission/combat, structure-spatial, fire-zone, finalize, and future consequence blocks are named helpers. | pass / DFM-P3F structure-spatial helper pass |
 | `P4 Regression Fixtures` | Add narrow behavior fixtures for high-risk paths. | P1-P3 build. | Dedicated fixture or runtime snapshot tests cover named paths. | direct/spatial/early-return pass |
 | `P5 Closure` | Sync docs, status, archive, and residuals. | P4 pass or explicit held residual. | Acceptance gate and current status are updated. | DFM-P6 pass |
 
@@ -84,8 +84,8 @@ Out of scope:
 - `src/models/weapons/detail/default_effects_*_detail.inc`
 - [weapons README](../../../../../src/models/weapons/README.md)
 - [weapons README.zh.md](../../../../../src/models/weapons/README.zh.md)
-- Build gate: `cmake --build build-local-win --target ef_core -j2`
-- Runtime guard: `.\.venv\Scripts\python.exe -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py --tb=short -ra`
+- Build gate: `cmake --build build --target ef_core -j2`
+- Runtime guard: `CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest tests/runtime/air_combat/test_weapon_guidance_realism_guards.py --tb=short -ra`
 
 ## Acceptance Gate
 
@@ -104,9 +104,9 @@ This subproject can be marked accepted only when:
   runtime fixtures green while continuing the structure-only split.
 - Consider a later C++ unit-test harness only as a separate project-wide testing
   initiative.
-- Hold the remaining aircraft structure-spatial helper extraction for a later
-  dispatch; continue only if formulas remain unchanged and the validation
-  surface stays green.
+- The previously held aircraft structure-spatial helper extraction is complete;
+  any further air-platform restructuring must be re-scoped as a new finite task
+  with formulas, authority strings, and public contracts preserved.
 
 ## Archive
 

@@ -1,6 +1,6 @@
 # Default Effects Modularization
 
-状态：`2026-06-02 paused / DFM-P3E mission-combat helper pass / DFM-P4 early-return fixture pass`。
+状态：`2026-06-02 paused / DFM-P3F structure-spatial helper pass / debug early-return snapshot guard pass`。
 
 语言：
 
@@ -32,8 +32,8 @@ Inputs:
 | Direct hit helper | pass | `detail/default_effects_direct_hit_detail.inc`；`DFM-P4` runtime fixtures | fixed-RNG direct component 与 protected-system fallback 路径已有 runtime fixture 覆盖，尚非 C++ golden harness。 |
 | Spatial projection helper | pass | `detail/default_effects_spatial_projection_detail.inc` 和共享 candidate helpers；`DFM-P4` runtime fixtures | broad / non-broad near-miss 路径已有 runtime fixture 覆盖。 |
 | System effect helper | pass | `detail/default_effects_system_effect_detail.inc` | 已有 build/runtime guard 覆盖，尚非逐字段 golden 对比。 |
-| Air platform resolution helper | partial | `detail/default_effects_air_platform_resolution_detail.inc` | platform-only、aircraft sensor/avionics、aircraft propulsion/fuel、aircraft control/hydraulic、aircraft crew-role、aircraft mission/combat 与 aircraft fire-zone consequence blocks 已有命名 helper；aircraft structure-spatial block 仍保持 inline。 |
-| Verification | pass-for-current-slice | `cmake --build build-local-win --target ef_core -j2`；`cmake --build build-local-win --target ef_py -j2`；runtime guard `155 passed` | 本模型还没有专用 C++ 单元测试网。 |
+| Air platform resolution helper | pass-for-structure | `detail/default_effects_air_platform_resolution_detail.inc` | platform-only、aircraft sensor/avionics、aircraft propulsion/fuel、aircraft control/hydraulic、aircraft crew-role、aircraft mission/combat、aircraft structure-spatial 与 aircraft fire-zone consequence blocks 已有命名 helper。 |
+| Verification | pass-for-current-slice | `cmake --build build --target ef_core -j2`；`cmake --build build --target ef_py -j2`；runtime guard `155 passed` | 本模型还没有专用 C++ 单元测试网。 |
 
 ## Scope
 
@@ -60,7 +60,7 @@ Out of scope:
 | `P0 Boundary` | 固定范围、authority 和任务清单。 | A2 评估指出 `default_effects_model.cpp` 过大。 | README 和任务簇存在，并由父入口链接。 | pass |
 | `P1 Extraction` | 将单体 helper 逻辑移入本地 detail 片段。 | baseline 可构建。 | direct、spatial、system-effect、result、state、warhead、geometry、component、legacy helpers 编译通过。 | pass |
 | `P2 Internal Cleanup` | 降低重复公式和 scratch 更新。 | P1 helper 边界编译通过。 | 统一 component-scale 和 warhead-sample helpers。 | pass |
-| `P3 Air Resolution Split` | 在不改公式的前提下压薄 air-platform consequence 内部。 | P2 pass。 | 机制载荷、scale 聚合、platform-only、sensor/avionics、propulsion/fuel、control/hydraulic、crew-role、mission/combat、fire-zone、finalize 与后续 consequence blocks 有命名 helper。 | partial / mission-combat helper pass |
+| `P3 Air Resolution Split` | 在不改公式的前提下压薄 air-platform consequence 内部。 | P2 pass。 | 机制载荷、scale 聚合、platform-only、sensor/avionics、propulsion/fuel、control/hydraulic、crew-role、mission/combat、structure-spatial、fire-zone、finalize 与后续 consequence blocks 有命名 helper。 | pass / DFM-P3F structure-spatial helper pass |
 | `P4 Regression Fixtures` | 为高风险路径补窄行为 fixture。 | P1-P3 构建通过。 | 专用 fixture 或 runtime snapshot 覆盖命名路径。 | direct/spatial/early-return pass |
 | `P5 Closure` | 同步 docs、status、archive 和 residual。 | P4 pass 或明确 held residual。 | acceptance gate 和 current status 更新。 | DFM-P6 pass |
 
@@ -77,8 +77,8 @@ Out of scope:
 - `src/models/weapons/detail/default_effects_*_detail.inc`
 - [weapons README](../../../../../src/models/weapons/README.md)
 - [weapons README.zh.md](../../../../../src/models/weapons/README.zh.md)
-- Build gate: `cmake --build build-local-win --target ef_core -j2`
-- Runtime guard: `.\.venv\Scripts\python.exe -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py --tb=short -ra`
+- Build gate: `cmake --build build --target ef_core -j2`
+- Runtime guard: `CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest tests/runtime/air_combat/test_weapon_guidance_realism_guards.py --tb=short -ra`
 
 ## Acceptance Gate
 
@@ -96,7 +96,9 @@ Out of scope:
 - 在继续结构化拆分时保持已接受的 direct、spatial 与 structured air-platform
   early-return runtime fixtures 为绿。
 - C++ 单元测试框架只作为后续项目级测试倡议处理。
-- 剩余 aircraft structure-spatial helper extraction 暂存为后续 dispatch；只有在公式不漂移且验证面保持绿色时才继续。
+- 先前 held 的 aircraft structure-spatial helper extraction 已完成；任何进一步
+  air-platform 重构都必须重新建立有限任务簇，并继续保持公式、authority strings
+  与 public contracts 不变。
 
 ## Archive
 

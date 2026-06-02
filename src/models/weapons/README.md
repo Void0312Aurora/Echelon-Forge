@@ -34,5 +34,6 @@ and legacy/fallback submodules. They are not standalone APIs or additional
 model entry points. The air-platform fragment now keeps platform-only,
 aircraft sensor/avionics, aircraft propulsion/fuel, aircraft
 control/hydraulic, aircraft crew-role, aircraft mission/combat, and aircraft
-fire-zone consequence handling in named helpers while the remaining aircraft
-structure-spatial extraction stays a held structure-only residual.
+structure-spatial, and aircraft fire-zone consequence handling in named
+helpers. Any further air-platform restructuring must be opened as a new
+structure-only task.

@@ -49,7 +49,7 @@ deterministic fuze released。
 | [任务簇分发包](task_cluster_dispatch_20260601.zh.md) | 将 `TC-A2-*` 拆成可交付 subagent / 主线程任务 |
 | [任务簇执行状态](task_cluster_execution_status_20260601.zh.md) | 记录按新任务簇分发和验证后的当前就绪度 |
 | [runtime 状态](runtime_status.zh.md) | 承接 `TC-A2-RUNTIME` / `G1` 的已维护工程面、回归面和非目标 |
-| [Default effects modularization](default_effects_modularization/README.zh.md) | 固化 `default_effects_model.cpp` 结构化拆分、已接受的 DFM-P4 fixture、DFM-P6 收口同步和剩余 structure-spatial air-platform residual |
+| [Default effects modularization](default_effects_modularization/README.zh.md) | 固化 `default_effects_model.cpp` 结构化拆分、已接受的 DFM-P4 fixture、DFM-P6 收口同步和 DFM-P3F structure-spatial helper 收口 |
 | [candidate 验收状态](candidate_acceptance_status.zh.md) | 承接当前 `TC-A2-BF-001..004` / `G2` 非权威候选包验收，并读取 `G3` residual 状态 |
 | [G3 residual 收尾状态](g3_residual_closeout_status_20260601.zh.md) | 清点 `RES-001..014`，将 G3 台账收尾为当前 research profile 已闭合，并保留防误用边界 |
 | [research candidate 数据策略](research_candidate_data_policy_20260601.zh.md) | 固化当前默认目标为 research / candidate，底层数据可替换、可扩展 |

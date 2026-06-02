@@ -1,6 +1,6 @@
 # Default Effects Modularization Task Clusters
 
-Status: `2026-06-02 finite task-cluster plan / Ramanujan mission-combat helper pass / paused`.
+Status: `2026-06-02 finite task-cluster plan / DFM-P3F structure-spatial helper pass / paused`.
 
 Parent subproject:
 
@@ -33,6 +33,7 @@ authority, deterministic fuze release, or industrial admission.
 | `DFM-P3C` | Ramanujan worker (`019e8441-3a03-7012-8888-30f64fec5927`); Darwin diagnostics (`019e8441-ef53-7fe0-9707-03d9ce2daec1`) | inherited / xhigh | Extract one source-only helper for aircraft lateral-fuel-storage, hydraulic-supply, and flight-control consequence blocks. | `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` for Ramanujan; diagnostics is read-only | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. | `git diff --check`; `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Control/hydraulic helper slice passes build plus runtime guard and returns a packet. | Serial after `DFM-P3B` acceptance; do not edit docs or tests in the worker. TM04/TM05 remains unrelated. | 1 | pass / control-hydraulic helper accepted |
 | `DFM-P3D` | Ramanujan worker (`019e8441-3a03-7012-8888-30f64fec5927`); Darwin diagnostics (`019e8441-ef53-7fe0-9707-03d9ce2daec1`) | inherited / xhigh | Extract one source-only helper for aircraft pilot, mission-crew, command-navigation, and generic crew fallback consequence blocks. | `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` for Ramanujan; diagnostics is read-only | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. | `git diff --check`; `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Crew-role helper slice passes build plus runtime guard and returns a packet. | Serial after `DFM-P3C` acceptance; do not edit docs or tests in the worker. TM04/TM05 remains unrelated. | 1 | pass / crew-role helper accepted |
 | `DFM-P3E` | Ramanujan worker (`019e8441-3a03-7012-8888-30f64fec5927`); Darwin diagnostics (`019e8441-ef53-7fe0-9707-03d9ce2daec1`) | inherited / xhigh | Extract one source-only helper for the aircraft-side mission/combat consequence block. | `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` for Ramanujan; diagnostics is read-only | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. | `git diff --check`; `cmake --build build-local-win --target ef_core -j2`; `cmake --build build-local-win --target ef_py -j2`; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Mission/combat helper slice passes build plus runtime guard and returns a packet. | Serial after `DFM-P3D` acceptance; do not edit docs or tests in the worker. Keep platform-level mission/combat behavior outside this helper. TM04/TM05 remains unrelated. | 1 | pass / mission-combat helper accepted |
+| `DFM-P3F` | main thread | local / xhigh-equivalent review | Verify and accept the aircraft-side structure-spatial consequence helper already present in the current source, then fix the debug early-return validation crash exposed by the accepted fixture. | `src/core/engine/simulation_kernel_damage_debug_api.cpp`; status docs; `src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc` as reviewed evidence | No formula, coefficient, RNG, result field, authority string, public contract, or derive/clamp/apply-to-platform reorder changes. Debug API changes may only use pre-hit target snapshots for event recording. | `git diff --check`; `cmake --build build --target ef_core -j2`; `cmake --build build --target ef_py -j2`; structured early-return fixture; `test_weapon_guidance_realism_guards.py -k dfm_p4`; full guard. | Structure-spatial helper is verified and accepted; debug API no longer reads target components after target destruct. | Serial after `DFM-P3E`; no parallel source worker. | 1 | pass / structure-spatial helper accepted |
 | `DFM-P6` | integration worker | inherited / xhigh | Closure sync: update status, parent links, acceptance/residuals, and archive boundary. | subproject docs, parent A2 README entries, `src/models/weapons/README*` if needed | No authority or public API claim. | `git diff --check`; link/path review; build/test evidence copied from current run. | Acceptance and held residuals are explicit; build/test evidence references the current Windows validation path. | Serial after implementation/test clusters. | 1 | pass |
 
 ## Dispatch Rules
@@ -62,10 +63,10 @@ for structure-only clusters.
 ## Validation Plan
 
 ```bash
-cmake --build build-local-win --target ef_core -j2
-cmake --build build-local-win --target ef_py -j2
+cmake --build build --target ef_core -j2
+cmake --build build --target ef_py -j2
 CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
-git diff --check -- src/models/weapons/default_effects_model.cpp src/models/weapons/detail src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/a2_high_fidelity_damage_model/default_effects_modularization
+git diff --check -- src/models/weapons/default_effects_model.cpp src/models/weapons/detail src/core/engine/simulation_kernel_damage_debug_api.cpp src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/a2_high_fidelity_damage_model/default_effects_modularization
 ```
 
 ## Acceptance Criteria
@@ -84,19 +85,19 @@ git diff --check -- src/models/weapons/default_effects_model.cpp src/models/weap
 Immediate:
 
 - Keep build and runtime guard green after the platform, sensor/avionics,
-  propulsion/fuel, control/hydraulic, crew-role, mission/combat, and fire-zone
-  consequence helper splits.
+  propulsion/fuel, control/hydraulic, crew-role, mission/combat,
+  structure-spatial, and fire-zone consequence helper splits.
 - Keep accepted `DFM-P4` / `DFM-P5` fixture hardening as the minimum regression
   floor for any further `DFM-P3` extraction.
 - Keep the accepted structured air-platform early-return fixture as the
   regression floor for platform-loss/destruct early return.
 - Do not send more workers against `DFM-P3`, `DFM-P3B`, `DFM-P3C`,
-  `DFM-P3D`, or `DFM-P3E`; the current task is paused after commit.
+  `DFM-P3D`, `DFM-P3E`, or `DFM-P3F`; the current task is paused after commit.
 
 Follow-on:
 
-- If resumed, create `DFM-P3F` for the aircraft structure-spatial helper slice
-  if tests stay green.
+- No default-effects air-platform consequence split remains in this subproject;
+  if resumed, create a new finite row with a fresh validation budget.
 
 Deferred:
 

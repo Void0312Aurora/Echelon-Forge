@@ -415,7 +415,7 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
     double missile_vz_mps
 ) {
     const auto target = ecs.entity(target_id);
-    const Transform* target_transform = target.is_valid() ? target.get<Transform>() : nullptr;
+    const Transform* target_transform = target.is_alive() ? target.get<Transform>() : nullptr;
     return debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
         attacker_id,
         target_id,
@@ -447,14 +447,22 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
 ) {
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
-    if (!attacker.is_valid() || !target.is_valid()) {
+    if (!attacker.is_alive() || !target.is_alive()) {
         return false;
     }
 
-    const Transform* target_transform = target.get<Transform>();
-    if (!target_transform) {
+    const Transform* target_transform_component = target.get<Transform>();
+    if (!target_transform_component) {
         return false;
     }
+    const Transform target_transform = *target_transform_component;
+    const Velocity* target_velocity_component = target.get<Velocity>();
+    const Velocity target_velocity_snapshot = target_velocity_component
+        ? *target_velocity_component
+        : Velocity{};
+    const Velocity* target_velocity = target_velocity_component
+        ? &target_velocity_snapshot
+        : nullptr;
 
     const EffectsModelRef* effects_ref = ecs.get<EffectsModelRef>();
     if (!effects_ref || !effects_ref->model) {
@@ -502,7 +510,7 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     synthetic.proximity_engaged = true;
 
     const Transform impact_transform = local_body_point_to_world_transform(
-        *target_transform,
+        target_transform,
         local_forward_m,
         local_right_m,
         local_up_m);
@@ -522,19 +530,19 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const auto detonation_local = world_point_to_local_body(
-        *target_transform,
+        target_transform,
         impact_transform.x,
         impact_transform.y,
         impact_transform.z);
     const auto missile_axis = velocity_axis_in_target_body(
-        *target_transform,
+        target_transform,
         missile_vx_mps,
         missile_vy_mps,
         missile_vz_mps);
     const double closure_mps = resolve_closure_from_impact(
-        *target_transform,
+        target_transform,
         impact_transform,
-        target.get<Velocity>(),
+        target_velocity,
         missile_vx_mps,
         missile_vy_mps,
         missile_vz_mps);

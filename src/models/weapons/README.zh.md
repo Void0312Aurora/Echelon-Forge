@@ -29,6 +29,7 @@ runtime，也不拥有 ground fires/damage runtime。
 拆为 direct-hit、spatial-projection、system-effect、air-platform-resolution、
 result-population 与 legacy/fallback 子模块。air-platform 片段已把 platform-only、
 aircraft sensor/avionics、aircraft propulsion/fuel、aircraft control/hydraulic、
-aircraft crew-role、aircraft mission/combat 和 aircraft fire-zone consequence
-处理收进命名 helper；其余 aircraft structure-spatial 拆分暂存为结构性 residual。
+aircraft crew-role、aircraft mission/combat、aircraft structure-spatial 和
+aircraft fire-zone consequence 处理收进命名 helper；任何进一步 air-platform
+重构都应重新建立结构性任务。
 它们不是独立 API，也不是新的模型入口。
