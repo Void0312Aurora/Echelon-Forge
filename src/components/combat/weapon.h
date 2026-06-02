@@ -92,6 +92,9 @@ struct Missile {
     // Proximity fuse bookkeeping: resolve hit once at closest approach.
     double proximity_min_dist_m = std::numeric_limits<double>::infinity();
     double proximity_last_dist_m = std::numeric_limits<double>::infinity();
+    double proximity_min_local_forward_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_min_local_right_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_min_local_up_m = std::numeric_limits<double>::quiet_NaN();
     bool proximity_engaged = false;
     bool fuze_delay_armed = false;
     double fuze_nearest_approach_time_s = std::numeric_limits<double>::quiet_NaN();

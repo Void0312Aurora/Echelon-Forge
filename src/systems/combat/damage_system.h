@@ -214,6 +214,13 @@ inline std::array<double, 3> damage_world_point_to_local_body(
     double world_z
 );
 
+inline std::array<double, 3> damage_local_body_point_to_world(
+    const Transform& target_transform,
+    double local_forward_m,
+    double local_right_m,
+    double local_up_m
+);
+
 inline double damage_hitbox_surface_distance_local(
     const std::array<double, 3>& local_point,
     const Hitbox& box
@@ -408,6 +415,77 @@ inline std::array<double, 3> damage_world_point_to_local_body(
         local.x,
         -local.y,
         local.z,
+    };
+}
+
+inline std::array<double, 3> damage_local_body_point_to_world(
+    const Transform& target_transform,
+    double local_forward_m,
+    double local_right_m,
+    double local_up_m
+) {
+    const Math::Vector3 world_delta = Math::body_to_world(
+        {local_forward_m, -local_right_m, local_up_m},
+        target_transform);
+    return {
+        target_transform.x + world_delta.x,
+        target_transform.y + world_delta.y,
+        target_transform.z + world_delta.z,
+    };
+}
+
+inline bool damage_has_proximity_min_local_point(const Missile& missile) {
+    return std::isfinite(missile.proximity_min_local_forward_m) &&
+        std::isfinite(missile.proximity_min_local_right_m) &&
+        std::isfinite(missile.proximity_min_local_up_m);
+}
+
+inline void damage_record_proximity_min_point(
+    Missile& missile,
+    const Transform& target_transform,
+    const Transform& missile_transform,
+    double distance_m
+) {
+    missile.proximity_min_dist_m = distance_m;
+    const auto local_point = damage_world_point_to_local_body(
+        target_transform,
+        missile_transform.x,
+        missile_transform.y,
+        missile_transform.z);
+    missile.proximity_min_local_forward_m = local_point[0];
+    missile.proximity_min_local_right_m = local_point[1];
+    missile.proximity_min_local_up_m = local_point[2];
+}
+
+inline std::array<double, 3> damage_effective_detonation_world_point(
+    const Missile& missile,
+    const Transform& target_transform,
+    const Transform& fallback_missile_transform,
+    bool contact_fuze,
+    bool timed_fuze
+) {
+    if (!contact_fuze && !timed_fuze && damage_has_proximity_min_local_point(missile)) {
+        return damage_local_body_point_to_world(
+            target_transform,
+            missile.proximity_min_local_forward_m,
+            missile.proximity_min_local_right_m,
+            missile.proximity_min_local_up_m);
+    }
+
+    if (std::isfinite(missile.fuze_detonation_x) &&
+        std::isfinite(missile.fuze_detonation_y) &&
+        std::isfinite(missile.fuze_detonation_z)) {
+        return {
+            missile.fuze_detonation_x,
+            missile.fuze_detonation_y,
+            missile.fuze_detonation_z,
+        };
+    }
+
+    return {
+        fallback_missile_transform.x,
+        fallback_missile_transform.y,
+        fallback_missile_transform.z,
     };
 }
 
@@ -931,9 +1009,15 @@ inline void register_damage_system(flecs::world& ecs) {
                             : m[i].fuse_distance;
                         const double fuze_reliability =
                             std::clamp(m[i].fuze_profile.reliability, 0.0, 1.0);
-                        p[i].x = std::isfinite(m[i].fuze_detonation_x) ? m[i].fuze_detonation_x : p[i].x;
-                        p[i].y = std::isfinite(m[i].fuze_detonation_y) ? m[i].fuze_detonation_y : p[i].y;
-                        p[i].z = std::isfinite(m[i].fuze_detonation_z) ? m[i].fuze_detonation_z : p[i].z;
+                        const auto detonation_world = damage_effective_detonation_world_point(
+                            m[i],
+                            *t_pos,
+                            p[i],
+                            contact_fuze,
+                            timed_fuze);
+                        p[i].x = detonation_world[0];
+                        p[i].y = detonation_world[1];
+                        p[i].z = detonation_world[2];
                         p[i].heading = std::isfinite(m[i].fuze_detonation_heading_deg)
                             ? m[i].fuze_detonation_heading_deg
                             : p[i].heading;
@@ -1040,7 +1124,11 @@ inline void register_damage_system(flecs::world& ecs) {
                         const double elapsed_s = current_time - m[i].launch_time;
                         if (elapsed_s < fuze_delay_s) {
                             if (dist < m[i].proximity_min_dist_m) {
-                                m[i].proximity_min_dist_m = dist;
+                                damage_record_proximity_min_point(
+                                    m[i],
+                                    *t_pos,
+                                    p[i],
+                                    dist);
                             }
                             if (std::isfinite(m[i].proximity_last_dist_m) &&
                                 dist < m[i].proximity_last_dist_m - 1.0e-3) {
@@ -1102,12 +1190,20 @@ inline void register_damage_system(flecs::world& ecs) {
 
                     if (!std::isfinite(m[i].proximity_last_dist_m)) {
                         m[i].proximity_last_dist_m = dist;
-                        m[i].proximity_min_dist_m = dist;
+                        damage_record_proximity_min_point(
+                            m[i],
+                            *t_pos,
+                            p[i],
+                            dist);
                         continue;
                     }
 
                     if (dist < m[i].proximity_min_dist_m) {
-                        m[i].proximity_min_dist_m = dist;
+                        damage_record_proximity_min_point(
+                            m[i],
+                            *t_pos,
+                            p[i],
+                            dist);
                     }
 
                     const double epsilon = 1e-3;
@@ -1202,9 +1298,15 @@ inline void register_damage_system(flecs::world& ecs) {
                     m[i].fuze_delay_armed = true;
                     m[i].fuze_nearest_approach_time_s = current_time;
                     m[i].fuze_detonation_time_s = current_time + fuze_delay_s;
-                    m[i].fuze_detonation_x = p[i].x;
-                    m[i].fuze_detonation_y = p[i].y;
-                    m[i].fuze_detonation_z = p[i].z;
+                    const auto detonation_world = damage_effective_detonation_world_point(
+                        m[i],
+                        *t_pos,
+                        p[i],
+                        contact_fuze,
+                        timed_fuze);
+                    m[i].fuze_detonation_x = detonation_world[0];
+                    m[i].fuze_detonation_y = detonation_world[1];
+                    m[i].fuze_detonation_z = detonation_world[2];
                     m[i].fuze_detonation_heading_deg = p[i].heading;
                     m[i].fuze_detonation_pitch_deg = p[i].pitch;
                     m[i].fuze_detonation_roll_deg = p[i].roll;

@@ -1049,6 +1049,9 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              out["nav_gain"] = missile->nav_gain;
              out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
              out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
+             out["proximity_min_local_forward_m"] = missile->proximity_min_local_forward_m;
+             out["proximity_min_local_right_m"] = missile->proximity_min_local_right_m;
+             out["proximity_min_local_up_m"] = missile->proximity_min_local_up_m;
              out["proximity_engaged"] = missile->proximity_engaged;
              out["fuze_delay_armed"] = missile->fuze_delay_armed;
              out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
