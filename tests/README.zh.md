@@ -12,6 +12,8 @@
 
 - `runtime/`
   - 按能力域与共享 surface 分组的运行时契约测试，位于 `air_combat/`、`bindings/`、`core/`、`engagement/`、`execution/`、`facade/`、`ground/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
+- `architecture/`
+  - 源码/文档护栏和治理检查，与运行时行为测试有意分离。
 - `eval/`
   - 维护的 CLI 级别评估回归测试。
 - `training/`
@@ -100,6 +102,13 @@ cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_waypoint_modes.json
 ```
 
+运行维护的契约 smoke 套件：
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contract_suite.json
+```
+
 运行批量运行程序：
 
 ```bash
@@ -138,8 +147,8 @@ Suite tier 含义：
   - 稳定后可考虑进入定时自动化的长耗时或宽覆盖回归候选。
 
 `tests/suites/test_system_matrix.json` 和 `tests/suites/focused_runtime_suite.json`
-只是首批治理 manifest。当前 CI 仍只通过 `tools/runners/run_pytest_suite.py`
-运行 `tests/smoke/ci_smoke_suite.json`。
+只是首批治理 manifest。当前 CI 会运行维护态 pytest smoke 套件、C++ CTest smoke 目标，
+以及维护态 JSON 契约 smoke 套件。
 
 如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。
 

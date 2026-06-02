@@ -24,6 +24,10 @@ The `SimulationKernel` public API stays in `simulation_kernel.h`. The implementa
   ECS component registration and system registration order.
 - `simulation_kernel_command_api.cpp`
   Legacy movement/action commands, command links, digital pilot/tasking setters/getters, and message commands.
+- `simulation_kernel_command_surface.*`
+  Narrow non-owning command/read surfaces used by batch/facade-facing code so new
+  call sites do not need to depend directly on the full `SimulationKernel`
+  public API.
 - `simulation_kernel_observation_api.cpp`
   Unit/agent observation, detections, health/fuel/messages, and observation diagnostics.
 - `simulation_kernel_visual_api.cpp`
@@ -35,7 +39,9 @@ The `SimulationKernel` public API stays in `simulation_kernel.h`. The implementa
 - `simulation_kernel.cpp`
   Constructor/destructor, model injection, reset/step, unit spawning, and database/environment configuration.
 
-`SimulationKernel` can keep its public API unchanged; the split is mainly about reducing responsibility density inside each implementation file.
+`SimulationKernel` keeps its broad public API for compatibility with Python
+bindings and existing tests. New C++ call sites should prefer the narrow command
+surface when they only need command/tasking writes or command/tasking reads.
 
 ## Dependency Direction
 

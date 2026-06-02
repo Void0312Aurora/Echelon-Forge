@@ -3,6 +3,7 @@
 #include "components/systems/data_link.h"
 #include "components/systems/sensor.h"
 #include "components/visual/visual_sensor.h"
+#include "core/engine/simulation_kernel_command_surface.h"
 #include "core/engine/world_batch_setup_helper.h"
 #include "core/engine/world_batch_visual_binding_compatibility_helper.h"
 #include "gpu/gpu_interaction_broadphase_runtime.h"
@@ -717,9 +718,10 @@ void WorldBatchRuntime::set_pilot_actions_batch(const std::vector<WorldPilotActi
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_pilot_action(item.entity_id, item.action);
+            commands.set_pilot_action(item.entity_id, item.action);
         }
     });
 }
@@ -801,9 +803,10 @@ void WorldBatchRuntime::set_mission_commands_batch(const std::vector<WorldMissio
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_mission_command(item.entity_id, item.command);
+            commands.set_mission_command(item.entity_id, item.command);
         }
     });
 }
@@ -814,9 +817,10 @@ void WorldBatchRuntime::set_mission_commands_maintained_batch(
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_mission_command(
+            commands.set_mission_command(
                 item.entity_id,
                 mission_command_compatibility_shell_from_maintained_batch_contract(
                     item.mission_command
@@ -832,9 +836,10 @@ void WorldBatchRuntime::set_task_orders_maintained_batch(
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_task_order(
+            commands.set_task_order(
                 item.entity_id,
                 task_order_compatibility_shell_from_maintained_batch_contract(
                     item.task_order
@@ -848,9 +853,10 @@ void WorldBatchRuntime::set_leader_intents_batch(const std::vector<WorldLeaderIn
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_leader_intent(item.entity_id, item.intent);
+            commands.set_leader_intent(item.entity_id, item.intent);
         }
     });
 }
@@ -861,9 +867,10 @@ void WorldBatchRuntime::set_leader_intents_maintained_batch(
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_leader_intent(
+            commands.set_leader_intent(
                 item.entity_id,
                 leader_intent_compatibility_shell_from_maintained_batch_contract(
                     item.leader_intent
@@ -877,9 +884,10 @@ void WorldBatchRuntime::set_pilot_reports_batch(const std::vector<WorldPilotRepo
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_pilot_report(item.entity_id, item.report);
+            commands.set_pilot_report(item.entity_id, item.report);
         }
     });
 }
@@ -890,9 +898,10 @@ void WorldBatchRuntime::set_pilot_reports_maintained_batch(
     const auto grouped = group_item_indices_by_world(worlds_.size(), assignments);
     parallel_for_index(worlds_.size(), worker_threads_, [&](size_t world_index) {
         auto& world = checked_world(world_index);
+        SimulationKernelCommandSurface commands(world);
         for (const size_t item_index : grouped[world_index]) {
             const auto& item = assignments[item_index];
-            world.set_pilot_report(
+            commands.set_pilot_report(
                 item.entity_id,
                 pilot_report_compatibility_shell_from_maintained_batch_contract(
                     item.pilot_report
@@ -935,7 +944,10 @@ std::vector<MissionCommand> WorldBatchRuntime::get_mission_commands_batch(const 
     std::vector<MissionCommand> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
-        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_mission_command(ref.entity_id);
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
+        out[i] = commands.get_mission_command(ref.entity_id);
     });
     return out;
 }
@@ -947,8 +959,11 @@ WorldBatchRuntime::get_mission_commands_maintained_batch(
     std::vector<MissionCommandMaintainedBatchContract> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
         out[i] = mission_command_maintained_batch_contract(
-            checked_world(static_cast<size_t>(ref.world_index)).get_mission_command(ref.entity_id)
+            commands.get_mission_command(ref.entity_id)
         );
     });
     return out;
@@ -961,8 +976,11 @@ WorldBatchRuntime::get_task_orders_maintained_batch(
     std::vector<TaskOrderMaintainedBatchContract> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
         out[i] = task_order_maintained_batch_contract(
-            checked_world(static_cast<size_t>(ref.world_index)).get_task_order(ref.entity_id)
+            commands.get_task_order(ref.entity_id)
         );
     });
     return out;
@@ -972,7 +990,10 @@ std::vector<LeaderIntent> WorldBatchRuntime::get_leader_intents_batch(const std:
     std::vector<LeaderIntent> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
-        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_leader_intent(ref.entity_id);
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
+        out[i] = commands.get_leader_intent(ref.entity_id);
     });
     return out;
 }
@@ -984,8 +1005,11 @@ WorldBatchRuntime::get_leader_intents_maintained_batch(
     std::vector<LeaderIntentMaintainedBatchContract> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
         out[i] = leader_intent_maintained_batch_contract(
-            checked_world(static_cast<size_t>(ref.world_index)).get_leader_intent(ref.entity_id)
+            commands.get_leader_intent(ref.entity_id)
         );
     });
     return out;
@@ -995,7 +1019,10 @@ std::vector<PilotReport> WorldBatchRuntime::get_pilot_reports_batch(const std::v
     std::vector<PilotReport> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
-        out[i] = checked_world(static_cast<size_t>(ref.world_index)).get_pilot_report(ref.entity_id);
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
+        out[i] = commands.get_pilot_report(ref.entity_id);
     });
     return out;
 }
@@ -1007,8 +1034,11 @@ WorldBatchRuntime::get_pilot_reports_maintained_batch(
     std::vector<PilotReportMaintainedBatchContract> out(refs.size());
     parallel_for_index(refs.size(), worker_threads_, [&](size_t i) {
         const auto& ref = refs[i];
+        const SimulationKernelCommandReadSurface commands(
+            checked_world(static_cast<size_t>(ref.world_index))
+        );
         out[i] = pilot_report_maintained_batch_contract(
-            checked_world(static_cast<size_t>(ref.world_index)).get_pilot_report(ref.entity_id)
+            commands.get_pilot_report(ref.entity_id)
         );
     });
     return out;

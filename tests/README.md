@@ -15,6 +15,9 @@
     under `air_combat/`, `bindings/`, `core/`, `engagement/`, `execution/`,
     `facade/`, `ground/`, `link/`, `mission/`, `multi_agent/`, `naval/`, and
     `navigation/`.
+- `architecture/`
+  - Source/documentation guardrails and governance checks that intentionally
+    stay separate from runtime behavior tests.
 - `eval/`
   - Maintained CLI-level evaluation regression tests.
 - `training/`
@@ -105,6 +108,13 @@ cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_waypoint_modes.json
 ```
 
+Run the maintained contract smoke suite:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contract_suite.json
+```
+
 Run a batch runner:
 
 ```bash
@@ -143,8 +153,8 @@ Suite tiers:
   - Candidate long-running or broad regression coverage for scheduled automation after stabilization.
 
 `tests/suites/test_system_matrix.json` and `tests/suites/focused_runtime_suite.json`
-are first-pass governance manifests only. Current CI still runs only
-`tests/smoke/ci_smoke_suite.json` through `tools/runners/run_pytest_suite.py`.
+are first-pass governance manifests only. Current CI runs the maintained pytest
+smoke suite, C++ CTest smoke target, and the maintained JSON contract smoke suite.
 
 If a smoke path is moved during a refactor, update the checked-in suite manifest
 first. CI and top-level documentation should reference the suite runner instead

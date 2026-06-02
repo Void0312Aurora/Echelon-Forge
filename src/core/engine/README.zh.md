@@ -24,6 +24,8 @@
   ECS component registration 和系统注册顺序。
 - `simulation_kernel_command_api.cpp`
   legacy movement/action command、command link、digital pilot/tasking setters/getters、message command。
+- `simulation_kernel_command_surface.*`
+  非 owning 的窄命令/读取 surface，供 batch/facade-facing 代码使用，避免新的调用点直接依赖完整 `SimulationKernel` public API。
 - `simulation_kernel_observation_api.cpp`
   unit/agent observation、detections、health/fuel/messages 和 observation diagnostics。
 - `simulation_kernel_visual_api.cpp`
@@ -35,7 +37,7 @@
 - `simulation_kernel.cpp`
   constructor/destructor、model injection、reset/step、unit spawn、database/environment configuration。
 
-`SimulationKernel` 的 public API 可以保持不变；拆分重点是降低实现文件的职责密度。
+`SimulationKernel` 为了兼容 Python 绑定和现有测试仍保留较宽 public API。新的 C++ 调用点如果只需要 command/tasking 写入或读取，应优先使用窄命令 surface。
 
 ## 依赖方向
 

@@ -24,5 +24,7 @@
 - `nightly`
   - Candidate long-running or broad regression coverage for scheduled automation after stabilization.
 
-CI still runs only `tests/smoke/ci_smoke_suite.json` through `tools/runners/run_pytest_suite.py`.
-The suite and matrix files here are governance metadata until a separate CI change explicitly promotes them.
+CI now runs the maintained pytest smoke suite in `tests/smoke/ci_smoke_suite.json`,
+the C++ CTest smoke target, and the maintained JSON contract smoke suite in
+`tests/smoke/ci_contract_suite.json`. The suite and matrix files here remain
+governance metadata until a separate CI change explicitly promotes them.

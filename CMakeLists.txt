@@ -55,6 +55,7 @@ set(EF_CORE_ENGINE_SOURCES
     src/core/engine/simulation_kernel_engagement_event_store.cpp
     src/core/engine/simulation_kernel_services.cpp
     src/core/engine/simulation_kernel_weapon_release_service.cpp
+    src/core/engine/simulation_kernel_command_surface.cpp
     src/core/engine/simulation_kernel_systems.cpp
     src/core/engine/simulation_kernel_command_api.cpp
     src/core/engine/simulation_kernel_observation_api.cpp

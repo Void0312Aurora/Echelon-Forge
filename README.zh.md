@@ -105,10 +105,12 @@ Windows/PowerShell 示例：
 
 ```bash
 cmake -S . -B build-workshop -DCMAKE_BUILD_TYPE=Release
-cmake --build build-workshop --target ef_core ef_py -j4
+cmake --build build-workshop --target ef_core ef_py ef_test -j4
+ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
 cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contract_suite.json
 ```
 
 在 Windows 上，使用 PowerShell 辅助脚本和 Windows 构建目录：
@@ -118,9 +120,11 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install pytest numpy
 cmake -S . -B build-local-win -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build-local-win --target ef_core ef_py -j2
+cmake --build build-local-win --target ef_core ef_py ef_test -j2
+ctest --test-dir build-local-win -R ef_test_all --output-on-failure
 .\tools\maintenance\cmo_env.ps1 validate
 .\tools\maintenance\cmo_env.ps1 python tools\runners\run_pytest_suite.py --suite tests\smoke\ci_smoke_suite.json
+.\tools\maintenance\cmo_env.ps1 python tools\runners\run_scenario_contract.py --suite tests\smoke\ci_contract_suite.json
 ```
 
 上述 Windows 路径仅限于当前本地开发工作流：烟雾测试和重点回归。它并不声称 Windows 不能运行 RL 训练；当本地依赖、运行时产物和运行输出策略就绪后，应有意启用训练工作流。

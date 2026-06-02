@@ -2,6 +2,8 @@
 
 Audit date: `2026-05-18`, corrected `2026-05-18` after re-verification.
 Commit `ce101c8` ("docs: correct verified documentation drift") resolved several issues.
+Follow-up closeout on `2026-06-02` closed the remaining P1 forward/manual
+items identified below.
 
 Legend:
 - **[FIXED]** = resolved by commit ce101c8
@@ -41,24 +43,30 @@ Legend:
 
 ## P1 — Significant
 
-### c2_communication.md — wrong file paths + missing feature — [OPEN]
+### c2_communication.md — wrong file paths + missing feature — [FIXED 2026-06-02]
 - **Source**: [forward_vs_code.md](forward_vs_code.md)
-- `src/components/action.h` → actual: `src/components/command/legacy_command.h` + `src/components/command/command_link.h`
-- `src/systems/command_link_system.h` → actual: `src/systems/core/operation_system.h`
-- `src/core/simulation_kernel.cpp` → actual: `src/core/engine/simulation_kernel.cpp`
-- `PendingCommand` claimed as implemented → does not exist (only `CommandLag`/`LaggedCommand`)
+- **Was**: paths were stale and the document claimed a generic `PendingCommand`.
+- **Follow-up fix**: current text points to `src/components/command/command_link.h`,
+  `src/components/command/legacy_command.h`,
+  `src/systems/systems/command_link_system.h`, and
+  `src/core/engine/simulation_kernel_command_api.cpp`. It now names the
+  concrete `PendingMovementCommand`, `PendingActionCommand`, and
+  `PendingMissionCommand` transport shells and explicitly states that no
+  generic `PendingCommand` type exists.
 
 ### engagement_termination.md — claimed features don't exist — [FIXED]
 - **Source**: [forward_vs_code.md](forward_vs_code.md)
 - **Was**: `disengage_range_m`, `min_specific_energy_j_kg`, `ammo_depletion_ends` claimed as "Already Implemented".
 - **Fix**: Rewrote section as "Recommended Engagement-Level Termination Extensions" — these are now correctly described as planning targets. Paths corrected to `src/core/mission/runtime/termination_runtime.*` and `gym_envs/scenario_loader/` package.
 
-### rl_selfplay.md — claimed implementation doesn't exist — [OPEN]
+### rl_selfplay.md — claimed implementation doesn't exist — [FIXED 2026-06-02]
 - **Source**: [forward_vs_code.md](forward_vs_code.md)
-- `examples/training/train_self_play.py` → directory and file don't exist
-- `examples/training/selfplay_config.json` → not found anywhere
-- No `train_self_play` or `selfplay_config` references in any source file
-- The "Current Implementation Notes" section needs to either be rewritten to match actual code, or the implementation needs to be found (if it exists under a different path).
+- **Was**: claimed `examples/training/train_self_play.py` and
+  `examples/training/selfplay_config.json` existed.
+- **Follow-up fix**: current text describes the file as a forward-looking
+  roadmap, explicitly says those two files do not exist in the current
+  repository, and redirects maintained training entry points to `train.py`,
+  `python/training/`, and `examples/config/training/`.
 
 ### weapons_engagement_impl.md — all code paths wrong — [FIXED]
 - **Source**: [forward_vs_code.md](forward_vs_code.md)
@@ -75,12 +83,16 @@ Legend:
 - **Was**: `MovementSystem` claimed as active position integration.
 - **Fix**: `LeapfrogIntegrationSystem` added as active mainline; `MovementSystem` noted as "simpler legacy... currently disabled in the active kernel path."
 
-### landing_task_notes.md / takeoff_to_cruise_mixedmode_notes.md — wrong repo root — [OPEN]
+### landing_task_notes.md / takeoff_to_cruise_mixedmode_notes.md — wrong repo root — [FIXED / DOWNGRADED 2026-06-02]
 - **Source**: [manual_vs_code.md](manual_vs_code.md)
-- All absolute paths use `/home/void0312/CMO/` → actual repo: `/home/void0312/Workshop/CMO/`
-- `gym_envs/scenario_loader.py` → is a directory, not a `.py` file
-- `experiments_tmp/` → doesn't exist at either path
-- 4 regression test files claimed → none exist in `tests/`
+- **Was**: absolute paths used the wrong repository root
+  (`/home/void0312/CMO/`) and several paths were stale.
+- **Follow-up fix**: current maintained notes use repository-relative paths and
+  point route-generation code to the package files under
+  `gym_envs/scenario_loader/`. The remaining `experiments_tmp/...` references
+  are explicitly labeled historical/local retained artifacts rather than
+  current authority; treat them as non-P1 provenance notes unless promoted by a
+  newer task or reference-artifact page.
 
 ### forward/README.md — references nonexistent file — [FIXED]
 - **Source**: [forward_vs_code.md](forward_vs_code.md)
@@ -163,9 +175,9 @@ Legend:
 |----------|-------|---------------------|
 | P0 [FIXED] | 2 | `stick_pitch`, `visualization_guide.py` |
 | P0 [DRAFT] | 2 | Architecture interfaces, GPU backends — never claimed as implemented |
-| P1 [FIXED] | 6 | `engagement_termination`, `weapons_engagement_impl`, `physics_engine_inventory`, `engine_capabilities`, `forward/README` |
+| P1 [FIXED] | 9 | `engagement_termination`, `weapons_engagement_impl`, `physics_engine_inventory`, `engine_capabilities`, `forward/README`, `c2_communication`, `rl_selfplay`, landing/takeoff task notes |
 | P1 [INVALID] | 1 | `scenario_guide.md` — schema is actually correct |
-| P1 [OPEN] | 3 | `c2_communication.md`, `rl_selfplay.md`, landing/takeoff task notes |
+| P1 [OPEN] | 0 | Remaining 2026-05-18 P1 forward/manual items closed by 2026-06-02 follow-up |
 | P1→P2 reclassified | 2 | `air/obs.md` (standard vs impl gap), line counts (expected post-refactor) |
 | P1→DRAFT reclassified | 2 | CMake target split, facade contract DTOs |
 | P2 [FIXED] | 3 | `air/act.md` naming, `forces.h` label, engagement_termination paths |
@@ -173,9 +185,6 @@ Legend:
 
 ### Remaining Actionable OPEN Items by Priority
 
-**P1 (3 items to fix):**
-1. `c2_communication.md` — correct 3 file paths; remove/rewrite `PendingCommand` claim
-2. `rl_selfplay.md` — remove or rewrite "Current Implementation Notes" section referencing nonexistent files
-3. `landing_task_notes.md` + `takeoff_to_cruise_mixedmode_notes.md` — fix repo root paths
+**P1:** none remaining after the 2026-06-02 follow-up closeout.
 
 **P2 (~33 items)** — Minor omissions, stale labels, editorial improvements across all domains.

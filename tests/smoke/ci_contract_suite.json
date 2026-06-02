@@ -1,0 +1,15 @@
+{
+  "name": "ci_contract_smoke",
+  "specs": [
+    "tests/contracts/chain/loader_command_chain_takeoff_to_landing.json",
+    "tests/contracts/route_generator/route_generator_v1.json",
+    "tests/contracts/route_generator/route_generator_waypoint_modes.json",
+    "tests/contracts/route_generator/route_generator_rotates_with_world_heading.json",
+    "tests/contracts/route_generator/route_generator_leg_ranges.json",
+    "tests/contracts/unit/comm/task_order_common_core_defaults.json",
+    "tests/contracts/unit/comm/scenario_loader_common_core_semantics.json",
+    "tests/contracts/unit/comm/scenario_loader_mission_semantics.json",
+    "tests/contracts/unit/config/env_config_resolution.json",
+    "tests/contracts/unit/world_model/replay_expert_actions.json"
+  ]
+}

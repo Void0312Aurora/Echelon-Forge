@@ -6,6 +6,9 @@
 // early — they do not attempt to validate physics or combat semantics.
 
 #include "core/engine/simulation_kernel.h"
+#include "core/engine/simulation_kernel_command_surface.h"
+#include "components/command/command_link.h"
+#include "components/command/command_link_qos.h"
 
 #include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
@@ -352,6 +355,100 @@ TEST_CASE("get_unit_fuel_is_finite") {
     auto fuel = kernel.get_unit_fuel(e.id());
     REQUIRE(fuel.size() == 4);
     CHECK(all_finite(fuel));
+}
+
+TEST_CASE("missing_unit_definition_file_fails_closed") {
+    SimulationKernel kernel;
+    kernel.reset(42);
+
+    std::string error;
+    CHECK_FALSE(kernel.load_unit_definitions(
+        "__ef_test_missing_unit_definitions__.json",
+        &error
+    ));
+    CHECK_FALSE(error.empty());
+}
+
+TEST_CASE("set_command_link_clamps_values_and_adds_pending_transports") {
+    SimulationKernel kernel;
+    kernel.reset(42);
+
+    auto e = kernel.spawn_unit(Side::Blue, "Aircraft",
+                               0.0, 0.0, 5000.0,
+                               0.0, 0.0, 0.0,
+                               150.0, 0.0, 0.0);
+    REQUIRE(e.is_valid());
+
+    kernel.set_command_link(e.id(), -5.0, 2.0);
+
+    auto entity = kernel.get_world().entity(e.id());
+    const CommandLink* link = entity.get<CommandLink>();
+    REQUIRE(link != nullptr);
+    CHECK(link->latency_s == doctest::Approx(0.0));
+    CHECK(link->drop_prob == doctest::Approx(1.0));
+    CHECK(entity.get<PendingMovementCommand>() != nullptr);
+    CHECK(entity.get<PendingActionCommand>() != nullptr);
+    CHECK(entity.get<PendingMissionCommand>() != nullptr);
+    CHECK(entity.get<MissionCommandPendingQueue>() != nullptr);
+}
+
+TEST_CASE("command_surface_sets_and_reads_maintained_tasking_components") {
+    SimulationKernel kernel;
+    kernel.reset(42);
+
+    auto e = kernel.spawn_unit(Side::Blue, "Aircraft",
+                               0.0, 0.0, 5000.0,
+                               0.0, 0.0, 0.0,
+                               150.0, 0.0, 0.0);
+    REQUIRE(e.is_valid());
+
+    SimulationKernelCommandSurface commands(kernel);
+    commands.set_command_link(e.id(), 0.0, 0.0);
+
+    MissionCommand mission{};
+    mission.command_code = 4;
+    mission.cmd_heading_deg = 90.0;
+    mission.cmd_altitude_m = 1500.0;
+    mission.cmd_speed_mps = 180.0;
+    commands.set_mission_command(e.id(), mission);
+
+    TaskOrder order{};
+    order.task_id = 77;
+    order.element_id = 12;
+    commands.set_task_order(e.id(), order);
+
+    LeaderIntent intent{};
+    intent.command_code = 9;
+    intent.formation_id = 3;
+    commands.set_leader_intent(e.id(), intent);
+
+    PilotReport report{};
+    report.sender_id = e.id();
+    report.status_value = 2.0;
+    commands.set_pilot_report(e.id(), report);
+
+    const SimulationKernelCommandReadSurface reader(kernel);
+    const MissionCommand got_mission = reader.get_mission_command(e.id());
+    CHECK(got_mission.active);
+    CHECK(got_mission.command_code == 4);
+    CHECK(got_mission.cmd_heading_deg == doctest::Approx(90.0));
+    CHECK(got_mission.cmd_altitude_m == doctest::Approx(1500.0));
+    CHECK(got_mission.cmd_speed_mps == doctest::Approx(180.0));
+
+    const TaskOrder got_order = reader.get_task_order(e.id());
+    CHECK(got_order.active);
+    CHECK(got_order.task_id == 77);
+    CHECK(got_order.element_id == 12);
+
+    const LeaderIntent got_intent = reader.get_leader_intent(e.id());
+    CHECK(got_intent.active);
+    CHECK(got_intent.command_code == 9);
+    CHECK(got_intent.formation_id == 3);
+
+    const PilotReport got_report = reader.get_pilot_report(e.id());
+    CHECK(got_report.active);
+    CHECK(got_report.sender_id == e.id());
+    CHECK(got_report.status_value == doctest::Approx(2.0));
 }
 
 TEST_CASE("is_unit_active_returns_false_for_unknown_id") {

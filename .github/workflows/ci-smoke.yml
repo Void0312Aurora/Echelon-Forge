@@ -37,9 +37,13 @@ jobs:
         run: |
           cmake -S . -B build-workshop -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build ef_core and ef_py
+      - name: Build ef_core, ef_py, and C++ tests
         run: |
-          cmake --build build-workshop --target ef_core ef_py -j2
+          cmake --build build-workshop --target ef_core ef_py ef_test -j2
+
+      - name: Run C++ smoke tests
+        run: |
+          ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 
       - name: Validate repo environment
         run: |
@@ -49,3 +53,8 @@ jobs:
         run: |
           source tools/maintenance/cmo_env.sh
           cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
+
+      - name: Run JSON contract smoke tests
+        run: |
+          source tools/maintenance/cmo_env.sh
+          cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contract_suite.json
