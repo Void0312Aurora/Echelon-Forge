@@ -3,9 +3,12 @@ from __future__ import annotations
 import os
 import random
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 _TORCH: Any | None = None
 _TORCH_IMPORT_ERROR: Exception | None = None
