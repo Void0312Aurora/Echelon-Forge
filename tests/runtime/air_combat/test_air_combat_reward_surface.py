@@ -162,6 +162,56 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
         self.assertAlmostEqual(terms["air_combat_roe_hold_fire_violation_penalty"], -2.5, places=6)
         self.assertNotIn("air_combat_roe_authorized_fire_attempt_bonus", terms)
 
+    def test_c2_roe_event_action_config_can_disable_legality_penalty_terms(self) -> None:
+        loader = _loader(
+            {
+                "air_combat_release_shaping_enabled": True,
+                "air_combat_invalid_fire_penalty": 0.0,
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_hold_fire_bonus": 0.0,
+                "air_combat_roe_hold_fire_violation_penalty": 0.0,
+                "air_combat_roe_unauthorized_fire_penalty": 0.0,
+                "air_combat_roe_pending_assessment_penalty": 0.0,
+                "air_combat_roe_premature_second_shot_penalty": 0.0,
+                "air_combat_roe_shot_budget_violation_penalty": 0.0,
+            }
+        )
+        loader.mission_cmd.update(
+            {
+                "wcs_state": 1,
+                "engage_order_state": 3,
+                "shot_policy_state": 0,
+                "shot_budget_remaining": 0,
+                "pending_assessment": False,
+                "authorization_to_fire": False,
+            }
+        )
+        loader._last_effective_action[9] = 1.0
+        truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+        reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(reward, 0.0, places=6)
+        for legality_key in (
+            "air_combat_invalid_fire_penalty",
+            "air_combat_roe_hold_fire_bonus",
+            "air_combat_roe_hold_fire_violation_penalty",
+            "air_combat_roe_unauthorized_fire_penalty",
+            "air_combat_roe_pending_assessment_penalty",
+            "air_combat_roe_premature_second_shot_penalty",
+            "air_combat_roe_shot_budget_violation_penalty",
+        ):
+            self.assertNotIn(legality_key, terms)
+
     def test_c2_roe_authorized_weapon_chain_shaping_rewards_pre_release_actions(self) -> None:
         loader = _loader(
             {
