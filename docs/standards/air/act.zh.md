@@ -81,6 +81,62 @@ numeric transport vector，但 policy 合同是 hybrid：部分维度按 Bernoul
 transport action，而不是 raw policy intent。因此对于 pulse 维度，policy command
 持续为高时只有上升沿步骤显示为 `1`，后续 held 步骤显示为 `0`。
 
+## A5 受约束事件动作 Overlay
+
+状态：`2026-06-03`，A5 S1 C2/ROE event-action 工作的 planning / implementation
+contract。本节冻结实现字段名；它还不表示 runtime 或 learned-policy 行为已经 accepted。
+
+对于 accepted A5 S1 C2/ROE training/eval entries，`fire_weapon` 不得继续被视为
+policy-facing 的逐帧 raw threshold。武器释放建模为事件动作：
+
+```text
+event_action in {hold, fire_once}
+event_action_mask = [1, fire_mask]
+```
+
+为了兼容 PPO/runtime，event-action overlay 仍可以通过 flat action vector transport；
+但 policy log-prob、entropy、stochastic sampling 和 deterministic evaluation 必须使用
+masked event semantics。
+
+policy-visible event state：
+
+| `engagement_state` | Meaning | Event support |
+| :--- | :--- | :--- |
+| `Hold` | C2/ROE、target、weapon 或 mission state 不允许 release。 | 仅 `hold` |
+| `AuthorizedReady` | 首发 release 已授权且可用。 | `hold`、`fire_once` |
+| `FiredAssess` | release 已接受，assessment pending。 | 仅 `hold` |
+| `ReattackReady` | assessment 后显式授权 follow-on release。 | `hold`、`fire_once` |
+| `Winchester` | 没有有效武器，或 release path 不可用。 | 仅 `hold` |
+
+最终 `fire_mask` 必须从具名 component 派生，包括 C2/ROE authorization、target presence、
+shot budget、pending assessment、weapon/ammo readiness 和 reattack permission。
+diagnostics 应同时暴露 final mask，以及导致 `fire_once` 不可用的 component 或 rejection
+reason。
+
+A5 implementation 所需 runtime info names：
+
+- `engagement_state`
+- `fire_mask`
+- `fire_once_requested`
+- `fire_once_accepted`
+- `fire_once_rejected_reason`
+- `release_executed`
+- `post_launch_suppressed`
+- `reattack_ready`
+
+最小 transition rule：
+
+```text
+AuthorizedReady + fire_once + fire_mask
+  -> consume one release event
+  -> enter FiredAssess
+  -> suppress fire_once until explicit ReattackReady or a new authorization cycle
+```
+
+该 overlay 与 reward shaping 刻意分离。reward 可以评价 outcome、timing、ammo cost
+和 tracking quality，但不应作为教会 release legality、shot budget 或 post-launch
+suppression 的主要机制。
+
 ## 规范的 `PilotAction` 字段
 
 当前内核侧公开的 `PilotAction` 字段可分为：

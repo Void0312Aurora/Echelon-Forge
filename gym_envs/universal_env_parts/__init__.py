@@ -5,6 +5,13 @@ from .actions import (
     is_air_combat_hybrid_action_mode,
     normalize_action,
 )
+from .air_combat_event_action import (
+    add_air_combat_event_action_info,
+    air_combat_event_action_contract_present,
+    apply_air_combat_event_action_gate,
+    finalize_air_combat_event_action_info,
+    reset_air_combat_event_action_state,
+)
 from .info import build_step_info, build_step_info_minimal
 from .naval_actions import (
     NAVAL_STATION3_ACTION_FAMILY,
@@ -44,13 +51,17 @@ from .spaces import (
 __all__ = [
     "AIR_COMBAT_HYBRID_V1_ACTION_DIM",
     "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
+    "add_air_combat_event_action_info",
+    "air_combat_event_action_contract_present",
     "air_combat_hybrid_effective_action",
+    "apply_air_combat_event_action_gate",
     "build_pilot_action",
     "build_step_info",
     "build_step_info_minimal",
     "build_universal_observation",
     "downsample_visual_mean",
     "expected_action_dim",
+    "finalize_air_combat_event_action_info",
     "append_temporal_history",
     "apply_naval_station_action",
     "attach_temporal_history",
@@ -75,6 +86,7 @@ __all__ = [
     "naval_policy_instruments",
     "naval_station_action_command",
     "normalize_action",
+    "reset_air_combat_event_action_state",
     "reset_naval_station_action_state",
     "reset_temporal_history",
     "temporal_history_enabled",

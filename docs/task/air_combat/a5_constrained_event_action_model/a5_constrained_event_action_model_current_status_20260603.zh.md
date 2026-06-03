@@ -1,7 +1,8 @@
 # A5 受约束事件动作模型当前状态
 
-状态：`2026-06-03`，planning checkpoint。本文记录从 reward/routing repair 转向
-constrained event-action modeling 的决策。
+状态：`2026-06-03`，implementation checkpoint。Surface audit、event contract、
+runtime prototype 和 policy event head 已验收；reward/config cleanup、diagnostics/evidence
+和 closure 仍待推进。
 
 ## Decision
 
@@ -41,12 +42,20 @@ Q-head 是优先 follow-on。hazard / first-event 和完整 hierarchical options
 
 ## Immediate Work
 
-1. 审计代码 surface，并冻结精确 event contract。
-2. 广泛 runtime 编辑前，先增加或更新 mask/state transition contract tests。
-3. 实现 runtime suppression 和 event adapter。
-4. 实现 policy event distribution 或窄 event Q-head。
-5. 更新 S1 C2/ROE active entries 和 diagnostics。
-6. 运行 focused tests 和 learned-policy probes。
+1. 更新 S1 C2/ROE active entries 和 diagnostics。
+2. 运行 focused diagnostics 与 learned-policy probes。
+3. 基于 residual map 判定 accepted 或 held。
+
+## Accepted Planning Evidence
+
+- Surface audit：
+  [a5_constrained_event_action_model_surface_audit_20260603.zh.md](a5_constrained_event_action_model_surface_audit_20260603.zh.md)
+- Event action contract：
+  [a5_constrained_event_action_model_event_contract_20260603.zh.md](a5_constrained_event_action_model_event_contract_20260603.zh.md)
+- Air action contract overlay：
+  [../../../standards/air/act.zh.md](../../../standards/air/act.zh.md)
+- Implementation evidence：
+  [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
 
 ## Open Risks
 

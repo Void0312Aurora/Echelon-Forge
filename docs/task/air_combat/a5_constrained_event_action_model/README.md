@@ -83,10 +83,10 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Convert the A4 held diagnosis and temp research notes into durable task scope. | A4 deterministic fire remains 0 and reward/routing trials are held. | README, current status, acceptance, dispatch queue, archive boundary, and task clusters exist. | pass |
-| `P1 Contract Audit` | Map the current action, observation, reward, policy, diagnostic, and config surfaces. | P0 complete. | A precise implementation write set and risk map exist. | planned |
-| `P2 Event Contract` | Define `engagement_state`, `fire_mask`, event actions, state transitions, and deterministic evaluation semantics. | P1 facts available. | Contract docs and tests describe event support independently of reward. | planned |
-| `P3 Runtime Integration` | Implement the constrained state machine and event action adapter for S1 C2/ROE. | P2 contract accepted. | Runtime rejects structural multi-fire and exposes post-launch state. | planned |
-| `P4 Policy Integration` | Add event action distribution or event Q-head with correct PPO log-prob/eval semantics. | P2/P3 stable. | Policy tests prove mask, log-prob, entropy/stats, and deterministic event behavior. | planned |
+| `P1 Contract Audit` | Map the current action, observation, reward, policy, diagnostic, and config surfaces. | P0 complete. | A precise implementation write set and risk map exist. | pass |
+| `P2 Event Contract` | Define `engagement_state`, `fire_mask`, event actions, state transitions, and deterministic evaluation semantics. | P1 facts available. | Contract docs freeze event support independently of reward; focused implementation tests remain in P3/P4. | pass |
+| `P3 Runtime Integration` | Implement the constrained state machine and event action adapter for S1 C2/ROE. | P2 contract accepted. | Runtime rejects structural multi-fire and exposes post-launch state. | pass |
+| `P4 Policy Integration` | Add event action distribution or event Q-head with correct PPO log-prob/eval semantics. | P2/P3 stable. | Policy tests prove mask, log-prob, entropy/stats, and deterministic event behavior. | pass |
 | `P5 Scenario And Reward Cleanup` | Move S1 C2/ROE active entries to event-action semantics and simplify reward responsibilities. | P3/P4 available. | Config tests and reward tests show constraints are not being learned via penalties. | planned |
 | `P6 Validation` | Run focused tests plus learned-policy probes. | Implementation paths pass unit tests. | Deterministic policy either executes one authorized first shot or residual is evidence-backed. | planned |
 | `P7 Closure` | Sync A3/A4/M1/M2 and parent indexes. | P6 evidence complete. | A5 is accepted or held with an explicit residual map. | planned |
@@ -101,16 +101,27 @@ Out of scope:
   [a5_constrained_event_action_model_dispatch_queue_20260603.md](a5_constrained_event_action_model_dispatch_queue_20260603.md)
 - Acceptance gate:
   [a5_constrained_event_action_model_acceptance_20260603.md](a5_constrained_event_action_model_acceptance_20260603.md)
+- Surface audit:
+  [a5_constrained_event_action_model_surface_audit_20260603.md](a5_constrained_event_action_model_surface_audit_20260603.md)
+- Event action contract:
+  [a5_constrained_event_action_model_event_contract_20260603.md](a5_constrained_event_action_model_event_contract_20260603.md)
+- Implementation evidence:
+  [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
 
 ## Outputs And Evidence
 
 Expected outputs:
 
 - Event-action contract for `engagement_state`, `fire_mask`, and
-  `hold/fire_once`.
+  `hold/fire_once`:
+  [a5_constrained_event_action_model_event_contract_20260603.md](a5_constrained_event_action_model_event_contract_20260603.md)
+- Read-only surface audit accepted as A5-EAM-B:
+  [a5_constrained_event_action_model_surface_audit_20260603.md](a5_constrained_event_action_model_surface_audit_20260603.md)
 - Runtime state-machine and action-mask tests.
 - Policy distribution or event Q-head tests covering stochastic sampling and
   deterministic evaluation.
+- Runtime/policy implementation evidence:
+  [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
 - Updated S1 C2/ROE training/eval config entries.
 - Diagnostics proving requested versus executed release and post-launch
   suppression.

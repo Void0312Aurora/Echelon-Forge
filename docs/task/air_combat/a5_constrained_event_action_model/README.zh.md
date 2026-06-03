@@ -76,10 +76,10 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 将 A4 held 诊断和 temp 调研转成持久任务范围。 | A4 deterministic fire 仍为 0，reward/routing trial held。 | README、current status、acceptance、dispatch queue、archive 边界和任务簇存在。 | pass |
-| `P1 Contract Audit` | 映射当前 action、observation、reward、policy、diagnostic 和 config surface。 | P0 完成。 | 精确实现写集和风险图存在。 | planned |
-| `P2 Event Contract` | 定义 `engagement_state`、`fire_mask`、事件动作、状态转移和 deterministic eval 语义。 | P1 事实可用。 | contract 文档和测试把 event support 与 reward 区分开。 | planned |
-| `P3 Runtime Integration` | 为 S1 C2/ROE 实现受约束状态机和 event action adapter。 | P2 contract accepted。 | runtime 从结构上拒绝多发并暴露 post-launch state。 | planned |
-| `P4 Policy Integration` | 增加 event action distribution 或 event Q-head，并保持 PPO log-prob/eval 语义正确。 | P2/P3 稳定。 | policy tests 证明 mask、log-prob、entropy/stats 和 deterministic event behavior。 | planned |
+| `P1 Contract Audit` | 映射当前 action、observation、reward、policy、diagnostic 和 config surface。 | P0 完成。 | 精确实现写集和风险图存在。 | pass |
+| `P2 Event Contract` | 定义 `engagement_state`、`fire_mask`、事件动作、状态转移和 deterministic eval 语义。 | P1 事实可用。 | contract 文档冻结 event support 与 reward 的分离；focused implementation tests 留在 P3/P4。 | pass |
+| `P3 Runtime Integration` | 为 S1 C2/ROE 实现受约束状态机和 event action adapter。 | P2 contract accepted。 | runtime 从结构上拒绝多发并暴露 post-launch state。 | pass |
+| `P4 Policy Integration` | 增加 event action distribution 或 event Q-head，并保持 PPO log-prob/eval 语义正确。 | P2/P3 稳定。 | policy tests 证明 mask、log-prob、entropy/stats 和 deterministic event behavior。 | pass |
 | `P5 Scenario And Reward Cleanup` | 将 S1 C2/ROE active entries 转到 event-action 语义，并简化 reward 职责。 | P3/P4 可用。 | config tests 和 reward tests 证明约束不是靠 penalty 学出来的。 | planned |
 | `P6 Validation` | 运行 focused tests 和 learned-policy probes。 | 实现路径通过 unit tests。 | deterministic policy 形成一次授权首发，或残余有证据归因。 | planned |
 | `P7 Closure` | 同步 A3/A4/M1/M2 和父级索引。 | P6 证据完成。 | A5 accepted 或 held，并带显式 residual map。 | planned |
@@ -94,14 +94,25 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
   [a5_constrained_event_action_model_dispatch_queue_20260603.zh.md](a5_constrained_event_action_model_dispatch_queue_20260603.zh.md)
 - 验收门：
   [a5_constrained_event_action_model_acceptance_20260603.zh.md](a5_constrained_event_action_model_acceptance_20260603.zh.md)
+- Surface audit：
+  [a5_constrained_event_action_model_surface_audit_20260603.zh.md](a5_constrained_event_action_model_surface_audit_20260603.zh.md)
+- Event action contract：
+  [a5_constrained_event_action_model_event_contract_20260603.zh.md](a5_constrained_event_action_model_event_contract_20260603.zh.md)
+- Implementation evidence：
+  [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
 
 ## Outputs And Evidence
 
 预期输出：
 
-- `engagement_state`、`fire_mask` 和 `hold/fire_once` 的 event-action contract。
+- `engagement_state`、`fire_mask` 和 `hold/fire_once` 的 event-action contract：
+  [a5_constrained_event_action_model_event_contract_20260603.zh.md](a5_constrained_event_action_model_event_contract_20260603.zh.md)
+- 已验收的只读 surface audit：
+  [a5_constrained_event_action_model_surface_audit_20260603.zh.md](a5_constrained_event_action_model_surface_audit_20260603.zh.md)
 - runtime state-machine 和 action-mask tests。
 - 覆盖随机采样与 deterministic evaluation 的 policy distribution 或 event Q-head tests。
+- runtime/policy implementation evidence：
+  [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
 - 更新后的 S1 C2/ROE training/eval config entries。
 - 能证明 requested versus executed release 和 post-launch suppression 的 diagnostics。
 - 对比 deterministic / stochastic 行为的 learned-policy evidence。

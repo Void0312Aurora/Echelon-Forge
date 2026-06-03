@@ -19,7 +19,12 @@ from python.models.transformer import (
 )
 from gym_envs.universal_env_parts import make_action_space
 from python.mission_obs_taxonomy import mission_observation_field_index
-from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
+from python.rl.policy_algo.policies import (
+    HierarchicalMoEExecutionPolicy,
+    SquashedMultiInputPolicy,
+    _HybridActionDistribution,
+    _normalize_hybrid_action_layout,
+)
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from train import apply_safe_action_bias
 
@@ -30,6 +35,24 @@ class _ConstantSchedule:
 
 
 class HMoEPolicyTests(unittest.TestCase):
+    def _make_air_combat_hybrid_distribution(
+        self,
+        params: th.Tensor,
+        *,
+        fire_mask: th.Tensor | None = None,
+    ) -> _HybridActionDistribution:
+        action_space = make_action_space("air_combat_hybrid_v1")
+        layout = _normalize_hybrid_action_layout("air_combat_hybrid_v1", action_space)
+        assert layout is not None
+        return _HybridActionDistribution(
+            layout=layout,
+            params=params,
+            log_std=th.zeros((6,), dtype=params.dtype, device=params.device),
+            action_low=action_space.low,
+            action_high=action_space.high,
+            fire_event_mask=fire_mask,
+        )
+
     def _make_policy(self) -> HierarchicalMoEExecutionPolicy:
         observation_space = spaces.Dict(
             {
@@ -295,7 +318,7 @@ class HMoEPolicyTests(unittest.TestCase):
             actions, values, log_prob = policy.forward(obs, deterministic=True)
             eval_values, eval_log_prob, entropy = policy.evaluate_actions(obs, actions)
 
-        self.assertEqual(int(policy.action_net.out_features), 19)
+        self.assertEqual(int(policy.action_net.out_features), 20)
         self.assertEqual(int(policy.log_std.shape[0]), 6)
         self.assertTrue(th.allclose(policy.log_std.detach(), th.full_like(policy.log_std.detach(), -1.2)))
         self.assertEqual(tuple(actions.shape), (2, 12))
@@ -315,6 +338,108 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertTrue(th.all(actions[:, 11] == th.round(actions[:, 11])))
         self.assertTrue(th.all(actions[:, 11] >= 0.0))
         self.assertTrue(th.all(actions[:, 11] <= 7.0))
+
+    def test_air_combat_hybrid_fire_event_mask_blocks_deterministic_and_stochastic_fire(self) -> None:
+        params = th.zeros((4, 20), dtype=th.float32)
+        params[:, 9] = 8.0
+        params[:, 11] = -2.0
+        dist = self._make_air_combat_hybrid_distribution(params, fire_mask=th.zeros((4,), dtype=th.bool))
+
+        deterministic_actions = dist.get_actions(deterministic=True)
+        stochastic_actions = dist.get_actions(deterministic=False)
+
+        self.assertTrue(th.all(deterministic_actions[:, 9] == 0.0))
+        self.assertTrue(th.all(stochastic_actions[:, 9] == 0.0))
+
+    def test_air_combat_hybrid_fire_event_logprob_and_entropy_are_finite_when_masked(self) -> None:
+        params = th.zeros((2, 20), dtype=th.float32)
+        params[:, 9] = 8.0
+        params[:, 11] = -2.0
+        dist = self._make_air_combat_hybrid_distribution(params, fire_mask=th.zeros((2,), dtype=th.bool))
+        hold_actions = th.zeros((2, 12), dtype=th.float32)
+        fire_actions = hold_actions.clone()
+        fire_actions[:, 9] = 1.0
+
+        hold_log_prob = dist.log_prob(hold_actions)
+        fire_log_prob = dist.log_prob(fire_actions)
+        entropy = dist.entropy()
+
+        self.assertTrue(th.isfinite(hold_log_prob).all())
+        self.assertTrue(th.isfinite(fire_log_prob).all())
+        self.assertTrue(th.isfinite(entropy).all())
+        self.assertTrue(th.all(fire_log_prob < hold_log_prob - 1.0e6))
+
+    def test_air_combat_hybrid_fire_event_deterministic_uses_hold_fire_argmax(self) -> None:
+        params = th.zeros((1, 20), dtype=th.float32)
+        params[:, 9] = 0.25
+        params[:, 11] = 2.0
+        dist = self._make_air_combat_hybrid_distribution(params, fire_mask=th.ones((1,), dtype=th.bool))
+
+        actions = dist.get_actions(deterministic=True)
+
+        self.assertEqual(float(actions[0, 9]), 0.0)
+
+    def test_air_combat_hybrid_non_event_binary_heads_still_use_bernoulli_semantics(self) -> None:
+        params = th.zeros((1, 20), dtype=th.float32)
+        params[:, 6] = -1.0
+        params[:, 7] = 1.0
+        params[:, 8] = 2.0
+        params[:, 9] = -3.0
+        params[:, 10] = -2.0
+        params[:, 11] = 0.0
+        dist = self._make_air_combat_hybrid_distribution(params, fire_mask=th.ones((1,), dtype=th.bool))
+
+        actions = dist.get_actions(deterministic=True)
+
+        self.assertEqual(float(actions[0, 6]), 0.0)
+        self.assertEqual(float(actions[0, 7]), 1.0)
+        self.assertEqual(float(actions[0, 8]), 1.0)
+        self.assertEqual(float(actions[0, 10]), 0.0)
+
+    def test_air_combat_c2_roe_mission_mask_plumbs_into_policy_distribution(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+        )
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = 8.0
+            policy.action_net.bias[11] = -2.0
+        mission = th.zeros((2, 20), dtype=th.float32)
+        mission[1, 5] = 2.0
+        mission[1, 6] = 1.0
+        mission[1, 14] = 2.0
+        mission[1, 15] = 1.0
+        mission[1, 16] = 1.0
+        mission[1, 19] = 1.0
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": mission,
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+
+        with th.no_grad():
+            actions = policy.get_distribution(obs).get_actions(deterministic=True)
+
+        self.assertEqual(float(actions[0, 9]), 0.0)
+        self.assertEqual(float(actions[1, 9]), 1.0)
 
     def test_safe_action_bias_initializes_air_combat_hybrid_switch_logits(self) -> None:
         observation_space = spaces.Dict(
@@ -358,7 +483,8 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertLess(float(bias[9]), -5.0)
         self.assertLess(float(bias[9]), 0.0)
         self.assertLess(float(bias[10]), 0.0)
-        self.assertGreater(float(bias[12]), float(bias[11]))
+        self.assertGreater(float(bias[11]), float(bias[9]))
+        self.assertGreater(float(bias[13]), float(bias[12]))
         for head in policy.hmoe_head_bank.family_heads:
             self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 

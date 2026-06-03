@@ -280,7 +280,7 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[1] = 0.0
                 b[2] = 0.0
             elif action_mode == "air_combat_hybrid_v1":
-                if int(b.shape[0]) < 19:
+                if int(b.shape[0]) < 20:
                     return
                 throttle_default, _gear_default, _flaps_default, _speedbrake_default = infer_full_action_safe_defaults(
                     scenario_path
@@ -292,14 +292,15 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[4] = 0.0
                 b[5] = 0.0
                 # Hybrid layout params: 0-5 continuous means, 6-10 binary logits,
-                # 11-18 weapon-select categorical logits.
+                # 11 fire-event hold logit, 12-19 weapon-select categorical logits.
                 b[6] = 3.0   # radar_active held on
                 b[7] = -4.0  # tms_up pulse, sparse but reachable
                 b[8] = 3.0   # master_arm held on
                 b[9] = -6.0  # fire_weapon pulse, sparse but reachable
                 b[10] = -8.0  # fire_gun pulse
-                b[11:19] = -0.5
-                b[12] = 1.0  # prefer station 1 over "no selected station" at startup
+                b[11] = 0.0  # fire-event hold logit starts above fire.
+                b[12:20] = -0.5
+                b[13] = 1.0  # prefer station 1 over "no selected station" at startup
 
         has_standard_bias = action_net is not None and getattr(action_net, "bias", None) is not None
         has_hmoe_bias = hmoe_head_bank is not None

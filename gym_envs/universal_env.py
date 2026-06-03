@@ -12,6 +12,8 @@ from gym_envs.scenario_loader import (
     normalize_flight_shaping_backend,
 )
 from gym_envs.universal_env_parts import (
+    add_air_combat_event_action_info,
+    apply_air_combat_event_action_gate,
     build_pilot_action,
     build_step_info,
     build_step_info_minimal,
@@ -19,6 +21,7 @@ from gym_envs.universal_env_parts import (
     downsample_visual_mean,
     air_combat_hybrid_effective_action,
     expected_action_dim,
+    finalize_air_combat_event_action_info,
     half_to_unit,
     make_action_space,
     make_observation_space,
@@ -32,6 +35,7 @@ from gym_envs.universal_env_parts import (
     apply_naval_station_action,
     attach_temporal_history,
     bind_naval_station_eval_reference,
+    reset_air_combat_event_action_state,
     reset_temporal_history,
     reset_naval_station_action_state,
     is_air_combat_hybrid_action_mode,
@@ -204,6 +208,8 @@ else:
             self._last_policy_action_intent = None
             self._temporal_history.clear()
             self._visual_cache = None
+            if self.loader is not None:
+                reset_air_combat_event_action_state(self.loader)
             self.loader = None
             sim = getattr(self, "sim", None)
             self.sim = None
@@ -237,6 +243,7 @@ else:
             self._last_action = None
             self._last_policy_action_intent = None
             reset_naval_station_action_state(self.loader)
+            reset_air_combat_event_action_state(self.loader)
             bind_naval_station_eval_reference(self.loader)
             self._temporal_history.clear()
             self._visual_cache = None
@@ -272,6 +279,7 @@ else:
 
             action_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             action = normalize_action(action, action_space=self.action_space, action_mode=self.action_mode)
+            truth_before = None
 
             if is_naval_station_action_mode(self.action_mode):
                 action = naval_station_action_command(action)
@@ -285,6 +293,13 @@ else:
                     previous_intent=self._last_policy_action_intent,
                 )
                 self._last_policy_action_intent = policy_intent
+                truth_before = self.sim.get_agent_observation(self.agent_id)
+                action, _ = apply_air_combat_event_action_gate(
+                    self.loader,
+                    action,
+                    agent_id=int(self.agent_id),
+                    truth_before=truth_before,
+                )
                 self._last_action = action.astype(np.float32, copy=True)
             else:
                 self._last_action = action.astype(np.float32, copy=True)
@@ -306,6 +321,12 @@ else:
             state_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             truth_now = self.sim.get_agent_observation(self.agent_id)
             inst_now = self.sim.get_instrument_state(self.agent_id)
+            if is_air_combat_hybrid_action_mode(self.action_mode):
+                finalize_air_combat_event_action_info(
+                    self.loader,
+                    truth_before=truth_before,
+                    truth_after=truth_now,
+                )
             state_read_ms = (time.perf_counter() - state_t0) * 1000.0 if self.collect_step_timing else 0.0
             self._last_truth = truth_now
             self._last_inst = inst_now
@@ -374,6 +395,7 @@ else:
                 info["timing"] = dict(self.last_step_timing)
             else:
                 self.last_step_timing = {}
+            add_air_combat_event_action_info(info, self.loader)
 
             return obs, reward, terminated, truncated, info
 
@@ -447,13 +469,16 @@ else:
 __all__ = [
     "UniversalEnv",
     "_configure_sim_log_level",
+    "add_air_combat_event_action_info",
     "air_combat_hybrid_effective_action",
+    "apply_air_combat_event_action_gate",
     "build_pilot_action",
     "build_step_info",
     "build_step_info_minimal",
     "build_universal_observation",
     "downsample_visual_mean",
     "expected_action_dim",
+    "finalize_air_combat_event_action_info",
     "half_to_unit",
     "is_air_combat_hybrid_action_mode",
     "make_action_space",
@@ -463,6 +488,7 @@ __all__ = [
     "naval_policy_instruments",
     "naval_station_action_command",
     "normalize_action",
+    "reset_air_combat_event_action_state",
     "spaces",
     "validate_naval_action_mode_for_loader",
 ]

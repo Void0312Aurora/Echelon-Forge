@@ -1,7 +1,8 @@
 # A5 Constrained Event Action Model Current Status
 
-Status: `2026-06-03` planning checkpoint. This record captures the decision to
-move from reward/routing repair to constrained event-action modeling.
+Status: `2026-06-03` implementation checkpoint. Surface audit, event contract,
+runtime prototype, and policy event head are accepted; reward/config cleanup,
+diagnostics/evidence, and closure remain pending.
 
 ## Decision
 
@@ -43,13 +44,20 @@ full hierarchical options are deferred.
 
 ## Immediate Work
 
-1. Audit code surfaces and freeze the exact event contract.
-2. Add or update contract tests for mask/state transitions before broad runtime
-   edits.
-3. Implement runtime suppression and event adapter.
-4. Implement policy event distribution or narrow event Q-head.
-5. Update S1 C2/ROE active entries and diagnostics.
-6. Run focused tests and learned-policy probes.
+1. Update S1 C2/ROE active entries and diagnostics.
+2. Run focused diagnostics and learned-policy probes.
+3. Decide accepted or held status with residual map.
+
+## Accepted Planning Evidence
+
+- Surface audit:
+  [a5_constrained_event_action_model_surface_audit_20260603.md](a5_constrained_event_action_model_surface_audit_20260603.md)
+- Event action contract:
+  [a5_constrained_event_action_model_event_contract_20260603.md](a5_constrained_event_action_model_event_contract_20260603.md)
+- Air action contract overlay:
+  [../../../standards/air/act.md](../../../standards/air/act.md)
+- Implementation evidence:
+  [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
 
 ## Open Risks
 

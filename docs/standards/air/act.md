@@ -86,6 +86,65 @@ effective transport action sent toward `PilotAction`, not the raw policy intent.
 For pulse dimensions, a held policy command therefore appears as `1` only on the
 rising-edge step and `0` on subsequent held steps.
 
+## A5 Constrained Event-Action Overlay
+
+Status: `2026-06-03` planning/implementation contract for the A5 S1 C2/ROE
+event-action work. This section freezes field names for implementation; it does
+not yet mark runtime or learned-policy behavior as accepted.
+
+For accepted A5 S1 C2/ROE training/eval entries, `fire_weapon` must no longer
+be treated as a raw policy-facing per-step threshold. Weapon release is modeled
+as an event action:
+
+```text
+event_action in {hold, fire_once}
+event_action_mask = [1, fire_mask]
+```
+
+The event-action overlay may still be transported through a flat action vector
+for PPO/runtime compatibility, but policy log-prob, entropy, stochastic sampling,
+and deterministic evaluation must use the masked event semantics.
+
+Policy-visible event state:
+
+| `engagement_state` | Meaning | Event support |
+| :--- | :--- | :--- |
+| `Hold` | C2/ROE, target, weapon, or mission state does not allow release. | `hold` only |
+| `AuthorizedReady` | First-shot release is authorized and available. | `hold`, `fire_once` |
+| `FiredAssess` | A release was accepted and assessment is pending. | `hold` only |
+| `ReattackReady` | Follow-on release is explicitly authorized after assessment. | `hold`, `fire_once` |
+| `Winchester` | No valid weapon remains or release path is unavailable. | `hold` only |
+
+The final `fire_mask` must be derived from named components, including C2/ROE
+authorization, target presence, shot budget, pending assessment, weapon/ammo
+readiness, and reattack permission. Diagnostics should expose both the final
+mask and the component or rejection reason that made `fire_once` unavailable.
+
+Required runtime info names for A5 implementation:
+
+- `engagement_state`
+- `fire_mask`
+- `fire_once_requested`
+- `fire_once_accepted`
+- `fire_once_rejected_reason`
+- `release_executed`
+- `post_launch_suppressed`
+- `reattack_ready`
+
+Minimum transition rule:
+
+```text
+AuthorizedReady + fire_once + fire_mask
+  -> consume one release event
+  -> enter FiredAssess
+  -> suppress fire_once until explicit ReattackReady or a new authorization cycle
+```
+
+This overlay is intentionally separate from reward shaping. Rewards may value
+outcome, timing, ammo cost, and tracking quality, but rewards should not be the
+primary mechanism for teaching release legality, shot budget, or post-launch
+suppression.
+
 ## Canonical `PilotAction` Fields
 
 The kernel-facing `PilotAction` fields currently exposed are grouped as:

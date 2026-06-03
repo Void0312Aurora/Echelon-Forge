@@ -118,17 +118,33 @@ class _HybridActionLayout:
         action_dim: int,
         continuous_indices: tuple[int, ...],
         binary_indices: tuple[int, ...],
+        event_action_index: int | None = None,
         categorical_indices: tuple[tuple[int, int], ...],
     ) -> None:
         self.name = str(name)
         self.action_dim = int(action_dim)
         self.continuous_indices = tuple(int(i) for i in continuous_indices)
         self.binary_indices = tuple(int(i) for i in binary_indices)
+        self.event_action_index = None if event_action_index is None else int(event_action_index)
         self.categorical_indices = tuple((int(i), int(n)) for i, n in categorical_indices)
         self.continuous_count = int(len(self.continuous_indices))
         self.binary_count = int(len(self.binary_indices))
+        self.event_logit_count = 1 if self.event_action_index is not None else 0
+        if self.event_action_index is not None and self.event_action_index not in self.binary_indices:
+            raise ValueError("event_action_index must also appear in binary_indices for flat transport compatibility")
+        self.event_binary_position = (
+            self.binary_indices.index(self.event_action_index) if self.event_action_index is not None else None
+        )
+        self.ordinary_binary_positions = tuple(
+            idx for idx, action_idx in enumerate(self.binary_indices) if action_idx != self.event_action_index
+        )
+        self.ordinary_binary_indices = tuple(
+            action_idx for action_idx in self.binary_indices if action_idx != self.event_action_index
+        )
         self.categorical_logit_count = int(sum(n for _, n in self.categorical_indices))
-        self.param_dim = int(self.continuous_count + self.binary_count + self.categorical_logit_count)
+        self.param_dim = int(
+            self.continuous_count + self.binary_count + self.event_logit_count + self.categorical_logit_count
+        )
 
 
 def _normalize_hybrid_action_layout(spec: Any, action_space) -> _HybridActionLayout | None:
@@ -156,8 +172,61 @@ def _normalize_hybrid_action_layout(spec: Any, action_space) -> _HybridActionLay
         action_dim=12,
         continuous_indices=(0, 1, 2, 3, 4, 5),
         binary_indices=(6, 7, 8, 9, 10),
+        event_action_index=9,
         categorical_indices=((11, 8),),
     )
+
+
+def _hybrid_fire_event_mask_from_obs(obs: Any, *, batch_size: int, device: th.device) -> th.Tensor | None:
+    if not isinstance(obs, dict):
+        return None
+
+    explicit_event_mask = obs.get("event_action_mask")
+    if explicit_event_mask is not None:
+        mask = th.as_tensor(explicit_event_mask, device=device)
+        if mask.ndim == 1:
+            mask = mask.reshape(1, -1)
+        if mask.ndim == 2 and int(mask.shape[1]) >= 2:
+            return mask[:, 1].to(dtype=th.bool)
+
+    explicit_fire_mask = obs.get("fire_mask")
+    if explicit_fire_mask is not None:
+        mask = th.as_tensor(explicit_fire_mask, device=device)
+        return mask.reshape(-1).to(dtype=th.bool)
+
+    mission = obs.get("mission")
+    if mission is None:
+        return None
+    mission_tensor = th.as_tensor(mission, device=device)
+    if mission_tensor.ndim != 2 or int(mission_tensor.shape[1]) != 20:
+        return None
+
+    wcs_state = th.round(mission_tensor[:, 5].float()).to(dtype=th.long)
+    authorization_to_fire = mission_tensor[:, 6] > 0.5
+    engage_order_state = th.round(mission_tensor[:, 14].float()).to(dtype=th.long)
+    shot_policy_state = th.round(mission_tensor[:, 15].float()).to(dtype=th.long)
+    shot_budget_remaining = th.round(mission_tensor[:, 16].float()).to(dtype=th.long)
+    pending_assessment = mission_tensor[:, 17] > 0.5
+    target_contact_present = mission_tensor[:, 19] > 0.5
+
+    engage_hold = (
+        (engage_order_state == 3)
+        | (engage_order_state == 4)
+        | (engage_order_state == 5)
+        | (engage_order_state == 6)
+    )
+    fire_mask = (
+        target_contact_present
+        & authorization_to_fire
+        & (wcs_state != 1)
+        & ~engage_hold
+        & (shot_policy_state > 0)
+        & (shot_budget_remaining > 0)
+        & ~pending_assessment
+    )
+    if int(fire_mask.shape[0]) != int(batch_size):
+        return None
+    return fire_mask
 
 
 class _HybridActionDistribution:
@@ -169,6 +238,7 @@ class _HybridActionDistribution:
         log_std: th.Tensor,
         action_low,
         action_high,
+        fire_event_mask: th.Tensor | None = None,
     ) -> None:
         self.layout = layout
         self.params = params
@@ -179,6 +249,9 @@ class _HybridActionDistribution:
         self.action_high = th.as_tensor(action_high, dtype=dtype, device=device).reshape(-1)
         self.continuous_indices = th.as_tensor(layout.continuous_indices, dtype=th.long, device=device)
         self.binary_indices = th.as_tensor(layout.binary_indices, dtype=th.long, device=device)
+        self.ordinary_binary_indices = th.as_tensor(layout.ordinary_binary_indices, dtype=th.long, device=device)
+        self.ordinary_binary_positions = th.as_tensor(layout.ordinary_binary_positions, dtype=th.long, device=device)
+        self.fire_event_mask = self._normalize_fire_event_mask(fire_event_mask)
         self._split_params()
 
     def _split_params(self) -> None:
@@ -189,11 +262,40 @@ class _HybridActionDistribution:
         offset += cont_n
         self.binary_logits = self.params[:, offset : offset + bin_n]
         offset += bin_n
+        self.fire_event_hold_logits = None
+        if self.layout.event_action_index is not None:
+            self.fire_event_hold_logits = self.params[:, offset]
+            offset += 1
         self.categorical_logits: list[tuple[int, th.Tensor]] = []
         for action_index, category_count in self.layout.categorical_indices:
             logits = self.params[:, offset : offset + int(category_count)]
             offset += int(category_count)
             self.categorical_logits.append((int(action_index), logits))
+
+    def _normalize_fire_event_mask(self, fire_event_mask: th.Tensor | None) -> th.Tensor | None:
+        if self.layout.event_action_index is None:
+            return None
+        batch = int(self.params.shape[0])
+        if fire_event_mask is None:
+            fire = th.ones((batch,), dtype=th.bool, device=self.params.device)
+        else:
+            fire = fire_event_mask.to(device=self.params.device).reshape(-1).to(dtype=th.bool)
+            if int(fire.shape[0]) != batch:
+                raise ValueError(f"fire_event_mask batch {int(fire.shape[0])} does not match params batch {batch}")
+        hold = th.ones_like(fire, dtype=th.bool)
+        return th.stack((hold, fire), dim=1)
+
+    def _fire_event_logits(self) -> th.Tensor | None:
+        if self.layout.event_action_index is None or self.fire_event_hold_logits is None:
+            return None
+        if self.layout.event_binary_position is None:
+            return None
+        fire_logits = self.binary_logits[:, int(self.layout.event_binary_position)]
+        logits = th.stack((self.fire_event_hold_logits, fire_logits), dim=1)
+        if self.fire_event_mask is None:
+            return logits
+        masked_floor = th.full_like(logits, -1.0e8)
+        return th.where(self.fire_event_mask, logits, masked_floor)
 
     def _continuous_bounds(self) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
         low = self.action_low[self.continuous_indices].reshape(1, -1)
@@ -220,8 +322,13 @@ class _HybridActionDistribution:
         actions = self.params.new_zeros((batch, self.layout.action_dim))
         if self.layout.continuous_count > 0:
             actions[:, self.continuous_indices] = self._transform_continuous(self.continuous_mean)
-        if self.layout.binary_count > 0:
-            actions[:, self.binary_indices] = (self.binary_logits >= 0.0).to(dtype=self.params.dtype)
+        if int(self.ordinary_binary_positions.numel()) > 0:
+            actions[:, self.ordinary_binary_indices] = (
+                self.binary_logits[:, self.ordinary_binary_positions] >= 0.0
+            ).to(dtype=self.params.dtype)
+        event_logits = self._fire_event_logits()
+        if event_logits is not None and self.layout.event_action_index is not None:
+            actions[:, int(self.layout.event_action_index)] = th.argmax(event_logits, dim=1).to(dtype=self.params.dtype)
         for action_index, logits in self.categorical_logits:
             actions[:, action_index] = th.argmax(logits, dim=1).to(dtype=self.params.dtype)
         return actions
@@ -235,8 +342,15 @@ class _HybridActionDistribution:
             std = th.exp(self.log_std).reshape(1, -1).expand_as(self.continuous_mean)
             raw = self.continuous_mean + std * th.randn_like(self.continuous_mean)
             actions[:, self.continuous_indices] = self._transform_continuous(raw)
-        if self.layout.binary_count > 0:
-            actions[:, self.binary_indices] = Bernoulli(logits=self.binary_logits).sample()
+        if int(self.ordinary_binary_positions.numel()) > 0:
+            actions[:, self.ordinary_binary_indices] = Bernoulli(
+                logits=self.binary_logits[:, self.ordinary_binary_positions]
+            ).sample()
+        event_logits = self._fire_event_logits()
+        if event_logits is not None and self.layout.event_action_index is not None:
+            actions[:, int(self.layout.event_action_index)] = Categorical(logits=event_logits).sample().to(
+                dtype=self.params.dtype
+            )
         for action_index, logits in self.categorical_logits:
             actions[:, action_index] = Categorical(logits=logits).sample().to(dtype=self.params.dtype)
         return actions
@@ -251,9 +365,15 @@ class _HybridActionDistribution:
             normal = Normal(self.continuous_mean, std)
             correction = th.log(scale) + th.log(th.clamp(1.0 - y.pow(2), min=1.0e-6))
             total = total + (normal.log_prob(raw) - correction).sum(dim=1)
-        if self.layout.binary_count > 0:
-            binary_actions = th.clamp(actions[:, self.binary_indices], 0.0, 1.0).round()
-            total = total + Bernoulli(logits=self.binary_logits).log_prob(binary_actions).sum(dim=1)
+        if int(self.ordinary_binary_positions.numel()) > 0:
+            binary_actions = th.clamp(actions[:, self.ordinary_binary_indices], 0.0, 1.0).round()
+            total = total + Bernoulli(logits=self.binary_logits[:, self.ordinary_binary_positions]).log_prob(
+                binary_actions
+            ).sum(dim=1)
+        event_logits = self._fire_event_logits()
+        if event_logits is not None and self.layout.event_action_index is not None:
+            event_action = th.clamp(actions[:, int(self.layout.event_action_index)].round().long(), 0, 1)
+            total = total + Categorical(logits=event_logits).log_prob(event_action)
         for action_index, logits in self.categorical_logits:
             categorical_action = th.clamp(actions[:, action_index].round().long(), 0, int(logits.shape[1]) - 1)
             total = total + Categorical(logits=logits).log_prob(categorical_action)
@@ -264,8 +384,11 @@ class _HybridActionDistribution:
         if self.layout.continuous_count > 0:
             std = th.exp(self.log_std).reshape(1, -1).expand_as(self.continuous_mean)
             total = total + Normal(self.continuous_mean, std).entropy().sum(dim=1)
-        if self.layout.binary_count > 0:
-            total = total + Bernoulli(logits=self.binary_logits).entropy().sum(dim=1)
+        if int(self.ordinary_binary_positions.numel()) > 0:
+            total = total + Bernoulli(logits=self.binary_logits[:, self.ordinary_binary_positions]).entropy().sum(dim=1)
+        event_logits = self._fire_event_logits()
+        if event_logits is not None:
+            total = total + Categorical(logits=event_logits).entropy()
         for _action_index, logits in self.categorical_logits:
             total = total + Categorical(logits=logits).entropy()
         return total
@@ -542,12 +665,18 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["hmoe/resid_effective_scale"] = float(effective_scale)
 
         if self._hybrid_action_layout is not None:
+            fire_event_mask = _hybrid_fire_event_mask_from_obs(
+                obs,
+                batch_size=int(mean_actions.shape[0]),
+                device=mean_actions.device,
+            )
             return _HybridActionDistribution(
                 layout=self._hybrid_action_layout,
                 params=mean_actions,
                 log_std=self.log_std,
                 action_low=self.action_space.low,
                 action_high=self.action_space.high,
+                fire_event_mask=fire_event_mask,
             )
         if isinstance(self.action_dist, SquashedDiagGaussianDistribution):
             return self.action_dist.proba_distribution(mean_actions, self.log_std)
