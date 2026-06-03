@@ -230,6 +230,22 @@ DEFAULT_EFFECTS_MODEL = (
     / "weapons"
     / "default_effects_model.cpp"
 )
+DEFAULT_EFFECTS_LEGACY_DETAIL = (
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "weapons"
+    / "detail"
+    / "default_effects_legacy_detail.inc"
+)
+DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL = (
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "weapons"
+    / "detail"
+    / "default_effects_air_platform_resolution_detail.inc"
+)
 STRUCTURAL_DOC_EN = (
     REPO_ROOT
     / "docs"
@@ -983,18 +999,40 @@ def test_wp22_command_link_pending_transport_headers_keep_typed_owner_markers_ex
 
 def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     text = _text(DEFAULT_EFFECTS_MODEL)
-    legacy_start = text.index("if (hp && !structured_air_target) {")
-    legacy_end = text.index("// --- 2. Geometric Damage Logic (New) ---", legacy_start)
-    structured_start = text.index("if (platform_damage && structured_air_target && structure_hit)")
-    structured_end = text.index("// --- 3. Fallback to Randomized Effects (Legacy) ---", structured_start)
+    legacy_text = _text(DEFAULT_EFFECTS_LEGACY_DETAIL)
+    air_platform_text = _text(DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL)
 
-    legacy_block = text[legacy_start:legacy_end]
-    structured_block = text[structured_start:structured_end]
+    assert (
+        '#include "models/weapons/detail/default_effects_legacy_detail.inc"'
+        in text
+    )
+    assert re.search(
+        r"if\s*\(\s*hp\s*&&\s*!structured_air_target\s*&&\s*"
+        r"apply_legacy_health_damage\s*\(",
+        text,
+    ), (
+        "legacy HP/Score damage must stay behind the non-structured-air gate "
+        "in DefaultEffectsModel"
+    )
+    assert "score->" not in text
 
+    legacy_block = _extract_function_block(
+        legacy_text,
+        "bool apply_legacy_health_damage(",
+    )
     assert "score->total_reward" in legacy_block
     assert "score->hits_landed" in legacy_block
     assert "score->kills_confirmed" in legacy_block
+
+    structured_block = _extract_function_block(
+        air_platform_text,
+        "bool resolve_default_effects_air_platform_consequences(",
+    )
+    assert "platform_damage && structured_air_target && scratch.structure_hit" in (
+        structured_block
+    )
     assert "score->" not in structured_block
+    assert "Score*" not in structured_block
 
 
 def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:

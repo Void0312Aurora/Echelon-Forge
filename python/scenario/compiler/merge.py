@@ -5,6 +5,7 @@ import os
 from typing import Any
 
 from .clone import _clone_scenario_value
+from .validation import validate_scenario_compiler_shape
 
 
 def _merge_prefab_data(target: dict[str, Any], prefab: dict[str, Any]) -> None:
@@ -51,7 +52,14 @@ def _compile_merged_scenario_data(
             with open(full_path, "r", encoding="utf-8") as handle:
                 prefab = json.load(handle)
             if not isinstance(prefab, dict):
-                continue
+                raise ValueError(
+                    f"Imported scenario prefab must contain a JSON object: {full_path}"
+                )
+            validate_scenario_compiler_shape(
+                prefab,
+                source_path=full_path,
+                context="imported scenario prefab",
+            )
 
             _merge_prefab_data(merged, prefab)
             imported_files.append(full_path)

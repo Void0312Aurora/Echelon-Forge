@@ -17,6 +17,8 @@
 
 - [项目实现审查与行动评价 2026-06-01](project_implementation_review_20260601.zh.md)
 - [文档系统就绪度审查 2026-06-01](documentation_system_readiness_review_20260601.zh.md) ([English](documentation_system_readiness_review_20260601.md))
+- [Engineering Governance P0](engineering_governance_p0/README.zh.md)：active remediation slice，用于 CI lint gate、smoke dependency constraints、C++ warning policy 和版本号对齐。
+- [Engineering Governance P1](engineering_governance_p1/README.zh.md)：active partial remediation slice，用于失效架构守卫修复和 scenario compiler 集中 shape validation。
 
 ## 领域审查
 

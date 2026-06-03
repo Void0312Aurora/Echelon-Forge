@@ -27,6 +27,7 @@ from .reward_metadata import (
     SafetyRewardConfig,
     WaypointModeRewardConfig,
 )
+from .validation import validate_scenario_compiler_shape
 from .waypoint_cache import (
     _compile_normalized_waypoint_templates,
     _compile_waypoint_template_route_ref_ids,
@@ -103,28 +104,27 @@ class ScenarioCompiler:
 
     @classmethod
     def _compile_from_data(cls, raw_scenario_data: dict[str, Any], *, source_path: str) -> CompiledScenario:
+        validate_scenario_compiler_shape(
+            raw_scenario_data,
+            source_path=source_path,
+        )
         merged, imported_files, warnings = _compile_merged_scenario_data(
             raw_scenario_data,
             project_root=REPO_ROOT,
+        )
+        validate_scenario_compiler_shape(
+            merged,
+            source_path=source_path,
+            context="merged scenario",
         )
         for line in warnings:
             print(line)
 
         env_cfg = merged.get("environment", {})
-        if not isinstance(env_cfg, dict):
-            env_cfg = {}
         zones = env_cfg.get("zones", [])
-        if not isinstance(zones, list):
-            zones = []
         entities = merged.get("entities", [])
-        if not isinstance(entities, list):
-            entities = []
         rewards_cfg = merged.get("rewards", {})
-        if not isinstance(rewards_cfg, dict):
-            rewards_cfg = {}
         task_cfg = merged.get("task_order", {})
-        if not isinstance(task_cfg, dict):
-            task_cfg = {}
         mission_cmd_template = _normalize_runtime_mission_command(merged.get("mission_command", {}), task_cfg)
         normalized_route_waypoints = materialize_runtime_waypoint_cache(mission_cmd_template)
         normalized_waypoint_templates = _compile_normalized_waypoint_templates(mission_cmd_template)

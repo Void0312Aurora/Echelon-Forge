@@ -1,10 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
-project(EchelonForge VERSION 0.1.0 LANGUAGES CXX C)
+project(EchelonForge VERSION 0.2.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(EF_ENABLE_CUDA_EXPERIMENTS "Enable experimental CUDA GPU runtime scaffolding" OFF)
+option(EF_ENABLE_PROJECT_WARNINGS "Enable warning flags for maintained project targets" ON)
+
+function(ef_enable_project_warnings target_name)
+    if (NOT EF_ENABLE_PROJECT_WARNINGS)
+        return()
+    endif()
+    target_compile_options(${target_name} PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>:-Wall>
+        $<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>:-Wextra>
+        $<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>:-Wpedantic>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wall>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wextra>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-Wpedantic>
+        $<$<COMPILE_LANG_AND_ID:C,MSVC>:/W4>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4>
+    )
+endfunction()
 
 if (CMAKE_RANLIB)
     # Ensure static archives get a symbol index on all toolchains.
@@ -130,7 +147,7 @@ add_library(ef_core STATIC
     ${EF_CORE_SOURCES}
 )
 
-target_include_directories(ef_core PUBLIC 
+target_include_directories(ef_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
@@ -275,6 +292,27 @@ target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Single CTest entry that runs all doctest suites
 add_test(NAME ef_test_all COMMAND ef_test)
+
+set(EF_PROJECT_WARNING_TARGETS
+    ef_core
+    ef_app
+    ef_py
+    ef_gpu_experiments
+    ef_gpu_visual_phase0_probe
+    ef_gpu_execution_observation_phase0_probe
+    ef_gpu_flight_shaping_phase0_probe
+    ef_gpu_interaction_broadphase_phase0_probe
+    ef_gpu_sensor_candidate_phase0_probe
+    ef_gpu_comm_candidate_phase0_probe
+    ef_gpu_visual_candidate_phase0_probe
+    ef_test
+)
+
+foreach(target_name IN LISTS EF_PROJECT_WARNING_TARGETS)
+    if (TARGET ${target_name})
+        ef_enable_project_warnings(${target_name})
+    endif()
+endforeach()
 
 # Install the extension module
 install(TARGETS ef_py DESTINATION .)

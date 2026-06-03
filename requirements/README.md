@@ -10,10 +10,11 @@ or experiment lockfile.
 
 ## Files
 
-- `constraints-smoke.txt`: lightweight constraints for CI/smoke resolution.
-  It covers the direct smoke installs, `pytest` and `numpy`, plus Python
-  package build tools that are reasonable to constrain when explicitly testing
-  package build/install behavior.
+- `constraints-smoke.txt`: lightweight constraints for CI/smoke/lint
+  resolution. It covers the direct smoke installs, `pytest` and `numpy`, the
+  Python lint gate dependency `ruff`, plus Python package build tools that are
+  reasonable to constrain when explicitly testing package build/install
+  behavior.
 
 ## How To Use
 
@@ -22,7 +23,7 @@ constraints file:
 
 ```bash
 python -m pip install --upgrade pip -c requirements/constraints-smoke.txt
-python -m pip install -c requirements/constraints-smoke.txt pytest numpy
+python -m pip install -c requirements/constraints-smoke.txt pytest numpy ruff
 ```
 
 This mirrors the repository smoke boundary: build the local C++/Python
@@ -37,10 +38,10 @@ They describe what a workflow may need, such as smoke tests, RL imports,
 training, world-model utilities, or local development convenience. They are not
 reproducible environment locks.
 
-`constraints-smoke.txt` is the reproducible entry point for CI/smoke dependency
-resolution only. It should stay small and should not hard-pin the training or
-experiment stack, including `torch`, `stable-baselines3`, `gymnasium`, or
-`tensorboard`.
+`constraints-smoke.txt` is the reproducible entry point for CI/smoke/lint
+dependency resolution only. It should stay small and should not hard-pin the
+training or experiment stack, including `torch`, `stable-baselines3`,
+`gymnasium`, or `tensorboard`.
 
 Training and experiment runs still need their own environment evidence. Until a
 dedicated lockfile policy exists, record the resolved environment with the run
@@ -56,8 +57,8 @@ constraints.
 
 ## Update Rules
 
-- Update `constraints-smoke.txt` when CI Python support, direct smoke installs,
-  or `pyproject.toml` build-system requirements change.
+- Update `constraints-smoke.txt` when CI Python support, direct smoke/lint
+  installs, or `pyproject.toml` build-system requirements change.
 - Keep constraints broad enough for patch-level updates, but narrow enough to
   prevent surprising major-version changes in the smoke lane.
 - Do not add optional training, RL, or world-model packages merely because they

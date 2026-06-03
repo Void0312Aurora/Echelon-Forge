@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 
 from python.testing.runtime import ensure_repo_imports

@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import copy
 import json
 import math
 import os
+from typing import Any
 
 from python.testing.runtime import ensure_repo_imports
 
-from .common import ContractSkipped, _load_spec, _materialize_scenario_path, _write_inline_scenario
+from .common import (
+    ContractSkipped,
+    _load_spec,
+    _materialize_scenario_path,
+    _wrap_deg,
+    _write_inline_scenario,
+)
 
 def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
     ensure_repo_imports()

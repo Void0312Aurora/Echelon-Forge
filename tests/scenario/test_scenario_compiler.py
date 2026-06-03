@@ -215,6 +215,44 @@ class ScenarioCompilerTests(unittest.TestCase):
         self.assertIs(ScenarioCompiler, PackagedScenarioCompiler)
         self.assertIsInstance(compiled, PackagedCompiledScenario)
 
+    def test_compile_path_rejects_non_object_root(self) -> None:
+        with open(self._scenario_path, "w", encoding="utf-8") as f:
+            json.dump([], f, ensure_ascii=True)
+
+        with self.assertRaisesRegex(ValueError, "Scenario file must contain a JSON object"):
+            ScenarioCompiler.compile_path(self._scenario_path)
+
+    def test_compile_data_rejects_non_list_entities(self) -> None:
+        scenario = _sample_scenario()
+        scenario["entities"] = {"Blue_F16": scenario["entities"][0]}
+
+        with self.assertRaisesRegex(ValueError, "'entities' must be a list"):
+            ScenarioCompiler.compile_data(scenario)
+
+    def test_compile_data_rejects_non_object_entity_entries(self) -> None:
+        scenario = _sample_scenario()
+        scenario["entities"] = ["Blue_F16"]
+
+        with self.assertRaisesRegex(ValueError, "entities\\[0\\] must be an object"):
+            ScenarioCompiler.compile_data(scenario)
+
+    def test_compile_data_rejects_invalid_import_prefab_shape(self) -> None:
+        fd, prefab_path = tempfile.mkstemp(prefix="scenario_compiler_prefab_", suffix=".json", dir="/tmp")
+        os.close(fd)
+        try:
+            with open(prefab_path, "w", encoding="utf-8") as f:
+                json.dump({"entities": {"Control_Tower": {}}}, f, ensure_ascii=True)
+            scenario = _sample_scenario()
+            scenario["imports"] = [{"file": prefab_path}]
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "imported scenario prefab 'entities' must be a list",
+            ):
+                ScenarioCompiler.compile_data(scenario)
+        finally:
+            os.unlink(prefab_path)
+
     def test_instantiate_isolates_nested_runtime_branches(self) -> None:
         compiled = ScenarioCompiler.compile_path(self._scenario_path)
 
