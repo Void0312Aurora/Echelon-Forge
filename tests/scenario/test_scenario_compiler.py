@@ -181,7 +181,7 @@ def _make_geometry() -> ef_py.CompiledScenarioGeometry:
 class ScenarioCompilerTests(unittest.TestCase):
     def setUp(self) -> None:
         ScenarioCompiler.clear_cache()
-        fd, self._scenario_path = tempfile.mkstemp(prefix="scenario_compiler_", suffix=".json", dir="/tmp")
+        fd, self._scenario_path = tempfile.mkstemp(prefix="scenario_compiler_", suffix=".json")
         os.close(fd)
         with open(self._scenario_path, "w", encoding="utf-8") as f:
             json.dump(_sample_scenario(), f, ensure_ascii=True)
@@ -237,7 +237,7 @@ class ScenarioCompilerTests(unittest.TestCase):
             ScenarioCompiler.compile_data(scenario)
 
     def test_compile_data_rejects_invalid_import_prefab_shape(self) -> None:
-        fd, prefab_path = tempfile.mkstemp(prefix="scenario_compiler_prefab_", suffix=".json", dir="/tmp")
+        fd, prefab_path = tempfile.mkstemp(prefix="scenario_compiler_prefab_", suffix=".json")
         os.close(fd)
         try:
             with open(prefab_path, "w", encoding="utf-8") as f:

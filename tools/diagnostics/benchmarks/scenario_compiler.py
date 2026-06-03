@@ -42,7 +42,7 @@ def _load_inline_contract(path: str) -> dict[str, Any]:
 
 
 def _write_temp_scenario(scenario: dict[str, Any], *, stem: str) -> str:
-    fd, tmp_path = tempfile.mkstemp(prefix=f"{stem}_", suffix=".json", dir="/tmp")
+    fd, tmp_path = tempfile.mkstemp(prefix=f"{stem}_", suffix=".json")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(scenario, f, ensure_ascii=True)

@@ -75,6 +75,10 @@ def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _repo_path(path: Path) -> str:
+    return path.as_posix()
+
+
 class NavalActiveTrainingEntryTests(unittest.TestCase):
     def test_naval_active_configs_are_n4_pre_fire_entry_gates(self) -> None:
         for filename, expected in NAVAL_ENTRIES.items():
@@ -133,8 +137,8 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
                     self.assertNotIn("action_mean_regularization_target", hyperparams)
 
                 self.assertEqual(naval_entry.get("task_id"), expected_task_id)
-                self.assertEqual(naval_entry.get("scenario_path"), str(expected["scenario"]))
-                self.assertEqual(naval_entry.get("contract_path"), str(expected["contract"]))
+                self.assertEqual(naval_entry.get("scenario_path"), _repo_path(expected["scenario"]))
+                self.assertEqual(naval_entry.get("contract_path"), _repo_path(expected["contract"]))
                 self.assertEqual(naval_entry.get("realism_grade"), "N4_pre_fire_bridge")
                 self.assertEqual(naval_entry.get("claim_level"), "entry_and_gate_only")
                 self.assertEqual(naval_entry.get("engagement_scope"), "pre_fire_only")
@@ -297,9 +301,9 @@ class NavalActiveTrainingEntryTests(unittest.TestCase):
         for filename in NAVAL_ENTRIES:
             self.assertIn(filename, readme)
             self.assertIn(filename, readme_zh)
-        self.assertIn(str(EXPECTED_SCENARIO), readme)
-        self.assertIn(str(RECOVERY_SCENARIO), readme)
-        self.assertIn(str(EXPECTED_CONTRACT), readme)
+        self.assertIn(_repo_path(EXPECTED_SCENARIO), readme)
+        self.assertIn(_repo_path(RECOVERY_SCENARIO), readme)
+        self.assertIn(_repo_path(EXPECTED_CONTRACT), readme)
         self.assertIn("not a trained naval policy", readme)
         self.assertIn("do not expose a weapon-release action", readme)
         self.assertIn("action_mode=naval_station3", readme)
