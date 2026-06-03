@@ -134,8 +134,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop python tools/diagnostic
   pending assessment、salvo 和 reattack 授权；只有 A3 约束可观测后仍出现未解释的多发，
   才回到后续 policy/memory package。
 - A3 32k learned-policy probe 未通过武器使用验收；post-launch mission observation 已
-  动态暴露预算耗尽和 pending assessment。下一步应在该修复后重跑 reactive/temporal
-  A3 对照，而不是重新打开动作接口。
+  动态暴露预算耗尽和 pending assessment。post-fix reactive/temporal 对照改善了
+  stochastic 发射纪律，但 deterministic 仍不发射；下一步应修复训练信号和 policy routing，
+  而不是重新打开动作接口。
 
 ## Archive
 

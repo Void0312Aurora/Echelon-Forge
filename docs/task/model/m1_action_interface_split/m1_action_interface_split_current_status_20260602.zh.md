@@ -30,6 +30,7 @@
 | Active config migration | pass | training-entry tests、JSON bootstrap、32-step train smoke、1000-step load/predict smoke、Stage-1 range-gate diagnostics | learned policy 仍未通过。 |
 | A3 C2/ROE interpretation | pass | [A3 P4 探针证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md) | 它分类 release 行为，但不证明 learned policy 质量。 |
 | A3 learned-policy probe | held | [A3 learned-policy 探针证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.zh.md) | 32k deterministic 不发射，stochastic 仍违规多发；已补 post-launch mission observation 动态状态。 |
+| A3 reactive/temporal comparison | held | [A3 reactive/temporal 对照证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md) | temporal stochastic 将违规发射从 8 次降到 0 次，但 deterministic policy 仍不发射。 |
 | Shaped S1 training recovery | partial | 65,536-step shaped run 完成，训练窗口内飞行状态健康且没有 deep-stall/combat-loss 回归 | deterministic policy 仍不发射；stochastic policy 会早发/多发，武器使用尚未验收。 |
 | Action-interface closure | accepted | [m1_action_interface_split_acceptance_20260602.zh.md](m1_action_interface_split_acceptance_20260602.zh.md) | M1 temporal evidence 与 M2 release 仍 held。 |
 
@@ -93,11 +94,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 ## 下一步顺序
 
 1. 用 accepted hybrid action interface 作为后续 S1 训练默认候选。
-2. 使用 A3 C2/ROE probe config 继续跑后续 S1 训练/评估，使 learned-policy release
-   能被评分为授权发射或违规发射；下一轮应使用 post-launch mission observation 动态修复后的
-   reactive/temporal 对照。
+2. 修复训练信号和 policy routing，使 deterministic policy 在 A3 C2/ROE 下学到授权首发。
 3. 在 deterministic learned release 出现后，用 A3-aware 指标比较 reactive/hybrid temporal
-   repeated-release interval。
+   repeated-release interval 与 post-launch hold 行为。
 
 ## 禁止的过度声明
 

@@ -15,6 +15,7 @@ M1 对应路径 A。它不是最终正式架构，而是进入路径 C 前的证
 - [A3 C2/ROE 发射纪律](../../air_combat/a3_c2_roe_release_discipline/README.zh.md)
 - [A3 C2/ROE P4 探针证据 - 2026-06-03](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md)
 - [A3 C2/ROE Learned-Policy 探针证据 - 2026-06-03](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.zh.md)
+- [A3 C2/ROE Reactive vs Temporal 对照证据 - 2026-06-03](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)
 - [M1-A4 Stage-1 短程证据 - 2026-06-02](m1_a4_stage1_evidence_20260602.zh.md)
 - [M1-A4 Hybrid Temporal Shaped 对照证据 - 2026-06-02](m1_a4_hybrid_temporal_shaped_pair_20260602.zh.md)
 - 当前空战训练配置：
@@ -116,6 +117,8 @@ M1 可以进入 M2 release vote 的最低证据：
   计数面区分开；
 - A3 learned-policy probe 已显示 32k deterministic 不发射、stochastic 仍多发违规；
   发射后 `shot_budget_remaining` / `pending_assessment` 已进入动态 mission observation；
+- post-fix reactive/temporal 对照显示 temporal stochastic 能把违规发射从 8 降到 0，
+  但 deterministic 仍不发射，且 temporal 授权发射偏少、无 damage report；
 - 改善来自策略可观察历史，而不是环境侧静默拦截重复发射；
 - 若改善只来自新增 command/ROE 约束，而不是 temporal history，M2 release 继续 held；
 - 若无改善，文档记录原因并暂停 M2 实现。

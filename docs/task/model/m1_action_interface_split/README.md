@@ -149,8 +149,10 @@ This subproject can be marked accepted only when:
   constraints are observable should return to a later policy/memory package.
 - The A3 32k learned-policy probe did not pass weapon-employment acceptance;
   post-launch mission observation now dynamically exposes budget exhaustion and
-  pending assessment. The next comparison should rerun reactive/temporal A3
-  after that fix, not reopen the action interface.
+  pending assessment. The post-fix reactive/temporal comparison improves
+  stochastic release discipline but still leaves deterministic no-fire, so the
+  next work should repair training signal and policy routing rather than reopen
+  the action interface.
 
 ## Archive
 

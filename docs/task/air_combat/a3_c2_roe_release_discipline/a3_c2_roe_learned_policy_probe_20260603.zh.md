@@ -103,3 +103,7 @@ learned policy 仍未验收：deterministic 行为不发射，stochastic 行为�
 
 下一项实质动作是在动态发射后观测修复之后，重跑 reactive/temporal A3 C2/ROE 训练对照。
 在可观察合同下 learned-policy 武器使用没有改善前，M2 继续 held。
+
+后续已完成：
+
+- [A3 C2/ROE Reactive vs Temporal 对照证据 - 2026-06-03](a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)

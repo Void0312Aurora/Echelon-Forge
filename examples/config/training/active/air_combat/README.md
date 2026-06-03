@@ -14,7 +14,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json)
     - Used by the Stage-1 M1 hybrid shaped training probe after the live damage chain and hybrid action interface are both available.
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
-    - Used by the additive Stage-1 A3 C2/ROE hybrid shaped probe; legacy M1 baseline entries remain on `mission_obs_mode=basic`.
+    - Used by the additive Stage-1 A3 C2/ROE hybrid shaped and temporal shaped probes; legacy M1 baseline entries remain on `mission_obs_mode=basic`.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Early curriculum target: unarmed `MQ-9_Reaper` surrogate for Stage 0 and Stage 1
@@ -75,6 +75,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Uses the C2/ROE training-shaped Stage-1 scenario with an explicit single-shot-then-assess command state.
   - This is an additive partial probe entry while reward/process metrics are still owned by the A3 reward/diagnostics stream.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json)
+  - Stage-1 A3 C2/ROE hybrid temporal shaped comparison probe using `mission_obs_mode=air_combat_c2_roe_v1`.
+  - Pairs with the A3 C2/ROE reactive shaped entry and only adds `temporal_history_len=16` plus `TemporalTransformerExtractor`.
+  - This is the maintained next entry for rerunning reactive/temporal learned-policy comparisons after post-launch mission observation became dynamic.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.
@@ -89,7 +94,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
 - Current legacy `1v1` smoke and M1 baseline entries still use `mission_obs_mode=basic`.
   - So the HMoE policy is active, but the maintained route semantics exposed to the policy are still minimal.
   - In current smoke logs this means routing stays on the navigation family/subexpert, which is acceptable for chain validation but not yet a fully differentiated combat-routing setup.
-  - The A3 C2/ROE probe is intentionally separate and additive; do not use it as evidence that legacy M1 baselines changed observation mode.
+  - The A3 C2/ROE probes are intentionally separate and additive; do not use them as evidence that legacy M1 baselines changed observation mode.
 - The raw `full`, hybrid, and temporal smoke entries intentionally do not enable the maintained scripted-residual action wrapper.
   - The shaped hybrid and hybrid temporal shaped training probes are the exceptions: they blend only the first four flight-control axes against stable flight and leave radar / master-arm / fire / weapon-select policy commands untouched.
   - For first `1v1` smoke we still want the learner to retain the raw action surface.

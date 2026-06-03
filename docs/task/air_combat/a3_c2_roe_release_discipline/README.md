@@ -31,6 +31,8 @@ Inputs:
   [c2_roe_code_surface_scan_20260602.zh.md](c2_roe_code_surface_scan_20260602.zh.md)
 - A3 learned-policy probe evidence:
   [a3_c2_roe_learned_policy_probe_20260603.md](a3_c2_roe_learned_policy_probe_20260603.md)
+- A3 reactive/temporal comparison evidence:
+  [a3_c2_roe_reactive_temporal_comparison_20260603.md](a3_c2_roe_reactive_temporal_comparison_20260603.md)
 
 ## Purpose
 
@@ -59,6 +61,7 @@ ROE violation.
 | M1 evidence | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 runs remained stable but still produced repeated launches; P4 probes now classify authorized and violation releases under the C2/ROE contract. | This does not prove memory is solved or useless; M2 remains held. |
 | A3 learned-policy probe | held after evidence | 32k A3 C2/ROE hybrid shaped training completed; deterministic final model did not fire, while stochastic 3-episode probing produced 3 authorized releases and 8 violation releases. | Learned policy is not accepted; this evidence exposed that post-launch state must dynamically enter mission observation. |
 | Post-launch observable state | local fix validated | `air_combat_c2_roe_v1` now uses current missile-count deficit and reward release count to update `shot_budget_remaining`, `pending_assessment`, and `own_missiles_in_flight_count`. | `own_missiles_in_flight_count` remains a release-count proxy, not a full missile lifecycle model. |
+| Reactive vs temporal A3 comparison | held after evidence | Fixed-seed 32k post-fix comparison: both deterministic policies did not fire; temporal stochastic reduced violation releases from 8 to 0 but produced only 2 authorized releases and no damage reports. | Temporal history helps stochastic discipline but does not solve deterministic weapon employment or policy routing. |
 
 ## Scope
 
@@ -155,6 +158,8 @@ Current outputs and evidence:
   [a3_c2_roe_p4_probe_evidence_20260603.md](a3_c2_roe_p4_probe_evidence_20260603.md)
 - A3 learned-policy probe and post-launch observation fix evidence:
   [a3_c2_roe_learned_policy_probe_20260603.md](a3_c2_roe_learned_policy_probe_20260603.md)
+- A3 reactive/temporal comparison evidence:
+  [a3_c2_roe_reactive_temporal_comparison_20260603.md](a3_c2_roe_reactive_temporal_comparison_20260603.md)
 - M1 evidence update deciding whether repeated fire remains a memory problem
   after C2/ROE observability exists.
 
@@ -184,9 +189,9 @@ This subproject can be marked accepted only when:
 - A3 32k learned-policy probing shows that the deterministic final model does
   not fire and stochastic behavior still produces many violation releases; this
   does not release M2.
-- The next substantive work is a reactive/temporal A3 C2/ROE learned-policy
-  comparison after the dynamic post-launch observation fix, to decide whether
-  the remaining gap is training signal, policy memory, or sequence-modeling.
+- The next substantive work is training-signal and policy-routing repair:
+  deterministic policy must learn an authorized first shot before M2 can be
+  reconsidered.
 
 ## Archive
 

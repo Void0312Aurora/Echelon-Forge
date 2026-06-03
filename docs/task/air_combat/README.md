@@ -29,8 +29,10 @@ accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
   release. The `2026-06-03` 32k A3 learned-policy probe shows that the
   deterministic model does not fire and stochastic probing still produces
   violation releases; post-launch mission observation now dynamically exposes
-  `shot_budget_remaining=0` / `pending_assessment=1`, but learned-policy weapon
-  employment and M2 release remain held.
+  `shot_budget_remaining=0` / `pending_assessment=1`. The post-fix
+  reactive/temporal comparison shows temporal stochastic probing can remove
+  violation releases, but deterministic weapon employment still does not fire;
+  M2 release remains held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -58,9 +60,8 @@ accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
-- run reactive/temporal learned-policy comparison against the A3 C2/ROE probe
-  config after the dynamic post-launch observation fix; do not release M2 from
-  process-probe classification or a single failed 32k learned-policy run alone
+- repair training signal and policy routing so deterministic policy learns an
+  authorized first shot under A3 C2/ROE before reconsidering M2
 
 ## Recommended Reading Order
 

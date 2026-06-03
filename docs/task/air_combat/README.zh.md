@@ -23,8 +23,9 @@
   许可和策略可观察的 mission observation 约束已经接入。P4 probe 能拆分授权发射与
   违规发射。`2026-06-03` 32k A3 learned-policy probe 显示 deterministic
   模型不发射，stochastic probe 仍产生多次违规发射；发射后 mission observation
-  已改为动态暴露 `shot_budget_remaining=0` / `pending_assessment=1`，但 learned-policy
-  武器使用验收和 M2 release 仍 held。
+  已改为动态暴露 `shot_budget_remaining=0` / `pending_assessment=1`。post-fix
+  reactive/temporal 对照显示 temporal stochastic 可清零违规发射，但 deterministic
+  武器使用仍不发射；M2 release 仍 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -46,8 +47,8 @@
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
-- 在发射后动态观测修复之后，使用 A3 C2/ROE probe config 继续 reactive/temporal
-  learned-policy 对照；不用 process-probe 分类结果或单次 32k 未通过结果直接释放 M2
+- 修复训练信号和 policy routing，使 deterministic policy 先学到 A3 C2/ROE 下的授权首发，
+  再重新讨论 M2
 
 ## 推荐阅读顺序
 

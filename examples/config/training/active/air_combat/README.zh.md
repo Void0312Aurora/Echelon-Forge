@@ -14,7 +14,7 @@
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json)
     - 在杀伤链和 hybrid 动作接口都可用后，由 Stage-1 M1 hybrid shaped 训练探针使用。
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
-    - 由 additive Stage-1 A3 C2/ROE hybrid shaped 探针使用；既有 M1 baseline 条目仍保持 `mission_obs_mode=basic`。
+    - 由 additive Stage-1 A3 C2/ROE hybrid shaped 与 temporal shaped 探针使用；既有 M1 baseline 条目仍保持 `mission_obs_mode=basic`。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
   - 早期课程目标：Stage 0 和 Stage 1 使用无武器 `MQ-9_Reaper` 替身
@@ -75,6 +75,11 @@
   - 使用 C2/ROE training-shaped Stage-1 场景，并显式给出 single-shot-then-assess command state。
   - 这是 reward/process metrics 仍由 A3 reward/diagnostics stream 处理期间的 additive partial probe 入口。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json)
+  - Stage-1 A3 C2/ROE hybrid temporal shaped 对照探针，使用 `mission_obs_mode=air_combat_c2_roe_v1`。
+  - 与 A3 C2/ROE reactive shaped 条目配对，只额外启用 `temporal_history_len=16` 和 `TemporalTransformerExtractor`。
+  - 这是 post-launch mission observation 动态化后，重跑 reactive/temporal learned-policy 对照的维护入口。
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
   - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。
@@ -89,7 +94,7 @@
 - 当前 legacy `1v1` smoke 和 M1 baseline 条目仍使用 `mission_obs_mode=basic`。
   - 因此 HMoE 策略处于活跃状态，但暴露给策略的维护路线语义仍然最小化。
   - 在当前烟雾日志中，这意味着路由停留在导航族/子专家上，这对于链路验证是可接受的，但尚未形成完全差异化的作战路由配置。
-  - A3 C2/ROE 探针是单独的 additive entry；不能据此推断既有 M1 baseline 已改变 observation mode。
+  - A3 C2/ROE 探针是单独的 additive entries；不能据此推断既有 M1 baseline 已改变 observation mode。
 - raw `full`、hybrid 和 temporal 烟雾测试条目有意不启用维护中的脚本化残差动作封装。
   - shaped hybrid 与 hybrid temporal shaped 训练探针是例外：它们只把前四个飞控轴和 stable-flight baseline 做残差混合，雷达 / master-arm / fire / weapon-select 仍保持策略直接控制。
   - 在首次 `1v1` 烟雾测试中，我们仍希望学习者保留原始动作表面。

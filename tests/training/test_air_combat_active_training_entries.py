@@ -32,6 +32,10 @@ STAGE1_C2_ROE_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_shaped_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_TEMPORAL_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -227,6 +231,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         c2_roe_configs = sorted(AIR_COMBAT_ACTIVE_DIR.glob("*c2_roe*.json"))
         c2_roe_scenarios = sorted((REPO_ROOT / "scenarios" / "air_combat" / "1v1").glob("*c2_roe*.json"))
         self.assertIn(STAGE1_C2_ROE_CONFIG, c2_roe_configs)
+        self.assertIn(STAGE1_C2_ROE_TEMPORAL_CONFIG, c2_roe_configs)
         self.assertIn(STAGE1_C2_ROE_SCENARIO, c2_roe_scenarios)
 
         cfg = _load_json(STAGE1_C2_ROE_CONFIG)
@@ -285,6 +290,46 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
         self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
 
+    def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
+        c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)
+        c2_roe_temporal = _load_json(STAGE1_C2_ROE_TEMPORAL_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(c2_roe_temporal.get(key), c2_roe.get(key), key)
+        self.assertEqual(c2_roe_temporal.get("runtime"), c2_roe.get("runtime"))
+        self.assertEqual(c2_roe_temporal.get("early_stop"), c2_roe.get("early_stop"))
+        self.assertEqual(c2_roe_temporal.get("diagnostics"), c2_roe.get("diagnostics"))
+        self.assertEqual(c2_roe_temporal.get("hmoe"), c2_roe.get("hmoe"))
+        self.assertEqual(c2_roe_temporal.get("wrappers"), c2_roe.get("wrappers"))
+
+        c2_roe_env = dict(c2_roe.get("env", {}))
+        c2_roe_temporal_env = dict(c2_roe_temporal.get("env", {}))
+        self.assertEqual(int(c2_roe_temporal_env.pop("temporal_history_len")), 16)
+        self.assertEqual(c2_roe_temporal_env, c2_roe_env)
+
+        c2_roe_hyper = dict(c2_roe.get("hyperparameters", {}))
+        c2_roe_temporal_hyper = dict(c2_roe_temporal.get("hyperparameters", {}))
+        c2_roe_policy_kwargs = dict(c2_roe_hyper.pop("policy_kwargs"))
+        c2_roe_temporal_policy_kwargs = dict(c2_roe_temporal_hyper.pop("policy_kwargs"))
+        self.assertEqual(c2_roe_temporal_hyper, c2_roe_hyper)
+        self.assertEqual(c2_roe_policy_kwargs.get("hybrid_action_spec"), "air_combat_hybrid_v1")
+        self.assertEqual(c2_roe_temporal_policy_kwargs.get("hybrid_action_spec"), "air_combat_hybrid_v1")
+        self.assertEqual(c2_roe_policy_kwargs.get("features_extractor_class"), "TransformerExtractor")
+        self.assertEqual(c2_roe_temporal_policy_kwargs.get("features_extractor_class"), "TemporalTransformerExtractor")
+        self.assertEqual(
+            c2_roe_temporal_policy_kwargs.get("family_subexpert_counts"),
+            c2_roe_policy_kwargs.get("family_subexpert_counts"),
+        )
+        self.assertEqual(c2_roe_temporal_policy_kwargs.get("net_arch"), c2_roe_policy_kwargs.get("net_arch"))
+        self.assertEqual(c2_roe_temporal_policy_kwargs.get("log_std_init"), c2_roe_policy_kwargs.get("log_std_init"))
+        temporal_extractor = c2_roe_temporal_policy_kwargs.get("features_extractor_kwargs", {})
+        reactive_extractor = c2_roe_policy_kwargs.get("features_extractor_kwargs", {})
+        self.assertEqual(int(temporal_extractor.get("features_dim")), int(reactive_extractor.get("features_dim")))
+        self.assertEqual(int(temporal_extractor.get("n_heads")), int(reactive_extractor.get("n_heads")))
+        self.assertEqual(int(temporal_extractor.get("n_layers")), int(reactive_extractor.get("n_layers")))
+        self.assertEqual(int(temporal_extractor.get("temporal_n_heads")), 4)
+        self.assertEqual(int(temporal_extractor.get("temporal_n_layers")), 2)
+
     def test_stage1_bvr_hybrid_temporal_shaped_probe_pairs_with_hybrid_shaped_baseline(self) -> None:
         shaped = _load_json(STAGE1_HYBRID_SHAPED_CONFIG)
         temporal_shaped = _load_json(STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG)
@@ -334,6 +379,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             ("hybrid_shaped", STAGE1_HYBRID_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
             ("hybrid_temporal_shaped", STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
             ("c2_roe_hybrid_shaped", STAGE1_C2_ROE_CONFIG, STAGE1_C2_ROE_SCENARIO),
+            ("c2_roe_hybrid_temporal_shaped", STAGE1_C2_ROE_TEMPORAL_CONFIG, STAGE1_C2_ROE_SCENARIO),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -363,11 +409,23 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             self.assertIn("world_batch_vec_env=True", proc.stdout)
             self.assertIn("World batch runtime:", proc.stdout)
             self.assertIn("Execution reward runtime: requested_backend=compiled effective_backend=compiled", proc.stdout)
-            if label in {"hybrid", "hybrid_temporal", "hybrid_shaped", "hybrid_temporal_shaped", "c2_roe_hybrid_shaped"}:
+            if label in {
+                "hybrid",
+                "hybrid_temporal",
+                "hybrid_shaped",
+                "hybrid_temporal_shaped",
+                "c2_roe_hybrid_shaped",
+                "c2_roe_hybrid_temporal_shaped",
+            }:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
-            if label in {"temporal", "hybrid_temporal", "hybrid_temporal_shaped"}:
+            if label in {
+                "temporal",
+                "hybrid_temporal",
+                "hybrid_temporal_shaped",
+                "c2_roe_hybrid_temporal_shaped",
+            }:
                 self.assertIn("temporal_history_len=16", proc.stdout)
-            if label == "c2_roe_hybrid_shaped":
+            if label in {"c2_roe_hybrid_shaped", "c2_roe_hybrid_temporal_shaped"}:
                 self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 

@@ -30,6 +30,8 @@ ROE 与发射纪律约束层；在这层明确前，不再把同一目标多枚�
   [c2_roe_code_surface_scan_20260602.zh.md](c2_roe_code_surface_scan_20260602.zh.md)
 - A3 learned-policy 探针证据：
   [a3_c2_roe_learned_policy_probe_20260603.zh.md](a3_c2_roe_learned_policy_probe_20260603.zh.md)
+- A3 reactive/temporal 对照证据：
+  [a3_c2_roe_reactive_temporal_comparison_20260603.zh.md](a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)
 
 ## Purpose
 
@@ -53,6 +55,7 @@ A3 要补的是这层缺失的指挥约束。它把公开 C2/ROE 概念收敛为
 | M1 证据 | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 稳定运行但仍出现重复发射；P4 probe 现在能在 C2/ROE 合同下分类授权发射与违规发射。 | 这不证明记忆已解决或无效；M2 继续 held。 |
 | A3 learned-policy probe | held after evidence | 32k A3 C2/ROE hybrid shaped 训练完成；deterministic final model 不发射，stochastic 3 episode 产生 3 次授权发射和 8 次违规发射。 | learned policy 未验收；该证据暴露了发射后状态需要动态进入 mission observation。 |
 | 发射后可观测状态 | local fix validated | `air_combat_c2_roe_v1` 现在用当前导弹余量下降和 reward release count 更新 `shot_budget_remaining`、`pending_assessment` 与 `own_missiles_in_flight_count`。 | `own_missiles_in_flight_count` 仍是 release-count proxy，不是完整导弹飞行生命周期模型。 |
+| A3 reactive vs temporal 对照 | held after evidence | 固定 seed 32k post-fix 对照：两者 deterministic 都不发射；temporal stochastic 将违规发射从 8 次降到 0 次，但只有 2 次授权发射且无 damage report。 | temporal history 改善了 stochastic 发射纪律，但未解决 deterministic 武器使用和 policy routing。 |
 
 ## Scope
 
@@ -143,6 +146,8 @@ Fail-closed defaults:
   [a3_c2_roe_p4_probe_evidence_20260603.zh.md](a3_c2_roe_p4_probe_evidence_20260603.zh.md)
 - A3 learned-policy 探针与发射后观测修复证据：
   [a3_c2_roe_learned_policy_probe_20260603.zh.md](a3_c2_roe_learned_policy_probe_20260603.zh.md)
+- A3 reactive/temporal 对照证据：
+  [a3_c2_roe_reactive_temporal_comparison_20260603.zh.md](a3_c2_roe_reactive_temporal_comparison_20260603.zh.md)
 - M1 证据更新：判断 C2/ROE 可观测后，重复发射是否仍是记忆问题。
 
 ## Acceptance Gate
@@ -163,8 +168,8 @@ Fail-closed defaults:
 - 数据链、外部传感器和 friend/no-fire-zone 逻辑是未来扩展，不是 A3 验收条件。
 - A3 32k learned-policy probe 已显示：deterministic final model 不发射，stochastic
   行为仍有大量违规发射；该结果不释放 M2。
-- 下一项实质工作是在发射后动态观测修复之后，重跑 reactive/temporal A3 C2/ROE
-  learned-policy 对照，确认剩余问题是训练信号、策略记忆还是 sequence-model 缺口。
+- 下一项实质工作转向训练信号和 policy routing 修复：deterministic policy 必须先学到
+  授权首发，随后才可重新讨论 M2。
 
 ## Archive
 

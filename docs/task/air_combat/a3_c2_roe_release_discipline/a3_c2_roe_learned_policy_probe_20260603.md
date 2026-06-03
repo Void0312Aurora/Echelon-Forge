@@ -109,3 +109,7 @@ violation releases.
 The main action item is to rerun reactive/temporal A3 C2/ROE training after the
 dynamic post-launch observation fix. M2 remains held until learned-policy
 weapon use improves under this observable contract.
+
+Follow-up completed:
+
+- [A3 C2/ROE Reactive vs Temporal Comparison - 2026-06-03](a3_c2_roe_reactive_temporal_comparison_20260603.md)
