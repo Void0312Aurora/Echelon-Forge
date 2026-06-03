@@ -1,9 +1,9 @@
 # A3 C2/ROE Release Discipline
 
-Status: `2026-06-03` bounded C2/ROE implementation, P4 evidence, and P5 index
-sync pass; M2 remains held. This subproject defines the air-combat C2, ROE,
-and shot-discipline layer needed before treating repeated missile launch as
-only a policy-memory failure.
+Status: `2026-06-03` bounded C2/ROE implementation, P4 evidence,
+learned-policy probe, and post-launch observation fix recorded; M2 remains
+held. This subproject defines the air-combat C2, ROE, and shot-discipline layer
+needed before treating repeated missile launch as only a policy-memory failure.
 
 Language:
 
@@ -29,6 +29,8 @@ Inputs:
   [c2_roe_public_source_scan_20260602.zh.md](c2_roe_public_source_scan_20260602.zh.md)
 - Code-surface scan:
   [c2_roe_code_surface_scan_20260602.zh.md](c2_roe_code_surface_scan_20260602.zh.md)
+- A3 learned-policy probe evidence:
+  [a3_c2_roe_learned_policy_probe_20260603.md](a3_c2_roe_learned_policy_probe_20260603.md)
 
 ## Purpose
 
@@ -54,7 +56,9 @@ ROE violation.
 | Existing runtime command fields | registered in A3 contract | `air_combat_c2_roe_v1` consumes `authorization_to_fire`, `roe_state`, WCS, engage order, assigned target, shot policy, and pending assessment through the loader/runtime path. | First version is a simulation contract, not a full C2 hierarchy or datalink model. |
 | Air-combat S1 scenarios | additive A3 probe available | `air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json` and its active config use `mission_obs_mode=air_combat_c2_roe_v1` and enable the C2/ROE reward gate. | Existing M1 baseline entries intentionally remain on `mission_obs_mode=basic`. |
 | Naval precedent | useful precedent | `naval_screen_station_v1` exposes `roe_state`, `authorization_to_fire`, and assigned target fields, with reward terms for ROE hold/authorization behavior. | Naval screen logic should guide wiring patterns, not define air tactics. |
-| M1 evidence | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 runs remained stable but still produced repeated launches; P4 probes now classify authorized and violation releases under the C2/ROE contract. | This does not prove memory is solved or useless; it keeps M2 held until learned-policy evidence is available. |
+| M1 evidence | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 runs remained stable but still produced repeated launches; P4 probes now classify authorized and violation releases under the C2/ROE contract. | This does not prove memory is solved or useless; M2 remains held. |
+| A3 learned-policy probe | held after evidence | 32k A3 C2/ROE hybrid shaped training completed; deterministic final model did not fire, while stochastic 3-episode probing produced 3 authorized releases and 8 violation releases. | Learned policy is not accepted; this evidence exposed that post-launch state must dynamically enter mission observation. |
+| Post-launch observable state | local fix validated | `air_combat_c2_roe_v1` now uses current missile-count deficit and reward release count to update `shot_budget_remaining`, `pending_assessment`, and `own_missiles_in_flight_count`. | `own_missiles_in_flight_count` remains a release-count proxy, not a full missile lifecycle model. |
 
 ## Scope
 
@@ -101,9 +105,9 @@ Field order:
 | `target_identity_state` | default mission `threat_state` or contact classification | Simplified contract value: `0=unknown`, `1=bogey`, `2=bandit`, `3=hostile`, `4=friendly`. |
 | `engage_order_state` | default `0` | `0=none`, `1=commit`, `2=engage`, `3=hold_fire`, `4=cease_fire`, `5=cease_engagement`, `6=abort`. |
 | `shot_policy_state` | default `0` | `0=weapons_hold`, `1=single_shot_then_assess`, `2=salvo_authorized`, `3=reattack_authorized`. |
-| `shot_budget_remaining` | default `0` | Remaining launches authorized by the current contract; first version is scenario/command supplied. |
-| `pending_assessment` | `0/1`, default `0` | Whether the aircraft is waiting for effect assessment or reauthorization after first shot. |
-| `own_missiles_in_flight_count` | default `0` | Own missiles in flight against the same target; first version consumes only an explicit mission field, with runtime diagnostics left for follow-up. |
+| `shot_budget_remaining` | default `0` | Remaining launches authorized by the current contract; scenario/command supplied, then decremented by known runtime release count in observation. |
+| `pending_assessment` | `0/1`, default `0` | Whether the aircraft is waiting for effect assessment or reauthorization after first shot; dynamically set to `1` after a known release under single-shot policy. |
+| `own_missiles_in_flight_count` | default `0` | Own missiles in flight against the same target; first version exposes the greater of the explicit mission field and known release-count proxy. |
 | `target_contact_present` | derived `0/1` | Whether the assigned-target track is present in the current observation. |
 
 Fail-closed defaults:
@@ -149,6 +153,8 @@ Current outputs and evidence:
   authorized salvos, and reattack shots.
 - A3-aware P4 probe evidence:
   [a3_c2_roe_p4_probe_evidence_20260603.md](a3_c2_roe_p4_probe_evidence_20260603.md)
+- A3 learned-policy probe and post-launch observation fix evidence:
+  [a3_c2_roe_learned_policy_probe_20260603.md](a3_c2_roe_learned_policy_probe_20260603.md)
 - M1 evidence update deciding whether repeated fire remains a memory problem
   after C2/ROE observability exists.
 
@@ -175,11 +181,12 @@ This subproject can be marked accepted only when:
   semantics are stable.
 - Datalink, offboard sensors, and friendly/no-fire-zone logic are future
   expansions, not A3 acceptance conditions.
-- If A3 constraints are observable and repeated unauthorized fire persists, the
-  remaining gap can return to M1/M2 as a policy-memory or sequence-model issue.
-- The next substantive work is learned-policy training/evaluation against the
-  A3 C2/ROE probe config when RL resources are available; local P5 closure does
-  not claim that result.
+- A3 32k learned-policy probing shows that the deterministic final model does
+  not fire and stochastic behavior still produces many violation releases; this
+  does not release M2.
+- The next substantive work is a reactive/temporal A3 C2/ROE learned-policy
+  comparison after the dynamic post-launch observation fix, to decide whether
+  the remaining gap is training signal, policy memory, or sequence-modeling.
 
 ## Archive
 

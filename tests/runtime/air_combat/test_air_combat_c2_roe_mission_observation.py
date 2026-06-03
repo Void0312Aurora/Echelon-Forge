@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -129,6 +130,67 @@ class AirCombatC2RoeMissionObservationTests(unittest.TestCase):
         self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_policy_state")]), 0.0)
         self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_budget_remaining")]), 0.0)
         self.assertEqual(float(mission[mission_observation_field_index(mode, "pending_assessment")]), 0.0)
+
+    def test_air_combat_c2_roe_v1_reflects_runtime_single_shot_assessment_state(self) -> None:
+        mode = "air_combat_c2_roe_v1"
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        loader = ScenarioLoader(sim)
+        agent_id = int(loader.load_scenario(_STAGE1_SCENARIO_PATH, seed=20260605))
+        loader.mission_cmd.update(
+            {
+                "roe_state": 2,
+                "wcs_state": 2,
+                "authorization_to_fire": True,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "own_missiles_in_flight_count": 0,
+            }
+        )
+        loader._air_combat_reward_release_count = 1
+        truth = sim.get_agent_observation(agent_id)
+        inst = sim.get_instrument_state(agent_id)
+
+        mission = loader.get_mission_observation(mode, truth=truth, inst=inst)
+
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_policy_state")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_budget_remaining")]), 0.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "pending_assessment")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "own_missiles_in_flight_count")]), 1.0)
+
+    def test_air_combat_c2_roe_v1_reflects_current_missile_delta_before_reward_runs(self) -> None:
+        mode = "air_combat_c2_roe_v1"
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        loader = ScenarioLoader(sim)
+        agent_id = int(loader.load_scenario(_STAGE1_SCENARIO_PATH, seed=20260606))
+        loader.mission_cmd.update(
+            {
+                "roe_state": 2,
+                "wcs_state": 2,
+                "authorization_to_fire": True,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "own_missiles_in_flight_count": 0,
+            }
+        )
+        loader._air_combat_reward_release_count = 0
+        loader._air_combat_c2_roe_initial_missiles = 4
+        truth = SimpleNamespace(missiles_remaining=3, contacts=[])
+        inst = sim.get_instrument_state(agent_id)
+
+        mission = loader.get_mission_observation(mode, truth=truth, inst=inst)
+
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_policy_state")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "shot_budget_remaining")]), 0.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "pending_assessment")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "own_missiles_in_flight_count")]), 1.0)
 
 
 if __name__ == "__main__":

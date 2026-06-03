@@ -38,6 +38,7 @@ diagnostics; learned policy and M2 release remain held.
 | HMoE hybrid policy | pass | HMoE forward/evaluate and tiny PPO smoke | Continuous-axis entropy uses the `-log_prob` sampled fallback. |
 | Active config migration | pass | training-entry tests, JSON bootstrap, 32-step train smoke, 1000-step load/predict smoke, Stage-1 range-gate diagnostics | Learned policy is still not accepted. |
 | A3 C2/ROE interpretation | pass | [A3 P4 probe evidence](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.md) | This classifies release behavior; it does not prove learned policy quality. |
+| A3 learned-policy probe | held | [A3 learned-policy probe evidence](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.md) | 32k deterministic does not fire and stochastic still makes violation releases; post-launch mission observation dynamic state has been added. |
 | Shaped S1 training recovery | partial | 65,536-step shaped run completed with healthy flight-state diagnostics and no deep-stall/combat-loss regression in training windows | Deterministic policy does not fire; stochastic policy fires early/repeatedly and is not weapon-employment accepted. |
 | Action-interface closure | accepted | [m1_action_interface_split_acceptance_20260602.md](m1_action_interface_split_acceptance_20260602.md) | M1 temporal evidence and M2 release remain held. |
 
@@ -107,7 +108,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 1. Use the accepted hybrid action interface as the default candidate for
    follow-on S1 training.
 2. Run follow-on S1 training/evaluation with the A3 C2/ROE probe config so
-   learned-policy releases can be scored as authorized or violation releases.
+   learned-policy releases can be scored as authorized or violation releases;
+   the next pass should use the reactive/temporal comparison after the dynamic
+   post-launch mission-observation fix.
 3. Once deterministic learned release appears, compare reactive/hybrid-temporal
    repeated-release intervals under A3-aware metrics.
 

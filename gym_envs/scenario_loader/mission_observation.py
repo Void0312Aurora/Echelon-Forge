@@ -226,6 +226,42 @@ def _target_track(truth, target_id: int):
     return None
 
 
+def _truth_missiles_remaining(truth) -> int | None:
+    try:
+        value = int(getattr(truth, "missiles_remaining", -1))
+    except Exception:
+        return None
+    return value if value >= 0 else None
+
+
+def _air_combat_observed_release_count(loader, truth) -> int:
+    try:
+        reward_release_count = max(0, int(getattr(loader, "_air_combat_reward_release_count", 0) or 0))
+    except Exception:
+        reward_release_count = 0
+
+    current_missiles = _truth_missiles_remaining(truth)
+    if current_missiles is None:
+        return int(reward_release_count)
+
+    initial_missiles = getattr(loader, "_air_combat_c2_roe_initial_missiles", None)
+    if initial_missiles is None:
+        initial_missiles = getattr(loader, "_air_combat_reward_prev_missiles", None)
+    try:
+        initial_missiles = int(initial_missiles)
+    except Exception:
+        initial_missiles = int(current_missiles)
+    if initial_missiles < int(current_missiles):
+        initial_missiles = int(current_missiles)
+    try:
+        setattr(loader, "_air_combat_c2_roe_initial_missiles", int(initial_missiles))
+    except Exception:
+        pass
+
+    missile_delta_release_count = max(0, int(initial_missiles) - int(current_missiles))
+    return max(int(reward_release_count), int(missile_delta_release_count))
+
+
 def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
     _ = inst
     if truth is None:
@@ -243,6 +279,18 @@ def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
     target_identity = cmd_view.int_field(
         "target_identity_state",
         cmd_view.int_field("threat_state", track_identity),
+    )
+    shot_policy_state = int(cmd_view.int_field("shot_policy_state", 0))
+    shot_budget_remaining = max(0, int(cmd_view.int_field("shot_budget_remaining", 0)))
+    release_count = _air_combat_observed_release_count(loader, truth)
+    if release_count > 0 and shot_budget_remaining > 0:
+        shot_budget_remaining = max(0, int(shot_budget_remaining) - int(release_count))
+    pending_assessment = bool(cmd_view.bool_field("pending_assessment", False))
+    if release_count > 0 and shot_policy_state == 1:
+        pending_assessment = True
+    own_missiles_in_flight_count = max(
+        int(cmd_view.int_field("own_missiles_in_flight_count", 0)),
+        int(release_count),
     )
 
     return np.array(
@@ -262,10 +310,10 @@ def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
             float(cmd_view.float_field("assigned_target_snapshot_time_s", 0.0)),
             float(target_identity),
             float(cmd_view.int_field("engage_order_state", 0)),
-            float(cmd_view.int_field("shot_policy_state", 0)),
-            float(cmd_view.int_field("shot_budget_remaining", 0)),
-            1.0 if bool(cmd_view.bool_field("pending_assessment", False)) else 0.0,
-            float(cmd_view.int_field("own_missiles_in_flight_count", 0)),
+            float(shot_policy_state),
+            float(shot_budget_remaining),
+            1.0 if bool(pending_assessment) else 0.0,
+            float(own_missiles_in_flight_count),
             float(target_contact_present),
         ],
         dtype=np.float32,

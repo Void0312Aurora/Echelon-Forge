@@ -133,6 +133,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop python tools/diagnostic
 - “同一目标已有己方导弹在飞时是否再打一枚”先交由 A3 定义 shot policy、
   pending assessment、salvo 和 reattack 授权；只有 A3 约束可观测后仍出现未解释的多发，
   才回到后续 policy/memory package。
+- A3 32k learned-policy probe 未通过武器使用验收；post-launch mission observation 已
+  动态暴露预算耗尽和 pending assessment。下一步应在该修复后重跑 reactive/temporal
+  A3 对照，而不是重新打开动作接口。
 
 ## Archive
 

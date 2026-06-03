@@ -1,8 +1,8 @@
 # A3 C2/ROE 发射纪律
 
-状态：`2026-06-03`，有边界的 C2/ROE implementation、P4 evidence 与 P5 index
-sync 通过；M2 继续 held。本子项目定义空战 C2、ROE 与发射纪律约束层；在这层明确前，
-不再把同一目标多枚导弹问题直接归因为策略记忆失败。
+状态：`2026-06-03`，有边界的 C2/ROE implementation、P4 evidence、learned-policy
+probe 与 post-launch observation 修复已记录；M2 继续 held。本子项目定义空战 C2、
+ROE 与发射纪律约束层；在这层明确前，不再把同一目标多枚导弹问题直接归因为策略记忆失败。
 
 语言：
 
@@ -28,6 +28,8 @@ sync 通过；M2 继续 held。本子项目定义空战 C2、ROE 与发射纪律
   [c2_roe_public_source_scan_20260602.zh.md](c2_roe_public_source_scan_20260602.zh.md)
 - 代码表面扫描：
   [c2_roe_code_surface_scan_20260602.zh.md](c2_roe_code_surface_scan_20260602.zh.md)
+- A3 learned-policy 探针证据：
+  [a3_c2_roe_learned_policy_probe_20260603.zh.md](a3_c2_roe_learned_policy_probe_20260603.zh.md)
 
 ## Purpose
 
@@ -48,7 +50,9 @@ A3 要补的是这层缺失的指挥约束。它把公开 C2/ROE 概念收敛为
 | 现有 runtime 命令字段 | 已注册到 A3 合同 | `air_combat_c2_roe_v1` 通过 loader/runtime 路径消费 `authorization_to_fire`、`roe_state`、WCS、engage order、assigned target、shot policy 和 pending assessment。 | 首版是仿真合同，不是完整 C2 层级或数据链模型。 |
 | 空战 S1 场景 | additive A3 probe 可用 | `air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json` 及其 active config 使用 `mission_obs_mode=air_combat_c2_roe_v1` 并启用 C2/ROE reward gate。 | 既有 M1 baseline 条目仍有意保持 `mission_obs_mode=basic`。 |
 | 海军 ROE 先例 | 可借鉴 | `naval_screen_station_v1` 已暴露 `roe_state`、`authorization_to_fire` 和目标字段，并有 ROE hold/authorization 奖励项。 | 海军 screen 逻辑只能指导 wiring 形态，不能定义空战战术。 |
-| M1 证据 | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 稳定运行但仍出现重复发射；P4 probe 现在能在 C2/ROE 合同下分类授权发射与违规发射。 | 这不证明记忆已解决或无效；在 learned-policy 证据可用前，M2 继续 held。 |
+| M1 证据 | A3-aware interpretation complete | Hybrid temporal shaped Stage-1 稳定运行但仍出现重复发射；P4 probe 现在能在 C2/ROE 合同下分类授权发射与违规发射。 | 这不证明记忆已解决或无效；M2 继续 held。 |
+| A3 learned-policy probe | held after evidence | 32k A3 C2/ROE hybrid shaped 训练完成；deterministic final model 不发射，stochastic 3 episode 产生 3 次授权发射和 8 次违规发射。 | learned policy 未验收；该证据暴露了发射后状态需要动态进入 mission observation。 |
+| 发射后可观测状态 | local fix validated | `air_combat_c2_roe_v1` 现在用当前导弹余量下降和 reward release count 更新 `shot_budget_remaining`、`pending_assessment` 与 `own_missiles_in_flight_count`。 | `own_missiles_in_flight_count` 仍是 release-count proxy，不是完整导弹飞行生命周期模型。 |
 
 ## Scope
 
@@ -91,9 +95,9 @@ ROE、BVR timeline 或平台战术。
 | `target_identity_state` | default mission `threat_state` or contact classification | `0=unknown`, `1=bogey`, `2=bandit`, `3=hostile`, `4=friendly` 的简化合同值。 |
 | `engage_order_state` | default `0` | `0=none`, `1=commit`, `2=engage`, `3=hold_fire`, `4=cease_fire`, `5=cease_engagement`, `6=abort`。 |
 | `shot_policy_state` | default `0` | `0=weapons_hold`, `1=single_shot_then_assess`, `2=salvo_authorized`, `3=reattack_authorized`。 |
-| `shot_budget_remaining` | default `0` | 当前合同授权剩余发射数；首版由场景/命令显式给出。 |
-| `pending_assessment` | `0/1`, default `0` | 首发后是否等待效果评估或再授权。 |
-| `own_missiles_in_flight_count` | default `0` | 面向同一目标的己方在飞弹计数；首版只消费显式 mission field，后续诊断可接入 runtime 统计。 |
+| `shot_budget_remaining` | default `0` | 当前合同授权剩余发射数；由场景/命令给出，并在观测侧扣除已知 runtime release count。 |
+| `pending_assessment` | `0/1`, default `0` | 首发后是否等待效果评估或再授权；single-shot 合同下已知发射后动态置为 `1`。 |
+| `own_missiles_in_flight_count` | default `0` | 面向同一目标的己方在飞弹计数；首版暴露显式 mission field 和已知 release-count proxy 的较大值。 |
 | `target_contact_present` | derived `0/1` | 当前观测中是否看到分配目标 track。 |
 
 Fail-closed defaults:
@@ -137,6 +141,8 @@ Fail-closed defaults:
   授权齐射、再攻击发射。
 - A3-aware P4 探针证据：
   [a3_c2_roe_p4_probe_evidence_20260603.zh.md](a3_c2_roe_p4_probe_evidence_20260603.zh.md)
+- A3 learned-policy 探针与发射后观测修复证据：
+  [a3_c2_roe_learned_policy_probe_20260603.zh.md](a3_c2_roe_learned_policy_probe_20260603.zh.md)
 - M1 证据更新：判断 C2/ROE 可观测后，重复发射是否仍是记忆问题。
 
 ## Acceptance Gate
@@ -155,10 +161,10 @@ Fail-closed defaults:
 - self-defense override 在首个 S1 命令合同 accepted 前保持 held。
 - 长机/僚机授权委派在单机 C2/ROE 语义稳定前保持 held。
 - 数据链、外部传感器和 friend/no-fire-zone 逻辑是未来扩展，不是 A3 验收条件。
-- 若 A3 约束可观测后仍出现重复未授权开火，再把剩余问题交回 M1/M2 作为策略记忆
-  或序列模型问题。
-- 下一项实质工作是在具备 RL 条件时，用 A3 C2/ROE probe config 跑 learned-policy
-  训练/评估；本地 P5 closure 不声明该结果。
+- A3 32k learned-policy probe 已显示：deterministic final model 不发射，stochastic
+  行为仍有大量违规发射；该结果不释放 M2。
+- 下一项实质工作是在发射后动态观测修复之后，重跑 reactive/temporal A3 C2/ROE
+  learned-policy 对照，确认剩余问题是训练信号、策略记忆还是 sequence-model 缺口。
 
 ## Archive
 
