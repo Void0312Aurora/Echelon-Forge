@@ -131,6 +131,7 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
             {
                 "air_combat_c2_roe_release_discipline_enabled": True,
                 "air_combat_roe_hold_fire_violation_penalty": -2.5,
+                "air_combat_roe_authorized_fire_attempt_bonus": 1.0,
             }
         )
         loader.mission_cmd.update(
@@ -159,6 +160,216 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
 
         self.assertAlmostEqual(reward, -2.5, places=6)
         self.assertAlmostEqual(terms["air_combat_roe_hold_fire_violation_penalty"], -2.5, places=6)
+        self.assertNotIn("air_combat_roe_authorized_fire_attempt_bonus", terms)
+
+    def test_c2_roe_authorized_weapon_chain_shaping_rewards_pre_release_actions(self) -> None:
+        loader = _loader(
+            {
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_authorized_radar_active_bonus": 0.1,
+                "air_combat_roe_authorized_tms_up_bonus": 0.2,
+                "air_combat_roe_authorized_master_arm_bonus": 0.3,
+                "air_combat_roe_authorized_weapon_selected_bonus": 0.4,
+                "air_combat_roe_authorized_fire_attempt_bonus": 1.0,
+                "air_combat_roe_authorized_fire_no_release_penalty": -0.25,
+            }
+        )
+        loader.mission_cmd.update(
+            {
+                "wcs_state": 2,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "authorization_to_fire": True,
+            }
+        )
+        loader._last_effective_action[6] = 1.0
+        loader._last_effective_action[7] = 1.0
+        loader._last_effective_action[8] = 1.0
+        loader._last_effective_action[9] = 1.0
+        loader._last_effective_action[11] = 1.0
+        truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+        reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(reward, 1.75, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_radar_active_bonus"], 0.1, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_tms_up_bonus"], 0.2, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_master_arm_bonus"], 0.3, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_weapon_selected_bonus"], 0.4, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_fire_attempt_bonus"], 1.0, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_fire_no_release_penalty"], -0.25, places=6)
+
+    def test_c2_roe_authorized_fire_opportunity_penalty_only_applies_before_release(self) -> None:
+        loader = _loader(
+            {
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_authorized_fire_opportunity_penalty": -0.5,
+            }
+        )
+        loader.mission_cmd.update(
+            {
+                "wcs_state": 2,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "authorization_to_fire": True,
+            }
+        )
+        loader._last_effective_action[9] = 0.0
+        truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+        reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(reward, -0.5, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_authorized_fire_opportunity_penalty"], -0.5, places=6)
+
+        loader_pending = _loader(
+            {
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_authorized_fire_opportunity_penalty": -0.5,
+            }
+        )
+        loader_pending.mission_cmd.update(
+            {
+                "wcs_state": 2,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 0,
+                "pending_assessment": True,
+                "authorization_to_fire": True,
+            }
+        )
+        loader_pending._last_effective_action[9] = 0.0
+
+        reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+            loader_pending,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(reward, 0.0, places=6)
+        self.assertNotIn("air_combat_roe_authorized_fire_opportunity_penalty", terms)
+
+    def test_c2_roe_authorized_weapon_chain_bonus_is_awarded_once_per_episode(self) -> None:
+        loader = _loader(
+            {
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_authorized_radar_active_bonus": 0.1,
+                "air_combat_roe_authorized_master_arm_bonus": 0.3,
+                "air_combat_roe_authorized_weapon_selected_bonus": 0.4,
+                "air_combat_roe_authorized_fire_attempt_bonus": 1.0,
+                "air_combat_roe_authorized_fire_no_release_penalty": -0.25,
+            }
+        )
+        loader.mission_cmd.update(
+            {
+                "wcs_state": 2,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "authorization_to_fire": True,
+            }
+        )
+        loader._last_effective_action[6] = 1.0
+        loader._last_effective_action[8] = 1.0
+        loader._last_effective_action[9] = 1.0
+        loader._last_effective_action[11] = 1.0
+        truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+        first_reward, *_first_rest = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+        second_reward, _terminated, _truncated, _status, second_terms, _reason = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(first_reward, 1.55, places=6)
+        self.assertAlmostEqual(second_reward, -0.25, places=6)
+        self.assertNotIn("air_combat_roe_authorized_radar_active_bonus", second_terms)
+        self.assertNotIn("air_combat_roe_authorized_master_arm_bonus", second_terms)
+        self.assertNotIn("air_combat_roe_authorized_weapon_selected_bonus", second_terms)
+        self.assertNotIn("air_combat_roe_authorized_fire_attempt_bonus", second_terms)
+        self.assertAlmostEqual(second_terms["air_combat_roe_authorized_fire_no_release_penalty"], -0.25, places=6)
+
+    def test_c2_roe_authorized_weapon_chain_shaping_stops_after_single_shot_budget(self) -> None:
+        loader = _loader(
+            {
+                "air_combat_c2_roe_release_discipline_enabled": True,
+                "air_combat_roe_authorized_fire_attempt_bonus": 1.0,
+                "air_combat_roe_authorized_fire_no_release_penalty": -0.25,
+                "air_combat_roe_premature_second_shot_penalty": -3.0,
+            }
+        )
+        loader.mission_cmd.update(
+            {
+                "wcs_state": 2,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+                "authorization_to_fire": True,
+            }
+        )
+        loader._air_combat_reward_release_count = 1
+        loader._last_effective_action[9] = 1.0
+        truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+        reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+            loader,
+            _sim(),
+            truth,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            status=[0.0, 0.0, 0.0, 0.0],
+            reward_breakdown={},
+        )
+
+        self.assertAlmostEqual(reward, -3.0, places=6)
+        self.assertAlmostEqual(terms["air_combat_roe_premature_second_shot_penalty"], -3.0, places=6)
+        self.assertNotIn("air_combat_roe_authorized_fire_attempt_bonus", terms)
+        self.assertNotIn("air_combat_roe_authorized_fire_no_release_penalty", terms)
 
     def test_c2_roe_authorized_salvo_release_gets_valid_and_salvo_terms(self) -> None:
         loader = _loader(

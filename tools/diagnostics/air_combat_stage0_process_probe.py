@@ -70,6 +70,13 @@ HYBRID_ACTION_COLUMNS = {
     "weapon_select": 11,
 }
 ACTION_SIGNAL_NAMES = tuple(FULL_ACTION_COLUMNS.keys())
+HYBRID_BINARY_POLICY_SIGNAL_NAMES = (
+    "radar_active",
+    "tms_up",
+    "master_arm",
+    "fire_weapon",
+    "fire_gun",
+)
 
 
 def _action_columns_for_mode(action_mode: str) -> dict[str, int]:
@@ -269,6 +276,87 @@ def _model_action(model, obs: dict[str, Any], *, deterministic: bool) -> np.ndar
     return np.asarray(action, dtype=np.float32).reshape(-1)
 
 
+def _distribution_policy_diagnostics(distribution: Any) -> dict[str, float]:
+    out: dict[str, float] = {}
+    binary_logits = getattr(distribution, "binary_logits", None)
+    if binary_logits is not None:
+        try:
+            logits = binary_logits.detach().to(device="cpu").numpy().astype(np.float64)
+            if logits.ndim == 1:
+                logits = logits.reshape(1, -1)
+            if logits.ndim == 2 and logits.shape[1] >= len(HYBRID_BINARY_POLICY_SIGNAL_NAMES):
+                probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -60.0, 60.0)))
+                for idx, name in enumerate(HYBRID_BINARY_POLICY_SIGNAL_NAMES):
+                    out[f"policy_logit_{name}"] = float(logits[0, idx])
+                    out[f"policy_prob_{name}"] = float(probs[0, idx])
+        except Exception:
+            pass
+
+    categorical_logits = getattr(distribution, "categorical_logits", None)
+    if categorical_logits:
+        try:
+            _action_index, logits_tensor = list(categorical_logits)[0]
+            logits = logits_tensor.detach().to(device="cpu").numpy().astype(np.float64)
+            if logits.ndim == 1:
+                logits = logits.reshape(1, -1)
+            logits = logits - logits.max(axis=1, keepdims=True)
+            probs = np.exp(logits)
+            probs = probs / np.clip(probs.sum(axis=1, keepdims=True), 1.0e-12, None)
+            mode = int(np.argmax(probs[0]))
+            out["policy_weapon_select_mode"] = float(mode)
+            out["policy_weapon_select_station0_prob"] = float(probs[0, 0])
+            if probs.shape[1] > 1:
+                out["policy_weapon_select_station1_prob"] = float(probs[0, 1])
+            out["policy_weapon_select_mode_prob"] = float(probs[0, mode])
+        except Exception:
+            pass
+    return out
+
+
+def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, float]:
+    policy = getattr(model, "policy", None)
+    get_distribution = getattr(policy, "get_distribution", None)
+    if not callable(get_distribution):
+        return {}
+    try:
+        import torch as th
+
+        obs_to_tensor = getattr(policy, "obs_to_tensor", None)
+        if callable(obs_to_tensor):
+            obs_tensor, _vectorized = obs_to_tensor(obs)
+        else:
+            from stable_baselines3.common.utils import obs_as_tensor
+
+            obs_tensor = obs_as_tensor(obs, getattr(policy, "device", "cpu"))
+        with th.no_grad():
+            distribution = get_distribution(obs_tensor)
+    except Exception:
+        return {}
+    return _distribution_policy_diagnostics(distribution)
+
+
+def _policy_c2_context(env) -> dict[str, float]:
+    try:
+        base = _base_env(env)
+        target_id = int(base.loader.primary_target_id or 0)
+        blue_id = int(base.agent_id)
+        c2_state = air_combat_c2_roe_state_from_mapping(
+            _mission_command_dict(base.loader),
+            target_id=int(target_id),
+            agent_id=int(blue_id),
+        )
+    except Exception:
+        return {}
+    return {
+        "policy_c2_authorization_to_fire": float(int(bool(c2_state.get("authorization_to_fire", False)))),
+        "policy_c2_shot_budget_remaining": float(int(c2_state.get("shot_budget_remaining", 0) or 0)),
+        "policy_c2_pending_assessment": float(int(bool(c2_state.get("pending_assessment", False)))),
+        "policy_c2_wcs_state": float(int(c2_state.get("wcs_state", 0) or 0)),
+        "policy_c2_engage_order_state": float(int(c2_state.get("engage_order_state", 0) or 0)),
+        "policy_c2_shot_policy_state": float(int(c2_state.get("shot_policy_state", 0) or 0)),
+    }
+
+
 def _base_env(env):
     return getattr(env, "unwrapped", env)
 
@@ -309,6 +397,7 @@ def _snapshot_row(
     initial_units: set[int],
     prev_missiles: int | None,
     prev_release_count: int = 0,
+    policy_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     base = _base_env(env)
     sim = base.sim
@@ -481,6 +570,9 @@ def _snapshot_row(
             previous_release_count=int(prev_release_count or 0),
         )
     )
+    if isinstance(policy_diagnostics, dict):
+        for key, value in policy_diagnostics.items():
+            row[str(key)] = _finite_float(value)
     return row
 
 
@@ -558,6 +650,33 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
             return float(default)
         return float(reducer(np.asarray(values, dtype=np.float64)))
 
+    def row_stat(key: str, reducer, default: float = float("nan"), predicate=None) -> float:
+        values = []
+        for row in rows:
+            if int(row.get("step", 0)) <= 0:
+                continue
+            if predicate is not None and not bool(predicate(row)):
+                continue
+            value = float(row.get(key, float("nan")))
+            if math.isfinite(value):
+                values.append(value)
+        if not values:
+            return float(default)
+        return float(reducer(np.asarray(values, dtype=np.float64)))
+
+    def authorized_first_shot_window(row: dict[str, Any]) -> bool:
+        authorization_to_fire = row.get("policy_c2_authorization_to_fire", row.get("authorization_to_fire", 0))
+        shot_budget_remaining = row.get("policy_c2_shot_budget_remaining", row.get("shot_budget_remaining", 0))
+        pending_assessment = row.get("policy_c2_pending_assessment", row.get("pending_assessment", 0))
+        return (
+            int(authorization_to_fire or 0) > 0
+            and int(shot_budget_remaining or 0) > 0
+            and int(pending_assessment or 0) <= 0
+        )
+
+    authorized_window_step_count = int(
+        sum(1 for row in rows if int(row.get("step", 0)) > 0 and authorized_first_shot_window(row))
+    )
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
     )
@@ -633,6 +752,33 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "action_fire_weapon_max": action_stat("fire_weapon", np.max),
         "effective_action_fire_weapon_mean": action_stat("effective_action_fire_weapon", np.mean),
         "effective_action_fire_weapon_max": action_stat("effective_action_fire_weapon", np.max),
+        "policy_prob_tms_up_mean": row_stat("policy_prob_tms_up", np.mean),
+        "policy_prob_tms_up_max": row_stat("policy_prob_tms_up", np.max),
+        "policy_logit_tms_up_mean": row_stat("policy_logit_tms_up", np.mean),
+        "policy_logit_tms_up_max": row_stat("policy_logit_tms_up", np.max),
+        "policy_prob_fire_weapon_mean": row_stat("policy_prob_fire_weapon", np.mean),
+        "policy_prob_fire_weapon_max": row_stat("policy_prob_fire_weapon", np.max),
+        "policy_logit_fire_weapon_mean": row_stat("policy_logit_fire_weapon", np.mean),
+        "policy_logit_fire_weapon_max": row_stat("policy_logit_fire_weapon", np.max),
+        "authorized_window_step_count": int(authorized_window_step_count),
+        "authorized_window_policy_prob_tms_up_mean": row_stat(
+            "policy_prob_tms_up", np.mean, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_prob_tms_up_max": row_stat(
+            "policy_prob_tms_up", np.max, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_logit_tms_up_max": row_stat(
+            "policy_logit_tms_up", np.max, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_prob_fire_weapon_mean": row_stat(
+            "policy_prob_fire_weapon", np.mean, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_prob_fire_weapon_max": row_stat(
+            "policy_prob_fire_weapon", np.max, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_logit_fire_weapon_max": row_stat(
+            "policy_logit_fire_weapon", np.max, predicate=authorized_first_shot_window
+        ),
         "release_count": int(sum(int(row.get("missile_release", 0)) for row in rows)),
         "authorized_release_count": int(authorized_release_count),
         "unauthorized_release_count": int(unauthorized_release_count),
@@ -729,10 +875,12 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 initial_units=initial_units,
                 prev_missiles=None,
                 prev_release_count=release_count_so_far,
+                policy_diagnostics=None,
             )
             rows.append(initial_row)
             ep_rows.append(initial_row)
             for step in range(1, max_steps + 1):
+                policy_diagnostics: dict[str, Any] = {}
                 if args.mode == "forced_fire":
                     action = _forced_fire_action(obs, rng, step, action_mode=action_mode)
                 elif args.mode == "range_gate_fire":
@@ -753,6 +901,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 elif args.mode == "uniform":
                     action = _uniform_action(env, obs, rng, step)
                 elif args.mode == "model":
+                    policy_diagnostics = _model_policy_diagnostics(model, obs)
+                    policy_diagnostics.update(_policy_c2_context(env))
                     action = _model_action(model, obs, deterministic=not bool(args.stochastic))
                 else:
                     raise ValueError(f"unknown mode: {args.mode}")
@@ -770,6 +920,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                     initial_units=initial_units,
                     prev_missiles=prev_missiles,
                     prev_release_count=release_count_so_far,
+                    policy_diagnostics=policy_diagnostics,
                 )
                 rows.append(row)
                 ep_rows.append(row)

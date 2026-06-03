@@ -16,12 +16,14 @@ FAMILY_TAKEOFF_GROUND = 0
 FAMILY_DEPARTURE_NAV = 1
 FAMILY_FORMATION_COOPERATIVE = 2
 FAMILY_RECOVERY_LANDING = 3
+FAMILY_COMBAT_WEAPONS = 4
 
 FAMILY_NAMES = {
     FAMILY_TAKEOFF_GROUND: "takeoff_ground",
     FAMILY_DEPARTURE_NAV: "departure_nav",
     FAMILY_FORMATION_COOPERATIVE: "formation_cooperative",
     FAMILY_RECOVERY_LANDING: "recovery_landing",
+    FAMILY_COMBAT_WEAPONS: "combat_weapons",
 }
 
 DEFAULT_FAMILY_SUBEXPERT_COUNTS = (
@@ -29,6 +31,7 @@ DEFAULT_FAMILY_SUBEXPERT_COUNTS = (
     2,  # departure_nav: vector / route
     3,  # formation: generic / lead / wingman
     1,  # recovery: generic
+    3,  # combat_weapons: hold / authorized first shot / post-launch assess
 )
 
 DEFAULT_SUBEXPERT_NAMES = {
@@ -36,6 +39,7 @@ DEFAULT_SUBEXPERT_NAMES = {
     FAMILY_DEPARTURE_NAV: ("vector", "route"),
     FAMILY_FORMATION_COOPERATIVE: ("generic", "element_lead", "wingman"),
     FAMILY_RECOVERY_LANDING: ("generic",),
+    FAMILY_COMBAT_WEAPONS: ("weapons_hold", "authorized_first_shot", "post_launch_assess"),
 }
 
 
@@ -80,6 +84,10 @@ def _formation_layout(dim: int) -> bool:
     return int(dim) >= 17 and not _formation_role_layout(dim) and not _cooperative_takeoff_layout(dim)
 
 
+def _air_combat_c2_roe_layout(dim: int) -> bool:
+    return int(dim) == 20
+
+
 def _mission_field(mission: th.Tensor, index: int, batch: int, device: th.device) -> th.Tensor:
     if mission.ndim != 2 or int(mission.shape[1]) <= int(index):
         return mission.new_zeros((batch,), device=device)
@@ -121,6 +129,42 @@ def route_from_mission_observation(
 
     command_code = _safe_round_long(mission[:, 0]) if dim >= 1 else _zeros_long(batch, device=dev)
     family = th.full((batch,), FAMILY_DEPARTURE_NAV, dtype=th.long, device=dev)
+
+    if _air_combat_c2_roe_layout(dim):
+        family = th.full((batch,), FAMILY_COMBAT_WEAPONS, dtype=th.long, device=dev)
+        subexpert = _zeros_long(batch, device=dev)
+
+        wcs_state = _safe_round_long(mission[:, 5])
+        authorization_to_fire = mission[:, 6] > 0.5
+        engage_order_state = _safe_round_long(mission[:, 14])
+        shot_policy_state = _safe_round_long(mission[:, 15])
+        shot_budget_remaining = _safe_round_long(mission[:, 16])
+        pending_assessment = mission[:, 17] > 0.5
+        own_missiles_in_flight = _safe_round_long(mission[:, 18]) > 0
+        target_contact_present = mission[:, 19] > 0.5
+
+        engage_hold = (
+            (engage_order_state == 3)
+            | (engage_order_state == 4)
+            | (engage_order_state == 5)
+            | (engage_order_state == 6)
+        )
+        authorized_first_shot = (
+            target_contact_present
+            & authorization_to_fire
+            & (wcs_state != 1)
+            & ~engage_hold
+            & (shot_policy_state > 0)
+            & (shot_budget_remaining > 0)
+            & ~pending_assessment
+        )
+        post_launch_assess = pending_assessment | own_missiles_in_flight | (
+            (shot_policy_state > 0) & (shot_budget_remaining <= 0)
+        )
+
+        subexpert = th.where(authorized_first_shot, th.ones_like(subexpert), subexpert)
+        subexpert = th.where(post_launch_assess, th.full_like(subexpert, 2), subexpert)
+        return HMoERouteBatch(family_index=family, subexpert_index=subexpert)
 
     is_takeoff = command_code == int(COMMAND_CODE_TAKEOFF)
     is_landing = command_code == int(COMMAND_CODE_LANDING)

@@ -5,6 +5,7 @@ import unittest
 import torch as th
 
 from python.rl.policy_algo.hmoe_routing import (
+    FAMILY_COMBAT_WEAPONS,
     FAMILY_DEPARTURE_NAV,
     FAMILY_FORMATION_COOPERATIVE,
     FAMILY_RECOVERY_LANDING,
@@ -125,6 +126,21 @@ class HMoERoutingTests(unittest.TestCase):
         route = route_from_mission_observation(mission, instruments=instruments)
         self.assertEqual([FAMILY_RECOVERY_LANDING], route.family_index.tolist())
         self.assertEqual([0], route.subexpert_index.tolist())
+
+    def test_route_detects_air_combat_c2_roe_weapons_family(self) -> None:
+        mission = th.tensor(
+            [
+                [2.0, 0.0, 7000.0, 230.0, 2.0, 2.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 2.0, 1.0, 1.0, 0.0, 0.0, 1.0],
+                [2.0, 0.0, 7000.0, 230.0, 2.0, 1.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                [2.0, 0.0, 7000.0, 230.0, 2.0, 2.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 2.0, 1.0, 0.0, 1.0, 1.0, 1.0],
+            ],
+            dtype=th.float32,
+        )
+
+        route = route_from_mission_observation(mission)
+
+        self.assertEqual([FAMILY_COMBAT_WEAPONS, FAMILY_COMBAT_WEAPONS, FAMILY_COMBAT_WEAPONS], route.family_index.tolist())
+        self.assertEqual([1, 0, 2], route.subexpert_index.tolist())
 
 
 if __name__ == "__main__":

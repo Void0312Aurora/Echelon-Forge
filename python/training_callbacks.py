@@ -81,6 +81,62 @@ class CMODiagnosticsCallback(BaseCallback):
             }
         return None
 
+    def _record_policy_distribution_diagnostics(self, obs: Any) -> None:
+        policy = getattr(self.model, "policy", None)
+        get_distribution = getattr(policy, "get_distribution", None)
+        if obs is None or not callable(get_distribution):
+            return
+
+        try:
+            import torch as th
+
+            obs_to_tensor = getattr(policy, "obs_to_tensor", None)
+            if callable(obs_to_tensor):
+                obs_tensor, _vectorized = obs_to_tensor(obs)
+            else:
+                from stable_baselines3.common.utils import obs_as_tensor
+
+                obs_tensor = obs_as_tensor(obs, getattr(policy, "device", "cpu"))
+            with th.no_grad():
+                distribution = get_distribution(obs_tensor)
+        except Exception:
+            return
+
+        binary_logits = getattr(distribution, "binary_logits", None)
+        if binary_logits is not None:
+            try:
+                logits = binary_logits.detach().to(device="cpu").numpy().astype(np.float64)
+                if logits.ndim == 1:
+                    logits = logits.reshape(1, -1)
+                if logits.ndim == 2 and logits.shape[1] >= 5:
+                    probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -60.0, 60.0)))
+                    names = ("radar", "tms", "arm", "fire", "gun")
+                    for idx, name in enumerate(names):
+                        self.logger.record(f"diag/pi_bin_{name}_logit_mean", float(logits[:, idx].mean()))
+                        self.logger.record(f"diag/pi_bin_{name}_p_mean", float(probs[:, idx].mean()))
+                        self.logger.record(f"diag/pi_bin_{name}_p_max", float(probs[:, idx].max()))
+            except Exception:
+                pass
+
+        categorical_logits = getattr(distribution, "categorical_logits", None)
+        if categorical_logits:
+            try:
+                _action_index, logits_tensor = list(categorical_logits)[0]
+                logits = logits_tensor.detach().to(device="cpu").numpy().astype(np.float64)
+                if logits.ndim == 1:
+                    logits = logits.reshape(1, -1)
+                logits = logits - logits.max(axis=1, keepdims=True)
+                probs = np.exp(logits)
+                denom = np.clip(probs.sum(axis=1, keepdims=True), 1.0e-12, None)
+                probs = probs / denom
+                mode = np.argmax(probs, axis=1)
+                self.logger.record("diag/pi_wsel_mode_mean", float(mode.mean()))
+                self.logger.record("diag/pi_wsel_s0_p_mean", float(probs[:, 0].mean()))
+                if probs.shape[1] > 1:
+                    self.logger.record("diag/pi_wsel_s1_p_mean", float(probs[:, 1].mean()))
+            except Exception:
+                pass
+
     def __init__(self, log_every_timesteps: int = 50_000, preterm_window_steps: int = 32, verbose: int = 0):
         super().__init__(verbose=verbose)
         self.log_every_timesteps = int(log_every_timesteps)
@@ -969,6 +1025,8 @@ class CMODiagnosticsCallback(BaseCallback):
                 self.logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
 
             self._record_leader_diagnostics(obs, list(infos))
+
+        self._record_policy_distribution_diagnostics(obs)
 
         policy = getattr(self.model, "policy", None)
         get_route_stats = getattr(policy, "get_hmoe_route_stats", None)

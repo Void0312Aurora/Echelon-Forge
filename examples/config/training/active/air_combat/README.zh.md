@@ -74,11 +74,13 @@
   - Stage-1 A3 C2/ROE hybrid shaped 探针，使用 `mission_obs_mode=air_combat_c2_roe_v1`。
   - 使用 C2/ROE training-shaped Stage-1 场景，并显式给出 single-shot-then-assess command state。
   - 这是 reward/process metrics 仍由 A3 reward/diagnostics stream 处理期间的 additive partial probe 入口。
+  - 从 A4 起，此条目使用五族 HMoE route surface `[3, 2, 3, 1, 3]`，第五族为 `combat_weapons`。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 A3 C2/ROE hybrid temporal shaped 对照探针，使用 `mission_obs_mode=air_combat_c2_roe_v1`。
   - 与 A3 C2/ROE reactive shaped 条目配对，只额外启用 `temporal_history_len=16` 和 `TemporalTransformerExtractor`。
   - 这是 post-launch mission observation 动态化后，重跑 reactive/temporal learned-policy 对照的维护入口。
+  - 从 A4 起，它与 reactive C2/ROE shaped probe 共享 `combat_weapons` family；已拒绝的 pulse-prior 试验不保留。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
@@ -94,7 +96,8 @@
 - 当前 legacy `1v1` smoke 和 M1 baseline 条目仍使用 `mission_obs_mode=basic`。
   - 因此 HMoE 策略处于活跃状态，但暴露给策略的维护路线语义仍然最小化。
   - 在当前烟雾日志中，这意味着路由停留在导航族/子专家上，这对于链路验证是可接受的，但尚未形成完全差异化的作战路由配置。
-  - A3 C2/ROE 探针是单独的 additive entries；不能据此推断既有 M1 baseline 已改变 observation mode。
+  - A3/A4 C2/ROE 探针是单独的 additive entries；不能据此推断既有 M1 baseline 已改变 observation mode。
+  - 专用 `combat_weapons` HMoE family 只在策略看到 `mission_obs_mode=air_combat_c2_roe_v1` 时可达。
 - raw `full`、hybrid 和 temporal 烟雾测试条目有意不启用维护中的脚本化残差动作封装。
   - shaped hybrid 与 hybrid temporal shaped 训练探针是例外：它们只把前四个飞控轴和 stable-flight baseline 做残差混合，雷达 / master-arm / fire / weapon-select 仍保持策略直接控制。
   - 在首次 `1v1` 烟雾测试中，我们仍希望学习者保留原始动作表面。

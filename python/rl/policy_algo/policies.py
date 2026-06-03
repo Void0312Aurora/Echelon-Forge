@@ -260,7 +260,15 @@ class _HybridActionDistribution:
         return total
 
     def entropy(self):
-        return None
+        total = self.params.new_zeros((int(self.params.shape[0]),))
+        if self.layout.continuous_count > 0:
+            std = th.exp(self.log_std).reshape(1, -1).expand_as(self.continuous_mean)
+            total = total + Normal(self.continuous_mean, std).entropy().sum(dim=1)
+        if self.layout.binary_count > 0:
+            total = total + Bernoulli(logits=self.binary_logits).entropy().sum(dim=1)
+        for _action_index, logits in self.categorical_logits:
+            total = total + Categorical(logits=logits).entropy()
+        return total
 
 
 class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
@@ -467,6 +475,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             "departure_nav": "nav",
             "formation_cooperative": "form",
             "recovery_landing": "land",
+            "combat_weapons": "combat",
         }
         subexpert_log_names = {
             "single_ship": "single",
@@ -477,6 +486,9 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             "generic": "generic",
             "element_lead": "lead",
             "wingman": "wingman",
+            "weapons_hold": "hold",
+            "authorized_first_shot": "first_shot",
+            "post_launch_assess": "assess",
         }
 
         family_cpu = family_index.detach().to(device="cpu", dtype=th.long)

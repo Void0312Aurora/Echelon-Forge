@@ -115,6 +115,47 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(stats["hmoe/fam/form"], 1.0, places=6)
         self.assertAlmostEqual(stats["hmoe/sub/form/wingman"], 1.0, places=6)
 
+    def test_air_combat_c2_roe_route_stats_use_combat_weapons_family(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "image": spaces.Box(low=0.0, high=1.0, shape=(1, 8, 8), dtype=float),
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(26,), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+                "prev_action": spaces.Box(low=-1.0, high=1.0, shape=(17,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            spaces.Box(low=-1.0, high=1.0, shape=(17,), dtype=float),
+            _ConstantSchedule(),
+            net_arch={"pi": [32], "vf": [32]},
+        )
+        obs = {
+            "image": th.zeros((3, 1, 8, 8), dtype=th.float32),
+            "instruments": th.zeros((3, 26), dtype=th.float32),
+            "prev_action": th.zeros((3, 17), dtype=th.float32),
+            "mission": th.tensor(
+                [
+                    [2.0, 0.0, 7000.0, 230.0, 2.0, 2.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 2.0, 1.0, 1.0, 0.0, 0.0, 1.0],
+                    [2.0, 0.0, 7000.0, 230.0, 2.0, 1.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                    [2.0, 0.0, 7000.0, 230.0, 2.0, 2.0, 1.0, 101.0, 9001.0, 301.0, 301.0, 0.0, 12.5, 3.0, 2.0, 1.0, 0.0, 1.0, 1.0, 1.0],
+                ],
+                dtype=th.float32,
+            ),
+        }
+
+        with th.no_grad():
+            actions, values, log_prob = policy.forward(obs, deterministic=True)
+
+        self.assertEqual(tuple(actions.shape), (3, 17))
+        self.assertEqual(tuple(values.shape), (3, 1))
+        self.assertEqual(tuple(log_prob.shape), (3,))
+        stats = policy.get_hmoe_route_stats()
+        self.assertAlmostEqual(stats["hmoe/fam/combat"], 1.0, places=6)
+        self.assertAlmostEqual(stats["hmoe/sub/combat/first_shot"], 1.0 / 3.0, places=6)
+        self.assertAlmostEqual(stats["hmoe/sub/combat/hold"], 1.0 / 3.0, places=6)
+        self.assertAlmostEqual(stats["hmoe/sub/combat/assess"], 1.0 / 3.0, places=6)
+
     def test_nonfinite_probe_preserves_observation_aware_routing(self) -> None:
         policy = self._make_policy()
         probe = NonFiniteTrainingProbe(report_path="/tmp/hmoe_nonfinite_probe_test.json", enabled=True)
@@ -265,7 +306,10 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertTrue(th.isfinite(actions).all())
         self.assertTrue(th.isfinite(log_prob).all())
         self.assertTrue(th.isfinite(eval_log_prob).all())
-        self.assertIsNone(entropy)
+        self.assertIsNotNone(entropy)
+        self.assertEqual(tuple(entropy.shape), (2,))
+        self.assertTrue(th.isfinite(entropy).all())
+        self.assertTrue(th.all(entropy > 0.0))
         for idx in (6, 7, 8, 9, 10):
             self.assertTrue(th.all((actions[:, idx] == 0.0) | (actions[:, idx] == 1.0)))
         self.assertTrue(th.all(actions[:, 11] == th.round(actions[:, 11])))

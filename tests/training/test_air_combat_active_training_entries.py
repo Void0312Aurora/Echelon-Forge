@@ -246,6 +246,11 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertEqual(env.get("flight_shaping_backend"), "compiled")
         self.assertTrue(bool(cfg.get("runtime", {}).get("world_batch_vec_env")))
 
+        policy_kwargs = cfg.get("hyperparameters", {}).get("policy_kwargs", {})
+        self.assertEqual(policy_kwargs.get("family_subexpert_counts"), [3, 2, 3, 1, 3])
+        self.assertAlmostEqual(float(policy_kwargs.get("hmoe_head_lr_scale")), 0.35, places=6)
+        self.assertAlmostEqual(float(policy_kwargs.get("hmoe_residual_start_factor")), 0.25, places=6)
+
         for baseline_path in (
             STAGE1_CONFIG,
             STAGE1_TEMPORAL_CONFIG,
@@ -285,6 +290,13 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertLess(float(rewards.get("air_combat_repeat_release_penalty", 0.0)), 0.0)
         self.assertGreater(float(rewards.get("air_combat_roe_valid_authorized_release_bonus", 0.0)), 0.0)
         self.assertGreater(float(rewards.get("air_combat_roe_authorized_first_release_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_radar_active_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_tms_up_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_master_arm_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_weapon_selected_bonus", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_roe_authorized_fire_attempt_bonus", 0.0)), 0.0)
+        self.assertLess(float(rewards.get("air_combat_roe_authorized_fire_no_release_penalty", 0.0)), 0.0)
+        self.assertEqual(float(rewards.get("air_combat_roe_authorized_fire_opportunity_penalty", 0.0)), 0.0)
         self.assertLess(float(rewards.get("air_combat_roe_unauthorized_fire_penalty", 0.0)), 0.0)
         self.assertLess(float(rewards.get("air_combat_roe_premature_second_shot_penalty", 0.0)), 0.0)
         self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)

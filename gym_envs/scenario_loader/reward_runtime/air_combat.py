@@ -26,6 +26,13 @@ _C2_ROE_REWARD_KEYS = (
     "air_combat_roe_hold_fire_bonus",
     "air_combat_roe_hold_fire_violation_penalty",
     "air_combat_roe_unauthorized_fire_penalty",
+    "air_combat_roe_authorized_radar_active_bonus",
+    "air_combat_roe_authorized_tms_up_bonus",
+    "air_combat_roe_authorized_master_arm_bonus",
+    "air_combat_roe_authorized_weapon_selected_bonus",
+    "air_combat_roe_authorized_fire_attempt_bonus",
+    "air_combat_roe_authorized_fire_no_release_penalty",
+    "air_combat_roe_authorized_fire_opportunity_penalty",
     "air_combat_roe_valid_authorized_release_bonus",
     "air_combat_roe_authorized_first_release_bonus",
     "air_combat_roe_pending_assessment_penalty",
@@ -88,6 +95,17 @@ def _add_term(rb: dict[str, float], name: str, value: float) -> float:
     if v != 0.0:
         rb[name] = float(rb.get(name, 0.0) + v)
     return v
+
+
+def _add_once_term(loader: Any, rb: dict[str, float], name: str, value: float) -> float:
+    awarded = getattr(loader, "_air_combat_c2_roe_reward_once_terms", None)
+    if not isinstance(awarded, set):
+        awarded = set()
+        setattr(loader, "_air_combat_c2_roe_reward_once_terms", awarded)
+    if name in awarded:
+        return 0.0
+    awarded.add(name)
+    return _add_term(rb, name, value)
 
 
 def is_air_combat_profile(loader: Any) -> bool:
@@ -397,18 +415,85 @@ def _truth_missiles_remaining(truth: Any) -> int | None:
 
 
 def _last_fire_attempted(loader: Any) -> bool:
+    return bool(_last_weapon_chain_state(loader).get("fire_attempted", False))
+
+
+def _last_weapon_chain_state(loader: Any) -> dict[str, Any]:
     action = getattr(loader, "_last_effective_action", None)
     if action is None:
-        return False
+        return {
+            "radar_active": False,
+            "tms_up": False,
+            "master_arm": False,
+            "fire_attempted": False,
+            "weapon_selected": False,
+            "weapon_select_id": 0,
+        }
     try:
         values = [float(v) for v in action]
     except Exception:
-        return False
+        values = []
     mode = str(getattr(loader, "_last_action_mode", "") or "")
-    fire_idx = 9 if mode == "air_combat_hybrid_v1" else 14
-    if len(values) <= fire_idx:
+    if mode == "air_combat_hybrid_v1":
+        indices = {
+            "radar_active": 6,
+            "tms_up": 7,
+            "master_arm": 8,
+            "fire_attempted": 9,
+            "weapon_select_id": 11,
+        }
+    else:
+        indices = {
+            "radar_active": 9,
+            "tms_up": 12,
+            "master_arm": 13,
+            "fire_attempted": 14,
+            "weapon_select_id": 16,
+        }
+
+    def _flag(name: str) -> bool:
+        idx = int(indices[name])
+        return bool(len(values) > idx and values[idx] > 0.5)
+
+    weapon_idx = int(indices["weapon_select_id"])
+    weapon_select_id = 0
+    if len(values) > weapon_idx:
+        try:
+            weapon_select_id = max(0, int(round(float(values[weapon_idx]))))
+        except Exception:
+            weapon_select_id = 0
+    return {
+        "radar_active": _flag("radar_active"),
+        "tms_up": _flag("tms_up"),
+        "master_arm": _flag("master_arm"),
+        "fire_attempted": _flag("fire_attempted"),
+        "weapon_selected": bool(weapon_select_id > 0),
+        "weapon_select_id": int(weapon_select_id),
+    }
+
+
+def _c2_roe_authorized_action_window(c2_state: dict[str, Any], *, previous_release_count: int) -> bool:
+    contract_present = bool(c2_state.get("contract_present", False))
+    roe_state = _as_int(c2_state.get("roe_state", 0), 0)
+    wcs_state = _as_int(c2_state.get("wcs_state", 1 if contract_present else roe_state), 1 if contract_present else roe_state)
+    shot_policy_state = _as_int(c2_state.get("shot_policy_state", 0), 0)
+    engage_order_state = _as_int(c2_state.get("engage_order_state", 0), 0)
+    shot_budget_remaining = max(0, _as_int(c2_state.get("shot_budget_remaining", 0), 0))
+    pending_assessment = _as_bool(c2_state.get("pending_assessment", False), False)
+    authorization_to_fire = _as_bool(c2_state.get("authorization_to_fire", False), False)
+
+    legacy_fallback_allowed = (not contract_present or wcs_state == 0) and roe_state in {0, 3}
+    hold_order = bool(contract_present and (wcs_state == 1 or shot_policy_state == 0 or engage_order_state in _C2_ROE_HOLD_ENGAGE_STATES))
+    authorized_candidate = bool(authorization_to_fire or legacy_fallback_allowed)
+    if hold_order or not authorized_candidate:
         return False
-    return bool(values[fire_idx] > 0.5)
+    if contract_present and shot_budget_remaining <= 0:
+        return False
+    if contract_present and pending_assessment and shot_policy_state != 3:
+        return False
+    if contract_present and shot_policy_state == 1 and int(previous_release_count or 0) > 0:
+        return False
+    return True
 
 
 def _add_c2_roe_reward_terms(loader: Any, rb: dict[str, float], classification: dict[str, Any]) -> float:
@@ -472,6 +557,63 @@ def _add_c2_roe_reward_terms(loader: Any, rb: dict[str, float], classification: 
     return total
 
 
+def _add_c2_roe_authorized_action_terms(
+    loader: Any,
+    rb: dict[str, float],
+    action_state: dict[str, Any],
+    *,
+    fire_attempted: bool,
+) -> float:
+    total = 0.0
+    if bool(action_state.get("radar_active", False)):
+        total += _add_once_term(
+            loader,
+            rb,
+            "air_combat_roe_authorized_radar_active_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_radar_active_bonus", 0.0),
+        )
+    if bool(action_state.get("tms_up", False)):
+        total += _add_once_term(
+            loader,
+            rb,
+            "air_combat_roe_authorized_tms_up_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_tms_up_bonus", 0.0),
+        )
+    if bool(action_state.get("master_arm", False)):
+        total += _add_once_term(
+            loader,
+            rb,
+            "air_combat_roe_authorized_master_arm_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_master_arm_bonus", 0.0),
+        )
+    if bool(action_state.get("weapon_selected", False)):
+        total += _add_once_term(
+            loader,
+            rb,
+            "air_combat_roe_authorized_weapon_selected_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_weapon_selected_bonus", 0.0),
+        )
+    if bool(fire_attempted):
+        total += _add_once_term(
+            loader,
+            rb,
+            "air_combat_roe_authorized_fire_attempt_bonus",
+            _cfg_float(loader, "air_combat_roe_authorized_fire_attempt_bonus", 0.0),
+        )
+        total += _add_term(
+            rb,
+            "air_combat_roe_authorized_fire_no_release_penalty",
+            _cfg_float(loader, "air_combat_roe_authorized_fire_no_release_penalty", 0.0),
+        )
+    else:
+        total += _add_term(
+            rb,
+            "air_combat_roe_authorized_fire_opportunity_penalty",
+            _cfg_float(loader, "air_combat_roe_authorized_fire_opportunity_penalty", 0.0),
+        )
+    return total
+
+
 def _apply_c2_roe_release_discipline(
     loader: Any,
     rb: dict[str, float],
@@ -481,6 +623,7 @@ def _apply_c2_roe_release_discipline(
     fire_attempted: bool,
 ) -> float:
     c2_state = air_combat_c2_roe_state_from_loader(loader)
+    action_state = _last_weapon_chain_state(loader)
     if int(release_count) > 0:
         total = 0.0
         for release_ordinal in range(int(release_count)):
@@ -500,7 +643,15 @@ def _apply_c2_roe_release_discipline(
         fire_attempted=bool(fire_attempted),
         previous_release_count=int(previous_release_count),
     )
-    return _add_c2_roe_reward_terms(loader, rb, classification)
+    total = _add_c2_roe_reward_terms(loader, rb, classification)
+    if _c2_roe_authorized_action_window(c2_state, previous_release_count=int(previous_release_count)):
+        total += _add_c2_roe_authorized_action_terms(
+            loader,
+            rb,
+            action_state,
+            fire_attempted=bool(fire_attempted),
+        )
+    return total
 
 
 def _apply_release_shaping(

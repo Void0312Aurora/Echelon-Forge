@@ -81,11 +81,11 @@
         "amp_dtype": "bf16",
         "use_checkpointing": true
       },
-      "family_subexpert_counts": [3, 2, 3, 1],
+      "family_subexpert_counts": [3, 2, 3, 1, 3],
       "hmoe_residual_scale": 0.18,
-      "hmoe_head_lr_scale": 0.15,
+      "hmoe_head_lr_scale": 0.35,
       "hmoe_residual_warmup_fraction": 0.3,
-      "hmoe_residual_start_factor": 0.0,
+      "hmoe_residual_start_factor": 0.25,
       "hybrid_action_spec": "air_combat_hybrid_v1",
       "log_std_init": -2.0,
       "net_arch": {

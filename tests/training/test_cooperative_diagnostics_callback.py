@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import unittest
 
+import torch as th
+
 from python.testing.runtime import ensure_repo_imports
 
 
@@ -38,6 +40,24 @@ class _DummyPolicy:
             "hmoe_params/family/nonzero_frac": 0.25,
             "hmoe_params/sub/nonzero_frac": 0.5,
         }
+
+
+class _DummyHybridDistribution:
+    def __init__(self) -> None:
+        self.binary_logits = th.tensor([[3.0, -1.0, 2.0, -0.5, -6.0]], dtype=th.float32)
+        self.categorical_logits = [
+            (11, th.tensor([[-1.0, 2.0, 0.0, -2.0, -2.0, -2.0, -2.0, -2.0]], dtype=th.float32))
+        ]
+
+
+class _DummyHybridPolicy:
+    device = "cpu"
+
+    def obs_to_tensor(self, obs):
+        return obs, False
+
+    def get_distribution(self, obs):
+        return _DummyHybridDistribution()
 
 
 class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
@@ -109,6 +129,35 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["hmoe/sub/nav/route"], 0.5, places=6)
         self.assertAlmostEqual(logger.records["hmoe_params/family/nonzero_frac"], 0.25, places=6)
         self.assertAlmostEqual(logger.records["hmoe_params/sub/nonzero_frac"], 0.5, places=6)
+
+    def test_records_hybrid_policy_binary_logits_when_policy_exposes_distribution(self) -> None:
+        cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
+        logger = _DummyLogger()
+        model = _DummyModel(logger)
+        model.policy = _DummyHybridPolicy()
+        cb.model = model
+        cb.locals = {
+            "new_obs": {"instruments": [[0.0] * 42]},
+            "actions": [[0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0]],
+            "rewards": [0.0],
+            "infos": [{}],
+            "dones": [False],
+        }
+        cb.num_timesteps = 1
+        cb._histories = []
+        cb._next_log_t = 1
+
+        self.assertTrue(cb._on_step())
+
+        self.assertAlmostEqual(logger.records["diag/pi_bin_tms_logit_mean"], -1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_bin_tms_p_mean"], 0.2689414, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_bin_fire_logit_mean"], -0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_bin_fire_p_mean"], 0.3775407, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_wsel_mode_mean"], 1.0, places=6)
+        self.assertGreater(
+            logger.records["diag/pi_wsel_s1_p_mean"],
+            logger.records["diag/pi_wsel_s0_p_mean"],
+        )
 
     def test_hybrid_air_combat_actions_are_not_logged_as_full_action_brakes(self) -> None:
         cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
