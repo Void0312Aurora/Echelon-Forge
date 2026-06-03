@@ -16,7 +16,7 @@
 
 | 流 | 状态 | 目标 | 写入面 | 非目标 | 验证 | 退出条件 |
 |----|------|------|--------|--------|------|----------|
-| `A2-D0 文档与边界冻结` | accepted | 建立子项目，冻结高真实度毁伤原则和 Phase 0 gate。 | `docs/task/air_combat/a2_high_fidelity_damage_model/**`、air_combat 索引 | 行为代码 | 文档 diff、索引可达 | 子项目能作为后续实现入口 |
+| `A2-D0 文档与边界冻结` | accepted | 建立子项目，冻结高真实度毁伤原则和 Phase 0 gate。 | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/**`、air_combat 索引 | 行为代码 | 文档 diff、索引可达 | 子项目能作为后续实现入口 |
 | `A2-P0.1 PlatformLossState 审计` | closed_for_design | 查明枚举值、raw int 比较、Python 暴露和序列化风险。 | 文档、必要时只读脚本 | 改枚举 | grep + 测试引用清单 | 得出 append-only/overlay 决策 |
 | `A2-P0.2 health observer 审计` | closed_with_guard | 盘点 `health > 0`、`get_unit_health`、`is_unit_active` 的语义依赖。 | 文档、只读 probe | 改 reward/termination | 调用点表 | 明确 HP 派生读数迁移影响 |
 | `A2-P0.3 ShipPlatform filter 审计` | closed_for_design | 判定 damage update 是新建 aircraft 系统还是泛化现有 naval 系统。 | 文档、只读 grep | 移除 filter | consumer matrix | 不破坏 ship-only 系统 |
@@ -42,7 +42,7 @@
 
 建议输出位置：
 
-- `docs/task/air_combat/a2_high_fidelity_damage_model/phase0_preflight_YYYYMMDD.zh.md`
+- `docs/task/air_combat/archive/a2_high_fidelity_damage_model/phase0_preflight_YYYYMMDD.zh.md`
 
 当前审计输出：
 

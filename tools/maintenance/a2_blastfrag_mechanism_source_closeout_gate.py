@@ -39,6 +39,7 @@ def _package_dir(repo_root: Path) -> Path:
         / "docs"
         / "task"
         / "air_combat"
+        / "archive"
         / "a2_high_fidelity_damage_model"
         / "calibration"
         / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
@@ -51,6 +52,7 @@ def _a2_root(repo_root: Path) -> Path:
         / "docs"
         / "task"
         / "air_combat"
+        / "archive"
         / "a2_high_fidelity_damage_model"
     )
 

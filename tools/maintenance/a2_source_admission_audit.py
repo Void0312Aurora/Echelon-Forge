@@ -12,9 +12,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-A2_ROOT = Path("docs/task/air_combat/a2_high_fidelity_damage_model")
-DATA_COLLECTION_DIR = A2_ROOT / "data_collection"
-CALIBRATION_DIR = A2_ROOT / "calibration"
+ARCHIVED_A2_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
+LEGACY_A2_ROOT = Path("docs/task/air_combat/a2_high_fidelity_damage_model")
 
 SOURCE_LEDGER_GLOB = "*/source_ledger*.zh.md"
 CALIBRATION_MARKDOWN_GLOB = "*/*.zh.md"
@@ -433,11 +432,23 @@ def collect_candidate_update_docs(a2_root: Path) -> list[Path]:
     )
 
 
+def resolve_a2_root(repo_root: Path) -> Path:
+    archived = repo_root / ARCHIVED_A2_ROOT
+    legacy = repo_root / LEGACY_A2_ROOT
+    if archived.exists() and (
+        (archived / "data_collection").exists()
+        or (archived / "calibration").exists()
+    ):
+        return ARCHIVED_A2_ROOT
+    return LEGACY_A2_ROOT
+
+
 def audit_a2_source_admission(repo_root: Path = REPO_ROOT) -> AuditSummary:
     repo_root = repo_root.resolve()
-    a2_root = repo_root / A2_ROOT
-    data_collection = repo_root / DATA_COLLECTION_DIR
-    calibration = repo_root / CALIBRATION_DIR
+    a2_root_rel = resolve_a2_root(repo_root)
+    a2_root = repo_root / a2_root_rel
+    data_collection = a2_root / "data_collection"
+    calibration = a2_root / "calibration"
     issues: list[Issue] = []
 
     ledger_paths = sorted(data_collection.glob(SOURCE_LEDGER_GLOB)) if data_collection.exists() else []

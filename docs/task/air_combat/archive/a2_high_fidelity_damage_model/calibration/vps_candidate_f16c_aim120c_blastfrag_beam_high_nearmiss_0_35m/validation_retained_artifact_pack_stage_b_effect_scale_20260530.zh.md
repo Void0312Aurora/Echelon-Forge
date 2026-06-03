@@ -19,7 +19,7 @@ JSON 产物，用来固定当前 candidate evidence chain；它不是 stock auth
 | `runtime_origin` | `no_stock_runtime_descriptor_author_side_artifacts_only` |
 | `review_surface` | `author_side_stage_b_effect_scale_candidate_only` |
 | `stage_c_component_probability_artifacts_present` | `false` |
-| `manifest_ref` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json` |
+| `manifest_ref` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json` |
 | `retained_artifact_count` | `4` |
 | `stock_runtime_action` | `forbidden` |
 
@@ -27,7 +27,7 @@ JSON 产物，用来固定当前 candidate evidence chain；它不是 stock auth
 
 当前 retained pack 目录为：
 
-`docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/`
+`docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/`
 
 | `artifact_key` | 文件 | 当前状态 | 角色 |
 |---|---|---|---|

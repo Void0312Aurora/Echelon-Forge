@@ -112,6 +112,6 @@ independent result audit result 为 `blocked`。本包没有把 candidate rows �
 ## 7. Reproduction
 
 ```bash
-python tools/maintenance/a2_blastfrag_stage_c_fragility_benchmark.py --retained-dir docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531
+python tools/maintenance/a2_blastfrag_stage_c_fragility_benchmark.py --retained-dir docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_fragility_benchmark_20260531
 pytest -q tests/architecture/test_a2_blastfrag_stage_c_fragility_benchmark.py
 ```

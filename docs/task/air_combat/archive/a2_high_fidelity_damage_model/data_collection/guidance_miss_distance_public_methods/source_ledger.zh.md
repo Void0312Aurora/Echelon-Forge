@@ -45,7 +45,7 @@
 
 | `record_id` | 类型 | 定位 | 用途 | 限制 |
 |---|---|---|---|---|
-| `GMD-INT-001` | internal reproducibility | `docs/task/air_combat/a2_high_fidelity_damage_model/README.zh.md` and `guidance_miss_distance/guidance_miss_distance_evasion_evidence_route_20260528.zh.md` | A2 head-on / tail-chase / beam / high-off-boresight regression seed；可与公开 PN 来源做 qualitative cross-check。 | 不是公开外部来源；数值受当前实现影响；不作为 source authority。 |
+| `GMD-INT-001` | internal reproducibility | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/README.zh.md` and `guidance_miss_distance/guidance_miss_distance_evasion_evidence_route_20260528.zh.md` | A2 head-on / tail-chase / beam / high-off-boresight regression seed；可与公开 PN 来源做 qualitative cross-check。 | 不是公开外部来源；数值受当前实现影响；不作为 source authority。 |
 | `GMD-SANITY-001` | sanity-check class | open-source / 民间 PN missile simulations、game/forum models、third-party PDF mirrors | 只用于发现 sign convention、单位、数量级、edge case 异常。 | 不是候选来源；没有逐项 license/provenance audit 前，不进入 benchmark_dataset / validation_criteria / reproducibility。 |
 
 ## 排除 / 暂缓记录

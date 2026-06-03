@@ -356,7 +356,7 @@
     "Pk and deterministic fuze authority remain out of scope and false."
   ],
   "mechanism_comparison_hashes_input_status": "partial_fail_closed_mechanism_comparison_hash_manifest",
-  "mechanism_comparison_hashes_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
+  "mechanism_comparison_hashes_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
   "non_authoritative_guards": {
     "blast_mechanism_authority_granted": false,
     "component_failure_probability_authority_granted": false,
@@ -371,7 +371,7 @@
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
   "review_target": "res_005_006_benchmark_execution_admission_gate",
   "schema_version": "a2.res005006_benchmark_execution_admission_gate.v1",
-  "source_payload_pack_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531",
+  "source_payload_pack_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531",
   "status": "partial_fail_closed_benchmark_execution_admission_gate",
   "tolerance_policy": {
     "admitted_tolerance": null,

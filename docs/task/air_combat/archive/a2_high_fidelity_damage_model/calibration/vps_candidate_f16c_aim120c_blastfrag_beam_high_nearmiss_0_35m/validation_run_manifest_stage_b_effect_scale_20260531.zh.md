@@ -27,7 +27,7 @@ benchmark/result execution record。它只减少 author-side 未完成项，不�
 ## 2. 复现命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_stage_b_release_closeout.py --output docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json
+python tools/maintenance/a2_blastfrag_stage_b_release_closeout.py --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json
 python tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py
 python tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py
 ```

@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530",
   "artifacts": [
     {
       "allowed_claim": "candidate validation scaffold inputs and non-authoritative guards are retained",
@@ -8,7 +8,7 @@
       "filename": "validation_scaffold_snapshot.json",
       "forbidden_claim": "independent validation, stock runtime authority, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_validation_scaffold_snapshot_only",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/validation_scaffold_snapshot.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/validation_scaffold_snapshot.json",
       "schema_version": "a2.vulnerability_surrogate_validation.v1",
       "sha256": "b3220e79813b08d407aa4229089290d7b3aa031f955c434437b387f61cc9580d",
       "status": "not_run"
@@ -20,7 +20,7 @@
       "filename": "scope_boundary_probe_snapshot.json",
       "forbidden_claim": "reviewed closure physics, stock runtime authority, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_scope_boundary_probe_only",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/scope_boundary_probe_snapshot.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/scope_boundary_probe_snapshot.json",
       "schema_version": "a2.scope_boundary_probe.v1",
       "sha256": "74dea1dd924843bd4e1ad62bb02eb5672b1f23c6ce04561cfa67f6f10efcc876",
       "status": "candidate_non_authoritative_scope_probe_results"
@@ -32,7 +32,7 @@
       "filename": "stage_b_effect_scale_snapshot.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_stage_b_hard_gate_snapshot_only",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_effect_scale_snapshot.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_effect_scale_snapshot.json",
       "schema_version": "a2.stage_b_effect_scale_snapshot.v1",
       "sha256": "0d771b867a81d77e045f2144ac8e3730ead67e64de7a62fbdd3bfb73b8b8dada",
       "status": "candidate_non_authoritative_stage_b_snapshot"
@@ -44,7 +44,7 @@
       "filename": "stage_b_validation_result_pack.json",
       "forbidden_claim": "independent validation result, stock runtime authority, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_stage_b_result_pack_only",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
       "schema_version": "a2.stage_b_validation_result_pack.v1",
       "sha256": "e11b21f41d632645466f94c942b59921fb2fc1d53218ed03c6b4645c059b05ce",
       "status": "candidate_non_authoritative_stage_b_result_pack"

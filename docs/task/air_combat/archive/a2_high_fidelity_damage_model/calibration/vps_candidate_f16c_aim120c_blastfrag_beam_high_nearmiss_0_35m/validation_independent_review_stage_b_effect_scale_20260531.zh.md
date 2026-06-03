@@ -79,7 +79,7 @@ Stage C component probability、Pk 或 deterministic fuze authority。
 ## 6. 复现命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py --output docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json
+python tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json
 pytest tests/architecture/test_a2_blastfrag_stage_b_independent_review_gate.py
 ```
 

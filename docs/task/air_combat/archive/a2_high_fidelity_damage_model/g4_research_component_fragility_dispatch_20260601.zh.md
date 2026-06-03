@@ -94,8 +94,8 @@ integration notes:
 最低验证：
 
 ```bash
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model
-rg -n "authorit[y]=true|component_failure_probability_authorit[y].*true|stock_descriptor_create[d].*true|calibration_statu[s].*calibrated|authority_admissio[n].*true|industrial_admissio[n].*true|replacement_allowe[d].*false" docs/task/air_combat/a2_high_fidelity_damage_model
+git diff --check -- docs/task/air_combat/archive/a2_high_fidelity_damage_model
+rg -n "authorit[y]=true|component_failure_probability_authorit[y].*true|stock_descriptor_create[d].*true|calibration_statu[s].*calibrated|authority_admissio[n].*true|industrial_admissio[n].*true|replacement_allowe[d].*false" docs/task/air_combat/archive/a2_high_fidelity_damage_model
 ```
 
 integration owner 还应检查：

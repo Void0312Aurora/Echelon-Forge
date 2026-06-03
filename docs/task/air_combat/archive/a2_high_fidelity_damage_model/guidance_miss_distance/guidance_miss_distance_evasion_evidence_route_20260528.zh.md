@@ -180,7 +180,7 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
 辅助审计命令：
 
 ```bash
-rg -n "proximity_min_dist_m|fuze_hit_probability|resolved_compatibility_damage_evasion|miss_distance_m|vulnerability_miss_distance_scale" src tests docs/task/air_combat/a2_high_fidelity_damage_model -S
+rg -n "proximity_min_dist_m|fuze_hit_probability|resolved_compatibility_damage_evasion|miss_distance_m|vulnerability_miss_distance_scale" src tests docs/task/air_combat/archive/a2_high_fidelity_damage_model -S
 rg -n "seeker_fov_deg|seeker_activation_range_m|midcourse_datalink_supported|track_memory_timeout_s|guidance_max_lateral_g|guidance_autopilot_tau_s|guidance_induced_drag_k" src tests/runtime/air_combat -S
 ```
 

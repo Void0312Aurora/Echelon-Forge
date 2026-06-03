@@ -44,7 +44,7 @@
   },
   "consumed_evidence": {
     "scope_and_independence_manifest": {
-      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
       "present": true,
       "status": "scope_manifest_complete"
     },
@@ -54,20 +54,20 @@
       "status": "candidate_non_authoritative_scope_probe_results"
     },
     "stage_b_independent_review_doc": {
-      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_independent_review_stage_b_effect_scale_20260531.zh.md",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_independent_review_stage_b_effect_scale_20260531.zh.md",
       "present": true
     },
     "stage_b_independent_review_gate": {
-      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json",
       "present": true,
       "status": "independent_review_complete"
     },
     "stage_b_independent_review_manifest": {
-      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/manifest.json",
       "present": true
     },
     "stage_b_result_pack": {
-      "path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
+      "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_validation_result_pack.json",
       "present": true,
       "status": "result_pack_complete"
     }

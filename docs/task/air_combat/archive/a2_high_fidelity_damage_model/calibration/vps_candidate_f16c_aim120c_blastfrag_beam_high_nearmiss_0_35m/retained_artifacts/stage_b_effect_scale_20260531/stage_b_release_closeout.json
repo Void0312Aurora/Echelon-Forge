@@ -595,8 +595,8 @@
   "validation_run_manifest": {
     "closure_mps": 900.0,
     "execution_mode": "deterministic_fixed_seed_candidate_scaffold",
-    "frozen_criteria_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md",
-    "frozen_scope_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
+    "frozen_criteria_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md",
+    "frozen_scope_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
     "release_readiness_gate_tool_ref": "tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py",
     "result_pack_tool_ref": "tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py",
     "run_id": "STAGE-B-ES-RUN-20260531-001",

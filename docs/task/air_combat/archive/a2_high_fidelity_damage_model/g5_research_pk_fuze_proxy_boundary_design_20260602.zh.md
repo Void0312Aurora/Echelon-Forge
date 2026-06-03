@@ -86,7 +86,7 @@ The following claims remain forbidden in this research lane:
 ```md
 status: pass
 touched files:
-- docs/task/air_combat/a2_high_fidelity_damage_model/g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md
+- docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_pk_fuze_proxy_boundary_design_20260602.zh.md
 commands/outcomes:
 - pending integration validation
 remaining paths:

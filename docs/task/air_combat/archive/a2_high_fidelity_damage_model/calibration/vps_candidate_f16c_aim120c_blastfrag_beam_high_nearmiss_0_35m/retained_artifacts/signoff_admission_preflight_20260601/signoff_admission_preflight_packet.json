@@ -19,7 +19,7 @@
     }
   ],
   "approval_granted": false,
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_admission_preflight_20260601",
   "authority_guards": {
     "allowed_output_release_authority_granted": false,
     "benchmark_consumption_authority_granted": false,
@@ -61,7 +61,7 @@
       "artifact_key": "signoff_intake_contract",
       "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
       "present": true,
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
       "required_for_preflight": true,
       "role": "current_retained_signoff_intake_contract_input",
       "schema_version": "a2.blastfrag_signoff_intake_contract.v1",

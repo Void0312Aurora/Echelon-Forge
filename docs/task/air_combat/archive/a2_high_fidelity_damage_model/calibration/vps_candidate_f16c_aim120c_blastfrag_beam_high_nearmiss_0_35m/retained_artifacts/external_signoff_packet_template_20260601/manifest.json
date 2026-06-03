@@ -1,13 +1,13 @@
 {
   "admission_granted": false,
   "approval_granted": false,
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601",
   "artifacts": [
     {
       "artifact_key": "external_signoff_packet_template",
       "external_schema_version": "a2.external_signoff_intake_packet.v1",
       "filename": "external_signoff_packet_template.json",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/external_signoff_packet_template_20260601/external_signoff_packet_template.json",
       "schema_version": "a2.external_signoff_packet_template.v1",
       "sha256": "d624bba1d1032bed34add492382dc06342781f67d83303403cbfaaafeefea328"
     }
@@ -35,7 +35,7 @@
     {
       "artifact_key": "source_rights_signoff_request_packet",
       "present": true,
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
       "required_for_template": true,
       "role": "current_source_rights_request_hash_pin_for_template_only_packet",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",

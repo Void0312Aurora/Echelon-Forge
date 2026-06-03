@@ -46,7 +46,7 @@ research proxy packet can be integrated without confusing proxy design with Pk o
 ```md
 status: pass
 touched files:
-- docs/task/air_combat/a2_high_fidelity_damage_model/g5_research_uncertainty_independence_audit_20260602.zh.md
+- docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_uncertainty_independence_audit_20260602.zh.md
 commands/outcomes:
 - pending integration validation
 remaining paths:

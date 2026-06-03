@@ -34,6 +34,7 @@ PACKAGE_DIR = (
     / "docs"
     / "task"
     / "air_combat"
+    / "archive"
     / "a2_high_fidelity_damage_model"
     / "calibration"
     / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
@@ -73,7 +74,7 @@ EXPECTED_RES004_PIN_IDS = [
 
 
 def _a2_root(repo_root: Path) -> Path:
-    return repo_root / "docs" / "task" / "air_combat" / "a2_high_fidelity_damage_model"
+    return repo_root / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
 
 
 def _evidence_refs(

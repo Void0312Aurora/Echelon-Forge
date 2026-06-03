@@ -18,7 +18,7 @@ surrogate identity”。
 | `repo_commit` | `e634f3aca7deed73c2918f58a8d07068c5727215` |
 | `worktree_state` | `repo_dirty_relevant_stage_b_file_set_hashed_retained_artifacts_present` |
 | `retained_artifact_pack_status` | `present_author_side_non_authoritative` |
-| `retained_artifact_manifest_ref` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json` |
+| `retained_artifact_manifest_ref` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/manifest.json` |
 | `retained_artifact_count` | `4` |
 | `current_validation_status` | `not_validated` |
 | `primary_release_scope` | `effect_scale_authority_only` |

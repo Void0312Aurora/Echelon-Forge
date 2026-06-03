@@ -58,12 +58,13 @@ PACKAGE_DIR = (
     / "docs"
     / "task"
     / "air_combat"
+    / "archive"
     / "a2_high_fidelity_damage_model"
     / "calibration"
     / "vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m"
 )
 A2_ROOT = (
-    REPO_ROOT / "docs" / "task" / "air_combat" / "a2_high_fidelity_damage_model"
+    REPO_ROOT / "docs" / "task" / "air_combat" / "archive" / "a2_high_fidelity_damage_model"
 )
 
 DOC_REFS = {

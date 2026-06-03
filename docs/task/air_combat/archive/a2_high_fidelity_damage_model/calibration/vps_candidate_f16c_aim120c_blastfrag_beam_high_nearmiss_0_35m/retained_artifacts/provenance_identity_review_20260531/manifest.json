@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531",
   "artifacts": [
     {
       "allowed_claim": "release-review blocker surface for RES-001/RES-002 is retained",
@@ -7,7 +7,7 @@
       "content_sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
       "filename": "provenance_identity_review_gate.json",
       "forbidden_claim": "stock descriptor release, source payload rights review, independent review signoff, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "schema_version": "a2.provenance_identity_review_gate.v1",
       "sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
@@ -29,8 +29,8 @@
   "package_id": "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0",
   "retention_scope": "provenance_identity_review_gate_output_only",
   "schema_version": "a2.provenance_identity_review_retained_manifest.v1",
-  "source_artifact_pack_manifest_consumed": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
-  "source_artifact_pack_manifest_expected": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+  "source_artifact_pack_manifest_consumed": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+  "source_artifact_pack_manifest_expected": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
   "source_artifact_payloads_retained": true,
   "source_payload_release_blockers": {
     "allowed_output_policy_blocked": true,

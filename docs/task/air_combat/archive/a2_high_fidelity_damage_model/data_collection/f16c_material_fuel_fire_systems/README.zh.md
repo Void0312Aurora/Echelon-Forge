@@ -11,9 +11,9 @@
 
 已读取并沿用：
 
-- `docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/source_admission_rules_20260528.zh.md`
-- `docs/task/air_combat/a2_high_fidelity_damage_model/vulnerability_evidence_schema_v1.zh.md`
-- `docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/`
+- `docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/source_admission_rules_20260528.zh.md`
+- `docs/task/air_combat/archive/a2_high_fidelity_damage_model/vulnerability_evidence_schema_v1.zh.md`
+- `docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/`
 
 已有 F-16 几何包已把 `F-16C_Block50` 的公开外形、总燃油量、发动机族、粗组件区和大量材料/装甲/内部布局缺口分开。本目录不改写几何结论，只补充公开来源能支持的燃油火灾、材料防火、结构后果和系统依赖方法背景。
 

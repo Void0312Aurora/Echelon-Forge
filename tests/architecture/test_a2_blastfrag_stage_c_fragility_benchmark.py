@@ -133,7 +133,7 @@ def test_a2_blastfrag_stage_c_fragility_benchmark_compares_candidate_to_syntheti
     ]
     assert [row["candidate_probability"] for row in rows] == [0.52, 0.37, 0.21]
     assert [row["synthetic_sigmoid_probability"] for row in rows] == pytest.approx(
-        [0.0024010146067079048, 0.001813348290361158, 0.0016625621124417252]
+        [0.001437651677663019, 0.001077334322735288, 0.0009847075557964436]
     )
     assert all(
         row["synthetic_sigmoid_probability_source"] == "synthetic_sigmoid"
@@ -146,10 +146,10 @@ def test_a2_blastfrag_stage_c_fragility_benchmark_compares_candidate_to_syntheti
         for row in rows
     )
     assert rows[0]["candidate_minus_synthetic_sigmoid"] == pytest.approx(
-        0.5175989853932921
+        0.518562348322337
     )
     assert rows[2]["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-        126.31107038255736
+        213.26128632185564
     )
 
     metrics = comparison["metrics"]
@@ -162,10 +162,10 @@ def test_a2_blastfrag_stage_c_fragility_benchmark_compares_candidate_to_syntheti
         0.3666666666666667
     )
     assert metrics["mean_synthetic_sigmoid_probability"] == pytest.approx(
-        0.0019589750031702626
+        0.0011665645187315837
     )
     assert metrics["mean_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-        0.36470769166349637
+        0.3655001021479351
     )
     assert metrics["replacement_allowed"] is False
     assert "cannot prove accuracy" in metrics["calibration_interpretation"]

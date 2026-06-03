@@ -44,8 +44,8 @@ RNG-compatible fallback。
 ```md
 status: pass
 touched files:
-- docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods/README.zh.md
-- docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md
+- docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods/README.zh.md
+- docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods/g5_r_source_scan_20260602.zh.md
 commands/outcomes:
 - pending integration validation
 remaining paths:

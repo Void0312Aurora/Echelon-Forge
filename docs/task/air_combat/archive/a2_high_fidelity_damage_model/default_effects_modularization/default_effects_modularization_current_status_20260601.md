@@ -113,7 +113,7 @@ CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtim
 CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 # 155 passed in 33.24s
 
-git diff --check -- src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc src/core/engine/simulation_kernel_damage_debug_api.cpp docs/task/air_combat/a2_high_fidelity_damage_model/default_effects_modularization src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/a2_high_fidelity_damage_model/README.zh.md
+git diff --check -- src/models/weapons/detail/default_effects_air_platform_resolution_detail.inc src/core/engine/simulation_kernel_damage_debug_api.cpp docs/task/air_combat/archive/a2_high_fidelity_damage_model/default_effects_modularization src/models/weapons/README.md src/models/weapons/README.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/README.zh.md
 # passed
 ```
 

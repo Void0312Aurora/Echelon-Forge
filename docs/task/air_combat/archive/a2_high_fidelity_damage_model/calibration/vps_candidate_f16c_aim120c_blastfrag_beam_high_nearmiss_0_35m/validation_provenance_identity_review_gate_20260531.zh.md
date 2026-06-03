@@ -79,6 +79,6 @@
 ## 7. 复核命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py --write-retained-artifact --retained-output-dir docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531 --output /tmp/a2_provenance_identity_review_retained_manifest.json
+python tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py --write-retained-artifact --retained-output-dir docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531 --output /tmp/a2_provenance_identity_review_retained_manifest.json
 python -m pytest -q tests/architecture/test_a2_blastfrag_provenance_identity_review_gate.py
 ```

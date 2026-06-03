@@ -63,7 +63,7 @@ response 和 consequence surface 串成一条 research event chain。它不实�
 ```md
 status: pass
 touched files:
-- docs/task/air_combat/a2_high_fidelity_damage_model/g5_research_event_chain_map_20260602.zh.md
+- docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_event_chain_map_20260602.zh.md
 commands/outcomes:
 - pending integration validation
 remaining paths:

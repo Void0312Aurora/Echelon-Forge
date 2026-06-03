@@ -1,12 +1,12 @@
 {
   "admission_granted": false,
   "approval_granted": false,
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601",
   "artifacts": [
     {
       "artifact_key": "signoff_intake_contract",
       "filename": "signoff_intake_contract.json",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/signoff_intake_contract_20260601/signoff_intake_contract.json",
       "schema_version": "a2.blastfrag_signoff_intake_contract.v1",
       "sha256": "93432c6546d44eee8232f383dcd75d1faa5daf46ba9b0f654fbf4935e607e416"
     }
@@ -37,7 +37,7 @@
     {
       "artifact_key": "source_rights_signoff_request_packet",
       "present": true,
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
       "required_for_contract": true,
       "role": "current_fail_closed_signoff_request_input",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",

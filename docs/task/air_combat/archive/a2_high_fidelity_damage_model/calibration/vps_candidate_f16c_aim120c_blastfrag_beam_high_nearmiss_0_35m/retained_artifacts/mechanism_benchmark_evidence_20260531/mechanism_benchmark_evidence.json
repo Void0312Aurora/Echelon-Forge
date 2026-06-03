@@ -21,16 +21,16 @@
     "RES-006": "blocked_fail_closed_blast_benchmark_payload_missing"
   },
   "doc_refs": {
-    "artifact_pin_manifest": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
-    "mechanism_model_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
-    "mechanism_source_closeout_gate": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
-    "stage_b_result_pack": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md",
-    "stage_c_result_pack": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md",
-    "target_geometry_assumptions": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
-    "target_geometry_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
-    "vps_blastfrag_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
-    "warhead_scope_and_sensitivity": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
-    "warhead_source_ledger": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md"
+    "artifact_pin_manifest": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md",
+    "mechanism_model_source_ledger": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+    "mechanism_source_closeout_gate": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_mechanism_source_closeout_gate_20260531.zh.md",
+    "stage_b_result_pack": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_b_effect_scale_20260530.zh.md",
+    "stage_c_result_pack": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_result_pack_stage_c_component_probability_20260530.zh.md",
+    "target_geometry_assumptions": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+    "target_geometry_source_ledger": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+    "vps_blastfrag_source_ledger": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+    "warhead_scope_and_sensitivity": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+    "warhead_source_ledger": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md"
   },
   "fragment_blast_lineage_summary": {
     "blast": [
@@ -77,7 +77,7 @@
             "externally_verified_source_ids": [
               "VPS-BFM-003"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "VPS-BFM-003"
@@ -108,7 +108,7 @@
             "externally_verified_source_ids": [
               "MECH-BLAST-003"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "MECH-BLAST-003"
@@ -194,7 +194,7 @@
             "externally_verified_source_ids": [
               "VPS-BFM-014"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "VPS-BFM-014"
@@ -225,7 +225,7 @@
             "externally_verified_source_ids": [
               "MECH-BLAST-004"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "MECH-BLAST-004"
@@ -254,7 +254,7 @@
             "externally_verified_source_ids": [
               "PHYS-BF-002"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [],
             "present_source_ids": [
@@ -340,7 +340,7 @@
             "externally_verified_source_ids": [
               "VPS-BFM-002"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [],
             "present_source_ids": [
@@ -377,7 +377,7 @@
               "PHYS-BF-001"
             ],
             "externally_verified_source_ids": [],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [],
             "present_source_ids": [
@@ -446,7 +446,7 @@
             "externally_verified_source_ids": [
               "VPS-BFM-007"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "VPS-BFM-007"
@@ -477,7 +477,7 @@
             "externally_verified_source_ids": [
               "MECH-FRAG-002"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "MECH-FRAG-002"
@@ -506,7 +506,7 @@
               "PHYS-BF-006"
             ],
             "externally_verified_source_ids": [],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [],
             "present_source_ids": [
@@ -589,7 +589,7 @@
             "externally_verified_source_ids": [
               "VPS-BFM-015"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "VPS-BFM-015"
@@ -620,7 +620,7 @@
             "externally_verified_source_ids": [
               "MECH-FRAG-004"
             ],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [
               "MECH-FRAG-004"
@@ -697,7 +697,7 @@
               "VPS-BFM-001"
             ],
             "externally_verified_source_ids": [],
-            "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+            "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
             "missing_source_ids": [],
             "pending_acquisition_source_ids": [],
             "present_source_ids": [
@@ -845,7 +845,7 @@
             "F16-TG-SRC-002",
             "F16-TG-SRC-012"
           ],
-          "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
+          "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/f16c_block50_target_geometry/source_ledger.zh.md",
           "missing_source_ids": [],
           "pending_acquisition_source_ids": [],
           "present_source_ids": [
@@ -940,7 +940,7 @@
           "validation_scaffold_status": "not_run"
         },
         "target_geometry_assumption_summary": {
-          "artifact_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
+          "artifact_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/target_geometry_assumptions_stage_b_effect_scale_20260530.zh.md",
           "author_status": "frozen_for_stage_b_review_only",
           "target_type": "F-16C_Block50",
           "unsupported_row_count": 2,
@@ -1021,7 +1021,7 @@
             "AIM120-WF-007",
             "PHYS-BF-002"
           ],
-          "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+          "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
           "missing_source_ids": [],
           "pending_acquisition_source_ids": [],
           "present_source_ids": [
@@ -1126,7 +1126,7 @@
           "validation_scaffold_status": "not_run"
         },
         "warhead_scope_summary": {
-          "artifact_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
+          "artifact_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md",
           "consumed_by_surrogate_yes_count": 3,
           "rejected_rows": 1,
           "weapon_class": "AIM-120C-class",
@@ -1193,7 +1193,7 @@
                 "externally_verified_source_ids": [
                   "VPS-BFM-007"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "VPS-BFM-007"
@@ -1224,7 +1224,7 @@
                 "externally_verified_source_ids": [
                   "MECH-FRAG-002"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "MECH-FRAG-002"
@@ -1253,7 +1253,7 @@
                   "PHYS-BF-006"
                 ],
                 "externally_verified_source_ids": [],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [],
                 "present_source_ids": [
@@ -1336,7 +1336,7 @@
                 "externally_verified_source_ids": [
                   "VPS-BFM-015"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "VPS-BFM-015"
@@ -1367,7 +1367,7 @@
                 "externally_verified_source_ids": [
                   "MECH-FRAG-004"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "MECH-FRAG-004"
@@ -1444,7 +1444,7 @@
                   "VPS-BFM-001"
                 ],
                 "externally_verified_source_ids": [],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [],
                 "present_source_ids": [
@@ -1583,7 +1583,7 @@
                 "externally_verified_source_ids": [
                   "VPS-BFM-003"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "VPS-BFM-003"
@@ -1614,7 +1614,7 @@
                 "externally_verified_source_ids": [
                   "MECH-BLAST-003"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "MECH-BLAST-003"
@@ -1700,7 +1700,7 @@
                 "externally_verified_source_ids": [
                   "VPS-BFM-014"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "VPS-BFM-014"
@@ -1731,7 +1731,7 @@
                 "externally_verified_source_ids": [
                   "MECH-BLAST-004"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/mechanism_model_public_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [
                   "MECH-BLAST-004"
@@ -1760,7 +1760,7 @@
                 "externally_verified_source_ids": [
                   "PHYS-BF-002"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [],
                 "present_source_ids": [
@@ -1846,7 +1846,7 @@
                 "externally_verified_source_ids": [
                   "VPS-BFM-002"
                 ],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/vps_blast_fragmentation_methods/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [],
                 "present_source_ids": [
@@ -1883,7 +1883,7 @@
                   "PHYS-BF-001"
                 ],
                 "externally_verified_source_ids": [],
-                "ledger_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
+                "ledger_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md",
                 "missing_source_ids": [],
                 "pending_acquisition_source_ids": [],
                 "present_source_ids": [

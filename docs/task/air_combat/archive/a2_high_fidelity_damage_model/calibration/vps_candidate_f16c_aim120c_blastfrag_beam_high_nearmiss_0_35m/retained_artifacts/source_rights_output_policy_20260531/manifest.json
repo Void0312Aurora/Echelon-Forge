@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531",
+  "artifact_dir": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531",
   "non_authoritative_guards": {
     "component_failure_probability_authority_in_stock": false,
     "component_failure_probability_authority_released": false,
@@ -21,7 +21,7 @@
       "forbidden_use": "copying document body, tables or figures into release artifacts; consuming document examples as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
       "hash_matches_expected": true,
       "policy_status": "release_candidate_fail_closed_policy_frozen",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-20.pdf",
       "requirement_id": "PIN-BFM-001:tp-20-pdf",
       "rights_status": "public_distribution_statement_supported_rights_review_candidate",
       "sha256": "293c5fd15a56b7ec4e6f4ad37d35f73a8e010083ce20baad56e39fb8423f165f",
@@ -33,7 +33,7 @@
       "forbidden_use": "copying spreadsheet body, formula or output tables; consuming spreadsheet/tool outputs as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
       "hash_matches_expected": true,
       "policy_status": "release_candidate_fail_closed_policy_frozen",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/BEC-O-V1.xlsx",
       "requirement_id": "PIN-BFM-001:bec-o-v1-xlsx",
       "rights_status": "public_distribution_statement_supported_rights_review_candidate",
       "sha256": "82815469317eb0b3dcf03b7687aae75075798b4345657a08399d8059c9de18fc",
@@ -45,7 +45,7 @@
       "forbidden_use": "copying document body, tables or figures into release artifacts; consuming document examples as benchmark results; source truth; runtime authority; stock descriptor authority; effect-scale authority; component-probability authority; Pk authority; deterministic-fuze authority",
       "hash_matches_expected": true,
       "policy_status": "release_candidate_fail_closed_policy_frozen",
-      "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
+      "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/payloads/TP-21.pdf",
       "requirement_id": "PIN-BFM-002:tp-21-pdf",
       "rights_status": "public_distribution_statement_supported_rights_review_candidate",
       "sha256": "84b72dee13dff247cff5018c8f3e4d560569ee301835fdc324a9ff5043979de8",
@@ -109,12 +109,12 @@
     "rights_supported_by_public_distribution_statement": true
   },
   "schema_version": "a2.source_rights_output_policy_retained_manifest.v1",
-  "source_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+  "source_manifest_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
   "source_payload_pack_manifest": {
     "all_payload_hashes_match": true,
     "all_payloads_exist": true,
     "allowed_output_policy_status": "release_candidate_fail_closed_policy_frozen",
-    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
+    "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
     "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off",
     "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
     "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
@@ -123,7 +123,7 @@
   "source_rights_output_policy_gate": {
     "content_sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
     "filename": "source_rights_output_policy_gate.json",
-    "relative_path": "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
+    "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
     "schema_version": "a2.source_rights_output_policy_gate.v1",
     "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71"
   },

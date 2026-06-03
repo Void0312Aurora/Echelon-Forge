@@ -40,12 +40,12 @@
 
 | evidence | present | upstream status | path |
 |---|---:|---|---|
-| `residual_register` | `True` | `n/a` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md` |
-| `warhead_scope_and_sensitivity` | `True` | `n/a` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md` |
-| `artifact_pin_manifest` | `True` | `n/a` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md` |
-| `warhead_source_ledger` | `True` | `n/a` | `docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md` |
-| `geometry_warhead_row_provenance_gate` | `True` | `blocked_non_authoritative_geometry_warhead_row_provenance_candidate` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json` |
-| `mechanism_source_closeout_gate` | `True` | `blocked_non_authoritative_mechanism_source_closeout_candidate` | `docs/task/air_combat/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json` |
+| `residual_register` | `True` | `n/a` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md` |
+| `warhead_scope_and_sensitivity` | `True` | `n/a` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/warhead_scope_and_sensitivity_stage_b_effect_scale_20260530.zh.md` |
+| `artifact_pin_manifest` | `True` | `n/a` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/artifact_pin_manifest_stage_b_effect_scale_20260530.zh.md` |
+| `warhead_source_ledger` | `True` | `n/a` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/aim120c_warhead_fuze/source_ledger.zh.md` |
+| `geometry_warhead_row_provenance_gate` | `True` | `blocked_non_authoritative_geometry_warhead_row_provenance_candidate` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json` |
+| `mechanism_source_closeout_gate` | `True` | `blocked_non_authoritative_mechanism_source_closeout_candidate` | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json` |
 
 ## 4. Non-Authoritative Guards
 
