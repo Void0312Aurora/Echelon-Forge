@@ -168,8 +168,11 @@ Fail-closed defaults:
 - 数据链、外部传感器和 friend/no-fire-zone 逻辑是未来扩展，不是 A3 验收条件。
 - A3 32k learned-policy probe 已显示：deterministic final model 不发射，stochastic
   行为仍有大量违规发射；该结果不释放 M2。
-- 下一项实质工作转向训练信号和 policy routing 修复：deterministic policy 必须先学到
-  授权首发，随后才可重新讨论 M2。
+- 下一项实质工作已进入
+  [../a4_authorized_first_shot_training_signal/README.zh.md](../a4_authorized_first_shot_training_signal/README.zh.md)：
+  deterministic policy 必须先学到授权首发，随后才可重新讨论 M2。
+- A4 现已为 `air_combat_c2_roe_v1` 增加专用 `combat_weapons` HMoE route；
+  post-routing learned-policy evidence 已记录但 held，因此 M2 继续 held。
 
 ## Archive
 

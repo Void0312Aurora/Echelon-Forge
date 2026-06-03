@@ -189,9 +189,13 @@ This subproject can be marked accepted only when:
 - A3 32k learned-policy probing shows that the deterministic final model does
   not fire and stochastic behavior still produces many violation releases; this
   does not release M2.
-- The next substantive work is training-signal and policy-routing repair:
+- The next substantive work is tracked by
+  [../a4_authorized_first_shot_training_signal/README.md](../a4_authorized_first_shot_training_signal/README.md):
   deterministic policy must learn an authorized first shot before M2 can be
   reconsidered.
+- A4 has since added a dedicated `combat_weapons` HMoE route for
+  `air_combat_c2_roe_v1`; post-routing learned-policy evidence is recorded but
+  held, so M2 remains held.
 
 ## Archive
 

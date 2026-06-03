@@ -2,7 +2,9 @@
 
 状态：`1v1` 工作线仍在活跃推进；默认入口已于 `2026-05-18` 收敛；
 `2026-05-25` 已开启分阶段 `1v1` 真实度梯度课程；`2026-06-03`
-有边界的 A3 C2/ROE 发射纪律层 accepted，M2 继续 held。
+有边界的 A3 C2/ROE 发射纪律层 accepted，M2 继续 held；同日开启 A4
+授权首发训练信号 follow-on；A4 reward/routing 证据继续 held 后，已开启 A5
+受约束事件动作模型路线。
 
 ## 当前状态
 
@@ -26,6 +28,23 @@
   已改为动态暴露 `shot_budget_remaining=0` / `pending_assessment=1`。post-fix
   reactive/temporal 对照显示 temporal stochastic 可清零违规发射，但 deterministic
   武器使用仍不发射；M2 release 仍 held。
+- 直接后续曾进入
+  [a4_authorized_first_shot_training_signal/README.zh.md](a4_authorized_first_shot_training_signal/README.zh.md)：
+  先用 reward shaping 和 policy-routing 证据让授权首发可训练，再重新讨论 M2。首个 A4
+  reward-side probe 显示，episode 内一次性武器链 shaping 仍不够：deterministic 仍不
+  fire，stochastic 仍产生违规发射；随后 routing probe 增加显式 `combat_weapons`
+  HMoE family。保留的 routed 32k evidence 小幅改善 stochastic 发射纪律，但
+  deterministic 仍为 0 fire/release。naive A4-only pulse-prior 放松已被测试并拒绝：
+  它增加违规发射，但没有让 deterministic policy fire。binary diagnostics 随后显示
+  授权窗口内 `fire_weapon` 仍约 `0.22%` probability / `-6.11` max logit；
+  有边界 fire-opportunity penalty trial 也已拒绝，因为它没有推动 deterministic fire，
+  且恶化 stochastic release discipline。因此 A4 作为证据保持 held：reward/routing
+  repair 不是根治手段。
+- 当前模型层 follow-on 是
+  [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)：
+  将武器释放从逐帧 binary/threshold control 改成受约束事件动作，引入显式
+  engagement state、action mask、`hold/fire_once` 语义、post-launch `FiredAssess`
+  suppression 和显式 reattack gate。A5 是重新讨论 M2 前的下一道门。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -47,8 +66,8 @@
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
-- 修复训练信号和 policy routing，使 deterministic policy 先学到 A3 C2/ROE 下的授权首发，
-  再重新讨论 M2
+- 用 A5 受约束事件动作模型替代 reward-only repair，使 deterministic policy 先学到
+  A3 C2/ROE 下的授权首发，再重新讨论 M2
 
 ## 推荐阅读顺序
 
@@ -67,6 +86,16 @@
   [a1_1v1_realism_gradient/README.zh.md](a1_1v1_realism_gradient/README.zh.md)
 - C2/ROE 发射纪律 accepted 层：
   [a3_c2_roe_release_discipline/README.zh.md](a3_c2_roe_release_discipline/README.zh.md)
+- 授权首发训练信号 follow-on：
+  [a4_authorized_first_shot_training_signal/README.zh.md](a4_authorized_first_shot_training_signal/README.zh.md)
+  及 reward 证据：
+  [a4_authorized_first_shot_reward_probe_20260603.zh.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.zh.md)
+  和 routing 证据：
+  [a4_authorized_first_shot_routing_probe_20260603.zh.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.zh.md)
+  以及 binary diagnostics：
+  [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
+- 受约束事件动作模型 follow-on：
+  [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档

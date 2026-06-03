@@ -3,6 +3,9 @@
 Status: active `1v1` workline; default entry converged on `2026-05-18`;
 `2026-05-25` opened the staged `1v1` realism-gradient curriculum; `2026-06-03`
 accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
+`2026-06-03` also opened A4 as the authorized-first-shot training-signal
+follow-on; after A4 reward/routing evidence remained held, A5 opened the
+constrained event-action model track.
 
 ## Current Status
 
@@ -33,6 +36,28 @@ accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
   reactive/temporal comparison shows temporal stochastic probing can remove
   violation releases, but deterministic weapon employment still does not fire;
   M2 release remains held.
+- The immediate follow-on was
+  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md):
+  reward shaping and policy-routing evidence must make an authorized first shot
+  trainable before M2 is reconsidered. The first A4 reward-side probe shows
+  once-per-episode weapon-chain shaping is not enough: deterministic still does
+  not fire, while stochastic probing still produces violation releases. The
+  subsequent routing probe adds an explicit `combat_weapons` HMoE family.
+  The retained routed 32k evidence modestly improves stochastic discipline
+  but still leaves deterministic at 0 fire/release. A naive A4-only
+  pulse-prior relaxation was tested and rejected because it increased violation
+  releases without making deterministic policy fire. Binary diagnostics then
+  showed authorized-window `fire_weapon` remains near `0.22%` probability /
+  `-6.11` max logit; a bounded fire-opportunity penalty trial was also rejected
+  because it did not move deterministic fire and worsened stochastic release
+  discipline. A4 is therefore held as evidence that reward/routing repair is
+  not the root fix.
+- The active model-level follow-on is
+  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md):
+  convert weapon release from a per-step binary/threshold control into a
+  constrained event action with explicit engagement state, action mask,
+  `hold/fire_once` semantics, post-launch `FiredAssess` suppression, and an
+  explicit reattack gate. A5 is the next gate before M2 can be reconsidered.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -60,8 +85,9 @@ accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
-- repair training signal and policy routing so deterministic policy learns an
-  authorized first shot under A3 C2/ROE before reconsidering M2
+- replace reward-only repair with the A5 constrained event-action model so
+  deterministic policy learns an authorized first shot under A3 C2/ROE before
+  reconsidering M2
 
 ## Recommended Reading Order
 
@@ -80,6 +106,16 @@ accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
 - C2/ROE release-discipline accepted layer:
   [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md)
+- Authorized first-shot training-signal follow-on:
+  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md)
+  and reward evidence:
+  [a4_authorized_first_shot_reward_probe_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.md)
+  plus routing evidence:
+  [a4_authorized_first_shot_routing_probe_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.md)
+  and binary diagnostics:
+  [a4_authorized_first_shot_binary_diagnostics_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.md)
+- Constrained event-action model follow-on:
+  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive
