@@ -146,6 +146,18 @@ class _HybridActionLayout:
             self.continuous_count + self.binary_count + self.event_logit_count + self.categorical_logit_count
         )
 
+    @property
+    def event_fire_param_index(self) -> int | None:
+        if self.event_binary_position is None:
+            return None
+        return int(self.continuous_count) + int(self.event_binary_position)
+
+    @property
+    def event_hold_param_index(self) -> int | None:
+        if self.event_action_index is None:
+            return None
+        return int(self.continuous_count) + int(self.binary_count)
+
 
 def _normalize_hybrid_action_layout(spec: Any, action_space) -> _HybridActionLayout | None:
     if spec is None:
@@ -286,16 +298,33 @@ class _HybridActionDistribution:
         return th.stack((hold, fire), dim=1)
 
     def _fire_event_logits(self) -> th.Tensor | None:
+        logits = self.fire_event_unmasked_logits()
+        if logits is None:
+            return None
+        if self.fire_event_mask is None:
+            return logits
+        masked_floor = th.full_like(logits, -1.0e8)
+        return th.where(self.fire_event_mask, logits, masked_floor)
+
+    def fire_event_unmasked_logits(self) -> th.Tensor | None:
         if self.layout.event_action_index is None or self.fire_event_hold_logits is None:
             return None
         if self.layout.event_binary_position is None:
             return None
         fire_logits = self.binary_logits[:, int(self.layout.event_binary_position)]
-        logits = th.stack((self.fire_event_hold_logits, fire_logits), dim=1)
-        if self.fire_event_mask is None:
-            return logits
-        masked_floor = th.full_like(logits, -1.0e8)
-        return th.where(self.fire_event_mask, logits, masked_floor)
+        return th.stack((self.fire_event_hold_logits, fire_logits), dim=1)
+
+    def fire_event_logit_delta(self) -> th.Tensor | None:
+        logits = self.fire_event_unmasked_logits()
+        if logits is None:
+            return None
+        return logits[:, 1] - logits[:, 0]
+
+    def fire_event_probability(self) -> th.Tensor | None:
+        delta = self.fire_event_logit_delta()
+        if delta is None:
+            return None
+        return th.sigmoid(delta)
 
     def _continuous_bounds(self) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
         low = self.action_low[self.continuous_indices].reshape(1, -1)
@@ -417,6 +446,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hmoe_residual_warmup_fraction: float = 0.15,
         hmoe_residual_start_factor: float = 0.0,
         hybrid_action_spec: Any | None = None,
+        hybrid_event_head_lr_scale: float = 0.0,
         **kwargs: Any,
     ):
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
@@ -424,11 +454,13 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_head_lr_scale = float(max(0.0, hmoe_head_lr_scale))
         self._hmoe_residual_warmup_fraction = float(min(max(0.0, hmoe_residual_warmup_fraction), 1.0))
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
+        self._hybrid_event_head_lr_scale = float(max(0.0, hybrid_event_head_lr_scale))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
         self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
         self._hybrid_action_spec_config = hybrid_action_spec
         self._hybrid_action_layout: _HybridActionLayout | None = None
+        self.hybrid_event_head: nn.Linear | None = None
         if hybrid_action_spec is not None:
             kwargs["squash_output"] = False
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
@@ -449,6 +481,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 )
             )
             self._squash_output = False
+            if self._hybrid_event_head_lr_scale > 0.0:
+                self.hybrid_event_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 2).to(self.device)
+                nn.init.zeros_(self.hybrid_event_head.weight)
+                nn.init.zeros_(self.hybrid_event_head.bias)
         self.hmoe_head_bank = _HMoEHeadBank(
             latent_dim=int(self.mlp_extractor.latent_dim_pi),
             action_dim=hmoe_output_dim,
@@ -468,6 +504,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hmoe_residual_warmup_fraction"] = float(self._hmoe_residual_warmup_fraction)
         data["hmoe_residual_start_factor"] = float(self._hmoe_residual_start_factor)
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
+        data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         return data
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
@@ -494,6 +531,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                     sub_head.weight.zero_()
                     if getattr(sub_head, "bias", None) is not None:
                         sub_head.bias.zero_()
+            if self.hybrid_event_head is not None:
+                self.hybrid_event_head.weight.zero_()
+                if getattr(self.hybrid_event_head, "bias", None) is not None:
+                    self.hybrid_event_head.bias.zero_()
 
     def get_hmoe_parameter_stats(self) -> dict[str, float]:
         stats: dict[str, float] = {}
@@ -530,12 +571,26 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         sub_modules = [head for family_subheads in self.hmoe_head_bank.subexpert_heads for head in family_subheads]
         _record_group("hmoe_params/family", family_modules)
         _record_group("hmoe_params/sub", sub_modules)
+        if self.hybrid_event_head is None:
+            stats["a6/event_head_params/enabled"] = 0.0
+            stats["a6/event_head_params/lr_scale"] = float(self._hybrid_event_head_lr_scale)
+        else:
+            stats["a6/event_head_params/enabled"] = 1.0
+            stats["a6/event_head_params/lr_scale"] = float(self._hybrid_event_head_lr_scale)
+            weight = self.hybrid_event_head.weight.detach()
+            bias = self.hybrid_event_head.bias.detach()
+            stats["a6/event_head_params/weight_norm"] = float(weight.norm().item())
+            stats["a6/event_head_params/bias_norm"] = float(bias.norm().item())
+            stats["a6/event_head_params/max_abs"] = float(max(weight.abs().max().item(), bias.abs().max().item()))
         return stats
 
     def _build_optimizer(self):
         hmoe_params = list(self.hmoe_head_bank.parameters())
+        event_params = list(self.hybrid_event_head.parameters()) if self.hybrid_event_head is not None else []
         hmoe_param_ids = {id(param) for param in hmoe_params}
-        shared_params = [param for param in self.parameters() if id(param) not in hmoe_param_ids]
+        event_param_ids = {id(param) for param in event_params}
+        routed_param_ids = hmoe_param_ids | event_param_ids
+        shared_params = [param for param in self.parameters() if id(param) not in routed_param_ids]
         param_groups: list[dict[str, Any]] = [
             {
                 "params": shared_params,
@@ -543,6 +598,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 "name": "shared",
             }
         ]
+        if event_params:
+            param_groups.append(
+                {
+                    "params": event_params,
+                    "lr_scale": float(self._hybrid_event_head_lr_scale),
+                    "name": "hybrid_event_head",
+                }
+            )
         if hmoe_params:
             param_groups.append(
                 {
@@ -637,6 +700,39 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     def get_hmoe_route_stats(self) -> dict[str, float]:
         return dict(self._last_hmoe_route_stats)
 
+    def _apply_hybrid_event_head(self, mean_actions: th.Tensor, latent_pi: th.Tensor) -> th.Tensor:
+        layout = self._hybrid_action_layout
+        event_head = self.hybrid_event_head
+        if layout is None or event_head is None:
+            self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
+            self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+            return mean_actions
+        hold_index = layout.event_hold_param_index
+        fire_index = layout.event_fire_param_index
+        if hold_index is None or fire_index is None:
+            self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
+            self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+            return mean_actions
+
+        event_delta = event_head(latent_pi)
+        adjusted = mean_actions.clone()
+        adjusted[:, int(hold_index)] = adjusted[:, int(hold_index)] + event_delta[:, 0]
+        adjusted[:, int(fire_index)] = adjusted[:, int(fire_index)] + event_delta[:, 1]
+
+        event_delta_detached = event_delta.detach()
+        self._last_hmoe_route_stats["a6/event_head_enabled"] = 1.0
+        self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+        self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(
+            event_delta_detached.abs().mean().item()
+        )
+        self._last_hmoe_route_stats["a6/event_head_delta_hold_mean"] = float(
+            event_delta_detached[:, 0].mean().item()
+        )
+        self._last_hmoe_route_stats["a6/event_head_delta_fire_mean"] = float(
+            event_delta_detached[:, 1].mean().item()
+        )
+        return adjusted
+
     def get_distribution(self, obs):
         features = super().extract_features(obs, self.pi_features_extractor)
         latent_pi = self.mlp_extractor.forward_actor(features)
@@ -665,6 +761,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["hmoe/resid_effective_scale"] = float(effective_scale)
 
         if self._hybrid_action_layout is not None:
+            mean_actions = self._apply_hybrid_event_head(mean_actions, latent_pi)
             fire_event_mask = _hybrid_fire_event_mask_from_obs(
                 obs,
                 batch_size=int(mean_actions.shape[0]),

@@ -14,6 +14,14 @@ from stable_baselines3.common.utils import explained_variance, obs_as_tensor
 from stable_baselines3.common.vec_env import VecEnv
 
 from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
+from .first_event_hazard import (
+    A6_FIRST_EVENT_SOURCE_CURRICULUM,
+    build_first_event_hazard_labels,
+    compute_first_event_hazard_loss,
+    current_first_event_curriculum_coef,
+    first_event_hazard_batch_from_rollout_data,
+)
+from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
 
 
 class AdaptiveKLPPO(PPO):
@@ -43,6 +51,13 @@ class AdaptiveKLPPO(PPO):
         boost_clip_on_low_kl: bool = False,
         action_mean_regularization_coef: float = 0.0,
         action_mean_regularization_target: Any = 0.0,
+        a6_first_event_hazard_coef: float = 0.0,
+        a6_first_event_curriculum_coef: float = 0.0,
+        a6_first_event_curriculum_decay_fraction: float = 0.25,
+        a6_first_event_curriculum_min_window_age_steps: int = 32,
+        a6_first_event_censored_survival_weight: float = 0.0,
+        a6_first_event_deadline_weight: float = 0.0,
+        a6_first_event_deadline_min_window_age_steps: int = 96,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -62,7 +77,28 @@ class AdaptiveKLPPO(PPO):
         self._low_kl_streak = 0
         self.action_mean_regularization_coef = float(max(0.0, action_mean_regularization_coef))
         self.action_mean_regularization_target = action_mean_regularization_target
+        self.a6_first_event_hazard_coef = float(max(0.0, a6_first_event_hazard_coef))
+        self.a6_first_event_curriculum_coef = float(max(0.0, a6_first_event_curriculum_coef))
+        self.a6_first_event_curriculum_decay_fraction = float(max(0.0, a6_first_event_curriculum_decay_fraction))
+        self.a6_first_event_curriculum_min_window_age_steps = max(
+            1,
+            int(a6_first_event_curriculum_min_window_age_steps),
+        )
+        self.a6_first_event_censored_survival_weight = float(max(0.0, a6_first_event_censored_survival_weight))
+        self.a6_first_event_deadline_weight = float(max(0.0, a6_first_event_deadline_weight))
+        self.a6_first_event_deadline_min_window_age_steps = max(
+            1,
+            int(a6_first_event_deadline_min_window_age_steps),
+        )
         super().__init__(*args, **kwargs)
+
+    def _a6_first_event_enabled(self) -> bool:
+        return bool(
+            self.a6_first_event_hazard_coef > 0.0
+            or self.a6_first_event_curriculum_coef > 0.0
+            or self.a6_first_event_censored_survival_weight > 0.0
+            or self.a6_first_event_deadline_weight > 0.0
+        )
 
     def _should_use_device_rollout_buffer(self) -> bool:
         if getattr(self.device, "type", str(self.device)) != "cuda":
@@ -77,8 +113,15 @@ class AdaptiveKLPPO(PPO):
         return bool(getattr(env, "policy_observation_torch_bridge", False))
 
     def _setup_model(self) -> None:
-        if self.rollout_buffer_class is None and self._should_use_device_rollout_buffer():
-            self.rollout_buffer_class = DeviceDictRolloutBuffer
+        if self.rollout_buffer_class is None:
+            if self._should_use_device_rollout_buffer():
+                self.rollout_buffer_class = (
+                    A6FirstEventDeviceDictRolloutBuffer
+                    if self._a6_first_event_enabled()
+                    else DeviceDictRolloutBuffer
+                )
+            elif self._a6_first_event_enabled() and isinstance(self.observation_space, spaces.Dict):
+                self.rollout_buffer_class = A6FirstEventDictRolloutBuffer
         super()._setup_model()
 
     def _get_policy_obs_tensor(self, env: VecEnv, obs) -> th.Tensor | dict[str, th.Tensor]:
@@ -103,6 +146,137 @@ class AdaptiveKLPPO(PPO):
             return values.detach().float().cpu().numpy().reshape(-1)
         return np.asarray(values, dtype=np.float32).reshape(-1)
 
+    @staticmethod
+    def _a6_first_event_bool(value: Any) -> bool:
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+
+    @classmethod
+    def _a6_first_event_fire_mask_from_info(cls, info: Any) -> bool:
+        if not isinstance(info, dict):
+            return False
+        if "fire_mask" in info:
+            return cls._a6_first_event_bool(info.get("fire_mask"))
+        event_mask = info.get("event_action_mask", None)
+        if th.is_tensor(event_mask):
+            values = event_mask.detach().cpu().reshape(-1).tolist()
+        elif isinstance(event_mask, np.ndarray):
+            values = event_mask.reshape(-1).tolist()
+        elif isinstance(event_mask, (list, tuple)):
+            values = list(event_mask)
+        else:
+            values = []
+        if len(values) >= 2:
+            return cls._a6_first_event_bool(values[1])
+        return False
+
+    @staticmethod
+    def _a6_first_event_policy_fire_mask_from_obs(obs: Any, n_envs: int) -> list[bool] | None:
+        if not isinstance(obs, dict):
+            return None
+        explicit_event_mask = obs.get("event_action_mask")
+        if explicit_event_mask is not None:
+            mask = th.as_tensor(explicit_event_mask)
+            if mask.ndim == 1:
+                mask = mask.reshape(1, -1)
+            if mask.ndim == 2 and int(mask.shape[1]) >= 2 and int(mask.shape[0]) == int(n_envs):
+                return [bool(value) for value in mask[:, 1].detach().cpu().reshape(-1).tolist()]
+        explicit_fire_mask = obs.get("fire_mask")
+        if explicit_fire_mask is not None:
+            mask = th.as_tensor(explicit_fire_mask).reshape(-1)
+            if int(mask.numel()) == int(n_envs):
+                return [bool(value) for value in mask.detach().cpu().tolist()]
+        mission = obs.get("mission")
+        if mission is None:
+            return None
+        mission_tensor = th.as_tensor(mission)
+        if mission_tensor.ndim != 2 or int(mission_tensor.shape[0]) != int(n_envs) or int(mission_tensor.shape[1]) != 20:
+            return None
+        wcs_state = th.round(mission_tensor[:, 5].float()).to(dtype=th.long)
+        authorization_to_fire = mission_tensor[:, 6] > 0.5
+        engage_order_state = th.round(mission_tensor[:, 14].float()).to(dtype=th.long)
+        shot_policy_state = th.round(mission_tensor[:, 15].float()).to(dtype=th.long)
+        shot_budget_remaining = th.round(mission_tensor[:, 16].float()).to(dtype=th.long)
+        pending_assessment = mission_tensor[:, 17] > 0.5
+        target_contact_present = mission_tensor[:, 19] > 0.5
+        engage_hold = (
+            (engage_order_state == 3)
+            | (engage_order_state == 4)
+            | (engage_order_state == 5)
+            | (engage_order_state == 6)
+        )
+        fire_mask = (
+            target_contact_present
+            & authorization_to_fire
+            & (wcs_state != 1)
+            & ~engage_hold
+            & (shot_policy_state > 0)
+            & (shot_budget_remaining > 0)
+            & ~pending_assessment
+        )
+        return [bool(value) for value in fire_mask.detach().cpu().reshape(-1).tolist()]
+
+    def _build_a6_first_event_labels_from_rollout_infos(
+        self,
+        *,
+        engagement_state: list[str],
+        fire_mask: list[bool],
+        fire_once_accepted: list[bool],
+        episode_id: list[int],
+    ):
+        return build_first_event_hazard_labels(
+            engagement_state=engagement_state,
+            fire_mask=fire_mask,
+            fire_once_accepted=fire_once_accepted,
+            episode_id=episode_id,
+            curriculum_weight=float(self._current_a6_first_event_curriculum_coef()),
+            curriculum_min_window_age_steps=int(self.a6_first_event_curriculum_min_window_age_steps),
+            curriculum_blocked_episode_ids=getattr(
+                self,
+                "_a6_first_event_curriculum_seeded_episode_ids",
+                set(),
+            ),
+            censored_survival_weight=float(self.a6_first_event_censored_survival_weight),
+            deadline_weight=float(self.a6_first_event_deadline_weight),
+            deadline_min_window_age_steps=int(self.a6_first_event_deadline_min_window_age_steps),
+            device=self.device,
+        )
+
+    def _record_a6_first_event_curriculum_seeds(self, labels, episode_id: list[int]) -> None:
+        seeded = getattr(self, "_a6_first_event_curriculum_seeded_episode_ids", None)
+        if seeded is None:
+            seeded = set()
+            self._a6_first_event_curriculum_seeded_episode_ids = seeded
+        sources = labels.source.detach().cpu().reshape(-1).tolist()
+        targets = labels.target.detach().cpu().reshape(-1).tolist()
+        for idx, source in enumerate(sources):
+            if int(source) == A6_FIRST_EVENT_SOURCE_CURRICULUM and float(targets[idx]) > 0.5:
+                seeded.add(int(episode_id[idx]))
+
+    def _attach_a6_first_event_labels_to_rollout_buffer(
+        self,
+        rollout_buffer: RolloutBuffer,
+        *,
+        engagement_state: list[str],
+        fire_mask: list[bool],
+        fire_once_accepted: list[bool],
+        episode_id: list[int],
+    ) -> None:
+        if not self._a6_first_event_enabled():
+            return
+        setter = getattr(rollout_buffer, "set_a6_first_event_labels", None)
+        if not callable(setter):
+            return
+        labels = self._build_a6_first_event_labels_from_rollout_infos(
+            engagement_state=engagement_state,
+            fire_mask=fire_mask,
+            fire_once_accepted=fire_once_accepted,
+            episode_id=episode_id,
+        )
+        setter(labels)
+        self._record_a6_first_event_curriculum_seeds(labels, episode_id)
+
     def collect_rollouts(
         self,
         env: VecEnv,
@@ -122,6 +296,25 @@ class AdaptiveKLPPO(PPO):
             self.policy.reset_noise(env.num_envs)
 
         callback.on_rollout_start()
+        collect_a6_first_event = bool(
+            self._a6_first_event_enabled()
+            and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
+        )
+        a6_engagement_state: list[str] = []
+        a6_fire_mask: list[bool] = []
+        a6_fire_once_accepted: list[bool] = []
+        a6_episode_id: list[int] = []
+        existing_a6_episode_id = getattr(self, "_a6_first_event_env_episode_id", None)
+        if (
+            collect_a6_first_event
+            and isinstance(existing_a6_episode_id, np.ndarray)
+            and int(existing_a6_episode_id.size) == int(env.num_envs)
+        ):
+            a6_env_episode_id = existing_a6_episode_id.astype(np.int64, copy=True)
+        else:
+            a6_env_episode_id = np.arange(env.num_envs, dtype=np.int64)
+        if collect_a6_first_event and not hasattr(self, "_a6_first_event_curriculum_seeded_episode_ids"):
+            self._a6_first_event_curriculum_seeded_episode_ids = set()
 
         while n_steps < n_rollout_steps:
             if self.use_sde and self.sde_sample_freq > 0 and n_steps % self.sde_sample_freq == 0:
@@ -130,6 +323,11 @@ class AdaptiveKLPPO(PPO):
             with th.no_grad():
                 obs_tensor = self._get_policy_obs_tensor(env, self._last_obs)
                 actions_tensor, values, log_probs = self.policy(obs_tensor)
+            a6_policy_fire_mask = (
+                self._a6_first_event_policy_fire_mask_from_obs(obs_tensor, env.num_envs)
+                if collect_a6_first_event
+                else None
+            )
             actions = actions_tensor.detach().cpu().numpy()
 
             clipped_actions = actions
@@ -141,6 +339,20 @@ class AdaptiveKLPPO(PPO):
 
             new_obs, rewards, dones, infos = env.step(clipped_actions)
             self.num_timesteps += env.num_envs
+
+            if collect_a6_first_event:
+                for env_idx, info in enumerate(infos):
+                    row = info if isinstance(info, dict) else {}
+                    if a6_policy_fire_mask is not None and env_idx < len(a6_policy_fire_mask):
+                        policy_window_open = bool(a6_policy_fire_mask[env_idx])
+                    else:
+                        policy_window_open = self._a6_first_event_fire_mask_from_info(row)
+                    a6_engagement_state.append(
+                        "AuthorizedReady" if policy_window_open else str(row.get("engagement_state", "") or "")
+                    )
+                    a6_fire_mask.append(bool(policy_window_open))
+                    a6_fire_once_accepted.append(self._a6_first_event_bool(row.get("fire_once_accepted", False)))
+                    a6_episode_id.append(int(a6_env_episode_id[env_idx]))
 
             callback.update_locals(locals())
             if not callback.on_step():
@@ -173,10 +385,23 @@ class AdaptiveKLPPO(PPO):
             )
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones
+            if collect_a6_first_event:
+                for env_idx, done in enumerate(dones):
+                    if bool(done):
+                        a6_env_episode_id[env_idx] += env.num_envs
 
         with th.no_grad():
             values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))  # type: ignore[arg-type]
 
+        if collect_a6_first_event:
+            self._a6_first_event_env_episode_id = a6_env_episode_id
+            self._attach_a6_first_event_labels_to_rollout_buffer(
+                rollout_buffer,
+                engagement_state=a6_engagement_state,
+                fire_mask=a6_fire_mask,
+                fire_once_accepted=a6_fire_once_accepted,
+                episode_id=a6_episode_id,
+            )
         rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
 
         callback.update_locals(locals())
@@ -260,6 +485,34 @@ class AdaptiveKLPPO(PPO):
         target = self._action_mean_regularization_target_tensor(reference_actions)
         return F.mse_loss(deterministic_actions, target, reduction="mean")
 
+    def _current_a6_first_event_curriculum_coef(self) -> float:
+        return current_first_event_curriculum_coef(
+            self.a6_first_event_curriculum_coef,
+            float(self._current_progress_remaining),
+            decay_completed_fraction=float(self.a6_first_event_curriculum_decay_fraction),
+        )
+
+    def _first_event_hazard_loss(self, rollout_data):
+        batch = first_event_hazard_batch_from_rollout_data(rollout_data)
+        if batch is None:
+            return None
+        active, target, weight = batch
+        obs = rollout_data.observations
+        distribution = self.policy.get_distribution(obs)
+        logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+        if not callable(logit_delta_getter):
+            return None
+        event_logit_delta = logit_delta_getter()
+        if event_logit_delta is None:
+            return None
+        return compute_first_event_hazard_loss(
+            event_logit_delta,
+            target.to(device=event_logit_delta.device),
+            active.to(device=event_logit_delta.device),
+            weight.to(device=event_logit_delta.device),
+            coef=float(self.a6_first_event_hazard_coef),
+        )
+
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -286,6 +539,9 @@ class AdaptiveKLPPO(PPO):
         entropy_losses = []
         pg_losses, value_losses = [], []
         action_mean_regularization_losses = []
+        first_event_hazard_losses = []
+        first_event_hazard_active_counts = []
+        first_event_hazard_positive_fracs = []
         clip_fractions = []
 
         approx_kl_divs = []
@@ -351,6 +607,12 @@ class AdaptiveKLPPO(PPO):
                 if action_mean_regularization_loss is not None:
                     action_mean_regularization_losses.append(float(action_mean_regularization_loss.detach().cpu()))
                     loss = loss + float(self.action_mean_regularization_coef) * action_mean_regularization_loss
+                first_event_hazard_loss = self._first_event_hazard_loss(rollout_data)
+                if first_event_hazard_loss is not None:
+                    first_event_hazard_losses.append(float(first_event_hazard_loss.loss.detach().cpu()))
+                    first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
+                    first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
+                    loss = loss + first_event_hazard_loss.loss
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
@@ -396,6 +658,22 @@ class AdaptiveKLPPO(PPO):
                 float(np.mean(action_mean_regularization_losses)) if action_mean_regularization_losses else 0.0,
             )
             self.logger.record("train/action_mean_regularization_coef", float(self.action_mean_regularization_coef))
+        if self._a6_first_event_enabled():
+            self.logger.record(
+                "a6/hazard_loss",
+                float(np.mean(first_event_hazard_losses)) if first_event_hazard_losses else 0.0,
+            )
+            self.logger.record("a6/hazard_coef", float(self.a6_first_event_hazard_coef))
+            self.logger.record("a6/curriculum_coef", float(self._current_a6_first_event_curriculum_coef()))
+            self.logger.record("a6/deadline_weight", float(self.a6_first_event_deadline_weight))
+            self.logger.record(
+                "a6/active_count_mean",
+                float(np.mean(first_event_hazard_active_counts)) if first_event_hazard_active_counts else 0.0,
+            )
+            self.logger.record(
+                "a6/target_positive_frac",
+                float(np.mean(first_event_hazard_positive_fracs)) if first_event_hazard_positive_fracs else 0.0,
+            )
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
         self.logger.record("train/clip_range", float(clip_range))

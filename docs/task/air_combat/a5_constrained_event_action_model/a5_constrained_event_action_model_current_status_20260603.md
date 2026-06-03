@@ -1,8 +1,9 @@
 # A5 Constrained Event Action Model Current Status
 
-Status: `2026-06-03` implementation checkpoint. Surface audit, event contract,
-runtime prototype, and policy event head are accepted; reward/config cleanup,
-diagnostics/evidence, and closure remain pending.
+Status: `2026-06-03` held after short learned-policy evidence. Surface audit,
+event contract, runtime prototype, policy event head, reward/config cleanup, and
+diagnostics implementation are accepted; A5 remains not accepted because the
+short learned-policy probe did not produce deterministic `fire_once`.
 
 ## Decision
 
@@ -42,11 +43,43 @@ full hierarchical options are deferred.
 | Reward | Express mission result, effect, timing, ammo cost, and tracking preference. | Do not reintroduce invalid-fire penalty as the main legality mechanism. |
 | Evaluation | Masked argmax or event-value comparison, not raw `sigmoid(logit)>0.5` threshold. | Deterministic behavior must remain auditable by diagnostics. |
 
+## Latest Learned Evidence
+
+The short A5 post-change run is recorded in
+[a5_constrained_event_action_model_short_learned_probe_20260603.md](a5_constrained_event_action_model_short_learned_probe_20260603.md).
+
+Summary:
+
+- Deterministic probe: `1880` fire-mask-open / `AuthorizedReady` steps, but
+  `0` fire requests and `0` releases; masked event fire probability stayed near
+  `0.217%` mean / `0.278%` max.
+- Stochastic probe: 3 episodes, 4 fire requests, 3 accepted requests, 3
+  releases, all 3 authorized, with `0` violation releases and `0` repeat or
+  shot-budget violations.
+
+This means A5 structurally fixes stochastic multi-fire/release discipline, but
+deterministic timing remains held.
+
 ## Immediate Work
 
-1. Update S1 C2/ROE active entries and diagnostics.
-2. Run focused diagnostics and learned-policy probes.
-3. Decide accepted or held status with residual map.
+1. Keep A5 held closure fail-closed while syncing A3/A4/M1/M2 and parent
+   indexes without overclaiming acceptance.
+2. Continue the created A6 follow-on:
+   [../a6_event_value_first_event_timing/README.md](../a6_event_value_first_event_timing/README.md).
+   The next A6 step is mathematical framing and objective-contract selection
+   for event-value, explicit first-shot curriculum, or hazard / first-event
+   timing.
+
+## Continuation Decision
+
+Continue only through a new A5-trained short evidence run. Retained A3/A4/M1
+models are not valid A5 learned-policy evidence because the hybrid policy head
+changed from the old 19-parameter layout to the new 20-parameter event-action
+layout. A quick load check of
+`experiments_tmp/a4_authorized_first_shot_routed_retained_temporal_32k_20260603/final_model.zip`
+failed with `action_net` and HMoE head shape mismatches (`19` versus `20`).
+Therefore direct deterministic/stochastic probes of old checkpoints would be a
+compatibility test, not A5 behavior evidence.
 
 ## Accepted Planning Evidence
 
@@ -58,6 +91,8 @@ full hierarchical options are deferred.
   [../../../standards/air/act.md](../../../standards/air/act.md)
 - Implementation evidence:
   [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
+- Short learned-policy probe:
+  [a5_constrained_event_action_model_short_learned_probe_20260603.md](a5_constrained_event_action_model_short_learned_probe_20260603.md)
 
 ## Open Risks
 
@@ -73,7 +108,7 @@ full hierarchical options are deferred.
 
 ## Forbidden Conclusions
 
-- A5 is not accepted yet.
+- A5 is held after evidence, not accepted.
 - A5 does not release M2.
 - A5 does not alter missile physics, damage, Pk, fuze, or real-world doctrine.
 - A5 does not make `2v2` or self-play in scope.

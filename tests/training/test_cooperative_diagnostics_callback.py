@@ -45,9 +45,13 @@ class _DummyPolicy:
 class _DummyHybridDistribution:
     def __init__(self) -> None:
         self.binary_logits = th.tensor([[3.0, -1.0, 2.0, -0.5, -6.0]], dtype=th.float32)
+        self.fire_event_mask = th.tensor([[1, 1]], dtype=th.bool)
         self.categorical_logits = [
             (11, th.tensor([[-1.0, 2.0, 0.0, -2.0, -2.0, -2.0, -2.0, -2.0]], dtype=th.float32))
         ]
+
+    def _fire_event_logits(self):
+        return th.tensor([[1.0, 3.0]], dtype=th.float32)
 
 
 class _DummyHybridPolicy:
@@ -153,10 +157,65 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["diag/pi_bin_tms_p_mean"], 0.2689414, places=6)
         self.assertAlmostEqual(logger.records["diag/pi_bin_fire_logit_mean"], -0.5, places=6)
         self.assertAlmostEqual(logger.records["diag/pi_bin_fire_p_mean"], 0.3775407, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_event_fire_p_mean"], 0.8807970, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_event_mode_fire_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/pi_event_fire_mask_frac"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["diag/pi_wsel_mode_mean"], 1.0, places=6)
         self.assertGreater(
             logger.records["diag/pi_wsel_s1_p_mean"],
             logger.records["diag/pi_wsel_s0_p_mean"],
+        )
+
+    def test_records_a5_event_info_rates_from_infos(self) -> None:
+        cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
+        logger = _DummyLogger()
+        cb.model = _DummyModel(logger)
+        cb.locals = {
+            "new_obs": {"instruments": [[0.0] * 42, [0.0] * 42]},
+            "actions": [[0.0] * 12, [0.0] * 12],
+            "rewards": [0.0, 0.0],
+            "infos": [
+                {
+                    "engagement_state": "AuthorizedReady",
+                    "fire_mask": 1,
+                    "fire_once_requested": True,
+                    "fire_once_accepted": True,
+                    "release_executed": True,
+                    "post_launch_suppressed": False,
+                    "fire_mask_components": {"fire_mask_c2_authorized": 1},
+                },
+                {
+                    "engagement_state": "FiredAssess",
+                    "fire_mask": 0,
+                    "fire_once_requested": True,
+                    "fire_once_accepted": False,
+                    "fire_once_rejected_reason": "pending_assessment",
+                    "release_executed": False,
+                    "post_launch_suppressed": True,
+                    "fire_mask_components": {"fire_mask_c2_authorized": 1, "fire_mask_not_pending_assessment": 0},
+                },
+            ],
+            "dones": [False, False],
+        }
+        cb.num_timesteps = 1
+        cb._histories = []
+        cb._next_log_t = 1
+
+        self.assertTrue(cb._on_step())
+
+        self.assertAlmostEqual(logger.records["diag/a5_event_info_count"], 2.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_fire_mask_open_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_fire_once_requested_count"], 2.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_fire_once_accepted_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_fire_once_rejected_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_post_launch_suppressed_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_reject_reason_pending_assessment_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_state_authorizedready_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/a5_state_firedassess_frac"], 0.5, places=6)
+        self.assertAlmostEqual(
+            logger.records["diag/a5_mask_component_fire_mask_not_pending_assessment_open_frac"],
+            0.0,
+            places=6,
         )
 
     def test_hybrid_air_combat_actions_are_not_logged_as_full_action_brakes(self) -> None:

@@ -451,6 +451,25 @@ class NonFiniteTrainingProbe:
                 self.policy.reset_noise(env.num_envs)
 
             callback.on_rollout_start()
+            collect_a6_first_event = bool(
+                getattr(self, "_a6_first_event_enabled", lambda: False)()
+                and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
+            )
+            a6_engagement_state: list[str] = []
+            a6_fire_mask: list[bool] = []
+            a6_fire_once_accepted: list[bool] = []
+            a6_episode_id: list[int] = []
+            existing_a6_episode_id = getattr(self, "_a6_first_event_env_episode_id", None)
+            if (
+                collect_a6_first_event
+                and isinstance(existing_a6_episode_id, np.ndarray)
+                and int(existing_a6_episode_id.size) == int(env.num_envs)
+            ):
+                a6_env_episode_id = existing_a6_episode_id.astype(np.int64, copy=True)
+            else:
+                a6_env_episode_id = np.arange(env.num_envs, dtype=np.int64)
+            if collect_a6_first_event and not hasattr(self, "_a6_first_event_curriculum_seeded_episode_ids"):
+                self._a6_first_event_curriculum_seeded_episode_ids = set()
 
             while n_steps < n_rollout_steps:
                 tracer.set_context(
@@ -473,6 +492,11 @@ class NonFiniteTrainingProbe:
                     tracer.check("rollout.actions_tensor", actions_tensor)
                     tracer.check("rollout.values", values)
                     tracer.check("rollout.log_probs", log_probs)
+                a6_policy_fire_mask = None
+                if collect_a6_first_event:
+                    policy_mask_fn = getattr(self, "_a6_first_event_policy_fire_mask_from_obs", None)
+                    if callable(policy_mask_fn):
+                        a6_policy_fire_mask = policy_mask_fn(obs_tensor, env.num_envs)
                 actions = actions_tensor.detach().cpu().numpy()
                 tracer.check("rollout.actions_numpy", actions)
 
@@ -494,6 +518,29 @@ class NonFiniteTrainingProbe:
                     tracer.check("rollout.new_obs", new_obs)
 
                 self.num_timesteps += env.num_envs
+                if collect_a6_first_event:
+                    fire_mask_from_info = getattr(self, "_a6_first_event_fire_mask_from_info", None)
+                    bool_from_info = getattr(self, "_a6_first_event_bool", None)
+                    for env_idx, info in enumerate(infos):
+                        row = info if isinstance(info, dict) else {}
+                        if a6_policy_fire_mask is not None and env_idx < len(a6_policy_fire_mask):
+                            policy_window_open = bool(a6_policy_fire_mask[env_idx])
+                        elif callable(fire_mask_from_info):
+                            policy_window_open = bool(fire_mask_from_info(row))
+                        else:
+                            policy_window_open = bool(row.get("fire_mask", False))
+                        a6_engagement_state.append(
+                            "AuthorizedReady" if policy_window_open else str(row.get("engagement_state", "") or "")
+                        )
+                        if callable(fire_mask_from_info):
+                            a6_fire_mask.append(bool(policy_window_open))
+                        else:
+                            a6_fire_mask.append(bool(policy_window_open))
+                        if callable(bool_from_info):
+                            a6_fire_once_accepted.append(bool(bool_from_info(row.get("fire_once_accepted", False))))
+                        else:
+                            a6_fire_once_accepted.append(bool(row.get("fire_once_accepted", False)))
+                        a6_episode_id.append(int(a6_env_episode_id[env_idx]))
                 callback.update_locals(locals())
                 if not callback.on_step():
                     return False
@@ -525,11 +572,33 @@ class NonFiniteTrainingProbe:
                 )
                 self._last_obs = new_obs
                 self._last_episode_starts = dones
+                if collect_a6_first_event:
+                    for env_idx, done in enumerate(dones):
+                        if bool(done):
+                            a6_env_episode_id[env_idx] += env.num_envs
 
             with th.no_grad():
                 values = self.policy.predict_values(self._get_policy_obs_tensor(env, new_obs))
                 tracer.check("rollout.last_values", values)
 
+            if collect_a6_first_event:
+                self._a6_first_event_env_episode_id = a6_env_episode_id
+                attach_a6 = getattr(self, "_attach_a6_first_event_labels_to_rollout_buffer", None)
+                if callable(attach_a6):
+                    attach_a6(
+                        rollout_buffer,
+                        engagement_state=a6_engagement_state,
+                        fire_mask=a6_fire_mask,
+                        fire_once_accepted=a6_fire_once_accepted,
+                        episode_id=a6_episode_id,
+                    )
+                    for field in (
+                        "a6_first_event_active",
+                        "a6_first_event_target",
+                        "a6_first_event_weight",
+                    ):
+                        if hasattr(rollout_buffer, field):
+                            tracer.check(f"rollout.buffer.{field}", getattr(rollout_buffer, field))
             rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
             if isinstance(rollout_buffer.observations, dict):
                 for key, value in rollout_buffer.observations.items():
@@ -568,6 +637,9 @@ class NonFiniteTrainingProbe:
             entropy_losses = []
             pg_losses, value_losses = [], []
             action_mean_regularization_losses = []
+            first_event_hazard_losses = []
+            first_event_hazard_active_counts = []
+            first_event_hazard_positive_fracs = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -595,6 +667,13 @@ class NonFiniteTrainingProbe:
                     tracer.check("train.rollout_data.old_log_prob", rollout_data.old_log_prob)
                     tracer.check("train.rollout_data.advantages", rollout_data.advantages)
                     tracer.check("train.rollout_data.returns", rollout_data.returns)
+                    for field in (
+                        "a6_first_event_active",
+                        "a6_first_event_target",
+                        "a6_first_event_weight",
+                    ):
+                        if hasattr(rollout_data, field):
+                            tracer.check(f"train.rollout_data.{field}", getattr(rollout_data, field))
 
                     actions = rollout_data.actions
                     if isinstance(self.action_space, spaces.Discrete):
@@ -669,6 +748,16 @@ class NonFiniteTrainingProbe:
                             float(action_mean_regularization_loss.detach().cpu())
                         )
                         loss = loss + float(getattr(self, "action_mean_regularization_coef", 0.0)) * action_mean_regularization_loss
+                    first_event_hazard_loss = None
+                    first_event_hazard_fn = getattr(self, "_first_event_hazard_loss", None)
+                    if callable(first_event_hazard_fn):
+                        first_event_hazard_loss = first_event_hazard_fn(rollout_data)
+                    if first_event_hazard_loss is not None:
+                        tracer.check("train.a6_first_event_hazard_loss", first_event_hazard_loss.loss)
+                        first_event_hazard_losses.append(float(first_event_hazard_loss.loss.detach().cpu()))
+                        first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
+                        first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
+                        loss = loss + first_event_hazard_loss.loss
                     tracer.check("train.loss", loss)
 
                     with th.no_grad():
@@ -726,6 +815,31 @@ class NonFiniteTrainingProbe:
                 self.logger.record(
                     "train/action_mean_regularization_coef",
                     float(getattr(self, "action_mean_regularization_coef", 0.0)),
+                )
+            if (
+                float(getattr(self, "a6_first_event_hazard_coef", 0.0)) > 0.0
+                or float(getattr(self, "a6_first_event_curriculum_coef", 0.0)) > 0.0
+                or float(getattr(self, "a6_first_event_deadline_weight", 0.0)) > 0.0
+                or float(getattr(self, "a6_first_event_censored_survival_weight", 0.0)) > 0.0
+            ):
+                curriculum_coef_fn = getattr(self, "_current_a6_first_event_curriculum_coef", None)
+                curriculum_coef = float(curriculum_coef_fn()) if callable(curriculum_coef_fn) else 0.0
+                self.logger.record(
+                    "a6/hazard_loss",
+                    float(np.mean(first_event_hazard_losses)) if first_event_hazard_losses else 0.0,
+                )
+                self.logger.record("a6/hazard_coef", float(getattr(self, "a6_first_event_hazard_coef", 0.0)))
+                self.logger.record("a6/curriculum_coef", curriculum_coef)
+                self.logger.record("a6/deadline_weight", float(getattr(self, "a6_first_event_deadline_weight", 0.0)))
+                self.logger.record(
+                    "a6/active_count_mean",
+                    float(np.mean(first_event_hazard_active_counts)) if first_event_hazard_active_counts else 0.0,
+                )
+                self.logger.record(
+                    "a6/target_positive_frac",
+                    float(np.mean(first_event_hazard_positive_fracs))
+                    if first_event_hazard_positive_fracs
+                    else 0.0,
                 )
 
             self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")

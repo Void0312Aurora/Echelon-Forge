@@ -1,7 +1,9 @@
 # A5 Constrained Event Action Model Acceptance Gate
 
-Status: `2026-06-03` not accepted. This file freezes the acceptance conditions
-before implementation starts.
+Status: `2026-06-03` held after evidence, not accepted. Structural
+event-action, reward/config, and diagnostics gates have implementation evidence.
+The short learned-policy probe fixed stochastic release discipline but did not
+produce deterministic `fire_once`; final cross-doc held closure remains pending.
 
 ## Accepted Scope To Prove
 
@@ -13,15 +15,15 @@ not release M2.
 
 | Gate | Required evidence | Status |
 | --- | --- | --- |
-| Event action support | Accepted S1 C2/ROE entry exposes `hold/fire_once` or equivalent constrained event semantics. | pending |
-| Mask legality | Fire is unavailable outside authorized event states by mask/state-machine support. | pending |
-| Post-launch suppression | Accepted `fire_once` enters assessment/no-fire state and prevents immediate repeat fire. | pending |
-| Explicit reattack path | Follow-up fire requires `ReattackReady`, salvo, or another explicit authorization state. | pending |
-| Policy semantics | Stochastic sampling, deterministic eval, log-prob, and entropy/stats all respect the same mask. | pending |
-| Reward boundary | Reward expresses outcome/timing/ammo/track preferences and does not serve as the primary legality mechanism. | pending |
-| Diagnostics | Probes distinguish requested, executed, rejected, authorized, violation, repeated, and post-launch fire attempts. | pending |
-| Learned evidence | Deterministic learned policy executes one authorized first shot, or held residual is narrowed outside reward-only tuning. | pending |
-| Documentation | A3/A4/M1/M2 and parent air-combat docs are synchronized without overclaiming. | pending |
+| Event action support | Accepted S1 C2/ROE entry exposes `hold/fire_once` or equivalent constrained event semantics. | pass: A5 event contract plus D/E implementation evidence |
+| Mask legality | Fire is unavailable outside authorized event states by mask/state-machine support. | pass: runtime gate and policy mask tests |
+| Post-launch suppression | Accepted `fire_once` enters assessment/no-fire state and prevents immediate repeat fire. | pass: runtime gate tests |
+| Explicit reattack path | Follow-up fire requires `ReattackReady`, salvo, or another explicit authorization state. | pass: runtime state machine contract and tests |
+| Policy semantics | Stochastic sampling, deterministic eval, log-prob, and entropy/stats all respect the same mask. | pass: HMoE policy tests |
+| Reward boundary | Reward expresses outcome/timing/ammo/track preferences and does not serve as the primary legality mechanism. | pass: F reward/config cleanup |
+| Diagnostics | Probes distinguish requested, executed, rejected, authorized, violation, repeated, and post-launch fire attempts. | pass: G diagnostics implementation |
+| Learned evidence | Deterministic learned policy executes one authorized first shot, or held residual is narrowed outside reward-only tuning. | held evidence: stochastic discipline fixed; deterministic `fire_once` remains 0 |
+| Documentation | A3/A4/M1/M2 and parent air-combat docs are synchronized without overclaiming. | partial: A5 and parent air-combat docs synced; full held closure sync pending |
 
 ## Minimum Test Shape
 
@@ -42,6 +44,9 @@ git diff --check -- docs/task/air_combat docs/standards/air gym_envs python scen
 Learned-policy probes must report deterministic and stochastic event behavior
 and must not stage `experiments_tmp`.
 
+The short A5 learned-policy probe is recorded in
+[a5_constrained_event_action_model_short_learned_probe_20260603.md](a5_constrained_event_action_model_short_learned_probe_20260603.md).
+
 ## Rejection Conditions
 
 A5 must remain held if any of these are true:
@@ -60,5 +65,6 @@ A5 must remain held if any of these are true:
 
 If masked categorical event semantics are structurally accepted but learned
 deterministic timing still fails, A5 may close as held with a follow-on event
-Q-head or hazard package. That follow-on must be created explicitly and must
-not be hidden as reward tuning.
+Q-head or hazard package. That follow-on is now explicit under
+[../a6_event_value_first_event_timing/README.md](../a6_event_value_first_event_timing/README.md)
+and must not be hidden as reward tuning.

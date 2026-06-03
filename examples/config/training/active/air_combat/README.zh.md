@@ -82,6 +82,17 @@
   - 这是 post-launch mission observation 动态化后，重跑 reactive/temporal learned-policy 对照的维护入口。
   - 从 A4 起，它与 reactive C2/ROE shaped probe 共享 `combat_weapons` family；已拒绝的 pulse-prior 试验不保留。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6 deadline-bootstrap 探针，使用相同的 C2/ROE temporal shaped surface。
+  - 合法性继续由 A3/A5 event mask 与状态转移持有。
+  - 将短暂衰减 curriculum 替换成 open-window 年龄阈值之后的持续 deadline target；它是 A6 re-scope 证据，不释放 M2。
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6-EVT-K event-head optimization 探针，使用相同的 deadline-bootstrap C2/ROE temporal shaped surface。
+  - 增加 `hybrid_event_head_lr_scale=10.0`，作为零初始化的 `hold/fire_once` event-logit 专用更新通道。
+  - 它用于在 event-head update-strength audit 后测试 optimizer ownership；不削弱 A3/A5 masks，也不释放 M2。
+  - 32k A6-EVT-K probe 已跨过 deterministic argmax 并保留 one-shot discipline，但 A6 因 launch-window timing quality 继续 held。
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
   - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。

@@ -1,8 +1,9 @@
 # A5 受约束事件动作模型
 
-状态：`2026-06-03`，planning。A4 证据表明 reward / routing 修补不足以解决
-deterministic 不发射与 stochastic 多发；本子项目开启 S1 C2/ROE 武器使用的长期
-事件动作建模工作。
+状态：`2026-06-03`，短训 learned-policy evidence 后 held。A5 已验收 surface audit、
+event contract、runtime state machine、policy event head、reward/config cleanup 和
+diagnostics implementation。A5 仍未 accepted：A5 post-change 短训修复了 stochastic
+release discipline，但没有让 deterministic policy 请求 `fire_once`。
 
 语言：
 
@@ -45,7 +46,7 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
 | A4 reward/routing 修复 | held | A4 binary diagnostics 显示授权窗口内 `fire_weapon` 仍约 `0.22%` probability / `-6.11` max logit；opportunity penalty 已拒绝。 | reward magnitude 与 route selection 不足以作为根治手段。 |
 | M1 hybrid action interface | accepted | `air_combat_hybrid_v1` 已拆分连续飞行轴、开关、选择器和 pulse 命令。 | fire pulse 仍需要事件支持、post-launch suppression 和 deterministic eval 语义。 |
 | 外部设计材料 | design input | `docs/temp/6/6·3/temp-01..03.md` 一致指向 state machine + mask + event head。 | 这些材料不是 authority；A5 将其转成维护中的任务范围。 |
-| Event-action architecture | planning | A5 runtime contract 尚未实现。 | A5 不能声明 M2 release、真实 BVR doctrine 或导弹物理 authority。 |
+| Event-action architecture | held after evidence | A5 contract、runtime state machine、policy event head、active S1 C2/ROE reward/config cleanup、diagnostics implementation 和短训 learned-policy evidence 已记录。 | deterministic `fire_once` 仍低于 hold；acceptance 前需要 event-value / first-event timing follow-on。 |
 
 ## Scope
 
@@ -80,9 +81,9 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
 | `P2 Event Contract` | 定义 `engagement_state`、`fire_mask`、事件动作、状态转移和 deterministic eval 语义。 | P1 事实可用。 | contract 文档冻结 event support 与 reward 的分离；focused implementation tests 留在 P3/P4。 | pass |
 | `P3 Runtime Integration` | 为 S1 C2/ROE 实现受约束状态机和 event action adapter。 | P2 contract accepted。 | runtime 从结构上拒绝多发并暴露 post-launch state。 | pass |
 | `P4 Policy Integration` | 增加 event action distribution 或 event Q-head，并保持 PPO log-prob/eval 语义正确。 | P2/P3 稳定。 | policy tests 证明 mask、log-prob、entropy/stats 和 deterministic event behavior。 | pass |
-| `P5 Scenario And Reward Cleanup` | 将 S1 C2/ROE active entries 转到 event-action 语义，并简化 reward 职责。 | P3/P4 可用。 | config tests 和 reward tests 证明约束不是靠 penalty 学出来的。 | planned |
-| `P6 Validation` | 运行 focused tests 和 learned-policy probes。 | 实现路径通过 unit tests。 | deterministic policy 形成一次授权首发，或残余有证据归因。 | planned |
-| `P7 Closure` | 同步 A3/A4/M1/M2 和父级索引。 | P6 证据完成。 | A5 accepted 或 held，并带显式 residual map。 | planned |
+| `P5 Scenario And Reward Cleanup` | 将 S1 C2/ROE active entries 转到 event-action 语义，并简化 reward 职责。 | P3/P4 可用。 | config tests 和 reward tests 证明约束不是靠 penalty 学出来的。 | pass |
+| `P6 Validation` | 运行 focused tests 和 learned-policy probes。 | 实现路径通过 unit tests。 | deterministic policy 形成一次授权首发，或残余有证据归因。 | held after evidence |
+| `P7 Closure` | 同步 A3/A4/M1/M2 和父级索引。 | P6 证据完成。 | A5 accepted 或 held，并带显式 residual map。 | held closure pending cross-doc sync |
 
 ## Task Clusters
 
@@ -100,6 +101,8 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
   [a5_constrained_event_action_model_event_contract_20260603.zh.md](a5_constrained_event_action_model_event_contract_20260603.zh.md)
 - Implementation evidence：
   [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
+- 短训 learned-policy evidence：
+  [a5_constrained_event_action_model_short_learned_probe_20260603.zh.md](a5_constrained_event_action_model_short_learned_probe_20260603.zh.md)
 
 ## Outputs And Evidence
 
@@ -115,7 +118,8 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
   [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
 - 更新后的 S1 C2/ROE training/eval config entries。
 - 能证明 requested versus executed release 和 post-launch suppression 的 diagnostics。
-- 对比 deterministic / stochastic 行为的 learned-policy evidence。
+- 对比 deterministic / stochastic 行为的 learned-policy evidence。当前 A5 短训证据已记录，
+  但结论为 held。
 
 ## Acceptance Gate
 
@@ -132,15 +136,18 @@ C2/ROE/武器状态和 action mask 处理，策略只在有效交战窗口内学
 - focused tests 覆盖 mask behavior、post-launch suppression、repeated-fire rejection、
   policy log-prob/eval semantics 和 active config wiring。
 - learned-policy evidence 证明 deterministic 授权首发，或者将剩余阻塞明确归入后续
-  policy/optimization package，且不重新回到 reward-only tuning。
+  policy/optimization package，且不重新回到 reward-only tuning。当前证据属于后者：
+  stochastic release discipline 已修复，deterministic release 仍 held。
 - 文档仍拒绝导弹物理、Pk、引信、真实 BVR doctrine 和 M2 release 过度声明。
 
 ## Residuals And Next Steps
 
 - 首版实现应优先采用 explicit state machine + masked event categorical：它能修复结构性多发和
   eval mismatch，同时兼容当前 PPO stack。
-- 如果 masked categorical 语义 accepted 后 deterministic timing 仍不稳定，则 event Q-head 是优先
-  follow-on。
+- 由于短训后 deterministic timing 仍 held，event Q-head、first-shot curriculum 或
+  hazard / first-event objective 是优先 follow-on；该 follow-on 现在由
+  [../a6_event_value_first_event_timing/README.zh.md](../a6_event_value_first_event_timing/README.zh.md)
+  跟踪。
 - hazard / first-event likelihood 与 hierarchical options 等到 window boundary、event dataset 和
   state transition 稳定后再推进。
 - 在 A5 证据证明 event-action surface 一致前，M2 继续 held。

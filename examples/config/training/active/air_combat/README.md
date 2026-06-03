@@ -82,6 +82,17 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - This is the maintained next entry for rerunning reactive/temporal learned-policy comparisons after post-launch mission observation became dynamic.
   - As of A4, it shares the same `combat_weapons` family as the reactive C2/ROE shaped probe; the rejected pulse-prior trial is not retained.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6 deadline-bootstrap probe using the same C2/ROE temporal shaped surface.
+  - Keeps legality owned by A3/A5 event masks and state transitions.
+  - Replaces the short decaying curriculum with a sustained deadline target after an open-window age threshold, so it is evidence for A6 re-scope rather than a new M2 release.
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6-EVT-K event-head optimization probe using the same deadline-bootstrap C2/ROE temporal shaped surface.
+  - Adds `hybrid_event_head_lr_scale=10.0` as a dedicated zero-initialized `hold/fire_once` event-logit update lane.
+  - It tests optimizer ownership after the event-head update-strength audit; it does not weaken A3/A5 masks or release M2.
+  - The 32k A6-EVT-K probe crossed deterministic argmax and preserved one-shot discipline, but A6 remains held on launch-window timing quality.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.

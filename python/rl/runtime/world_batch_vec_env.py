@@ -24,8 +24,10 @@ from gym_envs.scenario_loader import (
     normalize_execution_step_runtime_mode,
 )
 from gym_envs.universal_env import (
+    add_air_combat_event_action_info,
     append_temporal_history,
     air_combat_hybrid_effective_action,
+    apply_air_combat_event_action_gate,
     apply_naval_station_action,
     attach_temporal_history,
     bind_naval_station_eval_reference,
@@ -39,6 +41,7 @@ from gym_envs.universal_env import (
     naval_station_action_command,
     normalize_action,
     reset_naval_station_action_state,
+    finalize_air_combat_event_action_info,
     is_air_combat_hybrid_action_mode,
     is_naval_station_action_mode,
     temporal_history_enabled,
@@ -1548,6 +1551,7 @@ class WorldBatchVecEnv(VecEnv):
 
         assignments = []
         prepared_actions: list[Any | None] = [None] * self.num_envs
+        air_combat_truth_before: list[Any | None] = [None] * self.num_envs
         naval_action_sync_indices: list[int] = []
         for env_idx, handle in enumerate(self._handles):
             if handle.agent_id is None:
@@ -1570,6 +1574,13 @@ class WorldBatchVecEnv(VecEnv):
                     previous_intent=handle.last_policy_action_intent,
                 )
                 handle.last_policy_action_intent = policy_intent
+                air_combat_truth_before[env_idx] = handle.last_truth
+                action, _ = apply_air_combat_event_action_gate(
+                    handle.loader,
+                    action,
+                    agent_id=int(handle.agent_id),
+                    truth_before=handle.last_truth,
+                )
                 handle.last_action = action.astype(np.float32, copy=True)
             else:
                 handle.last_action = action.astype(np.float32, copy=True)
@@ -1602,6 +1613,12 @@ class WorldBatchVecEnv(VecEnv):
             handle.loader.steps = int(handle.steps)
             handle.last_truth = truth_list[env_idx]
             handle.last_inst = inst_list[env_idx]
+            if is_air_combat_hybrid_action_mode(self.action_mode):
+                finalize_air_combat_event_action_info(
+                    handle.loader,
+                    truth_before=air_combat_truth_before[env_idx],
+                    truth_after=handle.last_truth,
+                )
             sim_time = float(handle.steps) * float(
                 resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
             )
@@ -1712,6 +1729,8 @@ class WorldBatchVecEnv(VecEnv):
             prepared = prepared_actions[env_idx]
             if prepared is not None and handle.action_controller is not None:
                 obs, reward, info = handle.action_controller.finalize_step_result(obs, reward, info, prepared)
+            if is_air_combat_hybrid_action_mode(self.action_mode):
+                add_air_combat_event_action_info(info, handle.loader)
             if shadow_reports[env_idx] is not None:
                 info["execution_episode_controller_shadow_compare"] = shadow_reports[env_idx]
             handle.episode_return += float(reward)

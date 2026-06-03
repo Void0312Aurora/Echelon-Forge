@@ -92,6 +92,64 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(float(shared_group["lr"]), 3.0e-4, places=10)
         self.assertAlmostEqual(float(hmoe_group["lr"]), 3.0e-4 * 0.35, places=10)
 
+    def test_hybrid_event_head_gets_dedicated_optimizer_lane(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+            hybrid_event_head_lr_scale=8.0,
+        )
+
+        self.assertIsNotNone(policy.hybrid_event_head)
+        assert policy.hybrid_event_head is not None
+        self.assertTrue(th.allclose(policy.hybrid_event_head.weight.detach(), th.zeros_like(policy.hybrid_event_head.weight)))
+        self.assertTrue(th.allclose(policy.hybrid_event_head.bias.detach(), th.zeros_like(policy.hybrid_event_head.bias)))
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "hybrid_event_head", "hmoe"])
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1].get("lr_scale", 0.0)), 8.0, places=6)
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1]["lr"]), 3.0e-4 * 8.0, places=10)
+
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -5.0
+            policy.action_net.bias[11] = 0.0
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": th.zeros((2, 20), dtype=th.float32),
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+        obs["mission"][:, 5] = 2.0
+        obs["mission"][:, 6] = 1.0
+        obs["mission"][:, 14] = 2.0
+        obs["mission"][:, 15] = 1.0
+        obs["mission"][:, 16] = 1.0
+        obs["mission"][:, 19] = 1.0
+
+        with th.no_grad():
+            delta = policy.get_distribution(obs).fire_event_logit_delta()
+
+        self.assertIsNotNone(delta)
+        assert delta is not None
+        self.assertTrue(th.allclose(delta, th.full_like(delta, -5.0)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["a6/event_head_delta_abs_mean"]), 0.0, places=6)
+
     def test_route_stats_follow_mission_semantics(self) -> None:
         policy = self._make_policy()
         obs = {

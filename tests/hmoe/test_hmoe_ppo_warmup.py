@@ -13,6 +13,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
+from python.rl.policy_algo.first_event_hazard import A6_FIRST_EVENT_FIELD_ACTIVE, A6_FIRST_EVENT_FIELD_TARGET
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from stable_baselines3.common.callbacks import BaseCallback
@@ -128,12 +129,42 @@ class _TinyHybridAirCombatEnv(gym.Env):
         }
 
 
+class _TinyA6HybridAirCombatEnv(_TinyHybridAirCombatEnv):
+    def step(self, action):
+        self._steps += 1
+        action_arr = np.asarray(action, dtype=np.float32).reshape(-1)
+        reward = -float(np.mean(np.square(action_arr[:6])))
+        terminated = False
+        truncated = False
+        info = {
+            "engagement_state": "AuthorizedReady",
+            "fire_mask": 1,
+            "event_action_mask": [1, 1],
+            "fire_once_accepted": False,
+        }
+        return self._obs(), reward, terminated, truncated, info
+
+
 class _NoopCallback(BaseCallback):
     def _on_step(self) -> bool:
         return True
 
 
 class HMoEPPOWarmupTests(unittest.TestCase):
+    def test_a6_policy_fire_mask_uses_c2_roe_mission_window(self) -> None:
+        mission = th.zeros((2, 20), dtype=th.float32)
+        mission[:, 5] = 2.0
+        mission[:, 6] = 1.0
+        mission[:, 14] = 2.0
+        mission[:, 15] = 1.0
+        mission[:, 16] = 1.0
+        mission[:, 19] = 1.0
+        mission[1, 17] = 1.0
+
+        mask = AdaptiveKLPPO._a6_first_event_policy_fire_mask_from_obs({"mission": mission}, 2)
+
+        self.assertEqual(mask, [True, False])
+
     def test_collect_rollouts_applies_hmoe_warmup_before_first_step(self) -> None:
         env = DummyVecEnv([_TinyHMoEEnv])
         model = AdaptiveKLPPO(
@@ -263,6 +294,64 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         action, _ = model.predict(obs, deterministic=True)
         self.assertEqual(tuple(action.shape), (1, 12))
         self.assertTrue(np.isfinite(action).all())
+
+    def test_a6_first_event_labels_are_attached_to_rollout_minibatches(self) -> None:
+        env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_hazard_coef=0.2,
+            a6_first_event_curriculum_coef=0.5,
+            a6_first_event_curriculum_min_window_age_steps=2,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        rollout_data = next(model.rollout_buffer.get(model.n_steps))
+        self.assertTrue(hasattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE))
+        self.assertTrue(hasattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET))
+        self.assertEqual(int(getattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 2)
+        self.assertEqual(int((getattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET) > 0.5).sum().item()), 1)
+
+        hazard_loss = model._first_event_hazard_loss(rollout_data)
+        self.assertIsNotNone(hazard_loss)
+        assert hazard_loss is not None
+        self.assertEqual(hazard_loss.active_count, 2)
+        self.assertGreater(float(hazard_loss.loss.detach().cpu().item()), 0.0)
+
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        second_rollout_data = next(model.rollout_buffer.get(model.n_steps))
+        self.assertEqual(int(getattr(second_rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 0)
 
 
 if __name__ == "__main__":

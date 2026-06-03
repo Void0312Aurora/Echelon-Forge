@@ -4,7 +4,10 @@
 `2026-05-25` 已开启分阶段 `1v1` 真实度梯度课程；`2026-06-03`
 有边界的 A3 C2/ROE 发射纪律层 accepted，M2 继续 held；同日开启 A4
 授权首发训练信号 follow-on；A4 reward/routing 证据继续 held 后，已开启 A5
-受约束事件动作模型路线。
+受约束事件动作模型路线，且 A5 已在短训 learned-policy evidence 后保持 held。A6
+已完成首轮 event-value / first-event timing evidence wave、deadline-bootstrap re-scope wave
+和 event-head update-strength audit，并已完成 event-head optimization learned evidence；A6
+因 launch-window timing quality 继续 held。
 
 ## 当前状态
 
@@ -44,7 +47,24 @@
   [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)：
   将武器释放从逐帧 binary/threshold control 改成受约束事件动作，引入显式
   engagement state、action mask、`hold/fire_once` 语义、post-launch `FiredAssess`
-  suppression 和显式 reattack gate。A5 是重新讨论 M2 前的下一道门。
+  suppression 和显式 reattack gate。A5 短训 learned-policy probe 将 stochastic
+  release discipline 修复到每个 episode 一次 authorized release、零 violations，但
+  deterministic policy 仍为零 `fire_once` requests。A5 继续 held；下一步应针对
+  event-value / first-event timing，而不是 reward-only legality tuning。M2 继续 held。
+- 新 follow-on 是
+  [a6_event_value_first_event_timing/README.zh.md](a6_event_value_first_event_timing/README.zh.md)：
+  首个 masked first-event hazard / bounded curriculum 实现已经有真实 PPO labels 和
+  diagnostics，但短训 learned evidence 仍让 deterministic policy 停在 `0` 次
+  `fire_once` requests，event probability 约 `0.25%`。deadline-bootstrap re-scope 随后将
+  deterministic open-window probability 推到约 `0.49%`，但 deterministic requests 仍为
+  `0`；stochastic probing 保持 `3/3` 授权 releases、零 violation/repeat/budget issues，但有
+  一次 `weapon_not_ready` rejected request。event-head update audit 随后显示 A6 gradients
+  是 live，但当前 optimizer/head scaling 让 event delta 停在约 `-5`。有边界的
+  event-head lane 修复了这个狭义 blocker：deterministic probing 现在执行一次 authorized
+  release，stochastic probing 保持 `3/3` one-shot authorized releases，且零
+  rejected/violation/repeat/budget issues。A6 仍 held，因为 release timing 收敛到
+  authorization/contact 后的近立即时刻；下一步是 launch-window / engagement-quality timing
+  contract，而不是释放 M2。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -66,8 +86,10 @@
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
-- 用 A5 受约束事件动作模型替代 reward-only repair，使 deterministic policy 先学到
-  A3 C2/ROE 下的授权首发，再重新讨论 M2
+- 推进
+  [A6 event-value / first-event timing](a6_event_value_first_event_timing/README.zh.md)，
+  先定义 launch-window / engagement-quality timing contract，再考虑升级到 event-value head
+  或重新讨论 M2
 
 ## 推荐阅读顺序
 
@@ -96,6 +118,8 @@
   [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
 - 受约束事件动作模型 follow-on：
   [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)
+- Event-value / first-event timing follow-on：
+  [a6_event_value_first_event_timing/README.zh.md](a6_event_value_first_event_timing/README.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档

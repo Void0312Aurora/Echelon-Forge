@@ -1,8 +1,9 @@
 # A5 受约束事件动作模型当前状态
 
-状态：`2026-06-03`，implementation checkpoint。Surface audit、event contract、
-runtime prototype 和 policy event head 已验收；reward/config cleanup、diagnostics/evidence
-和 closure 仍待推进。
+状态：`2026-06-03`，短训 learned-policy evidence 后 held。Surface audit、event
+contract、runtime prototype、policy event head、reward/config cleanup 和 diagnostics
+implementation 已验收；A5 仍未 accepted，因为短训 learned-policy probe 没有产生
+deterministic `fire_once`。
 
 ## Decision
 
@@ -40,11 +41,40 @@ Q-head 是优先 follow-on。hazard / first-event 和完整 hierarchical options
 | reward | 表达 mission result、effect、timing、ammo cost 和 tracking preference。 | 不得把 invalid-fire penalty 重新变成主要合法性机制。 |
 | evaluation | 使用 masked argmax 或 event-value comparison，不用 raw `sigmoid(logit)>0.5` threshold。 | deterministic behavior 必须能被 diagnostics 审计。 |
 
+## Latest Learned Evidence
+
+A5 post-change 短训记录在
+[a5_constrained_event_action_model_short_learned_probe_20260603.zh.md](a5_constrained_event_action_model_short_learned_probe_20260603.zh.md)。
+
+摘要：
+
+- deterministic probe：`1880` 个 fire-mask-open / `AuthorizedReady` steps，但
+  `0` fire requests、`0` releases；masked event fire probability 仍约 `0.217%`
+  mean / `0.278%` max。
+- stochastic probe：3 个 episode，4 次 fire requests，3 次 accepted requests，
+  3 次 releases，3 次均为 authorized，`0` violation releases，`0` repeat 或
+  shot-budget violations。
+
+这说明 A5 结构性修复了 stochastic 多发 / release discipline，但 deterministic timing
+仍 held。
+
 ## Immediate Work
 
-1. 更新 S1 C2/ROE active entries 和 diagnostics。
-2. 运行 focused diagnostics 与 learned-policy probes。
-3. 基于 residual map 判定 accepted 或 held。
+1. 继续 fail-closed 地同步 A3/A4/M1/M2 与父级索引，使 A5 保持 held closure，且不得过度声明
+   accepted。
+2. 继续已创建的 A6 follow-on：
+   [../a6_event_value_first_event_timing/README.zh.md](../a6_event_value_first_event_timing/README.zh.md)。
+   A6 下一步是 mathematical framing 和 objective-contract selection，候选机制包括
+   event-value、显式 first-shot curriculum，或 hazard / first-event timing。
+
+## Continuation Decision
+
+后续只能通过新的 A5-trained short evidence run 继续。既有 A3/A4/M1 模型不能作为 A5
+learned-policy evidence，因为 hybrid policy head 已从旧 19 参数 layout 变为新的 20 参数
+event-action layout。对
+`experiments_tmp/a4_authorized_first_shot_routed_retained_temporal_32k_20260603/final_model.zip`
+的快速加载检查已经失败，报错为 `action_net` 与 HMoE heads 的 shape mismatch（`19`
+versus `20`）。因此直接探测旧 checkpoint 只能证明兼容性问题，不能证明 A5 行为。
 
 ## Accepted Planning Evidence
 
@@ -56,6 +86,8 @@ Q-head 是优先 follow-on。hazard / first-event 和完整 hierarchical options
   [../../../standards/air/act.zh.md](../../../standards/air/act.zh.md)
 - Implementation evidence：
   [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
+- 短训 learned-policy probe：
+  [a5_constrained_event_action_model_short_learned_probe_20260603.zh.md](a5_constrained_event_action_model_short_learned_probe_20260603.zh.md)
 
 ## Open Risks
 
@@ -68,7 +100,7 @@ Q-head 是优先 follow-on。hazard / first-event 和完整 hierarchical options
 
 ## Forbidden Conclusions
 
-- A5 尚未 accepted。
+- A5 是 held after evidence，尚未 accepted。
 - A5 不释放 M2。
 - A5 不修改导弹物理、毁伤、Pk、引信或真实 doctrine。
 - A5 不让 `2v2` 或 self-play 进入范围。

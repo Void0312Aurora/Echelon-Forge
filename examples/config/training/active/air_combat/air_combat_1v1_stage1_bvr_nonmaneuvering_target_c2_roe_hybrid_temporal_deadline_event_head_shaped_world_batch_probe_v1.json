@@ -1,0 +1,102 @@
+{
+  "agent_layer": "execution",
+  "algo": "AdaptiveKLPPO",
+  "policy": "HierarchicalMoEExecutionPolicy",
+  "total_timesteps": 32768,
+  "n_envs": 4,
+  "save_freq": 8192,
+  "runtime": {
+    "torch_threads": 1,
+    "world_batch_vec_env": true,
+    "world_batch_threads": 4,
+    "batch_observation_backend": "compiled",
+    "batch_visual_backend": "compiled",
+    "policy_observation_torch_bridge": true,
+    "observation_return_mode": "copy"
+  },
+  "env": {
+    "include_proprio": true,
+    "mission_obs_mode": "air_combat_c2_roe_v1",
+    "step_info_mode": "full",
+    "execution_step_runtime_mode": "compiled",
+    "flight_shaping_backend": "compiled",
+    "action_mode": "air_combat_hybrid_v1",
+    "temporal_history_len": 16
+  },
+  "early_stop": {
+    "enabled": false
+  },
+  "diagnostics": {
+    "nonfinite_probe": true,
+    "nonfinite_probe_report": "nonfinite_probe_report.json",
+    "nonfinite_probe_history": 1024
+  },
+  "hmoe": {
+    "bootstrap_from_shared_action_head": "auto"
+  },
+  "wrappers": {
+    "multi_timescale_action": {
+      "enabled": true,
+      "hold_steps": 1,
+      "low_freq_indices": [],
+      "snap_binary_indices": [],
+      "binary_hysteresis_indices": [],
+      "scripted_baseline_mode": "stable_flight",
+      "scripted_residual_scale": 0.18,
+      "scripted_blend_indices": [0, 1, 2, 3],
+      "scripted_lock_indices": []
+    }
+  },
+  "hyperparameters": {
+    "learning_rate": 0.00003,
+    "n_steps": 256,
+    "batch_size": 512,
+    "n_epochs": 2,
+    "gamma": 0.999,
+    "gae_lambda": 0.97,
+    "clip_range": 0.1,
+    "clip_range_vf": 0.1,
+    "normalize_advantage": true,
+    "ent_coef": 0.0005,
+    "vf_coef": 0.7,
+    "max_grad_norm": 0.5,
+    "target_kl": 0.02,
+    "kl_penalty_coef": 0.05,
+    "kl_adaptive": true,
+    "kl_penalty_coef_min": 0.01,
+    "kl_adapt_factor": 1.25,
+    "lr_mult_max": 1.5,
+    "low_kl_boost_patience": 6,
+    "boost_lr_on_low_kl": false,
+    "a6_first_event_hazard_coef": 0.3,
+    "a6_first_event_curriculum_coef": 0.0,
+    "a6_first_event_deadline_weight": 1.0,
+    "a6_first_event_deadline_min_window_age_steps": 64,
+    "device": "cuda",
+    "policy_kwargs": {
+      "features_extractor_class": "TemporalTransformerExtractor",
+      "features_extractor_kwargs": {
+        "features_dim": 192,
+        "n_heads": 4,
+        "n_layers": 3,
+        "temporal_n_heads": 4,
+        "temporal_n_layers": 2,
+        "use_amp": true,
+        "amp_dtype": "bf16",
+        "use_checkpointing": true
+      },
+      "family_subexpert_counts": [3, 2, 3, 1, 3],
+      "hmoe_residual_scale": 0.18,
+      "hmoe_head_lr_scale": 0.35,
+      "hmoe_residual_warmup_fraction": 0.3,
+      "hmoe_residual_start_factor": 0.25,
+      "hybrid_action_spec": "air_combat_hybrid_v1",
+      "hybrid_event_head_lr_scale": 10.0,
+      "log_std_init": -2.0,
+      "net_arch": {
+        "pi": [192, 192],
+        "vf": [192, 192]
+      }
+    }
+  }
+}

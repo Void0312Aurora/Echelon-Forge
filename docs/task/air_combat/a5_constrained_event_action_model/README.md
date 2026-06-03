@@ -1,8 +1,10 @@
 # A5 Constrained Event Action Model
 
-Status: `2026-06-03` planning. A4 evidence shows reward/routing changes are not
-enough; this subproject opens the long-range event-action modeling track for
-S1 C2/ROE weapon employment.
+Status: `2026-06-03` held after short learned-policy evidence. A5 has accepted
+the surface audit, event contract, runtime state machine, policy event head,
+reward/config cleanup, and diagnostics implementation. A5 remains not accepted:
+the short A5 post-change run fixed stochastic release discipline but did not
+make deterministic policy request `fire_once`.
 
 Language:
 
@@ -47,7 +49,7 @@ engagement windows.
 | A4 reward/routing repair | held | A4 binary diagnostics show authorized-window `fire_weapon` remains near `0.22%` probability / `-6.11` max logit; opportunity penalty was rejected. | Reward magnitude and route selection are not sufficient root fixes. |
 | M1 hybrid action interface | accepted | `air_combat_hybrid_v1` separates continuous flight axes from switches, selectors, and pulse commands. | The fire pulse still needs event support, post-launch suppression, and deterministic evaluation semantics. |
 | External design notes | design input | `docs/temp/6/6·3/temp-01..03.md` converge on state machine + mask + event head. | These notes are not authority; A5 turns the decision into maintained task scope. |
-| Event-action architecture | planning | No A5 runtime contract is implemented yet. | A5 must not claim M2 release, true BVR doctrine, or missile-physics authority. |
+| Event-action architecture | held after evidence | A5 contract, runtime state machine, policy event head, active S1 C2/ROE reward/config cleanup, diagnostics implementation, and short learned-policy evidence are recorded. | Deterministic `fire_once` remains below hold; event-value / first-event timing follow-on is needed before acceptance. |
 
 ## Scope
 
@@ -87,9 +89,9 @@ Out of scope:
 | `P2 Event Contract` | Define `engagement_state`, `fire_mask`, event actions, state transitions, and deterministic evaluation semantics. | P1 facts available. | Contract docs freeze event support independently of reward; focused implementation tests remain in P3/P4. | pass |
 | `P3 Runtime Integration` | Implement the constrained state machine and event action adapter for S1 C2/ROE. | P2 contract accepted. | Runtime rejects structural multi-fire and exposes post-launch state. | pass |
 | `P4 Policy Integration` | Add event action distribution or event Q-head with correct PPO log-prob/eval semantics. | P2/P3 stable. | Policy tests prove mask, log-prob, entropy/stats, and deterministic event behavior. | pass |
-| `P5 Scenario And Reward Cleanup` | Move S1 C2/ROE active entries to event-action semantics and simplify reward responsibilities. | P3/P4 available. | Config tests and reward tests show constraints are not being learned via penalties. | planned |
-| `P6 Validation` | Run focused tests plus learned-policy probes. | Implementation paths pass unit tests. | Deterministic policy either executes one authorized first shot or residual is evidence-backed. | planned |
-| `P7 Closure` | Sync A3/A4/M1/M2 and parent indexes. | P6 evidence complete. | A5 is accepted or held with an explicit residual map. | planned |
+| `P5 Scenario And Reward Cleanup` | Move S1 C2/ROE active entries to event-action semantics and simplify reward responsibilities. | P3/P4 available. | Config tests and reward tests show constraints are not being learned via penalties. | pass |
+| `P6 Validation` | Run focused tests plus learned-policy probes. | Implementation paths pass unit tests. | Deterministic policy either executes one authorized first shot or residual is evidence-backed. | held after evidence |
+| `P7 Closure` | Sync A3/A4/M1/M2 and parent indexes. | P6 evidence complete. | A5 is accepted or held with an explicit residual map. | held closure pending cross-doc sync |
 
 ## Task Clusters
 
@@ -107,6 +109,8 @@ Out of scope:
   [a5_constrained_event_action_model_event_contract_20260603.md](a5_constrained_event_action_model_event_contract_20260603.md)
 - Implementation evidence:
   [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
+- Short learned-policy evidence:
+  [a5_constrained_event_action_model_short_learned_probe_20260603.md](a5_constrained_event_action_model_short_learned_probe_20260603.md)
 
 ## Outputs And Evidence
 
@@ -126,6 +130,7 @@ Expected outputs:
 - Diagnostics proving requested versus executed release and post-launch
   suppression.
 - Learned-policy evidence comparing deterministic and stochastic behavior.
+  The short A5 learned-policy probe is now recorded, but it is a held outcome.
 
 ## Acceptance Gate
 
@@ -144,7 +149,9 @@ This subproject can be marked accepted only when:
   rejection, policy log-prob/eval semantics, and active config wiring.
 - Learned-policy evidence shows a deterministic authorized first shot, or the
   remaining blocker is explicitly assigned to a later policy/optimization
-  package without reopening reward-only tuning.
+  package without reopening reward-only tuning. The current evidence is the
+  latter: stochastic release discipline is fixed, deterministic release remains
+  held.
 - Documentation still refuses missile physics, Pk, fuze, true BVR doctrine, and
   M2 release overclaims.
 
@@ -153,8 +160,10 @@ This subproject can be marked accepted only when:
 - First implementation should prefer explicit state machine + masked event
   categorical because it fixes the structural multi-fire and eval mismatch while
   staying compatible with the current PPO stack.
-- Event Q-head is the preferred follow-on if deterministic timing remains
-  unstable after masked categorical semantics are accepted.
+- Event Q-head, first-shot curriculum, or hazard / first-event objective is the
+  preferred follow-on because deterministic timing remains held after the short
+  A5 run. That follow-on is now tracked as
+  [../a6_event_value_first_event_timing/README.md](../a6_event_value_first_event_timing/README.md).
 - Hazard / first-event likelihood and hierarchical options are deferred until
   window boundaries, event datasets, and state transitions are stable.
 - M2 remains held until A5 evidence shows the event-action surface is coherent.

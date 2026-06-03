@@ -77,6 +77,15 @@ HYBRID_BINARY_POLICY_SIGNAL_NAMES = (
     "fire_weapon",
     "fire_gun",
 )
+A5_FIRE_MASK_COMPONENT_NAMES = (
+    "fire_mask_c2_authorized",
+    "fire_mask_target_present",
+    "fire_mask_shot_budget_available",
+    "fire_mask_not_pending_assessment",
+    "fire_mask_weapon_ready",
+    "fire_mask_ammo_available",
+    "fire_mask_reattack_allowed",
+)
 
 
 def _action_columns_for_mode(action_mode: str) -> dict[str, int]:
@@ -92,6 +101,19 @@ def _finite_float(value: Any, default: float = float("nan")) -> float:
     except Exception:
         return float(default)
     return out if math.isfinite(out) else float(default)
+
+
+def _bool_int(value: Any) -> int:
+    if isinstance(value, str):
+        return int(value.strip().lower() in {"1", "true", "yes", "on"})
+    return int(bool(value))
+
+
+def _stable_json(value: Any) -> str:
+    try:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    except Exception:
+        return ""
 
 
 def _unit_id_set(sim) -> set[int]:
@@ -214,6 +236,66 @@ def _c2_roe_event_columns(
     }
 
 
+def _a5_event_info_columns(info: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(info, dict):
+        return {}
+    has_a5_field = any(
+        key in info
+        for key in (
+            "engagement_state",
+            "fire_mask",
+            "event_action_mask",
+            "fire_once_requested",
+            "fire_once_accepted",
+            "fire_once_rejected_reason",
+            "release_executed",
+            "post_launch_suppressed",
+            "reattack_ready",
+            "fire_mask_components",
+        )
+    )
+    if not has_a5_field:
+        return {}
+
+    out: dict[str, Any] = {
+        "engagement_state": str(info.get("engagement_state", "") or ""),
+        "fire_mask": int(_bool_int(info.get("fire_mask", 0))),
+        "fire_once_requested": int(_bool_int(info.get("fire_once_requested", False))),
+        "fire_once_accepted": int(_bool_int(info.get("fire_once_accepted", False))),
+        "fire_once_rejected_reason": str(info.get("fire_once_rejected_reason", "") or ""),
+        "release_executed": int(_bool_int(info.get("release_executed", False))),
+        "post_launch_suppressed": int(_bool_int(info.get("post_launch_suppressed", False))),
+        "reattack_ready": int(_bool_int(info.get("reattack_ready", False))),
+    }
+    out["fire_once_rejected"] = int(out["fire_once_requested"] > 0 and out["fire_once_accepted"] <= 0)
+
+    event_mask = info.get("event_action_mask", None)
+    if isinstance(event_mask, np.ndarray):
+        event_mask_list = event_mask.reshape(-1).tolist()
+    elif isinstance(event_mask, (list, tuple)):
+        event_mask_list = list(event_mask)
+    else:
+        event_mask_list = []
+    if event_mask_list:
+        mask_values = [int(_bool_int(value)) for value in event_mask_list]
+        out["event_action_mask_json"] = _stable_json(mask_values)
+        out["event_action_mask_hold"] = int(mask_values[0]) if len(mask_values) >= 1 else 1
+        out["event_action_mask_fire_once"] = int(mask_values[1]) if len(mask_values) >= 2 else out["fire_mask"]
+    else:
+        out["event_action_mask_json"] = _stable_json([1, int(out["fire_mask"])])
+        out["event_action_mask_hold"] = 1
+        out["event_action_mask_fire_once"] = int(out["fire_mask"])
+
+    components = info.get("fire_mask_components", {})
+    component_map = components if isinstance(components, dict) else {}
+    stable_components = {str(key): int(_bool_int(value)) for key, value in sorted(component_map.items())}
+    out["fire_mask_components_json"] = _stable_json(stable_components)
+    for name in A5_FIRE_MASK_COMPONENT_NAMES:
+        if name in stable_components:
+            out[name] = int(stable_components[name])
+    return out
+
+
 def _base_action(action_mode: str) -> np.ndarray:
     columns = _action_columns_for_mode(action_mode)
     action_dim = 12 if str(action_mode) == "air_combat_hybrid_v1" else 17
@@ -289,6 +371,51 @@ def _distribution_policy_diagnostics(distribution: Any) -> dict[str, float]:
                 for idx, name in enumerate(HYBRID_BINARY_POLICY_SIGNAL_NAMES):
                     out[f"policy_logit_{name}"] = float(logits[0, idx])
                     out[f"policy_prob_{name}"] = float(probs[0, idx])
+        except Exception:
+            pass
+
+    event_logits_fn = getattr(distribution, "_fire_event_logits", None)
+    if callable(event_logits_fn):
+        try:
+            event_logits_tensor = event_logits_fn()
+            logits = event_logits_tensor.detach().to(device="cpu").numpy().astype(np.float64)
+            if logits.ndim == 1:
+                logits = logits.reshape(1, -1)
+            if logits.ndim == 2 and logits.shape[1] >= 2:
+                shifted = logits - logits.max(axis=1, keepdims=True)
+                probs = np.exp(shifted)
+                probs = probs / np.clip(probs.sum(axis=1, keepdims=True), 1.0e-12, None)
+                mode = int(np.argmax(probs[0]))
+                entropy = -float(np.sum(probs[0, :2] * np.log(np.clip(probs[0, :2], 1.0e-12, 1.0))))
+                out["policy_event_logit_hold"] = float(logits[0, 0])
+                out["policy_event_logit_fire_once"] = float(logits[0, 1])
+                out["policy_event_prob_hold"] = float(probs[0, 0])
+                out["policy_event_prob_fire_once"] = float(probs[0, 1])
+                out["policy_event_mode"] = float(mode)
+                out["policy_event_entropy"] = float(entropy)
+                event_mask = getattr(distribution, "fire_event_mask", None)
+                if event_mask is not None:
+                    mask = event_mask.detach().to(device="cpu").numpy().astype(np.float64)
+                    if mask.ndim == 1:
+                        mask = mask.reshape(1, -1)
+                    if mask.ndim == 2 and mask.shape[1] >= 2:
+                        out["policy_event_mask_hold"] = float(mask[0, 0])
+                        out["policy_event_mask_fire_once"] = float(mask[0, 1])
+        except Exception:
+            pass
+
+    event_delta_fn = getattr(distribution, "fire_event_logit_delta", None)
+    event_prob_fn = getattr(distribution, "fire_event_probability", None)
+    if callable(event_delta_fn) and callable(event_prob_fn):
+        try:
+            delta = event_delta_fn()
+            prob = event_prob_fn()
+            if delta is not None and prob is not None:
+                delta_arr = delta.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
+                prob_arr = prob.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
+                if delta_arr.size > 0 and prob_arr.size > 0:
+                    out["policy_event_logit_delta"] = float(delta_arr[0])
+                    out["policy_event_prob_fire_once_unmasked"] = float(prob_arr[0])
         except Exception:
             pass
 
@@ -570,6 +697,7 @@ def _snapshot_row(
             previous_release_count=int(prev_release_count or 0),
         )
     )
+    row.update(_a5_event_info_columns(info))
     if isinstance(policy_diagnostics, dict):
         for key, value in policy_diagnostics.items():
             row[str(key)] = _finite_float(value)
@@ -635,6 +763,16 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
     legacy_fallback_release_count = int(
         sum(int(row.get("c2_roe_legacy_fallback_release_count", 0) or 0) for row in rows)
     )
+    a5_rejection_reason_counts = Counter(
+        str(row.get("fire_once_rejected_reason", "") or "unspecified")
+        for row in rows
+        if int(row.get("step", 0)) > 0 and int(row.get("fire_once_rejected", 0) or 0) > 0
+    )
+    a5_engagement_state_counts = Counter(
+        str(row.get("engagement_state", "") or "unknown")
+        for row in rows
+        if int(row.get("step", 0)) > 0 and str(row.get("engagement_state", "") or "") != ""
+    )
     release_count_total = int(sum(int(row.get("missile_release_delta", row.get("missile_release", 0)) or 0) for row in rows))
     unknown_release_count = max(0, release_count_total - authorized_release_count - violation_release_count)
 
@@ -677,6 +815,17 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
     authorized_window_step_count = int(
         sum(1 for row in rows if int(row.get("step", 0)) > 0 and authorized_first_shot_window(row))
     )
+    fire_mask_open_step_count = int(
+        sum(1 for row in rows if int(row.get("step", 0)) > 0 and int(row.get("fire_mask", 0) or 0) > 0)
+    )
+
+    def a6_open_window(row: dict[str, Any]) -> bool:
+        return (
+            int(row.get("step", 0)) > 0
+            and str(row.get("engagement_state", "") or "") == "AuthorizedReady"
+            and int(row.get("fire_mask", 0) or 0) > 0
+        )
+
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
     )
@@ -760,6 +909,37 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "policy_prob_fire_weapon_max": row_stat("policy_prob_fire_weapon", np.max),
         "policy_logit_fire_weapon_mean": row_stat("policy_logit_fire_weapon", np.mean),
         "policy_logit_fire_weapon_max": row_stat("policy_logit_fire_weapon", np.max),
+        "policy_event_prob_fire_once_mean": row_stat("policy_event_prob_fire_once", np.mean),
+        "policy_event_prob_fire_once_max": row_stat("policy_event_prob_fire_once", np.max),
+        "policy_event_logit_fire_once_max": row_stat("policy_event_logit_fire_once", np.max),
+        "a6_event_logit_delta_mean_open": row_stat("policy_event_logit_delta", np.mean, default=0.0, predicate=a6_open_window),
+        "a6_event_fire_prob_mean_open": row_stat(
+            "policy_event_prob_fire_once_unmasked",
+            np.mean,
+            default=0.0,
+            predicate=a6_open_window,
+        ),
+        "a6_event_fire_prob_max_open": row_stat(
+            "policy_event_prob_fire_once_unmasked",
+            np.max,
+            default=0.0,
+            predicate=a6_open_window,
+        ),
+        "a6_open_window_step_count": int(sum(1 for row in rows if a6_open_window(row))),
+        "policy_event_mode_fire_once_count": int(
+            sum(
+                1
+                for row in rows
+                if int(row.get("step", 0)) > 0 and int(row.get("policy_event_mode", -1) or -1) == 1
+            )
+        ),
+        "policy_event_mask_fire_once_open_count": int(
+            sum(
+                1
+                for row in rows
+                if int(row.get("step", 0)) > 0 and int(row.get("policy_event_mask_fire_once", 0) or 0) > 0
+            )
+        ),
         "authorized_window_step_count": int(authorized_window_step_count),
         "authorized_window_policy_prob_tms_up_mean": row_stat(
             "policy_prob_tms_up", np.mean, predicate=authorized_first_shot_window
@@ -779,6 +959,34 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "authorized_window_policy_logit_fire_weapon_max": row_stat(
             "policy_logit_fire_weapon", np.max, predicate=authorized_first_shot_window
         ),
+        "authorized_window_policy_event_prob_fire_once_mean": row_stat(
+            "policy_event_prob_fire_once", np.mean, predicate=authorized_first_shot_window
+        ),
+        "authorized_window_policy_event_prob_fire_once_max": row_stat(
+            "policy_event_prob_fire_once", np.max, predicate=authorized_first_shot_window
+        ),
+        "fire_mask_open_step_count": int(fire_mask_open_step_count),
+        "fire_mask_open_frac": (
+            float(fire_mask_open_step_count)
+            / float(max(1, sum(1 for row in rows if int(row.get("step", 0)) > 0)))
+        ),
+        "fire_once_requested_count": int(
+            sum(int(row.get("fire_once_requested", 0) or 0) for row in rows if int(row.get("step", 0)) > 0)
+        ),
+        "fire_once_accepted_count": int(
+            sum(int(row.get("fire_once_accepted", 0) or 0) for row in rows if int(row.get("step", 0)) > 0)
+        ),
+        "fire_once_rejected_count": int(
+            sum(int(row.get("fire_once_rejected", 0) or 0) for row in rows if int(row.get("step", 0)) > 0)
+        ),
+        "release_executed_count": int(
+            sum(int(row.get("release_executed", 0) or 0) for row in rows if int(row.get("step", 0)) > 0)
+        ),
+        "post_launch_suppressed_count": int(
+            sum(int(row.get("post_launch_suppressed", 0) or 0) for row in rows if int(row.get("step", 0)) > 0)
+        ),
+        "fire_once_rejected_reason_counts": dict(sorted(a5_rejection_reason_counts.items())),
+        "engagement_state_counts": dict(sorted(a5_engagement_state_counts.items())),
         "release_count": int(sum(int(row.get("missile_release", 0)) for row in rows)),
         "authorized_release_count": int(authorized_release_count),
         "unauthorized_release_count": int(unauthorized_release_count),

@@ -1,6 +1,9 @@
 # A5 受约束事件动作模型验收门
 
-状态：`2026-06-03`，not accepted。本文在实现开始前冻结验收条件。
+状态：`2026-06-03`，held after evidence，not accepted。structural event-action、
+reward/config 与 diagnostics gates 已有 implementation evidence。短训 learned-policy
+probe 修复了 stochastic release discipline，但没有产生 deterministic `fire_once`；
+最终跨文档 held closure 仍 pending。
 
 ## Accepted Scope To Prove
 
@@ -11,15 +14,15 @@ learned `1v1` tactical maturity，也不释放 M2。
 
 | Gate | Required evidence | Status |
 | --- | --- | --- |
-| Event action support | accepted S1 C2/ROE entry 暴露 `hold/fire_once` 或等价受约束事件语义。 | pending |
-| Mask legality | authorized event states 之外，fire 通过 mask/state-machine support 不可用。 | pending |
-| Post-launch suppression | accepted `fire_once` 进入 assessment/no-fire state，并阻止 immediate repeat fire。 | pending |
-| Explicit reattack path | 后续 fire 需要 `ReattackReady`、salvo 或其他显式 authorization state。 | pending |
-| Policy semantics | stochastic sampling、deterministic eval、log-prob 和 entropy/stats 都遵守同一 mask。 | pending |
-| Reward boundary | reward 表达 outcome/timing/ammo/track preferences，不承担主要合法性机制。 | pending |
-| Diagnostics | probes 能区分 requested、executed、rejected、authorized、violation、repeated 和 post-launch fire attempts。 | pending |
-| Learned evidence | deterministic learned policy 执行一次授权首发，或 held residual 被收窄到 reward-only tuning 之外。 | pending |
-| Documentation | A3/A4/M1/M2 与父级 air-combat docs 同步，且无过度声明。 | pending |
+| Event action support | accepted S1 C2/ROE entry 暴露 `hold/fire_once` 或等价受约束事件语义。 | pass：A5 event contract 加 D/E implementation evidence |
+| Mask legality | authorized event states 之外，fire 通过 mask/state-machine support 不可用。 | pass：runtime gate 与 policy mask tests |
+| Post-launch suppression | accepted `fire_once` 进入 assessment/no-fire state，并阻止 immediate repeat fire。 | pass：runtime gate tests |
+| Explicit reattack path | 后续 fire 需要 `ReattackReady`、salvo 或其他显式 authorization state。 | pass：runtime state machine contract 与 tests |
+| Policy semantics | stochastic sampling、deterministic eval、log-prob 和 entropy/stats 都遵守同一 mask。 | pass：HMoE policy tests |
+| Reward boundary | reward 表达 outcome/timing/ammo/track preferences，不承担主要合法性机制。 | pass：F reward/config cleanup |
+| Diagnostics | probes 能区分 requested、executed、rejected、authorized、violation、repeated 和 post-launch fire attempts。 | pass：G diagnostics implementation |
+| Learned evidence | deterministic learned policy 执行一次授权首发，或 held residual 被收窄到 reward-only tuning 之外。 | held evidence：stochastic discipline 已修复；deterministic `fire_once` 仍为 0 |
+| Documentation | A3/A4/M1/M2 与父级 air-combat docs 同步，且无过度声明。 | partial：A5 与父级 air-combat docs 已同步；完整 held closure sync 仍 pending |
 
 ## Minimum Test Shape
 
@@ -39,6 +42,9 @@ git diff --check -- docs/task/air_combat docs/standards/air gym_envs python scen
 learned-policy probes 必须报告 deterministic 与 stochastic event behavior，且不得 stage
 `experiments_tmp`。
 
+A5 短训 learned-policy probe 记录在
+[a5_constrained_event_action_model_short_learned_probe_20260603.zh.md](a5_constrained_event_action_model_short_learned_probe_20260603.zh.md)。
+
 ## Rejection Conditions
 
 如果出现以下任一情况，A5 必须保持 held：
@@ -54,4 +60,6 @@ learned-policy probes 必须报告 deterministic 与 stochastic event behavior�
 
 如果 masked categorical event semantics 已结构性 accepted，但 learned deterministic timing
 仍失败，A5 可以以 held 关闭，并显式创建 event Q-head 或 hazard follow-on。该 follow-on
-不得被隐藏成 reward tuning。
+现已在
+[../a6_event_value_first_event_timing/README.zh.md](../a6_event_value_first_event_timing/README.zh.md)
+下显式跟踪，且不得被隐藏成 reward tuning。

@@ -36,6 +36,14 @@ STAGE1_C2_ROE_TEMPORAL_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_shaped_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_shaped_world_batch_probe_v1.json"
+)
+STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -232,6 +240,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         c2_roe_scenarios = sorted((REPO_ROOT / "scenarios" / "air_combat" / "1v1").glob("*c2_roe*.json"))
         self.assertIn(STAGE1_C2_ROE_CONFIG, c2_roe_configs)
         self.assertIn(STAGE1_C2_ROE_TEMPORAL_CONFIG, c2_roe_configs)
+        self.assertIn(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG, c2_roe_configs)
         self.assertIn(STAGE1_C2_ROE_SCENARIO, c2_roe_scenarios)
 
         cfg = _load_json(STAGE1_C2_ROE_CONFIG)
@@ -241,7 +250,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertIsInstance(env, dict)
         self.assertEqual(env.get("mission_obs_mode"), "air_combat_c2_roe_v1")
         self.assertEqual(env.get("action_mode"), "air_combat_hybrid_v1")
-        self.assertEqual(env.get("step_info_mode"), "terminal")
+        self.assertEqual(env.get("step_info_mode"), "full")
         self.assertEqual(env.get("execution_step_runtime_mode"), "compiled")
         self.assertEqual(env.get("flight_shaping_backend"), "compiled")
         self.assertTrue(bool(cfg.get("runtime", {}).get("world_batch_vec_env")))
@@ -288,6 +297,8 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertTrue(bool(rewards.get("air_combat_c2_roe_release_discipline_enabled")))
         self.assertGreater(float(rewards.get("air_combat_first_release_bonus", 0.0)), 0.0)
         self.assertLess(float(rewards.get("air_combat_repeat_release_penalty", 0.0)), 0.0)
+        self.assertGreater(float(rewards.get("air_combat_repeat_release_penalty", 0.0)), -50.0)
+        self.assertEqual(float(rewards.get("air_combat_invalid_fire_penalty", 0.0)), 0.0)
         self.assertGreater(float(rewards.get("air_combat_roe_valid_authorized_release_bonus", 0.0)), 0.0)
         self.assertGreater(float(rewards.get("air_combat_roe_authorized_first_release_bonus", 0.0)), 0.0)
         self.assertGreater(float(rewards.get("air_combat_roe_authorized_radar_active_bonus", 0.0)), 0.0)
@@ -297,10 +308,68 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertGreater(float(rewards.get("air_combat_roe_authorized_fire_attempt_bonus", 0.0)), 0.0)
         self.assertLess(float(rewards.get("air_combat_roe_authorized_fire_no_release_penalty", 0.0)), 0.0)
         self.assertEqual(float(rewards.get("air_combat_roe_authorized_fire_opportunity_penalty", 0.0)), 0.0)
-        self.assertLess(float(rewards.get("air_combat_roe_unauthorized_fire_penalty", 0.0)), 0.0)
-        self.assertLess(float(rewards.get("air_combat_roe_premature_second_shot_penalty", 0.0)), 0.0)
+        for legality_key in (
+            "air_combat_roe_hold_fire_bonus",
+            "air_combat_roe_hold_fire_violation_penalty",
+            "air_combat_roe_unauthorized_fire_penalty",
+            "air_combat_roe_pending_assessment_penalty",
+            "air_combat_roe_premature_second_shot_penalty",
+            "air_combat_roe_shot_budget_violation_penalty",
+        ):
+            self.assertEqual(float(rewards.get(legality_key, 0.0)), 0.0, legality_key)
         self.assertEqual(scenario.get("entities", [])[0].get("ammo", {}).get("missiles_remaining"), 4)
         self.assertEqual(scenario.get("entities", [])[1].get("ammo", {}).get("missiles_remaining"), 0)
+
+    def test_stage1_c2_roe_deadline_bootstrap_probe_keeps_a6_rescope_separate(self) -> None:
+        baseline = _load_json(STAGE1_C2_ROE_TEMPORAL_CONFIG)
+        deadline = _load_json(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(deadline.get(key), baseline.get(key), key)
+        self.assertEqual(deadline.get("runtime"), baseline.get("runtime"))
+        self.assertEqual(deadline.get("env"), baseline.get("env"))
+        self.assertEqual(deadline.get("early_stop"), baseline.get("early_stop"))
+        self.assertEqual(deadline.get("diagnostics"), baseline.get("diagnostics"))
+        self.assertEqual(deadline.get("hmoe"), baseline.get("hmoe"))
+        self.assertEqual(deadline.get("wrappers"), baseline.get("wrappers"))
+
+        base_hyper = dict(baseline.get("hyperparameters", {}))
+        deadline_hyper = dict(deadline.get("hyperparameters", {}))
+        for key in ("a6_first_event_hazard_coef", "a6_first_event_curriculum_coef"):
+            base_hyper.pop(key, None)
+            deadline_hyper.pop(key, None)
+        deadline_weight = deadline_hyper.pop("a6_first_event_deadline_weight", None)
+        deadline_min_age = deadline_hyper.pop("a6_first_event_deadline_min_window_age_steps", None)
+        base_hyper.pop("a6_first_event_curriculum_decay_fraction", None)
+        base_hyper.pop("a6_first_event_curriculum_min_window_age_steps", None)
+        self.assertEqual(deadline_hyper, base_hyper)
+        self.assertGreater(float(deadline_weight), 0.0)
+        self.assertEqual(int(deadline_min_age), 64)
+        self.assertEqual(float(deadline.get("hyperparameters", {}).get("a6_first_event_curriculum_coef", 0.0)), 0.0)
+
+    def test_stage1_c2_roe_event_head_probe_is_separate_from_deadline_baseline(self) -> None:
+        deadline = _load_json(STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG)
+        event_head = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(event_head.get(key), deadline.get(key), key)
+        self.assertEqual(event_head.get("runtime"), deadline.get("runtime"))
+        self.assertEqual(event_head.get("env"), deadline.get("env"))
+        self.assertEqual(event_head.get("early_stop"), deadline.get("early_stop"))
+        self.assertEqual(event_head.get("diagnostics"), deadline.get("diagnostics"))
+        self.assertEqual(event_head.get("hmoe"), deadline.get("hmoe"))
+        self.assertEqual(event_head.get("wrappers"), deadline.get("wrappers"))
+
+        deadline_hyper = dict(deadline.get("hyperparameters", {}))
+        event_hyper = dict(event_head.get("hyperparameters", {}))
+        deadline_policy_kwargs = dict(deadline_hyper.get("policy_kwargs", {}))
+        event_policy_kwargs = dict(event_hyper.get("policy_kwargs", {}))
+        self.assertEqual(float(deadline_policy_kwargs.pop("hybrid_event_head_lr_scale", 0.0)), 0.0)
+        self.assertAlmostEqual(float(event_policy_kwargs.pop("hybrid_event_head_lr_scale", 0.0)), 10.0, places=6)
+        self.assertEqual(deadline_policy_kwargs, event_policy_kwargs)
+        deadline_hyper["policy_kwargs"] = deadline_policy_kwargs
+        event_hyper["policy_kwargs"] = event_policy_kwargs
+        self.assertEqual(event_hyper, deadline_hyper)
 
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)
@@ -392,6 +461,8 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             ("hybrid_temporal_shaped", STAGE1_HYBRID_TEMPORAL_SHAPED_CONFIG, STAGE1_SHAPED_SCENARIO),
             ("c2_roe_hybrid_shaped", STAGE1_C2_ROE_CONFIG, STAGE1_C2_ROE_SCENARIO),
             ("c2_roe_hybrid_temporal_shaped", STAGE1_C2_ROE_TEMPORAL_CONFIG, STAGE1_C2_ROE_SCENARIO),
+            ("c2_roe_hybrid_temporal_deadline_shaped", STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG, STAGE1_C2_ROE_SCENARIO),
+            ("c2_roe_hybrid_temporal_event_head_shaped", STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG, STAGE1_C2_ROE_SCENARIO),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -428,6 +499,8 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "hybrid_temporal_shaped",
                 "c2_roe_hybrid_shaped",
                 "c2_roe_hybrid_temporal_shaped",
+                "c2_roe_hybrid_temporal_deadline_shaped",
+                "c2_roe_hybrid_temporal_event_head_shaped",
             }:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {
@@ -435,9 +508,16 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "hybrid_temporal",
                 "hybrid_temporal_shaped",
                 "c2_roe_hybrid_temporal_shaped",
+                "c2_roe_hybrid_temporal_deadline_shaped",
+                "c2_roe_hybrid_temporal_event_head_shaped",
             }:
                 self.assertIn("temporal_history_len=16", proc.stdout)
-            if label in {"c2_roe_hybrid_shaped", "c2_roe_hybrid_temporal_shaped"}:
+            if label in {
+                "c2_roe_hybrid_shaped",
+                "c2_roe_hybrid_temporal_shaped",
+                "c2_roe_hybrid_temporal_deadline_shaped",
+                "c2_roe_hybrid_temporal_event_head_shaped",
+            }:
                 self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 

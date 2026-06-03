@@ -5,7 +5,11 @@ Status: active `1v1` workline; default entry converged on `2026-05-18`;
 accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
 `2026-06-03` also opened A4 as the authorized-first-shot training-signal
 follow-on; after A4 reward/routing evidence remained held, A5 opened the
-constrained event-action model track.
+constrained event-action model track and is now held after short learned-policy
+evidence. A6 has completed its first event-value / first-event timing evidence
+wave, deadline-bootstrap re-scope wave, event-head update-strength audit, and
+event-head optimization learned evidence; it remains held on launch-window
+timing quality.
 
 ## Current Status
 
@@ -57,7 +61,28 @@ constrained event-action model track.
   convert weapon release from a per-step binary/threshold control into a
   constrained event action with explicit engagement state, action mask,
   `hold/fire_once` semantics, post-launch `FiredAssess` suppression, and an
-  explicit reattack gate. A5 is the next gate before M2 can be reconsidered.
+  explicit reattack gate. The A5 short learned-policy probe fixes stochastic
+  release discipline to one authorized release per episode with no violations,
+  but deterministic policy still makes zero `fire_once` requests. A5 remains
+  held; the next fix should target event-value / first-event timing rather than
+  reward-only legality tuning. M2 remains held.
+- The new follow-on is
+  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md):
+  the first masked first-event hazard / bounded curriculum implementation now
+  has live PPO labels and diagnostics, but short learned evidence still leaves
+  deterministic policy at `0` `fire_once` requests with event probability near
+  `0.25%`. The deadline-bootstrap re-scope then doubles deterministic
+  open-window probability to about `0.49%`, but deterministic requests remain
+  `0`; stochastic probing keeps `3/3` authorized releases and zero
+  violation/repeat/budget issues, with one `weapon_not_ready` rejected request.
+  The event-head update audit then shows A6 gradients are live but current
+  optimizer/head scaling leaves the event delta near `-5`. The bounded
+  event-head lane fixes that narrow blocker: deterministic probing now executes
+  one authorized release, and stochastic probing preserves `3/3` one-shot
+  authorized releases with zero rejected/violation/repeat/budget issues. A6 is
+  still held because release timing collapses to near-immediate
+  authorization/contact; the next step is a launch-window / engagement-quality
+  timing contract rather than M2 release.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -85,9 +110,10 @@ constrained event-action model track.
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
-- replace reward-only repair with the A5 constrained event-action model so
-  deterministic policy learns an authorized first shot under A3 C2/ROE before
-  reconsidering M2
+- advance
+  [A6 event-value / first-event timing](a6_event_value_first_event_timing/README.md)
+  by defining a launch-window / engagement-quality timing contract before
+  escalating to an event-value head or reconsidering M2
 
 ## Recommended Reading Order
 
@@ -116,6 +142,8 @@ constrained event-action model track.
   [a4_authorized_first_shot_binary_diagnostics_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.md)
 - Constrained event-action model follow-on:
   [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md)
+- Event-value / first-event timing follow-on:
+  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive
