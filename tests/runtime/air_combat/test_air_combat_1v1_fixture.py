@@ -10,6 +10,7 @@ ensure_repo_imports()
 
 import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
+from gym_envs.universal_env_parts.common import gym as _gym  # noqa: E402
 from gym_envs.universal_env import build_universal_observation  # noqa: E402
 from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim  # noqa: E402
@@ -68,6 +69,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertEqual(int(getattr(hostile_track, "classification", 0)), 2)
         self.assertIn(int(getattr(hostile_track, "source", 0)), {1, 3})
 
+    @unittest.skipIf(_gym is None, "UniversalEnv requires optional dependency 'gymnasium'")
     def test_universal_env_loads_fixture_with_execution_observation_contract(self) -> None:
         env = UniversalEnv(
             _SCENARIO_PATH,
@@ -355,6 +357,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         red_obs1 = sim.get_agent_observation(red_id)
         self.assertLess(int(getattr(red_obs1, "missiles_remaining", -1)), initial_missiles)
 
+    @unittest.skipIf(_gym is None, "UniversalEnv requires optional dependency 'gymnasium'")
     def test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
         env = UniversalEnv(
             _STAGE0_SCENARIO_PATH,
