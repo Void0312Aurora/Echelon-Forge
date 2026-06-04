@@ -148,8 +148,8 @@ gpu
 
 ### 3.2 大文件仍然存在
 
-本轮用 `wc -l` 抽查，仍有多个大文件；P1-D7 后 `python/training_callbacks.py`
-仍为 1008 行：
+本轮用 `wc -l` 抽查，仍有多个大文件；P1-D8 后 `python/training_callbacks.py`
+仍为 977 行：
 
 | 文件 | 行数 |
 | --- | ---: |

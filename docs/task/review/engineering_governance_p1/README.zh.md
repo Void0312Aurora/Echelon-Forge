@@ -1,6 +1,6 @@
 # Engineering Governance P1
 
-状态：`2026-06-04` active partial local-pass remediation slice；`P1-A`、`P1-B`、有边界的 `P1-C` 和窄 `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7` 已在本地实现并验证，更宽的 callback 与 adapter split 切片继续暂缓。
+状态：`2026-06-04` active partial local-pass remediation slice；`P1-A`、`P1-B`、有边界的 `P1-C` 和窄 `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7`/`P1-D8` 已在本地实现并验证，更宽的 callback 与 adapter split 切片继续暂缓。
 
 语言：
 
@@ -29,8 +29,9 @@ route/parameter diagnostics 抽到第二个兼容 wrapper 后方；P1-D3 将 act
 diagnostics 抽到第三个兼容 wrapper 后方；P1-D4 将 leader diagnostics 抽到第四个
 兼容 wrapper 后方；P1-D5 将 step reward-term diagnostics 抽到第五个兼容 wrapper
 后方；P1-D6 将 A6 event-window info diagnostics 抽到第六个兼容 wrapper 后方。
-P1-D7 将 A5 event info diagnostics 抽到第七个兼容 wrapper 后方。更宽的
-adapter split 和完整 diagnostics callback 拆分仍需要单独切片处理。
+P1-D7 将 A5 event info diagnostics 抽到第七个兼容 wrapper 后方。P1-D8 将
+runway/gear step info diagnostics 抽到第八个兼容 wrapper 后方。更宽的 adapter
+split 和完整 diagnostics callback 拆分仍需要单独切片处理。
 
 ## Current State
 
@@ -45,7 +46,8 @@ adapter split 和完整 diagnostics callback 拆分仍需要单独切片处理�
 | Leader diagnostics helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_cooperative_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 leader observation/info/reward stats 记录；不拆 cooperative 或 event-window diagnostics。 |
 | Reward diagnostics helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_cooperative_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 step reward-term mean logging；不拆 terminal reward windows、cooperative diagnostics 或 event-window diagnostics。 |
 | A6 event-window info helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_a6_event_value_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 A6 first-event info logging；不拆 A5 event info、terminal/preterm windows 或 cooperative aggregation。 |
-| A5 event info helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_cooperative_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 A5 event info logging；不拆 runway/gear step info、terminal/preterm windows 或 cooperative aggregation。 |
+| A5 event info helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_cooperative_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 A5 event info logging；不拆 basic reward/instrument scalar logging、terminal/preterm windows 或 cooperative aggregation。 |
+| Runway/gear diagnostics helper | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`、`tests/training/test_cooperative_diagnostics_callback.py`；聚焦 training diagnostics tests 通过 | 抽取 runway/gear step info logging；不拆 basic reward/instrument scalar logging、terminal/preterm windows 或 cooperative aggregation。 |
 | Cooperative/event-window aggregation split | held | prior review residual | 更宽拆分仍暂缓到单独 packet，确保每个职责都有有边界 write set。 |
 
 ## Scope
@@ -69,6 +71,8 @@ In scope:
 - 将 A6 first-event info diagnostics 抽到聚焦 helper，同时保留现有 callback
   wrapper 与已记录 scalar keys。
 - 将 A5 event info diagnostics 抽到聚焦 helper，同时保留现有 callback
+  wrapper 与已记录 scalar keys。
+- 将 runway/gear step info diagnostics 抽到聚焦 helper，同时保留现有 callback
   wrapper 与已记录 scalar keys。
 - 为过去会被静默 coercion 或忽略的错误 shape 增加聚焦负向测试。
 - 为测试替换 facade 后 capability snapshot 自动刷新增加聚焦回归测试。
@@ -97,8 +101,9 @@ Out of scope:
 | `P1-D5 Reward Helper` | 在当前 callback wrapper 后方抽取 step reward-term diagnostics。 | P1-D4 local-pass。 | 聚焦 training diagnostics tests 证明 reward-term mean logging 与 missing-key behavior。 | pass |
 | `P1-D6 A6 Event Info Helper` | 在当前 callback wrapper 后方抽取 A6 first-event info diagnostics。 | P1-D5 local-pass。 | 聚焦 A6 diagnostics tests 证明 label-count logging 与 stable zero behavior。 | pass |
 | `P1-D7 A5 Event Info Helper` | 在当前 callback wrapper 后方抽取 A5 event info diagnostics。 | P1-D6 local-pass。 | 聚焦 training diagnostics tests 证明 event-rate、rejection、state 与 component logging。 | pass |
+| `P1-D8 Runway/Gear Helper` | 在当前 callback wrapper 后方抽取 runway/gear step info diagnostics。 | P1-D7 local-pass。 | 聚焦 training diagnostics tests 证明 runway、cross-track tail、gear-collapse 与 gear-stress logging。 | pass |
 | `P1-D Callback Split` | 拆分剩余 diagnostics callback 职责。 | 每个剩余职责都有有边界 packet。 | 单独完整 callback split 和训练诊断测试存在。 | held |
-| `P2 Closure` | 同步文档、残余和父 review index。 | P1-A/B/C/D1/D2/D3/D4/D5/D6/D7 验证完成。 | 状态准确区分已实现和暂缓项。 | active |
+| `P2 Closure` | 同步文档、残余和父 review index。 | P1-A/B/C/D1/D2/D3/D4/D5/D6/D7/D8 验证完成。 | 状态准确区分已实现和暂缓项。 | active |
 
 ## Task Clusters
 
@@ -128,7 +133,7 @@ Validation evidence:
 - Scenario/prefab shape scan 针对 `scenarios/`、`examples/scenarios/` 和
   `examples/config/prefabs/` 下 50 个 JSON 文件 passed。
 - `./.venv/bin/python -m pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q` passed，6 selected tests。
-- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed，14 tests。
+- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed，15 tests。
 
 ## Acceptance Gate
 
@@ -152,6 +157,8 @@ Validation evidence:
   且 label-count 与 stable-zero behavior 有测试保护。
 - A5 event info diagnostics 已隔离到 `python/training/diagnostics.py`，且
   event-rate、rejection、state 与 component logging 有测试保护。
+- Runway/gear step info diagnostics 已隔离到 `python/training/diagnostics.py`，
+  且 runway、cross-track tail、gear-collapse 与 gear-stress logging 有测试保护。
 - 聚焦本地测试和残余 blocker 已记录。
 
 更宽的 P1 program 仍未完成，直到暂缓的 callback 和更宽 adapter/world-batch class split 切片各自拥有任务记录和验证。
@@ -161,10 +168,11 @@ Validation evidence:
 - 如果后续还有并行改动落入，合入 clean branch 前再次运行完整架构守卫文件。
 - 决定 scenario compiler validation 后续是否升级为公开 JSON Schema，或保持轻量内部 shape guard。
 - 后续决定是否在 adapter split 中引入 `typing.Protocol` loader/runtime surfaces；当前 adapter-owned probing 已先集中到 capability snapshot。
-- 继续 P1-D，以有边界 packet 拆分 runway/gear step info、terminal/preterm
-  windows 与 cooperative/stateful event-window aggregation；P1-D1/D2/D3/D4/D5/D6/D7
-  已抽取 policy distribution、HMoE、action、leader、step reward、A6
-  event-window info 与 A5 event info diagnostics。
+- 继续 P1-D，以有边界 packet 拆分 basic reward/instrument scalar logging、
+  terminal/preterm windows 与 cooperative/stateful event-window aggregation；
+  P1-D1/D2/D3/D4/D5/D6/D7/D8 已抽取 policy distribution、HMoE、action、
+  leader、step reward、A6 event-window info、A5 event info 与 runway/gear
+  diagnostics。
 
 ## Archive
 

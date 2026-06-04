@@ -135,6 +135,48 @@ def record_reward_term_diagnostics(
             logger.record(f"diag/rew_{key}", float(np.asarray(vals, dtype=np.float32).mean()))
 
 
+def record_runway_gear_diagnostics(
+    *,
+    logger: Any,
+    infos: Any,
+) -> None:
+    if not isinstance(infos, (list, tuple)):
+        return
+
+    on_runway = [info.get("on_runway") for info in infos if isinstance(info, dict) and "on_runway" in info]
+    if on_runway:
+        logger.record("diag/on_runway_frac", float(np.asarray(on_runway, dtype=np.float32).mean()))
+
+    on_runway_geom = [
+        info.get("on_runway_geom") for info in infos if isinstance(info, dict) and "on_runway_geom" in info
+    ]
+    if on_runway_geom:
+        logger.record("diag/on_runway_geom_frac", float(np.asarray(on_runway_geom, dtype=np.float32).mean()))
+
+    runway_cross = [
+        info.get("runway_cross_m") for info in infos if isinstance(info, dict) and "runway_cross_m" in info
+    ]
+    if runway_cross:
+        runway_cross_array = np.asarray(runway_cross, dtype=np.float32)
+        logger.record("diag/runway_cross_abs_mean_m", float(np.abs(runway_cross_array).mean()))
+        abs_runway_cross = np.abs(runway_cross_array)
+        try:
+            logger.record("diag/runway_cross_abs_p95_m", float(np.percentile(abs_runway_cross, 95.0)))
+        except Exception:
+            pass
+        logger.record("diag/runway_cross_abs_max_m", float(abs_runway_cross.max(initial=0.0)))
+
+    gear_collapsed = [
+        info.get("gear_collapsed") for info in infos if isinstance(info, dict) and "gear_collapsed" in info
+    ]
+    if gear_collapsed:
+        logger.record("diag/gear_collapsed_frac", float(np.asarray(gear_collapsed, dtype=np.float32).mean()))
+
+    gear_stress = [info.get("gear_stress") for info in infos if isinstance(info, dict) and "gear_stress" in info]
+    if gear_stress:
+        logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
+
+
 def record_a6_first_event_info_diagnostics(
     *,
     model: Any,
@@ -665,4 +707,5 @@ __all__ = [
     "record_leader_diagnostics",
     "record_policy_distribution_diagnostics",
     "record_reward_term_diagnostics",
+    "record_runway_gear_diagnostics",
 ]

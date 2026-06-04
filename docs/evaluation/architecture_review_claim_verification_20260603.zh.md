@@ -47,7 +47,7 @@ ValueError: substring not found
 
 失败原因是测试仍在 `src/models/weapons/default_effects_model.cpp` 查找旧文本锚点 `if (hp && !structured_air_target) {`。当前实现已把 legacy health damage 写入迁移到 `src/models/weapons/detail/default_effects_legacy_detail.inc`，因此这是 stale static guard，而不是本轮样本中的 runtime 行为失败。
 
-**P1 更新（2026-06-04 追踪）：** `engineering_governance_p1` 已修复该 guard，使其检查当前 split-file owner 关系；最新聚焦复跑 `tests/architecture/test_wp22_structural_guardrails.py` 通过。P1-D1/D2/D3/D4/D5/D6/D7 也已把 policy-distribution、HMoE、action、leader、step reward、A6 event-window info 与 A5 event info diagnostics 抽到 `python/training/diagnostics.py`，但完整 `CMODiagnosticsCallback` split 仍未完成。
+**P1 更新（2026-06-04 追踪）：** `engineering_governance_p1` 已修复该 guard，使其检查当前 split-file owner 关系；最新聚焦复跑 `tests/architecture/test_wp22_structural_guardrails.py` 通过。P1-D1/D2/D3/D4/D5/D6/D7/D8 也已把 policy-distribution、HMoE、action、leader、step reward、A6 event-window info、A5 event info 与 runway/gear diagnostics 抽到 `python/training/diagnostics.py`，但完整 `CMODiagnosticsCallback` split 仍未完成。
 
 C++ smoke：
 
@@ -128,7 +128,7 @@ git ls-files -z '*.py' '*.cpp' '*.h' '*.json' | xargs -0 wc -l | awk '$1 > 3000 
 
 | 结构问题 | 当前判断 | 修正口径 |
 | --- | --- | --- |
-| `CMODiagnosticsCallback` 是 god class | **基本成立，已部分收敛** | `python/training_callbacks.py` 中该类当前从第 33 行持续到下一类前的第 809 行，`_on_step()` 从第 639 行开始。P1-D1/D2/D3/D4/D5/D6/D7 已将 policy-distribution、HMoE、action、leader、step reward、A6 event-window info 与 A5 event info 计算抽到 `python/training/diagnostics.py` 并保留原 wrapper，但 runway/gear step info、terminal/preterm windows、cooperative 与 stateful event-window aggregation 仍集中在同一 callback。文档中旧行数已漂移；“`_record_event_diagnostics` 也 reset same variables”不准确。 |
+| `CMODiagnosticsCallback` 是 god class | **基本成立，已部分收敛** | `python/training_callbacks.py` 中该类当前从第 34 行持续到下一类前的第 778 行，`_on_step()` 从第 643 行开始。P1-D1/D2/D3/D4/D5/D6/D7/D8 已将 policy-distribution、HMoE、action、leader、step reward、A6 event-window info、A5 event info 与 runway/gear 计算抽到 `python/training/diagnostics.py` 并保留原 wrapper，但 basic reward/instrument scalar logging、terminal/preterm windows、cooperative 与 stateful event-window aggregation 仍集中在同一 callback。文档中旧行数已漂移；“`_record_event_diagnostics` 也 reset same variables”不准确。 |
 | `WorldBatchVecEnv` 与 cooperative env 分叉 | **基本成立** | 两者均直接继承 `VecEnv`，没有共享 base，常量与 observation space 构建有重复。但当前 `cooperative_world_batch_vec_env.py` 为 1408 行，不是约 2000 行；70-80% 结构同一性没有被本轮量化证明。 |
 | `DefaultUnitFactory::spawn()` 单片实现 | **成立** | `src/models/core/default_unit_factory.h:683` 开始的 `spawn()` 仍跨传感器、声纳、mass/propulsion、missile runtime、damage、datalink、logistics 等职责。文档中“zero unit test coverage”应降级，因为架构测试会直接实例化 `DefaultUnitFactory`，但缺少独立工厂单元测试网的判断仍合理。 |
 | `train_actor_bc()` DRY 问题 | **成立** | `python/world_model/dreamer.py:690` 开始的 `train_actor_bc()` 确实按多种 `actor_input` 重复 pitch/roll/throttle/rudder 加权与 MSE 计算。当前分支数约 15，不是 13。 |

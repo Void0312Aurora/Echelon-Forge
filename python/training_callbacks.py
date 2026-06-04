@@ -18,6 +18,7 @@ from python.training.diagnostics import (
     record_leader_diagnostics,
     record_policy_distribution_diagnostics,
     record_reward_term_diagnostics,
+    record_runway_gear_diagnostics,
 )
 
 
@@ -636,6 +637,9 @@ class CMODiagnosticsCallback(BaseCallback):
             reward_keys=self.STEP_REWARD_KEYS,
         )
 
+    def _record_runway_gear_diagnostics(self, infos: Any) -> None:
+        record_runway_gear_diagnostics(logger=self.logger, infos=infos)
+
     def _on_step(self) -> bool:
         obs = self.locals.get("new_obs")
         actions = self.locals.get("clipped_actions", self.locals.get("actions"))
@@ -762,42 +766,7 @@ class CMODiagnosticsCallback(BaseCallback):
             self._record_a5_event_info_diagnostics(infos)
             self._record_a6_first_event_info_diagnostics(infos)
             self._record_step_reward_diagnostics(list(infos))
-
-            on_runway = [info.get("on_runway") for info in infos if isinstance(info, dict) and "on_runway" in info]
-            if on_runway:
-                self.logger.record("diag/on_runway_frac", float(np.asarray(on_runway, dtype=np.float32).mean()))
-
-            on_runway_geom = [
-                info.get("on_runway_geom") for info in infos if isinstance(info, dict) and "on_runway_geom" in info
-            ]
-            if on_runway_geom:
-                self.logger.record(
-                    "diag/on_runway_geom_frac", float(np.asarray(on_runway_geom, dtype=np.float32).mean())
-                )
-
-            runway_cross = [
-                info.get("runway_cross_m") for info in infos if isinstance(info, dict) and "runway_cross_m" in info
-            ]
-            if runway_cross:
-                rc = np.asarray(runway_cross, dtype=np.float32)
-                self.logger.record("diag/runway_cross_abs_mean_m", float(np.abs(rc).mean()))
-                abs_rc = np.abs(rc)
-                # Robust tail metrics help catch "edge-hugging" even when mean looks OK.
-                try:
-                    self.logger.record("diag/runway_cross_abs_p95_m", float(np.percentile(abs_rc, 95.0)))
-                except Exception:
-                    pass
-                self.logger.record("diag/runway_cross_abs_max_m", float(abs_rc.max(initial=0.0)))
-
-            gear_collapsed = [
-                info.get("gear_collapsed") for info in infos if isinstance(info, dict) and "gear_collapsed" in info
-            ]
-            if gear_collapsed:
-                self.logger.record("diag/gear_collapsed_frac", float(np.asarray(gear_collapsed, dtype=np.float32).mean()))
-
-            gear_stress = [info.get("gear_stress") for info in infos if isinstance(info, dict) and "gear_stress" in info]
-            if gear_stress:
-                self.logger.record("diag/gear_stress_mean", float(np.asarray(gear_stress, dtype=np.float32).mean()))
+            self._record_runway_gear_diagnostics(infos)
 
             self._record_leader_diagnostics(obs, list(infos))
 

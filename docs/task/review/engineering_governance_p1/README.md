@@ -1,6 +1,6 @@
 # Engineering Governance P1
 
-Status: `2026-06-04` active partial local-pass remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7` are implemented locally, broader callback and adapter-split slices remain held.
+Status: `2026-06-04` active partial local-pass remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7`/`P1-D8` are implemented locally, broader callback and adapter-split slices remain held.
 
 Language:
 
@@ -34,6 +34,8 @@ diagnostics behind a fourth compatibility wrapper. P1-D5 extracts step reward
 term diagnostics behind a fifth compatibility wrapper. P1-D6 extracts A6
 event-window info diagnostics behind a sixth compatibility wrapper. P1-D7
 extracts A5 event info diagnostics behind a seventh compatibility wrapper.
+P1-D8 extracts runway/gear step info diagnostics behind an eighth compatibility
+wrapper.
 Broader adapter splitting and full diagnostics callback decomposition remain
 separate follow-on slices.
 
@@ -50,7 +52,8 @@ separate follow-on slices.
 | Leader diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts leader observation/info/reward stat recording; does not split cooperative or event-window diagnostics. |
 | Reward diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts step reward-term mean logging; does not split terminal reward windows, cooperative diagnostics, or event-window diagnostics. |
 | A6 event-window info helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_a6_event_value_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts A6 first-event info logging; does not split A5 event info, terminal/preterm windows, or cooperative aggregation. |
-| A5 event info helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts A5 event info logging; does not split runway/gear step info, terminal/preterm windows, or cooperative aggregation. |
+| A5 event info helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts A5 event info logging; does not split basic reward/instrument scalar logging, terminal/preterm windows, or cooperative aggregation. |
+| Runway/gear diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts runway/gear step info logging; does not split basic reward/instrument scalar logging, terminal/preterm windows, or cooperative aggregation. |
 | Cooperative/event-window aggregation split | held | prior review residual | Broader split remains deferred to separate packets after each responsibility has a bounded write set. |
 
 ## Scope
@@ -77,6 +80,8 @@ In scope:
   preserving the existing callback wrapper and logged scalar keys.
 - Extract A5 event info diagnostics into a focused helper while preserving the
   existing callback wrapper and logged scalar keys.
+- Extract runway/gear step info diagnostics into a focused helper while
+  preserving the existing callback wrapper and logged scalar keys.
 - Add focused tests for invalid scenario roots and invalid shape cases that were
   previously silently coerced or ignored, and for adapter capability refresh
   after facade replacement in tests.
@@ -106,8 +111,9 @@ Out of scope:
 | `P1-D5 Reward Helper` | Extract step reward-term diagnostics behind the current callback wrapper. | P1-D4 local-pass. | Focused training diagnostics tests prove reward-term mean logging and missing-key behavior. | pass |
 | `P1-D6 A6 Event Info Helper` | Extract A6 first-event info diagnostics behind the current callback wrapper. | P1-D5 local-pass. | Focused A6 diagnostics tests prove label-count logging and stable zero behavior. | pass |
 | `P1-D7 A5 Event Info Helper` | Extract A5 event info diagnostics behind the current callback wrapper. | P1-D6 local-pass. | Focused training diagnostics tests prove event-rate, rejection, state, and component logging. | pass |
+| `P1-D8 Runway/Gear Helper` | Extract runway/gear step info diagnostics behind the current callback wrapper. | P1-D7 local-pass. | Focused training diagnostics tests prove runway, cross-track tail, gear-collapse, and gear-stress logging. | pass |
 | `P1-D Callback Split` | Split remaining diagnostics callback responsibilities. | Each remaining responsibility has a bounded packet. | Separate full callback split exists with training diagnostics tests. | held |
-| `P2 Closure` | Sync docs, residuals, and parent review index. | P1-A/B/C/D1/D2/D3/D4/D5/D6/D7 validation complete. | Status reflects implemented and held items. | active |
+| `P2 Closure` | Sync docs, residuals, and parent review index. | P1-A/B/C/D1/D2/D3/D4/D5/D6/D7/D8 validation complete. | Status reflects implemented and held items. | active |
 
 ## Task Clusters
 
@@ -137,7 +143,7 @@ Validation evidence:
 - Scenario/prefab shape scan passed for 50 JSON files under `scenarios/`,
   `examples/scenarios/`, and `examples/config/prefabs/`.
 - `./.venv/bin/python -m pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q` passed, 6 selected tests.
-- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed, 14 tests.
+- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed, 15 tests.
 
 ## Acceptance Gate
 
@@ -168,6 +174,9 @@ This subproject can mark the implemented P1-A/P1-B slice accepted only when:
   preserved by test.
 - A5 event info diagnostics are isolated in `python/training/diagnostics.py`,
   with event-rate, rejection, state, and component logging preserved by test.
+- Runway/gear step info diagnostics are isolated in
+  `python/training/diagnostics.py`, with runway, cross-track tail,
+  gear-collapse, and gear-stress logging preserved by test.
 - Focused local tests and any residual blockers are recorded.
 
 The broader P1 program remains incomplete until held callback and broader
@@ -183,10 +192,11 @@ validation.
 - Decide whether a later adapter split should introduce `typing.Protocol`
   interfaces around loader/runtime surfaces now that adapter-owned probing has a
   centralized capability snapshot.
-- Continue P1-D by splitting runway/gear step info, terminal/preterm windows,
-  and cooperative/stateful event-window aggregation in bounded packets;
-  P1-D1/D2/D3/D4/D5/D6/D7 extracted policy distribution, HMoE, action,
-  leader, step reward, A6 event-window info, and A5 event info diagnostics.
+- Continue P1-D by splitting basic reward/instrument scalar logging,
+  terminal/preterm windows, and cooperative/stateful event-window aggregation in
+  bounded packets; P1-D1/D2/D3/D4/D5/D6/D7/D8 extracted policy distribution,
+  HMoE, action, leader, step reward, A6 event-window info, A5 event info, and
+  runway/gear diagnostics.
 
 ## Archive
 

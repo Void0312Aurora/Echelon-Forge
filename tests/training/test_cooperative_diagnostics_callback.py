@@ -16,6 +16,7 @@ from python.training.diagnostics import (  # noqa: E402
     record_hmoe_policy_diagnostics,
     record_leader_diagnostics,
     record_reward_term_diagnostics,
+    record_runway_gear_diagnostics,
 )
 
 
@@ -409,6 +410,37 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["diag/rew_survival"], 0.25, places=6)
         self.assertAlmostEqual(logger.records["diag/rew_untracked"], -2.0, places=6)
         self.assertNotIn("diag/rew_missing", logger.records)
+
+    def test_runway_gear_helper_records_step_info_metrics(self) -> None:
+        logger = _DummyLogger()
+
+        record_runway_gear_diagnostics(
+            logger=logger,
+            infos=[
+                {
+                    "on_runway": 1.0,
+                    "on_runway_geom": 1.0,
+                    "runway_cross_m": -2.0,
+                    "gear_collapsed": 0.0,
+                    "gear_stress": 0.25,
+                },
+                {
+                    "on_runway": 0.0,
+                    "on_runway_geom": 1.0,
+                    "runway_cross_m": 4.0,
+                    "gear_collapsed": 1.0,
+                    "gear_stress": 0.75,
+                },
+            ],
+        )
+
+        self.assertAlmostEqual(logger.records["diag/on_runway_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/on_runway_geom_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/runway_cross_abs_mean_m"], 3.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/runway_cross_abs_p95_m"], 3.9, places=6)
+        self.assertAlmostEqual(logger.records["diag/runway_cross_abs_max_m"], 4.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/gear_collapsed_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/gear_stress_mean"], 0.5, places=6)
 
 
 if __name__ == "__main__":
