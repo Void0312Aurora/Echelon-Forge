@@ -54,6 +54,21 @@ class FirstEventHazardLoss:
     positive_frac: float
 
 
+@dataclass(frozen=True)
+class FirstEventCreditLoss:
+    loss: th.Tensor
+    value_loss: th.Tensor
+    delta_align_loss: th.Tensor
+    unscaled_value_loss: th.Tensor
+    unscaled_delta_align_loss: th.Tensor
+    active_count: int
+    positive_count: int
+    weight_sum: float
+    positive_frac: float
+    advantage_mean: float
+    advantage_abs_mean: float
+
+
 def current_first_event_curriculum_coef(
     initial_coef: float,
     progress_remaining: float,
@@ -298,6 +313,56 @@ def first_event_hazard_batch_from_rollout_data(rollout_data: Any) -> tuple[th.Te
     return None
 
 
+def first_event_credit_batch_from_rollout_data(
+    rollout_data: Any,
+) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor | None] | None:
+    batch = first_event_hazard_batch_from_rollout_data(rollout_data)
+    if batch is None:
+        return None
+    active, target, weight = batch
+    window_id = (
+        th.as_tensor(getattr(rollout_data, A6_FIRST_EVENT_FIELD_WINDOW_ID)).reshape(-1).to(dtype=th.long)
+        if hasattr(rollout_data, A6_FIRST_EVENT_FIELD_WINDOW_ID)
+        else None
+    )
+    if window_id is not None and int(window_id.numel()) != int(active.numel()):
+        raise ValueError("A7 first-event credit window ids must match label length")
+    return active, target, weight, window_id
+
+
+def _cap_first_event_credit_window_mass(
+    weights: th.Tensor,
+    targets: th.Tensor,
+    active_mask: th.Tensor,
+    window_id: th.Tensor | None,
+    *,
+    positive_mass_cap: float,
+    negative_mass_cap: float,
+) -> th.Tensor:
+    capped = weights.clone()
+    if window_id is None:
+        return capped
+
+    ids = window_id.to(device=weights.device).reshape(-1).long()
+    if int(ids.numel()) != int(weights.numel()):
+        raise ValueError("A7 first-event credit window ids must match weights")
+
+    for positive, cap in ((False, float(negative_mass_cap)), (True, float(positive_mass_cap))):
+        if cap <= 0.0:
+            continue
+        sign_mask = targets > 0.5 if positive else targets <= 0.5
+        valid = active_mask & sign_mask & (ids >= 0)
+        if int(valid.sum().detach().cpu().item()) <= 0:
+            continue
+        for value in th.unique(ids[valid], sorted=False):
+            group = valid & (ids == value)
+            mass = capped[group].sum()
+            mass_value = float(mass.detach().cpu().item())
+            if mass_value > cap:
+                capped[group] = capped[group] * (cap / max(mass_value, 1.0e-8))
+    return capped
+
+
 def compute_first_event_hazard_loss(
     event_logit_delta: th.Tensor,
     target: th.Tensor,
@@ -345,4 +410,104 @@ def compute_first_event_hazard_loss(
         positive_count=positive_count,
         weight_sum=float(weight_sum_tensor.detach().cpu().item()),
         positive_frac=(float(positive_count) / float(active_count)) if active_count > 0 else 0.0,
+    )
+
+
+def compute_first_event_credit_loss(
+    event_q_values: th.Tensor,
+    target: th.Tensor,
+    active: th.Tensor,
+    weight: th.Tensor | None = None,
+    *,
+    event_logit_delta: th.Tensor | None = None,
+    window_id: th.Tensor | None = None,
+    value_coef: float = 1.0,
+    delta_align_coef: float = 0.0,
+    delta_align_clip: float = 4.0,
+    positive_mass_cap: float = 1.0,
+    negative_mass_cap: float = 1.0,
+) -> FirstEventCreditLoss:
+    values = event_q_values.reshape(-1, 2)
+    q_hold = values[:, 0]
+    q_fire_once = values[:, 1]
+    advantage = q_fire_once - q_hold
+    targets = target.to(device=advantage.device, dtype=advantage.dtype).reshape(-1)
+    active_mask = active.to(device=advantage.device).reshape(-1).to(dtype=th.bool)
+    weights = (
+        th.ones_like(targets)
+        if weight is None
+        else weight.to(device=advantage.device, dtype=advantage.dtype).reshape(-1)
+    )
+    if not (int(advantage.numel()) == int(targets.numel()) == int(active_mask.numel()) == int(weights.numel())):
+        raise ValueError("A7 first-event credit tensors must flatten to the same length")
+
+    finite = th.isfinite(advantage) & th.isfinite(targets) & th.isfinite(weights)
+    if event_logit_delta is not None:
+        delta = event_logit_delta.to(device=advantage.device, dtype=advantage.dtype).reshape(-1)
+        if int(delta.numel()) != int(advantage.numel()):
+            raise ValueError("A7 event-logit delta must match event credit batch length")
+        finite = finite & th.isfinite(delta)
+    else:
+        delta = None
+
+    effective_weight = th.where(active_mask & finite, th.clamp(weights, min=0.0), th.zeros_like(weights))
+    effective_weight = _cap_first_event_credit_window_mass(
+        effective_weight,
+        targets,
+        active_mask & finite,
+        window_id,
+        positive_mass_cap=float(positive_mass_cap),
+        negative_mass_cap=float(negative_mass_cap),
+    )
+    weight_sum_tensor = effective_weight.sum()
+    positive_tensor = ((targets > 0.5) & (effective_weight > 0.0)).sum()
+    active_tensor = (effective_weight > 0.0).sum()
+    zero = advantage.sum() * 0.0
+    if delta is not None:
+        zero = zero + delta.sum() * 0.0
+    if float(weight_sum_tensor.detach().cpu().item()) <= 0.0:
+        return FirstEventCreditLoss(
+            loss=zero,
+            value_loss=zero,
+            delta_align_loss=zero,
+            unscaled_value_loss=zero.detach(),
+            unscaled_delta_align_loss=zero.detach(),
+            active_count=int(active_tensor.detach().cpu().item()),
+            positive_count=int(positive_tensor.detach().cpu().item()),
+            weight_sum=float(weight_sum_tensor.detach().cpu().item()),
+            positive_frac=0.0,
+            advantage_mean=float(advantage.detach().mean().cpu().item()) if int(advantage.numel()) > 0 else 0.0,
+            advantage_abs_mean=float(advantage.detach().abs().mean().cpu().item()) if int(advantage.numel()) > 0 else 0.0,
+        )
+
+    value_bce = F.binary_cross_entropy_with_logits(advantage, targets, reduction="none")
+    unscaled_value = (value_bce * effective_weight).sum() / weight_sum_tensor.clamp_min(1.0e-8)
+    value_loss = float(max(0.0, value_coef)) * unscaled_value
+
+    if delta is not None and float(delta_align_coef) > 0.0:
+        clip = float(max(0.0, delta_align_clip))
+        target_delta = advantage.detach()
+        if clip > 0.0:
+            target_delta = th.clamp(target_delta, min=-clip, max=clip)
+        delta_per_item = F.smooth_l1_loss(delta, target_delta, reduction="none")
+        unscaled_delta = (delta_per_item * effective_weight).sum() / weight_sum_tensor.clamp_min(1.0e-8)
+        delta_loss = float(delta_align_coef) * unscaled_delta
+    else:
+        unscaled_delta = zero.detach()
+        delta_loss = zero
+
+    positive_count = int(positive_tensor.detach().cpu().item())
+    active_count = int(active_tensor.detach().cpu().item())
+    return FirstEventCreditLoss(
+        loss=value_loss + delta_loss,
+        value_loss=value_loss,
+        delta_align_loss=delta_loss,
+        unscaled_value_loss=unscaled_value.detach(),
+        unscaled_delta_align_loss=unscaled_delta.detach(),
+        active_count=active_count,
+        positive_count=positive_count,
+        weight_sum=float(weight_sum_tensor.detach().cpu().item()),
+        positive_frac=(float(positive_count) / float(active_count)) if active_count > 0 else 0.0,
+        advantage_mean=float(advantage.detach().mean().cpu().item()),
+        advantage_abs_mean=float(advantage.detach().abs().mean().cpu().item()),
     )

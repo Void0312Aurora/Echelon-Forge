@@ -10,8 +10,8 @@ evidence. A6 has completed its first event-value / first-event timing evidence
 wave, deadline-bootstrap re-scope wave, event-head update-strength audit, and
 event-head optimization learned evidence; it remains held on launch-window
 timing quality. `2026-06-04` opened A7 as the counterfactual event-value /
-advantage-credit head follow-on; its policy-head prototype is now complete,
-with PPO auxiliary-credit integration next.
+advantage-credit head follow-on; its policy-head prototype and focused PPO
+auxiliary-credit integration are now complete, with config/diagnostics next.
 
 ## Current Status
 
@@ -91,10 +91,10 @@ with PPO auxiliary-credit integration next.
 - A7
   [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
   is now the implementation line for the first-event timing residual: the
-  policy-level event-credit head API is in place, while counterfactual target
-  semantics, window-balanced credit, event-logit coupling, and cumulative
-  early-fire diagnostics remain the next implementation work. A3/A5 legality
-  stays authoritative, and HMoE redesign/M2 remain held.
+  policy-level event-credit head API and focused PPO auxiliary-credit loss are
+  in place, while active config, callback/process-probe diagnostics, cumulative
+  early-fire diagnostics, and learned evidence remain the next implementation
+  work. A3/A5 legality stays authoritative, and HMoE redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -124,8 +124,8 @@ with PPO auxiliary-credit integration next.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through PPO auxiliary-credit integration before any new learned-policy probe
-  or M2 reconsideration
+  through config/diagnostics and focused validation before any new
+  learned-policy probe or M2 reconsideration
 
 ## Recommended Reading Order
 

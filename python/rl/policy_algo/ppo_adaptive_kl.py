@@ -17,8 +17,10 @@ from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
 from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
     build_first_event_hazard_labels,
+    compute_first_event_credit_loss,
     compute_first_event_hazard_loss,
     current_first_event_curriculum_coef,
+    first_event_credit_batch_from_rollout_data,
     first_event_hazard_batch_from_rollout_data,
 )
 from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
@@ -65,6 +67,18 @@ class AdaptiveKLPPO(PPO):
         a6_first_event_launch_window_min_window_age_steps: int = 1,
         a6_first_event_launch_window_prewindow_hold_weight: float = 0.0,
         a6_first_event_launch_window_early_accept_weight: float = 1.0,
+        a7_event_credit_value_coef: float = 0.0,
+        a7_event_credit_delta_align_coef: float = 0.0,
+        a7_event_credit_delta_align_clip: float = 4.0,
+        a7_event_credit_positive_mass_cap: float = 1.0,
+        a7_event_credit_negative_mass_cap: float = 1.0,
+        a7_event_credit_prewindow_hold_weight: float = 0.0,
+        a7_event_credit_early_accept_weight: float = 1.0,
+        a7_event_credit_curriculum_coef: float = 0.0,
+        a7_event_credit_curriculum_min_window_age_steps: int = 32,
+        a7_event_credit_censored_survival_weight: float = 0.0,
+        a7_event_credit_deadline_weight: float = 0.0,
+        a7_event_credit_deadline_min_window_age_steps: int = 96,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -111,6 +125,24 @@ class AdaptiveKLPPO(PPO):
         self.a6_first_event_launch_window_early_accept_weight = float(
             max(0.0, a6_first_event_launch_window_early_accept_weight)
         )
+        self.a7_event_credit_value_coef = float(max(0.0, a7_event_credit_value_coef))
+        self.a7_event_credit_delta_align_coef = float(max(0.0, a7_event_credit_delta_align_coef))
+        self.a7_event_credit_delta_align_clip = float(max(0.0, a7_event_credit_delta_align_clip))
+        self.a7_event_credit_positive_mass_cap = float(max(0.0, a7_event_credit_positive_mass_cap))
+        self.a7_event_credit_negative_mass_cap = float(max(0.0, a7_event_credit_negative_mass_cap))
+        self.a7_event_credit_prewindow_hold_weight = float(max(0.0, a7_event_credit_prewindow_hold_weight))
+        self.a7_event_credit_early_accept_weight = float(max(0.0, a7_event_credit_early_accept_weight))
+        self.a7_event_credit_curriculum_coef = float(max(0.0, a7_event_credit_curriculum_coef))
+        self.a7_event_credit_curriculum_min_window_age_steps = max(
+            1,
+            int(a7_event_credit_curriculum_min_window_age_steps),
+        )
+        self.a7_event_credit_censored_survival_weight = float(max(0.0, a7_event_credit_censored_survival_weight))
+        self.a7_event_credit_deadline_weight = float(max(0.0, a7_event_credit_deadline_weight))
+        self.a7_event_credit_deadline_min_window_age_steps = max(
+            1,
+            int(a7_event_credit_deadline_min_window_age_steps),
+        )
         super().__init__(*args, **kwargs)
 
     def _a6_first_event_enabled(self) -> bool:
@@ -120,6 +152,15 @@ class AdaptiveKLPPO(PPO):
             or self.a6_first_event_censored_survival_weight > 0.0
             or self.a6_first_event_deadline_weight > 0.0
         )
+
+    def _a7_event_credit_enabled(self) -> bool:
+        return bool(
+            self.a7_event_credit_value_coef > 0.0
+            or self.a7_event_credit_delta_align_coef > 0.0
+        )
+
+    def _first_event_label_collection_enabled(self) -> bool:
+        return bool(self._a6_first_event_enabled() or self._a7_event_credit_enabled())
 
     def _should_use_device_rollout_buffer(self) -> bool:
         if getattr(self.device, "type", str(self.device)) != "cuda":
@@ -138,10 +179,10 @@ class AdaptiveKLPPO(PPO):
             if self._should_use_device_rollout_buffer():
                 self.rollout_buffer_class = (
                     A6FirstEventDeviceDictRolloutBuffer
-                    if self._a6_first_event_enabled()
+                    if self._first_event_label_collection_enabled()
                     else DeviceDictRolloutBuffer
                 )
-            elif self._a6_first_event_enabled() and isinstance(self.observation_space, spaces.Dict):
+            elif self._first_event_label_collection_enabled() and isinstance(self.observation_space, spaces.Dict):
                 self.rollout_buffer_class = A6FirstEventDictRolloutBuffer
         super()._setup_model()
 
@@ -323,6 +364,7 @@ class AdaptiveKLPPO(PPO):
         episode_id: list[int],
         launch_window_open: list[bool] | None = None,
     ):
+        use_a6_targets = self._a6_first_event_enabled()
         return build_first_event_hazard_labels(
             engagement_state=engagement_state,
             fire_mask=fire_mask,
@@ -330,18 +372,46 @@ class AdaptiveKLPPO(PPO):
             episode_id=episode_id,
             launch_window_open=launch_window_open,
             launch_window_min_window_age_steps=int(self.a6_first_event_launch_window_min_window_age_steps),
-            launch_window_prewindow_hold_weight=float(self.a6_first_event_launch_window_prewindow_hold_weight),
-            launch_window_early_accept_weight=float(self.a6_first_event_launch_window_early_accept_weight),
-            curriculum_weight=float(self._current_a6_first_event_curriculum_coef()),
-            curriculum_min_window_age_steps=int(self.a6_first_event_curriculum_min_window_age_steps),
+            launch_window_prewindow_hold_weight=(
+                float(self.a6_first_event_launch_window_prewindow_hold_weight)
+                if use_a6_targets
+                else float(self.a7_event_credit_prewindow_hold_weight)
+            ),
+            launch_window_early_accept_weight=(
+                float(self.a6_first_event_launch_window_early_accept_weight)
+                if use_a6_targets
+                else float(self.a7_event_credit_early_accept_weight)
+            ),
+            curriculum_weight=(
+                float(self._current_a6_first_event_curriculum_coef())
+                if use_a6_targets
+                else float(self.a7_event_credit_curriculum_coef)
+            ),
+            curriculum_min_window_age_steps=(
+                int(self.a6_first_event_curriculum_min_window_age_steps)
+                if use_a6_targets
+                else int(self.a7_event_credit_curriculum_min_window_age_steps)
+            ),
             curriculum_blocked_episode_ids=getattr(
                 self,
                 "_a6_first_event_curriculum_seeded_episode_ids",
                 set(),
             ),
-            censored_survival_weight=float(self.a6_first_event_censored_survival_weight),
-            deadline_weight=float(self.a6_first_event_deadline_weight),
-            deadline_min_window_age_steps=int(self.a6_first_event_deadline_min_window_age_steps),
+            censored_survival_weight=(
+                float(self.a6_first_event_censored_survival_weight)
+                if use_a6_targets
+                else float(self.a7_event_credit_censored_survival_weight)
+            ),
+            deadline_weight=(
+                float(self.a6_first_event_deadline_weight)
+                if use_a6_targets
+                else float(self.a7_event_credit_deadline_weight)
+            ),
+            deadline_min_window_age_steps=(
+                int(self.a6_first_event_deadline_min_window_age_steps)
+                if use_a6_targets
+                else int(self.a7_event_credit_deadline_min_window_age_steps)
+            ),
             device=self.device,
         )
 
@@ -366,7 +436,7 @@ class AdaptiveKLPPO(PPO):
         episode_id: list[int],
         launch_window_open: list[bool] | None = None,
     ) -> None:
-        if not self._a6_first_event_enabled():
+        if not self._first_event_label_collection_enabled():
             return
         setter = getattr(rollout_buffer, "set_a6_first_event_labels", None)
         if not callable(setter):
@@ -401,7 +471,7 @@ class AdaptiveKLPPO(PPO):
 
         callback.on_rollout_start()
         collect_a6_first_event = bool(
-            self._a6_first_event_enabled()
+            self._first_event_label_collection_enabled()
             and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
         )
         a6_engagement_state: list[str] = []
@@ -612,6 +682,8 @@ class AdaptiveKLPPO(PPO):
         )
 
     def _first_event_hazard_loss(self, rollout_data):
+        if not self._a6_first_event_enabled():
+            return None
         batch = first_event_hazard_batch_from_rollout_data(rollout_data)
         if batch is None:
             return None
@@ -630,6 +702,39 @@ class AdaptiveKLPPO(PPO):
             active.to(device=event_logit_delta.device),
             weight.to(device=event_logit_delta.device),
             coef=float(self.a6_first_event_hazard_coef),
+        )
+
+    def _first_event_credit_loss(self, rollout_data):
+        if not self._a7_event_credit_enabled():
+            return None
+        batch = first_event_credit_batch_from_rollout_data(rollout_data)
+        if batch is None:
+            return None
+        active, target, weight, window_id = batch
+        obs = rollout_data.observations
+        distribution = self.policy.get_distribution(obs)
+        q_values_getter = getattr(distribution, "fire_event_q_values", None)
+        if not callable(q_values_getter):
+            return None
+        q_values = q_values_getter()
+        if q_values is None:
+            return None
+        logit_delta = None
+        logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+        if callable(logit_delta_getter):
+            logit_delta = logit_delta_getter()
+        return compute_first_event_credit_loss(
+            q_values,
+            target.to(device=q_values.device),
+            active.to(device=q_values.device),
+            weight.to(device=q_values.device),
+            event_logit_delta=logit_delta,
+            window_id=window_id.to(device=q_values.device) if window_id is not None else None,
+            value_coef=float(self.a7_event_credit_value_coef),
+            delta_align_coef=float(self.a7_event_credit_delta_align_coef),
+            delta_align_clip=float(self.a7_event_credit_delta_align_clip),
+            positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
+            negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
         )
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
@@ -661,6 +766,12 @@ class AdaptiveKLPPO(PPO):
         first_event_hazard_losses = []
         first_event_hazard_active_counts = []
         first_event_hazard_positive_fracs = []
+        first_event_credit_losses = []
+        first_event_credit_value_losses = []
+        first_event_credit_delta_align_losses = []
+        first_event_credit_active_counts = []
+        first_event_credit_positive_fracs = []
+        first_event_credit_advantage_means = []
         clip_fractions = []
 
         approx_kl_divs = []
@@ -732,6 +843,17 @@ class AdaptiveKLPPO(PPO):
                     first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                     first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                     loss = loss + first_event_hazard_loss.loss
+                first_event_credit_loss = self._first_event_credit_loss(rollout_data)
+                if first_event_credit_loss is not None:
+                    first_event_credit_losses.append(float(first_event_credit_loss.loss.detach().cpu()))
+                    first_event_credit_value_losses.append(float(first_event_credit_loss.value_loss.detach().cpu()))
+                    first_event_credit_delta_align_losses.append(
+                        float(first_event_credit_loss.delta_align_loss.detach().cpu())
+                    )
+                    first_event_credit_active_counts.append(int(first_event_credit_loss.active_count))
+                    first_event_credit_positive_fracs.append(float(first_event_credit_loss.positive_frac))
+                    first_event_credit_advantage_means.append(float(first_event_credit_loss.advantage_mean))
+                    loss = loss + first_event_credit_loss.loss
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
@@ -797,6 +919,37 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "a6/target_positive_frac",
                 float(np.mean(first_event_hazard_positive_fracs)) if first_event_hazard_positive_fracs else 0.0,
+            )
+        if self._a7_event_credit_enabled():
+            self.logger.record(
+                "a7/event_credit_loss",
+                float(np.mean(first_event_credit_losses)) if first_event_credit_losses else 0.0,
+            )
+            self.logger.record(
+                "a7/event_credit_value_loss",
+                float(np.mean(first_event_credit_value_losses)) if first_event_credit_value_losses else 0.0,
+            )
+            self.logger.record(
+                "a7/event_credit_delta_align_loss",
+                (
+                    float(np.mean(first_event_credit_delta_align_losses))
+                    if first_event_credit_delta_align_losses
+                    else 0.0
+                ),
+            )
+            self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
+            self.logger.record("a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef))
+            self.logger.record(
+                "a7/event_credit_active_count_mean",
+                float(np.mean(first_event_credit_active_counts)) if first_event_credit_active_counts else 0.0,
+            )
+            self.logger.record(
+                "a7/event_credit_target_positive_frac",
+                float(np.mean(first_event_credit_positive_fracs)) if first_event_credit_positive_fracs else 0.0,
+            )
+            self.logger.record(
+                "a7/event_credit_advantage_mean",
+                float(np.mean(first_event_credit_advantage_means)) if first_event_credit_advantage_means else 0.0,
             )
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")

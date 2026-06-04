@@ -11,7 +11,7 @@ ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
 from python.models.transformer import TransformerExtractor
-from python.rl.policy_algo.first_event_hazard import compute_first_event_hazard_loss
+from python.rl.policy_algo.first_event_hazard import compute_first_event_credit_loss, compute_first_event_hazard_loss
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
 
 
@@ -64,6 +64,7 @@ class A6EventHeadUpdateStrengthTests(unittest.TestCase):
         lr: float,
         *,
         hybrid_event_head_lr_scale: float = 0.0,
+        hybrid_event_credit_head_lr_scale: float = 0.0,
     ) -> HierarchicalMoEExecutionPolicy:
         th.manual_seed(123)
         policy = HierarchicalMoEExecutionPolicy(
@@ -84,6 +85,7 @@ class A6EventHeadUpdateStrengthTests(unittest.TestCase):
             hmoe_residual_warmup_fraction=0.3,
             hmoe_residual_start_factor=0.25,
             hybrid_event_head_lr_scale=hybrid_event_head_lr_scale,
+            hybrid_event_credit_head_lr_scale=hybrid_event_credit_head_lr_scale,
         )
         policy.set_hmoe_training_progress(0.0)
         policy.apply_optimizer_learning_rate(float(lr), lr_mult=1.0)
@@ -97,6 +99,9 @@ class A6EventHeadUpdateStrengthTests(unittest.TestCase):
             if policy.hybrid_event_head is not None:
                 policy.hybrid_event_head.weight.zero_()
                 policy.hybrid_event_head.bias.zero_()
+            if policy.hybrid_event_credit_head is not None:
+                policy.hybrid_event_credit_head.weight.zero_()
+                policy.hybrid_event_credit_head.bias.zero_()
         return policy
 
     def _hazard_loss(self, policy: HierarchicalMoEExecutionPolicy, obs: dict[str, th.Tensor]):
@@ -174,6 +179,73 @@ class A6EventHeadUpdateStrengthTests(unittest.TestCase):
         self.assertGreater(event_head_move, baseline_move * 5.0)
         self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
         self.assertGreater(float(stats["a6/event_head_delta_abs_mean"]), 0.0)
+
+    def test_a7_credit_value_loss_reaches_credit_head_without_event_logit_update(self) -> None:
+        policy = self._make_policy(3.0e-5, hybrid_event_credit_head_lr_scale=10.0)
+        obs = self._open_first_shot_obs()
+        distribution = policy.get_distribution(obs)
+        q_values = distribution.fire_event_q_values()
+        self.assertIsNotNone(q_values)
+        assert q_values is not None
+        target = th.ones((int(q_values.shape[0]),), dtype=th.float32)
+        active = th.ones_like(target, dtype=th.bool)
+        weight = th.ones_like(target)
+
+        loss = compute_first_event_credit_loss(
+            q_values,
+            target,
+            active,
+            weight,
+            value_coef=0.3,
+            delta_align_coef=0.0,
+        ).loss
+        loss.backward()
+
+        assert policy.hybrid_event_credit_head is not None
+        self.assertGreater(_grad_norm(policy.hybrid_event_credit_head.parameters()), 0.0)
+        self.assertIsNone(policy.action_net.bias.grad)
+        self.assertIsNone(policy.hybrid_event_head)
+
+    def test_a7_delta_align_loss_reaches_event_logits_not_credit_head(self) -> None:
+        policy = self._make_policy(
+            3.0e-5,
+            hybrid_event_head_lr_scale=10.0,
+            hybrid_event_credit_head_lr_scale=10.0,
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.hybrid_event_credit_head is not None
+        with th.no_grad():
+            policy.hybrid_event_credit_head.bias.copy_(th.tensor([0.0, 2.0], dtype=th.float32))
+        obs = self._open_first_shot_obs()
+        distribution = policy.get_distribution(obs)
+        q_values = distribution.fire_event_q_values()
+        event_delta = distribution.fire_event_logit_delta()
+        self.assertIsNotNone(q_values)
+        self.assertIsNotNone(event_delta)
+        assert q_values is not None
+        assert event_delta is not None
+        target = th.ones((int(q_values.shape[0]),), dtype=th.float32)
+        active = th.ones_like(target, dtype=th.bool)
+        weight = th.ones_like(target)
+
+        loss = compute_first_event_credit_loss(
+            q_values,
+            target,
+            active,
+            weight,
+            event_logit_delta=event_delta,
+            value_coef=0.0,
+            delta_align_coef=0.3,
+            delta_align_clip=4.0,
+        ).loss
+        loss.backward()
+
+        self.assertAlmostEqual(_grad_norm(policy.hybrid_event_credit_head.parameters()), 0.0, places=8)
+        self.assertGreater(_grad_norm(policy.hybrid_event_head.parameters()), 0.0)
+        self.assertIsNotNone(policy.action_net.bias.grad)
+        assert policy.action_net.bias.grad is not None
+        self.assertGreater(float(policy.action_net.bias.grad[9].detach().abs().cpu().item()), 0.0)
+        self.assertGreater(float(policy.action_net.bias.grad[11].detach().abs().cpu().item()), 0.0)
 
 
 if __name__ == "__main__":

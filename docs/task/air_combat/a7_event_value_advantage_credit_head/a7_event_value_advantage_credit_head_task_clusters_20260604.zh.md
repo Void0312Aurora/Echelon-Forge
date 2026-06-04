@@ -16,8 +16,8 @@ A7 可以为 masked `hold/fire_once` event action 增加 event-value / advantage
 | `A7-EVC-A Evidence And Architecture Intake` | main thread or read-only diagnostics worker | high | 对齐 A6-N、A6 label-density issue、HMoE gap 与当前 policy/PPO code entry points。 | 仅 A7 docs；可选 issue cross-links | code changes、training、HMoE redesign | Markdown review；code-surface references | Intake 命名 A7 必须解决什么，以及 HMoE gap 只能影响什么。 | First；B 前串行 | 1 | pass |
 | `A7-EVC-B Objective Contract` | main thread | high | 定义 value/advantage targets、target source、losses、diagnostics 与 rollback gates。 | A7 contract/status docs | L-only tuning、M2 release、runtime legality changes | Contract review against A3/A5/A6-N | Contract 足够具体，可以实现，并拒绝 unsupported labels。 | After A；C/D 前串行 | 2 | pass |
 | `A7-EVC-C Policy Head Prototype` | main thread plus read-only subagent review | high | 增加有边界的 event-value 或 advantage head，并暴露 outputs。 | `python/rl/policy_algo/policies.py`、focused policy tests | HMoE family/subexpert redesign、soft routing、M2 | focused policy tests；serialization/load smoke | Head zero-safe、shape-stable、optimizer-visible，并可接到 event logits。 | D 前完成；API 已稳定，可进入 PPO coupling。 | 2 | pass |
-| `A7-EVC-D PPO Auxiliary Credit` | future implementation worker | high | 训练 A7 head，并将 advantage credit 接到 event-logit delta。 | `python/rl/policy_algo/**`、rollout/loss tests | Reward-only legality、削弱 masks | focused PPO/loss tests；finite stats | Loss 处理 masks、early censoring 与 counterfactual targets。 | After C API；E 前串行 | 2 | planned next |
-| `A7-EVC-E Config And Diagnostics` | future implementation worker | medium | 增加 active config、callback/process-probe metrics 与累计 pre-window hazard。 | active configs、diagnostics/callback tests、docs | learned evidence、doctrine claims | config parse；diagnostics tests | A7 metrics 包含 advantage sign 与 cumulative early-fire probability。 | After D；只可与 F test refinement 并行 | 2 | planned |
+| `A7-EVC-D PPO Auxiliary Credit` | main thread plus read-only subagent scan | high | 训练 A7 head，并将 advantage credit 接到 event-logit delta。 | `python/rl/policy_algo/**`、rollout/loss tests | Reward-only legality、削弱 masks | focused PPO/loss tests；finite stats | Loss 处理 masks、early censoring 与 counterfactual targets。 | E 前完成；尚未运行 learned-policy。 | 2 | pass |
+| `A7-EVC-E Config And Diagnostics` | future implementation worker | medium | 增加 active config、callback/process-probe metrics 与累计 pre-window hazard。 | active configs、diagnostics/callback tests、docs | learned evidence、doctrine claims | config parse；diagnostics tests | A7 metrics 包含 advantage sign 与 cumulative early-fire probability。 | After D；只可与 F test refinement 并行 | 2 | planned next |
 | `A7-EVC-F Focused Validation Sweep` | main thread | n/a | 在 learned-policy probe 前运行 compile/JSON/focused tests。 | evidence note only unless tests require repair | training、broad refactor | compileall；pytest subset；`git diff --check` | Implementation ready for short learned evidence。 | After C/D/E | 1 | planned |
 | `A7-EVC-G Short Learned Evidence` | main thread | n/a | 运行短训/probe，并与 A6-EVT-M 对比。 | A7 evidence note；不 stage `experiments_tmp` | formal long training、M2 release | train/probe commands；deterministic/stochastic summaries | evidence 记录 release timing、violations、advantage sign 与 cumulative hazard。 | After F；serial | 1 | planned |
 | `A7-EVC-H Closure And Index Sync` | main thread | n/a | accept、hold 或 re-scope A7，并同步 parent/A6/issues docs。 | A7 docs、parent air-combat README、必要时 issue cross-links | hiding residuals、overclaiming stochastic-only behavior | `git diff --check -- docs/task/air_combat docs/task/issues` | status 与 indexes 和 evidence 一致。 | After G；serial | 1 | planned |
@@ -67,7 +67,7 @@ learned-policy probe。
 
 Immediate：
 
-- 基于稳定 `hybrid_event_credit_head` API 的 PPO auxiliary-credit coupling。
+- Focused A7 credit loss 的 active config 与 diagnostics。
 
 Follow-on：
 

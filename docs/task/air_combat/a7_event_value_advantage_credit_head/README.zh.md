@@ -3,7 +3,9 @@
 状态：`2026-06-04` active implementation subproject。A7 是 A6 root-cause re-scope
 后的 follow-on：在继续 launch-window 调参前，实现 masked `hold/fire_once` 动作的
 event-value / advantage-credit 机制。`A7-EVC-A/B` 已由 objective contract 关闭，
-`A7-EVC-C` 已落地 zero-safe policy-head prototype；PPO auxiliary credit 尚未接入。
+`A7-EVC-C` 已落地 zero-safe policy-head prototype，`A7-EVC-D` 已接入 focused
+PPO auxiliary credit；active config、diagnostics callbacks 与 learned-policy
+evidence 尚未完成。
 
 语言：
 
@@ -55,6 +57,7 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | HMoE gap | open issue | subexpert 不接收 family-head 输出，C2/ROE combat routing 塌缩到单 family。 | A7 必须考虑该风险，但本 slice 不重设计 HMoE。 |
 | A7 objective contract | pass | [Objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md) 选择 counterfactual event-value head、window balancing、policy-logit coupling 与 cumulative hazard diagnostics。 | 这只授权 focused A7 prototype，不释放 M2、HMoE redesign 或 missile/doctrine authority。 |
 | A7 policy head prototype | pass | `hybrid_event_credit_head` 暴露 `Q_hold`、`Q_fire_once` 与 event advantage，并覆盖 zero initialization、dedicated optimizer lane、default-disabled behavior、A6 coexistence tests 和 load smoke。 | A7-C 只暴露 credit；尚不训练该 head，也不把 credit 写回 event logits。 |
+| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` 与 `AdaptiveKLPPO._first_event_credit_loss()` 训练 A7 head，可选对齐 event-logit delta，并在 A7-only coeff 下启用 first-event label collection；focused PPO/gradient tests 已通过。 | 不声明 active JSON config、callback diagnostics、learned evidence 或 A7 accepted。 |
 
 ## 范围
 
@@ -84,8 +87,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | `P1 Evidence And HMoE Risk` | 对齐 A6-N、issue-board findings 与 policy code entry points。 | A7 exists。 | Objective contract 记录 HMoE gap 如何影响 head placement 与 diagnostics。 | pass |
 | `P2 Objective Contract` | 选择 value/advantage targets、label sources、losses 与 rollback gates。 | P1 evidence accepted。 | Contract 足够具体，可进入实现。 | pass |
 | `P3 Policy Head Prototype` | 增加有边界的 event-value / advantage head。 | P2 contract accepted。 | focused policy tests 覆盖 shape、initialization、serialization 与 event-logit coupling。 | pass |
-| `P4 PPO Integration` | 训练该 head，并将 auxiliary credit 接入 PPO updates。 | P3 head available。 | loss、stats、finite behavior 与 mask handling 有测试覆盖。 | planned next |
-| `P5 Config And Diagnostics` | 增加 active config 与累计 hazard diagnostics。 | P4 integration passes。 | config 与 callback/process-probe tests 暴露 A7 metrics。 | planned |
+| `P4 PPO Integration` | 训练该 head，并将 auxiliary credit 接入 PPO updates。 | P3 head available。 | loss、stats、finite behavior 与 mask handling 有测试覆盖。 | pass |
+| `P5 Config And Diagnostics` | 增加 active config 与累计 hazard diagnostics。 | P4 integration passes。 | config 与 callback/process-probe tests 暴露 A7 metrics。 | planned next |
 | `P6 Learned Evidence` | 运行短训 learned-policy probe。 | P5 tests pass。 | 记录 deterministic/stochastic timing、release counts 与累计 early hazard。 | planned |
 | `P7 Closure` | accept、hold 或 re-scope A7。 | P6 evidence exists。 | parent/A6/issues docs 与证据一致，且无 overclaim。 | planned |
 
@@ -113,10 +116,16 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   `HierarchicalMoEExecutionPolicy.get_hybrid_event_credit()` 与
   `_HybridActionDistribution.fire_event_q_values()` / `fire_event_advantage()`，
   由 `tests/hmoe/test_hmoe_policy.py` 覆盖。
+- PPO auxiliary-credit coupling：`python/rl/policy_algo/first_event_hazard.py`
+  中的 `compute_first_event_credit_loss()` 与
+  `first_event_credit_batch_from_rollout_data()`，以及
+  `python/rl/policy_algo/ppo_adaptive_kl.py` 中的
+  `AdaptiveKLPPO._first_event_credit_loss()`，由
+  `tests/hmoe/test_a6_event_head_update_strength.py` 和
+  `tests/hmoe/test_hmoe_ppo_warmup.py` 覆盖。
 
 计划 implementation 输出：
 
-- PPO auxiliary-loss implementation。
 - 覆盖 loss masks、diagnostics 与 active config 的 focused tests。
 - 与 A6-EVT-M 对照的短训 learned-policy evidence。
 
@@ -134,8 +143,8 @@ A7 只有在以下条件满足后才能 accepted：
 
 ## 残余与下一步
 
-- 立即下一步：基于 `A7-EVC-C` 已稳定的 `hybrid_event_credit_head` API，分发
-  `A7-EVC-D PPO Auxiliary Credit`。
+- 立即下一步：分发 `A7-EVC-E Config And Diagnostics`，让 active entries 与
+  callback/process-probe metrics 暴露新的 credit loss，再进入 learned-policy probe。
 - Adaptive label weight scheduling 仍是 guardrail candidate，不是主要 repair。
 - HMoE hierarchical computation 保持 issue-board item，除非 A7 evidence 证明它阻塞 advantage-credit learning。
 

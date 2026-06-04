@@ -175,5 +175,5 @@ learned-policy probe 前，A7 implementation 必须通过以下 focused gates：
 ## 分发结果
 
 本文档关闭 `A7-EVC-A` 与 `A7-EVC-B`。`A7-EVC-C Policy Head Prototype` 已提供稳定的
-`hybrid_event_credit_head` API；下一项可分发 cluster 是
-`A7-EVC-D PPO Auxiliary Credit`。
+`hybrid_event_credit_head` API，`A7-EVC-D PPO Auxiliary Credit` 已接入 focused PPO
+loss；下一项可分发 cluster 是 `A7-EVC-E Config And Diagnostics`。

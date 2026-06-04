@@ -3,9 +3,10 @@
 Status: `2026-06-04` active implementation subproject. A7 is the follow-on to
 the A6 root-cause re-scope: implement an event-value / advantage-credit
 mechanism for the masked `hold/fire_once` action before any more launch-window
-tuning. `A7-EVC-A/B` are closed by the objective contract, and `A7-EVC-C` has
-landed the zero-safe policy-head prototype. PPO auxiliary credit is not wired
-yet.
+tuning. `A7-EVC-A/B` are closed by the objective contract, `A7-EVC-C` has
+landed the zero-safe policy-head prototype, and `A7-EVC-D` has wired focused
+PPO auxiliary credit. Active config, diagnostics callbacks, and learned-policy
+evidence are not done yet.
 
 Language:
 
@@ -62,6 +63,7 @@ would have rewarded holding.
 | HMoE gap | open issue | Subexperts do not see family-head output, and C2/ROE combat routing collapses to one family. | A7 should account for this risk, but it does not redesign HMoE in this slice. |
 | A7 objective contract | pass | [Objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.md) selects a counterfactual event-value head, window balancing, policy-logit coupling, and cumulative hazard diagnostics. | This authorizes a focused A7 prototype, not M2, HMoE redesign, or missile/doctrine authority. |
 | A7 policy head prototype | pass | `hybrid_event_credit_head` exposes `Q_hold`, `Q_fire_once`, and event advantage with zero initialization, a dedicated optimizer lane, default-disabled behavior, A6 coexistence tests, and load smoke coverage. | A7-C exposes credit only; it does not train the head or write credit into event logits. |
+| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` and `AdaptiveKLPPO._first_event_credit_loss()` train the A7 head, optionally align event-logit delta, enable first-event label collection for A7-only coeffs, and pass focused PPO/gradient tests. | No active JSON config, callback diagnostics, learned evidence, or A7 acceptance claim. |
 
 ## Scope
 
@@ -97,8 +99,8 @@ Out of scope:
 | `P1 Evidence And HMoE Risk` | Reconcile A6-N, issue-board findings, and policy code entry points. | A7 exists. | Objective contract records how HMoE gap affects head placement and diagnostics. | pass |
 | `P2 Objective Contract` | Select value/advantage targets, label sources, losses, and rollback gates. | P1 evidence accepted. | Contract is specific enough for implementation. | pass |
 | `P3 Policy Head Prototype` | Add the bounded event-value / advantage head. | P2 contract accepted. | Focused policy tests cover shape, initialization, serialization, and event-logit coupling. | pass |
-| `P4 PPO Integration` | Train the head and connect auxiliary credit to PPO updates. | P3 head available. | Loss, stats, finite behavior, and mask handling are tested. | planned next |
-| `P5 Config And Diagnostics` | Add active config and cumulative hazard diagnostics. | P4 integration passes. | Config and callback/process-probe tests expose A7 metrics. | planned |
+| `P4 PPO Integration` | Train the head and connect auxiliary credit to PPO updates. | P3 head available. | Loss, stats, finite behavior, and mask handling are tested. | pass |
+| `P5 Config And Diagnostics` | Add active config and cumulative hazard diagnostics. | P4 integration passes. | Config and callback/process-probe tests expose A7 metrics. | planned next |
 | `P6 Learned Evidence` | Run short learned-policy probe. | P5 tests pass. | Deterministic/stochastic timing, release counts, and cumulative early hazard are recorded. | planned |
 | `P7 Closure` | Accept, hold, or re-scope A7. | P6 evidence exists. | Parent/A6/issues docs reflect evidence without overclaim. | planned |
 
@@ -127,10 +129,17 @@ Current outputs:
   `_HybridActionDistribution.fire_event_q_values()` / `fire_event_advantage()`
   in `python/rl/policy_algo/policies.py`, covered by
   `tests/hmoe/test_hmoe_policy.py`.
+- PPO auxiliary-credit coupling:
+  `compute_first_event_credit_loss()` and
+  `first_event_credit_batch_from_rollout_data()` in
+  `python/rl/policy_algo/first_event_hazard.py`, plus
+  `AdaptiveKLPPO._first_event_credit_loss()` in
+  `python/rl/policy_algo/ppo_adaptive_kl.py`, covered by
+  `tests/hmoe/test_a6_event_head_update_strength.py` and
+  `tests/hmoe/test_hmoe_ppo_warmup.py`.
 
 Planned implementation outputs:
 
-- PPO auxiliary-loss implementation.
 - Focused tests for loss masks, diagnostics, and active config.
 - Short learned-policy evidence comparing against A6-EVT-M.
 
@@ -153,8 +162,9 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: dispatch `A7-EVC-D PPO Auxiliary Credit` using the stable
-  `hybrid_event_credit_head` API from `A7-EVC-C`.
+- Immediate next step: dispatch `A7-EVC-E Config And Diagnostics` so active
+  entries and callback/process-probe metrics expose the new credit loss before
+  any learned-policy probe.
 - Adaptive label weight scheduling remains a guardrail candidate, not the
   primary repair.
 - HMoE hierarchical computation remains an issue-board item unless A7 evidence

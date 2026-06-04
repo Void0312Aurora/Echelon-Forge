@@ -16,7 +16,8 @@ surface.
 | --- | --- | --- |
 | Objective contract | A7 target gives counterfactual hold/fire credit and names target source. | pass: [objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.md) |
 | Policy head prototype | Head shape, zero init, optimizer lane, default-off behavior, serialization/load, and A6 coexistence are tested. | pass: `tests/hmoe/test_hmoe_policy.py` |
-| PPO implementation | Loss, masks, stats, and deterministic eval are tested. | not started: owned by `A7-EVC-D` |
+| PPO auxiliary credit | Loss, masks, finite stats, and event-logit coupling are tested. | pass: `tests/hmoe/test_a6_event_head_update_strength.py`, `tests/hmoe/test_hmoe_ppo_warmup.py` |
+| Config/diagnostics | Active entries and callback/process-probe metrics expose A7 credit behavior. | not started: owned by `A7-EVC-E` |
 | Legality boundary | A3/A5 masks and state machine remain authoritative. | required |
 | HMoE risk handling | HMoE gap is considered in head placement and diagnostics. | partial: A7-C keeps credit at policy-head level and does not redesign HMoE |
 | Learned evidence | Deterministic fires once inside quality window; stochastic early hazard is bounded. | not evaluated |
@@ -64,3 +65,16 @@ git diff --check -- python/rl/policy_algo/policies.py tests/hmoe/test_hmoe_polic
 Observed outcome: compileall passed; HMoE policy tests passed with `31 passed`;
 A6 event-head update-strength tests passed with `3 passed`; diff whitespace check
 passed.
+
+`A7-EVC-D` focused gates:
+
+```bash
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
+pytest tests/hmoe/test_a6_event_head_update_strength.py -q
+pytest tests/hmoe/test_hmoe_ppo_warmup.py -q
+pytest tests/hmoe/test_hmoe_policy.py -q
+```
+
+Observed outcome: compileall passed; event-head/credit gradient tests passed
+with `5 passed`; HMoE PPO warmup tests passed with `8 passed`; HMoE policy tests
+passed with `31 passed`.

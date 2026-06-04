@@ -187,5 +187,6 @@ Hold or re-scope A7 if any of these occur:
 ## Dispatch Result
 
 `A7-EVC-A` and `A7-EVC-B` are closed by this contract. `A7-EVC-C Policy Head
-Prototype` has now supplied the stable `hybrid_event_credit_head` API. The next
-dispatchable cluster is `A7-EVC-D PPO Auxiliary Credit`.
+Prototype` has supplied the stable `hybrid_event_credit_head` API, and
+`A7-EVC-D PPO Auxiliary Credit` has wired the focused PPO loss. The next
+dispatchable cluster is `A7-EVC-E Config And Diagnostics`.

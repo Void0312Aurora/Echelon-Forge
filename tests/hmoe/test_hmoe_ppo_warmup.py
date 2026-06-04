@@ -389,6 +389,64 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         second_rollout_data = next(model.rollout_buffer.get(model.n_steps))
         self.assertEqual(int(getattr(second_rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 0)
 
+    def test_a7_event_credit_only_collects_labels_and_updates_credit_head(self) -> None:
+        env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.5,
+            a7_event_credit_curriculum_coef=0.5,
+            a7_event_credit_curriculum_min_window_age_steps=1,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        self.assertFalse(model._a6_first_event_enabled())
+        self.assertTrue(model._a7_event_credit_enabled())
+        self.assertTrue(getattr(model.rollout_buffer, "supports_a6_first_event_labels", False))
+        model.set_logger(configure(format_strings=[]))
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        rollout_data = next(model.rollout_buffer.get(model.n_steps))
+        self.assertTrue(hasattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE))
+        self.assertTrue(hasattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET))
+        self.assertEqual(int(getattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 1)
+        self.assertEqual(int((getattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET) > 0.5).sum().item()), 1)
+
+        credit_loss = model._first_event_credit_loss(rollout_data)
+        self.assertIsNotNone(credit_loss)
+        assert credit_loss is not None
+        self.assertEqual(credit_loss.active_count, 1)
+        self.assertGreater(float(credit_loss.loss.detach().cpu().item()), 0.0)
+
+        assert model.policy.hybrid_event_credit_head is not None
+        before = model.policy.hybrid_event_credit_head.bias.detach().clone()
+        model.train()
+        after = model.policy.hybrid_event_credit_head.bias.detach().clone()
+        self.assertFalse(th.allclose(before, after))
+
 
 if __name__ == "__main__":
     unittest.main()
