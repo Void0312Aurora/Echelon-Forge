@@ -135,6 +135,10 @@ A6 继续 held。未来可验收切片不能只证明“event probability 移动
 
 ## 下一工作包
 
+`2026-06-04` follow-up：下方 `A6-EVT-O` 方向已拆分为 A7 子项目：
+[../a7_event_value_advantage_credit_head/README.zh.md](../a7_event_value_advantage_credit_head/README.zh.md)。
+后续 implementation 与分发应继续从 A7 进入。
+
 在任何进一步 implementation 或 training 前，先创建 `A6-EVT-O` design-first packet：
 
 ```md

@@ -7,7 +7,9 @@
 受约束事件动作模型路线，且 A5 已在短训 learned-policy evidence 后保持 held。A6
 已完成首轮 event-value / first-event timing evidence wave、deadline-bootstrap re-scope wave
 和 event-head update-strength audit，并已完成 event-head optimization learned evidence；A6
-因 launch-window timing quality 继续 held。
+因 launch-window timing quality 继续 held。`2026-06-04` 已开启 A7，作为
+counterfactual event-value / advantage-credit head follow-on；其 policy-head prototype
+已完成，下一步进入 PPO auxiliary-credit integration。
 
 ## 当前状态
 
@@ -63,8 +65,17 @@
   event-head lane 修复了这个狭义 blocker：deterministic probing 现在执行一次 authorized
   release，stochastic probing 保持 `3/3` one-shot authorized releases，且零
   rejected/violation/repeat/budget issues。A6 仍 held，因为 release timing 收敛到
-  authorization/contact 后的近立即时刻；下一步是 launch-window / engagement-quality timing
-  contract，而不是释放 M2。
+  authorization/contact 后的近立即时刻。随后 launch-window contract 压制了过早
+  deterministic fire，但未产出 accepted timing；root-cause re-scope 将当前 blocker
+  归属到 on-policy first-event censoring 与缺失 counterfactual hold/fire credit。
+  当前 active follow-on 是
+  [a7_event_value_advantage_credit_head/README.zh.md](a7_event_value_advantage_credit_head/README.zh.md)。
+- A7
+  [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)
+  是 first-event timing residual 的 implementation 线路：policy-level event-credit
+  head API 已就位；counterfactual target semantics、window-balanced credit、
+  event-logit coupling 与 cumulative early-fire diagnostics 仍是下一步实现工作。
+  A3/A5 legality 继续持有权威，HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -87,9 +98,8 @@
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
-  [A6 event-value / first-event timing](a6_event_value_first_event_timing/README.zh.md)，
-  先定义 launch-window / engagement-quality timing contract，再考虑升级到 event-value head
-  或重新讨论 M2
+  [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
+  先完成 PPO auxiliary-credit integration，再进行新的 learned-policy probe 或重新讨论 M2
 
 ## 推荐阅读顺序
 
@@ -120,6 +130,8 @@
   [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)
 - Event-value / first-event timing follow-on：
   [a6_event_value_first_event_timing/README.zh.md](a6_event_value_first_event_timing/README.zh.md)
+- Event-value / advantage-credit head implementation contract：
+  [a7_event_value_advantage_credit_head/README.zh.md](a7_event_value_advantage_credit_head/README.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档

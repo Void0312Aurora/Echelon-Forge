@@ -90,8 +90,9 @@ Parent: [README.md](README.md).
 
 Immediate:
 
-- Do not run more L short training or tune L weights until an `A6-EVT-O`
-  counterfactual event-time objective contract exists.
+- Do not run more L short training or tune L weights until the A7
+  [event-value / advantage-credit head](../a7_event_value_advantage_credit_head/README.md)
+  implementation contract is in place and its focused implementation gates pass.
 - The next design must handle cumulative pre-window hazard, absorbing
   first-event censoring, and explicit hold-vs-fire credit.
 - Keep runtime legality unchanged while this is investigated.
@@ -112,8 +113,9 @@ Held:
 6. Treat `A6-EVT-L/M` as completed evidence with a held outcome, not A6
    acceptance; re-scope launch-window shaping before any M2 release vote.
 7. Treat `A6-EVT-N` as completed root-cause analysis and a pause on tuning, not
-   acceptance. The next packet is `A6-EVT-O Counterfactual Event-Time
-   Objective`, design-first.
+   acceptance. The next packet is A7
+   [event-value / advantage-credit head](../a7_event_value_advantage_credit_head/README.md),
+   design-first then implementation-gated.
 
 ## Overclaim Refusals
 

@@ -9,7 +9,9 @@ constrained event-action model track and is now held after short learned-policy
 evidence. A6 has completed its first event-value / first-event timing evidence
 wave, deadline-bootstrap re-scope wave, event-head update-strength audit, and
 event-head optimization learned evidence; it remains held on launch-window
-timing quality.
+timing quality. `2026-06-04` opened A7 as the counterfactual event-value /
+advantage-credit head follow-on; its policy-head prototype is now complete,
+with PPO auxiliary-credit integration next.
 
 ## Current Status
 
@@ -81,8 +83,18 @@ timing quality.
   one authorized release, and stochastic probing preserves `3/3` one-shot
   authorized releases with zero rejected/violation/repeat/budget issues. A6 is
   still held because release timing collapses to near-immediate
-  authorization/contact; the next step is a launch-window / engagement-quality
-  timing contract rather than M2 release.
+  authorization/contact. The launch-window contract then suppressed early
+  deterministic fire without producing accepted timing, and the root-cause
+  re-scope assigns the current blocker to on-policy first-event censoring plus
+  missing counterfactual hold/fire credit. The active follow-on is
+  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md).
+- A7
+  [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
+  is now the implementation line for the first-event timing residual: the
+  policy-level event-credit head API is in place, while counterfactual target
+  semantics, window-balanced credit, event-logit coupling, and cumulative
+  early-fire diagnostics remain the next implementation work. A3/A5 legality
+  stays authoritative, and HMoE redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -111,9 +123,9 @@ timing quality.
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
   weapons
 - advance
-  [A6 event-value / first-event timing](a6_event_value_first_event_timing/README.md)
-  by defining a launch-window / engagement-quality timing contract before
-  escalating to an event-value head or reconsidering M2
+  [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
+  through PPO auxiliary-credit integration before any new learned-policy probe
+  or M2 reconsideration
 
 ## Recommended Reading Order
 
@@ -144,6 +156,8 @@ timing quality.
   [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md)
 - Event-value / first-event timing follow-on:
   [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md)
+- Event-value / advantage-credit head implementation contract:
+  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive

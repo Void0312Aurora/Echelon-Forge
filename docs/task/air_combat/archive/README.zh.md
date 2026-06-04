@@ -11,6 +11,8 @@
 
 - [a2_high_fidelity_damage_model/](a2_high_fidelity_damage_model/README.zh.md)：
   已封存的高真实度毁伤模型 research/candidate record。
+- [a3_c2_roe_release_discipline/](a3_c2_roe_release_discipline/README.zh.md)：
+  已 accepted 的 C2/ROE 发射纪律 contract 与 evidence packet。
 - [air_combat_1v1_entry_analysis_20260516.zh.md](air_combat_1v1_entry_analysis_20260516.zh.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.zh.md](air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 - [air_combat_1v1_freeze_plan_20260516.zh.md](air_combat_1v1_freeze_plan_20260516.zh.md)

@@ -78,7 +78,9 @@ launch-window timing，且剩余 blocker 需要 counterfactual event-time/value 
 
 Immediate：
 
-- 在 `A6-EVT-O` counterfactual event-time objective contract 存在前，不再运行 L 短训或调 L
+- 在 A7
+  [event-value / advantage-credit head](../a7_event_value_advantage_credit_head/README.zh.md)
+  implementation contract 存在且 focused implementation gates 通过前，不再运行 L 短训或调 L
   weights。
 - 下一设计必须处理累计 pre-window hazard、absorbing first-event censoring 与显式
   hold-vs-fire credit。
@@ -99,7 +101,9 @@ Held：
 6. 将 `A6-EVT-L/M` 视为 held outcome evidence，而不是 A6 acceptance；任何 M2 release vote
    前先重新 scope launch-window shaping。
 7. 将 `A6-EVT-N` 视为完成的 root-cause analysis 与 tuning pause，而不是 acceptance；下一
-   packet 是 design-first 的 `A6-EVT-O Counterfactual Event-Time Objective`。
+   packet 是 A7
+   [event-value / advantage-credit head](../a7_event_value_advantage_credit_head/README.zh.md)，
+   先 design-first，再 implementation-gated。
 
 ## 拒绝过度声明
 

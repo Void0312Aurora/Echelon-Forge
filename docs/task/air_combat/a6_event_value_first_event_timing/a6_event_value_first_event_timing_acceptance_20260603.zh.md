@@ -81,7 +81,7 @@ evidence 会在 on-policy 轨迹中被 censor。未来 gate 因此需要 counter
 - event-head deterministic crossing 在没有 launch-window timing contract 的情况下被表述为完整 A6 acceptance。
 - launch-window held evidence 被表述为 A6 acceptance。
 - L range/age bootstrap 数值被表述为 doctrine、missile authority 或最终战术成熟度。
-- 在 `A6-EVT-O` 定义 counterfactual target source、stochastic collection handling 与
+- 在 A7 定义并验证 counterfactual target source、stochastic collection handling 与
   cumulative hazard diagnostics 前启动进一步 L 训练。
 
 ## 验证命令

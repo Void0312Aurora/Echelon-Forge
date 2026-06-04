@@ -28,7 +28,7 @@ event-value 或 first-event timing。
 | `A6-EVT-L Launch-Window Timing Contract` | main thread | n/a | 定义并实现有边界的 timing-quality contract，把合法 authorization 与良好 first-release timing 分开。 | `python/rl/policy_algo/**`、`python/rl/support/nonfinite_probe.py`、`python/training_callbacks.py`、focused tests、active config、A6 docs | M2 release、missile/damage authority、真实 doctrine claims、削弱 A3/A5 masks | compileall；JSON parse；focused label/PPO/config/diagnostics tests | contract 命名 label source、window predicates、rejection handling、diagnostics 与 acceptance/rollback gates；实现由 focused tests 覆盖。 | After K；learned evidence 前串行 | 2 | pass |
 | `A6-EVT-M Launch-Window Short Learned Evidence` | main thread | n/a | 运行 L active config，并与 A6-EVT-K 对比 timing/release discipline。 | 仅 A6 evidence note；不 stage `experiments_tmp` | formal long training、M2 release、把 L range gate 当作 doctrine | Training command plus deterministic/stochastic probes | evidence 记录 release step、launch-window counts、requests、accepted/rejected releases、violations，以及 L accepted 或 re-scoped。 | After L；serial | 1 | pass；held outcome |
 | `A6-EVT-N Root-Cause Re-scope` | main thread | n/a | 暂停 L 调参，并解释 held launch-window evidence 背后的机制 blocker。 | 仅 A6 analysis/status/README/dispatch docs | 新训练、L 参数搜索、code/config changes、M2 release、削弱 A3/A5 masks | Markdown inspection；`git diff --check -- docs/task/air_combat/a6_event_value_first_event_timing` | root-cause note 判定 blocker 属于 tuning、missing labels、optimizer routing、stochastic censoring 或 value credit。 | After M；O 前串行 | 1 | pass；training paused |
-| `A6-EVT-O Counterfactual Event-Time Objective` | future worker or main thread | high | 定义下一 objective contract，给出显式 hold-vs-fire credit，并防止 early stochastic censoring 删除 quality-window targets。 | A6 objective/contract docs first；contract review 后才允许 code/config | L knob tuning、runtime legality changes、M2 release、missile authority、`2v2`、self-play | Mathematical review；focused label-test plan；cumulative hazard diagnostics plan | Contract 在 implementation 前选定 labels/losses/diagnostics/rollback gates。 | After N；任何新训练前串行 | 2 | planned next |
+| `A6-EVT-O Counterfactual Event-Time Objective` | main thread | high | 定义下一 objective contract，给出显式 hold-vs-fire credit，并防止 early stochastic censoring 删除 quality-window targets。 | A7 docs 现在承载该 contract | L knob tuning、runtime legality changes、M2 release、missile authority、`2v2`、self-play | A7 objective-contract review | Contract 在 implementation 前选定 labels/losses/diagnostics/rollback gates。 | After N；已转交 A7 | 2 | moved to A7 |
 
 ## 分发规则
 
@@ -38,8 +38,9 @@ event-value 或 first-event timing。
 - `A6-EVT-C`、`A6-EVT-F` 和 `A6-EVT-G` 必须串行。
 - `A6-EVT-C Objective Contract` 未关闭前，不分发 implementation。
 - `A6-EVT-L` focused tests 未通过前，不运行 `A6-EVT-M`。
-- `A6-EVT-N` 后不再运行 L 训练或调 L weights；必须先创建并审阅 `A6-EVT-O`。
-- `A6-EVT-O` implementation 派发前，contract 必须命名 labels、counterfactual target
+- `A6-EVT-N` 后不再运行 L 训练或调 L weights；counterfactual objective 继续通过
+  [A7](../a7_event_value_advantage_credit_head/README.zh.md) 推进。
+- A7 implementation 派发前，objective contract 必须命名 labels、counterfactual target
   source、stochastic collection handling 与 cumulative hazard diagnostics。
 - 若 cluster 超过 round cap，先停下重新 scope，再考虑新 wave。
 - 遵从
@@ -83,12 +84,12 @@ deterministic/stochastic release discipline 之外增加累计 pre-window hazard
 Immediate：
 
 - L tuning 与额外短训暂停。
-- `A6-EVT-O` 必须在 implementation 前定义 counterfactual event-time/value credit 与累计
+- A7 必须在 implementation 前定义 counterfactual event-time/value credit 与累计
   early-fire diagnostics。
 
 Follow-on：
 
-- 若 O 选择，则进入 event-value / advantage head 或 survival-style event-time objective。
+- A7 若证明 value credit 有效，则进入 PPO auxiliary credit 与 learned evidence。
 
 Deferred：
 

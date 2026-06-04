@@ -163,6 +163,11 @@ moved":
 
 ## Next Work Packet
 
+Follow-up `2026-06-04`: the `A6-EVT-O` direction below has been split into the
+A7 subproject,
+[../a7_event_value_advantage_credit_head/README.md](../a7_event_value_advantage_credit_head/README.md),
+so implementation and further dispatch should continue there.
+
 Create `A6-EVT-O` as a design-first packet before any further implementation or
 training:
 

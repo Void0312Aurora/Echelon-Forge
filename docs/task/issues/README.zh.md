@@ -17,8 +17,15 @@
 
 ## 活跃问题
 
-当前没有从本索引提升为 open blocking item 的跨领域 issue。只有当当前任务、review
-或 acceptance gate 需要主动修复协调时，才把 retained item 重新提升到这里。
+- [A6 发射窗口标签密度失衡](./a6_launch_window_label_imbalance/README.zh.md)：
+  L contract 下 deterministic `fire_once` argmax 不 crossing，尽管 open-window
+  event probability 达到 `34.6%`。它仍是 live symptom 与 balancing requirement，但
+  A6 root-cause re-scope 已将更深 blocker 归属为 first-event censoring 与缺失
+  counterfactual hold/fire credit；下一修复路径由 A7 承载。
+- [HMoE 层级化计算断裂](./hmoe_hierarchical_computation_gap/README.zh.md)：
+  subexpert head 接收与 family head 相同的原始 latent，而非 family-head 输出；
+  空战 C2/ROE 布局下五家族塌缩为单家族。A7 必须在 head placement 与 diagnostics
+  中考虑该风险，但该 issue 仍不授权活跃 HMoE redesign。
 
 ## 保留跟踪项
 

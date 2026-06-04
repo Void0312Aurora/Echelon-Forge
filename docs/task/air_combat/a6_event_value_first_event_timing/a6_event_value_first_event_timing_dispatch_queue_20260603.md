@@ -3,8 +3,8 @@
 Status: `2026-06-04` first/deadline waves, event-head update audit,
 event-head optimization learned evidence, launch-window contract implementation,
 launch-window short learned evidence, and root-cause re-scope are complete. A6
-remains held; L tuning is paused pending a counterfactual event-time objective
-contract.
+remains held; L tuning is paused and the counterfactual event-time objective has
+been transferred to A7.
 
 Parent: [README.md](README.md). Cluster plan:
 [a6_event_value_first_event_timing_task_clusters_20260603.md](a6_event_value_first_event_timing_task_clusters_20260603.md).
@@ -29,9 +29,8 @@ Parent: [README.md](README.md). Cluster plan:
 
 ## Active Queue
 
-| Cluster | Dispatch status | Owner guidance | Write scope | Guard |
-| --- | --- | --- | --- | --- |
-| `A6-EVT-O Counterfactual Event-Time Objective` | planned next | Main thread or future worker; design first. | A6 objective/contract docs first; code/config only after contract review. | Do not run more L training first; keep A3/A5 masks authoritative and M2 held. |
+No active A6 implementation queue remains. Continue through
+[A7 Event-Value / Advantage Credit Head](../a7_event_value_advantage_credit_head/README.md).
 
 ## Completed Blockers
 
@@ -46,7 +45,7 @@ Parent: [README.md](README.md). Cluster plan:
 | `A6-EVT-L Launch-Window Timing Contract` | Needed K evidence. | Unblocked by K and completed as implementation evidence. |
 | `A6-EVT-M Launch-Window Short Learned Evidence` | Needed L implementation tests. | Unblocked by L focused tests and completed as held evidence. |
 | `A6-EVT-N Root-Cause Re-scope` | Needed M evidence. | Unblocked by M held outcome and completed; result pauses L tuning. |
-| `A6-EVT-O Counterfactual Event-Time Objective` | Needs N root-cause analysis. | Unblocked by N; ready for design-first contract work. |
+| `A6-EVT-O Counterfactual Event-Time Objective` | Needed N root-cause analysis. | Transferred to A7 objective-contract work. |
 
 ## Dispatch Packet Template
 
@@ -66,6 +65,6 @@ return packet:
 - If subagents are used, map each worker to one cluster and follow
   [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
 - Keep `experiments_tmp` out of staging.
-- Do not resume L training or L weight search before `A6-EVT-O` defines the
-  counterfactual objective and cumulative hazard diagnostics.
+- Do not resume L training or L weight search before A7 defines and validates
+  the counterfactual objective and cumulative hazard diagnostics.
 - Keep M2 held unless A6 evidence later creates an explicit release vote.

@@ -20,9 +20,17 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Active Issues
 
-No cross-cutting issue is currently promoted as an open blocking item from this
-index. Promote a retained item back here only when a current task, review, or
-acceptance gate needs active repair coordination.
+- [A6 Launch-Window Label Density Imbalance](./a6_launch_window_label_imbalance/README.md):
+  deterministic `fire_once` argmax does not cross under the L contract despite
+  `34.6%` open-window event probability. It remains a live symptom and
+  balancing requirement, but A6 root-cause re-scope now treats the deeper
+  blocker as first-event censoring plus missing counterfactual hold/fire credit;
+  A7 owns the next repair path.
+- [HMoE Hierarchical Computation Gap](./hmoe_hierarchical_computation_gap/README.md):
+  subexpert heads receive the same raw latent as family heads rather than
+  family-head output; the combat C2/ROE layout collapses five families into one.
+  A7 must account for this in head placement and diagnostics, but this issue is
+  still not an active HMoE redesign authorization.
 
 ## Retained Tracking Items
 

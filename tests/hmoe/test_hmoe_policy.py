@@ -70,6 +70,45 @@ class HMoEPolicyTests(unittest.TestCase):
             net_arch={"pi": [32], "vf": [32]},
         )
 
+    def _make_air_combat_hybrid_observation_space(self, mission_dim: int = 20) -> spaces.Dict:
+        return spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(mission_dim,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+
+    def _make_air_combat_hybrid_policy(self, **policy_kwargs) -> HierarchicalMoEExecutionPolicy:
+        return HierarchicalMoEExecutionPolicy(
+            self._make_air_combat_hybrid_observation_space(),
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+            **policy_kwargs,
+        )
+
+    def _make_authorized_fire_obs(self, batch_size: int) -> dict[str, th.Tensor]:
+        mission = th.zeros((batch_size, 20), dtype=th.float32)
+        mission[:, 5] = 2.0
+        mission[:, 6] = 1.0
+        mission[:, 14] = 2.0
+        mission[:, 15] = 1.0
+        mission[:, 16] = 1.0
+        mission[:, 19] = 1.0
+        return {
+            "instruments": th.zeros((batch_size, 42), dtype=th.float32),
+            "contacts": th.zeros((batch_size, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((batch_size, 4, 4), dtype=th.float32),
+            "mission": mission,
+            "proprio": th.zeros((batch_size, 12), dtype=th.float32),
+        }
+
     def test_optimizer_includes_hmoe_head_parameters(self) -> None:
         policy = self._make_policy()
         head_param_ids = {id(param) for param in policy.hmoe_head_bank.parameters()}
@@ -149,6 +188,253 @@ class HMoEPolicyTests(unittest.TestCase):
         stats = policy.get_hmoe_route_stats()
         self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
         self.assertAlmostEqual(float(stats["a6/event_head_delta_abs_mean"]), 0.0, places=6)
+
+    def test_hybrid_event_credit_head_is_disabled_by_default(self) -> None:
+        policy = self._make_air_combat_hybrid_policy()
+
+        self.assertIsNone(policy.hybrid_event_credit_head)
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "hmoe"])
+        self.assertAlmostEqual(
+            float(policy._get_constructor_parameters().get("hybrid_event_credit_head_lr_scale", -1.0)),
+            0.0,
+            places=6,
+        )
+        obs = self._make_authorized_fire_obs(batch_size=2)
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            credit = policy.get_hybrid_event_credit(obs)
+            q_values = distribution.fire_event_q_values()
+            advantage = distribution.fire_event_advantage()
+
+        self.assertIsNone(credit)
+        self.assertIsNone(q_values)
+        self.assertIsNone(advantage)
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["a7/event_credit_head_enabled"]), 0.0)
+        self.assertAlmostEqual(float(stats["a7/event_credit_head_lr_scale"]), 0.0, places=6)
+
+    def test_hybrid_event_credit_head_gets_dedicated_optimizer_lane_and_zero_outputs(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+            hybrid_event_credit_head_lr_scale=6.0,
+        )
+
+        self.assertIsNotNone(policy.hybrid_event_credit_head)
+        assert policy.hybrid_event_credit_head is not None
+        self.assertTrue(
+            th.allclose(
+                policy.hybrid_event_credit_head.weight.detach(),
+                th.zeros_like(policy.hybrid_event_credit_head.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.hybrid_event_credit_head.bias.detach(),
+                th.zeros_like(policy.hybrid_event_credit_head.bias),
+            )
+        )
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "hybrid_event_credit_head", "hmoe"])
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1].get("lr_scale", 0.0)), 6.0, places=6)
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1]["lr"]), 3.0e-4 * 6.0, places=10)
+        self.assertAlmostEqual(
+            float(policy._get_constructor_parameters().get("hybrid_event_credit_head_lr_scale", 0.0)),
+            6.0,
+            places=6,
+        )
+
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -5.0
+            policy.action_net.bias[11] = 0.0
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": th.zeros((2, 20), dtype=th.float32),
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+        obs["mission"][:, 5] = 2.0
+        obs["mission"][:, 6] = 1.0
+        obs["mission"][:, 14] = 2.0
+        obs["mission"][:, 15] = 1.0
+        obs["mission"][:, 16] = 1.0
+        obs["mission"][:, 19] = 1.0
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            credit = policy.get_hybrid_event_credit(obs)
+            delta = distribution.fire_event_logit_delta()
+            q_values = distribution.fire_event_q_values()
+            advantage = distribution.fire_event_advantage()
+
+        self.assertIsNotNone(credit)
+        self.assertIsNotNone(delta)
+        self.assertIsNotNone(q_values)
+        self.assertIsNotNone(advantage)
+        assert credit is not None
+        assert delta is not None
+        assert q_values is not None
+        assert advantage is not None
+        self.assertTrue(th.allclose(delta, th.full_like(delta, -5.0)))
+        self.assertEqual(tuple(q_values.shape), (2, 2))
+        self.assertTrue(th.allclose(q_values, th.zeros_like(q_values)))
+        self.assertTrue(th.allclose(advantage, th.zeros_like(advantage)))
+        self.assertTrue(th.allclose(credit.q_hold, th.zeros_like(credit.q_hold)))
+        self.assertTrue(th.allclose(credit.q_fire_once, th.zeros_like(credit.q_fire_once)))
+        self.assertTrue(th.allclose(credit.event_advantage, th.zeros_like(credit.event_advantage)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["a7/event_credit_head_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["a7/event_credit_head_lr_scale"]), 6.0, places=6)
+        self.assertAlmostEqual(float(stats["a7/event_credit_advantage_abs_mean"]), 0.0, places=6)
+
+    def test_hybrid_event_credit_head_coexists_with_event_logit_head(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            hybrid_event_credit_head_lr_scale=6.0,
+        )
+
+        self.assertIsNotNone(policy.hybrid_event_head)
+        self.assertIsNotNone(policy.hybrid_event_credit_head)
+        self.assertEqual(
+            [group.get("name") for group in policy.optimizer.param_groups],
+            ["shared", "hybrid_event_head", "hybrid_event_credit_head", "hmoe"],
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.hybrid_event_credit_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -2.0
+            policy.action_net.bias[11] = 0.5
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.copy_(th.tensor([0.25, 1.25], dtype=th.float32))
+            policy.hybrid_event_credit_head.weight.zero_()
+            policy.hybrid_event_credit_head.bias.copy_(th.tensor([2.0, 5.0], dtype=th.float32))
+        obs = self._make_authorized_fire_obs(batch_size=4)
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            credit = policy.get_hybrid_event_credit(obs)
+            delta = distribution.fire_event_logit_delta()
+            q_values = distribution.fire_event_q_values()
+            advantage = distribution.fire_event_advantage()
+
+        self.assertIsNotNone(credit)
+        assert credit is not None
+        assert delta is not None
+        assert q_values is not None
+        assert advantage is not None
+        self.assertTrue(th.allclose(delta, th.full((4,), -1.5)))
+        self.assertTrue(th.allclose(q_values[:, 0], th.full((4,), 2.0)))
+        self.assertTrue(th.allclose(q_values[:, 1], th.full((4,), 5.0)))
+        self.assertTrue(th.allclose(advantage, th.full((4,), 3.0)))
+        self.assertTrue(th.allclose(credit.event_advantage, th.full((4,), 3.0)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
+        self.assertEqual(float(stats["a7/event_credit_head_enabled"]), 1.0)
+
+    def test_hybrid_event_credit_head_exposes_hold_fire_values_without_changing_event_logits(self) -> None:
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+            hybrid_event_credit_head_lr_scale=6.0,
+        )
+        assert policy.hybrid_event_credit_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -2.0
+            policy.action_net.bias[11] = 0.5
+            policy.hybrid_event_credit_head.weight.zero_()
+            policy.hybrid_event_credit_head.bias.copy_(th.tensor([1.25, -0.75], dtype=th.float32))
+        obs = {
+            "instruments": th.zeros((3, 42), dtype=th.float32),
+            "contacts": th.zeros((3, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((3, 4, 4), dtype=th.float32),
+            "mission": th.zeros((3, 20), dtype=th.float32),
+            "proprio": th.zeros((3, 12), dtype=th.float32),
+        }
+        obs["mission"][:, 5] = 2.0
+        obs["mission"][:, 6] = 1.0
+        obs["mission"][:, 14] = 2.0
+        obs["mission"][:, 15] = 1.0
+        obs["mission"][:, 16] = 1.0
+        obs["mission"][:, 19] = 1.0
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            credit = policy.get_hybrid_event_credit(obs)
+            delta = distribution.fire_event_logit_delta()
+            q_values = distribution.fire_event_q_values()
+            advantage = distribution.fire_event_advantage()
+
+        self.assertIsNotNone(credit)
+        assert credit is not None
+        assert delta is not None
+        assert q_values is not None
+        assert advantage is not None
+        self.assertTrue(th.allclose(delta, th.full_like(delta, -2.5)))
+        self.assertTrue(th.allclose(q_values[:, 0], th.full((3,), 1.25)))
+        self.assertTrue(th.allclose(q_values[:, 1], th.full((3,), -0.75)))
+        self.assertTrue(th.allclose(advantage, th.full((3,), -2.0)))
+        self.assertTrue(th.allclose(credit.q_hold, th.full((3,), 1.25)))
+        self.assertTrue(th.allclose(credit.q_fire_once, th.full((3,), -0.75)))
+        self.assertTrue(th.allclose(credit.event_advantage, th.full((3,), -2.0)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertAlmostEqual(float(stats["a7/event_credit_q_hold_mean"]), 1.25, places=6)
+        self.assertAlmostEqual(float(stats["a7/event_credit_q_fire_mean"]), -0.75, places=6)
+        self.assertAlmostEqual(float(stats["a7/event_credit_advantage_mean"]), -2.0, places=6)
+
+    def test_hybrid_event_credit_head_state_dict_load_smoke(self) -> None:
+        source = self._make_air_combat_hybrid_policy(hybrid_event_credit_head_lr_scale=6.0)
+        target = self._make_air_combat_hybrid_policy(hybrid_event_credit_head_lr_scale=6.0)
+        assert source.hybrid_event_credit_head is not None
+        with th.no_grad():
+            source.hybrid_event_credit_head.weight.zero_()
+            source.hybrid_event_credit_head.bias.copy_(th.tensor([0.5, 3.5], dtype=th.float32))
+
+        target.load_state_dict({key: value.detach().clone() for key, value in source.state_dict().items()})
+        obs = self._make_authorized_fire_obs(batch_size=2)
+
+        with th.no_grad():
+            credit = target.get_hybrid_event_credit(obs)
+
+        self.assertIsNotNone(credit)
+        assert credit is not None
+        self.assertTrue(th.allclose(credit.q_hold, th.full((2,), 0.5)))
+        self.assertTrue(th.allclose(credit.q_fire_once, th.full((2,), 3.5)))
+        self.assertTrue(th.allclose(credit.event_advantage, th.full((2,), 3.0)))
 
     def test_route_stats_follow_mission_semantics(self) -> None:
         policy = self._make_policy()
@@ -565,6 +851,28 @@ class HMoEPolicyTests(unittest.TestCase):
             for head in family_subheads:
                 self.assertTrue(th.allclose(head.weight.detach(), th.zeros_like(head.weight)))
                 self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
+
+    def test_initialize_hmoe_from_shared_action_head_zeroes_hybrid_event_credit_head(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(hybrid_event_credit_head_lr_scale=6.0)
+        assert policy.hybrid_event_credit_head is not None
+        with th.no_grad():
+            policy.hybrid_event_credit_head.weight.fill_(1.0)
+            policy.hybrid_event_credit_head.bias.fill_(1.0)
+
+        policy.initialize_hmoe_from_shared_action_head()
+
+        self.assertTrue(
+            th.allclose(
+                policy.hybrid_event_credit_head.weight.detach(),
+                th.zeros_like(policy.hybrid_event_credit_head.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.hybrid_event_credit_head.bias.detach(),
+                th.zeros_like(policy.hybrid_event_credit_head.bias),
+            )
+        )
 
     def test_hmoe_parameter_stats_report_nonzero_fraction(self) -> None:
         policy = self._make_policy()

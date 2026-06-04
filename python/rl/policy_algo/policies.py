@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Optional
 
 import torch as th
@@ -251,6 +252,7 @@ class _HybridActionDistribution:
         action_low,
         action_high,
         fire_event_mask: th.Tensor | None = None,
+        fire_event_q_values: th.Tensor | None = None,
     ) -> None:
         self.layout = layout
         self.params = params
@@ -264,6 +266,7 @@ class _HybridActionDistribution:
         self.ordinary_binary_indices = th.as_tensor(layout.ordinary_binary_indices, dtype=th.long, device=device)
         self.ordinary_binary_positions = th.as_tensor(layout.ordinary_binary_positions, dtype=th.long, device=device)
         self.fire_event_mask = self._normalize_fire_event_mask(fire_event_mask)
+        self._fire_event_q_values = self._normalize_fire_event_q_values(fire_event_q_values)
         self._split_params()
 
     def _split_params(self) -> None:
@@ -297,6 +300,18 @@ class _HybridActionDistribution:
         hold = th.ones_like(fire, dtype=th.bool)
         return th.stack((hold, fire), dim=1)
 
+    def _normalize_fire_event_q_values(self, q_values: th.Tensor | None) -> th.Tensor | None:
+        if q_values is None or self.layout.event_action_index is None:
+            return None
+        values = q_values.to(device=self.params.device, dtype=self.params.dtype)
+        if values.ndim != 2 or int(values.shape[1]) != 2:
+            raise ValueError("fire_event_q_values must have shape [batch, 2]")
+        if int(values.shape[0]) != int(self.params.shape[0]):
+            raise ValueError(
+                f"fire_event_q_values batch {int(values.shape[0])} does not match params batch {int(self.params.shape[0])}"
+            )
+        return values
+
     def _fire_event_logits(self) -> th.Tensor | None:
         logits = self.fire_event_unmasked_logits()
         if logits is None:
@@ -325,6 +340,15 @@ class _HybridActionDistribution:
         if delta is None:
             return None
         return th.sigmoid(delta)
+
+    def fire_event_q_values(self) -> th.Tensor | None:
+        return self._fire_event_q_values
+
+    def fire_event_advantage(self) -> th.Tensor | None:
+        values = self.fire_event_q_values()
+        if values is None:
+            return None
+        return values[:, 1] - values[:, 0]
 
     def _continuous_bounds(self) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
         low = self.action_low[self.continuous_indices].reshape(1, -1)
@@ -423,6 +447,13 @@ class _HybridActionDistribution:
         return total
 
 
+@dataclass(frozen=True)
+class _HybridEventCreditOutput:
+    q_hold: th.Tensor
+    q_fire_once: th.Tensor
+    event_advantage: th.Tensor
+
+
 class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     """
     Shared-backbone execution policy with explicit hierarchical semantic routing.
@@ -447,6 +478,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hmoe_residual_start_factor: float = 0.0,
         hybrid_action_spec: Any | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
+        hybrid_event_credit_head_lr_scale: float = 0.0,
         **kwargs: Any,
     ):
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
@@ -455,12 +487,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_warmup_fraction = float(min(max(0.0, hmoe_residual_warmup_fraction), 1.0))
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hybrid_event_head_lr_scale = float(max(0.0, hybrid_event_head_lr_scale))
+        self._hybrid_event_credit_head_lr_scale = float(max(0.0, hybrid_event_credit_head_lr_scale))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
         self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
         self._hybrid_action_spec_config = hybrid_action_spec
         self._hybrid_action_layout: _HybridActionLayout | None = None
         self.hybrid_event_head: nn.Linear | None = None
+        self.hybrid_event_credit_head: nn.Linear | None = None
         if hybrid_action_spec is not None:
             kwargs["squash_output"] = False
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
@@ -485,6 +519,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 2).to(self.device)
                 nn.init.zeros_(self.hybrid_event_head.weight)
                 nn.init.zeros_(self.hybrid_event_head.bias)
+            if self._hybrid_event_credit_head_lr_scale > 0.0:
+                self.hybrid_event_credit_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 2).to(self.device)
+                nn.init.zeros_(self.hybrid_event_credit_head.weight)
+                nn.init.zeros_(self.hybrid_event_credit_head.bias)
         self.hmoe_head_bank = _HMoEHeadBank(
             latent_dim=int(self.mlp_extractor.latent_dim_pi),
             action_dim=hmoe_output_dim,
@@ -505,6 +543,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hmoe_residual_start_factor"] = float(self._hmoe_residual_start_factor)
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+        data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
         return data
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
@@ -535,6 +574,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_head.weight.zero_()
                 if getattr(self.hybrid_event_head, "bias", None) is not None:
                     self.hybrid_event_head.bias.zero_()
+            if self.hybrid_event_credit_head is not None:
+                self.hybrid_event_credit_head.weight.zero_()
+                if getattr(self.hybrid_event_credit_head, "bias", None) is not None:
+                    self.hybrid_event_credit_head.bias.zero_()
 
     def get_hmoe_parameter_stats(self) -> dict[str, float]:
         stats: dict[str, float] = {}
@@ -582,14 +625,33 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             stats["a6/event_head_params/weight_norm"] = float(weight.norm().item())
             stats["a6/event_head_params/bias_norm"] = float(bias.norm().item())
             stats["a6/event_head_params/max_abs"] = float(max(weight.abs().max().item(), bias.abs().max().item()))
+        if self.hybrid_event_credit_head is None:
+            stats["a7/event_credit_head_params/enabled"] = 0.0
+            stats["a7/event_credit_head_params/lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
+        else:
+            stats["a7/event_credit_head_params/enabled"] = 1.0
+            stats["a7/event_credit_head_params/lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
+            weight = self.hybrid_event_credit_head.weight.detach()
+            bias = self.hybrid_event_credit_head.bias.detach()
+            stats["a7/event_credit_head_params/weight_norm"] = float(weight.norm().item())
+            stats["a7/event_credit_head_params/bias_norm"] = float(bias.norm().item())
+            stats["a7/event_credit_head_params/max_abs"] = float(
+                max(weight.abs().max().item(), bias.abs().max().item())
+            )
         return stats
 
     def _build_optimizer(self):
         hmoe_params = list(self.hmoe_head_bank.parameters())
         event_params = list(self.hybrid_event_head.parameters()) if self.hybrid_event_head is not None else []
+        credit_params = (
+            list(self.hybrid_event_credit_head.parameters())
+            if self.hybrid_event_credit_head is not None
+            else []
+        )
         hmoe_param_ids = {id(param) for param in hmoe_params}
         event_param_ids = {id(param) for param in event_params}
-        routed_param_ids = hmoe_param_ids | event_param_ids
+        credit_param_ids = {id(param) for param in credit_params}
+        routed_param_ids = hmoe_param_ids | event_param_ids | credit_param_ids
         shared_params = [param for param in self.parameters() if id(param) not in routed_param_ids]
         param_groups: list[dict[str, Any]] = [
             {
@@ -604,6 +666,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                     "params": event_params,
                     "lr_scale": float(self._hybrid_event_head_lr_scale),
                     "name": "hybrid_event_head",
+                }
+            )
+        if credit_params:
+            param_groups.append(
+                {
+                    "params": credit_params,
+                    "lr_scale": float(self._hybrid_event_credit_head_lr_scale),
+                    "name": "hybrid_event_credit_head",
                 }
             )
         if hmoe_params:
@@ -733,6 +803,47 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         )
         return adjusted
 
+    def _compute_hybrid_event_credit_values(self, latent_pi: th.Tensor) -> th.Tensor | None:
+        layout = self._hybrid_action_layout
+        credit_head = self.hybrid_event_credit_head
+        if layout is None or credit_head is None or layout.event_action_index is None:
+            self._last_hmoe_route_stats["a7/event_credit_head_enabled"] = 0.0
+            self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(
+                self._hybrid_event_credit_head_lr_scale
+            )
+            return None
+
+        values = credit_head(latent_pi)
+        values_detached = values.detach()
+        advantage = values_detached[:, 1] - values_detached[:, 0]
+        self._last_hmoe_route_stats["a7/event_credit_head_enabled"] = 1.0
+        self._last_hmoe_route_stats["a7/event_credit_head_lr_scale"] = float(
+            self._hybrid_event_credit_head_lr_scale
+        )
+        self._last_hmoe_route_stats["a7/event_credit_q_hold_mean"] = float(
+            values_detached[:, 0].mean().item()
+        )
+        self._last_hmoe_route_stats["a7/event_credit_q_fire_mean"] = float(
+            values_detached[:, 1].mean().item()
+        )
+        self._last_hmoe_route_stats["a7/event_credit_advantage_mean"] = float(advantage.mean().item())
+        self._last_hmoe_route_stats["a7/event_credit_advantage_abs_mean"] = float(advantage.abs().mean().item())
+        return values
+
+    def get_hybrid_event_credit(self, obs) -> _HybridEventCreditOutput | None:
+        distribution = self.get_distribution(obs)
+        values_getter = getattr(distribution, "fire_event_q_values", None)
+        if not callable(values_getter):
+            return None
+        values = values_getter()
+        if values is None:
+            return None
+        return _HybridEventCreditOutput(
+            q_hold=values[:, 0],
+            q_fire_once=values[:, 1],
+            event_advantage=values[:, 1] - values[:, 0],
+        )
+
     def get_distribution(self, obs):
         features = super().extract_features(obs, self.pi_features_extractor)
         latent_pi = self.mlp_extractor.forward_actor(features)
@@ -762,6 +873,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
 
         if self._hybrid_action_layout is not None:
             mean_actions = self._apply_hybrid_event_head(mean_actions, latent_pi)
+            fire_event_q_values = self._compute_hybrid_event_credit_values(latent_pi)
             fire_event_mask = _hybrid_fire_event_mask_from_obs(
                 obs,
                 batch_size=int(mean_actions.shape[0]),
@@ -774,6 +886,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 action_low=self.action_space.low,
                 action_high=self.action_space.high,
                 fire_event_mask=fire_event_mask,
+                fire_event_q_values=fire_event_q_values,
             )
         if isinstance(self.action_dist, SquashedDiagGaussianDistribution):
             return self.action_dist.proba_distribution(mean_actions, self.log_std)

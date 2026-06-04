@@ -2,8 +2,8 @@
 
 状态：`2026-06-04` 首轮、deadline waves、event-head update audit、event-head optimization
 learned evidence、launch-window contract implementation 与 launch-window short learned
-evidence、root-cause re-scope 已完成。A6 继续 held；L tuning 暂停，等待
-counterfactual event-time objective contract。
+evidence、root-cause re-scope 已完成。A6 继续 held；L tuning 暂停，counterfactual
+event-time objective 已转交 A7。
 
 父级：[README.zh.md](README.zh.md)。任务簇计划：
 [a6_event_value_first_event_timing_task_clusters_20260603.zh.md](a6_event_value_first_event_timing_task_clusters_20260603.zh.md)。
@@ -28,9 +28,9 @@ counterfactual event-time objective contract。
 
 ## Active Queue
 
-| Cluster | Dispatch status | Owner guidance | Write scope | Guard |
-| --- | --- | --- | --- | --- |
-| `A6-EVT-O Counterfactual Event-Time Objective` | planned next | main thread 或 future worker；先做 design。 | A6 objective/contract docs first；contract review 后才允许 code/config。 | 不先恢复 L 训练；保持 A3/A5 masks 权威，M2 held。 |
+当前没有活跃的 A6 implementation queue。后续通过
+[A7 Event-Value / Advantage Credit Head](../a7_event_value_advantage_credit_head/README.zh.md)
+继续推进。
 
 ## Completed Blockers
 
@@ -45,7 +45,7 @@ counterfactual event-time objective contract。
 | `A6-EVT-L Launch-Window Timing Contract` | 曾需要 K evidence。 | 已由 K unblock，并作为 implementation evidence 完成。 |
 | `A6-EVT-M Launch-Window Short Learned Evidence` | 曾需要 L implementation tests。 | 已由 L focused tests unblock，并作为 held evidence 完成。 |
 | `A6-EVT-N Root-Cause Re-scope` | 需要 M evidence。 | 已由 M held outcome unblock 并完成；结果是暂停 L tuning。 |
-| `A6-EVT-O Counterfactual Event-Time Objective` | 需要 N root-cause analysis。 | 已由 N unblock；可进入 design-first contract 工作。 |
+| `A6-EVT-O Counterfactual Event-Time Objective` | 曾需要 N root-cause analysis。 | 已转交 A7 objective-contract 工作。 |
 
 ## Dispatch Packet Template
 
@@ -65,6 +65,6 @@ return packet:
 - 若使用 subagents，每个 worker 必须映射到一个 cluster，并遵从
   [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.zh.md)。
 - `experiments_tmp` 不入 staging。
-- `A6-EVT-O` 定义 counterfactual objective 与 cumulative hazard diagnostics 前，不恢复 L
+- A7 定义并验证 counterfactual objective 与 cumulative hazard diagnostics 前，不恢复 L
   training 或 L weight search。
 - M2 保持 held，除非后续 A6 evidence 显式触发 release vote。

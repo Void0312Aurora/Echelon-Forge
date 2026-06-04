@@ -230,10 +230,12 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: create an `A6-EVT-O Counterfactual Event-Time Objective`
-  contract before any more training. The contract should define counterfactual
-  labels or event-time/value credit, cumulative pre-window hazard diagnostics,
-  and stochastic collection controls.
+- Immediate next step: continue the counterfactual event-time objective as the
+  A7 implementation-contract subproject:
+  [../a7_event_value_advantage_credit_head/README.md](../a7_event_value_advantage_credit_head/README.md).
+  A7 defines counterfactual labels or event-time/value credit, cumulative
+  pre-window hazard diagnostics, and stochastic collection controls before any
+  more learned-policy probing.
 - Event-value is no longer just a plausible long-term expansion; the root-cause
   note makes counterfactual hold/fire credit the next design requirement.
 - The bounded first-shot curriculum produced early gradient, then correctly

@@ -95,8 +95,9 @@ A6 must remain held or be re-scoped if:
 - launch-window held evidence is presented as A6 acceptance.
 - L range/age bootstrap values are presented as doctrine, missile authority, or
   final tactical maturity.
-- further L training is started before `A6-EVT-O` defines counterfactual target
-  source, stochastic collection handling, and cumulative hazard diagnostics.
+- further L training is started before A7 defines and validates the
+  counterfactual target source, stochastic collection handling, and cumulative
+  hazard diagnostics.
 
 ## Validation Commands
 

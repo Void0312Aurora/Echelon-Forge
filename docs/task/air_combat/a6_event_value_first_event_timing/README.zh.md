@@ -206,9 +206,11 @@ Held output：
 
 ## 残余与下一步
 
-- 立即下一步：在任何进一步训练前创建 `A6-EVT-O Counterfactual Event-Time Objective`
-  contract。该 contract 应定义 counterfactual labels 或 event-time/value credit、累计
-  pre-window hazard diagnostics 与 stochastic collection controls。
+- 立即下一步：将 counterfactual event-time objective 作为 A7 implementation-contract
+  子项目继续推进：
+  [../a7_event_value_advantage_credit_head/README.zh.md](../a7_event_value_advantage_credit_head/README.zh.md)。
+  A7 在任何进一步 learned-policy probing 前定义 counterfactual labels 或
+  event-time/value credit、累计 pre-window hazard diagnostics 与 stochastic collection controls。
 - Event-value 不再只是可能的长期扩展方向；根因记录把 counterfactual hold/fire credit 提升为
   下一设计要求。
 - 有边界的 first-shot curriculum 产生了早期 gradient，并按要求衰减为零；但单独使用未推动

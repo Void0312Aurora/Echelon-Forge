@@ -1,0 +1,48 @@
+# A7 Dispatch Queue
+
+Status: `2026-06-04` A7 is open. The objective contract is selected, and
+`A7-EVC-C Policy Head Prototype` has passed. The active queue now moves to PPO
+auxiliary-credit integration.
+
+Parent: [README.md](README.md). Task clusters:
+[a7_event_value_advantage_credit_head_task_clusters_20260604.md](a7_event_value_advantage_credit_head_task_clusters_20260604.md).
+
+## Active Queue
+
+| Cluster | Dispatch status | Owner guidance | Write scope | Guard |
+| --- | --- | --- | --- | --- |
+| `A7-EVC-D PPO Auxiliary Credit` | planned next | implementation worker; train the A7 head and connect advantage credit to event-logit updates. | `python/rl/policy_algo/**`, focused rollout/loss tests. | Do not weaken A3/A5 masks; no learned-policy run until focused tests pass. |
+
+## Completed Dispatches
+
+| Cluster | Result | Evidence | Residual |
+| --- | --- | --- | --- |
+| `A7-EVC-C Policy Head Prototype` | pass | `hybrid_event_credit_head_lr_scale`, `get_hybrid_event_credit()`, distribution-side `fire_event_q_values()` / `fire_event_advantage()`, default-disabled and A6-coexistence tests. | Head is exposed only; PPO loss coupling remains `A7-EVC-D`. |
+
+## Still Blocked
+
+| Cluster | Blocker | Unlock condition |
+| --- | --- | --- |
+| `A7-EVC-E Config And Diagnostics` | Needs loss/head metrics. | `A7-EVC-D` passes focused tests. |
+| `A7-EVC-G Short Learned Evidence` | Needs implementation validation. | `A7-EVC-F` passes. |
+
+## Dispatch Packet Template
+
+```md
+cluster: A7-EVC-*
+scope:
+write set:
+non-goals:
+validation:
+return packet:
+```
+
+## Integration Notes
+
+- Do not create separate conversation sessions for this work.
+- `A7-EVC-A/B` are closed by
+  [the objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.md).
+- `experiments_tmp` stays out of staging.
+- Keep A3/A5 legality authoritative.
+- Keep M2 and HMoE redesign held unless a separate release vote or issue task
+  is created.
