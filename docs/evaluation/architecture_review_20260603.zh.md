@@ -51,15 +51,16 @@
 
 **关键设计决策**：核心行为域使用可替换 strategy interfaces，systems 通过 Flecs singleton 获取 model refs。这是真实的依赖反转，但不是所有行为逻辑都已经完全藏在 strategy interface 后面；若干 systems 和 factory 仍有内联领域逻辑。
 
-### 2. 场景编译管线：compiler-like 架构，但仍有 validation debt
+### 2. 场景编译管线：compiler-like 架构，已具备轻量 shape guard
 
 | 文件 | 证据 |
 |------|------|
-| `python/scenario/compiler/service.py` | `CompiledScenario` frozen dataclass，带有基于 mtime 的新鲜度门控。`ScenarioCompiler` 编排 parse→merge→transform→emit。基于路径的缓存，带有新鲜度门控查找。 |
+| `python/scenario/compiler/service.py` | `CompiledScenario` frozen dataclass，带有基于 mtime 的新鲜度门控。`ScenarioCompiler` 编排 validate→parse/merge→transform→emit。基于路径的缓存，带有新鲜度门控查找。 |
+| `python/scenario/compiler/validation.py` | P1-B 为 compiler 直接消费字段和 prefab imports 增加集中轻量 shape guard。 |
 | `python/scenario/compiler/layout_template.py` | `CompiledWorldLayoutTemplate`、`CompiledZoneLayoutTemplate`、`CompiledSpawnLayoutTemplate`——全部 frozen dataclass IR 片段。 |
 | `python/scenario/runtime/kernel_apply.py` | `ScenarioWorldLayout` → `AppliedScenarioWorld` 物化路径。三种不同的 `instantiate()` 克隆方法用于不同的消费上下文。 |
 
-**数据流**：`JSON → Parse → Merge Imports → Transform/metadata/layout compilation → Frozen IR → Runtime Materialization → Kernel Apply`。compiler-like 结构真实存在，但主 `ScenarioCompiler.compile_*` 路径仍缺少集中式 schema validation pass，并存在默认值吞吐路径。
+**数据流**：`JSON → Shape Validation → Parse → Merge Imports → Transform/metadata/layout compilation → Frozen IR → Runtime Materialization → Kernel Apply`。compiler-like 结构真实存在。P1-B 已修复原评审指出的 compiler-consumed shape guard 缺口，但这仍是轻量内部 guard，不是完整公开 JSON Schema 或领域语义验证器。
 
 ### 3. 世界模型：自包含的 Dreamer-style 实现
 
@@ -126,8 +127,8 @@ python/training/（消费所有内容；不被更低层导入）
 
 | 文件:行 | 问题 | 严重性 |
 |---------|------|--------|
-| `python/training_callbacks.py:26-1290` | `CMODiagnosticsCallback` 是很大的单一 callback class，混合 reward、cooperative、leader、policy distribution、HMoE、action diagnostics 等职责。 | **高** |
-| `python/training_callbacks.py:1012-1288` | `_on_step()` 仍是很长的多域诊断方法。 | **高** |
+| `python/training_callbacks.py:34-1147` | `CMODiagnosticsCallback` 仍是很大的单一 callback class，混合 reward、cooperative、leader、event-window state 与 policy/HMoE/action helper orchestration。P1-D1/D2/D3 已将 policy-distribution、HMoE stat 和 action 计算移到 `python/training/diagnostics.py`，但完整 callback split 仍未完成。 | **高** |
+| `python/training_callbacks.py:932-1146` | `_on_step()` 仍是很长的多域诊断方法。 | **高** |
 | `python/training_callbacks.py` 初始化路径 | `__init__` 与 `_on_training_start` 重置了部分重叠的 cooperative/HMoE 状态。此前称 `_record_event_diagnostics` 也重置相同变量，当前源码不支持该说法。 | 中 |
 | 内联解释密度 | 对关键 RL diagnostics 基础设施而言，本文件局部解释仍偏少；精确注释密度应在重新定义计数规则后再引用。 | 中 |
 
@@ -166,8 +167,8 @@ python/training/（消费所有内容；不被更低层导入）
 
 | 文件:行 | 问题 | 严重性 |
 |---------|------|--------|
-| `python/rl/runtime/world_batch/adapter.py:230-810` | 单个类同时了解 runtime window、layout apply、batch observation、tasking、launch、execution 等路径，并包含多处 `hasattr` 能力探测；但不是每个方法都用 `hasattr(self.facade, "...")` 守卫。 | 中 |
-| `python/rl/runtime/world_batch/adapter.py:233-234` | 死参数：`runtime_compatibility_enabled` 被接受并用 `_ = runtime_compatibility_enabled` 丢弃。 | 低 |
+| `python/rl/runtime/world_batch/adapter.py:230-840` | 单个类仍同时了解 runtime window、layout apply、batch observation、tasking、launch、execution 等路径。P1-C 已把 adapter-owned capability probing 集中到 `RuntimeFacadeAdapterCapabilities`，但类本身仍偏宽。 | 中 |
+| `python/rl/runtime/world_batch/adapter.py:233-270` | 原 dead-parameter 发现已部分关闭：`runtime_compatibility_enabled` 现在进入 capability snapshot。更宽的 adapter split 仍开放。 | 低 |
 
 ### 6. Duck-Typed Loader 能力（无合同）
 
@@ -200,11 +201,11 @@ python/training/（消费所有内容；不被更低层导入）
 
 **关键风险**：诊断回调失败后训练静默继续（`training_callbacks.py` 有 40+ 个宽泛捕获）。当步骤/重置异常发生时，环境 rollout 静默降低数据质量。
 
-### 9. 缺少集中式场景验证
+### 9. P1-B 之后的场景验证残余
 
 | 位置 | 问题 | 严重性 |
 |------|------|--------|
-| `python/scenario/compiler/` | 主 `ScenarioCompiler.compile_*` 路径缺少集中式 scenario-schema validation stage。畸形 shape 可被强制为默认值（例如非 list `entities` → `entity_count=0`）。但 generation request/runtime validators 确实存在，因此不是完全没有 validation。 | 中 |
+| `python/scenario/compiler/` | P1-B 已让非 list `entities`、无效 prefab shape 等 compiler-consumed 错误在 merge/materialization 前 fail closed。剩余债务是领域语义验证，以及未来是否发布 JSON Schema。 | 低 |
 | `python/scenario/compiler/service.py:111` | 通过 `print()` 输出警告到 stdout——不可控、不可过滤。 | 低 |
 | 场景编译器 + 运行时 | 在 `float()` 转换周围有 5+ 个位置的宽泛 `except Exception`——缩小到 `except (ValueError, TypeError)`。 | 低 |
 
@@ -233,14 +234,14 @@ python/training/（消费所有内容；不被更低层导入）
 ### P0（立即处理——高影响、低风险）
 
 1. **提取共享 world-batch env support**——减少单/协作环境之间的重复。将共享观察维度常量提取到可配置 dataclass 或聚焦 helper module 中。
-2. **拆分 `CMODiagnosticsCallback`**——提取 `CooperativeDiagnosticsCallback`、`PolicyDiagnosticsCallback`、`LeaderDiagnosticsCallback`、`HMoEDiagnosticsCallback` 作为可组合的回调。
+2. **继续拆分 `CMODiagnosticsCallback`**——P1-D1/D2/D3 已把 policy-distribution、HMoE 与 action diagnostics 抽到 `python/training/diagnostics.py`；下一批应提取 cooperative、leader、reward 与 event-window diagnostics 作为可组合回调。
 3. **在 `dreamer.py` 中提取共享的 `_compute_bc_loss()`**——消除多种 `actor_input` 分支中重复的 BC loss weighting。
 
 ### P1（本周期内——中等影响）
 
 4. **定义 `typing.Protocol` 接口**替换所有 `hasattr` loader 能力检查。
 5. **拆分 `RuntimeFacadeAdapter`** 为共享 Protocol 后面的版本化实现。
-6. **在转换前添加集中式 `validate_scenario()`** 传递。
+6. **在 P1-B shape check 之外扩展场景验证**；只有兼容策略稳定后再发布完整 JSON Schema。
 7. **从 `kernel_apply.py`/`batch_apply.py` 提取共享的风/偏航随机化**。
 8. **在 `DreamerTrainer` 中添加配置时验证**，拒绝不兼容的 `actor_input` + 训练模式组合。
 

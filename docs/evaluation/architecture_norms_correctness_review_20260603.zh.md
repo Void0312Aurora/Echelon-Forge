@@ -173,7 +173,7 @@ tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_ef
 text.index("if (hp && !structured_air_target) {")
 ```
 
-当前实现已经把 legacy score 写入移到 `default_effects_legacy_detail.inc::apply_legacy_health_damage()`，主 `.cpp` 改为调用 helper。因此这是 stale static guard，而不是本轮样本中的 runtime 行为失败。
+当前实现已经把 legacy score 写入移到 `default_effects_legacy_detail.inc::apply_legacy_health_damage()`，主 `.cpp` 改为调用 helper。因此这是 stale static guard，而不是本轮样本中的 runtime 行为失败。P1-A 后续已把该 guard 改为检查当前 split-file owner 关系，最新聚焦复跑通过。
 
 C++ 原生验证：
 
@@ -356,7 +356,7 @@ ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 
 | 正确性层级 | 当前判断 | 依据 |
 | --- | --- | --- |
-| 架构边界正确性 | 较强，但有 stale guard | `129 passed, 1 failed`；唯一失败是旧文本锚点 |
+| 架构边界正确性 | 较强；P1-A 已修复原 stale guard | 原样本为 `129 passed, 1 failed`；后续 P1-A 聚焦复跑通过 |
 | 构建/原生 smoke 正确性 | 当前样本通过 | `ef_test_all` 通过 |
 | Facade/adapter 合同正确性 | 样本范围内通过 | facade、world setup、tasking bridge 测试通过 |
 | Mission command/domain slice 正确性 | 样本范围内通过 | split、naval fields roundtrip、naval station、ground schema 测试通过 |
@@ -405,7 +405,7 @@ ctest --test-dir build-workshop -R ef_test_all --output-on-failure
    CTest smoke 有效，但不能覆盖复杂仿真行为。
 
 4. **静态架构测试有脆弱锚点。**
-   stale guard 说明文本型守卫需要升级为更稳定的符号/禁止调用/文件归属检查。
+   P1-A 已修复原 stale guard，但文本型守卫仍应继续升级为更稳定的符号/禁止调用/文件归属检查。
 
 5. **发布治理不完整。**
    lockfile、版本同步、CHANGELOG、release checklist 仍有明确缺口。
@@ -426,13 +426,15 @@ ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 
 先覆盖分层、facade、contracts、compatibility、domain ownership、GPU truth boundary、release governance。
 
-### R2. 修复 stale architecture guard
+### R2. 继续减少脆弱 architecture guard 锚点
 
-把 `test_a2_structured_air_effects_do_not_write_rl_score_authority` 改为：
+P1-A 已把 `test_a2_structured_air_effects_do_not_write_rl_score_authority` 改为：
 
 - legacy score authority 检查 `default_effects_legacy_detail.inc::apply_legacy_health_damage()`。
 - structured air consequence 检查 `default_effects_air_platform_resolution_detail.inc::resolve_default_effects_air_platform_consequences()` 不含 `score->`。
 - 主 `.cpp` 只检查 structured/legacy 路由关系，而不依赖旧 block 形状。
+
+后续工作应把这套做法推广到其它文本型 architecture guard。
 
 ### R3. 为 `SimulationKernel` 制定 public surface 缩窄路线
 

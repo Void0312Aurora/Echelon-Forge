@@ -66,6 +66,63 @@ class RuntimeWindowEvidence:
     uses_compat_fallback: bool = False
 
 
+@dataclass(frozen=True)
+class RuntimeFacadeAdapterCapabilities:
+    """Resolved adapter capability snapshot for the current facade binding."""
+
+    runtime_compatibility_enabled: bool
+    has_runtime_window_api: bool
+    has_world_time_step: bool
+    has_batch_world_setup_result: bool
+    has_observation_batch_request: bool
+    has_export_observation_packet: bool
+    has_get_task_orders_maintained_batch: bool
+    has_apply_launch_requests_batch: bool
+    has_set_mission_commands_maintained_batch: bool
+    has_set_task_orders_maintained_batch: bool
+    has_set_leader_intents_maintained_batch: bool
+    has_set_pilot_reports_maintained_batch: bool
+
+
+def _resolve_runtime_facade_adapter_capabilities(
+    facade: Any,
+    *,
+    runtime_compatibility_enabled: bool,
+) -> RuntimeFacadeAdapterCapabilities:
+    return RuntimeFacadeAdapterCapabilities(
+        runtime_compatibility_enabled=bool(runtime_compatibility_enabled),
+        has_runtime_window_api=bool(
+            hasattr(facade, "run_wp10_window")
+            and hasattr(ef_py, "RuntimeWindowRequest")
+            and hasattr(ef_py, "RuntimeWindowActionRequest")
+            and hasattr(ef_py, "AgentRole")
+            and hasattr(ef_py, "authorize_maintained_action_intent")
+        ),
+        has_world_time_step=bool(hasattr(facade, "world_time_step")),
+        has_batch_world_setup_result=bool(hasattr(ef_py, "BatchWorldSetupResult")),
+        has_observation_batch_request=bool(hasattr(ef_py, "ObservationBatchRequest")),
+        has_export_observation_packet=bool(hasattr(facade, "export_observation_packet")),
+        has_get_task_orders_maintained_batch=bool(
+            hasattr(facade, "get_task_orders_maintained_batch")
+        ),
+        has_apply_launch_requests_batch=bool(
+            hasattr(facade, "apply_launch_requests_batch")
+        ),
+        has_set_mission_commands_maintained_batch=bool(
+            hasattr(facade, "set_mission_commands_maintained_batch")
+        ),
+        has_set_task_orders_maintained_batch=bool(
+            hasattr(facade, "set_task_orders_maintained_batch")
+        ),
+        has_set_leader_intents_maintained_batch=bool(
+            hasattr(facade, "set_leader_intents_maintained_batch")
+        ),
+        has_set_pilot_reports_maintained_batch=bool(
+            hasattr(facade, "set_pilot_reports_maintained_batch")
+        ),
+    )
+
+
 class _ScenarioLoaderRuntimeProxy:
     """World-indexed loader runtime shim that prefers facade-owned batch surfaces."""
 
@@ -231,15 +288,28 @@ class RuntimeFacadeAdapter:
     """Centralized compatibility adapter for facade-shaped runtime access."""
 
     def __init__(self, world_count: int, *, runtime_compatibility_enabled: bool = False):
-        _ = runtime_compatibility_enabled
+        self.runtime_compatibility_enabled = bool(runtime_compatibility_enabled)
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")
         self.facade = ef_py.RuntimeFacade(self._world_count)
+        self._capabilities_facade_id: int | None = None
+        self._capabilities: RuntimeFacadeAdapterCapabilities | None = None
         self._last_window_evidence: RuntimeWindowEvidence | None = None
         self._world_layouts: dict[int, AppliedScenarioWorld] = {}
         self._world_time_steps: dict[int, float] = {}
         self._next_launch_request_id = 1
+
+    @property
+    def capabilities(self) -> RuntimeFacadeAdapterCapabilities:
+        facade_id = id(self.facade)
+        if self._capabilities is None or self._capabilities_facade_id != facade_id:
+            self._capabilities = _resolve_runtime_facade_adapter_capabilities(
+                self.facade,
+                runtime_compatibility_enabled=self.runtime_compatibility_enabled,
+            )
+            self._capabilities_facade_id = facade_id
+        return self._capabilities
 
     def _batch_target(self):
         return self.facade
@@ -255,13 +325,7 @@ class RuntimeFacadeAdapter:
         self._last_window_evidence = None
 
     def supports_runtime_window_api(self) -> bool:
-        return bool(
-            hasattr(self.facade, "run_wp10_window")
-            and hasattr(ef_py, "RuntimeWindowRequest")
-            and hasattr(ef_py, "RuntimeWindowActionRequest")
-            and hasattr(ef_py, "AgentRole")
-            and hasattr(ef_py, "authorize_maintained_action_intent")
-        )
+        return self.capabilities.has_runtime_window_api
 
     def _runtime_window_authorized_action_role(
         self,
@@ -530,7 +594,7 @@ class RuntimeFacadeAdapter:
     def get_time_step(self, world_index: int) -> float:
         if int(world_index) in self._world_time_steps:
             return float(self._world_time_steps[int(world_index)])
-        if hasattr(self.facade, "world_time_step"):
+        if self.capabilities.has_world_time_step:
             return float(self.facade.world_time_step(int(world_index)))
         raise RuntimeError("RuntimeFacadeAdapter.get_time_step requires maintained facade time-step bindings")
 
@@ -596,7 +660,7 @@ class RuntimeFacadeAdapter:
 
     def apply_world_setup(self, request: Any):
         entity_ids = apply_world_setup_request_maintained(self.facade, request)
-        result = ef_py.BatchWorldSetupResult() if hasattr(ef_py, "BatchWorldSetupResult") else None
+        result = ef_py.BatchWorldSetupResult() if self.capabilities.has_batch_world_setup_result else None
         if result is None:
             return entity_ids
         result.entity_ids = list(entity_ids)
@@ -627,7 +691,7 @@ class RuntimeFacadeAdapter:
         )
 
     def export_observation_packet(self, request_or_refs: Any) -> Any:
-        if hasattr(self.facade, "export_observation_packet"):
+        if self.capabilities.has_export_observation_packet:
             return self.facade.export_observation_packet(request_or_refs)
         raise RuntimeError(
             "RuntimeFacadeAdapter.export_observation_packet requires maintained "
@@ -642,7 +706,7 @@ class RuntimeFacadeAdapter:
         include_instrument_states: bool = True,
     ) -> Any:
         refs_list = list(refs)
-        if hasattr(ef_py, "ObservationBatchRequest"):
+        if self.capabilities.has_observation_batch_request:
             request = ef_py.ObservationBatchRequest()
             request.refs = refs_list
             request.include_agent_observations = bool(include_agent_observations)
@@ -708,7 +772,7 @@ class RuntimeFacadeAdapter:
 
     def get_task_orders_maintained_batch(self, refs: Sequence[Any]) -> list[Any]:
         batch_target = self._batch_target()
-        if hasattr(batch_target, "get_task_orders_maintained_batch"):
+        if self.capabilities.has_get_task_orders_maintained_batch:
             return list(batch_target.get_task_orders_maintained_batch(list(refs)))
         return []
 
@@ -724,7 +788,7 @@ class RuntimeFacadeAdapter:
     def apply_launch_requests_batch(self, requests: Sequence[Any]) -> list[Any]:
         self._last_window_evidence = None
         batch_target = self._batch_target()
-        if not hasattr(batch_target, "apply_launch_requests_batch"):
+        if not self.capabilities.has_apply_launch_requests_batch:
             raise RuntimeError(
                 "RuntimeFacadeAdapter.apply_launch_requests_batch requires maintained "
                 "LaunchRequest batch bindings"
@@ -766,7 +830,7 @@ class RuntimeFacadeAdapter:
 
     def set_mission_commands_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()
-        if hasattr(batch_target, "set_mission_commands_maintained_batch"):
+        if self.capabilities.has_set_mission_commands_maintained_batch:
             batch_target.set_mission_commands_maintained_batch(list(assignments))
             return
         raise RuntimeError(
@@ -778,7 +842,7 @@ class RuntimeFacadeAdapter:
     def set_task_orders_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()
         materialized_assignments = list(assignments)
-        if hasattr(batch_target, "set_task_orders_maintained_batch"):
+        if self.capabilities.has_set_task_orders_maintained_batch:
             batch_target.set_task_orders_maintained_batch(materialized_assignments)
             return
         raise RuntimeError(
@@ -789,7 +853,7 @@ class RuntimeFacadeAdapter:
 
     def set_leader_intents_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()
-        if hasattr(batch_target, "set_leader_intents_maintained_batch"):
+        if self.capabilities.has_set_leader_intents_maintained_batch:
             batch_target.set_leader_intents_maintained_batch(list(assignments))
             return
         raise RuntimeError(
@@ -800,7 +864,7 @@ class RuntimeFacadeAdapter:
 
     def set_pilot_reports_maintained_batch(self, assignments: Sequence[Any]) -> None:
         batch_target = self._batch_target()
-        if hasattr(batch_target, "set_pilot_reports_maintained_batch"):
+        if self.capabilities.has_set_pilot_reports_maintained_batch:
             batch_target.set_pilot_reports_maintained_batch(list(assignments))
             return
         raise RuntimeError(
@@ -810,4 +874,4 @@ class RuntimeFacadeAdapter:
         )
 
 
-__all__ = ["RuntimeFacadeAdapter"]
+__all__ = ["RuntimeFacadeAdapter", "RuntimeFacadeAdapterCapabilities"]

@@ -1,4 +1,4 @@
-from .adapter import RuntimeFacadeAdapter
+from .adapter import RuntimeFacadeAdapter, RuntimeFacadeAdapterCapabilities
 from .common import (
     copy_obs,
     copy_obs_batch_item,
@@ -48,6 +48,7 @@ __all__ = [
     "CooperativeWorldState",
     "ExecutionObservationBatch",
     "RuntimeFacadeAdapter",
+    "RuntimeFacadeAdapterCapabilities",
     "ScriptedCooperativeCoordinationDirector",
     "WorldBatchVecEnvAccess",
     "clone_small_dict",

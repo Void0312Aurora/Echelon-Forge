@@ -5,6 +5,84 @@ from typing import Any
 import numpy as np
 
 
+def action_mode_from_width(width: int) -> str:
+    if int(width) == 12:
+        return "air_combat_hybrid_v1"
+    if int(width) >= 17:
+        return "full"
+    return "other"
+
+
+def combat_action_columns(mode: str) -> dict[str, int] | None:
+    if mode == "air_combat_hybrid_v1":
+        return {
+            "radar_active": 6,
+            "tms_up": 7,
+            "master_arm": 8,
+            "fire_weapon": 9,
+            "fire_gun": 10,
+            "weapon_select": 11,
+        }
+    if mode == "full":
+        return {
+            "radar_active": 9,
+            "tms_up": 12,
+            "master_arm": 13,
+            "fire_weapon": 14,
+            "fire_gun": 15,
+            "weapon_select": 16,
+        }
+    return None
+
+
+def record_action_diagnostics(*, logger: Any, actions: Any) -> None:
+    if actions is None:
+        return
+    try:
+        action_array = np.asarray(actions, dtype=np.float32)
+    except Exception:
+        return
+
+    if action_array.ndim == 2 and action_array.shape[1] >= 4:
+        logger.record("diag/action_pitch_mean", float(action_array[:, 0].mean()))
+        logger.record("diag/action_roll_mean", float(action_array[:, 1].mean()))
+        logger.record("diag/action_rudder_mean", float(action_array[:, 2].mean()))
+        logger.record("diag/action_throttle_mean", float(action_array[:, 3].mean()))
+    mode = action_mode_from_width(int(action_array.shape[1])) if action_array.ndim == 2 else "other"
+    if action_array.ndim == 2 and mode == "full" and action_array.shape[1] >= 9:
+        logger.record(
+            "diag/action_brake_any_frac",
+            float((np.maximum(action_array[:, 7], action_array[:, 8]) > 0.5).mean()),
+        )
+        brake_raw = np.maximum(action_array[:, 7], action_array[:, 8])
+        brake_amt = np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0)
+        logger.record("diag/action_brake_amt_mean", float(brake_amt.mean()))
+    columns = combat_action_columns(mode)
+    if action_array.ndim == 2 and columns is not None and action_array.shape[1] > max(columns.values()):
+        logger.record(
+            "diag/action_radar_active_frac",
+            float((action_array[:, columns["radar_active"]] > 0.5).mean()),
+        )
+        logger.record("diag/action_tms_up_frac", float((action_array[:, columns["tms_up"]] > 0.5).mean()))
+        logger.record(
+            "diag/action_master_arm_frac",
+            float((action_array[:, columns["master_arm"]] > 0.5).mean()),
+        )
+        logger.record(
+            "diag/action_fire_weapon_frac",
+            float((action_array[:, columns["fire_weapon"]] > 0.5).mean()),
+        )
+        logger.record(
+            "diag/action_fire_gun_frac",
+            float((action_array[:, columns["fire_gun"]] > 0.5).mean()),
+        )
+        if mode == "air_combat_hybrid_v1":
+            weapon_select_id = np.clip(np.rint(action_array[:, columns["weapon_select"]]), 0.0, 7.0)
+        else:
+            weapon_select_id = np.floor(np.clip(action_array[:, columns["weapon_select"]], 0.0, 1.0) * 7.0)
+        logger.record("diag/action_weapon_select_id_mean", float(weapon_select_id.mean()))
+
+
 def record_policy_distribution_diagnostics(
     *,
     model: Any,
@@ -128,4 +206,50 @@ def record_policy_distribution_diagnostics(
             pass
 
 
-__all__ = ["record_policy_distribution_diagnostics"]
+def record_hmoe_policy_diagnostics(
+    *,
+    model: Any,
+    logger: Any,
+    num_timesteps: int,
+    next_param_stats_t: int,
+    log_every_timesteps: int,
+) -> int:
+    policy = getattr(model, "policy", None)
+
+    get_route_stats = getattr(policy, "get_hmoe_route_stats", None)
+    if callable(get_route_stats):
+        try:
+            route_stats = get_route_stats()
+        except Exception:
+            route_stats = None
+        if isinstance(route_stats, dict):
+            for key, value in route_stats.items():
+                try:
+                    logger.record(str(key), float(value))
+                except Exception:
+                    continue
+
+    get_param_stats = getattr(policy, "get_hmoe_parameter_stats", None)
+    if not callable(get_param_stats) or int(num_timesteps) < int(next_param_stats_t):
+        return int(next_param_stats_t)
+
+    try:
+        param_stats = get_param_stats()
+    except Exception:
+        param_stats = None
+    if isinstance(param_stats, dict):
+        for key, value in param_stats.items():
+            try:
+                logger.record(str(key), float(value))
+            except Exception:
+                continue
+    return int(num_timesteps) + int(log_every_timesteps)
+
+
+__all__ = [
+    "action_mode_from_width",
+    "combat_action_columns",
+    "record_action_diagnostics",
+    "record_hmoe_policy_diagnostics",
+    "record_policy_distribution_diagnostics",
+]

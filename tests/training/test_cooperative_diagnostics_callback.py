@@ -10,6 +10,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.training_callbacks import CMODiagnosticsCallback  # noqa: E402
+from python.training.diagnostics import record_action_diagnostics, record_hmoe_policy_diagnostics  # noqa: E402
 
 
 class _DummyLogger:
@@ -134,6 +135,35 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["hmoe_params/family/nonzero_frac"], 0.25, places=6)
         self.assertAlmostEqual(logger.records["hmoe_params/sub/nonzero_frac"], 0.5, places=6)
 
+    def test_hmoe_policy_helper_keeps_parameter_stats_throttled(self) -> None:
+        logger = _DummyLogger()
+        model = _DummyModel(logger)
+        model.policy = _DummyPolicy()
+
+        next_t = record_hmoe_policy_diagnostics(
+            model=model,
+            logger=logger,
+            num_timesteps=4,
+            next_param_stats_t=10,
+            log_every_timesteps=5,
+        )
+
+        self.assertEqual(next_t, 10)
+        self.assertAlmostEqual(logger.records["hmoe/fam/nav"], 0.5, places=6)
+        self.assertNotIn("hmoe_params/family/nonzero_frac", logger.records)
+
+        next_t = record_hmoe_policy_diagnostics(
+            model=model,
+            logger=logger,
+            num_timesteps=10,
+            next_param_stats_t=next_t,
+            log_every_timesteps=5,
+        )
+
+        self.assertEqual(next_t, 15)
+        self.assertAlmostEqual(logger.records["hmoe_params/family/nonzero_frac"], 0.25, places=6)
+        self.assertAlmostEqual(logger.records["hmoe_params/sub/nonzero_frac"], 0.5, places=6)
+
     def test_records_hybrid_policy_binary_logits_when_policy_exposes_distribution(self) -> None:
         cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
         logger = _DummyLogger()
@@ -241,6 +271,27 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["diag/action_master_arm_frac"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["diag/action_fire_weapon_frac"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["diag/action_weapon_select_id_mean"], 1.0, places=6)
+
+    def test_action_helper_records_full_action_brake_and_combat_switches(self) -> None:
+        logger = _DummyLogger()
+
+        record_action_diagnostics(
+            logger=logger,
+            actions=[
+                [0.1, -0.2, 0.3, 0.4, 0.0, 0.0, 0.0, 0.75, 0.1, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.5],
+                [-0.1, 0.2, -0.3, 0.6, 0.0, 0.0, 0.0, 0.25, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
+            ],
+        )
+
+        self.assertAlmostEqual(logger.records["diag/action_pitch_mean"], 0.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_throttle_mean"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_brake_any_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_brake_amt_mean"], 0.55, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_radar_active_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_tms_up_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_master_arm_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_fire_gun_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/action_weapon_select_id_mean"], 5.0, places=6)
 
 
 if __name__ == "__main__":

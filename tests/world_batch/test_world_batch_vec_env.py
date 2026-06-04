@@ -1000,6 +1000,35 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch"))
         self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch_compatibility"))
 
+    def test_world_batch_adapter_capability_snapshot_tracks_facade_swaps(self) -> None:
+        adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
+
+        self.assertTrue(adapter.capabilities.runtime_compatibility_enabled)
+
+        class _TaskOrderCapableFacade:
+            def __init__(self) -> None:
+                self.batches: list[list[Any]] = []
+
+            def set_task_orders_maintained_batch(self, assignments):
+                self.batches.append(list(assignments))
+
+        task_capable = _TaskOrderCapableFacade()
+        adapter.facade = task_capable  # type: ignore[assignment]
+
+        self.assertTrue(adapter.capabilities.has_set_task_orders_maintained_batch)
+        adapter.set_task_orders_maintained_batch([])
+        self.assertEqual(task_capable.batches, [[]])
+
+        class _TaskOrderMissingFacade:
+            def set_task_orders_batch(self, assignments):
+                raise AssertionError("legacy task-order fallback must not be probed")
+
+        adapter.facade = _TaskOrderMissingFacade()  # type: ignore[assignment]
+
+        self.assertFalse(adapter.capabilities.has_set_task_orders_maintained_batch)
+        with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
+            adapter.set_task_orders_maintained_batch([])
+
     def test_world_batch_adapter_step_worlds_uses_facade_batch_step_without_raw_runtime_escape(self) -> None:
         adapter = vec_env_module._RuntimeFacadeAdapter(2)
 

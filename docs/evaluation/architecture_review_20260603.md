@@ -51,15 +51,16 @@ Full-project architecture quality assessment. Evaluating whether implementations
 
 **Key Design Decision**: Core behavior domains use replaceable strategy interfaces, and systems fetch model references via Flecs singletons. This is real dependency inversion, but not a complete separation of all behavioral logic: several systems and factories still carry inline domain logic.
 
-### 2. Scenario Compilation Pipeline: Compiler-Like Architecture With Validation Debt
+### 2. Scenario Compilation Pipeline: Compiler-Like Architecture With Shape Guard
 
 | File | Evidence |
 |------|----------|
-| `python/scenario/compiler/service.py` | `CompiledScenario` frozen dataclass with mtime-based freshness gating. `ScenarioCompiler` orchestrates parse→merge→transform→emit. Path-based caching with freshness-gated lookup. |
+| `python/scenario/compiler/service.py` | `CompiledScenario` frozen dataclass with mtime-based freshness gating. `ScenarioCompiler` orchestrates validate→parse/merge→transform→emit. Path-based caching with freshness-gated lookup. |
+| `python/scenario/compiler/validation.py` | P1-B adds a centralized lightweight shape guard for compiler-consumed fields and prefab imports. |
 | `python/scenario/compiler/layout_template.py` | `CompiledWorldLayoutTemplate`, `CompiledZoneLayoutTemplate`, `CompiledSpawnLayoutTemplate` — frozen dataclass IR fragments. |
 | `python/scenario/runtime/kernel_apply.py` | `ScenarioWorldLayout` → `AppliedScenarioWorld` materialization path. Three distinct `instantiate()` clone methods for different consumption contexts. |
 
-**Data Flow**: `JSON → Parse → Merge Imports → Transform/metadata/layout compilation → Frozen IR → Runtime Materialization → Kernel Apply`. The compiler-like structure is real, but the main `ScenarioCompiler.compile_*` path still lacks a centralized schema-validation pass and contains default-coercion paths.
+**Data Flow**: `JSON → Shape Validation → Parse → Merge Imports → Transform/metadata/layout compilation → Frozen IR → Runtime Materialization → Kernel Apply`. The compiler-like structure is real. P1-B closed the specific missing compiler-consumed shape guard noted in the original review, but this remains a lightweight internal guard rather than a full published JSON Schema or domain semantic validator.
 
 ### 3. World Model: Self-Contained Dreamer-Style Implementation
 
@@ -126,8 +127,8 @@ python/training/ (consumes everything; not imported by lower layers)
 
 | File:Line | Issue | Severity |
 |-----------|-------|----------|
-| `python/training_callbacks.py:26-1290` | `CMODiagnosticsCallback` is a very large single callback class with reward, cooperative, leader, policy-distribution, HMoE, and action diagnostics mixed together. | **HIGH** |
-| `python/training_callbacks.py:1012-1288` | `_on_step()` remains a long multi-domain diagnostics method. | **HIGH** |
+| `python/training_callbacks.py:34-1147` | `CMODiagnosticsCallback` remains a very large single callback class with reward, cooperative, leader, event-window state, and policy/HMoE/action helper orchestration mixed together. P1-D1/D2/D3 moved policy-distribution, HMoE stat, and action calculations to `python/training/diagnostics.py`, but the full callback split is still open. | **HIGH** |
+| `python/training_callbacks.py:932-1146` | `_on_step()` remains a long multi-domain diagnostics method. | **HIGH** |
 | `python/training_callbacks.py` initialization paths | `__init__` and `_on_training_start` reset overlapping cooperative/HMoE state. The prior claim that `_record_event_diagnostics` resets the same variables was not supported by the current source. | MEDIUM |
 | Inline explanation density | The file has far less local explanation than expected for critical RL diagnostics infrastructure, although exact comment-density figures should be recomputed before quoting. | MEDIUM |
 
@@ -166,8 +167,8 @@ python/training/ (consumes everything; not imported by lower layers)
 
 | File:Line | Issue | Severity |
 |-----------|-------|----------|
-| `python/rl/runtime/world_batch/adapter.py:230-810` | Single class knows runtime window, layout apply, batch observation, tasking, launch, and execution paths. It contains several `hasattr` capability probes, although not every method is guarded this way. | MEDIUM |
-| `python/rl/runtime/world_batch/adapter.py:233-234` | Dead parameter: `runtime_compatibility_enabled` accepted and discarded with `_ = runtime_compatibility_enabled`. | LOW |
+| `python/rl/runtime/world_batch/adapter.py:230-840` | Single class knows runtime window, layout apply, batch observation, tasking, launch, and execution paths. P1-C centralizes adapter-owned capability probing in `RuntimeFacadeAdapterCapabilities`, but the class still remains broad. | MEDIUM |
+| `python/rl/runtime/world_batch/adapter.py:233-270` | Original dead-parameter finding is partially closed: `runtime_compatibility_enabled` is now recorded in the capability snapshot. A broader adapter split remains open. | LOW |
 
 ### 6. Duck-Typed Loader Capabilities (No Contract)
 
@@ -200,11 +201,11 @@ python/training/ (consumes everything; not imported by lower layers)
 
 **Key Risk**: Training silently continues after diagnostic callback failures (`training_callbacks.py` has 40+ broad catches). Environment rollouts silently degrade data quality when step/reset exceptions occur.
 
-### 9. Missing Centralized Scenario Validation
+### 9. Scenario Validation Residuals After P1-B
 
 | Location | Issue | Severity |
 |----------|-------|----------|
-| `python/scenario/compiler/` | Main `ScenarioCompiler.compile_*` path lacks a centralized scenario-schema validation stage. Malformed shapes can be coerced to defaults (e.g., non-list `entities` → `entity_count=0`). Generation request/runtime validators do exist, so this is not a total absence of validation. | MEDIUM |
+| `python/scenario/compiler/` | P1-B now rejects malformed compiler-consumed shapes such as non-list `entities` and invalid prefab shape before merge/materialization. Remaining validation debt is domain semantics and any future public JSON Schema, not the original missing shape guard. | LOW |
 | `python/scenario/compiler/service.py:111` | Warnings via `print()` to stdout — uncontrollable, unfilterable. | LOW |
 | Scenario compiler + runtime | 5+ locations with broad `except Exception` around `float()` casts — narrow to `(ValueError, TypeError)`. | LOW |
 
@@ -233,14 +234,14 @@ python/training/ (consumes everything; not imported by lower layers)
 ### P0 (Address Now — High Impact, Low Risk)
 
 1. **Extract shared world-batch env support** — reduce duplication between single and cooperative envs. Extract shared observation dimension constants into a configurable dataclass or focused helper module.
-2. **Split `CMODiagnosticsCallback`** — extract `CooperativeDiagnosticsCallback`, `PolicyDiagnosticsCallback`, `LeaderDiagnosticsCallback`, `HMoEDiagnosticsCallback` as composable callbacks.
+2. **Continue splitting `CMODiagnosticsCallback`** — P1-D1/D2/D3 already extracted policy-distribution, HMoE, and action diagnostics into `python/training/diagnostics.py`; next slices should extract cooperative, leader, reward, and event-window diagnostics as composable callbacks.
 3. **Extract shared `_compute_bc_loss()`** in `dreamer.py` — eliminate repeated BC loss weighting across many `actor_input` branches.
 
 ### P1 (This Cycle — Medium Impact)
 
 4. **Define `typing.Protocol` interfaces** replacing all `hasattr` loader capability checks.
 5. **Split `RuntimeFacadeAdapter`** into versioned implementations behind shared Protocol.
-6. **Add centralized `validate_scenario()`** pass before transformation.
+6. **Extend scenario validation beyond P1-B shape checks** if lightweight guards prove insufficient; publish JSON Schema only after compatibility policy is settled.
 7. **Extract shared wind/yaw randomization** from `kernel_apply.py`/`batch_apply.py`.
 8. **Add configuration-time validation** in `DreamerTrainer` rejecting incompatible `actor_input` + training mode combos.
 

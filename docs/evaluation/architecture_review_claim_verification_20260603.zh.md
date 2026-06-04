@@ -47,6 +47,8 @@ ValueError: substring not found
 
 失败原因是测试仍在 `src/models/weapons/default_effects_model.cpp` 查找旧文本锚点 `if (hp && !structured_air_target) {`。当前实现已把 legacy health damage 写入迁移到 `src/models/weapons/detail/default_effects_legacy_detail.inc`，因此这是 stale static guard，而不是本轮样本中的 runtime 行为失败。
 
+**P1 更新（2026-06-04 追踪）：** `engineering_governance_p1` 已修复该 guard，使其检查当前 split-file owner 关系；最新聚焦复跑 `tests/architecture/test_wp22_structural_guardrails.py` 通过。P1-D1/D2/D3 也已把 policy-distribution、HMoE 与 action diagnostics 抽到 `python/training/diagnostics.py`，但完整 `CMODiagnosticsCallback` split 仍未完成。
+
 C++ smoke：
 
 ```bash
@@ -126,15 +128,15 @@ git ls-files -z '*.py' '*.cpp' '*.h' '*.json' | xargs -0 wc -l | awk '$1 > 3000 
 
 | 结构问题 | 当前判断 | 修正口径 |
 | --- | --- | --- |
-| `CMODiagnosticsCallback` 是 god class | **基本成立** | `python/training_callbacks.py` 中该类从第 26 行持续到下一类第 1291 行，`_on_step()` 从第 1012 行开始，确实混合多类诊断。文档中行数已漂移；“`_record_event_diagnostics` 也 reset same variables”不准确。 |
+| `CMODiagnosticsCallback` 是 god class | **基本成立，已部分收敛** | `python/training_callbacks.py` 中该类当前从第 34 行持续到下一类第 1148 行，`_on_step()` 从第 932 行开始。P1-D1/D2/D3 已将 policy-distribution、HMoE 与 action 计算抽到 `python/training/diagnostics.py` 并保留原 wrapper，但 reward、cooperative、leader 与 event-window diagnostics 仍集中在同一 callback。文档中旧行数已漂移；“`_record_event_diagnostics` 也 reset same variables”不准确。 |
 | `WorldBatchVecEnv` 与 cooperative env 分叉 | **基本成立** | 两者均直接继承 `VecEnv`，没有共享 base，常量与 observation space 构建有重复。但当前 `cooperative_world_batch_vec_env.py` 为 1408 行，不是约 2000 行；70-80% 结构同一性没有被本轮量化证明。 |
 | `DefaultUnitFactory::spawn()` 单片实现 | **成立** | `src/models/core/default_unit_factory.h:683` 开始的 `spawn()` 仍跨传感器、声纳、mass/propulsion、missile runtime、damage、datalink、logistics 等职责。文档中“zero unit test coverage”应降级，因为架构测试会直接实例化 `DefaultUnitFactory`，但缺少独立工厂单元测试网的判断仍合理。 |
 | `train_actor_bc()` DRY 问题 | **成立** | `python/world_model/dreamer.py:690` 开始的 `train_actor_bc()` 确实按多种 `actor_input` 重复 pitch/roll/throttle/rudder 加权与 MSE 计算。当前分支数约 15，不是 13。 |
-| `RuntimeFacadeAdapter` god adapter + dead parameter | **基本成立** | `runtime_compatibility_enabled` 被接收后 `_ = runtime_compatibility_enabled` 丢弃；类同时处理 runtime window、layout apply、observation/tasking/execution 等。但“每个 method 都 guard on hasattr(self.facade, ...)”不准确，部分方法直接转发。 |
+| `RuntimeFacadeAdapter` god adapter + dead parameter | **已部分收敛** | P1-C 让 `runtime_compatibility_enabled` 成为 adapter capability snapshot 的显式字段，并把多处 facade/binding probing 收敛到 `RuntimeFacadeAdapterCapabilities`。类仍同时处理 runtime window、layout apply、observation/tasking/execution 等，因此更宽的 adapter split 仍未完成。 |
 | loader duck typing / private method | **成立** | `world_batch_vec_env.py` 与 `cooperative_world_batch_vec_env.py` 仍通过 `hasattr` 和 `_build_step_evaluation_batch_env_state`、`_prepare_step_evaluation`、`_python_owned_mission_observation_mode` 等私有能力探测/调用。`hasattr` 总数需重新按口径计。 |
 | cooperative director 单片 / 无 Protocol | **基本成立** | `ScriptedCooperativeCoordinationDirector` 单类处理 formation、role metadata、takeoff、slot apply 等；`cooperative_world_batch_vec_env.py` 硬编码创建该 director。无 `Protocol` 基类属实。无 target-lock / communication abstraction 属于从源码缺口推出的设计限制，应标为推断。 |
 | Python broad exception / silent fallback | **问题成立，数字不成立** | `except Exception` 确实广泛存在，且 `training_callbacks.py`、world-batch env、scenario compiler/runtime 有 silent fallback。`bare except:` 为 0 是积极事实。但 `raise ... from exc` 不是 2，本轮核对为 22 量级。 |
-| 缺少 centralized scenario validation | **需限定** | 主 `ScenarioCompiler.compile_*` 路径没有统一 scenario schema validation stage，非 list `entities` 会被置空并导致 `entity_count=0`；warnings 用 `print()`。但 generation request/runtime 有专用 validators，因此不是“完全没有 validation”。 |
+| 缺少 centralized scenario validation | **已由 P1-B 部分修复** | 主 `ScenarioCompiler.compile_*` 路径现在有轻量 shape guard，非 list `entities` 和无效 prefab shape 会 fail closed。剩余问题是领域语义验证、公开 JSON Schema 与 warning 输出策略，而不是原来的“缺少 compiler-consumed shape validation”。 |
 
 ## 5. 对其它评估文档的可信度判断
 
@@ -148,7 +150,7 @@ git ls-files -z '*.py' '*.cpp' '*.h' '*.json' | xargs -0 wc -l | awk '$1 > 3000 
 - 大文件仍存在，且 `runtime_facade.cpp` 与 `test_world_batch_vec_env.py` 超过 3000 行。
 - `MissionCommand` 仍是兼容壳。
 - `default_effects_model` 已模块化但仍是大翻译单元。
-- 聚焦架构测试存在 stale guard。
+- 聚焦架构测试曾存在 stale guard；P1-A 已修复，后续应继续减少脆弱文本锚点。
 
 建议保留该文基调，只需后续随工作树漂移更新具体行数。
 

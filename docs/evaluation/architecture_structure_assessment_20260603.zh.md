@@ -158,7 +158,7 @@ gpu
 | `src/content/unit_definition_loader.cpp` | 1686 |
 | `src/models/core/default_unit_factory.h` | 1580 |
 | `src/systems/combat/damage_system.h` | 1525 |
-| `python/training_callbacks.py` | 1373 |
+| `python/training_callbacks.py` | 1346 |
 | `src/runtime/contracts/world_batch_contracts.h` | 1316 |
 | `src/core/engine/world_batch_runtime.cpp` | 1285 |
 
@@ -180,9 +180,9 @@ gpu
 
 但 `.cpp + detail/*.inc` 合计仍然是一个很大的 default effects 翻译单元。它是“已经被模块化的复杂实现”，不是“完全拆分完成的小模型”。
 
-### 3.5 架构测试中存在 stale guard
+### 3.5 架构测试曾存在 stale guard，P1-A 已修复
 
-本轮执行聚焦架构测试：
+原评估轮次执行聚焦架构测试：
 
 ```bash
 source tools/maintenance/cmo_env.sh
@@ -203,6 +203,14 @@ cmo_python -m pytest -q \
 
 ```text
 tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
+
+后续 `engineering_governance_p1` 已将该 guard 改为检查当前 split-file
+ownership：legacy score authority 位于
+`default_effects_legacy_detail.inc::apply_legacy_health_damage()`，structured
+air consequence path 位于
+`default_effects_air_platform_resolution_detail.inc::resolve_default_effects_air_platform_consequences()`，
+并确认 structured block 不含 `score->`。该项现在是已修复历史发现，而不是当前
+architecture test blocker。
 ```
 
 失败原因不是运行时行为直接失败，而是测试仍在 `default_effects_model.cpp` 中寻找旧文本锚点：
@@ -242,8 +250,8 @@ legacy score 写入迁移到了 `src/models/weapons/detail/default_effects_legac
 
 ## 5. 后续建议
 
-1. **修复 stale 架构测试。**
-   将 `test_a2_structured_air_effects_do_not_write_rl_score_authority` 从主 `.cpp` 文本块检查改为同时检查 `default_effects_legacy_detail.inc` 与 `default_effects_air_platform_resolution_detail.inc`，保持原意：legacy path 可以写 `Score`，structured air effects path 不应写 RL score authority。
+1. **持续减少脆弱文本锚点。**
+   P1-A 已修复 `test_a2_structured_air_effects_do_not_write_rl_score_authority`。后续新增或维护 architecture tests 时，应优先检查符号、include、函数签名、禁止调用和 owner 文件位置，而不是依赖整段旧代码形状。
 
 2. **继续缩窄 `SimulationKernel` public surface。**
    已有 command/read surface 是正确方向。下一步可以按 Observation、Weapon、Debug/Diagnostics、Setup 分组继续做非破坏性 surface。
@@ -254,8 +262,8 @@ legacy score 写入迁移到了 `src/models/weapons/detail/default_effects_legac
 4. **把“能运行”和“领域 owner 完成”分开评估。**
    Naval/Ground 尤其需要保持这个口径：测试通过只能证明某个 slice 可用，不等于完整 naval/ground domain runtime 成熟。
 
-5. **保留架构测试，但减少脆弱文本锚点。**
-   对必须用文本扫描的守卫，应优先检查符号、include、函数签名、禁止调用和 owner 文件位置，而不是过度依赖一整段旧代码形状。
+5. **保留架构测试，但持续校准锚点。**
+   对必须用文本扫描的守卫，应优先检查符号、include、函数签名、禁止调用和 owner 文件位置，并在代码拆分后及时更新 guard 证据。
 
 ---
 

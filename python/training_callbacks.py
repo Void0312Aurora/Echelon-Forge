@@ -7,7 +7,13 @@ import os
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 
-from python.training.diagnostics import record_policy_distribution_diagnostics
+from python.training.diagnostics import (
+    action_mode_from_width,
+    combat_action_columns,
+    record_action_diagnostics,
+    record_hmoe_policy_diagnostics,
+    record_policy_distribution_diagnostics,
+)
 
 
 def _safe_mean(values):
@@ -61,39 +67,29 @@ class CMODiagnosticsCallback(BaseCallback):
 
     @staticmethod
     def _action_mode_from_width(width: int) -> str:
-        if int(width) == 12:
-            return "air_combat_hybrid_v1"
-        if int(width) >= 17:
-            return "full"
-        return "other"
+        return action_mode_from_width(width)
 
     @staticmethod
     def _combat_action_columns(mode: str) -> dict[str, int] | None:
-        if mode == "air_combat_hybrid_v1":
-            return {
-                "radar_active": 6,
-                "tms_up": 7,
-                "master_arm": 8,
-                "fire_weapon": 9,
-                "fire_gun": 10,
-                "weapon_select": 11,
-            }
-        if mode == "full":
-            return {
-                "radar_active": 9,
-                "tms_up": 12,
-                "master_arm": 13,
-                "fire_weapon": 14,
-                "fire_gun": 15,
-                "weapon_select": 16,
-            }
-        return None
+        return combat_action_columns(mode)
+
+    def _record_action_diagnostics(self, actions: Any) -> None:
+        record_action_diagnostics(logger=self.logger, actions=actions)
 
     def _record_policy_distribution_diagnostics(self, obs: Any) -> None:
         record_policy_distribution_diagnostics(
             model=getattr(self, "model", None),
             logger=self.logger,
             obs=obs,
+        )
+
+    def _record_hmoe_policy_diagnostics(self) -> None:
+        self._hmoe_param_stats_next_log_t = record_hmoe_policy_diagnostics(
+            model=getattr(self, "model", None),
+            logger=self.logger,
+            num_timesteps=int(self.num_timesteps),
+            next_param_stats_t=int(self._hmoe_param_stats_next_log_t),
+            log_every_timesteps=int(self.log_every_timesteps),
         )
 
     def _record_a6_first_event_info_diagnostics(self, infos: Any) -> None:
@@ -1053,43 +1049,7 @@ class CMODiagnosticsCallback(BaseCallback):
                     self.logger.record("diag/ils_loc_abs_mean", float(np.abs(ils[:, 1]).mean()))
 
         actions_for_log = effective_action_arr if effective_action_arr is not None else action_arr
-        if actions_for_log is not None:
-            a = np.asarray(actions_for_log, dtype=np.float32)
-            if a.ndim == 2 and a.shape[1] >= 4:
-                self.logger.record("diag/action_pitch_mean", float(a[:, 0].mean()))
-                self.logger.record("diag/action_roll_mean", float(a[:, 1].mean()))
-                self.logger.record("diag/action_rudder_mean", float(a[:, 2].mean()))
-                self.logger.record("diag/action_throttle_mean", float(a[:, 3].mean()))
-            mode = self._action_mode_from_width(int(a.shape[1])) if a.ndim == 2 else "other"
-            if a.ndim == 2 and mode == "full" and a.shape[1] >= 9:
-                self.logger.record("diag/action_brake_any_frac", float((np.maximum(a[:, 7], a[:, 8]) > 0.5).mean()))
-                brake_raw = np.maximum(a[:, 7], a[:, 8])
-                brake_amt = np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0)
-                self.logger.record("diag/action_brake_amt_mean", float(brake_amt.mean()))
-            columns = self._combat_action_columns(mode)
-            if a.ndim == 2 and columns is not None and a.shape[1] > max(columns.values()):
-                self.logger.record(
-                    "diag/action_radar_active_frac",
-                    float((a[:, columns["radar_active"]] > 0.5).mean()),
-                )
-                self.logger.record("diag/action_tms_up_frac", float((a[:, columns["tms_up"]] > 0.5).mean()))
-                self.logger.record(
-                    "diag/action_master_arm_frac",
-                    float((a[:, columns["master_arm"]] > 0.5).mean()),
-                )
-                self.logger.record(
-                    "diag/action_fire_weapon_frac",
-                    float((a[:, columns["fire_weapon"]] > 0.5).mean()),
-                )
-                self.logger.record(
-                    "diag/action_fire_gun_frac",
-                    float((a[:, columns["fire_gun"]] > 0.5).mean()),
-                )
-                if mode == "air_combat_hybrid_v1":
-                    weapon_select_id = np.clip(np.rint(a[:, columns["weapon_select"]]), 0.0, 7.0)
-                else:
-                    weapon_select_id = np.floor(np.clip(a[:, columns["weapon_select"]], 0.0, 1.0) * 7.0)
-                self.logger.record("diag/action_weapon_select_id_mean", float(weapon_select_id.mean()))
+        self._record_action_diagnostics(actions_for_log)
 
         if isinstance(infos, (list, tuple)) and infos:
             self._record_a5_event_info_diagnostics(infos)
@@ -1180,34 +1140,7 @@ class CMODiagnosticsCallback(BaseCallback):
             self._record_leader_diagnostics(obs, list(infos))
 
         self._record_policy_distribution_diagnostics(obs)
-
-        policy = getattr(self.model, "policy", None)
-        get_route_stats = getattr(policy, "get_hmoe_route_stats", None)
-        if callable(get_route_stats):
-            try:
-                route_stats = get_route_stats()
-            except Exception:
-                route_stats = None
-            if isinstance(route_stats, dict):
-                for key, value in route_stats.items():
-                    try:
-                        self.logger.record(str(key), float(value))
-                    except Exception:
-                        continue
-        get_param_stats = getattr(policy, "get_hmoe_parameter_stats", None)
-        if callable(get_param_stats) and int(self.num_timesteps) >= int(self._hmoe_param_stats_next_log_t):
-            try:
-                param_stats = get_param_stats()
-            except Exception:
-                param_stats = None
-            if isinstance(param_stats, dict):
-                for key, value in param_stats.items():
-                    try:
-                        self.logger.record(str(key), float(value))
-                    except Exception:
-                        continue
-            self._hmoe_param_stats_next_log_t = int(self.num_timesteps) + int(self.log_every_timesteps)
-
+        self._record_hmoe_policy_diagnostics()
         self._record_event_diagnostics()
         return True
 

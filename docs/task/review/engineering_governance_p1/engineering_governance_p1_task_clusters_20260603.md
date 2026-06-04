@@ -1,14 +1,16 @@
 # Engineering Governance P1 Task Clusters
 
-Status: `2026-06-03` finite task-cluster record for the P1 remediation slice; `P1-A` and `P1-B` are local-pass, `P1-C` and `P1-D` remain held.
+Status: `2026-06-04` finite task-cluster record for the P1 remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3` are local-pass, while the broader `P1-D` callback split remains held.
 
 Parent subproject: [Engineering Governance P1](README.md)
 
 ## Boundary Decision
 
 This P1 slice fixes verified, narrow architecture and correctness issues. It
-does not expand into broad runtime adapter or diagnostics callback refactors
-while the worktree contains unrelated concurrent A5/A6 changes.
+does not expand into broad runtime adapter splits or full diagnostics callback
+refactors. The callback work in this slice is limited to policy-distribution,
+HMoE, and action diagnostics helper extractions that preserve the existing
+callback entry points.
 
 ## Finite Task Cluster List
 
@@ -16,9 +18,12 @@ while the worktree contains unrelated concurrent A5/A6 changes.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `P1-A` | main thread | n/a | Repair the stale A2 structured-air architecture guard so it tracks current split-file ownership. | `tests/architecture/test_wp22_structural_guardrails.py` | Runtime behavior changes, weapon damage tuning | `pytest tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` | Focused guard passes and still asserts Score writes stay out of structured-air path. | First; serial | 1 | pass |
 | `P1-B` | main thread | n/a | Add centralized shape validation to the main scenario compiler and prefab merge path. | `python/scenario/compiler/validation.py`, `python/scenario/compiler/service.py`, `python/scenario/compiler/merge.py`, `tests/scenario/test_scenario_compiler.py` | Full JSON Schema, domain semantic validation, loader/runtime rewrite | `pytest tests/scenario/test_scenario_compiler.py -q` | Invalid consumed shapes fail closed; existing compiler tests pass. | After P1-A; serial in this run | 2 | pass |
-| `P1-C` | future worker | n/a | Reduce duplicated runtime facade/world-batch capability probing through a bounded adapter slice. | future runtime adapter files only after packet is written | Callback refactors, training config changes | future focused runtime/world-batch tests | Separate packet exists with exact write set and broad validation. | Depends on P1-A/B closure; not parallel with runtime-heavy edits | 2 | held |
-| `P1-D` | future worker | n/a | Split cooperative diagnostics callback responsibilities after active A5/A6 edits settle. | future callback/test files only after packet is written | RL algorithm changes, A5/A6 behavior tuning | future callback and training diagnostics tests | Separate packet exists and no overlapping callback edits are active. | Held until A5/A6 worktree noise settles | 2 | held |
-| `P1-E` | main thread | n/a | Record task status, evidence, and parent review index links. | `docs/task/review/engineering_governance_p1/**`, `docs/task/review/README*` | Claiming all P1 work complete | Markdown inspection; `git diff --check` | Docs distinguish local-pass P1-A/B from held P1-C/D. | Last; serial | 1 | active |
+| `P1-C` | main thread | n/a | Reduce duplicated RuntimeFacadeAdapter-owned capability probing through a bounded capability snapshot. | `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch/__init__.py`, `tests/world_batch/test_world_batch_vec_env.py` | Callback refactors, training config changes, full adapter split, world-batch env base-class extraction | `pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q` | Capability snapshot exists, refreshes on facade swap, and focused world-batch tests pass. | After P1-A/B; serial due runtime surface | 2 | pass |
+| `P1-D1` | main thread | n/a | Extract policy-distribution diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving the current callback method. | `python/training/diagnostics.py`, `python/training_callbacks.py` | Full callback class decomposition, RL algorithm changes, A5/A6 behavior tuning | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing diagnostics tests pass and the public callback method remains available. | After P1-C; serial due callback touch | 1 | pass |
+| `P1-D2` | main thread | n/a | Extract HMoE route/parameter diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving parameter-stat throttling. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing HMoE stat keys | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback route/param stats still log; helper test proves parameter stats remain throttled. | After P1-D1; serial due callback touch | 1 | pass |
+| `P1-D3` | main thread | n/a | Extract full/hybrid action diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing action schema semantics | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback action stats still log; helper test proves full-action brake and combat switch semantics. | After P1-D2; serial due callback touch | 1 | pass |
+| `P1-D` | future worker | n/a | Split remaining cooperative/leader/reward/event-window diagnostics callback responsibilities. | future callback/test files only after packet is written | RL algorithm changes, A5/A6 behavior tuning, reworking P1-D1/D2/D3 helpers without need | future callback and training diagnostics tests | Separate packet exists and no overlapping callback edits are active. | Held until each responsibility has a bounded packet | 2 | held |
+| `P1-E` | main thread | n/a | Record task status, evidence, and parent review index links. | `docs/task/review/engineering_governance_p1/**`, `docs/task/review/README*` | Claiming all P1 work complete | Markdown inspection; `git diff --check` | Docs distinguish local-pass P1-A/B/C/D1/D2/D3 from held broader P1-D. | Last; serial | 1 | active |
 
 ## Dispatch Rules
 
@@ -26,8 +31,10 @@ while the worktree contains unrelated concurrent A5/A6 changes.
 - Do not create a new conversation thread for this work.
 - Do not allow two workers to edit the same task status table, scenario
   compiler validation module, runtime adapter, or callback file concurrently.
-- P1-C and P1-D require fresh packets before implementation because their write
-  sets are broader than this narrow run.
+- P1-D requires a fresh packet before broader implementation because its write
+  set is broader than the P1-D1/P1-D2/P1-D3 helper extractions in this run.
+- A future full adapter split or `typing.Protocol` loader contract also requires
+  a separate packet; P1-C only centralizes adapter-owned capability resolution.
 - Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
   only when the execution environment can dispatch workers without creating new
   conversation threads.
@@ -48,15 +55,26 @@ integration notes:
 ```bash
 ./.venv/bin/python -m pytest tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q
 ./.venv/bin/python -m pytest tests/scenario/test_scenario_compiler.py -q
-./.venv/bin/python -m ruff check python/scenario/compiler/validation.py python/scenario/compiler/service.py python/scenario/compiler/merge.py tests/scenario/test_scenario_compiler.py tests/architecture/test_wp22_structural_guardrails.py
-git diff --check -- tests/architecture/test_wp22_structural_guardrails.py python/scenario/compiler/validation.py python/scenario/compiler/service.py python/scenario/compiler/merge.py tests/scenario/test_scenario_compiler.py docs/task/review/engineering_governance_p1 docs/task/review/README.md docs/task/review/README.zh.md
+./.venv/bin/python -m pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q
+./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q
+./.venv/bin/python -m ruff check python/scenario/compiler/validation.py python/scenario/compiler/service.py python/scenario/compiler/merge.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/__init__.py python/training/diagnostics.py python/training_callbacks.py tests/scenario/test_scenario_compiler.py tests/architecture/test_wp22_structural_guardrails.py tests/world_batch/test_world_batch_vec_env.py tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py
+git diff --check -- tests/architecture/test_wp22_structural_guardrails.py python/scenario/compiler/validation.py python/scenario/compiler/service.py python/scenario/compiler/merge.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/__init__.py python/training/diagnostics.py python/training_callbacks.py tests/scenario/test_scenario_compiler.py tests/world_batch/test_world_batch_vec_env.py tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py docs/task/review/engineering_governance_p1 docs/task/review/README.md docs/task/review/README.zh.md docs/evaluation/architecture_review_20260603.md docs/evaluation/architecture_review_20260603.zh.md docs/evaluation/architecture_review_claim_verification_20260603.zh.md docs/evaluation/architecture_norms_correctness_review_20260603.zh.md docs/evaluation/architecture_structure_assessment_20260603.zh.md
 ```
 
 ## Acceptance Criteria
 
 - P1-A architecture guard passes locally and asserts current ownership.
 - P1-B scenario compiler tests pass locally and include negative shape cases.
-- The task record does not mark P1-C/P1-D complete.
+- P1-C adapter-owned probing uses a named capability snapshot and focused tests
+  prove it refreshes after facade swaps.
+- P1-D1 policy-distribution diagnostics are extracted behind the existing
+  callback method and focused diagnostics tests pass.
+- P1-D2 HMoE diagnostics are extracted behind the existing callback method and
+  focused diagnostics tests prove parameter-stat throttling.
+- P1-D3 action diagnostics are extracted behind the existing callback method
+  and focused diagnostics tests prove full-action brake/combat switch logging.
+- The task record does not mark broader P1-D or a broader adapter split
+  complete.
 - Residuals are explicit enough for later packets.
 
 ## Validation Evidence
@@ -65,6 +83,8 @@ git diff --check -- tests/architecture/test_wp22_structural_guardrails.py python
 test_a2_structured_air_effects_do_not_write_rl_score_authority: pass
 tests/architecture/test_wp22_structural_guardrails.py: pass, 17 passed
 tests/scenario/test_scenario_compiler.py: pass, 23 passed
+world-batch adapter focused tests: pass, 6 selected passed
+training diagnostics focused tests: pass, 11 passed
 ruff check for touched Python files: pass
 git diff --check for touched P1 files: pass
 scenario/prefab shape scan: pass, 50 JSON files
@@ -75,12 +95,14 @@ scenario/prefab shape scan: pass, 50 JSON files
 Immediate:
 
 - Re-run the focused validation before acceptance if later parallel edits touch
-  architecture guardrails or scenario compiler files.
+  architecture guardrails, scenario compiler files, or world-batch adapter files.
 
 Follow-on:
 
-- P1-C runtime facade/world-batch adapter narrowing.
-- P1-D cooperative diagnostics callback split.
+- P1-D cooperative/leader/reward/event-window diagnostics callback split;
+  P1-D1/D2/D3 only extracted policy distribution, HMoE, and action diagnostics.
+- Full adapter split or `typing.Protocol` loader/runtime contract after the
+  capability snapshot proves stable.
 - Optional scenario JSON Schema publication if lightweight shape validation is
   later insufficient.
 
