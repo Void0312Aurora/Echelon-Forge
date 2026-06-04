@@ -22,6 +22,9 @@
 - G6-E2/E3 接受第一版 native ground platform schema 证据：
   `Ground_Platoon_MVP` 可 load/spawn、报告 `UnitType::Ground`，并通过共享面
   暴露静态 runtime inspection state。
+- native static scenario-loader 切片现在消费这份 schema 证据：
+  `ground_platoon_native_static_occupy_v1` 直接 spawn `Ground_Platoon_MVP`，
+  保留 `UnitType::Ground`，并维持同一个 G1 `TASK_OCCUPY` status-shell 边界。
 - 真实地面机动、地形交互、感知、火力、毁伤和 observation export 仍然延后。
 
 术语说明：项目阶段 `G6 Realism Gradient MVP Scenarios` 不等于域真实性梯度
@@ -47,6 +50,10 @@
   typed-platform/facade 路径；
 - 一个 G6-E2/E3 native schema 切片，使 `Ground_Platoon_MVP` 能作为 native
   `Ground` load/spawn/inspect，但不释放 movement；
+- 一个 native static scenario-loader fixture，证明已接受 schema 可由
+  `scenarios/ground/` 消费，而不再依赖 `Aircraft` compatibility spawn shell；
+- 一个正式的 `src/components/tasking/ground/` 边界，为 `TaskOrder`、
+  `LeaderIntent` 与 `PilotReport` 提供 G0/G1 tasking/status owner slice；
 - RL/runtime 入口现在通过共享 tasking bridge 构造 mission command，而不是 air-only 路径。
 
 当前主要风险不是“链路是否存在”，而是边界纪律：很容易把 G5 smoke 场景误读为真实 ground unit 或 movement 证明。现有证据只支持 Army/ground tasking-chain participation。
@@ -99,6 +106,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   `Ground_Platoon_MVP`，spawn 返回非空 entity，Python identity 为
   `ef_py.UnitType.Ground`，该 entity 不是 air/naval/facility substitute，
   malformed ground schema 会 fail closed。
+- `ground_platoon_native_static_occupy_v1` 现在在 scenario-loader 层面消费这份
+  schema，同时仍停留在 `G1` static status semantics。
 - 这只关闭 schema identity；不释放 `G2` movement。
 - 后续每个新场景都必须声明自己是继续停留在 `G0`，推进到 `G1`，还是进入 `G2+`，并在宣称该层真实性前补齐相应 gate。
 
@@ -146,6 +155,8 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   是第一版 G1 static occupy/status fixture。
 - [ground_platoon_support_relationship_v1.json](../../../scenarios/ground/ground_platoon_support_relationship_v1.json)
   是第一版 G1 support relationship fixture。
+- [ground_platoon_native_static_occupy_v1.json](../../../scenarios/ground/ground_platoon_native_static_occupy_v1.json)
+  是第一版 G1 native-schema static scenario-loader fixture。
 
 合同与测试：
 
@@ -158,6 +169,7 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 - [test_ground_realism_gradient_mvp_scenarios.py](../../../tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py)
 - [test_ground_realism_gradient_guardrails.py](../../../tests/architecture/test_ground_realism_gradient_guardrails.py)
 - [test_ground_native_platform_schema.py](../../../tests/runtime/ground/test_ground_native_platform_schema.py)
+- [test_ground_native_static_scenario.py](../../../tests/runtime/ground/test_ground_native_static_scenario.py)
 
 基础设施缺口：
 
@@ -170,6 +182,13 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
   `type = "Ground"`、`Ground_Platoon_MVP`、`DefaultUnitFactory::spawn()`、
   现有 `SimulationKernel.get_unit_type()` Python evidence，以及 focused
   load/spawn/negative tests。
+- native static scenario-loader 切片通过 `ScenarioLoader` 证明该 schema，
+  但不新增 movement route、terrain model、sensing export、fires、damage 或
+  combat state。
+- `src/components/tasking/ground/` 现在命名第一版正式 ground tasking/status
+  owner slice。它不新增 `MissionCommand`、`PilotAction`、`CommandPacket`、
+  `ObservationPacket`、`TrackPacket`、movement、sensing、fires、damage、
+  terrain 或 combat runtime authority。
 
 ## 域状态
 

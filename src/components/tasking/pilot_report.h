@@ -2,9 +2,10 @@
 
 #include "components/tasking/air/pilot_report_air.h"
 #include "components/tasking/common/pilot_report_core.h"
+#include "components/tasking/ground/pilot_report_ground.h"
 #include "components/tasking/naval/pilot_report_naval.h"
 
-struct PilotReport : PilotReportCore, PilotReportAir, PilotReportNaval {};
+struct PilotReport : PilotReportCore, PilotReportAir, PilotReportNaval, PilotReportGround {};
 
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
@@ -12,7 +13,9 @@ using PilotReportCompatibilityTransportShell = PilotReport;
 inline constexpr bool kPilotReportCompatibilityTransportShell = true;
 
 static_assert(
-    kPilotReportAirOwnedDomainSlice && kPilotReportNavalOwnedDomainSlice,
+    kPilotReportAirOwnedDomainSlice &&
+        kPilotReportNavalOwnedDomainSlice &&
+        kPilotReportGroundOwnedDomainSlice,
     "PilotReport compatibility shells must project to explicit owner slices."
 );
 
@@ -54,9 +57,32 @@ pilot_report_naval_owner_slice(
     return report;
 }
 
+[[nodiscard]] inline const PilotReportGround&
+pilot_report_ground_owner_slice(
+    const PilotReportCompatibilityTransportShell& report
+) noexcept {
+    return report;
+}
+
+[[nodiscard]] inline PilotReportGround&
+pilot_report_ground_owner_slice(
+    PilotReportCompatibilityTransportShell& report
+) noexcept {
+    return report;
+}
+
 [[nodiscard]] inline PilotReportNaval::CommandAuthorityDirective
 pilot_report_naval_command_authority(
     const PilotReportCompatibilityTransportShell& report
 ) noexcept {
     return pilot_report_naval_command_authority(pilot_report_naval_owner_slice(report));
+}
+
+[[nodiscard]] inline PilotReportGround::StaticStatusDirective
+pilot_report_ground_static_status_directive(
+    const PilotReportCompatibilityTransportShell& report
+) noexcept {
+    return pilot_report_ground_static_status_directive(
+        pilot_report_ground_owner_slice(report)
+    );
 }

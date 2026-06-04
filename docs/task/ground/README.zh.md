@@ -64,6 +64,15 @@
   entity，且可稳定检查 position、velocity、heading、instrument 与 health。
   这仅是 schema 证据；route movement、terrain、sensing、fires、damage 和
   combat 仍保持 held。
+- 一个后续 native static scenario-loader 切片现在开始消费这份 schema 证据：
+  `ground_platoon_native_static_occupy_v1` 能通过 ScenarioLoader 直接 spawn
+  `Ground_Platoon_MVP`，保留 `ef_py.UnitType.Ground`，并传播同一个 G1
+  Army/ground `TASK_OCCUPY` status shell。它仍不释放 route movement、terrain、
+  sensing、fires、damage、combat 或 ground RL。
+- `src/components/tasking/ground/` 现在作为第一版正式 ground tasking/status
+  component boundary 存在，只覆盖 G0/G1 owner slice。它不新增 ground command
+  packet、observation packet、movement model、fires、damage、combat 或 RL
+  surface。
 
 ## 当前入口
 
@@ -130,6 +139,10 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
   realism-gradient guardrails
 - 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效，但不重开这些已接受记录
 - 将已接受的 G6-E2/E3 native schema 证据作为后续 route-move release vote 的输入
+- 维护 native static scenario-loader fixture，作为低于 movement-release 线的
+  schema-consumption 证据
+- 维护 `src/components/tasking/ground/` 作为正式 tasking/status 边界，不把它当作
+  command、observation、movement 或 combat runtime 的捷径
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
 - command delivery、observation/export、movement、sensing、terrain、fires、

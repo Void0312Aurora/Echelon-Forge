@@ -72,6 +72,16 @@ without creating a new vertical runtime path.
   entity with stable position, velocity, heading, instrument, and health
   inspection. This is schema evidence only; route movement, terrain, sensing,
   fires, damage, and combat remain held.
+- A follow-on native static scenario-loader slice now consumes that schema
+  evidence through `ground_platoon_native_static_occupy_v1`: ScenarioLoader can
+  spawn `Ground_Platoon_MVP` directly, preserve `ef_py.UnitType.Ground`, and
+  propagate the same G1 Army/ground `TASK_OCCUPY` status shell. It still does
+  not release route movement, terrain, sensing, fires, damage, combat, or
+  ground RL.
+- `src/components/tasking/ground/` now exists as the first formal ground
+  tasking/status component boundary for G0/G1 owner slices. It does not add a
+  ground command packet, observation packet, movement model, fires, damage,
+  combat, or RL surface.
 
 ## Current Entry Points
 
@@ -143,6 +153,10 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
   scenario, without reopening those accepted records
 - use the accepted G6-E2/E3 native schema evidence as input to a later
   route-move release vote
+- maintain the native static scenario-loader fixture as schema-consumption
+  evidence below the movement-release line
+- maintain `src/components/tasking/ground/` as a formal tasking/status boundary,
+  not a shortcut into command, observation, movement, or combat runtime
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
 - keep command delivery, observation/export, movement, sensing, terrain, fires,
   effects, damage, and broad `MissionCommand` growth held

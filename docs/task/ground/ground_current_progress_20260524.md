@@ -28,6 +28,10 @@ Current positioning:
 - G6-E2/E3 accept the first native ground platform schema evidence:
   `Ground_Platoon_MVP` loads, spawns, reports `UnitType::Ground`, and exposes
   static runtime inspection state through shared surfaces.
+- A native static scenario-loader slice now consumes that schema evidence:
+  `ground_platoon_native_static_occupy_v1` spawns `Ground_Platoon_MVP` directly,
+  preserves `UnitType::Ground`, and keeps the same G1 `TASK_OCCUPY`
+  status-shell boundary.
 - Real ground movement, terrain interaction, sensing, fires, damage, and
   observation export are still deferred.
 
@@ -58,6 +62,12 @@ What is already real:
   first schema slice;
 - a G6-E2/E3 native schema slice that makes `Ground_Platoon_MVP` loadable,
   spawnable, and inspectable as native `Ground` without releasing movement;
+- a native static scenario-loader fixture that proves the accepted schema can
+  be consumed by `scenarios/ground/` without falling back to an `Aircraft`
+  compatibility spawn shell;
+- a formal `src/components/tasking/ground/` boundary with G0/G1
+  tasking/status owner slices for `TaskOrder`, `LeaderIntent`, and
+  `PilotReport`;
 - RL/runtime entry points now route mission-command construction through the
   shared tasking bridge rather than an air-only path.
 
@@ -126,6 +136,8 @@ Current ground placement:
   `Ground_Platoon_MVP`, spawn returns a non-null entity, Python identity is
   `ef_py.UnitType.Ground`, the entity is not an air/naval/facility substitute,
   and malformed ground schemas fail closed.
+- `ground_platoon_native_static_occupy_v1` now consumes that schema at the
+  scenario-loader level while staying in `G1` static status semantics.
 - This closes schema identity only; it does not release `G2` movement.
 - Any next scenario must declare whether it remains `G0`, moves to `G1`, or
   enters `G2+`, and it must add the corresponding gates before claiming
@@ -180,6 +192,8 @@ Content and scenarios:
   is the first G1 static occupy/status fixture.
 - [ground_platoon_support_relationship_v1.json](../../../scenarios/ground/ground_platoon_support_relationship_v1.json)
   is the first G1 support relationship fixture.
+- [ground_platoon_native_static_occupy_v1.json](../../../scenarios/ground/ground_platoon_native_static_occupy_v1.json)
+  is the first G1 native-schema static scenario-loader fixture.
 
 Contracts and tests:
 
@@ -192,6 +206,7 @@ Contracts and tests:
 - [test_ground_realism_gradient_mvp_scenarios.py](../../../tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py)
 - [test_ground_realism_gradient_guardrails.py](../../../tests/architecture/test_ground_realism_gradient_guardrails.py)
 - [test_ground_native_platform_schema.py](../../../tests/runtime/ground/test_ground_native_platform_schema.py)
+- [test_ground_native_static_scenario.py](../../../tests/runtime/ground/test_ground_native_static_scenario.py)
 
 Infrastructure gaps:
 
@@ -204,6 +219,13 @@ Infrastructure gaps:
   `UnitType::Ground`, `type = "Ground"`, `Ground_Platoon_MVP`,
   `DefaultUnitFactory::spawn()`, existing `SimulationKernel.get_unit_type()`
   Python evidence, and focused load/spawn/negative tests.
+- The native static scenario-loader slice proves that schema through
+  `ScenarioLoader`, but does not add a movement route, terrain model, sensing
+  export, fires, damage, or combat state.
+- `src/components/tasking/ground/` now names the first formal ground
+  tasking/status owner slice. It does not add `MissionCommand`, `PilotAction`,
+  `CommandPacket`, `ObservationPacket`, `TrackPacket`, movement, sensing, fires,
+  damage, terrain, or combat runtime authority.
 
 ## Domain State
 

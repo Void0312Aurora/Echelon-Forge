@@ -16,21 +16,40 @@ def _ground_scenario_docs() -> list[tuple[Path, dict]]:
     return docs
 
 
-def test_ground_scenarios_keep_current_spawn_shell_explicitly_compatibility_only() -> None:
+def _ground_spawn_surface(scenario: dict) -> str:
+    boundary = scenario.get("mvp_boundary", {})
+    return str(boundary.get("spawn_surface", "compatibility_shell")).strip() or "compatibility_shell"
+
+
+def test_ground_scenarios_declare_spawn_surface_without_private_runtime_path() -> None:
     docs = _ground_scenario_docs()
     assert docs, "ground scenarios should exist before this guard can pass"
 
+    saw_compatibility_shell = False
+    saw_native_schema = False
     for path, scenario in docs:
         boundary = scenario.get("mvp_boundary", {})
-        assert boundary.get("compatibility_spawn_type") == "Aircraft", path.relative_to(REPO_ROOT).as_posix()
+        spawn_surface = _ground_spawn_surface(scenario)
         assert scenario.get("tasking_profile") == "ground", path.relative_to(REPO_ROOT).as_posix()
-        for entity in scenario.get("entities", []):
-            assert entity.get("type") == "Aircraft", path.relative_to(REPO_ROOT).as_posix()
+        if spawn_surface == "compatibility_shell":
+            saw_compatibility_shell = True
+            assert boundary.get("compatibility_spawn_type") == "Aircraft", path.relative_to(REPO_ROOT).as_posix()
+            for entity in scenario.get("entities", []):
+                assert entity.get("type") == "Aircraft", path.relative_to(REPO_ROOT).as_posix()
+        elif spawn_surface == "native_ground_schema":
+            saw_native_schema = True
+            assert boundary.get("runtime_spawn_type") == "Ground_Platoon_MVP", path.relative_to(REPO_ROOT).as_posix()
+            for entity in scenario.get("entities", []):
+                assert entity.get("type") == "Ground_Platoon_MVP", path.relative_to(REPO_ROOT).as_posix()
+        else:
+            raise AssertionError((path.relative_to(REPO_ROOT).as_posix(), spawn_surface))
+
+    assert saw_compatibility_shell, "compatibility-shell ground fixtures should remain as regression guards"
+    assert saw_native_schema, "native ground schema scenario-loader evidence should remain present"
 
 
-def test_ground_g0_g1_scenarios_defer_native_runtime_and_g2_plus_realism() -> None:
-    required_deferred_tokens = (
-        "runtime-loadable ground unit schema",
+def test_ground_g0_g1_scenarios_defer_g2_plus_realism() -> None:
+    g2_plus_deferred_tokens = (
         "ground movement dynamics",
         "terrain",
         "ground sensing",
@@ -51,7 +70,13 @@ def test_ground_g0_g1_scenarios_defer_native_runtime_and_g2_plus_realism() -> No
             )
         ]
         deferred_text = "\n".join(deferred_claims).lower()
-        for token in required_deferred_tokens:
+        if _ground_spawn_surface(scenario) == "compatibility_shell":
+            assert "runtime-loadable ground unit schema" in deferred_text, path.relative_to(REPO_ROOT).as_posix()
+        else:
+            assert "runtime-loadable ground unit schema" not in deferred_text, path.relative_to(REPO_ROOT).as_posix()
+            assert "ground_platoon_mvp" in str(boundary.get("runtime_spawn_type", "")).lower()
+            assert "route following or movement behavior" in deferred_text, path.relative_to(REPO_ROOT).as_posix()
+        for token in g2_plus_deferred_tokens:
             assert token.lower() in deferred_text, (
                 path.relative_to(REPO_ROOT).as_posix(),
                 token,
