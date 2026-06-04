@@ -188,5 +188,15 @@ Hold or re-scope A7 if any of these occur:
 
 `A7-EVC-A` and `A7-EVC-B` are closed by this contract. `A7-EVC-C Policy Head
 Prototype` has supplied the stable `hybrid_event_credit_head` API, and
-`A7-EVC-D PPO Auxiliary Credit` has wired the focused PPO loss. The next
-dispatchable cluster is `A7-EVC-E Config And Diagnostics`.
+`A7-EVC-D PPO Auxiliary Credit` has wired the focused PPO loss. `A7-EVC-E
+Config And Diagnostics` has supplied the active entry and diagnostics surface.
+`A7-EVC-F Focused Validation Sweep` has passed, `A7-EVC-G Short Learned
+Evidence` has since completed as a held outcome, and `A7-EVC-I Target
+Construction And Credit Sign Audit` has identified missing shadow-quality
+target repair as the next implementation blocker. `A7-EVC-J Shadow Quality
+Target Repair` has since fixed the label-censoring path but remains held on
+learned behavior. `A7-EVC-K Legal-State Projection And Coupling Audit` then
+showed the remaining blocker is projection/coupling, and `A7-EVC-L
+Legal-State Projection Contract` selected projected legal-open credit as the
+next mechanism. The current dispatchable cluster is `A7-EVC-M Projected
+Legal-Open Credit Prototype`.

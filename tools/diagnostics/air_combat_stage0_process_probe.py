@@ -116,6 +116,24 @@ def _stable_json(value: Any) -> str:
         return ""
 
 
+def _a7_launch_window_config_from_train_config(train_config: dict[str, Any] | None) -> dict[str, float]:
+    hyper = train_config.get("hyperparameters", {}) if isinstance(train_config, dict) else {}
+    if not isinstance(hyper, dict):
+        hyper = {}
+    return {
+        "min_range_m": _finite_float(hyper.get("a6_first_event_launch_window_min_range_m", 0.0), 0.0),
+        "max_range_m": _finite_float(hyper.get("a6_first_event_launch_window_max_range_m", 0.0), 0.0),
+        "max_track_age_s": _finite_float(
+            hyper.get("a6_first_event_launch_window_max_track_age_s", float("inf")),
+            float("inf"),
+        ),
+        "min_window_age_steps": _finite_float(
+            hyper.get("a6_first_event_launch_window_min_window_age_steps", 1),
+            1.0,
+        ),
+    }
+
+
 def _unit_id_set(sim) -> set[int]:
     out: set[int] = set()
     try:
@@ -419,6 +437,21 @@ def _distribution_policy_diagnostics(distribution: Any) -> dict[str, float]:
         except Exception:
             pass
 
+    q_values_fn = getattr(distribution, "fire_event_q_values", None)
+    if callable(q_values_fn):
+        try:
+            q_values_tensor = q_values_fn()
+            if q_values_tensor is not None:
+                q_values = q_values_tensor.detach().to(device="cpu").numpy().astype(np.float64)
+                if q_values.ndim == 1:
+                    q_values = q_values.reshape(1, -1)
+                if q_values.ndim == 2 and q_values.shape[1] >= 2:
+                    out["policy_event_q_hold"] = float(q_values[0, 0])
+                    out["policy_event_q_fire_once"] = float(q_values[0, 1])
+                    out["policy_event_advantage"] = float(q_values[0, 1] - q_values[0, 0])
+        except Exception:
+            pass
+
     categorical_logits = getattr(distribution, "categorical_logits", None)
     if categorical_logits:
         try:
@@ -704,7 +737,10 @@ def _snapshot_row(
     return row
 
 
-def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _summarize_episode(
+    rows: list[dict[str, Any]],
+    launch_window_config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if not rows:
         return {}
     final = rows[-1]
@@ -826,6 +862,71 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
             and int(row.get("fire_mask", 0) or 0) > 0
         )
 
+    launch_window = dict(launch_window_config or {})
+    min_range_m = _finite_float(launch_window.get("min_range_m", 0.0), 0.0)
+    max_range_m = _finite_float(launch_window.get("max_range_m", 0.0), 0.0)
+    max_track_age_s = _finite_float(launch_window.get("max_track_age_s", float("inf")), float("inf"))
+    min_window_age_steps = max(1, int(_finite_float(launch_window.get("min_window_age_steps", 1), 1.0)))
+    legal_window_age_by_step: dict[int, int] = {}
+    legal_window_age = 0
+    for row in rows:
+        step = int(row.get("step", 0))
+        if a6_open_window(row):
+            legal_window_age += 1
+        else:
+            legal_window_age = 0
+        legal_window_age_by_step[step] = int(legal_window_age)
+
+    def a7_quality_window(row: dict[str, Any]) -> bool:
+        if not a6_open_window(row):
+            return False
+        step = int(row.get("step", 0))
+        if legal_window_age_by_step.get(step, 0) < min_window_age_steps:
+            return False
+        range_m = _finite_float(row.get("target_range_track_m", float("nan")))
+        if not math.isfinite(range_m):
+            range_m = _finite_float(row.get("target_range_geom_m", float("nan")))
+        if min_range_m > 0.0 and (not math.isfinite(range_m) or range_m < min_range_m):
+            return False
+        if max_range_m > 0.0 and math.isfinite(max_range_m) and (
+            not math.isfinite(range_m) or range_m > max_range_m
+        ):
+            return False
+        track_age_s = _finite_float(row.get("target_track_age_s", float("nan")))
+        if math.isfinite(max_track_age_s) and max_track_age_s >= 0.0:
+            if not math.isfinite(track_age_s) or track_age_s > max_track_age_s:
+                return False
+        return True
+
+    def a7_prewindow(row: dict[str, Any]) -> bool:
+        return a6_open_window(row) and not a7_quality_window(row)
+
+    def row_sign_frac(key: str, predicate, *, positive: bool) -> float:
+        values = []
+        for row in rows:
+            if int(row.get("step", 0)) <= 0 or not bool(predicate(row)):
+                continue
+            value = float(row.get(key, float("nan")))
+            if math.isfinite(value):
+                values.append(value)
+        if not values:
+            return 0.0
+        arr = np.asarray(values, dtype=np.float64)
+        return float((arr > 0.0).mean() if positive else (arr < 0.0).mean())
+
+    def row_cumulative_prob(key: str, predicate) -> float:
+        values = []
+        for row in rows:
+            if int(row.get("step", 0)) <= 0 or not bool(predicate(row)):
+                continue
+            value = float(row.get(key, float("nan")))
+            if math.isfinite(value):
+                values.append(float(np.clip(value, 0.0, 1.0)))
+        if not values:
+            return 0.0
+        probs = np.asarray(values, dtype=np.float64)
+        return float(1.0 - np.exp(np.log1p(-probs).sum()))
+
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
     )
@@ -926,6 +1027,60 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
             predicate=a6_open_window,
         ),
         "a6_open_window_step_count": int(sum(1 for row in rows if a6_open_window(row))),
+        "a7_prewindow_step_count": int(
+            sum(1 for row in rows if int(row.get("step", 0)) > 0 and a7_prewindow(row))
+        ),
+        "a7_quality_window_step_count": int(
+            sum(1 for row in rows if int(row.get("step", 0)) > 0 and a7_quality_window(row))
+        ),
+        "a7_prewindow_event_fire_prob_cum": row_cumulative_prob(
+            "policy_event_prob_fire_once_unmasked",
+            a7_prewindow,
+        ),
+        "a7_prewindow_event_fire_prob_mean": row_stat(
+            "policy_event_prob_fire_once_unmasked",
+            np.mean,
+            default=0.0,
+            predicate=a7_prewindow,
+        ),
+        "a7_quality_window_event_fire_prob_mean": row_stat(
+            "policy_event_prob_fire_once_unmasked",
+            np.mean,
+            default=0.0,
+            predicate=a7_quality_window,
+        ),
+        "a7_event_credit_advantage_mean_prewindow": row_stat(
+            "policy_event_advantage",
+            np.mean,
+            default=0.0,
+            predicate=a7_prewindow,
+        ),
+        "a7_event_credit_advantage_positive_frac_prewindow": row_sign_frac(
+            "policy_event_advantage",
+            a7_prewindow,
+            positive=True,
+        ),
+        "a7_event_credit_advantage_negative_frac_prewindow": row_sign_frac(
+            "policy_event_advantage",
+            a7_prewindow,
+            positive=False,
+        ),
+        "a7_event_credit_advantage_mean_quality": row_stat(
+            "policy_event_advantage",
+            np.mean,
+            default=0.0,
+            predicate=a7_quality_window,
+        ),
+        "a7_event_credit_advantage_positive_frac_quality": row_sign_frac(
+            "policy_event_advantage",
+            a7_quality_window,
+            positive=True,
+        ),
+        "a7_event_credit_advantage_negative_frac_quality": row_sign_frac(
+            "policy_event_advantage",
+            a7_quality_window,
+            positive=False,
+        ),
         "policy_event_mode_fire_once_count": int(
             sum(
                 1
@@ -1049,6 +1204,7 @@ def _summarize_episode(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     scenario_path = os.path.abspath(args.scenario)
     train_config = load_json_config(os.path.abspath(args.train_config)) if args.train_config else {}
+    launch_window_config = _a7_launch_window_config_from_train_config(train_config)
     model = None
     if args.mode == "model":
         if not args.model:
@@ -1136,7 +1292,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 release_count_so_far += int(row.get("missile_release_delta", 0) or 0)
                 if bool(terminated or truncated):
                     break
-            episode_summaries.append(_summarize_episode(ep_rows))
+            episode_summaries.append(_summarize_episode(ep_rows, launch_window_config=launch_window_config))
     finally:
         try:
             env.close()

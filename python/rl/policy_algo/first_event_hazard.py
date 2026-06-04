@@ -31,6 +31,7 @@ A6_FIRST_EVENT_SOURCE_CENSORED = 3
 A6_FIRST_EVENT_SOURCE_DEADLINE = 4
 A6_FIRST_EVENT_SOURCE_PREWINDOW = 5
 A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED = 6
+A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY = 7
 
 
 @dataclass(frozen=True)
@@ -126,6 +127,8 @@ def build_first_event_hazard_labels(
     censored_survival_weight: float = 0.0,
     deadline_weight: float = 0.0,
     deadline_min_window_age_steps: int = 96,
+    shadow_quality_after_early_accept: bool = False,
+    shadow_quality_positive_weight: float = 0.0,
     device: th.device | str | None = None,
 ) -> FirstEventHazardLabels:
     states = list(engagement_state)
@@ -155,6 +158,8 @@ def build_first_event_hazard_labels(
     launch_min_age = max(1, int(launch_window_min_window_age_steps))
     prewindow_hold_weight = float(max(0.0, launch_window_prewindow_hold_weight))
     early_accept_weight = float(max(0.0, launch_window_early_accept_weight))
+    shadow_quality_enabled = bool(shadow_quality_after_early_accept and launch_gate_enabled)
+    shadow_quality_weight = float(max(0.0, shadow_quality_positive_weight))
     window_counter = 0
 
     ordered_episodes: list[int] = []
@@ -225,6 +230,19 @@ def build_first_event_hazard_labels(
                             else A6_FIRST_EVENT_SOURCE_PREWINDOW
                         )
                         had_accepted[step_idx] = True
+                    if shadow_quality_enabled and shadow_quality_weight > 0.0:
+                        for future_cursor in range(start + tau_pos + 1, len(indices)):
+                            future_idx = indices[future_cursor]
+                            future_age = float(future_cursor - start + 1)
+                            if not (bool(launch_open[future_idx]) and future_age >= float(launch_min_age)):
+                                continue
+                            active[future_idx] = True
+                            target[future_idx] = 1.0
+                            weight[future_idx] = shadow_quality_weight
+                            source[future_idx] = A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY
+                            window_age[future_idx] = future_age
+                            window_id[future_idx] = current_window_id
+                            had_accepted[future_idx] = True
                 episode_has_first_event = True
                 continue
 
@@ -315,7 +333,7 @@ def first_event_hazard_batch_from_rollout_data(rollout_data: Any) -> tuple[th.Te
 
 def first_event_credit_batch_from_rollout_data(
     rollout_data: Any,
-) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor | None] | None:
+) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor | None, th.Tensor | None] | None:
     batch = first_event_hazard_batch_from_rollout_data(rollout_data)
     if batch is None:
         return None
@@ -327,7 +345,14 @@ def first_event_credit_batch_from_rollout_data(
     )
     if window_id is not None and int(window_id.numel()) != int(active.numel()):
         raise ValueError("A7 first-event credit window ids must match label length")
-    return active, target, weight, window_id
+    source = (
+        th.as_tensor(getattr(rollout_data, A6_FIRST_EVENT_FIELD_SOURCE)).reshape(-1).to(dtype=th.long)
+        if hasattr(rollout_data, A6_FIRST_EVENT_FIELD_SOURCE)
+        else None
+    )
+    if source is not None and int(source.numel()) != int(active.numel()):
+        raise ValueError("A7 first-event credit sources must match label length")
+    return active, target, weight, window_id, source
 
 
 def _cap_first_event_credit_window_mass(
@@ -424,6 +449,7 @@ def compute_first_event_credit_loss(
     value_coef: float = 1.0,
     delta_align_coef: float = 0.0,
     delta_align_clip: float = 4.0,
+    delta_align_active: th.Tensor | None = None,
     positive_mass_cap: float = 1.0,
     negative_mass_cap: float = 1.0,
 ) -> FirstEventCreditLoss:
@@ -447,8 +473,15 @@ def compute_first_event_credit_loss(
         if int(delta.numel()) != int(advantage.numel()):
             raise ValueError("A7 event-logit delta must match event credit batch length")
         finite = finite & th.isfinite(delta)
+        if delta_align_active is None:
+            delta_align_mask = th.ones_like(active_mask, dtype=th.bool)
+        else:
+            delta_align_mask = delta_align_active.to(device=advantage.device).reshape(-1).to(dtype=th.bool)
+            if int(delta_align_mask.numel()) != int(advantage.numel()):
+                raise ValueError("A7 delta-align active mask must match event credit batch length")
     else:
         delta = None
+        delta_align_mask = None
 
     effective_weight = th.where(active_mask & finite, th.clamp(weights, min=0.0), th.zeros_like(weights))
     effective_weight = _cap_first_event_credit_window_mass(
@@ -490,8 +523,18 @@ def compute_first_event_credit_loss(
         if clip > 0.0:
             target_delta = th.clamp(target_delta, min=-clip, max=clip)
         delta_per_item = F.smooth_l1_loss(delta, target_delta, reduction="none")
-        unscaled_delta = (delta_per_item * effective_weight).sum() / weight_sum_tensor.clamp_min(1.0e-8)
-        delta_loss = float(delta_align_coef) * unscaled_delta
+        delta_weight = th.where(
+            delta_align_mask & finite,
+            effective_weight,
+            th.zeros_like(effective_weight),
+        )
+        delta_weight_sum = delta_weight.sum()
+        if float(delta_weight_sum.detach().cpu().item()) > 0.0:
+            unscaled_delta = (delta_per_item * delta_weight).sum() / delta_weight_sum.clamp_min(1.0e-8)
+            delta_loss = float(delta_align_coef) * unscaled_delta
+        else:
+            unscaled_delta = zero.detach()
+            delta_loss = zero
     else:
         unscaled_delta = zero.detach()
         delta_loss = zero

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 from collections import deque
+from tempfile import gettempdir
 
 import gymnasium as gym
 import numpy as np
@@ -16,6 +17,7 @@ from gym_envs.universal_env_parts import make_action_space
 from python.rl.policy_algo.first_event_hazard import A6_FIRST_EVENT_FIELD_ACTIVE, A6_FIRST_EVENT_FIELD_TARGET
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.vec_env import DummyVecEnv
@@ -446,6 +448,63 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         model.train()
         after = model.policy.hybrid_event_credit_head.bias.detach().clone()
         self.assertFalse(th.allclose(before, after))
+
+    def test_nonfinite_probe_preserves_a7_event_credit_training_path(self) -> None:
+        env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.5,
+            a7_event_credit_curriculum_coef=0.5,
+            a7_event_credit_curriculum_min_window_age_steps=1,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        probe = NonFiniteTrainingProbe(
+            report_path=f"{gettempdir()}/a7_nonfinite_probe_regression.json",
+            history_limit=32,
+            enabled=True,
+        )
+        probe.install(model)
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        rollout_data = next(model.rollout_buffer.get(model.n_steps))
+        self.assertEqual(int(getattr(rollout_data, A6_FIRST_EVENT_FIELD_ACTIVE).sum().item()), 1)
+        self.assertEqual(int((getattr(rollout_data, A6_FIRST_EVENT_FIELD_TARGET) > 0.5).sum().item()), 1)
+
+        assert model.policy.hybrid_event_credit_head is not None
+        before = model.policy.hybrid_event_credit_head.bias.detach().clone()
+        model.train()
+        after = model.policy.hybrid_event_credit_head.bias.detach().clone()
+
+        self.assertFalse(th.allclose(before, after))
+        self.assertIn("a7/event_credit_loss", model.logger.name_to_value)
+        self.assertGreater(float(model.logger.name_to_value["a7/event_credit_active_count_mean"]), 0.0)
 
 
 if __name__ == "__main__":

@@ -65,6 +65,40 @@ class _DummyHybridPolicy:
         return _DummyHybridDistribution(open_mask=self.open_mask)
 
 
+class _DummyA7HybridDistribution:
+    def __init__(self) -> None:
+        self.binary_logits = th.zeros((2, 5), dtype=th.float32)
+        self.fire_event_mask = th.tensor([[1, 1], [1, 1]], dtype=th.bool)
+        self.categorical_logits = [(11, th.zeros((2, 8), dtype=th.float32))]
+        self._delta = th.tensor([0.2, -0.4], dtype=th.float32)
+        self._q_values = th.tensor([[1.0, -1.0], [-0.5, 1.0]], dtype=th.float32)
+
+    def _fire_event_logits(self):
+        return th.stack([th.zeros_like(self._delta), self._delta], dim=1)
+
+    def fire_event_logit_delta(self):
+        return self._delta
+
+    def fire_event_probability(self):
+        return th.sigmoid(self._delta)
+
+    def fire_event_q_values(self):
+        return self._q_values
+
+    def fire_event_advantage(self):
+        return self._q_values[:, 1] - self._q_values[:, 0]
+
+
+class _DummyA7HybridPolicy:
+    device = "cpu"
+
+    def obs_to_tensor(self, obs):
+        return obs, False
+
+    def get_distribution(self, obs):
+        return _DummyA7HybridDistribution()
+
+
 class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
     def test_records_a6_open_window_event_delta_and_probability(self) -> None:
         cb = CMODiagnosticsCallback(log_every_timesteps=1)
@@ -94,6 +128,35 @@ class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["a6/event_logit_delta_mean_open"], 0.0, places=6)
         self.assertAlmostEqual(logger.records["a6/event_fire_prob_mean_open"], 0.0, places=6)
         self.assertAlmostEqual(logger.records["a6/event_fire_prob_max_open"], 0.0, places=6)
+
+    def test_records_a7_credit_advantage_signs_and_prewindow_cumulative_hazard(self) -> None:
+        cb = CMODiagnosticsCallback(log_every_timesteps=1)
+        logger = _DummyLogger()
+        model = _DummyModel(logger)
+        model.policy = _DummyA7HybridPolicy()
+        cb.model = model
+
+        cb._record_policy_distribution_diagnostics(
+            {
+                "instruments": [[0.0] * 42, [0.0] * 42],
+                "a6_first_event_active": [1.0, 1.0],
+                "a6_first_event_target": [0.0, 1.0],
+                "a6_first_event_source": [5, 4],
+            }
+        )
+
+        prewindow_prob = float(th.sigmoid(th.tensor(0.2)).item())
+        self.assertAlmostEqual(logger.records["a7/evc_q_hold_mean"], 0.25, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_q_fire_mean"], 0.0, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_adv_mean"], -0.25, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_adv_pos_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_adv_neg_frac"], 0.5, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_pre_adv_mean"], -2.0, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_pre_adv_neg_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_qual_adv_mean"], 1.5, places=6)
+        self.assertAlmostEqual(logger.records["a7/evc_qual_adv_pos_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a7/prewindow_step_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a7/prewindow_event_fire_prob_cum"], prewindow_prob, places=6)
 
     def test_records_a6_label_counts_from_infos(self) -> None:
         logger = _DummyLogger()

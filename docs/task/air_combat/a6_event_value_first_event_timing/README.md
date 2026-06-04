@@ -230,14 +230,16 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: continue the counterfactual event-time objective as the
-  A7 implementation-contract subproject:
+- Immediate next step: continue inside the A7 implementation-contract
+  subproject:
   [../a7_event_value_advantage_credit_head/README.md](../a7_event_value_advantage_credit_head/README.md).
-  A7 defines counterfactual labels or event-time/value credit, cumulative
-  pre-window hazard diagnostics, and stochastic collection controls before any
-  more learned-policy probing.
-- Event-value is no longer just a plausible long-term expansion; the root-cause
-  note makes counterfactual hold/fire credit the next design requirement.
+  A7 has now implemented and validated the event-credit path and repaired the
+  shadow-quality label-censoring bug, but repaired short learned evidence remains
+  held: deterministic still records `0` releases, stochastic releases too early,
+  and quality-window advantage remains negative.
+- Event-value is no longer just a plausible long-term expansion; the A7-G held
+  result plus A7-I/J evidence narrows the next design requirement to
+  post-repair legal-state projection / policy-coupling analysis.
 - The bounded first-shot curriculum produced early gradient, then correctly
   decayed to zero; by itself it did not move deterministic argmax.
 - M2 remains held until deterministic first-event behavior is trainable under

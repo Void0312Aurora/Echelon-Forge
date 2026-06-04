@@ -140,6 +140,11 @@ A7
 - 只有当 A7 学到正确 event-credit signs，但 policy coupling 仍以可归因于层级 gap
   的方式失败时，才把 HMoE repair 提升为活跃任务。
 
+`A7-EVC-K/L` 现在显示当前 failure 仍发生在该升级门之前：修复后的 target builder 已恢复
+shadow-quality positives，但它们主要位于 closed-mask rows，需要先完成 legal-state
+projection 才能评估 policy coupling。因此本 issue 保持 watch item，而不是 active A7
+blocker。
+
 本 issue 不授权在 A7 内进行 HMoE redesign。
 
 ## 不能宣称

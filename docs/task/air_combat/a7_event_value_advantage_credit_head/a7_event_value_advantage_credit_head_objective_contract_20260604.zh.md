@@ -176,4 +176,12 @@ learned-policy probe 前，A7 implementation 必须通过以下 focused gates：
 
 本文档关闭 `A7-EVC-A` 与 `A7-EVC-B`。`A7-EVC-C Policy Head Prototype` 已提供稳定的
 `hybrid_event_credit_head` API，`A7-EVC-D PPO Auxiliary Credit` 已接入 focused PPO
-loss；下一项可分发 cluster 是 `A7-EVC-E Config And Diagnostics`。
+loss；`A7-EVC-E Config And Diagnostics` 已提供 active entry 与 diagnostics
+surface；`A7-EVC-F Focused Validation Sweep` 已通过，`A7-EVC-G Short Learned
+Evidence` 已完成为 held outcome，`A7-EVC-I Target Construction And Credit Sign
+Audit` 已将缺失 shadow-quality target repair 定位为下一实现阻塞点。`A7-EVC-J
+Shadow Quality Target Repair` 随后修复 label-censoring 路径，但 learned behavior
+仍 held。`A7-EVC-K Legal-State Projection And Coupling Audit` 随后证明剩余 blocker
+是 projection/coupling，`A7-EVC-L Legal-State Projection Contract` 已选择 projected
+legal-open credit 作为下一机制。当前可分发 cluster 是 `A7-EVC-M Projected Legal-Open
+Credit Prototype`。

@@ -2,7 +2,16 @@
 
 Status: `2026-06-04` active implementation. A7 has selected its objective
 contract and completed `A7-EVC-C Policy Head Prototype` plus `A7-EVC-D PPO
-Auxiliary Credit`; config/diagnostics are the next implementation slice.
+Auxiliary Credit` plus `A7-EVC-E Config And Diagnostics`; `A7-EVC-F Focused
+Validation Sweep` has also passed. `A7-EVC-G Short Learned Evidence` is now
+complete as valid evidence with a held learned-policy outcome. `A7-EVC-I
+Target Construction And Credit Sign Audit` has now identified missing
+shadow-quality target repair as the primary structural fault. `A7-EVC-J Shadow
+Quality Target Repair` has fixed the confirmed label-censoring bug and passed
+focused tests plus a 32k repair probe, but learned first-shot timing remains
+held. `A7-EVC-K Legal-State Projection And Coupling Audit` has closed the
+post-repair diagnosis, and `A7-EVC-L Legal-State Projection Contract` has
+selected the next mechanism. Implementation is not started.
 
 Parent: [README.md](README.md).
 
@@ -20,8 +29,33 @@ Parent: [README.md](README.md).
 - `A7-EVC-D PPO Auxiliary Credit` is complete: A7-only coeffs can collect
   first-event labels, the credit head receives value loss, and delta alignment
   can update event logits without changing runtime masks.
+- `A7-EVC-E Config And Diagnostics` is complete: the A7 active config opens the
+  credit head/loss path, and callback/process-probe diagnostics expose credit
+  values, advantage signs, and cumulative early-fire hazard.
+- `A7-EVC-F Focused Validation Sweep` is complete: JSON, compileall, focused
+  HMoE/A7, active-entry, diagnostics, process-probe, and diff gates passed.
+- `A7-EVC-G Short Learned Evidence` is complete as held evidence: the valid r3
+  training run records live `a7/event_credit_loss`, but deterministic probing
+  still executes `0` releases and stochastic probing releases too early at
+  steps `14`, `47`, and `2`.
+- `A7-EVC-I Target Construction And Credit Sign Audit` is complete:
+  stochastic r3 label reconstruction yields only `19` active labels and `0`
+  positives, while each early-release episode later reaches more than `1000`
+  shadow quality states.
+- `A7-EVC-J Shadow Quality Target Repair` is complete as implementation repair:
+  stochastic early accepted episodes no longer collapse to zero-positive A7
+  target samples, but repaired short learned evidence still does not meet timing
+  acceptance.
+- `A7-EVC-K Legal-State Projection And Coupling Audit` is complete: repaired
+  positives exist, but most live on closed-mask `FiredAssess` observations and
+  are deliberately excluded from delta alignment.
+- `A7-EVC-L Legal-State Projection Contract` is complete as a design contract:
+  raw shadow rows become projection/opportunity evidence, while positive
+  value/delta alignment is allowed only on projected legal-open observations.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
-  A7 should not rely solely on hard-routed subexpert behavior.
+  A7 should not rely solely on hard-routed subexpert behavior, but the current
+  A7 failure is already visible in the censored target construction and
+  event-credit advantage sign.
 
 ## Maturity Matrix
 
@@ -30,13 +64,23 @@ Parent: [README.md](README.md).
 | A7 docs | active | README/task clusters/current status/dispatch/acceptance/objective contract exist. | Documentation and dispatch surface only. |
 | Objective contract | pass | The selected contract defines counterfactual target semantics, window balancing, head placement, loss coupling, diagnostics, and rollback gates. | It authorizes focused implementation, not broad architecture release. |
 | Policy head prototype | pass | `python/rl/policy_algo/policies.py` exposes `hybrid_event_credit_head_lr_scale`, `get_hybrid_event_credit()`, and distribution-side credit values; `tests/hmoe/test_hmoe_policy.py` covers default-off, zero init, optimizer lane, A6 coexistence, load smoke, and bootstrap zeroing. | No PPO auxiliary loss or training claim. |
-| PPO auxiliary credit | pass | `first_event_hazard.py` adds `compute_first_event_credit_loss()` with finite masking and window mass caps; `ppo_adaptive_kl.py` adds A7 coeffs, A7-only label collection, credit loss coupling, delta alignment, and finite logs; focused HMoE tests pass. | No active config/callback diagnostics or learned-policy claim. |
-| HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless evidence forces a new task. |
+| PPO auxiliary credit | pass | `first_event_hazard.py` adds `compute_first_event_credit_loss()` with finite masking and window mass caps; `ppo_adaptive_kl.py` adds A7 coeffs, A7-only label collection, credit loss coupling, delta alignment, and finite logs; focused HMoE tests pass. | No learned-policy claim. |
+| Config and diagnostics | pass | [config diagnostics evidence](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md) adds the A7 active entry, callback A7 credit/hazard metrics, and process-probe A7 summaries. | No learned-policy claim. |
+| Focused validation | pass | [focused validation sweep](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md) records JSON, compileall, focused pytest, and diff checks. | No learned-policy claim. |
+| Short learned evidence | pass; held outcome | [short learned evidence](a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md) records valid r3 training/probe evidence after nonfinite-probe repair. | A7 is not accepted: deterministic stays at `0` releases, stochastic fires early, and quality-window advantage remains negative. |
+| Target construction audit | pass; repaired by J | [target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md) proves early stochastic accepted release censors later quality-window positives from A7 labels. | J has repaired this target-construction bug; the remaining blocker is post-repair projection/coupling, not another coefficient-tuning pass. |
+| Shadow-quality target repair | pass; held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) adds `A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY`, positive shadow labels after early accepted release, an A7 config knob, diagnostics coverage, and delta-align masking for shadow rows. | Label censoring is fixed, but behavior is still held: deterministic `0` releases, early stochastic releases, and negative quality-window advantage. |
+| Legal-state projection audit | pass; held outcome | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) shows shadow positives are restored but remain value-only on closed-mask rows, leaving legal-open quality states negative. | This is a structural diagnosis, not acceptance. |
+| Legal-state projection contract | pass; implementation not started | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive credit and forbids raw closed-mask delta alignment. | No code behavior changes yet; next implementation is `A7-EVC-M`. |
+| HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Dispatch `A7-EVC-E Config And Diagnostics`: add active config entries and
-callback/process-probe metrics for the A7 credit loss and advantage signs.
+Implement `A7-EVC-M Projected Legal-Open Credit Prototype`: the target builder
+now supplies shadow-quality positives, and L defines how to project that
+evidence onto a legal-open decision surface. The next bounded question is
+whether projected positive value/delta alignment changes legal-open quality
+states without weakening A3/A5 masks.
 
 ## Validation Snapshot
 
@@ -46,6 +90,59 @@ callback/process-probe metrics for the A7 credit loss and advantage signs.
   `5 passed`.
 - `pytest tests/hmoe/test_hmoe_ppo_warmup.py -q`: pass, `8 passed`.
 - `git diff --check -- python/rl/policy_algo/policies.py tests/hmoe/test_hmoe_policy.py`: pass.
+- `python -m json.tool <A7 active config>`: pass.
+- `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py`: pass.
+- `pytest tests/training/test_a6_event_value_active_config.py -q`: pass,
+  `6 passed`.
+- `pytest tests/training/test_a6_event_value_diagnostics_callback.py -q`:
+  pass, `5 passed`.
+- `pytest tests/diagnostics/test_a6_event_value_process_probe.py -q`: pass,
+  `3 passed`.
+- `pytest tests/training/test_air_combat_active_training_entries.py -q`: pass,
+  `13 passed`.
+- `pytest tests/training/test_cooperative_diagnostics_callback.py -q`: pass,
+  `13 passed`.
+- `pytest tests/diagnostics/test_air_combat_process_probe.py -q`: pass,
+  `9 passed`.
+- `pytest tests/hmoe/test_hmoe_policy.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q`: pass,
+  `44 passed`.
+- `pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/training/test_air_combat_active_training_entries.py -q`: pass,
+  `24 passed`.
+- `pytest tests/diagnostics/test_a6_event_value_process_probe.py tests/diagnostics/test_air_combat_process_probe.py tests/training/test_cooperative_diagnostics_callback.py -q`: pass,
+  `25 passed`.
+- `git diff --check -- <A7 write set>`: pass.
+- `python -m compileall -q python/rl/support/nonfinite_probe.py python/training/diagnostics.py tests/hmoe/test_hmoe_ppo_warmup.py`: pass.
+- `pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_preserves_a7_event_credit_training_path tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_event_credit_only_collects_labels_and_updates_credit_head tests/training/test_a6_event_value_diagnostics_callback.py -q`: pass, `7 passed`.
+- A7 r3 TensorBoard scalar check: `a7/event_credit_loss` present at step
+  `32768`; active count `450.0`; advantage mean `-0.978105`.
+- A7 r3 deterministic probe: `0` requests, `0` releases, `1880`
+  open-window steps, open-window fire probability mean/max `23.1%` / `23.3%`,
+  and negative prewindow/quality advantage.
+- A7 r3 stochastic probe: `3/3` authorized one-shot releases at steps `14`,
+  `47`, and `2`, with `0` unauthorized/violation/repeat/budget issues.
+- A7-EVC-I label reconstruction:
+  - deterministic r3: `1880` active labels, `1076` positives, `804`
+    negatives;
+  - stochastic r3: `19` active labels, `0` positives, `19` negatives;
+  - stochastic early-release episodes still expose `1080`, `1061`, and `1081`
+    post-accepted shadow quality states.
+- A7-EVC-J focused repair gates: compileall passed for touched policy/diagnostic
+  files; `pytest tests/hmoe/test_a6_first_event_hazard.py -q` passed with
+  `15 passed`; focused HMoE/PPO tests passed with `14 passed`; focused
+  config/diagnostics/active-entry tests passed with `27 passed`.
+- A7-EVC-J label reconstruction after repair:
+  - old r3 deterministic: `1880` active labels, `1076` positives, `804`
+    negatives;
+  - old r3 stochastic: `3241` active labels, `3222` positives, `19` negatives,
+    with `shadow_quality=3222`;
+  - repaired r1 stochastic probe: `3215` active labels, `3209` positives, `6`
+    negatives, with `shadow_quality=3209`.
+- A7-EVC-J 32k repair run completed `32768` steps under
+  `experiments_tmp/a7_shadow_quality_repair_32k_20260604_r1`; deterministic
+  probe still records `0` releases with open-window fire probability mean/max
+  `25.5%` / `27.2%` and quality-window A7 advantage mean `-0.902`; stochastic
+  probe records `3/3` authorized one-shot releases at steps `4`, `43`, and `2`
+  with `0` unauthorized/repeat/budget violations.
 
 ## Held Items
 

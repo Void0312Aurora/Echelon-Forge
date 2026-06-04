@@ -451,8 +451,13 @@ class NonFiniteTrainingProbe:
                 self.policy.reset_noise(env.num_envs)
 
             callback.on_rollout_start()
+            first_event_label_collection_enabled = getattr(self, "_first_event_label_collection_enabled", None)
+            if callable(first_event_label_collection_enabled):
+                collect_a6_first_event = bool(first_event_label_collection_enabled())
+            else:
+                collect_a6_first_event = bool(getattr(self, "_a6_first_event_enabled", lambda: False)())
             collect_a6_first_event = bool(
-                getattr(self, "_a6_first_event_enabled", lambda: False)()
+                collect_a6_first_event
                 and getattr(rollout_buffer, "supports_a6_first_event_labels", False)
             )
             a6_engagement_state: list[str] = []
@@ -654,6 +659,12 @@ class NonFiniteTrainingProbe:
             first_event_hazard_losses = []
             first_event_hazard_active_counts = []
             first_event_hazard_positive_fracs = []
+            first_event_credit_losses = []
+            first_event_credit_value_losses = []
+            first_event_credit_delta_align_losses = []
+            first_event_credit_active_counts = []
+            first_event_credit_positive_fracs = []
+            first_event_credit_advantage_means = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -772,6 +783,31 @@ class NonFiniteTrainingProbe:
                         first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                         first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                         loss = loss + first_event_hazard_loss.loss
+                    first_event_credit_loss = None
+                    first_event_credit_fn = getattr(self, "_first_event_credit_loss", None)
+                    if callable(first_event_credit_fn):
+                        first_event_credit_loss = first_event_credit_fn(rollout_data)
+                    if first_event_credit_loss is not None:
+                        tracer.check("train.a7_first_event_credit_loss", first_event_credit_loss.loss)
+                        tracer.check(
+                            "train.a7_first_event_credit_value_loss",
+                            first_event_credit_loss.value_loss,
+                        )
+                        tracer.check(
+                            "train.a7_first_event_credit_delta_align_loss",
+                            first_event_credit_loss.delta_align_loss,
+                        )
+                        first_event_credit_losses.append(float(first_event_credit_loss.loss.detach().cpu()))
+                        first_event_credit_value_losses.append(
+                            float(first_event_credit_loss.value_loss.detach().cpu())
+                        )
+                        first_event_credit_delta_align_losses.append(
+                            float(first_event_credit_loss.delta_align_loss.detach().cpu())
+                        )
+                        first_event_credit_active_counts.append(int(first_event_credit_loss.active_count))
+                        first_event_credit_positive_fracs.append(float(first_event_credit_loss.positive_frac))
+                        first_event_credit_advantage_means.append(float(first_event_credit_loss.advantage_mean))
+                        loss = loss + first_event_credit_loss.loss
                     tracer.check("train.loss", loss)
 
                     with th.no_grad():
@@ -862,6 +898,43 @@ class NonFiniteTrainingProbe:
                     float(np.mean(first_event_hazard_positive_fracs))
                     if first_event_hazard_positive_fracs
                     else 0.0,
+                )
+            if bool(getattr(self, "_a7_event_credit_enabled", lambda: False)()):
+                self.logger.record(
+                    "a7/event_credit_loss",
+                    float(np.mean(first_event_credit_losses)) if first_event_credit_losses else 0.0,
+                )
+                self.logger.record(
+                    "a7/event_credit_value_loss",
+                    float(np.mean(first_event_credit_value_losses)) if first_event_credit_value_losses else 0.0,
+                )
+                self.logger.record(
+                    "a7/event_credit_delta_align_loss",
+                    (
+                        float(np.mean(first_event_credit_delta_align_losses))
+                        if first_event_credit_delta_align_losses
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/event_credit_value_coef",
+                    float(getattr(self, "a7_event_credit_value_coef", 0.0)),
+                )
+                self.logger.record(
+                    "a7/event_credit_delta_align_coef",
+                    float(getattr(self, "a7_event_credit_delta_align_coef", 0.0)),
+                )
+                self.logger.record(
+                    "a7/event_credit_active_count_mean",
+                    float(np.mean(first_event_credit_active_counts)) if first_event_credit_active_counts else 0.0,
+                )
+                self.logger.record(
+                    "a7/event_credit_target_positive_frac",
+                    float(np.mean(first_event_credit_positive_fracs)) if first_event_credit_positive_fracs else 0.0,
+                )
+                self.logger.record(
+                    "a7/event_credit_advantage_mean",
+                    float(np.mean(first_event_credit_advantage_means)) if first_event_credit_advantage_means else 0.0,
                 )
 
             self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")

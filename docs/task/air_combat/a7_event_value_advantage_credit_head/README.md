@@ -5,8 +5,18 @@ the A6 root-cause re-scope: implement an event-value / advantage-credit
 mechanism for the masked `hold/fire_once` action before any more launch-window
 tuning. `A7-EVC-A/B` are closed by the objective contract, `A7-EVC-C` has
 landed the zero-safe policy-head prototype, and `A7-EVC-D` has wired focused
-PPO auxiliary credit. Active config, diagnostics callbacks, and learned-policy
-evidence are not done yet.
+PPO auxiliary credit. `A7-EVC-E` has added the active config and diagnostics
+surface, `A7-EVC-F` has passed the focused validation sweep, and `A7-EVC-G`
+has produced valid short learned evidence as a held outcome. The credit-training
+path is active, but launch-window timing acceptance is not met.
+`A7-EVC-I` has now traced the held outcome to missing shadow-quality target
+repair after early stochastic accepted release. `A7-EVC-J` has repaired that
+label-censoring path and passed focused tests plus a 32k repair probe, but the
+learned-policy outcome remains held: deterministic probing still records `0`
+releases, stochastic probing still fires too early, and quality-window advantage
+remains negative. `A7-EVC-K` has now closed the post-repair structural audit:
+the remaining blocker is legal-state projection / value-to-policy coupling.
+`A7-EVC-L` selects a projection contract; implementation has not started.
 
 Language:
 
@@ -63,7 +73,14 @@ would have rewarded holding.
 | HMoE gap | open issue | Subexperts do not see family-head output, and C2/ROE combat routing collapses to one family. | A7 should account for this risk, but it does not redesign HMoE in this slice. |
 | A7 objective contract | pass | [Objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.md) selects a counterfactual event-value head, window balancing, policy-logit coupling, and cumulative hazard diagnostics. | This authorizes a focused A7 prototype, not M2, HMoE redesign, or missile/doctrine authority. |
 | A7 policy head prototype | pass | `hybrid_event_credit_head` exposes `Q_hold`, `Q_fire_once`, and event advantage with zero initialization, a dedicated optimizer lane, default-disabled behavior, A6 coexistence tests, and load smoke coverage. | A7-C exposes credit only; it does not train the head or write credit into event logits. |
-| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` and `AdaptiveKLPPO._first_event_credit_loss()` train the A7 head, optionally align event-logit delta, enable first-event label collection for A7-only coeffs, and pass focused PPO/gradient tests. | No active JSON config, callback diagnostics, learned evidence, or A7 acceptance claim. |
+| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` and `AdaptiveKLPPO._first_event_credit_loss()` train the A7 head, optionally align event-logit delta, enable first-event label collection for A7-only coeffs, and pass focused PPO/gradient tests. | No learned-policy claim. |
+| A7 config and diagnostics | pass | [Config and diagnostics evidence](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md) adds the A7 active config, callback event-credit/early-hazard metrics, and process-probe summary metrics. | No learned-policy claim by itself; G has now evaluated the learned behavior as held. |
+| A7 focused validation | pass | [Focused validation sweep](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md) re-runs JSON, compileall, HMoE policy/PPO, config, callback, active-entry, process-probe, and diff checks. | No learned-policy claim. |
+| A7 short learned evidence | pass; held outcome | [Short learned evidence](a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md) validates r3 after nonfinite-probe fixes: `a7/event_credit_loss` is live, deterministic still fires `0` times, and stochastic releases at steps `14`, `47`, and `2`. | A7 credit training is active, but quality-window event advantage remains negative and A7 is not accepted. |
+| A7 target construction audit | pass; repaired by J | [Target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md) reconstructs current labels: stochastic r3 has `19` active labels, `0` positives, and more than `1000` post-early-release shadow quality states per episode. | The fault was target construction, not runtime legality, disabled training, or HMoE as the primary blocker; J has repaired the censoring path. |
+| A7 shadow-quality target repair | pass; held outcome | [Shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) adds post-early `shadow_quality` positives, preserves early-accepted negatives, masks shadow rows out of delta alignment, and validates the repaired active config. | The label-censoring bug is fixed, but learned timing is still not accepted. The next question is how repaired shadow credit reaches legal-open quality states. |
+| A7 legal-state projection audit | pass; held outcome | [Legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) proves post-J positives exist but mostly live on closed-mask `FiredAssess` observations; direct policy alignment remains dominated by legal-open negatives. | K is docs/diagnostics evidence only. It does not accept A7 or justify closed-mask delta alignment. |
+| A7 legal-state projection contract | pass; implementation not started | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open credit: raw shadow rows become projection/opportunity evidence, while positive delta alignment is allowed only on projected legal-open observations. | The contract does not weaken A3/A5 masks, does not run training, and does not release HMoE/M2 or missile/doctrine authority. |
 
 ## Scope
 
@@ -100,9 +117,13 @@ Out of scope:
 | `P2 Objective Contract` | Select value/advantage targets, label sources, losses, and rollback gates. | P1 evidence accepted. | Contract is specific enough for implementation. | pass |
 | `P3 Policy Head Prototype` | Add the bounded event-value / advantage head. | P2 contract accepted. | Focused policy tests cover shape, initialization, serialization, and event-logit coupling. | pass |
 | `P4 PPO Integration` | Train the head and connect auxiliary credit to PPO updates. | P3 head available. | Loss, stats, finite behavior, and mask handling are tested. | pass |
-| `P5 Config And Diagnostics` | Add active config and cumulative hazard diagnostics. | P4 integration passes. | Config and callback/process-probe tests expose A7 metrics. | planned next |
-| `P6 Learned Evidence` | Run short learned-policy probe. | P5 tests pass. | Deterministic/stochastic timing, release counts, and cumulative early hazard are recorded. | planned |
-| `P7 Closure` | Accept, hold, or re-scope A7. | P6 evidence exists. | Parent/A6/issues docs reflect evidence without overclaim. | planned |
+| `P5 Config And Diagnostics` | Add active config and cumulative hazard diagnostics. | P4 integration passes. | Config and callback/process-probe tests expose A7 metrics. | pass |
+| `P6 Learned Evidence` | Run short learned-policy probe. | P5 tests pass and F validation sweep is clean. | Deterministic/stochastic timing, release counts, and cumulative early hazard are recorded. | pass; held outcome |
+| `P7 Closure` | Accept, hold, or re-scope A7. | P6 evidence exists. | Parent/A6/issues docs reflect evidence without overclaim. | pass; held sync |
+| `P8 Target Audit` | Diagnose the negative quality-window credit sign. | P7 sync complete. | Target/loss construction names the failing link and next repair. | pass; repaired by J |
+| `P9 Shadow Target Repair` | Implement and test shadow-quality counterfactual targets. | P8 audit exists. | Early stochastic release no longer censors future quality evidence from target credit, and learned-policy probe evidence records the residual behavior. | pass; held outcome |
+| `P10 Projection Audit` | Diagnose why repaired positives do not move legal-open quality states. | P9 repair probe exists. | Projection/coupling failure is separated from missing positives, HMoE redesign, and coefficient-only tuning. | pass; spawned L contract |
+| `P11 Projection Contract` | Define the legal-state projection mechanism before implementation. | P10 audit exists. | Contract selects projected legal-open positive alignment and names implementation gates. | pass; implementation not started |
 
 ## Task Clusters
 
@@ -116,6 +137,8 @@ Out of scope:
   [a7_event_value_advantage_credit_head_acceptance_20260604.md](a7_event_value_advantage_credit_head_acceptance_20260604.md)
 - Objective contract:
   [a7_event_value_advantage_credit_head_objective_contract_20260604.md](a7_event_value_advantage_credit_head_objective_contract_20260604.md)
+- Legal-state projection contract:
+  [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md)
 
 ## Outputs And Evidence
 
@@ -137,11 +160,30 @@ Current outputs:
   `python/rl/policy_algo/ppo_adaptive_kl.py`, covered by
   `tests/hmoe/test_a6_event_head_update_strength.py` and
   `tests/hmoe/test_hmoe_ppo_warmup.py`.
+- Config and diagnostics:
+  [a7_event_value_advantage_credit_head_config_diagnostics_20260604.md](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md),
+  the A7 active config under `examples/config/training/active/air_combat/`,
+  callback event-credit diagnostics in `python/training/diagnostics.py`, and
+  process-probe A7 summary metrics in
+  `tools/diagnostics/air_combat_stage0_process_probe.py`.
+- Focused validation:
+  [a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md).
+- Short learned evidence:
+  [a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md).
+- Target construction and credit-sign audit:
+  [a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md).
+- Shadow-quality target repair:
+  [a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md).
+- Legal-state projection and coupling audit:
+  [a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md).
+- Legal-state projection contract:
+  [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md).
 
-Planned implementation outputs:
+Planned follow-on outputs:
 
-- Focused tests for loss masks, diagnostics, and active config.
-- Short learned-policy evidence comparing against A6-EVT-M.
+- Projected legal-open credit prototype that trains positive value/delta
+  alignment only on projected legal-open observations, not raw closed-mask
+  shadow rows.
 
 ## Acceptance Gate
 
@@ -162,13 +204,17 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: dispatch `A7-EVC-E Config And Diagnostics` so active
-  entries and callback/process-probe metrics expose the new credit loss before
-  any learned-policy probe.
+- Immediate next step: implement `A7-EVC-M Projected Legal-Open Credit
+  Prototype` from the L contract. `A7-EVC-J` fixed target label censoring, and
+  `A7-EVC-K/L` now show that repaired positives must be projected onto the
+  legal-open decision surface before another learned-policy wave.
+- The repair direction is legal-state counterfactual projection with a stronger
+  separation between raw shadow opportunity learning and legal-state policy
+  distillation, not another blind coefficient-only training run.
 - Adaptive label weight scheduling remains a guardrail candidate, not the
   primary repair.
 - HMoE hierarchical computation remains an issue-board item unless A7 evidence
-  proves it blocks advantage-credit learning.
+  proves it blocks policy coupling after correct credit signs are learned.
 
 ## Archive
 

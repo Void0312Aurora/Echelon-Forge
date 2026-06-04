@@ -206,13 +206,13 @@ Held output：
 
 ## 残余与下一步
 
-- 立即下一步：将 counterfactual event-time objective 作为 A7 implementation-contract
-  子项目继续推进：
+- 立即下一步：继续在 A7 implementation-contract 子项目内推进：
   [../a7_event_value_advantage_credit_head/README.zh.md](../a7_event_value_advantage_credit_head/README.zh.md)。
-  A7 在任何进一步 learned-policy probing 前定义 counterfactual labels 或
-  event-time/value credit、累计 pre-window hazard diagnostics 与 stochastic collection controls。
-- Event-value 不再只是可能的长期扩展方向；根因记录把 counterfactual hold/fire credit 提升为
-  下一设计要求。
+  A7 已实现并验证 event-credit path，并已修复 shadow-quality label-censoring bug；
+  但修复后的 short learned evidence 仍 held：deterministic 仍为 `0` releases，
+  stochastic 过早发射，quality-window advantage 仍为负。
+- Event-value 不再只是可能的长期扩展方向；A7-G held 结果与 A7-I/J 证据将下一设计要求收窄到
+  修复后的 legal-state projection / policy-coupling analysis。
 - 有边界的 first-shot curriculum 产生了早期 gradient，并按要求衰减为零；但单独使用未推动
   deterministic argmax。
 - M2 继续 held，直到 deterministic first-event behavior 在当前 A3/A5 约束下可训练，或 A6

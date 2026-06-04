@@ -9,7 +9,12 @@
 和 event-head update-strength audit，并已完成 event-head optimization learned evidence；A6
 因 launch-window timing quality 继续 held。`2026-06-04` 已开启 A7，作为
 counterfactual event-value / advantage-credit head follow-on；其 policy-head prototype
-与 focused PPO auxiliary-credit integration 已完成，下一步进入 config/diagnostics。
+与 focused PPO auxiliary-credit integration、config/diagnostics、focused validation
+和 short learned evidence 已完成。A7 继续 held，因为 deterministic probing 仍为
+`0` releases，quality-window event advantage 仍为负。A7 target-construction audit
+已将结构性 blocker 追踪到 early stochastic accepted release 后缺失 shadow-quality
+target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repair probe
+仍让 learned first-shot timing 保持 held。
 
 ## 当前状态
 
@@ -73,9 +78,19 @@ counterfactual event-value / advantage-credit head follow-on；其 policy-head p
 - A7
   [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)
   是 first-event timing residual 的 implementation 线路：policy-level event-credit
-  head API 与 focused PPO auxiliary-credit loss 已就位；active config、
-  callback/process-probe diagnostics、cumulative early-fire diagnostics 与 learned
-  evidence 仍是下一步实现工作。A3/A5 legality 继续持有权威，HMoE redesign/M2 继续 held。
+  head API、focused PPO auxiliary-credit loss、active config、
+  callback/process-probe diagnostics 与 cumulative early-fire diagnostics 已就位。
+  有效 A7 r3 short evidence 保持 A5 one-shot legality，但 outcome 继续 held：
+  deterministic probing 记录 `0` releases，stochastic probing 在 steps `14`、`47`、
+  `2` 过早发射，quality-window advantage 仍为负。target-construction audit 已命名失败环节：
+  early stochastic accepted release 会从 A7 labels 中删失后续 quality-window positives。
+  `A7-EVC-J` 现已修复该 label-censoring 路径，修复后的 label reconstruction
+  恢复了数千个 shadow-quality positives；但 repair probe 仍记录 deterministic `0`
+  releases、stochastic 过早 release、quality-window advantage 为负。Post-repair
+  projection audit 与 L contract 现在给出下一机制：把 shadow-quality evidence 投影到
+  legal-open decision surface，并只在该表面做 positive value/delta alignment。当前下一步是
+  projected legal-open credit prototype，而不是继续盲训。A3/A5 legality 继续持有权威，
+  HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -99,7 +114,7 @@ counterfactual event-value / advantage-credit head follow-on；其 policy-head p
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
-  先完成 config/diagnostics 与 focused validation，再进行新的 learned-policy probe 或重新讨论 M2
+  通过 projected legal-open credit prototype 后，再重新讨论 M2
 
 ## 推荐阅读顺序
 

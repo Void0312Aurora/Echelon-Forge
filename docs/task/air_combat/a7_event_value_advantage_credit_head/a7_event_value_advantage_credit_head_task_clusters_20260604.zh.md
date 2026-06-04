@@ -17,10 +17,15 @@ A7 可以为 masked `hold/fire_once` event action 增加 event-value / advantage
 | `A7-EVC-B Objective Contract` | main thread | high | 定义 value/advantage targets、target source、losses、diagnostics 与 rollback gates。 | A7 contract/status docs | L-only tuning、M2 release、runtime legality changes | Contract review against A3/A5/A6-N | Contract 足够具体，可以实现，并拒绝 unsupported labels。 | After A；C/D 前串行 | 2 | pass |
 | `A7-EVC-C Policy Head Prototype` | main thread plus read-only subagent review | high | 增加有边界的 event-value 或 advantage head，并暴露 outputs。 | `python/rl/policy_algo/policies.py`、focused policy tests | HMoE family/subexpert redesign、soft routing、M2 | focused policy tests；serialization/load smoke | Head zero-safe、shape-stable、optimizer-visible，并可接到 event logits。 | D 前完成；API 已稳定，可进入 PPO coupling。 | 2 | pass |
 | `A7-EVC-D PPO Auxiliary Credit` | main thread plus read-only subagent scan | high | 训练 A7 head，并将 advantage credit 接到 event-logit delta。 | `python/rl/policy_algo/**`、rollout/loss tests | Reward-only legality、削弱 masks | focused PPO/loss tests；finite stats | Loss 处理 masks、early censoring 与 counterfactual targets。 | E 前完成；尚未运行 learned-policy。 | 2 | pass |
-| `A7-EVC-E Config And Diagnostics` | future implementation worker | medium | 增加 active config、callback/process-probe metrics 与累计 pre-window hazard。 | active configs、diagnostics/callback tests、docs | learned evidence、doctrine claims | config parse；diagnostics tests | A7 metrics 包含 advantage sign 与 cumulative early-fire probability。 | After D；只可与 F test refinement 并行 | 2 | planned next |
-| `A7-EVC-F Focused Validation Sweep` | main thread | n/a | 在 learned-policy probe 前运行 compile/JSON/focused tests。 | evidence note only unless tests require repair | training、broad refactor | compileall；pytest subset；`git diff --check` | Implementation ready for short learned evidence。 | After C/D/E | 1 | planned |
-| `A7-EVC-G Short Learned Evidence` | main thread | n/a | 运行短训/probe，并与 A6-EVT-M 对比。 | A7 evidence note；不 stage `experiments_tmp` | formal long training、M2 release | train/probe commands；deterministic/stochastic summaries | evidence 记录 release timing、violations、advantage sign 与 cumulative hazard。 | After F；serial | 1 | planned |
-| `A7-EVC-H Closure And Index Sync` | main thread | n/a | accept、hold 或 re-scope A7，并同步 parent/A6/issues docs。 | A7 docs、parent air-combat README、必要时 issue cross-links | hiding residuals、overclaiming stochastic-only behavior | `git diff --check -- docs/task/air_combat docs/task/issues` | status 与 indexes 和 evidence 一致。 | After G；serial | 1 | planned |
+| `A7-EVC-E Config And Diagnostics` | implementation worker | medium | 增加 active config、callback/process-probe metrics 与累计 pre-window hazard。 | active configs、diagnostics/callback tests、docs | learned evidence、doctrine claims | config parse；diagnostics tests | A7 metrics 包含 advantage sign 与 cumulative early-fire probability。 | After D；只可与 F test refinement 并行 | 2 | pass |
+| `A7-EVC-F Focused Validation Sweep` | main thread | n/a | 在 learned-policy probe 前运行 compile/JSON/focused tests。 | evidence note only unless tests require repair | training、broad refactor | compileall；pytest subset；`git diff --check` | Implementation ready for short learned evidence。 | After C/D/E | 1 | pass |
+| `A7-EVC-G Short Learned Evidence` | main thread | n/a | 运行短训/probe，并与 A6-EVT-M 对比。 | A7 evidence note；不 stage `experiments_tmp` | formal long training、M2 release | train/probe commands；deterministic/stochastic summaries | evidence 记录 release timing、violations、advantage sign 与 cumulative hazard。 | After F；serial | 1 | pass；held outcome |
+| `A7-EVC-H Closure And Index Sync` | main thread | n/a | accept、hold 或 re-scope A7，并同步 parent/A6/issues docs。 | A7 docs、parent air-combat README、必要时 issue cross-links | hiding residuals、overclaiming stochastic-only behavior | `git diff --check -- docs/task/air_combat docs/task/issues` | status 与 indexes 和 evidence 一致。 | After G；serial | 1 | pass；held sync |
+| `A7-EVC-I Target Construction And Credit Sign Audit` | main thread 或 read-only diagnostics worker | high | 解释为什么 A7 quality-window advantage 仍为负，并决定继续训练前是否需要 target/loss repair。 | A7 evidence/status docs | 继续 32k training、HMoE redesign、M2 release、削弱 A3/A5 masks | label reconstruction；code-surface review；docs diff check | Audit 将 early stochastic accepted release 后缺失 shadow-quality target repair 命名为失败环节。 | After H；serial | 2 | pass；spawned J repair |
+| `A7-EVC-J Shadow Quality Target Repair` | implementation worker plus read-only diagnostics review | high | 修复 target construction，使 early accepted release 不再从 target credit 中删失 future quality-window evidence。 | `python/rl/policy_algo/first_event_hazard.py`、`python/rl/policy_algo/ppo_adaptive_kl.py`、`python/training/diagnostics.py`、`tests/hmoe/**` 与 `tests/training/**` focused tests、A7 docs、active config | runtime legality changes、削弱 A3/A5 masks、HMoE redesign、M2 release | focused target-construction tests；compileall；focused PPO/loss tests；docs diff check；short repair probe | Shadow quality evidence 在 early accepted release 后恢复，post-release shadow rows 不通过 event-logit delta alignment 训练，且 repair probe 记录剩余 behavior。 | After I；K 前串行 | 2 | pass；held outcome |
+| `A7-EVC-K Legal-State Projection And Coupling Audit` | main thread 或 diagnostics worker | high | 解释 repaired shadow positives 为什么仍未让 legal-open quality states 学到 positive event advantage。 | 优先 A7 docs；只有在写出有边界 contract 后才增加 optional focused diagnostics/tests | coefficient-only tuning、继续盲跑 32k training、削弱 A3/A5 masks、HMoE redesign、M2 release | label/value/coupling audit；repaired-run probe review；docs diff check | Audit 在下一轮 training 前区分 target projection、value-head learning、delta alignment、policy distillation 与 HMoE-routing hypotheses。 | After J；串行 | 2 | pass；spawned L contract |
+| `A7-EVC-L Legal-State Projection Contract` | main thread | high | 选择 legal-state projection 机制，在不做 closed-mask delta alignment 的前提下把 shadow-quality evidence 转成 legal-open positive credit。 | 仅 A7 contract/status docs | implementation、training、削弱 A3/A5 masks、HMoE redesign、M2 release | contract review；docs diff check | Contract 命名 projection whitelist、loss split、implementation entry points 与 validation gates。 | After K；串行 | 1 | pass；implementation not started |
+| `A7-EVC-M Projected Legal-Open Credit Prototype` | implementation worker plus diagnostics review | high | 实现 L 合同：对 shadow-quality rows 构造 projected legal-open value/delta alignment，同时 raw closed-mask rows 保持 value-only/opportunity-only。 | `python/rl/policy_algo/first_event_projection.py`、`python/rl/policy_algo/first_event_hazard.py`、`python/rl/policy_algo/ppo_adaptive_kl.py`、focused tests、active config/diagnostics docs | closed-mask delta alignment、runtime fire-mask weakening、broad HMoE/M2 work、focused gates 前盲跑 32k training | projection helper tests；PPO/loss tests；active config/diagnostics tests；compileall；docs diff check | Projected positives 产生 legal-open credit pressure，unsupported layouts 被报告，A3/A5 masks 继续权威。 | After L；串行 | 2 | planned next |
 
 ## 分发规则
 
@@ -67,12 +72,14 @@ learned-policy probe。
 
 Immediate：
 
-- Focused A7 credit loss 的 active config 与 diagnostics。
+- `A7-EVC-M Projected Legal-Open Credit Prototype`。
 
 Follow-on：
 
-- 若 value credit 有效但训练不稳定，Adaptive label scheduling 可作为 guardrail。
-- 只有当 A7 evidence 证明 HMoE hierarchical-computation 是活跃 blocker，才进入 HMoE repair。
+- 只有当 projection prototype 暴露剩余的有界 weighting issue 后，Adaptive label scheduling
+  才作为 guardrail。
+- 只有当 A7 学到正确 credit signs 后仍出现可归因于 hierarchy 的 policy coupling
+  failure，才进入 HMoE repair。
 
 Deferred：
 

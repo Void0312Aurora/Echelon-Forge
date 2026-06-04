@@ -19,6 +19,7 @@ class _DummyHybridDistribution:
         self.categorical_logits = [
             (11, th.tensor([[-1.0, 2.0, 0.0, -2.0, -2.0, -2.0, -2.0, -2.0]], dtype=th.float32))
         ]
+        self._q_values = th.tensor([[1.5, -0.5]], dtype=th.float32)
 
     def _fire_event_logits(self):
         return th.tensor([[1.0, 3.0]], dtype=th.float32)
@@ -29,6 +30,12 @@ class _DummyHybridDistribution:
     def fire_event_probability(self):
         return th.sigmoid(self.fire_event_logit_delta())
 
+    def fire_event_q_values(self):
+        return self._q_values
+
+    def fire_event_advantage(self):
+        return self._q_values[:, 1] - self._q_values[:, 0]
+
 
 def _row(
     step: int,
@@ -38,7 +45,11 @@ def _row(
     event_delta: float = 0.0,
     event_prob: float = 0.0,
     event_mode: int = 0,
+    event_advantage: float = 0.0,
+    target_range_m: float | None = None,
+    target_track_age_s: float = 1.0,
 ) -> dict:
+    target_range = (12000.0 - step) if target_range_m is None else float(target_range_m)
     return {
         "episode": 0,
         "step": step,
@@ -46,7 +57,9 @@ def _row(
         "terminated": int(step == 3),
         "truncated": 0,
         "termination_reason": "combat_timeout" if step == 3 else "",
-        "target_range_geom_m": 12000.0 - step,
+        "target_range_geom_m": target_range,
+        "target_range_track_m": target_range,
+        "target_track_age_s": target_track_age_s,
         "target_health": 100.0,
         "can_fire": 1,
         "target_contact": 1,
@@ -78,6 +91,9 @@ def _row(
         "policy_event_logit_fire_once": event_delta,
         "policy_event_mode": event_mode,
         "policy_event_mask_fire_once": mask,
+        "policy_event_q_hold": 0.0,
+        "policy_event_q_fire_once": event_advantage,
+        "policy_event_advantage": event_advantage,
         "effects_event_count": 0,
         "damage_report_count": 0,
         "last_effect_miss_distance_m": math.nan,
@@ -106,6 +122,9 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
         self.assertAlmostEqual(diagnostics["policy_event_prob_fire_once"], 0.8807970, places=6)
         self.assertEqual(int(diagnostics["policy_event_mode"]), 1)
         self.assertEqual(int(diagnostics["policy_event_mask_fire_once"]), 1)
+        self.assertAlmostEqual(diagnostics["policy_event_q_hold"], 1.5, places=6)
+        self.assertAlmostEqual(diagnostics["policy_event_q_fire_once"], -0.5, places=6)
+        self.assertAlmostEqual(diagnostics["policy_event_advantage"], -2.0, places=6)
 
     def test_episode_summary_reports_a6_open_window_event_metrics(self) -> None:
         summary = probe._summarize_episode(
@@ -122,6 +141,33 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
         self.assertAlmostEqual(summary["a6_event_fire_prob_mean_open"], 0.5, places=6)
         self.assertAlmostEqual(summary["a6_event_fire_prob_max_open"], 0.75, places=6)
         self.assertEqual(summary["policy_event_mode_fire_once_count"], 2)
+
+    def test_episode_summary_reports_a7_credit_signs_and_prewindow_cumulative_hazard(self) -> None:
+        summary = probe._summarize_episode(
+            [
+                _row(0),
+                _row(1, state="AuthorizedReady", mask=1, event_prob=0.1, event_advantage=-1.0),
+                _row(2, state="AuthorizedReady", mask=1, event_prob=0.2, event_advantage=-2.0),
+                _row(3, state="AuthorizedReady", mask=1, event_prob=0.6, event_advantage=1.0),
+                _row(4, state="AuthorizedReady", mask=1, event_prob=0.8, event_advantage=2.0),
+            ],
+            launch_window_config={
+                "min_range_m": 8000.0,
+                "max_range_m": 30000.0,
+                "max_track_age_s": 5.0,
+                "min_window_age_steps": 3,
+            },
+        )
+
+        self.assertEqual(summary["a7_prewindow_step_count"], 2)
+        self.assertEqual(summary["a7_quality_window_step_count"], 2)
+        self.assertAlmostEqual(summary["a7_prewindow_event_fire_prob_cum"], 0.28, places=6)
+        self.assertAlmostEqual(summary["a7_prewindow_event_fire_prob_mean"], 0.15, places=6)
+        self.assertAlmostEqual(summary["a7_quality_window_event_fire_prob_mean"], 0.7, places=6)
+        self.assertAlmostEqual(summary["a7_event_credit_advantage_mean_prewindow"], -1.5, places=6)
+        self.assertAlmostEqual(summary["a7_event_credit_advantage_negative_frac_prewindow"], 1.0, places=6)
+        self.assertAlmostEqual(summary["a7_event_credit_advantage_mean_quality"], 1.5, places=6)
+        self.assertAlmostEqual(summary["a7_event_credit_advantage_positive_frac_quality"], 1.0, places=6)
 
 
 if __name__ == "__main__":

@@ -158,6 +158,12 @@ uses this issue as a placement and diagnostics constraint:
 - HMoE repair should be promoted only if A7 learns correct event-credit signs
   but policy coupling still fails in a way attributable to the hierarchy gap.
 
+`A7-EVC-K/L` now shows the current failure still occurs earlier than that
+promotion gate: the repaired target builder restores shadow-quality positives,
+but they mostly live on closed-mask rows and need legal-state projection before
+policy coupling can be assessed. Therefore this issue remains a watch item
+rather than an active A7 blocker.
+
 This issue does not authorize an HMoE redesign inside A7.
 
 ## Non-Claims

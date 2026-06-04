@@ -4,8 +4,16 @@
 后的 follow-on：在继续 launch-window 调参前，实现 masked `hold/fire_once` 动作的
 event-value / advantage-credit 机制。`A7-EVC-A/B` 已由 objective contract 关闭，
 `A7-EVC-C` 已落地 zero-safe policy-head prototype，`A7-EVC-D` 已接入 focused
-PPO auxiliary credit；active config、diagnostics callbacks 与 learned-policy
-evidence 尚未完成。
+PPO auxiliary credit；`A7-EVC-E` 已补上 active config 与 diagnostics surface，
+`A7-EVC-F` 已通过 focused validation sweep；`A7-EVC-G` 已产出有效短训证据，
+但 learned-policy outcome 继续 held。credit-training path 已恢复，launch-window
+timing 尚未达到验收门。`A7-EVC-I` 已将 held outcome 追踪到 early stochastic
+accepted release 后缺失 shadow-quality target repair。`A7-EVC-J` 已修复该
+label-censoring 路径，并通过 focused tests 与 32k repair probe；但 learned-policy
+outcome 仍 held：deterministic probing 仍为 `0` releases，stochastic probing
+仍过早发射，quality-window advantage 仍为负。`A7-EVC-K` 已关闭 post-repair
+结构审计：剩余 blocker 是 legal-state projection / value-to-policy coupling。
+`A7-EVC-L` 已选择 projection contract；实现尚未开始。
 
 语言：
 
@@ -57,7 +65,14 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | HMoE gap | open issue | subexpert 不接收 family-head 输出，C2/ROE combat routing 塌缩到单 family。 | A7 必须考虑该风险，但本 slice 不重设计 HMoE。 |
 | A7 objective contract | pass | [Objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md) 选择 counterfactual event-value head、window balancing、policy-logit coupling 与 cumulative hazard diagnostics。 | 这只授权 focused A7 prototype，不释放 M2、HMoE redesign 或 missile/doctrine authority。 |
 | A7 policy head prototype | pass | `hybrid_event_credit_head` 暴露 `Q_hold`、`Q_fire_once` 与 event advantage，并覆盖 zero initialization、dedicated optimizer lane、default-disabled behavior、A6 coexistence tests 和 load smoke。 | A7-C 只暴露 credit；尚不训练该 head，也不把 credit 写回 event logits。 |
-| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` 与 `AdaptiveKLPPO._first_event_credit_loss()` 训练 A7 head，可选对齐 event-logit delta，并在 A7-only coeff 下启用 first-event label collection；focused PPO/gradient tests 已通过。 | 不声明 active JSON config、callback diagnostics、learned evidence 或 A7 accepted。 |
+| A7 PPO auxiliary credit | pass | `compute_first_event_credit_loss()` 与 `AdaptiveKLPPO._first_event_credit_loss()` 训练 A7 head，可选对齐 event-logit delta，并在 A7-only coeff 下启用 first-event label collection；focused PPO/gradient tests 已通过。 | 不声明 learned-policy。 |
+| A7 config and diagnostics | pass | [Config and diagnostics evidence](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md) 增加 A7 active config、callback event-credit/early-hazard metrics 与 process-probe summary metrics。 | 它本身不声明 learned-policy；G 已将 learned behavior 评估为 held。 |
+| A7 focused validation | pass | [Focused validation sweep](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md) 重跑 JSON、compileall、HMoE policy/PPO、config、callback、active-entry、process-probe 与 diff checks。 | 不声明 learned-policy。 |
+| A7 short learned evidence | pass；held outcome | [Short learned evidence](a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md) 在 nonfinite-probe 修复后验证 r3：`a7/event_credit_loss` 为 live，deterministic 仍为 `0` releases，stochastic release steps 为 `14`、`47`、`2`。 | A7 credit training 已生效，但 quality-window event advantage 仍为负，A7 不能 accepted。 |
+| A7 target construction audit | pass；已由 J 修复 | [Target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md) 重构当前标签：stochastic r3 只有 `19` 个 active labels、`0` 个 positives，而每个 episode 在 early release 后都有超过 `1000` 个 shadow quality states。 | 故障点是 target construction，不是 runtime legality、training path disabled 或 HMoE primary blocker；J 已修复该 censoring path。 |
+| A7 shadow-quality target repair | pass；held outcome | [Shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md) 增加 post-early `shadow_quality` positives，保留 early-accepted negatives，将 shadow rows 排除出 delta alignment，并验证修复后的 active config。 | label-censoring bug 已修复，但 learned timing 仍未 accepted。下一问题是 repaired shadow credit 如何影响 legal-open quality states。 |
+| A7 legal-state projection audit | pass；held outcome | [Legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md) 证明 J 后 positives 存在，但主要位于 closed-mask `FiredAssess` observations；直接 policy alignment 仍由 legal-open negatives 主导。 | K 只是 docs/diagnostics evidence，不验收 A7，也不授权 closed-mask delta alignment。 |
+| A7 legal-state projection contract | pass；implementation not started | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open credit：raw shadow rows 作为 projection/opportunity evidence，positive delta alignment 只允许在 projected legal-open observations 上发生。 | 合同不削弱 A3/A5 masks，不启动训练，不释放 HMoE/M2 或 missile/doctrine authority。 |
 
 ## 范围
 
@@ -88,9 +103,13 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | `P2 Objective Contract` | 选择 value/advantage targets、label sources、losses 与 rollback gates。 | P1 evidence accepted。 | Contract 足够具体，可进入实现。 | pass |
 | `P3 Policy Head Prototype` | 增加有边界的 event-value / advantage head。 | P2 contract accepted。 | focused policy tests 覆盖 shape、initialization、serialization 与 event-logit coupling。 | pass |
 | `P4 PPO Integration` | 训练该 head，并将 auxiliary credit 接入 PPO updates。 | P3 head available。 | loss、stats、finite behavior 与 mask handling 有测试覆盖。 | pass |
-| `P5 Config And Diagnostics` | 增加 active config 与累计 hazard diagnostics。 | P4 integration passes。 | config 与 callback/process-probe tests 暴露 A7 metrics。 | planned next |
-| `P6 Learned Evidence` | 运行短训 learned-policy probe。 | P5 tests pass。 | 记录 deterministic/stochastic timing、release counts 与累计 early hazard。 | planned |
-| `P7 Closure` | accept、hold 或 re-scope A7。 | P6 evidence exists。 | parent/A6/issues docs 与证据一致，且无 overclaim。 | planned |
+| `P5 Config And Diagnostics` | 增加 active config 与累计 hazard diagnostics。 | P4 integration passes。 | config 与 callback/process-probe tests 暴露 A7 metrics。 | pass |
+| `P6 Learned Evidence` | 运行短训 learned-policy probe。 | P5 tests pass 且 F validation sweep clean。 | 记录 deterministic/stochastic timing、release counts 与累计 early hazard。 | pass；held outcome |
+| `P7 Closure` | accept、hold 或 re-scope A7。 | P6 evidence exists。 | parent/A6/issues docs 与证据一致，且无 overclaim。 | pass；held sync |
+| `P8 Target Audit` | 诊断 quality-window credit sign 为负的原因。 | P7 sync complete。 | target/loss construction 命名失败环节与后续 repair。 | pass；已由 J 修复 |
+| `P9 Shadow Target Repair` | 实现并测试 shadow-quality counterfactual targets。 | P8 audit exists。 | early stochastic release 不再从 target credit 中删失 future quality evidence，且 learned-policy probe evidence 记录残余行为。 | pass；held outcome |
+| `P10 Projection Audit` | 诊断 repaired positives 为什么不移动 legal-open quality states。 | P9 repair probe exists。 | projection/coupling failure 与缺失 positives、HMoE redesign、coefficient-only tuning 区分开。 | pass；spawned L contract |
+| `P11 Projection Contract` | 实现前定义 legal-state projection 机制。 | P10 audit exists。 | Contract 选择 projected legal-open positive alignment，并命名 implementation gates。 | pass；implementation not started |
 
 ## 任务簇
 
@@ -104,6 +123,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_acceptance_20260604.zh.md](a7_event_value_advantage_credit_head_acceptance_20260604.zh.md)
 - Objective contract：
   [a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md](a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md)
+- Legal-state projection contract：
+  [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md)
 
 ## 输出与证据
 
@@ -123,11 +144,29 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   `AdaptiveKLPPO._first_event_credit_loss()`，由
   `tests/hmoe/test_a6_event_head_update_strength.py` 和
   `tests/hmoe/test_hmoe_ppo_warmup.py` 覆盖。
+- Config and diagnostics：
+  [a7_event_value_advantage_credit_head_config_diagnostics_20260604.md](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md)、
+  `examples/config/training/active/air_combat/` 下的 A7 active config、
+  `python/training/diagnostics.py` 中的 callback event-credit diagnostics，
+  以及 `tools/diagnostics/air_combat_stage0_process_probe.py` 中的 A7
+  process-probe summary metrics。
+- Focused validation：
+  [a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md)。
+- Short learned evidence：
+  [a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_learned_evidence_20260604.md)。
+- Target construction and credit-sign audit：
+  [a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md)。
+- Shadow-quality target repair：
+  [a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md)。
+- Legal-state projection and coupling audit：
+  [a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md)。
+- Legal-state projection contract：
+  [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md)。
 
-计划 implementation 输出：
+计划 follow-on 输出：
 
-- 覆盖 loss masks、diagnostics 与 active config 的 focused tests。
-- 与 A6-EVT-M 对照的短训 learned-policy evidence。
+- Projected legal-open credit prototype：只在 projected legal-open observations 上训练
+  positive value/delta alignment，不对 raw closed-mask shadow rows 训练直接 alignment。
 
 ## 验收门
 
@@ -143,10 +182,15 @@ A7 只有在以下条件满足后才能 accepted：
 
 ## 残余与下一步
 
-- 立即下一步：分发 `A7-EVC-E Config And Diagnostics`，让 active entries 与
-  callback/process-probe metrics 暴露新的 credit loss，再进入 learned-policy probe。
+- 立即下一步：依据 L 合同实现 `A7-EVC-M Projected Legal-Open Credit Prototype`。
+  `A7-EVC-J` 已修复 target label censoring，`A7-EVC-K/L` 进一步说明 repaired positives
+  必须投影到 legal-open decision surface 后，才应启动下一轮 learned-policy wave。
+- 修复方向是 legal-state counterfactual projection，并更强地区分 raw shadow
+  opportunity learning 与 legal-state policy distillation；不应回到盲目
+  coefficient-only training。
 - Adaptive label weight scheduling 仍是 guardrail candidate，不是主要 repair。
-- HMoE hierarchical computation 保持 issue-board item，除非 A7 evidence 证明它阻塞 advantage-credit learning。
+- HMoE hierarchical computation 保持 issue-board item；只有当 A7 学到正确 credit
+  signs 后仍出现可归因于 policy coupling 的失败，才把它升级为 active blocker。
 
 ## 归档
 

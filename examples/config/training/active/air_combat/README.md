@@ -99,6 +99,14 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Early accepted releases become negative labels; deadline/curriculum positives are gated by the launch window.
   - It is an implementation/evidence entry for the next short probe, not M2 release, doctrine, missile-authority, or Pk evidence.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json)
+  - Stage-1 A7 event-credit probe using the same C2/ROE temporal shaped and launch-window gate.
+  - Keeps A6 hazard loss disabled and trains the zero-initialized `hybrid_event_credit_head` with value credit plus event-logit delta alignment.
+  - Includes `a7_event_credit_shadow_quality_weight=1.0` for the A7-EVC-J shadow-quality target repair path.
+  - Keeps A3/A5 legality masks and one-shot state-machine authority unchanged.
+  - It was used by A7-G r3 and A7-EVC-J repair evidence; both are valid but held because deterministic releases remain `0` and quality-window advantage stays negative.
+  - It is not M2 release, doctrine, missile-authority, or Pk evidence, and it should not be rerun blindly before the legal-state projection / coupling audit.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.

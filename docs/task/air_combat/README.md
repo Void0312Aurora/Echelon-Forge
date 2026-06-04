@@ -11,7 +11,13 @@ wave, deadline-bootstrap re-scope wave, event-head update-strength audit, and
 event-head optimization learned evidence; it remains held on launch-window
 timing quality. `2026-06-04` opened A7 as the counterfactual event-value /
 advantage-credit head follow-on; its policy-head prototype and focused PPO
-auxiliary-credit integration are now complete, with config/diagnostics next.
+auxiliary-credit integration, config/diagnostics, focused validation, and short
+learned evidence are now complete. A7 remains held because deterministic
+probing still makes `0` releases and quality-window event advantage remains
+negative. The A7 target-construction audit has traced the structural blocker to
+missing shadow-quality target repair after early stochastic accepted release;
+`A7-EVC-J` has repaired that label-censoring path, but its 32k repair probe still
+leaves learned first-shot timing held.
 
 ## Current Status
 
@@ -91,10 +97,22 @@ auxiliary-credit integration are now complete, with config/diagnostics next.
 - A7
   [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
   is now the implementation line for the first-event timing residual: the
-  policy-level event-credit head API and focused PPO auxiliary-credit loss are
-  in place, while active config, callback/process-probe diagnostics, cumulative
-  early-fire diagnostics, and learned evidence remain the next implementation
-  work. A3/A5 legality stays authoritative, and HMoE redesign/M2 remain held.
+  policy-level event-credit head API, focused PPO auxiliary-credit loss, active
+  config, callback/process-probe diagnostics, and cumulative early-fire
+  diagnostics are in place. The valid A7 r3 short evidence keeps A5 one-shot
+  legality intact but remains held: deterministic probing records `0` releases,
+  stochastic probing fires early at steps `14`, `47`, and `2`, and
+  quality-window advantage is still negative. The target-construction audit
+  named the failing link: early stochastic accepted release censored later
+  quality-window positives from A7 labels. `A7-EVC-J` now fixes that
+  label-censoring path, and repaired label reconstruction restores thousands of
+  shadow-quality positives, but the repair probe still records deterministic
+  `0` releases, early stochastic releases, and negative quality-window advantage.
+  The post-repair projection audit and L contract now show the next mechanism:
+  project shadow-quality evidence onto a legal-open decision surface and align
+  positive value/delta only there. The active next step is the projected
+  legal-open credit prototype, not another blind training run. A3/A5 legality
+  stays authoritative, and HMoE redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -124,8 +142,8 @@ auxiliary-credit integration are now complete, with config/diagnostics next.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through config/diagnostics and focused validation before any new
-  learned-policy probe or M2 reconsideration
+  through the projected legal-open credit prototype before any M2
+  reconsideration
 
 ## Recommended Reading Order
 

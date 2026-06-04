@@ -19,8 +19,11 @@ from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
     A6_FIRST_EVENT_SOURCE_DEADLINE,
     A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_INACTIVE,
     A6_FIRST_EVENT_SOURCE_PREWINDOW,
+    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     build_first_event_hazard_labels,
+    compute_first_event_credit_loss,
     compute_first_event_hazard_loss,
     current_first_event_curriculum_coef,
     first_event_hazard_batch_from_rollout_data,
@@ -160,6 +163,54 @@ class A6FirstEventHazardTests(unittest.TestCase):
         self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
         self.assertTrue(th.equal(labels.had_accepted[:2], th.tensor([1, 1], dtype=th.bool)))
 
+    def test_shadow_quality_repair_adds_post_early_positive_credit_without_reopening_fire_mask(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=[
+                "AuthorizedReady",
+                "AuthorizedReady",
+                "FiredAssess",
+                "FiredAssess",
+                "FiredAssess",
+                "FiredAssess",
+            ],
+            fire_mask=[1, 1, 0, 0, 0, 0],
+            fire_once_accepted=[0, 1, 0, 0, 0, 0],
+            episode_id=[0, 0, 0, 0, 0, 0],
+            launch_window_open=[0, 0, 0, 1, 1, 1],
+            launch_window_min_window_age_steps=3,
+            launch_window_prewindow_hold_weight=0.25,
+            launch_window_early_accept_weight=0.75,
+            shadow_quality_after_early_accept=True,
+            shadow_quality_positive_weight=0.5,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 1, 1, 1], dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
+        self.assertTrue(th.allclose(labels.weight, th.tensor([0.25, 0.75, 0.0, 0.5, 0.5, 0.5])))
+        self.assertEqual(int(labels.source[0]), A6_FIRST_EVENT_SOURCE_PREWINDOW)
+        self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
+        self.assertTrue(th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)))
+        self.assertTrue(th.equal(labels.window_id[[0, 1, 3, 4, 5]], th.zeros((5,), dtype=th.long)))
+        self.assertTrue(th.all(labels.window_id[2] < 0))
+        self.assertTrue(th.equal(labels.had_accepted[[0, 1, 3, 4, 5]], th.ones((5,), dtype=th.bool)))
+
+    def test_shadow_quality_repair_keeps_early_accepted_negative_when_no_future_quality_exists(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady", "AuthorizedReady", "FiredAssess", "FiredAssess"],
+            fire_mask=[1, 1, 0, 0],
+            fire_once_accepted=[0, 1, 0, 0],
+            episode_id=[0, 0, 0, 0],
+            launch_window_open=[0, 0, 0, 0],
+            launch_window_prewindow_hold_weight=0.25,
+            launch_window_early_accept_weight=0.75,
+            shadow_quality_after_early_accept=True,
+            shadow_quality_positive_weight=0.5,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 0], dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.zeros(4)))
+        self.assertTrue(th.all(labels.source[2:] == A6_FIRST_EVENT_SOURCE_INACTIVE))
+
     def test_launch_window_gate_keeps_accepted_positive_inside_quality_window(self) -> None:
         labels = build_first_event_hazard_labels(
             engagement_state=["AuthorizedReady"] * 4,
@@ -238,6 +289,31 @@ class A6FirstEventHazardTests(unittest.TestCase):
         self.assertIsNotNone(logits.grad)
         self.assertTrue(th.isfinite(logits.grad).all())
         self.assertGreater(float(logits.grad.detach().abs().sum().cpu().item()), 0.0)
+
+    def test_shadow_quality_credit_can_skip_delta_alignment_for_closed_mask_rows(self) -> None:
+        q_values = th.zeros((2, 2), dtype=th.float32, requires_grad=True)
+        event_delta = th.ones((2,), dtype=th.float32, requires_grad=True)
+        target = th.ones((2,), dtype=th.float32)
+        active = th.ones((2,), dtype=th.bool)
+        weight = th.ones((2,), dtype=th.float32)
+        delta_align_active = th.tensor([0, 1], dtype=th.bool)
+
+        result = compute_first_event_credit_loss(
+            q_values,
+            target,
+            active,
+            weight,
+            event_logit_delta=event_delta,
+            value_coef=0.0,
+            delta_align_coef=1.0,
+            delta_align_active=delta_align_active,
+        )
+        result.loss.backward()
+
+        self.assertIsNotNone(event_delta.grad)
+        assert event_delta.grad is not None
+        self.assertAlmostEqual(float(event_delta.grad[0].detach().cpu().item()), 0.0, places=8)
+        self.assertNotEqual(float(event_delta.grad[1].detach().cpu().item()), 0.0)
 
     def test_event_logit_delta_is_unmasked_while_categorical_semantics_stay_masked(self) -> None:
         params = th.zeros((2, 20), dtype=th.float32)

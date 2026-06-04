@@ -5,6 +5,18 @@ from typing import Any
 
 import numpy as np
 
+from python.rl.policy_algo.first_event_hazard import (
+    A6_FIRST_EVENT_FIELD_ACTIVE,
+    A6_FIRST_EVENT_FIELD_SOURCE,
+    A6_FIRST_EVENT_FIELD_TARGET,
+    A6_FIRST_EVENT_SOURCE_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_CURRICULUM,
+    A6_FIRST_EVENT_SOURCE_DEADLINE,
+    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_PREWINDOW,
+    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+)
+
 
 def _safe_mean(values):
     if values is None:
@@ -13,6 +25,76 @@ def _safe_mean(values):
     if arr.size == 0:
         return None
     return float(arr.mean())
+
+
+def _as_numpy_array(value: Any, *, dtype=np.float64) -> np.ndarray | None:
+    if value is None:
+        return None
+    try:
+        if hasattr(value, "detach"):
+            value = value.detach().to(device="cpu").numpy()
+        return np.asarray(value, dtype=dtype)
+    except Exception:
+        return None
+
+
+def _obs_field_array(obs: Any, key: str, *, length: int, dtype=np.float64) -> np.ndarray | None:
+    if not isinstance(obs, dict) or key not in obs:
+        return None
+    arr = _as_numpy_array(obs.get(key), dtype=dtype)
+    if arr is None:
+        return None
+    flat = arr.reshape(-1)
+    if int(flat.size) != int(length):
+        return None
+    return flat
+
+
+def _first_event_label_masks_from_obs(obs: Any, length: int) -> dict[str, np.ndarray]:
+    active_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_ACTIVE, length=length)
+    target_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_TARGET, length=length)
+    source_arr = _obs_field_array(obs, A6_FIRST_EVENT_FIELD_SOURCE, length=length)
+    if active_arr is None and target_arr is None and source_arr is None:
+        return {}
+
+    active = np.ones(int(length), dtype=bool) if active_arr is None else active_arr > 0.5
+    prewindow = np.zeros(int(length), dtype=bool)
+    quality = np.zeros(int(length), dtype=bool)
+
+    if source_arr is not None:
+        source = source_arr.astype(np.int64, copy=False)
+        prewindow |= np.isin(
+            source,
+            (
+                A6_FIRST_EVENT_SOURCE_PREWINDOW,
+                A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+            ),
+        )
+        quality |= np.isin(
+            source,
+            (
+                A6_FIRST_EVENT_SOURCE_ACCEPTED,
+                A6_FIRST_EVENT_SOURCE_CURRICULUM,
+                A6_FIRST_EVENT_SOURCE_DEADLINE,
+                A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+            ),
+        )
+
+    if target_arr is not None:
+        prewindow |= active & (target_arr <= 0.5)
+        quality |= active & (target_arr > 0.5)
+
+    return {
+        "prewindow": prewindow & active,
+        "quality": quality & active,
+    }
+
+
+def _cumulative_event_probability(probabilities: np.ndarray) -> float:
+    probs = np.clip(np.asarray(probabilities, dtype=np.float64).reshape(-1), 0.0, 1.0)
+    if probs.size == 0:
+        return 0.0
+    return float(1.0 - np.exp(np.log1p(-probs).sum()))
 
 
 def _bool_int(value: Any) -> int:
@@ -734,6 +816,114 @@ def record_policy_distribution_diagnostics(
                     logger.record("a6/event_logit_delta_mean_open", 0.0)
                     logger.record("a6/event_fire_prob_mean_open", 0.0)
                     logger.record("a6/event_fire_prob_max_open", 0.0)
+                label_masks = _first_event_label_masks_from_obs(obs, int(prob_arr.size))
+                prewindow_mask = label_masks.get("prewindow")
+                if prewindow_mask is not None:
+                    prewindow_count = int(np.count_nonzero(prewindow_mask))
+                    logger.record("a7/prewindow_step_count", float(prewindow_count))
+                    if prewindow_count > 0:
+                        prewindow_probs = prob_arr[prewindow_mask]
+                        logger.record(
+                            "a7/prewindow_event_fire_prob_cum",
+                            _cumulative_event_probability(prewindow_probs),
+                        )
+                        logger.record("a7/prewindow_event_fire_prob_mean", float(prewindow_probs.mean()))
+                        logger.record("a7/prewindow_event_fire_prob_max", float(prewindow_probs.max()))
+                    else:
+                        logger.record("a7/prewindow_event_fire_prob_cum", 0.0)
+                        logger.record("a7/prewindow_event_fire_prob_mean", 0.0)
+                        logger.record("a7/prewindow_event_fire_prob_max", 0.0)
+                quality_mask = label_masks.get("quality")
+                if quality_mask is not None:
+                    quality_count = int(np.count_nonzero(quality_mask))
+                    logger.record("a7/quality_window_step_count", float(quality_count))
+                    if quality_count > 0:
+                        logger.record(
+                            "a7/quality_window_event_fire_prob_mean",
+                            float(prob_arr[quality_mask].mean()),
+                        )
+                    else:
+                        logger.record("a7/quality_window_event_fire_prob_mean", 0.0)
+        except Exception:
+            pass
+
+    q_values_getter = getattr(distribution, "fire_event_q_values", None)
+    if callable(q_values_getter):
+        try:
+            q_values_tensor = q_values_getter()
+            if q_values_tensor is not None:
+                values = q_values_tensor.detach().to(device="cpu").numpy().astype(np.float64)
+                if values.ndim == 1:
+                    values = values.reshape(1, -1)
+                if values.ndim == 2 and values.shape[1] >= 2:
+                    q_hold = values[:, 0]
+                    q_fire = values[:, 1]
+                    advantage = q_fire - q_hold
+                    logger.record("a7/evc_q_hold_mean", float(q_hold.mean()))
+                    logger.record("a7/evc_q_fire_mean", float(q_fire.mean()))
+                    logger.record("a7/evc_adv_mean", float(advantage.mean()))
+                    logger.record("a7/evc_adv_abs_mean", float(np.abs(advantage).mean()))
+                    logger.record(
+                        "a7/evc_adv_pos_frac",
+                        float((advantage > 0.0).mean()),
+                    )
+                    logger.record(
+                        "a7/evc_adv_neg_frac",
+                        float((advantage < 0.0).mean()),
+                    )
+
+                    event_mask = getattr(distribution, "fire_event_mask", None)
+                    if event_mask is not None:
+                        mask = event_mask.detach().to(device="cpu").numpy().astype(bool)
+                        if mask.ndim == 1:
+                            mask = mask.reshape(1, -1)
+                        if mask.ndim == 2 and mask.shape[1] >= 2 and mask.shape[0] == values.shape[0]:
+                            open_mask = mask[:, 1].reshape(-1)
+                            open_count = int(np.count_nonzero(open_mask))
+                            logger.record("a7/evc_open_count", float(open_count))
+                            if open_count > 0:
+                                open_advantage = advantage[open_mask]
+                                logger.record(
+                                    "a7/evc_adv_mean_open",
+                                    float(open_advantage.mean()),
+                                )
+                                logger.record(
+                                    "a7/evc_adv_pos_frac_open",
+                                    float((open_advantage > 0.0).mean()),
+                                )
+                            else:
+                                logger.record("a7/evc_adv_mean_open", 0.0)
+                                logger.record("a7/evc_adv_pos_frac_open", 0.0)
+
+                    label_masks = _first_event_label_masks_from_obs(obs, int(values.shape[0]))
+                    for label, mask in (
+                        ("prewindow", label_masks.get("prewindow")),
+                        ("quality", label_masks.get("quality")),
+                    ):
+                        if mask is None:
+                            continue
+                        label_key = "pre" if label == "prewindow" else "qual"
+                        count = int(np.count_nonzero(mask))
+                        logger.record(f"a7/evc_{label_key}_count", float(count))
+                        if count <= 0:
+                            logger.record(f"a7/evc_{label_key}_q_hold_mean", 0.0)
+                            logger.record(f"a7/evc_{label_key}_q_fire_mean", 0.0)
+                            logger.record(f"a7/evc_{label_key}_adv_mean", 0.0)
+                            logger.record(f"a7/evc_{label_key}_adv_pos_frac", 0.0)
+                            logger.record(f"a7/evc_{label_key}_adv_neg_frac", 0.0)
+                            continue
+                        label_advantage = advantage[mask]
+                        logger.record(f"a7/evc_{label_key}_q_hold_mean", float(q_hold[mask].mean()))
+                        logger.record(f"a7/evc_{label_key}_q_fire_mean", float(q_fire[mask].mean()))
+                        logger.record(f"a7/evc_{label_key}_adv_mean", float(label_advantage.mean()))
+                        logger.record(
+                            f"a7/evc_{label_key}_adv_pos_frac",
+                            float((label_advantage > 0.0).mean()),
+                        )
+                        logger.record(
+                            f"a7/evc_{label_key}_adv_neg_frac",
+                            float((label_advantage < 0.0).mean()),
+                        )
         except Exception:
             pass
 

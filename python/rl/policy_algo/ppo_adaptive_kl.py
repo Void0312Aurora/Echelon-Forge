@@ -16,6 +16,7 @@ from stable_baselines3.common.vec_env import VecEnv
 from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
 from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
+    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     build_first_event_hazard_labels,
     compute_first_event_credit_loss,
     compute_first_event_hazard_loss,
@@ -79,6 +80,7 @@ class AdaptiveKLPPO(PPO):
         a7_event_credit_censored_survival_weight: float = 0.0,
         a7_event_credit_deadline_weight: float = 0.0,
         a7_event_credit_deadline_min_window_age_steps: int = 96,
+        a7_event_credit_shadow_quality_weight: float = 1.0,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -143,6 +145,7 @@ class AdaptiveKLPPO(PPO):
             1,
             int(a7_event_credit_deadline_min_window_age_steps),
         )
+        self.a7_event_credit_shadow_quality_weight = float(max(0.0, a7_event_credit_shadow_quality_weight))
         super().__init__(*args, **kwargs)
 
     def _a6_first_event_enabled(self) -> bool:
@@ -411,6 +414,14 @@ class AdaptiveKLPPO(PPO):
                 int(self.a6_first_event_deadline_min_window_age_steps)
                 if use_a6_targets
                 else int(self.a7_event_credit_deadline_min_window_age_steps)
+            ),
+            shadow_quality_after_early_accept=bool(
+                not use_a6_targets and self.a7_event_credit_shadow_quality_weight > 0.0
+            ),
+            shadow_quality_positive_weight=(
+                0.0
+                if use_a6_targets
+                else float(self.a7_event_credit_shadow_quality_weight)
             ),
             device=self.device,
         )
@@ -710,7 +721,7 @@ class AdaptiveKLPPO(PPO):
         batch = first_event_credit_batch_from_rollout_data(rollout_data)
         if batch is None:
             return None
-        active, target, weight, window_id = batch
+        active, target, weight, window_id, source = batch
         obs = rollout_data.observations
         distribution = self.policy.get_distribution(obs)
         q_values_getter = getattr(distribution, "fire_event_q_values", None)
@@ -723,6 +734,9 @@ class AdaptiveKLPPO(PPO):
         logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
         if callable(logit_delta_getter):
             logit_delta = logit_delta_getter()
+        delta_align_active = None
+        if source is not None:
+            delta_align_active = source.to(device=q_values.device) != int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
         return compute_first_event_credit_loss(
             q_values,
             target.to(device=q_values.device),
@@ -733,6 +747,7 @@ class AdaptiveKLPPO(PPO):
             value_coef=float(self.a7_event_credit_value_coef),
             delta_align_coef=float(self.a7_event_credit_delta_align_coef),
             delta_align_clip=float(self.a7_event_credit_delta_align_clip),
+            delta_align_active=delta_align_active,
             positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
             negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
         )
