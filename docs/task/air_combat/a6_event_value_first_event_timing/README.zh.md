@@ -1,10 +1,12 @@
 # A6 事件价值与首事件时机
 
-状态：`2026-06-03` event-head learned-policy evidence 后 held。A6 已证明
-hazard/curriculum 与 deadline-bootstrap 训练路径真实生效，审计也证明 event-head gradients
-路由正确；A6-EVT-K 进一步证明专用 event-head optimizer lane 可以跨过 deterministic
-`fire_once` argmax。A6 继续 held，因为 learned release 收敛到 authorization/contact 后的
-近立即发射，而不是成熟的 launch-window timing 决策。
+状态：`2026-06-04` launch-window short learned-policy evidence 与 root-cause re-scope
+后 held。A6 已证明 hazard/curriculum 与 deadline-bootstrap 训练路径真实生效，审计也证明
+event-head gradients 路由正确；A6-EVT-K 证明专用 event-head optimizer lane 可以跨过
+deterministic `fire_once` argmax。A6-EVT-L 已实现有边界的 launch-window label contract；
+A6-EVT-M 显示它压制了 deterministic 近立即 release，但尚未产生可验收的 launch-window
+timing；A6-EVT-N 进一步判定剩余 blocker 是 on-policy first-event censoring 与缺失
+counterfactual hold/fire credit，而不是继续调 L 参数的问题。
 
 语言：
 
@@ -49,7 +51,7 @@ fire-mask-open 步，却仍把 `fire_once` 概率压在接近零的位置，mask
 | A4 reward/routing | held | reward、HMoE route、binary diagnostics 和 opportunity-penalty trial 都没有让 deterministic fire。 | reward-only tuning 不再作为默认主线。 |
 | A5 event-action support | held after evidence | event mask/state machine/policy event head 已实现；stochastic probing 能按纪律授权发射。 | deterministic learned policy 仍为零 `fire_once` requests。 |
 | A5 retained observation | pass as A6 input | deterministic：`1880` 个 fire-mask-open 步，`0` 次 fire request；stochastic：`3` 局 `3` 次授权发射，`0` 违规。 | 这是短训保留证据，不是最终 policy acceptance。 |
-| A6 model direction | held after event-head learned evidence | A6 labels/loss 已进入 PPO 和 diagnostics；deadline bootstrap 让 event probability 约翻倍，但 deterministic policy 仍为零 `fire_once` requests。Event-head audit 证明 gradients 到达 shared 与 HMoE heads；A6-EVT-K 随后跨过 deterministic argmax，并执行一次 authorized release。 | release 几乎紧贴 authorization/contact，timing quality 仍未解决；M2 继续 held。 |
+| A6 model direction | held after root-cause re-scope | A6 labels/loss 已进入 PPO 和 diagnostics；deadline bootstrap 让 event probability 约翻倍，但 deterministic policy 仍为零 `fire_once` requests。Event-head audit 证明 gradients 到达 shared 与 HMoE heads；A6-EVT-K 随后跨过 deterministic argmax，并执行一次 authorized release。A6-EVT-L 增加 launch-window gated labels。A6-EVT-M deterministic probe 达到 `34.6% / 35.0%` open-window fire probability，但仍为零 requests；stochastic release steps 为 `7`、`43`、`4`。A6-EVT-N 说明逐步 stochastic hazard 累积、absorbing first-event censoring 与缺失 counterfactual hold/fire credit 是当前根因。 | L 调参和额外短训暂停；下一机制必须是 counterfactual event-time/value contract；M2 继续 held。 |
 
 ## 范围
 
@@ -91,7 +93,9 @@ fire-mask-open 步，却仍把 `fire_once` 概率压在接近零的位置，mask
 | `P8 Deadline Short Evidence` | 运行 deadline wave 短训/探针对照。 | P7 tests pass。 | deterministic/stochastic probes 记录 event logits 是否跨过 masked argmax。 | pass；held outcome |
 | `P9 Event-Head Update Audit` | 审计 optimizer/head scaling 是否阻止 A6 正例推动 event logits。 | P8 held evidence exists。 | focused update probe 解释为什么持续正例只把 probability 推到约 `0.5%`。 | pass；held outcome |
 | `P10 Event-Head Optimization Lane` | 给 `hold/fire_once` event rows 一个更强但有边界的更新路径。 | P9 将 blocker 归因到 update strength。 | 短训证据测试 deterministic argmax 能否在不削弱 A3/A5 masks 的情况下 crossing。 | pass；held timing residual |
-| `P11 Launch-Window Timing Contract` | 把 authorization 与良好首发 timing 分开。 | P10 证明 event argmax 可 crossing，但 release 过早。 | 新的有边界 contract 定义 engagement-quality/window labels，且不削弱 A3/A5 masks。 | planned |
+| `P11 Launch-Window Timing Contract` | 把 authorization 与良好首发 timing 分开。 | P10 证明 event argmax 可 crossing，但 release 过早。 | 有边界 contract 定义 engagement-quality/window labels，且不削弱 A3/A5 masks；focused tests 覆盖实现表面。 | pass |
+| `P12 Launch-Window Short Evidence` | 在 learned-policy probe 中测试 L contract。 | P11 focused tests pass。 | deterministic/stochastic outcomes 记录 release timing 与 discipline。 | pass；held outcome |
+| `P13 Root-Cause Re-scope` | 停止 L 调参并识别机制 blocker。 | P12 held evidence exists。 | 根因记录解释 stochastic hazard 累积、吸收式 first-event censoring 与缺失 counterfactual hold/fire credit；继续训练前先重新定义下一 contract。 | pass；training paused |
 
 ## 任务簇
 
@@ -121,6 +125,12 @@ fire-mask-open 步，却仍把 `fire_once` 概率压在接近零的位置，mask
   [a6_event_value_first_event_timing_event_head_optimization_lane_20260603.zh.md](a6_event_value_first_event_timing_event_head_optimization_lane_20260603.zh.md)
 - Event-head short learned evidence：
   [a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md](a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.zh.md)
+- Launch-window timing contract：
+  [a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md](a6_event_value_first_event_timing_launch_window_timing_contract_20260604.zh.md)
+- Launch-window short learned evidence：
+  [a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md](a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.zh.md)
+- Root-cause re-scope：
+  [a6_event_value_first_event_timing_root_cause_rescope_20260604.zh.md](a6_event_value_first_event_timing_root_cause_rescope_20260604.zh.md)
 
 ## 输出与证据
 
@@ -157,6 +167,18 @@ fire-mask-open 步，却仍把 `fire_once` 概率压在接近零的位置，mask
   accepted authorized release；stochastic 产生 `3/3` accepted authorized releases，且无
   rejected、violation、repeat 或 budget 问题。这证明 event decision 可训练，但暴露 early
   launch-window residual。
+- Launch-window timing contract implementation 已按 `A6-EVT-L` 完成：
+  A6 labels 现在区分 legal authorization 与 quality-window release，early accepted releases
+  会变成 negative labels，deadline/curriculum positives 被 quality window gate 约束，PPO
+  从 policy observations 中派生 contact quality，并提供独立 L active config。
+- Launch-window short learned evidence 已按 `A6-EVT-M` 完成：deterministic 不再近立即发射，
+  但也没有 crossing；open-window event probability 达到 `34.6% / 35.0%`，requests 为 `0`。
+  Stochastic 仍然每局采样一次 authorized release，steps 为 `7`、`43`、`4`，无 rejected、
+  violation、repeat 或 budget 问题。
+- Root-cause re-scope 已按 `A6-EVT-N` 完成：额外 L 训练与参数调节暂停。当前 blocker 是结构性
+  问题：逐步 stochastic hazard 累积会在 deterministic argmax crossing 前产生 early first
+  events，而 accepted first event 会 censor 后续 quality-window evidence。下一轮 implementation
+  或 training 前，A6 需要 counterfactual event-time/value contract。
 
 Held output：
 
@@ -164,6 +186,9 @@ Held output：
 - Deadline bootstrap 能移动 event probability，但不能推动 deterministic argmax。
 - Event-head optimization 推动 deterministic argmax crossing，但 learned release 发生在
   authorization/contact 后的近立即时刻，尚未证明成熟 first-event timing。
+- Launch-window short evidence 压制 deterministic early fire，但尚未证明 launch-window timing。
+- L 参数搜索暂停，因为根因是在 on-policy absorbing first-event collection 下缺失
+  counterfactual hold/fire credit。
 
 ## 验收门
 
@@ -181,10 +206,11 @@ Held output：
 
 ## 残余与下一步
 
-- 立即下一步：定义 launch-window / engagement-quality timing contract，把合法 authorization
-  与战术上有意义的 release timing 分开。
-- Event-value 仍是可能的长期扩展方向，但当前窄 blocker 是 label/window semantics，而不是原始
-  event-head update strength。
+- 立即下一步：在任何进一步训练前创建 `A6-EVT-O Counterfactual Event-Time Objective`
+  contract。该 contract 应定义 counterfactual labels 或 event-time/value credit、累计
+  pre-window hazard diagnostics 与 stochastic collection controls。
+- Event-value 不再只是可能的长期扩展方向；根因记录把 counterfactual hold/fire credit 提升为
+  下一设计要求。
 - 有边界的 first-shot curriculum 产生了早期 gradient，并按要求衰减为零；但单独使用未推动
   deterministic argmax。
 - M2 继续 held，直到 deterministic first-event behavior 在当前 A3/A5 约束下可训练，或 A6

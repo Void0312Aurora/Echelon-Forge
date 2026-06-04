@@ -1,8 +1,10 @@
 # A6 Dispatch Queue
 
-Status: `2026-06-03` first/deadline waves, event-head update audit, and
-event-head optimization learned evidence are complete. A6 remains held on
-launch-window timing quality.
+Status: `2026-06-04` first/deadline waves, event-head update audit,
+event-head optimization learned evidence, launch-window contract implementation,
+launch-window short learned evidence, and root-cause re-scope are complete. A6
+remains held; L tuning is paused pending a counterfactual event-time objective
+contract.
 
 Parent: [README.md](README.md). Cluster plan:
 [a6_event_value_first_event_timing_task_clusters_20260603.md](a6_event_value_first_event_timing_task_clusters_20260603.md).
@@ -21,12 +23,15 @@ Parent: [README.md](README.md). Cluster plan:
 | `A6-EVT-I Deadline Short Learned Evidence` | pass; held outcome | Main thread ran `32768`-step deadline train plus deterministic/stochastic probes. | Evidence note only; `experiments_tmp` not staged. | Deterministic still 0 requests; stochastic has 1 rejected request but 0 violation/repeat/budget issues. |
 | `A6-EVT-J Event-Head Update-Strength Audit` | pass; held outcome | Main thread audited A6 loss/optimizer routing and added a focused update-strength diagnostic test. | `tests/hmoe/test_a6_event_head_update_strength.py`, A6 evidence note. | Diagnostic only; A6 still held and M2 still held. |
 | `A6-EVT-K Event-Head Optimization Lane` | pass; held timing residual | Main thread added dedicated zero-initialized event-head optimizer lane, diagnostics, focused tests, separate active config, and short learned evidence. | `python/rl/policy_algo/policies.py`, focused tests, active config, A6 docs/evidence. | Deterministic crossing is proven, but release timing is near-immediate; A6 and M2 held. |
+| `A6-EVT-L Launch-Window Timing Contract` | pass | Main thread added launch-window gated labels, PPO contact-quality extraction, non-finite probe parity, diagnostics, focused tests, independent active config, and contract docs. | `python/rl/policy_algo/**`, `python/rl/support/nonfinite_probe.py`, `python/training_callbacks.py`, tests, active config, A6 docs. | Implementation is covered; learned-policy acceptance is evaluated by M. |
+| `A6-EVT-M Launch-Window Short Learned Evidence` | pass; held outcome | Main thread ran `32768`-step L train plus deterministic/stochastic probes. | Evidence note only; `experiments_tmp` not staged. | Deterministic no longer fires early but also does not cross; stochastic still samples early authorized releases. |
+| `A6-EVT-N Root-Cause Re-scope` | pass; training paused | Main thread analyzed L evidence as a first-event survival/hazard process. | A6 analysis/status/README/dispatch docs. | No new training; next mechanism is counterfactual event-time/value credit, not L tuning. |
 
 ## Active Queue
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A6-EVT-L Launch-Window Timing Contract` | planned next | Main thread or future worker; design first. | A6 contract/status docs first; code/config only after contract acceptance. | Separate authorization from good launch timing; keep A3/A5 masks authoritative and M2 held. |
+| `A6-EVT-O Counterfactual Event-Time Objective` | planned next | Main thread or future worker; design first. | A6 objective/contract docs first; code/config only after contract review. | Do not run more L training first; keep A3/A5 masks authoritative and M2 held. |
 
 ## Completed Blockers
 
@@ -38,7 +43,10 @@ Parent: [README.md](README.md). Cluster plan:
 | `A6-EVT-I Deadline Short Learned Evidence` | Needed deadline implementation tests. | Unblocked by H and completed; result is held. |
 | `A6-EVT-J Event-Head Update-Strength Audit` | Needed deadline evidence. | Unblocked by I and completed; result is held. |
 | `A6-EVT-K Event-Head Optimization Lane` | Needed update-strength diagnosis and learned evidence. | Unblocked by J and completed as held timing residual. |
-| `A6-EVT-L Launch-Window Timing Contract` | Needs K evidence. | Unblocked by K; ready for design/contract packet. |
+| `A6-EVT-L Launch-Window Timing Contract` | Needed K evidence. | Unblocked by K and completed as implementation evidence. |
+| `A6-EVT-M Launch-Window Short Learned Evidence` | Needed L implementation tests. | Unblocked by L focused tests and completed as held evidence. |
+| `A6-EVT-N Root-Cause Re-scope` | Needed M evidence. | Unblocked by M held outcome and completed; result pauses L tuning. |
+| `A6-EVT-O Counterfactual Event-Time Objective` | Needs N root-cause analysis. | Unblocked by N; ready for design-first contract work. |
 
 ## Dispatch Packet Template
 
@@ -58,4 +66,6 @@ return packet:
 - If subagents are used, map each worker to one cluster and follow
   [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
 - Keep `experiments_tmp` out of staging.
+- Do not resume L training or L weight search before `A6-EVT-O` defines the
+  counterfactual objective and cumulative hazard diagnostics.
 - Keep M2 held unless A6 evidence later creates an explicit release vote.

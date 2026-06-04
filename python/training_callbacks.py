@@ -7,6 +7,8 @@ import os
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 
+from python.training.diagnostics import record_policy_distribution_diagnostics
+
 
 def _safe_mean(values):
     if values is None:
@@ -88,118 +90,11 @@ class CMODiagnosticsCallback(BaseCallback):
         return None
 
     def _record_policy_distribution_diagnostics(self, obs: Any) -> None:
-        policy = getattr(self.model, "policy", None)
-        get_distribution = getattr(policy, "get_distribution", None)
-        if obs is None or not callable(get_distribution):
-            return
-
-        try:
-            import torch as th
-
-            obs_to_tensor = getattr(policy, "obs_to_tensor", None)
-            if callable(obs_to_tensor):
-                obs_tensor, _vectorized = obs_to_tensor(obs)
-            else:
-                from stable_baselines3.common.utils import obs_as_tensor
-
-                obs_tensor = obs_as_tensor(obs, getattr(policy, "device", "cpu"))
-            with th.no_grad():
-                distribution = get_distribution(obs_tensor)
-        except Exception:
-            return
-
-        binary_logits = getattr(distribution, "binary_logits", None)
-        if binary_logits is not None:
-            try:
-                logits = binary_logits.detach().to(device="cpu").numpy().astype(np.float64)
-                if logits.ndim == 1:
-                    logits = logits.reshape(1, -1)
-                if logits.ndim == 2 and logits.shape[1] >= 5:
-                    probs = 1.0 / (1.0 + np.exp(-np.clip(logits, -60.0, 60.0)))
-                    names = ("radar", "tms", "arm", "fire", "gun")
-                    for idx, name in enumerate(names):
-                        self.logger.record(f"diag/pi_bin_{name}_logit_mean", float(logits[:, idx].mean()))
-                        self.logger.record(f"diag/pi_bin_{name}_p_mean", float(probs[:, idx].mean()))
-                        self.logger.record(f"diag/pi_bin_{name}_p_max", float(probs[:, idx].max()))
-            except Exception:
-                pass
-
-        event_logits_fn = getattr(distribution, "_fire_event_logits", None)
-        if callable(event_logits_fn):
-            try:
-                event_logits_tensor = event_logits_fn()
-                logits = event_logits_tensor.detach().to(device="cpu").numpy().astype(np.float64)
-                if logits.ndim == 1:
-                    logits = logits.reshape(1, -1)
-                if logits.ndim == 2 and logits.shape[1] >= 2:
-                    shifted = logits - logits.max(axis=1, keepdims=True)
-                    probs = np.exp(shifted)
-                    denom = np.clip(probs.sum(axis=1, keepdims=True), 1.0e-12, None)
-                    probs = probs / denom
-                    mode = np.argmax(probs[:, :2], axis=1)
-                    entropy = -np.sum(probs[:, :2] * np.log(np.clip(probs[:, :2], 1.0e-12, 1.0)), axis=1)
-                    self.logger.record("diag/pi_event_fire_p_mean", float(probs[:, 1].mean()))
-                    self.logger.record("diag/pi_event_fire_p_max", float(probs[:, 1].max()))
-                    self.logger.record("diag/pi_event_mode_fire_frac", float((mode == 1).mean()))
-                    self.logger.record("diag/pi_event_entropy_mean", float(entropy.mean()))
-                    event_mask = getattr(distribution, "fire_event_mask", None)
-                    if event_mask is not None:
-                        mask = event_mask.detach().to(device="cpu").numpy().astype(np.float64)
-                        if mask.ndim == 1:
-                            mask = mask.reshape(1, -1)
-                        if mask.ndim == 2 and mask.shape[1] >= 2:
-                            self.logger.record("diag/pi_event_fire_mask_frac", float(mask[:, 1].mean()))
-            except Exception:
-                pass
-
-        event_delta_fn = getattr(distribution, "fire_event_logit_delta", None)
-        event_prob_fn = getattr(distribution, "fire_event_probability", None)
-        if callable(event_delta_fn) and callable(event_prob_fn):
-            try:
-                delta = event_delta_fn()
-                prob = event_prob_fn()
-                if delta is not None and prob is not None:
-                    delta_arr = delta.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
-                    prob_arr = prob.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
-                    mask_arr = np.ones_like(prob_arr, dtype=bool)
-                    event_mask = getattr(distribution, "fire_event_mask", None)
-                    if event_mask is not None:
-                        mask = event_mask.detach().to(device="cpu").numpy().astype(bool)
-                        if mask.ndim == 1:
-                            mask = mask.reshape(1, -1)
-                        if mask.ndim == 2 and mask.shape[1] >= 2:
-                            mask_arr = mask[:, 1].reshape(-1)
-                    open_count = int(np.count_nonzero(mask_arr))
-                    self.logger.record("a6/open_window_count", float(open_count))
-                    if open_count > 0:
-                        self.logger.record("a6/event_logit_delta_mean_open", float(delta_arr[mask_arr].mean()))
-                        self.logger.record("a6/event_fire_prob_mean_open", float(prob_arr[mask_arr].mean()))
-                        self.logger.record("a6/event_fire_prob_max_open", float(prob_arr[mask_arr].max()))
-                    else:
-                        self.logger.record("a6/event_logit_delta_mean_open", 0.0)
-                        self.logger.record("a6/event_fire_prob_mean_open", 0.0)
-                        self.logger.record("a6/event_fire_prob_max_open", 0.0)
-            except Exception:
-                pass
-
-        categorical_logits = getattr(distribution, "categorical_logits", None)
-        if categorical_logits:
-            try:
-                _action_index, logits_tensor = list(categorical_logits)[0]
-                logits = logits_tensor.detach().to(device="cpu").numpy().astype(np.float64)
-                if logits.ndim == 1:
-                    logits = logits.reshape(1, -1)
-                logits = logits - logits.max(axis=1, keepdims=True)
-                probs = np.exp(logits)
-                denom = np.clip(probs.sum(axis=1, keepdims=True), 1.0e-12, None)
-                probs = probs / denom
-                mode = np.argmax(probs, axis=1)
-                self.logger.record("diag/pi_wsel_mode_mean", float(mode.mean()))
-                self.logger.record("diag/pi_wsel_s0_p_mean", float(probs[:, 0].mean()))
-                if probs.shape[1] > 1:
-                    self.logger.record("diag/pi_wsel_s1_p_mean", float(probs[:, 1].mean()))
-            except Exception:
-                pass
+        record_policy_distribution_diagnostics(
+            model=getattr(self, "model", None),
+            logger=self.logger,
+            obs=obs,
+        )
 
     def _record_a6_first_event_info_diagnostics(self, infos: Any) -> None:
         model = getattr(self, "model", None)
@@ -214,7 +109,17 @@ class CMODiagnosticsCallback(BaseCallback):
             curriculum_coef = float(getattr(model, "a6_first_event_curriculum_coef", 0.0) or 0.0)
 
         deadline_weight = float(getattr(model, "a6_first_event_deadline_weight", 0.0) or 0.0)
-        has_model_knobs = hazard_coef > 0.0 or curriculum_coef > 0.0 or deadline_weight > 0.0
+        launch_window_enabled = bool(getattr(model, "a6_first_event_launch_window_enabled", False))
+        prewindow_hold_weight = float(
+            getattr(model, "a6_first_event_launch_window_prewindow_hold_weight", 0.0) or 0.0
+        )
+        has_model_knobs = (
+            hazard_coef > 0.0
+            or curriculum_coef > 0.0
+            or deadline_weight > 0.0
+            or launch_window_enabled
+            or prewindow_hold_weight > 0.0
+        )
         a6_infos = []
         if isinstance(infos, (list, tuple)):
             a6_infos = [
@@ -238,6 +143,8 @@ class CMODiagnosticsCallback(BaseCallback):
         self.logger.record("a6/hazard_coef", hazard_coef)
         self.logger.record("a6/curriculum_coef", curriculum_coef)
         self.logger.record("a6/deadline_weight", deadline_weight)
+        self.logger.record("a6/launch_window_enabled", float(launch_window_enabled))
+        self.logger.record("a6/launch_window_prewindow_hold_weight", prewindow_hold_weight)
         if not a6_infos:
             self.logger.record("a6/active_count", 0.0)
             self.logger.record("a6/active_frac", 0.0)
@@ -245,6 +152,8 @@ class CMODiagnosticsCallback(BaseCallback):
             self.logger.record("a6/target_positive_frac", 0.0)
             self.logger.record("a6/curriculum_positive_count", 0.0)
             self.logger.record("a6/deadline_positive_count", 0.0)
+            self.logger.record("a6/prewindow_hold_count", 0.0)
+            self.logger.record("a6/early_accepted_count", 0.0)
             self.logger.record("a6/censored_window_count", 0.0)
             return
 
@@ -253,6 +162,8 @@ class CMODiagnosticsCallback(BaseCallback):
         positive_count = 0
         curriculum_positive_count = 0
         deadline_positive_count = 0
+        prewindow_hold_count = 0
+        early_accepted_count = 0
         censored_window_ids: set[str] = set()
         censored_row_count = 0
         for idx, info in enumerate(a6_infos):
@@ -275,6 +186,10 @@ class CMODiagnosticsCallback(BaseCallback):
                     curriculum_positive_count += 1
                 if source in {"deadline", "4"}:
                     deadline_positive_count += 1
+            if active_weighted and target <= 0.5 and source in {"prewindow", "5"}:
+                prewindow_hold_count += 1
+            if active_weighted and target <= 0.5 and source in {"early_accepted", "early-accepted", "6"}:
+                early_accepted_count += 1
             if source in {"censored", "3"}:
                 censored_row_count += 1
                 censored_window_ids.add(str(info.get("a6_first_event_window_id", idx)))
@@ -288,6 +203,8 @@ class CMODiagnosticsCallback(BaseCallback):
         )
         self.logger.record("a6/curriculum_positive_count", float(curriculum_positive_count))
         self.logger.record("a6/deadline_positive_count", float(deadline_positive_count))
+        self.logger.record("a6/prewindow_hold_count", float(prewindow_hold_count))
+        self.logger.record("a6/early_accepted_count", float(early_accepted_count))
         self.logger.record(
             "a6/censored_window_count",
             float(len(censored_window_ids) if censored_window_ids else censored_row_count),

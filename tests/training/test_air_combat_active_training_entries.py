@@ -44,6 +44,10 @@ STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_TEMPORAL_LAUNCH_WINDOW_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -371,6 +375,39 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         event_hyper["policy_kwargs"] = event_policy_kwargs
         self.assertEqual(event_hyper, deadline_hyper)
 
+    def test_stage1_c2_roe_launch_window_probe_is_separate_from_event_head_baseline(self) -> None:
+        event_head = _load_json(STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG)
+        launch_window = _load_json(STAGE1_C2_ROE_TEMPORAL_LAUNCH_WINDOW_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(launch_window.get(key), event_head.get(key), key)
+        self.assertEqual(launch_window.get("runtime"), event_head.get("runtime"))
+        self.assertEqual(launch_window.get("env"), event_head.get("env"))
+        self.assertEqual(launch_window.get("early_stop"), event_head.get("early_stop"))
+        self.assertEqual(launch_window.get("diagnostics"), event_head.get("diagnostics"))
+        self.assertEqual(launch_window.get("hmoe"), event_head.get("hmoe"))
+        self.assertEqual(launch_window.get("wrappers"), event_head.get("wrappers"))
+
+        event_hyper = dict(event_head.get("hyperparameters", {}))
+        launch_hyper = dict(launch_window.get("hyperparameters", {}))
+        launch_knobs = {
+            key: launch_hyper.pop(key, None)
+            for key in (
+                "a6_first_event_launch_window_enabled",
+                "a6_first_event_launch_window_min_range_m",
+                "a6_first_event_launch_window_max_range_m",
+                "a6_first_event_launch_window_max_track_age_s",
+                "a6_first_event_launch_window_min_window_age_steps",
+                "a6_first_event_launch_window_prewindow_hold_weight",
+                "a6_first_event_launch_window_early_accept_weight",
+            )
+        }
+        self.assertEqual(launch_hyper, event_hyper)
+        self.assertTrue(bool(launch_knobs["a6_first_event_launch_window_enabled"]))
+        self.assertGreater(float(launch_knobs["a6_first_event_launch_window_min_range_m"]), 0.0)
+        self.assertGreater(float(launch_knobs["a6_first_event_launch_window_max_range_m"]), 0.0)
+        self.assertGreater(float(launch_knobs["a6_first_event_launch_window_prewindow_hold_weight"]), 0.0)
+
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)
         c2_roe_temporal = _load_json(STAGE1_C2_ROE_TEMPORAL_CONFIG)
@@ -463,6 +500,11 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             ("c2_roe_hybrid_temporal_shaped", STAGE1_C2_ROE_TEMPORAL_CONFIG, STAGE1_C2_ROE_SCENARIO),
             ("c2_roe_hybrid_temporal_deadline_shaped", STAGE1_C2_ROE_TEMPORAL_DEADLINE_CONFIG, STAGE1_C2_ROE_SCENARIO),
             ("c2_roe_hybrid_temporal_event_head_shaped", STAGE1_C2_ROE_TEMPORAL_EVENT_HEAD_CONFIG, STAGE1_C2_ROE_SCENARIO),
+            (
+                "c2_roe_hybrid_temporal_launch_window_shaped",
+                STAGE1_C2_ROE_TEMPORAL_LAUNCH_WINDOW_CONFIG,
+                STAGE1_C2_ROE_SCENARIO,
+            ),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -501,6 +543,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_shaped",
                 "c2_roe_hybrid_temporal_deadline_shaped",
                 "c2_roe_hybrid_temporal_event_head_shaped",
+                "c2_roe_hybrid_temporal_launch_window_shaped",
             }:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {
@@ -510,6 +553,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_shaped",
                 "c2_roe_hybrid_temporal_deadline_shaped",
                 "c2_roe_hybrid_temporal_event_head_shaped",
+                "c2_roe_hybrid_temporal_launch_window_shaped",
             }:
                 self.assertIn("temporal_history_len=16", proc.stdout)
             if label in {
@@ -517,6 +561,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_shaped",
                 "c2_roe_hybrid_temporal_deadline_shaped",
                 "c2_roe_hybrid_temporal_event_head_shaped",
+                "c2_roe_hybrid_temporal_launch_window_shaped",
             }:
                 self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)

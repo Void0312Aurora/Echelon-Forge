@@ -459,6 +459,7 @@ class NonFiniteTrainingProbe:
             a6_fire_mask: list[bool] = []
             a6_fire_once_accepted: list[bool] = []
             a6_episode_id: list[int] = []
+            a6_launch_window_open: list[bool] = []
             existing_a6_episode_id = getattr(self, "_a6_first_event_env_episode_id", None)
             if (
                 collect_a6_first_event
@@ -493,10 +494,14 @@ class NonFiniteTrainingProbe:
                     tracer.check("rollout.values", values)
                     tracer.check("rollout.log_probs", log_probs)
                 a6_policy_fire_mask = None
+                a6_policy_launch_window = None
                 if collect_a6_first_event:
                     policy_mask_fn = getattr(self, "_a6_first_event_policy_fire_mask_from_obs", None)
                     if callable(policy_mask_fn):
                         a6_policy_fire_mask = policy_mask_fn(obs_tensor, env.num_envs)
+                    launch_window_fn = getattr(self, "_a6_first_event_launch_window_from_policy_obs", None)
+                    if callable(launch_window_fn):
+                        a6_policy_launch_window = launch_window_fn(obs_tensor, env.num_envs)
                 actions = actions_tensor.detach().cpu().numpy()
                 tracer.check("rollout.actions_numpy", actions)
 
@@ -541,6 +546,10 @@ class NonFiniteTrainingProbe:
                         else:
                             a6_fire_once_accepted.append(bool(row.get("fire_once_accepted", False)))
                         a6_episode_id.append(int(a6_env_episode_id[env_idx]))
+                        if a6_policy_launch_window is not None and env_idx < len(a6_policy_launch_window):
+                            a6_launch_window_open.append(bool(a6_policy_launch_window[env_idx]))
+                        else:
+                            a6_launch_window_open.append(bool(policy_window_open))
                 callback.update_locals(locals())
                 if not callback.on_step():
                     return False
@@ -591,6 +600,11 @@ class NonFiniteTrainingProbe:
                         fire_mask=a6_fire_mask,
                         fire_once_accepted=a6_fire_once_accepted,
                         episode_id=a6_episode_id,
+                        launch_window_open=(
+                            a6_launch_window_open
+                            if bool(getattr(self, "a6_first_event_launch_window_enabled", False))
+                            else None
+                        ),
                     )
                     for field in (
                         "a6_first_event_active",
@@ -831,6 +845,14 @@ class NonFiniteTrainingProbe:
                 self.logger.record("a6/hazard_coef", float(getattr(self, "a6_first_event_hazard_coef", 0.0)))
                 self.logger.record("a6/curriculum_coef", curriculum_coef)
                 self.logger.record("a6/deadline_weight", float(getattr(self, "a6_first_event_deadline_weight", 0.0)))
+                self.logger.record(
+                    "a6/launch_window_enabled",
+                    float(bool(getattr(self, "a6_first_event_launch_window_enabled", False))),
+                )
+                self.logger.record(
+                    "a6/launch_window_prewindow_hold_weight",
+                    float(getattr(self, "a6_first_event_launch_window_prewindow_hold_weight", 0.0)),
+                )
                 self.logger.record(
                     "a6/active_count_mean",
                     float(np.mean(first_event_hazard_active_counts)) if first_event_hazard_active_counts else 0.0,

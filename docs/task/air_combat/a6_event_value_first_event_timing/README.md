@@ -1,11 +1,14 @@
 # A6 Event Value And First-Event Timing
 
-Status: `2026-06-03` held after event-head learned-policy evidence. A6 proved
-the hazard/curriculum and deadline-bootstrap training paths are live, the audit
-shows event-head gradients are routed correctly, and A6-EVT-K now proves the
-dedicated event-head optimizer lane can cross deterministic `fire_once` argmax.
-A6 remains held because the learned release collapses to near-immediate
-authorization/contact timing rather than a mature launch-window decision.
+Status: `2026-06-04` held after launch-window short learned-policy evidence and
+root-cause re-scope. A6 proved the hazard/curriculum and deadline-bootstrap
+training paths are live, the audit shows event-head gradients are routed
+correctly, and A6-EVT-K proves the dedicated event-head optimizer lane can cross
+deterministic `fire_once` argmax. A6-EVT-L implements a bounded launch-window
+label contract, A6-EVT-M shows it suppresses deterministic near-immediate
+release without producing accepted launch-window timing, and A6-EVT-N now
+identifies the remaining blocker as on-policy first-event censoring plus missing
+counterfactual hold/fire credit rather than an L-parameter tuning issue.
 
 Language:
 
@@ -52,7 +55,7 @@ than reopening reward-only legality penalties.
 | A4 reward/routing | held | Reward, HMoE route, binary diagnostics, and opportunity-penalty trials did not make deterministic fire. | Reward-only tuning is no longer the active default. |
 | A5 event-action support | held after evidence | Event mask/state machine/policy event head are implemented; stochastic probing executes disciplined authorized releases. | Deterministic learned policy still makes zero `fire_once` requests. |
 | A5 retained observation | pass as A6 input | Deterministic: `1880` fire-mask-open steps, `0` fire requests; stochastic: `3` authorized releases over `3` episodes, `0` violations. | This is short-run evidence under retained artifacts, not final policy acceptance. |
-| A6 model direction | held after event-head learned evidence | A6 labels/loss enter PPO and diagnostics; deadline bootstrap doubles event probability but deterministic policy still makes zero `fire_once` requests. Event-head audit shows gradients reach shared and HMoE heads; A6-EVT-K then crosses deterministic argmax and executes one authorized release. | The release is near-immediate after authorization/contact, so timing quality remains unresolved. M2 remains held. |
+| A6 model direction | held after root-cause re-scope | A6 labels/loss enter PPO and diagnostics; deadline bootstrap doubles event probability but deterministic policy still makes zero `fire_once` requests. Event-head audit shows gradients reach shared and HMoE heads; A6-EVT-K then crosses deterministic argmax and executes one authorized release. A6-EVT-L adds launch-window gated labels. A6-EVT-M deterministic probe reaches `34.6% / 35.0%` open-window fire probability but still makes zero requests; stochastic releases at steps `7`, `43`, and `4`. A6-EVT-N shows per-step stochastic hazard accumulation, absorbing first-event censoring, and missing counterfactual hold/fire credit are the current root cause. | L tuning and extra short training are paused. The next mechanism must be a counterfactual event-time/value contract. M2 remains held. |
 
 ## Scope
 
@@ -98,7 +101,9 @@ Out of scope:
 | `P8 Deadline Short Evidence` | Run short train/probe comparison for the deadline wave. | P7 tests pass. | Deterministic/stochastic probes record whether event logits finally cross masked argmax. | pass; held outcome |
 | `P9 Event-Head Update Audit` | Audit whether optimizer/head scaling prevents A6 positives from moving event logits. | P8 held evidence exists. | Focused update probe explains why sustained positives only move probability to about `0.5%`. | pass; held outcome |
 | `P10 Event-Head Optimization Lane` | Give `hold/fire_once` event rows a bounded stronger update path. | P9 identifies update strength as the blocker. | Short learned evidence tests whether deterministic argmax can cross without weakening A3/A5 masks. | pass; held timing residual |
-| `P11 Launch-Window Timing Contract` | Separate authorization from good first-release timing. | P10 proves event argmax can cross but releases too early. | A new bounded contract defines engagement-quality/window labels without weakening A3/A5 masks. | planned |
+| `P11 Launch-Window Timing Contract` | Separate authorization from good first-release timing. | P10 proves event argmax can cross but releases too early. | A bounded contract defines engagement-quality/window labels without weakening A3/A5 masks, and focused tests cover the implementation surface. | pass |
+| `P12 Launch-Window Short Evidence` | Test the L contract in learned-policy probes. | P11 focused tests pass. | Deterministic/stochastic outcomes record release timing and discipline. | pass; held outcome |
+| `P13 Root-Cause Re-scope` | Stop L tuning and identify the mechanism blocker. | P12 held evidence exists. | Root-cause note explains stochastic hazard accumulation, absorbing first-event censoring, and missing counterfactual hold/fire credit; next contract is re-scoped before more training. | pass; training paused |
 
 ## Task Clusters
 
@@ -128,6 +133,12 @@ Out of scope:
   [a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md](a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md)
 - Event-head short learned evidence:
   [a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md](a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md)
+- Launch-window timing contract:
+  [a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md](a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md)
+- Launch-window short learned evidence:
+  [a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md](a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md)
+- Root-cause re-scope:
+  [a6_event_value_first_event_timing_root_cause_rescope_20260604.md](a6_event_value_first_event_timing_root_cause_rescope_20260604.md)
 
 ## Outputs And Evidence
 
@@ -172,6 +183,22 @@ Current outputs:
   accepted authorized releases with zero rejected, violation, repeat, or budget
   issues. This proves the event decision is trainable, but exposes an early
   launch-window residual.
+- Launch-window timing contract implementation completed as `A6-EVT-L`:
+  A6 labels now distinguish legal authorization from quality-window release,
+  early accepted releases become negative labels, deadline/curriculum positives
+  are gated by the quality window, PPO derives contact quality from policy
+  observations, and an independent L active config is available.
+- Launch-window short learned evidence completed as `A6-EVT-M`: deterministic
+  no longer fires near-immediately, but also does not cross; open-window event
+  probability reaches `34.6% / 35.0%` and `0` requests. Stochastic still samples
+  one authorized release per episode at steps `7`, `43`, and `4`, with no
+  rejected, violation, repeat, or budget issues.
+- Root-cause re-scope completed as `A6-EVT-N`: additional L training and
+  parameter tuning are paused. The current blocker is structural: per-step
+  stochastic hazard accumulation can produce early first events before
+  deterministic argmax crosses, and an accepted first event censors later
+  quality-window evidence. A6 needs a counterfactual event-time/value contract
+  before the next implementation or training wave.
 
 Held output:
 
@@ -180,6 +207,11 @@ Held output:
 - Event-head optimization crosses deterministic argmax, but the learned release
   occurs immediately after authorization/contact rather than proving mature
   first-event timing.
+- Launch-window short evidence suppresses deterministic early fire but does not
+  yet prove launch-window timing.
+- L parameter search is paused because the root cause is missing
+  counterfactual hold/fire credit under on-policy absorbing first-event
+  collection.
 
 ## Acceptance Gate
 
@@ -198,11 +230,12 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: define a launch-window / engagement-quality timing
-  contract that separates legal authorization from tactically useful release
-  timing.
-- Event-value remains a plausible long-term expansion, but the next narrow
-  blocker is label/window semantics rather than raw event-head update strength.
+- Immediate next step: create an `A6-EVT-O Counterfactual Event-Time Objective`
+  contract before any more training. The contract should define counterfactual
+  labels or event-time/value credit, cumulative pre-window hazard diagnostics,
+  and stochastic collection controls.
+- Event-value is no longer just a plausible long-term expansion; the root-cause
+  note makes counterfactual hold/fire credit the next design requirement.
 - The bounded first-shot curriculum produced early gradient, then correctly
   decayed to zero; by itself it did not move deterministic argmax.
 - M2 remains held until deterministic first-event behavior is trainable under

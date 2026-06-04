@@ -1,8 +1,8 @@
 # A6 Event Value And First-Event Timing Task Clusters
 
-Status: `2026-06-03` finite task-cluster plan for
-[README.md](README.md), re-scoped through event-head learned evidence and the
-launch-window timing residual.
+Status: `2026-06-04` finite task-cluster plan for
+[README.md](README.md), re-scoped through root-cause analysis after the
+launch-window short learned evidence.
 
 ## Boundary Decision
 
@@ -26,7 +26,10 @@ directly address event-value or first-event timing.
 | `A6-EVT-I Deadline Short Learned Evidence` | main thread | n/a | Run deadline short train/probe and record deterministic/stochastic outcomes. | A6 evidence note; no `experiments_tmp` staging | Formal long training, accepting fixed-age teacher as doctrine | Training command plus deterministic/stochastic probes | Evidence records event probability/mode, requests, releases, violations, and whether deadline bootstrap is accepted or held. | After H tests pass; serial | 1 | pass; held outcome |
 | `A6-EVT-J Event-Head Update-Strength Audit` | main thread | n/a | Determine why sustained positive labels only move event probability to about `0.5%`. | `tests/hmoe/test_a6_event_head_update_strength.py`, A6 evidence note | M2 release, value-head implementation before update audit, reward-only legality | focused gradient/update probe; no learned-policy acceptance from unit probe alone | Audit identifies optimizer/head scaling blocker or clears path to event-value head. | After I; serial | 1 | pass; held outcome |
 | `A6-EVT-K Event-Head Optimization Lane` | main thread | n/a | Add a bounded stronger update path for `hold/fire_once` event rows and diagnostics. | `python/rl/policy_algo/**`, focused tests, A6 docs/config if needed | M2 release, weakening masks, broad reward-only legality, missile/damage authority | compileall; focused policy/PPO tests; short learned probe | Event-row LR/diagnostics are visible and learned evidence shows either deterministic crossing or a precise held residual. | After J; serial before event-value head | 2 | pass; held timing residual |
-| `A6-EVT-L Launch-Window Timing Contract` | main thread or dispatched worker | inherited, high | Define a bounded timing-quality contract that separates legal authorization from good first-release timing. | A6 design/contract/status docs first; code/config only after contract acceptance | M2 release, missile/damage authority, real doctrine claims, weakening A3/A5 masks | Contract review against K evidence; later focused tests if implemented | Contract names label source, window predicates, rejection handling, diagnostics, and acceptance/rollback gates. | After K; serial before more training changes | 2 | planned |
+| `A6-EVT-L Launch-Window Timing Contract` | main thread | n/a | Define and implement a bounded timing-quality contract that separates legal authorization from good first-release timing. | `python/rl/policy_algo/**`, `python/rl/support/nonfinite_probe.py`, `python/training_callbacks.py`, focused tests, active config, A6 docs | M2 release, missile/damage authority, real doctrine claims, weakening A3/A5 masks | compileall; JSON parse; focused label/PPO/config/diagnostics tests | Contract names label source, window predicates, rejection handling, diagnostics, and acceptance/rollback gates; implementation is covered by focused tests. | After K; serial before learned evidence | 2 | pass |
+| `A6-EVT-M Launch-Window Short Learned Evidence` | main thread | n/a | Run the L active config and compare timing/release discipline against A6-EVT-K. | A6 evidence note only; no `experiments_tmp` staging | Formal long training, M2 release, treating L range gate as doctrine | Training command plus deterministic/stochastic probes | Evidence records release step, launch-window counts, requests, accepted/rejected releases, violations, and whether L is accepted or re-scoped. | After L; serial | 1 | pass; held outcome |
+| `A6-EVT-N Root-Cause Re-scope` | main thread | n/a | Pause L tuning and explain the mechanism blocker behind the held launch-window evidence. | A6 analysis/status/README/dispatch docs only | New training, L parameter search, code/config changes, M2 release, weakening A3/A5 masks | Markdown inspection; `git diff --check -- docs/task/air_combat/a6_event_value_first_event_timing` | Root-cause note identifies whether the blocker is tuning, missing labels, optimizer routing, stochastic censoring, or value credit. | After M; serial before O | 1 | pass; training paused |
+| `A6-EVT-O Counterfactual Event-Time Objective` | future worker or main thread | high | Define the next objective contract that gives explicit hold-vs-fire credit and prevents early stochastic censoring from erasing quality-window targets. | A6 objective/contract docs first; code/config only after contract review | L knob tuning, runtime legality changes, M2 release, missile authority, `2v2`, self-play | Mathematical review; focused label-test plan; cumulative hazard diagnostics plan | Contract selects labels/losses/diagnostics/rollback gates before implementation. | After N; serial before any new training | 2 | planned next |
 
 ## Dispatch Rules
 
@@ -35,6 +38,12 @@ directly address event-value or first-event timing.
   contract, or policy-loss surface concurrently.
 - Keep `A6-EVT-C`, `A6-EVT-F`, and `A6-EVT-G` serial.
 - Do not dispatch implementation before `A6-EVT-C Objective Contract` closes.
+- Do not run `A6-EVT-M` until `A6-EVT-L` focused tests pass.
+- Do not run more L training or tune L weights after `A6-EVT-N`; create and
+  review `A6-EVT-O` first.
+- Do not dispatch implementation for `A6-EVT-O` until its objective contract
+  names labels, counterfactual target source, stochastic collection handling,
+  and cumulative hazard diagnostics.
 - If a cluster exceeds its round cap, stop and re-scope before adding a new
   wave.
 - Follow
@@ -63,6 +72,10 @@ Implementation gates will be defined by `A6-EVT-C`, but must include focused
 policy/PPO tests, active-entry/config tests, diagnostics tests, and at least one
 short learned-policy probe.
 
+Post-N implementation gates are defined by the active objective contract. Any
+new training wave must include cumulative pre-window hazard reporting in
+addition to deterministic/stochastic release discipline.
+
 ## Acceptance Criteria
 
 - The selected objective directly moves masked event timing, not raw
@@ -76,12 +89,14 @@ short learned-policy probe.
 
 Immediate:
 
-- Launch-window / engagement-quality timing contract.
+- L tuning and additional short training are paused.
+- `A6-EVT-O` must define counterfactual event-time/value credit and cumulative
+  early-fire diagnostics before implementation.
 
 Follow-on:
 
-- Event-value / advantage head if the timing contract still lacks value credit
-  after legal/timing labels are separated.
+- Event-value / advantage head or survival-style event-time objective if O
+  selects it.
 
 Deferred:
 

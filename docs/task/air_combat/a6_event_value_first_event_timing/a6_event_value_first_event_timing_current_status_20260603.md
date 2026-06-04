@@ -1,9 +1,11 @@
 # A6 Current Status
 
-Status: `2026-06-03` held after event-head learned-policy evidence. P0-P10 pass
-as evidence-producing/re-scope/audit/implementation slices, but A6 is not
-accepted because the first deterministic crossing collapses to near-immediate
-authorization/contact release rather than mature first-event timing.
+Status: `2026-06-04` held after launch-window short learned-policy evidence and
+root-cause re-scope. P0-P13 pass as evidence-producing/re-scope/audit/
+implementation/analysis slices, but A6 is not accepted because L suppresses
+deterministic early fire without producing stable launch-window timing, and the
+remaining blocker requires counterfactual event-time/value credit rather than
+more L tuning.
 
 Parent: [README.md](README.md).
 
@@ -45,6 +47,25 @@ Parent: [README.md](README.md).
   discipline, but the first release occurs at step `2` in deterministic probing
   and at steps `4`, `42`, and `2` in stochastic probing. A6 remains held as a
   launch-window timing problem.
+- Implemented
+  [launch-window timing contract](a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md).
+  The label builder now gates accepted/curriculum/deadline positives through a
+  quality window, early accepted releases become negative labels, PPO derives
+  the window predicate from policy-observed contacts, diagnostics expose
+  pre-window/early-accepted counts, and a separate L active config is present.
+- Ran
+  [launch-window short learned evidence](a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md).
+  Deterministic probing made `0` requests and `0` releases, while open-window
+  event probability reached `34.6% / 35.0%`. Stochastic probing preserved
+  one-shot discipline but still sampled early authorized releases at steps `7`,
+  `43`, and `4`.
+- Completed
+  [root-cause re-scope](a6_event_value_first_event_timing_root_cause_rescope_20260604.md).
+  Further L training and parameter tuning are paused. The blocker is now framed
+  as per-step stochastic hazard accumulation plus absorbing first-event
+  censoring: stochastic collection can fire early with `0.25` to `0.35`
+  per-step probability, while the accepted release removes later
+  quality-window evidence that should teach the hold decision.
 
 ## Maturity Matrix
 
@@ -61,15 +82,19 @@ Parent: [README.md](README.md).
 | Deadline learned evidence | pass; held outcome | `32768`-step deadline run completed. Deterministic: `1840` open steps, `0` requests, event probability `0.494% / 0.496%`; stochastic: `3/3` authorized releases, `1` rejected request, `0` violations. | Deadline bootstrap moves probability but still does not solve deterministic argmax. |
 | Event-head update audit | pass; held outcome | [Event-head audit](a6_event_value_first_event_timing_event_head_update_audit_20260603.md) plus `tests/hmoe/test_a6_event_head_update_strength.py` show gradients reach shared/HMoE event heads, while current `3e-5` LR and damped residual lane move event delta too slowly. | Diagnostic evidence only; no learned-policy acceptance. |
 | Event-head optimization lane | pass; held timing residual | [Event-head lane](a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md) plus [short evidence](a6_event_value_first_event_timing_event_head_short_learned_probe_20260603.md) show deterministic crossing and one authorized release; stochastic gives `3/3` authorized releases with zero rejected/violation/repeat/budget issues. | The release timing collapses to near-immediate authorization/contact; A6 remains held. |
+| Launch-window timing contract | pass | [Launch-window contract](a6_event_value_first_event_timing_launch_window_timing_contract_20260604.md), focused label/PPO/config/diagnostics tests, and independent L active config. | Implementation evidence only; learned-policy acceptance still depends on evidence. |
+| Launch-window learned evidence | pass; held outcome | [Launch-window short evidence](a6_event_value_first_event_timing_launch_window_short_learned_probe_20260604.md) shows deterministic `0` requests at `34.6% / 35.0%` open-window probability; stochastic `3/3` authorized releases at steps `7`, `43`, `4` with no rejected/violation/repeat/budget issues. | L reduces deterministic early fire but does not prove launch-window timing. |
+| Root-cause re-scope | pass; training paused | [Root-cause re-scope](a6_event_value_first_event_timing_root_cause_rescope_20260604.md) records cumulative stochastic early-fire probabilities of `0.810`, `0.556`, and `0.625` before the sampled releases and identifies missing counterfactual hold/fire credit. | This is analysis and re-scope evidence, not a new learned-policy acceptance. |
 
 ## Residual Register
 
 Immediate:
 
-- Define a launch-window / engagement-quality timing contract that separates
-  legal authorization from good release timing.
-- Decide whether this stays as `A6-EVT-L` or becomes a new follow-on subproject
-  once the contract surface is clear.
+- Do not run more L short training or tune L weights until an `A6-EVT-O`
+  counterfactual event-time objective contract exists.
+- The next design must handle cumulative pre-window hazard, absorbing
+  first-event censoring, and explicit hold-vs-fire credit.
+- Keep runtime legality unchanged while this is investigated.
 
 Held:
 
@@ -84,7 +109,11 @@ Held:
 3. Treat `A6-EVT-H/I` as completed evidence, not acceptance.
 4. Treat `A6-EVT-J` as completed audit evidence, not acceptance.
 5. Treat `A6-EVT-K` as completed event-head evidence, not A6 acceptance.
-6. Continue through a launch-window timing contract before any M2 release vote.
+6. Treat `A6-EVT-L/M` as completed evidence with a held outcome, not A6
+   acceptance; re-scope launch-window shaping before any M2 release vote.
+7. Treat `A6-EVT-N` as completed root-cause analysis and a pause on tuning, not
+   acceptance. The next packet is `A6-EVT-O Counterfactual Event-Time
+   Objective`, design-first.
 
 ## Overclaim Refusals
 
@@ -96,4 +125,6 @@ Held:
 - Deadline bootstrap is not a real-world tactics or doctrine claim.
 - Event-head update audit is not learned-policy acceptance.
 - Event-head deterministic crossing is not proof of mature launch timing.
+- Launch-window learned evidence is not A6 acceptance.
+- Root-cause re-scope is not a license to loosen A3/A5 legality or release M2.
 - M2 remains held until A6 or later evidence justifies a release vote.

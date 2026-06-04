@@ -37,6 +37,15 @@ A6_EVENT_HEAD_CONFIG = (
     / "air_combat"
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json"
 )
+A6_LAUNCH_WINDOW_CONFIG = (
+    REPO_ROOT
+    / "examples"
+    / "config"
+    / "training"
+    / "active"
+    / "air_combat"
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json"
+)
 A6_SCENARIO = (
     REPO_ROOT
     / "scenarios"
@@ -97,6 +106,28 @@ class A6EventValueActiveConfigTests(unittest.TestCase):
         self.assertGreater(float(hyper.get("a6_first_event_hazard_coef", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a6_first_event_deadline_weight", 0.0)), 0.0)
         self.assertEqual(float(hyper.get("a6_first_event_curriculum_coef", 0.0)), 0.0)
+
+    def test_launch_window_config_separates_legal_authorization_from_timing_labels(self) -> None:
+        event_head = _load_json(A6_EVENT_HEAD_CONFIG)
+        cfg = _load_json(A6_LAUNCH_WINDOW_CONFIG)
+        hyper = cfg.get("hyperparameters", {})
+
+        self.assertEqual(cfg.get("algo"), "AdaptiveKLPPO")
+        self.assertEqual(cfg.get("policy"), "HierarchicalMoEExecutionPolicy")
+        self.assertEqual(cfg.get("env"), event_head.get("env"))
+        self.assertEqual(cfg.get("runtime"), event_head.get("runtime"))
+        self.assertTrue(bool(hyper.get("a6_first_event_launch_window_enabled")))
+        self.assertGreater(float(hyper.get("a6_first_event_launch_window_min_range_m", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a6_first_event_launch_window_max_range_m", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a6_first_event_launch_window_max_track_age_s", 0.0)), 0.0)
+        self.assertGreater(int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 0)), 1)
+        self.assertGreater(float(hyper.get("a6_first_event_launch_window_prewindow_hold_weight", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a6_first_event_launch_window_early_accept_weight", 0.0)), 0.0)
+        self.assertAlmostEqual(
+            float(hyper.get("policy_kwargs", {}).get("hybrid_event_head_lr_scale", 0.0)),
+            10.0,
+            places=6,
+        )
 
     def test_a6_active_path_keeps_legality_penalties_disabled(self) -> None:
         scenario = _load_json(A6_SCENARIO)

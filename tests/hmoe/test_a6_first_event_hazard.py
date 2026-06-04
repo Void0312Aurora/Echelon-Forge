@@ -18,6 +18,8 @@ from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CENSORED,
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
     A6_FIRST_EVENT_SOURCE_DEADLINE,
+    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_PREWINDOW,
     build_first_event_hazard_labels,
     compute_first_event_hazard_loss,
     current_first_event_curriculum_coef,
@@ -120,6 +122,59 @@ class A6FirstEventHazardTests(unittest.TestCase):
         self.assertTrue(th.allclose(labels.weight, th.tensor([0, 0, 0, 0.25, 0.25, 0.25, 0], dtype=th.float32)))
         self.assertTrue(th.equal(labels.source[3:6], th.full((3,), A6_FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
         self.assertEqual(int(labels.source[6]), 0)
+
+    def test_launch_window_gate_marks_prewindow_hold_and_delays_deadline_positive(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady"] * 6,
+            fire_mask=[1, 1, 1, 1, 1, 1],
+            fire_once_accepted=[0, 0, 0, 0, 0, 0],
+            episode_id=[0, 0, 0, 0, 0, 0],
+            launch_window_open=[0, 0, 0, 1, 1, 1],
+            launch_window_min_window_age_steps=3,
+            launch_window_prewindow_hold_weight=0.2,
+            deadline_weight=0.5,
+            deadline_min_window_age_steps=2,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 1, 1, 1, 1], dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
+        self.assertTrue(th.allclose(labels.weight, th.tensor([0.2, 0.2, 0.2, 0.5, 0.5, 0.5])))
+        self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
+        self.assertTrue(th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
+
+    def test_launch_window_gate_treats_early_accepted_release_as_negative(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady"] * 4,
+            fire_mask=[1, 1, 1, 1],
+            fire_once_accepted=[0, 1, 0, 0],
+            episode_id=[0, 0, 0, 0],
+            launch_window_open=[0, 0, 1, 1],
+            launch_window_prewindow_hold_weight=0.25,
+            launch_window_early_accept_weight=0.75,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 0], dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.zeros(4)))
+        self.assertTrue(th.allclose(labels.weight, th.tensor([0.25, 0.75, 0.0, 0.0])))
+        self.assertEqual(int(labels.source[0]), A6_FIRST_EVENT_SOURCE_PREWINDOW)
+        self.assertEqual(int(labels.source[1]), A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED)
+        self.assertTrue(th.equal(labels.had_accepted[:2], th.tensor([1, 1], dtype=th.bool)))
+
+    def test_launch_window_gate_keeps_accepted_positive_inside_quality_window(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady"] * 4,
+            fire_mask=[1, 1, 1, 1],
+            fire_once_accepted=[0, 0, 1, 0],
+            episode_id=[0, 0, 0, 0],
+            launch_window_open=[0, 1, 1, 1],
+            launch_window_min_window_age_steps=2,
+            launch_window_prewindow_hold_weight=0.25,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 1, 0], dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 1, 0], dtype=th.float32)))
+        self.assertTrue(th.allclose(labels.weight, th.tensor([1.0, 1.0, 1.0, 0.0])))
+        self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_ACCEPTED)))
 
     def test_curriculum_schedule_is_zero_after_first_quarter_training(self) -> None:
         self.assertAlmostEqual(

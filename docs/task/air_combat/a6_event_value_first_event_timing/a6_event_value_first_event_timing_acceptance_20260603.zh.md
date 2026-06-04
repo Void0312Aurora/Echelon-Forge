@@ -1,6 +1,7 @@
 # A6 验收门
 
-状态：`2026-06-03` event-head learned evidence 后 gate evaluated；not accepted。
+状态：`2026-06-04` launch-window short learned evidence 与 root-cause re-scope 后 gate
+evaluated；not accepted。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -13,11 +14,12 @@ objective，让 A5 masked `hold/fire_once` event surface 可训练。
 
 | Gate | Required outcome | Current state |
 | --- | --- | --- |
-| Objective contract | selected objective 直接针对 masked event timing。 | pass for first contracts：masked first-event hazard 与 deadline bootstrap；下一 contract 必须区分 authorization 与 launch-window quality。 |
+| Objective contract | selected objective 直接针对 masked event timing。 | pass for first contracts 与 L contract：masked first-event hazard、deadline bootstrap、event-head optimization 和 launch-window gated labels。 |
 | Legality boundary | A3/A5 masks 与 state transitions 继续持有 legal support 和 post-launch suppression。 | pass；没有恢复 reward-only legality penalties。 |
-| Training-kernel tests | Policy/PPO tests 覆盖 objective shape、mask、finite loss/stats、deterministic eval 和 compatibility。 | pass；包含 deadline label/source tests、event-head update-strength diagnostics 与 event-head optimizer lane tests。 |
-| Config/diagnostics tests | Active S1 C2/ROE config 暴露 A6 knobs 和 diagnostics，且不恢复 legality-as-penalty defaults。 | pass；包含独立 deadline config/logging tests。 |
-| Learned evidence | deterministic event probability/mode 相对 A5 baseline 有实质移动，并且要么授权首发一次，要么留下精确 held residual。 | crossing 通过、timing held：event-head deterministic probe 在 step `2` release 一次；stochastic 在 `3/3` episodes 中各 release 一次；timing 收敛到 near-immediate authorization/contact。 |
+| Training-kernel tests | Policy/PPO tests 覆盖 objective shape、mask、finite loss/stats、deterministic eval 和 compatibility。 | pass；包含 deadline label/source tests、event-head update-strength diagnostics、event-head optimizer lane tests 与 launch-window label/PPO extraction tests。 |
+| Config/diagnostics tests | Active S1 C2/ROE config 暴露 A6 knobs 和 diagnostics，且不恢复 legality-as-penalty defaults。 | pass；包含独立 deadline、event-head 和 launch-window config/logging tests。 |
+| Learned evidence | deterministic event probability/mode 相对 A5 baseline 有实质移动，并且要么授权首发一次，要么留下精确 held residual。 | held：launch-window deterministic probe 达到 `34.6% / 35.0%` open-window probability，但 requests 为 `0`；stochastic release steps 为 `7`、`43`、`4`。 |
+| Root-cause analysis | 继续训练前先把 held residual 归属到明确机制类别。 | pass：A6-EVT-N 将 blocker 归属到 stochastic hazard accumulation、absorbing first-event censoring 与缺失 counterfactual hold/fire credit。 |
 | Overclaim refusal | M2、`2v2`、self-play、missile physics、Pk、fuze、damage authority 和 real doctrine 继续 held。 | active |
 
 ## 当前需要击败的 baseline
@@ -47,6 +49,23 @@ violation、repeat 或 budget issues。A6 仍 held，因为这不是成熟 first
 policy 几乎在 authorization/contact 后立即 release，导致原本希望验证的 deadline/open-window
 timing evidence 被 vacate。
 
+Launch-window timing contract 改变 label surface，使 legal authorization 不再天然成为
+positive teacher。它加入 pre-window hold labels、early-accepted negative labels、
+contact-quality range gating 与独立 active config。这只是 implementation evidence；仍需短训
+learned-policy probe 击败当前 baseline。
+
+Launch-window short probe 显示 contract 是 live 的，但未 accepted。Deterministic mode 不再
+重复 K-style step-2 release，但也没有跨过 masked argmax：`0` requests、`0` releases，
+open-window fire probability 为 `34.6% / 35.0%`。Stochastic mode 仍然每局采样一次
+authorized release，steps 为 `7`、`43`、`4`；无 rejected、violation、repeat 或 budget issues。
+
+Root-cause re-scope 将该结果视为 first-event survival/hazard blocker，而不是 L tuning
+问题。Stochastic releases 对应的 release 前累计 early-fire probabilities 为 `0.810`、`0.556`
+与 `0.625`，但 deterministic mode 仍需要 `fire_once` probability 超过 `0.5` 才能跨过
+argmax。Accepted early release 对 first-event window 是吸收事件，因此后续 quality-window
+evidence 会在 on-policy 轨迹中被 censor。未来 gate 因此需要 counterfactual hold/fire credit
+或 event-time survival objective，再考虑继续训练。
+
 ## 失败条件
 
 若出现以下情况，A6 必须保持 held 或重新 scope：
@@ -60,6 +79,10 @@ timing evidence 被 vacate。
 - fixed-age deadline 行为被表述为 doctrine 或最终战术成熟度，而不是有边界 bootstrap evidence。
 - event-head update diagnostics 被表述为 learned-policy acceptance。
 - event-head deterministic crossing 在没有 launch-window timing contract 的情况下被表述为完整 A6 acceptance。
+- launch-window held evidence 被表述为 A6 acceptance。
+- L range/age bootstrap 数值被表述为 doctrine、missile authority 或最终战术成熟度。
+- 在 `A6-EVT-O` 定义 counterfactual target source、stochastic collection handling 与
+  cumulative hazard diagnostics 前启动进一步 L 训练。
 
 ## 验证命令
 
@@ -140,3 +163,59 @@ Event-head optimization gate：
 ```
 
 Observed：`77 passed, 10 subtests passed`。
+
+Launch-window focused implementation gate：
+
+```bash
+.venv/bin/python -m compileall -q \
+  python/rl/policy_algo/first_event_hazard.py \
+  python/rl/policy_algo/ppo_adaptive_kl.py \
+  python/rl/support/nonfinite_probe.py \
+  python/training_callbacks.py
+```
+
+Observed：pass。
+
+```bash
+.venv/bin/python -m json.tool \
+  examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json \
+  >/dev/null
+```
+
+Observed：pass。
+
+```bash
+.venv/bin/python -m pytest \
+  tests/hmoe/test_a6_first_event_hazard.py \
+  tests/hmoe/test_hmoe_ppo_warmup.py \
+  tests/training/test_a6_event_value_diagnostics_callback.py \
+  tests/training/test_a6_event_value_active_config.py \
+  -q
+```
+
+Observed：`28 passed`。
+
+Launch-window learned-policy gate：
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py \
+  --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
+  --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json \
+  --output_base experiments_tmp \
+  --run_name a6_launch_window_temporal_32k_20260604 \
+  --n_envs 4 \
+  --torch_threads 1 \
+  --seed 20260641
+```
+
+Observed：完成 `32768` timesteps。
+
+Deterministic probe observed `0` requests 与 `34.6% / 35.0%` open-window event
+probability。Stochastic probe observed steps `7`、`43`、`4` 的 `3/3` authorized
+releases，且 zero rejected / violation / repeat / budget issues。
+
+Root-cause docs gate：
+
+```bash
+git diff --check -- docs/task/air_combat/a6_event_value_first_event_timing
+```

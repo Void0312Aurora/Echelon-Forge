@@ -1,8 +1,8 @@
 # A6 事件价值与首事件时机任务簇
 
-状态：`2026-06-03` finite task-cluster plan，用于
-[README.zh.md](README.zh.md)，已推进到 event-head learned evidence 与 launch-window
-timing residual 后的 re-scope。
+状态：`2026-06-04` finite task-cluster plan，用于
+[README.zh.md](README.zh.md)，已推进到 launch-window short learned evidence 后的
+root-cause analysis。
 
 ## 边界决策
 
@@ -25,7 +25,10 @@ event-value 或 first-event timing。
 | `A6-EVT-I Deadline Short Learned Evidence` | main thread | n/a | 运行 deadline 短训/探针并记录 deterministic/stochastic outcomes。 | A6 evidence note；不 stage `experiments_tmp` | formal long training、把 fixed-age teacher 当 doctrine 接受 | Training command plus deterministic/stochastic probes | evidence 记录 event probability/mode、requests、releases、violations，以及 deadline bootstrap accepted/held。 | After H tests pass；serial | 1 | pass；held outcome |
 | `A6-EVT-J Event-Head Update-Strength Audit` | main thread | n/a | 判定为什么持续正例只把 event probability 推到约 `0.5%`。 | `tests/hmoe/test_a6_event_head_update_strength.py`、A6 evidence note | M2 release、update audit 前实现 value-head、reward-only legality | focused gradient/update probe；unit probe 不能单独作为 learned-policy acceptance | Audit 识别 optimizer/head scaling blocker，或为 event-value head 清路。 | After I；serial | 1 | pass；held outcome |
 | `A6-EVT-K Event-Head Optimization Lane` | main thread | n/a | 为 `hold/fire_once` event rows 增加更强但有边界的更新路径与 diagnostics。 | `python/rl/policy_algo/**`、focused tests、必要时 A6 docs/config | M2 release、削弱 masks、broad reward-only legality、missile/damage authority | compileall；focused policy/PPO tests；短训 learned probe | event-row LR/diagnostics 可见，并且 learned evidence 要么显示 deterministic crossing，要么留下精确 held residual。 | After J；event-value head 前串行 | 2 | pass；held timing residual |
-| `A6-EVT-L Launch-Window Timing Contract` | main thread 或 dispatched worker | inherited, high | 定义有边界的 timing-quality contract，把合法 authorization 与良好 first-release timing 分开。 | 优先 A6 design/contract/status docs；contract accepted 后才进入 code/config | M2 release、missile/damage authority、真实 doctrine claims、削弱 A3/A5 masks | 按 K evidence 做 contract review；实现后再补 focused tests | contract 命名 label source、window predicates、rejection handling、diagnostics 与 acceptance/rollback gates。 | After K；更多训练改动前串行 | 2 | planned |
+| `A6-EVT-L Launch-Window Timing Contract` | main thread | n/a | 定义并实现有边界的 timing-quality contract，把合法 authorization 与良好 first-release timing 分开。 | `python/rl/policy_algo/**`、`python/rl/support/nonfinite_probe.py`、`python/training_callbacks.py`、focused tests、active config、A6 docs | M2 release、missile/damage authority、真实 doctrine claims、削弱 A3/A5 masks | compileall；JSON parse；focused label/PPO/config/diagnostics tests | contract 命名 label source、window predicates、rejection handling、diagnostics 与 acceptance/rollback gates；实现由 focused tests 覆盖。 | After K；learned evidence 前串行 | 2 | pass |
+| `A6-EVT-M Launch-Window Short Learned Evidence` | main thread | n/a | 运行 L active config，并与 A6-EVT-K 对比 timing/release discipline。 | 仅 A6 evidence note；不 stage `experiments_tmp` | formal long training、M2 release、把 L range gate 当作 doctrine | Training command plus deterministic/stochastic probes | evidence 记录 release step、launch-window counts、requests、accepted/rejected releases、violations，以及 L accepted 或 re-scoped。 | After L；serial | 1 | pass；held outcome |
+| `A6-EVT-N Root-Cause Re-scope` | main thread | n/a | 暂停 L 调参，并解释 held launch-window evidence 背后的机制 blocker。 | 仅 A6 analysis/status/README/dispatch docs | 新训练、L 参数搜索、code/config changes、M2 release、削弱 A3/A5 masks | Markdown inspection；`git diff --check -- docs/task/air_combat/a6_event_value_first_event_timing` | root-cause note 判定 blocker 属于 tuning、missing labels、optimizer routing、stochastic censoring 或 value credit。 | After M；O 前串行 | 1 | pass；training paused |
+| `A6-EVT-O Counterfactual Event-Time Objective` | future worker or main thread | high | 定义下一 objective contract，给出显式 hold-vs-fire credit，并防止 early stochastic censoring 删除 quality-window targets。 | A6 objective/contract docs first；contract review 后才允许 code/config | L knob tuning、runtime legality changes、M2 release、missile authority、`2v2`、self-play | Mathematical review；focused label-test plan；cumulative hazard diagnostics plan | Contract 在 implementation 前选定 labels/losses/diagnostics/rollback gates。 | After N；任何新训练前串行 | 2 | planned next |
 
 ## 分发规则
 
@@ -34,6 +37,10 @@ event-value 或 first-event timing。
   policy-loss surface。
 - `A6-EVT-C`、`A6-EVT-F` 和 `A6-EVT-G` 必须串行。
 - `A6-EVT-C Objective Contract` 未关闭前，不分发 implementation。
+- `A6-EVT-L` focused tests 未通过前，不运行 `A6-EVT-M`。
+- `A6-EVT-N` 后不再运行 L 训练或调 L weights；必须先创建并审阅 `A6-EVT-O`。
+- `A6-EVT-O` implementation 派发前，contract 必须命名 labels、counterfactual target
+  source、stochastic collection handling 与 cumulative hazard diagnostics。
 - 若 cluster 超过 round cap，先停下重新 scope，再考虑新 wave。
 - 遵从
   [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.zh.md)。
@@ -60,6 +67,9 @@ git diff --check -- docs/task/air_combat
 Implementation gates 由 `A6-EVT-C` 定义，但必须包含 focused policy/PPO tests、
 active-entry/config tests、diagnostics tests，以及至少一次短训 learned-policy probe。
 
+Post-N implementation gates 由 active objective contract 定义。任何新 training wave 都必须在
+deterministic/stochastic release discipline 之外增加累计 pre-window hazard reporting。
+
 ## 验收标准
 
 - selected objective 直接移动 masked event timing，而不是 raw `fire_weapon` thresholding。
@@ -72,12 +82,13 @@ active-entry/config tests、diagnostics tests，以及至少一次短训 learned
 
 Immediate：
 
-- Launch-window / engagement-quality timing contract。
+- L tuning 与额外短训暂停。
+- `A6-EVT-O` 必须在 implementation 前定义 counterfactual event-time/value credit 与累计
+  early-fire diagnostics。
 
 Follow-on：
 
-- 若 timing contract 在合法/timing labels 分离后仍缺 value credit，则进入 event-value /
-  advantage head。
+- 若 O 选择，则进入 event-value / advantage head 或 survival-style event-time objective。
 
 Deferred：
 

@@ -93,6 +93,12 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - It tests optimizer ownership after the event-head update-strength audit; it does not weaken A3/A5 masks or release M2.
   - The 32k A6-EVT-K probe crossed deterministic argmax and preserved one-shot discipline, but A6 remains held on launch-window timing quality.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6-EVT-L launch-window timing-contract probe using the same event-head C2/ROE temporal shaped surface.
+  - Separates legal authorization from quality-window launch labels with policy-observed contact range/track age and legal-window age.
+  - Early accepted releases become negative labels; deadline/curriculum positives are gated by the launch window.
+  - It is an implementation/evidence entry for the next short probe, not M2 release, doctrine, missile-authority, or Pk evidence.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.

@@ -29,6 +29,8 @@ A6_FIRST_EVENT_SOURCE_ACCEPTED = 1
 A6_FIRST_EVENT_SOURCE_CURRICULUM = 2
 A6_FIRST_EVENT_SOURCE_CENSORED = 3
 A6_FIRST_EVENT_SOURCE_DEADLINE = 4
+A6_FIRST_EVENT_SOURCE_PREWINDOW = 5
+A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED = 6
 
 
 @dataclass(frozen=True)
@@ -99,6 +101,10 @@ def build_first_event_hazard_labels(
     fire_mask: Sequence[Any] | th.Tensor,
     fire_once_accepted: Sequence[Any] | th.Tensor | None = None,
     episode_id: Sequence[Any] | th.Tensor | None = None,
+    launch_window_open: Sequence[Any] | th.Tensor | None = None,
+    launch_window_min_window_age_steps: int = 1,
+    launch_window_prewindow_hold_weight: float = 0.0,
+    launch_window_early_accept_weight: float = 1.0,
     curriculum_weight: float = 0.0,
     curriculum_min_window_age_steps: int = 32,
     curriculum_blocked_episode_ids: Sequence[int] | set[int] | None = None,
@@ -112,7 +118,9 @@ def build_first_event_hazard_labels(
     fire_open = _as_bool_list(fire_mask)
     accepted = _as_bool_list(fire_once_accepted, default_len=count)
     episodes = _as_episode_ids(episode_id, count)
-    if not (len(fire_open) == len(accepted) == len(episodes) == count):
+    launch_gate_enabled = launch_window_open is not None
+    launch_open = _as_bool_list(launch_window_open, default_len=count) if launch_gate_enabled else [True] * count
+    if not (len(fire_open) == len(accepted) == len(episodes) == len(launch_open) == count):
         raise ValueError("A6 first-event label inputs must have the same flattened length")
 
     active = [False] * count
@@ -129,6 +137,9 @@ def build_first_event_hazard_labels(
     censored_weight = float(max(0.0, censored_survival_weight))
     deadline_weight = float(max(0.0, deadline_weight))
     deadline_min_age = max(1, int(deadline_min_window_age_steps))
+    launch_min_age = max(1, int(launch_window_min_window_age_steps))
+    prewindow_hold_weight = float(max(0.0, launch_window_prewindow_hold_weight))
+    early_accept_weight = float(max(0.0, launch_window_early_accept_weight))
     window_counter = 0
 
     ordered_episodes: list[int] = []
@@ -166,29 +177,62 @@ def build_first_event_hazard_labels(
             for age, step_idx in enumerate(window_indices, start=1):
                 window_age[step_idx] = float(age)
                 window_id[step_idx] = current_window_id
+            quality_open = [
+                (not launch_gate_enabled)
+                or (bool(launch_open[step_idx]) and window_age[step_idx] >= float(launch_min_age))
+                for step_idx in window_indices
+            ]
 
             accepted_positions = [pos for pos, step_idx in enumerate(window_indices) if bool(accepted[step_idx])]
             if accepted_positions:
                 tau_pos = int(accepted_positions[0])
-                for pos, step_idx in enumerate(window_indices[: tau_pos + 1]):
-                    active[step_idx] = True
-                    target[step_idx] = 1.0 if pos == tau_pos else 0.0
-                    weight[step_idx] = 1.0
-                    source[step_idx] = A6_FIRST_EVENT_SOURCE_ACCEPTED
-                    had_accepted[step_idx] = True
+                if quality_open[tau_pos]:
+                    for pos, step_idx in enumerate(window_indices[: tau_pos + 1]):
+                        active[step_idx] = True
+                        target[step_idx] = 1.0 if pos == tau_pos else 0.0
+                        weight[step_idx] = 1.0
+                        source[step_idx] = A6_FIRST_EVENT_SOURCE_ACCEPTED
+                        had_accepted[step_idx] = True
+                else:
+                    for step_idx in window_indices[: tau_pos + 1]:
+                        step_is_accepted = bool(accepted[step_idx])
+                        negative_weight = (
+                            max(prewindow_hold_weight, early_accept_weight)
+                            if step_is_accepted
+                            else prewindow_hold_weight
+                        )
+                        active[step_idx] = negative_weight > 0.0
+                        target[step_idx] = 0.0
+                        weight[step_idx] = negative_weight
+                        source[step_idx] = (
+                            A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED
+                            if step_is_accepted
+                            else A6_FIRST_EVENT_SOURCE_PREWINDOW
+                        )
+                        had_accepted[step_idx] = True
                 episode_has_first_event = True
                 continue
 
-            for step_idx in window_indices:
+            for pos, step_idx in enumerate(window_indices):
                 source[step_idx] = A6_FIRST_EVENT_SOURCE_CENSORED
                 if censored_weight > 0.0:
                     active[step_idx] = True
                     target[step_idx] = 0.0
                     weight[step_idx] = censored_weight
+                if launch_gate_enabled and not quality_open[pos]:
+                    source[step_idx] = A6_FIRST_EVENT_SOURCE_PREWINDOW
+                    if prewindow_hold_weight > 0.0:
+                        active[step_idx] = True
+                        target[step_idx] = 0.0
+                        weight[step_idx] = prewindow_hold_weight
 
             if curriculum_weight > 0.0 and not curriculum_used and episode not in blocked_curriculum_episodes:
                 seed_pos = next(
-                    (pos for pos, step_idx in enumerate(window_indices) if window_age[step_idx] >= float(min_age)),
+                    (
+                        pos
+                        for pos, step_idx in enumerate(window_indices)
+                        if quality_open[pos] and window_age[step_idx] >= float(min_age)
+                    ),
                     None,
                 )
                 if seed_pos is not None:
@@ -200,7 +244,9 @@ def build_first_event_hazard_labels(
                     curriculum_used = True
 
             if deadline_weight > 0.0:
-                for step_idx in window_indices:
+                for pos, step_idx in enumerate(window_indices):
+                    if not quality_open[pos]:
+                        continue
                     if window_age[step_idx] < float(deadline_min_age):
                         continue
                     active[step_idx] = True

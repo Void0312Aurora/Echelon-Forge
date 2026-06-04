@@ -93,6 +93,12 @@
   - 它用于在 event-head update-strength audit 后测试 optimizer ownership；不削弱 A3/A5 masks，也不释放 M2。
   - 32k A6-EVT-K probe 已跨过 deterministic argmax 并保留 one-shot discipline，但 A6 因 launch-window timing quality 继续 held。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_launch_window_shaped_world_batch_probe_v1.json)
+  - Stage-1 A6-EVT-L launch-window timing-contract 探针，使用相同的 event-head C2/ROE temporal shaped surface。
+  - 通过 policy-observed contact range / track age 与 legal-window age，将 legal authorization 与 quality-window launch labels 分开。
+  - early accepted releases 会变成 negative labels；deadline/curriculum positives 由 launch window gate 约束。
+  - 这是下一轮短探针的 implementation/evidence entry，不是 M2 release、doctrine、missile-authority 或 Pk evidence。
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
   - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。

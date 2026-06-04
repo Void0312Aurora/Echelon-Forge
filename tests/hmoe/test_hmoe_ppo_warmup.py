@@ -165,6 +165,42 @@ class HMoEPPOWarmupTests(unittest.TestCase):
 
         self.assertEqual(mask, [True, False])
 
+    def test_a6_launch_window_uses_contact_range_and_track_age_from_policy_obs(self) -> None:
+        contacts = th.zeros((2, 10, 5), dtype=th.float32)
+        contacts[0, 0, 0] = 15000.0
+        contacts[0, 0, 4] = 0.5
+        contacts[1, 0, 0] = 42000.0
+        contacts[1, 0, 4] = 0.5
+
+        launch_window = AdaptiveKLPPO._a6_first_event_policy_launch_window_from_obs(
+            {"contacts": contacts},
+            2,
+            min_range_m=8000.0,
+            max_range_m=30000.0,
+            max_track_age_s=2.0,
+        )
+
+        self.assertEqual(launch_window, [True, False])
+
+    def test_a6_launch_window_prefers_latest_contacts_history_frame(self) -> None:
+        contacts_history = th.zeros((2, 3, 10, 5), dtype=th.float32)
+        contacts_history[0, 0, 0, 0] = 14000.0
+        contacts_history[0, 0, 0, 4] = 0.2
+        contacts_history[0, 2, 0, 0] = 42000.0
+        contacts_history[0, 2, 0, 4] = 0.2
+        contacts_history[1, 2, 0, 0] = 18000.0
+        contacts_history[1, 2, 0, 4] = 3.5
+
+        launch_window = AdaptiveKLPPO._a6_first_event_policy_launch_window_from_obs(
+            {"contacts_history": contacts_history},
+            2,
+            min_range_m=8000.0,
+            max_range_m=30000.0,
+            max_track_age_s=2.0,
+        )
+
+        self.assertEqual(launch_window, [False, False])
+
     def test_collect_rollouts_applies_hmoe_warmup_before_first_step(self) -> None:
         env = DummyVecEnv([_TinyHMoEEnv])
         model = AdaptiveKLPPO(

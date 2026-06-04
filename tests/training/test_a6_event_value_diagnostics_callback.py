@@ -23,6 +23,8 @@ class _DummyModel:
     a6_first_event_hazard_coef = 0.2
     a6_first_event_curriculum_coef = 0.1
     a6_first_event_deadline_weight = 0.4
+    a6_first_event_launch_window_enabled = True
+    a6_first_event_launch_window_prewindow_hold_weight = 0.3
 
     def __init__(self, logger: _DummyLogger) -> None:
         self.logger = logger
@@ -127,18 +129,36 @@ class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
                     "a6_first_event_source": "deadline",
                     "a6_first_event_window_id": 8,
                 },
+                {
+                    "a6_first_event_active": 1,
+                    "a6_first_event_target": 0,
+                    "a6_first_event_weight": 0.3,
+                    "a6_first_event_source": "prewindow",
+                    "a6_first_event_window_id": 9,
+                },
+                {
+                    "a6_first_event_active": 1,
+                    "a6_first_event_target": 0,
+                    "a6_first_event_weight": 1.0,
+                    "a6_first_event_source": "early_accepted",
+                    "a6_first_event_window_id": 9,
+                },
             ]
         )
 
         self.assertAlmostEqual(logger.records["a6/hazard_coef"], 0.2, places=6)
         self.assertAlmostEqual(logger.records["a6/curriculum_coef"], 0.075, places=6)
         self.assertAlmostEqual(logger.records["a6/deadline_weight"], 0.4, places=6)
-        self.assertAlmostEqual(logger.records["a6/active_count"], 3.0, places=6)
-        self.assertAlmostEqual(logger.records["a6/active_frac"], 3.0 / 4.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/launch_window_enabled"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/launch_window_prewindow_hold_weight"], 0.3, places=6)
+        self.assertAlmostEqual(logger.records["a6/active_count"], 5.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/active_frac"], 5.0 / 6.0, places=6)
         self.assertAlmostEqual(logger.records["a6/target_positive_count"], 2.0, places=6)
-        self.assertAlmostEqual(logger.records["a6/target_positive_frac"], 2.0 / 3.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/target_positive_frac"], 2.0 / 5.0, places=6)
         self.assertAlmostEqual(logger.records["a6/curriculum_positive_count"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["a6/deadline_positive_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/prewindow_hold_count"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/early_accepted_count"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["a6/censored_window_count"], 1.0, places=6)
 
     def test_records_a6_label_stable_zeros_when_enabled_but_absent(self) -> None:
@@ -151,9 +171,12 @@ class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["a6/hazard_coef"], 0.2, places=6)
         self.assertAlmostEqual(logger.records["a6/curriculum_coef"], 0.075, places=6)
         self.assertAlmostEqual(logger.records["a6/deadline_weight"], 0.4, places=6)
+        self.assertAlmostEqual(logger.records["a6/launch_window_enabled"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["a6/active_count"], 0.0, places=6)
         self.assertAlmostEqual(logger.records["a6/target_positive_frac"], 0.0, places=6)
         self.assertAlmostEqual(logger.records["a6/deadline_positive_count"], 0.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/prewindow_hold_count"], 0.0, places=6)
+        self.assertAlmostEqual(logger.records["a6/early_accepted_count"], 0.0, places=6)
         self.assertAlmostEqual(logger.records["a6/censored_window_count"], 0.0, places=6)
 
 
