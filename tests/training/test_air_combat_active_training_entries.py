@@ -52,6 +52,10 @@ STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -448,11 +452,35 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertGreater(float(launch_hyper.get("a6_first_event_deadline_weight", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_value_coef", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_delta_align_coef", 0.0)), 0.0)
+        self.assertTrue(bool(a7_hyper.get("a7_event_credit_delta_align_positive_only")))
         self.assertGreater(float(a7_hyper.get("a7_event_credit_deadline_weight", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_shadow_quality_weight", 0.0)), 0.0)
+        self.assertGreater(float(a7_hyper.get("a7_event_credit_legal_open_quality_weight", 0.0)), 0.0)
+        self.assertGreater(int(a7_hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 0)), 1)
         self.assertTrue(bool(a7_hyper.get("a7_event_credit_legal_projection_enabled")))
         self.assertGreater(float(a7_hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_projection_delta_align_coef", 0.0)), 0.0)
+        self.assertTrue(bool(a7_hyper.get("a7_event_credit_separate_update_enabled")))
+        self.assertGreater(float(a7_hyper.get("a7_event_credit_separate_update_max_grad_norm", 0.0)), 0.0)
+
+    def test_stage1_c2_roe_a7_state_completed_probe_changes_only_mission_obs_mode(self) -> None:
+        baseline = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG)
+        state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "total_timesteps", "n_envs", "save_freq"):
+            self.assertEqual(state_completed.get(key), baseline.get(key), key)
+        self.assertEqual(state_completed.get("runtime"), baseline.get("runtime"))
+        self.assertEqual(state_completed.get("early_stop"), baseline.get("early_stop"))
+        self.assertEqual(state_completed.get("diagnostics"), baseline.get("diagnostics"))
+        self.assertEqual(state_completed.get("hmoe"), baseline.get("hmoe"))
+        self.assertEqual(state_completed.get("wrappers"), baseline.get("wrappers"))
+        self.assertEqual(state_completed.get("hyperparameters"), baseline.get("hyperparameters"))
+
+        env = dict(state_completed.get("env", {}))
+        baseline_env = dict(baseline.get("env", {}))
+        self.assertEqual(env.pop("mission_obs_mode"), "air_combat_c2_roe_v2")
+        self.assertEqual(baseline_env.pop("mission_obs_mode"), "air_combat_c2_roe_v1")
+        self.assertEqual(env, baseline_env)
 
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)
@@ -556,6 +584,11 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 STAGE1_C2_ROE_TEMPORAL_A7_EVENT_CREDIT_CONFIG,
                 STAGE1_C2_ROE_SCENARIO,
             ),
+            (
+                "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
+                STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG,
+                STAGE1_C2_ROE_SCENARIO,
+            ),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -596,6 +629,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_event_head_shaped",
                 "c2_roe_hybrid_temporal_launch_window_shaped",
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
+                "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
             }:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {
@@ -607,6 +641,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_event_head_shaped",
                 "c2_roe_hybrid_temporal_launch_window_shaped",
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
+                "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
             }:
                 self.assertIn("temporal_history_len=16", proc.stdout)
             if label in {
@@ -618,6 +653,8 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
             }:
                 self.assertIn("mission_obs_mode=air_combat_c2_roe_v1", proc.stdout)
+            if label == "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed":
+                self.assertIn("mission_obs_mode=air_combat_c2_roe_v2", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 
 

@@ -107,10 +107,23 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
     `a7_event_credit_legal_projection_enabled=true`,
     `a7_event_credit_projection_value_coef>0`, and
     `a7_event_credit_projection_delta_align_coef>0`.
+  - As of A7-EVC-V, enables the protected online credit update contract with
+    `a7_event_credit_separate_update_enabled=true`,
+    `a7_event_credit_separate_update_max_grad_norm=0.5`, and
+    `a7_event_credit_delta_align_positive_only=true`.
   - Keeps A3/A5 legality masks and one-shot state-machine authority unchanged.
   - It was used by A7-G r3 and A7-EVC-J repair evidence; both are valid but held because deterministic releases remain `0` and quality-window advantage stays negative.
   - It is now the maintained entry for A7-EVC-N short projection learned evidence after M focused gates.
   - It is not M2 release, doctrine, missile-authority, or Pk evidence, and focused projection tests still do not count as behavior acceptance.
+
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json)
+  - Stage-1 A7 explicit state-completion probe using `mission_obs_mode=air_combat_c2_roe_v2`.
+  - Keeps the A7/R event-credit hyperparameters unchanged while exposing current legal-open age, launch-window readiness, quality-window readiness, target range, and target track age in the mission observation.
+  - Includes the A7-EVC-V protected credit update contract:
+    separate credit-head value updates, positive-only delta alignment, and a
+    separate clip budget.
+  - The 32k S probe completed as held evidence: focused tests passed, open-window fire probability rose, deterministic probing still recorded `0` releases, and quality-window advantage remained negative.
+  - It is a pre-M2 structural observability experiment; it does not release sequence-native M2, doctrine, missile-authority, or Pk evidence.
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.

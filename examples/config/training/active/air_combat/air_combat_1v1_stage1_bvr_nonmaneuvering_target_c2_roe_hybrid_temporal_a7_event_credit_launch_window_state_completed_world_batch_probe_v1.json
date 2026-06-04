@@ -16,7 +16,7 @@
   },
   "env": {
     "include_proprio": true,
-    "mission_obs_mode": "air_combat_c2_roe_v1",
+    "mission_obs_mode": "air_combat_c2_roe_v2",
     "step_info_mode": "full",
     "execution_step_runtime_mode": "compiled",
     "flight_shaping_backend": "compiled",

@@ -55,6 +55,15 @@ A7_EVENT_CREDIT_CONFIG = (
     / "air_combat"
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json"
 )
+A7_STATE_COMPLETED_CONFIG = (
+    REPO_ROOT
+    / "examples"
+    / "config"
+    / "training"
+    / "active"
+    / "air_combat"
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json"
+)
 A6_SCENARIO = (
     REPO_ROOT
     / "scenarios"
@@ -162,15 +171,35 @@ class A6EventValueActiveConfigTests(unittest.TestCase):
 
         self.assertGreater(float(hyper.get("a7_event_credit_value_coef", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_delta_align_coef", 0.0)), 0.0)
+        self.assertTrue(bool(hyper.get("a7_event_credit_delta_align_positive_only")))
         self.assertGreater(float(hyper.get("a7_event_credit_prewindow_hold_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_early_accept_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_deadline_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a7_event_credit_legal_open_quality_weight", 0.0)), 0.0)
+        self.assertGreater(int(hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 0)), 1)
         self.assertTrue(bool(hyper.get("a7_event_credit_legal_projection_enabled")))
         self.assertGreater(float(hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_projection_delta_align_coef", 0.0)), 0.0)
+        self.assertTrue(bool(hyper.get("a7_event_credit_separate_update_enabled")))
+        self.assertGreater(float(hyper.get("a7_event_credit_separate_update_max_grad_norm", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_positive_mass_cap", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_negative_mass_cap", 0.0)), 0.0)
+
+    def test_a7_state_completed_config_changes_only_observation_contract(self) -> None:
+        baseline = _load_json(A7_EVENT_CREDIT_CONFIG)
+        cfg = _load_json(A7_STATE_COMPLETED_CONFIG)
+
+        self.assertEqual(cfg.get("algo"), "AdaptiveKLPPO")
+        self.assertEqual(cfg.get("policy"), "HierarchicalMoEExecutionPolicy")
+        self.assertEqual(cfg.get("runtime"), baseline.get("runtime"))
+        self.assertEqual(cfg.get("hyperparameters"), baseline.get("hyperparameters"))
+
+        env = dict(cfg.get("env", {}))
+        baseline_env = dict(baseline.get("env", {}))
+        self.assertEqual(env.pop("mission_obs_mode"), "air_combat_c2_roe_v2")
+        self.assertEqual(baseline_env.pop("mission_obs_mode"), "air_combat_c2_roe_v1")
+        self.assertEqual(env, baseline_env)
 
     def test_a6_active_path_keeps_legality_penalties_disabled(self) -> None:
         scenario = _load_json(A6_SCENARIO)
