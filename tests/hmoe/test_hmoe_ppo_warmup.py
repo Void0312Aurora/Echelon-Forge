@@ -14,7 +14,14 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
-from python.rl.policy_algo.first_event_hazard import A6_FIRST_EVENT_FIELD_ACTIVE, A6_FIRST_EVENT_FIELD_TARGET
+from python.rl.policy_algo.first_event_hazard import (
+    A6_FIRST_EVENT_FIELD_ACTIVE,
+    A6_FIRST_EVENT_FIELD_SOURCE,
+    A6_FIRST_EVENT_FIELD_TARGET,
+    A6_FIRST_EVENT_FIELD_WEIGHT,
+    A6_FIRST_EVENT_FIELD_WINDOW_ID,
+    A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+)
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
@@ -145,6 +152,48 @@ class _TinyA6HybridAirCombatEnv(_TinyHybridAirCombatEnv):
             "fire_once_accepted": False,
         }
         return self._obs(), reward, terminated, truncated, info
+
+
+class _TinyA7ProjectionHybridAirCombatEnv(gym.Env):
+    metadata = {}
+
+    def __init__(self) -> None:
+        self.observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=np.float32),
+                "contacts": spaces.Box(low=-1.0e6, high=1.0e6, shape=(10, 5), dtype=np.float32),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=np.float32),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(20,), dtype=np.float32),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=np.float32),
+            }
+        )
+        self.action_space = make_action_space("air_combat_hybrid_v1")
+
+    def reset(self, *, seed=None, options=None):
+        return self._obs(), {}
+
+    def step(self, action):
+        return self._obs(), 0.0, False, False, {}
+
+    def _obs(self):
+        mission = np.zeros((20,), dtype=np.float32)
+        mission[5] = 1.0
+        mission[6] = 0.0
+        mission[14] = 4.0
+        mission[15] = 0.0
+        mission[16] = 0.0
+        mission[17] = 1.0
+        mission[19] = 0.0
+        contacts = np.zeros((10, 5), dtype=np.float32)
+        contacts[0, 0] = 16000.0
+        contacts[0, 4] = 0.2
+        return {
+            "instruments": np.zeros((42,), dtype=np.float32),
+            "contacts": contacts,
+            "rwr": np.zeros((4, 4), dtype=np.float32),
+            "mission": mission,
+            "proprio": np.zeros((12,), dtype=np.float32),
+        }
 
 
 class _NoopCallback(BaseCallback):
@@ -505,6 +554,69 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertFalse(th.allclose(before, after))
         self.assertIn("a7/event_credit_loss", model.logger.name_to_value)
         self.assertGreater(float(model.logger.name_to_value["a7/event_credit_active_count_mean"]), 0.0)
+
+    def test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
+        env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.0,
+            a7_event_credit_delta_align_coef=0.5,
+            a7_event_credit_legal_projection_enabled=True,
+            a7_event_credit_projection_value_coef=0.5,
+            a7_event_credit_projection_delta_align_coef=0.5,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 6.0,
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.hybrid_event_credit_head is not None
+        assert model.policy.hybrid_event_head is not None
+        with th.no_grad():
+            model.policy.hybrid_event_credit_head.weight.zero_()
+            model.policy.hybrid_event_credit_head.bias.copy_(th.tensor([0.0, 2.0], dtype=th.float32))
+
+        obs_np = env.reset()
+        obs = model.policy.obs_to_tensor(obs_np)[0]
+
+        class _RolloutData:
+            observations = obs
+
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
+        setattr(
+            _RolloutData,
+            A6_FIRST_EVENT_FIELD_SOURCE,
+            th.full((1,), A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY, dtype=th.long),
+        )
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
+
+        credit_loss = model._first_event_credit_loss(_RolloutData)
+        self.assertIsNotNone(credit_loss)
+        assert credit_loss is not None
+        self.assertEqual(credit_loss.projection_active_count, 1)
+        self.assertEqual(credit_loss.projection_unsupported_count, 0)
+        self.assertGreater(float(credit_loss.projection_advantage_mean), 1.0)
+        self.assertGreater(float(credit_loss.loss.detach().cpu().item()), 0.0)
+
+        model.policy.optimizer.zero_grad()
+        credit_loss.loss.backward()
+        event_grad = 0.0
+        for param in model.policy.hybrid_event_head.parameters():
+            if param.grad is not None:
+                event_grad += float(param.grad.detach().abs().sum().cpu().item())
+        self.assertGreater(event_grad, 0.0)
 
 
 if __name__ == "__main__":

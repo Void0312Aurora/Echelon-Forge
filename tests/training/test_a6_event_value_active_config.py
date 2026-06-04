@@ -166,6 +166,9 @@ class A6EventValueActiveConfigTests(unittest.TestCase):
         self.assertGreater(float(hyper.get("a7_event_credit_early_accept_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_deadline_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_shadow_quality_weight", 0.0)), 0.0)
+        self.assertTrue(bool(hyper.get("a7_event_credit_legal_projection_enabled")))
+        self.assertGreater(float(hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a7_event_credit_projection_delta_align_coef", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_positive_mass_cap", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_negative_mass_cap", 0.0)), 0.0)
 

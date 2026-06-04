@@ -11,7 +11,9 @@ Quality Target Repair` has fixed the confirmed label-censoring bug and passed
 focused tests plus a 32k repair probe, but learned first-shot timing remains
 held. `A7-EVC-K Legal-State Projection And Coupling Audit` has closed the
 post-repair diagnosis, and `A7-EVC-L Legal-State Projection Contract` has
-selected the next mechanism. Implementation is not started.
+selected the next mechanism. `A7-EVC-M Projected Legal-Open Credit Prototype`
+has implemented that mechanism with focused validation. Learned-policy behavior
+after projection is not yet evaluated.
 
 Parent: [README.md](README.md).
 
@@ -52,6 +54,10 @@ Parent: [README.md](README.md).
 - `A7-EVC-L Legal-State Projection Contract` is complete as a design contract:
   raw shadow rows become projection/opportunity evidence, while positive
   value/delta alignment is allowed only on projected legal-open observations.
+- `A7-EVC-M Projected Legal-Open Credit Prototype` is complete as an
+  implementation slice: projected legal-open observations now train positive
+  value/delta alignment for shadow-quality evidence while raw closed-mask rows
+  remain excluded from ordinary delta alignment.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
   A7 should not rely solely on hard-routed subexpert behavior, but the current
   A7 failure is already visible in the censored target construction and
@@ -71,16 +77,16 @@ Parent: [README.md](README.md).
 | Target construction audit | pass; repaired by J | [target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md) proves early stochastic accepted release censors later quality-window positives from A7 labels. | J has repaired this target-construction bug; the remaining blocker is post-repair projection/coupling, not another coefficient-tuning pass. |
 | Shadow-quality target repair | pass; held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) adds `A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY`, positive shadow labels after early accepted release, an A7 config knob, diagnostics coverage, and delta-align masking for shadow rows. | Label censoring is fixed, but behavior is still held: deterministic `0` releases, early stochastic releases, and negative quality-window advantage. |
 | Legal-state projection audit | pass; held outcome | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) shows shadow positives are restored but remain value-only on closed-mask rows, leaving legal-open quality states negative. | This is a structural diagnosis, not acceptance. |
-| Legal-state projection contract | pass; implementation not started | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive credit and forbids raw closed-mask delta alignment. | No code behavior changes yet; next implementation is `A7-EVC-M`. |
+| Legal-state projection contract | pass; implemented by M | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive credit and forbids raw closed-mask delta alignment. | The contract is now implemented as a focused prototype; it still does not prove learned-policy behavior. |
+| Projected legal-open credit prototype | pass; learned behavior not evaluated | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and gradient path only; A7 behavior acceptance still requires a short projection learned-policy probe. |
 | HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Implement `A7-EVC-M Projected Legal-Open Credit Prototype`: the target builder
-now supplies shadow-quality positives, and L defines how to project that
-evidence onto a legal-open decision surface. The next bounded question is
-whether projected positive value/delta alignment changes legal-open quality
-states without weakening A3/A5 masks.
+Run `A7-EVC-N Short Projection Learned Evidence`: M supplies the projected
+legal-open training path and focused tests show projected positive event-logit
+pressure. The next bounded question is whether this changes deterministic
+release timing and stochastic early-fire behavior without weakening A3/A5 masks.
 
 ## Validation Snapshot
 
@@ -143,6 +149,13 @@ states without weakening A3/A5 masks.
   `25.5%` / `27.2%` and quality-window A7 advantage mean `-0.902`; stochastic
   probe records `3/3` authorized one-shot releases at steps `4`, `43`, and `2`
   with `0` unauthorized/repeat/budget violations.
+- A7-EVC-M focused repair gates: compileall passed for
+  `first_event_projection.py`, `first_event_hazard.py`, and
+  `ppo_adaptive_kl.py`; `pytest tests/hmoe/test_a6_first_event_hazard.py -q`
+  passed with `17 passed`; the focused projected-loss PPO test passed with
+  `1 passed`; the focused HMoE/PPO group passed with `15 passed`; JSON parsing
+  and active config/entry tests passed with `19 passed`; the combined focused
+  rerun after docs sync passed with `51 passed`.
 
 ## Held Items
 

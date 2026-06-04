@@ -17,6 +17,7 @@ from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
 from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+    FirstEventCreditLoss,
     build_first_event_hazard_labels,
     compute_first_event_credit_loss,
     compute_first_event_hazard_loss,
@@ -24,6 +25,7 @@ from .first_event_hazard import (
     first_event_credit_batch_from_rollout_data,
     first_event_hazard_batch_from_rollout_data,
 )
+from .first_event_projection import project_air_combat_c2_roe_legal_open_observations
 from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
 
 
@@ -81,6 +83,9 @@ class AdaptiveKLPPO(PPO):
         a7_event_credit_deadline_weight: float = 0.0,
         a7_event_credit_deadline_min_window_age_steps: int = 96,
         a7_event_credit_shadow_quality_weight: float = 1.0,
+        a7_event_credit_legal_projection_enabled: bool = False,
+        a7_event_credit_projection_value_coef: float = 0.0,
+        a7_event_credit_projection_delta_align_coef: float = 0.0,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -146,6 +151,11 @@ class AdaptiveKLPPO(PPO):
             int(a7_event_credit_deadline_min_window_age_steps),
         )
         self.a7_event_credit_shadow_quality_weight = float(max(0.0, a7_event_credit_shadow_quality_weight))
+        self.a7_event_credit_legal_projection_enabled = bool(a7_event_credit_legal_projection_enabled)
+        self.a7_event_credit_projection_value_coef = float(max(0.0, a7_event_credit_projection_value_coef))
+        self.a7_event_credit_projection_delta_align_coef = float(
+            max(0.0, a7_event_credit_projection_delta_align_coef)
+        )
         super().__init__(*args, **kwargs)
 
     def _a6_first_event_enabled(self) -> bool:
@@ -160,6 +170,8 @@ class AdaptiveKLPPO(PPO):
         return bool(
             self.a7_event_credit_value_coef > 0.0
             or self.a7_event_credit_delta_align_coef > 0.0
+            or self.a7_event_credit_projection_value_coef > 0.0
+            or self.a7_event_credit_projection_delta_align_coef > 0.0
         )
 
     def _first_event_label_collection_enabled(self) -> bool:
@@ -737,7 +749,7 @@ class AdaptiveKLPPO(PPO):
         delta_align_active = None
         if source is not None:
             delta_align_active = source.to(device=q_values.device) != int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
-        return compute_first_event_credit_loss(
+        base_loss = compute_first_event_credit_loss(
             q_values,
             target.to(device=q_values.device),
             active.to(device=q_values.device),
@@ -750,6 +762,114 @@ class AdaptiveKLPPO(PPO):
             delta_align_active=delta_align_active,
             positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
             negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
+        )
+        if (
+            not self.a7_event_credit_legal_projection_enabled
+            or source is None
+            or (
+                self.a7_event_credit_projection_value_coef <= 0.0
+                and self.a7_event_credit_projection_delta_align_coef <= 0.0
+            )
+        ):
+            return base_loss
+
+        shadow_active = (
+            active.to(device=q_values.device).reshape(-1).to(dtype=th.bool)
+            & (source.to(device=q_values.device).reshape(-1).long() == int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY))
+        )
+        projection = project_air_combat_c2_roe_legal_open_observations(obs, shadow_active)
+        if projection is None:
+            return FirstEventCreditLoss(
+                loss=base_loss.loss,
+                value_loss=base_loss.value_loss,
+                delta_align_loss=base_loss.delta_align_loss,
+                unscaled_value_loss=base_loss.unscaled_value_loss,
+                unscaled_delta_align_loss=base_loss.unscaled_delta_align_loss,
+                active_count=base_loss.active_count,
+                positive_count=base_loss.positive_count,
+                weight_sum=base_loss.weight_sum,
+                positive_frac=base_loss.positive_frac,
+                advantage_mean=base_loss.advantage_mean,
+                advantage_abs_mean=base_loss.advantage_abs_mean,
+                projection_unsupported_count=int(shadow_active.sum().detach().cpu().item()),
+            )
+        projected_active = projection.active.to(device=q_values.device).reshape(-1).to(dtype=th.bool)
+        if int(projected_active.sum().detach().cpu().item()) <= 0:
+            return FirstEventCreditLoss(
+                loss=base_loss.loss,
+                value_loss=base_loss.value_loss,
+                delta_align_loss=base_loss.delta_align_loss,
+                unscaled_value_loss=base_loss.unscaled_value_loss,
+                unscaled_delta_align_loss=base_loss.unscaled_delta_align_loss,
+                active_count=base_loss.active_count,
+                positive_count=base_loss.positive_count,
+                weight_sum=base_loss.weight_sum,
+                positive_frac=base_loss.positive_frac,
+                advantage_mean=base_loss.advantage_mean,
+                advantage_abs_mean=base_loss.advantage_abs_mean,
+                projection_unsupported_count=int(projection.unsupported_count),
+            )
+
+        projected_distribution = self.policy.get_distribution(projection.observations)
+        projected_q_getter = getattr(projected_distribution, "fire_event_q_values", None)
+        if not callable(projected_q_getter):
+            return base_loss
+        projected_q_values = projected_q_getter()
+        if projected_q_values is None:
+            return base_loss
+        projected_delta = None
+        projected_delta_getter = getattr(projected_distribution, "fire_event_logit_delta", None)
+        if callable(projected_delta_getter):
+            projected_delta = projected_delta_getter()
+        projected_targets = th.ones_like(target.to(device=q_values.device, dtype=th.float32).reshape(-1))
+        projection_loss = compute_first_event_credit_loss(
+            projected_q_values,
+            projected_targets.to(device=projected_q_values.device),
+            projected_active.to(device=projected_q_values.device),
+            weight.to(device=projected_q_values.device),
+            event_logit_delta=projected_delta,
+            window_id=window_id.to(device=projected_q_values.device) if window_id is not None else None,
+            value_coef=float(self.a7_event_credit_projection_value_coef),
+            delta_align_coef=float(self.a7_event_credit_projection_delta_align_coef),
+            delta_align_clip=float(self.a7_event_credit_delta_align_clip),
+            delta_align_active=projected_active.to(device=projected_q_values.device),
+            positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
+            negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
+        )
+        projected_advantage = projected_q_values[:, 1] - projected_q_values[:, 0]
+        projected_weighted_advantage = projected_advantage[projected_active.to(device=projected_q_values.device)]
+        projection_advantage_mean = (
+            float(projected_weighted_advantage.detach().mean().cpu().item())
+            if int(projected_weighted_advantage.numel()) > 0
+            else 0.0
+        )
+        projection_delta_mean = 0.0
+        if projected_delta is not None:
+            projected_delta_active = projected_delta.reshape(-1)[projected_active.to(device=projected_delta.device)]
+            projection_delta_mean = (
+                float(projected_delta_active.detach().mean().cpu().item())
+                if int(projected_delta_active.numel()) > 0
+                else 0.0
+            )
+        combined_active = int(base_loss.active_count) + int(projection_loss.active_count)
+        combined_positive = int(base_loss.positive_count) + int(projection_loss.positive_count)
+        return FirstEventCreditLoss(
+            loss=base_loss.loss + projection_loss.loss,
+            value_loss=base_loss.value_loss + projection_loss.value_loss,
+            delta_align_loss=base_loss.delta_align_loss + projection_loss.delta_align_loss,
+            unscaled_value_loss=base_loss.unscaled_value_loss + projection_loss.unscaled_value_loss,
+            unscaled_delta_align_loss=base_loss.unscaled_delta_align_loss
+            + projection_loss.unscaled_delta_align_loss,
+            active_count=combined_active,
+            positive_count=combined_positive,
+            weight_sum=float(base_loss.weight_sum) + float(projection_loss.weight_sum),
+            positive_frac=(float(combined_positive) / float(combined_active)) if combined_active > 0 else 0.0,
+            advantage_mean=base_loss.advantage_mean,
+            advantage_abs_mean=base_loss.advantage_abs_mean,
+            projection_active_count=int(projection_loss.active_count),
+            projection_unsupported_count=int(projection.unsupported_count),
+            projection_advantage_mean=projection_advantage_mean,
+            projection_delta_mean=projection_delta_mean,
         )
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
@@ -787,6 +907,10 @@ class AdaptiveKLPPO(PPO):
         first_event_credit_active_counts = []
         first_event_credit_positive_fracs = []
         first_event_credit_advantage_means = []
+        first_event_credit_projection_active_counts = []
+        first_event_credit_projection_unsupported_counts = []
+        first_event_credit_projection_advantage_means = []
+        first_event_credit_projection_delta_means = []
         clip_fractions = []
 
         approx_kl_divs = []
@@ -868,6 +992,18 @@ class AdaptiveKLPPO(PPO):
                     first_event_credit_active_counts.append(int(first_event_credit_loss.active_count))
                     first_event_credit_positive_fracs.append(float(first_event_credit_loss.positive_frac))
                     first_event_credit_advantage_means.append(float(first_event_credit_loss.advantage_mean))
+                    first_event_credit_projection_active_counts.append(
+                        int(first_event_credit_loss.projection_active_count)
+                    )
+                    first_event_credit_projection_unsupported_counts.append(
+                        int(first_event_credit_loss.projection_unsupported_count)
+                    )
+                    first_event_credit_projection_advantage_means.append(
+                        float(first_event_credit_loss.projection_advantage_mean)
+                    )
+                    first_event_credit_projection_delta_means.append(
+                        float(first_event_credit_loss.projection_delta_mean)
+                    )
                     loss = loss + first_event_credit_loss.loss
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
@@ -955,6 +1091,18 @@ class AdaptiveKLPPO(PPO):
             self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
             self.logger.record("a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef))
             self.logger.record(
+                "a7/event_credit_legal_projection_enabled",
+                float(self.a7_event_credit_legal_projection_enabled),
+            )
+            self.logger.record(
+                "a7/event_credit_projection_value_coef",
+                float(self.a7_event_credit_projection_value_coef),
+            )
+            self.logger.record(
+                "a7/event_credit_projection_delta_align_coef",
+                float(self.a7_event_credit_projection_delta_align_coef),
+            )
+            self.logger.record(
                 "a7/event_credit_active_count_mean",
                 float(np.mean(first_event_credit_active_counts)) if first_event_credit_active_counts else 0.0,
             )
@@ -965,6 +1113,38 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "a7/event_credit_advantage_mean",
                 float(np.mean(first_event_credit_advantage_means)) if first_event_credit_advantage_means else 0.0,
+            )
+            self.logger.record(
+                "a7/event_credit_projection_active_count_mean",
+                (
+                    float(np.mean(first_event_credit_projection_active_counts))
+                    if first_event_credit_projection_active_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_credit_projection_unsupported_count_mean",
+                (
+                    float(np.mean(first_event_credit_projection_unsupported_counts))
+                    if first_event_credit_projection_unsupported_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_credit_projection_advantage_mean",
+                (
+                    float(np.mean(first_event_credit_projection_advantage_means))
+                    if first_event_credit_projection_advantage_means
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_credit_projection_delta_mean",
+                (
+                    float(np.mean(first_event_credit_projection_delta_means))
+                    if first_event_credit_projection_delta_means
+                    else 0.0
+                ),
             )
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")

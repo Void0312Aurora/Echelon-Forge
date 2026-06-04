@@ -28,6 +28,7 @@ from python.rl.policy_algo.first_event_hazard import (
     current_first_event_curriculum_coef,
     first_event_hazard_batch_from_rollout_data,
 )
+from python.rl.policy_algo.first_event_projection import project_air_combat_c2_roe_legal_open_observations
 from python.rl.policy_algo.policies import _HybridActionDistribution, _normalize_hybrid_action_layout
 
 
@@ -314,6 +315,52 @@ class A6FirstEventHazardTests(unittest.TestCase):
         assert event_delta.grad is not None
         self.assertAlmostEqual(float(event_delta.grad[0].detach().cpu().item()), 0.0, places=8)
         self.assertNotEqual(float(event_delta.grad[1].detach().cpu().item()), 0.0)
+
+    def test_legal_state_projection_rewrites_only_event_legality_surface(self) -> None:
+        mission = th.zeros((2, 20), dtype=th.float32)
+        mission[:, 5] = 1.0
+        mission[:, 6] = 0.0
+        mission[:, 14] = 4.0
+        mission[:, 15] = 0.0
+        mission[:, 16] = 0.0
+        mission[:, 17] = 1.0
+        mission[:, 19] = 0.0
+        contacts = th.zeros((2, 10, 5), dtype=th.float32)
+        contacts[0, 0, 0] = 16000.0
+        obs = {
+            "mission": mission,
+            "contacts": contacts,
+            "event_action_mask": th.tensor([[1, 0], [1, 0]], dtype=th.float32),
+            "fire_mask": th.zeros((2,), dtype=th.float32),
+            "instruments": th.ones((2, 4), dtype=th.float32),
+        }
+
+        projection = project_air_combat_c2_roe_legal_open_observations(obs, th.tensor([1, 1], dtype=th.bool))
+
+        self.assertIsNotNone(projection)
+        assert projection is not None
+        self.assertTrue(th.equal(projection.active, th.tensor([1, 0], dtype=th.bool)))
+        self.assertEqual(projection.unsupported_count, 1)
+        projected_mission = projection.observations["mission"]
+        self.assertEqual(float(projected_mission[0, 5].item()), 2.0)
+        self.assertEqual(float(projected_mission[0, 6].item()), 1.0)
+        self.assertEqual(float(projected_mission[0, 14].item()), 2.0)
+        self.assertEqual(float(projected_mission[0, 15].item()), 1.0)
+        self.assertEqual(float(projected_mission[0, 16].item()), 1.0)
+        self.assertEqual(float(projected_mission[0, 17].item()), 0.0)
+        self.assertEqual(float(projected_mission[0, 19].item()), 1.0)
+        self.assertTrue(th.equal(projection.observations["event_action_mask"][0], th.tensor([1.0, 1.0])))
+        self.assertEqual(float(projection.observations["fire_mask"][0].item()), 1.0)
+        self.assertTrue(th.equal(projection.observations["instruments"], obs["instruments"]))
+        self.assertTrue(th.equal(obs["event_action_mask"][0], th.tensor([1.0, 0.0])))
+
+    def test_legal_state_projection_refuses_unsupported_mission_layout(self) -> None:
+        projection = project_air_combat_c2_roe_legal_open_observations(
+            {"mission": th.zeros((1, 21), dtype=th.float32)},
+            th.ones((1,), dtype=th.bool),
+        )
+
+        self.assertIsNone(projection)
 
     def test_event_logit_delta_is_unmasked_while_categorical_semantics_stay_masked(self) -> None:
         params = th.zeros((2, 20), dtype=th.float32)

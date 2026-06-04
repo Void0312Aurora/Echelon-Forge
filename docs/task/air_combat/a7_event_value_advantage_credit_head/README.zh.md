@@ -13,7 +13,8 @@ label-censoring 路径，并通过 focused tests 与 32k repair probe；但 lear
 outcome 仍 held：deterministic probing 仍为 `0` releases，stochastic probing
 仍过早发射，quality-window advantage 仍为负。`A7-EVC-K` 已关闭 post-repair
 结构审计：剩余 blocker 是 legal-state projection / value-to-policy coupling。
-`A7-EVC-L` 已选择 projection contract；实现尚未开始。
+`A7-EVC-L` 已选择 projection contract，`A7-EVC-M` 已实现 projected legal-open
+credit prototype 并通过 focused validation。M 后 learned-policy behavior 尚未评估。
 
 语言：
 
@@ -72,7 +73,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | A7 target construction audit | pass；已由 J 修复 | [Target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md) 重构当前标签：stochastic r3 只有 `19` 个 active labels、`0` 个 positives，而每个 episode 在 early release 后都有超过 `1000` 个 shadow quality states。 | 故障点是 target construction，不是 runtime legality、training path disabled 或 HMoE primary blocker；J 已修复该 censoring path。 |
 | A7 shadow-quality target repair | pass；held outcome | [Shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md) 增加 post-early `shadow_quality` positives，保留 early-accepted negatives，将 shadow rows 排除出 delta alignment，并验证修复后的 active config。 | label-censoring bug 已修复，但 learned timing 仍未 accepted。下一问题是 repaired shadow credit 如何影响 legal-open quality states。 |
 | A7 legal-state projection audit | pass；held outcome | [Legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md) 证明 J 后 positives 存在，但主要位于 closed-mask `FiredAssess` observations；直接 policy alignment 仍由 legal-open negatives 主导。 | K 只是 docs/diagnostics evidence，不验收 A7，也不授权 closed-mask delta alignment。 |
-| A7 legal-state projection contract | pass；implementation not started | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open credit：raw shadow rows 作为 projection/opportunity evidence，positive delta alignment 只允许在 projected legal-open observations 上发生。 | 合同不削弱 A3/A5 masks，不启动训练，不释放 HMoE/M2 或 missile/doctrine authority。 |
+| A7 legal-state projection contract | pass；已由 M 实现 | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open credit：raw shadow rows 作为 projection/opportunity evidence，positive delta alignment 只允许在 projected legal-open observations 上发生。 | 合同不削弱 A3/A5 masks，且已作为 focused prototype 实现；仍不证明 learned-policy behavior。 |
+| A7 projected legal-open credit prototype | pass；learned behavior not evaluated | [Projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 增加 `first_event_projection.py`、projection coeffs、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests。 | M 只证明机制与 focused gradient path；短训证据前 A7 继续 held。 |
 
 ## 范围
 
@@ -109,7 +111,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | `P8 Target Audit` | 诊断 quality-window credit sign 为负的原因。 | P7 sync complete。 | target/loss construction 命名失败环节与后续 repair。 | pass；已由 J 修复 |
 | `P9 Shadow Target Repair` | 实现并测试 shadow-quality counterfactual targets。 | P8 audit exists。 | early stochastic release 不再从 target credit 中删失 future quality evidence，且 learned-policy probe evidence 记录残余行为。 | pass；held outcome |
 | `P10 Projection Audit` | 诊断 repaired positives 为什么不移动 legal-open quality states。 | P9 repair probe exists。 | projection/coupling failure 与缺失 positives、HMoE redesign、coefficient-only tuning 区分开。 | pass；spawned L contract |
-| `P11 Projection Contract` | 实现前定义 legal-state projection 机制。 | P10 audit exists。 | Contract 选择 projected legal-open positive alignment，并命名 implementation gates。 | pass；implementation not started |
+| `P11 Projection Contract` | 实现前定义 legal-state projection 机制。 | P10 audit exists。 | Contract 选择 projected legal-open positive alignment，并命名 implementation gates。 | pass；已由 M 实现 |
+| `P12 Projection Prototype` | 依据 L 合同实现 projected legal-open credit。 | P11 contract exists。 | Focused tests 证明 projection whitelist、unsupported-layout refusal、no raw closed-mask delta alignment 与 projected positive delta pressure。 | pass；learned behavior not evaluated |
 
 ## 任务簇
 
@@ -125,6 +128,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md](a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md)
 - Legal-state projection contract：
   [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md)
+- Projected legal-open credit prototype：
+  [a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md)
 
 ## 输出与证据
 
@@ -162,11 +167,12 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md)。
 - Legal-state projection contract：
   [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md)。
+- Projected legal-open credit prototype：
+  [a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md)。
 
 计划 follow-on 输出：
 
-- Projected legal-open credit prototype：只在 projected legal-open observations 上训练
-  positive value/delta alignment，不对 raw closed-mask shadow rows 训练直接 alignment。
+- Short projected-credit learned-policy evidence。
 
 ## 验收门
 
@@ -182,9 +188,9 @@ A7 只有在以下条件满足后才能 accepted：
 
 ## 残余与下一步
 
-- 立即下一步：依据 L 合同实现 `A7-EVC-M Projected Legal-Open Credit Prototype`。
-  `A7-EVC-J` 已修复 target label censoring，`A7-EVC-K/L` 进一步说明 repaired positives
-  必须投影到 legal-open decision surface 后，才应启动下一轮 learned-policy wave。
+- 立即下一步：运行 `A7-EVC-N Short Projection Learned Evidence`。`A7-EVC-M`
+  已实现 projected legal-open path；剩余问题是这个 focused fix 是否能在短训探针中改变
+  deterministic timing 与 stochastic early-fire behavior。
 - 修复方向是 legal-state counterfactual projection，并更强地区分 raw shadow
   opportunity learning 与 legal-state policy distillation；不应回到盲目
   coefficient-only training。

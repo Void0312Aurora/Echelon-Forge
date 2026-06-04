@@ -3,9 +3,9 @@
 Status: `2026-06-04` A7 is held after repaired short learned evidence. The
 objective contract, policy head, PPO auxiliary credit, config/diagnostics,
 focused validation, learned-evidence, closure/index-sync, target audit,
-shadow-repair, projection-audit, and projection-contract slices have passed.
-A7 remains held on behavior acceptance until projected legal-open credit is
-implemented and tested.
+shadow-repair, projection-audit, projection-contract, and projected legal-open
+prototype slices have passed. A7 remains held on behavior acceptance until the
+projected-credit path is evaluated in a short learned-policy wave.
 
 Parent: [README.md](README.md). Task clusters:
 [a7_event_value_advantage_credit_head_task_clusters_20260604.md](a7_event_value_advantage_credit_head_task_clusters_20260604.md).
@@ -14,7 +14,7 @@ Parent: [README.md](README.md). Task clusters:
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-M Projected Legal-Open Credit Prototype` | planned next | implementation worker plus diagnostics review; implement L's projection path before another learned-policy wave. | Projection helper, A7 loss/PPO coupling, focused tests, active config/diagnostics docs. | Do not align raw closed-mask `shadow_quality` rows; do not weaken A3/A5 masks; no blind 32k training before focused gates; no HMoE/M2/doctrine/missile release. |
+| `A7-EVC-N Short Projection Learned Evidence` | planned next | main thread; run a bounded learned-policy probe after M focused gates. | A7 evidence/status docs; `experiments_tmp` output is not staged. | Do not treat focused gradient tests as behavior acceptance; keep A3/A5 masks authoritative; no HMoE/M2/doctrine/missile release. |
 
 ## Completed Dispatches
 
@@ -29,13 +29,14 @@ Parent: [README.md](README.md). Task clusters:
 | `A7-EVC-I Target Construction And Credit Sign Audit` | pass; repaired by J | [target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md): stochastic r3 labels contain `0` positives despite later shadow-quality states after early release. | J repaired the censoring path; remaining work is projection/coupling diagnosis, not coefficient tuning. |
 | `A7-EVC-J Shadow Quality Target Repair` | pass; held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md): repair restores shadow-quality positives after early accepted release and passes focused tests plus a 32k repair probe. | Label censoring is fixed, but deterministic remains `0` releases, stochastic fires early, and quality-window advantage stays negative. |
 | `A7-EVC-K Legal-State Projection And Coupling Audit` | pass; spawned L contract | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md): repaired positives exist but mostly live on closed-mask `FiredAssess` rows and are value-only. | The root residual is projection/coupling, not missing positives or coefficient tuning. |
-| `A7-EVC-L Legal-State Projection Contract` | pass; implementation not started | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md): selects projected legal-open positive value/delta alignment from shadow evidence. | Next work is M implementation; L does not itself change behavior. |
+| `A7-EVC-L Legal-State Projection Contract` | pass; implemented by M | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md): selects projected legal-open positive value/delta alignment from shadow evidence. | L does not itself change behavior; M now implements it as a focused prototype. |
+| `A7-EVC-M Projected Legal-Open Credit Prototype` | pass; learned behavior not evaluated | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md): implements L through `first_event_projection.py`, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves projected legal-open pressure in focused tests; N must evaluate learned deterministic/stochastic behavior. |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | Repaired shadow credit still does not make legal-open quality states prefer `fire_once`. | `A7-EVC-M` implements and tests projected legal-open credit before another learned-policy wave. |
+| A7 behavior acceptance | Projected legal-open credit has not yet been tested in learned-policy behavior. | `A7-EVC-N` records deterministic timing, stochastic early-fire timing, one-shot violations, and projection diagnostics. |
 
 ## Dispatch Packet Template
 

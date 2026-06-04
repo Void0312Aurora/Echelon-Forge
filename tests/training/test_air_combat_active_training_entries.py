@@ -450,6 +450,9 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertGreater(float(a7_hyper.get("a7_event_credit_delta_align_coef", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_deadline_weight", 0.0)), 0.0)
         self.assertGreater(float(a7_hyper.get("a7_event_credit_shadow_quality_weight", 0.0)), 0.0)
+        self.assertTrue(bool(a7_hyper.get("a7_event_credit_legal_projection_enabled")))
+        self.assertGreater(float(a7_hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
+        self.assertGreater(float(a7_hyper.get("a7_event_credit_projection_delta_align_coef", 0.0)), 0.0)
 
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)

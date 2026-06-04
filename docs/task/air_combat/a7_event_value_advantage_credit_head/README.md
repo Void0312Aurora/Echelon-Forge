@@ -16,7 +16,9 @@ learned-policy outcome remains held: deterministic probing still records `0`
 releases, stochastic probing still fires too early, and quality-window advantage
 remains negative. `A7-EVC-K` has now closed the post-repair structural audit:
 the remaining blocker is legal-state projection / value-to-policy coupling.
-`A7-EVC-L` selects a projection contract; implementation has not started.
+`A7-EVC-L` selected a projection contract, and `A7-EVC-M` has implemented the
+projected legal-open credit prototype with focused validation. Learned-policy
+behavior remains unevaluated after M.
 
 Language:
 
@@ -80,7 +82,8 @@ would have rewarded holding.
 | A7 target construction audit | pass; repaired by J | [Target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md) reconstructs current labels: stochastic r3 has `19` active labels, `0` positives, and more than `1000` post-early-release shadow quality states per episode. | The fault was target construction, not runtime legality, disabled training, or HMoE as the primary blocker; J has repaired the censoring path. |
 | A7 shadow-quality target repair | pass; held outcome | [Shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) adds post-early `shadow_quality` positives, preserves early-accepted negatives, masks shadow rows out of delta alignment, and validates the repaired active config. | The label-censoring bug is fixed, but learned timing is still not accepted. The next question is how repaired shadow credit reaches legal-open quality states. |
 | A7 legal-state projection audit | pass; held outcome | [Legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) proves post-J positives exist but mostly live on closed-mask `FiredAssess` observations; direct policy alignment remains dominated by legal-open negatives. | K is docs/diagnostics evidence only. It does not accept A7 or justify closed-mask delta alignment. |
-| A7 legal-state projection contract | pass; implementation not started | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open credit: raw shadow rows become projection/opportunity evidence, while positive delta alignment is allowed only on projected legal-open observations. | The contract does not weaken A3/A5 masks, does not run training, and does not release HMoE/M2 or missile/doctrine authority. |
+| A7 legal-state projection contract | pass; implemented by M | [Legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open credit: raw shadow rows become projection/opportunity evidence, while positive delta alignment is allowed only on projected legal-open observations. | The contract does not weaken A3/A5 masks and is now implemented as a focused prototype; it still does not prove learned-policy behavior. |
+| A7 projected legal-open credit prototype | pass; learned behavior not evaluated | [Projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and focused gradient path only; A7 remains held until short learned-policy evidence. |
 
 ## Scope
 
@@ -123,7 +126,8 @@ Out of scope:
 | `P8 Target Audit` | Diagnose the negative quality-window credit sign. | P7 sync complete. | Target/loss construction names the failing link and next repair. | pass; repaired by J |
 | `P9 Shadow Target Repair` | Implement and test shadow-quality counterfactual targets. | P8 audit exists. | Early stochastic release no longer censors future quality evidence from target credit, and learned-policy probe evidence records the residual behavior. | pass; held outcome |
 | `P10 Projection Audit` | Diagnose why repaired positives do not move legal-open quality states. | P9 repair probe exists. | Projection/coupling failure is separated from missing positives, HMoE redesign, and coefficient-only tuning. | pass; spawned L contract |
-| `P11 Projection Contract` | Define the legal-state projection mechanism before implementation. | P10 audit exists. | Contract selects projected legal-open positive alignment and names implementation gates. | pass; implementation not started |
+| `P11 Projection Contract` | Define the legal-state projection mechanism before implementation. | P10 audit exists. | Contract selects projected legal-open positive alignment and names implementation gates. | pass; implemented by M |
+| `P12 Projection Prototype` | Implement projected legal-open credit from the L contract. | P11 contract exists. | Focused tests prove projection whitelist, unsupported-layout refusal, no raw closed-mask delta alignment, and projected positive delta pressure. | pass; learned behavior not evaluated |
 
 ## Task Clusters
 
@@ -139,6 +143,8 @@ Out of scope:
   [a7_event_value_advantage_credit_head_objective_contract_20260604.md](a7_event_value_advantage_credit_head_objective_contract_20260604.md)
 - Legal-state projection contract:
   [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md)
+- Projected legal-open credit prototype:
+  [a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md)
 
 ## Outputs And Evidence
 
@@ -178,12 +184,12 @@ Current outputs:
   [a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md).
 - Legal-state projection contract:
   [a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md).
+- Projected legal-open credit prototype:
+  [a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md).
 
 Planned follow-on outputs:
 
-- Projected legal-open credit prototype that trains positive value/delta
-  alignment only on projected legal-open observations, not raw closed-mask
-  shadow rows.
+- Short projected-credit learned-policy evidence.
 
 ## Acceptance Gate
 
@@ -204,10 +210,10 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: implement `A7-EVC-M Projected Legal-Open Credit
-  Prototype` from the L contract. `A7-EVC-J` fixed target label censoring, and
-  `A7-EVC-K/L` now show that repaired positives must be projected onto the
-  legal-open decision surface before another learned-policy wave.
+- Immediate next step: run `A7-EVC-N Short Projection Learned Evidence`.
+  `A7-EVC-M` has implemented the projected legal-open path; the remaining
+  question is whether this focused fix changes deterministic timing and
+  stochastic early-fire behavior in a short learned-policy probe.
 - The repair direction is legal-state counterfactual projection with a stronger
   separation between raw shadow opportunity learning and legal-state policy
   distillation, not another blind coefficient-only training run.

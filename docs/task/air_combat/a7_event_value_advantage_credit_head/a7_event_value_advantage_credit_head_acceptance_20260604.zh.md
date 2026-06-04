@@ -1,8 +1,9 @@
 # A7 验收门
 
-状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L` implementation、
-validation、learned-evidence、index-sync、target-audit、shadow-repair、
-projection-audit 与 projection-contract slices 已评估。A7 继续 held。
+状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M`
+implementation、validation、learned-evidence、index-sync、target-audit、
+shadow-repair、projection-audit、projection-contract 与 projected legal-open
+prototype slices 已评估。A7 继续 held。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -26,8 +27,9 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Target construction audit | Early stochastic release 不删失 counterfactual quality-window evidence。 | repair 后 pass：[target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md) 找到 zero-positive censoring fault；[shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md) 恢复 early accepted release 后的 `shadow_quality` positives。 |
 | Post-repair coupling | Repaired shadow credit 改变 legal-open quality-state preference。 | held：32k repair probe 中 quality-window A7 advantage mean 仍为 `-0.902`，deterministic 仍为 `0` releases。 |
 | Projection audit | Post-J blocker 与缺失 positives、HMoE redesign、coefficient-only tuning 区分开。 | pass：[legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md) 显示多数 repaired positives 是 closed-mask value-only shadow rows。 |
-| Projection contract | Shadow evidence 可以在不做 closed-mask delta alignment 的前提下映射为 legal-open positive credit。 | design-only pass：[legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive value/delta alignment。 |
-| Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | planned next：`A7-EVC-M Projected Legal-Open Credit Prototype`。 |
+| Projection contract | Shadow evidence 可以在不做 closed-mask delta alignment 的前提下映射为 legal-open positive credit。 | pass；已由 M 实现：[legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive value/delta alignment。 |
+| Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | pass；learned behavior not evaluated：[projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 实现 `first_event_projection.py`、PPO projection loss、metrics、config knobs 与 focused tests。 |
+| Projection learned evidence | Projected credit 改善 deterministic/stochastic first-shot timing，同时保持 one-shot legality。 | planned next：`A7-EVC-N Short Projection Learned Evidence`。 |
 | Overclaim refusal | M2、HMoE redesign、missile authority、`2v2`、self-play 与 doctrine 继续 held。 | required |
 
 ## 失败条件
@@ -145,6 +147,19 @@ label-censoring 路径，并通过 focused tests。修复后的 32k learned-poli
 `4`、`43`、`2` 过早 release，quality-window A7 advantage mean 为 `-0.902`。
 
 `A7-EVC-K` 随后已关闭 projection/coupling audit，`A7-EVC-L` 已选择 legal-state
-projection contract。下一有界分发项为 `A7-EVC-M Projected Legal-Open Credit
-Prototype`；它必须在下一轮 learned-policy wave 前实现并测试 projected legal-open
-credit。
+projection contract，`A7-EVC-M` 已实现 projected legal-open prototype。M focused
+validation 通过：
+
+```bash
+python -m compileall -q python/rl/policy_algo/first_event_projection.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
+pytest tests/hmoe/test_a6_first_event_hazard.py -q
+pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+pytest tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
+python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
+pytest tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
+```
+
+观察结果：compileall 与 JSON 通过；focused test groups 分别为 `17 passed`、
+`1 passed`、`15 passed` 与 `19 passed`；docs sync 后 combined focused rerun
+通过，`51 passed`。下一有界分发项为
+`A7-EVC-N Short Projection Learned Evidence`。

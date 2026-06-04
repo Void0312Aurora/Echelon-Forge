@@ -108,11 +108,14 @@ leaves learned first-shot timing held.
   label-censoring path, and repaired label reconstruction restores thousands of
   shadow-quality positives, but the repair probe still records deterministic
   `0` releases, early stochastic releases, and negative quality-window advantage.
-  The post-repair projection audit and L contract now show the next mechanism:
+  The post-repair projection audit and L contract selected the next mechanism:
   project shadow-quality evidence onto a legal-open decision surface and align
-  positive value/delta only there. The active next step is the projected
-  legal-open credit prototype, not another blind training run. A3/A5 legality
-  stays authoritative, and HMoE redesign/M2 remain held.
+  positive value/delta only there. `A7-EVC-M` now implements that projected
+  legal-open prototype and focused tests show projected positive event-logit
+  pressure, but learned-policy behavior remains unevaluated. The active next
+  step is `A7-EVC-N` short projection learned evidence, not another blind
+  coefficient-tuning run. A3/A5 legality stays authoritative, and HMoE
+  redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -142,8 +145,7 @@ leaves learned first-shot timing held.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through the projected legal-open credit prototype before any M2
-  reconsideration
+  through short projection learned evidence before any M2 reconsideration
 
 ## Recommended Reading Order
 

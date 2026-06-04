@@ -1,8 +1,9 @@
 # A7 Acceptance Gate
 
-Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L` implementation,
-validation, learned-evidence, index-sync, target-audit, shadow-repair,
-projection-audit, and projection-contract slices evaluated. A7 remains held.
+Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M`
+implementation, validation, learned-evidence, index-sync, target-audit,
+shadow-repair, projection-audit, projection-contract, and projected legal-open
+prototype slices evaluated. A7 remains held.
 
 Parent: [README.md](README.md).
 
@@ -27,8 +28,9 @@ surface.
 | Target construction audit | Early stochastic release does not censor counterfactual quality-window evidence. | pass after repair: [target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.md) found the zero-positive censoring fault; [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) restores `shadow_quality` positives after early accepted release. |
 | Post-repair coupling | Repaired shadow credit changes legal-open quality-state preference. | held: the 32k repair probe still has quality-window A7 advantage mean `-0.902` and deterministic `0` releases. |
 | Projection audit | The post-J blocker is separated from missing positives, HMoE redesign, and coefficient-only tuning. | pass: [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) shows most repaired positives are closed-mask value-only shadow rows. |
-| Projection contract | Shadow evidence can be mapped to legal-open positive credit without closed-mask delta alignment. | pass as design only: [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive value/delta alignment. |
-| Projection implementation | Projected legal-open credit is implemented and tested before another learned-policy wave. | planned next: `A7-EVC-M Projected Legal-Open Credit Prototype`. |
+| Projection contract | Shadow evidence can be mapped to legal-open positive credit without closed-mask delta alignment. | pass; implemented by M: [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive value/delta alignment. |
+| Projection implementation | Projected legal-open credit is implemented and tested before another learned-policy wave. | pass; learned behavior not evaluated: [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) implements `first_event_projection.py`, PPO projection loss, metrics, config knobs, and focused tests. |
+| Projection learned evidence | Projected credit improves deterministic/stochastic first-shot timing while preserving one-shot legality. | planned next: `A7-EVC-N Short Projection Learned Evidence`. |
 | Overclaim refusal | M2, HMoE redesign, missile authority, `2v2`, self-play, and doctrine remain held. | required |
 
 ## Failure Conditions
@@ -150,7 +152,20 @@ tests. The repaired 32k learned-policy probe is still held: deterministic
 probing records `0` releases, stochastic probing releases early at steps `4`,
 `43`, and `2`, and quality-window A7 advantage mean is `-0.902`.
 
-`A7-EVC-K` has since closed the projection/coupling audit, and `A7-EVC-L` has
-selected the legal-state projection contract. The next bounded dispatch is
-`A7-EVC-M Projected Legal-Open Credit Prototype`; it must implement and test
-projected legal-open credit before another learned-policy wave.
+`A7-EVC-K` has since closed the projection/coupling audit, `A7-EVC-L` selected
+the legal-state projection contract, and `A7-EVC-M` implemented the projected
+legal-open prototype. M focused validation passed:
+
+```bash
+python -m compileall -q python/rl/policy_algo/first_event_projection.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
+pytest tests/hmoe/test_a6_first_event_hazard.py -q
+pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+pytest tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
+python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
+pytest tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
+```
+
+Observed outcome: compileall and JSON passed; focused test groups passed with
+`17 passed`, `1 passed`, `15 passed`, and `19 passed`; the combined focused
+rerun after docs sync passed with `51 passed`. The next bounded dispatch is
+`A7-EVC-N Short Projection Learned Evidence`.

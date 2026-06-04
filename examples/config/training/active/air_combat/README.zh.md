@@ -103,9 +103,14 @@
   - Stage-1 A7 event-credit 探针，使用相同的 C2/ROE temporal shaped surface 与 launch-window gate。
   - 关闭 A6 hazard loss，用 value credit 与 event-logit delta alignment 训练 zero-initialized `hybrid_event_credit_head`。
   - 包含 `a7_event_credit_shadow_quality_weight=1.0`，用于 A7-EVC-J shadow-quality target repair 路径。
+  - 从 A7-EVC-M 起，启用 projected legal-open credit：
+    `a7_event_credit_legal_projection_enabled=true`、
+    `a7_event_credit_projection_value_coef>0` 与
+    `a7_event_credit_projection_delta_align_coef>0`。
   - A3/A5 legality masks 与 one-shot state-machine authority 保持不变。
   - 它已用于 A7-G r3 与 A7-EVC-J repair evidence；两者均有效但 held，因为 deterministic releases 仍为 `0`，quality-window advantage 仍为负。
-  - 它不是 M2 release、doctrine、missile-authority 或 Pk evidence；legal-state projection / coupling audit 前不应盲目重跑。
+  - 它现在是 A7-EVC-N short projection learned evidence 的维护入口。
+  - 它不是 M2 release、doctrine、missile-authority 或 Pk evidence；focused projection tests 仍不等于 behavior acceptance。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。

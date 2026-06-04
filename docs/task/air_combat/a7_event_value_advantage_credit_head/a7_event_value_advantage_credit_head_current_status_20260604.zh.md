@@ -9,7 +9,8 @@
 确认过的 label-censoring bug，并通过 focused tests 与 32k repair probe；但 learned
 first-shot timing 仍 held。`A7-EVC-K Legal-State Projection And Coupling Audit`
 已关闭 post-repair 诊断，`A7-EVC-L Legal-State Projection Contract` 已选择下一机制；
-实现尚未开始。
+`A7-EVC-M Projected Legal-Open Credit Prototype` 已完成该机制的 focused
+implementation 与验证。Projection 后 learned-policy behavior 尚未评估。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -45,6 +46,10 @@ first-shot timing 仍 held。`A7-EVC-K Legal-State Projection And Coupling Audit
 - `A7-EVC-L Legal-State Projection Contract` 已作为 design contract 完成：raw
   shadow rows 变成 projection/opportunity evidence，positive value/delta alignment
   只允许在 projected legal-open observations 上发生。
+- `A7-EVC-M Projected Legal-Open Credit Prototype` 已作为 implementation slice
+  完成：projected legal-open observations 现在可为 shadow-quality evidence 训练
+  positive value/delta alignment，raw closed-mask rows 继续排除出 ordinary
+  delta alignment。
 - HMoE hierarchical computation gap 被记录为 architecture risk：A7 不应只依赖 hard-routed
   subexpert behavior；但当前 A7 failure 已经在被删失的 target construction 与 event-credit
   advantage sign 上可见。
@@ -63,15 +68,16 @@ first-shot timing 仍 held。`A7-EVC-K Legal-State Projection And Coupling Audit
 | Target construction audit | pass；已由 J 修复 | [target construction and credit-sign audit](a7_event_value_advantage_credit_head_target_construction_credit_sign_audit_20260604.zh.md) 证明 early stochastic accepted release 会从 A7 labels 中删失后续 quality-window positives。 | J 已修复该 target-construction bug；剩余 blocker 是修复后的 projection/coupling，不是再调 coefficient。 |
 | Shadow-quality target repair | pass；held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md) 增加 `A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY`、early accepted release 后的 positive shadow labels、A7 config knob、diagnostics 覆盖，并让 shadow rows 跳过 delta alignment。 | Label censoring 已修复，但 behavior 仍 held：deterministic `0` releases、stochastic 过早 release、quality-window advantage 为负。 |
 | Legal-state projection audit | pass；held outcome | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md) 显示 shadow positives 已恢复，但仍是 closed-mask rows 上的 value-only 信号，legal-open quality states 继续为负。 | 这是结构性诊断，不是验收。 |
-| Legal-state projection contract | pass；implementation not started | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive credit，并禁止 raw closed-mask delta alignment。 | 尚无 code behavior change；下一实现是 `A7-EVC-M`。 |
+| Legal-state projection contract | pass；已由 M 实现 | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive credit，并禁止 raw closed-mask delta alignment。 | 合同已作为 focused prototype 实现；仍不证明 learned-policy behavior。 |
+| Projected legal-open credit prototype | pass；learned behavior not evaluated | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 增加 `first_event_projection.py`、projection coeffs、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests。 | M 只证明机制和 gradient path；A7 behavior acceptance 仍需要 short projection learned-policy probe。 |
 | HMoE relation | watch item | issue board 记录 flat subexpert input 与 combat-family collapse。 | 除非正确 credit signs 已学到但 policy coupling 仍以可归因于 hierarchy gap 的方式失败，否则 A7 不修 HMoE。 |
 
 ## 立即下一步
 
-实现 `A7-EVC-M Projected Legal-Open Credit Prototype`：target builder 现在能提供
-shadow-quality positives，L 已定义如何把该证据投影到 legal-open decision surface。
-下一有界问题是 projected positive value/delta alignment 是否能在不削弱 A3/A5 masks 的
-前提下改变 legal-open quality states。
+运行 `A7-EVC-N Short Projection Learned Evidence`：M 已提供 projected legal-open
+training path，focused tests 也证明 projected positive event-logit pressure 存在。
+下一有界问题是它能否在不削弱 A3/A5 masks 的前提下改变 deterministic release timing
+与 stochastic early-fire behavior。
 
 ## 验证快照
 
@@ -124,6 +130,12 @@ shadow-quality positives，L 已定义如何把该证据投影到 legal-open dec
   mean/max 为 `25.5%` / `27.2%`，quality-window A7 advantage mean 为 `-0.902`；
   stochastic probe 记录 `3/3` authorized one-shot releases，steps 为 `4`、`43`、
   `2`，且 `0` unauthorized/repeat/budget violations。
+- A7-EVC-M focused repair gates：`first_event_projection.py`、
+  `first_event_hazard.py` 与 `ppo_adaptive_kl.py` 的 compileall 通过；
+  `pytest tests/hmoe/test_a6_first_event_hazard.py -q` 通过，`17 passed`；
+  focused projected-loss PPO test 通过，`1 passed`；focused HMoE/PPO group
+  通过，`15 passed`；JSON parsing 与 active config/entry tests 通过，
+  `19 passed`；docs sync 后 combined focused rerun 通过，`51 passed`。
 
 ## Held Items
 

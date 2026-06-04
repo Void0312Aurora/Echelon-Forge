@@ -92,6 +92,9 @@
     "a7_event_credit_deadline_weight": 1.0,
     "a7_event_credit_deadline_min_window_age_steps": 64,
     "a7_event_credit_shadow_quality_weight": 1.0,
+    "a7_event_credit_legal_projection_enabled": true,
+    "a7_event_credit_projection_value_coef": 0.4,
+    "a7_event_credit_projection_delta_align_coef": 0.15,
     "device": "cuda",
     "policy_kwargs": {
       "features_extractor_class": "TemporalTransformerExtractor",

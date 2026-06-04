@@ -87,10 +87,12 @@ target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repa
   `A7-EVC-J` 现已修复该 label-censoring 路径，修复后的 label reconstruction
   恢复了数千个 shadow-quality positives；但 repair probe 仍记录 deterministic `0`
   releases、stochastic 过早 release、quality-window advantage 为负。Post-repair
-  projection audit 与 L contract 现在给出下一机制：把 shadow-quality evidence 投影到
-  legal-open decision surface，并只在该表面做 positive value/delta alignment。当前下一步是
-  projected legal-open credit prototype，而不是继续盲训。A3/A5 legality 继续持有权威，
-  HMoE redesign/M2 继续 held。
+  projection audit 与 L contract 已给出下一机制：把 shadow-quality evidence 投影到
+  legal-open decision surface，并只在该表面做 positive value/delta alignment。
+  `A7-EVC-M` 现已实现该 projected legal-open prototype，focused tests 也证明
+  projected positive event-logit pressure 存在，但 learned-policy behavior 尚未评估。
+  当前下一步是 `A7-EVC-N` short projection learned evidence，而不是继续盲目调
+  coefficient。A3/A5 legality 继续持有权威，HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -114,7 +116,7 @@ target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repa
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
-  通过 projected legal-open credit prototype 后，再重新讨论 M2
+  通过 short projection learned evidence 后，再重新讨论 M2
 
 ## 推荐阅读顺序
 
