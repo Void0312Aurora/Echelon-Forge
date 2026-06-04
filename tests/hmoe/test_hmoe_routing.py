@@ -4,6 +4,7 @@ import unittest
 
 import torch as th
 
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.hmoe_routing import (
     FAMILY_COMBAT_WEAPONS,
     FAMILY_DEPARTURE_NAV,
@@ -141,6 +142,20 @@ class HMoERoutingTests(unittest.TestCase):
 
         self.assertEqual([FAMILY_COMBAT_WEAPONS, FAMILY_COMBAT_WEAPONS, FAMILY_COMBAT_WEAPONS], route.family_index.tolist())
         self.assertEqual([1, 0, 2], route.subexpert_index.tolist())
+
+    def test_route_detects_air_combat_c2_roe_v2_state_completed_fire_mask(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        mission = th.zeros((2, mission_observation_dim(mode)), dtype=th.float32)
+        mission[:, mission_observation_field_index(mode, "shot_policy_state")] = 1.0
+        mission[:, mission_observation_field_index(mode, "shot_budget_remaining")] = 1.0
+        mission[:, mission_observation_field_index(mode, "target_contact_present")] = 1.0
+        mission[0, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+        mission[1, mission_observation_field_index(mode, "pending_assessment")] = 1.0
+
+        route = route_from_mission_observation(mission)
+
+        self.assertEqual([FAMILY_COMBAT_WEAPONS, FAMILY_COMBAT_WEAPONS], route.family_index.tolist())
+        self.assertEqual([1, 2], route.subexpert_index.tolist())
 
 
 if __name__ == "__main__":

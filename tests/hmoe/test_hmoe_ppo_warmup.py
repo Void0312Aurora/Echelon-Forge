@@ -14,12 +14,14 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_FIELD_ACTIVE,
     A6_FIRST_EVENT_FIELD_SOURCE,
     A6_FIRST_EVENT_FIELD_TARGET,
     A6_FIRST_EVENT_FIELD_WEIGHT,
     A6_FIRST_EVENT_FIELD_WINDOW_ID,
+    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
 )
@@ -197,6 +199,21 @@ class _TinyA7ProjectionHybridAirCombatEnv(gym.Env):
         }
 
 
+class _TinyA7LegalOpenHybridAirCombatEnv(_TinyA7ProjectionHybridAirCombatEnv):
+    def _obs(self):
+        obs = super()._obs()
+        mission = np.array(obs["mission"], copy=True)
+        mission[5] = 2.0
+        mission[6] = 1.0
+        mission[14] = 2.0
+        mission[15] = 1.0
+        mission[16] = 1.0
+        mission[17] = 0.0
+        mission[19] = 1.0
+        obs["mission"] = mission
+        return obs
+
+
 class _NoopCallback(BaseCallback):
     def _on_step(self) -> bool:
         return True
@@ -217,6 +234,15 @@ class HMoEPPOWarmupTests(unittest.TestCase):
 
         self.assertEqual(mask, [True, False])
 
+    def test_a6_policy_fire_mask_uses_c2_roe_v2_explicit_state_completion(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        mission = th.zeros((2, mission_observation_dim(mode)), dtype=th.float32)
+        mission[0, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+
+        mask = AdaptiveKLPPO._a6_first_event_policy_fire_mask_from_obs({"mission": mission}, 2)
+
+        self.assertEqual(mask, [True, False])
+
     def test_a6_launch_window_uses_contact_range_and_track_age_from_policy_obs(self) -> None:
         contacts = th.zeros((2, 10, 5), dtype=th.float32)
         contacts[0, 0, 0] = 15000.0
@@ -226,6 +252,24 @@ class HMoEPPOWarmupTests(unittest.TestCase):
 
         launch_window = AdaptiveKLPPO._a6_first_event_policy_launch_window_from_obs(
             {"contacts": contacts},
+            2,
+            min_range_m=8000.0,
+            max_range_m=30000.0,
+            max_track_age_s=2.0,
+        )
+
+        self.assertEqual(launch_window, [True, False])
+
+    def test_a6_launch_window_uses_c2_roe_v2_explicit_state_completion(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        mission = th.zeros((2, mission_observation_dim(mode)), dtype=th.float32)
+        mission[0, mission_observation_field_index(mode, "launch_window_open")] = 1.0
+        contacts = th.zeros((2, 10, 5), dtype=th.float32)
+        contacts[:, 0, 0] = 45000.0
+        contacts[:, 0, 4] = 0.5
+
+        launch_window = AdaptiveKLPPO._a6_first_event_policy_launch_window_from_obs(
+            {"mission": mission, "contacts": contacts},
             2,
             min_range_m=8000.0,
             max_range_m=30000.0,
@@ -456,6 +500,9 @@ class HMoEPPOWarmupTests(unittest.TestCase):
             a7_event_credit_value_coef=0.5,
             a7_event_credit_curriculum_coef=0.5,
             a7_event_credit_curriculum_min_window_age_steps=1,
+            a7_event_credit_separate_update_enabled=True,
+            a7_event_credit_separate_update_max_grad_norm=0.5,
+            a7_event_credit_delta_align_positive_only=True,
             policy_kwargs={
                 "net_arch": {"pi": [32], "vf": [32]},
                 "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -499,6 +546,66 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         after = model.policy.hybrid_event_credit_head.bias.detach().clone()
         self.assertFalse(th.allclose(before, after))
 
+    def test_a7_separate_credit_update_only_writes_credit_head(self) -> None:
+        env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.5,
+            a7_event_credit_curriculum_coef=0.5,
+            a7_event_credit_curriculum_min_window_age_steps=1,
+            a7_event_credit_separate_update_enabled=True,
+            a7_event_credit_separate_update_max_grad_norm=0.5,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        rollout_data = next(model.rollout_buffer.get(model.n_steps))
+
+        before = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+        credit_loss, grad_norm = model._first_event_credit_separate_value_update(rollout_data)
+        self.assertIsNotNone(credit_loss)
+        assert credit_loss is not None
+        self.assertEqual(credit_loss.active_count, 1)
+        self.assertGreater(float(credit_loss.value_loss.detach().cpu()), 0.0)
+        self.assertGreater(float(grad_norm), 0.0)
+
+        credit_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before[name], param.detach())
+            if name.startswith("hybrid_event_credit_head."):
+                credit_changed = credit_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(credit_changed)
+
     def test_nonfinite_probe_preserves_a7_event_credit_training_path(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
         model = AdaptiveKLPPO(
@@ -514,6 +621,9 @@ class HMoEPPOWarmupTests(unittest.TestCase):
             a7_event_credit_value_coef=0.5,
             a7_event_credit_curriculum_coef=0.5,
             a7_event_credit_curriculum_min_window_age_steps=1,
+            a7_event_credit_separate_update_enabled=True,
+            a7_event_credit_separate_update_max_grad_norm=0.5,
+            a7_event_credit_delta_align_positive_only=True,
             policy_kwargs={
                 "net_arch": {"pi": [32], "vf": [32]},
                 "hybrid_action_spec": "air_combat_hybrid_v1",
@@ -555,6 +665,9 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertFalse(th.allclose(before, after))
         self.assertIn("a7/event_credit_loss", model.logger.name_to_value)
         self.assertGreater(float(model.logger.name_to_value["a7/event_credit_active_count_mean"]), 0.0)
+        self.assertEqual(float(model.logger.name_to_value["a7/evc_separate_update_enabled"]), 1.0)
+        self.assertGreater(float(model.logger.name_to_value["a7/evc_separate_update_grad_norm_mean"]), 0.0)
+        self.assertEqual(float(model.logger.name_to_value["a7/event_credit_delta_align_positive_only"]), 1.0)
 
     def test_nonfinite_probe_records_a7_projection_credit_stats(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
@@ -626,6 +739,11 @@ class HMoEPPOWarmupTests(unittest.TestCase):
                 source_deadline_count=2,
                 source_early_accepted_count=1,
                 source_prewindow_count=5,
+                source_legal_open_quality_count=6,
+                source_legal_open_quality_positive_count=6,
+                source_deadline_positive_count=2,
+                source_shadow_positive_count=4,
+                source_legal_open_quality_advantage_mean=0.4,
             )
 
         model._first_event_credit_loss = _projection_loss
@@ -644,6 +762,75 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertEqual(float(logged["a7/evc_src_deadline_count_mean"]), 2.0)
         self.assertEqual(float(logged["a7/evc_src_early_count_mean"]), 1.0)
         self.assertEqual(float(logged["a7/evc_src_pre_count_mean"]), 5.0)
+        self.assertEqual(float(logged["a7/evc_src_legal_open_quality_count_mean"]), 6.0)
+        self.assertEqual(float(logged["a7/evc_src_legal_open_quality_positive_count_mean"]), 6.0)
+        self.assertEqual(float(logged["a7/evc_src_deadline_positive_count_mean"]), 2.0)
+        self.assertEqual(float(logged["a7/evc_src_shadow_positive_count_mean"]), 4.0)
+        self.assertAlmostEqual(float(logged["a7/evc_src_legal_open_quality_advantage_mean"]), 0.4)
+
+    def test_a7_legal_open_quality_credit_aligns_event_logits_without_projection(self) -> None:
+        env = DummyVecEnv([_TinyA7LegalOpenHybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.0,
+            a7_event_credit_delta_align_coef=0.5,
+            a7_event_credit_legal_projection_enabled=True,
+            a7_event_credit_projection_value_coef=0.5,
+            a7_event_credit_projection_delta_align_coef=0.5,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 6.0,
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.hybrid_event_credit_head is not None
+        assert model.policy.hybrid_event_head is not None
+        with th.no_grad():
+            model.policy.hybrid_event_credit_head.weight.zero_()
+            model.policy.hybrid_event_credit_head.bias.copy_(th.tensor([0.0, 2.0], dtype=th.float32))
+
+        obs_np = env.reset()
+        obs = model.policy.obs_to_tensor(obs_np)[0]
+
+        class _RolloutData:
+            observations = obs
+
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_ACTIVE, th.ones((1,), dtype=th.float32))
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_TARGET, th.ones((1,), dtype=th.float32))
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WEIGHT, th.ones((1,), dtype=th.float32))
+        setattr(
+            _RolloutData,
+            A6_FIRST_EVENT_FIELD_SOURCE,
+            th.full((1,), A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long),
+        )
+        setattr(_RolloutData, A6_FIRST_EVENT_FIELD_WINDOW_ID, th.zeros((1,), dtype=th.long))
+
+        credit_loss = model._first_event_credit_loss(_RolloutData)
+        self.assertIsNotNone(credit_loss)
+        assert credit_loss is not None
+        self.assertEqual(credit_loss.source_legal_open_quality_count, 1)
+        self.assertEqual(credit_loss.source_legal_open_quality_positive_count, 1)
+        self.assertEqual(credit_loss.projection_candidate_count, 0)
+        self.assertEqual(credit_loss.projection_active_count, 0)
+        self.assertGreater(float(credit_loss.source_legal_open_quality_advantage_mean), 1.0)
+
+        model.policy.optimizer.zero_grad()
+        credit_loss.loss.backward()
+        event_grad = 0.0
+        for param in model.policy.hybrid_event_head.parameters():
+            if param.grad is not None:
+                event_grad += float(param.grad.detach().abs().sum().cpu().item())
+        self.assertGreater(event_grad, 0.0)
 
     def test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
         env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])

@@ -18,7 +18,7 @@ from python.models.transformer import (
     preprocess_transformer_observations,
 )
 from gym_envs.universal_env_parts import make_action_space
-from python.mission_obs_taxonomy import mission_observation_field_index
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.policies import (
     HierarchicalMoEExecutionPolicy,
     SquashedMultiInputPolicy,
@@ -771,6 +771,48 @@ class HMoEPolicyTests(unittest.TestCase):
         mission[1, 15] = 1.0
         mission[1, 16] = 1.0
         mission[1, 19] = 1.0
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": mission,
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+
+        with th.no_grad():
+            actions = policy.get_distribution(obs).get_actions(deterministic=True)
+
+        self.assertEqual(float(actions[0, 9]), 0.0)
+        self.assertEqual(float(actions[1, 9]), 1.0)
+
+    def test_air_combat_c2_roe_v2_explicit_fire_mask_plumbs_into_policy_distribution(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        mission_dim = mission_observation_dim(mode)
+        observation_space = spaces.Dict(
+            {
+                "instruments": spaces.Box(low=-1.0, high=1.0, shape=(42,), dtype=float),
+                "contacts": spaces.Box(low=-1.0, high=1.0, shape=(10, 5), dtype=float),
+                "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
+                "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(mission_dim,), dtype=float),
+                "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+            }
+        )
+        policy = HierarchicalMoEExecutionPolicy(
+            observation_space,
+            make_action_space("air_combat_hybrid_v1"),
+            _ConstantSchedule(),
+            features_extractor_class=TransformerExtractor,
+            features_extractor_kwargs={"features_dim": 32, "n_heads": 4, "n_layers": 1, "use_checkpointing": False},
+            net_arch={"pi": [32], "vf": [32]},
+            hybrid_action_spec="air_combat_hybrid_v1",
+        )
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = 8.0
+            policy.action_net.bias[11] = -2.0
+        mission = th.zeros((2, mission_dim), dtype=th.float32)
+        mission[1, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
         obs = {
             "instruments": th.zeros((2, 42), dtype=th.float32),
             "contacts": th.zeros((2, 10, 5), dtype=th.float32),

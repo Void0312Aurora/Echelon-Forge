@@ -10,6 +10,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
+from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index
 from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_FIELD_ACTIVE,
     A6_FIRST_EVENT_FIELD_TARGET,
@@ -20,6 +21,7 @@ from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_DEADLINE,
     A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
     A6_FIRST_EVENT_SOURCE_INACTIVE,
+    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
     A6_FIRST_EVENT_SOURCE_PREWINDOW,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     build_first_event_hazard_labels,
@@ -146,6 +148,42 @@ class A6FirstEventHazardTests(unittest.TestCase):
         self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
         self.assertTrue(th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_DEADLINE, dtype=th.long)))
 
+    def test_legal_open_quality_credit_marks_no_release_quality_rows_before_deadline(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady"] * 6,
+            fire_mask=[1, 1, 1, 1, 1, 1],
+            fire_once_accepted=[0, 0, 0, 0, 0, 0],
+            episode_id=[0, 0, 0, 0, 0, 0],
+            launch_window_open=[0, 0, 0, 1, 1, 1],
+            launch_window_min_window_age_steps=3,
+            launch_window_prewindow_hold_weight=0.2,
+            deadline_weight=0.5,
+            deadline_min_window_age_steps=2,
+            legal_open_quality_weight=0.75,
+            legal_open_quality_min_window_age_steps=3,
+        )
+
+        self.assertTrue(th.equal(labels.active, th.ones((6,), dtype=th.bool)))
+        self.assertTrue(th.allclose(labels.target, th.tensor([0, 0, 0, 1, 1, 1], dtype=th.float32)))
+        self.assertTrue(th.allclose(labels.weight, th.tensor([0.2, 0.2, 0.2, 0.75, 0.75, 0.75])))
+        self.assertTrue(th.equal(labels.source[:3], th.full((3,), A6_FIRST_EVENT_SOURCE_PREWINDOW, dtype=th.long)))
+        self.assertTrue(
+            th.equal(labels.source[3:], th.full((3,), A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY, dtype=th.long))
+        )
+
+    def test_legal_open_quality_credit_requires_launch_window_evidence(self) -> None:
+        labels = build_first_event_hazard_labels(
+            engagement_state=["AuthorizedReady"] * 4,
+            fire_mask=[1, 1, 1, 1],
+            fire_once_accepted=[0, 0, 0, 0],
+            episode_id=[0, 0, 0, 0],
+            legal_open_quality_weight=0.75,
+        )
+
+        self.assertTrue(th.all(labels.active == th.zeros_like(labels.active)))
+        self.assertTrue(th.all(labels.weight == th.zeros_like(labels.weight)))
+        self.assertTrue(th.all(labels.source == A6_FIRST_EVENT_SOURCE_CENSORED))
+
     def test_launch_window_gate_treats_early_accepted_release_as_negative(self) -> None:
         labels = build_first_event_hazard_labels(
             engagement_state=["AuthorizedReady"] * 4,
@@ -183,6 +221,7 @@ class A6FirstEventHazardTests(unittest.TestCase):
             launch_window_early_accept_weight=0.75,
             shadow_quality_after_early_accept=True,
             shadow_quality_positive_weight=0.5,
+            legal_open_quality_weight=0.75,
         )
 
         self.assertTrue(th.equal(labels.active, th.tensor([1, 1, 0, 1, 1, 1], dtype=th.bool)))
@@ -353,6 +392,35 @@ class A6FirstEventHazardTests(unittest.TestCase):
         self.assertEqual(float(projection.observations["fire_mask"][0].item()), 1.0)
         self.assertTrue(th.equal(projection.observations["instruments"], obs["instruments"]))
         self.assertTrue(th.equal(obs["event_action_mask"][0], th.tensor([1.0, 0.0])))
+
+    def test_legal_state_projection_rewrites_c2_roe_v2_explicit_fire_mask(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        mission = th.zeros((1, mission_observation_dim(mode)), dtype=th.float32)
+        mission[:, mission_observation_field_index(mode, "wcs_state")] = 1.0
+        mission[:, mission_observation_field_index(mode, "target_contact_present")] = 1.0
+        mission[:, mission_observation_field_index(mode, "fire_mask_open")] = 0.0
+        obs = {
+            "mission": mission,
+            "event_action_mask": th.tensor([[1, 0]], dtype=th.float32),
+            "fire_mask": th.zeros((1,), dtype=th.float32),
+        }
+
+        projection = project_air_combat_c2_roe_legal_open_observations(obs, th.ones((1,), dtype=th.bool))
+
+        self.assertIsNotNone(projection)
+        assert projection is not None
+        projected_mission = projection.observations["mission"]
+        self.assertEqual(float(projected_mission[0, mission_observation_field_index(mode, "wcs_state")].item()), 2.0)
+        self.assertEqual(
+            float(projected_mission[0, mission_observation_field_index(mode, "authorization_to_fire")].item()),
+            1.0,
+        )
+        self.assertEqual(
+            float(projected_mission[0, mission_observation_field_index(mode, "fire_mask_open")].item()),
+            1.0,
+        )
+        self.assertTrue(th.equal(projection.observations["event_action_mask"][0], th.tensor([1.0, 1.0])))
+        self.assertEqual(float(projection.observations["fire_mask"][0].item()), 1.0)
 
     def test_legal_state_projection_refuses_unsupported_mission_layout(self) -> None:
         projection = project_air_combat_c2_roe_legal_open_observations(
