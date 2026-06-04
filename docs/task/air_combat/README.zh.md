@@ -98,9 +98,10 @@ releases，stochastic probing 仍过早发射。
   active rows 保持 `0.0`；deterministic probing 仍为 `0` releases，stochastic probing
   在 steps `2`、`47`、`5` 过早 release。`A7-EVC-O` 已关闭 root-cause audit：当
   train rollouts 没有 accepted releases 时，M projection 会 candidate-starved，因为其
-  `shadow_quality` source 只有在 early sampled release 后才出现。当前下一步是
-  `A7-EVC-P` legal-open opportunity credit，而不是继续盲目调 coefficient。A3/A5
-  legality 继续持有权威，HMoE redesign/M2 继续 held。
+  `shadow_quality` source 只有在 early sampled release 后才出现。`A7-EVC-P` 已选择
+  direct legal-open quality opportunity credit；当前下一步是 `A7-EVC-Q` prototype
+  implementation，而不是继续盲目调 coefficient。A3/A5 legality 继续持有权威，
+  HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -124,7 +125,7 @@ releases，stochastic probing 仍过早发射。
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
-  通过 legal-open opportunity credit contract 后，再重新讨论 M2
+  通过 legal-open opportunity credit prototype 后，再重新讨论 M2
 
 ## 推荐阅读顺序
 

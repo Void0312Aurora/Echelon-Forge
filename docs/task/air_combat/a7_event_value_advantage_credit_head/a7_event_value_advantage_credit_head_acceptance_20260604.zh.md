@@ -1,9 +1,9 @@
 # A7 验收门
 
-状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O`
+状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O/P`
 implementation、validation、learned-evidence、index-sync、target-audit、
 shadow-repair、projection-audit、projection-contract 与 projected legal-open
-prototype/projection-eligibility slices 已评估。A7 继续 held。
+prototype/projection-eligibility/opportunity-contract slices 已评估。A7 继续 held。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -31,7 +31,8 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | pass；N 后 held：[projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 实现 `first_event_projection.py`、PPO projection loss、metrics、config knobs 与 focused tests。 |
 | Projection learned evidence | Projected credit 改善 deterministic/stochastic first-shot timing，同时保持 one-shot legality。 | held：[short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection 已启用且 one-shot legality 保持，但 deterministic 仍为 `0` releases，stochastic release steps 为 `2`、`47`、`5`，projection active rows 保持 `0.0`。 |
 | Projection eligibility audit | 下一轮 training wave 前解释 projection active rows。 | pass：[projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 找到 candidate starvation：M projection 可在 `shadow_quality` rows 存在时 activate，但 N train diagnostics 没有 accepted releases，因此没有 projection candidates。 |
-| Legal-open opportunity contract | 下一轮 implementation/training wave 前定义 non-starved legal-open opportunity credit。 | planned next：`A7-EVC-P Legal-Open Opportunity Credit Contract`。 |
+| Legal-open opportunity contract | 下一轮 implementation/training wave 前定义 non-starved legal-open opportunity credit。 | pass：[legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md) 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY`。 |
+| Legal-open opportunity implementation | P 合同被实现，且 focused tests 证明 non-starved legal-open positives。 | planned next：`A7-EVC-Q Legal-Open Opportunity Credit Prototype`。 |
 | Overclaim refusal | M2、HMoE redesign、missile authority、`2v2`、self-play 与 doctrine 继续 held。 | required |
 
 ## 失败条件
@@ -44,6 +45,7 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
   advantage；
 - projection 继续 candidate-starved，因为 active positive credit 依赖 early accepted
   release 采样；
+- legal-open opportunity positives 出现在真实 legal-open quality-window rows 之外；
 - implementation 把 raw closed-mask `shadow_quality` rows 直接对齐到 event logits，
   而不是先投影到 legal-open decision surface；
 - deterministic 再次在 authorization/contact 后近立即发射；
@@ -205,3 +207,14 @@ diff check 通过。审计将 candidate starvation 与 unsupported projection re
 reconstruction 只有在 early sampled release 后才产生 `3280` 个 `shadow_quality`
 positives。接下来的有界分发项是
 `A7-EVC-P Legal-Open Opportunity Credit Contract`。
+
+`A7-EVC-P` legal-open opportunity credit contract：
+
+```bash
+git diff --check -- docs/task/air_combat
+```
+
+观察结果：contract 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为 direct
+legal-open quality positives，保留 `SHADOW_QUALITY` 作为 projection repair，并将
+`DEADLINE` 保持为 fallback/diagnostic source。接下来的有界分发项是
+`A7-EVC-Q Legal-Open Opportunity Credit Prototype`。

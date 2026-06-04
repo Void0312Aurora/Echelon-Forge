@@ -20,7 +20,9 @@ projection diagnostics show `a7/evc_proj_active_count_mean=0.0` at the end of
 the 32k run. `A7-EVC-O Projection Eligibility Root-Cause Audit` has now closed
 that split: the projection path is candidate-starved in N because logged
 training rollouts contain no accepted release and therefore no `shadow_quality`
-projection candidates.
+projection candidates. `A7-EVC-P Legal-Open Opportunity Credit Contract` has now
+selected direct legal-open quality positives as the next non-starved credit
+source; implementation remains the next slice.
 
 Parent: [README.md](README.md).
 
@@ -74,9 +76,13 @@ Parent: [README.md](README.md).
   probe reconstruction is `deadline=1080` / `prewindow=800`, and stochastic
   probe reconstruction shows `shadow_quality=3280` only after early sampled
   release.
-- The immediate next bounded slice is `A7-EVC-P Legal-Open Opportunity Credit
-  Contract`: define a positive legal-open opportunity source that is not
-  conditional on sampling early accepted release.
+- `A7-EVC-P Legal-Open Opportunity Credit Contract` is complete: it selects
+  `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` for direct legal-open
+  quality-window positives, keeps `SHADOW_QUALITY` as the projection repair
+  source, and leaves `DEADLINE` as a fallback/diagnostic source.
+- The immediate next bounded slice is `A7-EVC-Q Legal-Open Opportunity Credit
+  Prototype`: implement the P source/loss/diagnostic path before another
+  learned-policy wave.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
   A7 should not rely solely on hard-routed subexpert behavior, but the current
   A7 failure is already visible in the censored target construction and
@@ -100,15 +106,16 @@ Parent: [README.md](README.md).
 | Projected legal-open credit prototype | pass; held after N | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and gradient path only; N shows learned behavior still held. |
 | Short projection learned evidence | pass; held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) records the r3 32k train and deterministic/stochastic probes after projection-logger repair. | Projection is enabled but active projected rows stay at `0.0`; deterministic remains `0` releases and stochastic still fires early. |
 | Projection eligibility root-cause audit | pass; spawned P | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md) separates no-candidate starvation from unsupported projection rejection. | M projection remains a post-early-release repair path; next contract must provide legal-open opportunity credit before the failure mode is sampled. |
+| Legal-open opportunity credit contract | pass; spawned Q | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md) selects `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` as a real legal-open quality-window positive source. | P is docs-only; Q must prove source construction, loss routing, and diagnostics before training. |
 | HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Run `A7-EVC-P Legal-Open Opportunity Credit Contract`: O shows the projected
-legal-open training path is candidate-starved unless early accepted release is
-sampled. The next bounded question is how to add positive legal-open
-opportunity credit without weakening A3/A5 masks or aligning raw closed-mask
-rows.
+Run `A7-EVC-Q Legal-Open Opportunity Credit Prototype`: P selects direct
+`LEGAL_OPEN_QUALITY` positives on real legal-open quality-window rows. The next
+bounded question is whether the source/loss/diagnostic path can be implemented
+without weakening A3/A5 masks, aligning raw closed-mask rows, or running a
+learned-policy wave before focused gates.
 
 ## Validation Snapshot
 
@@ -209,6 +216,10 @@ rows.
   labels from `deadline=1080` and `prewindow=800`; stochastic N produces
   `3291` active labels with `shadow_quality=3280`, `prewindow=8`, and
   `early_accepted=3`.
+- A7-EVC-P contract: direct legal-open quality opportunity credit is selected as
+  `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY`; it is positive only on real
+  pre-release legal-open quality-window rows and does not route through
+  projection.
 
 ## Held Items
 

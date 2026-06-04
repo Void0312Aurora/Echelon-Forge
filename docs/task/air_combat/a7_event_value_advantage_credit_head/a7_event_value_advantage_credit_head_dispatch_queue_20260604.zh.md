@@ -4,9 +4,9 @@
 contract、policy head、PPO auxiliary credit、config/diagnostics、focused
 validation、learned-evidence、closure/index-sync、target audit、shadow-repair、
 projection-audit、projection-contract 与 projected legal-open prototype slices
-已通过；`A7-EVC-N` 也已作为 held learned evidence 通过。A7 仍在 behavior
-acceptance 上 held，且 `A7-EVC-O` 已关闭 projection-eligibility audit。当前残余是：
-M projection 除非 policy 先采样 early accepted release，否则会 candidate-starved。
+已通过；`A7-EVC-N` 也已作为 held learned evidence 通过，`A7-EVC-O` 已关闭
+projection-eligibility audit，且 `A7-EVC-P` 已选择 legal-open opportunity-credit
+contract。A7 仍在 behavior acceptance 上 held，直到 P 合同被实现并评估。
 
 父级：[README.zh.md](README.zh.md)。任务簇：
 [a7_event_value_advantage_credit_head_task_clusters_20260604.zh.md](a7_event_value_advantage_credit_head_task_clusters_20260604.zh.md)。
@@ -15,7 +15,7 @@ M projection 除非 policy 先采样 early accepted release，否则会 candidat
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-P Legal-Open Opportunity Credit Contract` | planned next | main thread；实现前定义 non-starved legal-open opportunity-credit source。 | 仅 A7 contract/status docs。 | 合同前不 implementation/training；不做 closed-mask delta alignment；A3/A5 masks 继续权威；不释放 HMoE/M2/doctrine/missile authority。 |
+| `A7-EVC-Q Legal-Open Opportunity Credit Prototype` | planned next | implementation worker；training 前按 P 合同实现 source/loss/diagnostic focused tests。 | `python/rl/policy_algo/first_event_hazard.py`、`python/rl/policy_algo/ppo_adaptive_kl.py`、`python/rl/support/nonfinite_probe.py`、focused tests、active config/diagnostics docs。 | 不做 broad reward tuning；不削弱 A3/A5 masks；不做 raw shadow delta alignment；不释放 HMoE/M2/doctrine/missile authority；focused gates 前不跑 learned-policy wave。 |
 
 ## 已完成分发
 
@@ -34,12 +34,13 @@ M projection 除非 policy 先采样 early accepted release，否则会 candidat
 | `A7-EVC-M Projected Legal-Open Credit Prototype` | pass；N 后 held | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md)：通过 `first_event_projection.py`、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests 实现 L。 | M 只在 focused tests 中证明 projected legal-open pressure；N 显示 learned run 没有激活 projected rows。 |
 | `A7-EVC-N Short Projection Learned Evidence` | pass；held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md)：projection 已启用并记录日志，ordinary event-credit 仍 live，deterministic 仍为 `0` releases，stochastic release steps 为 `2`、`47`、`5`，projected active rows 保持 `0.0`。 | 下一有界工作是 O：解释 shadow-quality evidence 为什么没有进入 active projected legal-open rows。 |
 | `A7-EVC-O Projection Eligibility Root-Cause Audit` | pass；spawned P contract | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md)：N training diagnostics 中没有 accepted releases；deterministic probe reconstruction 只有 deadline/prewindow，而 stochastic reconstruction 在 early release 后有 `3280` 个 shadow-quality positives。 | 下一有界工作是 P：定义不依赖采样 early accepted release 的 legal-open opportunity credit。 |
+| `A7-EVC-P Legal-Open Opportunity Credit Contract` | pass；spawned Q prototype | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md)：选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为真实 legal-open quality-window positives。 | 下一有界工作是 Q：在另一轮 learned-policy wave 前实现 source/loss/diagnostic path。 |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | 当前 projection credit 除非采样 early accepted release，否则 candidate-starved；deterministic 仍为 `0` releases，stochastic 仍过早发射。 | `A7-EVC-P` 在 implementation 与下一轮 training 前定义 legal-open opportunity-credit contract。 |
+| A7 behavior acceptance | 当前 projection credit 除非采样 early accepted release，否则 candidate-starved；deterministic 仍为 `0` releases，stochastic 仍过早发射。 | `A7-EVC-Q` 实现 P opportunity-credit contract，然后记录有界 learned evidence。 |
 
 ## Dispatch Packet Template
 

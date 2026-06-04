@@ -16,7 +16,9 @@ releases，stochastic probing release steps 为 `2`、`47`、`5`，新修复的 
 diagnostics 显示 32k run 结束时 `a7/evc_proj_active_count_mean=0.0`。
 `A7-EVC-O Projection Eligibility Root-Cause Audit` 已关闭该分裂：N 中 projection
 path candidate-starved，因为 logged training rollouts 没有 accepted release，因此没有
-`shadow_quality` projection candidates。
+`shadow_quality` projection candidates。`A7-EVC-P Legal-Open Opportunity Credit
+Contract` 已选择 direct legal-open quality positives 作为下一条 non-starved credit
+source；implementation 仍是下一切片。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -63,8 +65,12 @@ path candidate-starved，因为 logged training rollouts 没有 accepted release
   diagnostics 中 accepted releases 为 `0`；deterministic probe reconstruction 为
   `deadline=1080` / `prewindow=800`；stochastic probe reconstruction 则只在 early
   sampled release 后出现 `shadow_quality=3280`。
-- 立即下一有界切片是 `A7-EVC-P Legal-Open Opportunity Credit Contract`：定义不依赖
-  early accepted release 采样的 positive legal-open opportunity source。
+- `A7-EVC-P Legal-Open Opportunity Credit Contract` 已完成：它选择
+  `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为 direct legal-open
+  quality-window positives，保留 `SHADOW_QUALITY` 作为 projection repair source，
+  并将 `DEADLINE` 保持为 fallback/diagnostic source。
+- 立即下一有界切片是 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`：在另一轮
+  learned-policy wave 前实现 P 的 source/loss/diagnostic path。
 - HMoE hierarchical computation gap 被记录为 architecture risk：A7 不应只依赖 hard-routed
   subexpert behavior；但当前 A7 failure 已经在被删失的 target construction 与 event-credit
   advantage sign 上可见。
@@ -87,14 +93,15 @@ path candidate-starved，因为 logged training rollouts 没有 accepted release
 | Projected legal-open credit prototype | pass；N 后 held | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 增加 `first_event_projection.py`、projection coeffs、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests。 | M 只证明机制和 gradient path；N 显示 learned behavior 继续 held。 |
 | Short projection learned evidence | pass；held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection-logger 修复后的 r3 32k train 与 deterministic/stochastic probes。 | Projection 已启用，但 active projected rows 保持 `0.0`；deterministic 仍为 `0` releases，stochastic 仍过早发射。 |
 | Projection eligibility root-cause audit | pass；spawned P | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 将 no-candidate starvation 与 unsupported projection rejection 分离。 | M projection 仍是 post-early-release repair path；下一合同必须在采样 failure mode 前提供 legal-open opportunity credit。 |
+| Legal-open opportunity credit contract | pass；spawned Q | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md) 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为真实 legal-open quality-window positive source。 | P 是 docs-only；Q 必须在 training 前证明 source construction、loss routing 与 diagnostics。 |
 | HMoE relation | watch item | issue board 记录 flat subexpert input 与 combat-family collapse。 | 除非正确 credit signs 已学到但 policy coupling 仍以可归因于 hierarchy gap 的方式失败，否则 A7 不修 HMoE。 |
 
 ## 立即下一步
 
-运行 `A7-EVC-P Legal-Open Opportunity Credit Contract`：O 显示 projected legal-open
-training path 除非采样 early accepted release，否则会 candidate-starved。下一有界问题是如何
-在不削弱 A3/A5 masks、也不对 raw closed-mask rows 做 alignment 的前提下，增加 positive
-legal-open opportunity credit。
+运行 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`：P 选择在真实 legal-open
+quality-window rows 上直接提供 `LEGAL_OPEN_QUALITY` positives。下一有界问题是能否在
+不削弱 A3/A5 masks、不对 raw closed-mask rows 做 alignment、且 focused gates 前不跑
+learned-policy wave 的前提下，实现 source/loss/diagnostic path。
 
 ## 验证快照
 
@@ -180,6 +187,9 @@ legal-open opportunity credit。
 - A7-EVC-O probe reconstruction：deterministic N 产生 `1880` 个 active labels，
   来源为 `deadline=1080` 与 `prewindow=800`；stochastic N 产生 `3291` 个 active
   labels，来源为 `shadow_quality=3280`、`prewindow=8` 与 `early_accepted=3`。
+- A7-EVC-P contract：direct legal-open quality opportunity credit 被选择为
+  `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY`；它只在真实 pre-release legal-open
+  quality-window rows 上为 positive，且不经过 projection。
 
 ## Held Items
 

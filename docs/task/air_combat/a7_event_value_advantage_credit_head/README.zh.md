@@ -17,11 +17,11 @@ outcome 仍 held：deterministic probing 仍为 `0` releases，stochastic probin
 credit prototype 并通过 focused validation，`A7-EVC-N` 也已完成 short projection
 learned-policy probe。N 是有效证据，但 behavior 继续 held：deterministic probing
 仍为 `0` releases，stochastic probing 仍过早发射，且 projection metrics 显示在
-projection enabled 的情况下 `a7/evc_proj_active_count_mean=0.0`。下一有界切片是
-projection-eligibility root-cause audit，而不是继续盲目加长训练。`A7-EVC-O` 已关闭
-该审计：projection candidates 饥饿，因为该路径只在 early accepted release 后的
-`shadow_quality` rows 上激活，而 N training diagnostics 显示 logged rollouts 中没有
-accepted release。下一有界切片是 legal-open opportunity-credit contract。
+projection enabled 的情况下 `a7/evc_proj_active_count_mean=0.0`。`A7-EVC-O`
+已关闭 projection-eligibility audit：projection candidates 饥饿，因为该路径只在
+early accepted release 后的 `shadow_quality` rows 上激活，而 N training diagnostics
+显示 logged rollouts 中没有 accepted release。`A7-EVC-P` 已选择 direct legal-open
+opportunity-credit contract。下一有界切片是它的 focused prototype。
 
 语言：
 
@@ -84,6 +84,7 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | A7 projected legal-open credit prototype | pass；N 后 held | [Projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 增加 `first_event_projection.py`、projection coeffs、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests。 | M 只证明机制与 focused gradient path；N 显示 learned behavior 继续 held。 |
 | A7 short projection learned evidence | pass；held outcome | [Short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 在 projection-logger 修复后验证 r3：projection 已启用，ordinary A7 event-credit 仍 live，deterministic probing 为 `0` releases，stochastic probing release steps 为 `2`、`47`、`5`，projected active rows 保持 `0.0`。 | A7 不能 accepted；下一问题是 shadow-quality evidence 为什么没有在 learned rollout/loss path 中进入 active projected rows。 |
 | A7 projection eligibility audit | pass；spawned P | [Projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 显示 N training diagnostics 中没有 accepted release，而 stochastic probe reconstruction 可产生 `3280` 个 `shadow_quality` positives。 | M projection candidate-starved，因为它依赖 early accepted release；下一步应定义不依赖采样 failure mode 的 legal-open opportunity credit。 |
+| A7 legal-open opportunity contract | pass；spawned Q | [Legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md) 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为真实 legal-open quality-window positive source。 | P 只是 docs-only；implementation、training 与 learned behavior 继续 held，直到 Q focused gates 通过。 |
 
 ## 范围
 
@@ -124,7 +125,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | `P12 Projection Prototype` | 依据 L 合同实现 projected legal-open credit。 | P11 contract exists。 | Focused tests 证明 projection whitelist、unsupported-layout refusal、no raw closed-mask delta alignment 与 projected positive delta pressure。 | pass；N 已评估 learned behavior |
 | `P13 Projection Learned Evidence` | 运行 short projected-credit learned-policy probe。 | P12 focused gates pass。 | 记录 projection metrics、deterministic/stochastic timing 与 one-shot discipline。 | pass；held outcome |
 | `P14 Projection Eligibility Audit` | 诊断 learned run 中 projection active rows 为什么为 0。 | P13 evidence exists。 | 在下一轮 training 前解释 shadow-quality labels 到 projected legal-open rows 的 rollout/loss handoff。 | pass；spawned P |
-| `P15 Opportunity Credit Contract` | 定义不依赖 early accepted release 的 legal-open positive opportunity credit。 | P14 evidence exists。 | Contract 命名 target source、loss split、diagnostics 与 rollback gates。 | planned next |
+| `P15 Opportunity Credit Contract` | 定义不依赖 early accepted release 的 legal-open positive opportunity credit。 | P14 evidence exists。 | Contract 命名 target source、loss split、diagnostics 与 rollback gates。 | pass；spawned Q |
+| `P16 Opportunity Credit Prototype` | 按 P 合同实现 legal-open opportunity credit。 | P15 contract exists。 | Focused tests 在 training 前证明 source construction、loss routing、diagnostics 与 A3/A5 legality boundaries。 | planned next |
 
 ## 任务簇
 
@@ -146,6 +148,8 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md)
 - Projection eligibility root-cause audit：
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md)
+- Legal-open opportunity credit contract：
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md)
 
 ## 输出与证据
 
@@ -189,10 +193,12 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md)。
 - Projection eligibility root-cause audit：
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md)。
+- Legal-open opportunity credit contract：
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md)。
 
 计划 follow-on 输出：
 
-- Legal-open opportunity-credit contract。
+- Legal-open opportunity-credit prototype。
 
 ## 验收门
 
@@ -208,10 +214,9 @@ A7 只有在以下条件满足后才能 accepted：
 
 ## 残余与下一步
 
-- 立即下一步：运行 `A7-EVC-P Legal-Open Opportunity Credit Contract`。`A7-EVC-O`
-  显示 M projection path 除非 policy 先采样 early accepted release，否则会
-  candidate-starved。下一机制必须在采样该 failure mode 前提供 positive legal-open
-  quality evidence。
+- 立即下一步：运行 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`。`A7-EVC-P`
+  选择在真实 legal-open quality-window rows 上直接提供 `LEGAL_OPEN_QUALITY`
+  positives；Q 必须在不削弱 A3/A5 masks、也不突破 raw-shadow delta 边界的前提下实现该 source。
 - 修复方向是 legal-state counterfactual projection，并更强地区分 raw shadow
   opportunity learning 与 legal-state policy distillation；不应回到盲目
   coefficient-only training。

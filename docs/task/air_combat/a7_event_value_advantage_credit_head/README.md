@@ -21,13 +21,12 @@ projected legal-open credit prototype with focused validation, and `A7-EVC-N`
 has now run the short projection learned-policy probe. N is valid evidence, but
 the behavior remains held: deterministic probing still records `0` releases,
 stochastic probing still fires too early, and projection metrics show
-`a7/evc_proj_active_count_mean=0.0` despite projection being enabled. The next
-bounded slice is a projection-eligibility root-cause audit, not longer blind
-training. `A7-EVC-O` has now closed that audit: projection candidates are
-starved because the path only activates on `shadow_quality` rows after an
-early accepted release, while N's training diagnostics show no accepted
-release in the logged rollouts. The next bounded slice is a legal-open
-opportunity-credit contract.
+`a7/evc_proj_active_count_mean=0.0` despite projection being enabled.
+`A7-EVC-O` has now closed the projection-eligibility audit: projection
+candidates are starved because the path only activates on `shadow_quality` rows
+after an early accepted release, while N's training diagnostics show no accepted
+release in the logged rollouts. `A7-EVC-P` has selected a direct legal-open
+opportunity-credit contract. The next bounded slice is its focused prototype.
 
 Language:
 
@@ -95,6 +94,7 @@ would have rewarded holding.
 | A7 projected legal-open credit prototype | pass; held after N | [Projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and focused gradient path only; N shows learned behavior still held. |
 | A7 short projection learned evidence | pass; held outcome | [Short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) validates r3 after projection-logger repairs: projection is enabled, ordinary A7 event-credit remains live, deterministic probing records `0` releases, stochastic probing releases at steps `2`, `47`, and `5`, and projected active rows remain `0.0`. | A7 is not accepted; the next question is why shadow-quality evidence does not reach active projected rows in the learned rollout/loss path. |
 | A7 projection eligibility audit | pass; spawned P | [Projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md) shows N training diagnostics have no accepted release, while stochastic probe reconstruction produces `3280` `shadow_quality` positives. | M projection is candidate-starved because it depends on early accepted release; next work should define legal-open opportunity credit that does not depend on sampling the failure mode. |
+| A7 legal-open opportunity contract | pass; spawned Q | [Legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md) selects `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` as a real legal-open quality-window positive source. | P is docs-only; implementation, training, and learned behavior remain held until Q focused gates pass. |
 
 ## Scope
 
@@ -141,7 +141,8 @@ Out of scope:
 | `P12 Projection Prototype` | Implement projected legal-open credit from the L contract. | P11 contract exists. | Focused tests prove projection whitelist, unsupported-layout refusal, no raw closed-mask delta alignment, and projected positive delta pressure. | pass; N evaluated learned behavior |
 | `P13 Projection Learned Evidence` | Run short projected-credit learned-policy probe. | P12 focused gates pass. | Projection metrics, deterministic/stochastic timing, and one-shot discipline are recorded. | pass; held outcome |
 | `P14 Projection Eligibility Audit` | Diagnose why projection active rows remain zero in the learned run. | P13 evidence exists. | Rollout/loss handoff from shadow-quality labels to projected legal-open rows is explained before another training wave. | pass; spawned P |
-| `P15 Opportunity Credit Contract` | Define legal-open positive opportunity credit that does not depend on early accepted release. | P14 evidence exists. | Contract names target source, loss split, diagnostics, and rollback gates. | planned next |
+| `P15 Opportunity Credit Contract` | Define legal-open positive opportunity credit that does not depend on early accepted release. | P14 evidence exists. | Contract names target source, loss split, diagnostics, and rollback gates. | pass; spawned Q |
+| `P16 Opportunity Credit Prototype` | Implement legal-open opportunity credit from the P contract. | P15 contract exists. | Focused tests prove source construction, loss routing, diagnostics, and A3/A5 legality boundaries before training. | planned next |
 
 ## Task Clusters
 
@@ -163,6 +164,8 @@ Out of scope:
   [a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md)
 - Projection eligibility root-cause audit:
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md)
+- Legal-open opportunity credit contract:
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md)
 
 ## Outputs And Evidence
 
@@ -208,10 +211,12 @@ Current outputs:
   [a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md).
 - Projection eligibility root-cause audit:
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md).
+- Legal-open opportunity credit contract:
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md).
 
 Planned follow-on outputs:
 
-- Legal-open opportunity-credit contract.
+- Legal-open opportunity-credit prototype.
 
 ## Acceptance Gate
 
@@ -232,10 +237,10 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: run `A7-EVC-P Legal-Open Opportunity Credit Contract`.
-  `A7-EVC-O` shows the M projection path is candidate-starved unless the policy
-  first samples an early accepted release. The next mechanism must provide
-  positive legal-open quality evidence before that failure mode is sampled.
+- Immediate next step: run `A7-EVC-Q Legal-Open Opportunity Credit Prototype`.
+  `A7-EVC-P` selects direct `LEGAL_OPEN_QUALITY` positives on real legal-open
+  quality-window rows; Q must implement that source without weakening A3/A5
+  masks or raw-shadow delta boundaries.
 - The repair direction is legal-state counterfactual projection with a stronger
   separation between raw shadow opportunity learning and legal-state policy
   distillation, not another blind coefficient-only training run.

@@ -5,9 +5,9 @@ objective contract, policy head, PPO auxiliary credit, config/diagnostics,
 focused validation, learned-evidence, closure/index-sync, target audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
 prototype slices have passed; `A7-EVC-N` has also passed as held learned
-evidence, and `A7-EVC-O` has closed the projection-eligibility audit. A7
-remains held because M projection is candidate-starved unless the policy first
-samples an early accepted release.
+evidence, `A7-EVC-O` has closed the projection-eligibility audit, and
+`A7-EVC-P` has selected the legal-open opportunity-credit contract. A7 remains
+held until the P contract is implemented and evaluated.
 
 Parent: [README.md](README.md). Task clusters:
 [a7_event_value_advantage_credit_head_task_clusters_20260604.md](a7_event_value_advantage_credit_head_task_clusters_20260604.md).
@@ -16,7 +16,7 @@ Parent: [README.md](README.md). Task clusters:
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-P Legal-Open Opportunity Credit Contract` | planned next | main thread; define a non-starved legal-open opportunity-credit source before implementation. | A7 contract/status docs only. | No implementation/training before contract; no closed-mask delta alignment; keep A3/A5 masks authoritative; no HMoE/M2/doctrine/missile release. |
+| `A7-EVC-Q Legal-Open Opportunity Credit Prototype` | planned next | implementation worker; implement the P contract with focused source/loss/diagnostic tests before training. | `python/rl/policy_algo/first_event_hazard.py`, `python/rl/policy_algo/ppo_adaptive_kl.py`, `python/rl/support/nonfinite_probe.py`, focused tests, active config/diagnostics docs. | No broad reward tuning; no weakening A3/A5 masks; no raw shadow delta alignment; no HMoE/M2/doctrine/missile release; no learned-policy wave before focused gates. |
 
 ## Completed Dispatches
 
@@ -35,12 +35,13 @@ Parent: [README.md](README.md). Task clusters:
 | `A7-EVC-M Projected Legal-Open Credit Prototype` | pass; held after N | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md): implements L through `first_event_projection.py`, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves projected legal-open pressure in focused tests; N shows the learned run does not activate projected rows. |
 | `A7-EVC-N Short Projection Learned Evidence` | pass; held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md): projection is enabled and logged, ordinary event-credit remains live, deterministic is still `0` releases, stochastic release steps are `2`, `47`, and `5`, and projected active rows stay `0.0`. | The next bounded work is O: explain why shadow-quality evidence does not reach active projected legal-open rows. |
 | `A7-EVC-O Projection Eligibility Root-Cause Audit` | pass; spawned P contract | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md): N training diagnostics have no accepted releases; deterministic probe reconstruction is deadline/prewindow only, while stochastic reconstruction has `3280` shadow-quality positives after early release. | The next bounded work is P: define legal-open opportunity credit that does not depend on sampling early accepted release. |
+| `A7-EVC-P Legal-Open Opportunity Credit Contract` | pass; spawned Q prototype | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md): selects `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` for real legal-open quality-window positives. | The next bounded work is Q: implement the source/loss/diagnostic path before another learned-policy wave. |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | Current projection credit is candidate-starved unless early accepted release is sampled; deterministic remains `0` releases and stochastic fires early. | `A7-EVC-P` defines a legal-open opportunity-credit contract before implementation and another training wave. |
+| A7 behavior acceptance | Current projection credit is candidate-starved unless early accepted release is sampled; deterministic remains `0` releases and stochastic fires early. | `A7-EVC-Q` implements the P opportunity-credit contract and then records bounded learned evidence. |
 
 ## Dispatch Packet Template
 
