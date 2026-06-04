@@ -1,6 +1,6 @@
 # Engineering Governance P1 Task Clusters
 
-Status: `2026-06-04` finite task-cluster record for the P1 remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3` are local-pass, while the broader `P1-D` callback split remains held.
+Status: `2026-06-04` finite task-cluster record for the P1 remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7` are local-pass, while the broader `P1-D` callback split remains held.
 
 Parent subproject: [Engineering Governance P1](README.md)
 
@@ -9,8 +9,9 @@ Parent subproject: [Engineering Governance P1](README.md)
 This P1 slice fixes verified, narrow architecture and correctness issues. It
 does not expand into broad runtime adapter splits or full diagnostics callback
 refactors. The callback work in this slice is limited to policy-distribution,
-HMoE, and action diagnostics helper extractions that preserve the existing
-callback entry points.
+HMoE, action, leader, step reward, A6 event-window info, and A5 event info
+diagnostics helper extractions that preserve the existing callback entry
+points.
 
 ## Finite Task Cluster List
 
@@ -22,8 +23,12 @@ callback entry points.
 | `P1-D1` | main thread | n/a | Extract policy-distribution diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving the current callback method. | `python/training/diagnostics.py`, `python/training_callbacks.py` | Full callback class decomposition, RL algorithm changes, A5/A6 behavior tuning | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing diagnostics tests pass and the public callback method remains available. | After P1-C; serial due callback touch | 1 | pass |
 | `P1-D2` | main thread | n/a | Extract HMoE route/parameter diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving parameter-stat throttling. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing HMoE stat keys | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback route/param stats still log; helper test proves parameter stats remain throttled. | After P1-D1; serial due callback touch | 1 | pass |
 | `P1-D3` | main thread | n/a | Extract full/hybrid action diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing action schema semantics | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback action stats still log; helper test proves full-action brake and combat switch semantics. | After P1-D2; serial due callback touch | 1 | pass |
-| `P1-D` | future worker | n/a | Split remaining cooperative/leader/reward/event-window diagnostics callback responsibilities. | future callback/test files only after packet is written | RL algorithm changes, A5/A6 behavior tuning, reworking P1-D1/D2/D3 helpers without need | future callback and training diagnostics tests | Separate packet exists and no overlapping callback edits are active. | Held until each responsibility has a bounded packet | 2 | held |
-| `P1-E` | main thread | n/a | Record task status, evidence, and parent review index links. | `docs/task/review/engineering_governance_p1/**`, `docs/task/review/README*` | Claiming all P1 work complete | Markdown inspection; `git diff --check` | Docs distinguish local-pass P1-A/B/C/D1/D2/D3 from held broader P1-D. | Last; serial | 1 | active |
+| `P1-D4` | main thread | n/a | Extract leader observation/info/reward diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing leader stat keys | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback leader stats still log; helper test proves observation, bucket, C2, and reward semantics. | After P1-D3; serial due callback touch | 1 | pass |
+| `P1-D5` | main thread | n/a | Extract step reward-term diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing reward stat keys | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback reward-term stats still log; helper test proves reward-term mean and missing-key behavior. | After P1-D4; serial due callback touch | 1 | pass |
+| `P1-D6` | main thread | n/a | Extract A6 first-event info diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_a6_event_value_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing A6 stat keys or label semantics | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback A6 info stats still log; helper test proves label-count and stable-zero behavior. | After P1-D5; serial due callback touch | 1 | pass |
+| `P1-D7` | main thread | n/a | Extract A5 event info diagnostics from `CMODiagnosticsCallback` into a focused helper while preserving logged scalar keys. | `python/training/diagnostics.py`, `python/training_callbacks.py`, `tests/training/test_cooperative_diagnostics_callback.py` | Full callback class decomposition, RL algorithm changes, changing A5 stat keys or release-discipline semantics | `pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` | Existing callback A5 info stats still log; helper test proves event-rate, rejection, state, and component logging. | After P1-D6; serial due callback touch | 1 | pass |
+| `P1-D` | future worker | n/a | Split remaining runway/gear step info, terminal/preterm window, and cooperative/stateful event-window diagnostics callback responsibilities. | future callback/test files only after packet is written | RL algorithm changes, A5/A6 behavior tuning, reworking P1-D1/D2/D3/D4/D5/D6/D7 helpers without need | future callback and training diagnostics tests | Separate packet exists and no overlapping callback edits are active. | Held until each responsibility has a bounded packet | 2 | held |
+| `P1-E` | main thread | n/a | Record task status, evidence, and parent review index links. | `docs/task/review/engineering_governance_p1/**`, `docs/task/review/README*` | Claiming all P1 work complete | Markdown inspection; `git diff --check` | Docs distinguish local-pass P1-A/B/C/D1/D2/D3/D4/D5/D6/D7 from held broader P1-D. | Last; serial | 1 | active |
 
 ## Dispatch Rules
 
@@ -32,7 +37,7 @@ callback entry points.
 - Do not allow two workers to edit the same task status table, scenario
   compiler validation module, runtime adapter, or callback file concurrently.
 - P1-D requires a fresh packet before broader implementation because its write
-  set is broader than the P1-D1/P1-D2/P1-D3 helper extractions in this run.
+  set is broader than the P1-D1/P1-D2/P1-D3/P1-D4/P1-D5/P1-D6/P1-D7 helper extractions in this run.
 - A future full adapter split or `typing.Protocol` loader contract also requires
   a separate packet; P1-C only centralizes adapter-owned capability resolution.
 - Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
@@ -73,6 +78,18 @@ git diff --check -- tests/architecture/test_wp22_structural_guardrails.py python
   focused diagnostics tests prove parameter-stat throttling.
 - P1-D3 action diagnostics are extracted behind the existing callback method
   and focused diagnostics tests prove full-action brake/combat switch logging.
+- P1-D4 leader diagnostics are extracted behind the existing callback method
+  and focused diagnostics tests prove observation, bucket, C2, and reward
+  logging.
+- P1-D5 step reward-term diagnostics are extracted behind the existing callback
+  method and focused diagnostics tests prove mean logging and missing-key
+  behavior.
+- P1-D6 A6 first-event info diagnostics are extracted behind the existing
+  callback method and focused diagnostics tests prove label-count and
+  stable-zero behavior.
+- P1-D7 A5 event info diagnostics are extracted behind the existing callback
+  method and focused diagnostics tests prove event-rate, rejection, state, and
+  component logging.
 - The task record does not mark broader P1-D or a broader adapter split
   complete.
 - Residuals are explicit enough for later packets.
@@ -84,7 +101,7 @@ test_a2_structured_air_effects_do_not_write_rl_score_authority: pass
 tests/architecture/test_wp22_structural_guardrails.py: pass, 17 passed
 tests/scenario/test_scenario_compiler.py: pass, 23 passed
 world-batch adapter focused tests: pass, 6 selected passed
-training diagnostics focused tests: pass, 11 passed
+training diagnostics focused tests: pass, 14 passed
 ruff check for touched Python files: pass
 git diff --check for touched P1 files: pass
 scenario/prefab shape scan: pass, 50 JSON files
@@ -99,8 +116,10 @@ Immediate:
 
 Follow-on:
 
-- P1-D cooperative/leader/reward/event-window diagnostics callback split;
-  P1-D1/D2/D3 only extracted policy distribution, HMoE, and action diagnostics.
+- P1-D runway/gear step info, terminal/preterm window, and cooperative/stateful
+  event-window diagnostics callback split; P1-D1/D2/D3/D4/D5/D6/D7 extracted
+  policy distribution, HMoE, action, leader, step reward, A6 event-window info,
+  and A5 event info diagnostics.
 - Full adapter split or `typing.Protocol` loader/runtime contract after the
   capability snapshot proves stable.
 - Optional scenario JSON Schema publication if lightweight shape validation is

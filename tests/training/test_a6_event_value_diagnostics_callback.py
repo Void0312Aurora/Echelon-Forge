@@ -9,6 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.training_callbacks import CMODiagnosticsCallback
+from python.training.diagnostics import record_a6_first_event_info_diagnostics
 
 
 class _DummyLogger:
@@ -95,12 +96,13 @@ class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["a6/event_fire_prob_max_open"], 0.0, places=6)
 
     def test_records_a6_label_counts_from_infos(self) -> None:
-        cb = CMODiagnosticsCallback(log_every_timesteps=1)
         logger = _DummyLogger()
-        cb.model = _DummyModel(logger)
+        model = _DummyModel(logger)
 
-        cb._record_a6_first_event_info_diagnostics(
-            [
+        record_a6_first_event_info_diagnostics(
+            model=model,
+            logger=logger,
+            infos=[
                 {
                     "a6_first_event_active": 1,
                     "a6_first_event_target": 0,
@@ -143,7 +145,7 @@ class A6EventValueDiagnosticsCallbackTests(unittest.TestCase):
                     "a6_first_event_source": "early_accepted",
                     "a6_first_event_window_id": 9,
                 },
-            ]
+            ],
         )
 
         self.assertAlmostEqual(logger.records["a6/hazard_coef"], 0.2, places=6)

@@ -127,8 +127,8 @@ python/training/ (consumes everything; not imported by lower layers)
 
 | File:Line | Issue | Severity |
 |-----------|-------|----------|
-| `python/training_callbacks.py:34-1147` | `CMODiagnosticsCallback` remains a very large single callback class with reward, cooperative, leader, event-window state, and policy/HMoE/action helper orchestration mixed together. P1-D1/D2/D3 moved policy-distribution, HMoE stat, and action calculations to `python/training/diagnostics.py`, but the full callback split is still open. | **HIGH** |
-| `python/training_callbacks.py:932-1146` | `_on_step()` remains a long multi-domain diagnostics method. | **HIGH** |
+| `python/training_callbacks.py:33-809` | `CMODiagnosticsCallback` remains a large single callback class with runway/gear step info, terminal/preterm reward windows, cooperative/stateful event-window aggregation, and policy/HMoE/action/A5/A6/leader/reward helper orchestration mixed together. P1-D1/D2/D3/D4/D5/D6/D7 moved policy-distribution, HMoE stat, action, leader, step reward-term, A6 event-window info, and A5 event info calculations to `python/training/diagnostics.py`, but the full callback split is still open. | **HIGH** |
+| `python/training_callbacks.py:639-807` | `_on_step()` remains a long multi-domain diagnostics method. | **HIGH** |
 | `python/training_callbacks.py` initialization paths | `__init__` and `_on_training_start` reset overlapping cooperative/HMoE state. The prior claim that `_record_event_diagnostics` resets the same variables was not supported by the current source. | MEDIUM |
 | Inline explanation density | The file has far less local explanation than expected for critical RL diagnostics infrastructure, although exact comment-density figures should be recomputed before quoting. | MEDIUM |
 
@@ -234,7 +234,7 @@ python/training/ (consumes everything; not imported by lower layers)
 ### P0 (Address Now — High Impact, Low Risk)
 
 1. **Extract shared world-batch env support** — reduce duplication between single and cooperative envs. Extract shared observation dimension constants into a configurable dataclass or focused helper module.
-2. **Continue splitting `CMODiagnosticsCallback`** — P1-D1/D2/D3 already extracted policy-distribution, HMoE, and action diagnostics into `python/training/diagnostics.py`; next slices should extract cooperative, leader, reward, and event-window diagnostics as composable callbacks.
+2. **Continue splitting `CMODiagnosticsCallback`** — P1-D1/D2/D3/D4/D5/D6/D7 already extracted policy-distribution, HMoE, action, leader, step reward, A6 event-window info, and A5 event info diagnostics into `python/training/diagnostics.py`; next slices should extract runway/gear step info plus terminal/preterm and cooperative/stateful event-window aggregation as composable helpers or callbacks.
 3. **Extract shared `_compute_bc_loss()`** in `dreamer.py` — eliminate repeated BC loss weighting across many `actor_input` branches.
 
 ### P1 (This Cycle — Medium Impact)

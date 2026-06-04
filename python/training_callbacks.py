@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict, deque
+from collections import defaultdict, deque
 from typing import Any
 import os
 
@@ -10,9 +10,14 @@ from stable_baselines3.common.callbacks import BaseCallback
 from python.training.diagnostics import (
     action_mode_from_width,
     combat_action_columns,
+    normalize_diagnostic_key,
+    record_a5_event_info_diagnostics,
+    record_a6_first_event_info_diagnostics,
     record_action_diagnostics,
     record_hmoe_policy_diagnostics,
+    record_leader_diagnostics,
     record_policy_distribution_diagnostics,
+    record_reward_term_diagnostics,
 )
 
 
@@ -23,12 +28,6 @@ def _safe_mean(values):
     if arr.size == 0:
         return None
     return float(arr.mean())
-
-
-def _bool_int(value: Any) -> int:
-    if isinstance(value, str):
-        return int(value.strip().lower() in {"1", "true", "yes", "on"})
-    return int(bool(value))
 
 
 class CMODiagnosticsCallback(BaseCallback):
@@ -65,6 +64,40 @@ class CMODiagnosticsCallback(BaseCallback):
         "mode_change_penalty",
     )
 
+    STEP_REWARD_KEYS = (
+        "total",
+        "survival",
+        "crash_penalty",
+        "stall_penalty",
+        "overload_penalty",
+        "failfast_penalty",
+        "off_runway_penalty",
+        "off_runway_terminate_penalty",
+        "gear_collapse_penalty",
+        "altitude_progress",
+        "speed_progress",
+        "speed_regress",
+        "heading_error_penalty",
+        "heading_hold_bonus",
+        "altitude_error_penalty",
+        "speed_error_penalty",
+        "roll_abs_penalty",
+        "pitch_abs_penalty",
+        "yaw_rate_abs_penalty",
+        "beta_abs_penalty",
+        "g_deviation_penalty",
+        "alignment_reward",
+        "waypoint_progress",
+        "waypoint_distance",
+        "waypoint_reached_bonus",
+        "waypoint_success_bonus",
+        "objective_bonus",
+        "combat_win_bonus",
+        "combat_loss_penalty",
+        "combat_draw_reward",
+        "untracked",
+    )
+
     @staticmethod
     def _action_mode_from_width(width: int) -> str:
         return action_mode_from_width(width)
@@ -93,196 +126,14 @@ class CMODiagnosticsCallback(BaseCallback):
         )
 
     def _record_a6_first_event_info_diagnostics(self, infos: Any) -> None:
-        model = getattr(self, "model", None)
-        hazard_coef = float(getattr(model, "a6_first_event_hazard_coef", 0.0) or 0.0)
-        curriculum_coef_fn = getattr(model, "_current_a6_first_event_curriculum_coef", None)
-        if callable(curriculum_coef_fn):
-            try:
-                curriculum_coef = float(curriculum_coef_fn())
-            except Exception:
-                curriculum_coef = 0.0
-        else:
-            curriculum_coef = float(getattr(model, "a6_first_event_curriculum_coef", 0.0) or 0.0)
-
-        deadline_weight = float(getattr(model, "a6_first_event_deadline_weight", 0.0) or 0.0)
-        launch_window_enabled = bool(getattr(model, "a6_first_event_launch_window_enabled", False))
-        prewindow_hold_weight = float(
-            getattr(model, "a6_first_event_launch_window_prewindow_hold_weight", 0.0) or 0.0
-        )
-        has_model_knobs = (
-            hazard_coef > 0.0
-            or curriculum_coef > 0.0
-            or deadline_weight > 0.0
-            or launch_window_enabled
-            or prewindow_hold_weight > 0.0
-        )
-        a6_infos = []
-        if isinstance(infos, (list, tuple)):
-            a6_infos = [
-                info
-                for info in infos
-                if isinstance(info, dict)
-                and any(
-                    key in info
-                    for key in (
-                        "a6_first_event_active",
-                        "a6_first_event_target",
-                        "a6_first_event_weight",
-                        "a6_first_event_source",
-                        "a6_first_event_window_id",
-                    )
-                )
-            ]
-        if not has_model_knobs and not a6_infos:
-            return
-
-        self.logger.record("a6/hazard_coef", hazard_coef)
-        self.logger.record("a6/curriculum_coef", curriculum_coef)
-        self.logger.record("a6/deadline_weight", deadline_weight)
-        self.logger.record("a6/launch_window_enabled", float(launch_window_enabled))
-        self.logger.record("a6/launch_window_prewindow_hold_weight", prewindow_hold_weight)
-        if not a6_infos:
-            self.logger.record("a6/active_count", 0.0)
-            self.logger.record("a6/active_frac", 0.0)
-            self.logger.record("a6/target_positive_count", 0.0)
-            self.logger.record("a6/target_positive_frac", 0.0)
-            self.logger.record("a6/curriculum_positive_count", 0.0)
-            self.logger.record("a6/deadline_positive_count", 0.0)
-            self.logger.record("a6/prewindow_hold_count", 0.0)
-            self.logger.record("a6/early_accepted_count", 0.0)
-            self.logger.record("a6/censored_window_count", 0.0)
-            return
-
-        denom = float(len(a6_infos))
-        active_count = 0
-        positive_count = 0
-        curriculum_positive_count = 0
-        deadline_positive_count = 0
-        prewindow_hold_count = 0
-        early_accepted_count = 0
-        censored_window_ids: set[str] = set()
-        censored_row_count = 0
-        for idx, info in enumerate(a6_infos):
-            active = _bool_int(info.get("a6_first_event_active", False))
-            try:
-                target = float(info.get("a6_first_event_target", 0.0))
-            except Exception:
-                target = 0.0
-            try:
-                weight = float(info.get("a6_first_event_weight", 1.0))
-            except Exception:
-                weight = 0.0
-            source = str(info.get("a6_first_event_source", "") or "").strip().lower()
-            active_weighted = bool(active and weight > 0.0)
-            if active_weighted:
-                active_count += 1
-            if active_weighted and target > 0.5:
-                positive_count += 1
-                if source in {"curriculum", "2"}:
-                    curriculum_positive_count += 1
-                if source in {"deadline", "4"}:
-                    deadline_positive_count += 1
-            if active_weighted and target <= 0.5 and source in {"prewindow", "5"}:
-                prewindow_hold_count += 1
-            if active_weighted and target <= 0.5 and source in {"early_accepted", "early-accepted", "6"}:
-                early_accepted_count += 1
-            if source in {"censored", "3"}:
-                censored_row_count += 1
-                censored_window_ids.add(str(info.get("a6_first_event_window_id", idx)))
-
-        self.logger.record("a6/active_count", float(active_count))
-        self.logger.record("a6/active_frac", float(active_count) / denom)
-        self.logger.record("a6/target_positive_count", float(positive_count))
-        self.logger.record(
-            "a6/target_positive_frac",
-            float(positive_count) / float(active_count) if active_count > 0 else 0.0,
-        )
-        self.logger.record("a6/curriculum_positive_count", float(curriculum_positive_count))
-        self.logger.record("a6/deadline_positive_count", float(deadline_positive_count))
-        self.logger.record("a6/prewindow_hold_count", float(prewindow_hold_count))
-        self.logger.record("a6/early_accepted_count", float(early_accepted_count))
-        self.logger.record(
-            "a6/censored_window_count",
-            float(len(censored_window_ids) if censored_window_ids else censored_row_count),
+        record_a6_first_event_info_diagnostics(
+            model=getattr(self, "model", None),
+            logger=self.logger,
+            infos=infos,
         )
 
     def _record_a5_event_info_diagnostics(self, infos: Any) -> None:
-        if not isinstance(infos, (list, tuple)):
-            return
-        a5_infos = [
-            info
-            for info in infos
-            if isinstance(info, dict)
-            and any(
-                key in info
-                for key in (
-                    "engagement_state",
-                    "fire_mask",
-                    "fire_once_requested",
-                    "fire_once_accepted",
-                    "fire_once_rejected_reason",
-                    "release_executed",
-                    "post_launch_suppressed",
-                )
-            )
-        ]
-        if not a5_infos:
-            return
-        denom = float(len(a5_infos))
-
-        def _sum_bool(key: str) -> int:
-            return int(sum(_bool_int(info.get(key, False)) for info in a5_infos))
-
-        fire_mask_open = _sum_bool("fire_mask")
-        requested = _sum_bool("fire_once_requested")
-        accepted = _sum_bool("fire_once_accepted")
-        executed = _sum_bool("release_executed")
-        suppressed = _sum_bool("post_launch_suppressed")
-        rejected = int(
-            sum(
-                1
-                for info in a5_infos
-                if _bool_int(info.get("fire_once_requested", False))
-                and not _bool_int(info.get("fire_once_accepted", False))
-            )
-        )
-
-        self.logger.record("diag/a5_event_info_count", float(len(a5_infos)))
-        self.logger.record("diag/a5_fire_mask_open_frac", float(fire_mask_open) / denom)
-        self.logger.record("diag/a5_fire_once_requested_count", float(requested))
-        self.logger.record("diag/a5_fire_once_requested_frac", float(requested) / denom)
-        self.logger.record("diag/a5_fire_once_accepted_count", float(accepted))
-        self.logger.record("diag/a5_fire_once_rejected_count", float(rejected))
-        self.logger.record("diag/a5_fire_once_rejected_frac", float(rejected) / denom)
-        self.logger.record("diag/a5_release_executed_count", float(executed))
-        self.logger.record("diag/a5_post_launch_suppressed_count", float(suppressed))
-
-        reason_counts = Counter(
-            str(info.get("fire_once_rejected_reason", "") or "unspecified")
-            for info in a5_infos
-            if _bool_int(info.get("fire_once_requested", False))
-            and not _bool_int(info.get("fire_once_accepted", False))
-        )
-        for reason, count in sorted(reason_counts.items()):
-            self.logger.record(f"diag/a5_reject_reason_{self._normalize_reason(reason)}_count", float(count))
-
-        state_counts = Counter(str(info.get("engagement_state", "") or "unknown") for info in a5_infos)
-        for state, count in sorted(state_counts.items()):
-            self.logger.record(f"diag/a5_state_{self._normalize_reason(state)}_frac", float(count) / denom)
-
-        component_values: dict[str, list[float]] = defaultdict(list)
-        for info in a5_infos:
-            components = info.get("fire_mask_components", {})
-            if not isinstance(components, dict):
-                continue
-            for key, value in components.items():
-                component_values[str(key)].append(float(_bool_int(value)))
-        for key, values in sorted(component_values.items()):
-            if values:
-                self.logger.record(
-                    f"diag/a5_mask_component_{self._normalize_reason(key)}_open_frac",
-                    float(np.asarray(values, dtype=np.float32).mean()),
-                )
+        record_a5_event_info_diagnostics(logger=self.logger, infos=infos)
 
     def __init__(self, log_every_timesteps: int = 50_000, preterm_window_steps: int = 32, verbose: int = 0):
         super().__init__(verbose=verbose)
@@ -350,18 +201,7 @@ class CMODiagnosticsCallback(BaseCallback):
 
     @staticmethod
     def _normalize_reason(reason: str) -> str:
-        if not reason:
-            return "unknown"
-        out = []
-        for ch in str(reason).strip().lower():
-            if ("a" <= ch <= "z") or ("0" <= ch <= "9"):
-                out.append(ch)
-            else:
-                out.append("_")
-        s = "".join(out).strip("_")
-        while "__" in s:
-            s = s.replace("__", "_")
-        return s if s else "unknown"
+        return normalize_diagnostic_key(reason)
 
     @staticmethod
     def _is_failure_reason(reason: str) -> bool:
@@ -781,153 +621,20 @@ class CMODiagnosticsCallback(BaseCallback):
         self._coop_world_slot_timeout = defaultdict(bool)
         self._coop_world_slot_progress_values = defaultdict(list)
 
-    @staticmethod
-    def _mean_info_values(infos: list[dict], key: str) -> float | None:
-        vals = []
-        for info in infos:
-            if not isinstance(info, dict) or key not in info:
-                continue
-            try:
-                vals.append(float(info[key]))
-            except Exception:
-                continue
-        return _safe_mean(vals)
-
-    @staticmethod
-    def _mean_reward_term_values(infos: list[dict], info_key: str, term_key: str) -> float | None:
-        vals = []
-        for info in infos:
-            if not isinstance(info, dict):
-                continue
-            rt = info.get(info_key)
-            if not isinstance(rt, dict) or term_key not in rt:
-                continue
-            try:
-                vals.append(float(rt[term_key]))
-            except Exception:
-                continue
-        return _safe_mean(vals)
-
     def _record_leader_diagnostics(self, obs, infos: list[dict]) -> None:
-        if isinstance(obs, dict) and "ownship" in obs:
-            try:
-                own = np.asarray(obs["ownship"], dtype=np.float32)
-                if own.ndim == 1:
-                    own = own.reshape(1, -1)
-                if own.ndim == 2 and own.shape[1] >= 12:
-                    self.logger.record("leader_diag/ias_mean", float(own[:, 0].mean()))
-                    self.logger.record("leader_diag/alt_agl_mean", float(own[:, 2].mean()))
-                    self.logger.record("leader_diag/alt_baro_mean", float(own[:, 3].mean()))
-                    self.logger.record("leader_diag/vvi_mean", float(own[:, 4].mean()))
-                    self.logger.record("leader_diag/heading_mean", float(own[:, 5].mean()))
-                    self.logger.record("leader_diag/roll_abs_mean", float(np.abs(own[:, 7]).mean()))
-                    self.logger.record("leader_diag/pitch_abs_mean", float(np.abs(own[:, 8]).mean()))
-                    self.logger.record("leader_diag/gear_mean", float(own[:, 11].mean()))
-            except Exception:
-                pass
+        record_leader_diagnostics(
+            logger=self.logger,
+            obs=obs,
+            infos=infos,
+            reward_keys=self.LEADER_REWARD_KEYS,
+        )
 
-        if isinstance(obs, dict) and "terminal" in obs:
-            try:
-                terminal = np.asarray(obs["terminal"], dtype=np.float32)
-                if terminal.ndim == 1:
-                    terminal = terminal.reshape(1, -1)
-                if terminal.ndim == 2 and terminal.shape[1] >= 8:
-                    self.logger.record("leader_diag/dme_mean_m", float(terminal[:, 0].mean()))
-                    self.logger.record("leader_diag/loc_abs_mean", float(np.abs(terminal[:, 1]).mean()))
-                    self.logger.record("leader_diag/gs_abs_mean", float(np.abs(terminal[:, 2]).mean()))
-                    self.logger.record("leader_diag/runway_cross_abs_mean_m", float(np.abs(terminal[:, 4]).mean()))
-                    self.logger.record("leader_diag/runway_heading_abs_mean_deg", float(np.abs(terminal[:, 5]).mean()))
-                    self.logger.record("leader_diag/approach_phase_frac", float((terminal[:, 6] > 0.5).mean()))
-                    self.logger.record("leader_diag/landing_cmd_frac", float((terminal[:, 7] > 0.5).mean()))
-            except Exception:
-                pass
-
-        if not infos:
-            return
-
-        mean_guarded = self._mean_info_values(infos, "leader_phase_guarded")
-        if mean_guarded is not None:
-            self.logger.record("leader_diag/phase_guarded_frac", float(mean_guarded))
-        mean_bias_guarded = self._mean_info_values(infos, "leader_bias_guarded")
-        if mean_bias_guarded is not None:
-            self.logger.record("leader_diag/bias_guarded_frac", float(mean_bias_guarded))
-        mean_terminal_feasible = self._mean_info_values(infos, "leader_terminal_feasible")
-        if mean_terminal_feasible is not None:
-            self.logger.record("leader_diag/terminal_feasible_frac", float(mean_terminal_feasible))
-
-        mode_counts: dict[str, int] = defaultdict(int)
-        req_counts: dict[str, int] = defaultdict(int)
-        reason_counts: dict[str, int] = defaultdict(int)
-        bias_reason_counts: dict[str, int] = defaultdict(int)
-        c2_task_counts: dict[str, int] = defaultdict(int)
-        c2_transition_reason_counts: dict[str, int] = defaultdict(int)
-        cmd_deltas = []
-        for info in infos:
-            if not isinstance(info, dict):
-                continue
-            mode = info.get("leader_phase_bucket")
-            if isinstance(mode, str) and mode.strip():
-                mode_counts[self._normalize_reason(mode)] += 1
-            req = info.get("leader_requested_phase_bucket")
-            if isinstance(req, str) and req.strip():
-                req_counts[self._normalize_reason(req)] += 1
-            reason = info.get("leader_phase_guard_reason")
-            if isinstance(reason, str) and reason.strip():
-                reason_counts[self._normalize_reason(reason)] += 1
-            bias_reason = info.get("leader_bias_guard_reason")
-            if isinstance(bias_reason, str) and bias_reason.strip():
-                bias_reason_counts[self._normalize_reason(bias_reason)] += 1
-            c2_task = info.get("leader_c2_task_name")
-            if isinstance(c2_task, str) and c2_task.strip():
-                c2_task_counts[self._normalize_reason(c2_task)] += 1
-            c2_reason = info.get("leader_c2_transition_reason")
-            if isinstance(c2_reason, str) and c2_reason.strip():
-                c2_transition_reason_counts[self._normalize_reason(c2_reason)] += 1
-            eff = info.get("leader_effective_command")
-            base = info.get("leader_baseline_command")
-            try:
-                if eff is not None and base is not None:
-                    eff_arr = np.asarray(eff, dtype=np.float32).reshape(-1)
-                    base_arr = np.asarray(base, dtype=np.float32).reshape(-1)
-                    if eff_arr.size >= 4 and base_arr.size >= 4:
-                        cmd_deltas.append(
-                            abs(float(eff_arr[0]) - float(base_arr[0]))
-                            + abs(float(eff_arr[1]) - float(base_arr[1])) / 180.0
-                            + abs(float(eff_arr[2]) - float(base_arr[2])) / max(1.0, abs(float(base_arr[2])) + 1.0)
-                            + abs(float(eff_arr[3]) - float(base_arr[3])) / max(1.0, abs(float(base_arr[3])) + 1.0)
-                        )
-            except Exception:
-                continue
-
-        total = float(max(1, len(infos)))
-        for mode, count in sorted(mode_counts.items()):
-            self.logger.record(f"leader_diag/phase_frac_{mode}", float(count) / total)
-        for req, count in sorted(req_counts.items()):
-            self.logger.record(f"leader_diag/request_frac_{req}", float(count) / total)
-        for reason, count in sorted(reason_counts.items()):
-            self.logger.record(f"leader_diag/guard_reason_frac_{reason}", float(count) / total)
-        for reason, count in sorted(bias_reason_counts.items()):
-            self.logger.record(f"leader_diag/bias_guard_reason_frac_{reason}", float(count) / total)
-        for task_name, count in sorted(c2_task_counts.items()):
-            self.logger.record(f"leader_diag/c2_task_frac_{task_name}", float(count) / total)
-        for reason, count in sorted(c2_transition_reason_counts.items()):
-            self.logger.record(f"leader_diag/c2_transition_reason_frac_{reason}", float(count) / total)
-        if cmd_deltas:
-            self.logger.record(
-                "leader_diag/cmd_vs_baseline_delta_mean",
-                float(np.mean(np.asarray(cmd_deltas, dtype=np.float32))),
-            )
-        report_valid = self._mean_info_values(infos, "leader_report_valid")
-        if report_valid is not None:
-            self.logger.record("leader_diag/report_valid_frac", float(report_valid))
-        c2_transitioned = self._mean_info_values(infos, "leader_c2_transitioned")
-        if c2_transitioned is not None:
-            self.logger.record("leader_diag/c2_transition_frac", float(c2_transitioned))
-
-        for key in self.LEADER_REWARD_KEYS:
-            mean_val = self._mean_reward_term_values(infos, "leader_reward_terms", key)
-            if mean_val is not None:
-                self.logger.record(f"leader_diag/reward_{key}", float(mean_val))
+    def _record_step_reward_diagnostics(self, infos: list[dict]) -> None:
+        record_reward_term_diagnostics(
+            logger=self.logger,
+            infos=infos,
+            reward_keys=self.STEP_REWARD_KEYS,
+        )
 
     def _on_step(self) -> bool:
         obs = self.locals.get("new_obs")
@@ -1054,52 +761,7 @@ class CMODiagnosticsCallback(BaseCallback):
         if isinstance(infos, (list, tuple)) and infos:
             self._record_a5_event_info_diagnostics(infos)
             self._record_a6_first_event_info_diagnostics(infos)
-            reward_keys = [
-                "total",
-                "survival",
-                "crash_penalty",
-                "stall_penalty",
-                "overload_penalty",
-                "failfast_penalty",
-                "off_runway_penalty",
-                "off_runway_terminate_penalty",
-                "gear_collapse_penalty",
-                "altitude_progress",
-                "speed_progress",
-                "speed_regress",
-                "heading_error_penalty",
-                "heading_hold_bonus",
-                "altitude_error_penalty",
-                "speed_error_penalty",
-                "roll_abs_penalty",
-                "pitch_abs_penalty",
-                "yaw_rate_abs_penalty",
-                "beta_abs_penalty",
-                "g_deviation_penalty",
-                "alignment_reward",
-                "waypoint_progress",
-                "waypoint_distance",
-                "waypoint_reached_bonus",
-                "waypoint_success_bonus",
-                "objective_bonus",
-                "combat_win_bonus",
-                "combat_loss_penalty",
-                "combat_draw_reward",
-                "untracked",
-            ]
-            for key in reward_keys:
-                vals = []
-                for info in infos:
-                    if not isinstance(info, dict):
-                        continue
-                    rt = info.get("reward_terms")
-                    if isinstance(rt, dict) and key in rt:
-                        try:
-                            vals.append(float(rt[key]))
-                        except Exception:
-                            pass
-                if vals:
-                    self.logger.record(f"diag/rew_{key}", float(np.asarray(vals, dtype=np.float32).mean()))
+            self._record_step_reward_diagnostics(list(infos))
 
             on_runway = [info.get("on_runway") for info in infos if isinstance(info, dict) and "on_runway" in info]
             if on_runway:

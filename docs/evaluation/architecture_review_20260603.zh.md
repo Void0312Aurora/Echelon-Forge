@@ -127,8 +127,8 @@ python/training/（消费所有内容；不被更低层导入）
 
 | 文件:行 | 问题 | 严重性 |
 |---------|------|--------|
-| `python/training_callbacks.py:34-1147` | `CMODiagnosticsCallback` 仍是很大的单一 callback class，混合 reward、cooperative、leader、event-window state 与 policy/HMoE/action helper orchestration。P1-D1/D2/D3 已将 policy-distribution、HMoE stat 和 action 计算移到 `python/training/diagnostics.py`，但完整 callback split 仍未完成。 | **高** |
-| `python/training_callbacks.py:932-1146` | `_on_step()` 仍是很长的多域诊断方法。 | **高** |
+| `python/training_callbacks.py:33-809` | `CMODiagnosticsCallback` 仍是较大的单一 callback class，混合 runway/gear step info、terminal/preterm reward windows、cooperative/stateful event-window aggregation 与 policy/HMoE/action/A5/A6/leader/reward helper orchestration。P1-D1/D2/D3/D4/D5/D6/D7 已将 policy-distribution、HMoE stat、action、leader、step reward-term、A6 event-window info 和 A5 event info 计算移到 `python/training/diagnostics.py`，但完整 callback split 仍未完成。 | **高** |
+| `python/training_callbacks.py:639-807` | `_on_step()` 仍是很长的多域诊断方法。 | **高** |
 | `python/training_callbacks.py` 初始化路径 | `__init__` 与 `_on_training_start` 重置了部分重叠的 cooperative/HMoE 状态。此前称 `_record_event_diagnostics` 也重置相同变量，当前源码不支持该说法。 | 中 |
 | 内联解释密度 | 对关键 RL diagnostics 基础设施而言，本文件局部解释仍偏少；精确注释密度应在重新定义计数规则后再引用。 | 中 |
 
@@ -234,7 +234,7 @@ python/training/（消费所有内容；不被更低层导入）
 ### P0（立即处理——高影响、低风险）
 
 1. **提取共享 world-batch env support**——减少单/协作环境之间的重复。将共享观察维度常量提取到可配置 dataclass 或聚焦 helper module 中。
-2. **继续拆分 `CMODiagnosticsCallback`**——P1-D1/D2/D3 已把 policy-distribution、HMoE 与 action diagnostics 抽到 `python/training/diagnostics.py`；下一批应提取 cooperative、leader、reward 与 event-window diagnostics 作为可组合回调。
+2. **继续拆分 `CMODiagnosticsCallback`**——P1-D1/D2/D3/D4/D5/D6/D7 已把 policy-distribution、HMoE、action、leader、step reward、A6 event-window info 与 A5 event info diagnostics 抽到 `python/training/diagnostics.py`；下一批应提取 runway/gear step info，以及 terminal/preterm 与 cooperative/stateful event-window aggregation 作为可组合 helper 或 callback。
 3. **在 `dreamer.py` 中提取共享的 `_compute_bc_loss()`**——消除多种 `actor_input` 分支中重复的 BC loss weighting。
 
 ### P1（本周期内——中等影响）
