@@ -18,7 +18,25 @@ diagnostics 显示 32k run 结束时 `a7/evc_proj_active_count_mean=0.0`。
 path candidate-starved，因为 logged training rollouts 没有 accepted release，因此没有
 `shadow_quality` projection candidates。`A7-EVC-P Legal-Open Opportunity Credit
 Contract` 已选择 direct legal-open quality positives 作为下一条 non-starved credit
-source；implementation 仍是下一切片。
+source。`A7-EVC-Q Legal-Open Opportunity Credit Prototype` 已实现该 source 并通过
+focused gates。`A7-EVC-R Short Opportunity Learned Evidence` 已评估 Q 后 learned
+behavior：direct legal-open source counts 是 live 的，但 deterministic probing
+仍记录 `0` releases，stochastic probing 在 steps `3`、`44`、`10` 过早 release，
+quality-window advantage 仍为负。`A7-EVC-S Explicit State Completion Probe` 已用
+`air_combat_c2_roe_v2` 测试 pre-M2 observability 假设：policy 现在可以显式看到
+legal/window age 与 readiness fields，但 deterministic probing 仍记录 `0`
+releases，quality-window advantage 仍为负。`A7-EVC-T Value/Policy Coupling
+Audit` 已用 offline fixed-batch fit 验证断点：S final model 的
+`LEGAL_OPEN_QUALITY` advantage 起初为负，但同一固定 batch 只更新 credit head
+即可拟合出正 legal-open advantage。`A7-EVC-U Online Update-Path Isolation`
+已定位 online blocker：PPO-alone 不更新 `hybrid_event_credit_head`，但 PPO+A7
+共享同一次 global clip 与同一 actor/feature representation，压低 credit-head
+有效更新预算，并造成 value/delta representation conflict。`A7-EVC-V Online
+Credit Update Contract` 已实现 protected repair：A7 value credit 通过 detached
+latent features、独立 optimizer step 与独立 clip budget 只更新
+`hybrid_event_credit_head`，delta-align 也改为 positive-only gated。V 作为结构修复
+通过，8k observation 改善 legal-open advantage，但 learned first-shot behavior
+仍 held。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -69,8 +87,33 @@ source；implementation 仍是下一切片。
   `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为 direct legal-open
   quality-window positives，保留 `SHADOW_QUALITY` 作为 projection repair source，
   并将 `DEADLINE` 保持为 fallback/diagnostic source。
-- 立即下一有界切片是 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`：在另一轮
-  learned-policy wave 前实现 P 的 source/loss/diagnostic path。
+- `A7-EVC-Q Legal-Open Opportunity Credit Prototype` 已完成：direct legal-open
+  quality positives、source metrics、active config knobs 与 focused tests 已就位。
+- `A7-EVC-R Short Opportunity Learned Evidence` 已完成为 held evidence：r1
+  32k train 记录最终 `a7/evc_src_legal_open_quality_count_mean=332` 与
+  `a7/evc_src_legal_open_quality_positive_count_mean=332`，但 learned timing
+  未 accepted。
+- `A7-EVC-S Explicit State Completion Probe` 已完成为 held evidence：
+  `air_combat_c2_roe_v2` 暴露 legal/window age、launch readiness、quality
+  readiness、target range 与 target track age。32k learned probe 提升了
+  open-window event-fire probability，但 deterministic mode 仍为 `hold`，且
+  quality-window advantage 仍为负。
+- `A7-EVC-T Value/Policy Coupling Audit` 已作为 breakpoint evidence 完成：
+  固定 deterministic S batch 含 `1356` 个 `LEGAL_OPEN_QUALITY` positives，
+  初始 legal-open advantage 为 `-0.8536`，离线拟合只放开 credit head 即可把这些
+  rows 翻成正值。
+- `A7-EVC-U Online Update-Path Isolation` 已作为 blocker-localization evidence
+  完成：PPO-alone credit-head gradient 为 `0.0`，PPO+A7 global clipping 将
+  credit-head effective norm 从约 `0.4855` 压到 `0.00689`，且 A7
+  value/delta gradients 在 shared actor/features 中冲突。
+- `A7-EVC-V Online Credit Update Contract` 已作为 structural repair 完成：
+  detached-latent credit value updates、protected credit-head clipping、
+  positive-only delta alignment、active config wiring 与 nonfinite-probe parity
+  均已实现并测试。8k observation 改善 credit advantage，但仍以 deterministic
+  `0` releases 与负 legal-open advantage 结束。
+- 立即下一有界切片是 `A7-EVC-W Active Update Window Diagnosis`：在另一轮
+  learned-policy wave 前解释 protected A7 updates 为什么在 early training 后
+  inactive 或仍不足。
 - HMoE hierarchical computation gap 被记录为 architecture risk：A7 不应只依赖 hard-routed
   subexpert behavior；但当前 A7 failure 已经在被删失的 target construction 与 event-credit
   advantage sign 上可见。
@@ -94,14 +137,21 @@ source；implementation 仍是下一切片。
 | Short projection learned evidence | pass；held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection-logger 修复后的 r3 32k train 与 deterministic/stochastic probes。 | Projection 已启用，但 active projected rows 保持 `0.0`；deterministic 仍为 `0` releases，stochastic 仍过早发射。 |
 | Projection eligibility root-cause audit | pass；spawned P | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 将 no-candidate starvation 与 unsupported projection rejection 分离。 | M projection 仍是 post-early-release repair path；下一合同必须在采样 failure mode 前提供 legal-open opportunity credit。 |
 | Legal-open opportunity credit contract | pass；spawned Q | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md) 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为真实 legal-open quality-window positive source。 | P 是 docs-only；Q 必须在 training 前证明 source construction、loss routing 与 diagnostics。 |
+| Legal-open opportunity credit prototype | pass；已由 R 评估 | [legal-open opportunity credit prototype](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md) 实现 direct legal-open quality positives，并验证 source/loss/diagnostic path。 | Q 不证明 learned behavior；R 已将其评估为 held。 |
+| Short opportunity learned evidence | pass；held outcome | [short opportunity learned evidence](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md) 记录 direct `LEGAL_OPEN_QUALITY` credit 后的 r1 32k train/probe。 | Source starvation 已修复，但 deterministic 仍为 `0` releases，stochastic 仍过早 release，quality-window advantage 仍为负。 |
+| Explicit state completion | pass；held outcome | [explicit state completion probe](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md) 增加 `air_combat_c2_roe_v2`、focused tests、32k learned train 与 deterministic/stochastic probes。 | 缺失 window-age observability 不是充分根因：deterministic 仍记录 `0` releases，quality-window advantage 仍为负。 |
+| Value/policy coupling audit | pass；breakpoint verified | [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md) 增加 offline fixed-batch fit probe，并证明 legal-open positives 可由 credit head 分离。 | 剩余 blocker 是在线联合训练/update coupling，而不是 label starvation、显式状态或 credit-head 容量。 |
+| Online update-path isolation | pass；blocker localized | [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md) 增加 gradient/update probe 与 TensorBoard scalar review。 | 剩余 blocker 是 update contract：shared PPO global clipping 加 shared actor/feature coupling。排除 direct PPO credit-head overwrite。 |
+| Online credit update contract | pass；held outcome | [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md) 增加独立 detached-latent credit-head value update、protected clip budget、positive-only delta alignment、active config flags 与 nonfinite-probe parity。 | update contract 已修复，但 behavior 仍 held：8k observation 后 deterministic `0` releases，legal-open advantage 仍为负。 |
 | HMoE relation | watch item | issue board 记录 flat subexpert input 与 combat-family collapse。 | 除非正确 credit signs 已学到但 policy coupling 仍以可归因于 hierarchy gap 的方式失败，否则 A7 不修 HMoE。 |
 
 ## 立即下一步
 
-运行 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`：P 选择在真实 legal-open
-quality-window rows 上直接提供 `LEGAL_OPEN_QUALITY` positives。下一有界问题是能否在
-不削弱 A3/A5 masks、不对 raw closed-mask rows 做 alignment、且 focused gates 前不跑
-learned-policy wave 的前提下，实现 source/loss/diagnostic path。
+运行 `A7-EVC-W Active Update Window Diagnosis`。V 证明 protected credit update
+lane 是 live 的，并且不再被 PPO global clipping 饿死，但 8k observation 仍未越过
+positive legal-open advantage。下一有界问题是剩余失败属于 active-window
+starvation、curriculum sampling、replay/fixed positive batches、adaptive label
+scheduling，还是更大的 training-loop contract。
 
 ## 验证快照
 
@@ -190,6 +240,70 @@ learned-policy wave 的前提下，实现 source/loss/diagnostic path。
 - A7-EVC-P contract：direct legal-open quality opportunity credit 被选择为
   `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY`；它只在真实 pre-release legal-open
   quality-window rows 上为 positive，且不经过 projection。
+- A7-EVC-Q focused gates：compileall 通过；focused Q tests 通过，`5 passed`；
+  combined A6/A7/HMoE/active-config pytest 通过，`55 passed`。
+- A7-EVC-Q source diagnostics 现在包含
+  `a7/evc_src_legal_open_quality_count_mean`、
+  `a7/evc_src_legal_open_quality_positive_count_mean` 与
+  `a7/evc_src_legal_open_quality_advantage_mean`。
+- A7-EVC-R 32k opportunity run 在
+  `experiments_tmp/a7_legal_open_opportunity_32k_20260604_r1` 下完成；TensorBoard
+  step `32768` 记录 `a7/event_credit_active_count_mean=512.0`、
+  `a7/event_credit_target_positive_frac=0.648438`、
+  `a7/event_credit_advantage_mean=-0.850262`、
+  `a7/evc_src_legal_open_quality_count_mean=332.0` 与
+  `a7/evc_src_legal_open_quality_positive_count_mean=332.0`。
+- A7-EVC-R deterministic probe 记录 `0` requests 与 `0` releases，`1840`
+  open-window steps，open-window fire probability mean/max 为
+  `0.281221` / `0.293340`，quality-window A7 advantage mean 为 `-0.792674`。
+- A7-EVC-R stochastic probe 记录 `3/3` authorized one-shot releases，steps 为
+  `3`、`44`、`10`，且 `0` unauthorized/repeat/budget violations。
+- A7-EVC-S focused state-completion gates 通过：
+  `pytest tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/hmoe/test_hmoe_routing.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py tests/hmoe/test_a6_first_event_hazard.py tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q`
+  为 `105 passed`；`git diff --check` 通过。
+- A7-EVC-S 32k state-completed run 在
+  `experiments_tmp/a7_state_completed_opportunity_32k_20260604_r1` 下完成；最终
+  training logs 记录 `a7/evc_src_legal_open_quality_count_mean=330`、
+  `a7/evc_src_legal_open_quality_positive_count_mean=330`、
+  `a7/event_credit_target_positive_frac=0.645` 与
+  `a7/event_credit_advantage_mean=-0.924`。
+- A7-EVC-S deterministic probe 在 `4` episodes 中记录 `0` requests 与 `0`
+  releases；fire-mask-open steps 为 `[599, 559, 599, 599]`，
+  authorized-window event-fire probability mean 为 `0.2634`，quality-window A7
+  advantage mean 为 `-0.8534`。
+- A7-EVC-S stochastic probe 记录 `8/8` authorized one-shot releases，steps 为
+  `[6, 42, 4, 2, 5, 46, 3, 46]`，且 `0` unauthorized/repeat/budget violations；
+  releases 仍然过早，不能证明 quality-window timing accepted。
+- A7-EVC-T offline fixed-batch fit probe：
+  `tools/diagnostics/a7_credit_head_offline_fit_probe.py` 从 S final model 采集
+  `2516` 个 active labels，其中 `1356` 个 `LEGAL_OPEN_QUALITY` positives。
+  初始 legal-open advantage 为 `-0.8536`；credit-head-only fitting 将 legal-open
+  advantage 翻到 `+0.6417`，正号比例 `1.0`；折算 value-coef 的预算对照仍翻到
+  `+0.0083`，正号比例 `1.0`。
+- A7-EVC-U online update-path probe：
+  `tools/diagnostics/a7_online_update_path_probe.py` 已完成，并写出
+  `experiments_tmp/a7_online_update_path_probe_20260604.json`。Fixed-batch A7
+  value 与 delta-align gradients 在 actor/features 中冲突（actor MLP
+  `cosine=-0.8954`，features `-0.9097`）。Online PPO-alone credit-head
+  gradient 为 `0.0`；PPO+A7 global clipping 将 credit-head effective norm 从约
+  `0.4855` 压到 `0.00689`。
+- A7-EVC-U 对 S run 的 TensorBoard scalar review：`train/value_loss` 最大到
+  `6526.7822`，而 `a7/event_credit_loss` 最大为 `1.0749`；A7 advantage mean
+  从约 `-0.0442` 漂移到 `-0.9239`，尽管最终 positive target fraction 为
+  `0.6445`。
+- A7-EVC-V focused structural gates 在最终重跑前已通过：`ppo_adaptive_kl.py`、
+  `policies.py`、`nonfinite_probe.py` 与 focused tests 的 compileall 通过；
+  direct separate-update 与 nonfinite-probe tests 为 `2 passed`；
+  policy/update-strength focused tests 为 `7 passed`；active-config checks 为
+  `2 passed`。
+- A7-EVC-V 8k protected-update observation 在
+  `experiments_tmp/a7_separate_update_8k_v2_20260604` 下完成 `8192` steps；
+  separate update lane 记录为 enabled，早期 separate-update grad norm 非零，
+  `a7/event_credit_advantage_mean` 改善到约 `-0.0583`。
+- A7-EVC-V final probes 仍 hold behavior：fixed-batch legal-open positives
+  保持 `1356`，但 legal-open positive advantage 为
+  `-0.05257667228579521`，positive sign fraction 为 `0.0`；process probing
+  记录 `release_count=0` 与 `fire_once_requested_count=0`。
 
 ## Held Items
 

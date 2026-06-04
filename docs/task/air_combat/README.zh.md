@@ -15,9 +15,16 @@ counterfactual event-value / advantage-credit head follow-on；其 policy-head p
 已将结构性 blocker 追踪到 early stochastic accepted release 后缺失 shadow-quality
 target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repair probe
 仍让 learned first-shot timing 保持 held。`A7-EVC-M` 随后实现 projected legal-open
-credit，`A7-EVC-N` 已用短训 learned run 评估该路径；A7 仍 held，因为 projection
-已启用但 active projected rows 保持 `0.0`，deterministic probing 仍为 `0`
-releases，stochastic probing 仍过早发射。
+credit，`A7-EVC-N` 已用短训 learned run 评估该路径，projection 仍 candidate-starved。
+`A7-EVC-Q/R` 随后增加并测试 direct legal-open opportunity credit，`A7-EVC-S`
+随后用 `air_combat_c2_roe_v2` 测试 explicit state completion。`A7-EVC-T`
+随后用 offline fixed-batch fit 验证 value/policy 断点：legal-open positives
+可由 credit head 本地分离，但 learned checkpoint 仍为 negative/hold。
+`A7-EVC-U` 随后将 online blocker 定位到 shared PPO global clipping 加 shared
+actor/features coupling，并排除 direct PPO credit-head overwrite。`A7-EVC-V`
+已用 protected credit-head-only value lane 与 positive-only delta alignment 修复
+该 update contract。A7 仍 held：8k observation 改善了 credit advantage，但
+deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
 
 ## 当前状态
 
@@ -99,9 +106,22 @@ releases，stochastic probing 仍过早发射。
   在 steps `2`、`47`、`5` 过早 release。`A7-EVC-O` 已关闭 root-cause audit：当
   train rollouts 没有 accepted releases 时，M projection 会 candidate-starved，因为其
   `shadow_quality` source 只有在 early sampled release 后才出现。`A7-EVC-P` 已选择
-  direct legal-open quality opportunity credit；当前下一步是 `A7-EVC-Q` prototype
-  implementation，而不是继续盲目调 coefficient。A3/A5 legality 继续持有权威，
-  HMoE redesign/M2 继续 held。
+  direct legal-open quality opportunity credit，且 `A7-EVC-Q` 已实现 focused
+  source/loss/diagnostic path；`A7-EVC-R` 已运行 bounded short opportunity learned
+  evidence：legal-open source counts 是 live 的，deterministic 仍为 `0` releases，
+  stochastic release steps 为 `3`、`44`、`10`，quality-window advantage 仍为负。
+  `A7-EVC-S` 随后测试 explicit state completion：`air_combat_c2_roe_v2` 暴露
+  legal/window age 与 readiness，open-window fire probability 上升，但 deterministic
+  probing 仍记录 `0` releases，quality-window advantage 仍为负。`A7-EVC-T`
+  已验证 fixed legal-open positives 可仅用 credit head 拟合成正 advantage，
+  `A7-EVC-U` 则显示 PPO+A7 global clipping 会压碎 credit-head effective
+  gradient budget，且 A7 value/delta gradients 在 shared actor/features 中冲突。
+  `A7-EVC-V` 现已实现 protected online credit-update contract：独立 detached-latent
+  credit-head value update、protected clip budget、positive-only delta alignment、
+  active config wiring 与 nonfinite-probe parity。8k observation 改善 credit
+  advantage 但继续 held，因此当前下一步是 update-window/curriculum diagnosis，
+  而不是继续盲目调 coefficient。
+  A3/A5 legality 继续持有权威，HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -125,7 +145,7 @@ releases，stochastic probing 仍过早发射。
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
-  通过 legal-open opportunity credit prototype 后，再重新讨论 M2
+  在 V protected-update repair 后进入 update-window/curriculum diagnosis；M2 继续 held
 
 ## 推荐阅读顺序
 

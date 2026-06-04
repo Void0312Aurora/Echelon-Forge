@@ -1,13 +1,26 @@
 # A7 Dispatch Queue
 
-Status: `2026-06-04` A7 is held after short projection learned evidence. The
+Status: `2026-06-04` A7 is held after explicit state-completion evidence. The
 objective contract, policy head, PPO auxiliary credit, config/diagnostics,
 focused validation, learned-evidence, closure/index-sync, target audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
 prototype slices have passed; `A7-EVC-N` has also passed as held learned
-evidence, `A7-EVC-O` has closed the projection-eligibility audit, and
-`A7-EVC-P` has selected the legal-open opportunity-credit contract. A7 remains
-held until the P contract is implemented and evaluated.
+evidence, `A7-EVC-O` has closed the projection-eligibility audit,
+`A7-EVC-P` has selected the legal-open opportunity-credit contract, and
+`A7-EVC-Q` has implemented it with focused validation. `A7-EVC-R` has now
+recorded bounded learned evidence: legal-open opportunity source counts are
+live, but learned timing remains held. `A7-EVC-S` has now completed the
+explicit state-completion probe: observability is improved, but deterministic
+mode remains `hold` and quality-window advantage remains negative. `A7-EVC-T`
+has now verified the value/policy breakpoint: fixed-batch offline credit-head
+fitting can flip legal-open positives to positive advantage, so the remaining
+fault is online update-path coupling. `A7-EVC-U` has now localized that fault:
+PPO does not directly overwrite the credit head, but shared PPO global clipping
+and shared actor/features representation coupling starve and destabilize A7
+credit learning. `A7-EVC-V` has now implemented the protected online credit
+update contract and passed structural gates plus an 8k observation, but A7
+remains held because deterministic probing still records `0` releases and
+legal-open credit advantage remains negative.
 
 Parent: [README.md](README.md). Task clusters:
 [a7_event_value_advantage_credit_head_task_clusters_20260604.md](a7_event_value_advantage_credit_head_task_clusters_20260604.md).
@@ -16,7 +29,7 @@ Parent: [README.md](README.md). Task clusters:
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-Q Legal-Open Opportunity Credit Prototype` | planned next | implementation worker; implement the P contract with focused source/loss/diagnostic tests before training. | `python/rl/policy_algo/first_event_hazard.py`, `python/rl/policy_algo/ppo_adaptive_kl.py`, `python/rl/support/nonfinite_probe.py`, focused tests, active config/diagnostics docs. | No broad reward tuning; no weakening A3/A5 masks; no raw shadow delta alignment; no HMoE/M2/doctrine/missile release; no learned-policy wave before focused gates. |
+| `A7-EVC-W Active Update Window Diagnosis` | planned next | main thread or diagnostics worker; explain why protected credit updates go inactive or remain insufficient after early training. | A7 docs first; optional diagnostics only after the failing window handoff is isolated. | No blind coefficient run; no formal long training; no HMoE/M2/doctrine/missile release; preserve A3/A5 one-shot legality as a hard gate. |
 
 ## Completed Dispatches
 
@@ -36,12 +49,18 @@ Parent: [README.md](README.md). Task clusters:
 | `A7-EVC-N Short Projection Learned Evidence` | pass; held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md): projection is enabled and logged, ordinary event-credit remains live, deterministic is still `0` releases, stochastic release steps are `2`, `47`, and `5`, and projected active rows stay `0.0`. | The next bounded work is O: explain why shadow-quality evidence does not reach active projected legal-open rows. |
 | `A7-EVC-O Projection Eligibility Root-Cause Audit` | pass; spawned P contract | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md): N training diagnostics have no accepted releases; deterministic probe reconstruction is deadline/prewindow only, while stochastic reconstruction has `3280` shadow-quality positives after early release. | The next bounded work is P: define legal-open opportunity credit that does not depend on sampling early accepted release. |
 | `A7-EVC-P Legal-Open Opportunity Credit Contract` | pass; spawned Q prototype | [legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md): selects `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` for real legal-open quality-window positives. | The next bounded work is Q: implement the source/loss/diagnostic path before another learned-policy wave. |
+| `A7-EVC-Q Legal-Open Opportunity Credit Prototype` | pass; spawned R learned evidence | [legal-open opportunity credit prototype](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md): implements `LEGAL_OPEN_QUALITY`, source metrics, nonfinite-probe mirroring, active config knobs, and focused tests. | R has since completed and holds learned behavior; the next bounded work is S. |
+| `A7-EVC-R Short Opportunity Learned Evidence` | pass; held outcome | [short opportunity learned evidence](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md): legal-open quality source counts are live in the r1 32k train, deterministic remains `0` releases, stochastic release steps are `3`, `44`, and `10`, and one-shot legality is preserved. | S has since tested explicit state completion; source starvation remains fixed but learned timing is still held. |
+| `A7-EVC-S Explicit State Completion Probe` | pass; held outcome | [explicit state completion probe](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md): `air_combat_c2_roe_v2` exposes legal/window age, readiness, range, and track-age fields; focused tests passed with `105 passed`; the 32k probe preserves one-shot legality but deterministic still records `0` releases. | The next bounded work is T: explain the value/advantage-to-policy coupling failure now that both source starvation and missing explicit window state are insufficient explanations. |
+| `A7-EVC-T Value/Policy Coupling Audit` | pass; breakpoint verified | [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md): fixed S batch has `1356` `LEGAL_OPEN_QUALITY` positives, initial legal-open advantage `-0.8536`, and credit-head-only offline fitting flips legal-open advantage positive. | The next bounded work is U: isolate the online update path that keeps the learned checkpoint negative despite local credit-head separability. |
+| `A7-EVC-U Online Update-Path Isolation` | pass; blocker localized | [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md): PPO-alone credit-head gradient is `0.0`; PPO+A7 global clipping reduces credit-head effective norm from about `0.4855` to `0.00689`; A7 value and delta-align gradients also conflict in shared actor/features. | The next bounded work is V: specify a decoupled A7 credit update contract before implementation. |
+| `A7-EVC-V Online Credit Update Contract` | pass; held outcome | [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md): adds detached-latent credit values, separate credit-head-only value update, protected clip budget, positive-only delta alignment, active config flags, and nonfinite-probe parity. The 8k observation proves the lane is live and improves legal-open credit advantage, but deterministic probing still records `0` releases. | The next bounded work is W: explain update-window/sample availability after the protected update contract is live. |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | Current projection credit is candidate-starved unless early accepted release is sampled; deterministic remains `0` releases and stochastic fires early. | `A7-EVC-Q` implements the P opportunity-credit contract and then records bounded learned evidence. |
+| A7 behavior acceptance | V repairs the protected credit update lane, but legal-open advantage remains negative and deterministic policy still chooses `hold`. | `A7-EVC-W` explains whether the remaining blocker is active-window starvation, curriculum sampling, replay/fixed positives, adaptive label scheduling, or broader training-loop structure. |
 
 ## Dispatch Packet Template
 

@@ -18,10 +18,18 @@ negative. The A7 target-construction audit has traced the structural blocker to
 missing shadow-quality target repair after early stochastic accepted release;
 `A7-EVC-J` has repaired that label-censoring path, but its 32k repair probe still
 leaves learned first-shot timing held. `A7-EVC-M` then implemented projected
-legal-open credit, and `A7-EVC-N` has evaluated it in a short learned run; A7
-still remains held because projection is enabled but active projected rows stay
-at `0.0`, deterministic probing remains `0` releases, and stochastic probing
-still fires early.
+legal-open credit, and `A7-EVC-N` evaluated it in a short learned run; projection
+remained candidate-starved. `A7-EVC-Q/R` then added and tested direct
+legal-open opportunity credit, and `A7-EVC-S` tested explicit state completion
+with `air_combat_c2_roe_v2`. `A7-EVC-T` then verified the value/policy
+breakpoint with an offline fixed-batch fit: legal-open positives are locally
+separable by the credit head, but the learned checkpoint remains negative/hold.
+`A7-EVC-U` then localized the online blocker to shared PPO global clipping plus
+shared actor/features coupling, while excluding direct PPO credit-head
+overwrite. `A7-EVC-V` has now repaired that update contract with a protected
+credit-head-only value lane and positive-only delta alignment. A7 still remains
+held: the 8k observation improves credit advantage, but deterministic probing
+still records `0` releases and legal-open advantage remains negative.
 
 ## Current Status
 
@@ -123,9 +131,26 @@ still fires early.
   has closed the root-cause audit: M projection is candidate-starved when train
   rollouts contain no accepted releases, because its `shadow_quality` source
   appears only after early sampled release. `A7-EVC-P` has selected direct
-  legal-open quality opportunity credit; the active next step is
-  `A7-EVC-Q` prototype implementation, not another blind coefficient-tuning run.
-  A3/A5 legality stays authoritative, and HMoE redesign/M2 remain held.
+  legal-open quality opportunity credit, and `A7-EVC-Q` has implemented the
+  focused source/loss/diagnostic path. `A7-EVC-R` has now run bounded short
+  opportunity learned evidence: legal-open source counts are live, deterministic
+  remains `0` releases, stochastic release steps are `3`, `44`, and `10`, and
+  quality-window advantage remains negative. `A7-EVC-S` then tested explicit
+  state completion: `air_combat_c2_roe_v2` exposes legal/window age and
+  readiness, and open-window fire probability rises, but deterministic probing
+  still records `0` releases and quality-window advantage remains negative.
+  `A7-EVC-T` verifies that fixed legal-open positives can be fit to positive
+  advantage with the credit head alone. `A7-EVC-U` then shows that PPO+A7
+  global clipping crushes credit-head effective gradient budget and that A7
+  value/delta gradients conflict in shared actor/features. `A7-EVC-V` now
+  implements the protected online credit-update contract: separate
+  detached-latent credit-head value update, protected clip budget,
+  positive-only delta alignment, active config wiring, and nonfinite-probe
+  parity. The 8k observation improves credit advantage but remains held, so the
+  active next step is update-window/curriculum diagnosis rather than another
+  blind coefficient-tuning run. A3/A5
+  legality stays authoritative, and
+  HMoE redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -155,7 +180,8 @@ still fires early.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through legal-open opportunity credit prototype before any M2 reconsideration
+  through update-window/curriculum diagnosis after the V protected-update
+  repair before any M2 reconsideration
 
 ## Recommended Reading Order
 

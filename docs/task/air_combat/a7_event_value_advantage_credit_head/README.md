@@ -26,7 +26,28 @@ stochastic probing still fires too early, and projection metrics show
 candidates are starved because the path only activates on `shadow_quality` rows
 after an early accepted release, while N's training diagnostics show no accepted
 release in the logged rollouts. `A7-EVC-P` has selected a direct legal-open
-opportunity-credit contract. The next bounded slice is its focused prototype.
+opportunity-credit contract, and `A7-EVC-Q` has implemented it with focused
+validation. `A7-EVC-R` has now run short opportunity learned evidence. R is
+valid evidence but still held: direct legal-open source counts are live in the
+learned train path, deterministic probing remains `0` releases, stochastic
+probing still releases early, and quality-window advantage remains negative.
+`A7-EVC-S` has now run an explicit state-completion experiment with
+`air_combat_c2_roe_v2`. S improves observability and raises open-window
+event-fire probability, but the learned event-credit advantage remains negative
+and deterministic mode remains `hold`. `A7-EVC-T` has now verified the
+value/policy coupling breakpoint: on the same S final-model rollout batch,
+offline supervised fitting can flip `LEGAL_OPEN_QUALITY` rows to positive
+advantage with the credit head alone. That moved the bounded next step to
+online update-path isolation rather than another blind coefficient-tuning run.
+`A7-EVC-U` has now isolated the online blocker: PPO does not directly
+overwrite the credit head, but the shared PPO global gradient clip and shared
+actor/features update contract starve and destabilize A7 credit learning.
+`A7-EVC-V` has implemented the online credit-update contract: A7 value credit
+now has a separate credit-head-only update lane, protected gradient clipping,
+positive-only delta-alignment gating, and nonfinite-probe parity. V passes as a
+structural repair and improves short-run credit advantage, but behavior remains
+held because deterministic probing still records `0` releases and legal-open
+credit advantage remains slightly negative.
 
 Language:
 
@@ -95,6 +116,12 @@ would have rewarded holding.
 | A7 short projection learned evidence | pass; held outcome | [Short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) validates r3 after projection-logger repairs: projection is enabled, ordinary A7 event-credit remains live, deterministic probing records `0` releases, stochastic probing releases at steps `2`, `47`, and `5`, and projected active rows remain `0.0`. | A7 is not accepted; the next question is why shadow-quality evidence does not reach active projected rows in the learned rollout/loss path. |
 | A7 projection eligibility audit | pass; spawned P | [Projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md) shows N training diagnostics have no accepted release, while stochastic probe reconstruction produces `3280` `shadow_quality` positives. | M projection is candidate-starved because it depends on early accepted release; next work should define legal-open opportunity credit that does not depend on sampling the failure mode. |
 | A7 legal-open opportunity contract | pass; spawned Q | [Legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md) selects `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` as a real legal-open quality-window positive source. | P is docs-only; implementation, training, and learned behavior remain held until Q focused gates pass. |
+| A7 legal-open opportunity prototype | pass; evaluated by R | [Legal-open opportunity credit prototype](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md) implements direct legal-open quality positives, source metrics, active config knobs, and focused tests. | Q proves the source/loss/diagnostic path only; R now evaluates learned behavior as held. |
+| A7 short opportunity learned evidence | pass; held outcome | [Short opportunity learned evidence](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md) records the r1 32k train and deterministic/stochastic probes after direct legal-open opportunity credit. | Source starvation is fixed, but deterministic remains `0` releases, stochastic still fires early, and quality-window advantage remains negative. |
+| A7 explicit state completion | pass; held outcome | [Explicit state completion probe](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md) adds `air_combat_c2_roe_v2`, exposes legal/window age and readiness fields, and runs a 32k learned probe. | Observability is improved, but deterministic remains `0` releases and quality-window advantage remains negative. |
+| A7 value/policy coupling audit | pass; breakpoint verified | [Value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md) adds an offline fixed-batch credit-head fit probe and shows `1356` legal-open positives can be fit from negative to positive advantage with the credit head alone. | The label/value object is locally fit-able; the remaining blocker is online joint-training/update coupling. |
+| A7 online update-path isolation | pass; blocker localized | [Online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md) adds a gradient/update diagnostic showing PPO-alone credit-head gradient is `0.0`, while PPO+A7 global clipping reduces credit-head effective norm from about `0.4855` to `0.00689`; A7 value and delta-align also conflict in shared actor/features. | The next fix should decouple A7 credit updates from shared PPO clipping and representation drift; this is not acceptance. |
+| A7 online credit update contract | pass; held outcome | [Online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md) adds detached-latent credit values, a separate credit-head-only value update, separate clip budget, positive-only delta alignment, active config flags, and nonfinite-probe parity. | The update contract is repaired, but 8k evidence still ends with deterministic `0` releases and negative legal-open advantage. |
 
 ## Scope
 
@@ -142,7 +169,12 @@ Out of scope:
 | `P13 Projection Learned Evidence` | Run short projected-credit learned-policy probe. | P12 focused gates pass. | Projection metrics, deterministic/stochastic timing, and one-shot discipline are recorded. | pass; held outcome |
 | `P14 Projection Eligibility Audit` | Diagnose why projection active rows remain zero in the learned run. | P13 evidence exists. | Rollout/loss handoff from shadow-quality labels to projected legal-open rows is explained before another training wave. | pass; spawned P |
 | `P15 Opportunity Credit Contract` | Define legal-open positive opportunity credit that does not depend on early accepted release. | P14 evidence exists. | Contract names target source, loss split, diagnostics, and rollback gates. | pass; spawned Q |
-| `P16 Opportunity Credit Prototype` | Implement legal-open opportunity credit from the P contract. | P15 contract exists. | Focused tests prove source construction, loss routing, diagnostics, and A3/A5 legality boundaries before training. | planned next |
+| `P16 Opportunity Credit Prototype` | Implement legal-open opportunity credit from the P contract. | P15 contract exists. | Focused tests prove source construction, loss routing, diagnostics, and A3/A5 legality boundaries before training. | pass; spawned R |
+| `P17 Short Opportunity Learned Evidence` | Run a bounded learned-policy probe after Q and compare source counts/timing against N. | P16 focused gates pass. | Evidence records legal-open quality source counts, deterministic/stochastic timing, one-shot discipline, and advantage signs. | pass; held outcome |
+| `P18 Explicit State Completion` | Test whether missing Markov state explains the held A7/R outcome. | P17 evidence exists. | V2 observation contract, tests, 32k train, and deterministic/stochastic probes are recorded. | pass; held outcome |
+| `P19 Coupling Audit` | Explain why non-starved visible positives move probability but not deterministic mode or advantage sign. | P18 evidence exists. | The breakpoint is verified: the fixed S batch is separable by the credit head, so the residual fault is online joint-training/update coupling. | pass; spawned update-path isolation |
+| `P20 Online Update-Path Isolation` | Isolate which online update component blocks the locally fit-able credit signal. | P19 evidence exists. | The blocker is localized to shared PPO global clipping plus shared actor/feature coupling; direct PPO credit-head overwrite is excluded. | pass; spawned update-contract work |
+| `P21 Online Credit Update Contract` | Decouple A7 credit value learning from shared PPO clipping and representation drift. | P20 blocker localized. | Separate credit-head-only update, positive-only delta alignment, active config wiring, nonfinite-probe parity, and short learned observation are recorded. | pass; held outcome |
 
 ## Task Clusters
 
@@ -166,6 +198,18 @@ Out of scope:
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md)
 - Legal-open opportunity credit contract:
   [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md)
+- Legal-open opportunity credit prototype:
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md)
+- Short opportunity learned evidence:
+  [a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md)
+- Explicit state completion probe:
+  [a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md)
+- Value/policy coupling audit:
+  [a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md)
+- Online update-path isolation:
+  [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md)
+- Online credit update contract:
+  [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md)
 
 ## Outputs And Evidence
 
@@ -213,10 +257,23 @@ Current outputs:
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md).
 - Legal-open opportunity credit contract:
   [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.md).
+- Legal-open opportunity credit prototype:
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.md).
+- Short opportunity learned evidence:
+  [a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.md).
+- Explicit state completion probe:
+  [a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.md).
+- Value/policy coupling audit:
+  [a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md).
+- Online update-path isolation:
+  [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md).
+- Online credit update contract:
+  [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md).
 
 Planned follow-on outputs:
 
-- Legal-open opportunity-credit prototype.
+- Update-window/curriculum diagnosis after V repairs the online credit update
+  contract but leaves behavior held.
 
 ## Acceptance Gate
 
@@ -237,13 +294,12 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: run `A7-EVC-Q Legal-Open Opportunity Credit Prototype`.
-  `A7-EVC-P` selects direct `LEGAL_OPEN_QUALITY` positives on real legal-open
-  quality-window rows; Q must implement that source without weakening A3/A5
-  masks or raw-shadow delta boundaries.
-- The repair direction is legal-state counterfactual projection with a stronger
-  separation between raw shadow opportunity learning and legal-state policy
-  distillation, not another blind coefficient-only training run.
+- Immediate next step: diagnose why active positive update windows disappear
+  after the protected credit-head update lane is live.
+- The repaired V contract rules out shared PPO global clipping as the active
+  write-surface blocker, but not credit-sample availability, curriculum
+  scheduling, replay/fixed positive batches, or adaptive label scheduling as
+  follow-on mechanisms.
 - Adaptive label weight scheduling remains a guardrail candidate, not the
   primary repair.
 - HMoE hierarchical computation remains an issue-board item unless A7 evidence

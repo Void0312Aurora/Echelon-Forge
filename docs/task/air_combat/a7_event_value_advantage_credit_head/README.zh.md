@@ -21,7 +21,25 @@ projection enabled 的情况下 `a7/evc_proj_active_count_mean=0.0`。`A7-EVC-O`
 已关闭 projection-eligibility audit：projection candidates 饥饿，因为该路径只在
 early accepted release 后的 `shadow_quality` rows 上激活，而 N training diagnostics
 显示 logged rollouts 中没有 accepted release。`A7-EVC-P` 已选择 direct legal-open
-opportunity-credit contract。下一有界切片是它的 focused prototype。
+opportunity-credit contract，且 `A7-EVC-Q` 已通过 focused validation 实现该合同。
+`A7-EVC-R` 已运行 short opportunity learned evidence。R 是有效证据但继续 held：
+direct legal-open source counts 已进入 learned train path，deterministic probing
+仍为 `0` releases，stochastic probing 仍过早 release，quality-window advantage
+仍为负。`A7-EVC-S` 已运行显式状态补全实验，使用
+`air_combat_c2_roe_v2` 暴露 legal/window age 与 readiness。S 改善了
+observability，并提高 open-window event-fire probability，但 learned
+event-credit advantage 仍为负，deterministic mode 仍是 `hold`。`A7-EVC-T`
+已经验证 value/policy coupling 断点：在同一 S final-model rollout batch 上，
+离线 supervised fitting 只放开 credit head 就能把 `LEGAL_OPEN_QUALITY` rows
+翻成正 advantage。这把有界下一步转向 online update-path isolation，而不是另一轮
+blind coefficient-tuning run。`A7-EVC-U` 已隔离 online blocker：PPO 不会直接
+覆盖 credit head，但 shared PPO global gradient clip 与 shared actor/features
+update contract 会饿死并扰动 A7 credit learning。`A7-EVC-V` 已实现 online
+credit-update contract：A7 value credit 现在通过 detached latent features、独立
+optimizer step 与独立 clip budget 只更新 `hybrid_event_credit_head`，delta-align
+也改为 positive-only gated。V 作为结构修复通过，并改善短训 credit advantage，
+但 behavior 仍 held：deterministic probing 仍记录 `0` releases，legal-open
+credit advantage 仍略为负。
 
 语言：
 
@@ -85,6 +103,12 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | A7 short projection learned evidence | pass；held outcome | [Short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 在 projection-logger 修复后验证 r3：projection 已启用，ordinary A7 event-credit 仍 live，deterministic probing 为 `0` releases，stochastic probing release steps 为 `2`、`47`、`5`，projected active rows 保持 `0.0`。 | A7 不能 accepted；下一问题是 shadow-quality evidence 为什么没有在 learned rollout/loss path 中进入 active projected rows。 |
 | A7 projection eligibility audit | pass；spawned P | [Projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 显示 N training diagnostics 中没有 accepted release，而 stochastic probe reconstruction 可产生 `3280` 个 `shadow_quality` positives。 | M projection candidate-starved，因为它依赖 early accepted release；下一步应定义不依赖采样 failure mode 的 legal-open opportunity credit。 |
 | A7 legal-open opportunity contract | pass；spawned Q | [Legal-open opportunity credit contract](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md) 选择 `A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY` 作为真实 legal-open quality-window positive source。 | P 只是 docs-only；implementation、training 与 learned behavior 继续 held，直到 Q focused gates 通过。 |
+| A7 legal-open opportunity prototype | pass；已由 R 评估 | [Legal-open opportunity credit prototype](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md) 实现 direct legal-open quality positives、source metrics、active config knobs 与 focused tests。 | Q 只证明 source/loss/diagnostic path；R 已将 learned behavior 评估为 held。 |
+| A7 short opportunity learned evidence | pass；held outcome | [Short opportunity learned evidence](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md) 记录 direct legal-open opportunity credit 后的 r1 32k train 与 deterministic/stochastic probes。 | Source starvation 已修复，但 deterministic 仍为 `0` releases，stochastic 仍过早发射，quality-window advantage 仍为负。 |
+| A7 explicit state completion | pass；held outcome | [Explicit state completion probe](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md) 增加 `air_combat_c2_roe_v2`，显式暴露 legal/window age 与 readiness，并运行 32k learned probe。 | Observability 已改善，但 deterministic 仍为 `0` releases，quality-window advantage 仍为负。 |
+| A7 value/policy coupling audit | pass；breakpoint verified | [Value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md) 增加 fixed-batch 离线 credit-head fit probe，并证明 `1356` 个 legal-open positives 可由 credit head 从负 advantage 拟合到正 advantage。 | label/value 对象本地可拟合；剩余 blocker 是在线联合训练/update coupling。 |
+| A7 online update-path isolation | pass；blocker localized | [Online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md) 增加 gradient/update diagnostic：PPO-alone credit-head gradient 为 `0.0`，但 PPO+A7 global clipping 将 credit-head effective norm 从约 `0.4855` 压到 `0.00689`；A7 value 与 delta-align 还会在 shared actor/features 中冲突。 | 下一修复应将 A7 credit update 与 shared PPO clipping / representation drift 解耦；这不是 acceptance。 |
+| A7 online credit update contract | pass；held outcome | [Online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md) 增加 detached-latent credit values、独立 credit-head-only value update、独立 clip budget、positive-only delta alignment、active config flags 与 nonfinite-probe parity。 | update contract 已修复，但 8k evidence 仍以 deterministic `0` releases 与负 legal-open advantage 结束。 |
 
 ## 范围
 
@@ -126,7 +150,12 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
 | `P13 Projection Learned Evidence` | 运行 short projected-credit learned-policy probe。 | P12 focused gates pass。 | 记录 projection metrics、deterministic/stochastic timing 与 one-shot discipline。 | pass；held outcome |
 | `P14 Projection Eligibility Audit` | 诊断 learned run 中 projection active rows 为什么为 0。 | P13 evidence exists。 | 在下一轮 training 前解释 shadow-quality labels 到 projected legal-open rows 的 rollout/loss handoff。 | pass；spawned P |
 | `P15 Opportunity Credit Contract` | 定义不依赖 early accepted release 的 legal-open positive opportunity credit。 | P14 evidence exists。 | Contract 命名 target source、loss split、diagnostics 与 rollback gates。 | pass；spawned Q |
-| `P16 Opportunity Credit Prototype` | 按 P 合同实现 legal-open opportunity credit。 | P15 contract exists。 | Focused tests 在 training 前证明 source construction、loss routing、diagnostics 与 A3/A5 legality boundaries。 | planned next |
+| `P16 Opportunity Credit Prototype` | 按 P 合同实现 legal-open opportunity credit。 | P15 contract exists。 | Focused tests 在 training 前证明 source construction、loss routing、diagnostics 与 A3/A5 legality boundaries。 | pass；spawned R |
+| `P17 Short Opportunity Learned Evidence` | Q 后运行 bounded learned-policy probe，并与 N 的 source counts/timing 对照。 | P16 focused gates pass。 | Evidence 记录 legal-open quality source counts、deterministic/stochastic timing、one-shot discipline 与 advantage signs。 | pass；held outcome |
+| `P18 Explicit State Completion` | 测试缺失 Markov state 是否解释 A7/R held outcome。 | P17 evidence exists。 | 记录 v2 observation contract、tests、32k train 与 deterministic/stochastic probes。 | pass；held outcome |
+| `P19 Coupling Audit` | 解释 non-starved visible positives 为什么移动 probability 却没有翻转 deterministic mode 或 advantage sign。 | P18 evidence exists。 | 断点已验证：固定 S batch 可由 credit head 分离；剩余故障是在线联合训练/update coupling。 | pass；spawned update-path isolation |
+| `P20 Online Update-Path Isolation` | 隔离哪个 online update component 阻断本地可拟合 credit signal。 | P19 evidence exists。 | blocker 定位到 shared PPO global clipping 与 shared actor/feature coupling；排除 direct PPO credit-head overwrite。 | pass；spawned update-contract work |
+| `P21 Online Credit Update Contract` | 将 A7 credit value learning 从 shared PPO clipping 与 representation drift 中解耦。 | P20 blocker localized。 | 独立 credit-head-only update、positive-only delta alignment、active config wiring、nonfinite-probe parity 与短训观察已记录。 | pass；held outcome |
 
 ## 任务簇
 
@@ -150,6 +179,18 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md)
 - Legal-open opportunity credit contract：
   [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md)
+- Legal-open opportunity credit prototype：
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md)
+- Short opportunity learned evidence：
+  [a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md)
+- Explicit state completion probe：
+  [a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md)
+- Value/policy coupling audit：
+  [a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md)
+- Online update-path isolation：
+  [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md)
+- Online credit update contract：
+  [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md)
 
 ## 输出与证据
 
@@ -195,10 +236,23 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md)。
 - Legal-open opportunity credit contract：
   [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_contract_20260604.zh.md)。
+- Legal-open opportunity credit prototype：
+  [a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md](a7_event_value_advantage_credit_head_legal_open_opportunity_credit_prototype_20260604.zh.md)。
+- Short opportunity learned evidence：
+  [a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md](a7_event_value_advantage_credit_head_short_opportunity_learned_evidence_20260604.zh.md)。
+- Explicit state completion probe：
+  [a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md](a7_event_value_advantage_credit_head_explicit_state_completion_probe_20260604.zh.md)。
+- Value/policy coupling audit：
+  [a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md)。
+- Online update-path isolation：
+  [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md)。
+- Online credit update contract：
+  [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md)。
 
 计划 follow-on 输出：
 
-- Legal-open opportunity-credit prototype。
+- V 修复 online credit update contract 但 behavior 仍 held 之后的
+  update-window/curriculum diagnosis。
 
 ## 验收门
 
@@ -214,12 +268,11 @@ A7 只有在以下条件满足后才能 accepted：
 
 ## 残余与下一步
 
-- 立即下一步：运行 `A7-EVC-Q Legal-Open Opportunity Credit Prototype`。`A7-EVC-P`
-  选择在真实 legal-open quality-window rows 上直接提供 `LEGAL_OPEN_QUALITY`
-  positives；Q 必须在不削弱 A3/A5 masks、也不突破 raw-shadow delta 边界的前提下实现该 source。
-- 修复方向是 legal-state counterfactual projection，并更强地区分 raw shadow
-  opportunity learning 与 legal-state policy distillation；不应回到盲目
-  coefficient-only training。
+- 立即下一步：诊断 protected credit-head update lane 已接通后，active positive
+  update windows 为什么消失或仍不足。
+- V 已排除 shared PPO global clipping 作为当前写面 blocker，但尚未排除
+  credit-sample availability、curriculum scheduling、replay/fixed positive
+  batches 或 adaptive label scheduling 等后续机制。
 - Adaptive label weight scheduling 仍是 guardrail candidate，不是主要 repair。
 - HMoE hierarchical computation 保持 issue-board item；只有当 A7 学到正确 credit
   signs 后仍出现可归因于 policy coupling 的失败，才把它升级为 active blocker。
