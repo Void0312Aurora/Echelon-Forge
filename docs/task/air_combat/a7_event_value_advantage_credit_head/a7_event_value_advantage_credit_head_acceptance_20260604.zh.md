@@ -1,9 +1,9 @@
 # A7 验收门
 
-状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N`
+状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O`
 implementation、validation、learned-evidence、index-sync、target-audit、
 shadow-repair、projection-audit、projection-contract 与 projected legal-open
-prototype slices 已评估。A7 继续 held。
+prototype/projection-eligibility slices 已评估。A7 继续 held。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -30,7 +30,8 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Projection contract | Shadow evidence 可以在不做 closed-mask delta alignment 的前提下映射为 legal-open positive credit。 | pass；已由 M 实现：[legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive value/delta alignment。 |
 | Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | pass；N 后 held：[projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 实现 `first_event_projection.py`、PPO projection loss、metrics、config knobs 与 focused tests。 |
 | Projection learned evidence | Projected credit 改善 deterministic/stochastic first-shot timing，同时保持 one-shot legality。 | held：[short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection 已启用且 one-shot legality 保持，但 deterministic 仍为 `0` releases，stochastic release steps 为 `2`、`47`、`5`，projection active rows 保持 `0.0`。 |
-| Projection eligibility audit | 下一轮 training wave 前解释 projection active rows。 | planned next：`A7-EVC-O Projection Eligibility Root-Cause Audit`。 |
+| Projection eligibility audit | 下一轮 training wave 前解释 projection active rows。 | pass：[projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 找到 candidate starvation：M projection 可在 `shadow_quality` rows 存在时 activate，但 N train diagnostics 没有 accepted releases，因此没有 projection candidates。 |
+| Legal-open opportunity contract | 下一轮 implementation/training wave 前定义 non-starved legal-open opportunity credit。 | planned next：`A7-EVC-P Legal-Open Opportunity Credit Contract`。 |
 | Overclaim refusal | M2、HMoE redesign、missile authority、`2v2`、self-play 与 doctrine 继续 held。 | required |
 
 ## 失败条件
@@ -41,7 +42,8 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 - advantage head 只是 diagnostic-only，不能影响 event logits 或 policy updates；
 - repaired shadow credit 仍未把 legal-open quality states 推成 positive `fire_once`
   advantage；
-- projection 已启用，但 learned-run loss path 没有收到 projected active rows；
+- projection 继续 candidate-starved，因为 active positive credit 依赖 early accepted
+  release 采样；
 - implementation 把 raw closed-mask `shadow_quality` rows 直接对齐到 event logits，
   而不是先投影到 legal-open decision surface；
 - deterministic 再次在 authorization/contact 后近立即发射；
@@ -186,5 +188,20 @@ event-credit activity：`a7/event_credit_loss=0.322098`、
 Deterministic probing 记录 `0` requests 与 `0` releases，quality-window
 advantage 为 `-0.866`。Stochastic probing 记录 `3/3` authorized one-shot
 releases，steps 为 `2`、`47`、`5`，且 zero unauthorized/repeat/budget violations。
-这保持了 one-shot legality，但不满足 behavior acceptance。下一有界分发项为
+这保持了 one-shot legality，但不满足 behavior acceptance。这触发了
 `A7-EVC-O Projection Eligibility Root-Cause Audit`。
+
+`A7-EVC-O` projection eligibility root-cause audit：
+
+```bash
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
+pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+```
+
+观察结果：compileall 通过；focused projection/nonfinite tests 通过，`2 passed`；
+post-sync combined A6/A7/HMoE/active-config pytest 通过，`52 passed`，docs/code
+diff check 通过。审计将 candidate starvation 与 unsupported projection rejection
+区分开：N train diagnostics 没有 logged accepted releases；stochastic probe
+reconstruction 只有在 early sampled release 后才产生 `3280` 个 `shadow_quality`
+positives。接下来的有界分发项是
+`A7-EVC-P Legal-Open Opportunity Credit Contract`。

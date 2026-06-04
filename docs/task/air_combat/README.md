@@ -119,10 +119,12 @@ still fires early.
   pressure. `A7-EVC-N` has now run the short projection learned evidence:
   projection is enabled and ordinary event-credit remains live, but projected
   active rows stay at `0.0`; deterministic probing still records `0` releases,
-  and stochastic probing releases early at steps `2`, `47`, and `5`. The active
-  next step is `A7-EVC-O` projection eligibility root-cause audit, not another
-  blind coefficient-tuning run. A3/A5 legality stays authoritative, and HMoE
-  redesign/M2 remain held.
+  and stochastic probing releases early at steps `2`, `47`, and `5`. `A7-EVC-O`
+  has closed the root-cause audit: M projection is candidate-starved when train
+  rollouts contain no accepted releases, because its `shadow_quality` source
+  appears only after early sampled release. The active next step is
+  `A7-EVC-P` legal-open opportunity credit, not another blind coefficient-tuning
+  run. A3/A5 legality stays authoritative, and HMoE redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -152,7 +154,7 @@ still fires early.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through projection eligibility root-cause audit before any M2 reconsideration
+  through legal-open opportunity credit contract before any M2 reconsideration
 
 ## Recommended Reading Order
 

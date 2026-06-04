@@ -14,6 +14,9 @@ implementation 与验证。Projection 后 learned-policy behavior 已由 `A7-EVC
 Projection Learned Evidence` 评估，并继续 held：deterministic probing 记录 `0`
 releases，stochastic probing release steps 为 `2`、`47`、`5`，新修复的 projection
 diagnostics 显示 32k run 结束时 `a7/evc_proj_active_count_mean=0.0`。
+`A7-EVC-O Projection Eligibility Root-Cause Audit` 已关闭该分裂：N 中 projection
+path candidate-starved，因为 logged training rollouts 没有 accepted release，因此没有
+`shadow_quality` projection candidates。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -56,9 +59,12 @@ diagnostics 显示 32k run 结束时 `a7/evc_proj_active_count_mean=0.0`。
 - `A7-EVC-N Short Projection Learned Evidence` 已完成为 held evidence：
   projection path 已启用并能在日志中观测，ordinary event-credit 仍 live，但
   projected active rows 为 `0.0`，learned behavior 未达到 timing acceptance。
-- 立即下一有界切片是 `A7-EVC-O Projection Eligibility Root-Cause Audit`：检查
-  shadow-quality evidence 为什么没有在真实 learned-run rollout/loss path 中变成
-  active projected legal-open rows。
+- `A7-EVC-O Projection Eligibility Root-Cause Audit` 已完成：N TensorBoard 的 logged
+  diagnostics 中 accepted releases 为 `0`；deterministic probe reconstruction 为
+  `deadline=1080` / `prewindow=800`；stochastic probe reconstruction 则只在 early
+  sampled release 后出现 `shadow_quality=3280`。
+- 立即下一有界切片是 `A7-EVC-P Legal-Open Opportunity Credit Contract`：定义不依赖
+  early accepted release 采样的 positive legal-open opportunity source。
 - HMoE hierarchical computation gap 被记录为 architecture risk：A7 不应只依赖 hard-routed
   subexpert behavior；但当前 A7 failure 已经在被删失的 target construction 与 event-credit
   advantage sign 上可见。
@@ -80,14 +86,15 @@ diagnostics 显示 32k run 结束时 `a7/evc_proj_active_count_mean=0.0`。
 | Legal-state projection contract | pass；已由 M 实现 | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive credit，并禁止 raw closed-mask delta alignment。 | 合同已作为 focused prototype 实现；仍不证明 learned-policy behavior。 |
 | Projected legal-open credit prototype | pass；N 后 held | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 增加 `first_event_projection.py`、projection coeffs、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests。 | M 只证明机制和 gradient path；N 显示 learned behavior 继续 held。 |
 | Short projection learned evidence | pass；held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection-logger 修复后的 r3 32k train 与 deterministic/stochastic probes。 | Projection 已启用，但 active projected rows 保持 `0.0`；deterministic 仍为 `0` releases，stochastic 仍过早发射。 |
+| Projection eligibility root-cause audit | pass；spawned P | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md) 将 no-candidate starvation 与 unsupported projection rejection 分离。 | M projection 仍是 post-early-release repair path；下一合同必须在采样 failure mode 前提供 legal-open opportunity credit。 |
 | HMoE relation | watch item | issue board 记录 flat subexpert input 与 combat-family collapse。 | 除非正确 credit signs 已学到但 policy coupling 仍以可归因于 hierarchy gap 的方式失败，否则 A7 不修 HMoE。 |
 
 ## 立即下一步
 
-运行 `A7-EVC-O Projection Eligibility Root-Cause Audit`：N 显示 projected legal-open
-training path 已启用并完成 logging，但 learned run 中没有 projected rows 变为 active。
-下一有界问题是真实 rollout/loss path 为什么没有把 shadow-quality evidence handoff 到
-projected loss。
+运行 `A7-EVC-P Legal-Open Opportunity Credit Contract`：O 显示 projected legal-open
+training path 除非采样 early accepted release，否则会 candidate-starved。下一有界问题是如何
+在不削弱 A3/A5 masks、也不对 raw closed-mask rows 做 alignment 的前提下，增加 positive
+legal-open opportunity credit。
 
 ## 验证快照
 
@@ -161,6 +168,18 @@ projected loss。
   quality-window A7 advantage mean 为 `-0.866`。
 - A7-EVC-N stochastic probe 记录 `3/3` authorized one-shot releases，steps 为
   `2`、`47`、`5`，且 `0` unauthorized/repeat/budget violations。
+- A7-EVC-O diagnostics：`FirstEventCreditLoss` 现在记录 projection-candidate 与关键
+  source counts；normal PPO 与 nonfinite-probe train paths 记录
+  `a7/evc_proj_candidate_count_mean`、`a7/evc_src_shadow_count_mean`、
+  `a7/evc_src_deadline_count_mean`、`a7/evc_src_early_count_mean` 与
+  `a7/evc_src_pre_count_mean`。
+- A7-EVC-O evidence review：N TensorBoard logged diagnostic snapshots 中
+  `diag/a5_release_executed_count=0` 且 `diag/a5_fire_once_accepted_count=0`；
+  全部 `31` 条 train records 中 `a7/evc_proj_active_count_mean=0` 且
+  `a7/evc_proj_unsupported_count_mean=0`。
+- A7-EVC-O probe reconstruction：deterministic N 产生 `1880` 个 active labels，
+  来源为 `deadline=1080` 与 `prewindow=800`；stochastic N 产生 `3291` 个 active
+  labels，来源为 `shadow_quality=3280`、`prewindow=8` 与 `early_accepted=3`。
 
 ## Held Items
 

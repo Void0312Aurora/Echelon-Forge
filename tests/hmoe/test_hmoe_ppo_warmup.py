@@ -618,9 +618,14 @@ class HMoEPPOWarmupTests(unittest.TestCase):
                 advantage_mean=-0.1,
                 advantage_abs_mean=0.1,
                 projection_active_count=3,
+                projection_candidate_count=4,
                 projection_unsupported_count=1,
                 projection_advantage_mean=0.75,
                 projection_delta_mean=0.25,
+                source_shadow_count=4,
+                source_deadline_count=2,
+                source_early_accepted_count=1,
+                source_prewindow_count=5,
             )
 
         model._first_event_credit_loss = _projection_loss
@@ -631,9 +636,14 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertAlmostEqual(float(logged["a7/evc_proj_value_coef"]), 0.5)
         self.assertAlmostEqual(float(logged["a7/evc_proj_delta_coef"]), 0.25)
         self.assertEqual(float(logged["a7/evc_proj_active_count_mean"]), 3.0)
+        self.assertEqual(float(logged["a7/evc_proj_candidate_count_mean"]), 4.0)
         self.assertEqual(float(logged["a7/evc_proj_unsupported_count_mean"]), 1.0)
         self.assertAlmostEqual(float(logged["a7/evc_proj_advantage_mean"]), 0.75)
         self.assertAlmostEqual(float(logged["a7/evc_proj_delta_mean"]), 0.25)
+        self.assertEqual(float(logged["a7/evc_src_shadow_count_mean"]), 4.0)
+        self.assertEqual(float(logged["a7/evc_src_deadline_count_mean"]), 2.0)
+        self.assertEqual(float(logged["a7/evc_src_early_count_mean"]), 1.0)
+        self.assertEqual(float(logged["a7/evc_src_pre_count_mean"]), 5.0)
 
     def test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
         env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])
@@ -685,8 +695,10 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         credit_loss = model._first_event_credit_loss(_RolloutData)
         self.assertIsNotNone(credit_loss)
         assert credit_loss is not None
+        self.assertEqual(credit_loss.projection_candidate_count, 1)
         self.assertEqual(credit_loss.projection_active_count, 1)
         self.assertEqual(credit_loss.projection_unsupported_count, 0)
+        self.assertEqual(credit_loss.source_shadow_count, 1)
         self.assertGreater(float(credit_loss.projection_advantage_mean), 1.0)
         self.assertGreater(float(credit_loss.loss.detach().cpu().item()), 0.0)
 

@@ -1,9 +1,9 @@
 # A7 Acceptance Gate
 
-Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N`
+Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O`
 implementation, validation, learned-evidence, index-sync, target-audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
-prototype slices evaluated. A7 remains held.
+prototype/projection-eligibility slices evaluated. A7 remains held.
 
 Parent: [README.md](README.md).
 
@@ -31,7 +31,8 @@ surface.
 | Projection contract | Shadow evidence can be mapped to legal-open positive credit without closed-mask delta alignment. | pass; implemented by M: [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive value/delta alignment. |
 | Projection implementation | Projected legal-open credit is implemented and tested before another learned-policy wave. | pass; held after N: [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) implements `first_event_projection.py`, PPO projection loss, metrics, config knobs, and focused tests. |
 | Projection learned evidence | Projected credit improves deterministic/stochastic first-shot timing while preserving one-shot legality. | held: [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) records projection enabled and one-shot legality preserved, but deterministic remains `0` releases, stochastic releases at steps `2`, `47`, and `5`, and projection active rows stay `0.0`. |
-| Projection eligibility audit | Projection active rows are explained before another training wave. | planned next: `A7-EVC-O Projection Eligibility Root-Cause Audit`. |
+| Projection eligibility audit | Projection active rows are explained before another training wave. | pass: [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md) finds candidate starvation: M projection can activate for `shadow_quality` rows, but N train diagnostics have no accepted releases and therefore no projection candidates. |
+| Legal-open opportunity contract | Non-starved legal-open opportunity credit is defined before another implementation/training wave. | planned next: `A7-EVC-P Legal-Open Opportunity Credit Contract`. |
 | Overclaim refusal | M2, HMoE redesign, missile authority, `2v2`, self-play, and doctrine remain held. | required |
 
 ## Failure Conditions
@@ -43,8 +44,8 @@ A7 remains held or must be re-scoped if:
   policy updates;
 - repaired shadow credit still fails to move legal-open quality states into
   positive `fire_once` advantage;
-- projection is enabled but no projected active rows reach the learned-run loss
-  path;
+- projection remains candidate-starved because active positive credit depends on
+  sampling early accepted release;
 - the implementation aligns raw closed-mask `shadow_quality` rows directly to
   event logits instead of projecting them to a legal-open decision surface;
 - deterministic fires near-immediately after authorization/contact again;
@@ -196,5 +197,20 @@ Deterministic probing records `0` requests and `0` releases with
 quality-window advantage `-0.866`. Stochastic probing records `3/3`
 authorized one-shot releases at steps `2`, `47`, and `5`, with zero
 unauthorized/repeat/budget violations. This preserves one-shot legality but
-does not satisfy behavior acceptance. The next bounded dispatch is
+does not satisfy behavior acceptance. This triggered
 `A7-EVC-O Projection Eligibility Root-Cause Audit`.
+
+`A7-EVC-O` projection eligibility root-cause audit:
+
+```bash
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
+pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+```
+
+Observed outcome: compileall passed; focused projection/nonfinite tests passed
+with `2 passed`; post-sync combined A6/A7/HMoE/active-config pytest passed with
+`52 passed`, and docs/code diff check passed. The audit separates candidate
+starvation from unsupported projection rejection: N train diagnostics logged no
+accepted releases, while stochastic probe reconstruction produces `3280`
+`shadow_quality` positives only after early sampled release. The next bounded
+dispatch is `A7-EVC-P Legal-Open Opportunity Credit Contract`.

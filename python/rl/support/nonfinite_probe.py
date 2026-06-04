@@ -666,9 +666,14 @@ class NonFiniteTrainingProbe:
             first_event_credit_positive_fracs = []
             first_event_credit_advantage_means = []
             first_event_credit_projection_active_counts = []
+            first_event_credit_projection_candidate_counts = []
             first_event_credit_projection_unsupported_counts = []
             first_event_credit_projection_advantage_means = []
             first_event_credit_projection_delta_means = []
+            first_event_credit_source_shadow_counts = []
+            first_event_credit_source_deadline_counts = []
+            first_event_credit_source_early_counts = []
+            first_event_credit_source_prewindow_counts = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -814,6 +819,9 @@ class NonFiniteTrainingProbe:
                         first_event_credit_projection_active_counts.append(
                             int(getattr(first_event_credit_loss, "projection_active_count", 0))
                         )
+                        first_event_credit_projection_candidate_counts.append(
+                            int(getattr(first_event_credit_loss, "projection_candidate_count", 0))
+                        )
                         first_event_credit_projection_unsupported_counts.append(
                             int(getattr(first_event_credit_loss, "projection_unsupported_count", 0))
                         )
@@ -822,6 +830,18 @@ class NonFiniteTrainingProbe:
                         )
                         first_event_credit_projection_delta_means.append(
                             float(getattr(first_event_credit_loss, "projection_delta_mean", 0.0))
+                        )
+                        first_event_credit_source_shadow_counts.append(
+                            int(getattr(first_event_credit_loss, "source_shadow_count", 0))
+                        )
+                        first_event_credit_source_deadline_counts.append(
+                            int(getattr(first_event_credit_loss, "source_deadline_count", 0))
+                        )
+                        first_event_credit_source_early_counts.append(
+                            int(getattr(first_event_credit_loss, "source_early_accepted_count", 0))
+                        )
+                        first_event_credit_source_prewindow_counts.append(
+                            int(getattr(first_event_credit_loss, "source_prewindow_count", 0))
                         )
                         loss = loss + first_event_credit_loss.loss
                     tracer.check("train.loss", loss)
@@ -973,12 +993,44 @@ class NonFiniteTrainingProbe:
                     ),
                 )
                 self.logger.record(
+                    "a7/evc_proj_candidate_count_mean",
+                    (
+                        float(np.mean(first_event_credit_projection_candidate_counts))
+                        if first_event_credit_projection_candidate_counts
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
                     "a7/evc_proj_unsupported_count_mean",
                     (
                         float(np.mean(first_event_credit_projection_unsupported_counts))
                         if first_event_credit_projection_unsupported_counts
                         else 0.0
                     ),
+                )
+                self.logger.record(
+                    "a7/evc_src_shadow_count_mean",
+                    float(np.mean(first_event_credit_source_shadow_counts))
+                    if first_event_credit_source_shadow_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_deadline_count_mean",
+                    float(np.mean(first_event_credit_source_deadline_counts))
+                    if first_event_credit_source_deadline_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_early_count_mean",
+                    float(np.mean(first_event_credit_source_early_counts))
+                    if first_event_credit_source_early_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_pre_count_mean",
+                    float(np.mean(first_event_credit_source_prewindow_counts))
+                    if first_event_credit_source_prewindow_counts
+                    else 0.0,
                 )
                 self.logger.record(
                     "a7/evc_proj_advantage_mean",

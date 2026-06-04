@@ -17,7 +17,10 @@ after projection is now evaluated by `A7-EVC-N Short Projection Learned
 Evidence` and remains held: deterministic probing records `0` releases,
 stochastic probing releases at steps `2`, `47`, and `5`, and the newly repaired
 projection diagnostics show `a7/evc_proj_active_count_mean=0.0` at the end of
-the 32k run.
+the 32k run. `A7-EVC-O Projection Eligibility Root-Cause Audit` has now closed
+that split: the projection path is candidate-starved in N because logged
+training rollouts contain no accepted release and therefore no `shadow_quality`
+projection candidates.
 
 Parent: [README.md](README.md).
 
@@ -66,9 +69,14 @@ Parent: [README.md](README.md).
   the projection path is enabled and visible in logs, ordinary event-credit
   remains live, but projected active rows are `0.0` and learned behavior does
   not improve enough for timing acceptance.
-- The immediate next bounded slice is `A7-EVC-O Projection Eligibility
-  Root-Cause Audit`: inspect why shadow-quality evidence does not become active
-  projected legal-open rows in the real learned-run rollout/loss path.
+- `A7-EVC-O Projection Eligibility Root-Cause Audit` is complete: N
+  TensorBoard has `0` accepted releases in logged diagnostics, deterministic
+  probe reconstruction is `deadline=1080` / `prewindow=800`, and stochastic
+  probe reconstruction shows `shadow_quality=3280` only after early sampled
+  release.
+- The immediate next bounded slice is `A7-EVC-P Legal-Open Opportunity Credit
+  Contract`: define a positive legal-open opportunity source that is not
+  conditional on sampling early accepted release.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
   A7 should not rely solely on hard-routed subexpert behavior, but the current
   A7 failure is already visible in the censored target construction and
@@ -91,15 +99,16 @@ Parent: [README.md](README.md).
 | Legal-state projection contract | pass; implemented by M | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive credit and forbids raw closed-mask delta alignment. | The contract is now implemented as a focused prototype; it still does not prove learned-policy behavior. |
 | Projected legal-open credit prototype | pass; held after N | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and gradient path only; N shows learned behavior still held. |
 | Short projection learned evidence | pass; held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) records the r3 32k train and deterministic/stochastic probes after projection-logger repair. | Projection is enabled but active projected rows stay at `0.0`; deterministic remains `0` releases and stochastic still fires early. |
+| Projection eligibility root-cause audit | pass; spawned P | [projection eligibility root-cause audit](a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.md) separates no-candidate starvation from unsupported projection rejection. | M projection remains a post-early-release repair path; next contract must provide legal-open opportunity credit before the failure mode is sampled. |
 | HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Run `A7-EVC-O Projection Eligibility Root-Cause Audit`: N shows the projected
-legal-open training path is enabled and logged, but no projected rows become
-active in the learned run. The next bounded question is why the real
-rollout/loss path does not hand shadow-quality evidence into the projected
-loss.
+Run `A7-EVC-P Legal-Open Opportunity Credit Contract`: O shows the projected
+legal-open training path is candidate-starved unless early accepted release is
+sampled. The next bounded question is how to add positive legal-open
+opportunity credit without weakening A3/A5 masks or aligning raw closed-mask
+rows.
 
 ## Validation Snapshot
 
@@ -187,6 +196,19 @@ loss.
   `25.2%` / `26.2%`, and quality-window A7 advantage mean `-0.866`.
 - A7-EVC-N stochastic probe records `3/3` authorized one-shot releases at
   steps `2`, `47`, and `5`, with `0` unauthorized/repeat/budget violations.
+- A7-EVC-O diagnostics: `FirstEventCreditLoss` now records
+  projection-candidate and key source counts; normal PPO and nonfinite-probe
+  train paths log `a7/evc_proj_candidate_count_mean`,
+  `a7/evc_src_shadow_count_mean`, `a7/evc_src_deadline_count_mean`,
+  `a7/evc_src_early_count_mean`, and `a7/evc_src_pre_count_mean`.
+- A7-EVC-O evidence review: N TensorBoard has `diag/a5_release_executed_count=0`
+  and `diag/a5_fire_once_accepted_count=0` in all logged diagnostic snapshots;
+  `a7/evc_proj_active_count_mean=0` and
+  `a7/evc_proj_unsupported_count_mean=0` across all `31` train records.
+- A7-EVC-O probe reconstruction: deterministic N produces `1880` active
+  labels from `deadline=1080` and `prewindow=800`; stochastic N produces
+  `3291` active labels with `shadow_quality=3280`, `prewindow=8`, and
+  `early_accepted=3`.
 
 ## Held Items
 

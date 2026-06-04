@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Optional
 
 import numpy as np
@@ -16,6 +17,9 @@ from stable_baselines3.common.vec_env import VecEnv
 from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
 from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
+    A6_FIRST_EVENT_SOURCE_DEADLINE,
+    A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_PREWINDOW,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
     build_first_event_hazard_labels,
@@ -763,6 +767,27 @@ class AdaptiveKLPPO(PPO):
             positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
             negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
         )
+        source_stats: dict[str, int] = {}
+        if source is not None:
+            source_flat = source.to(device=q_values.device).reshape(-1).long()
+            active_flat = active.to(device=q_values.device).reshape(-1).to(dtype=th.bool)
+            weight_flat = weight.to(device=q_values.device).reshape(-1)
+            source_active = active_flat & (weight_flat > 0.0)
+
+            def _source_count(value: int) -> int:
+                return int((source_active & (source_flat == int(value))).sum().detach().cpu().item())
+
+            source_stats = {
+                "source_shadow_count": _source_count(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY),
+                "source_deadline_count": _source_count(A6_FIRST_EVENT_SOURCE_DEADLINE),
+                "source_early_accepted_count": _source_count(A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED),
+                "source_prewindow_count": _source_count(A6_FIRST_EVENT_SOURCE_PREWINDOW),
+            }
+            base_loss = replace(
+                base_loss,
+                projection_candidate_count=source_stats["source_shadow_count"],
+                **source_stats,
+            )
         if (
             not self.a7_event_credit_legal_projection_enabled
             or source is None
@@ -791,7 +816,9 @@ class AdaptiveKLPPO(PPO):
                 positive_frac=base_loss.positive_frac,
                 advantage_mean=base_loss.advantage_mean,
                 advantage_abs_mean=base_loss.advantage_abs_mean,
+                projection_candidate_count=int(shadow_active.sum().detach().cpu().item()),
                 projection_unsupported_count=int(shadow_active.sum().detach().cpu().item()),
+                **source_stats,
             )
         projected_active = projection.active.to(device=q_values.device).reshape(-1).to(dtype=th.bool)
         if int(projected_active.sum().detach().cpu().item()) <= 0:
@@ -807,7 +834,9 @@ class AdaptiveKLPPO(PPO):
                 positive_frac=base_loss.positive_frac,
                 advantage_mean=base_loss.advantage_mean,
                 advantage_abs_mean=base_loss.advantage_abs_mean,
+                projection_candidate_count=int(shadow_active.sum().detach().cpu().item()),
                 projection_unsupported_count=int(projection.unsupported_count),
+                **source_stats,
             )
 
         projected_distribution = self.policy.get_distribution(projection.observations)
@@ -867,9 +896,11 @@ class AdaptiveKLPPO(PPO):
             advantage_mean=base_loss.advantage_mean,
             advantage_abs_mean=base_loss.advantage_abs_mean,
             projection_active_count=int(projection_loss.active_count),
+            projection_candidate_count=int(shadow_active.sum().detach().cpu().item()),
             projection_unsupported_count=int(projection.unsupported_count),
             projection_advantage_mean=projection_advantage_mean,
             projection_delta_mean=projection_delta_mean,
+            **source_stats,
         )
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
@@ -908,9 +939,14 @@ class AdaptiveKLPPO(PPO):
         first_event_credit_positive_fracs = []
         first_event_credit_advantage_means = []
         first_event_credit_projection_active_counts = []
+        first_event_credit_projection_candidate_counts = []
         first_event_credit_projection_unsupported_counts = []
         first_event_credit_projection_advantage_means = []
         first_event_credit_projection_delta_means = []
+        first_event_credit_source_shadow_counts = []
+        first_event_credit_source_deadline_counts = []
+        first_event_credit_source_early_counts = []
+        first_event_credit_source_prewindow_counts = []
         clip_fractions = []
 
         approx_kl_divs = []
@@ -995,6 +1031,9 @@ class AdaptiveKLPPO(PPO):
                     first_event_credit_projection_active_counts.append(
                         int(first_event_credit_loss.projection_active_count)
                     )
+                    first_event_credit_projection_candidate_counts.append(
+                        int(first_event_credit_loss.projection_candidate_count)
+                    )
                     first_event_credit_projection_unsupported_counts.append(
                         int(first_event_credit_loss.projection_unsupported_count)
                     )
@@ -1003,6 +1042,14 @@ class AdaptiveKLPPO(PPO):
                     )
                     first_event_credit_projection_delta_means.append(
                         float(first_event_credit_loss.projection_delta_mean)
+                    )
+                    first_event_credit_source_shadow_counts.append(int(first_event_credit_loss.source_shadow_count))
+                    first_event_credit_source_deadline_counts.append(int(first_event_credit_loss.source_deadline_count))
+                    first_event_credit_source_early_counts.append(
+                        int(first_event_credit_loss.source_early_accepted_count)
+                    )
+                    first_event_credit_source_prewindow_counts.append(
+                        int(first_event_credit_loss.source_prewindow_count)
                     )
                     loss = loss + first_event_credit_loss.loss
 
@@ -1123,12 +1170,44 @@ class AdaptiveKLPPO(PPO):
                 ),
             )
             self.logger.record(
+                "a7/evc_proj_candidate_count_mean",
+                (
+                    float(np.mean(first_event_credit_projection_candidate_counts))
+                    if first_event_credit_projection_candidate_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
                 "a7/evc_proj_unsupported_count_mean",
                 (
                     float(np.mean(first_event_credit_projection_unsupported_counts))
                     if first_event_credit_projection_unsupported_counts
                     else 0.0
                 ),
+            )
+            self.logger.record(
+                "a7/evc_src_shadow_count_mean",
+                float(np.mean(first_event_credit_source_shadow_counts))
+                if first_event_credit_source_shadow_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_deadline_count_mean",
+                float(np.mean(first_event_credit_source_deadline_counts))
+                if first_event_credit_source_deadline_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_early_count_mean",
+                float(np.mean(first_event_credit_source_early_counts))
+                if first_event_credit_source_early_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_pre_count_mean",
+                float(np.mean(first_event_credit_source_prewindow_counts))
+                if first_event_credit_source_prewindow_counts
+                else 0.0,
             )
             self.logger.record(
                 "a7/evc_proj_advantage_mean",

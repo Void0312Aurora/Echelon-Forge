@@ -69,9 +69,14 @@ class FirstEventCreditLoss:
     advantage_mean: float
     advantage_abs_mean: float
     projection_active_count: int = 0
+    projection_candidate_count: int = 0
     projection_unsupported_count: int = 0
     projection_advantage_mean: float = 0.0
     projection_delta_mean: float = 0.0
+    source_shadow_count: int = 0
+    source_deadline_count: int = 0
+    source_early_accepted_count: int = 0
+    source_prewindow_count: int = 0
 
 
 def current_first_event_curriculum_coef(
