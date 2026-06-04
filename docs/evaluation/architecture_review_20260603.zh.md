@@ -123,16 +123,18 @@ python/training/（消费所有内容；不被更低层导入）
 
 ## 结构性问题（需要重构）
 
-### 1. 训练诊断回调：God Class 反模式
+### 1. 训练诊断回调：P1 owner split 已闭合
 
 | 文件:行 | 问题 | 严重性 |
 |---------|------|--------|
-| `python/training_callbacks.py:34-778` | `CMODiagnosticsCallback` 仍是较大的单一 callback class，混合 basic reward/instrument scalar logging、terminal/preterm reward windows、cooperative/stateful event-window aggregation 与 policy/HMoE/action/A5/A6/leader/reward/runway helper orchestration。P1-D1/D2/D3/D4/D5/D6/D7/D8 已将 policy-distribution、HMoE stat、action、leader、step reward-term、A6 event-window info、A5 event info 和 runway/gear 计算移到 `python/training/diagnostics.py`，但完整 callback split 仍未完成。 | **高** |
-| `python/training_callbacks.py:643-776` | `_on_step()` 仍是很长的多域诊断方法。 | **高** |
-| `python/training_callbacks.py` 初始化路径 | `__init__` 与 `_on_training_start` 重置了部分重叠的 cooperative/HMoE 状态。此前称 `_record_event_diagnostics` 也重置相同变量，当前源码不支持该说法。 | 中 |
-| 内联解释密度 | 对关键 RL diagnostics 基础设施而言，本文件局部解释仍偏少；精确注释密度应在重新定义计数规则后再引用。 | 中 |
+| `python/training_callbacks.py:33-212` | `CMODiagnosticsCallback` 不再是 diagnostics calculation/state owner。它现在只保留 SB3 lifecycle wiring、logging cadence、兼容 wrapper，并将 calculation/state 委托给 `python/training/diagnostics.py`。 | P1 **closed** |
+| `python/training_callbacks.py:176-212` | `_on_step()` 现在是较小的 orchestrator：收集 SB3 locals，将 event-window observation 交给 `TrainingEventDiagnosticsWindow`，再调用聚焦 logging helpers。 | 低 |
+| `python/training/diagnostics.py:138-218`；`800-1277` | Basic step scalar logging、action/effective-action selection、terminal/preterm windows 与 cooperative aggregation 已进入 helper functions/classes，并有直接测试。该 helper module 仍较大，应继续靠测试和边界维护，而不是塞回 callback。 | 中 |
+| 内联解释密度 | 精确 comment-density figures 应重新定义计数口径后再引用；旧 callback-specific severity 已不符合当前 owner split。 | 低 |
 
-**同一文件中的反例**：`ScenarioCurriculumCallback` 和 `RewardPlateauEarlyStopCallback` 明显更聚焦，说明 `CMODiagnosticsCallback` 的宽形态是局部结构债，而不是项目整体不会写小 callback。
+**当前边界**：P1 已闭合 callback owner 问题。后续如继续处理，应聚焦
+helper-module maintainability 或 typed diagnostics contracts，而不是继续挂
+"held P1-D callback split"。
 
 ### 2. WorldBatchVecEnv 分叉类层次
 
@@ -199,7 +201,9 @@ python/training/（消费所有内容；不被更低层导入）
 | Python 自定义异常 | project Python/tooling 口径至少 3 个 | 没有完整生产异常层级；至少一个自定义异常并非 test-only |
 | 裸 `except:` | 0 | 积极——团队有意识地避免了这一点 |
 
-**关键风险**：诊断回调失败后训练静默继续（`training_callbacks.py` 有 40+ 个宽泛捕获）。当步骤/重置异常发生时，环境 rollout 静默降低数据质量。
+**关键风险**：Diagnostics helpers 仍使用较多 defensive broad catches
+（`training_callbacks.py` 当前有 4 个 `except Exception` site；`python/training/diagnostics.py`
+约 45 个）。当 step/reset 异常发生时，environment rollout 仍可能静默降低数据质量。
 
 ### 9. P1-B 之后的场景验证残余
 
@@ -222,7 +226,7 @@ python/training/（消费所有内容；不被更低层导入）
 | 可观测性 | **良好** | HMoE 路由/参数统计、每阶段计时仪表、GPU 实验统计、非有限探针 |
 | 关注点分离 | **总体良好** | ECS（数据 vs 逻辑）、编译器 vs 运行时、世界模型隔离、CPU/GPU 参考-实验分离 |
 | 代码重复 | **需要关注** | 两个 env class 有显著重叠，BC loss 有多分支重复，factory 类型初始化块仍集中。 |
-| 文件大小纪律 | **混合** | 多个关键文件偏大：`runtime_facade.cpp` 与 `tests/world_batch/test_world_batch_vec_env.py` 均为 3092 行；`world_batch_vec_env.py`、`default_unit_factory.h`、`training_callbacks.py` 也偏大。 |
+| 文件大小纪律 | **混合** | 多个关键文件偏大：`runtime_facade.cpp` 与 `tests/world_batch/test_world_batch_vec_env.py` 均为 3092 行；`world_batch_vec_env.py` 与 `default_unit_factory.h` 也偏大。P1 已将 `training_callbacks.py` 降到 413 行，同时将 diagnostics helpers 移入 1295 行的 `python/training/diagnostics.py`。 |
 | 代码库清洁度 | **良好但依赖口径** | 代码/工具 scope 的 TODO/FIXME/HACK 较少，当前 grep 未发现裸 `except:`。全仓/文档/archive 口径更高，因此不能不加限定地称为 entire codebase。 |
 | 注释密度 | **需要关注** | training callback 与 world-batch env 代码相对复杂度解释不足。精确密度数字应重新计算后再引用。 |
 | 测试覆盖率 | **强但不完整** | tracked Python test 文件 227 个、活跃 JSON contract 86 个、architecture test 文件 86 个、smoke/contract suites 都是强证据；但不能证明完整 physics/domain/training correctness。 |
@@ -234,7 +238,7 @@ python/training/（消费所有内容；不被更低层导入）
 ### P0（立即处理——高影响、低风险）
 
 1. **提取共享 world-batch env support**——减少单/协作环境之间的重复。将共享观察维度常量提取到可配置 dataclass 或聚焦 helper module 中。
-2. **继续拆分 `CMODiagnosticsCallback`**——P1-D1/D2/D3/D4/D5/D6/D7/D8 已把 policy-distribution、HMoE、action、leader、step reward、A6 event-window info、A5 event info 与 runway/gear diagnostics 抽到 `python/training/diagnostics.py`；下一批应提取 basic reward/instrument scalar logging，以及 terminal/preterm 与 cooperative/stateful event-window aggregation 作为可组合 helper 或 callback。
+2. **将 P1 diagnostics callback split 视为已闭合**——`CMODiagnosticsCallback` 已将 diagnostics calculation/state 委托给 `python/training/diagnostics.py`；后续如有需要，应转向 helper-module maintainability 或 typed diagnostics contracts。
 3. **在 `dreamer.py` 中提取共享的 `_compute_bc_loss()`**——消除多种 `actor_input` 分支中重复的 BC loss weighting。
 
 ### P1（本周期内——中等影响）
@@ -253,7 +257,7 @@ python/training/（消费所有内容；不被更低层导入）
 12. **在场景编译器中使用 `logging.warning()`** 代替 `print()`。
 13. **提取 `_HybridActionDistribution`** 到独立文件。
 14. **去重 `hmoe_routing.py` 和 `policies.py` 之间的 `authorized_first_shot`** 逻辑。
-15. **为 `training_callbacks.py` 和 `world_batch_vec_env.py` 添加内联文档**（0.1-0.3% 注释密度对基础设施代码来说是不可接受的）。
+15. **为剩余宽基础设施文件添加内联文档**，例如 `world_batch_vec_env.py` 以及复杂 diagnostics helper 区段；具体 comment-density 需先重新定义统计口径。
 
 ### P3（长期——研究质量）
 

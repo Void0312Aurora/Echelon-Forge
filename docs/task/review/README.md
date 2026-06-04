@@ -18,7 +18,7 @@ Status: active review record.
 - [Project Implementation Review And Action Assessment 2026-06-01](project_implementation_review_20260601.zh.md) (中文)
 - [Documentation System Readiness Review 2026-06-01](documentation_system_readiness_review_20260601.md) ([中文](documentation_system_readiness_review_20260601.zh.md))
 - [Engineering Governance P0](engineering_governance_p0/README.md): active remediation slice for CI lint gates, smoke dependency constraints, C++ warning policy, and version alignment.
-- [Engineering Governance P1](engineering_governance_p1/README.md): active partial remediation slice for stale architecture guard repair and centralized scenario compiler shape validation.
+- [Engineering Governance P1](engineering_governance_p1/README.md): closed local-pass remediation slice for stale architecture guard repair, scenario compiler shape validation, adapter capability probing convergence, and diagnostics callback owner split.
 
 ## Domain Reviews
 

@@ -148,8 +148,9 @@ gpu
 
 ### 3.2 大文件仍然存在
 
-本轮用 `wc -l` 抽查，仍有多个大文件；P1-D8 后 `python/training_callbacks.py`
-仍为 977 行：
+本轮用 `wc -l` 抽查，仍有多个大文件；P1-D 闭合后
+`python/training_callbacks.py` 已降至 413 行，原 diagnostics state/calculation
+迁入 `python/training/diagnostics.py`（1295 行）：
 
 | 文件 | 行数 |
 | --- | ---: |
@@ -159,7 +160,8 @@ gpu
 | `src/content/unit_definition_loader.cpp` | 1686 |
 | `src/models/core/default_unit_factory.h` | 1580 |
 | `src/systems/combat/damage_system.h` | 1525 |
-| `python/training_callbacks.py` | 1197 |
+| `python/training/diagnostics.py` | 1295 |
+| `python/training_callbacks.py` | 413 |
 | `src/runtime/contracts/world_batch_contracts.h` | 1316 |
 | `src/core/engine/world_batch_runtime.cpp` | 1285 |
 

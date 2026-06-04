@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from typing import Any
 
 import numpy as np
@@ -133,6 +133,107 @@ def record_reward_term_diagnostics(
                     pass
         if vals:
             logger.record(f"diag/rew_{key}", float(np.asarray(vals, dtype=np.float32).mean()))
+
+
+def record_basic_step_diagnostics(
+    *,
+    logger: Any,
+    obs: Any,
+    rewards: Any,
+) -> None:
+    r_mean = _safe_mean(rewards)
+    if r_mean is not None:
+        logger.record("diag/reward_mean", r_mean)
+
+    if not (isinstance(obs, dict) and "instruments" in obs):
+        return
+    try:
+        inst = np.asarray(obs["instruments"], dtype=np.float32)
+    except Exception:
+        return
+    if inst.ndim == 1:
+        inst = inst.reshape(1, -1)
+    if inst.ndim != 2 or inst.shape[1] < 10:
+        return
+
+    logger.record("diag/ias_mean", float(inst[:, 0].mean()))
+    logger.record("diag/alt_baro_mean", float(inst[:, 2].mean()))
+    logger.record("diag/aoa_mean", float(inst[:, 5].mean()))
+    logger.record("diag/pitch_mean", float(inst[:, 7].mean()))
+    logger.record("diag/roll_mean", float(inst[:, 8].mean()))
+
+    if inst.shape[1] >= 42:
+        ils = inst[:, -4:]
+        logger.record("diag/ils_valid_frac", float((ils[:, 0] > 0.5).mean()))
+        logger.record("diag/ils_loc_abs_mean", float(np.abs(ils[:, 1]).mean()))
+
+
+def _coerce_instrument_array(obs: Any) -> np.ndarray | None:
+    if not (isinstance(obs, dict) and "instruments" in obs):
+        return None
+    try:
+        inst_arr = np.asarray(obs["instruments"], dtype=np.float32)
+        if inst_arr.ndim == 1:
+            inst_arr = inst_arr.reshape(1, -1)
+        return inst_arr
+    except Exception:
+        return None
+
+
+def _coerce_action_array(actions: Any) -> np.ndarray | None:
+    if actions is None:
+        return None
+    try:
+        action_arr = np.asarray(actions, dtype=np.float32)
+        if action_arr.ndim == 1:
+            action_arr = action_arr.reshape(1, -1)
+        return action_arr
+    except Exception:
+        return None
+
+
+def _coerce_effective_action_array(infos: Any) -> np.ndarray | None:
+    if not (isinstance(infos, (list, tuple)) and infos):
+        return None
+    eff_rows = []
+    for info in infos:
+        if not isinstance(info, dict) or "effective_action" not in info:
+            return None
+        try:
+            eff_rows.append(np.asarray(info["effective_action"], dtype=np.float32).reshape(-1))
+        except Exception:
+            return None
+    if not eff_rows:
+        return None
+    try:
+        return np.stack(eff_rows, axis=0)
+    except Exception:
+        return None
+
+
+def action_array_for_diagnostics(*, actions: Any, infos: Any) -> np.ndarray | None:
+    effective_action_arr = _coerce_effective_action_array(infos)
+    if effective_action_arr is not None:
+        return effective_action_arr
+    return _coerce_action_array(actions)
+
+
+def _coerce_reward_array(rewards: Any) -> np.ndarray | None:
+    if rewards is None:
+        return None
+    try:
+        return np.asarray(rewards, dtype=np.float32).reshape(-1)
+    except Exception:
+        return None
+
+
+def _coerce_done_array(dones: Any) -> np.ndarray | None:
+    if dones is None:
+        return None
+    try:
+        return np.asarray(dones, dtype=bool).reshape(-1)
+    except Exception:
+        return None
 
 
 def record_runway_gear_diagnostics(
@@ -696,13 +797,496 @@ def record_hmoe_policy_diagnostics(
     return int(num_timesteps) + int(log_every_timesteps)
 
 
+class TrainingEventDiagnosticsWindow:
+    def __init__(
+        self,
+        *,
+        terminal_reward_keys: tuple[str, ...],
+        preterm_window_steps: int,
+    ) -> None:
+        self.terminal_reward_keys = tuple(terminal_reward_keys)
+        self.preterm_window_steps = max(4, int(preterm_window_steps))
+        self.histories: list[deque] = []
+        self.reset_for_training(1)
+
+    def reset_for_training(self, n_envs: int) -> None:
+        self.histories = [deque(maxlen=self.preterm_window_steps) for _ in range(max(1, int(n_envs)))]
+        self.reset_window()
+
+    def reset_window(self) -> None:
+        self.episodes_window = 0
+        self.term_counts_window: dict[str, int] = defaultdict(int)
+        if not hasattr(self, "term_counts_total"):
+            self.term_counts_total: dict[str, int] = defaultdict(int)
+        self.failure_window = 0
+        self.terminal_reward_window: dict[str, list[float]] = defaultdict(list)
+        self.preterm_stats_window: dict[str, list[float]] = defaultdict(list)
+        self.coop_world_done_window = 0
+        self.coop_world_success_window = 0
+        self.coop_shared_reset_window = 0
+        self.coop_timeout_window = 0
+        self.coop_role_episode_counts_window: dict[str, int] = defaultdict(int)
+        self.coop_role_success_counts_window: dict[str, int] = defaultdict(int)
+        self.coop_role_shared_reset_counts_window: dict[str, int] = defaultdict(int)
+        self.coop_role_term_counts_window: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.coop_role_reward_window: dict[str, list[float]] = defaultdict(list)
+        self.coop_role_length_window: dict[str, list[float]] = defaultdict(list)
+        self.coop_role_waypoint_index_window: dict[str, list[float]] = defaultdict(list)
+        self.coop_role_waypoint_progress_window: dict[str, list[float]] = defaultdict(list)
+        self.coop_world_min_progress_window: list[float] = []
+        self.coop_world_max_progress_window: list[float] = []
+        self.coop_world_progress_gap_window: list[float] = []
+        self.coop_world_slot_seen: dict[int, set[int]] = defaultdict(set)
+        self.coop_world_slot_success: dict[int, bool] = defaultdict(bool)
+        self.coop_world_slot_timeout: dict[int, bool] = defaultdict(bool)
+        self.coop_world_slot_progress_values: dict[int, list[float]] = defaultdict(list)
+
+    @staticmethod
+    def is_failure_reason(reason: str) -> bool:
+        if reason.startswith("success"):
+            return False
+        if reason == "combat_win":
+            return False
+        if reason in ("timeout", "running"):
+            return False
+        return True
+
+    def infer_termination_reason(self, info: dict) -> str:
+        if not isinstance(info, dict):
+            return "done_unknown"
+
+        tr = info.get("termination_reason")
+        if isinstance(tr, str) and tr.strip():
+            return normalize_diagnostic_key(tr)
+
+        rt = info.get("reward_terms")
+        if isinstance(rt, dict):
+            try:
+                if float(rt.get("nan_guard", 0.0)) > 0.0:
+                    return "nan_guard"
+            except Exception:
+                pass
+            if "waypoint_success_bonus" in rt:
+                try:
+                    if float(rt.get("waypoint_success_bonus", 0.0)) > 0.0:
+                        return "success_waypoint"
+                except Exception:
+                    pass
+            if "objective_bonus" in rt:
+                try:
+                    if float(rt.get("objective_bonus", 0.0)) > 0.0:
+                        return "success_objective"
+                except Exception:
+                    pass
+            if "off_runway_terminate_penalty" in rt:
+                return "off_runway_terminate"
+            if "gear_collapse_penalty" in rt:
+                return "gear_collapse"
+            if "failfast_penalty" in rt:
+                return "failfast"
+            if "crash_penalty" in rt:
+                return "crash"
+
+        ms = info.get("mission_status")
+        if ms is not None:
+            try:
+                term = float(ms[3])
+                if term > 0.5:
+                    return "success"
+                if term < -0.5:
+                    return "failure_unknown"
+            except Exception:
+                pass
+
+        if bool(info.get("TimeLimit.truncated", False)) or bool(info.get("truncated", False)):
+            return "timeout"
+        return "done_unknown"
+
+    @staticmethod
+    def extract_terminal_inst(info: dict) -> np.ndarray | None:
+        if not isinstance(info, dict):
+            return None
+        term_obs = info.get("terminal_observation", None)
+        if isinstance(term_obs, dict) and ("instruments" in term_obs):
+            try:
+                arr = np.asarray(term_obs["instruments"], dtype=np.float32).reshape(-1)
+                if arr.size > 0:
+                    return arr
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def make_snapshot(inst_row: Any, action_row: Any, reward_scalar: Any) -> dict[str, float] | None:
+        snap = {}
+        if inst_row is not None:
+            try:
+                inst = np.asarray(inst_row, dtype=np.float32).reshape(-1)
+            except Exception:
+                inst = None
+            if inst is not None and inst.size >= 11:
+                snap["ias"] = float(inst[0])
+                if inst.size > 3:
+                    snap["alt_agl"] = float(inst[3])
+                if inst.size > 5:
+                    snap["aoa"] = float(inst[5])
+                if inst.size > 6:
+                    snap["beta"] = float(inst[6])
+                if inst.size > 7:
+                    snap["pitch"] = float(inst[7])
+                if inst.size > 8:
+                    snap["roll"] = float(inst[8])
+                if inst.size > 10:
+                    snap["g"] = float(inst[10])
+                if inst.size > 14:
+                    snap["yaw_rate"] = float(inst[14])
+
+        if action_row is not None:
+            try:
+                action = np.asarray(action_row, dtype=np.float32).reshape(-1)
+            except Exception:
+                action = None
+            if action is not None and action.size > 3:
+                snap["throttle"] = float(action[3])
+            mode = action_mode_from_width(0 if action is None else int(action.size))
+            if action is not None and mode == "full" and action.size > 8:
+                brake_raw = float(max(float(action[7]), float(action[8])))
+                snap["brake"] = float(np.clip((brake_raw - 0.5) * 2.0, 0.0, 1.0))
+            columns = combat_action_columns(mode)
+            if action is not None and columns is not None and action.size > max(columns.values()):
+                snap["radar_active"] = float(action[columns["radar_active"]] > 0.5)
+                snap["master_arm"] = float(action[columns["master_arm"]] > 0.5)
+                snap["fire_weapon"] = float(action[columns["fire_weapon"]] > 0.5)
+                snap["fire_gun"] = float(action[columns["fire_gun"]] > 0.5)
+                snap["tms_up"] = float(action[columns["tms_up"]] > 0.5)
+                if mode == "air_combat_hybrid_v1":
+                    snap["weapon_select_id"] = float(
+                        int(np.clip(round(float(action[columns["weapon_select"]])), 0, 7))
+                    )
+                else:
+                    snap["weapon_select_id"] = float(
+                        int(np.clip(float(action[columns["weapon_select"]]), 0.0, 1.0) * 7.0)
+                    )
+
+        if reward_scalar is not None:
+            try:
+                snap["reward"] = float(reward_scalar)
+            except Exception:
+                pass
+        return snap if snap else None
+
+    def record_terminal_reward_terms(self, info: dict) -> None:
+        if not isinstance(info, dict):
+            return
+        rt = info.get("reward_terms")
+        if not isinstance(rt, dict):
+            return
+        for key in self.terminal_reward_keys:
+            if key not in rt:
+                continue
+            try:
+                self.terminal_reward_window[key].append(float(rt[key]))
+            except Exception:
+                continue
+
+    def record_preterm_window(self, hist: deque) -> None:
+        if not hist:
+            return
+        snap_list = list(hist)
+        self.preterm_stats_window["window_len_steps"].append(float(len(snap_list)))
+
+        def _values(name: str):
+            vals = []
+            for snap in snap_list:
+                if name in snap:
+                    try:
+                        vals.append(float(snap[name]))
+                    except Exception:
+                        continue
+            return vals
+
+        alt = _values("alt_agl")
+        if alt:
+            self.preterm_stats_window["min_alt_agl_m"].append(float(np.min(alt)))
+            self.preterm_stats_window["final_alt_agl_m"].append(float(alt[-1]))
+
+        roll = _values("roll")
+        if roll:
+            self.preterm_stats_window["max_abs_roll_deg"].append(float(np.max(np.abs(roll))))
+        pitch = _values("pitch")
+        if pitch:
+            self.preterm_stats_window["max_abs_pitch_deg"].append(float(np.max(np.abs(pitch))))
+        aoa = _values("aoa")
+        if aoa:
+            self.preterm_stats_window["max_abs_aoa_deg"].append(float(np.max(np.abs(aoa))))
+        beta = _values("beta")
+        if beta:
+            self.preterm_stats_window["max_abs_beta_deg"].append(float(np.max(np.abs(beta))))
+        yaw_rate = _values("yaw_rate")
+        if yaw_rate:
+            self.preterm_stats_window["max_abs_yaw_rate_deg_s"].append(float(np.max(np.abs(yaw_rate))))
+        g_vals = _values("g")
+        if g_vals:
+            self.preterm_stats_window["max_abs_g"].append(float(np.max(np.abs(g_vals))))
+        throttle = _values("throttle")
+        if throttle:
+            self.preterm_stats_window["mean_throttle"].append(float(np.mean(throttle)))
+        brake = _values("brake")
+        if brake:
+            self.preterm_stats_window["mean_brake"].append(float(np.mean(brake)))
+        for switch_name in ("radar_active", "master_arm", "fire_weapon", "fire_gun"):
+            vals = _values(switch_name)
+            if vals:
+                self.preterm_stats_window[f"mean_{switch_name}"].append(float(np.mean(vals)))
+        weapon_select = _values("weapon_select_id")
+        if weapon_select:
+            self.preterm_stats_window["mean_weapon_select_id"].append(float(np.mean(weapon_select)))
+
+    @staticmethod
+    def coop_role_name(info: dict) -> str | None:
+        if not isinstance(info, dict):
+            return None
+        role = str(info.get("formation_role_id", "") or "").strip()
+        entity = str(info.get("entity_name", "") or "").strip()
+        if role:
+            return role
+        if entity:
+            return entity
+        return None
+
+    def record_cooperative_episode(self, info: dict, reason: str) -> None:
+        if not isinstance(info, dict):
+            return
+        world_index = info.get("world_index", None)
+        slot_index = info.get("slot_index", None)
+        slots_per_world = info.get("slots_per_world", None)
+        if world_index is None or slot_index is None:
+            return
+        try:
+            world_idx = int(world_index)
+            slot_idx = int(slot_index)
+            expected_slots = max(1, int(slots_per_world)) if slots_per_world is not None else 1
+        except Exception:
+            return
+
+        role_name = self.coop_role_name(info)
+        ms = info.get("mission_status")
+        if role_name:
+            self.coop_role_episode_counts_window[role_name] += 1
+            ep = info.get("episode", {})
+            if isinstance(ep, dict):
+                try:
+                    self.coop_role_reward_window[role_name].append(float(ep.get("r", 0.0)))
+                except Exception:
+                    pass
+                try:
+                    self.coop_role_length_window[role_name].append(float(ep.get("l", 0.0)))
+                except Exception:
+                    pass
+            if ms is not None:
+                try:
+                    arr = np.asarray(ms, dtype=np.float32).reshape(-1)
+                except Exception:
+                    arr = None
+                if arr is not None:
+                    if arr.size >= 2:
+                        try:
+                            self.coop_role_waypoint_index_window[role_name].append(float(arr[1]))
+                        except Exception:
+                            pass
+                    if arr.size >= 3:
+                        try:
+                            waypoint_count = float(arr[2])
+                            progress = float(arr[1]) / waypoint_count if waypoint_count > 0.5 else 0.0
+                            self.coop_role_waypoint_progress_window[role_name].append(progress)
+                        except Exception:
+                            pass
+            if bool(float(info.get("shared_world_reset", 0.0)) > 0.5):
+                self.coop_role_shared_reset_counts_window[role_name] += 1
+            if str(reason).strip():
+                self.coop_role_term_counts_window[role_name][str(reason)] += 1
+
+        success = False
+        if ms is not None:
+            try:
+                arr = np.asarray(ms, dtype=np.float32).reshape(-1)
+                if arr.size >= 4 and float(arr[3]) > 0.5:
+                    success = True
+            except Exception:
+                success = False
+            else:
+                if arr.size >= 3:
+                    try:
+                        waypoint_count = float(arr[2])
+                        progress = float(arr[1]) / waypoint_count if waypoint_count > 0.5 else 0.0
+                        self.coop_world_slot_progress_values[world_idx].append(progress)
+                    except Exception:
+                        pass
+        if role_name and success:
+            self.coop_role_success_counts_window[role_name] += 1
+
+        self.coop_world_slot_seen[world_idx].add(slot_idx)
+        world_success_flag = bool(float(info.get("world_success", 0.0)) > 0.5) if isinstance(info, dict) else False
+        self.coop_world_slot_success[world_idx] = bool(self.coop_world_slot_success[world_idx] or success)
+        self.coop_world_slot_timeout[world_idx] = bool(self.coop_world_slot_timeout[world_idx] or str(reason) == "timeout")
+        if bool(float(info.get("shared_world_reset", 0.0)) > 0.5):
+            self.coop_shared_reset_window += 1
+
+        if bool(float(info.get("world_done", 0.0)) > 0.5) and len(self.coop_world_slot_seen[world_idx]) >= expected_slots:
+            self.coop_world_done_window += 1
+            if bool(world_success_flag):
+                self.coop_world_success_window += 1
+            if bool(self.coop_world_slot_timeout[world_idx]):
+                self.coop_timeout_window += 1
+            progress_vals = self.coop_world_slot_progress_values.get(world_idx, [])
+            if progress_vals:
+                min_progress = float(np.min(progress_vals))
+                max_progress = float(np.max(progress_vals))
+                self.coop_world_min_progress_window.append(min_progress)
+                self.coop_world_max_progress_window.append(max_progress)
+                self.coop_world_progress_gap_window.append(float(max_progress - min_progress))
+            self.coop_world_slot_seen.pop(world_idx, None)
+            self.coop_world_slot_success.pop(world_idx, None)
+            self.coop_world_slot_timeout.pop(world_idx, None)
+            self.coop_world_slot_progress_values.pop(world_idx, None)
+
+    def observe_step(self, *, obs: Any, actions: Any, rewards: Any, infos: Any, dones: Any) -> None:
+        inst_arr = _coerce_instrument_array(obs)
+        action_arr = _coerce_action_array(actions)
+        effective_action_arr = _coerce_effective_action_array(infos)
+        reward_arr = _coerce_reward_array(rewards)
+        done_arr = _coerce_done_array(dones)
+        info_rows = infos if isinstance(infos, (list, tuple)) else []
+
+        n_envs = len(self.histories)
+        for i in range(n_envs):
+            done_i = bool(done_arr[i]) if (done_arr is not None and i < done_arr.shape[0]) else False
+            info_i = info_rows[i] if i < len(info_rows) and isinstance(info_rows[i], dict) else {}
+            if effective_action_arr is not None and i < effective_action_arr.shape[0]:
+                act_i = effective_action_arr[i]
+            else:
+                act_i = action_arr[i] if (action_arr is not None and i < action_arr.shape[0]) else None
+            rew_i = float(reward_arr[i]) if (reward_arr is not None and i < reward_arr.shape[0]) else None
+
+            if done_i:
+                inst_term = self.extract_terminal_inst(info_i)
+                if inst_term is None:
+                    inst_term = inst_arr[i] if (inst_arr is not None and i < inst_arr.shape[0]) else None
+                snap = self.make_snapshot(inst_term, act_i, rew_i)
+                if snap is not None:
+                    self.histories[i].append(snap)
+
+                reason = self.infer_termination_reason(info_i)
+                self.episodes_window += 1
+                self.term_counts_window[reason] += 1
+                self.term_counts_total[reason] += 1
+                self.record_terminal_reward_terms(info_i)
+                self.record_cooperative_episode(info_i, reason)
+                if self.is_failure_reason(reason):
+                    self.failure_window += 1
+                    self.record_preterm_window(self.histories[i])
+                self.histories[i].clear()
+            else:
+                inst_i = inst_arr[i] if (inst_arr is not None and i < inst_arr.shape[0]) else None
+                snap = self.make_snapshot(inst_i, act_i, rew_i)
+                if snap is not None:
+                    self.histories[i].append(snap)
+
+    def record_and_reset(self, *, logger: Any) -> None:
+        if self.episodes_window > 0:
+            episodes = float(self.episodes_window)
+            logger.record("diag/episodes_done_window", episodes)
+            logger.record("diag/failure_frac_window", float(self.failure_window) / episodes)
+            for reason in sorted(self.term_counts_window.keys()):
+                cnt = float(self.term_counts_window[reason])
+                logger.record(f"diag/term_frac_{reason}", cnt / episodes)
+                logger.record(f"diag/term_count_total_{reason}", float(self.term_counts_total[reason]))
+
+        for key, vals in self.terminal_reward_window.items():
+            if vals:
+                logger.record(f"diag/term_rew_{key}", float(np.mean(np.asarray(vals, dtype=np.float32))))
+
+        for key, vals in self.preterm_stats_window.items():
+            if vals:
+                logger.record(f"diag/preterm_{key}", float(np.mean(np.asarray(vals, dtype=np.float32))))
+
+        if self.coop_world_done_window > 0:
+            worlds = float(self.coop_world_done_window)
+            logger.record("coop_diag/world_episodes_done_window", worlds)
+            logger.record("coop_diag/world_success_frac_window", float(self.coop_world_success_window) / worlds)
+            logger.record("coop_diag/world_timeout_frac_window", float(self.coop_timeout_window) / worlds)
+            logger.record("coop_diag/shared_reset_per_world_mean", float(self.coop_shared_reset_window) / worlds)
+            if self.coop_world_min_progress_window:
+                logger.record(
+                    "coop_diag/world_min_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(self.coop_world_min_progress_window, dtype=np.float32))),
+                )
+            if self.coop_world_max_progress_window:
+                logger.record(
+                    "coop_diag/world_max_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(self.coop_world_max_progress_window, dtype=np.float32))),
+                )
+            if self.coop_world_progress_gap_window:
+                logger.record(
+                    "coop_diag/world_waypoint_progress_gap_frac_mean",
+                    float(np.mean(np.asarray(self.coop_world_progress_gap_window, dtype=np.float32))),
+                )
+        total_role_eps = float(sum(self.coop_role_episode_counts_window.values()))
+        if total_role_eps > 0.0:
+            logger.record("coop_diag/slot_episodes_done_window", total_role_eps)
+        for role_name in sorted(self.coop_role_episode_counts_window.keys()):
+            episodes = float(self.coop_role_episode_counts_window[role_name])
+            if episodes <= 0.0:
+                continue
+            role_key = normalize_diagnostic_key(role_name)
+            logger.record(
+                f"coop_diag/role_{role_key}_success_frac_window",
+                float(self.coop_role_success_counts_window[role_name]) / episodes,
+            )
+            logger.record(
+                f"coop_diag/role_{role_key}_shared_reset_frac_window",
+                float(self.coop_role_shared_reset_counts_window[role_name]) / episodes,
+            )
+            rewards = self.coop_role_reward_window.get(role_name, [])
+            if rewards:
+                logger.record(
+                    f"coop_diag/role_{role_key}_reward_mean",
+                    float(np.mean(np.asarray(rewards, dtype=np.float32))),
+                )
+            lengths = self.coop_role_length_window.get(role_name, [])
+            if lengths:
+                logger.record(
+                    f"coop_diag/role_{role_key}_episode_len_mean",
+                    float(np.mean(np.asarray(lengths, dtype=np.float32))),
+                )
+            waypoint_indices = self.coop_role_waypoint_index_window.get(role_name, [])
+            if waypoint_indices:
+                logger.record(
+                    f"coop_diag/role_{role_key}_waypoint_index_mean",
+                    float(np.mean(np.asarray(waypoint_indices, dtype=np.float32))),
+                )
+            waypoint_progress = self.coop_role_waypoint_progress_window.get(role_name, [])
+            if waypoint_progress:
+                logger.record(
+                    f"coop_diag/role_{role_key}_waypoint_progress_frac_mean",
+                    float(np.mean(np.asarray(waypoint_progress, dtype=np.float32))),
+                )
+            for reason, count in sorted(self.coop_role_term_counts_window[role_name].items()):
+                logger.record(f"coop_diag/role_{role_key}_term_frac_{reason}", float(count) / episodes)
+
+        self.reset_window()
+
+
 __all__ = [
+    "TrainingEventDiagnosticsWindow",
     "action_mode_from_width",
+    "action_array_for_diagnostics",
     "combat_action_columns",
     "normalize_diagnostic_key",
     "record_a5_event_info_diagnostics",
     "record_a6_first_event_info_diagnostics",
     "record_action_diagnostics",
+    "record_basic_step_diagnostics",
     "record_hmoe_policy_diagnostics",
     "record_leader_diagnostics",
     "record_policy_distribution_diagnostics",

@@ -123,16 +123,18 @@ python/training/ (consumes everything; not imported by lower layers)
 
 ## Structural Problems (Needs Refactoring)
 
-### 1. Training Diagnostics Callback: God Class Anti-Pattern
+### 1. Training Diagnostics Callback: P1 Owner Split Closed
 
 | File:Line | Issue | Severity |
 |-----------|-------|----------|
-| `python/training_callbacks.py:34-778` | `CMODiagnosticsCallback` remains a large single callback class with basic reward/instrument scalar logging, terminal/preterm reward windows, cooperative/stateful event-window aggregation, and policy/HMoE/action/A5/A6/leader/reward/runway helper orchestration mixed together. P1-D1/D2/D3/D4/D5/D6/D7/D8 moved policy-distribution, HMoE stat, action, leader, step reward-term, A6 event-window info, A5 event info, and runway/gear calculations to `python/training/diagnostics.py`, but the full callback split is still open. | **HIGH** |
-| `python/training_callbacks.py:643-776` | `_on_step()` remains a long multi-domain diagnostics method. | **HIGH** |
-| `python/training_callbacks.py` initialization paths | `__init__` and `_on_training_start` reset overlapping cooperative/HMoE state. The prior claim that `_record_event_diagnostics` resets the same variables was not supported by the current source. | MEDIUM |
-| Inline explanation density | The file has far less local explanation than expected for critical RL diagnostics infrastructure, although exact comment-density figures should be recomputed before quoting. | MEDIUM |
+| `python/training_callbacks.py:33-212` | `CMODiagnosticsCallback` is no longer the diagnostics calculation/state owner. It now keeps SB3 lifecycle wiring, logging cadence, compatibility wrappers, and delegates calculation/state to `python/training/diagnostics.py`. | P1 **closed** |
+| `python/training_callbacks.py:176-212` | `_on_step()` is now a compact orchestrator: collect SB3 locals, pass event-window observation to `TrainingEventDiagnosticsWindow`, then call focused logging helpers. | LOW |
+| `python/training/diagnostics.py:138-218`; `800-1277` | Basic step scalar logging, action/effective-action selection, terminal/preterm windows, and cooperative aggregation now live in helper functions/classes with direct tests. This helper module is sizeable and should be kept under test rather than folded back into the callback. | MEDIUM |
+| Inline explanation density | Exact comment-density figures should be recomputed before quoting; the old callback-specific severity no longer reflects the current owner split. | LOW |
 
-**Counter-example in same file**: `ScenarioCurriculumCallback` and `RewardPlateauEarlyStopCallback` are much more focused, showing that the broad shape of `CMODiagnosticsCallback` is local debt rather than a project-wide inability to write small callbacks.
+**Current boundary**: P1 closed the callback owner problem. Any future work here
+should target helper-module maintainability or typed diagnostics contracts, not
+another "held P1-D callback split".
 
 ### 2. WorldBatchVecEnv Forked Class Hierarchy
 
@@ -199,7 +201,10 @@ python/training/ (consumes everything; not imported by lower layers)
 | Python custom exceptions | At least 3 in project Python/tooling scope | No broad production exception hierarchy; at least one custom exception is not test-only |
 | Bare `except:` | 0 | Positive — team consciously avoided this |
 
-**Key Risk**: Training silently continues after diagnostic callback failures (`training_callbacks.py` has 40+ broad catches). Environment rollouts silently degrade data quality when step/reset exceptions occur.
+**Key Risk**: Diagnostics helpers still use broad defensive catches
+(`training_callbacks.py` now has 4 `except Exception` sites; `python/training/diagnostics.py`
+has about 45). Environment rollouts can still silently degrade data quality when
+step/reset exceptions occur.
 
 ### 9. Scenario Validation Residuals After P1-B
 
@@ -222,7 +227,7 @@ python/training/ (consumes everything; not imported by lower layers)
 | Observability | **Good** | HMoE route/parameter stats, per-stage timing instrumentation, GPU experiment stats, nonfinite probe |
 | Separation of concerns | **Generally Good** | ECS (data vs logic), compiler vs runtime, world model isolation, CPU/GPU reference-experiment separation |
 | Code duplication | **Needs Attention** | Two env classes have significant overlap, BC loss code has many repeated branches, and factory type-initialization blocks remain concentrated. |
-| File size discipline | **Mixed** | Several important files are oversized: `runtime_facade.cpp` and `tests/world_batch/test_world_batch_vec_env.py` are both 3092 lines; `world_batch_vec_env.py`, `default_unit_factory.h`, and `training_callbacks.py` are also large. |
+| File size discipline | **Mixed** | Several important files are oversized: `runtime_facade.cpp` and `tests/world_batch/test_world_batch_vec_env.py` are both 3092 lines; `world_batch_vec_env.py` and `default_unit_factory.h` are also large. P1 reduced `training_callbacks.py` to 413 lines while moving diagnostics helpers to `python/training/diagnostics.py` (1295 lines). |
 | Codebase cleanliness | **Good, scope-dependent** | Code/tooling scope has few TODO/FIXME/HACK markers and no bare `except:` in the current grep. Whole-repo/document/archive counts are higher, so this should not be quoted as "entire codebase" without scope. |
 | Comment density | **Needs Attention** | Training callbacks and world-batch env code are under-explained for their complexity. Exact density numbers should be recomputed before citation. |
 | Test coverage | **Strong but not complete** | 227 tracked Python test files, 86 active JSON contracts, 86 architecture test files, and smoke/contract suites are strong evidence; this does not prove full physics/domain/training correctness. |
@@ -234,7 +239,7 @@ python/training/ (consumes everything; not imported by lower layers)
 ### P0 (Address Now — High Impact, Low Risk)
 
 1. **Extract shared world-batch env support** — reduce duplication between single and cooperative envs. Extract shared observation dimension constants into a configurable dataclass or focused helper module.
-2. **Continue splitting `CMODiagnosticsCallback`** — P1-D1/D2/D3/D4/D5/D6/D7/D8 already extracted policy-distribution, HMoE, action, leader, step reward, A6 event-window info, A5 event info, and runway/gear diagnostics into `python/training/diagnostics.py`; next slices should extract basic reward/instrument scalar logging plus terminal/preterm and cooperative/stateful event-window aggregation as composable helpers or callbacks.
+2. **Treat the P1 diagnostics callback split as closed** — `CMODiagnosticsCallback` now delegates diagnostics calculation/state to `python/training/diagnostics.py`; future work should focus on helper-module maintainability or typed diagnostics contracts if needed.
 3. **Extract shared `_compute_bc_loss()`** in `dreamer.py` — eliminate repeated BC loss weighting across many `actor_input` branches.
 
 ### P1 (This Cycle — Medium Impact)
@@ -253,7 +258,7 @@ python/training/ (consumes everything; not imported by lower layers)
 12. **Use `logging.warning()`** instead of `print()` in scenario compiler.
 13. **Extract `_HybridActionDistribution`** into separate file.
 14. **Deduplicate `authorized_first_shot`** logic between `hmoe_routing.py` and `policies.py`.
-15. **Add inline documentation** to `training_callbacks.py` and `world_batch_vec_env.py` (0.1-0.3% comment density is unacceptable for infrastructure code).
+15. **Add inline documentation** to the remaining broad infrastructure files such as `world_batch_vec_env.py` and complex diagnostics helper sections after recomputing a defined comment-density metric.
 
 ### P3 (Long-term — Research Quality)
 

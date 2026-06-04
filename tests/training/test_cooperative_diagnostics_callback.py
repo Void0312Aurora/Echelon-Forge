@@ -11,8 +11,10 @@ ensure_repo_imports()
 
 from python.training_callbacks import CMODiagnosticsCallback  # noqa: E402
 from python.training.diagnostics import (  # noqa: E402
+    TrainingEventDiagnosticsWindow,
     record_a5_event_info_diagnostics,
     record_action_diagnostics,
+    record_basic_step_diagnostics,
     record_hmoe_policy_diagnostics,
     record_leader_diagnostics,
     record_reward_term_diagnostics,
@@ -74,40 +76,42 @@ class _DummyHybridPolicy:
 
 class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
     def test_records_role_and_world_window_metrics(self) -> None:
-        cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)
         logger = _DummyLogger()
-        cb.model = _DummyModel(logger)
-        cb._episodes_window = 2
-        cb._term_counts_window["success_waypoint"] = 1
-        cb._term_counts_window["timeout"] = 1
-        cb._term_counts_total["success_waypoint"] = 3
-        cb._term_counts_total["timeout"] = 2
-        cb._coop_world_done_window = 1
-        cb._coop_world_success_window = 1
-        cb._coop_timeout_window = 0
-        cb._coop_shared_reset_window = 1
-        cb._coop_world_min_progress_window.append(0.75)
-        cb._coop_world_max_progress_window.append(1.0)
-        cb._coop_world_progress_gap_window.append(0.25)
-        cb._coop_role_episode_counts_window["ElementLead"] = 1
-        cb._coop_role_success_counts_window["ElementLead"] = 1
-        cb._coop_role_shared_reset_counts_window["ElementLead"] = 0
-        cb._coop_role_term_counts_window["ElementLead"]["success_waypoint"] = 1
-        cb._coop_role_reward_window["ElementLead"].append(3900.0)
-        cb._coop_role_length_window["ElementLead"].append(5000.0)
-        cb._coop_role_waypoint_index_window["ElementLead"].append(4.0)
-        cb._coop_role_waypoint_progress_window["ElementLead"].append(1.0)
-        cb._coop_role_episode_counts_window["Wingman"] = 1
-        cb._coop_role_success_counts_window["Wingman"] = 0
-        cb._coop_role_shared_reset_counts_window["Wingman"] = 1
-        cb._coop_role_term_counts_window["Wingman"]["running"] = 1
-        cb._coop_role_reward_window["Wingman"].append(2400.0)
-        cb._coop_role_length_window["Wingman"].append(5000.0)
-        cb._coop_role_waypoint_index_window["Wingman"].append(3.0)
-        cb._coop_role_waypoint_progress_window["Wingman"].append(0.75)
-        cb._coop_world_slot_progress_values[0] = [1.0, 0.75]
+        window = TrainingEventDiagnosticsWindow(
+            terminal_reward_keys=CMODiagnosticsCallback.TERMINAL_REWARD_KEYS,
+            preterm_window_steps=4,
+        )
+        window.episodes_window = 2
+        window.term_counts_window["success_waypoint"] = 1
+        window.term_counts_window["timeout"] = 1
+        window.term_counts_total["success_waypoint"] = 3
+        window.term_counts_total["timeout"] = 2
+        window.coop_world_done_window = 1
+        window.coop_world_success_window = 1
+        window.coop_timeout_window = 0
+        window.coop_shared_reset_window = 1
+        window.coop_world_min_progress_window.append(0.75)
+        window.coop_world_max_progress_window.append(1.0)
+        window.coop_world_progress_gap_window.append(0.25)
+        window.coop_role_episode_counts_window["ElementLead"] = 1
+        window.coop_role_success_counts_window["ElementLead"] = 1
+        window.coop_role_shared_reset_counts_window["ElementLead"] = 0
+        window.coop_role_term_counts_window["ElementLead"]["success_waypoint"] = 1
+        window.coop_role_reward_window["ElementLead"].append(3900.0)
+        window.coop_role_length_window["ElementLead"].append(5000.0)
+        window.coop_role_waypoint_index_window["ElementLead"].append(4.0)
+        window.coop_role_waypoint_progress_window["ElementLead"].append(1.0)
+        window.coop_role_episode_counts_window["Wingman"] = 1
+        window.coop_role_success_counts_window["Wingman"] = 0
+        window.coop_role_shared_reset_counts_window["Wingman"] = 1
+        window.coop_role_term_counts_window["Wingman"]["running"] = 1
+        window.coop_role_reward_window["Wingman"].append(2400.0)
+        window.coop_role_length_window["Wingman"].append(5000.0)
+        window.coop_role_waypoint_index_window["Wingman"].append(3.0)
+        window.coop_role_waypoint_progress_window["Wingman"].append(0.75)
+        window.coop_world_slot_progress_values[0] = [1.0, 0.75]
 
-        cb._record_event_diagnostics()
+        window.record_and_reset(logger=logger)
 
         self.assertIn("coop_diag/world_episodes_done_window", logger.records)
         self.assertAlmostEqual(logger.records["coop_diag/world_success_frac_window"], 1.0, places=6)
@@ -118,6 +122,63 @@ class CooperativeDiagnosticsCallbackTests(unittest.TestCase):
         self.assertAlmostEqual(logger.records["coop_diag/role_wingman_shared_reset_frac_window"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["coop_diag/role_wingman_term_frac_running"], 1.0, places=6)
         self.assertAlmostEqual(logger.records["coop_diag/role_wingman_waypoint_progress_frac_mean"], 0.75, places=6)
+        self.assertEqual(window.episodes_window, 0)
+
+    def test_event_window_observes_terminal_failure_and_preterm_snapshot(self) -> None:
+        logger = _DummyLogger()
+        window = TrainingEventDiagnosticsWindow(
+            terminal_reward_keys=("total", "crash_penalty"),
+            preterm_window_steps=4,
+        )
+        window.reset_for_training(1)
+
+        window.observe_step(
+            obs={"instruments": [[120.0, 0.0, 0.0, 80.0, 0.0, 3.0, -2.0, 5.0, -20.0, 0.0, 1.1, 0.0, 0.0, 0.0, 4.0]]},
+            actions=[[0.0, 0.0, 0.0, 0.6] + [0.0] * 13],
+            rewards=[0.5],
+            infos=[{}],
+            dones=[False],
+        )
+        window.observe_step(
+            obs={"instruments": [[100.0, 0.0, 0.0, 20.0, 0.0, 6.0, -4.0, 10.0, -45.0, 0.0, 2.0, 0.0, 0.0, 0.0, 8.0]]},
+            actions=[[0.0, 0.0, 0.0, 0.4] + [0.0] * 13],
+            rewards=[-10.0],
+            infos=[{"reward_terms": {"total": -10.0, "crash_penalty": -20.0}}],
+            dones=[True],
+        )
+
+        window.record_and_reset(logger=logger)
+
+        self.assertAlmostEqual(logger.records["diag/episodes_done_window"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/failure_frac_window"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/term_frac_crash"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/term_rew_total"], -10.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/preterm_window_len_steps"], 2.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/preterm_min_alt_agl_m"], 20.0, places=6)
+
+    def test_basic_step_helper_records_reward_instrument_and_ils_scalars(self) -> None:
+        logger = _DummyLogger()
+        row = [0.0] * 42
+        row[0] = 110.0
+        row[2] = 1200.0
+        row[5] = 2.5
+        row[7] = -3.0
+        row[8] = 4.0
+        row[-4] = 1.0
+        row[-3] = -0.25
+
+        record_basic_step_diagnostics(
+            logger=logger,
+            obs={"instruments": [row]},
+            rewards=[1.0, 3.0],
+        )
+
+        self.assertAlmostEqual(logger.records["diag/reward_mean"], 2.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/ias_mean"], 110.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/alt_baro_mean"], 1200.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/aoa_mean"], 2.5, places=6)
+        self.assertAlmostEqual(logger.records["diag/ils_valid_frac"], 1.0, places=6)
+        self.assertAlmostEqual(logger.records["diag/ils_loc_abs_mean"], 0.25, places=6)
 
     def test_records_hmoe_route_stats_when_policy_exposes_them(self) -> None:
         cb = CMODiagnosticsCallback(log_every_timesteps=1, preterm_window_steps=4)

@@ -1,6 +1,8 @@
 # Engineering Governance P1
 
-Status: `2026-06-04` active partial local-pass remediation slice; `P1-A`, `P1-B`, bounded `P1-C`, and narrow `P1-D1`/`P1-D2`/`P1-D3`/`P1-D4`/`P1-D5`/`P1-D6`/`P1-D7`/`P1-D8` are implemented locally, broader callback and adapter-split slices remain held.
+Status: `2026-06-04` closed local-pass remediation slice. `P1-A`, `P1-B`,
+bounded `P1-C`, and the scoped `P1-D` diagnostics callback split are
+implemented and validated locally.
 
 Language:
 
@@ -18,26 +20,20 @@ Inputs:
 
 ## Purpose
 
-This subproject implements the next bounded remediation slice after P0. It
-targets verified correctness and architecture-guard issues that can be fixed
-without broad runtime rewrites: a stale architecture test, the main scenario
-compiler's missing centralized shape validation, and a narrow runtime facade
-adapter capability-probing convergence.
+This subproject implements the P1 remediation work that followed P0. It fixes
+the verified P1 issues that had clear owner boundaries: a stale architecture
+guard, missing centralized shape validation in the scenario compiler path,
+duplicated adapter-owned capability probing, and the broad
+`CMODiagnosticsCallback` diagnostics owner.
 
-It intentionally does not claim that all P1 work is complete. The first P1-C
-adapter slice only centralizes capability resolution in `RuntimeFacadeAdapter`,
-and the first P1-D1 callback slice only extracts policy-distribution
-diagnostics behind a compatibility wrapper. P1-D2 extracts HMoE policy route
-and parameter diagnostics behind a second compatibility wrapper. P1-D3 extracts
-action diagnostics behind a third compatibility wrapper. P1-D4 extracts leader
-diagnostics behind a fourth compatibility wrapper. P1-D5 extracts step reward
-term diagnostics behind a fifth compatibility wrapper. P1-D6 extracts A6
-event-window info diagnostics behind a sixth compatibility wrapper. P1-D7
-extracts A5 event info diagnostics behind a seventh compatibility wrapper.
-P1-D8 extracts runway/gear step info diagnostics behind an eighth compatibility
-wrapper.
-Broader adapter splitting and full diagnostics callback decomposition remain
-separate follow-on slices.
+The closure boundary is explicit. `P1-C` centralizes
+`RuntimeFacadeAdapter`-owned capability probing through a capability snapshot;
+it does not claim a full adapter or world-batch class hierarchy split. That
+larger adapter decomposition is future architecture work, not a held residual
+inside this P1 task. `P1-D` is closed for the diagnostics callback owner:
+step scalars, action/policy/HMoE/A5/A6/leader/reward/runway logging, terminal
+reward windows, preterm snapshots, and cooperative event-window aggregation now
+live behind focused helpers in `python/training/diagnostics.py`.
 
 ## Current State
 
@@ -46,54 +42,33 @@ separate follow-on slices.
 | Stale architecture guard | local-pass | `tests/architecture/test_wp22_structural_guardrails.py`; focused test passed | Updates the guard to current split-file structure; does not change weapon effects runtime behavior. |
 | Scenario compiler shape validation | local-pass | `python/scenario/compiler/validation.py`; `service.py`; `merge.py`; `tests/scenario/test_scenario_compiler.py`; focused suite passed | Validates consumed shape only; does not introduce a full JSON Schema or domain semantic validator. |
 | Runtime facade/world-batch capability probing | local-pass | `python/rl/runtime/world_batch/adapter.py`; `tests/world_batch/test_world_batch_vec_env.py`; focused world-batch tests passed | Adds a centralized capability snapshot for adapter-owned probing; does not split world-batch env classes or the full adapter. |
-| Policy-distribution diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; focused training diagnostics tests passed | Extracts one diagnostics responsibility behind the existing callback method; does not split the full callback class. |
-| HMoE diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts HMoE route/parameter stat recording and preserves parameter-stat throttling; does not split cooperative, leader, or action diagnostics. |
-| Action diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts full/hybrid action logging and preserves full-action brake plus combat switch semantics; does not split cooperative or leader diagnostics. |
-| Leader diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts leader observation/info/reward stat recording; does not split cooperative or event-window diagnostics. |
-| Reward diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts step reward-term mean logging; does not split terminal reward windows, cooperative diagnostics, or event-window diagnostics. |
-| A6 event-window info helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_a6_event_value_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts A6 first-event info logging; does not split A5 event info, terminal/preterm windows, or cooperative aggregation. |
-| A5 event info helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts A5 event info logging; does not split basic reward/instrument scalar logging, terminal/preterm windows, or cooperative aggregation. |
-| Runway/gear diagnostics helper | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; `tests/training/test_cooperative_diagnostics_callback.py`; focused training diagnostics tests passed | Extracts runway/gear step info logging; does not split basic reward/instrument scalar logging, terminal/preterm windows, or cooperative aggregation. |
-| Cooperative/event-window aggregation split | held | prior review residual | Broader split remains deferred to separate packets after each responsibility has a bounded write set. |
+| Diagnostics callback helper extraction | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; training diagnostics tests passed | Moves diagnostics calculation and event-window state out of `CMODiagnosticsCallback`; does not change RL algorithm behavior or logged key semantics. |
+| Task and evaluation documentation | local-pass | This subproject, parent review index, and architecture evaluation updates | Records P1 as closed without claiming unrelated architecture work is complete. |
 
 ## Scope
 
 In scope:
 
-- Repair stale architecture guardrails that fail because code was structurally
+- Repair stale architecture guardrails that failed because code was structurally
   split while the guard still searched old inline text.
 - Add a small, centralized scenario compiler shape validator for fields consumed
   by the main compile path and prefab merge path.
 - Add a small, centralized runtime facade adapter capability snapshot so core
   adapter-owned probing is not scattered through each writer/reader method.
-- Extract policy-distribution diagnostics into a focused helper while preserving
-  the existing `CMODiagnosticsCallback` method as a compatibility wrapper.
-- Extract HMoE policy route/parameter diagnostics into a focused helper while
-  preserving the callback's parameter-stat throttle state.
-- Extract full/hybrid action diagnostics into a focused helper while preserving
-  the existing callback wrapper and logged scalar keys.
-- Extract leader observation/info/reward diagnostics into a focused helper
-  while preserving the existing callback wrapper and logged scalar keys.
-- Extract step reward-term diagnostics into a focused helper while preserving
-  the existing callback wrapper and logged scalar keys.
-- Extract A6 first-event info diagnostics into a focused helper while
-  preserving the existing callback wrapper and logged scalar keys.
-- Extract A5 event info diagnostics into a focused helper while preserving the
-  existing callback wrapper and logged scalar keys.
-- Extract runway/gear step info diagnostics into a focused helper while
-  preserving the existing callback wrapper and logged scalar keys.
-- Add focused tests for invalid scenario roots and invalid shape cases that were
-  previously silently coerced or ignored, and for adapter capability refresh
-  after facade replacement in tests.
-- Record validation evidence and residual work honestly.
+- Extract diagnostics calculations and state from `CMODiagnosticsCallback` into
+  `python/training/diagnostics.py`, while preserving existing callback wrapper
+  entry points and logged scalar keys.
+- Add focused tests for invalid scenario roots, invalid shape cases, adapter
+  capability refresh after facade replacement, and diagnostics helper behavior.
+- Record validation evidence and closure boundaries honestly.
 
 Out of scope:
 
 - Changing weapon effects runtime logic.
 - Replacing scenario compilation with a full JSON Schema system.
 - Adding semantic validation for every domain-specific scenario field.
-- Broadly splitting runtime facade adapters, world-batch env classes, or
-  diagnostics callbacks in this slice.
+- Splitting the full runtime adapter or world-batch env class hierarchy.
+- Changing RL algorithms, reward semantics, A5/A6 behavior, or training config.
 - Cleaning unrelated worktree changes.
 
 ## Phase Plan
@@ -104,16 +79,8 @@ Out of scope:
 | `P1-A Guard Repair` | Make stale architecture guard match current split implementation. | Failing guard is reproducible. | Focused architecture guard passes. | pass |
 | `P1-B Compiler Guard` | Add centralized compiler shape validation. | Existing compiler tests pass before edit. | Focused scenario compiler suite passes with negative tests. | pass |
 | `P1-C Adapter Narrowing` | Reduce duplicated runtime capability probing. | P1-A/B local-pass and runtime surface is quiet. | Capability snapshot is implemented and focused world-batch validation passes. | pass |
-| `P1-D1 Policy Helper` | Extract policy-distribution diagnostics behind the current callback wrapper. | P1-C local-pass and callback edit surface is narrow. | Focused cooperative/A6 diagnostics tests pass. | pass |
-| `P1-D2 HMoE Helper` | Extract HMoE route/parameter diagnostics behind the current callback wrapper. | P1-D1 local-pass. | Focused training diagnostics tests prove route logging and parameter-stat throttling. | pass |
-| `P1-D3 Action Helper` | Extract full/hybrid action diagnostics behind the current callback wrapper. | P1-D2 local-pass. | Focused training diagnostics tests prove full-action brake and combat switch logging. | pass |
-| `P1-D4 Leader Helper` | Extract leader observation/info/reward diagnostics behind the current callback wrapper. | P1-D3 local-pass. | Focused training diagnostics tests prove leader observation, bucket, C2, and reward logging. | pass |
-| `P1-D5 Reward Helper` | Extract step reward-term diagnostics behind the current callback wrapper. | P1-D4 local-pass. | Focused training diagnostics tests prove reward-term mean logging and missing-key behavior. | pass |
-| `P1-D6 A6 Event Info Helper` | Extract A6 first-event info diagnostics behind the current callback wrapper. | P1-D5 local-pass. | Focused A6 diagnostics tests prove label-count logging and stable zero behavior. | pass |
-| `P1-D7 A5 Event Info Helper` | Extract A5 event info diagnostics behind the current callback wrapper. | P1-D6 local-pass. | Focused training diagnostics tests prove event-rate, rejection, state, and component logging. | pass |
-| `P1-D8 Runway/Gear Helper` | Extract runway/gear step info diagnostics behind the current callback wrapper. | P1-D7 local-pass. | Focused training diagnostics tests prove runway, cross-track tail, gear-collapse, and gear-stress logging. | pass |
-| `P1-D Callback Split` | Split remaining diagnostics callback responsibilities. | Each remaining responsibility has a bounded packet. | Separate full callback split exists with training diagnostics tests. | held |
-| `P2 Closure` | Sync docs, residuals, and parent review index. | P1-A/B/C/D1/D2/D3/D4/D5/D6/D7/D8 validation complete. | Status reflects implemented and held items. | active |
+| `P1-D Diagnostics Callback Split` | Move diagnostics calculation and event-window state out of `CMODiagnosticsCallback`. | P1-C local-pass and callback responsibilities are identified. | Training diagnostics helpers cover policy, HMoE, actions, leader, rewards, A5/A6, runway/gear, basic step scalars, terminal/preterm windows, and cooperative aggregation. | pass |
+| `P2 Closure` | Sync docs, residuals, and parent review index. | P1-A/B/C/D validation complete. | Status reflects a closed P1 slice and future work is not listed as held P1. | pass |
 
 ## Task Clusters
 
@@ -131,6 +98,8 @@ Out of scope:
 - `python/training_callbacks.py`
 - `tests/scenario/test_scenario_compiler.py`
 - `tests/world_batch/test_world_batch_vec_env.py`
+- `tests/training/test_cooperative_diagnostics_callback.py`
+- `tests/training/test_a6_event_value_diagnostics_callback.py`
 - This task subproject and parent review index entries.
 
 Validation evidence:
@@ -138,16 +107,16 @@ Validation evidence:
 - `./.venv/bin/python -m pytest tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` passed.
 - `./.venv/bin/python -m pytest tests/architecture/test_wp22_structural_guardrails.py -q` passed, 17 tests.
 - `./.venv/bin/python -m pytest tests/scenario/test_scenario_compiler.py -q` passed.
-- `./.venv/bin/python -m ruff check ...` passed for touched Python files.
-- `git diff --check -- ...` passed for touched P1 files.
 - Scenario/prefab shape scan passed for 50 JSON files under `scenarios/`,
   `examples/scenarios/`, and `examples/config/prefabs/`.
 - `./.venv/bin/python -m pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q` passed, 6 selected tests.
-- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed, 15 tests.
+- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed, 17 tests.
+- `./.venv/bin/python -m ruff check ...` passed for touched Python files.
+- `git diff --check -- ...` passed for touched P1 files.
 
 ## Acceptance Gate
 
-This subproject can mark the implemented P1-A/P1-B slice accepted only when:
+This P1 subproject is accepted when:
 
 - The architecture guard asserts the current structural ownership rather than
   an obsolete inline text anchor.
@@ -156,47 +125,26 @@ This subproject can mark the implemented P1-A/P1-B slice accepted only when:
 - Prefab import shape errors are reported before merge mutation.
 - RuntimeFacadeAdapter-owned capability checks use a named capability snapshot
   and refresh when tests swap the facade object.
-- Policy-distribution diagnostics are isolated in `python/training/diagnostics.py`
-  without changing the existing callback entry point.
-- HMoE route/parameter diagnostics are isolated in
-  `python/training/diagnostics.py`, with callback-owned throttling behavior
-  preserved by test.
-- Full/hybrid action diagnostics are isolated in
-  `python/training/diagnostics.py`, with full-action brake and combat-switch
-  behavior preserved by test.
-- Leader observation/info/reward diagnostics are isolated in
-  `python/training/diagnostics.py`, with leader bucket, C2 transition, and
-  reward behavior preserved by test.
-- Step reward-term diagnostics are isolated in `python/training/diagnostics.py`,
-  with logged scalar keys and missing-key behavior preserved by test.
-- A6 first-event info diagnostics are isolated in
-  `python/training/diagnostics.py`, with label-count and stable-zero behavior
-  preserved by test.
-- A5 event info diagnostics are isolated in `python/training/diagnostics.py`,
-  with event-rate, rejection, state, and component logging preserved by test.
-- Runway/gear step info diagnostics are isolated in
-  `python/training/diagnostics.py`, with runway, cross-track tail,
-  gear-collapse, and gear-stress logging preserved by test.
-- Focused local tests and any residual blockers are recorded.
-
-The broader P1 program remains incomplete until held callback and broader
-adapter/world-batch class split slices receive their own task records and
-validation.
+- `CMODiagnosticsCallback` no longer owns diagnostics calculations or
+  terminal/preterm/cooperative window state; it delegates to
+  `python/training/diagnostics.py`.
+- Focused tests prove helper behavior and preserve existing logged scalar keys.
+- Documentation states this P1 slice as closed without claiming future adapter,
+  JSON Schema, domain semantic validation, or broader runtime refactors are
+  complete.
 
 ## Residuals And Next Steps
 
-- Run the full architecture guard file again before accepting this slice into a
-  clean branch if further parallel edits land.
-- Decide whether scenario compiler validation should later become a published
-  JSON Schema or stay as a lightweight internal shape guard.
-- Decide whether a later adapter split should introduce `typing.Protocol`
-  interfaces around loader/runtime surfaces now that adapter-owned probing has a
-  centralized capability snapshot.
-- Continue P1-D by splitting basic reward/instrument scalar logging,
-  terminal/preterm windows, and cooperative/stateful event-window aggregation in
-  bounded packets; P1-D1/D2/D3/D4/D5/D6/D7/D8 extracted policy distribution,
-  HMoE, action, leader, step reward, A6 event-window info, A5 event info, and
-  runway/gear diagnostics.
+Closed P1 does not leave held P1 work. The following are separate future tasks
+if they become priority:
+
+- Full runtime adapter/world-batch env class hierarchy split.
+- Optional public JSON Schema or deeper domain semantic validation for scenario
+  content.
+- Broader architecture refactors already tracked by the main architecture
+  review, such as `DefaultUnitFactory::spawn()` and world-batch env duplication.
+- Re-run focused validation before merging if parallel edits touch the same
+  architecture guard, compiler, adapter, or training diagnostics files.
 
 ## Archive
 
