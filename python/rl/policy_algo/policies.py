@@ -12,6 +12,14 @@ from stable_baselines3.common.distributions import SquashedDiagGaussianDistribut
 from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.common.policies import MultiInputActorCriticPolicy
 
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+    mission_observation_dim,
+    mission_observation_field_index,
+    mission_observation_has_field,
+)
+
 from .hmoe_routing import (
     DEFAULT_FAMILY_SUBEXPERT_COUNTS,
     FAMILY_DEPARTURE_NAV,
@@ -19,6 +27,23 @@ from .hmoe_routing import (
     route_from_mission_observation,
     subexpert_name,
 )
+
+
+_AIR_COMBAT_C2_ROE_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+)
+
+
+def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
+    for mode in _AIR_COMBAT_C2_ROE_MODES:
+        if int(dim) == int(mission_observation_dim(mode)):
+            return mode
+    return None
+
+
+def _mission_column(mission: th.Tensor, mode: str, field_name: str) -> th.Tensor:
+    return mission[:, mission_observation_field_index(mode, field_name)]
 
 
 class SquashedMultiInputPolicy(MultiInputActorCriticPolicy):
@@ -211,16 +236,31 @@ def _hybrid_fire_event_mask_from_obs(obs: Any, *, batch_size: int, device: th.de
     if mission is None:
         return None
     mission_tensor = th.as_tensor(mission, device=device)
-    if mission_tensor.ndim != 2 or int(mission_tensor.shape[1]) != 20:
+    if mission_tensor.ndim != 2:
+        return None
+    mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission_tensor.shape[1]))
+    if mission_mode is None:
         return None
 
-    wcs_state = th.round(mission_tensor[:, 5].float()).to(dtype=th.long)
-    authorization_to_fire = mission_tensor[:, 6] > 0.5
-    engage_order_state = th.round(mission_tensor[:, 14].float()).to(dtype=th.long)
-    shot_policy_state = th.round(mission_tensor[:, 15].float()).to(dtype=th.long)
-    shot_budget_remaining = th.round(mission_tensor[:, 16].float()).to(dtype=th.long)
-    pending_assessment = mission_tensor[:, 17] > 0.5
-    target_contact_present = mission_tensor[:, 19] > 0.5
+    if mission_observation_has_field(mission_mode, "fire_mask_open"):
+        fire_mask = _mission_column(mission_tensor, mission_mode, "fire_mask_open") > 0.5
+        if int(fire_mask.shape[0]) != int(batch_size):
+            return None
+        return fire_mask
+
+    wcs_state = th.round(_mission_column(mission_tensor, mission_mode, "wcs_state").float()).to(dtype=th.long)
+    authorization_to_fire = _mission_column(mission_tensor, mission_mode, "authorization_to_fire") > 0.5
+    engage_order_state = th.round(
+        _mission_column(mission_tensor, mission_mode, "engage_order_state").float()
+    ).to(dtype=th.long)
+    shot_policy_state = th.round(
+        _mission_column(mission_tensor, mission_mode, "shot_policy_state").float()
+    ).to(dtype=th.long)
+    shot_budget_remaining = th.round(
+        _mission_column(mission_tensor, mission_mode, "shot_budget_remaining").float()
+    ).to(dtype=th.long)
+    pending_assessment = _mission_column(mission_tensor, mission_mode, "pending_assessment") > 0.5
+    target_contact_present = _mission_column(mission_tensor, mission_mode, "target_contact_present") > 0.5
 
     engage_hold = (
         (engage_order_state == 3)
@@ -829,6 +869,17 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["a7/event_credit_advantage_mean"] = float(advantage.mean().item())
         self._last_hmoe_route_stats["a7/event_credit_advantage_abs_mean"] = float(advantage.abs().mean().item())
         return values
+
+    def get_hybrid_event_credit_values(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+        if detach_latent:
+            with th.no_grad():
+                features = super().extract_features(obs, self.pi_features_extractor)
+                latent_pi = self.mlp_extractor.forward_actor(features)
+            latent_pi = latent_pi.detach()
+        else:
+            features = super().extract_features(obs, self.pi_features_extractor)
+            latent_pi = self.mlp_extractor.forward_actor(features)
+        return self._compute_hybrid_event_credit_values(latent_pi)
 
     def get_hybrid_event_credit(self, obs) -> _HybridEventCreditOutput | None:
         distribution = self.get_distribution(obs)

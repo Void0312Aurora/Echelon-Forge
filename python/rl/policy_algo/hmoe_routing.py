@@ -4,6 +4,13 @@ from dataclasses import dataclass
 
 import torch as th
 
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+    mission_observation_dim,
+    mission_observation_field_index,
+    mission_observation_has_field,
+)
 from python.rl.control.mission_defs import (
     COMMAND_CODE_LANDING,
     COMMAND_CODE_ROUTE,
@@ -84,8 +91,25 @@ def _formation_layout(dim: int) -> bool:
     return int(dim) >= 17 and not _formation_role_layout(dim) and not _cooperative_takeoff_layout(dim)
 
 
+_AIR_COMBAT_C2_ROE_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+)
+
+
+def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
+    for mode in _AIR_COMBAT_C2_ROE_MODES:
+        if int(dim) == int(mission_observation_dim(mode)):
+            return mode
+    return None
+
+
 def _air_combat_c2_roe_layout(dim: int) -> bool:
-    return int(dim) == 20
+    return _air_combat_c2_roe_mode_from_dim(int(dim)) is not None
+
+
+def _mission_field_by_name(mission: th.Tensor, mode: str, field_name: str) -> th.Tensor:
+    return mission[:, mission_observation_field_index(mode, field_name)]
 
 
 def _mission_field(mission: th.Tensor, index: int, batch: int, device: th.device) -> th.Tensor:
@@ -130,18 +154,25 @@ def route_from_mission_observation(
     command_code = _safe_round_long(mission[:, 0]) if dim >= 1 else _zeros_long(batch, device=dev)
     family = th.full((batch,), FAMILY_DEPARTURE_NAV, dtype=th.long, device=dev)
 
-    if _air_combat_c2_roe_layout(dim):
+    air_combat_mode = _air_combat_c2_roe_mode_from_dim(dim)
+    if air_combat_mode is not None:
         family = th.full((batch,), FAMILY_COMBAT_WEAPONS, dtype=th.long, device=dev)
         subexpert = _zeros_long(batch, device=dev)
 
-        wcs_state = _safe_round_long(mission[:, 5])
-        authorization_to_fire = mission[:, 6] > 0.5
-        engage_order_state = _safe_round_long(mission[:, 14])
-        shot_policy_state = _safe_round_long(mission[:, 15])
-        shot_budget_remaining = _safe_round_long(mission[:, 16])
-        pending_assessment = mission[:, 17] > 0.5
-        own_missiles_in_flight = _safe_round_long(mission[:, 18]) > 0
-        target_contact_present = mission[:, 19] > 0.5
+        wcs_state = _safe_round_long(_mission_field_by_name(mission, air_combat_mode, "wcs_state"))
+        authorization_to_fire = _mission_field_by_name(mission, air_combat_mode, "authorization_to_fire") > 0.5
+        engage_order_state = _safe_round_long(
+            _mission_field_by_name(mission, air_combat_mode, "engage_order_state")
+        )
+        shot_policy_state = _safe_round_long(_mission_field_by_name(mission, air_combat_mode, "shot_policy_state"))
+        shot_budget_remaining = _safe_round_long(
+            _mission_field_by_name(mission, air_combat_mode, "shot_budget_remaining")
+        )
+        pending_assessment = _mission_field_by_name(mission, air_combat_mode, "pending_assessment") > 0.5
+        own_missiles_in_flight = (
+            _safe_round_long(_mission_field_by_name(mission, air_combat_mode, "own_missiles_in_flight_count")) > 0
+        )
+        target_contact_present = _mission_field_by_name(mission, air_combat_mode, "target_contact_present") > 0.5
 
         engage_hold = (
             (engage_order_state == 3)
@@ -149,15 +180,18 @@ def route_from_mission_observation(
             | (engage_order_state == 5)
             | (engage_order_state == 6)
         )
-        authorized_first_shot = (
-            target_contact_present
-            & authorization_to_fire
-            & (wcs_state != 1)
-            & ~engage_hold
-            & (shot_policy_state > 0)
-            & (shot_budget_remaining > 0)
-            & ~pending_assessment
-        )
+        if mission_observation_has_field(air_combat_mode, "fire_mask_open"):
+            authorized_first_shot = _mission_field_by_name(mission, air_combat_mode, "fire_mask_open") > 0.5
+        else:
+            authorized_first_shot = (
+                target_contact_present
+                & authorization_to_fire
+                & (wcs_state != 1)
+                & ~engage_hold
+                & (shot_policy_state > 0)
+                & (shot_budget_remaining > 0)
+                & ~pending_assessment
+            )
         post_launch_assess = pending_assessment | own_missiles_in_flight | (
             (shot_policy_state > 0) & (shot_budget_remaining <= 0)
         )

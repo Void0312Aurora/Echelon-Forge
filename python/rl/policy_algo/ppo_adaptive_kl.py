@@ -14,11 +14,20 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import explained_variance, obs_as_tensor
 from stable_baselines3.common.vec_env import VecEnv
 
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+    mission_observation_dim,
+    mission_observation_field_index,
+    mission_observation_has_field,
+)
+
 from .device_dict_rollout_buffer import DeviceDictRolloutBuffer
 from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_CURRICULUM,
     A6_FIRST_EVENT_SOURCE_DEADLINE,
     A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED,
+    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
     A6_FIRST_EVENT_SOURCE_PREWINDOW,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
@@ -31,6 +40,23 @@ from .first_event_hazard import (
 )
 from .first_event_projection import project_air_combat_c2_roe_legal_open_observations
 from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
+
+
+_AIR_COMBAT_C2_ROE_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+)
+
+
+def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
+    for mode in _AIR_COMBAT_C2_ROE_MODES:
+        if int(dim) == int(mission_observation_dim(mode)):
+            return mode
+    return None
+
+
+def _mission_column(mission: th.Tensor, mode: str, field_name: str) -> th.Tensor:
+    return mission[:, mission_observation_field_index(mode, field_name)]
 
 
 class AdaptiveKLPPO(PPO):
@@ -77,6 +103,7 @@ class AdaptiveKLPPO(PPO):
         a7_event_credit_value_coef: float = 0.0,
         a7_event_credit_delta_align_coef: float = 0.0,
         a7_event_credit_delta_align_clip: float = 4.0,
+        a7_event_credit_delta_align_positive_only: bool = False,
         a7_event_credit_positive_mass_cap: float = 1.0,
         a7_event_credit_negative_mass_cap: float = 1.0,
         a7_event_credit_prewindow_hold_weight: float = 0.0,
@@ -87,9 +114,13 @@ class AdaptiveKLPPO(PPO):
         a7_event_credit_deadline_weight: float = 0.0,
         a7_event_credit_deadline_min_window_age_steps: int = 96,
         a7_event_credit_shadow_quality_weight: float = 1.0,
+        a7_event_credit_legal_open_quality_weight: float = 0.0,
+        a7_event_credit_legal_open_quality_min_window_age_steps: int = 1,
         a7_event_credit_legal_projection_enabled: bool = False,
         a7_event_credit_projection_value_coef: float = 0.0,
         a7_event_credit_projection_delta_align_coef: float = 0.0,
+        a7_event_credit_separate_update_enabled: bool = False,
+        a7_event_credit_separate_update_max_grad_norm: float = 0.5,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -139,6 +170,7 @@ class AdaptiveKLPPO(PPO):
         self.a7_event_credit_value_coef = float(max(0.0, a7_event_credit_value_coef))
         self.a7_event_credit_delta_align_coef = float(max(0.0, a7_event_credit_delta_align_coef))
         self.a7_event_credit_delta_align_clip = float(max(0.0, a7_event_credit_delta_align_clip))
+        self.a7_event_credit_delta_align_positive_only = bool(a7_event_credit_delta_align_positive_only)
         self.a7_event_credit_positive_mass_cap = float(max(0.0, a7_event_credit_positive_mass_cap))
         self.a7_event_credit_negative_mass_cap = float(max(0.0, a7_event_credit_negative_mass_cap))
         self.a7_event_credit_prewindow_hold_weight = float(max(0.0, a7_event_credit_prewindow_hold_weight))
@@ -155,10 +187,19 @@ class AdaptiveKLPPO(PPO):
             int(a7_event_credit_deadline_min_window_age_steps),
         )
         self.a7_event_credit_shadow_quality_weight = float(max(0.0, a7_event_credit_shadow_quality_weight))
+        self.a7_event_credit_legal_open_quality_weight = float(max(0.0, a7_event_credit_legal_open_quality_weight))
+        self.a7_event_credit_legal_open_quality_min_window_age_steps = max(
+            1,
+            int(a7_event_credit_legal_open_quality_min_window_age_steps),
+        )
         self.a7_event_credit_legal_projection_enabled = bool(a7_event_credit_legal_projection_enabled)
         self.a7_event_credit_projection_value_coef = float(max(0.0, a7_event_credit_projection_value_coef))
         self.a7_event_credit_projection_delta_align_coef = float(
             max(0.0, a7_event_credit_projection_delta_align_coef)
+        )
+        self.a7_event_credit_separate_update_enabled = bool(a7_event_credit_separate_update_enabled)
+        self.a7_event_credit_separate_update_max_grad_norm = float(
+            max(0.0, a7_event_credit_separate_update_max_grad_norm)
         )
         super().__init__(*args, **kwargs)
 
@@ -272,15 +313,27 @@ class AdaptiveKLPPO(PPO):
         if mission is None:
             return None
         mission_tensor = th.as_tensor(mission)
-        if mission_tensor.ndim != 2 or int(mission_tensor.shape[0]) != int(n_envs) or int(mission_tensor.shape[1]) != 20:
+        if mission_tensor.ndim != 2 or int(mission_tensor.shape[0]) != int(n_envs):
             return None
-        wcs_state = th.round(mission_tensor[:, 5].float()).to(dtype=th.long)
-        authorization_to_fire = mission_tensor[:, 6] > 0.5
-        engage_order_state = th.round(mission_tensor[:, 14].float()).to(dtype=th.long)
-        shot_policy_state = th.round(mission_tensor[:, 15].float()).to(dtype=th.long)
-        shot_budget_remaining = th.round(mission_tensor[:, 16].float()).to(dtype=th.long)
-        pending_assessment = mission_tensor[:, 17] > 0.5
-        target_contact_present = mission_tensor[:, 19] > 0.5
+        mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission_tensor.shape[1]))
+        if mission_mode is None:
+            return None
+        if mission_observation_has_field(mission_mode, "fire_mask_open"):
+            fire_mask = _mission_column(mission_tensor, mission_mode, "fire_mask_open") > 0.5
+            return [bool(value) for value in fire_mask.detach().cpu().reshape(-1).tolist()]
+        wcs_state = th.round(_mission_column(mission_tensor, mission_mode, "wcs_state").float()).to(dtype=th.long)
+        authorization_to_fire = _mission_column(mission_tensor, mission_mode, "authorization_to_fire") > 0.5
+        engage_order_state = th.round(
+            _mission_column(mission_tensor, mission_mode, "engage_order_state").float()
+        ).to(dtype=th.long)
+        shot_policy_state = th.round(
+            _mission_column(mission_tensor, mission_mode, "shot_policy_state").float()
+        ).to(dtype=th.long)
+        shot_budget_remaining = th.round(
+            _mission_column(mission_tensor, mission_mode, "shot_budget_remaining").float()
+        ).to(dtype=th.long)
+        pending_assessment = _mission_column(mission_tensor, mission_mode, "pending_assessment") > 0.5
+        target_contact_present = _mission_column(mission_tensor, mission_mode, "target_contact_present") > 0.5
         engage_hold = (
             (engage_order_state == 3)
             | (engage_order_state == 4)
@@ -309,6 +362,15 @@ class AdaptiveKLPPO(PPO):
     ) -> list[bool] | None:
         if not isinstance(obs, dict):
             return None
+
+        mission = obs.get("mission")
+        if mission is not None:
+            mission_tensor = th.as_tensor(mission)
+            if mission_tensor.ndim == 2 and int(mission_tensor.shape[0]) == int(n_envs):
+                mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission_tensor.shape[1]))
+                if mission_mode is not None and mission_observation_has_field(mission_mode, "launch_window_open"):
+                    launch_window = _mission_column(mission_tensor, mission_mode, "launch_window_open") > 0.5
+                    return [bool(value) for value in launch_window.detach().cpu().reshape(-1).tolist()]
 
         contacts_tensor = None
         contacts_history = obs.get("contacts_history")
@@ -438,6 +500,16 @@ class AdaptiveKLPPO(PPO):
                 0.0
                 if use_a6_targets
                 else float(self.a7_event_credit_shadow_quality_weight)
+            ),
+            legal_open_quality_weight=(
+                0.0
+                if use_a6_targets
+                else float(self.a7_event_credit_legal_open_quality_weight)
+            ),
+            legal_open_quality_min_window_age_steps=(
+                1
+                if use_a6_targets
+                else int(self.a7_event_credit_legal_open_quality_min_window_age_steps)
             ),
             device=self.device,
         )
@@ -731,7 +803,16 @@ class AdaptiveKLPPO(PPO):
             coef=float(self.a6_first_event_hazard_coef),
         )
 
-    def _first_event_credit_loss(self, rollout_data):
+    def _first_event_credit_loss(
+        self,
+        rollout_data,
+        *,
+        value_coef: float | None = None,
+        delta_align_coef: float | None = None,
+        projection_value_coef: float | None = None,
+        projection_delta_align_coef: float | None = None,
+        detach_credit_latent: bool = False,
+    ):
         if not self._a7_event_credit_enabled():
             return None
         batch = first_event_credit_batch_from_rollout_data(rollout_data)
@@ -739,20 +820,35 @@ class AdaptiveKLPPO(PPO):
             return None
         active, target, weight, window_id, source = batch
         obs = rollout_data.observations
-        distribution = self.policy.get_distribution(obs)
-        q_values_getter = getattr(distribution, "fire_event_q_values", None)
-        if not callable(q_values_getter):
-            return None
-        q_values = q_values_getter()
+        if detach_credit_latent:
+            q_values_getter = getattr(self.policy, "get_hybrid_event_credit_values", None)
+            if not callable(q_values_getter):
+                return None
+            q_values = q_values_getter(obs, detach_latent=True)
+            distribution = None
+        else:
+            distribution = self.policy.get_distribution(obs)
+            q_values_getter = getattr(distribution, "fire_event_q_values", None)
+            if not callable(q_values_getter):
+                return None
+            q_values = q_values_getter()
         if q_values is None:
             return None
         logit_delta = None
-        logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
-        if callable(logit_delta_getter):
-            logit_delta = logit_delta_getter()
+        if distribution is not None:
+            logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+            if callable(logit_delta_getter):
+                logit_delta = logit_delta_getter()
         delta_align_active = None
         if source is not None:
             delta_align_active = source.to(device=q_values.device) != int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+        if self.a7_event_credit_delta_align_positive_only and logit_delta is not None:
+            positive_credit = (q_values[:, 1] - q_values[:, 0]).detach() > 0.0
+            delta_align_active = (
+                positive_credit
+                if delta_align_active is None
+                else delta_align_active.to(device=q_values.device).reshape(-1).to(dtype=th.bool) & positive_credit
+            )
         base_loss = compute_first_event_credit_loss(
             q_values,
             target.to(device=q_values.device),
@@ -760,8 +856,16 @@ class AdaptiveKLPPO(PPO):
             weight.to(device=q_values.device),
             event_logit_delta=logit_delta,
             window_id=window_id.to(device=q_values.device) if window_id is not None else None,
-            value_coef=float(self.a7_event_credit_value_coef),
-            delta_align_coef=float(self.a7_event_credit_delta_align_coef),
+            value_coef=(
+                float(self.a7_event_credit_value_coef)
+                if value_coef is None
+                else float(max(0.0, value_coef))
+            ),
+            delta_align_coef=(
+                float(self.a7_event_credit_delta_align_coef)
+                if delta_align_coef is None
+                else float(max(0.0, delta_align_coef))
+            ),
             delta_align_clip=float(self.a7_event_credit_delta_align_clip),
             delta_align_active=delta_align_active,
             positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
@@ -777,11 +881,41 @@ class AdaptiveKLPPO(PPO):
             def _source_count(value: int) -> int:
                 return int((source_active & (source_flat == int(value))).sum().detach().cpu().item())
 
+            positive_flat = target.to(device=q_values.device).reshape(-1) > 0.5
+            advantage = q_values[:, 1] - q_values[:, 0]
+            legal_open_quality_mask = source_active & (
+                source_flat == int(A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY)
+            )
+
+            def _source_positive_count(value: int) -> int:
+                return int(
+                    (
+                        source_active
+                        & positive_flat
+                        & (source_flat == int(value))
+                    ).sum().detach().cpu().item()
+                )
+
+            def _source_advantage_mean(mask: th.Tensor) -> float:
+                selected = advantage[mask]
+                return (
+                    float(selected.detach().mean().cpu().item())
+                    if int(selected.numel()) > 0
+                    else 0.0
+                )
+
             source_stats = {
                 "source_shadow_count": _source_count(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY),
                 "source_deadline_count": _source_count(A6_FIRST_EVENT_SOURCE_DEADLINE),
                 "source_early_accepted_count": _source_count(A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED),
                 "source_prewindow_count": _source_count(A6_FIRST_EVENT_SOURCE_PREWINDOW),
+                "source_legal_open_quality_count": _source_count(A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY),
+                "source_legal_open_quality_positive_count": _source_positive_count(
+                    A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY
+                ),
+                "source_deadline_positive_count": _source_positive_count(A6_FIRST_EVENT_SOURCE_DEADLINE),
+                "source_shadow_positive_count": _source_positive_count(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY),
+                "source_legal_open_quality_advantage_mean": _source_advantage_mean(legal_open_quality_mask),
             }
             base_loss = replace(
                 base_loss,
@@ -794,6 +928,12 @@ class AdaptiveKLPPO(PPO):
             or (
                 self.a7_event_credit_projection_value_coef <= 0.0
                 and self.a7_event_credit_projection_delta_align_coef <= 0.0
+            )
+            or (
+                projection_value_coef is not None
+                and projection_delta_align_coef is not None
+                and float(projection_value_coef) <= 0.0
+                and float(projection_delta_align_coef) <= 0.0
             )
         ):
             return base_loss
@@ -839,17 +979,25 @@ class AdaptiveKLPPO(PPO):
                 **source_stats,
             )
 
-        projected_distribution = self.policy.get_distribution(projection.observations)
-        projected_q_getter = getattr(projected_distribution, "fire_event_q_values", None)
-        if not callable(projected_q_getter):
-            return base_loss
-        projected_q_values = projected_q_getter()
+        if detach_credit_latent:
+            projected_q_getter = getattr(self.policy, "get_hybrid_event_credit_values", None)
+            if not callable(projected_q_getter):
+                return base_loss
+            projected_q_values = projected_q_getter(projection.observations, detach_latent=True)
+            projected_distribution = None
+        else:
+            projected_distribution = self.policy.get_distribution(projection.observations)
+            projected_q_getter = getattr(projected_distribution, "fire_event_q_values", None)
+            if not callable(projected_q_getter):
+                return base_loss
+            projected_q_values = projected_q_getter()
         if projected_q_values is None:
             return base_loss
         projected_delta = None
-        projected_delta_getter = getattr(projected_distribution, "fire_event_logit_delta", None)
-        if callable(projected_delta_getter):
-            projected_delta = projected_delta_getter()
+        if projected_distribution is not None:
+            projected_delta_getter = getattr(projected_distribution, "fire_event_logit_delta", None)
+            if callable(projected_delta_getter):
+                projected_delta = projected_delta_getter()
         projected_targets = th.ones_like(target.to(device=q_values.device, dtype=th.float32).reshape(-1))
         projection_loss = compute_first_event_credit_loss(
             projected_q_values,
@@ -858,10 +1006,25 @@ class AdaptiveKLPPO(PPO):
             weight.to(device=projected_q_values.device),
             event_logit_delta=projected_delta,
             window_id=window_id.to(device=projected_q_values.device) if window_id is not None else None,
-            value_coef=float(self.a7_event_credit_projection_value_coef),
-            delta_align_coef=float(self.a7_event_credit_projection_delta_align_coef),
+            value_coef=(
+                float(self.a7_event_credit_projection_value_coef)
+                if projection_value_coef is None
+                else float(max(0.0, projection_value_coef))
+            ),
+            delta_align_coef=(
+                float(self.a7_event_credit_projection_delta_align_coef)
+                if projection_delta_align_coef is None
+                else float(max(0.0, projection_delta_align_coef))
+            ),
             delta_align_clip=float(self.a7_event_credit_delta_align_clip),
-            delta_align_active=projected_active.to(device=projected_q_values.device),
+            delta_align_active=(
+                projected_active.to(device=projected_q_values.device)
+                if not self.a7_event_credit_delta_align_positive_only or projected_delta is None
+                else (
+                    projected_active.to(device=projected_q_values.device)
+                    & ((projected_q_values[:, 1] - projected_q_values[:, 0]).detach() > 0.0)
+                )
+            ),
             positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
             negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
         )
@@ -902,6 +1065,45 @@ class AdaptiveKLPPO(PPO):
             projection_delta_mean=projection_delta_mean,
             **source_stats,
         )
+
+    def _a7_event_credit_head_parameters(self) -> list[th.nn.Parameter]:
+        credit_head = getattr(self.policy, "hybrid_event_credit_head", None)
+        if credit_head is None:
+            return []
+        return [param for param in credit_head.parameters() if param.requires_grad]
+
+    def _first_event_credit_separate_value_update(
+        self,
+        rollout_data,
+    ) -> tuple[FirstEventCreditLoss | None, float]:
+        if not self.a7_event_credit_separate_update_enabled:
+            return None, 0.0
+        credit_params = self._a7_event_credit_head_parameters()
+        if not credit_params:
+            return None, 0.0
+
+        credit_loss = self._first_event_credit_loss(
+            rollout_data,
+            value_coef=float(self.a7_event_credit_value_coef),
+            delta_align_coef=0.0,
+            projection_value_coef=float(self.a7_event_credit_projection_value_coef),
+            projection_delta_align_coef=0.0,
+            detach_credit_latent=True,
+        )
+        if credit_loss is None:
+            return None, 0.0
+
+        self.policy.optimizer.zero_grad(set_to_none=True)
+        credit_loss.loss.backward()
+        max_norm = float(self.a7_event_credit_separate_update_max_grad_norm)
+        if max_norm > 0.0:
+            grad_norm_tensor = th.nn.utils.clip_grad_norm_(credit_params, max_norm)
+            grad_norm = float(grad_norm_tensor.detach().cpu().item())
+        else:
+            grad_norm = 0.0
+        self.policy.optimizer.step()
+        self.policy.optimizer.zero_grad(set_to_none=True)
+        return credit_loss, grad_norm
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
@@ -947,10 +1149,65 @@ class AdaptiveKLPPO(PPO):
         first_event_credit_source_deadline_counts = []
         first_event_credit_source_early_counts = []
         first_event_credit_source_prewindow_counts = []
+        first_event_credit_source_legal_open_quality_counts = []
+        first_event_credit_source_legal_open_quality_positive_counts = []
+        first_event_credit_source_deadline_positive_counts = []
+        first_event_credit_source_shadow_positive_counts = []
+        first_event_credit_source_legal_open_quality_advantage_means = []
+        first_event_credit_separate_update_grad_norms = []
+        first_event_credit_separate_update_counts = []
         clip_fractions = []
 
         approx_kl_divs = []
         continue_training = True
+
+        def _append_first_event_credit_stats(
+            credit_loss: FirstEventCreditLoss,
+            *,
+            total_loss=None,
+            value_loss=None,
+            delta_align_loss=None,
+        ) -> None:
+            first_event_credit_losses.append(
+                float((credit_loss.loss if total_loss is None else total_loss).detach().cpu())
+            )
+            first_event_credit_value_losses.append(
+                float((credit_loss.value_loss if value_loss is None else value_loss).detach().cpu())
+            )
+            first_event_credit_delta_align_losses.append(
+                float(
+                    (
+                        credit_loss.delta_align_loss
+                        if delta_align_loss is None
+                        else delta_align_loss
+                    ).detach().cpu()
+                )
+            )
+            first_event_credit_active_counts.append(int(credit_loss.active_count))
+            first_event_credit_positive_fracs.append(float(credit_loss.positive_frac))
+            first_event_credit_advantage_means.append(float(credit_loss.advantage_mean))
+            first_event_credit_projection_active_counts.append(int(credit_loss.projection_active_count))
+            first_event_credit_projection_candidate_counts.append(int(credit_loss.projection_candidate_count))
+            first_event_credit_projection_unsupported_counts.append(int(credit_loss.projection_unsupported_count))
+            first_event_credit_projection_advantage_means.append(float(credit_loss.projection_advantage_mean))
+            first_event_credit_projection_delta_means.append(float(credit_loss.projection_delta_mean))
+            first_event_credit_source_shadow_counts.append(int(credit_loss.source_shadow_count))
+            first_event_credit_source_deadline_counts.append(int(credit_loss.source_deadline_count))
+            first_event_credit_source_early_counts.append(int(credit_loss.source_early_accepted_count))
+            first_event_credit_source_prewindow_counts.append(int(credit_loss.source_prewindow_count))
+            first_event_credit_source_legal_open_quality_counts.append(
+                int(credit_loss.source_legal_open_quality_count)
+            )
+            first_event_credit_source_legal_open_quality_positive_counts.append(
+                int(credit_loss.source_legal_open_quality_positive_count)
+            )
+            first_event_credit_source_deadline_positive_counts.append(
+                int(credit_loss.source_deadline_positive_count)
+            )
+            first_event_credit_source_shadow_positive_counts.append(int(credit_loss.source_shadow_positive_count))
+            first_event_credit_source_legal_open_quality_advantage_means.append(
+                float(credit_loss.source_legal_open_quality_advantage_mean)
+            )
 
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
@@ -1018,40 +1275,34 @@ class AdaptiveKLPPO(PPO):
                     first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                     first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                     loss = loss + first_event_hazard_loss.loss
-                first_event_credit_loss = self._first_event_credit_loss(rollout_data)
+                separate_credit_loss, separate_credit_grad_norm = (
+                    self._first_event_credit_separate_value_update(rollout_data)
+                    if self.a7_event_credit_separate_update_enabled
+                    else (None, 0.0)
+                )
+                if separate_credit_loss is not None:
+                    first_event_credit_separate_update_grad_norms.append(float(separate_credit_grad_norm))
+                    first_event_credit_separate_update_counts.append(1)
+                first_event_credit_loss = self._first_event_credit_loss(
+                    rollout_data,
+                    value_coef=0.0 if self.a7_event_credit_separate_update_enabled else None,
+                    projection_value_coef=0.0 if self.a7_event_credit_separate_update_enabled else None,
+                )
                 if first_event_credit_loss is not None:
-                    first_event_credit_losses.append(float(first_event_credit_loss.loss.detach().cpu()))
-                    first_event_credit_value_losses.append(float(first_event_credit_loss.value_loss.detach().cpu()))
-                    first_event_credit_delta_align_losses.append(
-                        float(first_event_credit_loss.delta_align_loss.detach().cpu())
-                    )
-                    first_event_credit_active_counts.append(int(first_event_credit_loss.active_count))
-                    first_event_credit_positive_fracs.append(float(first_event_credit_loss.positive_frac))
-                    first_event_credit_advantage_means.append(float(first_event_credit_loss.advantage_mean))
-                    first_event_credit_projection_active_counts.append(
-                        int(first_event_credit_loss.projection_active_count)
-                    )
-                    first_event_credit_projection_candidate_counts.append(
-                        int(first_event_credit_loss.projection_candidate_count)
-                    )
-                    first_event_credit_projection_unsupported_counts.append(
-                        int(first_event_credit_loss.projection_unsupported_count)
-                    )
-                    first_event_credit_projection_advantage_means.append(
-                        float(first_event_credit_loss.projection_advantage_mean)
-                    )
-                    first_event_credit_projection_delta_means.append(
-                        float(first_event_credit_loss.projection_delta_mean)
-                    )
-                    first_event_credit_source_shadow_counts.append(int(first_event_credit_loss.source_shadow_count))
-                    first_event_credit_source_deadline_counts.append(int(first_event_credit_loss.source_deadline_count))
-                    first_event_credit_source_early_counts.append(
-                        int(first_event_credit_loss.source_early_accepted_count)
-                    )
-                    first_event_credit_source_prewindow_counts.append(
-                        int(first_event_credit_loss.source_prewindow_count)
+                    total_credit_loss = first_event_credit_loss.loss
+                    value_credit_loss = first_event_credit_loss.value_loss
+                    if separate_credit_loss is not None:
+                        total_credit_loss = total_credit_loss + separate_credit_loss.loss.detach()
+                        value_credit_loss = separate_credit_loss.value_loss
+                    _append_first_event_credit_stats(
+                        first_event_credit_loss,
+                        total_loss=total_credit_loss,
+                        value_loss=value_credit_loss,
+                        delta_align_loss=first_event_credit_loss.delta_align_loss,
                     )
                     loss = loss + first_event_credit_loss.loss
+                elif separate_credit_loss is not None:
+                    _append_first_event_credit_stats(separate_credit_loss)
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
@@ -1138,6 +1389,38 @@ class AdaptiveKLPPO(PPO):
             self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
             self.logger.record("a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef))
             self.logger.record(
+                "a7/event_credit_delta_align_positive_only",
+                float(self.a7_event_credit_delta_align_positive_only),
+            )
+            self.logger.record(
+                "a7/evc_separate_update_enabled",
+                float(self.a7_event_credit_separate_update_enabled),
+            )
+            self.logger.record(
+                "a7/evc_separate_update_max_grad_norm",
+                float(self.a7_event_credit_separate_update_max_grad_norm),
+            )
+            self.logger.record(
+                "a7/evc_separate_update_count_mean",
+                (
+                    float(np.mean(first_event_credit_separate_update_counts))
+                    if first_event_credit_separate_update_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/evc_separate_update_grad_norm_mean",
+                (
+                    float(np.mean(first_event_credit_separate_update_grad_norms))
+                    if first_event_credit_separate_update_grad_norms
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_credit_legal_open_quality_weight",
+                float(self.a7_event_credit_legal_open_quality_weight),
+            )
+            self.logger.record(
                 "a7/evc_proj_enabled",
                 float(self.a7_event_credit_legal_projection_enabled),
             )
@@ -1207,6 +1490,36 @@ class AdaptiveKLPPO(PPO):
                 "a7/evc_src_pre_count_mean",
                 float(np.mean(first_event_credit_source_prewindow_counts))
                 if first_event_credit_source_prewindow_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_legal_open_quality_count_mean",
+                float(np.mean(first_event_credit_source_legal_open_quality_counts))
+                if first_event_credit_source_legal_open_quality_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_legal_open_quality_positive_count_mean",
+                float(np.mean(first_event_credit_source_legal_open_quality_positive_counts))
+                if first_event_credit_source_legal_open_quality_positive_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_deadline_positive_count_mean",
+                float(np.mean(first_event_credit_source_deadline_positive_counts))
+                if first_event_credit_source_deadline_positive_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_shadow_positive_count_mean",
+                float(np.mean(first_event_credit_source_shadow_positive_counts))
+                if first_event_credit_source_shadow_positive_counts
+                else 0.0,
+            )
+            self.logger.record(
+                "a7/evc_src_legal_open_quality_advantage_mean",
+                float(np.mean(first_event_credit_source_legal_open_quality_advantage_means))
+                if first_event_credit_source_legal_open_quality_advantage_means
                 else 0.0,
             )
             self.logger.record(

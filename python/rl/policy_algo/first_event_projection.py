@@ -5,6 +5,14 @@ from typing import Any
 
 import torch as th
 
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+    mission_observation_dim,
+    mission_observation_field_index,
+    mission_observation_has_field,
+)
+
 
 @dataclass(frozen=True)
 class FirstEventLegalProjection:
@@ -17,9 +25,30 @@ def _clone_observation_mapping(obs: dict[str, Any]) -> dict[str, Any]:
     return {key: value.clone() if th.is_tensor(value) else value for key, value in obs.items()}
 
 
+_AIR_COMBAT_C2_ROE_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+)
+
+
+def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
+    for mode in _AIR_COMBAT_C2_ROE_MODES:
+        if int(dim) == int(mission_observation_dim(mode)):
+            return mode
+    return None
+
+
+def _mission_index(mode: str, field_name: str) -> int:
+    return int(mission_observation_field_index(mode, field_name))
+
+
 def _contact_evidence_from_obs(obs: dict[str, Any], n_envs: int, device: th.device) -> th.Tensor:
     mission = th.as_tensor(obs["mission"], device=device)
-    evidence = mission[:, 19].float() > 0.5
+    mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission.shape[1]))
+    if mission_mode is None:
+        evidence = th.zeros((int(n_envs),), dtype=th.bool, device=device)
+    else:
+        evidence = mission[:, _mission_index(mission_mode, "target_contact_present")].float() > 0.5
 
     contacts_history = obs.get("contacts_history")
     if contacts_history is not None:
@@ -62,7 +91,10 @@ def project_air_combat_c2_roe_legal_open_observations(
         return None
 
     mission = th.as_tensor(obs["mission"])
-    if mission.ndim != 2 or int(mission.shape[1]) != 20:
+    if mission.ndim != 2:
+        return None
+    mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission.shape[1]))
+    if mission_mode is None:
         return None
 
     active = candidate_active.to(device=mission.device).reshape(-1).to(dtype=th.bool)
@@ -86,13 +118,16 @@ def project_air_combat_c2_roe_legal_open_observations(
 
     mission_projected = mission.clone()
     rows = projected_active
-    mission_projected[rows, 5] = mission_projected.new_tensor(2.0)
-    mission_projected[rows, 6] = mission_projected.new_tensor(1.0)
-    mission_projected[rows, 14] = mission_projected.new_tensor(2.0)
-    mission_projected[rows, 15] = mission_projected.new_tensor(1.0)
-    mission_projected[rows, 16] = th.clamp(mission_projected[rows, 16], min=1.0)
-    mission_projected[rows, 17] = mission_projected.new_tensor(0.0)
-    mission_projected[rows, 19] = mission_projected.new_tensor(1.0)
+    mission_projected[rows, _mission_index(mission_mode, "wcs_state")] = mission_projected.new_tensor(2.0)
+    mission_projected[rows, _mission_index(mission_mode, "authorization_to_fire")] = mission_projected.new_tensor(1.0)
+    mission_projected[rows, _mission_index(mission_mode, "engage_order_state")] = mission_projected.new_tensor(2.0)
+    mission_projected[rows, _mission_index(mission_mode, "shot_policy_state")] = mission_projected.new_tensor(1.0)
+    budget_idx = _mission_index(mission_mode, "shot_budget_remaining")
+    mission_projected[rows, budget_idx] = th.clamp(mission_projected[rows, budget_idx], min=1.0)
+    mission_projected[rows, _mission_index(mission_mode, "pending_assessment")] = mission_projected.new_tensor(0.0)
+    mission_projected[rows, _mission_index(mission_mode, "target_contact_present")] = mission_projected.new_tensor(1.0)
+    if mission_observation_has_field(mission_mode, "fire_mask_open"):
+        mission_projected[rows, _mission_index(mission_mode, "fire_mask_open")] = mission_projected.new_tensor(1.0)
     projected["mission"] = mission_projected
 
     event_mask = projected.get("event_action_mask")

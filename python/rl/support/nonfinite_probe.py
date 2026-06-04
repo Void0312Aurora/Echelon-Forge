@@ -674,6 +674,13 @@ class NonFiniteTrainingProbe:
             first_event_credit_source_deadline_counts = []
             first_event_credit_source_early_counts = []
             first_event_credit_source_prewindow_counts = []
+            first_event_credit_source_legal_open_quality_counts = []
+            first_event_credit_source_legal_open_quality_positive_counts = []
+            first_event_credit_source_deadline_positive_counts = []
+            first_event_credit_source_shadow_positive_counts = []
+            first_event_credit_source_legal_open_quality_advantage_means = []
+            first_event_credit_separate_update_grad_norms = []
+            first_event_credit_separate_update_counts = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -792,23 +799,51 @@ class NonFiniteTrainingProbe:
                         first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                         first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                         loss = loss + first_event_hazard_loss.loss
+                    separate_credit_loss = None
+                    separate_credit_grad_norm = 0.0
+                    if bool(getattr(self, "a7_event_credit_separate_update_enabled", False)):
+                        separate_update_fn = getattr(self, "_first_event_credit_separate_value_update", None)
+                        if callable(separate_update_fn):
+                            separate_credit_loss, separate_credit_grad_norm = separate_update_fn(rollout_data)
+                        if separate_credit_loss is not None:
+                            tracer.check(
+                                "train.a7_first_event_credit_separate_value_loss",
+                                separate_credit_loss.value_loss,
+                            )
+                            first_event_credit_separate_update_grad_norms.append(
+                                float(separate_credit_grad_norm)
+                            )
+                            first_event_credit_separate_update_counts.append(1)
                     first_event_credit_loss = None
                     first_event_credit_fn = getattr(self, "_first_event_credit_loss", None)
                     if callable(first_event_credit_fn):
-                        first_event_credit_loss = first_event_credit_fn(rollout_data)
+                        first_event_credit_loss = first_event_credit_fn(
+                            rollout_data,
+                            value_coef=0.0
+                            if bool(getattr(self, "a7_event_credit_separate_update_enabled", False))
+                            else None,
+                            projection_value_coef=0.0
+                            if bool(getattr(self, "a7_event_credit_separate_update_enabled", False))
+                            else None,
+                        )
                     if first_event_credit_loss is not None:
+                        total_credit_loss = first_event_credit_loss.loss
+                        value_credit_loss = first_event_credit_loss.value_loss
+                        if separate_credit_loss is not None:
+                            total_credit_loss = total_credit_loss + separate_credit_loss.loss.detach()
+                            value_credit_loss = separate_credit_loss.value_loss
                         tracer.check("train.a7_first_event_credit_loss", first_event_credit_loss.loss)
                         tracer.check(
                             "train.a7_first_event_credit_value_loss",
-                            first_event_credit_loss.value_loss,
+                            value_credit_loss,
                         )
                         tracer.check(
                             "train.a7_first_event_credit_delta_align_loss",
                             first_event_credit_loss.delta_align_loss,
                         )
-                        first_event_credit_losses.append(float(first_event_credit_loss.loss.detach().cpu()))
+                        first_event_credit_losses.append(float(total_credit_loss.detach().cpu()))
                         first_event_credit_value_losses.append(
-                            float(first_event_credit_loss.value_loss.detach().cpu())
+                            float(value_credit_loss.detach().cpu())
                         )
                         first_event_credit_delta_align_losses.append(
                             float(first_event_credit_loss.delta_align_loss.detach().cpu())
@@ -843,7 +878,73 @@ class NonFiniteTrainingProbe:
                         first_event_credit_source_prewindow_counts.append(
                             int(getattr(first_event_credit_loss, "source_prewindow_count", 0))
                         )
+                        first_event_credit_source_legal_open_quality_counts.append(
+                            int(getattr(first_event_credit_loss, "source_legal_open_quality_count", 0))
+                        )
+                        first_event_credit_source_legal_open_quality_positive_counts.append(
+                            int(getattr(first_event_credit_loss, "source_legal_open_quality_positive_count", 0))
+                        )
+                        first_event_credit_source_deadline_positive_counts.append(
+                            int(getattr(first_event_credit_loss, "source_deadline_positive_count", 0))
+                        )
+                        first_event_credit_source_shadow_positive_counts.append(
+                            int(getattr(first_event_credit_loss, "source_shadow_positive_count", 0))
+                        )
+                        first_event_credit_source_legal_open_quality_advantage_means.append(
+                            float(getattr(first_event_credit_loss, "source_legal_open_quality_advantage_mean", 0.0))
+                        )
                         loss = loss + first_event_credit_loss.loss
+                    elif separate_credit_loss is not None:
+                        first_event_credit_losses.append(float(separate_credit_loss.loss.detach().cpu()))
+                        first_event_credit_value_losses.append(float(separate_credit_loss.value_loss.detach().cpu()))
+                        first_event_credit_delta_align_losses.append(
+                            float(separate_credit_loss.delta_align_loss.detach().cpu())
+                        )
+                        first_event_credit_active_counts.append(int(separate_credit_loss.active_count))
+                        first_event_credit_positive_fracs.append(float(separate_credit_loss.positive_frac))
+                        first_event_credit_advantage_means.append(float(separate_credit_loss.advantage_mean))
+                        first_event_credit_projection_active_counts.append(
+                            int(getattr(separate_credit_loss, "projection_active_count", 0))
+                        )
+                        first_event_credit_projection_candidate_counts.append(
+                            int(getattr(separate_credit_loss, "projection_candidate_count", 0))
+                        )
+                        first_event_credit_projection_unsupported_counts.append(
+                            int(getattr(separate_credit_loss, "projection_unsupported_count", 0))
+                        )
+                        first_event_credit_projection_advantage_means.append(
+                            float(getattr(separate_credit_loss, "projection_advantage_mean", 0.0))
+                        )
+                        first_event_credit_projection_delta_means.append(
+                            float(getattr(separate_credit_loss, "projection_delta_mean", 0.0))
+                        )
+                        first_event_credit_source_shadow_counts.append(
+                            int(getattr(separate_credit_loss, "source_shadow_count", 0))
+                        )
+                        first_event_credit_source_deadline_counts.append(
+                            int(getattr(separate_credit_loss, "source_deadline_count", 0))
+                        )
+                        first_event_credit_source_early_counts.append(
+                            int(getattr(separate_credit_loss, "source_early_accepted_count", 0))
+                        )
+                        first_event_credit_source_prewindow_counts.append(
+                            int(getattr(separate_credit_loss, "source_prewindow_count", 0))
+                        )
+                        first_event_credit_source_legal_open_quality_counts.append(
+                            int(getattr(separate_credit_loss, "source_legal_open_quality_count", 0))
+                        )
+                        first_event_credit_source_legal_open_quality_positive_counts.append(
+                            int(getattr(separate_credit_loss, "source_legal_open_quality_positive_count", 0))
+                        )
+                        first_event_credit_source_deadline_positive_counts.append(
+                            int(getattr(separate_credit_loss, "source_deadline_positive_count", 0))
+                        )
+                        first_event_credit_source_shadow_positive_counts.append(
+                            int(getattr(separate_credit_loss, "source_shadow_positive_count", 0))
+                        )
+                        first_event_credit_source_legal_open_quality_advantage_means.append(
+                            float(getattr(separate_credit_loss, "source_legal_open_quality_advantage_mean", 0.0))
+                        )
                     tracer.check("train.loss", loss)
 
                     with th.no_grad():
@@ -961,6 +1062,38 @@ class NonFiniteTrainingProbe:
                     float(getattr(self, "a7_event_credit_delta_align_coef", 0.0)),
                 )
                 self.logger.record(
+                    "a7/event_credit_delta_align_positive_only",
+                    float(bool(getattr(self, "a7_event_credit_delta_align_positive_only", False))),
+                )
+                self.logger.record(
+                    "a7/evc_separate_update_enabled",
+                    float(bool(getattr(self, "a7_event_credit_separate_update_enabled", False))),
+                )
+                self.logger.record(
+                    "a7/evc_separate_update_max_grad_norm",
+                    float(getattr(self, "a7_event_credit_separate_update_max_grad_norm", 0.0)),
+                )
+                self.logger.record(
+                    "a7/evc_separate_update_count_mean",
+                    (
+                        float(np.mean(first_event_credit_separate_update_counts))
+                        if first_event_credit_separate_update_counts
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/evc_separate_update_grad_norm_mean",
+                    (
+                        float(np.mean(first_event_credit_separate_update_grad_norms))
+                        if first_event_credit_separate_update_grad_norms
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/event_credit_legal_open_quality_weight",
+                    float(getattr(self, "a7_event_credit_legal_open_quality_weight", 0.0)),
+                )
+                self.logger.record(
                     "a7/evc_proj_enabled",
                     float(bool(getattr(self, "a7_event_credit_legal_projection_enabled", False))),
                 )
@@ -1030,6 +1163,36 @@ class NonFiniteTrainingProbe:
                     "a7/evc_src_pre_count_mean",
                     float(np.mean(first_event_credit_source_prewindow_counts))
                     if first_event_credit_source_prewindow_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_legal_open_quality_count_mean",
+                    float(np.mean(first_event_credit_source_legal_open_quality_counts))
+                    if first_event_credit_source_legal_open_quality_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_legal_open_quality_positive_count_mean",
+                    float(np.mean(first_event_credit_source_legal_open_quality_positive_counts))
+                    if first_event_credit_source_legal_open_quality_positive_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_deadline_positive_count_mean",
+                    float(np.mean(first_event_credit_source_deadline_positive_counts))
+                    if first_event_credit_source_deadline_positive_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_shadow_positive_count_mean",
+                    float(np.mean(first_event_credit_source_shadow_positive_counts))
+                    if first_event_credit_source_shadow_positive_counts
+                    else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_src_legal_open_quality_advantage_mean",
+                    float(np.mean(first_event_credit_source_legal_open_quality_advantage_means))
+                    if first_event_credit_source_legal_open_quality_advantage_means
                     else 0.0,
                 )
                 self.logger.record(

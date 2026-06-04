@@ -7,7 +7,13 @@ import torch
 import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-from python.mission_obs_taxonomy import mission_observation_dim
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+    mission_observation_dim,
+    mission_observation_field_index,
+    mission_observation_has_field,
+)
 
 
 _TRANSFORMER_FEATURE_CLAMP = 12.0
@@ -107,6 +113,15 @@ _MISSION_NAVAL_IDX_ASSIGNED_TARGET_SOURCE_ID = 19
 _MISSION_NAVAL_IDX_SELF_ROLE_CODE = 20
 _MISSION_NAVAL_IDX_RELATIVE_SLOT_CODE = 21
 _MISSION_NAVAL_IDX_REFERENCE_RELATIVE_SLOT_CODE = 22
+
+_MISSION_AIR_COMBAT_C2_ROE_MODES = (
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
+)
+_MISSION_AIR_COMBAT_C2_ROE_MODE_BY_DIM = {
+    mission_observation_dim(mode): mode
+    for mode in _MISSION_AIR_COMBAT_C2_ROE_MODES
+}
 
 _CONTACT_IDX_RANGE_M = 0
 _CONTACT_IDX_AZIMUTH_DEG = 1
@@ -233,6 +248,9 @@ def preprocess_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
     out = mission.float().clone()
     if out.ndim != 2:
         return _sanitize_features(out)
+    air_combat_mode = _MISSION_AIR_COMBAT_C2_ROE_MODE_BY_DIM.get(int(out.shape[-1]))
+    if air_combat_mode is not None:
+        return preprocess_air_combat_c2_roe_mission_tensor(out, air_combat_mode)
     if int(out.shape[-1]) == _MISSION_NAVAL_SCREEN_DIM:
         return preprocess_naval_screen_station_mission_tensor(out)
 
@@ -261,6 +279,52 @@ def preprocess_mission_tensor(mission: torch.Tensor) -> torch.Tensor:
     _set_last_dim(out, _MISSION_IDX_SELF_FORMATION_ROLE_CODE, lambda x: _scaled(x, scale=4.0))
     _set_last_dim(out, _MISSION_IDX_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
     _set_last_dim(out, _MISSION_IDX_REFERENCE_RELATIVE_SLOT_CODE, lambda x: _scaled(x, scale=16.0))
+    return _sanitize_features(out)
+
+
+def _air_combat_idx(mode: str, field_name: str) -> int:
+    return int(mission_observation_field_index(mode, field_name))
+
+
+def _set_air_combat_field(out: torch.Tensor, mode: str, field_name: str, fn) -> None:
+    if mission_observation_has_field(mode, field_name):
+        _set_last_dim(out, _air_combat_idx(mode, field_name), fn)
+
+
+def preprocess_air_combat_c2_roe_mission_tensor(mission: torch.Tensor, mode: str) -> torch.Tensor:
+    out = mission.float().clone()
+    if out.ndim != 2:
+        return _sanitize_features(out)
+
+    _set_air_combat_field(out, mode, "command_code", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "target_heading_deg", _wrap_degrees_unit)
+    _set_air_combat_field(out, mode, "target_altitude_m", lambda x: _symlog(x, scale=1000.0))
+    _set_air_combat_field(out, mode, "target_speed_mps", lambda x: _scaled(x, scale=200.0))
+    _set_air_combat_field(out, mode, "roe_state", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "wcs_state", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "authorization_to_fire", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "engagement_authority_holder_id", lambda x: _symlog(x, scale=100.0))
+    _set_air_combat_field(out, mode, "engagement_authority_grantor_id", lambda x: _symlog(x, scale=100.0))
+    _set_air_combat_field(out, mode, "assigned_target_id", lambda x: _symlog(x, scale=100.0))
+    _set_air_combat_field(out, mode, "assigned_target_track_id", lambda x: _symlog(x, scale=100.0))
+    _set_air_combat_field(out, mode, "assigned_target_source_id", lambda x: _symlog(x, scale=100.0))
+    _set_air_combat_field(out, mode, "assigned_target_snapshot_time_s", lambda x: _symlog(x, scale=10.0))
+    _set_air_combat_field(out, mode, "target_identity_state", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "engage_order_state", lambda x: _scaled(x, scale=8.0))
+    _set_air_combat_field(out, mode, "shot_policy_state", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "shot_budget_remaining", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "pending_assessment", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "own_missiles_in_flight_count", lambda x: _scaled(x, scale=4.0))
+    _set_air_combat_field(out, mode, "target_contact_present", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "fire_mask_open", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "launch_window_open", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "quality_window_ready", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "legal_open_age_steps", lambda x: _scaled(x, scale=32.0))
+    _set_air_combat_field(out, mode, "legal_open_age_norm", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "launch_window_age_steps", lambda x: _scaled(x, scale=32.0))
+    _set_air_combat_field(out, mode, "launch_window_age_norm", lambda x: torch.clamp(x, 0.0, 1.0))
+    _set_air_combat_field(out, mode, "target_range_m", lambda x: _symlog(x, scale=1000.0))
+    _set_air_combat_field(out, mode, "target_track_age_s", lambda x: _scaled(x, scale=10.0))
     return _sanitize_features(out)
 
 

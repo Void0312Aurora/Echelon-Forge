@@ -32,6 +32,7 @@ A6_FIRST_EVENT_SOURCE_DEADLINE = 4
 A6_FIRST_EVENT_SOURCE_PREWINDOW = 5
 A6_FIRST_EVENT_SOURCE_EARLY_ACCEPTED = 6
 A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY = 7
+A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY = 8
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,11 @@ class FirstEventCreditLoss:
     source_deadline_count: int = 0
     source_early_accepted_count: int = 0
     source_prewindow_count: int = 0
+    source_legal_open_quality_count: int = 0
+    source_legal_open_quality_positive_count: int = 0
+    source_deadline_positive_count: int = 0
+    source_shadow_positive_count: int = 0
+    source_legal_open_quality_advantage_mean: float = 0.0
 
 
 def current_first_event_curriculum_coef(
@@ -138,6 +144,8 @@ def build_first_event_hazard_labels(
     deadline_min_window_age_steps: int = 96,
     shadow_quality_after_early_accept: bool = False,
     shadow_quality_positive_weight: float = 0.0,
+    legal_open_quality_weight: float = 0.0,
+    legal_open_quality_min_window_age_steps: int = 1,
     device: th.device | str | None = None,
 ) -> FirstEventHazardLabels:
     states = list(engagement_state)
@@ -169,6 +177,9 @@ def build_first_event_hazard_labels(
     early_accept_weight = float(max(0.0, launch_window_early_accept_weight))
     shadow_quality_enabled = bool(shadow_quality_after_early_accept and launch_gate_enabled)
     shadow_quality_weight = float(max(0.0, shadow_quality_positive_weight))
+    legal_open_quality_weight = float(max(0.0, legal_open_quality_weight))
+    legal_open_quality_min_age = max(1, int(legal_open_quality_min_window_age_steps))
+    legal_open_quality_enabled = bool(launch_gate_enabled and legal_open_quality_weight > 0.0)
     window_counter = 0
 
     ordered_episodes: list[int] = []
@@ -295,6 +306,17 @@ def build_first_event_hazard_labels(
                     target[step_idx] = 1.0
                     weight[step_idx] = deadline_weight
                     source[step_idx] = A6_FIRST_EVENT_SOURCE_DEADLINE
+
+            if legal_open_quality_enabled:
+                for pos, step_idx in enumerate(window_indices):
+                    if not quality_open[pos]:
+                        continue
+                    if window_age[step_idx] < float(legal_open_quality_min_age):
+                        continue
+                    active[step_idx] = True
+                    target[step_idx] = 1.0
+                    weight[step_idx] = legal_open_quality_weight
+                    source[step_idx] = A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY
 
     out_device = th.device(device) if device is not None else th.device("cpu")
     return FirstEventHazardLabels(
