@@ -41,6 +41,7 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
                 "nav_v2_cooperative_takeoff_v1",
                 "naval_screen_station_v1",
                 "air_combat_c2_roe_v1",
+                "air_combat_c2_roe_v2",
             ],
         )
 
@@ -198,6 +199,23 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
         self.assertEqual(mission_observation_field_index(mode, "authorization_to_fire"), 6)
         self.assertEqual(mission_observation_field_index(mode, "shot_policy_state"), 15)
         self.assertEqual(mission_observation_field_index(mode, "target_contact_present"), 19)
+
+    def test_air_combat_c2_roe_v2_adds_state_completion_fields(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+
+        self.assertTrue(mission_observation_python_owned(mode))
+        self.assertEqual(mission_observation_dim(mode), 29)
+        self.assertEqual(env_mission_observation_dim(mode), 29)
+        self.assertEqual(ScenarioLoader._mission_observation_mode_code(mode), 8)
+        self.assertEqual(ScenarioLoader._python_owned_mission_observation_mode(mode), True)
+        self.assertEqual(mission_observation_field_index(mode, "target_contact_present"), 19)
+        self.assertEqual(mission_observation_field_index(mode, "fire_mask_open"), 20)
+        self.assertEqual(mission_observation_field_index(mode, "launch_window_open"), 21)
+        self.assertEqual(mission_observation_field_index(mode, "quality_window_ready"), 22)
+        self.assertEqual(mission_observation_field_index(mode, "legal_open_age_steps"), 23)
+        self.assertEqual(mission_observation_field_index(mode, "launch_window_age_steps"), 25)
+        self.assertEqual(mission_observation_field_index(mode, "target_range_m"), 27)
+        self.assertEqual(mission_observation_field_index(mode, "target_track_age_s"), 28)
 
 
 if __name__ == "__main__":

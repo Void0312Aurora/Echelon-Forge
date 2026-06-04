@@ -26,6 +26,10 @@ def reset_air_combat_event_action_state(loader: Any) -> None:
         "_air_combat_event_action_accepted_count",
         "_air_combat_event_action_initial_missiles",
         "_last_air_combat_event_action_info",
+        "_air_combat_c2_roe_legal_open_age_steps",
+        "_air_combat_c2_roe_legal_open_age_step_key",
+        "_air_combat_c2_roe_launch_window_age_steps",
+        "_air_combat_c2_roe_launch_window_age_step_key",
     ):
         try:
             if hasattr(loader, name):

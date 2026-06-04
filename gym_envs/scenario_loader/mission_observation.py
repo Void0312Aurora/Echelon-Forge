@@ -262,7 +262,91 @@ def _air_combat_observed_release_count(loader, truth) -> int:
     return max(int(reward_release_count), int(missile_delta_release_count))
 
 
-def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
+_AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MIN_RANGE_M = 8000.0
+_AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MAX_RANGE_M = 30000.0
+_AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MAX_TRACK_AGE_S = 5.0
+_AIR_COMBAT_C2_ROE_QUALITY_MIN_WINDOW_AGE_STEPS = 32
+
+
+def _air_combat_c2_roe_policy_fire_mask_open(
+    *,
+    wcs_state: int,
+    authorization_to_fire: bool,
+    engage_order_state: int,
+    shot_policy_state: int,
+    shot_budget_remaining: int,
+    pending_assessment: bool,
+    target_contact_present: bool,
+) -> bool:
+    engage_hold = int(engage_order_state) in {3, 4, 5, 6}
+    return bool(
+        target_contact_present
+        and authorization_to_fire
+        and int(wcs_state) != 1
+        and not engage_hold
+        and int(shot_policy_state) > 0
+        and int(shot_budget_remaining) > 0
+        and not pending_assessment
+    )
+
+
+def _air_combat_c2_roe_launch_window_open(target_track) -> bool:
+    if target_track is None:
+        return False
+    try:
+        target_range_m = float(getattr(target_track, "range", 0.0))
+    except Exception:
+        target_range_m = 0.0
+    try:
+        target_track_age_s = float(getattr(target_track, "time_since_update", 0.0))
+    except Exception:
+        target_track_age_s = float("inf")
+    return bool(
+        np.isfinite(target_range_m)
+        and _AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MIN_RANGE_M <= target_range_m <= _AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MAX_RANGE_M
+        and np.isfinite(target_track_age_s)
+        and target_track_age_s <= _AIR_COMBAT_C2_ROE_LAUNCH_WINDOW_MAX_TRACK_AGE_S
+    )
+
+
+def _air_combat_c2_roe_window_age(
+    loader,
+    *,
+    attr_name: str,
+    step_attr_name: str,
+    open_now: bool,
+) -> int:
+    try:
+        step = int(getattr(loader, "steps", 0) or 0)
+    except Exception:
+        step = 0
+    last_step = getattr(loader, step_attr_name, None)
+    if last_step == step:
+        try:
+            return max(0, int(getattr(loader, attr_name, 0) or 0))
+        except Exception:
+            return 0
+
+    previous_age = 0
+    try:
+        if last_step is not None and int(last_step) <= step:
+            previous_age = max(0, int(getattr(loader, attr_name, 0) or 0))
+    except Exception:
+        previous_age = 0
+    age = previous_age + 1 if bool(open_now) else 0
+    try:
+        setattr(loader, attr_name, int(age))
+        setattr(loader, step_attr_name, int(step))
+    except Exception:
+        pass
+    return int(age)
+
+
+def _air_combat_c2_roe_age_norm(age_steps: int) -> float:
+    return float(np.clip(float(max(0, int(age_steps))) / float(_AIR_COMBAT_C2_ROE_QUALITY_MIN_WINDOW_AGE_STEPS), 0.0, 1.0))
+
+
+def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None, state_completion: bool = False) -> np.ndarray:
     _ = inst
     if truth is None:
         try:
@@ -275,11 +359,18 @@ def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
     target_id = assigned_target_id if assigned_target_id > 0 else int(getattr(loader, "primary_target_id", 0) or 0)
     target_track = _target_track(truth, target_id)
     target_contact_present = 1.0 if target_track is not None else 0.0
+    target_range_m = float(getattr(target_track, "range", 0.0) or 0.0) if target_track is not None else 0.0
+    target_track_age_s = (
+        float(getattr(target_track, "time_since_update", 0.0) or 0.0) if target_track is not None else 0.0
+    )
     track_identity = int(getattr(target_track, "classification", 0) or 0) if target_track is not None else 0
     target_identity = cmd_view.int_field(
         "target_identity_state",
         cmd_view.int_field("threat_state", track_identity),
     )
+    wcs_state = int(cmd_view.int_field("wcs_state", 1))
+    authorization_to_fire = bool(cmd_view.bool_field("authorization_to_fire", False))
+    engage_order_state = int(cmd_view.int_field("engage_order_state", 0))
     shot_policy_state = int(cmd_view.int_field("shot_policy_state", 0))
     shot_budget_remaining = max(0, int(cmd_view.int_field("shot_budget_remaining", 0)))
     release_count = _air_combat_observed_release_count(loader, truth)
@@ -293,28 +384,70 @@ def _air_combat_c2_roe_vector(loader, *, truth=None, inst=None) -> np.ndarray:
         int(release_count),
     )
 
+    base_values = [
+        float(cmd_view.int_field("command_code", 0)),
+        float(cmd_view.float_field("target_heading", 0.0)),
+        float(cmd_view.float_field("target_altitude", 0.0)),
+        float(cmd_view.float_field("target_speed", 0.0)),
+        float(cmd_view.int_field("roe_state", 0)),
+        float(wcs_state),
+        1.0 if authorization_to_fire else 0.0,
+        float(cmd_view.int_field("engagement_authority_holder_id", 0)),
+        float(cmd_view.int_field("engagement_authority_grantor_id", 0)),
+        float(assigned_target_id),
+        float(cmd_view.int_field("assigned_target_track_id", 0)),
+        float(cmd_view.int_field("assigned_target_source_id", 0)),
+        float(cmd_view.float_field("assigned_target_snapshot_time_s", 0.0)),
+        float(target_identity),
+        float(engage_order_state),
+        float(shot_policy_state),
+        float(shot_budget_remaining),
+        1.0 if bool(pending_assessment) else 0.0,
+        float(own_missiles_in_flight_count),
+        float(target_contact_present),
+    ]
+    if not bool(state_completion):
+        return np.array(base_values, dtype=np.float32)
+
+    fire_mask_open = _air_combat_c2_roe_policy_fire_mask_open(
+        wcs_state=int(wcs_state),
+        authorization_to_fire=bool(authorization_to_fire),
+        engage_order_state=int(engage_order_state),
+        shot_policy_state=int(shot_policy_state),
+        shot_budget_remaining=int(shot_budget_remaining),
+        pending_assessment=bool(pending_assessment),
+        target_contact_present=bool(target_contact_present > 0.5),
+    )
+    launch_window_open = _air_combat_c2_roe_launch_window_open(target_track)
+    legal_open_age_steps = _air_combat_c2_roe_window_age(
+        loader,
+        attr_name="_air_combat_c2_roe_legal_open_age_steps",
+        step_attr_name="_air_combat_c2_roe_legal_open_age_step_key",
+        open_now=bool(fire_mask_open),
+    )
+    launch_window_age_steps = _air_combat_c2_roe_window_age(
+        loader,
+        attr_name="_air_combat_c2_roe_launch_window_age_steps",
+        step_attr_name="_air_combat_c2_roe_launch_window_age_step_key",
+        open_now=bool(fire_mask_open and launch_window_open),
+    )
+    quality_window_ready = bool(
+        fire_mask_open
+        and launch_window_open
+        and int(legal_open_age_steps) >= int(_AIR_COMBAT_C2_ROE_QUALITY_MIN_WINDOW_AGE_STEPS)
+    )
     return np.array(
         [
-            float(cmd_view.int_field("command_code", 0)),
-            float(cmd_view.float_field("target_heading", 0.0)),
-            float(cmd_view.float_field("target_altitude", 0.0)),
-            float(cmd_view.float_field("target_speed", 0.0)),
-            float(cmd_view.int_field("roe_state", 0)),
-            float(cmd_view.int_field("wcs_state", 1)),
-            1.0 if bool(cmd_view.bool_field("authorization_to_fire", False)) else 0.0,
-            float(cmd_view.int_field("engagement_authority_holder_id", 0)),
-            float(cmd_view.int_field("engagement_authority_grantor_id", 0)),
-            float(assigned_target_id),
-            float(cmd_view.int_field("assigned_target_track_id", 0)),
-            float(cmd_view.int_field("assigned_target_source_id", 0)),
-            float(cmd_view.float_field("assigned_target_snapshot_time_s", 0.0)),
-            float(target_identity),
-            float(cmd_view.int_field("engage_order_state", 0)),
-            float(shot_policy_state),
-            float(shot_budget_remaining),
-            1.0 if bool(pending_assessment) else 0.0,
-            float(own_missiles_in_flight_count),
-            float(target_contact_present),
+            *base_values,
+            1.0 if fire_mask_open else 0.0,
+            1.0 if launch_window_open else 0.0,
+            1.0 if quality_window_ready else 0.0,
+            float(legal_open_age_steps),
+            _air_combat_c2_roe_age_norm(int(legal_open_age_steps)),
+            float(launch_window_age_steps),
+            _air_combat_c2_roe_age_norm(int(launch_window_age_steps)),
+            float(target_range_m),
+            float(target_track_age_s),
         ],
         dtype=np.float32,
     )
@@ -473,6 +606,8 @@ def get_python_owned_mission_observation(loader, mode: str, *, truth=None, inst=
         return _naval_screen_station_vector(loader, truth=truth, inst=inst)
     if mode_norm == "air_combat_c2_roe_v1":
         return _air_combat_c2_roe_vector(loader, truth=truth, inst=inst)
+    if mode_norm == "air_combat_c2_roe_v2":
+        return _air_combat_c2_roe_vector(loader, truth=truth, inst=inst, state_completion=True)
     raise ValueError(f"Unknown Python-owned mission observation mode: {mode!r}")
 
 

@@ -192,6 +192,84 @@ class AirCombatC2RoeMissionObservationTests(unittest.TestCase):
         self.assertEqual(float(mission[mission_observation_field_index(mode, "pending_assessment")]), 1.0)
         self.assertEqual(float(mission[mission_observation_field_index(mode, "own_missiles_in_flight_count")]), 1.0)
 
+    def test_air_combat_c2_roe_v2_exposes_state_completion_window_fields(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        sim = ef_py.SimulationKernel()
+        self.assertTrue(sim.load_database(_DB_PATH))
+
+        loader = ScenarioLoader(sim)
+        agent_id = int(loader.load_scenario(_STAGE1_SCENARIO_PATH, seed=20260607))
+        target_id = int(loader.primary_target_id or 0)
+        self.assertGreater(target_id, 0)
+        loader.mission_cmd.update(
+            {
+                "roe_state": 2,
+                "wcs_state": 2,
+                "authorization_to_fire": True,
+                "engagement_authority_holder_id": agent_id,
+                "assigned_target_id": target_id,
+                "engage_order_state": 2,
+                "shot_policy_state": 1,
+                "shot_budget_remaining": 1,
+                "pending_assessment": False,
+            }
+        )
+        truth = SimpleNamespace(
+            missiles_remaining=4,
+            contacts=[
+                SimpleNamespace(
+                    id=target_id,
+                    range=15000.0,
+                    azimuth=0.0,
+                    elevation=0.0,
+                    closing_speed=0.0,
+                    time_since_update=0.5,
+                    classification=3,
+                )
+            ],
+        )
+
+        mission = None
+        for step in range(32):
+            loader.steps = step
+            mission = loader.get_mission_observation(mode, truth=truth, inst=None)
+        assert mission is not None
+
+        self.assertEqual(tuple(mission.shape), (mission_observation_dim(mode),))
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "fire_mask_open")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "launch_window_open")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "quality_window_ready")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "legal_open_age_steps")]), 32.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "legal_open_age_norm")]), 1.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "launch_window_age_steps")]), 32.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "target_range_m")]), 15000.0)
+        self.assertEqual(float(mission[mission_observation_field_index(mode, "target_track_age_s")]), 0.5)
+
+        repeated = loader.get_mission_observation(mode, truth=truth, inst=None)
+        self.assertEqual(float(repeated[mission_observation_field_index(mode, "legal_open_age_steps")]), 32.0)
+
+        loader.steps = 33
+        stale_truth = SimpleNamespace(
+            missiles_remaining=4,
+            contacts=[
+                SimpleNamespace(
+                    id=target_id,
+                    range=15000.0,
+                    azimuth=0.0,
+                    elevation=0.0,
+                    closing_speed=0.0,
+                    time_since_update=8.0,
+                    classification=3,
+                )
+            ],
+        )
+        stale_mission = loader.get_mission_observation(mode, truth=stale_truth, inst=None)
+        self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "fire_mask_open")]), 1.0)
+        self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "launch_window_open")]), 0.0)
+        self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "quality_window_ready")]), 0.0)
+        self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "legal_open_age_steps")]), 33.0)
+        self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "launch_window_age_steps")]), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

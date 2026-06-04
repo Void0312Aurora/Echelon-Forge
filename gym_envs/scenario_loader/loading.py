@@ -211,6 +211,10 @@ def finalize_loaded_world(loader, *, initial_truth=None, initial_inst=None, sync
     loader._air_combat_reward_release_count = 0
     loader._air_combat_c2_roe_initial_missiles = None
     loader._air_combat_c2_roe_reward_once_terms = set()
+    loader._air_combat_c2_roe_legal_open_age_steps = 0
+    loader._air_combat_c2_roe_legal_open_age_step_key = None
+    loader._air_combat_c2_roe_launch_window_age_steps = 0
+    loader._air_combat_c2_roe_launch_window_age_step_key = None
     loader._approach_prev_dme_m = None
     loader._approach_prev_loc_abs = None
     loader._approach_prev_gs_abs = None
