@@ -13,7 +13,11 @@ held. `A7-EVC-K Legal-State Projection And Coupling Audit` has closed the
 post-repair diagnosis, and `A7-EVC-L Legal-State Projection Contract` has
 selected the next mechanism. `A7-EVC-M Projected Legal-Open Credit Prototype`
 has implemented that mechanism with focused validation. Learned-policy behavior
-after projection is not yet evaluated.
+after projection is now evaluated by `A7-EVC-N Short Projection Learned
+Evidence` and remains held: deterministic probing records `0` releases,
+stochastic probing releases at steps `2`, `47`, and `5`, and the newly repaired
+projection diagnostics show `a7/evc_proj_active_count_mean=0.0` at the end of
+the 32k run.
 
 Parent: [README.md](README.md).
 
@@ -58,6 +62,13 @@ Parent: [README.md](README.md).
   implementation slice: projected legal-open observations now train positive
   value/delta alignment for shadow-quality evidence while raw closed-mask rows
   remain excluded from ordinary delta alignment.
+- `A7-EVC-N Short Projection Learned Evidence` is complete as held evidence:
+  the projection path is enabled and visible in logs, ordinary event-credit
+  remains live, but projected active rows are `0.0` and learned behavior does
+  not improve enough for timing acceptance.
+- The immediate next bounded slice is `A7-EVC-O Projection Eligibility
+  Root-Cause Audit`: inspect why shadow-quality evidence does not become active
+  projected legal-open rows in the real learned-run rollout/loss path.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
   A7 should not rely solely on hard-routed subexpert behavior, but the current
   A7 failure is already visible in the censored target construction and
@@ -78,15 +89,17 @@ Parent: [README.md](README.md).
 | Shadow-quality target repair | pass; held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.md) adds `A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY`, positive shadow labels after early accepted release, an A7 config knob, diagnostics coverage, and delta-align masking for shadow rows. | Label censoring is fixed, but behavior is still held: deterministic `0` releases, early stochastic releases, and negative quality-window advantage. |
 | Legal-state projection audit | pass; held outcome | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) shows shadow positives are restored but remain value-only on closed-mask rows, leaving legal-open quality states negative. | This is a structural diagnosis, not acceptance. |
 | Legal-state projection contract | pass; implemented by M | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive credit and forbids raw closed-mask delta alignment. | The contract is now implemented as a focused prototype; it still does not prove learned-policy behavior. |
-| Projected legal-open credit prototype | pass; learned behavior not evaluated | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and gradient path only; A7 behavior acceptance still requires a short projection learned-policy probe. |
+| Projected legal-open credit prototype | pass; held after N | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) adds `first_event_projection.py`, projection coeffs, PPO projected-distribution loss, projection metrics, active config knobs, and focused tests. | M proves the mechanism and gradient path only; N shows learned behavior still held. |
+| Short projection learned evidence | pass; held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) records the r3 32k train and deterministic/stochastic probes after projection-logger repair. | Projection is enabled but active projected rows stay at `0.0`; deterministic remains `0` releases and stochastic still fires early. |
 | HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Run `A7-EVC-N Short Projection Learned Evidence`: M supplies the projected
-legal-open training path and focused tests show projected positive event-logit
-pressure. The next bounded question is whether this changes deterministic
-release timing and stochastic early-fire behavior without weakening A3/A5 masks.
+Run `A7-EVC-O Projection Eligibility Root-Cause Audit`: N shows the projected
+legal-open training path is enabled and logged, but no projected rows become
+active in the learned run. The next bounded question is why the real
+rollout/loss path does not hand shadow-quality evidence into the projected
+loss.
 
 ## Validation Snapshot
 
@@ -156,6 +169,24 @@ release timing and stochastic early-fire behavior without weakening A3/A5 masks.
   `1 passed`; the focused HMoE/PPO group passed with `15 passed`; JSON parsing
   and active config/entry tests passed with `19 passed`; the combined focused
   rerun after docs sync passed with `51 passed`.
+- A7-EVC-N diagnostic repair gates: compileall passed for
+  `python/rl/policy_algo/ppo_adaptive_kl.py`,
+  `python/rl/support/nonfinite_probe.py`, and
+  `tests/hmoe/test_hmoe_ppo_warmup.py`; focused projection/nonfinite tests
+  passed with `3 passed`.
+- A7-EVC-N 32k projection run completed under
+  `experiments_tmp/a7_projection_credit_32k_20260604_r3`; TensorBoard at step
+  `32768` records `a7/event_credit_loss=0.322098`,
+  `a7/event_credit_active_count_mean=450.0`,
+  `a7/event_credit_target_positive_frac=0.599887`,
+  `a7/event_credit_advantage_mean=-0.962887`,
+  `a7/evc_proj_enabled=1.0`, and
+  `a7/evc_proj_active_count_mean=0.0`.
+- A7-EVC-N deterministic probe records `0` requests and `0` releases, with
+  `1880` open-window steps, open-window fire probability mean/max
+  `25.2%` / `26.2%`, and quality-window A7 advantage mean `-0.866`.
+- A7-EVC-N stochastic probe records `3/3` authorized one-shot releases at
+  steps `2`, `47`, and `5`, with `0` unauthorized/repeat/budget violations.
 
 ## Held Items
 

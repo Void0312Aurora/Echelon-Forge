@@ -665,6 +665,10 @@ class NonFiniteTrainingProbe:
             first_event_credit_active_counts = []
             first_event_credit_positive_fracs = []
             first_event_credit_advantage_means = []
+            first_event_credit_projection_active_counts = []
+            first_event_credit_projection_unsupported_counts = []
+            first_event_credit_projection_advantage_means = []
+            first_event_credit_projection_delta_means = []
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
@@ -807,6 +811,18 @@ class NonFiniteTrainingProbe:
                         first_event_credit_active_counts.append(int(first_event_credit_loss.active_count))
                         first_event_credit_positive_fracs.append(float(first_event_credit_loss.positive_frac))
                         first_event_credit_advantage_means.append(float(first_event_credit_loss.advantage_mean))
+                        first_event_credit_projection_active_counts.append(
+                            int(getattr(first_event_credit_loss, "projection_active_count", 0))
+                        )
+                        first_event_credit_projection_unsupported_counts.append(
+                            int(getattr(first_event_credit_loss, "projection_unsupported_count", 0))
+                        )
+                        first_event_credit_projection_advantage_means.append(
+                            float(getattr(first_event_credit_loss, "projection_advantage_mean", 0.0))
+                        )
+                        first_event_credit_projection_delta_means.append(
+                            float(getattr(first_event_credit_loss, "projection_delta_mean", 0.0))
+                        )
                         loss = loss + first_event_credit_loss.loss
                     tracer.check("train.loss", loss)
 
@@ -925,6 +941,18 @@ class NonFiniteTrainingProbe:
                     float(getattr(self, "a7_event_credit_delta_align_coef", 0.0)),
                 )
                 self.logger.record(
+                    "a7/evc_proj_enabled",
+                    float(bool(getattr(self, "a7_event_credit_legal_projection_enabled", False))),
+                )
+                self.logger.record(
+                    "a7/evc_proj_value_coef",
+                    float(getattr(self, "a7_event_credit_projection_value_coef", 0.0)),
+                )
+                self.logger.record(
+                    "a7/evc_proj_delta_coef",
+                    float(getattr(self, "a7_event_credit_projection_delta_align_coef", 0.0)),
+                )
+                self.logger.record(
                     "a7/event_credit_active_count_mean",
                     float(np.mean(first_event_credit_active_counts)) if first_event_credit_active_counts else 0.0,
                 )
@@ -935,6 +963,38 @@ class NonFiniteTrainingProbe:
                 self.logger.record(
                     "a7/event_credit_advantage_mean",
                     float(np.mean(first_event_credit_advantage_means)) if first_event_credit_advantage_means else 0.0,
+                )
+                self.logger.record(
+                    "a7/evc_proj_active_count_mean",
+                    (
+                        float(np.mean(first_event_credit_projection_active_counts))
+                        if first_event_credit_projection_active_counts
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/evc_proj_unsupported_count_mean",
+                    (
+                        float(np.mean(first_event_credit_projection_unsupported_counts))
+                        if first_event_credit_projection_unsupported_counts
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/evc_proj_advantage_mean",
+                    (
+                        float(np.mean(first_event_credit_projection_advantage_means))
+                        if first_event_credit_projection_advantage_means
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "a7/evc_proj_delta_mean",
+                    (
+                        float(np.mean(first_event_credit_projection_delta_means))
+                        if first_event_credit_projection_delta_means
+                        else 0.0
+                    ),
                 )
 
             self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")

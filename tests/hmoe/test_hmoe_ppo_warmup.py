@@ -21,6 +21,7 @@ from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_FIELD_WEIGHT,
     A6_FIRST_EVENT_FIELD_WINDOW_ID,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
+    FirstEventCreditLoss,
 )
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
@@ -554,6 +555,85 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertFalse(th.allclose(before, after))
         self.assertIn("a7/event_credit_loss", model.logger.name_to_value)
         self.assertGreater(float(model.logger.name_to_value["a7/event_credit_active_count_mean"]), 0.0)
+
+    def test_nonfinite_probe_records_a7_projection_credit_stats(self) -> None:
+        env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_legal_projection_enabled=True,
+            a7_event_credit_projection_value_coef=0.5,
+            a7_event_credit_projection_delta_align_coef=0.25,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        probe = NonFiniteTrainingProbe(
+            report_path=f"{gettempdir()}/a7_projection_nonfinite_probe_regression.json",
+            history_limit=32,
+            enabled=True,
+        )
+        probe.install(model)
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        def _projection_loss(_rollout_data):
+            anchor = next(model.policy.parameters()).sum() * 0.0
+            loss = anchor + th.tensor(0.5, device=anchor.device)
+            value_loss = anchor + th.tensor(0.3, device=anchor.device)
+            delta_loss = anchor + th.tensor(0.2, device=anchor.device)
+            return FirstEventCreditLoss(
+                loss=loss,
+                value_loss=value_loss,
+                delta_align_loss=delta_loss,
+                unscaled_value_loss=value_loss,
+                unscaled_delta_align_loss=delta_loss,
+                active_count=4,
+                positive_count=2,
+                weight_sum=4.0,
+                positive_frac=0.5,
+                advantage_mean=-0.1,
+                advantage_abs_mean=0.1,
+                projection_active_count=3,
+                projection_unsupported_count=1,
+                projection_advantage_mean=0.75,
+                projection_delta_mean=0.25,
+            )
+
+        model._first_event_credit_loss = _projection_loss
+        model.train()
+
+        logged = model.logger.name_to_value
+        self.assertEqual(float(logged["a7/evc_proj_enabled"]), 1.0)
+        self.assertAlmostEqual(float(logged["a7/evc_proj_value_coef"]), 0.5)
+        self.assertAlmostEqual(float(logged["a7/evc_proj_delta_coef"]), 0.25)
+        self.assertEqual(float(logged["a7/evc_proj_active_count_mean"]), 3.0)
+        self.assertEqual(float(logged["a7/evc_proj_unsupported_count_mean"]), 1.0)
+        self.assertAlmostEqual(float(logged["a7/evc_proj_advantage_mean"]), 0.75)
+        self.assertAlmostEqual(float(logged["a7/evc_proj_delta_mean"]), 0.25)
 
     def test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits(self) -> None:
         env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])

@@ -1,6 +1,6 @@
 # A7 Acceptance Gate
 
-Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M`
+Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N`
 implementation, validation, learned-evidence, index-sync, target-audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
 prototype slices evaluated. A7 remains held.
@@ -29,8 +29,9 @@ surface.
 | Post-repair coupling | Repaired shadow credit changes legal-open quality-state preference. | held: the 32k repair probe still has quality-window A7 advantage mean `-0.902` and deterministic `0` releases. |
 | Projection audit | The post-J blocker is separated from missing positives, HMoE redesign, and coefficient-only tuning. | pass: [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.md) shows most repaired positives are closed-mask value-only shadow rows. |
 | Projection contract | Shadow evidence can be mapped to legal-open positive credit without closed-mask delta alignment. | pass; implemented by M: [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.md) selects projected legal-open positive value/delta alignment. |
-| Projection implementation | Projected legal-open credit is implemented and tested before another learned-policy wave. | pass; learned behavior not evaluated: [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) implements `first_event_projection.py`, PPO projection loss, metrics, config knobs, and focused tests. |
-| Projection learned evidence | Projected credit improves deterministic/stochastic first-shot timing while preserving one-shot legality. | planned next: `A7-EVC-N Short Projection Learned Evidence`. |
+| Projection implementation | Projected legal-open credit is implemented and tested before another learned-policy wave. | pass; held after N: [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.md) implements `first_event_projection.py`, PPO projection loss, metrics, config knobs, and focused tests. |
+| Projection learned evidence | Projected credit improves deterministic/stochastic first-shot timing while preserving one-shot legality. | held: [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.md) records projection enabled and one-shot legality preserved, but deterministic remains `0` releases, stochastic releases at steps `2`, `47`, and `5`, and projection active rows stay `0.0`. |
+| Projection eligibility audit | Projection active rows are explained before another training wave. | planned next: `A7-EVC-O Projection Eligibility Root-Cause Audit`. |
 | Overclaim refusal | M2, HMoE redesign, missile authority, `2v2`, self-play, and doctrine remain held. | required |
 
 ## Failure Conditions
@@ -42,6 +43,8 @@ A7 remains held or must be re-scoped if:
   policy updates;
 - repaired shadow credit still fails to move legal-open quality states into
   positive `fire_once` advantage;
+- projection is enabled but no projected active rows reach the learned-run loss
+  path;
 - the implementation aligns raw closed-mask `shadow_quality` rows directly to
   event logits instead of projecting them to a legal-open decision surface;
 - deterministic fires near-immediately after authorization/contact again;
@@ -167,5 +170,31 @@ pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a
 
 Observed outcome: compileall and JSON passed; focused test groups passed with
 `17 passed`, `1 passed`, `15 passed`, and `19 passed`; the combined focused
-rerun after docs sync passed with `51 passed`. The next bounded dispatch is
-`A7-EVC-N Short Projection Learned Evidence`.
+rerun after docs sync passed with `51 passed`. `A7-EVC-N` has since completed
+as held learned evidence.
+
+`A7-EVC-N` short projection learned evidence:
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py \
+  --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
+  --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json \
+  --output_base experiments_tmp \
+  --run_name a7_projection_credit_32k_20260604_r3 \
+  --n_envs 4 \
+  --torch_threads 1 \
+  --seed 20260691
+```
+
+Observed outcome: completed `32768` steps. TensorBoard records ordinary
+event-credit activity at step `32768` with
+`a7/event_credit_loss=0.322098`,
+`a7/event_credit_active_count_mean=450.0`, and
+`a7/event_credit_advantage_mean=-0.962887`; projection is enabled with
+`a7/evc_proj_enabled=1.0`, but `a7/evc_proj_active_count_mean=0.0`.
+Deterministic probing records `0` requests and `0` releases with
+quality-window advantage `-0.866`. Stochastic probing records `3/3`
+authorized one-shot releases at steps `2`, `47`, and `5`, with zero
+unauthorized/repeat/budget violations. This preserves one-shot legality but
+does not satisfy behavior acceptance. The next bounded dispatch is
+`A7-EVC-O Projection Eligibility Root-Cause Audit`.

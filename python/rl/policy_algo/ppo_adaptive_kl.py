@@ -1091,15 +1091,15 @@ class AdaptiveKLPPO(PPO):
             self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
             self.logger.record("a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef))
             self.logger.record(
-                "a7/event_credit_legal_projection_enabled",
+                "a7/evc_proj_enabled",
                 float(self.a7_event_credit_legal_projection_enabled),
             )
             self.logger.record(
-                "a7/event_credit_projection_value_coef",
+                "a7/evc_proj_value_coef",
                 float(self.a7_event_credit_projection_value_coef),
             )
             self.logger.record(
-                "a7/event_credit_projection_delta_align_coef",
+                "a7/evc_proj_delta_coef",
                 float(self.a7_event_credit_projection_delta_align_coef),
             )
             self.logger.record(
@@ -1115,7 +1115,7 @@ class AdaptiveKLPPO(PPO):
                 float(np.mean(first_event_credit_advantage_means)) if first_event_credit_advantage_means else 0.0,
             )
             self.logger.record(
-                "a7/event_credit_projection_active_count_mean",
+                "a7/evc_proj_active_count_mean",
                 (
                     float(np.mean(first_event_credit_projection_active_counts))
                     if first_event_credit_projection_active_counts
@@ -1123,7 +1123,7 @@ class AdaptiveKLPPO(PPO):
                 ),
             )
             self.logger.record(
-                "a7/event_credit_projection_unsupported_count_mean",
+                "a7/evc_proj_unsupported_count_mean",
                 (
                     float(np.mean(first_event_credit_projection_unsupported_counts))
                     if first_event_credit_projection_unsupported_counts
@@ -1131,7 +1131,7 @@ class AdaptiveKLPPO(PPO):
                 ),
             )
             self.logger.record(
-                "a7/event_credit_projection_advantage_mean",
+                "a7/evc_proj_advantage_mean",
                 (
                     float(np.mean(first_event_credit_projection_advantage_means))
                     if first_event_credit_projection_advantage_means
@@ -1139,7 +1139,7 @@ class AdaptiveKLPPO(PPO):
                 ),
             )
             self.logger.record(
-                "a7/event_credit_projection_delta_mean",
+                "a7/evc_proj_delta_mean",
                 (
                     float(np.mean(first_event_credit_projection_delta_means))
                     if first_event_credit_projection_delta_means

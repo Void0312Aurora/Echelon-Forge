@@ -1,11 +1,12 @@
 # A7 分发队列
 
-状态：`2026-06-04` A7 在修复后的 short learned evidence 后保持 held。Objective
+状态：`2026-06-04` A7 在 short projection learned evidence 后保持 held。Objective
 contract、policy head、PPO auxiliary credit、config/diagnostics、focused
 validation、learned-evidence、closure/index-sync、target audit、shadow-repair、
 projection-audit、projection-contract 与 projected legal-open prototype slices
-已通过。A7 仍在 behavior acceptance 上 held，直到 projected-credit path 完成短
-learned-policy wave 评估。
+已通过；`A7-EVC-N` 也已作为 held learned evidence 通过。A7 仍在 behavior
+acceptance 上 held，因为 projection 已启用，但 learned run 中 active projected rows
+保持 `0.0`。
 
 父级：[README.zh.md](README.zh.md)。任务簇：
 [a7_event_value_advantage_credit_head_task_clusters_20260604.zh.md](a7_event_value_advantage_credit_head_task_clusters_20260604.zh.md)。
@@ -14,7 +15,7 @@ learned-policy wave 评估。
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-N Short Projection Learned Evidence` | planned next | main thread；M focused gates 后运行有边界 learned-policy probe。 | A7 evidence/status docs；`experiments_tmp` output 不入 staging。 | 不把 focused gradient tests 当成 behavior acceptance；A3/A5 masks 继续权威；不释放 HMoE/M2/doctrine/missile authority。 |
+| `A7-EVC-O Projection Eligibility Root-Cause Audit` | planned next | main thread 或 diagnostics worker；检查真实 learned-run rollout/loss path 中 projection active rows 为什么为零。 | 优先 A7 evidence/status docs；只有在确认 interface gap 后才增加 optional focused tests。 | 不继续盲跑 32k training 或 coefficient tuning；A3/A5 masks 继续权威；不释放 HMoE/M2/doctrine/missile authority。 |
 
 ## 已完成分发
 
@@ -30,13 +31,14 @@ learned-policy wave 评估。
 | `A7-EVC-J Shadow Quality Target Repair` | pass；held outcome | [shadow-quality repair](a7_event_value_advantage_credit_head_shadow_quality_repair_20260604.zh.md)：repair 恢复 early accepted release 后的 shadow-quality positives，并通过 focused tests 与 32k repair probe。 | Label censoring 已修复，但 deterministic 仍为 `0` releases，stochastic 仍过早发射，quality-window advantage 仍为负。 |
 | `A7-EVC-K Legal-State Projection And Coupling Audit` | pass；spawned L contract | [legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md)：repaired positives 存在，但主要位于 closed-mask `FiredAssess` rows，且是 value-only。 | 根残余是 projection/coupling，不是缺 positives 或 coefficient tuning。 |
 | `A7-EVC-L Legal-State Projection Contract` | pass；已由 M 实现 | [legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md)：选择从 shadow evidence 构造 projected legal-open positive value/delta alignment。 | L 自身不改变 behavior；M 已将它实现为 focused prototype。 |
-| `A7-EVC-M Projected Legal-Open Credit Prototype` | pass；learned behavior not evaluated | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md)：通过 `first_event_projection.py`、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests 实现 L。 | M 只在 focused tests 中证明 projected legal-open pressure；N 必须评估 learned deterministic/stochastic behavior。 |
+| `A7-EVC-M Projected Legal-Open Credit Prototype` | pass；N 后 held | [projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md)：通过 `first_event_projection.py`、PPO projected-distribution loss、projection metrics、active config knobs 与 focused tests 实现 L。 | M 只在 focused tests 中证明 projected legal-open pressure；N 显示 learned run 没有激活 projected rows。 |
+| `A7-EVC-N Short Projection Learned Evidence` | pass；held outcome | [short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md)：projection 已启用并记录日志，ordinary event-credit 仍 live，deterministic 仍为 `0` releases，stochastic release steps 为 `2`、`47`、`5`，projected active rows 保持 `0.0`。 | 下一有界工作是 O：解释 shadow-quality evidence 为什么没有进入 active projected legal-open rows。 |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | Projected legal-open credit 尚未完成 learned-policy behavior 测试。 | `A7-EVC-N` 记录 deterministic timing、stochastic early-fire timing、one-shot violations 与 projection diagnostics。 |
+| A7 behavior acceptance | Projected legal-open credit 已启用，但 learned run 中未激活；deterministic 仍为 `0` releases，stochastic 仍过早发射。 | `A7-EVC-O` 在下一轮 training 前识别 rollout/loss handoff failure 与有界 repair path。 |
 
 ## Dispatch Packet Template
 

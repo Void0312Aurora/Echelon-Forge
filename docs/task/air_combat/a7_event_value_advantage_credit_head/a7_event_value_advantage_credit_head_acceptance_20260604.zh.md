@@ -1,6 +1,6 @@
 # A7 验收门
 
-状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M`
+状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N`
 implementation、validation、learned-evidence、index-sync、target-audit、
 shadow-repair、projection-audit、projection-contract 与 projected legal-open
 prototype slices 已评估。A7 继续 held。
@@ -28,8 +28,9 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Post-repair coupling | Repaired shadow credit 改变 legal-open quality-state preference。 | held：32k repair probe 中 quality-window A7 advantage mean 仍为 `-0.902`，deterministic 仍为 `0` releases。 |
 | Projection audit | Post-J blocker 与缺失 positives、HMoE redesign、coefficient-only tuning 区分开。 | pass：[legal-state projection and coupling audit](a7_event_value_advantage_credit_head_legal_state_projection_coupling_audit_20260604.zh.md) 显示多数 repaired positives 是 closed-mask value-only shadow rows。 |
 | Projection contract | Shadow evidence 可以在不做 closed-mask delta alignment 的前提下映射为 legal-open positive credit。 | pass；已由 M 实现：[legal-state projection contract](a7_event_value_advantage_credit_head_legal_state_projection_contract_20260604.zh.md) 选择 projected legal-open positive value/delta alignment。 |
-| Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | pass；learned behavior not evaluated：[projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 实现 `first_event_projection.py`、PPO projection loss、metrics、config knobs 与 focused tests。 |
-| Projection learned evidence | Projected credit 改善 deterministic/stochastic first-shot timing，同时保持 one-shot legality。 | planned next：`A7-EVC-N Short Projection Learned Evidence`。 |
+| Projection implementation | 下一轮 learned-policy wave 前实现并测试 projected legal-open credit。 | pass；N 后 held：[projected legal-open credit prototype](a7_event_value_advantage_credit_head_projected_legal_open_credit_prototype_20260604.zh.md) 实现 `first_event_projection.py`、PPO projection loss、metrics、config knobs 与 focused tests。 |
+| Projection learned evidence | Projected credit 改善 deterministic/stochastic first-shot timing，同时保持 one-shot legality。 | held：[short projection learned evidence](a7_event_value_advantage_credit_head_short_projection_learned_evidence_20260604.zh.md) 记录 projection 已启用且 one-shot legality 保持，但 deterministic 仍为 `0` releases，stochastic release steps 为 `2`、`47`、`5`，projection active rows 保持 `0.0`。 |
+| Projection eligibility audit | 下一轮 training wave 前解释 projection active rows。 | planned next：`A7-EVC-O Projection Eligibility Root-Cause Audit`。 |
 | Overclaim refusal | M2、HMoE redesign、missile authority、`2v2`、self-play 与 doctrine 继续 held。 | required |
 
 ## 失败条件
@@ -40,6 +41,7 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 - advantage head 只是 diagnostic-only，不能影响 event logits 或 policy updates；
 - repaired shadow credit 仍未把 legal-open quality states 推成 positive `fire_once`
   advantage；
+- projection 已启用，但 learned-run loss path 没有收到 projected active rows；
 - implementation 把 raw closed-mask `shadow_quality` rows 直接对齐到 event logits，
   而不是先投影到 legal-open decision surface；
 - deterministic 再次在 authorization/contact 后近立即发射；
@@ -161,5 +163,28 @@ pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a
 
 观察结果：compileall 与 JSON 通过；focused test groups 分别为 `17 passed`、
 `1 passed`、`15 passed` 与 `19 passed`；docs sync 后 combined focused rerun
-通过，`51 passed`。下一有界分发项为
-`A7-EVC-N Short Projection Learned Evidence`。
+通过，`51 passed`。`A7-EVC-N` 随后已完成为 held learned evidence。
+
+`A7-EVC-N` short projection learned evidence：
+
+```bash
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py \
+  --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
+  --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json \
+  --output_base experiments_tmp \
+  --run_name a7_projection_credit_32k_20260604_r3 \
+  --n_envs 4 \
+  --torch_threads 1 \
+  --seed 20260691
+```
+
+观察结果：完成 `32768` steps。TensorBoard 在 step `32768` 记录 ordinary
+event-credit activity：`a7/event_credit_loss=0.322098`、
+`a7/event_credit_active_count_mean=450.0` 与
+`a7/event_credit_advantage_mean=-0.962887`；projection 已启用，
+`a7/evc_proj_enabled=1.0`，但 `a7/evc_proj_active_count_mean=0.0`。
+Deterministic probing 记录 `0` requests 与 `0` releases，quality-window
+advantage 为 `-0.866`。Stochastic probing 记录 `3/3` authorized one-shot
+releases，steps 为 `2`、`47`、`5`，且 zero unauthorized/repeat/budget violations。
+这保持了 one-shot legality，但不满足 behavior acceptance。下一有界分发项为
+`A7-EVC-O Projection Eligibility Root-Cause Audit`。

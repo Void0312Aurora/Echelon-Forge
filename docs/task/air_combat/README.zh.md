@@ -14,7 +14,10 @@ counterfactual event-value / advantage-credit head follow-on；其 policy-head p
 `0` releases，quality-window event advantage 仍为负。A7 target-construction audit
 已将结构性 blocker 追踪到 early stochastic accepted release 后缺失 shadow-quality
 target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repair probe
-仍让 learned first-shot timing 保持 held。
+仍让 learned first-shot timing 保持 held。`A7-EVC-M` 随后实现 projected legal-open
+credit，`A7-EVC-N` 已用短训 learned run 评估该路径；A7 仍 held，因为 projection
+已启用但 active projected rows 保持 `0.0`，deterministic probing 仍为 `0`
+releases，stochastic probing 仍过早发射。
 
 ## 当前状态
 
@@ -90,9 +93,12 @@ target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repa
   projection audit 与 L contract 已给出下一机制：把 shadow-quality evidence 投影到
   legal-open decision surface，并只在该表面做 positive value/delta alignment。
   `A7-EVC-M` 现已实现该 projected legal-open prototype，focused tests 也证明
-  projected positive event-logit pressure 存在，但 learned-policy behavior 尚未评估。
-  当前下一步是 `A7-EVC-N` short projection learned evidence，而不是继续盲目调
-  coefficient。A3/A5 legality 继续持有权威，HMoE redesign/M2 继续 held。
+  projected positive event-logit pressure 存在。`A7-EVC-N` 已运行 short projection
+  learned evidence：projection 已启用，ordinary event-credit 仍 live，但 projected
+  active rows 保持 `0.0`；deterministic probing 仍为 `0` releases，stochastic probing
+  在 steps `2`、`47`、`5` 过早 release。当前下一步是 `A7-EVC-O` projection
+  eligibility root-cause audit，而不是继续盲目调 coefficient。A3/A5 legality 继续
+  持有权威，HMoE redesign/M2 继续 held。
 - 高真实度毁伤模型现在在
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   保留轻量指针；完整包位于
@@ -116,7 +122,7 @@ target repair；`A7-EVC-J` 已修复该 label-censoring 路径，但其 32k repa
 - 按 `scenarios/air_combat/1v1/` 下的 staged 场景，从武器发射到有限双向武器逐步验收
 - 推进
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.zh.md)，
-  通过 short projection learned evidence 后，再重新讨论 M2
+  通过 projection eligibility root-cause audit 后，再重新讨论 M2
 
 ## 推荐阅读顺序
 

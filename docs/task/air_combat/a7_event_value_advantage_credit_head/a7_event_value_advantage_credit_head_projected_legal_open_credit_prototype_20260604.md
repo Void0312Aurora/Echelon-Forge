@@ -35,11 +35,13 @@ contract as a focused prototype.
   - `a7_event_credit_legal_projection_enabled`
   - `a7_event_credit_projection_value_coef`
   - `a7_event_credit_projection_delta_align_coef`
-- Added logger stats:
-  - `a7/event_credit_projection_active_count_mean`
-  - `a7/event_credit_projection_unsupported_count_mean`
-  - `a7/event_credit_projection_advantage_mean`
-  - `a7/event_credit_projection_delta_mean`
+- Added short logger stats:
+  - `a7/evc_proj_active_count_mean`
+  - `a7/evc_proj_unsupported_count_mean`
+  - `a7/evc_proj_advantage_mean`
+  - `a7/evc_proj_delta_mean`
+- Mirrored those projection stats in `NonFiniteTrainingProbe`, whose patched
+  `train()` path is used by the active A7 config.
 - Enabled projection in the active A7 config.
 
 ## Validation

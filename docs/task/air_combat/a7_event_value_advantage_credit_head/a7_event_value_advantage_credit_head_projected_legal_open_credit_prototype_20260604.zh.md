@@ -32,11 +32,13 @@ observations 上的 positive `fire_once` credit。M 将该合同实现为 focuse
   - `a7_event_credit_legal_projection_enabled`
   - `a7_event_credit_projection_value_coef`
   - `a7_event_credit_projection_delta_align_coef`
-- 新增 logger stats：
-  - `a7/event_credit_projection_active_count_mean`
-  - `a7/event_credit_projection_unsupported_count_mean`
-  - `a7/event_credit_projection_advantage_mean`
-  - `a7/event_credit_projection_delta_mean`
+- 新增 short logger stats：
+  - `a7/evc_proj_active_count_mean`
+  - `a7/evc_proj_unsupported_count_mean`
+  - `a7/evc_proj_advantage_mean`
+  - `a7/evc_proj_delta_mean`
+- 在 `NonFiniteTrainingProbe` 中同步记录这些 projection stats；active A7 config
+  使用的正是它 patch 过的 `train()` path。
 - Active A7 config 已启用 projection。
 
 ## 验证

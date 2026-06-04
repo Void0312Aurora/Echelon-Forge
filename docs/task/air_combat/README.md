@@ -17,7 +17,11 @@ probing still makes `0` releases and quality-window event advantage remains
 negative. The A7 target-construction audit has traced the structural blocker to
 missing shadow-quality target repair after early stochastic accepted release;
 `A7-EVC-J` has repaired that label-censoring path, but its 32k repair probe still
-leaves learned first-shot timing held.
+leaves learned first-shot timing held. `A7-EVC-M` then implemented projected
+legal-open credit, and `A7-EVC-N` has evaluated it in a short learned run; A7
+still remains held because projection is enabled but active projected rows stay
+at `0.0`, deterministic probing remains `0` releases, and stochastic probing
+still fires early.
 
 ## Current Status
 
@@ -112,9 +116,12 @@ leaves learned first-shot timing held.
   project shadow-quality evidence onto a legal-open decision surface and align
   positive value/delta only there. `A7-EVC-M` now implements that projected
   legal-open prototype and focused tests show projected positive event-logit
-  pressure, but learned-policy behavior remains unevaluated. The active next
-  step is `A7-EVC-N` short projection learned evidence, not another blind
-  coefficient-tuning run. A3/A5 legality stays authoritative, and HMoE
+  pressure. `A7-EVC-N` has now run the short projection learned evidence:
+  projection is enabled and ordinary event-credit remains live, but projected
+  active rows stay at `0.0`; deterministic probing still records `0` releases,
+  and stochastic probing releases early at steps `2`, `47`, and `5`. The active
+  next step is `A7-EVC-O` projection eligibility root-cause audit, not another
+  blind coefficient-tuning run. A3/A5 legality stays authoritative, and HMoE
   redesign/M2 remain held.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
@@ -145,7 +152,7 @@ leaves learned first-shot timing held.
   weapons
 - advance
   [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through short projection learned evidence before any M2 reconsideration
+  through projection eligibility root-cause audit before any M2 reconsideration
 
 ## Recommended Reading Order
 
