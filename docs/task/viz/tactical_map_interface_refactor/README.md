@@ -1,7 +1,8 @@
 # Tactical Map Interface Refactor
 
 Status: `2026-06-06` active visualization subproject. `P0` planning and
-reference baseline are installed; runtime implementation has not started.
+reference baseline are installed; `P1` shell layout is accepted as a slice;
+`P2` map workspace remains next.
 
 Language:
 
@@ -44,7 +45,7 @@ maintained interface and map-workspace plan on top of them.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Unified viz entry | active foundation, first usable closure already recorded | [viz_unified_entry_session_profile_plan_20260516.md](../archive/viz_unified_entry_session_profile_plan_20260516.md) | This does not solve the tactical-map layout or multi-map workspace. |
-| Current tactical map | active but cramped/debug-oriented | [index.html](../../../../examples/viz/web_viz/templates/index.html) | The current map is a canvas view with many direct controls, not a composed tactical interface. |
+| Current tactical map | `P1` map-first shell accepted as a slice | [P1 acceptance](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md) | This accepts dock/collapse layout only, not the later multi-map workspace. |
 | G0 environment overlays | accepted visualization-only slice | [environment_substrate_g0_viz_overlay_sync_acceptance_20260606.md](../../ground/environment_substrate_g0_architecture/environment_substrate_g0_viz_overlay_sync_acceptance_20260606.md) | This is drawing metadata only, not terrain-aware movement, LOS, cover, or combat behavior. |
 | Multi-map workspace | missing | no maintained workspace model yet | Multiple views must be UI/profile concepts, not scenario realism claims. |
 | Tactical-map style baseline | pass for `P0` | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | References guide visual design only; they do not create military-symbol standard compliance. |
@@ -82,7 +83,7 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary And Reference` | Install the subproject, task clusters, current status, and map-style baseline. | User requests a durable `docs/task/viz` work surface. | Parent README links this subproject and docs-only validation is clean. | pass |
-| `P1 Shell Layout` | Rework the current UI into a map-first tactical shell. | `P0` pass. | Map is first-viewport primary surface on narrow and desktop screens. | planned |
+| `P1 Shell Layout` | Rework the current UI into a map-first tactical shell. | `P0` pass. | Map is first-viewport primary surface on narrow and desktop screens. | accepted slice |
 | `P2 Map Workspace Model` | Add multiple named map surfaces and switching/split behavior. | `P1` shell can host map panels. | `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` have explicit UI roles. | planned |
 | `P3 Layer And Symbology Model` | Centralize layer grouping, draw order, and tactical symbol styling. | `P2` workspace exists. | Existing overlays render through grouped layer rules without broader capability claims. | planned |
 | `P4 Profile Integration` | Let profiles select default workspace/layers without changing scenario semantics. | `P2` and `P3` stable enough for defaults. | Profile loader accepts and validates UI defaults for map workspace selection. | planned |
@@ -93,6 +94,10 @@ Out of scope:
 
 - Finite task cluster plan:
   [tactical_map_interface_refactor_task_clusters_20260606.md](tactical_map_interface_refactor_task_clusters_20260606.md)
+- Dispatch queue:
+  [tactical_map_interface_refactor_dispatch_queue_20260606.md](tactical_map_interface_refactor_dispatch_queue_20260606.md)
+- P1 shell-layout acceptance:
+  [tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md)
 
 ## Outputs And Evidence
 
@@ -127,10 +132,11 @@ This subproject can be marked accepted only when:
 
 Immediate:
 
-- Implement `P1` shell layout after this planning surface is accepted.
-- Decide whether the first runtime slice should deliver tabbed map surfaces or a
-  split-map workspace. The task-cluster plan allows either if validation proves
-  the map remains primary.
+- Decide whether `P2` first delivers tabbed map surfaces or a split-map
+  workspace. The task-cluster plan allows either if validation proves the map
+  remains primary.
+- Keep `P1` shell evidence current if later UI work touches the same template
+  blocks.
 
 Follow-on:
 

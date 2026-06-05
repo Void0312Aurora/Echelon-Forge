@@ -15,55 +15,57 @@
     </script>
     <style>
         :root {
-            --viz-top-offset: 132px;
-            --viz-gutter: 20px;
-            --overlay-left: var(--viz-gutter);
-            --overlay-top: var(--viz-top-offset);
-            --overlay-width: 340px;
-            --overlay-max-height: calc(100vh - var(--viz-top-offset) - 160px);
-            --unit-list-top: var(--viz-top-offset);
-            --unit-list-left: auto;
-            --unit-list-right: var(--viz-gutter);
-            --unit-list-width: 220px;
-            --unit-list-max-height: calc(100vh - var(--viz-top-offset) - 160px);
-            --controls-help-left: var(--viz-gutter);
-            --controls-help-right: auto;
-            --controls-help-bottom: var(--viz-gutter);
-            --controls-help-width: 340px;
-            --ui-controls-left: auto;
-            --ui-controls-right: var(--viz-gutter);
-            --ui-controls-bottom: var(--viz-gutter);
+            --viz-top-offset: 62px;
+            --viz-gutter: 12px;
+            --left-dock-width: 348px;
+            --right-dock-width: 324px;
+            --map-left-inset: 24px;
+            --map-right-inset: 24px;
+            --map-bottom-inset: 54px;
+            --dock-top: calc(var(--viz-top-offset) + var(--viz-gutter));
+            --dock-bottom: 52px;
+            --controls-help-bottom: 12px;
         }
 
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #111;
+            background-color: #070b0f;
             font-family: 'Courier New', monospace;
             color: #ddd;
         }
 
-        #overlay {
+        #viz-shell {
             position: fixed;
-            top: var(--overlay-top);
-            left: var(--overlay-left);
-            width: min(var(--overlay-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
-            max-height: var(--overlay-max-height);
+            inset: 0;
+            overflow: hidden;
             pointer-events: none;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px;
-            border: 1px solid #444;
+            z-index: 2;
+        }
+
+        #viz-shell > * {
+            pointer-events: auto;
+        }
+
+        #overlay {
+            position: static;
+            width: 100%;
+            max-height: none;
+            pointer-events: auto;
+            background: transparent;
+            padding: 0;
+            border: 0;
             box-sizing: border-box;
-            overflow-y: auto;
-            overscroll-behavior: contain;
-            z-index: 3;
+            overflow: visible;
         }
 
         h3 {
-            margin-top: 0;
-            color: #00ccff;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
+            margin: 0 0 8px;
+            color: #9ed7e8;
+            border-bottom: 1px solid rgba(110, 151, 168, 0.28);
+            padding-bottom: 6px;
+            font-size: 12px;
+            letter-spacing: 0;
         }
 
         .data-row {
@@ -83,35 +85,31 @@
         }
 
         #unit-list {
-            position: fixed;
-            top: var(--unit-list-top);
-            left: var(--unit-list-left);
-            right: var(--unit-list-right);
-            width: min(var(--unit-list-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px;
-            border: 1px solid #444;
+            position: static;
+            width: 100%;
+            background: transparent;
+            padding: 0;
+            border: 0;
             box-sizing: border-box;
-            max-height: var(--unit-list-max-height);
-            overflow-y: auto;
+            max-height: none;
+            overflow: visible;
             overscroll-behavior: contain;
-            z-index: 3;
         }
 
         .unit-item {
-            padding: 5px;
+            padding: 7px 8px;
             cursor: pointer;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid rgba(85, 111, 122, 0.22);
             font-size: 12px;
         }
 
         .unit-item:hover {
-            background: #333;
+            background: rgba(88, 122, 134, 0.18);
         }
 
         .unit-item.active {
             border-left: 3px solid #00ccff;
-            background: #222;
+            background: rgba(47, 99, 117, 0.26);
         }
 
         .unit-meta {
@@ -129,26 +127,27 @@
         #controls-help {
             position: fixed;
             bottom: var(--controls-help-bottom);
-            left: var(--controls-help-left);
-            right: var(--controls-help-right);
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 12px;
-            color: #666;
+            color: #748690;
             pointer-events: none;
-            max-width: min(var(--controls-help-width), calc(100vw - var(--viz-gutter) - var(--viz-gutter)));
-            z-index: 3;
+            max-width: calc(100vw - 32px);
+            text-align: center;
+            z-index: 6;
+            background: rgba(4, 9, 12, 0.64);
+            border: 1px solid rgba(96, 127, 145, 0.22);
+            padding: 6px 10px;
+            box-sizing: border-box;
         }
 
         #ui-controls {
-            position: fixed;
-            bottom: var(--ui-controls-bottom);
-            left: var(--ui-controls-left);
-            right: var(--ui-controls-right);
+            position: static;
             pointer-events: auto;
             display: flex;
             flex-wrap: wrap;
             justify-content: flex-end;
-            gap: 10px;
-            z-index: 3;
+            gap: 6px;
         }
 
         #viz-menubar {
@@ -157,12 +156,15 @@
             left: 0;
             right: 0;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: rgba(4, 10, 15, 0.9);
-            border-bottom: 1px solid #294357;
-            padding: 12px 18px;
-            z-index: 4;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 50px;
+            background: rgba(4, 10, 14, 0.92);
+            border-bottom: 1px solid rgba(80, 116, 132, 0.42);
+            padding: 6px 12px;
+            box-sizing: border-box;
+            z-index: 7;
             pointer-events: auto;
             backdrop-filter: blur(8px);
         }
@@ -175,33 +177,41 @@
         }
 
         .menu-row--status {
+            flex: 1 1 auto;
             justify-content: space-between;
             flex-wrap: wrap;
+            min-width: 0;
         }
 
         .menu-row--selectors {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 10px;
             align-items: stretch;
         }
 
         .menu-field {
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-columns: auto minmax(0, 1fr);
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             min-width: 0;
-            padding: 8px 10px;
-            background: rgba(9, 20, 30, 0.72);
-            border: 1px solid #294357;
+            padding: 8px;
+            background: rgba(9, 18, 24, 0.72);
+            border: 1px solid rgba(80, 116, 132, 0.34);
         }
 
+        .menu-field button {
+            grid-column: 1 / -1;
+            justify-self: stretch;
+        }
+
+        #viz-shell select,
         #viz-menubar select {
             background: #161616;
             color: #ddd;
             border: 1px solid #555;
-            padding: 7px 10px;
+            padding: 7px 9px;
             min-width: 0;
             width: 100%;
         }
@@ -216,8 +226,10 @@
         .menu-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: flex-end;
+            gap: 6px;
             flex-wrap: wrap;
+            min-width: 0;
         }
 
         .menu-tag {
@@ -237,15 +249,18 @@
         }
 
         button {
-            background: #222;
+            background: rgba(19, 29, 34, 0.96);
             color: #ccc;
-            border: 1px solid #555;
-            padding: 8px 16px;
+            border: 1px solid rgba(108, 133, 145, 0.62);
+            padding: 7px 10px;
             cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            white-space: nowrap;
         }
 
         button:hover {
-            background: #333;
+            background: rgba(36, 52, 60, 0.98);
             color: #fff;
         }
 
@@ -262,7 +277,7 @@
         .section-spacer {
             margin-top: 12px;
             padding-top: 10px;
-            border-top: 1px solid #333;
+            border-top: 1px solid rgba(85, 111, 122, 0.28);
         }
 
         .task-sequence {
@@ -302,7 +317,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            max-width: 360px;
+            max-width: 100%;
         }
 
         .history-item {
@@ -339,9 +354,9 @@
 
         #tactical-header {
             position: absolute;
-            top: calc(var(--viz-top-offset) - 16px);
-            left: 24px;
-            right: 24px;
+            top: var(--dock-top);
+            left: var(--map-left-inset);
+            right: var(--map-right-inset);
             z-index: 2;
             display: flex;
             justify-content: space-between;
@@ -369,9 +384,9 @@
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 4px;
-            row-gap: 4px;
-            max-width: calc(100vw - 240px);
+            gap: 5px;
+            row-gap: 5px;
+            max-width: 100%;
             pointer-events: auto;
         }
 
@@ -409,98 +424,242 @@
         #tactical-canvas:active {
             cursor: grabbing;
         }
+
+        .viz-dock {
+            position: fixed;
+            top: var(--dock-top);
+            bottom: var(--dock-bottom);
+            width: min(var(--left-dock-width), calc(100vw - 32px));
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(5, 12, 17, 0.9);
+            border: 1px solid rgba(86, 123, 139, 0.42);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(8px);
+            transition: transform 140ms ease, opacity 140ms ease;
+            box-sizing: border-box;
+        }
+
+        .viz-dock--left {
+            left: var(--viz-gutter);
+            width: min(var(--left-dock-width), calc(100vw - 32px));
+        }
+
+        .viz-dock--right {
+            right: var(--viz-gutter);
+            width: min(var(--right-dock-width), calc(100vw - 32px));
+        }
+
+        html[data-left-dock="closed"] .viz-dock--left {
+            transform: translateX(calc(-100% - 24px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        html[data-right-dock="closed"] .viz-dock--right {
+            transform: translateX(calc(100% + 24px));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        html[data-left-dock="closed"] #viz-shell .viz-dock--left,
+        html[data-right-dock="closed"] #viz-shell .viz-dock--right {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .dock-header {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 10px 0;
+            color: #9cc9d8;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .dock-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 0 10px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dock-section {
+            border: 1px solid rgba(80, 116, 132, 0.26);
+            background: rgba(6, 14, 20, 0.62);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .dock-close {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .dock-toggle.active {
+            border-color: #42b9db;
+            color: #caedf7;
+            background: rgba(16, 55, 70, 0.82);
+        }
+
+        @media (max-width: 860px) {
+            #viz-menubar {
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .menu-row--status {
+                width: 100%;
+            }
+
+            .menu-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            #ui-controls {
+                flex: 1 1 100%;
+                justify-content: flex-start;
+            }
+
+            button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            #controls-help {
+                display: none;
+            }
+
+            .viz-dock {
+                top: calc(var(--viz-top-offset) + 8px);
+                bottom: 10px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div id="overlay">
-        <h3>TELEMETRY</h3>
-        <div class="data-row"><span class="label">TIME</span><span id="v-time" class="value">0.00 s</span></div>
-        <div id="focused-unit-stats">
-            <div class="data-row"><span class="label">UNIT</span><span id="v-name" class="value">--</span></div>
-            <div class="data-row"><span class="label">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
-            <div class="data-row"><span class="label">IAS / GS</span><span id="v-spd" class="value">0.0 / 0.0 m/s</span></div>
-            <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
-            <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
-            <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
-        </div>
-        <div class="section-spacer">
-            <h3>MISSION</h3>
-            <div class="data-row"><span class="label">C2 TASK</span><span id="m-task" class="value">--</span></div>
-            <div class="data-row"><span class="label">PHASE</span><span id="m-phase" class="value">--</span></div>
-            <div class="data-row"><span class="label">COMMAND</span><span id="m-command" class="value">--</span></div>
-            <div class="data-row"><span class="label">WAYPOINT</span><span id="m-waypoint" class="value">--</span></div>
-            <div class="label">SEQUENCE</div>
-            <div id="m-sequence" class="task-sequence"></div>
-            <div class="label" style="margin-top: 10px;">RECENT SWITCHES</div>
-            <div id="mission-history"></div>
-        </div>
-    </div>
-
-    <div id="unit-list">
-        <h3>UNITS</h3>
-        <div id="unit-list-content"></div>
-    </div>
-
-    <div id="viz-menubar">
-        <div class="menu-row menu-row--status">
-            <div class="menu-status">
-                <span class="menu-tag">SESSION</span>
-                <span id="viz-session-label">UNLOADED</span>
-            </div>
-            <div class="menu-actions">
-                <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
-                <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
-            </div>
-        </div>
-        <div class="menu-row menu-row--selectors">
-            <div class="menu-field">
-                <span class="menu-tag">PROFILE</span>
-                <select id="profile-select"></select>
-                <button id="btn-load-profile" onclick="loadSelectedProfile()">LOAD PROFILE</button>
-            </div>
-            <div class="menu-field">
-                <span class="menu-tag">SCENARIO</span>
-                <select id="scenario-select"></select>
-                <button id="btn-load" onclick="loadSelectedScenario()">LOAD</button>
-            </div>
-            <div class="menu-field">
-                <span class="menu-tag">ASSET SET</span>
-                <select id="asset-registry-select"></select>
-                <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()">LOAD ASSET SET</button>
-            </div>
-        </div>
-    </div>
-
     <div id="tactical-panel">
         <div id="tactical-header">
             <div class="tactical-header-left">
                 <span>TACTICAL VIEW</span>
-                <div class="tactical-layer-controls" aria-label="Tactical layers">
-                    <span class="menu-tag">LAYERS</span>
-                    <button id="btn-layer-environment" class="tactical-layer-button" onclick="toggleTacticalLayer('environment')">ENV</button>
-                    <button id="btn-layer-route" class="tactical-layer-button" onclick="toggleTacticalLayer('route')">ROUTE</button>
-                    <button id="btn-layer-trails" class="tactical-layer-button" onclick="toggleTacticalLayer('trails')">TRAILS</button>
-                    <button id="btn-layer-weapons" class="tactical-layer-button" onclick="toggleTacticalLayer('weapons')">WEAPONS</button>
-                    <button id="btn-layer-tracks" class="tactical-layer-button" onclick="toggleTacticalLayer('tracks')">TRACKS</button>
-                    <button id="btn-layer-sensor-rings" class="tactical-layer-button" onclick="toggleTacticalLayer('sensorRings')">RINGS</button>
-                    <button id="btn-layer-datalinks" class="tactical-layer-button" onclick="toggleTacticalLayer('datalinks')">LINKS</button>
-                </div>
             </div>
             <span id="tactical-scale">SCALE --</span>
         </div>
         <canvas id="tactical-canvas"></canvas>
     </div>
 
-    <div id="controls-help">[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume</div>
+    <div id="viz-shell">
+        <div id="viz-menubar">
+            <div class="menu-row menu-row--status">
+                <div class="menu-status">
+                    <span class="menu-tag">SESSION</span>
+                    <span id="viz-session-label">UNLOADED</span>
+                </div>
+                <div class="menu-actions">
+                    <button id="btn-toggle-left" class="dock-toggle" onclick="toggleVizDock('left')">SETUP</button>
+                    <button id="btn-toggle-right" class="dock-toggle" onclick="toggleVizDock('right')">DATA</button>
+                    <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
+                    <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
+                    <div id="ui-controls">
+                        <button id="btn-view" onclick="togglePresentationMode()">VIEW: MAP</button>
+                        <button id="btn-cam" onclick="toggleCamera()">3D: CHASE</button>
+                        <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
+                        <button id="btn-speed" class="pill" onclick="cycleSpeed()">SPD: 1x</button>
+                        <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
+                        <button id="btn-start" class="primary" onclick="runSessionAction()">START</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div id="ui-controls">
-        <button id="btn-view" onclick="togglePresentationMode()">VIEW: MAP</button>
-        <button id="btn-cam" onclick="toggleCamera()">3D: CHASE</button>
-        <button id="btn-speed-down" onclick="adjustSpeed(-1)">SLOW</button>
-        <button id="btn-speed" class="pill" onclick="cycleSpeed()">SPD: 1x</button>
-        <button id="btn-speed-up" onclick="adjustSpeed(1)">FAST</button>
-        <button id="btn-start" class="primary" onclick="runSessionAction()">START</button>
+        <aside id="left-dock" class="viz-dock viz-dock--left">
+            <div class="dock-header">
+                <span>SESSION SETUP</span>
+                <button class="dock-close" onclick="toggleVizDock('left')">CLOSE</button>
+            </div>
+            <div class="dock-body">
+                <div class="menu-row menu-row--selectors">
+                    <div class="menu-field">
+                        <span class="menu-tag">PROFILE</span>
+                        <select id="profile-select"></select>
+                        <button id="btn-load-profile" onclick="loadSelectedProfile()">LOAD PROFILE</button>
+                    </div>
+                    <div class="menu-field">
+                        <span class="menu-tag">SCENARIO</span>
+                        <select id="scenario-select"></select>
+                        <button id="btn-load" onclick="loadSelectedScenario()">LOAD</button>
+                    </div>
+                    <div class="menu-field">
+                        <span class="menu-tag">ASSET SET</span>
+                        <select id="asset-registry-select"></select>
+                        <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()">LOAD ASSET SET</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <aside id="right-dock" class="viz-dock viz-dock--right">
+            <div class="dock-header">
+                <span>TACTICAL DATA</span>
+                <button class="dock-close" onclick="toggleVizDock('right')">CLOSE</button>
+            </div>
+            <div class="dock-body">
+                <div id="tactical-layer-panel" class="dock-section">
+                    <h3>LAYERS</h3>
+                    <div class="tactical-layer-controls" aria-label="Tactical layers">
+                        <button id="btn-layer-environment" class="tactical-layer-button" onclick="toggleTacticalLayer('environment')">ENV</button>
+                        <button id="btn-layer-route" class="tactical-layer-button" onclick="toggleTacticalLayer('route')">ROUTE</button>
+                        <button id="btn-layer-trails" class="tactical-layer-button" onclick="toggleTacticalLayer('trails')">TRAILS</button>
+                        <button id="btn-layer-weapons" class="tactical-layer-button" onclick="toggleTacticalLayer('weapons')">WEAPONS</button>
+                        <button id="btn-layer-tracks" class="tactical-layer-button" onclick="toggleTacticalLayer('tracks')">TRACKS</button>
+                        <button id="btn-layer-sensor-rings" class="tactical-layer-button" onclick="toggleTacticalLayer('sensorRings')">RINGS</button>
+                        <button id="btn-layer-datalinks" class="tactical-layer-button" onclick="toggleTacticalLayer('datalinks')">LINKS</button>
+                    </div>
+                </div>
+
+                <div id="overlay" class="dock-section">
+                    <h3>TELEMETRY</h3>
+                    <div class="data-row"><span class="label">TIME</span><span id="v-time" class="value">0.00 s</span></div>
+                    <div id="focused-unit-stats">
+                        <div class="data-row"><span class="label">UNIT</span><span id="v-name" class="value">--</span></div>
+                        <div class="data-row"><span class="label">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
+                        <div class="data-row"><span class="label">IAS / GS</span><span id="v-spd" class="value">0.0 / 0.0 m/s</span></div>
+                        <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
+                        <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
+                        <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
+                    </div>
+                    <div class="section-spacer">
+                        <h3>MISSION</h3>
+                        <div class="data-row"><span class="label">C2 TASK</span><span id="m-task" class="value">--</span></div>
+                        <div class="data-row"><span class="label">PHASE</span><span id="m-phase" class="value">--</span></div>
+                        <div class="data-row"><span class="label">COMMAND</span><span id="m-command" class="value">--</span></div>
+                        <div class="data-row"><span class="label">WAYPOINT</span><span id="m-waypoint" class="value">--</span></div>
+                        <div class="label">SEQUENCE</div>
+                        <div id="m-sequence" class="task-sequence"></div>
+                        <div class="label" style="margin-top: 10px;">RECENT SWITCHES</div>
+                        <div id="mission-history"></div>
+                    </div>
+                </div>
+
+                <div id="unit-list" class="dock-section">
+                    <h3>UNITS</h3>
+                    <div id="unit-list-content"></div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="controls-help">[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume</div>
     </div>
 
     <script type="module">
@@ -574,14 +733,19 @@
         let sessionControlState = { loaded: false, ready: false, running: false, paused: false };
         const layoutState = {
             mode: 'wide',
-            topInset: 132,
-            leftInset: 20,
-            rightInset: 20,
-            bottomInset: 20,
-            tacticalPadding: { left: 320, right: 220, top: 72, bottom: 110 },
+            topInset: 76,
+            leftInset: 24,
+            rightInset: 24,
+            bottomInset: 72,
+            tacticalPadding: { left: 24, right: 24, top: 88, bottom: 72 },
             measurements: {},
             applying: false,
         };
+        const dockState = {
+            left: window.innerWidth >= 960,
+            right: window.innerWidth >= 1180,
+        };
+        let dockUserTouched = false;
 
         // --- Init ThreeJS ---
         const scene = new THREE.Scene();
@@ -611,11 +775,20 @@
         const tacticalPanel = document.getElementById('tactical-panel');
         const tacticalCanvas = document.getElementById('tactical-canvas');
         const tacticalCtx = tacticalCanvas.getContext('2d');
+        const vizShell = document.getElementById('viz-shell');
         const vizMenubar = document.getElementById('viz-menubar');
         const overlayPanel = document.getElementById('overlay');
         const unitListPanel = document.getElementById('unit-list');
+        const leftDockPanel = document.getElementById('left-dock');
+        const rightDockPanel = document.getElementById('right-dock');
         const controlsHelpPanel = document.getElementById('controls-help');
         const uiControlsPanel = document.getElementById('ui-controls');
+
+        function applyResponsiveDockDefaults() {
+            if (dockUserTouched) return;
+            dockState.left = window.innerWidth >= 960;
+            dockState.right = window.innerWidth >= 1180;
+        }
 
         function measureLayoutPanels() {
             const measure = (element, fallbackWidth = 0, fallbackHeight = 0) => {
@@ -626,19 +799,20 @@
                     height: Math.max(fallbackHeight, Math.round(rect.height || element.offsetHeight || 0)),
                 };
             };
-            const overlayBox = measure(overlayPanel, 340, 0);
-            const unitListBox = measure(unitListPanel, 220, 0);
+            const leftDockBox = measure(leftDockPanel, 348, 0);
+            const rightDockBox = measure(rightDockPanel, 324, 0);
             const controlsHelpBox = measure(controlsHelpPanel, 340, 0);
             const uiControlsBox = measure(uiControlsPanel, 220, 0);
+            const topbarHeight = vizMenubar?.offsetHeight || 50;
             return {
                 viewportWidth: window.innerWidth,
                 viewportHeight: window.innerHeight,
-                gutter: 20,
-                topOffset: (vizMenubar?.offsetHeight || 116) + 16,
-                overlayWidth: overlayBox.width,
-                overlayHeight: overlayBox.height,
-                unitListWidth: unitListBox.width,
-                unitListHeight: unitListBox.height,
+                gutter: 12,
+                topOffset: topbarHeight + 12,
+                leftDockWidth: leftDockBox.width,
+                leftDockHeight: leftDockBox.height,
+                rightDockWidth: rightDockBox.width,
+                rightDockHeight: rightDockBox.height,
                 controlsHelpWidth: controlsHelpBox.width,
                 controlsHelpHeight: controlsHelpBox.height,
                 uiControlsWidth: uiControlsBox.width,
@@ -647,132 +821,79 @@
         }
 
         function resolveLayoutMode(measurements) {
-            const overlayWidth = Math.max(280, Math.min(380, measurements.overlayWidth || 340));
-            const unitListWidth = Math.max(200, Math.min(300, measurements.unitListWidth || 220));
-            const overlayHeight = Math.max(200, measurements.overlayHeight || 0);
-            const unitListHeight = Math.max(48, measurements.unitListHeight || 0);
-            const controlsHelpHeight = Math.max(14, measurements.controlsHelpHeight || 0);
-            const uiControlsHeight = Math.max(48, measurements.uiControlsHeight || 0);
-            const wideWidthNeeded = overlayWidth + unitListWidth + measurements.gutter * 4 + 360;
-            const wideHeightNeeded = measurements.topOffset + Math.max(overlayHeight, unitListHeight) + Math.max(controlsHelpHeight, uiControlsHeight) + measurements.gutter * 3 + 160;
-            if (measurements.viewportWidth >= wideWidthNeeded && measurements.viewportHeight >= wideHeightNeeded) {
-                return 'wide';
-            }
-            const compactWidthNeeded = Math.max(overlayWidth, unitListWidth) + measurements.gutter * 3 + 420;
-            const compactHeightNeeded = measurements.topOffset + overlayHeight + unitListHeight + Math.max(controlsHelpHeight, uiControlsHeight) + measurements.gutter * 4 + 140;
-            if (measurements.viewportWidth >= compactWidthNeeded && measurements.viewportHeight >= compactHeightNeeded) {
-                return 'compact';
-            }
-            return 'stacked';
+            if (measurements.viewportWidth < 860 || measurements.viewportHeight < 560) return 'narrow';
+            if (measurements.viewportWidth < 1180) return 'compact';
+            return 'wide';
         }
 
         function applyAutoLayout(mode, measurements) {
             const rootStyle = document.documentElement.style;
             const gutter = measurements.gutter;
             const topOffset = measurements.topOffset;
-            const overlayWidth = Math.max(280, Math.min(380, measurements.overlayWidth || 340));
-            const unitListWidth = Math.max(200, Math.min(300, measurements.unitListWidth || 220));
-            const leftColumnWidth = Math.max(overlayWidth, unitListWidth);
-            const bottomDockHeight = Math.max(measurements.controlsHelpHeight, measurements.uiControlsHeight, 48);
-            let overlayTop = topOffset;
-            let overlayLeft = `${gutter}px`;
-            let overlayWidthValue = `${overlayWidth}px`;
-            let overlayMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 3}px)`;
-            let unitListTop = topOffset;
-            let unitListLeft = 'auto';
-            let unitListRight = `${gutter}px`;
-            let unitListWidthValue = `${unitListWidth}px`;
-            let unitListMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 3}px)`;
-            let controlsHelpLeft = `${gutter}px`;
-            let controlsHelpRight = 'auto';
-            let controlsHelpBottom = `${gutter}px`;
-            let controlsHelpWidth = `${overlayWidth}px`;
-            let uiControlsLeft = 'auto';
-            let uiControlsRight = `${gutter}px`;
-            let uiControlsBottom = `${gutter}px`;
-
-            if (mode === 'compact') {
-                overlayWidthValue = `${leftColumnWidth}px`;
-                unitListTop = topOffset + measurements.overlayHeight + gutter;
-                unitListLeft = `${gutter}px`;
-                unitListRight = 'auto';
-                unitListWidthValue = `${leftColumnWidth}px`;
-                controlsHelpWidth = `${leftColumnWidth}px`;
-                overlayMaxHeight = `calc(100vh - ${topOffset + bottomDockHeight + gutter * 4 + measurements.unitListHeight}px)`;
-                unitListMaxHeight = `calc(100vh - ${unitListTop + bottomDockHeight + gutter * 3}px)`;
-            } else if (mode === 'stacked') {
-                const stackedWidth = `${Math.max(320, Math.min(420, measurements.viewportWidth - gutter * 2))}px`;
-                const stackedBottom = measurements.uiControlsHeight + gutter * 2;
-                overlayWidthValue = stackedWidth;
-                unitListTop = topOffset + measurements.overlayHeight + gutter;
-                unitListLeft = `${gutter}px`;
-                unitListRight = 'auto';
-                unitListWidthValue = stackedWidth;
-                controlsHelpLeft = `${gutter}px`;
-                controlsHelpRight = 'auto';
-                controlsHelpBottom = `${stackedBottom}px`;
-                controlsHelpWidth = stackedWidth;
-                uiControlsLeft = 'auto';
-                uiControlsRight = `${gutter}px`;
-                overlayMaxHeight = `calc(100vh - ${topOffset + measurements.unitListHeight + measurements.controlsHelpHeight + measurements.uiControlsHeight + gutter * 5}px)`;
-                unitListMaxHeight = `calc(100vh - ${unitListTop + measurements.controlsHelpHeight + measurements.uiControlsHeight + gutter * 4}px)`;
-            }
+            const overlayDockMode = mode === 'narrow';
+            const leftDockWidth = Math.max(300, Math.min(380, measurements.leftDockWidth || 348));
+            const rightDockWidth = Math.max(280, Math.min(360, measurements.rightDockWidth || 324));
+            const leftInset = (!overlayDockMode && dockState.left) ? leftDockWidth + gutter * 2 : gutter + 12;
+            const rightInset = (!overlayDockMode && dockState.right) ? rightDockWidth + gutter * 2 : gutter + 12;
+            const controlsHelpBottom = mode === 'narrow' ? 10 : gutter;
+            const controlsHeight = controlsHelpPanel && getComputedStyle(controlsHelpPanel).display !== 'none'
+                ? Math.max(0, measurements.controlsHelpHeight || 0)
+                : 0;
+            const bottomInset = Math.max(56, controlsHeight + controlsHelpBottom + gutter);
 
             rootStyle.setProperty('--viz-top-offset', `${topOffset}px`);
-            rootStyle.setProperty('--overlay-left', overlayLeft);
-            rootStyle.setProperty('--overlay-top', `${overlayTop}px`);
-            rootStyle.setProperty('--overlay-width', overlayWidthValue);
-            rootStyle.setProperty('--overlay-max-height', overlayMaxHeight);
-            rootStyle.setProperty('--unit-list-top', `${unitListTop}px`);
-            rootStyle.setProperty('--unit-list-left', unitListLeft);
-            rootStyle.setProperty('--unit-list-right', unitListRight);
-            rootStyle.setProperty('--unit-list-width', unitListWidthValue);
-            rootStyle.setProperty('--unit-list-max-height', unitListMaxHeight);
-            rootStyle.setProperty('--controls-help-left', controlsHelpLeft);
-            rootStyle.setProperty('--controls-help-right', controlsHelpRight);
-            rootStyle.setProperty('--controls-help-bottom', controlsHelpBottom);
-            rootStyle.setProperty('--controls-help-width', controlsHelpWidth);
-            rootStyle.setProperty('--ui-controls-left', uiControlsLeft);
-            rootStyle.setProperty('--ui-controls-right', uiControlsRight);
-            rootStyle.setProperty('--ui-controls-bottom', uiControlsBottom);
+            rootStyle.setProperty('--left-dock-width', `${leftDockWidth}px`);
+            rootStyle.setProperty('--right-dock-width', `${rightDockWidth}px`);
+            rootStyle.setProperty('--map-left-inset', `${leftInset}px`);
+            rootStyle.setProperty('--map-right-inset', `${rightInset}px`);
+            rootStyle.setProperty('--map-bottom-inset', `${bottomInset}px`);
+            rootStyle.setProperty('--controls-help-bottom', `${controlsHelpBottom}px`);
             document.documentElement.dataset.layoutMode = mode;
+            document.documentElement.dataset.leftDock = dockState.left ? 'open' : 'closed';
+            document.documentElement.dataset.rightDock = dockState.right ? 'open' : 'closed';
+
+            const leftToggle = document.getElementById('btn-toggle-left');
+            const rightToggle = document.getElementById('btn-toggle-right');
+            leftToggle?.classList.toggle('active', dockState.left);
+            rightToggle?.classList.toggle('active', dockState.right);
+            leftToggle?.setAttribute('aria-pressed', dockState.left ? 'true' : 'false');
+            rightToggle?.setAttribute('aria-pressed', dockState.right ? 'true' : 'false');
+            if (leftDockPanel) {
+                leftDockPanel.setAttribute('aria-hidden', dockState.left ? 'false' : 'true');
+                leftDockPanel.inert = !dockState.left;
+            }
+            if (rightDockPanel) {
+                rightDockPanel.setAttribute('aria-hidden', dockState.right ? 'false' : 'true');
+                rightDockPanel.inert = !dockState.right;
+            }
 
             layoutState.mode = mode;
-            layoutState.measurements = measurements;
+            layoutState.measurements = {
+                ...measurements,
+                leftDockWidth,
+                rightDockWidth,
+                leftInset,
+                rightInset,
+                bottomInset,
+                topOffset,
+            };
         }
 
         function computeTacticalPaddingFromLayout() {
             const measurements = layoutState.measurements || {};
             const gutter = measurements.gutter || 20;
-            const bottomWide = Math.max(110, Math.max(measurements.controlsHelpHeight || 0, measurements.uiControlsHeight || 0) + gutter * 2);
-            if (layoutState.mode === 'stacked') {
-                const topOffset = measurements.topOffset || 72;
-                return {
-                    left: gutter + 8,
-                    right: gutter + 8,
-                    top: Math.max(88, topOffset + gutter * 2),
-                    bottom: Math.max(120, (measurements.controlsHelpHeight || 0) + (measurements.uiControlsHeight || 0) + gutter * 3),
-                };
-            }
-            if (layoutState.mode === 'compact') {
-                return {
-                    left: Math.max(220, Math.max(measurements.overlayWidth || 0, measurements.unitListWidth || 0) + gutter * 2),
-                    right: Math.max(140, Math.min(260, (measurements.uiControlsWidth || 0) + gutter)),
-                    top: 72,
-                    bottom: bottomWide,
-                };
-            }
             return {
-                left: Math.max(220, (measurements.overlayWidth || 340) + gutter * 2),
-                right: Math.max(180, (measurements.unitListWidth || 220) + gutter * 2),
-                top: 72,
-                bottom: bottomWide,
+                left: Math.max(24, measurements.leftInset || gutter + 12),
+                right: Math.max(24, measurements.rightInset || gutter + 12),
+                top: Math.max(82, (measurements.topOffset || 62) + 42),
+                bottom: Math.max(56, measurements.bottomInset || 56),
             };
         }
 
         function refreshAutoLayout(options = {}) {
             if (layoutState.applying) return;
             layoutState.applying = true;
+            applyResponsiveDockDefaults();
             const measurements = measureLayoutPanels();
             const mode = resolveLayoutMode(measurements);
             applyAutoLayout(mode, measurements);
@@ -791,9 +912,17 @@
             refreshAutoLayout();
         }
 
+        window.toggleVizDock = function (side) {
+            if (!Object.prototype.hasOwnProperty.call(dockState, side)) return;
+            dockUserTouched = true;
+            dockState[side] = !dockState[side];
+            refreshAutoLayout({ redraw: true });
+        };
+
         function updatePresentationModeUI() {
             const mapMode = presentationMode === 'MAP';
             const cameraButton = document.getElementById('btn-cam');
+            vizShell?.classList.toggle('viz-shell--3d', !mapMode);
             tacticalPanel.classList.toggle('hidden', !mapMode);
             renderer.domElement.style.opacity = mapMode ? '0.16' : '1.0';
             renderer.domElement.style.pointerEvents = mapMode ? 'none' : 'auto';
@@ -802,6 +931,7 @@
             document.getElementById('btn-view').innerText = `VIEW: ${presentationMode}`;
             cameraButton.innerText = `3D: ${viewMode}`;
             cameraButton.style.display = mapMode ? 'none' : '';
+            refreshAutoLayout({ redraw: true });
         }
 
         function updateTacticalLayerButtons() {
@@ -1621,6 +1751,14 @@
                 select.appendChild(option);
                 return;
             }
+            const scenarioOnlySession = !!sessionControlState.loaded && !!currentScenario && !currentProfile;
+            if (scenarioOnlySession) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.innerText = 'Scenario only (no profile active)';
+                option.title = 'The current session was loaded directly from a scenario.';
+                select.appendChild(option);
+            }
             items.forEach((profile) => {
                 const path = String(profile?.path || '').trim();
                 const name = String(profile?.name || path || '--');
@@ -1631,7 +1769,9 @@
                 select.appendChild(option);
             });
             const knownPaths = items.map((item) => String(item?.path || '').trim()).filter(Boolean);
-            const desired = currentProfile && knownPaths.includes(currentProfile) ? currentProfile : (knownPaths[0] || '');
+            const desired = currentProfile && knownPaths.includes(currentProfile)
+                ? currentProfile
+                : scenarioOnlySession ? '' : (knownPaths[0] || '');
             select.value = desired;
         }
 

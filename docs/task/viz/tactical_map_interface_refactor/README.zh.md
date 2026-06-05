@@ -1,7 +1,7 @@
 # 战术地图界面重构
 
 状态：`2026-06-06`，活跃的可视化子项目。`P0` 规划与参考基线已建立；
-runtime 实现尚未开始。
+`P1` 壳布局已作为切片接受；`P2` 地图工作区仍是下一步。
 
 语言：
 
@@ -38,7 +38,7 @@ runtime 实现尚未开始。
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | 统一可视化入口 | 活跃基础，已记录第一版可用收口 | [viz_unified_entry_session_profile_plan_20260516.zh.md](../archive/viz_unified_entry_session_profile_plan_20260516.zh.md) | 这不等于已解决战术地图布局或多地图工作区。 |
-| 当前战术地图 | 活跃但偏拥挤、偏调试 | [index.html](../../../../examples/viz/web_viz/templates/index.html) | 当前地图仍是带大量直接控件的 canvas 视图，而不是组合式战术界面。 |
+| 当前战术地图 | `P1` 地图优先壳已作为切片接受 | [P1 验收](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md) | 这里只接受 dock/collapse 布局，不接受后续多地图工作区。 |
 | G0 环境叠加 | 已验收的“仅可视化”切片 | [environment_substrate_g0_viz_overlay_sync_acceptance_20260606.zh.md](../../ground/environment_substrate_g0_architecture/environment_substrate_g0_viz_overlay_sync_acceptance_20260606.zh.md) | 这里只是绘制元数据，不释放地形机动、LOS、遮蔽或战斗行为。 |
 | 多地图工作区 | 缺失 | 尚无维护中的 workspace model | 多视图必须是 UI/profile 概念，不是 scenario 真实性声明。 |
 | 战术地图风格基线 | `P0` 已通过 | [风格基线](tactical_map_interface_refactor_style_reference_baseline_20260606.zh.md) | 参考资料只指导视觉设计，不构成军标合规声明。 |
@@ -67,7 +67,7 @@ runtime 实现尚未开始。
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary And Reference` | 建立子项目、任务簇、当前状态和地图风格基线。 | 用户要求在 `docs/task/viz` 建立持久工作面。 | 父 README 已链接本子项目，docs-only 校验干净。 | pass |
-| `P1 Shell Layout` | 将当前 UI 重构为地图优先的战术壳。 | `P0` 通过。 | 窄屏和桌面中地图都是第一视口的主表面。 | planned |
+| `P1 Shell Layout` | 将当前 UI 重构为地图优先的战术壳。 | `P0` 通过。 | 窄屏和桌面中地图都是第一视口的主表面。 | accepted slice |
 | `P2 Map Workspace Model` | 增加多个具名地图表面和切换/分屏行为。 | `P1` 壳可以承载地图面板。 | `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 均有明确 UI 角色。 | planned |
 | `P3 Layer And Symbology Model` | 集中管理图层分组、绘制顺序和战术符号风格。 | `P2` 工作区存在。 | 现有叠加层通过分组图层规则渲染，且不扩大能力声明。 | planned |
 | `P4 Profile Integration` | 让 profile 能选择默认工作区/图层，但不改变 scenario 语义。 | `P2` 和 `P3` 足够稳定。 | profile loader 接受并校验地图工作区 UI 默认值。 | planned |
@@ -78,6 +78,10 @@ runtime 实现尚未开始。
 
 - 有限任务簇计划：
   [tactical_map_interface_refactor_task_clusters_20260606.zh.md](tactical_map_interface_refactor_task_clusters_20260606.zh.md)
+- 派发队列：
+  [tactical_map_interface_refactor_dispatch_queue_20260606.zh.md](tactical_map_interface_refactor_dispatch_queue_20260606.zh.md)
+- P1 壳布局验收：
+  [tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md)
 
 ## 输出与证据
 
@@ -104,8 +108,8 @@ runtime 实现尚未开始。
 
 立即项：
 
-- 在本规划面接受后实现 `P1` 壳布局。
-- 判断第一轮 runtime 切片应交付 tabbed 地图表面还是 split-map 工作区；只要验证证明地图仍为主表面，任务簇允许二者之一。
+- 判断 `P2` 第一轮应交付 tabbed 地图表面还是 split-map 工作区；只要验证证明地图仍为主表面，任务簇允许二者之一。
+- 如果后续 UI 工作触及同一模板块，需要保持 `P1` 壳证据当前有效。
 
 后续项：
 

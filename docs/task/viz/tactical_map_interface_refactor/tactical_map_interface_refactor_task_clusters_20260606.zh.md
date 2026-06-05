@@ -2,7 +2,7 @@
 
 状态：`2026-06-06`，对应
 [战术地图界面重构](README.zh.md) 的有限任务簇计划。`P0` 已通过；
-实现任务簇仍为 planned。
+`P1` 壳布局已作为切片接受；`P2` 是下一项计划实现簇。
 
 ## 边界决策
 
@@ -15,7 +15,7 @@
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `VIZ-TMAP-P0` | main thread | n/a | 建立持久子项目权威、任务簇、当前状态和风格基线。 | `docs/task/viz/tactical_map_interface_refactor/**`、`docs/task/viz/README*.md` | Runtime UI 实现；scenario/profile schema 变更。 | `git diff --check -- docs/task/viz`；本地链接/路径检查。 | 父 README 已链接子项目，docs-only 校验干净。 | 首项，串行。 | 1 | pass |
-| `VIZ-TMAP-P1` | main thread 或 implementation worker | n/a | 将当前战术 UI 重构为地图优先壳，控制区 dock/collapse。 | `examples/viz/web_viz/templates/index.html`；可选 dated evidence 截图路径 | 多地图语义；profile schema 变更；地形或战斗行为。 | 嵌入式 module 语法检查；窄屏/桌面浏览器 smoke；console 错误检查。 | 战术地图在第一视口中是主表面，控制区不再把地图顶出有用视野。 | 依赖 `P0`；若触及同一模板区域，与 `P2` 串行。 | 2 | planned |
+| `VIZ-TMAP-P1` | main thread | n/a | 将当前战术 UI 重构为地图优先壳，控制区 dock/collapse。 | `examples/viz/web_viz/templates/index.html`；可选 dated evidence 截图路径 | 多地图语义；profile schema 变更；地形或战斗行为。 | 嵌入式 module 语法检查；窄屏/桌面浏览器 smoke；console 错误检查。 | 战术地图在第一视口中是主表面，控制区不再把地图顶出有用视野。 | 依赖 `P0`；若触及同一模板区域，与 `P2` 串行。 | 2 | accepted slice |
 | `VIZ-TMAP-P2` | main thread 或 implementation worker | n/a | 增加维护中的地图工作区模型，包含 `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 等具名表面。 | `examples/viz/web_viz/templates/index.html`；仅在默认值需要时可加 profile fixture | Scenario 编辑器；runtime 地形生成；新的仿真 payload 要求。 | 浏览器 smoke 证明地图表面切换或分屏行为；既有 profile 加载仍可用。 | 每个已接受表面都有清晰角色、默认图层集，且不会遮挡主地图。 | 依赖 `P1`；可与 `P3` 只读设计评审并行。 | 2 | planned |
 | `VIZ-TMAP-P3` | implementation worker 或 integration worker | n/a | 集中管理战术图层分组、绘制顺序和第一版符号风格。 | `examples/viz/web_viz/templates/index.html`；若本地证明合理，可少量抽出 JS/CSS | 完整 MIL-STD-2525/APP-6 合规；改变 tactical payload 语义。 | Module 语法检查；单元、路线、航迹、传感器、武器、ENV 图层截图检查。 | 现有叠加通过分组图层控制渲染，阵营、不确定性、环境样式可读。 | 依赖 `P1`；如写区重叠，可跟随 `P2`。 | 2 | planned |
 | `VIZ-TMAP-P4` | integration worker | n/a | 仅在需要时扩展 profile UI 默认值，用于默认 workspace/layer/view 选择。 | `examples/viz/app/profile_loader.py`、`examples/viz/profiles/*.json`、`tests/viz` 下聚焦测试 | Scenario schema 变更；训练配置变更；世界/真实性参数。 | 聚焦 profile-loader 测试和既有 viz smoke 加载。 | Profiles 可选择默认 UI 工作区/图层，而 scenarios 保持不变。 | 依赖已接受的 `P2` 或 `P3` 默认值。 | 2 | planned |
@@ -78,8 +78,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 立即项：
 
-- `P1` 壳布局实现。
-- 第一轮 runtime 切片采用 tabbed 地图表面还是 split-map 布局的决策。
+- `P2` 第一轮 runtime 切片采用 tabbed 地图表面还是 split-map 布局的决策。
+- 如果 `P2` 触及同一模板结构，需要保持 `P1` 壳布局证据继续有效。
 
 后续项：
 

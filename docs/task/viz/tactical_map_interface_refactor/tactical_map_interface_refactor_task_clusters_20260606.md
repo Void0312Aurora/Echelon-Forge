@@ -1,8 +1,8 @@
 # Tactical Map Interface Refactor Task Clusters
 
 Status: `2026-06-06` finite task-cluster plan for
-[Tactical Map Interface Refactor](README.md). `P0` is pass; implementation
-clusters remain planned.
+[Tactical Map Interface Refactor](README.md). `P0` is pass; `P1` shell layout
+is accepted as a slice; `P2` is the next planned implementation cluster.
 
 ## Boundary Decision
 
@@ -20,7 +20,7 @@ are UI views over accepted payloads; they are not new simulation semantics.
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `VIZ-TMAP-P0` | main thread | n/a | Install durable subproject authority, task clusters, current status, and style baseline. | `docs/task/viz/tactical_map_interface_refactor/**`, `docs/task/viz/README*.md` | Runtime UI implementation; scenario/profile schema changes. | `git diff --check -- docs/task/viz`; local link/path inspection. | Parent README links the subproject and docs-only validation is clean. | First, serial. | 1 | pass |
-| `VIZ-TMAP-P1` | main thread or implementation worker | n/a | Rework the current tactical UI into a map-first shell with docked/collapsible controls. | `examples/viz/web_viz/templates/index.html`; optional screenshots under a dated evidence path | Multi-map semantics; profile schema changes; terrain or combat behavior. | Embedded module syntax check; browser smoke at narrow and desktop viewports; console error check. | Tactical map is visible as the primary first-viewport surface and controls no longer push it below useful view. | Depends on `P0`; serial with `P2` if touching the same template sections. | 2 | planned |
+| `VIZ-TMAP-P1` | main thread | n/a | Rework the current tactical UI into a map-first shell with docked/collapsible controls. | `examples/viz/web_viz/templates/index.html`; optional screenshots under a dated evidence path | Multi-map semantics; profile schema changes; terrain or combat behavior. | Embedded module syntax check; browser smoke at narrow and desktop viewports; console error check. | Tactical map is visible as the primary first-viewport surface and controls no longer push it below useful view. | Depends on `P0`; serial with `P2` if touching the same template sections. | 2 | accepted slice |
 | `VIZ-TMAP-P2` | main thread or implementation worker | n/a | Add a maintained map-workspace model with named surfaces such as `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect`. | `examples/viz/web_viz/templates/index.html`; optional profile fixture only if needed for defaults | Scenario editor; runtime terrain generation; new simulation payload requirements. | Browser smoke proves map surface switching or split behavior; existing profile loading still works. | Each accepted surface has a clear role, default layer set, and no overlap that hides the map. | Depends on `P1`; can share read-only design review with `P3`. | 2 | planned |
 | `VIZ-TMAP-P3` | implementation worker or integration worker | n/a | Centralize tactical layer groups, draw order, and first-pass symbology styling. | `examples/viz/web_viz/templates/index.html`; optional small JS/CSS extraction if locally justified | Full MIL-STD-2525/APP-6 compliance; changing tactical payload semantics. | Module syntax check; browser screenshot checks for unit, route, track, sensor, weapon, and ENV layers. | Existing overlays render through grouped layer controls with readable affiliation, uncertainty, and environment styling. | Depends on `P1`; can follow `P2` or land after it if write areas overlap. | 2 | planned |
 | `VIZ-TMAP-P4` | integration worker | n/a | Extend profile UI defaults only as needed for default workspace/layer/view selection. | `examples/viz/app/profile_loader.py`, `examples/viz/profiles/*.json`, focused tests under `tests/viz` | Scenario schema changes; training config changes; world/realism parameters. | Focused profile-loader tests plus existing viz smoke load. | Profiles can select default UI workspace/layers while scenarios remain unchanged. | Depends on accepted `P2` or `P3` defaults. | 2 | planned |
@@ -89,9 +89,10 @@ Browser smoke must cover at least:
 
 Immediate:
 
-- `P1` shell layout implementation.
-- Decision between tabbed map surfaces and split-map layout for the first
+- `P2` decision between tabbed map surfaces and split-map layout for the first
   runtime slice.
+- Preserve `P1` shell-layout evidence if `P2` touches the same template
+  structure.
 
 Follow-on:
 
