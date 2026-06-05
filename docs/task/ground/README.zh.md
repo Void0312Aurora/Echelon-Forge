@@ -1,7 +1,8 @@
 # Ground
 
-状态：已于 `2026-05-21` 建立活跃规划入口；当前进展追踪更新于
-`2026-05-26`。
+状态：active follow-on 入口；bootstrap 规划基线，以及 environment-substrate G0
+设计/实现线已在 `2026-06-06` 接受并闭合至 G0-M；当前进展追踪更新于
+`2026-06-06`。
 
 语言：
 
@@ -15,6 +16,40 @@
 
 - 最新状态总结以
   [陆军 / 地面当前进展追踪](ground_current_progress_20260524.zh.md) 为准。
+- 已接受 environment-substrate G0 design/implementation line：
+  [environment_substrate_g0_architecture/README.zh.md](environment_substrate_g0_architecture/README.zh.md)。
+  该包把 G0 定义为 shared environment-substrate 的设计与实现线。当前已接受子阶段包括
+  architecture/design records、G0-J static manifest contract 与 G0-K
+  generator/catalog contract、G0-L projection setup plus compiler-ingestion
+  contract，以及 G0-M metadata-only derived products；不释放 runtime setup
+  application、movement、LOS、cover、fires、damage 或 combat。
+- 已接受 environment-substrate G0-J static manifest contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md)。
+  该子阶段在 `python/scenario/environment_substrate/` 下新增 shared static manifest
+  data structures、registries、validators、deterministic fixture 与 contract-level
+  projection tests；不释放 generator 或 runtime behavior。
+- 已接受 environment-substrate G0-K generator/catalog contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md)。
+  该子阶段在 `python/scenario/environment_substrate/` 下新增 deterministic
+  request/tile/seed/provenance rules、catalog descriptors/admission 与 in-memory
+  generated manifest fixture；不释放 runtime projection 或 generated scenario
+  artifacts。
+- 已接受 environment-substrate G0-L projection setup payload contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md)。
+  该子阶段新增 Python 侧 inert setup payload/evidence conversion，用于 already
+  validated `world_zone_definition` projections。
+- 已接受 environment-substrate G0-L-F scenario compiler ingestion：
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md)。
+  该子阶段在 layout metadata compilation 之前，将 accepted projection setup
+  payloads ingest 到 merged `environment.zones`；不 apply runtime setup。
+- 已接受 environment-substrate G0-M metadata-only derived products：
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md)。
+  该子阶段只新增 `surface_zone_index` 与 `occlusion_candidate_index` contract
+  products；不释放 movement、LOS、cover、fires、damage、combat 或 runtime consumers。
+- Environment-substrate G0 closure：
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md)。
+- 原始 bootstrap 计划已经满足其 planning-lane 成功标准，现作为 accepted
+  archived baseline 保留，不再是 active dispatch surface。
 - `services/army` 已经存在，并且是权威的军种画像边界文档。
 - 当前任务树已经维护专门的 ground 执行特化规划线：G0-G4 tasking lifecycle
   证据与 G6-E native schema 证据已经接受；movement、sensing、terrain、fires、
@@ -26,8 +61,9 @@
 - 当前工作线已拆成 G0-G6 阶段，便于 subagent 接收边界清楚、互不重叠的任务。
 - G0 已由 main-thread G0-D 验收。
 - G1 已验收一个窄范围 Python-profile-only 切片：`army`、`ground`、`land`
-  与 `ServiceProfile.Army` 均规范化为 `ground`；C++ DTO 壳、绑定、
-  runtime 行为和场景加载器仍保持 held。
+  与 `ServiceProfile.Army` 均规范化为 `ground`。该 G1 切片当时保留 C++ DTO
+  壳、绑定、runtime 行为和场景加载器；后续 `2026-06-05` 基础设施更新只新增
+  static G0/G1 owner-slice DTO 与绑定，不释放 runtime behavior。
 - G2 已验收第一批 ground 内容/测试种子：`examples/config/database/ground/units/`
   下的非自动加载 `ground_platoon_starter.seed`，以及三个可运行的
   `tests/contracts/unit/ground/` common-core 合同。
@@ -64,13 +100,41 @@
   entity，且可稳定检查 position、velocity、heading、instrument 与 health。
   这仅是 schema 证据；route movement、terrain、sensing、fires、damage 和
   combat 仍保持 held。
+- 第一版 C++ ground static owner-slice 基础设施已经落到
+  `src/components/tasking/ground/` 与 `src/components/command/ground/`。它通过现有
+  compatibility shell、maintained batch contract、JSON round-trip 与 Python
+  binding 暴露 G0/G1 static task/status metadata。它不释放 route movement、
+  terrain、sensing、fires、damage 或 combat。
+- ground profile 现在能从 ground task/status metadata 生成 G0/G1 static
+  `MissionCommandGround` 字段。这是 static tasking 的 command-authoring
+  独立，不是独立的 ground movement 或 combat runtime。
 
 ## 当前入口
 
 - 当前进展追踪：
   [ground_current_progress_20260524.zh.md](ground_current_progress_20260524.zh.md)
-- 主计划：
-  [ground_domain_bootstrap_plan_20260521.zh.md](ground_domain_bootstrap_plan_20260521.zh.md)
+- 已接受 environment-substrate G0 architecture package：
+  [environment_substrate_g0_architecture/README.zh.md](environment_substrate_g0_architecture/README.zh.md)
+- 已接受 environment-substrate G0-J static manifest contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md)
+- 已接受 environment-substrate G0-K generator/catalog contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md)
+- G0-K 验收：
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md)
+- 已接受 environment-substrate G0-L projection setup payload contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md)
+- 已接受 environment-substrate G0-L-F scenario compiler ingestion：
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md)
+- 已接受 environment-substrate G0-M metadata-only derived products：
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md)
+- Environment-substrate G0 closure：
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md)
+- Environment-substrate G0-L projection preflight and task map：
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_preflight_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_preflight_20260606.zh.md)
+- Terrain system G0 architecture design：
+  [environment_substrate_g0_architecture/environment_substrate_g0_terrain_system_architecture_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_terrain_system_architecture_20260605.zh.md)
+- 已接受 bootstrap 基线：
+  [archive/ground_domain_bootstrap_plan_20260521.zh.md](archive/ground_domain_bootstrap_plan_20260521.zh.md)
 - Subagent 分发：
   [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)
 - Review：
@@ -93,6 +157,8 @@
 本索引链接，是因为当前 movement-release 规划仍消费这些 gate；新工作应新开
 follow-on package，不要在这些已接受记录内继续追加实现任务。
 
+- Ground bootstrap 计划：
+  [archive/ground_domain_bootstrap_plan_20260521.zh.md](archive/ground_domain_bootstrap_plan_20260521.zh.md)
 - G0 边界冻结：
   [g0_boundary_freeze/README.zh.md](g0_boundary_freeze/README.zh.md)
 - G1 合同骨架：
@@ -113,6 +179,20 @@ follow-on package，不要在这些已接受记录内继续追加实现任务。
   [g6_route_move_release_decision/README.zh.md](g6_route_move_release_decision/README.zh.md)
 - G6-E native ground platform schema 证据：
   [g6_native_ground_platform_schema/README.zh.md](g6_native_ground_platform_schema/README.zh.md)
+- Environment substrate G0 architecture：
+  [environment_substrate_g0_architecture/README.zh.md](environment_substrate_g0_architecture/README.zh.md)
+- Environment substrate G0-J static manifest contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.zh.md)
+- Environment substrate G0-K generator/catalog contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.zh.md)
+- Environment substrate G0-L projection setup payload contract：
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.zh.md)
+- Environment substrate G0-L-F scenario compiler ingestion：
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.zh.md)
+- Environment substrate G0-M metadata-only derived products：
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.zh.md)
+- Environment substrate G0 closure：
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.zh.md)
 
 ## 已封存基线
 
@@ -126,12 +206,25 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
 
 ## 当前继续推进重点
 
+- 将已接受 G0-K 视为 Python request/tile/catalog contract 与 in-memory fixture
+  baseline，供 projection work 使用
+- 将已接受 G0-L 视为 payload/evidence conversion 加 strict scenario compiler data
+  ingestion；runtime setup application 仍需要单独 release package
+- 将已接受 G0-M 视为 metadata-only derived-product contracts；runtime consumers 与
+  movement/LOS/cover behavior 仍需要单独 release package
+- 将 terrain 保持为 shared environment root 中第一条被细化的 branch，并与
+  atmosphere/weather、wind、illumination、maritime/ocean、hydrology 和 dynamic
+  environment branches 并列
+- 保持已接受 G0-J implementation 的 manifest-first 边界：当前 C++/Python terrain
+  setup 仍是 compatibility/query surface，新增 Python package 是 shared
+  `environment_substrate` contract namespace
 - 维护 G0/G5 tasking smoke 与 G6 G1 static occupy/support fixtures，作为
   realism-gradient guardrails
 - 在添加任何 movement 场景前，保持 G6-C/G6-D route-move guardrails 生效，但不重开这些已接受记录
 - 将已接受的 G6-E2/E3 native schema 证据作为后续 route-move release vote 的输入
 - G1 场景只验证 static occupy/support relationship 语义，不扩张为 ground
   combat/runtime 证明
-- command delivery、observation/export、movement、sensing、terrain、fires、
-  effects、damage 与 broad `MissionCommand` growth 继续 held
+- observation/export、movement、sensing、terrain、fires、effects、damage、
+  combat 与 broad `MissionCommand` growth 继续 held；当前
+  `MissionCommandGround` 路径只承载 static task metadata authoring
 - 所有委派工作都通过 subagent queue 分发

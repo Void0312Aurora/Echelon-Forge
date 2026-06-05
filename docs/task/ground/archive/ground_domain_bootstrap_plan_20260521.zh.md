@@ -1,17 +1,18 @@
 # Ground 域启动计划
 
-状态：`2026-05-26` G0-G4 封存基线；G5 tasking smoke 已验收；G6
-开启第一批 realism-gradient MVP 场景；G6-D1/D2 preflight 以
-`preflight-only` 验收，并继续把 route movement 阻塞在 native ground
-platform schema 工作之前；G6-E0/E1/E2/E3 已接受第一版 native schema evidence。
+状态：`2026-06-05` 已接受并归档为完成的 ground bootstrap 规划基线。G0-G4、
+G5、G6-A/B/C/D preflight、G6-E native schema evidence，以及第一版 static
+ground owner slice 已满足本计划的成功标准。route movement、terrain、
+sensing、fires、damage、combat 与完整 ground runtime behavior 仍保持 held，
+等待后续 follow-on package。
 
 输入：
 
-- [仿真系统架构设计](../../plan/architecture/simulation_system_architecture_design.md)
-- [美国陆军画像](../../standards/services/army.zh.md)
-- [通用空海军](../common_air_naval/README.zh.md)
-- [Stage 3 平台扩展主线计划](../review/stage3_platform_expansion_mainline_plan_20260521.md)
-- [Ground 域启动计划 review](../review/ground_domain_bootstrap_plan_review_20260521.md)
+- [仿真系统架构设计](../../../plan/architecture/simulation_system_architecture_design.md)
+- [美国陆军画像](../../../standards/services/army.zh.md)
+- [通用空海军](../../common_air_naval/README.zh.md)
+- [Stage 3 平台扩展主线计划](../../review/stage3_platform_expansion_mainline_plan_20260521.md)
+- [Ground 域启动计划 review](../../review/ground_domain_bootstrap_plan_review_20260521.md)
 
 ## 1. 目标
 
@@ -46,20 +47,22 @@ platform schema 工作之前；G6-E0/E1/E2/E3 已接受第一版 native schema e
 
 ## 3. 当前仓库位置
 
-截至 `2026-05-26`，仓库已经具备：
+截至 `2026-06-05`，仓库已经具备：
 
 - 权威的 Army service-profile 文档
 - 维护中的 `ground/` standards 特化层
-- tasking/command DTO 层的 `common + air + naval` 拆分
+- tasking/command DTO 层的 `common + air + naval + ground` 拆分，其中
+  ground slice 只承载 static G0/G1 task/status metadata
 - `air` 与 `naval` 的 Python tasking-profile 分发
 - `army`、`ground`、`land` 与 `ServiceProfile.Army` 的 ground tasking profile 分发
 - “新域通过 capability 实现接入，而非新增 runtime path”的架构法则
 - 通过 G6-E native schema 切片验收的 ground tasking profile、content seed、
   scenario fixture 与 focused runtime/contract tests
+- `TaskOrder`、`LeaderIntent`、`PilotReport` 与 `MissionCommand` 的 static
+  C++ ground owner slice 和 Python binding
 
 当前仓库尚未具备：
 
-- ground 专用 DTO 落点
 - 第一版可达成共识的机动 / 火力 / 观测语义面
 - route movement、terrain-aware movement、ground sensing、fires、damage 与
   combat behavior
@@ -117,20 +120,20 @@ blocker；route movement 仍需要后续 G6-D3/G6-F release vote。
 
 | 阶段 | 子项目 | 分发任务簇 | 释放状态 |
 |------|--------|------------|----------|
-| `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.zh.md) | [G0 standards alignment cluster](archive/g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
-| `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.zh.md) | [G1 profile and DTO contract cluster](archive/g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
-| `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.zh.md) | [G2 content fixture and test cluster](archive/g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.zh.md) | [G3 execution surface preflight cluster](archive/g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.zh.md) | accepted |
-| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.zh.md) | [G4 selected runtime slice cluster](archive/g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
-| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.zh.md) | [G5 MVP scenario cluster](archive/g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
-| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.zh.md) | [G6 realism-gradient MVP scenario cluster](archive/g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.zh.md) | [G6-D route-move release-decision cluster](archive/g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；G6-E2/E3 现已关闭 native schema identity；route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.zh.md) | [G6-E native schema cluster](archive/g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 已接受 native schema evidence；route movement 仍保持 held |
+| `G0 边界冻结` | [g0_boundary_freeze/](g0_boundary_freeze/README.zh.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
+| `G1 合同骨架` | [g1_contract_skeleton/](g1_contract_skeleton/README.zh.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
+| `G2 内容与测试种子` | [g2_content_test_seed/](g2_content_test_seed/README.zh.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
+| `G3 执行面设计` | [g3_execution_surface_design/](g3_execution_surface_design/README.zh.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.zh.md) | accepted |
+| `G4 runtime 切片` | [g4_runtime_slice/](g4_runtime_slice/README.zh.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | 已验收并封存为有边界的 tasking-only lifecycle proof |
+| `G5 MVP 场景` | [g5_mvp_scenario/](g5_mvp_scenario/README.zh.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | 已验收 tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.zh.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | 已验收 G1 static occupy 与 G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.zh.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 以 `preflight-only` 验收；G6-E2/E3 现已关闭 native schema identity；route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.zh.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 已接受 native schema evidence；route movement 仍保持 held |
 
 当前分发队列是
-[ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)。
+[ground_subagent_dispatch_queue_20260521.md](../ground_subagent_dispatch_queue_20260521.md)。
 该队列遵循仓库的
-[Subagent 使用规范](../../standards/governance/subagent_usage_policy.zh.md)：
+[Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)：
 限定写入范围、禁止多个 worker 同时拆同一张规范表、由 main thread 负责最终集成，并要求 worker 在释放后续依赖阶段前返回标准 return packet。
 
 ## 5. 第一波最小语义范围
@@ -265,8 +268,8 @@ ground information state 遵循六层架构模型。
 - `docs/task/ground/` 中的规划与收敛记录
 - Python `tasking_profile` 对 `Army` / `ground` 的识别
 - starter `python/rl/profile/ground_profile.py` 与 adapter 壳
-- 仅在最小字段集先达成共识后，再考虑在
-  `components/tasking/ground` 与 `components/command/ground` 下增加 C++ DTO 落点
+- 将已接受的 `components/tasking/ground` 与 `components/command/ground`
+  static C++ owner-slice 落点继续限制在 G0/G1 task/status metadata
 - 聚焦于 resolution、defaults 与 compatibility behavior 的测试
 
 不要从这些开始：
@@ -328,7 +331,7 @@ ground information state 遵循六层架构模型。
 
 ### 9.4 contracts、bindings 与 facade 可见性
 
-- C++ DTO 落点
+- 已接受 static owner slice 之外的后续 C++ DTO 扩展
 - 字段进入 maintained 后的 Python binding 暴露
 - facade request/result 的可见性规则
 - 对现有 caller 的兼容策略

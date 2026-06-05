@@ -2,12 +2,17 @@
 
 # 地面子代理调度队列
 
-状态：`2026-05-26` G0-G4 已封存为 accepted ground baseline。G5 tasking
+状态：`2026-06-06` G0-G4 已封存为 accepted ground baseline。G5 tasking
 smoke 已接受；G6-A/B 已接受第一批 G1 realism-gradient MVP 场景 fixture；
 G6-C 已接受 route-move boundary guardrails；G6-D1/D2 已以
 `preflight-only` 返回 native-schema blocker。G6-E0/E1/E2/E3 已接受第一版
-native ground platform schema；route movement 仍保持 held，等待后续 release
-vote。
+  native ground platform schema。当前已有面向 task/status metadata 的 static
+  ground C++ owner slice；route movement 仍保持 held，等待后续 release vote。当前
+shared environment-substrate G0 line 已接受并闭合到 G0-M：G0 design/architecture、
+G0-J static manifest contract、G0-K generator/catalog contract、G0-L projection
+setup plus compiler ingestion，以及 G0-M metadata-only derived products 已接受；
+runtime setup application、runtime consumers、movement、LOS、cover、fires、damage
+和 combat 继续 held。
 
 启动子代理时使用此队列。主线程拥有集成和最终验收。
 
@@ -22,7 +27,8 @@ vote。
 - 标准和层级以标准树为准。
 - 工作者不得撤销无关编辑或其他工作者所做的编辑。
 - 如果下一个切片不合理，工作者可以在 `preflight-only` 处停止。
-- G1 实现仅针对 G1-B 的仅 Python 配置文件切片被接受。C++ DTO 外壳、绑定、运行时行为和场景加载器仍被保留。
+- G1 实现仅针对 G1-B 的仅 Python 配置文件切片被接受。后续已有面向 G0/G1
+  task/status metadata 的 static C++ owner slice 与绑定；runtime 行为和场景加载器仍被保留。
 - G2 仅针对内容/测试种子范围被接受。runtime-loadable ground unit schema、
   movement、terrain、sensing、fires、weapon、damage 和 combat behavior 仍被保留。
 
@@ -40,6 +46,11 @@ flowchart TD
     G6 --> G6C["G6-C Route-Move Boundary"]
     G6C --> G6D["G6-D Route-Move Release Decision"]
     G6D --> G6E["G6-E Native Ground Platform Schema"]
+    G6E --> ENVG0["Environment Substrate G0 Architecture"]
+    ENVG0 --> ENVG0J["Environment Substrate G0-J Static Manifest Contract"]
+    ENVG0J --> ENVG0K["Environment Substrate G0-K Generator Catalog Contract"]
+    ENVG0K --> ENVG0L["Environment Substrate G0-L Projection Setup + Ingestion"]
+    ENVG0L --> ENVG0M["Environment Substrate G0-M Metadata Derived Products"]
 ```
 
 并行规则：
@@ -68,9 +79,51 @@ flowchart TD
 - `G6-E2/E3` 接受 native schema 证据：`Ground_Platoon_MVP` 可作为
   `UnitType::Ground` load/spawn/inspect；route movement 与 combat behavior
   仍保持 held。
+- `Environment Substrate G0` 已作为 follow-on design/implementation line 接受，
+  不是已归档 G0-G6 evidence packets 的续写。它由 ground lane 索引为孵化需求来源，
+  但 terrain-system 目标面向 air、naval、ground 和未来 domains 共享。
+- `Environment Substrate G0-J` 只接受 static shared manifest contracts、registries、
+  validators、deterministic fixture，以及 `python/scenario/environment_substrate/`
+  下的 contract-level compatibility projection tests。
+- `Environment Substrate G0-K` 只接受 Python request/tile/catalog contracts、
+  deterministic seed/provenance rules、catalog admission 与 in-memory generated
+  manifest fixtures。
+- `Environment Substrate G0-L` 接受 Python inert projection setup
+  payload/evidence conversion 加 strict scenario compiler data ingestion；runtime
+  setup application 继续 held。
+- `Environment Substrate G0-M` 接受 metadata-only `surface_zone_index` 与
+  `occlusion_candidate_index` contract products；runtime consumers 继续 held。
+- `Environment Substrate G0/G0-J/G0-K/G0-L/G0-M` 不释放 runtime setup
+  application、movement、LOS、cover、fires、damage、combat、weather simulation、
+  hydrodynamics、hydrology effects 或任一 domain 的 dynamic environment mutation。
 
 术语说明：这里的调度阶段 `G6 Realism Gradient MVP 场景` 不是域真实性梯度表中的
 `G6 effects/damage/termination`。本阶段只发布两个 `G1` 真实性 fixture。
+
+## 当前 Follow-On Wave
+
+| 流 | 代理类型 | 模型/推理 | 任务 | 写入范围 |
+| --- | --- | --- | --- | --- |
+| `ENV-G0-A` | 主线程 diagnostics | 当前主线程 | 已完成 package construction：清点当前 environment/query/setup/scenario surfaces，并记录它们不证明什么。 | 仅 `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_source_inventory_20260605*.md`。 |
+| `ENV-G0-B` | 主线程 architecture | 当前主线程 | 已完成 package construction：定义 generic manifest、branch registry、component registry、开放 layer semantics、catalog composition、validators、projection boundary 与 derived-product placeholders。 | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_architecture_plan_20260605*.md` 加 package README/task-cluster sync。 |
+| `ENV-G0-C` | 主线程 integration | 当前主线程 | 已完成 package construction：同步 ground 父级 README、progress tracker 和 dispatch queue，使本包成为 active environment-substrate follow-on。 | `docs/task/ground/README*.md`、`docs/task/ground/ground_current_progress_20260524*.md`、`docs/task/ground/ground_subagent_dispatch_queue_20260521*.md` 和本 package docs。 |
+| `ENV-G0-D` | read-only diagnostics plus main-thread integration | inherited parent / diagnostics | 已完成：按文档化 subagent rules 分析 C++ 与 Python terrain foundations，然后在更大的 environment substrate 内设计 terrain-branch architecture。 | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_subagent_dispatch_20260605*.md`、`environment_substrate_g0_terrain_system_architecture_20260605*.md`、source inventory/package sync。 |
+| `ENV-G0-F` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass：已清点当前非 terrain environment branches，包括 atmosphere/weather、wind、illumination/sun、maritime/ocean、hydrology 与 dynamic-environment hints。 | none；仅 diagnostics packet。 |
+| `ENV-G0-G` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass：已审查 branch ontology、cross-branch environment objects、component gaps 与 catalog rules。 | none；仅 diagnostics packet。 |
+| `ENV-G0-H` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass：已审查 branch-aware manifests 面向当前 setup surfaces 的 fail-closed projection 与 validator gates。 | none；仅 diagnostics packet。 |
+| `ENV-G0-I` | main-thread integration | 当前主线程 | Completed/pass：已整合 F/G/H diagnostics，接受 G0，同步 package docs 与父级导航，且不释放 runtime behavior。 | 仅 `docs/task/ground/environment_substrate_g0_architecture/*.md`、`docs/task/ground/README*.md`、`ground_current_progress_20260524*.md` 与 `ground_subagent_dispatch_queue_20260521*.md`。 |
+| `ENV-G0-J` | main-thread implementation | 当前主线程 | Accepted：已实现 static shared manifest contract、default registries、validators、deterministic fixture 与 contract projection tests。 | `python/scenario/environment_substrate/**`、`tests/scenario/test_environment_substrate_*.py` 和 package status docs。无 C++ runtime。 |
+| `ENV-G0-K-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass：检查 generator/compiler surfaces，并定义 deterministic request、tile、seed 与 provenance contract requirements。 | none；仅 diagnostics packet。 |
+| `ENV-G0-K-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass：为 terrain 与 non-terrain environment branches 定义 generic catalog descriptor/admission rules。 | none；仅 diagnostics packet。 |
+| `ENV-G0-K-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass：定义 generator implementation 前所需 focused tests、determinism gates 与 validator failures。 | none；仅 diagnostics packet。 |
+| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | 当前主线程 | Accepted：整合 G0-K-A/B/C packets，实现有限 Python generator/catalog contract，并只接受 G0-K 的 in-memory deterministic fixture generation。 | `python/scenario/environment_substrate/catalog.py`、`python/scenario/environment_substrate/generator.py`、`python/scenario/environment_substrate/__init__.py`、`tests/scenario/test_environment_substrate_generator_catalog.py`、G0 package docs 与 parent status docs。不做 runtime projection 或 derived products。 |
+| `ENV-G0-L-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass：检查 Python scenario compiler/setup surfaces，并把 accepted candidate handling 限定到后续 `world_zone_definition` ingestion。 | none；仅 diagnostics packet。 |
+| `ENV-G0-L-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass：检查 C++ batch/world setup contracts，并确认第一版 payload contract 不需要 C++ edits。 | none；仅 diagnostics packet。 |
+| `ENV-G0-L-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass：定义 projection setup payload implementation 前所需 focused tests、fail-closed reason codes 与 held capability gates。 | none；仅 diagnostics packet。 |
+| `ENV-G0-L-D` | main-thread integration | 当前主线程 | Completed/pass：整合 G0-L-A/B/C packets，并接受有限 Python-only projection setup payload write set。 | G0 package docs 加 parent ground README/progress/queue docs；不做 compiler/runtime application。 |
+| `ENV-G0-L-E` | main-thread implementation / acceptance | 当前主线程 | Accepted：实现 already validated `world_zone_definition` projections 的 inert projection setup payload/evidence conversion。 | `python/scenario/environment_substrate/projection_setup.py`、package exports、focused tests、G0 package docs 与 parent status docs。不做 runtime setup application。 |
+| `ENV-G0-L-F` | main-thread integration / implementation | 当前主线程 | Accepted：已把 projection payloads 接入 strict scenario compiler data ingestion。 | `python/scenario/environment_substrate/scenario_ingestion.py`、`python/scenario/compiler/service.py`、package exports、focused tests、G0 package docs 与 parent status docs。不做 runtime setup application、C++ edits、generated scenarios、movement、LOS、cover、fires、damage 或 combat。 |
+| `ENV-G0-M` | main-thread implementation / acceptance | 当前主线程 | Accepted：已实现 metadata-only `surface_zone_index` 与 `occlusion_candidate_index` derived-product contracts，并闭合 G0。 | `python/scenario/environment_substrate/derived_products.py`、package exports、focused tests、G0 package docs 与 parent status docs。不做 runtime consumers、road graph、movement-cost grid、passability mask、runtime LOS/cover product、tactical-area runtime graph 或 combat behavior。 |
 
 ## 第一波
 

@@ -1,7 +1,8 @@
 # Ground
 
-Status: active planning entry opened on `2026-05-21`; current progress tracking
-updated on `2026-05-26`.
+Status: active follow-on entry; bootstrap planning baseline plus the
+environment-substrate G0 design/implementation line accepted and closed through
+G0-M on `2026-06-06`; current progress tracking updated on `2026-06-06`.
 
 Language:
 
@@ -16,6 +17,44 @@ without creating a new vertical runtime path.
 
 - The latest state summary is
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md).
+- Accepted environment-substrate G0 design/implementation line:
+  [environment_substrate_g0_architecture/README.md](environment_substrate_g0_architecture/README.md).
+  This package treats G0 as the shared environment-substrate design and
+  implementation lane. Current accepted substages include architecture/design
+  records, the G0-J static manifest contract, the G0-K generator/catalog
+  contract, the G0-L projection setup plus compiler-ingestion contract, and
+  G0-M metadata-only derived products; they do not release runtime setup
+  application, movement, LOS, cover, fires, damage, or combat.
+- Accepted environment-substrate G0-J static manifest contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md).
+  This substage adds shared static manifest data structures, registries,
+  validators, a deterministic fixture, and contract-level projection tests under
+  `python/scenario/environment_substrate/`; it does not release generator or
+  runtime behavior.
+- Accepted environment-substrate G0-K generator/catalog contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md).
+  This substage adds deterministic request/tile/seed/provenance rules, catalog
+  descriptors/admission, and an in-memory generated manifest fixture under
+  `python/scenario/environment_substrate/`; it does not release runtime
+  projection or generated scenario artifacts.
+- Accepted environment-substrate G0-L projection setup payload contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md).
+  This substage adds Python-only inert setup payload/evidence conversion for
+  already validated `world_zone_definition` projections.
+- Accepted environment-substrate G0-L-F scenario compiler ingestion:
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md).
+  This substage ingests accepted projection setup payloads into merged
+  `environment.zones` before layout metadata compilation; it does not apply
+  runtime setup.
+- Accepted environment-substrate G0-M metadata-only derived products:
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md).
+  This substage adds `surface_zone_index` and `occlusion_candidate_index`
+  contract products only; it does not release movement, LOS, cover, fires,
+  damage, combat, or runtime consumers.
+- Environment-substrate G0 closure:
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md).
+- The original bootstrap plan met its planning-lane success criteria and is now
+  an accepted archived baseline, not an active dispatch surface.
 - `services/army` already exists as the authoritative service-profile boundary.
 - The task tree now maintains a dedicated ground execution-specialization lane:
   G0-G4 tasking lifecycle evidence and G6-E native schema evidence are
@@ -30,8 +69,10 @@ without creating a new vertical runtime path.
   non-overlapping tasks.
 - G0 is accepted by main-thread G0-D.
 - G1 accepted a narrow Python-profile-only slice: `army`, `ground`, `land`, and
-  `ServiceProfile.Army` normalize to `ground`; C++ DTO shells, bindings,
-  runtime behavior, and scenario loaders remain held.
+  `ServiceProfile.Army` normalize to `ground`. That G1 slice held C++ DTO
+  shells, bindings, runtime behavior, and scenario loaders; the later
+  `2026-06-05` infrastructure update only adds static G0/G1 owner-slice DTOs
+  and bindings, without releasing runtime behavior.
 - G2 accepted the first ground content/test seed: a non-auto-loaded
   `ground_platoon_starter.seed` under `examples/config/database/ground/units/`
   and three runnable `tests/contracts/unit/ground/` common-core contracts.
@@ -72,13 +113,41 @@ without creating a new vertical runtime path.
   entity with stable position, velocity, heading, instrument, and health
   inspection. This is schema evidence only; route movement, terrain, sensing,
   fires, damage, and combat remain held.
+- The first C++ ground static owner-slice infrastructure has landed under
+  `src/components/tasking/ground/` and `src/components/command/ground/`. It
+  exposes G0/G1 static task/status metadata through existing compatibility
+  shells, maintained batch contracts, JSON round-trip, and Python bindings. It
+  does not release route movement, terrain, sensing, fires, damage, or combat.
+- The ground profile now authors G0/G1 static `MissionCommandGround` fields from
+  ground task/status metadata. This is command-authoring independence for static
+  tasking, not an independent ground movement or combat runtime.
 
 ## Current Entry Points
 
 - Current progress tracking:
   [ground_current_progress_20260524.md](ground_current_progress_20260524.md)
-- Primary plan:
-  [ground_domain_bootstrap_plan_20260521.md](ground_domain_bootstrap_plan_20260521.md)
+- Accepted environment-substrate G0 architecture package:
+  [environment_substrate_g0_architecture/README.md](environment_substrate_g0_architecture/README.md)
+- Accepted environment-substrate G0-J static manifest contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md)
+- Accepted environment-substrate G0-K generator/catalog contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md)
+- G0-K acceptance:
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_acceptance_20260606.md)
+- Accepted environment-substrate G0-L projection setup payload contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md)
+- Accepted environment-substrate G0-L-F scenario compiler ingestion:
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md)
+- Accepted environment-substrate G0-M metadata-only derived products:
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md)
+- Environment-substrate G0 closure:
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md)
+- Environment-substrate G0-L projection preflight and task map:
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_preflight_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_preflight_20260606.md)
+- Terrain system G0 architecture design:
+  [environment_substrate_g0_architecture/environment_substrate_g0_terrain_system_architecture_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_terrain_system_architecture_20260605.md)
+- Accepted bootstrap baseline:
+  [archive/ground_domain_bootstrap_plan_20260521.md](archive/ground_domain_bootstrap_plan_20260521.md)
 - Subagent dispatch:
   [ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md)
 - Review:
@@ -103,6 +172,8 @@ linked from this index because current movement-release planning still consumes
 their gates, but new work should open a fresh follow-on package instead of
 editing these accepted records in place.
 
+- Ground bootstrap plan:
+  [archive/ground_domain_bootstrap_plan_20260521.md](archive/ground_domain_bootstrap_plan_20260521.md)
 - G0 boundary freeze:
   [g0_boundary_freeze/README.md](g0_boundary_freeze/README.md)
 - G1 contract skeleton:
@@ -123,6 +194,20 @@ editing these accepted records in place.
   [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
 - G6-E native ground platform schema evidence:
   [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
+- Environment substrate G0 architecture:
+  [environment_substrate_g0_architecture/README.md](environment_substrate_g0_architecture/README.md)
+- Environment substrate G0-J static manifest contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_static_manifest_contract_20260605.md)
+- Environment substrate G0-K generator/catalog contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md](environment_substrate_g0_architecture/environment_substrate_g0_generator_catalog_20260605.md)
+- Environment substrate G0-L projection setup payload contract:
+  [environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_projection_setup_acceptance_20260606.md)
+- Environment substrate G0-L-F scenario compiler ingestion:
+  [environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_scenario_ingestion_acceptance_20260606.md)
+- Environment substrate G0-M metadata-only derived products:
+  [environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_derived_products_acceptance_20260606.md)
+- Environment substrate G0 closure:
+  [environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md](environment_substrate_g0_architecture/environment_substrate_g0_closure_acceptance_20260606.md)
 
 ## Sealed Baseline
 
@@ -137,6 +222,19 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
 
 ## Current Follow-On Focus
 
+- treat accepted G0-K as the Python request/tile/catalog contract and in-memory
+  fixture baseline for projection work
+- treat accepted G0-L as payload/evidence conversion plus strict scenario
+  compiler data ingestion; runtime setup application still needs a separate
+  release package
+- treat accepted G0-M as metadata-only derived-product contracts; runtime
+  consumers and movement/LOS/cover behavior still need separate release packages
+- keep terrain as the first detailed branch inside the shared environment root,
+  alongside atmosphere/weather, wind, illumination, maritime/ocean, hydrology,
+  and dynamic environment branches
+- keep the accepted G0-J implementation manifest-first: current C++/Python terrain
+  setup remains compatibility/query surface, and the new Python package is the
+  shared `environment_substrate` contract namespace
 - maintain G0/G5 tasking smoke and G6 G1 static occupy/support fixtures as
   realism-gradient guardrails
 - keep G6-C/G6-D route-move guardrails in force before adding any movement
@@ -144,6 +242,7 @@ G0-G4 are now sealed as the accepted baseline for ground tasking:
 - use the accepted G6-E2/E3 native schema evidence as input to a later
   route-move release vote
 - keep G1 scenarios scoped to static occupy/support relationship semantics only
-- keep command delivery, observation/export, movement, sensing, terrain, fires,
-  effects, damage, and broad `MissionCommand` growth held
+- keep observation/export, movement, sensing, terrain, fires, effects, damage,
+  combat, and broad `MissionCommand` growth held; the current
+  `MissionCommandGround` path is only static task metadata authoring
 - use the subagent queue for all delegated work

@@ -1,11 +1,17 @@
 # Ground Subagent Dispatch Queue
 
-Status: `2026-05-26` G0-G4 sealed as the accepted ground baseline. G5 tasking
+Status: `2026-06-06` G0-G4 sealed as the accepted ground baseline. G5 tasking
 smoke is accepted, G6-A/B are accepted for the first G1 realism-gradient MVP
 scenario fixtures, G6-C is accepted for route-move boundary guardrails, and
 G6-D1/D2 returned `preflight-only` with native-schema blockers. G6-E0/E1/E2/E3
-are accepted for the first native ground platform schema; route movement remains
-held pending a later release vote.
+are accepted for the first native ground platform schema. Static ground C++
+owner slices now exist for task/status metadata; route movement remains held
+pending a later release vote. The shared environment-substrate G0 line is now
+accepted and closed through G0-M: design/architecture, G0-J static manifest
+contract, G0-K generator/catalog contract, G0-L projection setup plus compiler
+ingestion, and G0-M metadata-only derived products are accepted, while runtime
+setup application, runtime consumers, movement, LOS, cover, fires, damage, and
+combat remain held.
 
 Use this queue when launching subagents. The main thread owns integration and
 final acceptance.
@@ -21,8 +27,9 @@ Rules:
 - The standards tree wins for naming and layering.
 - Workers must not revert unrelated edits or edits made by other workers.
 - A worker may stop at `preflight-only` if the next slice is not justified.
-- G1 implementation is accepted only for G1-B's Python-profile-only slice. C++
-  DTO shells, bindings, runtime behavior, and scenario loaders remain held.
+- G1 implementation is accepted only for G1-B's Python-profile-only slice.
+  Later static C++ owner slices and bindings exist for G0/G1 task/status
+  metadata only; runtime behavior and scenario loaders remain held.
 - G2 is accepted only for content/test seed scope. Runtime-loadable ground unit
   schemas, movement, terrain, sensing, fires, weapon, damage, and combat
   behavior remain held.
@@ -41,6 +48,11 @@ flowchart TD
     G6 --> G6C["G6-C Route-Move Boundary"]
     G6C --> G6D["G6-D Route-Move Release Decision"]
     G6D --> G6E["G6-E Native Ground Platform Schema"]
+    G6E --> ENVG0["Environment Substrate G0 Architecture"]
+    ENVG0 --> ENVG0J["Environment Substrate G0-J Static Manifest Contract"]
+    ENVG0J --> ENVG0K["Environment Substrate G0-K Generator Catalog Contract"]
+    ENVG0K --> ENVG0L["Environment Substrate G0-L Projection Setup + Ingestion"]
+    ENVG0L --> ENVG0M["Environment Substrate G0-M Metadata Derived Products"]
 ```
 
 Parallel rule:
@@ -72,10 +84,55 @@ Parallel rule:
 - `G6-E2/E3` accept the native schema evidence: `Ground_Platoon_MVP` is
   loadable/spawnable/inspectable as `UnitType::Ground`; route movement and
   combat behavior remain held.
+- `Environment Substrate G0` is accepted as a follow-on design/implementation
+  line, not a continuation of the archived G0-G6 evidence packets. It is indexed
+  from the ground lane as the incubating demand, but its terrain-system target is
+  shared across air, naval, ground, and future domains.
+- `Environment Substrate G0-J` is accepted only for static shared manifest
+  contracts, registries, validators, a deterministic fixture, and contract-level
+  compatibility projection tests under `python/scenario/environment_substrate/`.
+- `Environment Substrate G0-K` is accepted only for Python request/tile/catalog
+  contracts, deterministic seed/provenance rules, catalog admission, and
+  in-memory generated manifest fixtures.
+- `Environment Substrate G0-L` is accepted for Python inert projection setup
+  payload/evidence conversion plus strict scenario compiler data ingestion;
+  runtime setup application remains held.
+- `Environment Substrate G0-M` is accepted for metadata-only
+  `surface_zone_index` and `occlusion_candidate_index` contract products;
+  runtime consumers remain held.
+- `Environment Substrate G0/G0-J/G0-K/G0-L/G0-M` do not release runtime setup
+  application, movement, LOS, cover, fires, damage, combat, weather simulation,
+  hydrodynamics, hydrology effects, or dynamic environment mutation for any
+  domain.
 
 Terminology note: this project phase `G6 Realism Gradient MVP Scenarios` is not
 the same as the domain-realism grade `G6 effects/damage/termination`; this
 phase releases only two `G1` realism fixtures.
+
+## Current Follow-On Wave
+
+| Stream | Agent type | Model / reasoning | Task | Write scope |
+| --- | --- | --- | --- | --- |
+| `ENV-G0-A` | main-thread diagnostics | current main thread | Completed for package construction: inventory current environment/query/setup/scenario surfaces and record what they do not prove. | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_source_inventory_20260605*.md` only. |
+| `ENV-G0-B` | main-thread architecture | current main thread | Completed for package construction: define generic manifest, branch registry, component registry, open layer semantics, catalog composition, validators, projection boundary, and derived-product placeholders. | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_architecture_plan_20260605*.md` plus package README/task-cluster sync only. |
+| `ENV-G0-C` | main-thread integration | current main thread | Completed for package construction: synchronize parent ground README, progress tracker, and dispatch queue so this package is the active environment-substrate follow-on. | `docs/task/ground/README*.md`, `docs/task/ground/ground_current_progress_20260524*.md`, `docs/task/ground/ground_subagent_dispatch_queue_20260521*.md`, and this package docs only. |
+| `ENV-G0-D` | read-only diagnostics plus main-thread integration | inherited parent / diagnostics | Completed: analyze C++ and Python terrain foundations under the documented subagent rules, then design terrain-branch architecture within the broader environment substrate. | `docs/task/ground/environment_substrate_g0_architecture/environment_substrate_g0_subagent_dispatch_20260605*.md`, `environment_substrate_g0_terrain_system_architecture_20260605*.md`, source inventory/package sync only. |
+| `ENV-G0-F` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass: inventoried current non-terrain environment branches for atmosphere/weather, wind, illumination/sun, maritime/ocean, hydrology, and dynamic-environment hints. | none; diagnostics packet only. |
+| `ENV-G0-G` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass: reviewed branch ontology, cross-branch environment objects, component gaps, and catalog rules. | none; diagnostics packet only. |
+| `ENV-G0-H` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass: reviewed fail-closed projection and validator gates for branch-aware manifests against current setup surfaces. | none; diagnostics packet only. |
+| `ENV-G0-I` | main-thread integration | current main thread | Completed/pass: integrated F/G/H diagnostics, accepted G0, synchronized package docs and parent navigation, and did not release runtime behavior. | `docs/task/ground/environment_substrate_g0_architecture/*.md`, `docs/task/ground/README*.md`, `ground_current_progress_20260524*.md`, and `ground_subagent_dispatch_queue_20260521*.md` only. |
+| `ENV-G0-J` | main-thread implementation | current main thread | Accepted: implemented static shared manifest contract, default registries, validators, deterministic fixture, and contract projection tests. | `python/scenario/environment_substrate/**`, `tests/scenario/test_environment_substrate_*.py`, and package status docs. No C++ runtime. |
+| `ENV-G0-K-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass: inspected generator/compiler surfaces and defined deterministic request, tile, seed, and provenance contract requirements. | none; diagnostics packet only. |
+| `ENV-G0-K-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass: defined generic catalog descriptor/admission rules across terrain and non-terrain environment branches. | none; diagnostics packet only. |
+| `ENV-G0-K-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass: defined focused tests, determinism gates, and validator failures before generator implementation. | none; diagnostics packet only. |
+| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | current main thread | Accepted: integrated G0-K-A/B/C packets, implemented finite Python generator/catalog contract, and accepted G0-K only for in-memory deterministic fixture generation. | `python/scenario/environment_substrate/catalog.py`, `python/scenario/environment_substrate/generator.py`, `python/scenario/environment_substrate/__init__.py`, `tests/scenario/test_environment_substrate_generator_catalog.py`, G0 package docs, and parent status docs. No runtime projection or derived products. |
+| `ENV-G0-L-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass: inspected Python scenario compiler/setup surfaces and limited accepted candidate handling to future `world_zone_definition` ingestion. | none; diagnostics packet only. |
+| `ENV-G0-L-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass: inspected C++ batch/world setup contracts and confirmed no C++ edits are needed for the first payload contract. | none; diagnostics packet only. |
+| `ENV-G0-L-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass: defined focused tests, fail-closed reason codes, and held capability gates before projection setup payload implementation. | none; diagnostics packet only. |
+| `ENV-G0-L-D` | main-thread integration | current main thread | Completed/pass: integrated G0-L-A/B/C packets and accepted a finite Python-only projection setup payload write set. | G0 package docs plus parent ground README/progress/queue docs; no compiler/runtime application. |
+| `ENV-G0-L-E` | main-thread implementation / acceptance | current main thread | Accepted: implemented inert projection setup payload/evidence conversion for already validated `world_zone_definition` projections. | `python/scenario/environment_substrate/projection_setup.py`, package exports, focused tests, G0 package docs, and parent status docs. No runtime setup application. |
+| `ENV-G0-L-F` | main-thread integration / implementation | current main thread | Accepted: wired projection payloads into strict scenario compiler data ingestion. | `python/scenario/environment_substrate/scenario_ingestion.py`, `python/scenario/compiler/service.py`, package exports, focused tests, G0 package docs, and parent status docs. No runtime setup application, C++ edits, generated scenarios, movement, LOS, cover, fires, damage, or combat. |
+| `ENV-G0-M` | main-thread implementation / acceptance | current main thread | Accepted: implemented metadata-only `surface_zone_index` and `occlusion_candidate_index` derived-product contracts and closed G0. | `python/scenario/environment_substrate/derived_products.py`, package exports, focused tests, G0 package docs, and parent status docs. No runtime consumers, road graph, movement-cost grid, passability mask, runtime LOS/cover product, tactical-area runtime graph, or combat behavior. |
 
 ## First Wave
 

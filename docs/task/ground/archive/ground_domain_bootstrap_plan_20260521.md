@@ -1,17 +1,18 @@
 # Ground Domain Bootstrap Plan
 
-Status: `2026-05-26` sealed baseline for G0-G4; G5 tasking smoke is accepted;
-G6 opens the first realism-gradient MVP scenario batch; G6-D1/D2 preflight is
-accepted as `preflight-only` and keeps route movement blocked on native ground
-platform schema work; G6-E0/E1/E2/E3 accept the first native schema evidence.
+Status: `2026-06-05` accepted and archived as the completed ground bootstrap
+planning baseline. G0-G4, G5, G6-A/B/C/D preflight, G6-E native schema
+evidence, and the first static ground owner slices satisfy this plan's success
+criteria. Route movement, terrain, sensing, fires, damage, combat, and full
+ground runtime behavior remain held for later follow-on packages.
 
 Inputs:
 
-- [Simulation system architecture design](../../plan/architecture/simulation_system_architecture_design.md)
-- [US Army profile](../../standards/services/army.md)
-- [Common air naval](../common_air_naval/README.md)
-- [Stage 3 platform expansion mainline plan](../review/stage3_platform_expansion_mainline_plan_20260521.md)
-- [Ground domain bootstrap plan review](../review/ground_domain_bootstrap_plan_review_20260521.md)
+- [Simulation system architecture design](../../../plan/architecture/simulation_system_architecture_design.md)
+- [US Army profile](../../../standards/services/army.md)
+- [Common air naval](../../common_air_naval/README.md)
+- [Stage 3 platform expansion mainline plan](../../review/stage3_platform_expansion_mainline_plan_20260521.md)
+- [Ground domain bootstrap plan review](../../review/ground_domain_bootstrap_plan_review_20260521.md)
 
 ## 1. Purpose
 
@@ -53,11 +54,12 @@ Rationale:
 
 ## 3. Current Repo Position
 
-As of `2026-05-26`, the repository already has:
+As of `2026-06-05`, the repository already has:
 
 - an authoritative Army service-profile document
 - a maintained `ground/` standards specialization
-- a `common + air + naval` split across tasking/command DTO layers
+- a `common + air + naval + ground` split across tasking/command DTO layers,
+  where the ground slice is static G0/G1 task/status metadata only
 - Python tasking-profile dispatch for `air` and `naval`
 - ground tasking profile dispatch for `army`, `ground`, `land`, and
   `ServiceProfile.Army`
@@ -65,10 +67,11 @@ As of `2026-05-26`, the repository already has:
   rather than new runtime paths
 - accepted ground tasking profiles, content seeds, scenario fixtures, and
   focused runtime/contract tests through the G6-E native schema slice
+- static C++ ground owner slices and Python bindings for `TaskOrder`,
+  `LeaderIntent`, `PilotReport`, and `MissionCommand`
 
 The repository does not yet have:
 
-- ground-specific DTO landing points
 - a first agreed movement / fires / observation surface
 - route movement, terrain-aware movement, ground sensing, fires, damage, and
   combat behavior
@@ -130,20 +133,20 @@ lightweight work statements.
 
 | Phase | Subproject | Dispatch cluster | Release state |
 |-------|------------|------------------|---------------|
-| `G0 Boundary Freeze` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](archive/g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
-| `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](archive/g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
-| `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](archive/g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
-| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](archive/g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
-| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](archive/g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
-| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](archive/g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
-| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](archive/g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
-| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](archive/g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; G6-E2/E3 now closes native schema identity; route-move implementation held |
-| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](archive/g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 accepted for native schema evidence; route movement remains held |
+| `G0 Boundary Freeze` | [g0_boundary_freeze/](g0_boundary_freeze/README.md) | [G0 standards alignment cluster](g0_boundary_freeze/g0_standards_alignment_cluster_20260521.md) | accepted |
+| `G1 Contract Skeleton` | [g1_contract_skeleton/](g1_contract_skeleton/README.md) | [G1 profile and DTO contract cluster](g1_contract_skeleton/g1_profile_dto_contract_cluster_20260521.md) | accepted for Python-profile-only slice |
+| `G2 Content And Test Seed` | [g2_content_test_seed/](g2_content_test_seed/README.md) | [G2 content fixture and test cluster](g2_content_test_seed/g2_content_fixture_test_cluster_20260521.md) | accepted |
+| `G3 Execution Surface Design` | [g3_execution_surface_design/](g3_execution_surface_design/README.md) | [G3 execution surface preflight cluster](g3_execution_surface_design/g3_execution_surface_preflight_cluster_20260521.md) | accepted |
+| `G4 Runtime Slice` | [g4_runtime_slice/](g4_runtime_slice/README.md) | [G4 selected runtime slice cluster](g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md) | accepted and sealed for bounded tasking-only lifecycle proof |
+| `G5 MVP Scenario` | [g5_mvp_scenario/](g5_mvp_scenario/README.md) | [G5 MVP scenario cluster](g5_mvp_scenario/g5_mvp_scenario_cluster_20260522.md) | accepted for tasking smoke scenario |
+| `G6 Realism Gradient MVP Scenarios` | [g6_realism_gradient_mvp_scenarios/](g6_realism_gradient_mvp_scenarios/README.md) | [G6 realism-gradient MVP scenario cluster](g6_realism_gradient_mvp_scenarios/g6_realism_gradient_mvp_scenario_cluster_20260524.md) | accepted for G1 static occupy and G1 support relationship compatibility-shell fixtures |
+| `G6-D Route-Move Release Decision` | [g6_route_move_release_decision/](g6_route_move_release_decision/README.md) | [G6-D route-move release-decision cluster](g6_route_move_release_decision/g6_route_move_release_decision_cluster_20260524.md) | D1/D2 accepted as `preflight-only`; G6-E2/E3 now closes native schema identity; route-move implementation held |
+| `G6-E Native Ground Platform Schema Package` | [g6_native_ground_platform_schema/](g6_native_ground_platform_schema/README.md) | [G6-E native schema cluster](g6_native_ground_platform_schema/g6_native_ground_platform_schema_cluster_20260525.md) | G6-E0/E1/E2/E3 accepted for native schema evidence; route movement remains held |
 
 The active assignment queue is
-[ground_subagent_dispatch_queue_20260521.md](ground_subagent_dispatch_queue_20260521.md).
+[ground_subagent_dispatch_queue_20260521.md](../ground_subagent_dispatch_queue_20260521.md).
 It applies the repository's
-[Subagent Usage Policy](../../standards/governance/subagent_usage_policy.md):
+[Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md):
 bounded write scopes, no concurrent edits to the same normative table, main
 thread integration ownership, and a required worker return packet before the
 next dependent phase is released.
@@ -291,8 +294,9 @@ Recommended scope:
 - `docs/task/ground/` planning and convergence records
 - Python `tasking_profile` recognition for `Army` / `ground`
 - starter `python/rl/profile/ground_profile.py` and adapter shell
-- C++ DTO landing points under `components/tasking/ground` and
-  `components/command/ground` only if a minimal field set is agreed first
+- keep the accepted static C++ owner-slice landing points under
+  `components/tasking/ground` and `components/command/ground` limited to G0/G1
+  task/status metadata
 - focused tests proving resolution, defaults, and compatibility behavior
 
 Do not start with:
@@ -363,7 +367,7 @@ domain bootstrap should account for the following cross-cutting surfaces:
 
 ### 9.4 Contracts, Bindings, And Facade Visibility
 
-- C++ DTO landing points
+- future C++ DTO extensions beyond the accepted static owner slices
 - Python binding exposure when fields become maintained
 - facade request/result visibility rules
 - compatibility behavior for existing consumers

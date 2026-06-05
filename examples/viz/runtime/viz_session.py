@@ -39,6 +39,7 @@ from python.world_model.features import (
     append_angle_sincos_features,
     nav_tracking_features,
 )
+from examples.viz.runtime.environment_overlays import build_environment_overlay_payload
 from examples.viz.runtime.action_utils import normalize_fixed_action
 
 
@@ -801,7 +802,12 @@ class VizSession:
 
     def emit_cached_setup(self) -> None:
         if self.map_data:
-            print(f"Sending cached map data ({len(self.map_data.get('zones', []))} zones) to new client")
+            overlay_layers = self.map_data.get("environment_overlays", {}).get("layers", [])
+            print(
+                "Sending cached map data "
+                f"({len(self.map_data.get('zones', []))} zones, {len(overlay_layers)} env layers) "
+                "to new client"
+            )
             self.socketio.emit("map_setup", self.map_data)
         if self.nav_data:
             self.socketio.emit("nav_setup", self.nav_data)
@@ -1462,8 +1468,13 @@ class VizSession:
         episode_max_gs = 0.0
         episode_max_agl = 0.0
 
-        zones = sim_env.loader.scenario_data.get("environment", {}).get("zones", [])
-        self.map_data = {"zones": zones}
+        scenario_data = sim_env.loader.scenario_data
+        zones = scenario_data.get("environment", {}).get("zones", [])
+        environment_overlays = build_environment_overlay_payload(scenario_data)
+        self.map_data = {
+            "zones": zones,
+            "environment_overlays": environment_overlays,
+        }
         print("=" * 60)
         print("MAP DATA SENT TO VIZ:")
         for z in zones:
@@ -1471,6 +1482,7 @@ class VizSession:
                 f"  Zone '{z.get('name')}': x={z.get('x')}, y={z.get('y')}, "
                 f"width={z.get('width')}, length={z.get('length')}, heading={z.get('heading')}"
             )
+        print(f"  Environment overlay layers: {len(environment_overlays.get('layers', []))}")
         print("=" * 60)
         self.socketio.emit("map_setup", self.map_data)
         self.socketio.emit("speed_update", {"value": float(self.sim_speed)})

@@ -34,6 +34,9 @@ from .waypoint_cache import (
     _normalize_runtime_mission_command,
     materialize_runtime_waypoint_cache,
 )
+from ..environment_substrate.scenario_ingestion import (
+    ingest_projection_setup_payloads_into_scenario,
+)
 
 
 @dataclass(frozen=True)
@@ -112,6 +115,15 @@ class ScenarioCompiler:
             raw_scenario_data,
             project_root=REPO_ROOT,
         )
+        ingestion = ingest_projection_setup_payloads_into_scenario(merged)
+        if not ingestion.valid:
+            message = ingestion.errors[0] if ingestion.errors else ingestion.rejection_reason
+            raise ValueError(
+                f"environment substrate projection ingestion failed "
+                f"({ingestion.rejection_reason}): {message}"
+            )
+        if ingestion.scenario_data is not None:
+            merged = ingestion.scenario_data
         validate_scenario_compiler_shape(
             merged,
             source_path=source_path,

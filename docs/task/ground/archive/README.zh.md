@@ -8,6 +8,8 @@
 
 ## 索引
 
+- [ground_domain_bootstrap_plan_20260521](ground_domain_bootstrap_plan_20260521.zh.md)
+- [ground_domain_bootstrap_plan_acceptance_20260605](ground_domain_bootstrap_plan_acceptance_20260605.zh.md)
 - [g0_boundary_freeze](g0_boundary_freeze/README.zh.md)
 - [g1_contract_skeleton](g1_contract_skeleton/README.zh.md)
 - [g2_content_test_seed](g2_content_test_seed/README.zh.md)
