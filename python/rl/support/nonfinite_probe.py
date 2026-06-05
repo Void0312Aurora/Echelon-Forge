@@ -438,6 +438,23 @@ class NonFiniteTrainingProbe:
     def _patch_algo(self, model) -> None:
         tracer = self.recorder
 
+        def reset_m3s1_grouped_stopping_state(algo) -> None:
+            if not hasattr(algo, "_m3s1_grouped_stopping_sidecar"):
+                return
+            algo._m3s1_grouped_stopping_sidecar = None
+            algo._m3s1_last_grouped_stopping_loss = None
+            algo._m3s1_last_grouped_stopping_grad_norm = 0.0
+            diagnostics = getattr(algo, "_m3s1_last_grouped_stopping_diagnostics", None)
+            if diagnostics is not None:
+                try:
+                    algo._m3s1_last_grouped_stopping_diagnostics = type(diagnostics)()
+                except Exception:
+                    pass
+
+        def m3s1_grouped_stopping_enabled(algo) -> bool:
+            enabled = getattr(algo, "_m3s1_grouped_stopping_enabled", None)
+            return bool(callable(enabled) and enabled())
+
         def traced_collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps: int) -> bool:
             assert self._last_obs is not None, "No previous observation was provided"
             self.policy.set_training_mode(False)
@@ -447,6 +464,7 @@ class NonFiniteTrainingProbe:
 
             n_steps = 0
             rollout_buffer.reset()
+            reset_m3s1_grouped_stopping_state(self)
             if self.use_sde:
                 self.policy.reset_noise(env.num_envs)
 
@@ -610,6 +628,7 @@ class NonFiniteTrainingProbe:
                             if bool(getattr(self, "a6_first_event_launch_window_enabled", False))
                             else None
                         ),
+                        env_episode_id_after_rollout=a6_env_episode_id,
                     )
                     for field in (
                         "a6_first_event_active",
@@ -618,6 +637,21 @@ class NonFiniteTrainingProbe:
                     ):
                         if hasattr(rollout_buffer, field):
                             tracer.check(f"rollout.buffer.{field}", getattr(rollout_buffer, field))
+                build_m3_sidecar = getattr(self, "_build_m3s1_grouped_stopping_sidecar", None)
+                if callable(build_m3_sidecar) and m3s1_grouped_stopping_enabled(self):
+                    self._m3s1_grouped_stopping_sidecar = build_m3_sidecar(
+                        rollout_buffer,
+                        fire_mask=a6_fire_mask,
+                        fire_once_accepted=a6_fire_once_accepted,
+                        episode_id=a6_episode_id,
+                        launch_window_open=a6_launch_window_open,
+                    )
+                    sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+                    if sidecar is not None:
+                        tracer.check(
+                            "rollout.m3s1_grouped_sidecar_group_count",
+                            np.asarray([float(len(sidecar.groups))], dtype=np.float32),
+                        )
             rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
             if isinstance(rollout_buffer.observations, dict):
                 for key, value in rollout_buffer.observations.items():
@@ -684,6 +718,7 @@ class NonFiniteTrainingProbe:
             clip_fractions = []
             approx_kl_divs = []
             continue_training = True
+            m3s1_grouped_stopping_loss = None
 
             tracer.check_named_tensors("train.params.start", _parameter_payload(self.policy))
 
@@ -969,6 +1004,27 @@ class NonFiniteTrainingProbe:
                 if not continue_training:
                     break
 
+            m3s1_update_fn = getattr(self, "_m3s1_grouped_stopping_auxiliary_update", None)
+            if callable(m3s1_update_fn):
+                m3s1_grouped_stopping_loss = m3s1_update_fn()
+                if m3s1_grouped_stopping_loss is not None:
+                    tracer.check(
+                        "train.m3s1_grouped_stopping_loss",
+                        m3s1_grouped_stopping_loss.loss,
+                    )
+                    tracer.check(
+                        "train.m3s1_grouped_stopping_unscaled_loss",
+                        m3s1_grouped_stopping_loss.unscaled_loss,
+                    )
+                    tracer.check(
+                        "train.m3s1_grouped_stopping_grad_norm",
+                        np.asarray(
+                            [float(getattr(self, "_m3s1_last_grouped_stopping_grad_norm", 0.0))],
+                            dtype=np.float32,
+                        ),
+                    )
+                    tracer.check_named_tensors("train.params.post_m3s1_update", _parameter_payload(self.policy))
+
             explained_var = self._to_numpy_flat(self.rollout_buffer.values)
             explained_ret = self._to_numpy_flat(self.rollout_buffer.returns)
             tracer.check("train.rollout_buffer.values.flat", explained_var)
@@ -1036,6 +1092,131 @@ class NonFiniteTrainingProbe:
                     if first_event_hazard_positive_fracs
                     else 0.0,
                 )
+            if m3s1_grouped_stopping_enabled(self):
+                sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+                stats = (
+                    m3s1_grouped_stopping_loss.stats
+                    if m3s1_grouped_stopping_loss is not None
+                    else None
+                )
+                diagnostics = getattr(self, "_m3s1_last_grouped_stopping_diagnostics", None)
+
+                def stat_value(name: str) -> float:
+                    return float(getattr(stats, name, 0.0)) if stats is not None else 0.0
+
+                def diag_value(name: str) -> float:
+                    return float(getattr(diagnostics, name, 0.0)) if diagnostics is not None else 0.0
+
+                active_row_count = stat_value("active_row_count")
+                boundary_cross_count = stat_value("boundary_cross_count")
+                boundary_cross_in_window_count = stat_value("boundary_cross_in_window_count")
+                closed_mask_stop_attempt_count = stat_value("closed_mask_stop_attempt_count")
+                closed_mask_row_count = diag_value("closed_mask_row_count")
+                self.logger.record(
+                    "m3s1/grouped_stopping_coef",
+                    float(getattr(self, "m3s1_grouped_stopping_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s1/grouped_stopping_loss",
+                    (
+                        float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
+                        if m3s1_grouped_stopping_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s1/grouped_stopping_unscaled_loss",
+                    (
+                        float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
+                        if m3s1_grouped_stopping_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s1/grouped_stopping_grad_norm",
+                    float(getattr(self, "_m3s1_last_grouped_stopping_grad_norm", 0.0)),
+                )
+                self.logger.record(
+                    "m3s1/grouped_sidecar_group_count",
+                    float(len(sidecar.groups)) if sidecar else 0.0,
+                )
+                self.logger.record("m3s1/grouped_active_group_count", stat_value("active_group_count"))
+                self.logger.record("m3s1/grouped_row_count", stat_value("row_count"))
+                self.logger.record("m3s1/grouped_active_row_count", active_row_count)
+                self.logger.record("m3s1/window_group_count", stat_value("window_group_count"))
+                self.logger.record("m3s1/no_window_group_count", stat_value("no_window_group_count"))
+                self.logger.record("m3s1/early_prefix_group_count", stat_value("early_prefix_group_count"))
+                self.logger.record("m3s1/right_censor_group_count", stat_value("right_censor_group_count"))
+                self.logger.record(
+                    "m3s1/grouped_labels_reached_loss",
+                    1.0 if stats is not None and int(getattr(stats, "active_group_count", 0)) > 0 else 0.0,
+                )
+                self.logger.record("m3s1/hazard_desirable_mass", stat_value("mean_p_window"))
+                self.logger.record("m3s1/hazard_early_mass", stat_value("mean_p_early"))
+                self.logger.record("m3s1/no_event_mass", stat_value("mean_p_none"))
+                self.logger.record("m3s1/stop_logit_mean", diag_value("stop_logit_mean"))
+                self.logger.record("m3s1/stop_logit_desirable_mean", diag_value("stop_logit_desirable_mean"))
+                self.logger.record("m3s1/stop_logit_prewindow_mean", diag_value("stop_logit_prewindow_mean"))
+                self.logger.record("m3s1/stop_logit_no_window_mean", diag_value("stop_logit_no_window_mean"))
+                self.logger.record("m3s1/stop_logit_closed_mask_mean", diag_value("stop_logit_closed_mask_mean"))
+                self.logger.record("m3s1/stop_logit_count", diag_value("stop_logit_count"))
+                self.logger.record("m3s1/stop_logit_desirable_count", diag_value("stop_logit_desirable_count"))
+                self.logger.record("m3s1/stop_logit_prewindow_count", diag_value("stop_logit_prewindow_count"))
+                self.logger.record("m3s1/stop_logit_no_window_count", diag_value("stop_logit_no_window_count"))
+                self.logger.record(
+                    "m3s1/event_logit_delta_diagnostic_mean",
+                    diag_value("event_logit_delta_diagnostic_mean"),
+                )
+                self.logger.record(
+                    "m3s1/event_logit_delta_diagnostic_count",
+                    diag_value("event_logit_delta_diagnostic_count"),
+                )
+                self.logger.record("m3s1/boundary_cross_count", boundary_cross_count)
+                self.logger.record(
+                    "m3s1/boundary_cross_ratio",
+                    boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
+                )
+                self.logger.record(
+                    "m3s1/boundary_cross_in_window_count",
+                    boundary_cross_in_window_count,
+                )
+                self.logger.record(
+                    "m3s1/boundary_cross_in_window_ratio",
+                    (
+                        boundary_cross_in_window_count / boundary_cross_count
+                        if boundary_cross_count > 0.0
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s1/closed_mask_stop_attempt_count",
+                    closed_mask_stop_attempt_count,
+                )
+                self.logger.record("m3s1/closed_mask_row_count", closed_mask_row_count)
+                self.logger.record(
+                    "m3s1/closed_mask_stop_attempt_ratio",
+                    (
+                        closed_mask_stop_attempt_count / closed_mask_row_count
+                        if closed_mask_row_count > 0.0
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s1/accepted_event_count",
+                    float(getattr(sidecar, "accepted_event_count", 0.0)) if sidecar else 0.0,
+                )
+                self.logger.record(
+                    "m3s1/one_shot_violation_count",
+                    float(getattr(sidecar, "one_shot_violation_count", 0.0)) if sidecar else 0.0,
+                )
+                self.logger.record(
+                    "m3s1/closed_mask_accepted_event_count",
+                    float(getattr(sidecar, "closed_mask_accepted_event_count", 0.0)) if sidecar else 0.0,
+                )
+                self.logger.record(
+                    "m3s1/grouped_stopping_detach_latent",
+                    float(bool(getattr(self, "m3s1_grouped_stopping_detach_latent", False))),
+                )
             if bool(getattr(self, "_a7_event_credit_enabled", lambda: False)()):
                 self.logger.record(
                     "a7/event_credit_loss",
@@ -1088,6 +1269,22 @@ class NonFiniteTrainingProbe:
                         if first_event_credit_separate_update_grad_norms
                         else 0.0
                     ),
+                )
+                self.logger.record(
+                    "a7/evc_cross_rollout_context_rows",
+                    float(getattr(self, "_a7_cross_rollout_last_context_row_count", 0)),
+                )
+                self.logger.record(
+                    "a7/evc_carried_shadow_pending_envs",
+                    float(getattr(self, "_a7_cross_rollout_last_carried_shadow_pending_envs", 0)),
+                )
+                self.logger.record(
+                    "a7/evc_carried_shadow_positive_count_mean",
+                    float(getattr(self, "_a7_cross_rollout_last_carried_shadow_positive_count", 0)),
+                )
+                self.logger.record(
+                    "a7/evc_cross_rollout_first_event_count_mean",
+                    float(getattr(self, "_a7_cross_rollout_last_first_event_count", 0)),
                 )
                 self.logger.record(
                     "a7/event_credit_legal_open_quality_weight",

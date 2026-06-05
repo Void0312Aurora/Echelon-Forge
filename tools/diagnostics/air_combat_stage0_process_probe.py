@@ -473,6 +473,46 @@ def _distribution_policy_diagnostics(distribution: Any) -> dict[str, float]:
     return out
 
 
+def _m3_stopping_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
+    out: dict[str, float] = {}
+    get_m3_stopping = getattr(policy, "get_m3_stopping", None)
+    if not callable(get_m3_stopping):
+        return out
+    out["policy_m3_stopping_head_probe_available"] = 1.0
+    try:
+        stopping = get_m3_stopping(obs_tensor, detach_latent=True)
+    except TypeError:
+        try:
+            stopping = get_m3_stopping(obs_tensor)
+        except Exception:
+            return out
+    except Exception:
+        return out
+    if stopping is None:
+        out["policy_m3_stopping_head_enabled"] = 0.0
+        return out
+
+    out["policy_m3_stopping_head_enabled"] = 1.0
+    logit_tensor = getattr(stopping, "stopping_logit", getattr(stopping, "hazard_logit", None))
+    hazard_tensor = getattr(stopping, "hazard", None)
+    if logit_tensor is not None:
+        try:
+            logits = logit_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
+            if logits.size > 0:
+                out["policy_m3_stop_logit"] = float(logits[0])
+                out["policy_m3_boundary_cross"] = float(logits[0] >= 0.0)
+        except Exception:
+            pass
+    if hazard_tensor is not None:
+        try:
+            hazards = hazard_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
+            if hazards.size > 0:
+                out["policy_m3_stop_prob"] = float(hazards[0])
+        except Exception:
+            pass
+    return out
+
+
 def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, float]:
     policy = getattr(model, "policy", None)
     get_distribution = getattr(policy, "get_distribution", None)
@@ -492,7 +532,10 @@ def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, floa
             distribution = get_distribution(obs_tensor)
     except Exception:
         return {}
-    return _distribution_policy_diagnostics(distribution)
+    diagnostics = _distribution_policy_diagnostics(distribution)
+    with th.no_grad():
+        diagnostics.update(_m3_stopping_policy_diagnostics(policy, obs_tensor))
+    return diagnostics
 
 
 def _policy_c2_context(env) -> dict[str, float]:
@@ -901,6 +944,9 @@ def _summarize_episode(
     def a7_prewindow(row: dict[str, Any]) -> bool:
         return a6_open_window(row) and not a7_quality_window(row)
 
+    def m3_boundary_cross(row: dict[str, Any]) -> bool:
+        return int(row.get("policy_m3_boundary_cross", 0) or 0) > 0
+
     def row_sign_frac(key: str, predicate, *, positive: bool) -> float:
         values = []
         for row in rows:
@@ -926,6 +972,9 @@ def _summarize_episode(
             return 0.0
         probs = np.asarray(values, dtype=np.float64)
         return float(1.0 - np.exp(np.log1p(-probs).sum()))
+
+    def count_rows(predicate) -> int:
+        return int(sum(1 for row in rows if int(row.get("step", 0)) > 0 and bool(predicate(row))))
 
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
@@ -1013,6 +1062,19 @@ def _summarize_episode(
         "policy_event_prob_fire_once_mean": row_stat("policy_event_prob_fire_once", np.mean),
         "policy_event_prob_fire_once_max": row_stat("policy_event_prob_fire_once", np.max),
         "policy_event_logit_fire_once_max": row_stat("policy_event_logit_fire_once", np.max),
+        "policy_m3_stopping_head_enabled": row_stat(
+            "policy_m3_stopping_head_enabled",
+            np.max,
+            default=0.0,
+        ),
+        "policy_m3_stop_logit_mean": row_stat("policy_m3_stop_logit", np.mean, default=0.0),
+        "policy_m3_stop_logit_max": row_stat("policy_m3_stop_logit", np.max, default=0.0),
+        "policy_m3_stop_prob_mean": row_stat("policy_m3_stop_prob", np.mean, default=0.0),
+        "policy_m3_stop_prob_max": row_stat("policy_m3_stop_prob", np.max, default=0.0),
+        "policy_m3_boundary_cross_count": count_rows(m3_boundary_cross),
+        "policy_m3_first_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0 and m3_boundary_cross(row)
+        ),
         "a6_event_logit_delta_mean_open": row_stat("policy_event_logit_delta", np.mean, default=0.0, predicate=a6_open_window),
         "a6_event_fire_prob_mean_open": row_stat(
             "policy_event_prob_fire_once_unmasked",
@@ -1048,6 +1110,31 @@ def _summarize_episode(
             np.mean,
             default=0.0,
             predicate=a7_quality_window,
+        ),
+        "a7_prewindow_m3_stop_prob_cum": row_cumulative_prob(
+            "policy_m3_stop_prob",
+            a7_prewindow,
+        ),
+        "a7_prewindow_m3_stop_prob_mean": row_stat(
+            "policy_m3_stop_prob",
+            np.mean,
+            default=0.0,
+            predicate=a7_prewindow,
+        ),
+        "a7_quality_window_m3_stop_prob_mean": row_stat(
+            "policy_m3_stop_prob",
+            np.mean,
+            default=0.0,
+            predicate=a7_quality_window,
+        ),
+        "a7_prewindow_m3_boundary_cross_count": count_rows(
+            lambda row: a7_prewindow(row) and m3_boundary_cross(row)
+        ),
+        "a7_quality_window_m3_boundary_cross_count": count_rows(
+            lambda row: a7_quality_window(row) and m3_boundary_cross(row)
+        ),
+        "a7_first_quality_window_m3_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0 and a7_quality_window(row) and m3_boundary_cross(row)
         ),
         "a7_event_credit_advantage_mean_prewindow": row_stat(
             "policy_event_advantage",

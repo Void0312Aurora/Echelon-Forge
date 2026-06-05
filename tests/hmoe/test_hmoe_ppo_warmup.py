@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from collections import deque
 from tempfile import gettempdir
+from types import SimpleNamespace
 
 import gymnasium as gym
 import numpy as np
@@ -24,6 +25,7 @@ from python.rl.policy_algo.first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_LEGAL_OPEN_QUALITY,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
+    FirstEventHazardLabels,
 )
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
@@ -157,6 +159,17 @@ class _TinyA6HybridAirCombatEnv(_TinyHybridAirCombatEnv):
         return self._obs(), reward, terminated, truncated, info
 
 
+class _TinyM3S1HybridAirCombatEnv(_TinyA6HybridAirCombatEnv):
+    def _obs(self):
+        obs = super()._obs()
+        contacts = np.zeros((10, 5), dtype=np.float32)
+        if self._steps >= 2:
+            contacts[0, 0] = 1000.0
+            contacts[0, 4] = 0.1
+        obs["contacts"] = contacts
+        return obs
+
+
 class _TinyA7ProjectionHybridAirCombatEnv(gym.Env):
     metadata = {}
 
@@ -188,7 +201,7 @@ class _TinyA7ProjectionHybridAirCombatEnv(gym.Env):
         mission[17] = 1.0
         mission[19] = 0.0
         contacts = np.zeros((10, 5), dtype=np.float32)
-        contacts[0, 0] = 16000.0
+        contacts[0, 0] = 1.0
         contacts[0, 4] = 0.2
         return {
             "instruments": np.zeros((42,), dtype=np.float32),
@@ -219,7 +232,130 @@ class _NoopCallback(BaseCallback):
         return True
 
 
+def _grad_norm(params) -> float:
+    total = 0.0
+    for param in params:
+        if param.grad is not None:
+            total += float(param.grad.detach().pow(2).sum().cpu().item())
+    return total**0.5
+
+
+class _FirstEventLabelBuffer:
+    supports_a6_first_event_labels = True
+
+    def __init__(self, buffer_size: int, n_envs: int = 1) -> None:
+        self.buffer_size = int(buffer_size)
+        self.n_envs = int(n_envs)
+        self.labels: FirstEventHazardLabels | None = None
+
+    def set_a6_first_event_labels(self, labels: FirstEventHazardLabels) -> None:
+        self.labels = labels
+
+
 class HMoEPPOWarmupTests(unittest.TestCase):
+    def _make_a7_first_event_label_model(self) -> AdaptiveKLPPO:
+        model = object.__new__(AdaptiveKLPPO)
+        model.device = th.device("cpu")
+        model.a6_first_event_hazard_coef = 0.0
+        model.a6_first_event_curriculum_coef = 0.0
+        model.a6_first_event_censored_survival_weight = 0.0
+        model.a6_first_event_deadline_weight = 0.0
+        model.a6_first_event_launch_window_enabled = True
+        model.a6_first_event_launch_window_min_window_age_steps = 32
+        model.a6_first_event_deadline_min_window_age_steps = 96
+        model.a6_first_event_launch_window_prewindow_hold_weight = 0.0
+        model.a6_first_event_launch_window_early_accept_weight = 0.0
+        model.a6_first_event_curriculum_min_window_age_steps = 32
+        model.a7_event_credit_value_coef = 0.5
+        model.a7_event_credit_delta_align_coef = 0.0
+        model.a7_event_credit_projection_value_coef = 0.0
+        model.a7_event_credit_projection_delta_align_coef = 0.0
+        model.a7_event_credit_prewindow_hold_weight = 0.25
+        model.a7_event_credit_early_accept_weight = 0.75
+        model.a7_event_credit_curriculum_coef = 0.0
+        model.a7_event_credit_curriculum_min_window_age_steps = 32
+        model.a7_event_credit_censored_survival_weight = 0.0
+        model.a7_event_credit_deadline_weight = 0.0
+        model.a7_event_credit_deadline_min_window_age_steps = 96
+        model.a7_event_credit_shadow_quality_weight = 0.5
+        model.a7_event_credit_legal_open_quality_weight = 0.0
+        model.a7_event_credit_legal_open_quality_min_window_age_steps = 1
+        model.a7_event_policy_margin_coef = 0.0
+        model.a7_event_policy_margin = 2.0
+        model.a7_event_policy_projection_margin_coef = 0.0
+        model.a7_event_policy_separate_update_enabled = False
+        model.a7_event_policy_separate_update_max_grad_norm = 0.5
+        model.a7_event_policy_separate_update_steps = 1
+        return model
+
+    def _make_a7_policy_margin_model(
+        self,
+        *,
+        separate_update: bool,
+    ) -> tuple[AdaptiveKLPPO, DummyVecEnv]:
+        env = DummyVecEnv([_TinyA7ProjectionHybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a7_event_credit_value_coef=0.0,
+            a7_event_credit_delta_align_coef=0.0,
+            a7_event_credit_legal_projection_enabled=True,
+            a7_event_credit_positive_mass_cap=1.0,
+            a7_event_credit_negative_mass_cap=1.0,
+            a7_event_policy_margin_coef=0.35,
+            a7_event_policy_margin=2.0,
+            a7_event_policy_projection_margin_coef=0.15,
+            a7_event_policy_separate_update_enabled=separate_update,
+            a7_event_policy_separate_update_max_grad_norm=0.5,
+            a7_event_policy_separate_update_steps=1,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+                "hybrid_event_credit_head_lr_scale": 6.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        with th.no_grad():
+            model.policy.action_net.weight[9].fill_(0.01)
+            model.policy.action_net.weight[11].fill_(-0.01)
+        return model, env
+
+    def _a7_shadow_projection_rollout_data(self, model: AdaptiveKLPPO, env: DummyVecEnv):
+        obs = env.reset()
+        obs_t = {
+            key: th.as_tensor(value, device=model.device)
+            for key, value in obs.items()
+        }
+        batch_size = int(next(iter(obs_t.values())).shape[0])
+        active = th.ones((batch_size,), dtype=th.bool, device=model.device)
+        target = th.ones((batch_size,), dtype=th.float32, device=model.device)
+        weight = th.ones((batch_size,), dtype=th.float32, device=model.device)
+        source = th.full(
+            (batch_size,),
+            int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY),
+            dtype=th.long,
+            device=model.device,
+        )
+        window_id = th.zeros((batch_size,), dtype=th.long, device=model.device)
+        return SimpleNamespace(
+            observations=obs_t,
+            **{
+                A6_FIRST_EVENT_FIELD_ACTIVE: active,
+                A6_FIRST_EVENT_FIELD_TARGET: target,
+                A6_FIRST_EVENT_FIELD_WEIGHT: weight,
+                A6_FIRST_EVENT_FIELD_SOURCE: source,
+                A6_FIRST_EVENT_FIELD_WINDOW_ID: window_id,
+            },
+        )
+
     def test_a6_policy_fire_mask_uses_c2_roe_mission_window(self) -> None:
         mission = th.zeros((2, 20), dtype=th.float32)
         mission[:, 5] = 2.0
@@ -296,6 +432,85 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         )
 
         self.assertEqual(launch_window, [False, False])
+
+    def test_a7_cross_rollout_first_event_state_recovers_shadow_quality_after_boundary(self) -> None:
+        model = self._make_a7_first_event_label_model()
+        episode_len = 512
+        chunk_size = 128
+        accepted_index = 5
+        launch_open_start = 281
+        engagement_state = [
+            "AuthorizedReady" if idx <= accepted_index else "FiredAssess"
+            for idx in range(episode_len)
+        ]
+        fire_mask = [idx <= accepted_index for idx in range(episode_len)]
+        fire_once_accepted = [idx == accepted_index for idx in range(episode_len)]
+        episode_id = [0] * episode_len
+        launch_window_open = [idx >= launch_open_start for idx in range(episode_len)]
+
+        full_labels = model._build_a6_first_event_labels_from_rollout_infos(
+            engagement_state=engagement_state,
+            fire_mask=fire_mask,
+            fire_once_accepted=fire_once_accepted,
+            episode_id=episode_id,
+            launch_window_open=launch_window_open,
+        )
+        full_shadow_positive = (
+            (full_labels.source == A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+            & (full_labels.target > 0.5)
+            & full_labels.active
+        )
+        self.assertEqual(int(full_shadow_positive.sum().item()), episode_len - launch_open_start)
+
+        local_shadow_positive_count = 0
+        for start in range(0, episode_len, chunk_size):
+            end = min(start + chunk_size, episode_len)
+            local_labels = model._build_a6_first_event_labels_from_rollout_infos(
+                engagement_state=engagement_state[start:end],
+                fire_mask=fire_mask[start:end],
+                fire_once_accepted=fire_once_accepted[start:end],
+                episode_id=episode_id[start:end],
+                launch_window_open=launch_window_open[start:end],
+            )
+            local_shadow_positive_count += int(
+                (
+                    (local_labels.source == A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+                    & (local_labels.target > 0.5)
+                    & local_labels.active
+                ).sum().item()
+            )
+        self.assertEqual(local_shadow_positive_count, 0)
+
+        chunked_labels: list[FirstEventHazardLabels] = []
+        for start in range(0, episode_len, chunk_size):
+            end = min(start + chunk_size, episode_len)
+            buffer = _FirstEventLabelBuffer(buffer_size=end - start)
+            model._attach_a6_first_event_labels_to_rollout_buffer(
+                buffer,
+                engagement_state=engagement_state[start:end],
+                fire_mask=fire_mask[start:end],
+                fire_once_accepted=fire_once_accepted[start:end],
+                episode_id=episode_id[start:end],
+                launch_window_open=launch_window_open[start:end],
+                env_episode_id_after_rollout=np.array([0], dtype=np.int64),
+            )
+            self.assertIsNotNone(buffer.labels)
+            assert buffer.labels is not None
+            chunked_labels.append(buffer.labels)
+
+        def concat_field(name: str) -> th.Tensor:
+            return th.cat([getattr(labels, name).detach().cpu().reshape(-1) for labels in chunked_labels])
+
+        self.assertTrue(th.equal(concat_field("active"), full_labels.active.cpu()))
+        self.assertTrue(th.allclose(concat_field("target"), full_labels.target.cpu()))
+        self.assertTrue(th.allclose(concat_field("weight"), full_labels.weight.cpu()))
+        self.assertTrue(th.equal(concat_field("source"), full_labels.source.cpu()))
+        self.assertTrue(th.allclose(concat_field("window_age"), full_labels.window_age.cpu()))
+        self.assertTrue(th.equal(concat_field("window_id"), full_labels.window_id.cpu()))
+        self.assertTrue(th.equal(concat_field("had_accepted"), full_labels.had_accepted.cpu()))
+        self.assertEqual(int(model._a7_cross_rollout_last_carried_shadow_pending_envs), 1)
+        self.assertEqual(int(model._a7_cross_rollout_last_carried_shadow_positive_count), chunk_size)
+        self.assertEqual(int(model._a7_cross_rollout_last_first_event_count), chunk_size)
 
     def test_collect_rollouts_applies_hmoe_warmup_before_first_step(self) -> None:
         env = DummyVecEnv([_TinyHMoEEnv])
@@ -546,6 +761,211 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         after = model.policy.hybrid_event_credit_head.bias.detach().clone()
         self.assertFalse(th.allclose(before, after))
 
+    def test_m3s1_sidecar_preserves_closed_mask_rows(self) -> None:
+        model = object.__new__(AdaptiveKLPPO)
+        model.m3s1_grouped_stopping_coef = 1.0
+        model.a6_first_event_launch_window_min_window_age_steps = 1
+        buffer = SimpleNamespace(
+            n_envs=1,
+            observations={
+                "mission": np.zeros((3, 1, 21), dtype=np.float32),
+            },
+        )
+
+        sidecar = model._build_m3s1_grouped_stopping_sidecar(
+            buffer,
+            fire_mask=[False, True, True],
+            fire_once_accepted=[False, False, False],
+            episode_id=[0, 0, 0],
+            launch_window_open=[True, True, True],
+        )
+
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+        self.assertEqual(sidecar.groups[0].row_indices, (0, 1, 2))
+        self.assertEqual(sidecar.groups[0].legal_mask, (False, True, True))
+        self.assertEqual(sidecar.groups[0].quality_mask, (False, True, True))
+        self.assertEqual(sidecar.accepted_event_count, 0)
+        self.assertEqual(sidecar.one_shot_violation_count, 0)
+        self.assertEqual(sidecar.closed_mask_accepted_event_count, 0)
+
+        violation_buffer = SimpleNamespace(
+            n_envs=1,
+            observations={
+                "mission": np.zeros((4, 1, 21), dtype=np.float32),
+            },
+        )
+        violation_sidecar = model._build_m3s1_grouped_stopping_sidecar(
+            violation_buffer,
+            fire_mask=[True, True, False, True],
+            fire_once_accepted=[True, True, True, False],
+            episode_id=[7, 7, 7, 7],
+            launch_window_open=[True, True, True, True],
+        )
+
+        self.assertIsNotNone(violation_sidecar)
+        assert violation_sidecar is not None
+        self.assertEqual(violation_sidecar.accepted_event_count, 3)
+        self.assertEqual(violation_sidecar.one_shot_violation_count, 2)
+        self.assertEqual(violation_sidecar.closed_mask_accepted_event_count, 1)
+
+    def test_m3s1_grouped_stopping_auxiliary_updates_from_complete_sidecar_group(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s1_grouped_stopping_coef=1.0,
+            m3s1_grouped_stopping_early_mass_coef=0.5,
+            m3s1_grouped_stopping_early_mass_budget=0.05,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "m3_stopping_head_lr_scale": 5.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.m3_stopping_head is not None
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+        self.assertEqual(sidecar.groups[0].row_indices, (0, 1, 2, 3))
+        self.assertEqual(sidecar.groups[0].quality_mask, (False, False, True, True))
+
+        before = model.policy.m3_stopping_head.bias.detach().clone()
+        model.train()
+        after = model.policy.m3_stopping_head.bias.detach().clone()
+
+        self.assertFalse(th.allclose(before, after))
+        logged = model.logger.name_to_value
+        self.assertEqual(float(logged["m3s1/grouped_sidecar_group_count"]), 1.0)
+        self.assertEqual(float(logged["m3s1/grouped_active_group_count"]), 1.0)
+        self.assertEqual(float(logged["m3s1/grouped_row_count"]), 4.0)
+        self.assertGreater(float(logged["m3s1/grouped_stopping_loss"]), 0.0)
+        self.assertGreater(float(logged["m3s1/grouped_stopping_grad_norm"]), 0.0)
+        self.assertGreater(float(logged["m3s1/hazard_early_mass"]), 0.0)
+        for key in (
+            "m3s1/grouped_labels_reached_loss",
+            "m3s1/stop_logit_mean",
+            "m3s1/stop_logit_desirable_mean",
+            "m3s1/stop_logit_prewindow_mean",
+            "m3s1/stop_logit_no_window_mean",
+            "m3s1/event_logit_delta_diagnostic_mean",
+            "m3s1/boundary_cross_ratio",
+            "m3s1/boundary_cross_in_window_ratio",
+            "m3s1/closed_mask_stop_attempt_ratio",
+            "m3s1/one_shot_violation_count",
+            "m3s1/closed_mask_accepted_event_count",
+        ):
+            self.assertIn(key, logged)
+            self.assertTrue(np.isfinite(float(logged[key])), key)
+        self.assertEqual(float(logged["m3s1/grouped_labels_reached_loss"]), 1.0)
+        self.assertEqual(float(logged["m3s1/stop_logit_count"]), 4.0)
+        self.assertEqual(float(logged["m3s1/stop_logit_desirable_count"]), 2.0)
+        self.assertEqual(float(logged["m3s1/stop_logit_prewindow_count"]), 2.0)
+        self.assertEqual(float(logged["m3s1/stop_logit_no_window_count"]), 0.0)
+        self.assertEqual(float(logged["m3s1/event_logit_delta_diagnostic_count"]), 4.0)
+        self.assertEqual(float(logged["m3s1/boundary_cross_count"]), 4.0)
+        self.assertEqual(float(logged["m3s1/boundary_cross_in_window_count"]), 2.0)
+        self.assertAlmostEqual(float(logged["m3s1/boundary_cross_ratio"]), 1.0, places=6)
+        self.assertAlmostEqual(float(logged["m3s1/boundary_cross_in_window_ratio"]), 0.5, places=6)
+        self.assertEqual(float(logged["m3s1/closed_mask_stop_attempt_count"]), 0.0)
+        self.assertEqual(float(logged["m3s1/closed_mask_row_count"]), 0.0)
+        self.assertEqual(float(logged["m3s1/accepted_event_count"]), 0.0)
+        self.assertEqual(float(logged["m3s1/one_shot_violation_count"]), 0.0)
+        self.assertEqual(float(logged["m3s1/closed_mask_accepted_event_count"]), 0.0)
+
+    def test_nonfinite_probe_preserves_m3s1_grouped_stopping_training_path(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s1_grouped_stopping_coef=1.0,
+            m3s1_grouped_stopping_early_mass_coef=0.5,
+            m3s1_grouped_stopping_early_mass_budget=0.05,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "m3_stopping_head_lr_scale": 5.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        probe = NonFiniteTrainingProbe(
+            report_path=f"{gettempdir()}/m3s1_nonfinite_probe_regression.json",
+            history_limit=32,
+            enabled=True,
+        )
+        probe.install(model)
+        assert model.policy.m3_stopping_head is not None
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+
+        before = model.policy.m3_stopping_head.bias.detach().clone()
+        model.train()
+        after = model.policy.m3_stopping_head.bias.detach().clone()
+
+        self.assertFalse(th.allclose(before, after))
+        logged = model.logger.name_to_value
+        self.assertEqual(float(logged["m3s1/grouped_sidecar_group_count"]), 1.0)
+        self.assertEqual(float(logged["m3s1/grouped_active_group_count"]), 1.0)
+        self.assertGreater(float(logged["m3s1/grouped_stopping_loss"]), 0.0)
+        self.assertGreater(float(logged["m3s1/grouped_stopping_grad_norm"]), 0.0)
+        self.assertEqual(float(logged["m3s1/grouped_labels_reached_loss"]), 1.0)
+        self.assertEqual(float(logged["m3s1/stop_logit_count"]), 4.0)
+
     def test_a7_separate_credit_update_only_writes_credit_head(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])
         model = AdaptiveKLPPO(
@@ -605,6 +1025,55 @@ class HMoEPPOWarmupTests(unittest.TestCase):
             else:
                 self.assertFalse(changed, name)
         self.assertTrue(credit_changed)
+
+    def test_a7_policy_margin_loss_projects_shadow_rows_into_policy_path(self) -> None:
+        model, env = self._make_a7_policy_margin_model(separate_update=False)
+        rollout_data = self._a7_shadow_projection_rollout_data(model, env)
+
+        margin_loss = model._first_event_policy_margin_loss(rollout_data)
+        self.assertIsNotNone(margin_loss)
+        assert margin_loss is not None
+        self.assertEqual(margin_loss.active_count, 1)
+        self.assertEqual(margin_loss.projection_active_count, 1)
+        self.assertAlmostEqual(float(margin_loss.positive_frac), 1.0, places=6)
+        self.assertGreater(float(margin_loss.loss.detach().cpu()), 0.0)
+
+        assert model.policy.hybrid_event_head is not None
+        assert model.policy.hybrid_event_credit_head is not None
+        model.policy.optimizer.zero_grad(set_to_none=True)
+        margin_loss.loss.backward()
+
+        self.assertGreater(_grad_norm(model.policy.action_net.parameters()), 0.0)
+        self.assertGreater(_grad_norm(model.policy.hybrid_event_head.parameters()), 0.0)
+        self.assertGreater(_grad_norm(model.policy.mlp_extractor.policy_net.parameters()), 0.0)
+        self.assertAlmostEqual(
+            _grad_norm(model.policy.hybrid_event_credit_head.parameters()),
+            0.0,
+            places=8,
+        )
+
+    def test_a7_separate_policy_margin_update_only_writes_event_policy_path(self) -> None:
+        model, env = self._make_a7_policy_margin_model(separate_update=True)
+        rollout_data = self._a7_shadow_projection_rollout_data(model, env)
+        before = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+
+        margin_loss, grad_norm = model._first_event_policy_margin_separate_update(rollout_data)
+        self.assertIsNotNone(margin_loss)
+        assert margin_loss is not None
+        self.assertEqual(margin_loss.projection_active_count, 1)
+        self.assertGreater(float(grad_norm), 0.0)
+
+        selected_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before[name], param.detach())
+            if name.startswith(("action_net.", "hybrid_event_head.", "mlp_extractor.policy_net.")):
+                selected_changed = selected_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(selected_changed)
 
     def test_nonfinite_probe_preserves_a7_event_credit_training_path(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])

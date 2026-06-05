@@ -209,7 +209,12 @@ def infer_full_action_safe_defaults(scenario_path: str) -> tuple[float, float, f
     return float(throttle_default), float(gear_default), float(flaps_default), float(speedbrake_default)
 
 
-def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
+def apply_safe_action_bias(
+    model: PPO,
+    action_mode: str,
+    scenario_path: str,
+    train_config: dict[str, Any] | None = None,
+):
     """
     Improve early exploration for mixed-range action spaces.
 
@@ -296,7 +301,10 @@ def apply_safe_action_bias(model: PPO, action_mode: str, scenario_path: str):
                 b[6] = 3.0   # radar_active held on
                 b[7] = -4.0  # tms_up pulse, sparse but reachable
                 b[8] = 3.0   # master_arm held on
-                b[9] = -6.0  # fire_weapon pulse, sparse but reachable
+                # Keep the stochastic first-shot prior conservative. A7 event-policy
+                # margin learns from legal-open/hindsight labels; relaxing this bias
+                # makes pre-window releases almost certain and starves legal-open data.
+                b[9] = -6.0  # fire_weapon pulse
                 b[10] = -8.0  # fire_gun pulse
                 b[11] = 0.0  # fire-event hold logit starts above fire.
                 b[12:20] = -0.5
@@ -868,7 +876,7 @@ def main():
             print(f"Initializing Parameters From: {init_path}")
             model.set_parameters(init_path, exact_match=False, device=hyperparams.get("device", "auto"))
         elif agent_layer in {"execution", "cooperative_execution"} and not args.no_init_safe_action_bias:
-            apply_safe_action_bias(model, env_settings["action_mode"], scenario_path)
+            apply_safe_action_bias(model, env_settings["action_mode"], scenario_path, train_config=train_config)
         elif agent_layer == "leader":
             apply_leader_action_bias(model)
 

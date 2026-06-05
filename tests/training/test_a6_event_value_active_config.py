@@ -170,7 +170,7 @@ class A6EventValueActiveConfigTests(unittest.TestCase):
         self.assertGreater(int(hyper.get("a6_first_event_launch_window_min_window_age_steps", 0)), 1)
 
         self.assertGreater(float(hyper.get("a7_event_credit_value_coef", 0.0)), 0.0)
-        self.assertGreater(float(hyper.get("a7_event_credit_delta_align_coef", 0.0)), 0.0)
+        self.assertEqual(float(hyper.get("a7_event_credit_delta_align_coef", -1.0)), 0.0)
         self.assertTrue(bool(hyper.get("a7_event_credit_delta_align_positive_only")))
         self.assertGreater(float(hyper.get("a7_event_credit_prewindow_hold_weight", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_early_accept_weight", 0.0)), 0.0)
@@ -180,11 +180,17 @@ class A6EventValueActiveConfigTests(unittest.TestCase):
         self.assertGreater(int(hyper.get("a7_event_credit_legal_open_quality_min_window_age_steps", 0)), 1)
         self.assertTrue(bool(hyper.get("a7_event_credit_legal_projection_enabled")))
         self.assertGreater(float(hyper.get("a7_event_credit_projection_value_coef", 0.0)), 0.0)
-        self.assertGreater(float(hyper.get("a7_event_credit_projection_delta_align_coef", 0.0)), 0.0)
+        self.assertEqual(float(hyper.get("a7_event_credit_projection_delta_align_coef", -1.0)), 0.0)
         self.assertTrue(bool(hyper.get("a7_event_credit_separate_update_enabled")))
         self.assertGreater(float(hyper.get("a7_event_credit_separate_update_max_grad_norm", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_positive_mass_cap", 0.0)), 0.0)
         self.assertGreater(float(hyper.get("a7_event_credit_negative_mass_cap", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a7_event_policy_margin_coef", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a7_event_policy_margin", 0.0)), 0.0)
+        self.assertGreater(float(hyper.get("a7_event_policy_projection_margin_coef", 0.0)), 0.0)
+        self.assertTrue(bool(hyper.get("a7_event_policy_separate_update_enabled")))
+        self.assertGreater(float(hyper.get("a7_event_policy_separate_update_max_grad_norm", 0.0)), 0.0)
+        self.assertGreater(int(hyper.get("a7_event_policy_separate_update_steps", 0)), 1)
 
     def test_a7_state_completed_config_changes_only_observation_contract(self) -> None:
         baseline = _load_json(A7_EVENT_CREDIT_CONFIG)

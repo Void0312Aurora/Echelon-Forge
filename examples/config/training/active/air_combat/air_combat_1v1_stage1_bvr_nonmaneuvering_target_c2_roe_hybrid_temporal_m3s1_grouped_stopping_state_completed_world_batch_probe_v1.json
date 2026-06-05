@@ -2,9 +2,9 @@
   "agent_layer": "execution",
   "algo": "AdaptiveKLPPO",
   "policy": "HierarchicalMoEExecutionPolicy",
-  "total_timesteps": 32768,
+  "total_timesteps": 8192,
   "n_envs": 4,
-  "save_freq": 8192,
+  "save_freq": 2048,
   "runtime": {
     "torch_threads": 1,
     "world_batch_vec_env": true,
@@ -43,12 +43,17 @@
       "binary_hysteresis_indices": [],
       "scripted_baseline_mode": "stable_flight",
       "scripted_residual_scale": 0.18,
-      "scripted_blend_indices": [0, 1, 2, 3],
+      "scripted_blend_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
       "scripted_lock_indices": []
     }
   },
   "hyperparameters": {
-    "learning_rate": 0.00003,
+    "learning_rate": 3e-05,
     "n_steps": 256,
     "batch_size": 512,
     "n_epochs": 2,
@@ -106,6 +111,12 @@
     "a7_event_policy_separate_update_enabled": true,
     "a7_event_policy_separate_update_max_grad_norm": 2.0,
     "a7_event_policy_separate_update_steps": 4,
+    "m3s1_grouped_stopping_coef": 1.0,
+    "m3s1_grouped_stopping_early_mass_coef": 1.0,
+    "m3s1_grouped_stopping_early_mass_budget": 0.05,
+    "m3s1_grouped_stopping_no_event_coef": 1.0,
+    "m3s1_grouped_stopping_boundary_threshold": 0.0,
+    "m3s1_grouped_stopping_detach_latent": false,
     "device": "cuda",
     "policy_kwargs": {
       "features_extractor_class": "TemporalTransformerExtractor",
@@ -119,7 +130,13 @@
         "amp_dtype": "bf16",
         "use_checkpointing": true
       },
-      "family_subexpert_counts": [3, 2, 3, 1, 3],
+      "family_subexpert_counts": [
+        3,
+        2,
+        3,
+        1,
+        3
+      ],
       "hmoe_residual_scale": 0.18,
       "hmoe_head_lr_scale": 0.35,
       "hmoe_residual_warmup_fraction": 0.3,
@@ -127,10 +144,17 @@
       "hybrid_action_spec": "air_combat_hybrid_v1",
       "hybrid_event_head_lr_scale": 10.0,
       "hybrid_event_credit_head_lr_scale": 6.0,
+      "m3_stopping_head_lr_scale": 5.0,
       "log_std_init": -2.0,
       "net_arch": {
-        "pi": [192, 192],
-        "vf": [192, 192]
+        "pi": [
+          192,
+          192
+        ],
+        "vf": [
+          192,
+          192
+        ]
       }
     }
   }

@@ -494,6 +494,13 @@ class _HybridEventCreditOutput:
     event_advantage: th.Tensor
 
 
+@dataclass(frozen=True)
+class _M3StoppingOutput:
+    stopping_logit: th.Tensor
+    hazard_logit: th.Tensor
+    hazard: th.Tensor
+
+
 class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     """
     Shared-backbone execution policy with explicit hierarchical semantic routing.
@@ -519,6 +526,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hybrid_action_spec: Any | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
         hybrid_event_credit_head_lr_scale: float = 0.0,
+        m3_stopping_head_lr_scale: float = 0.0,
         **kwargs: Any,
     ):
         self._hmoe_family_subexpert_counts = tuple(int(max(1, v)) for v in family_subexpert_counts)
@@ -528,6 +536,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hybrid_event_head_lr_scale = float(max(0.0, hybrid_event_head_lr_scale))
         self._hybrid_event_credit_head_lr_scale = float(max(0.0, hybrid_event_credit_head_lr_scale))
+        self._m3_stopping_head_lr_scale = float(max(0.0, m3_stopping_head_lr_scale))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
         self._hybrid_log_std_init = float(kwargs.get("log_std_init", 0.0))
@@ -535,6 +544,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hybrid_action_layout: _HybridActionLayout | None = None
         self.hybrid_event_head: nn.Linear | None = None
         self.hybrid_event_credit_head: nn.Linear | None = None
+        self.m3_stopping_head: nn.Linear | None = None
         if hybrid_action_spec is not None:
             kwargs["squash_output"] = False
         super().__init__(observation_space, action_space, lr_schedule, *args, **kwargs)
@@ -563,6 +573,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_credit_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 2).to(self.device)
                 nn.init.zeros_(self.hybrid_event_credit_head.weight)
                 nn.init.zeros_(self.hybrid_event_credit_head.bias)
+        if self._m3_stopping_head_lr_scale > 0.0:
+            self.m3_stopping_head = nn.Linear(int(self.mlp_extractor.latent_dim_pi), 1).to(self.device)
+            nn.init.zeros_(self.m3_stopping_head.weight)
+            nn.init.zeros_(self.m3_stopping_head.bias)
         self.hmoe_head_bank = _HMoEHeadBank(
             latent_dim=int(self.mlp_extractor.latent_dim_pi),
             action_dim=hmoe_output_dim,
@@ -584,6 +598,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
+        data["m3_stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
         return data
 
     def initialize_hmoe_from_shared_action_head(self) -> None:
@@ -618,6 +633,10 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                 self.hybrid_event_credit_head.weight.zero_()
                 if getattr(self.hybrid_event_credit_head, "bias", None) is not None:
                     self.hybrid_event_credit_head.bias.zero_()
+            if self.m3_stopping_head is not None:
+                self.m3_stopping_head.weight.zero_()
+                if getattr(self.m3_stopping_head, "bias", None) is not None:
+                    self.m3_stopping_head.bias.zero_()
 
     def get_hmoe_parameter_stats(self) -> dict[str, float]:
         stats: dict[str, float] = {}
@@ -678,6 +697,19 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             stats["a7/event_credit_head_params/max_abs"] = float(
                 max(weight.abs().max().item(), bias.abs().max().item())
             )
+        if self.m3_stopping_head is None:
+            stats["m3s1/stopping_head_params/enabled"] = 0.0
+            stats["m3s1/stopping_head_params/lr_scale"] = float(self._m3_stopping_head_lr_scale)
+        else:
+            stats["m3s1/stopping_head_params/enabled"] = 1.0
+            stats["m3s1/stopping_head_params/lr_scale"] = float(self._m3_stopping_head_lr_scale)
+            weight = self.m3_stopping_head.weight.detach()
+            bias = self.m3_stopping_head.bias.detach()
+            stats["m3s1/stopping_head_params/weight_norm"] = float(weight.norm().item())
+            stats["m3s1/stopping_head_params/bias_norm"] = float(bias.norm().item())
+            stats["m3s1/stopping_head_params/max_abs"] = float(
+                max(weight.abs().max().item(), bias.abs().max().item())
+            )
         return stats
 
     def _build_optimizer(self):
@@ -688,10 +720,12 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             if self.hybrid_event_credit_head is not None
             else []
         )
+        stopping_params = list(self.m3_stopping_head.parameters()) if self.m3_stopping_head is not None else []
         hmoe_param_ids = {id(param) for param in hmoe_params}
         event_param_ids = {id(param) for param in event_params}
         credit_param_ids = {id(param) for param in credit_params}
-        routed_param_ids = hmoe_param_ids | event_param_ids | credit_param_ids
+        stopping_param_ids = {id(param) for param in stopping_params}
+        routed_param_ids = hmoe_param_ids | event_param_ids | credit_param_ids | stopping_param_ids
         shared_params = [param for param in self.parameters() if id(param) not in routed_param_ids]
         param_groups: list[dict[str, Any]] = [
             {
@@ -714,6 +748,14 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
                     "params": credit_params,
                     "lr_scale": float(self._hybrid_event_credit_head_lr_scale),
                     "name": "hybrid_event_credit_head",
+                }
+            )
+        if stopping_params:
+            param_groups.append(
+                {
+                    "params": stopping_params,
+                    "lr_scale": float(self._m3_stopping_head_lr_scale),
+                    "name": "m3_stopping_head",
                 }
             )
         if hmoe_params:
@@ -869,6 +911,47 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._last_hmoe_route_stats["a7/event_credit_advantage_mean"] = float(advantage.mean().item())
         self._last_hmoe_route_stats["a7/event_credit_advantage_abs_mean"] = float(advantage.abs().mean().item())
         return values
+
+    def _compute_m3_stopping_logits(self, latent_pi: th.Tensor) -> th.Tensor | None:
+        stopping_head = self.m3_stopping_head
+        if stopping_head is None:
+            self._last_hmoe_route_stats["m3s1/stopping_head_enabled"] = 0.0
+            self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
+            return None
+
+        logits = stopping_head(latent_pi).reshape(-1)
+        logits_detached = logits.detach()
+        hazard_detached = th.sigmoid(logits_detached)
+        self._last_hmoe_route_stats["m3s1/stopping_head_enabled"] = 1.0
+        self._last_hmoe_route_stats["m3s1/stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
+        self._last_hmoe_route_stats["m3s1/stop_logit_mean"] = float(logits_detached.mean().item())
+        self._last_hmoe_route_stats["m3s1/stop_logit_abs_mean"] = float(logits_detached.abs().mean().item())
+        self._last_hmoe_route_stats["m3s1/hazard_mean"] = float(hazard_detached.mean().item())
+        return logits
+
+    def get_m3_stopping_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+        if detach_latent:
+            with th.no_grad():
+                features = super().extract_features(obs, self.pi_features_extractor)
+                latent_pi = self.mlp_extractor.forward_actor(features)
+            latent_pi = latent_pi.detach()
+        else:
+            features = super().extract_features(obs, self.pi_features_extractor)
+            latent_pi = self.mlp_extractor.forward_actor(features)
+        return self._compute_m3_stopping_logits(latent_pi)
+
+    def get_m3_stopping_hazard_logits(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
+        return self.get_m3_stopping_logits(obs, detach_latent=detach_latent)
+
+    def get_m3_stopping(self, obs: Any, *, detach_latent: bool = False) -> _M3StoppingOutput | None:
+        logits = self.get_m3_stopping_logits(obs, detach_latent=detach_latent)
+        if logits is None:
+            return None
+        return _M3StoppingOutput(
+            stopping_logit=logits,
+            hazard_logit=logits,
+            hazard=th.sigmoid(logits),
+        )
 
     def get_hybrid_event_credit_values(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor | None:
         if detach_latent:

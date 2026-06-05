@@ -436,6 +436,137 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertTrue(th.allclose(credit.q_fire_once, th.full((2,), 3.5)))
         self.assertTrue(th.allclose(credit.event_advantage, th.full((2,), 3.0)))
 
+    def test_m3_stopping_head_is_disabled_by_default(self) -> None:
+        policy = self._make_air_combat_hybrid_policy()
+        obs = self._make_authorized_fire_obs(batch_size=2)
+
+        with th.no_grad():
+            stopping = policy.get_m3_stopping(obs)
+            logits = policy.get_m3_stopping_logits(obs)
+
+        self.assertIsNone(policy.m3_stopping_head)
+        self.assertIsNone(stopping)
+        self.assertIsNone(logits)
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "hmoe"])
+        self.assertAlmostEqual(
+            float(policy._get_constructor_parameters().get("m3_stopping_head_lr_scale", -1.0)),
+            0.0,
+            places=6,
+        )
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s1/stopping_head_enabled"]), 0.0)
+        self.assertAlmostEqual(float(stats["m3s1/stopping_head_lr_scale"]), 0.0, places=6)
+
+    def test_m3_stopping_head_gets_dedicated_optimizer_lane_and_zero_outputs(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(m3_stopping_head_lr_scale=5.0)
+
+        self.assertIsNotNone(policy.m3_stopping_head)
+        assert policy.m3_stopping_head is not None
+        self.assertTrue(th.allclose(policy.m3_stopping_head.weight.detach(), th.zeros_like(policy.m3_stopping_head.weight)))
+        self.assertTrue(th.allclose(policy.m3_stopping_head.bias.detach(), th.zeros_like(policy.m3_stopping_head.bias)))
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "m3_stopping_head", "hmoe"])
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1].get("lr_scale", 0.0)), 5.0, places=6)
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1]["lr"]), 3.0e-4 * 5.0, places=10)
+        self.assertAlmostEqual(
+            float(policy._get_constructor_parameters().get("m3_stopping_head_lr_scale", 0.0)),
+            5.0,
+            places=6,
+        )
+        obs = self._make_authorized_fire_obs(batch_size=3)
+
+        with th.no_grad():
+            stopping = policy.get_m3_stopping(obs)
+            logits = policy.get_m3_stopping_hazard_logits(obs)
+
+        self.assertIsNotNone(stopping)
+        assert stopping is not None
+        assert logits is not None
+        self.assertTrue(th.allclose(stopping.stopping_logit, th.zeros_like(stopping.stopping_logit)))
+        self.assertTrue(th.allclose(stopping.hazard_logit, th.zeros_like(stopping.hazard_logit)))
+        self.assertTrue(th.allclose(stopping.hazard, th.full_like(stopping.hazard, 0.5)))
+        self.assertTrue(th.allclose(logits, th.zeros_like(logits)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s1/stopping_head_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["m3s1/stopping_head_lr_scale"]), 5.0, places=6)
+        self.assertAlmostEqual(float(stats["m3s1/stop_logit_mean"]), 0.0, places=6)
+        self.assertAlmostEqual(float(stats["m3s1/hazard_mean"]), 0.5, places=6)
+
+    def test_m3_stopping_head_is_independent_from_executable_event_logits(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            m3_stopping_head_lr_scale=5.0,
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.m3_stopping_head is not None
+        self.assertEqual(
+            [group.get("name") for group in policy.optimizer.param_groups],
+            ["shared", "hybrid_event_head", "m3_stopping_head", "hmoe"],
+        )
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -2.0
+            policy.action_net.bias[11] = 0.5
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.copy_(th.tensor([0.25, 1.25], dtype=th.float32))
+            policy.m3_stopping_head.weight.zero_()
+            policy.m3_stopping_head.bias.fill_(3.0)
+        obs = self._make_authorized_fire_obs(batch_size=4)
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            delta = distribution.fire_event_logit_delta()
+            stopping = policy.get_m3_stopping(obs)
+
+        self.assertIsNotNone(delta)
+        self.assertIsNotNone(stopping)
+        assert delta is not None
+        assert stopping is not None
+        self.assertTrue(th.allclose(delta, th.full((4,), -1.5)))
+        self.assertTrue(th.allclose(stopping.stopping_logit, th.full((4,), 3.0)))
+        self.assertTrue(th.allclose(stopping.hazard, th.sigmoid(th.full((4,), 3.0))))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
+        self.assertEqual(float(stats["m3s1/stopping_head_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["a6/event_head_delta_fire_mean"]), 1.25, places=6)
+        self.assertAlmostEqual(float(stats["m3s1/stop_logit_mean"]), 3.0, places=6)
+
+    def test_m3_stopping_head_does_not_bypass_fire_mask(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(m3_stopping_head_lr_scale=5.0)
+        assert policy.m3_stopping_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = 8.0
+            policy.action_net.bias[11] = -2.0
+            policy.m3_stopping_head.weight.zero_()
+            policy.m3_stopping_head.bias.fill_(12.0)
+        mission = th.zeros((2, 20), dtype=th.float32)
+        mission[1, 5] = 2.0
+        mission[1, 6] = 1.0
+        mission[1, 14] = 2.0
+        mission[1, 15] = 1.0
+        mission[1, 16] = 1.0
+        mission[1, 19] = 1.0
+        obs = {
+            "instruments": th.zeros((2, 42), dtype=th.float32),
+            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "mission": mission,
+            "proprio": th.zeros((2, 12), dtype=th.float32),
+        }
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            actions = distribution.get_actions(deterministic=True)
+            stopping = policy.get_m3_stopping(obs)
+
+        self.assertIsNotNone(stopping)
+        assert stopping is not None
+        self.assertTrue(th.allclose(stopping.stopping_logit, th.full((2,), 12.0)))
+        self.assertEqual(float(actions[0, 9]), 0.0)
+        self.assertEqual(float(actions[1, 9]), 1.0)
+
     def test_route_stats_follow_mission_semantics(self) -> None:
         policy = self._make_policy()
         obs = {
@@ -874,6 +1005,28 @@ class HMoEPolicyTests(unittest.TestCase):
         for head in policy.hmoe_head_bank.family_heads:
             self.assertTrue(th.allclose(head.bias.detach(), th.zeros_like(head.bias)))
 
+        with th.no_grad():
+            policy.action_net.weight.fill_(0.25)
+            policy.action_net.bias.fill_(0.1)
+        apply_safe_action_bias(
+            model,
+            "air_combat_hybrid_v1",
+            "scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json",
+            train_config={
+                "hyperparameters": {
+                    "a7_event_policy_margin_coef": 0.35,
+                    "a7_event_policy_projection_margin_coef": 0.15,
+                }
+            },
+        )
+
+        bias = policy.action_net.bias.detach().cpu()
+        self.assertTrue(th.allclose(policy.action_net.weight.detach(), th.zeros_like(policy.action_net.weight)))
+        self.assertLess(float(bias[9]), -5.0)
+        self.assertLess(float(bias[9]), 0.0)
+        self.assertGreater(float(bias[11]), float(bias[9]))
+        self.assertLess(float(th.sigmoid(bias[9] - bias[11]).item()), 0.01)
+
     def test_initialize_hmoe_from_shared_action_head_preserves_zero_residual_bootstrap(self) -> None:
         policy = self._make_policy()
         with th.no_grad():
@@ -913,6 +1066,28 @@ class HMoEPolicyTests(unittest.TestCase):
             th.allclose(
                 policy.hybrid_event_credit_head.bias.detach(),
                 th.zeros_like(policy.hybrid_event_credit_head.bias),
+            )
+        )
+
+    def test_initialize_hmoe_from_shared_action_head_zeroes_m3_stopping_head(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(m3_stopping_head_lr_scale=5.0)
+        assert policy.m3_stopping_head is not None
+        with th.no_grad():
+            policy.m3_stopping_head.weight.fill_(1.0)
+            policy.m3_stopping_head.bias.fill_(1.0)
+
+        policy.initialize_hmoe_from_shared_action_head()
+
+        self.assertTrue(
+            th.allclose(
+                policy.m3_stopping_head.weight.detach(),
+                th.zeros_like(policy.m3_stopping_head.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_stopping_head.bias.detach(),
+                th.zeros_like(policy.m3_stopping_head.bias),
             )
         )
 

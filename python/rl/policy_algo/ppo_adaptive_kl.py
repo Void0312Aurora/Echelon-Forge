@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any, Optional
 
 import numpy as np
@@ -31,21 +31,82 @@ from .first_event_hazard import (
     A6_FIRST_EVENT_SOURCE_PREWINDOW,
     A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY,
     FirstEventCreditLoss,
+    FirstEventHazardLabels,
+    FirstEventPolicyMarginLoss,
     build_first_event_hazard_labels,
     compute_first_event_credit_loss,
     compute_first_event_hazard_loss,
+    compute_first_event_policy_margin_loss,
     current_first_event_curriculum_coef,
     first_event_credit_batch_from_rollout_data,
     first_event_hazard_batch_from_rollout_data,
 )
 from .first_event_projection import project_air_combat_c2_roe_legal_open_observations
 from .first_event_rollout_buffer import A6FirstEventDeviceDictRolloutBuffer, A6FirstEventDictRolloutBuffer
+from .m3s1_grouped_stopping import (
+    M3S1_CENSOR_EARLY_EVENT_PREFIX,
+    M3S1_CENSOR_NONE,
+    M3S1_CENSOR_TIMEOUT,
+    M3S1_ROUTE_ON_POLICY,
+    M3S1GroupedStoppingEvidence,
+    M3S1GroupedStoppingLoss,
+    compute_m3s1_grouped_stopping_loss,
+)
 
 
 _AIR_COMBAT_C2_ROE_MODES = (
     MISSION_OBS_AIR_COMBAT_C2_ROE_V1,
     MISSION_OBS_AIR_COMBAT_C2_ROE_V2,
 )
+
+
+@dataclass(frozen=True)
+class _A7FirstEventRolloutRow:
+    engagement_state: str
+    fire_mask: bool
+    fire_once_accepted: bool
+    episode_id: int
+    launch_window_open: bool
+
+
+@dataclass(frozen=True)
+class _M3S1GroupedStoppingSidecarGroup:
+    group_id: int | str
+    episode_id: int | str
+    row_indices: tuple[int, ...]
+    step_indices: tuple[int, ...]
+    env_indices: tuple[int, ...]
+    legal_mask: tuple[bool, ...]
+    quality_mask: tuple[bool, ...]
+    accepted_event: tuple[bool, ...]
+    censoring_kind: str
+    censor_step: int | None
+    support_horizon: int | None
+
+
+@dataclass(frozen=True)
+class _M3S1GroupedStoppingSidecar:
+    groups: tuple[_M3S1GroupedStoppingSidecarGroup, ...]
+    observations: dict[str, Any]
+    accepted_event_count: int = 0
+    one_shot_violation_count: int = 0
+    closed_mask_accepted_event_count: int = 0
+
+
+@dataclass(frozen=True)
+class _M3S1GroupedStoppingDiagnostics:
+    stop_logit_mean: float = 0.0
+    stop_logit_desirable_mean: float = 0.0
+    stop_logit_prewindow_mean: float = 0.0
+    stop_logit_no_window_mean: float = 0.0
+    stop_logit_closed_mask_mean: float = 0.0
+    event_logit_delta_diagnostic_mean: float = 0.0
+    stop_logit_count: int = 0
+    stop_logit_desirable_count: int = 0
+    stop_logit_prewindow_count: int = 0
+    stop_logit_no_window_count: int = 0
+    closed_mask_row_count: int = 0
+    event_logit_delta_diagnostic_count: int = 0
 
 
 def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
@@ -121,6 +182,19 @@ class AdaptiveKLPPO(PPO):
         a7_event_credit_projection_delta_align_coef: float = 0.0,
         a7_event_credit_separate_update_enabled: bool = False,
         a7_event_credit_separate_update_max_grad_norm: float = 0.5,
+        a7_event_policy_margin_coef: float = 0.0,
+        a7_event_policy_margin: float = 2.0,
+        a7_event_policy_projection_margin_coef: float = 0.0,
+        a7_event_policy_separate_update_enabled: bool = False,
+        a7_event_policy_separate_update_max_grad_norm: float = 0.5,
+        a7_event_policy_separate_update_steps: int = 1,
+        m3s1_grouped_stopping_coef: float = 0.0,
+        m3s1_grouped_stopping_early_mass_coef: float = 1.0,
+        m3s1_grouped_stopping_early_mass_budget: float = 0.05,
+        m3s1_grouped_stopping_prefix_early_mass_budget: float | None = None,
+        m3s1_grouped_stopping_no_event_coef: float = 1.0,
+        m3s1_grouped_stopping_boundary_threshold: float = 0.0,
+        m3s1_grouped_stopping_detach_latent: bool = False,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -201,6 +275,29 @@ class AdaptiveKLPPO(PPO):
         self.a7_event_credit_separate_update_max_grad_norm = float(
             max(0.0, a7_event_credit_separate_update_max_grad_norm)
         )
+        self.a7_event_policy_margin_coef = float(max(0.0, a7_event_policy_margin_coef))
+        self.a7_event_policy_margin = float(max(0.0, a7_event_policy_margin))
+        self.a7_event_policy_projection_margin_coef = float(max(0.0, a7_event_policy_projection_margin_coef))
+        self.a7_event_policy_separate_update_enabled = bool(a7_event_policy_separate_update_enabled)
+        self.a7_event_policy_separate_update_max_grad_norm = float(
+            max(0.0, a7_event_policy_separate_update_max_grad_norm)
+        )
+        self.a7_event_policy_separate_update_steps = max(1, int(a7_event_policy_separate_update_steps))
+        self.m3s1_grouped_stopping_coef = float(max(0.0, m3s1_grouped_stopping_coef))
+        self.m3s1_grouped_stopping_early_mass_coef = float(max(0.0, m3s1_grouped_stopping_early_mass_coef))
+        self.m3s1_grouped_stopping_early_mass_budget = float(max(0.0, m3s1_grouped_stopping_early_mass_budget))
+        self.m3s1_grouped_stopping_prefix_early_mass_budget = (
+            None
+            if m3s1_grouped_stopping_prefix_early_mass_budget is None
+            else float(max(0.0, m3s1_grouped_stopping_prefix_early_mass_budget))
+        )
+        self.m3s1_grouped_stopping_no_event_coef = float(max(0.0, m3s1_grouped_stopping_no_event_coef))
+        self.m3s1_grouped_stopping_boundary_threshold = float(m3s1_grouped_stopping_boundary_threshold)
+        self.m3s1_grouped_stopping_detach_latent = bool(m3s1_grouped_stopping_detach_latent)
+        self._m3s1_grouped_stopping_sidecar: _M3S1GroupedStoppingSidecar | None = None
+        self._m3s1_last_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
+        self._m3s1_last_grouped_stopping_grad_norm = 0.0
+        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
         super().__init__(*args, **kwargs)
 
     def _a6_first_event_enabled(self) -> bool:
@@ -219,8 +316,24 @@ class AdaptiveKLPPO(PPO):
             or self.a7_event_credit_projection_delta_align_coef > 0.0
         )
 
+    def _a7_event_policy_margin_enabled(self) -> bool:
+        return bool(
+            self.a7_event_policy_margin_coef > 0.0
+            or self.a7_event_policy_projection_margin_coef > 0.0
+        )
+
+    def _a7_first_event_aux_enabled(self) -> bool:
+        return bool(self._a7_event_credit_enabled() or self._a7_event_policy_margin_enabled())
+
+    def _m3s1_grouped_stopping_enabled(self) -> bool:
+        return bool(float(getattr(self, "m3s1_grouped_stopping_coef", 0.0)) > 0.0)
+
     def _first_event_label_collection_enabled(self) -> bool:
-        return bool(self._a6_first_event_enabled() or self._a7_event_credit_enabled())
+        return bool(
+            self._a6_first_event_enabled()
+            or self._a7_first_event_aux_enabled()
+            or self._m3s1_grouped_stopping_enabled()
+        )
 
     def _should_use_device_rollout_buffer(self) -> bool:
         if getattr(self.device, "type", str(self.device)) != "cuda":
@@ -514,6 +627,267 @@ class AdaptiveKLPPO(PPO):
             device=self.device,
         )
 
+    @staticmethod
+    def _slice_first_event_labels(
+        labels: FirstEventHazardLabels,
+        *,
+        start: int,
+        count: int,
+    ) -> FirstEventHazardLabels:
+        end = int(start) + int(count)
+        return replace(
+            labels,
+            active=labels.active[start:end],
+            target=labels.target[start:end],
+            weight=labels.weight[start:end],
+            source=labels.source[start:end],
+            window_age=labels.window_age[start:end],
+            window_id=labels.window_id[start:end],
+            had_accepted=labels.had_accepted[start:end],
+        )
+
+    @staticmethod
+    def _a7_first_event_rows_to_inputs(
+        rows: list[_A7FirstEventRolloutRow],
+    ) -> tuple[list[str], list[bool], list[bool], list[int], list[bool]]:
+        return (
+            [row.engagement_state for row in rows],
+            [bool(row.fire_mask) for row in rows],
+            [bool(row.fire_once_accepted) for row in rows],
+            [int(row.episode_id) for row in rows],
+            [bool(row.launch_window_open) for row in rows],
+        )
+
+    @staticmethod
+    def _a7_first_event_rows_from_rollout_inputs(
+        *,
+        engagement_state: list[str],
+        fire_mask: list[bool],
+        fire_once_accepted: list[bool],
+        episode_id: list[int],
+        launch_window_open: list[bool],
+    ) -> list[_A7FirstEventRolloutRow]:
+        count = len(engagement_state)
+        if not (
+            len(fire_mask)
+            == len(fire_once_accepted)
+            == len(episode_id)
+            == len(launch_window_open)
+            == count
+        ):
+            raise ValueError("A7 first-event rollout rows must have the same flattened length")
+        return [
+            _A7FirstEventRolloutRow(
+                engagement_state=str(engagement_state[idx]),
+                fire_mask=bool(fire_mask[idx]),
+                fire_once_accepted=bool(fire_once_accepted[idx]),
+                episode_id=int(episode_id[idx]),
+                launch_window_open=bool(launch_window_open[idx]),
+            )
+            for idx in range(count)
+        ]
+
+    @staticmethod
+    def _a7_first_event_rows_by_env(
+        rows: list[_A7FirstEventRolloutRow],
+        *,
+        n_envs: int,
+    ) -> list[list[_A7FirstEventRolloutRow]]:
+        env_count = max(1, int(n_envs))
+        per_env: list[list[_A7FirstEventRolloutRow]] = [[] for _ in range(env_count)]
+        for flat_idx, row in enumerate(rows):
+            per_env[int(flat_idx) % env_count].append(row)
+        return per_env
+
+    def _a7_cross_rollout_first_event_enabled(self, launch_window_open: list[bool] | None) -> bool:
+        return bool(
+            not self._a6_first_event_enabled()
+            and self._a7_first_event_aux_enabled()
+            and launch_window_open is not None
+        )
+
+    def _get_a7_first_event_rollout_history(self, n_envs: int) -> list[list[_A7FirstEventRolloutRow]]:
+        env_count = max(1, int(n_envs))
+        history = getattr(self, "_a7_first_event_rollout_history", None)
+        if not isinstance(history, list) or len(history) != env_count:
+            history = [[] for _ in range(env_count)]
+            self._a7_first_event_rollout_history = history
+        return history
+
+    def _a7_build_cross_rollout_first_event_labels(
+        self,
+        *,
+        engagement_state: list[str],
+        fire_mask: list[bool],
+        fire_once_accepted: list[bool],
+        episode_id: list[int],
+        launch_window_open: list[bool],
+        n_envs: int,
+    ) -> tuple[
+        FirstEventHazardLabels,
+        FirstEventHazardLabels,
+        list[list[_A7FirstEventRolloutRow]],
+        int,
+    ]:
+        current_rows = self._a7_first_event_rows_from_rollout_inputs(
+            engagement_state=engagement_state,
+            fire_mask=fire_mask,
+            fire_once_accepted=fire_once_accepted,
+            episode_id=episode_id,
+            launch_window_open=launch_window_open,
+        )
+        current_rows_by_env = self._a7_first_event_rows_by_env(current_rows, n_envs=n_envs)
+        history = self._get_a7_first_event_rollout_history(n_envs)
+        prefix_rows: list[_A7FirstEventRolloutRow] = []
+        for env_idx, rows in enumerate(current_rows_by_env):
+            if not rows:
+                continue
+            carried = history[env_idx]
+            if carried and int(carried[-1].episode_id) == int(rows[0].episode_id):
+                prefix_rows.extend(carried)
+
+        local_labels = self._build_a6_first_event_labels_from_rollout_infos(
+            engagement_state=engagement_state,
+            fire_mask=fire_mask,
+            fire_once_accepted=fire_once_accepted,
+            episode_id=episode_id,
+            launch_window_open=launch_window_open,
+        )
+        if not prefix_rows:
+            return local_labels, local_labels, current_rows_by_env, 0
+
+        combined_rows = [*prefix_rows, *current_rows]
+        (
+            combined_engagement_state,
+            combined_fire_mask,
+            combined_fire_once_accepted,
+            combined_episode_id,
+            combined_launch_window_open,
+        ) = self._a7_first_event_rows_to_inputs(combined_rows)
+        combined_labels = self._build_a6_first_event_labels_from_rollout_infos(
+            engagement_state=combined_engagement_state,
+            fire_mask=combined_fire_mask,
+            fire_once_accepted=combined_fire_once_accepted,
+            episode_id=combined_episode_id,
+            launch_window_open=combined_launch_window_open,
+        )
+        labels = self._slice_first_event_labels(
+            combined_labels,
+            start=len(prefix_rows),
+            count=len(current_rows),
+        )
+        return labels, local_labels, current_rows_by_env, len(prefix_rows)
+
+    def _update_a7_first_event_rollout_history(
+        self,
+        *,
+        current_rows_by_env: list[list[_A7FirstEventRolloutRow]],
+        n_envs: int,
+        env_episode_id_after_rollout: np.ndarray | list[int] | None,
+    ) -> list[list[_A7FirstEventRolloutRow]]:
+        history = self._get_a7_first_event_rollout_history(n_envs)
+        final_episode_id: list[int] | None = None
+        if env_episode_id_after_rollout is not None:
+            final_array = np.asarray(env_episode_id_after_rollout, dtype=np.int64).reshape(-1)
+            if int(final_array.size) == int(len(history)):
+                final_episode_id = [int(value) for value in final_array.tolist()]
+
+        for env_idx, rows in enumerate(current_rows_by_env):
+            carried = history[env_idx]
+            kept: list[_A7FirstEventRolloutRow] = []
+            if rows and carried and int(carried[-1].episode_id) == int(rows[0].episode_id):
+                kept = list(carried)
+            elif not rows and carried:
+                kept = list(carried)
+
+            current_episode = int(kept[-1].episode_id) if kept else None
+            for row in rows:
+                row_episode = int(row.episode_id)
+                if current_episode is None or row_episode != current_episode:
+                    kept = []
+                    current_episode = row_episode
+                kept.append(row)
+
+            if final_episode_id is not None:
+                if not kept or int(kept[-1].episode_id) != int(final_episode_id[env_idx]):
+                    kept = []
+            history[env_idx] = kept
+        return history
+
+    def _a7_first_event_history_has_pending_shadow(self, rows: list[_A7FirstEventRolloutRow]) -> bool:
+        if not rows:
+            return False
+        launch_min_age = max(1, int(self.a6_first_event_launch_window_min_window_age_steps))
+        cursor = 0
+        while cursor < len(rows):
+            row = rows[cursor]
+            if not (str(row.engagement_state) == "AuthorizedReady" and bool(row.fire_mask)):
+                cursor += 1
+                continue
+            start = cursor
+            while cursor < len(rows):
+                window_row = rows[cursor]
+                if not (str(window_row.engagement_state) == "AuthorizedReady" and bool(window_row.fire_mask)):
+                    break
+                cursor += 1
+            for pos, window_row in enumerate(rows[start:cursor]):
+                if not bool(window_row.fire_once_accepted):
+                    continue
+                age = int(pos) + 1
+                quality_open = bool(window_row.launch_window_open) and age >= launch_min_age
+                return not quality_open
+        return False
+
+    def _record_a7_cross_rollout_first_event_stats(
+        self,
+        *,
+        labels: FirstEventHazardLabels,
+        local_labels: FirstEventHazardLabels,
+        history: list[list[_A7FirstEventRolloutRow]],
+        prefix_count: int,
+    ) -> None:
+        active = labels.active.detach().cpu().reshape(-1).to(dtype=th.bool)
+        target = labels.target.detach().cpu().reshape(-1)
+        weight = labels.weight.detach().cpu().reshape(-1)
+        source = labels.source.detach().cpu().reshape(-1).long()
+        local_active = local_labels.active.detach().cpu().reshape(-1).to(dtype=th.bool)
+        local_target = local_labels.target.detach().cpu().reshape(-1)
+        local_weight = local_labels.weight.detach().cpu().reshape(-1)
+        local_source = local_labels.source.detach().cpu().reshape(-1).long()
+        positive_shadow = (
+            active
+            & (weight > 0.0)
+            & (target > 0.5)
+            & (source == int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY))
+        )
+        local_positive_shadow = (
+            local_active
+            & (local_weight > 0.0)
+            & (local_target > 0.5)
+            & (local_source == int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY))
+        )
+        recovered_shadow = positive_shadow & ~local_positive_shadow
+        changed = (
+            (active != local_active)
+            | ((target - local_target).abs() > 1.0e-6)
+            | ((weight - local_weight).abs() > 1.0e-6)
+            | (source != local_source)
+        )
+        self._a7_cross_rollout_last_context_row_count = int(prefix_count)
+        self._a7_cross_rollout_last_carried_shadow_positive_count = int(
+            recovered_shadow.sum().item()
+        )
+        self._a7_cross_rollout_last_first_event_count = int(changed.sum().item())
+        self._a7_cross_rollout_last_carried_shadow_pending_envs = int(
+            sum(1 for rows in history if self._a7_first_event_history_has_pending_shadow(rows))
+        )
+
+    def _reset_a7_cross_rollout_first_event_stats(self) -> None:
+        self._a7_cross_rollout_last_context_row_count = 0
+        self._a7_cross_rollout_last_carried_shadow_positive_count = 0
+        self._a7_cross_rollout_last_first_event_count = 0
+        self._a7_cross_rollout_last_carried_shadow_pending_envs = 0
+
     def _record_a6_first_event_curriculum_seeds(self, labels, episode_id: list[int]) -> None:
         seeded = getattr(self, "_a6_first_event_curriculum_seeded_episode_ids", None)
         if seeded is None:
@@ -525,6 +899,125 @@ class AdaptiveKLPPO(PPO):
             if int(source) == A6_FIRST_EVENT_SOURCE_CURRICULUM and float(targets[idx]) > 0.5:
                 seeded.add(int(episode_id[idx]))
 
+    @staticmethod
+    def _m3s1_rollout_observation_snapshot(rollout_buffer: RolloutBuffer) -> dict[str, Any] | None:
+        observations = getattr(rollout_buffer, "observations", None)
+        if not isinstance(observations, dict):
+            return None
+        snapshot: dict[str, Any] = {}
+        for key, value in observations.items():
+            if th.is_tensor(value):
+                snapshot[str(key)] = value.detach().cpu().clone()
+            else:
+                snapshot[str(key)] = np.array(value, copy=True)
+        return snapshot
+
+    def _build_m3s1_grouped_stopping_sidecar(
+        self,
+        rollout_buffer: RolloutBuffer,
+        *,
+        fire_mask: list[bool],
+        fire_once_accepted: list[bool],
+        episode_id: list[int],
+        launch_window_open: list[bool],
+    ) -> _M3S1GroupedStoppingSidecar | None:
+        if not self._m3s1_grouped_stopping_enabled():
+            return None
+        n_envs = max(1, int(getattr(rollout_buffer, "n_envs", 1)))
+        count = len(fire_mask)
+        if not (len(fire_once_accepted) == len(episode_id) == len(launch_window_open) == count):
+            raise ValueError("M3-S1 grouped stopping rollout rows must have the same flattened length")
+        if count <= 0 or count % n_envs != 0:
+            return None
+
+        observations = self._m3s1_rollout_observation_snapshot(rollout_buffer)
+        if observations is None:
+            return None
+
+        ordered_episodes: list[int] = []
+        seen_episodes: set[int] = set()
+        for value in episode_id:
+            episode = int(value)
+            if episode not in seen_episodes:
+                ordered_episodes.append(episode)
+                seen_episodes.add(episode)
+
+        launch_min_age = max(1, int(self.a6_first_event_launch_window_min_window_age_steps))
+        groups: list[_M3S1GroupedStoppingSidecarGroup] = []
+        group_counter = 0
+        accepted_event_count = 0
+        one_shot_violation_count = 0
+        closed_mask_accepted_event_count = 0
+        for episode in ordered_episodes:
+            indices = [idx for idx, value in enumerate(episode_id) if int(value) == episode]
+            if not indices:
+                continue
+            full_accepted_indices = [idx for idx in indices if bool(fire_once_accepted[int(idx)])]
+            accepted_event_count += len(full_accepted_indices)
+            one_shot_violation_count += max(0, len(full_accepted_indices) - 1)
+            closed_mask_accepted_event_count += sum(
+                1 for idx in full_accepted_indices if not bool(fire_mask[int(idx)])
+            )
+
+            group_flat_indices: list[int] = []
+            legal_mask: list[bool] = []
+            quality: list[bool] = []
+            accepted: list[bool] = []
+            legal_window_age = 0
+            for raw_idx in indices:
+                flat_idx = int(raw_idx)
+                is_legal = bool(fire_mask[flat_idx])
+                if is_legal:
+                    legal_window_age += 1
+                else:
+                    legal_window_age = 0
+                group_flat_indices.append(flat_idx)
+                legal_mask.append(is_legal)
+                quality.append(
+                    is_legal
+                    and bool(launch_window_open[flat_idx])
+                    and legal_window_age >= launch_min_age
+                )
+                accepted.append(bool(fire_once_accepted[flat_idx]))
+                if accepted[-1]:
+                    break
+
+            accepted_positions = [idx for idx, value in enumerate(accepted) if bool(value)]
+            if accepted_positions and not bool(quality[int(accepted_positions[0])]):
+                censoring_kind = M3S1_CENSOR_EARLY_EVENT_PREFIX
+                censor_step = int(group_flat_indices[int(accepted_positions[0])] // n_envs)
+            elif accepted_positions:
+                censoring_kind = M3S1_CENSOR_NONE
+                censor_step = int(group_flat_indices[int(accepted_positions[0])] // n_envs)
+            else:
+                censoring_kind = M3S1_CENSOR_TIMEOUT
+                censor_step = None
+
+            groups.append(
+                _M3S1GroupedStoppingSidecarGroup(
+                    group_id=f"{episode}:{group_counter}",
+                    episode_id=int(episode),
+                    row_indices=tuple(group_flat_indices),
+                    step_indices=tuple(int(value // n_envs) for value in group_flat_indices),
+                    env_indices=tuple(int(value % n_envs) for value in group_flat_indices),
+                    legal_mask=tuple(legal_mask),
+                    quality_mask=tuple(quality),
+                    accepted_event=tuple(accepted),
+                    censoring_kind=censoring_kind,
+                    censor_step=censor_step,
+                    support_horizon=max(group_flat_indices),
+                )
+            )
+            group_counter += 1
+
+        return _M3S1GroupedStoppingSidecar(
+            groups=tuple(groups),
+            observations=observations,
+            accepted_event_count=int(accepted_event_count),
+            one_shot_violation_count=int(one_shot_violation_count),
+            closed_mask_accepted_event_count=int(closed_mask_accepted_event_count),
+        )
+
     def _attach_a6_first_event_labels_to_rollout_buffer(
         self,
         rollout_buffer: RolloutBuffer,
@@ -534,21 +1027,54 @@ class AdaptiveKLPPO(PPO):
         fire_once_accepted: list[bool],
         episode_id: list[int],
         launch_window_open: list[bool] | None = None,
-    ) -> None:
+        env_episode_id_after_rollout: np.ndarray | list[int] | None = None,
+    ) -> FirstEventHazardLabels | None:
         if not self._first_event_label_collection_enabled():
-            return
+            return None
         setter = getattr(rollout_buffer, "set_a6_first_event_labels", None)
         if not callable(setter):
-            return
-        labels = self._build_a6_first_event_labels_from_rollout_infos(
-            engagement_state=engagement_state,
-            fire_mask=fire_mask,
-            fire_once_accepted=fire_once_accepted,
-            episode_id=episode_id,
-            launch_window_open=launch_window_open,
-        )
+            return None
+        use_cross_rollout = self._a7_cross_rollout_first_event_enabled(launch_window_open)
+        local_labels = None
+        current_rows_by_env = None
+        prefix_count = 0
+        n_envs = max(1, int(getattr(rollout_buffer, "n_envs", 1)))
+        if use_cross_rollout:
+            assert launch_window_open is not None
+            labels, local_labels, current_rows_by_env, prefix_count = (
+                self._a7_build_cross_rollout_first_event_labels(
+                    engagement_state=engagement_state,
+                    fire_mask=fire_mask,
+                    fire_once_accepted=fire_once_accepted,
+                    episode_id=episode_id,
+                    launch_window_open=launch_window_open,
+                    n_envs=n_envs,
+                )
+            )
+        else:
+            self._reset_a7_cross_rollout_first_event_stats()
+            labels = self._build_a6_first_event_labels_from_rollout_infos(
+                engagement_state=engagement_state,
+                fire_mask=fire_mask,
+                fire_once_accepted=fire_once_accepted,
+                episode_id=episode_id,
+                launch_window_open=launch_window_open,
+            )
         setter(labels)
+        if use_cross_rollout and local_labels is not None and current_rows_by_env is not None:
+            history = self._update_a7_first_event_rollout_history(
+                current_rows_by_env=current_rows_by_env,
+                n_envs=n_envs,
+                env_episode_id_after_rollout=env_episode_id_after_rollout,
+            )
+            self._record_a7_cross_rollout_first_event_stats(
+                labels=labels,
+                local_labels=local_labels,
+                history=history,
+                prefix_count=prefix_count,
+            )
         self._record_a6_first_event_curriculum_seeds(labels, episode_id)
+        return labels
 
     def collect_rollouts(
         self,
@@ -565,6 +1091,10 @@ class AdaptiveKLPPO(PPO):
 
         n_steps = 0
         rollout_buffer.reset()
+        self._m3s1_grouped_stopping_sidecar = None
+        self._m3s1_last_grouped_stopping_loss = None
+        self._m3s1_last_grouped_stopping_grad_norm = 0.0
+        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
         if self.use_sde:
             self.policy.reset_noise(env.num_envs)
 
@@ -689,7 +1219,16 @@ class AdaptiveKLPPO(PPO):
                     if self.a6_first_event_launch_window_enabled
                     else None
                 ),
+                env_episode_id_after_rollout=a6_env_episode_id,
             )
+            if self._m3s1_grouped_stopping_enabled():
+                self._m3s1_grouped_stopping_sidecar = self._build_m3s1_grouped_stopping_sidecar(
+                    rollout_buffer,
+                    fire_mask=a6_fire_mask,
+                    fire_once_accepted=a6_fire_once_accepted,
+                    episode_id=a6_episode_id,
+                    launch_window_open=a6_launch_window_open,
+                )
         rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
 
         callback.update_locals(locals())
@@ -1066,11 +1605,170 @@ class AdaptiveKLPPO(PPO):
             **source_stats,
         )
 
+    def _first_event_policy_margin_loss(
+        self,
+        rollout_data,
+        *,
+        coef: float | None = None,
+        projection_coef: float | None = None,
+    ) -> FirstEventPolicyMarginLoss | None:
+        if not self._a7_event_policy_margin_enabled():
+            return None
+        batch = first_event_credit_batch_from_rollout_data(rollout_data)
+        if batch is None:
+            return None
+        active, target, weight, window_id, source = batch
+        distribution = self.policy.get_distribution(rollout_data.observations)
+        logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+        if not callable(logit_delta_getter):
+            return None
+        logit_delta = logit_delta_getter()
+        if logit_delta is None:
+            return None
+
+        policy_active = None
+        if source is not None:
+            policy_active = source.to(device=logit_delta.device) != int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY)
+        base_loss = compute_first_event_policy_margin_loss(
+            logit_delta,
+            target.to(device=logit_delta.device),
+            active.to(device=logit_delta.device),
+            weight.to(device=logit_delta.device),
+            window_id=window_id.to(device=logit_delta.device) if window_id is not None else None,
+            policy_active=policy_active,
+            coef=(
+                float(self.a7_event_policy_margin_coef)
+                if coef is None
+                else float(max(0.0, coef))
+            ),
+            margin=float(self.a7_event_policy_margin),
+            positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
+            negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
+        )
+
+        projection_margin_coef = (
+            float(self.a7_event_policy_projection_margin_coef)
+            if projection_coef is None
+            else float(max(0.0, projection_coef))
+        )
+        if (
+            projection_margin_coef <= 0.0
+            or not self.a7_event_credit_legal_projection_enabled
+            or source is None
+        ):
+            return base_loss
+
+        shadow_active = (
+            active.to(device=logit_delta.device).reshape(-1).to(dtype=th.bool)
+            & (source.to(device=logit_delta.device).reshape(-1).long() == int(A6_FIRST_EVENT_SOURCE_SHADOW_QUALITY))
+        )
+        projection = project_air_combat_c2_roe_legal_open_observations(rollout_data.observations, shadow_active)
+        if projection is None:
+            return replace(
+                base_loss,
+                projection_active_count=int(shadow_active.sum().detach().cpu().item()),
+            )
+        projected_active = projection.active.to(device=logit_delta.device).reshape(-1).to(dtype=th.bool)
+        if int(projected_active.sum().detach().cpu().item()) <= 0:
+            return replace(base_loss, projection_active_count=0)
+
+        projected_distribution = self.policy.get_distribution(projection.observations)
+        projected_delta_getter = getattr(projected_distribution, "fire_event_logit_delta", None)
+        if not callable(projected_delta_getter):
+            return base_loss
+        projected_delta = projected_delta_getter()
+        if projected_delta is None:
+            return base_loss
+        projected_targets = th.ones_like(target.to(device=projected_delta.device, dtype=th.float32).reshape(-1))
+        projection_loss = compute_first_event_policy_margin_loss(
+            projected_delta,
+            projected_targets,
+            projected_active.to(device=projected_delta.device),
+            weight.to(device=projected_delta.device),
+            window_id=window_id.to(device=projected_delta.device) if window_id is not None else None,
+            coef=projection_margin_coef,
+            margin=float(self.a7_event_policy_margin),
+            positive_mass_cap=float(self.a7_event_credit_positive_mass_cap),
+            negative_mass_cap=float(self.a7_event_credit_negative_mass_cap),
+        )
+        projected_delta_active = projected_delta.reshape(-1)[projected_active.to(device=projected_delta.device)]
+        projection_delta_mean = (
+            float(projected_delta_active.detach().mean().cpu().item())
+            if int(projected_delta_active.numel()) > 0
+            else 0.0
+        )
+        combined_active = int(base_loss.active_count) + int(projection_loss.active_count)
+        combined_positive = int(base_loss.positive_count) + int(projection_loss.positive_count)
+        return FirstEventPolicyMarginLoss(
+            loss=base_loss.loss + projection_loss.loss,
+            unscaled_loss=base_loss.unscaled_loss + projection_loss.unscaled_loss,
+            active_count=combined_active,
+            positive_count=combined_positive,
+            weight_sum=float(base_loss.weight_sum) + float(projection_loss.weight_sum),
+            positive_frac=(float(combined_positive) / float(combined_active)) if combined_active > 0 else 0.0,
+            delta_mean=base_loss.delta_mean,
+            delta_positive_frac=base_loss.delta_positive_frac,
+            projection_active_count=int(projection_loss.active_count),
+            projection_delta_mean=projection_delta_mean,
+        )
+
     def _a7_event_credit_head_parameters(self) -> list[th.nn.Parameter]:
         credit_head = getattr(self.policy, "hybrid_event_credit_head", None)
         if credit_head is None:
             return []
         return [param for param in credit_head.parameters() if param.requires_grad]
+
+    def _a7_event_policy_margin_parameters(self) -> list[th.nn.Parameter]:
+        selected: list[th.nn.Parameter] = []
+        action_net = getattr(self.policy, "action_net", None)
+        if action_net is not None:
+            selected.extend(param for param in action_net.parameters() if param.requires_grad)
+        event_head = getattr(self.policy, "hybrid_event_head", None)
+        if event_head is not None:
+            selected.extend(param for param in event_head.parameters() if param.requires_grad)
+        mlp_extractor = getattr(self.policy, "mlp_extractor", None)
+        policy_net = getattr(mlp_extractor, "policy_net", None)
+        if policy_net is not None:
+            selected.extend(param for param in policy_net.parameters() if param.requires_grad)
+        return selected
+
+    def _first_event_policy_margin_separate_update(
+        self,
+        rollout_data,
+    ) -> tuple[FirstEventPolicyMarginLoss | None, float]:
+        if not self.a7_event_policy_separate_update_enabled:
+            return None, 0.0
+        selected_params = self._a7_event_policy_margin_parameters()
+        if not selected_params:
+            return None, 0.0
+
+        selected_ids = {id(param) for param in selected_params}
+        last_margin_loss: FirstEventPolicyMarginLoss | None = None
+        max_grad_norm_seen = 0.0
+        for _ in range(int(self.a7_event_policy_separate_update_steps)):
+            margin_loss = self._first_event_policy_margin_loss(
+                rollout_data,
+                coef=float(self.a7_event_policy_margin_coef),
+                projection_coef=float(self.a7_event_policy_projection_margin_coef),
+            )
+            if margin_loss is None:
+                break
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            margin_loss.loss.backward()
+            for param in self.policy.parameters():
+                if id(param) not in selected_ids:
+                    param.grad = None
+            max_norm = float(self.a7_event_policy_separate_update_max_grad_norm)
+            if max_norm > 0.0:
+                grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
+                grad_norm = float(grad_norm_tensor.detach().cpu().item())
+            else:
+                grad_norm = 0.0
+            max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            self.policy.optimizer.step()
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            last_margin_loss = margin_loss
+        return last_margin_loss, max_grad_norm_seen
 
     def _first_event_credit_separate_value_update(
         self,
@@ -1104,6 +1802,203 @@ class AdaptiveKLPPO(PPO):
         self.policy.optimizer.step()
         self.policy.optimizer.zero_grad(set_to_none=True)
         return credit_loss, grad_norm
+
+    def _m3s1_observations_for_group(
+        self,
+        sidecar: _M3S1GroupedStoppingSidecar,
+        group: _M3S1GroupedStoppingSidecarGroup,
+    ) -> dict[str, th.Tensor]:
+        observations: dict[str, th.Tensor] = {}
+        for key, source in sidecar.observations.items():
+            rows = []
+            for step_idx, env_idx in zip(group.step_indices, group.env_indices):
+                if th.is_tensor(source):
+                    rows.append(source[int(step_idx), int(env_idx)].to(device=self.device))
+                else:
+                    rows.append(th.as_tensor(source[int(step_idx), int(env_idx)], device=self.device))
+            observations[str(key)] = th.stack(rows, dim=0)
+        return observations
+
+    @staticmethod
+    def _m3s1_extend_float_values(values: list[float], tensor: th.Tensor) -> None:
+        values.extend(float(value) for value in tensor.detach().cpu().reshape(-1).tolist())
+
+    @staticmethod
+    def _m3s1_group_order(group: _M3S1GroupedStoppingSidecarGroup, *, device: th.device) -> th.Tensor:
+        env_indices = th.as_tensor(group.env_indices, device=device).reshape(-1).to(dtype=th.long)
+        step_indices = th.as_tensor(group.step_indices, device=device).reshape(-1).to(dtype=th.long)
+        if int(step_indices.numel()) <= 0:
+            return th.empty((0,), dtype=th.long, device=device)
+        env_stride = max(1, int(env_indices.max().detach().cpu().item()) + 1)
+        return th.argsort(step_indices * env_stride + env_indices)
+
+    def _m3s1_event_logit_delta_diagnostic(self, obs: dict[str, th.Tensor]) -> th.Tensor | None:
+        distribution_getter = getattr(self.policy, "get_distribution", None)
+        if not callable(distribution_getter):
+            return None
+        with th.no_grad():
+            distribution = distribution_getter(obs)
+            logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+            if not callable(logit_delta_getter):
+                return None
+            logit_delta = logit_delta_getter()
+            if logit_delta is None:
+                return None
+            return logit_delta.reshape(-1).detach()
+
+    def _m3s1_group_diagnostic_masks(
+        self,
+        group: _M3S1GroupedStoppingSidecarGroup,
+        logits: th.Tensor,
+    ) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, th.Tensor]:
+        device = logits.device
+        order = self._m3s1_group_order(group, device=device)
+        legal = th.as_tensor(group.legal_mask, device=device).reshape(-1).to(dtype=th.bool)
+        quality = th.as_tensor(group.quality_mask, device=device).reshape(-1).to(dtype=th.bool)
+        row_indices = th.as_tensor(group.row_indices, device=device).reshape(-1).to(dtype=th.long)
+        step_indices = th.as_tensor(group.step_indices, device=device).reshape(-1).to(dtype=th.long)
+        support = th.ones_like(legal, dtype=th.bool)
+        if group.support_horizon is not None:
+            support = support & (row_indices <= int(group.support_horizon))
+        if group.censor_step is not None and group.censoring_kind != M3S1_CENSOR_EARLY_EVENT_PREFIX:
+            support = support & (step_indices <= int(group.censor_step))
+
+        logits = logits[order]
+        legal = legal[order]
+        quality = quality[order]
+        support = support[order]
+        supported_legal = legal[support]
+        supported_quality = quality[support]
+        desirable = supported_legal & supported_quality
+        prewindow = th.zeros_like(desirable, dtype=th.bool)
+        no_window = th.zeros_like(desirable, dtype=th.bool)
+        if bool(desirable.any().detach().cpu().item()):
+            first_quality = int(th.nonzero(desirable, as_tuple=False).flatten()[0].detach().cpu().item())
+            positions = th.arange(int(desirable.numel()), device=device)
+            prewindow = supported_legal & (~supported_quality) & (positions < first_quality)
+        else:
+            no_window = supported_legal
+        return logits[support], supported_legal, desirable, prewindow, no_window
+
+    @staticmethod
+    def _m3s1_mean(values: list[float]) -> float:
+        return float(sum(values) / len(values)) if values else 0.0
+
+    def _m3s1_grouped_stopping_auxiliary_update(self) -> M3S1GroupedStoppingLoss | None:
+        self._m3s1_last_grouped_stopping_grad_norm = 0.0
+        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics()
+        if not self._m3s1_grouped_stopping_enabled():
+            return None
+        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        if sidecar is None or not sidecar.groups:
+            return None
+        stopping_getter = getattr(self.policy, "get_m3_stopping_logits", None)
+        if not callable(stopping_getter):
+            return None
+
+        evidence: list[M3S1GroupedStoppingEvidence] = []
+        stop_logit_values: list[float] = []
+        stop_logit_desirable_values: list[float] = []
+        stop_logit_prewindow_values: list[float] = []
+        stop_logit_no_window_values: list[float] = []
+        stop_logit_closed_mask_values: list[float] = []
+        event_logit_delta_values: list[float] = []
+        closed_mask_row_count = 0
+        for group in sidecar.groups:
+            obs = self._m3s1_observations_for_group(sidecar, group)
+            stopping_logits = stopping_getter(
+                obs,
+                detach_latent=bool(self.m3s1_grouped_stopping_detach_latent),
+            )
+            if stopping_logits is None:
+                return None
+            if int(stopping_logits.reshape(-1).numel()) != len(group.row_indices):
+                raise ValueError("M3-S1 stopping logits must match grouped sidecar rows")
+            flat_logits = stopping_logits.reshape(-1)
+            supported_logits, supported_legal, desirable, prewindow, no_window = (
+                self._m3s1_group_diagnostic_masks(group, flat_logits)
+            )
+            closed_mask = ~supported_legal
+            self._m3s1_extend_float_values(stop_logit_values, supported_logits)
+            self._m3s1_extend_float_values(stop_logit_desirable_values, supported_logits[desirable])
+            self._m3s1_extend_float_values(stop_logit_prewindow_values, supported_logits[prewindow])
+            self._m3s1_extend_float_values(stop_logit_no_window_values, supported_logits[no_window])
+            self._m3s1_extend_float_values(stop_logit_closed_mask_values, supported_logits[closed_mask])
+            closed_mask_row_count += int(closed_mask.sum().detach().cpu().item())
+
+            event_logit_delta = self._m3s1_event_logit_delta_diagnostic(obs)
+            if event_logit_delta is not None and int(event_logit_delta.numel()) == int(flat_logits.numel()):
+                order = self._m3s1_group_order(group, device=event_logit_delta.device)
+                supported = th.ones(
+                    (int(event_logit_delta.numel()),),
+                    dtype=th.bool,
+                    device=event_logit_delta.device,
+                )
+                row_indices = th.as_tensor(group.row_indices, device=event_logit_delta.device).reshape(-1).long()
+                step_indices = th.as_tensor(group.step_indices, device=event_logit_delta.device).reshape(-1).long()
+                if group.support_horizon is not None:
+                    supported = supported & (row_indices <= int(group.support_horizon))
+                if group.censor_step is not None and group.censoring_kind != M3S1_CENSOR_EARLY_EVENT_PREFIX:
+                    supported = supported & (step_indices <= int(group.censor_step))
+                self._m3s1_extend_float_values(
+                    event_logit_delta_values,
+                    event_logit_delta[order][supported[order]],
+                )
+            evidence.append(
+                M3S1GroupedStoppingEvidence(
+                    group_id=group.group_id,
+                    episode_id=group.episode_id,
+                    route_source=M3S1_ROUTE_ON_POLICY,
+                    row_indices=group.row_indices,
+                    step_indices=group.step_indices,
+                    env_indices=group.env_indices,
+                    legal_mask=group.legal_mask,
+                    quality_mask=group.quality_mask,
+                    stopping_logits=stopping_logits.reshape(-1),
+                    accepted_event=group.accepted_event,
+                    censoring_kind=group.censoring_kind,
+                    censor_step=group.censor_step,
+                    support_horizon=group.support_horizon,
+                )
+            )
+
+        self._m3s1_last_grouped_stopping_diagnostics = _M3S1GroupedStoppingDiagnostics(
+            stop_logit_mean=self._m3s1_mean(stop_logit_values),
+            stop_logit_desirable_mean=self._m3s1_mean(stop_logit_desirable_values),
+            stop_logit_prewindow_mean=self._m3s1_mean(stop_logit_prewindow_values),
+            stop_logit_no_window_mean=self._m3s1_mean(stop_logit_no_window_values),
+            stop_logit_closed_mask_mean=self._m3s1_mean(stop_logit_closed_mask_values),
+            event_logit_delta_diagnostic_mean=self._m3s1_mean(event_logit_delta_values),
+            stop_logit_count=len(stop_logit_values),
+            stop_logit_desirable_count=len(stop_logit_desirable_values),
+            stop_logit_prewindow_count=len(stop_logit_prewindow_values),
+            stop_logit_no_window_count=len(stop_logit_no_window_values),
+            closed_mask_row_count=int(closed_mask_row_count),
+            event_logit_delta_diagnostic_count=len(event_logit_delta_values),
+        )
+
+        grouped_loss = compute_m3s1_grouped_stopping_loss(
+            evidence,
+            coef=float(self.m3s1_grouped_stopping_coef),
+            early_mass_coef=float(self.m3s1_grouped_stopping_early_mass_coef),
+            early_mass_budget=float(self.m3s1_grouped_stopping_early_mass_budget),
+            prefix_early_mass_budget=self.m3s1_grouped_stopping_prefix_early_mass_budget,
+            no_event_coef=float(self.m3s1_grouped_stopping_no_event_coef),
+            boundary_threshold=float(self.m3s1_grouped_stopping_boundary_threshold),
+        )
+        self._m3s1_last_grouped_stopping_loss = grouped_loss
+        if (
+            grouped_loss.loss.requires_grad
+            and float(grouped_loss.loss.detach().cpu().item()) != 0.0
+            and int(grouped_loss.stats.active_group_count) > 0
+        ):
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            grouped_loss.loss.backward()
+            grad_norm_tensor = th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+            self._m3s1_last_grouped_stopping_grad_norm = float(grad_norm_tensor.detach().cpu().item())
+            self.policy.optimizer.step()
+            self.policy.optimizer.zero_grad(set_to_none=True)
+        return grouped_loss
 
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
@@ -1156,10 +2051,20 @@ class AdaptiveKLPPO(PPO):
         first_event_credit_source_legal_open_quality_advantage_means = []
         first_event_credit_separate_update_grad_norms = []
         first_event_credit_separate_update_counts = []
+        first_event_policy_margin_losses = []
+        first_event_policy_margin_active_counts = []
+        first_event_policy_margin_positive_fracs = []
+        first_event_policy_margin_delta_means = []
+        first_event_policy_margin_delta_positive_fracs = []
+        first_event_policy_margin_projection_active_counts = []
+        first_event_policy_margin_projection_delta_means = []
+        first_event_policy_margin_separate_update_grad_norms = []
+        first_event_policy_margin_separate_update_counts = []
         clip_fractions = []
 
         approx_kl_divs = []
         continue_training = True
+        m3s1_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
 
         def _append_first_event_credit_stats(
             credit_loss: FirstEventCreditLoss,
@@ -1209,10 +2114,33 @@ class AdaptiveKLPPO(PPO):
                 float(credit_loss.source_legal_open_quality_advantage_mean)
             )
 
+        def _append_first_event_policy_margin_stats(
+            margin_loss: FirstEventPolicyMarginLoss,
+        ) -> None:
+            first_event_policy_margin_losses.append(float(margin_loss.loss.detach().cpu()))
+            first_event_policy_margin_active_counts.append(int(margin_loss.active_count))
+            first_event_policy_margin_positive_fracs.append(float(margin_loss.positive_frac))
+            first_event_policy_margin_delta_means.append(float(margin_loss.delta_mean))
+            first_event_policy_margin_delta_positive_fracs.append(float(margin_loss.delta_positive_frac))
+            first_event_policy_margin_projection_active_counts.append(int(margin_loss.projection_active_count))
+            first_event_policy_margin_projection_delta_means.append(float(margin_loss.projection_delta_mean))
+
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
+                separate_policy_margin_loss, separate_policy_margin_grad_norm = (
+                    self._first_event_policy_margin_separate_update(rollout_data)
+                    if self.a7_event_policy_separate_update_enabled
+                    else (None, 0.0)
+                )
+                if separate_policy_margin_loss is not None:
+                    first_event_policy_margin_separate_update_grad_norms.append(
+                        float(separate_policy_margin_grad_norm)
+                    )
+                    first_event_policy_margin_separate_update_counts.append(1)
+                    _append_first_event_policy_margin_stats(separate_policy_margin_loss)
+
                 actions = rollout_data.actions
                 if isinstance(self.action_space, spaces.Discrete):
                     actions = rollout_data.actions.long().flatten()
@@ -1275,6 +2203,11 @@ class AdaptiveKLPPO(PPO):
                     first_event_hazard_active_counts.append(int(first_event_hazard_loss.active_count))
                     first_event_hazard_positive_fracs.append(float(first_event_hazard_loss.positive_frac))
                     loss = loss + first_event_hazard_loss.loss
+                if not self.a7_event_policy_separate_update_enabled:
+                    first_event_policy_margin_loss = self._first_event_policy_margin_loss(rollout_data)
+                    if first_event_policy_margin_loss is not None:
+                        _append_first_event_policy_margin_stats(first_event_policy_margin_loss)
+                        loss = loss + first_event_policy_margin_loss.loss
                 separate_credit_loss, separate_credit_grad_norm = (
                     self._first_event_credit_separate_value_update(rollout_data)
                     if self.a7_event_credit_separate_update_enabled
@@ -1324,6 +2257,8 @@ class AdaptiveKLPPO(PPO):
             if not continue_training:
                 break
 
+        m3s1_grouped_stopping_loss = self._m3s1_grouped_stopping_auxiliary_update()
+
         explained_var = explained_variance(
             self._to_numpy_flat(self.rollout_buffer.values),
             self._to_numpy_flat(self.rollout_buffer.returns),
@@ -1368,6 +2303,115 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "a6/target_positive_frac",
                 float(np.mean(first_event_hazard_positive_fracs)) if first_event_hazard_positive_fracs else 0.0,
+            )
+        if self._m3s1_grouped_stopping_enabled():
+            sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+            stats = m3s1_grouped_stopping_loss.stats if m3s1_grouped_stopping_loss is not None else None
+            diagnostics = getattr(
+                self,
+                "_m3s1_last_grouped_stopping_diagnostics",
+                _M3S1GroupedStoppingDiagnostics(),
+            )
+            active_row_count = float(stats.active_row_count) if stats else 0.0
+            boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
+            boundary_cross_in_window_count = float(stats.boundary_cross_in_window_count) if stats else 0.0
+            closed_mask_stop_attempt_count = float(stats.closed_mask_stop_attempt_count) if stats else 0.0
+            closed_mask_row_count = float(diagnostics.closed_mask_row_count)
+            self.logger.record("m3s1/grouped_stopping_coef", float(self.m3s1_grouped_stopping_coef))
+            self.logger.record(
+                "m3s1/grouped_stopping_loss",
+                (
+                    float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
+                    if m3s1_grouped_stopping_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s1/grouped_stopping_unscaled_loss",
+                (
+                    float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
+                    if m3s1_grouped_stopping_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record("m3s1/grouped_stopping_grad_norm", float(self._m3s1_last_grouped_stopping_grad_norm))
+            self.logger.record("m3s1/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0)
+            self.logger.record("m3s1/grouped_active_group_count", float(stats.active_group_count) if stats else 0.0)
+            self.logger.record("m3s1/grouped_row_count", float(stats.row_count) if stats else 0.0)
+            self.logger.record("m3s1/grouped_active_row_count", float(stats.active_row_count) if stats else 0.0)
+            self.logger.record("m3s1/window_group_count", float(stats.window_group_count) if stats else 0.0)
+            self.logger.record("m3s1/no_window_group_count", float(stats.no_window_group_count) if stats else 0.0)
+            self.logger.record("m3s1/early_prefix_group_count", float(stats.early_prefix_group_count) if stats else 0.0)
+            self.logger.record("m3s1/right_censor_group_count", float(stats.right_censor_group_count) if stats else 0.0)
+            self.logger.record(
+                "m3s1/grouped_labels_reached_loss",
+                1.0 if stats and stats.active_group_count > 0 else 0.0,
+            )
+            self.logger.record("m3s1/hazard_desirable_mass", float(stats.mean_p_window) if stats else 0.0)
+            self.logger.record("m3s1/hazard_early_mass", float(stats.mean_p_early) if stats else 0.0)
+            self.logger.record("m3s1/no_event_mass", float(stats.mean_p_none) if stats else 0.0)
+            self.logger.record("m3s1/stop_logit_mean", float(diagnostics.stop_logit_mean))
+            self.logger.record("m3s1/stop_logit_desirable_mean", float(diagnostics.stop_logit_desirable_mean))
+            self.logger.record("m3s1/stop_logit_prewindow_mean", float(diagnostics.stop_logit_prewindow_mean))
+            self.logger.record("m3s1/stop_logit_no_window_mean", float(diagnostics.stop_logit_no_window_mean))
+            self.logger.record("m3s1/stop_logit_closed_mask_mean", float(diagnostics.stop_logit_closed_mask_mean))
+            self.logger.record("m3s1/stop_logit_count", float(diagnostics.stop_logit_count))
+            self.logger.record("m3s1/stop_logit_desirable_count", float(diagnostics.stop_logit_desirable_count))
+            self.logger.record("m3s1/stop_logit_prewindow_count", float(diagnostics.stop_logit_prewindow_count))
+            self.logger.record("m3s1/stop_logit_no_window_count", float(diagnostics.stop_logit_no_window_count))
+            self.logger.record(
+                "m3s1/event_logit_delta_diagnostic_mean",
+                float(diagnostics.event_logit_delta_diagnostic_mean),
+            )
+            self.logger.record(
+                "m3s1/event_logit_delta_diagnostic_count",
+                float(diagnostics.event_logit_delta_diagnostic_count),
+            )
+            self.logger.record("m3s1/boundary_cross_count", boundary_cross_count)
+            self.logger.record(
+                "m3s1/boundary_cross_ratio",
+                boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
+            )
+            self.logger.record(
+                "m3s1/boundary_cross_in_window_count",
+                boundary_cross_in_window_count,
+            )
+            self.logger.record(
+                "m3s1/boundary_cross_in_window_ratio",
+                (
+                    boundary_cross_in_window_count / boundary_cross_count
+                    if boundary_cross_count > 0.0
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s1/closed_mask_stop_attempt_count",
+                closed_mask_stop_attempt_count,
+            )
+            self.logger.record("m3s1/closed_mask_row_count", closed_mask_row_count)
+            self.logger.record(
+                "m3s1/closed_mask_stop_attempt_ratio",
+                (
+                    closed_mask_stop_attempt_count / closed_mask_row_count
+                    if closed_mask_row_count > 0.0
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s1/accepted_event_count",
+                float(sidecar.accepted_event_count) if sidecar else 0.0,
+            )
+            self.logger.record(
+                "m3s1/one_shot_violation_count",
+                float(sidecar.one_shot_violation_count) if sidecar else 0.0,
+            )
+            self.logger.record(
+                "m3s1/closed_mask_accepted_event_count",
+                float(sidecar.closed_mask_accepted_event_count) if sidecar else 0.0,
+            )
+            self.logger.record(
+                "m3s1/grouped_stopping_detach_latent",
+                float(self.m3s1_grouped_stopping_detach_latent),
             )
         if self._a7_event_credit_enabled():
             self.logger.record(
@@ -1415,6 +2459,22 @@ class AdaptiveKLPPO(PPO):
                     if first_event_credit_separate_update_grad_norms
                     else 0.0
                 ),
+            )
+            self.logger.record(
+                "a7/evc_cross_rollout_context_rows",
+                float(getattr(self, "_a7_cross_rollout_last_context_row_count", 0)),
+            )
+            self.logger.record(
+                "a7/evc_carried_shadow_pending_envs",
+                float(getattr(self, "_a7_cross_rollout_last_carried_shadow_pending_envs", 0)),
+            )
+            self.logger.record(
+                "a7/evc_carried_shadow_positive_count_mean",
+                float(getattr(self, "_a7_cross_rollout_last_carried_shadow_positive_count", 0)),
+            )
+            self.logger.record(
+                "a7/evc_cross_rollout_first_event_count_mean",
+                float(getattr(self, "_a7_cross_rollout_last_first_event_count", 0)),
             )
             self.logger.record(
                 "a7/event_credit_legal_open_quality_weight",
@@ -1535,6 +2595,94 @@ class AdaptiveKLPPO(PPO):
                 (
                     float(np.mean(first_event_credit_projection_delta_means))
                     if first_event_credit_projection_delta_means
+                    else 0.0
+                ),
+            )
+
+        if self._a7_event_policy_margin_enabled():
+            self.logger.record(
+                "a7/event_policy_margin_loss",
+                float(np.mean(first_event_policy_margin_losses)) if first_event_policy_margin_losses else 0.0,
+            )
+            self.logger.record("a7/event_policy_margin_coef", float(self.a7_event_policy_margin_coef))
+            self.logger.record("a7/event_policy_margin", float(self.a7_event_policy_margin))
+            self.logger.record(
+                "a7/event_policy_projection_margin_coef",
+                float(self.a7_event_policy_projection_margin_coef),
+            )
+            self.logger.record(
+                "a7/event_policy_separate_update_enabled",
+                float(self.a7_event_policy_separate_update_enabled),
+            )
+            self.logger.record(
+                "a7/event_policy_separate_update_max_grad_norm",
+                float(self.a7_event_policy_separate_update_max_grad_norm),
+            )
+            self.logger.record(
+                "a7/event_policy_separate_update_steps",
+                int(self.a7_event_policy_separate_update_steps),
+            )
+            self.logger.record(
+                "a7/event_policy_separate_update_count_mean",
+                (
+                    float(np.mean(first_event_policy_margin_separate_update_counts))
+                    if first_event_policy_margin_separate_update_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_separate_update_grad_norm_mean",
+                (
+                    float(np.mean(first_event_policy_margin_separate_update_grad_norms))
+                    if first_event_policy_margin_separate_update_grad_norms
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_active_count_mean",
+                (
+                    float(np.mean(first_event_policy_margin_active_counts))
+                    if first_event_policy_margin_active_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_target_positive_frac",
+                (
+                    float(np.mean(first_event_policy_margin_positive_fracs))
+                    if first_event_policy_margin_positive_fracs
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_delta_mean",
+                (
+                    float(np.mean(first_event_policy_margin_delta_means))
+                    if first_event_policy_margin_delta_means
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_delta_positive_frac",
+                (
+                    float(np.mean(first_event_policy_margin_delta_positive_fracs))
+                    if first_event_policy_margin_delta_positive_fracs
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_projection_active_count_mean",
+                (
+                    float(np.mean(first_event_policy_margin_projection_active_counts))
+                    if first_event_policy_margin_projection_active_counts
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "a7/event_policy_margin_projection_delta_mean",
+                (
+                    float(np.mean(first_event_policy_margin_projection_delta_means))
+                    if first_event_policy_margin_projection_delta_means
                     else 0.0
                 ),
             )

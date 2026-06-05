@@ -125,6 +125,12 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - The 32k S probe completed as held evidence: focused tests passed, open-window fire probability rose, deterministic probing still recorded `0` releases, and quality-window advantage remained negative.
   - It is a pre-M2 structural observability experiment; it does not release sequence-native M2, doctrine, missile-authority, or Pk evidence.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json)
+  - Stage-1 M3-S1 grouped stopping short probe using the A7 explicit state-completion observation surface.
+  - Opens the independent `m3_stopping_head` and `m3s1_grouped_stopping_*` auxiliary objective while keeping A7 coefficients and A3/A5 legality masks unchanged.
+  - Uses an 8k budget for validation evidence, not a promoted formal training run.
+  - This entry can prove M3 stop-boundary movement only; executable fire timing remains held until the stopping head is connected to or compared against the hybrid event action path.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.

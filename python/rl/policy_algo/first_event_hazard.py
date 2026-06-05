@@ -85,6 +85,20 @@ class FirstEventCreditLoss:
     source_legal_open_quality_advantage_mean: float = 0.0
 
 
+@dataclass(frozen=True)
+class FirstEventPolicyMarginLoss:
+    loss: th.Tensor
+    unscaled_loss: th.Tensor
+    active_count: int
+    positive_count: int
+    weight_sum: float
+    positive_frac: float
+    delta_mean: float
+    delta_positive_frac: float
+    projection_active_count: int = 0
+    projection_delta_mean: float = 0.0
+
+
 def current_first_event_curriculum_coef(
     initial_coef: float,
     progress_remaining: float,
@@ -584,4 +598,100 @@ def compute_first_event_credit_loss(
         positive_frac=(float(positive_count) / float(active_count)) if active_count > 0 else 0.0,
         advantage_mean=float(advantage.detach().mean().cpu().item()),
         advantage_abs_mean=float(advantage.detach().abs().mean().cpu().item()),
+    )
+
+
+def compute_first_event_policy_margin_loss(
+    event_logit_delta: th.Tensor,
+    target: th.Tensor,
+    active: th.Tensor,
+    weight: th.Tensor | None = None,
+    *,
+    window_id: th.Tensor | None = None,
+    policy_active: th.Tensor | None = None,
+    coef: float = 1.0,
+    margin: float = 2.0,
+    positive_mass_cap: float = 1.0,
+    negative_mass_cap: float = 1.0,
+) -> FirstEventPolicyMarginLoss:
+    delta = event_logit_delta.reshape(-1)
+    targets = target.to(device=delta.device, dtype=delta.dtype).reshape(-1)
+    active_mask = active.to(device=delta.device).reshape(-1).to(dtype=th.bool)
+    weights = (
+        th.ones_like(targets)
+        if weight is None
+        else weight.to(device=delta.device, dtype=delta.dtype).reshape(-1)
+    )
+    if policy_active is None:
+        policy_mask = th.ones_like(active_mask, dtype=th.bool)
+    else:
+        policy_mask = policy_active.to(device=delta.device).reshape(-1).to(dtype=th.bool)
+    if not (
+        int(delta.numel())
+        == int(targets.numel())
+        == int(active_mask.numel())
+        == int(weights.numel())
+        == int(policy_mask.numel())
+    ):
+        raise ValueError("A7 event-policy margin tensors must flatten to the same length")
+
+    finite = th.isfinite(delta) & th.isfinite(targets) & th.isfinite(weights)
+    effective_weight = th.where(
+        active_mask & policy_mask & finite,
+        th.clamp(weights, min=0.0),
+        th.zeros_like(weights),
+    )
+    effective_weight = _cap_first_event_credit_window_mass(
+        effective_weight,
+        targets,
+        active_mask & policy_mask & finite,
+        window_id,
+        positive_mass_cap=float(positive_mass_cap),
+        negative_mass_cap=float(negative_mass_cap),
+    )
+    weight_sum_tensor = effective_weight.sum()
+    active_tensor = (effective_weight > 0.0).sum()
+    positive_tensor = ((targets > 0.5) & (effective_weight > 0.0)).sum()
+    zero = delta.sum() * 0.0
+    if float(weight_sum_tensor.detach().cpu().item()) <= 0.0:
+        return FirstEventPolicyMarginLoss(
+            loss=zero,
+            unscaled_loss=zero.detach(),
+            active_count=int(active_tensor.detach().cpu().item()),
+            positive_count=int(positive_tensor.detach().cpu().item()),
+            weight_sum=float(weight_sum_tensor.detach().cpu().item()),
+            positive_frac=0.0,
+            delta_mean=float(delta.detach().mean().cpu().item()) if int(delta.numel()) > 0 else 0.0,
+            delta_positive_frac=0.0,
+        )
+
+    signed_target = th.where(targets > 0.5, th.ones_like(targets), -th.ones_like(targets))
+    margin_value = float(max(0.0, margin))
+    violation = th.clamp(margin_value - signed_target * delta, min=0.0)
+    per_item = violation.pow(2)
+    unscaled = (per_item * effective_weight).sum() / weight_sum_tensor.clamp_min(1.0e-8)
+    loss = float(max(0.0, coef)) * unscaled
+    active_delta = delta[effective_weight > 0.0]
+    return FirstEventPolicyMarginLoss(
+        loss=loss,
+        unscaled_loss=unscaled.detach(),
+        active_count=int(active_tensor.detach().cpu().item()),
+        positive_count=int(positive_tensor.detach().cpu().item()),
+        weight_sum=float(weight_sum_tensor.detach().cpu().item()),
+        positive_frac=(
+            float(positive_tensor.detach().cpu().item())
+            / float(active_tensor.detach().cpu().item())
+            if int(active_tensor.detach().cpu().item()) > 0
+            else 0.0
+        ),
+        delta_mean=(
+            float(active_delta.detach().mean().cpu().item())
+            if int(active_delta.numel()) > 0
+            else 0.0
+        ),
+        delta_positive_frac=(
+            float((active_delta > 0.0).detach().float().mean().cpu().item())
+            if int(active_delta.numel()) > 0
+            else 0.0
+        ),
     )

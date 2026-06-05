@@ -11,7 +11,11 @@ ensure_repo_imports()
 
 from gym_envs.universal_env_parts import make_action_space
 from python.models.transformer import TransformerExtractor
-from python.rl.policy_algo.first_event_hazard import compute_first_event_credit_loss, compute_first_event_hazard_loss
+from python.rl.policy_algo.first_event_hazard import (
+    compute_first_event_credit_loss,
+    compute_first_event_hazard_loss,
+    compute_first_event_policy_margin_loss,
+)
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy
 
 
@@ -246,6 +250,62 @@ class A6EventHeadUpdateStrengthTests(unittest.TestCase):
         assert policy.action_net.bias.grad is not None
         self.assertGreater(float(policy.action_net.bias.grad[9].detach().abs().cpu().item()), 0.0)
         self.assertGreater(float(policy.action_net.bias.grad[11].detach().abs().cpu().item()), 0.0)
+
+    def test_a7_policy_margin_loss_pushes_positive_up_and_negative_down(self) -> None:
+        delta = th.tensor([0.0, 0.0], dtype=th.float32, requires_grad=True)
+        target = th.tensor([1.0, 0.0], dtype=th.float32)
+        active = th.ones_like(target, dtype=th.bool)
+        weight = th.ones_like(target)
+
+        loss = compute_first_event_policy_margin_loss(
+            delta,
+            target,
+            active,
+            weight,
+            coef=1.0,
+            margin=2.0,
+        ).loss
+        loss.backward()
+
+        self.assertIsNotNone(delta.grad)
+        assert delta.grad is not None
+        self.assertLess(float(delta.grad[0].detach().cpu().item()), 0.0)
+        self.assertGreater(float(delta.grad[1].detach().cpu().item()), 0.0)
+
+    def test_a7_policy_margin_loss_reaches_event_policy_path_not_credit_head(self) -> None:
+        policy = self._make_policy(
+            3.0e-5,
+            hybrid_event_head_lr_scale=10.0,
+            hybrid_event_credit_head_lr_scale=10.0,
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.hybrid_event_credit_head is not None
+        with th.no_grad():
+            policy.action_net.weight[9].fill_(0.01)
+            policy.action_net.weight[11].fill_(-0.01)
+        obs = self._open_first_shot_obs()
+        distribution = policy.get_distribution(obs)
+        event_delta = distribution.fire_event_logit_delta()
+        self.assertIsNotNone(event_delta)
+        assert event_delta is not None
+        target = th.ones_like(event_delta)
+        active = th.ones_like(event_delta, dtype=th.bool)
+        weight = th.ones_like(event_delta)
+
+        loss = compute_first_event_policy_margin_loss(
+            event_delta,
+            target,
+            active,
+            weight,
+            coef=0.3,
+            margin=2.0,
+        ).loss
+        loss.backward()
+
+        self.assertGreater(_grad_norm(policy.action_net.parameters()), 0.0)
+        self.assertGreater(_grad_norm(policy.hybrid_event_head.parameters()), 0.0)
+        self.assertGreater(_grad_norm(policy.mlp_extractor.policy_net.parameters()), 0.0)
+        self.assertAlmostEqual(_grad_norm(policy.hybrid_event_credit_head.parameters()), 0.0, places=8)
 
 
 if __name__ == "__main__":

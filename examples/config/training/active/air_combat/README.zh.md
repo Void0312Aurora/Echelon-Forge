@@ -124,6 +124,12 @@
   - 32k S probe 已完成为 held evidence：focused tests 通过，open-window fire probability 上升，但 deterministic probing 仍记录 `0` releases，quality-window advantage 仍为负。
   - 它是 pre-M2 结构可观测性实验；不释放 sequence-native M2、doctrine、missile-authority 或 Pk evidence。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json)
+  - Stage-1 M3-S1 grouped stopping 短探针，复用 A7 显式状态补全 observation surface。
+  - 打开 independent `m3_stopping_head` 与 `m3s1_grouped_stopping_*` auxiliary objective，同时保持 A7 系数和 A3/A5 legality masks 不变。
+  - 使用 8k budget 形成 validation evidence，不是 promoted formal training run。
+  - 该条目只能证明 M3 stop-boundary movement；在 stopping head 与 hybrid event action path 连接或对照前，executable fire timing 仍 held。
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
   - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。
