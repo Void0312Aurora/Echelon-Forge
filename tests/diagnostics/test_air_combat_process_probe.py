@@ -481,6 +481,68 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         self.assertEqual(summary["roe_state_at_fire"], [2, 2])
         self.assertEqual(summary["authorization_to_fire_at_fire"], [1, 1])
 
+    def test_legal_mask_fire_action_waits_for_open_mask_delay_and_one_shot(self) -> None:
+        old_open = probe._legal_fire_mask_open
+        try:
+            probe._legal_fire_mask_open = lambda *args, **kwargs: True
+
+            action, fired, age = probe._legal_mask_fire_action(
+                env=object(),
+                action_mode="air_combat_hybrid_v1",
+                already_fired=False,
+                legal_open_age_steps=30,
+                fire_delay_steps=31,
+            )
+
+            self.assertFalse(fired)
+            self.assertEqual(age, 31)
+            self.assertEqual(float(action[9]), 0.0)
+
+            action, fired, age = probe._legal_mask_fire_action(
+                env=object(),
+                action_mode="air_combat_hybrid_v1",
+                already_fired=False,
+                legal_open_age_steps=31,
+                fire_delay_steps=31,
+            )
+
+            self.assertTrue(fired)
+            self.assertEqual(age, 32)
+            self.assertEqual(float(action[9]), 1.0)
+
+            action, fired, age = probe._legal_mask_fire_action(
+                env=object(),
+                action_mode="air_combat_hybrid_v1",
+                already_fired=True,
+                legal_open_age_steps=32,
+                fire_delay_steps=31,
+            )
+
+            self.assertFalse(fired)
+            self.assertEqual(age, 33)
+            self.assertEqual(float(action[9]), 0.0)
+        finally:
+            probe._legal_fire_mask_open = old_open
+
+    def test_legal_mask_fire_action_resets_age_when_mask_closes(self) -> None:
+        old_open = probe._legal_fire_mask_open
+        try:
+            probe._legal_fire_mask_open = lambda *args, **kwargs: False
+
+            action, fired, age = probe._legal_mask_fire_action(
+                env=object(),
+                action_mode="air_combat_hybrid_v1",
+                already_fired=False,
+                legal_open_age_steps=12,
+                fire_delay_steps=0,
+            )
+
+            self.assertFalse(fired)
+            self.assertEqual(age, 0)
+            self.assertEqual(float(action[9]), 0.0)
+        finally:
+            probe._legal_fire_mask_open = old_open
+
 
 if __name__ == "__main__":
     unittest.main()

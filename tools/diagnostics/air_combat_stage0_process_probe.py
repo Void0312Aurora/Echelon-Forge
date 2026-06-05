@@ -25,6 +25,7 @@ from gym_envs.scenario_loader.reward_runtime.air_combat import (
     air_combat_c2_roe_state_from_mapping,
     classify_air_combat_c2_roe_event,
 )
+from gym_envs.universal_env_parts.air_combat_event_action import _build_fire_event_support
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 
@@ -363,6 +364,61 @@ def _switch_explore_action(_obs: dict[str, Any], rng: np.random.Generator, _step
     else:
         action[columns["weapon_select"]] = float(rng.random())
     return action
+
+
+def _legal_fire_mask_open(env, *, action_mode: str, fire_range_m: float = 0.0) -> bool:
+    base = _base_env(env)
+    target_id = int(getattr(base.loader, "primary_target_id", 0) or 0)
+    if target_id <= 0:
+        return False
+    if fire_range_m > 0.0:
+        distance_m = _distance_m(base.sim, int(base.agent_id), target_id)
+        if not math.isfinite(distance_m) or distance_m > float(fire_range_m):
+            return False
+    try:
+        truth = base.sim.get_agent_observation(base.agent_id)
+    except Exception:
+        truth = None
+    if str(action_mode) == "air_combat_hybrid_v1":
+        support_action = _range_gate_fire_action(fire=False, action_mode=action_mode)
+        try:
+            support = _build_fire_event_support(
+                base.loader,
+                support_action,
+                agent_id=int(base.agent_id),
+                truth=truth,
+            )
+            return bool(int(support.get("fire_mask", 0) or 0) > 0)
+        except Exception:
+            return False
+    return bool(getattr(truth, "can_fire", False))
+
+
+def _legal_mask_fire_action(
+    *,
+    env,
+    action_mode: str,
+    already_fired: bool,
+    legal_open_age_steps: int,
+    fire_delay_steps: int,
+    legal_fire_range_m: float = 0.0,
+) -> tuple[np.ndarray, bool, int]:
+    legal_open = _legal_fire_mask_open(
+        env,
+        action_mode=action_mode,
+        fire_range_m=float(legal_fire_range_m),
+    )
+    next_age = int(legal_open_age_steps) + 1 if legal_open else 0
+    fire = (
+        not bool(already_fired)
+        and bool(legal_open)
+        and next_age > max(0, int(fire_delay_steps))
+    )
+    return (
+        _range_gate_fire_action(fire=fire, action_mode=action_mode),
+        bool(fire),
+        int(next_age),
+    )
 
 
 def _uniform_action(env, _obs: dict[str, Any], rng: np.random.Generator, _step: int) -> np.ndarray:
@@ -1313,6 +1369,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             prev_missiles = int(getattr(base_env.sim.get_agent_observation(base_env.agent_id), "missiles_remaining", -1))
             release_count_so_far = 0
             range_gate_fired = False
+            legal_mask_fired = False
+            legal_open_age_steps = 0
             ep_rows: list[dict[str, Any]] = []
             initial_row = _snapshot_row(
                 episode=ep,
@@ -1334,6 +1392,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 policy_diagnostics: dict[str, Any] = {}
                 if args.mode == "forced_fire":
                     action = _forced_fire_action(obs, rng, step, action_mode=action_mode)
+                elif args.mode == "hold_fire":
+                    action = _range_gate_fire_action(fire=False, action_mode=action_mode)
                 elif args.mode == "range_gate_fire":
                     base_env = _base_env(env)
                     target_id = int(base_env.loader.primary_target_id or 0)
@@ -1347,6 +1407,17 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                     action = _range_gate_fire_action(fire=fire, action_mode=action_mode)
                     if fire:
                         range_gate_fired = True
+                elif args.mode == "legal_mask_fire":
+                    action, fire, legal_open_age_steps = _legal_mask_fire_action(
+                        env=env,
+                        action_mode=action_mode,
+                        already_fired=legal_mask_fired,
+                        legal_open_age_steps=legal_open_age_steps,
+                        fire_delay_steps=int(getattr(args, "fire_delay_steps", 0)),
+                        legal_fire_range_m=float(getattr(args, "legal_fire_range_m", 0.0)),
+                    )
+                    if fire:
+                        legal_mask_fired = True
                 elif args.mode == "switch_explore":
                     action = _switch_explore_action(obs, rng, step, action_mode=action_mode)
                 elif args.mode == "uniform":
@@ -1392,6 +1463,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "train_config": os.path.abspath(args.train_config) if args.train_config else None,
         "action_mode": action_mode,
         "mode": str(args.mode),
+        "fire_delay_steps": int(getattr(args, "fire_delay_steps", 0)),
+        "legal_fire_range_m": float(getattr(args, "legal_fire_range_m", 0.0)),
         "model": os.path.abspath(args.model) if args.model else None,
         "seed": int(args.seed),
         "episodes": int(args.episodes),
@@ -1477,10 +1550,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
     parser.add_argument(
         "--mode",
-        choices=["forced_fire", "range_gate_fire", "switch_explore", "uniform", "model"],
+        choices=[
+            "forced_fire",
+            "hold_fire",
+            "range_gate_fire",
+            "legal_mask_fire",
+            "switch_explore",
+            "uniform",
+            "model",
+        ],
         default="forced_fire",
     )
     parser.add_argument("--fire_range_m", type=float, default=12000.0)
+    parser.add_argument(
+        "--fire_delay_steps",
+        type=int,
+        default=0,
+        help="For --mode legal_mask_fire, wait this many consecutive legal-open steps before pulsing fire.",
+    )
+    parser.add_argument(
+        "--legal_fire_range_m",
+        type=float,
+        default=0.0,
+        help="For --mode legal_mask_fire, optional range gate in meters; <=0 disables the range gate.",
+    )
     parser.add_argument("--model", default="", help="SB3 model path for --mode model.")
     parser.add_argument("--algo", default="auto")
     parser.add_argument("--device", default="auto")
