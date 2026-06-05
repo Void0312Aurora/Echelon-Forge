@@ -13,9 +13,12 @@
 
 - 活跃计划与当前实现边界：
   [viz_unified_entry_session_profile_plan_20260516.zh.md](./archive/viz_unified_entry_session_profile_plan_20260516.zh.md)
+- 战术地图界面重构：
+  [tactical_map_interface_refactor/README.zh.md](./tactical_map_interface_refactor/README.zh.md)
 
 ## 当前继续推进重点
 
+- 在统一入口/profile/session 基础之上，把战术地图界面重构作为独立工作面推进
 - 扩展更多已验证海空资产的 asset registry 覆盖
 - 清理 runtime 退出路径和重复会话调试噪音
 - 继续保持“可视化便利性”和“真实性/世界参数”分层

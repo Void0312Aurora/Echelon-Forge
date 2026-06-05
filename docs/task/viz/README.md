@@ -17,9 +17,13 @@ Status: unified-entry refactor workline remains active; local entry converged on
 
 - Active plan and current implementation boundary:
   [viz_unified_entry_session_profile_plan_20260516.md](./archive/viz_unified_entry_session_profile_plan_20260516.md)
+- Tactical map interface refactor:
+  [tactical_map_interface_refactor/README.md](./tactical_map_interface_refactor/README.md)
 
 ## Current Follow-On Focus
 
+- advance the tactical map interface refactor as a separate work surface on top
+  of the unified-entry/profile/session foundation
 - extend asset-registry coverage for more verified naval/air assets
 - clean up runtime exit and repeated session debug flow noise
 - keep visualization convenience separate from realism/world-parameter changes
