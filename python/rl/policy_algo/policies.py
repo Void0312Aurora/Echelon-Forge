@@ -526,6 +526,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         hybrid_action_spec: Any | None = None,
         hybrid_event_head_lr_scale: float = 0.0,
         hybrid_event_credit_head_lr_scale: float = 0.0,
+        hybrid_event_use_m3_stopping_head: bool = False,
         m3_stopping_head_lr_scale: float = 0.0,
         **kwargs: Any,
     ):
@@ -536,6 +537,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         self._hmoe_residual_start_factor = float(min(max(0.0, hmoe_residual_start_factor), 1.0))
         self._hybrid_event_head_lr_scale = float(max(0.0, hybrid_event_head_lr_scale))
         self._hybrid_event_credit_head_lr_scale = float(max(0.0, hybrid_event_credit_head_lr_scale))
+        self._hybrid_event_use_m3_stopping_head = bool(hybrid_event_use_m3_stopping_head)
         self._m3_stopping_head_lr_scale = float(max(0.0, m3_stopping_head_lr_scale))
         self._hmoe_residual_gate = float(self._hmoe_residual_start_factor)
         self._hmoe_initial_lr = float(lr_schedule(1))
@@ -598,6 +600,7 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
         data["hybrid_action_spec"] = self._hybrid_action_spec_config
         data["hybrid_event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
         data["hybrid_event_credit_head_lr_scale"] = float(self._hybrid_event_credit_head_lr_scale)
+        data["hybrid_event_use_m3_stopping_head"] = bool(self._hybrid_event_use_m3_stopping_head)
         data["m3_stopping_head_lr_scale"] = float(self._m3_stopping_head_lr_scale)
         return data
 
@@ -855,34 +858,56 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
     def _apply_hybrid_event_head(self, mean_actions: th.Tensor, latent_pi: th.Tensor) -> th.Tensor:
         layout = self._hybrid_action_layout
         event_head = self.hybrid_event_head
-        if layout is None or event_head is None:
+        stopping_head = self.m3_stopping_head
+        if layout is None:
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
             self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+            self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 0.0
             return mean_actions
         hold_index = layout.event_hold_param_index
         fire_index = layout.event_fire_param_index
         if hold_index is None or fire_index is None:
             self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
             self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
+            self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 0.0
             return mean_actions
 
-        event_delta = event_head(latent_pi)
         adjusted = mean_actions.clone()
-        adjusted[:, int(hold_index)] = adjusted[:, int(hold_index)] + event_delta[:, 0]
-        adjusted[:, int(fire_index)] = adjusted[:, int(fire_index)] + event_delta[:, 1]
+        if event_head is not None:
+            event_delta = event_head(latent_pi)
+            adjusted[:, int(hold_index)] = adjusted[:, int(hold_index)] + event_delta[:, 0]
+            adjusted[:, int(fire_index)] = adjusted[:, int(fire_index)] + event_delta[:, 1]
 
-        event_delta_detached = event_delta.detach()
-        self._last_hmoe_route_stats["a6/event_head_enabled"] = 1.0
+            event_delta_detached = event_delta.detach()
+            self._last_hmoe_route_stats["a6/event_head_enabled"] = 1.0
+            self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(
+                event_delta_detached.abs().mean().item()
+            )
+            self._last_hmoe_route_stats["a6/event_head_delta_hold_mean"] = float(
+                event_delta_detached[:, 0].mean().item()
+            )
+            self._last_hmoe_route_stats["a6/event_head_delta_fire_mean"] = float(
+                event_delta_detached[:, 1].mean().item()
+            )
+        else:
+            self._last_hmoe_route_stats["a6/event_head_enabled"] = 0.0
         self._last_hmoe_route_stats["a6/event_head_lr_scale"] = float(self._hybrid_event_head_lr_scale)
-        self._last_hmoe_route_stats["a6/event_head_delta_abs_mean"] = float(
-            event_delta_detached.abs().mean().item()
-        )
-        self._last_hmoe_route_stats["a6/event_head_delta_hold_mean"] = float(
-            event_delta_detached[:, 0].mean().item()
-        )
-        self._last_hmoe_route_stats["a6/event_head_delta_fire_mean"] = float(
-            event_delta_detached[:, 1].mean().item()
-        )
+
+        if self._hybrid_event_use_m3_stopping_head and stopping_head is not None:
+            stopping_logits = stopping_head(latent_pi).reshape(-1)
+            midpoint = 0.5 * (adjusted[:, int(hold_index)] + adjusted[:, int(fire_index)])
+            adjusted[:, int(hold_index)] = midpoint - 0.5 * stopping_logits
+            adjusted[:, int(fire_index)] = midpoint + 0.5 * stopping_logits
+            stopping_detached = stopping_logits.detach()
+            self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 1.0
+            self._last_hmoe_route_stats["m3s2/event_adapter_logit_mean"] = float(
+                stopping_detached.mean().item()
+            )
+            self._last_hmoe_route_stats["m3s2/event_adapter_logit_abs_mean"] = float(
+                stopping_detached.abs().mean().item()
+            )
+        else:
+            self._last_hmoe_route_stats["m3s2/event_adapter_enabled"] = 0.0
         return adjusted
 
     def _compute_hybrid_event_credit_values(self, latent_pi: th.Tensor) -> th.Tensor | None:

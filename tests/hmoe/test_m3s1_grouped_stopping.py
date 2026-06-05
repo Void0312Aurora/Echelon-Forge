@@ -79,6 +79,289 @@ class M3S1GroupedStoppingTests(unittest.TestCase):
         )
         self.assertNotAlmostEqual(float(result.loss.detach().item()), float(row_bce_sum.item()))
 
+    def test_early_survival_penalty_directly_punishes_prewindow_mass(self) -> None:
+        low_early_logits = th.tensor([-8.0, 0.0, 0.0], requires_grad=True)
+        high_early_logits = th.tensor([4.0, 0.0, 0.0], requires_grad=True)
+
+        low = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    low_early_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            early_survival_coef=5.0,
+        )
+        high = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    high_early_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            early_survival_coef=5.0,
+        )
+
+        self.assertLess(low.stats.mean_p_early, high.stats.mean_p_early)
+        self.assertLess(float(low.loss.detach().item()), float(high.loss.detach().item()))
+
+    def test_window_delay_penalty_prefers_earlier_quality_mass(self) -> None:
+        early_logits = th.tensor([4.0, -4.0, -4.0, -4.0], requires_grad=True)
+        late_logits = th.tensor([-4.0, -4.0, -4.0, 4.0], requires_grad=True)
+
+        early = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    early_logits,
+                    legal_mask=[True, True, True, True],
+                    quality_mask=[True, True, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_delay_coef=5.0,
+        )
+        late = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    late_logits,
+                    legal_mask=[True, True, True, True],
+                    quality_mask=[True, True, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_delay_coef=5.0,
+        )
+
+        self.assertAlmostEqual(early.stats.mean_p_window, late.stats.mean_p_window, places=6)
+        self.assertLess(early.stats.mean_quality_delay, late.stats.mean_quality_delay)
+        self.assertLess(float(early.loss.detach().item()), float(late.loss.detach().item()))
+
+    def test_window_deadline_penalty_prefers_mass_before_deadline(self) -> None:
+        on_time_logits = th.tensor([-4.0, 4.0, -4.0, -4.0], requires_grad=True)
+        late_logits = th.tensor([-4.0, -4.0, -4.0, 4.0], requires_grad=True)
+
+        on_time = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    on_time_logits,
+                    legal_mask=[True, True, True, True],
+                    quality_mask=[True, True, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_deadline_coef=2.0,
+            window_deadline_steps=2,
+        )
+        late = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    late_logits,
+                    legal_mask=[True, True, True, True],
+                    quality_mask=[True, True, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_deadline_coef=2.0,
+            window_deadline_steps=2,
+        )
+
+        self.assertAlmostEqual(on_time.stats.mean_p_window, late.stats.mean_p_window, places=6)
+        self.assertGreater(on_time.stats.mean_p_deadline, late.stats.mean_p_deadline)
+        self.assertLess(float(on_time.loss.detach().item()), float(late.loss.detach().item()))
+
+    def test_window_contrastive_margin_penalizes_prewindow_anchor_over_quality_anchor(self) -> None:
+        bad_logits = th.tensor([1.0, -1.0, -1.0], requires_grad=True)
+        good_logits = th.tensor([-1.0, 1.5, 1.0], requires_grad=True)
+
+        bad_base = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    bad_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_contrastive_margin=2.0,
+        )
+        bad_margin = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    bad_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_contrastive_margin_coef=3.0,
+            window_contrastive_margin=2.0,
+        )
+        good_base = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    good_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_contrastive_margin=2.0,
+        )
+        good_margin = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    good_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_contrastive_margin_coef=3.0,
+            window_contrastive_margin=2.0,
+        )
+
+        self.assertAlmostEqual(bad_margin.stats.mean_quality_prewindow_logit_margin, -2.0, places=6)
+        self.assertAlmostEqual(bad_margin.stats.mean_quality_prewindow_margin_loss, 4.0, places=6)
+        self.assertAlmostEqual(
+            float(bad_margin.loss.detach().item() - bad_base.loss.detach().item()),
+            12.0,
+            places=5,
+        )
+        self.assertGreater(good_margin.stats.mean_quality_prewindow_logit_margin, 2.0)
+        self.assertAlmostEqual(good_margin.stats.mean_quality_prewindow_margin_loss, 0.0, places=6)
+        self.assertAlmostEqual(
+            float(good_margin.loss.detach().item()),
+            float(good_base.loss.detach().item()),
+            places=6,
+        )
+
+    def test_window_quality_boundary_penalty_requires_at_least_one_quality_anchor_near_threshold(self) -> None:
+        low_quality_logits = th.tensor([-3.0, -2.0, -4.0], requires_grad=True)
+        high_quality_logits = th.tensor([-3.0, 0.5, -4.0], requires_grad=True)
+
+        low_base = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    low_quality_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_quality_boundary_logit=0.0,
+        )
+        low_boundary = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    low_quality_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_quality_boundary_coef=2.0,
+            window_quality_boundary_logit=0.0,
+        )
+        high_base = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    high_quality_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_quality_boundary_logit=0.0,
+        )
+        high_boundary = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    high_quality_logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_quality_boundary_coef=2.0,
+            window_quality_boundary_logit=0.0,
+        )
+
+        self.assertAlmostEqual(low_boundary.stats.mean_quality_boundary_logit, -2.0, places=6)
+        self.assertAlmostEqual(low_boundary.stats.mean_quality_boundary_margin_loss, 2.0, places=6)
+        self.assertAlmostEqual(
+            float(low_boundary.loss.detach().item() - low_base.loss.detach().item()),
+            4.0,
+            places=5,
+        )
+        self.assertAlmostEqual(high_boundary.stats.mean_quality_boundary_logit, 0.5, places=6)
+        self.assertAlmostEqual(high_boundary.stats.mean_quality_boundary_margin_loss, 0.0, places=6)
+        self.assertAlmostEqual(
+            float(high_boundary.loss.detach().item()),
+            float(high_base.loss.detach().item()),
+            places=6,
+        )
+
+    def test_window_balanced_bce_penalizes_all_high_prewindow_logits(self) -> None:
+        all_high = th.tensor([4.0, 4.0, 4.0], requires_grad=True)
+        separated = th.tensor([-4.0, 4.0, 4.0], requires_grad=True)
+
+        bad = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    all_high,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_balanced_bce_coef=3.0,
+        )
+        good = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    separated,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_balanced_bce_coef=3.0,
+        )
+
+        self.assertGreater(bad.stats.mean_window_balanced_bce_loss, good.stats.mean_window_balanced_bce_loss)
+        self.assertLess(float(good.loss.detach().item()), float(bad.loss.detach().item()))
+
+    def test_long_prewindow_keeps_survival_gradient_in_log_domain(self) -> None:
+        logits = th.cat((th.zeros(800), th.full((100,), -8.0))).requires_grad_()
+        result = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    logits,
+                    legal_mask=[True] * 900,
+                    quality_mask=([False] * 800) + ([True] * 100),
+                )
+            ],
+            early_mass_coef=0.0,
+            early_survival_coef=1.0,
+            window_delay_coef=0.0,
+            window_deadline_coef=0.0,
+            window_quality_boundary_coef=0.0,
+            window_contrastive_margin_coef=0.0,
+            window_balanced_bce_coef=0.0,
+        )
+
+        result.loss.backward()
+
+        self.assertTrue(th.isfinite(result.loss))
+        self.assertIsNotNone(logits.grad)
+        assert logits.grad is not None
+        self.assertGreater(float(logits.grad[:800].mean().item()), 0.0)
+        self.assertLess(float(logits.grad[800:].mean().item()), 0.0)
+
     def test_legal_mask_blocks_hazard_but_counts_closed_boundary_attempts(self) -> None:
         logits = th.tensor([8.0, 8.0], requires_grad=True)
         result = compute_m3s1_grouped_stopping_loss(

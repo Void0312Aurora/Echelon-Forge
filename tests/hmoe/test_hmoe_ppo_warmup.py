@@ -901,6 +901,228 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertEqual(float(logged["m3s1/one_shot_violation_count"]), 0.0)
         self.assertEqual(float(logged["m3s1/closed_mask_accepted_event_count"]), 0.0)
 
+    def test_m3s2_event_window_auxiliary_updates_executable_event_policy_path(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_event_window_coef=1.0,
+            m3s2_event_window_early_mass_coef=0.5,
+            m3s2_event_window_early_mass_budget=0.05,
+            m3s2_event_window_delay_coef=0.25,
+            m3s2_event_window_deadline_coef=0.25,
+            m3s2_event_window_deadline_steps=2,
+            m3s2_event_window_quality_boundary_coef=1.0,
+            m3s2_event_window_quality_boundary_logit=0.0,
+            m3s2_event_window_contrastive_margin_coef=1.0,
+            m3s2_event_window_contrastive_margin=1.5,
+            m3s2_event_window_separate_update_enabled=True,
+            m3s2_event_window_dedicated_optimizer_enabled=True,
+            m3s2_event_window_separate_update_steps=2,
+            m3s2_event_window_max_grad_norm=2.0,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+                "hybrid_event_credit_head_lr_scale": 6.0,
+                "m3_stopping_head_lr_scale": 5.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        self.assertFalse(model._m3s1_grouped_stopping_enabled())
+        self.assertTrue(model._m3s2_event_window_enabled())
+        self.assertTrue(model._first_event_label_collection_enabled())
+        assert model.policy.hybrid_event_head is not None
+        assert model.policy.hybrid_event_credit_head is not None
+        assert model.policy.m3_stopping_head is not None
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+        self.assertEqual(sidecar.groups[0].quality_mask, (False, False, True, True))
+
+        before = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+        event_window_loss = model._m3s2_event_window_auxiliary_update()
+
+        self.assertIsNotNone(event_window_loss)
+        assert event_window_loss is not None
+        self.assertEqual(event_window_loss.stats.window_group_count, 1)
+        self.assertGreater(float(event_window_loss.loss.detach().cpu().item()), 0.0)
+        self.assertGreater(float(model._m3s2_last_event_window_grad_norm), 0.0)
+        self.assertGreater(float(event_window_loss.stats.mean_p_window), 0.0)
+        self.assertGreaterEqual(float(event_window_loss.stats.mean_p_deadline), 0.0)
+        self.assertGreaterEqual(float(event_window_loss.stats.mean_quality_boundary_margin_loss), 0.0)
+        self.assertGreaterEqual(float(event_window_loss.stats.mean_quality_prewindow_margin_loss), 0.0)
+
+        selected_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before[name], param.detach())
+            if name.startswith(("action_net.", "hybrid_event_head.", "mlp_extractor.policy_net.")):
+                selected_changed = selected_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(selected_changed)
+
+    def test_m3s2_event_window_can_train_dedicated_stopping_head_adapter(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_event_window_coef=1.0,
+            m3s2_event_window_early_mass_coef=0.5,
+            m3s2_event_window_early_mass_budget=0.05,
+            m3s2_event_window_quality_boundary_coef=1.0,
+            m3s2_event_window_quality_boundary_logit=0.0,
+            m3s2_event_window_contrastive_margin_coef=1.0,
+            m3s2_event_window_contrastive_margin=1.5,
+            m3s2_event_window_balanced_bce_coef=2.0,
+            m3s2_event_window_use_stopping_head=True,
+            m3s2_event_window_separate_update_enabled=True,
+            m3s2_event_window_dedicated_optimizer_enabled=True,
+            m3s2_event_window_separate_update_steps=2,
+            m3s2_event_window_max_grad_norm=2.0,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_use_m3_stopping_head": True,
+                "m3_stopping_head_lr_scale": 5.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.m3_stopping_head is not None
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        before = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+        event_window_loss = model._m3s2_event_window_auxiliary_update()
+
+        self.assertIsNotNone(event_window_loss)
+        assert event_window_loss is not None
+        self.assertEqual(event_window_loss.stats.window_group_count, 1)
+        self.assertGreater(float(model._m3s2_last_event_window_grad_norm), 0.0)
+        self.assertGreaterEqual(float(event_window_loss.stats.mean_window_balanced_bce_loss), 0.0)
+
+        selected_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before[name], param.detach())
+            if name.startswith("m3_stopping_head."):
+                selected_changed = selected_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(selected_changed)
+
+    def test_m3s2_support_preserving_collect_masks_until_quality_ready(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_window_age_steps=3,
+            m3s2_event_window_coef=1.0,
+            m3s2_event_window_support_preserving_collect_enabled=True,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+            },
+        )
+
+        first = model._m3s2_support_preserving_collect_masks(
+            fire_mask=[True],
+            launch_window_open=[False],
+            n_envs=1,
+        )
+        second = model._m3s2_support_preserving_collect_masks(
+            fire_mask=[True],
+            launch_window_open=[True],
+            n_envs=1,
+        )
+        third = model._m3s2_support_preserving_collect_masks(
+            fire_mask=[True],
+            launch_window_open=[True],
+            n_envs=1,
+        )
+
+        self.assertEqual(first, [True])
+        self.assertEqual(second, [True])
+        self.assertEqual(third, [False])
+        self.assertEqual(model._m3s2_support_preserving_collect_hold_count, 2)
+        self.assertEqual(model._m3s2_support_preserving_collect_candidate_count, 3)
+        self.assertEqual(model._m3s2_support_preserving_collect_quality_count, 1)
+
+        model.m3s2_event_window_support_preserving_hold_quality_enabled = True
+        fourth = model._m3s2_support_preserving_collect_masks(
+            fire_mask=[True],
+            launch_window_open=[True],
+            n_envs=1,
+        )
+        self.assertEqual(fourth, [True])
+        self.assertEqual(model._m3s2_support_preserving_collect_hold_count, 3)
+        self.assertEqual(model._m3s2_support_preserving_collect_quality_count, 2)
+
     def test_nonfinite_probe_preserves_m3s1_grouped_stopping_training_path(self) -> None:
         env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
         model = AdaptiveKLPPO(
@@ -965,6 +1187,91 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertGreater(float(logged["m3s1/grouped_stopping_grad_norm"]), 0.0)
         self.assertEqual(float(logged["m3s1/grouped_labels_reached_loss"]), 1.0)
         self.assertEqual(float(logged["m3s1/stop_logit_count"]), 4.0)
+
+    def test_nonfinite_probe_preserves_m3s2_event_window_training_path(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_event_window_coef=1.0,
+            m3s2_event_window_early_mass_coef=0.5,
+            m3s2_event_window_early_mass_budget=0.05,
+            m3s2_event_window_delay_coef=0.25,
+            m3s2_event_window_deadline_coef=0.25,
+            m3s2_event_window_deadline_steps=2,
+            m3s2_event_window_quality_boundary_coef=1.0,
+            m3s2_event_window_quality_boundary_logit=0.0,
+            m3s2_event_window_contrastive_margin_coef=1.0,
+            m3s2_event_window_contrastive_margin=1.5,
+            m3s2_event_window_separate_update_enabled=True,
+            m3s2_event_window_dedicated_optimizer_enabled=True,
+            m3s2_event_window_separate_update_steps=2,
+            m3s2_event_window_max_grad_norm=2.0,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        probe = NonFiniteTrainingProbe(
+            report_path=f"{gettempdir()}/m3s2_nonfinite_probe_regression.json",
+            history_limit=32,
+            enabled=True,
+        )
+        probe.install(model)
+        assert model.policy.hybrid_event_head is not None
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+
+        before = model.policy.hybrid_event_head.bias.detach().clone()
+        model.train()
+        after = model.policy.hybrid_event_head.bias.detach().clone()
+
+        self.assertFalse(th.allclose(before, after))
+        logged = model.logger.name_to_value
+        self.assertEqual(float(logged["m3s2/grouped_sidecar_group_count"]), 1.0)
+        self.assertEqual(float(logged["m3s2/grouped_active_group_count"]), 1.0)
+        self.assertGreater(float(logged["m3s2/event_window_loss"]), 0.0)
+        self.assertGreater(float(logged["m3s2/event_window_grad_norm"]), 0.0)
+        self.assertEqual(float(logged["m3s2/window_group_count"]), 1.0)
+        self.assertEqual(float(logged["m3s2/event_logit_delta_count"]), 4.0)
+        self.assertEqual(float(logged["m3s2/ew_q_boundary_coef"]), 1.0)
+        self.assertEqual(float(logged["m3s2/ew_q_boundary_logit"]), 0.0)
+        self.assertEqual(float(logged["m3s2/ew_contrast_coef"]), 1.0)
+        self.assertEqual(float(logged["m3s2/ew_contrast_margin"]), 1.5)
+        self.assertEqual(float(logged["m3s2/event_window_dedicated_optimizer_enabled"]), 1.0)
+        self.assertIn("m3s2/q_boundary_logit", logged)
+        self.assertIn("m3s2/q_boundary_loss", logged)
+        self.assertIn("m3s2/q_pre_margin", logged)
+        self.assertIn("m3s2/q_pre_margin_loss", logged)
 
     def test_a7_separate_credit_update_only_writes_credit_head(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])

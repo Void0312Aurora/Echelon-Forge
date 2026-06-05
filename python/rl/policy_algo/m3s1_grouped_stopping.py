@@ -62,6 +62,13 @@ class M3S1GroupedStoppingStats:
     mean_p_early: float
     mean_p_none: float
     mean_lambda: float
+    mean_p_deadline: float
+    mean_quality_delay: float
+    mean_quality_boundary_logit: float
+    mean_quality_boundary_margin_loss: float
+    mean_quality_prewindow_logit_margin: float
+    mean_quality_prewindow_margin_loss: float
+    mean_window_balanced_bce_loss: float
     mean_loss: float
     max_group_loss: float
 
@@ -79,8 +86,17 @@ def compute_m3s1_grouped_stopping_loss(
     coef: float = 1.0,
     early_mass_coef: float = 1.0,
     early_mass_budget: float = 0.05,
+    early_survival_coef: float = 0.0,
     prefix_early_mass_budget: float | None = None,
     no_event_coef: float = 1.0,
+    window_delay_coef: float = 0.0,
+    window_deadline_coef: float = 0.0,
+    window_deadline_steps: int = 0,
+    window_quality_boundary_coef: float = 0.0,
+    window_quality_boundary_logit: float = 0.0,
+    window_contrastive_margin_coef: float = 0.0,
+    window_contrastive_margin: float = 0.0,
+    window_balanced_bce_coef: float = 0.0,
     eps: float = 1.0e-8,
     boundary_threshold: float = 0.0,
 ) -> M3S1GroupedStoppingLoss:
@@ -97,6 +113,13 @@ def compute_m3s1_grouped_stopping_loss(
     p_window_values: list[float] = []
     p_early_values: list[float] = []
     p_none_values: list[float] = []
+    p_deadline_values: list[float] = []
+    quality_delay_values: list[float] = []
+    quality_boundary_logit_values: list[float] = []
+    quality_boundary_margin_loss_values: list[float] = []
+    quality_prewindow_logit_margin_values: list[float] = []
+    quality_prewindow_margin_loss_values: list[float] = []
+    window_balanced_bce_loss_values: list[float] = []
     lambda_values: list[float] = []
 
     group_count = len(groups)
@@ -159,12 +182,20 @@ def compute_m3s1_grouped_stopping_loss(
                 before_tau,
                 early_mass_coef=float(early_mass_coef),
                 early_mass_budget=float(prefix_budget),
+                early_survival_coef=float(early_survival_coef),
                 eps=eps_value,
             )
             group_losses.append(group_loss)
             p_window_values.append(0.0)
             p_early_values.append(p_early)
             p_none_values.append(p_none)
+            p_deadline_values.append(0.0)
+            quality_delay_values.append(0.0)
+            quality_boundary_logit_values.append(0.0)
+            quality_boundary_margin_loss_values.append(0.0)
+            quality_prewindow_logit_margin_values.append(0.0)
+            quality_prewindow_margin_loss_values.append(0.0)
+            window_balanced_bce_loss_values.append(0.0)
             lambda_values.append(lambda_mean)
             continue
 
@@ -173,20 +204,49 @@ def compute_m3s1_grouped_stopping_loss(
 
         executable_quality = supported_quality & supported_legal
         has_window = bool(executable_quality.any().detach().cpu().item())
-        group_loss, p_window, p_early, p_none, lambda_mean = _window_or_no_event_loss(
+        (
+            group_loss,
+            p_window,
+            p_early,
+            p_none,
+            p_deadline,
+            quality_delay,
+            quality_boundary_logit,
+            quality_boundary_margin_loss,
+            quality_prewindow_logit_margin,
+            quality_prewindow_margin_loss,
+            window_balanced_bce_loss,
+            lambda_mean,
+        ) = _window_or_no_event_loss(
             supported_logits,
             supported_legal,
             executable_quality,
             has_window=has_window,
             early_mass_coef=float(early_mass_coef),
             early_mass_budget=float(early_mass_budget),
+            early_survival_coef=float(early_survival_coef),
             no_event_coef=float(no_event_coef),
+            window_delay_coef=float(window_delay_coef),
+            window_deadline_coef=float(window_deadline_coef),
+            window_deadline_steps=int(window_deadline_steps),
+            window_quality_boundary_coef=float(window_quality_boundary_coef),
+            window_quality_boundary_logit=float(window_quality_boundary_logit),
+            window_contrastive_margin_coef=float(window_contrastive_margin_coef),
+            window_contrastive_margin=float(window_contrastive_margin),
+            window_balanced_bce_coef=float(window_balanced_bce_coef),
             eps=eps_value,
         )
         group_losses.append(group_loss)
         p_window_values.append(p_window)
         p_early_values.append(p_early)
         p_none_values.append(p_none)
+        p_deadline_values.append(p_deadline)
+        quality_delay_values.append(quality_delay)
+        quality_boundary_logit_values.append(quality_boundary_logit)
+        quality_boundary_margin_loss_values.append(quality_boundary_margin_loss)
+        quality_prewindow_logit_margin_values.append(quality_prewindow_logit_margin)
+        quality_prewindow_margin_loss_values.append(quality_prewindow_margin_loss)
+        window_balanced_bce_loss_values.append(window_balanced_bce_loss)
         lambda_values.append(lambda_mean)
         if has_window:
             window_group_count += 1
@@ -217,6 +277,13 @@ def compute_m3s1_grouped_stopping_loss(
         mean_p_early=_mean(p_early_values),
         mean_p_none=_mean(p_none_values),
         mean_lambda=_mean(lambda_values),
+        mean_p_deadline=_mean(p_deadline_values),
+        mean_quality_delay=_mean(quality_delay_values),
+        mean_quality_boundary_logit=_mean(quality_boundary_logit_values),
+        mean_quality_boundary_margin_loss=_mean(quality_boundary_margin_loss_values),
+        mean_quality_prewindow_logit_margin=_mean(quality_prewindow_logit_margin_values),
+        mean_quality_prewindow_margin_loss=_mean(quality_prewindow_margin_loss_values),
+        mean_window_balanced_bce_loss=_mean(window_balanced_bce_loss_values),
         mean_loss=_mean(loss_values),
         max_group_loss=max(loss_values) if loss_values else 0.0,
     )
@@ -299,27 +366,114 @@ def _window_or_no_event_loss(
     has_window: bool,
     early_mass_coef: float,
     early_mass_budget: float,
+    early_survival_coef: float,
     no_event_coef: float,
+    window_delay_coef: float,
+    window_deadline_coef: float,
+    window_deadline_steps: int,
+    window_quality_boundary_coef: float,
+    window_quality_boundary_logit: float,
+    window_contrastive_margin_coef: float,
+    window_contrastive_margin: float,
+    window_balanced_bce_coef: float,
     eps: float,
-) -> tuple[th.Tensor, float, float, float, float]:
-    hazard, event_mass, p_none = _hazard_event_mass(logits, legal_mask)
+) -> tuple[th.Tensor, float, float, float, float, float, float, float, float, float, float, float]:
+    hazard, event_mass, p_none, log_survival_before, log_event_mass, log_p_none = _hazard_event_mass(
+        logits,
+        legal_mask,
+    )
+    p_deadline_value = 0.0
+    quality_delay_value = 0.0
+    quality_boundary_logit_value = 0.0
+    quality_boundary_margin_loss_value = 0.0
+    quality_prewindow_logit_margin_value = 0.0
+    quality_prewindow_margin_loss_value = 0.0
+    window_balanced_bce_loss_value = 0.0
     if has_window:
         first_quality_pos = int(th.nonzero(quality_mask, as_tuple=False).flatten()[0].detach().cpu().item())
         positions = th.arange(int(logits.numel()), device=logits.device)
-        early_mask = (~quality_mask) & (positions < first_quality_pos)
-        p_window_tensor = event_mass[quality_mask].sum()
-        p_early_tensor = event_mass[early_mask].sum()
+        early_mask = (~quality_mask) & (positions < first_quality_pos) & legal_mask
+        log_p_window_tensor = th.logsumexp(log_event_mass[quality_mask], dim=0)
+        p_window_tensor = th.exp(log_p_window_tensor)
+        if bool(early_mask.any().detach().cpu().item()):
+            log_survival_to_window = log_survival_before[first_quality_pos]
+            p_early_tensor = -th.expm1(log_survival_to_window)
+        else:
+            log_survival_to_window = logits.new_zeros((), dtype=log_event_mass.dtype)
+            p_early_tensor = logits.new_zeros((), dtype=log_event_mass.dtype)
         early_penalty = th.clamp(p_early_tensor - float(early_mass_budget), min=0.0).pow(2)
-        loss = -th.log(p_window_tensor.clamp_min(eps)) + float(early_mass_coef) * early_penalty
+        loss = -log_p_window_tensor + float(early_mass_coef) * early_penalty
+        if float(early_survival_coef) > 0.0:
+            loss = loss + float(early_survival_coef) * -log_survival_to_window
+        quality_positions = th.nonzero(quality_mask, as_tuple=False).flatten()
+        quality_count = int(quality_positions.numel())
+        if quality_count > 0 and float(window_delay_coef) > 0.0:
+            ranks = th.arange(quality_count, device=logits.device, dtype=logits.dtype)
+            denom = float(max(1, quality_count - 1))
+            normalized_delay = ranks / denom
+            quality_weights = th.exp(log_event_mass[quality_positions] - log_p_window_tensor)
+            expected_delay = (quality_weights.to(dtype=logits.dtype) * normalized_delay).sum()
+            loss = loss + float(window_delay_coef) * expected_delay
+            quality_delay_value = float(expected_delay.detach().cpu().item())
+        if quality_count > 0 and float(window_deadline_coef) > 0.0 and int(window_deadline_steps) > 0:
+            deadline_count = min(quality_count, int(window_deadline_steps))
+            deadline_positions = quality_positions[:deadline_count]
+            log_p_deadline_tensor = th.logsumexp(log_event_mass[deadline_positions], dim=0)
+            p_deadline_tensor = th.exp(log_p_deadline_tensor)
+            loss = loss + float(window_deadline_coef) * -log_p_deadline_tensor
+            p_deadline_value = float(p_deadline_tensor.detach().cpu().item())
+        if quality_count > 0:
+            quality_anchor = logits[quality_mask].max()
+            quality_boundary_margin_loss = th.clamp(
+                float(window_quality_boundary_logit) - quality_anchor,
+                min=0.0,
+            )
+            if float(window_quality_boundary_coef) > 0.0:
+                loss = loss + float(window_quality_boundary_coef) * quality_boundary_margin_loss
+            quality_boundary_logit_value = float(quality_anchor.detach().cpu().item())
+            quality_boundary_margin_loss_value = float(quality_boundary_margin_loss.detach().cpu().item())
+        if bool(early_mask.any().detach().cpu().item()):
+            prewindow_anchor = logits[early_mask].max()
+            quality_prewindow_margin = quality_anchor - prewindow_anchor
+            margin_loss = th.clamp(float(window_contrastive_margin) - quality_prewindow_margin, min=0.0)
+            if float(window_contrastive_margin_coef) > 0.0:
+                loss = loss + float(window_contrastive_margin_coef) * margin_loss
+            quality_prewindow_logit_margin_value = float(quality_prewindow_margin.detach().cpu().item())
+            quality_prewindow_margin_loss_value = float(margin_loss.detach().cpu().item())
+        bce_mask = (early_mask | quality_mask) & legal_mask
+        if float(window_balanced_bce_coef) > 0.0 and bool(bce_mask.any().detach().cpu().item()):
+            bce_logits = logits[bce_mask]
+            bce_labels = quality_mask[bce_mask].to(dtype=logits.dtype)
+            pos_count = bce_labels.sum()
+            neg_count = bce_labels.numel() - pos_count
+            if bool((pos_count > 0.0).detach().cpu().item()) and bool((neg_count > 0.0).detach().cpu().item()):
+                pos_weight = 0.5 / pos_count.clamp_min(1.0)
+                neg_weight = 0.5 / neg_count.clamp_min(1.0)
+                weights = th.where(bce_labels > 0.5, pos_weight, neg_weight)
+                bce_loss = th.nn.functional.binary_cross_entropy_with_logits(
+                    bce_logits,
+                    bce_labels,
+                    weight=weights,
+                    reduction="sum",
+                )
+                loss = loss + float(window_balanced_bce_coef) * bce_loss
+                window_balanced_bce_loss_value = float(bce_loss.detach().cpu().item())
     else:
         p_window_tensor = event_mass.sum() * 0.0
-        p_early_tensor = event_mass.sum()
-        loss = float(no_event_coef) * -th.log(p_none.clamp_min(eps))
+        p_early_tensor = -th.expm1(log_p_none)
+        loss = float(no_event_coef) * -log_p_none
     return (
         loss,
         float(p_window_tensor.detach().cpu().item()),
         float(p_early_tensor.detach().cpu().item()),
         float(p_none.detach().cpu().item()),
+        p_deadline_value,
+        quality_delay_value,
+        quality_boundary_logit_value,
+        quality_boundary_margin_loss_value,
+        quality_prewindow_logit_margin_value,
+        quality_prewindow_margin_loss_value,
+        window_balanced_bce_loss_value,
         float(hazard.mean().detach().cpu().item()) if int(hazard.numel()) > 0 else 0.0,
     )
 
@@ -331,15 +485,18 @@ def _early_prefix_loss(
     *,
     early_mass_coef: float,
     early_mass_budget: float,
+    early_survival_coef: float,
     eps: float,
 ) -> tuple[th.Tensor, float, float, float]:
     tau_logits = logits[before_tau]
     tau_legal = legal_mask[before_tau]
-    hazard, event_mass, p_none = _hazard_event_mass(tau_logits, tau_legal)
+    hazard, event_mass, p_none, _, _, log_p_none = _hazard_event_mass(tau_logits, tau_legal)
     survival_to_tau = p_none
-    p_early_tensor = event_mass.sum()
+    p_early_tensor = -th.expm1(log_p_none)
     early_penalty = th.clamp(p_early_tensor - float(early_mass_budget), min=0.0).pow(2)
-    loss = -th.log(survival_to_tau.clamp_min(eps)) + float(early_mass_coef) * early_penalty
+    loss = -log_p_none + float(early_mass_coef) * early_penalty
+    if float(early_survival_coef) > 0.0:
+        loss = loss + float(early_survival_coef) * -log_p_none
     return (
         loss,
         float(p_early_tensor.detach().cpu().item()),
@@ -348,15 +505,24 @@ def _early_prefix_loss(
     )
 
 
-def _hazard_event_mass(logits: th.Tensor, legal_mask: th.Tensor) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
-    hazard = th.sigmoid(logits) * legal_mask.to(device=logits.device, dtype=logits.dtype)
+def _hazard_event_mass(
+    logits: th.Tensor,
+    legal_mask: th.Tensor,
+) -> tuple[th.Tensor, th.Tensor, th.Tensor, th.Tensor, th.Tensor, th.Tensor]:
+    work_logits = logits.to(dtype=th.float64)
+    work_legal = legal_mask.to(device=logits.device, dtype=work_logits.dtype)
+    hazard = th.sigmoid(work_logits) * work_legal
     hazard = hazard.clamp(min=0.0, max=1.0 - 1.0e-7)
     log_survival_after = th.cumsum(th.log1p(-hazard), dim=0)
-    zero = logits.new_zeros((1,))
+    zero = work_logits.new_zeros((1,))
     log_survival_before = th.cat((zero, log_survival_after[:-1]), dim=0)
-    event_mass = th.exp(log_survival_before) * hazard
-    p_none = th.exp(log_survival_after[-1]) if int(logits.numel()) > 0 else logits.sum() * 0.0 + 1.0
-    return hazard, event_mass, p_none
+    neg_inf = work_logits.new_full(hazard.shape, -th.inf)
+    log_hazard = th.where(hazard > 0.0, th.log(hazard.clamp_min(th.finfo(work_logits.dtype).tiny)), neg_inf)
+    log_event_mass = log_survival_before + log_hazard
+    event_mass = th.exp(log_event_mass)
+    log_p_none = log_survival_after[-1] if int(logits.numel()) > 0 else work_logits.sum() * 0.0
+    p_none = th.exp(log_p_none)
+    return hazard, event_mass, p_none, log_survival_before, log_event_mass, log_p_none
 
 
 def _first_tau_position(steps: th.Tensor, accepted_event: th.Tensor, censor_step: int | None) -> int:

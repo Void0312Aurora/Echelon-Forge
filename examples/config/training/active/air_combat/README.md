@@ -131,6 +131,14 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Uses an 8k budget for validation evidence, not a promoted formal training run.
   - This entry can prove M3 stop-boundary movement only; executable fire timing remains held until the stopping head is connected to or compared against the hybrid event action path.
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
+  - Stage-1 M3-S2 executable event-window short probe using the A7 explicit state-completion observation surface.
+  - Reuses grouped survival/event-mass evidence, but trains the hybrid event action logit delta directly through `m3s2_event_window_*` instead of opening the independent M3-S1 stopping head.
+  - Adds a deterministic quality-boundary anchor and a contrastive quality-vs-prewindow margin so the objective is "form one executable boundary inside the window", not just high cumulative stochastic event mass.
+  - Uses a dedicated M3-S2 auxiliary optimizer path so event-window updates do not reuse PPO Adam state.
+  - As of the 2026-06-06 support-preserving repair, collection can force hold through the legal-open support window so M3-S2 active rows survive training; deterministic learned-policy release remains held at `0`.
+  - Uses an 8k budget for validation evidence; behavior acceptance still requires learned-policy release probes.
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.
   - Uses the same training-shaped scenario, stable-flight residual wrapper, and low initial exploration noise as the hybrid shaped entry.

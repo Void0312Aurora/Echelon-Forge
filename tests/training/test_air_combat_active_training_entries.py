@@ -60,6 +60,10 @@ STAGE1_C2_ROE_TEMPORAL_M3S1_GROUPED_STOPPING_CONFIG = (
     AIR_COMBAT_ACTIVE_DIR
     / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json"
 )
+STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG = (
+    AIR_COMBAT_ACTIVE_DIR
+    / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
     REPO_ROOT
@@ -532,6 +536,74 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         self.assertAlmostEqual(float(m3_knobs["m3s1_grouped_stopping_boundary_threshold"]), 0.0, places=6)
         self.assertFalse(bool(m3_knobs["m3s1_grouped_stopping_detach_latent"]))
 
+    def test_stage1_m3s2_event_window_probe_extends_state_completed_config_only(self) -> None:
+        state_completed = _load_json(STAGE1_C2_ROE_TEMPORAL_A7_STATE_COMPLETED_CONFIG)
+        m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+
+        for key in ("agent_layer", "algo", "policy", "n_envs"):
+            self.assertEqual(m3s2.get(key), state_completed.get(key), key)
+        self.assertEqual(int(m3s2.get("total_timesteps")), 8192)
+        self.assertLess(int(m3s2.get("total_timesteps")), int(state_completed.get("total_timesteps")))
+        self.assertEqual(m3s2.get("runtime"), state_completed.get("runtime"))
+        self.assertEqual(m3s2.get("env"), state_completed.get("env"))
+        self.assertEqual(m3s2.get("early_stop"), state_completed.get("early_stop"))
+        self.assertEqual(m3s2.get("diagnostics"), state_completed.get("diagnostics"))
+        self.assertEqual(m3s2.get("hmoe"), state_completed.get("hmoe"))
+        self.assertEqual(m3s2.get("wrappers"), state_completed.get("wrappers"))
+
+        state_hyper = dict(state_completed.get("hyperparameters", {}))
+        m3_hyper = dict(m3s2.get("hyperparameters", {}))
+        state_policy_kwargs = dict(state_hyper.pop("policy_kwargs", {}))
+        m3_policy_kwargs = dict(m3_hyper.pop("policy_kwargs", {}))
+        self.assertTrue(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_stopping_head", False)))
+        self.assertAlmostEqual(float(m3_policy_kwargs.pop("m3_stopping_head_lr_scale", 0.0)), 10.0, places=6)
+        self.assertEqual(m3_policy_kwargs, state_policy_kwargs)
+
+        m3_knobs = {
+            key: m3_hyper.pop(key, None)
+            for key in (
+                "m3s2_event_window_coef",
+                "m3s2_event_window_early_mass_coef",
+                "m3s2_event_window_early_mass_budget",
+                "m3s2_event_window_early_survival_coef",
+                "m3s2_event_window_no_event_coef",
+                "m3s2_event_window_delay_coef",
+                "m3s2_event_window_deadline_coef",
+                "m3s2_event_window_deadline_steps",
+                "m3s2_event_window_quality_boundary_coef",
+                "m3s2_event_window_quality_boundary_logit",
+                "m3s2_event_window_contrastive_margin_coef",
+                "m3s2_event_window_contrastive_margin",
+                "m3s2_event_window_balanced_bce_coef",
+                "m3s2_event_window_use_stopping_head",
+                "m3s2_event_window_separate_update_enabled",
+                "m3s2_event_window_dedicated_optimizer_enabled",
+                "m3s2_event_window_separate_update_steps",
+                "m3s2_event_window_max_grad_norm",
+                "m3s2_event_window_support_preserving_collect_enabled",
+                "m3s2_event_window_support_preserving_hold_quality_enabled",
+            )
+        }
+        self.assertEqual(m3_hyper, state_hyper)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_coef"]), 1.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_early_mass_budget"]), 0.02, places=6)
+        self.assertGreater(float(m3_knobs["m3s2_event_window_early_survival_coef"]), 0.0)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_delay_coef"]), 0.5, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_deadline_coef"]), 0.5, places=6)
+        self.assertEqual(int(m3_knobs["m3s2_event_window_deadline_steps"]), 64)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_quality_boundary_coef"]), 20.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_quality_boundary_logit"]), 0.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_contrastive_margin_coef"]), 2.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_contrastive_margin"]), 2.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_balanced_bce_coef"]), 20.0, places=6)
+        self.assertTrue(bool(m3_knobs["m3s2_event_window_use_stopping_head"]))
+        self.assertTrue(bool(m3_knobs["m3s2_event_window_separate_update_enabled"]))
+        self.assertTrue(bool(m3_knobs["m3s2_event_window_dedicated_optimizer_enabled"]))
+        self.assertEqual(int(m3_knobs["m3s2_event_window_separate_update_steps"]), 8)
+        self.assertGreater(float(m3_knobs["m3s2_event_window_max_grad_norm"]), 0.0)
+        self.assertTrue(bool(m3_knobs["m3s2_event_window_support_preserving_collect_enabled"]))
+        self.assertTrue(bool(m3_knobs["m3s2_event_window_support_preserving_hold_quality_enabled"]))
+
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)
         c2_roe_temporal = _load_json(STAGE1_C2_ROE_TEMPORAL_CONFIG)
@@ -644,6 +716,11 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 STAGE1_C2_ROE_TEMPORAL_M3S1_GROUPED_STOPPING_CONFIG,
                 STAGE1_C2_ROE_SCENARIO,
             ),
+            (
+                "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
+                STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG,
+                STAGE1_C2_ROE_SCENARIO,
+            ),
         ]
         for label, config_path, scenario_path in entries:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmpdir:
@@ -686,6 +763,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
                 "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
+                "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
             }:
                 self.assertIn("action_mode=air_combat_hybrid_v1", proc.stdout)
             if label in {
@@ -699,6 +777,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped",
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
                 "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
+                "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
             }:
                 self.assertIn("temporal_history_len=16", proc.stdout)
             if label in {
@@ -713,6 +792,7 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
             if label in {
                 "c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed",
                 "c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed",
+                "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
             }:
                 self.assertIn("mission_obs_mode=air_combat_c2_roe_v2", proc.stdout)
             self.assertIn("Error: --test_only requires --resume_path", proc.stdout)

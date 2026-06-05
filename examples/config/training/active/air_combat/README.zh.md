@@ -130,6 +130,14 @@
   - 使用 8k budget 形成 validation evidence，不是 promoted formal training run。
   - 该条目只能证明 M3 stop-boundary movement；在 stopping head 与 hybrid event action path 连接或对照前，executable fire timing 仍 held。
 
+- [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
+  - Stage-1 M3-S2 executable event-window 短探针，复用 A7 显式状态补全 observation surface。
+  - 复用 grouped survival/event-mass evidence，但通过 `m3s2_event_window_*` 直接训练 hybrid event action logit delta，而不是打开 independent M3-S1 stopping head。
+  - 增加 deterministic quality-boundary anchor 和 quality-vs-prewindow contrastive margin，使目标变成“在窗口内形成一个可执行边界”，而不只是很高的累计 stochastic event mass。
+  - 使用 dedicated M3-S2 auxiliary optimizer path，避免 event-window updates 复用 PPO Adam 状态。
+  - 从 2026-06-06 support-preserving repair 起，collection 可在 legal-open support window 内 forced hold，从而保住 M3-S2 active rows；deterministic learned-policy release 仍 held at `0`。
+  - 使用 8k budget 形成 validation evidence；行为验收仍需要 learned-policy release probes。
+
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。
   - 与 hybrid shaped 条目使用同一 training-shaped 场景、同一稳定飞行残差 wrapper 和同一低初始探索噪声。

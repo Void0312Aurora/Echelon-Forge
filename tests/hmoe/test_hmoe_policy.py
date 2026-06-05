@@ -350,6 +350,44 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
         self.assertEqual(float(stats["a7/event_credit_head_enabled"]), 1.0)
 
+    def test_m3_stopping_head_can_override_hybrid_fire_event_delta(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            hybrid_event_use_m3_stopping_head=True,
+            m3_stopping_head_lr_scale=5.0,
+        )
+
+        self.assertIsNotNone(policy.hybrid_event_head)
+        self.assertIsNotNone(policy.m3_stopping_head)
+        self.assertEqual(
+            [group.get("name") for group in policy.optimizer.param_groups],
+            ["shared", "hybrid_event_head", "m3_stopping_head", "hmoe"],
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.m3_stopping_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -2.0
+            policy.action_net.bias[11] = 0.5
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.copy_(th.tensor([0.25, 1.25], dtype=th.float32))
+            policy.m3_stopping_head.weight.zero_()
+            policy.m3_stopping_head.bias.fill_(3.0)
+        obs = self._make_authorized_fire_obs(batch_size=4)
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            delta = distribution.fire_event_logit_delta()
+            mode = distribution.mode()
+
+        assert delta is not None
+        self.assertTrue(th.allclose(delta, th.full((4,), 3.0)))
+        self.assertTrue(th.allclose(mode[:, 9], th.ones((4,), dtype=mode.dtype)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s2/event_adapter_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["m3s2/event_adapter_logit_mean"]), 3.0, places=6)
+
     def test_hybrid_event_credit_head_exposes_hold_fire_values_without_changing_event_logits(self) -> None:
         observation_space = spaces.Dict(
             {
