@@ -51,7 +51,7 @@ severity, a concrete file/line reference, and a recommended resolution path.
 ### D-005: Clock Domain — Only Tactical Cadence Defined
 
 **Severity:** HIGH
-**Reference:** `docs/task/ground/ground_domain_bootstrap_plan_20260521.md` §6.4.
+**Reference:** `docs/task/ground/archive/ground_domain_bootstrap_plan_20260521.md` §6.4.
 **Impact:** Only tactical decision rate (1 Hz) is declared. Motion, sensing, fires, observation export cadences are undefined. The 1 Hz is sometimes misread as "the whole ground domain runs at 1 Hz."
 **Resolution:** Extend the clock domain table with ALL planned ground pipelines and their cadence ranges, even if marked "deferred."
 

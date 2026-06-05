@@ -1,7 +1,7 @@
 # Ground Domain Bootstrap Plan — Architecture Approval
 
 Status: `2026-05-21` plan reviewed; approved with five required G0 supplements.
-Source: [ground_domain_bootstrap_plan_20260521.md](../ground/ground_domain_bootstrap_plan_20260521.md)
+Source: [ground_domain_bootstrap_plan_20260521.md](../ground/archive/ground_domain_bootstrap_plan_20260521.md)
 Authority: [simulation system architecture design](../../plan/architecture/simulation_system_architecture_design.md)
 
 ## 1. Overall Assessment

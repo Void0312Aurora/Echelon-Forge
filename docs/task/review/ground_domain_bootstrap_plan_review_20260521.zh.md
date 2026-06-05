@@ -3,7 +3,7 @@
 # 地面域引导计划——架构批准
 
 状态：`2026-05-21` 计划已审核；批准，附带五个必需的 G0 补充项。
-来源：[ground_domain_bootstrap_plan_20260521.md](../task/ground/ground_domain_bootstrap_plan_20260521.md)
+来源：[ground_domain_bootstrap_plan_20260521.zh.md](../ground/archive/ground_domain_bootstrap_plan_20260521.zh.md)
 权威依据：[仿真系统架构设计](../../plan/architecture/simulation_system_architecture_design.md)
 
 ## 1. 总体评估
