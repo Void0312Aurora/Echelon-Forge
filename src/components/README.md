@@ -2,7 +2,7 @@
 
 `components/` stores only ECS components, lightweight value types, and stable DTO-like structs. Types here may be read or bound by `systems/`, `core/`, `runtime/facade`, and `interfaces/python`, but they must not own runtime orchestration logic.
 
-The current component surface is multi-domain rather than flight-only: air remains the most complete execution surface, naval has maintained platform plus command/tasking DTO slices, and ground is represented only by shared type/terrain/ground-contact primitives plus typed setup evidence. Do not treat those ground-aware primitives as a complete land-domain component model.
+The current component surface is multi-domain rather than flight-only: air remains the most complete execution surface, naval has maintained platform plus command/tasking DTO slices, and ground now has a narrow tasking/status owner slice plus native schema evidence. Do not treat those ground-aware primitives as a complete land-domain component model.
 
 ## Allowed
 
@@ -62,8 +62,8 @@ The current component surface is multi-domain rather than flight-only: air remai
   - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`, `air/*`, and `naval/*` are the maintained entry points for the split subdomains
-  - There is no `ground/*` tasking or command component subtree yet; land tasking/native schema work remains bootstrap-only.
+  - `common/*`, `air/*`, `naval/*`, and `ground/*` are the maintained entry points for the split subdomains
+  - `ground/*` is intentionally limited to G0/G1 tasking/status and native schema boundary fields; land movement, sensing, fires, damage, terrain, and combat runtime remain held.
 
 ## Migration Notes
 

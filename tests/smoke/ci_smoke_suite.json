@@ -2,6 +2,7 @@
   "name": "ci_smoke",
   "paths": [
     "tests/architecture/test_runtime_facade_layering.py",
+    "tests/architecture/test_ground_tasking_component_boundary.py",
     "tests/architecture/test_wp5_design_boundary_gates.py",
     "tests/architecture/test_cmake_target_readiness.py",
     "tests/runtime/core/test_env_config.py",
@@ -23,6 +24,7 @@
     "tests/runtime/mission/test_mission_command_split_semantics.py",
     "tests/runtime/mission/test_policy_contract_shape.py",
     "tests/runtime/ground/test_ground_native_platform_schema.py",
+    "tests/runtime/ground/test_ground_native_static_scenario.py",
     "tests/runtime/naval/test_naval_ship_database.py",
     "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
     "tests/runtime/air_combat/test_weapon_roe_runtime.py",

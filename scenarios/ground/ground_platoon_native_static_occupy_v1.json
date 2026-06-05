@@ -1,0 +1,112 @@
+{
+  "scenario_name": "Ground Platoon Native Static Occupy V1",
+  "description": "G1 native ground schema scenario-loader evidence. The platoon is spawned as Ground_Platoon_MVP and remains static inside the objective zone while Army/ground TASK_OCCUPY tasking state propagates through ScenarioLoader and TaskOrder -> LeaderIntent -> PilotReport. This scenario consumes the accepted native schema evidence only; it does not release route movement, terrain interaction, sensing, fires, effects, damage, or combat behavior.",
+  "tasking_profile": "ground",
+  "mvp_boundary": {
+    "status": "native_static_schema_status_shell",
+    "spawn_surface": "native_ground_schema",
+    "runtime_spawn_type": "Ground_Platoon_MVP",
+    "validated_surface": "ScenarioLoader load plus native Ground_Platoon_MVP identity and normalized Army/ground TASK_OCCUPY status shell",
+    "realism_gradient": {
+      "grade": "G1",
+      "native_schema": "Ground_Platoon_MVP",
+      "validated_claims": [
+        "ScenarioLoader can spawn Ground_Platoon_MVP through the shared world layout path",
+        "spawned agent reports UnitType.Ground",
+        "Army service_profile resolves through explicit ground tasking_profile",
+        "TASK_OCCUPY maps to Defend task family",
+        "TASK_OCCUPY preserves TACON command relationship",
+        "TASK_OCCUPY preserves Independent coordination mode",
+        "static initial position is inside the objective zone"
+      ],
+      "deferred_claims": [
+        "ground movement dynamics",
+        "route following or movement behavior",
+        "terrain traversal, masking, cover, or line-of-sight",
+        "ground sensing, track fusion, or observation export",
+        "direct fires",
+        "indirect fires",
+        "effects, damage, or suppression",
+        "formal CommandPacket",
+        "ObservationPacket",
+        "TrackPacket"
+      ]
+    },
+    "deferred_runtime_claims": [
+      "ground movement dynamics",
+      "route following or movement behavior",
+      "terrain traversal, masking, cover, or line-of-sight",
+      "ground sensing, track fusion, or observation export",
+      "direct fires",
+      "indirect fires",
+      "effects, damage, or suppression",
+      "formal CommandPacket",
+      "ObservationPacket",
+      "TrackPacket"
+    ]
+  },
+  "environment": {
+    "time_step": 1.0,
+    "max_steps": 30,
+    "terrain_type": "flat",
+    "wind": {
+      "speed_mps": 0.0,
+      "dir_from_deg": 0.0,
+      "shear_mps_per_km": 0.0
+    },
+    "zones": [
+      {
+        "name": "NativeObjectiveEagle",
+        "x": 75.0,
+        "y": -125.0,
+        "width": 400.0,
+        "length": 400.0,
+        "heading": 0.0,
+        "surface": "HardPacked"
+      }
+    ]
+  },
+  "mission_command": {
+    "tasking_profile": "ground",
+    "command_code": 0,
+    "target_heading": 0.0,
+    "target_altitude": 0.0,
+    "target_speed": 0.0,
+    "formation_id": 0,
+    "authorization_to_fire": false
+  },
+  "task_order": {
+    "tasking_profile": "ground",
+    "task_name": "TASK_OCCUPY",
+    "service_profile": "Army",
+    "task_group_id": 4701,
+    "parent_node_id": 4701,
+    "supported_node_id": 4701,
+    "supporting_node_id": 4701,
+    "assignee_id": 4701,
+    "element_id": 4701,
+    "anchor_x_m": 75.0,
+    "anchor_y_m": -125.0,
+    "anchor_z_m": 0.0,
+    "target_altitude_m": 0.0,
+    "target_speed_mps": 0.0,
+    "speed_min_mps": 0.0,
+    "speed_max_mps": 0.0
+  },
+  "entities": [
+    {
+      "name": "Blue_Ground_Platoon_Native_Static_Occupy",
+      "side": "Blue",
+      "type": "Ground_Platoon_MVP",
+      "is_agent": true,
+      "pos": [75.0, -125.0, 0.0],
+      "vel": [0.0, 0.0, 0.0],
+      "heading": 0.0
+    }
+  ],
+  "objectives": [],
+  "rewards": {
+    "survival": 0.0,
+    "crash_penalty": 0.0
+  }
+}
