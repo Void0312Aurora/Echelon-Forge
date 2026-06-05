@@ -328,11 +328,12 @@ or a broader training-loop contract.
   max `6526.7822`, while `a7/event_credit_loss` max is `1.0749`; the A7
   advantage mean drifts from about `-0.0442` to `-0.9239` despite final
   positive target fraction `0.6445`.
-- A7-EVC-V focused structural gates passed before final rerun: compileall for
+- A7-EVC-V focused structural gates passed: compileall for
   `ppo_adaptive_kl.py`, `policies.py`, `nonfinite_probe.py`, and focused tests;
   direct separate-update and nonfinite-probe tests passed with `2 passed`;
   policy/update-strength focused tests passed with `7 passed`; active-config
-  checks passed with `2 passed`.
+  checks passed with `2 passed`; the final combined focused rerun passed with
+  `111 passed`; diff whitespace check passed.
 - A7-EVC-V 8k protected-update observation completed `8192` steps under
   `experiments_tmp/a7_separate_update_8k_v2_20260604`; the separate update lane
   is logged as enabled, early separate-update grad norm is nonzero, and

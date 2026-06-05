@@ -291,11 +291,12 @@ scheduling，还是更大的 training-loop contract。
   `6526.7822`，而 `a7/event_credit_loss` 最大为 `1.0749`；A7 advantage mean
   从约 `-0.0442` 漂移到 `-0.9239`，尽管最终 positive target fraction 为
   `0.6445`。
-- A7-EVC-V focused structural gates 在最终重跑前已通过：`ppo_adaptive_kl.py`、
+- A7-EVC-V focused structural gates 已通过：`ppo_adaptive_kl.py`、
   `policies.py`、`nonfinite_probe.py` 与 focused tests 的 compileall 通过；
   direct separate-update 与 nonfinite-probe tests 为 `2 passed`；
   policy/update-strength focused tests 为 `7 passed`；active-config checks 为
-  `2 passed`。
+  `2 passed`；最终 combined focused rerun 为 `111 passed`；diff whitespace
+  check 通过。
 - A7-EVC-V 8k protected-update observation 在
   `experiments_tmp/a7_separate_update_8k_v2_20260604` 下完成 `8192` steps；
   separate update lane 记录为 enabled，早期 separate-update grad norm 非零，

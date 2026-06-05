@@ -370,9 +370,10 @@ pytest tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_hybrid_event_credit
 pytest tests/training/test_a6_event_value_active_config.py::A6EventValueActiveConfigTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_c2_roe_a7_event_credit_probe_is_separate_from_a6_launch_window_baseline -q
 ```
 
-Observed outcome before final rerun: compileall passed; focused separate-update
-and nonfinite-probe tests passed with `2 passed`; policy/update-strength tests
-passed with `7 passed`; active-config tests passed with `2 passed`.
+Observed outcome: compileall passed; focused separate-update and
+nonfinite-probe tests passed with `2 passed`; policy/update-strength tests
+passed with `7 passed`; active-config tests passed with `2 passed`; the final
+combined focused rerun passed with `111 passed`; diff whitespace check passed.
 
 The protected-update 8k observation completed `8192` steps and proved the
 separate lane live (`a7/evc_separate_update_enabled=1.0`, nonzero early

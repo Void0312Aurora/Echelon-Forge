@@ -713,7 +713,7 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         )
         self.assertTrue(ok)
 
-        def _projection_loss(_rollout_data):
+        def _projection_loss(_rollout_data, **_kwargs):
             anchor = next(model.policy.parameters()).sum() * 0.0
             loss = anchor + th.tensor(0.5, device=anchor.device)
             value_loss = anchor + th.tensor(0.3, device=anchor.device)

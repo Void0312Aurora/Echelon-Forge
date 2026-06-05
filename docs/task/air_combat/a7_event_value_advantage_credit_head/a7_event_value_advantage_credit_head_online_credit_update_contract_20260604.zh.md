@@ -61,8 +61,10 @@ pytest tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_hybrid_event_credit
 pytest tests/training/test_a6_event_value_active_config.py::A6EventValueActiveConfigTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_c2_roe_a7_event_credit_probe_is_separate_from_a6_launch_window_baseline -q
 ```
 
-最终重跑前已观测：compileall 通过；focused HMoE/PPO tests 为 `2 passed`；
-policy/update-strength tests 为 `7 passed`；active-config tests 为 `2 passed`。
+最终验证：compileall 与两个 active-config JSON parse gates 通过；focused
+separate-update 与 nonfinite-probe tests 为 `2 passed`；policy/update-strength
+tests 为 `7 passed`；active-config tests 为 `2 passed`；最终 combined focused
+rerun 为 `111 passed`；diff whitespace check 通过。
 
 短训观察：
 
