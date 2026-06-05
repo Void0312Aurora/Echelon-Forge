@@ -1,6 +1,6 @@
 # A7 Current Status
 
-Status: `2026-06-04` active implementation. A7 has selected its objective
+Status: `2026-06-05` active implementation. A7 has selected its objective
 contract and completed `A7-EVC-C Policy Head Prototype` plus `A7-EVC-D PPO
 Auxiliary Credit` plus `A7-EVC-E Config And Diagnostics`; `A7-EVC-F Focused
 Validation Sweep` has also passed. `A7-EVC-G Short Learned Evidence` is now
@@ -44,7 +44,35 @@ credit updates only `hybrid_event_credit_head` through detached latent
 features, a separate optimizer step, and a separate clip budget, while
 delta-align is positive-only gated. V passes as a structural repair and the 8k
 observation improves legal-open advantage, but learned first-shot behavior
-remains held.
+remains held. `A7-EVC-W Active Update Window Diagnosis` has now localized the
+remaining failure to rollout-local first-event credit assignment: full episodes
+contain shadow-quality positives after early stochastic release, but the
+training-sized rollout chunks lose those positives across PPO segment
+boundaries. `A7-EVC-X Cross-Rollout First-Event Credit State` has now repaired
+that rollout-boundary handoff with focused validation: carried-state `128` step
+chunks match full 512-step episode labels and recover `231` shadow-quality
+positives. `A7-EVC-Y Post-X Learned Observation` has now run the bounded 32k
+post-X train and probes. The repaired signal reaches training and stochastic
+execution preserves one-shot legality, but learned behavior remains held:
+deterministic probing still records `0` releases, stochastic releases remain
+near-immediate/prewindow samples, and long stochastic episodes produce no
+effects/damage chain. `A7-EVC-Z Execution Breakpoint Analysis` has now isolated
+the remaining structural fault: fixed-batch labels are present and balanced,
+the credit head can move in the right direction offline, and the actor can
+separate prewindow from quality when event logits receive direct signed
+supervision. The current A7 contract fails because event-logit delta is aligned
+to a tiny detached credit advantage rather than a calibrated signed margin, and
+credit-head-only detached-latent learning does not train the actor timing
+representation. `A7-EVC-AA Event-Policy Margin Repair` has now implemented that
+direct signed actor/event margin and added a bounded actor/event separate update
+lane. A follow-up diagnosis rejected the relaxed safe fire bias: moving the
+startup fire prior to about `-2.06` made per-step fire probability about
+`0.1126`, starving legal-open labels through early stochastic releases. The
+current repair keeps the initial fire bias conservative. A follow-up 8k
+safe-bias run kept event fire probability near `0.0031`, preserved stochastic
+one-shot legality, and briefly restored legal-open quality labels mid-training,
+but deterministic probing still recorded `0` releases and final active
+event-credit rows returned to `0`. A7 remains held.
 
 Parent: [README.md](README.md).
 
@@ -128,9 +156,34 @@ Parent: [README.md](README.md).
   parity are implemented and tested. The 8k observation improves credit
   advantage but still ends with deterministic `0` releases and negative
   legal-open advantage.
-- The immediate next bounded slice is `A7-EVC-W Active Update Window
-  Diagnosis`: explain why protected A7 updates become inactive or insufficient
-  after early training before another learned-policy wave.
+- `A7-EVC-W Active Update Window Diagnosis` is complete as root-cause evidence:
+  a stochastic 512-step final-model episode contains `231` `shadow_quality`
+  positives, while the same trajectory split into `128` step rollout chunks has
+  only `5` early negative labels and then `0` active labels.
+- `A7-EVC-X Cross-Rollout First-Event Credit State` is complete as focused
+  implementation repair: A7-only same-episode carried history is attached across
+  PPO rollouts, nonfinite-probe parity is preserved, and the chunk-vs-full
+  regression recovers the missing `231` `shadow_quality` positives.
+- `A7-EVC-Y Post-X Learned Observation` is complete as held evidence: the 32k
+  post-X run shows carried cross-rollout credit is live in training;
+  deterministic probing remains `0` releases; stochastic probing records
+  exactly one authorized release per episode, but release timing remains early
+  and no effects/damage events are observed even in `2400` step probes.
+- `A7-EVC-Z Execution Breakpoint Analysis` is complete as structural
+  root-cause evidence: the fixed hold batch has `1880` active labels
+  (`840` prewindow negatives and `1040` legal-open positives), the current
+  policy is flat at about `0.273` fire probability, direct event-logit
+  supervision with actor-policy-net updates separates quality (`0.749` mean
+  fire probability) from prewindow (`0.083`), and the current detached
+  credit-advantage delta-align objective does not provide that signed actor
+  training signal.
+- `A7-EVC-AA Event-Policy Margin Repair` is complete as structural repair and
+  held short learned evidence: `FirstEventPolicyMarginLoss` and the PPO
+  margin/separate-update lane directly train event-logit delta with signed
+  legal-open positive and prewindow negative margins; the A7 active configs now
+  use the margin path. The relaxed-initial-fire-bias probe is rejected because
+  it raises prewindow hazard together with quality-window probability; the
+  startup hybrid fire bias is again conservative.
 - The HMoE hierarchical computation gap is recorded as an architecture risk:
   A7 should not rely solely on hard-routed subexpert behavior, but the current
   A7 failure is already visible in the censored target construction and
@@ -161,19 +214,55 @@ Parent: [README.md](README.md).
 | Value/policy coupling audit | pass; breakpoint verified | [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md) adds an offline fixed-batch fit probe and shows legal-open positives are separable by the credit head. | The remaining blocker is online joint-training/update coupling, not label starvation, explicit state, or credit-head capacity. |
 | Online update-path isolation | pass; blocker localized | [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md) adds a gradient/update probe and TensorBoard scalar review. | The remaining blocker is the update contract: shared PPO global clipping plus shared actor/feature coupling. Direct PPO credit-head overwrite is excluded. |
 | Online credit update contract | pass; held outcome | [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md) adds a separate detached-latent credit-head value update, protected clip budget, positive-only delta alignment, active config flags, and nonfinite-probe parity. | The update contract is repaired, but behavior is still held: deterministic `0` releases and negative legal-open advantage after the 8k observation. |
+| Active update-window diagnosis | pass; spawned X | [active update-window diagnosis](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md) shows the A7 positives exist on the full episode but are censored by `128` step rollout-local labels after early stochastic release. | The next repair is cross-rollout credit state, not coefficient tuning. |
+| Cross-rollout first-event state | pass; evaluated by Y | [cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md) implements A7-only per-env carried episode history, current-slice label attach, reset on episode advance, and nonfinite-probe diagnostics parity. | Focused validation fixes the rollout-boundary label handoff; Y evaluates learned behavior as still held. |
+| Post-X learned observation | pass; held outcome | [post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md) records the post-X 32k train, deterministic/stochastic probes, and a longer stochastic probe. | Deterministic still holds; stochastic single-shot legality is clean, but release timing is early and no effects/damage chain appears. |
+| Execution breakpoint analysis | pass; held outcome | [execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md) proves label presence, credit-head fit, and actor-capacity fit while isolating the weak detached delta-align target. | Next work should define a direct signed event-policy contract; A7 is still not accepted. |
+| Event-policy margin repair | pass; held outcome | [event-policy margin repair](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md) implements a direct signed event-logit margin and separate actor/event update lane; A7-only safe-bias relaxation is rejected as label starvation; the conservative-bias follow-up keeps fire probability low but deterministic still holds. | Startup fire prior is conservative again; A7 still needs online label/update persistence sufficient to learn low-prewindow-hazard timing. |
 | HMoE relation | watch item | Issue board documents flat subexpert input and combat-family collapse. | A7 does not repair HMoE unless correct credit signs are learned and coupling still fails in a hierarchy-attributable way. |
 
 ## Immediate Next Step
 
-Run `A7-EVC-W Active Update Window Diagnosis`. V proves the protected credit
-update lane is live and no longer starved by PPO global clipping, but the
-8k observation still does not cross positive legal-open advantage. The next
-bounded question is whether the remaining failure is active-window starvation,
-curriculum sampling, replay/fixed positive batches, adaptive label scheduling,
-or a broader training-loop contract.
+Post-X observation, Z breakpoint analysis, and AA event-policy margin repair are
+complete, and A7 remains held. The next investigation should analyze the
+post-AA threshold and online sampling-distribution blocker: direct signed
+margin now moves the actor surface, but deterministic argmax still does not
+cross the fire threshold and stochastic samples still occur too early. Another
+coefficient sweep is not the right default.
 
 ## Validation Snapshot
 
+- A7-EVC-AA focused gates:
+  - `python -m compileall -q train.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py`: pass.
+  - `python -m json.tool <two A7 active configs>`: pass.
+  - `pytest tests/training/test_a6_event_value_active_config.py -q`: pass,
+    `7 passed`.
+  - `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`: pass,
+    `7 passed`.
+  - `pytest tests/hmoe/test_hmoe_ppo_warmup.py -q`: pass, `18 passed`.
+  - `pytest tests/hmoe/test_hmoe_policy.py -q`: pass, `32 passed`.
+  - `git diff --check -- <A7 event-policy margin write set>`: pass.
+- A7-EVC-AA short learned observation:
+  - r1 deterministic: `0` accepted releases, quality-window fire probability
+    mean `0.00391`, open-window event-logit delta mean `-5.5409`;
+  - r2 deterministic: `0` accepted releases, quality-window fire probability
+    mean `0.11261`, open-window event-logit delta mean `-2.0643`;
+  - r2 stochastic: `4/4` authorized one-shot releases at steps `6`, `51`,
+    `11`, and `18`, still early/prewindow.
+- A7-EVC-AA safe-bias follow-up 8k observation:
+  - run:
+    `experiments_tmp/a7_event_policy_margin_safe_bias_8k_20260605_r1`;
+  - TensorBoard: `a7/event_credit_active_count_mean` is live mid-run
+    (`718` at step `3072`, `762` at step `4096`) but returns to `0` at
+    `8192`; `a7/evc_src_legal_open_quality_count_mean` briefly records
+    `231` and `128`, then returns to `0`;
+  - deterministic probe: `2/2` episodes record `0` releases, final missiles
+    stay `4`, quality/prewindow fire probability stays near `0.0031`, and no
+    effects or damage appear;
+  - stochastic probe: `3/4` episodes each record exactly one authorized
+    release at steps `84`, `407`, and `18`; one episode does not release;
+    no unauthorized/repeat/salvo/budget issues appear, but there are still no
+    effects or damage.
 - `python -m compileall -q python/rl/policy_algo/policies.py`: pass.
 - `pytest tests/hmoe/test_hmoe_policy.py -q`: pass, `31 passed`.
 - `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`: pass,
@@ -342,6 +431,14 @@ or a broader training-loop contract.
   remain at `1356`, but legal-open positive advantage is
   `-0.05257667228579521` with positive sign fraction `0.0`; process probing
   records `release_count=0` and `fire_once_requested_count=0`.
+- A7-EVC-W TensorBoard review of V: `a7/event_credit_active_count_mean` is
+  `174.0` at step `1024`, `64.0` at `2048` and `2560`, `18.5` at `3072`, and
+  `0.0` from `3584` through `8192`; source counts vanish with it.
+- A7-EVC-W chunked-label audit: the same stochastic final-model 512-step
+  episode has accepted release at step `6`, first launch-window open at step
+  `282`, and `231` full-episode `shadow_quality` positives, but `128` step
+  rollout chunks produce only `5` early negative labels and then `0` active
+  labels.
 
 ## Held Items
 

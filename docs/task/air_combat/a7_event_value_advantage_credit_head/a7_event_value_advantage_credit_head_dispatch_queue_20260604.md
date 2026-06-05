@@ -1,6 +1,6 @@
 # A7 Dispatch Queue
 
-Status: `2026-06-04` A7 is held after explicit state-completion evidence. The
+Status: `2026-06-05` A7 is held after AA event-policy margin repair. The
 objective contract, policy head, PPO auxiliary credit, config/diagnostics,
 focused validation, learned-evidence, closure/index-sync, target audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
@@ -20,7 +20,20 @@ and shared actor/features representation coupling starve and destabilize A7
 credit learning. `A7-EVC-V` has now implemented the protected online credit
 update contract and passed structural gates plus an 8k observation, but A7
 remains held because deterministic probing still records `0` releases and
-legal-open credit advantage remains negative.
+legal-open credit advantage remains negative. `A7-EVC-W` has now closed the
+active update-window diagnosis: the active samples disappear because the
+episode-level first-event label is evaluated on rollout-local `128` step chunks
+and loses shadow-quality positives across PPO segment boundaries. `A7-EVC-X` has
+now restored cross-rollout first-event credit state with focused validation.
+`A7-EVC-Y` has now completed the post-X learned observation: the restored
+training signal is live and stochastic one-shot legality is preserved, but A7
+behavior remains held because deterministic probing still records `0` releases,
+stochastic releases remain too early, and long stochastic probes show no
+effects/damage chain. `A7-EVC-Z` has completed the execution breakpoint
+analysis, and `A7-EVC-AA` has implemented the direct signed event-policy margin
+repair. AA moves the actor surface in short training, but A7 behavior remains
+held because deterministic probing still records `0` releases and stochastic
+releases remain early/prewindow.
 
 Parent: [README.md](README.md). Task clusters:
 [a7_event_value_advantage_credit_head_task_clusters_20260604.md](a7_event_value_advantage_credit_head_task_clusters_20260604.md).
@@ -29,7 +42,7 @@ Parent: [README.md](README.md). Task clusters:
 
 | Cluster | Dispatch status | Owner guidance | Write scope | Guard |
 | --- | --- | --- | --- | --- |
-| `A7-EVC-W Active Update Window Diagnosis` | planned next | main thread or diagnostics worker; explain why protected credit updates go inactive or remain insufficient after early training. | A7 docs first; optional diagnostics only after the failing window handoff is isolated. | No blind coefficient run; no formal long training; no HMoE/M2/doctrine/missile release; preserve A3/A5 one-shot legality as a hard gate. |
+| Post-AA threshold and sampling-distribution analysis | planned next | main thread; explain why direct signed event-policy margin moves stochastic fire probability but deterministic argmax still stays below the fire threshold, and why early samples dominate before timing separation is learned. | A7 evidence docs and focused diagnostics first; code changes only after a confirmed structural fault. | Do not run another coefficient sweep by default; preserve A3/A5 one-shot legality and keep `experiments_tmp` unstaged. |
 
 ## Completed Dispatches
 
@@ -55,12 +68,17 @@ Parent: [README.md](README.md). Task clusters:
 | `A7-EVC-T Value/Policy Coupling Audit` | pass; breakpoint verified | [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md): fixed S batch has `1356` `LEGAL_OPEN_QUALITY` positives, initial legal-open advantage `-0.8536`, and credit-head-only offline fitting flips legal-open advantage positive. | The next bounded work is U: isolate the online update path that keeps the learned checkpoint negative despite local credit-head separability. |
 | `A7-EVC-U Online Update-Path Isolation` | pass; blocker localized | [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md): PPO-alone credit-head gradient is `0.0`; PPO+A7 global clipping reduces credit-head effective norm from about `0.4855` to `0.00689`; A7 value and delta-align gradients also conflict in shared actor/features. | The next bounded work is V: specify a decoupled A7 credit update contract before implementation. |
 | `A7-EVC-V Online Credit Update Contract` | pass; held outcome | [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md): adds detached-latent credit values, separate credit-head-only value update, protected clip budget, positive-only delta alignment, active config flags, and nonfinite-probe parity. The 8k observation proves the lane is live and improves legal-open credit advantage, but deterministic probing still records `0` releases. | The next bounded work is W: explain update-window/sample availability after the protected update contract is live. |
+| `A7-EVC-W Active Update Window Diagnosis` | pass; spawned X contract | [active update-window diagnosis](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md): full stochastic 512-step episode labels contain `231` `shadow_quality` positives, but training-sized `128` step chunks contain only early negatives and then zero active labels. | The next bounded work is X: carry first-event credit state across PPO rollout boundaries. |
+| `A7-EVC-X Cross-Rollout First-Event Credit State` | pass; evaluated by Y | [cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md): implements A7-only carried episode history across PPO rollouts, mirrors diagnostics in NonFiniteTrainingProbe, and proves chunked labels recover full-episode shadow-quality positives. | Y shows the repair is live but behavior remains held. |
+| `A7-EVC-Y Post-X Learned Observation` | pass; held outcome | [post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md): 32k post-X training shows carried credit is live; deterministic probing records `0` releases; stochastic probing records exactly one authorized release per episode but releases early; long stochastic probes show no effects or damage. | The next bounded work is execution-breakpoint analysis, not more label repair or coefficient tuning. |
+| `A7-EVC-Z Execution Breakpoint Analysis` | pass; spawned AA | [execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md): fixed-batch labels, credit-head fit, and event-logit fit isolate the old value-to-policy link as too weak and not signed enough. | AA has since implemented direct signed event-policy margin. |
+| `A7-EVC-AA Event-Policy Margin Repair` | pass; held outcome | [event-policy margin repair](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md): direct signed event-logit margin and separate actor/event update lane are complete; safe-bias relaxation is rejected as label starvation. | Startup fire prior is conservative again; A7 still needs low-prewindow-hazard timing learning. |
 
 ## Still Blocked
 
 | Cluster | Blocker | Unlock condition |
 | --- | --- | --- |
-| A7 behavior acceptance | V repairs the protected credit update lane, but legal-open advantage remains negative and deterministic policy still chooses `hold`. | `A7-EVC-W` explains whether the remaining blocker is active-window starvation, curriculum sampling, replay/fixed positives, adaptive label scheduling, or broader training-loop structure. |
+| A7 behavior acceptance | AA still fails acceptance: deterministic stays `hold` even after direct signed margin, and stochastic releases remain early/prewindow. | Explain the post-AA policy-threshold and online sampling-distribution blocker before another training wave. |
 
 ## Dispatch Packet Template
 

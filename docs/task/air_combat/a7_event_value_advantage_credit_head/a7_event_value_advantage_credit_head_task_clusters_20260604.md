@@ -1,7 +1,8 @@
 # A7 Event-Value / Advantage Credit Head Task Clusters
 
-Status: `2026-06-04` finite task-cluster plan for
-[README.md](README.md).
+Status: `2026-06-05` finite task-cluster plan for
+[README.md](README.md). `A7-EVC-AA Event-Policy Margin Repair` is complete as a
+structural repair and held short learned-policy observation.
 
 ## Boundary Decision
 
@@ -36,7 +37,11 @@ claim missile/real-doctrine authority.
 | `A7-EVC-T Value/Policy Coupling Audit` | main thread or diagnostics worker | high | Explain why non-starved visible positives move event-fire probability but not learned advantage sign or deterministic event mode. | A7 docs plus focused diagnostic script | Blind coefficient run, formal long training, weakening A3/A5 masks, HMoE redesign, M2 release | fixed-batch offline fit probe; compileall; docs diff check | Audit verifies the breakpoint: labels/state/credit-head capacity are locally sufficient, and the residual fault is online update-path coupling. | After S; serial | 2 | pass; spawned U |
 | `A7-EVC-U Online Update-Path Isolation` | main thread or diagnostics worker | high | Isolate why a credit-head-separable fixed batch does not survive online PPO/shared/event-head training. | `tools/diagnostics/a7_online_update_path_probe.py`, A7 docs | Blind coefficient run, formal long training, weakening A3/A5 masks, HMoE redesign, M2 release | gradient-norm/parameter-drift audit; compileall; TensorBoard scalar review; docs diff check | Names the blocker as shared PPO global clipping plus shared actor/feature coupling; direct PPO credit-head overwrite is excluded. | After T; serial | 2 | pass; spawned V contract |
 | `A7-EVC-V Online Credit Update Contract` | main thread | high | Implement the repair contract that decouples A7 value credit from shared PPO clipping and representation drift. | `python/rl/policy_algo/policies.py`, `python/rl/policy_algo/ppo_adaptive_kl.py`, `python/rl/support/nonfinite_probe.py`, active configs, focused tests, A7 docs | Coefficient-only tuning, formal long training, weakening A3/A5 masks, HMoE redesign, M2 release | compileall; focused HMoE/PPO/config tests; 8k train/probe observation; docs diff check | Separate credit-head-only value update, protected clip budget, positive-only delta alignment, and nonfinite-probe parity are proven; learned behavior remains held. | After U; serial | 2 | pass; held outcome |
-| `A7-EVC-W Active Update Window Diagnosis` | main thread or diagnostics worker | high | Explain why protected A7 credit updates become inactive or insufficient after early training even when legal-open positives exist. | A7 docs first; optional diagnostics script/tests after the failing window handoff is isolated | Blind coefficient run, formal long training, weakening A3/A5 masks, HMoE redesign, M2 release | TensorBoard/update-window review; fixed-batch vs on-policy sample audit; docs diff check | Names whether the remaining blocker is curriculum sampling, replay/fixed positive batches, adaptive label scheduling, or a broader training-loop contract. | After V; serial | 2 | planned next |
+| `A7-EVC-W Active Update Window Diagnosis` | main thread or diagnostics worker | high | Explain why protected A7 credit updates become inactive or insufficient after early training even when legal-open positives exist. | A7 docs first; optional diagnostics script/tests after the failing window handoff is isolated | Blind coefficient run, formal long training, weakening A3/A5 masks, HMoE redesign, M2 release | TensorBoard/update-window review; fixed-batch vs on-policy sample audit; docs diff check | Names the remaining blocker as rollout-local first-event label censoring across PPO segment boundaries. | After V; serial | 2 | pass; spawned X contract |
+| `A7-EVC-X Cross-Rollout First-Event Credit State` | main thread or implementation worker | high | Define and implement an episode-stateful credit-label contract so early accepted release and later quality-window positives survive PPO rollout boundaries. | `python/rl/policy_algo/ppo_adaptive_kl.py`, `python/rl/support/nonfinite_probe.py`, focused tests, diagnostics docs | Bigger `n_steps` as primary repair, replay-only workaround, blind coefficient run, weakening A3/A5 masks, HMoE redesign, M2 release | whole-episode vs chunked-label regression; focused PPO/rollout tests; compileall; diagnostics/logging check | Chunked `128` step labels recover the same shadow-quality positives as whole-episode labels when early accepted release and launch window cross a rollout boundary. | After W; serial before more learned-policy waves | 2 | pass; evaluated by Y |
+| `A7-EVC-Y Post-X Learned Observation` | main thread | n/a | Run the bounded post-X learned-policy observation and compare deterministic/stochastic behavior against V/W. | A7 evidence/status docs; no `experiments_tmp` staging | Formal long training, blind coefficient sweep, weakening A3/A5 masks, HMoE redesign, M2 release, missile/doctrine authority | 32k train; deterministic/stochastic process probes; longer stochastic probe; docs diff check | Evidence records that carried credit is live, deterministic remains `0` releases, stochastic one-shot legality is clean but early, and no effects/damage chain is observed. | After X; serial | 1 | pass; held outcome |
+| `A7-EVC-Z Execution Breakpoint Analysis` | main thread or diagnostics worker | high | Explain why post-X labels and credit still do not cross deterministic event-mode selection. | A7 evidence docs and focused diagnostics | More blind training, coefficient sweep, weakening A3/A5 masks, HMoE redesign, M2 release | fixed-batch label reconstruction; credit-head fit; event-logit fit; docs diff check | The value-to-policy link is isolated: tiny detached credit advantage is not a calibrated signed actor target. | After Y; serial before AA | 2 | pass; spawned AA |
+| `A7-EVC-AA Event-Policy Margin Repair` | implementation worker plus diagnostics review | high | Implement a direct signed event-policy margin and bounded actor/event update lane. | `python/rl/policy_algo/first_event_hazard.py`, `python/rl/policy_algo/ppo_adaptive_kl.py`, `train.py`, active configs, focused tests, A7 docs | Runtime legality changes, closed-mask raw shadow delta alignment, formal long training, HMoE/M2 work | compileall; JSON; focused HMoE/PPO/config tests; 8k before/after train/probes; docs diff check | Actor event probability moves from dead-low to reachable stochastic firing, but deterministic remains `0` releases and timing stays held. | After Z; serial | 2 | pass; held outcome |
 
 ## Dispatch Rules
 
@@ -86,12 +91,15 @@ a learned-policy probe before acceptance.
 
 Immediate:
 
-- `A7-EVC-W Active Update Window Diagnosis`.
+- Post-AA blocker analysis: explain why direct signed event-policy margin moves
+  stochastic fire probability but deterministic argmax still stays below the
+  fire threshold, and why early samples dominate before timing separation is
+  learned.
 
 Follow-on:
 
-- Adaptive label scheduling as a guardrail only after W separates sample-window
-  starvation from remaining loss-weighting issues.
+- Adaptive label scheduling as a guardrail only after X restores episode-level
+  label equivalence across rollout boundaries.
 - HMoE hierarchical-computation repair only if A7 learns correct credit signs
   and policy coupling still fails in a hierarchy-attributable way.
 

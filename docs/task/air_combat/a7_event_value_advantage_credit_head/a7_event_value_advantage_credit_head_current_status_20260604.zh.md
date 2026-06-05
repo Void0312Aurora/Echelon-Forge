@@ -1,6 +1,6 @@
 # A7 当前状态
 
-状态：`2026-06-04` active implementation。A7 已选定 objective contract，并完成
+状态：`2026-06-05` active implementation。A7 已选定 objective contract，并完成
 `A7-EVC-C Policy Head Prototype`、`A7-EVC-D PPO Auxiliary Credit` 与
 `A7-EVC-E Config And Diagnostics`；`A7-EVC-F Focused Validation Sweep` 也已通过。
 `A7-EVC-G Short Learned Evidence` 已完成为有效证据，但 learned-policy outcome
@@ -36,7 +36,30 @@ Credit Update Contract` 已实现 protected repair：A7 value credit 通过 deta
 latent features、独立 optimizer step 与独立 clip budget 只更新
 `hybrid_event_credit_head`，delta-align 也改为 positive-only gated。V 作为结构修复
 通过，8k observation 改善 legal-open advantage，但 learned first-shot behavior
-仍 held。
+仍 held。`A7-EVC-W Active Update Window Diagnosis` 已将剩余失败定位到
+rollout-local first-event credit assignment：完整 episode 在 stochastic early
+release 后包含 shadow-quality positives，但训练尺寸的 rollout chunks 会在 PPO
+segment boundary 丢失这些 positives。`A7-EVC-X Cross-Rollout First-Event
+Credit State` 已以 focused validation 修复该 rollout-boundary handoff：带
+carried-state 的 `128` step chunks 与完整 512-step episode labels 一致，并恢复
+`231` 个 shadow-quality positives。`A7-EVC-Y Post-X Learned Observation` 已运行
+bounded 32k post-X train 与 probes。修复后的 signal 进入了 training，stochastic
+execution 保持 one-shot legality；但 learned behavior 仍 held：deterministic
+probing 仍记录 `0` releases，stochastic releases 仍是 near-immediate/prewindow
+samples，长 stochastic episodes 也没有 effects/damage chain。`A7-EVC-Z Execution
+Breakpoint Analysis` 已隔离剩余结构故障：fixed-batch labels 存在且平衡，credit
+head 可在离线向正确方向移动，并且当 event logits 收到直接有符号监督时，actor 可以分离
+prewindow 与 quality。当前 A7 contract 失败的原因是 event-logit delta 对齐到 tiny
+detached credit advantage，而不是 calibrated signed margin；credit-head-only
+detached-latent learning 也没有训练 actor timing representation。`A7-EVC-AA
+Event-Policy Margin Repair` 已实现该 direct signed actor/event margin，增加有边界的
+actor/event separate update lane。后续分析否定了 A7 margin config 下放宽 safe fire
+bias：它将 quality-window fire probability 推到约 `0.1126` 的同时，也让 prewindow
+stochastic firing 几乎必然发生并饿死 legal-open labels。当前 startup fire prior 已恢复
+保守。本轮 follow-up 8k safe-bias run 将 event fire probability 保持在约
+`0.0031`，保留了 stochastic one-shot legality，并在训练中段短暂恢复
+legal-open quality labels；但 deterministic probing 仍记录 `0` releases，最终
+active event-credit rows 又回到 `0`。A7 继续 held。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -111,9 +134,30 @@ latent features、独立 optimizer step 与独立 clip budget 只更新
   positive-only delta alignment、active config wiring 与 nonfinite-probe parity
   均已实现并测试。8k observation 改善 credit advantage，但仍以 deterministic
   `0` releases 与负 legal-open advantage 结束。
-- 立即下一有界切片是 `A7-EVC-W Active Update Window Diagnosis`：在另一轮
-  learned-policy wave 前解释 protected A7 updates 为什么在 early training 后
-  inactive 或仍不足。
+- `A7-EVC-W Active Update Window Diagnosis` 已完成为 root-cause evidence：
+  一个 stochastic 512-step final-model episode 含 `231` 个 `shadow_quality`
+  positives，但同一轨迹按 `128` step rollout chunks 切开后只有 `5` 个 early
+  negative labels，之后 active labels 为 `0`。
+- `A7-EVC-X Cross-Rollout First-Event Credit State` 已完成为 focused
+  implementation repair：A7-only same-episode carried history 跨 PPO rollouts
+  attach，保留 nonfinite-probe parity，并由 chunk-vs-full regression 恢复缺失的
+  `231` 个 `shadow_quality` positives。
+- `A7-EVC-Y Post-X Learned Observation` 已完成为 held evidence：post-X 32k run
+  显示 carried cross-rollout credit 在 training 中是 live 的；deterministic probing
+  仍为 `0` releases；stochastic probing 每个 episode 恰好一次 authorized release，
+  但 timing 仍过早，且即使在 `2400` step probes 中也没有 effects/damage events。
+- `A7-EVC-Z Execution Breakpoint Analysis` 已完成为 structural root-cause
+  evidence：固定 hold batch 含 `1880` 个 active labels（`840` 个 prewindow negatives
+  与 `1040` 个 legal-open positives），当前策略 fire probability 近似平坦在
+  `0.273`；直接 event-logit supervision 加 actor-policy-net updates 可以分离
+  quality（mean fire probability `0.749`）与 prewindow（`0.083`），而当前 detached
+  credit-advantage delta-align objective 没有提供这种有符号 actor training signal。
+- `A7-EVC-AA Event-Policy Margin Repair` 已完成为 structural repair 与 held short
+  learned evidence：`FirstEventPolicyMarginLoss` 与 PPO margin/separate-update
+  lane 直接用有符号 legal-open positive 与 prewindow negative margins 训练
+  event-logit delta；A7 active configs 已使用 margin path。relaxed initial fire bias
+  probe 被否定，因为它同时抬高 prewindow hazard 与 quality-window probability；startup
+  hybrid fire bias 已恢复为保守设置。
 - HMoE hierarchical computation gap 被记录为 architecture risk：A7 不应只依赖 hard-routed
   subexpert behavior；但当前 A7 failure 已经在被删失的 target construction 与 event-credit
   advantage sign 上可见。
@@ -143,18 +187,52 @@ latent features、独立 optimizer step 与独立 clip budget 只更新
 | Value/policy coupling audit | pass；breakpoint verified | [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md) 增加 offline fixed-batch fit probe，并证明 legal-open positives 可由 credit head 分离。 | 剩余 blocker 是在线联合训练/update coupling，而不是 label starvation、显式状态或 credit-head 容量。 |
 | Online update-path isolation | pass；blocker localized | [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md) 增加 gradient/update probe 与 TensorBoard scalar review。 | 剩余 blocker 是 update contract：shared PPO global clipping 加 shared actor/feature coupling。排除 direct PPO credit-head overwrite。 |
 | Online credit update contract | pass；held outcome | [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md) 增加独立 detached-latent credit-head value update、protected clip budget、positive-only delta alignment、active config flags 与 nonfinite-probe parity。 | update contract 已修复，但 behavior 仍 held：8k observation 后 deterministic `0` releases，legal-open advantage 仍为负。 |
+| Active update-window diagnosis | pass；spawned X | [active update-window 诊断](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.zh.md) 证明 A7 positives 存在于完整 episode 上，但 stochastic early release 后会被 `128` step rollout-local labels 删失。 | 下一修复是 cross-rollout credit state，而不是 coefficient tuning。 |
+| Cross-rollout first-event state | pass；已由 Y 评估 | [cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.zh.md) 实现 A7-only per-env carried episode history、current-slice label attach、episode advance reset 与 nonfinite-probe diagnostics parity。 | Focused validation 修复 rollout-boundary label handoff；Y 将 learned behavior 评估为仍 held。 |
+| Post-X learned observation | pass；held outcome | [post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.zh.md) 记录 post-X 32k train、deterministic/stochastic probes 与更长 stochastic probe。 | Deterministic 仍 hold；stochastic single-shot legality clean，但 release timing 过早且没有 effects/damage chain。 |
+| Execution breakpoint analysis | pass；held outcome | [execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md) 证明 label presence、credit-head fit 与 actor-capacity fit，同时定位 weak detached delta-align target。 | 下一步应定义 direct signed event-policy contract；A7 仍未 accepted。 |
+| Event-policy margin repair | pass；held outcome | [event-policy margin 修复](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md) 实现 direct signed event-logit margin 与独立 actor/event update lane；A7-only safe-bias relaxation 被否定为 label starvation；conservative-bias follow-up 维持低 fire probability，但 deterministic 仍 hold。 | Startup fire prior 已恢复保守；A7 仍需要足以学习 low-prewindow-hazard timing 的 online label/update persistence。 |
 | HMoE relation | watch item | issue board 记录 flat subexpert input 与 combat-family collapse。 | 除非正确 credit signs 已学到但 policy coupling 仍以可归因于 hierarchy gap 的方式失败，否则 A7 不修 HMoE。 |
 
 ## 立即下一步
 
-运行 `A7-EVC-W Active Update Window Diagnosis`。V 证明 protected credit update
-lane 是 live 的，并且不再被 PPO global clipping 饿死，但 8k observation 仍未越过
-positive legal-open advantage。下一有界问题是剩余失败属于 active-window
-starvation、curriculum sampling、replay/fixed positive batches、adaptive label
-scheduling，还是更大的 training-loop contract。
+Post-X observation、Z breakpoint analysis 与 AA event-policy margin repair 已完成，
+A7 继续 held。下一步应分析 AA 后的 threshold 与 online sampling-distribution blocker：
+direct signed margin 已经移动 actor surface，但 deterministic argmax 仍没有跨过 fire
+threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep。
 
 ## 验证快照
 
+- A7-EVC-AA focused gates：
+  - `python -m compileall -q train.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py`：pass。
+  - `python -m json.tool <two A7 active configs>`：pass。
+  - `pytest tests/training/test_a6_event_value_active_config.py -q`：pass，
+    `7 passed`。
+  - `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`：pass，
+    `7 passed`。
+  - `pytest tests/hmoe/test_hmoe_ppo_warmup.py -q`：pass，`18 passed`。
+  - `pytest tests/hmoe/test_hmoe_policy.py -q`：pass，`32 passed`。
+  - `git diff --check -- <A7 event-policy margin write set>`：pass。
+- A7-EVC-AA short learned observation：
+  - r1 deterministic：`0` accepted releases，quality-window fire probability
+    mean `0.00391`，open-window event-logit delta mean `-5.5409`；
+  - r2 deterministic：`0` accepted releases，quality-window fire probability
+    mean `0.11261`，open-window event-logit delta mean `-2.0643`；
+  - r2 stochastic：`4/4` authorized one-shot releases，steps 为 `6`、`51`、
+    `11`、`18`，仍为 early/prewindow。
+- A7-EVC-AA safe-bias follow-up 8k observation：
+  - run：
+    `experiments_tmp/a7_event_policy_margin_safe_bias_8k_20260605_r1`；
+  - TensorBoard：`a7/event_credit_active_count_mean` 在中段 live，step
+    `3072` 为 `718`、step `4096` 为 `762`，但 step `8192` 回到 `0`；
+    `a7/evc_src_legal_open_quality_count_mean` 短暂记录 `231` 与 `128`，
+    之后回到 `0`；
+  - deterministic probe：`2/2` episodes 记录 `0` releases，final missiles
+    保持 `4`，quality/prewindow fire probability 约 `0.0031`，且没有 effects
+    或 damage；
+  - stochastic probe：`3/4` episodes 各记录恰好一次 authorized release，steps
+    为 `84`、`407`、`18`；另一个 episode 未 release；没有
+    unauthorized/repeat/salvo/budget issues，但仍没有 effects 或 damage。
 - `python -m compileall -q python/rl/policy_algo/policies.py`：pass。
 - `pytest tests/hmoe/test_hmoe_policy.py -q`：pass，`31 passed`。
 - `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`：pass，`5 passed`。
@@ -305,6 +383,13 @@ scheduling，还是更大的 training-loop contract。
   保持 `1356`，但 legal-open positive advantage 为
   `-0.05257667228579521`，positive sign fraction 为 `0.0`；process probing
   记录 `release_count=0` 与 `fire_once_requested_count=0`。
+- A7-EVC-W 对 V 的 TensorBoard review：`a7/event_credit_active_count_mean`
+  在 step `1024` 为 `174.0`，`2048` 与 `2560` 为 `64.0`，`3072` 为 `18.5`，
+  从 `3584` 到 `8192` 均为 `0.0`；source counts 同步消失。
+- A7-EVC-W chunked-label audit：同一条 stochastic final-model 512-step
+  episode 在 step `6` accepted release，首个 launch-window open 在 step `282`，
+  完整 episode 有 `231` 个 `shadow_quality` positives，但 `128` step rollout
+  chunks 只产生 `5` 个 early negative labels，之后 active labels 为 `0`。
 
 ## Held Items
 

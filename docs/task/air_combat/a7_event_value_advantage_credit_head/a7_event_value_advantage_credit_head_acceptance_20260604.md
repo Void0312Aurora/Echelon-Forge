@@ -1,14 +1,25 @@
 # A7 Acceptance Gate
 
-Status: `2026-06-04` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V`
+Status: `2026-06-05` evaluated; `A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X`
 implementation, validation, learned-evidence, index-sync, target-audit,
 shadow-repair, projection-audit, projection-contract, and projected legal-open
 prototype/projection-eligibility/opportunity-contract/opportunity-prototype
 slices plus explicit state completion, value/policy breakpoint verification,
-online update-path isolation, and online credit update repair evaluated. A7
+online update-path isolation, online credit update repair, and active
+update-window diagnosis evaluated. A7
 remains held after V because the protected credit-head update lane is live and
 improves short-run credit advantage, but legal-open advantage remains negative
-and deterministic probing still records `0` releases.
+and deterministic probing still records `0` releases. W localized the next
+blocker to rollout-local first-event label censoring across PPO segment
+boundaries, X repairs that label handoff in focused tests, and Y has now
+completed the post-X learned-policy observation. A7 behavior remains held:
+deterministic probing still records `0` releases, stochastic releases remain
+too early despite clean one-shot legality, and long stochastic probes show no
+effects/damage chain. Z isolated the value-to-policy execution breakpoint, and
+AA has implemented the direct signed event-policy margin repair. AA is a
+structural pass but remains a behavior hold: short probes show event fire
+probability rises, but deterministic probing still records `0` releases and
+stochastic releases remain early/prewindow.
 
 Parent: [README.md](README.md).
 
@@ -44,6 +55,11 @@ surface.
 | Value/policy coupling breakpoint | The remaining negative advantage is separated from label starvation, explicit state, and credit-head capacity. | pass; held: [value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md) shows the fixed S batch has `1356` legal-open positives and can be fit to positive advantage with the credit head alone. |
 | Online update-path isolation | The online blocker is separated from direct PPO credit-head overwrite and pure label/state/capacity explanations. | pass; held: [online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md) shows PPO-alone credit-head gradient is `0.0`, while PPO+A7 global clipping reduces credit-head effective norm from about `0.4855` to `0.00689`, and A7 value/delta conflict in shared actor/features. |
 | Online credit update contract | A7 value credit is decoupled from shared PPO global clipping and shared actor/features representation drift. | pass; held: [online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md) implements separate detached-latent credit-head value updates, protected clipping, positive-only delta alignment, active config flags, and nonfinite-probe parity; behavior remains held after 8k observation. |
+| Active update-window diagnosis | Active-label disappearance after V is explained before more learned-policy waves. | pass; held: [active update-window diagnosis](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md) shows full episodes contain shadow-quality positives but `128` step rollout-local labels censor them after early stochastic release. |
+| Cross-rollout first-event state | Episode-level first-event credit survives PPO rollout boundaries. | pass; evaluated by Y: [cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md) proves chunked `128` step labels recover full-episode `shadow_quality` positives under the early-release/late-quality-window regression. |
+| Post-X learned observation | Restored cross-rollout credit improves learned first-shot behavior while preserving one-shot legality. | held: [post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md) shows restored credit is live and stochastic one-shot discipline is clean, but deterministic remains `0` releases, stochastic releases early, and no effects/damage events are observed. |
+| Execution breakpoint analysis | The residual post-X fault is separated from missing labels, credit-head capacity, and direct actor capacity. | pass; held: [execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md) shows direct signed event-logit supervision can teach the actor timing split, while the old detached credit-advantage delta-align target cannot. |
+| Event-policy margin repair | Direct signed event-policy margin and a bounded actor/event update lane are implemented and measured before acceptance. | pass; held: [event-policy margin repair](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md) moves quality-window fire probability from about `0.0039` to `0.1126`, but deterministic remains `0` releases and stochastic timing remains early. |
 | Overclaim refusal | M2, HMoE redesign, missile authority, `2v2`, self-play, and doctrine remain held. | required |
 
 ## Failure Conditions
@@ -69,9 +85,14 @@ A7 remains held or must be re-scoped if:
 - online update-path isolation localizes the blocker, but the implementation
   still uses a single shared PPO backward/global clip/optimizer contract for A7
   credit;
-- protected separate credit update is live, but active positive update windows
-  disappear or legal-open advantage remains negative and deterministic mode
-  remains `hold`;
+- cross-rollout first-event state is carried in focused tests, but post-X
+  learned-policy observation still leaves legal-open advantage negative and
+  deterministic mode at `hold`;
+- post-X observation leaves deterministic mode at `hold`, stochastic releases
+  near-immediately/prewindow, or launched missiles produce no observed
+  effects/damage chain;
+- event-policy margin repair moves event probability but deterministic argmax
+  remains below the fire threshold or stochastic releases remain prewindow;
 - the implementation aligns raw closed-mask `shadow_quality` rows directly to
   event logits instead of projecting them to a legal-open decision surface;
 - deterministic fires near-immediately after authorization/contact again;

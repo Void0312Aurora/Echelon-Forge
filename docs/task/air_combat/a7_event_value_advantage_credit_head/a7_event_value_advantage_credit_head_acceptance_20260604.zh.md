@@ -1,13 +1,22 @@
 # A7 验收门
 
-状态：`2026-06-04` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V`
+状态：`2026-06-05` evaluated；`A7-EVC-C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X`
 implementation、validation、learned-evidence、index-sync、target-audit、
 shadow-repair、projection-audit、projection-contract 与 projected legal-open
 prototype/projection-eligibility/opportunity-contract/opportunity-prototype
 slices、explicit state completion、value/policy breakpoint verification 与
-online update-path isolation、online credit update repair 已评估。V 后 A7 仍 held，
+online update-path isolation、online credit update repair、active update-window
+diagnosis 已评估。V 后 A7 仍 held，
 因为 protected credit-head update lane 是 live 的，并改善短训 credit advantage，
-但 legal-open advantage 仍为负，deterministic probing 仍记录 `0` releases。
+但 legal-open advantage 仍为负，deterministic probing 仍记录 `0` releases。W
+将下一 blocker 定位为 PPO segment boundaries 上的 rollout-local first-event
+label censoring，X 已在 focused tests 中修复该 label handoff，且 Y 已完成 post-X
+learned-policy observation。A7 behavior 仍 held：deterministic probing 仍记录
+`0` releases，stochastic releases 尽管 one-shot legality clean 但仍过早，长
+stochastic probes 也没有 effects/damage chain。Z 已隔离 value-to-policy execution
+breakpoint，AA 已实现 direct signed event-policy margin repair。AA 是 structural
+pass，但 behavior 继续 held：短训 probes 显示 event fire probability 上升，但
+deterministic probing 仍记录 `0` releases，stochastic releases 仍 early/prewindow。
 
 父级：[README.zh.md](README.zh.md)。
 
@@ -42,6 +51,11 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Value/policy coupling breakpoint | 将剩余 negative advantage 与 label starvation、显式状态、credit-head capacity 分离。 | pass；held：[value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.zh.md) 显示固定 S batch 有 `1356` 个 legal-open positives，并可只用 credit head 拟合成正 advantage。 |
 | Online update-path isolation | 将 online blocker 与 direct PPO credit-head overwrite、纯 label/state/capacity explanations 分离。 | pass；held：[online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.zh.md) 显示 PPO-alone credit-head gradient 为 `0.0`，而 PPO+A7 global clipping 将 credit-head effective norm 从约 `0.4855` 压到 `0.00689`，且 A7 value/delta 在 shared actor/features 中冲突。 |
 | Online credit update contract | 将 A7 value credit 从 shared PPO global clipping 与 shared actor/features representation drift 中解耦。 | pass；held：[online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.zh.md) 实现独立 detached-latent credit-head value updates、protected clipping、positive-only delta alignment、active config flags 与 nonfinite-probe parity；8k observation 后 behavior 仍 held。 |
+| Active update-window diagnosis | 在更多 learned-policy waves 前解释 V 后 active-label disappearance。 | pass；held：[active update-window 诊断](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.zh.md) 显示完整 episode 有 shadow-quality positives，但 `128` step rollout-local labels 会在 stochastic early release 后删失它们。 |
+| Cross-rollout first-event state | Episode-level first-event credit 跨 PPO rollout boundaries 保留。 | pass；已由 Y 评估：[cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.zh.md) 证明 early-release/late-quality-window regression 下，`128` step chunked labels 能恢复完整 episode 的 `shadow_quality` positives。 |
+| Post-X learned observation | 恢复后的 cross-rollout credit 改善 learned first-shot behavior，同时保持 one-shot legality。 | held：[post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.zh.md) 显示 restored credit 是 live 的，stochastic one-shot discipline clean，但 deterministic 仍为 `0` releases，stochastic release 过早，且没有 observed effects/damage events。 |
+| Execution breakpoint analysis | 将 post-X 残余故障与缺失 labels、credit-head capacity、direct actor capacity 分离。 | pass；held：[execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md) 显示 direct signed event-logit supervision 能教 actor timing split，而旧 detached credit-advantage delta-align target 不能。 |
+| Event-policy margin repair | 在 acceptance 前实现并测量 direct signed event-policy margin 与有边界 actor/event update lane。 | pass；held：[event-policy margin 修复](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md) 将 quality-window fire probability 从约 `0.0039` 提升到 `0.1126`，但 deterministic 仍为 `0` releases，stochastic timing 仍过早。 |
 | Overclaim refusal | M2、HMoE redesign、missile authority、`2v2`、self-play 与 doctrine 继续 held。 | required |
 
 ## 失败条件
@@ -63,8 +77,13 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
   legal-open advantage 保持负值且 deterministic mode 为 `hold`；
 - online update-path isolation 已定位 blocker，但 implementation 仍对 A7 credit
   使用单一 shared PPO backward/global clip/optimizer contract；
-- protected separate credit update 是 live 的，但 active positive update windows
-  消失，或 legal-open advantage 仍为负且 deterministic mode 仍停在 `hold`；
+- cross-rollout first-event state 已在 focused tests 中携带，但 post-X
+  learned-policy observation 仍让 legal-open advantage 为负、deterministic mode
+  停在 `hold`；
+- post-X observation 仍让 deterministic mode 停在 `hold`、stochastic
+  near-immediate/prewindow release，或已发射导弹没有 observed effects/damage chain；
+- event-policy margin repair 移动 event probability 后，deterministic argmax
+  仍低于 fire threshold，或 stochastic releases 仍在 prewindow；
 - implementation 把 raw closed-mask `shadow_quality` rows 直接对齐到 event logits，
   而不是先投影到 legal-open decision surface；
 - deterministic 再次在 authorization/contact 后近立即发射；

@@ -1,6 +1,6 @@
 # A7 Event-Value / Advantage Credit Head
 
-Status: `2026-06-04` active implementation subproject. A7 is the follow-on to
+Status: `2026-06-05` active implementation subproject. A7 is the follow-on to
 the A6 root-cause re-scope: implement an event-value / advantage-credit
 mechanism for the masked `hold/fire_once` action before any more launch-window
 tuning. `A7-EVC-A/B` are closed by the objective contract, `A7-EVC-C` has
@@ -47,7 +47,29 @@ now has a separate credit-head-only update lane, protected gradient clipping,
 positive-only delta-alignment gating, and nonfinite-probe parity. V passes as a
 structural repair and improves short-run credit advantage, but behavior remains
 held because deterministic probing still records `0` releases and legal-open
-credit advantage remains slightly negative.
+credit advantage remains slightly negative. `A7-EVC-W` localized the next
+blocker: the episode-level first-event credit label was evaluated on PPO
+rollout-local chunks. When stochastic early accepted release occurred before the
+quality window and the quality window arrived in a later rollout, the
+shadow-quality positives existed on the full episode but were censored from the
+chunked training labels. `A7-EVC-X` now implements cross-rollout first-event
+credit state and focused tests prove that `128` step chunks recover the same
+shadow-quality positives as the full 512-step episode. `A7-EVC-Y` has now run
+the post-X learned-policy observation. Y proves the restored signal reaches
+training and stochastic execution preserves one-shot discipline, but A7 remains
+held: deterministic probing still records `0` releases, stochastic releases are
+still near-immediate/prewindow samples, and long stochastic episodes produce no
+effects or damage events. `A7-EVC-Z` has now isolated the remaining execution
+breakpoint: labels are present and actor capacity is sufficient under direct
+event-logit supervision, but the current A7 value-to-policy contract aligns the
+event delta to a tiny detached credit advantage instead of a calibrated signed
+margin, and detached credit-head learning does not teach the actor timing
+representation. `A7-EVC-AA` has now implemented the direct signed event-policy
+margin repair with a separate actor/event update lane. Follow-up analysis
+rejected the A7-enabled safe-bias relaxation: it raised quality-window fire
+probability but also made prewindow stochastic firing overwhelmingly likely,
+starving legal-open labels. The current repair keeps the initial fire prior
+conservative; A7 remains held pending a clean learned timing discriminator.
 
 Language:
 
@@ -122,6 +144,11 @@ would have rewarded holding.
 | A7 value/policy coupling audit | pass; breakpoint verified | [Value/policy coupling audit](a7_event_value_advantage_credit_head_value_policy_coupling_audit_20260604.md) adds an offline fixed-batch credit-head fit probe and shows `1356` legal-open positives can be fit from negative to positive advantage with the credit head alone. | The label/value object is locally fit-able; the remaining blocker is online joint-training/update coupling. |
 | A7 online update-path isolation | pass; blocker localized | [Online update-path isolation](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md) adds a gradient/update diagnostic showing PPO-alone credit-head gradient is `0.0`, while PPO+A7 global clipping reduces credit-head effective norm from about `0.4855` to `0.00689`; A7 value and delta-align also conflict in shared actor/features. | The next fix should decouple A7 credit updates from shared PPO clipping and representation drift; this is not acceptance. |
 | A7 online credit update contract | pass; held outcome | [Online credit update contract](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md) adds detached-latent credit values, a separate credit-head-only value update, separate clip budget, positive-only delta alignment, active config flags, and nonfinite-probe parity. | The update contract is repaired, but 8k evidence still ends with deterministic `0` releases and negative legal-open advantage. |
+| A7 active update-window diagnosis | pass; spawned X | [Active update-window diagnosis](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md) shows a 512-step stochastic episode contains `231` `shadow_quality` positives, but the same trajectory split into `128` step training chunks has only `5` early negative labels and then `0` active labels. | The remaining blocker is rollout-boundary credit-state loss, not another coefficient sweep. |
+| A7 cross-rollout first-event state | pass; evaluated by Y | [Cross-rollout first-event credit state](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md) adds A7-only per-env rollout history, same-episode carried-prefix label construction, reset on episode advance, nonfinite-probe parity, and focused chunk-vs-full regression coverage. | Focused repair only; Y shows behavior remains held after the repair. |
+| A7 post-X learned observation | pass; held outcome | [Post-X learned observation](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md) records a 32k post-X train, deterministic/stochastic probes, and a longer stochastic probe. | X's signal is live, but deterministic stays `hold`; stochastic samples exactly one authorized release but still fires too early and produces no effects/damage chain. |
+| A7 execution breakpoint analysis | pass; held outcome | [Execution breakpoint analysis](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md) reconstructs fixed-batch labels, credit-head fit, and event-logit fit after Y. | The root fault is the value-to-policy contract: tiny detached credit advantages plus positive-only delta alignment do not create a robust signed actor timing discriminator. |
+| A7 event-policy margin repair | pass; held outcome | [Event-policy margin repair](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md) adds a direct signed event-logit margin and a bounded actor/event separate update lane, then rejects A7-only safe-bias relaxation as label starvation. | The startup fire prior is conservative again; A7 still needs a learned timing discriminator that preserves low prewindow hazard. |
 
 ## Scope
 
@@ -175,6 +202,11 @@ Out of scope:
 | `P19 Coupling Audit` | Explain why non-starved visible positives move probability but not deterministic mode or advantage sign. | P18 evidence exists. | The breakpoint is verified: the fixed S batch is separable by the credit head, so the residual fault is online joint-training/update coupling. | pass; spawned update-path isolation |
 | `P20 Online Update-Path Isolation` | Isolate which online update component blocks the locally fit-able credit signal. | P19 evidence exists. | The blocker is localized to shared PPO global clipping plus shared actor/feature coupling; direct PPO credit-head overwrite is excluded. | pass; spawned update-contract work |
 | `P21 Online Credit Update Contract` | Decouple A7 credit value learning from shared PPO clipping and representation drift. | P20 blocker localized. | Separate credit-head-only update, positive-only delta alignment, active config wiring, nonfinite-probe parity, and short learned observation are recorded. | pass; held outcome |
+| `P22 Active Update Window Diagnosis` | Determine why protected A7 updates go inactive after early training. | P21 evidence exists. | Rollout-local first-event labels are shown not to equal full-episode labels when early accepted release and quality window cross a rollout boundary. | pass; spawned X |
+| `P23 Cross-Rollout First-Event State` | Restore episode-level first-event credit across PPO rollout boundaries. | P22 evidence exists. | Chunked `128` step labels recover full-episode `shadow_quality` positives under the early-release/late-quality-window regression. | pass; evaluated by Y |
+| `P24 Post-X Learned Observation` | Re-observe learned behavior after cross-rollout first-event state repair. | P23 focused gates pass. | Training/probe evidence records active labels, advantage signs, deterministic release behavior, stochastic one-shot discipline, and effects/damage status. | pass; held outcome |
+| `P25 Execution Breakpoint Analysis` | Explain why post-X labels and credit still do not cross deterministic event-mode selection. | P24 held evidence exists. | Fixed-batch probes separate label presence, credit-head fit, event-head fit, and actor-representation capacity. | pass; spawned event-policy contract work |
+| `P26 Event-Policy Margin Repair` | Give the actor/event path a direct signed margin instead of relying on tiny detached credit advantage. | P25 breakpoint exists. | Focused tests and 8k before/after probes record whether the actor event surface changes and whether learned behavior reaches acceptance. | pass; held outcome |
 
 ## Task Clusters
 
@@ -210,6 +242,16 @@ Out of scope:
   [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md)
 - Online credit update contract:
   [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md)
+- Active update-window diagnosis:
+  [a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md)
+- Cross-rollout first-event credit state:
+  [a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md)
+- Post-X learned observation:
+  [a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md)
+- Execution breakpoint analysis:
+  [a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md)
+- Event-policy margin repair:
+  [a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md)
 
 ## Outputs And Evidence
 
@@ -269,11 +311,16 @@ Current outputs:
   [a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md](a7_event_value_advantage_credit_head_online_update_path_isolation_20260604.md).
 - Online credit update contract:
   [a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md](a7_event_value_advantage_credit_head_online_credit_update_contract_20260604.md).
-
-Planned follow-on outputs:
-
-- Update-window/curriculum diagnosis after V repairs the online credit update
-  contract but leaves behavior held.
+- Active update-window diagnosis:
+  [a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md](a7_event_value_advantage_credit_head_active_update_window_diagnosis_20260605.md).
+- Cross-rollout first-event credit state:
+  [a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md](a7_event_value_advantage_credit_head_cross_rollout_first_event_state_20260605.md).
+- Post-X learned observation:
+  [a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md](a7_event_value_advantage_credit_head_post_x_learned_observation_20260605.md).
+- Execution breakpoint analysis:
+  [a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md](a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.md).
+- Event-policy margin repair:
+  [a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md](a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.md).
 
 ## Acceptance Gate
 
@@ -294,12 +341,13 @@ A7 can be accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: diagnose why active positive update windows disappear
-  after the protected credit-head update lane is live.
-- The repaired V contract rules out shared PPO global clipping as the active
-  write-surface blocker, but not credit-sample availability, curriculum
-  scheduling, replay/fixed positive batches, or adaptive label scheduling as
-  follow-on mechanisms.
+- Immediate next step: analyze the post-AA policy-threshold and online
+  sampling-distribution blocker, not another coefficient sweep.
+- Z isolated the value-to-policy execution fault; AA repairs that fault by
+  adding a direct signed actor/event margin. The repair is real but incomplete:
+  short probes show event probability rises from dead-low to reachable
+  stochastic firing, while deterministic argmax still stays below the fire
+  threshold and stochastic samples remain early.
 - Adaptive label weight scheduling remains a guardrail candidate, not the
   primary repair.
 - HMoE hierarchical computation remains an issue-board item unless A7 evidence

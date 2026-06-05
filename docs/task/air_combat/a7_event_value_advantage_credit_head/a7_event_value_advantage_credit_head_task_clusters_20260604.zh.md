@@ -1,7 +1,8 @@
 # A7 Event-Value / Advantage Credit Head 任务簇
 
-状态：`2026-06-04` finite task-cluster plan，用于
-[README.zh.md](README.zh.md)。
+状态：`2026-06-05` finite task-cluster plan，用于
+[README.zh.md](README.zh.md)。`A7-EVC-AA Event-Policy Margin Repair` 已完成为
+structural repair 与 held short learned-policy observation。
 
 ## 边界决策
 
@@ -35,7 +36,11 @@ A7 可以为 masked `hold/fire_once` event action 增加 event-value / advantage
 | `A7-EVC-T Value/Policy Coupling Audit` | main thread 或 diagnostics worker | high | 解释 non-starved visible positives 为什么移动 event-fire probability，却没有改变 learned advantage sign 或 deterministic event mode。 | A7 docs 与 focused diagnostic script | blind coefficient run、formal long training、削弱 A3/A5 masks、HMoE redesign、M2 release | fixed-batch offline fit probe；compileall；docs diff check | Audit 验证断点：labels/state/credit-head capacity 本地足够，剩余故障是 online update-path coupling。 | After S；串行 | 2 | pass；spawned U |
 | `A7-EVC-U Online Update-Path Isolation` | main thread 或 diagnostics worker | high | 隔离为什么 credit-head-separable fixed batch 不能在 online PPO/shared/event-head training 中保留下来。 | `tools/diagnostics/a7_online_update_path_probe.py`、A7 docs | blind coefficient run、formal long training、削弱 A3/A5 masks、HMoE redesign、M2 release | gradient-norm/parameter-drift audit；compileall；TensorBoard scalar review；docs diff check | 将 blocker 命名为 shared PPO global clipping 加 shared actor/feature coupling；排除 direct PPO credit-head overwrite。 | After T；串行 | 2 | pass；spawned V contract |
 | `A7-EVC-V Online Credit Update Contract` | main thread | high | 实现 repair contract，将 A7 value credit 从 shared PPO clipping 与 representation drift 中解耦。 | `python/rl/policy_algo/policies.py`、`python/rl/policy_algo/ppo_adaptive_kl.py`、`python/rl/support/nonfinite_probe.py`、active configs、focused tests、A7 docs | coefficient-only tuning、formal long training、削弱 A3/A5 masks、HMoE redesign、M2 release | compileall；focused HMoE/PPO/config tests；8k train/probe observation；docs diff check | 独立 credit-head-only value update、protected clip budget、positive-only delta alignment 与 nonfinite-probe parity 已证明；learned behavior 仍 held。 | After U；串行 | 2 | pass；held outcome |
-| `A7-EVC-W Active Update Window Diagnosis` | main thread 或 diagnostics worker | high | 解释 protected A7 credit updates 为什么在 early training 后 inactive 或仍不足，即使 legal-open positives 存在。 | 优先 A7 docs；失败 handoff 隔离后可选 diagnostics script/tests | blind coefficient run、formal long training、削弱 A3/A5 masks、HMoE redesign、M2 release | TensorBoard/update-window review；fixed-batch vs on-policy sample audit；docs diff check | 命名剩余 blocker 属于 curriculum sampling、replay/fixed positive batches、adaptive label scheduling 或更大的 training-loop contract。 | After V；串行 | 2 | planned next |
+| `A7-EVC-W Active Update Window Diagnosis` | main thread 或 diagnostics worker | high | 解释 protected A7 credit updates 为什么在 early training 后 inactive 或仍不足，即使 legal-open positives 存在。 | 优先 A7 docs；失败 handoff 隔离后可选 diagnostics script/tests | blind coefficient run、formal long training、削弱 A3/A5 masks、HMoE redesign、M2 release | TensorBoard/update-window review；fixed-batch vs on-policy sample audit；docs diff check | 将剩余 blocker 命名为 PPO segment boundary 上的 rollout-local first-event label censoring。 | After V；串行 | 2 | pass；spawned X contract |
+| `A7-EVC-X Cross-Rollout First-Event Credit State` | main thread 或 implementation worker | high | 定义并实现 episode-stateful credit-label contract，让 early accepted release 与后续 quality-window positives 跨 PPO rollout boundary 保留下来。 | `python/rl/policy_algo/ppo_adaptive_kl.py`、`python/rl/support/nonfinite_probe.py`、focused tests、diagnostics docs | 把更大 `n_steps` 当主修复、replay-only workaround、blind coefficient run、削弱 A3/A5 masks、HMoE redesign、M2 release | whole-episode vs chunked-label regression；focused PPO/rollout tests；compileall；diagnostics/logging check | 当 early accepted release 与 launch window 跨 rollout boundary 时，`128` step chunked labels 能恢复与完整 episode labels 等价的 shadow-quality positives。 | After W；下一轮 learned-policy wave 前串行 | 2 | pass；已由 Y 评估 |
+| `A7-EVC-Y Post-X Learned Observation` | main thread | n/a | 运行 bounded post-X learned-policy observation，并将 deterministic/stochastic behavior 与 V/W 对照。 | A7 evidence/status docs；`experiments_tmp` 不入 staging | formal long training、blind coefficient sweep、削弱 A3/A5 masks、HMoE redesign、M2 release、missile/doctrine authority | 32k train；deterministic/stochastic process probes；更长 stochastic probe；docs diff check | Evidence 记录 carried credit 是 live 的、deterministic 仍为 `0` releases、stochastic one-shot legality clean 但过早、且没有 observed effects/damage chain。 | After X；串行 | 1 | pass；held outcome |
+| `A7-EVC-Z Execution Breakpoint Analysis` | main thread 或 diagnostics worker | high | 解释 post-X labels 与 credit 为什么仍没有跨过 deterministic event-mode selection。 | A7 evidence docs 与 focused diagnostics | blind training、coefficient sweep、削弱 A3/A5 masks、HMoE redesign、M2 release | fixed-batch label reconstruction；credit-head fit；event-logit fit；docs diff check | 隔离 value-to-policy link：tiny detached credit advantage 不是 calibrated signed actor target。 | After Y；AA 前串行 | 2 | pass；spawned AA |
+| `A7-EVC-AA Event-Policy Margin Repair` | implementation worker plus diagnostics review | high | 实现 direct signed event-policy margin 与有边界 actor/event update lane。 | `python/rl/policy_algo/first_event_hazard.py`、`python/rl/policy_algo/ppo_adaptive_kl.py`、`train.py`、active configs、focused tests、A7 docs | runtime legality changes、closed-mask raw shadow delta alignment、formal long training、HMoE/M2 work | compileall；JSON；focused HMoE/PPO/config tests；8k 前后对照 train/probes；docs diff check | Actor event probability 从 dead-low 移到 reachable stochastic firing，但 deterministic 仍为 `0` releases，timing 继续 held。 | After Z；串行 | 2 | pass；held outcome |
 
 ## 分发规则
 
@@ -82,11 +87,13 @@ learned-policy probe。
 
 Immediate：
 
-- `A7-EVC-W Active Update Window Diagnosis`。
+- Post-AA blocker analysis：解释 direct signed event-policy margin 为什么能移动
+  stochastic fire probability，但 deterministic argmax 仍低于 fire threshold，以及 early
+  samples 为什么会在 timing separation 学成前主导。
 
 Follow-on：
 
-- 只有当 W 将 sample-window starvation 与剩余 loss-weighting issue 分离后，
+- 只有当 X 恢复 rollout boundary 上的 episode-level label 等价后，
   Adaptive label scheduling 才作为 guardrail。
 - 只有当 A7 学到正确 credit signs 后仍出现可归因于 hierarchy 的 policy coupling
   failure，才进入 HMoE repair。
