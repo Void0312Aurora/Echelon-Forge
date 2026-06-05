@@ -16,6 +16,22 @@
 - 模型选择暂停：`2026-06-05`，A7 first-event timing 证据被重新收束为 M3，即一个
   与领域无关的一次性时机 / optimal-stopping 模型选择问题；M3-S1 现在作为架构分离、
   data/censoring 与 grouped stopping objectives 的 planning contract，代码实现仍需等合同明确。
+- 可学习性审计：`2026-06-05`，M3-S2 判定 legal release 与 terminal wins 在 oracle
+  surface 中可达，但 reward ordering 偏向 late close-range wins，且当前 labels-to-credit-to-policy
+  合同没有训练出经过校准的 signed event-logit discriminator。后续 M3-S2 direct
+  event-window probe 已到达 executable event logits，但 deterministic 仍 `0` releases，
+  `2026-06-06` 更尖锐的诊断是 cumulative prewindow hazard：`p ~= 0.0055` 在 `800`
+  个 prewindow steps 上意味着 `0.988` 的 early-sample risk，因此 sampled policy 会擦除
+  自己的 quality-window supervision。support-preserving collection repair 能在 8k run 中
+  保持 M3-S2 active groups，但 deterministic probing 仍记录 `0` releases。structural toy
+  probe 随后排除了纯 grouped M3-S2 loss object：free logits 与小 MLP 都能学会 `800 + 1080`
+  one-shot window boundary。real update path probe 随后显示，当前 Stage-1 M3-S2 auxiliary
+  update 会同时压低 prewindow 与 quality logits，通过全局 hazard suppression 而不是 boundary
+  formation 来降低 loss。log-domain cumulative-hazard repair 恢复了长 prewindow survival
+  gradients，并在 8k 短训中将 M3 stop probability 从约 `0.47` 降到 `0.145`，但
+  deterministic release 仍为 `0`，stochastic 仍会提前采样。后续应先原型验证带尺度分离的
+  real-row discriminator，并修复 event-to-pulse adapter、signed event-logit actor targets
+  或 reward contract，再把 M2 memory 视为主要修复。
 - 释放原则：只有当路径 A 在 stage-0 / stage-1 空战课程中显示时间信息能改善
   重复发射、可达性或策略稳定性后，才展开路径 C 的实现。
 - 路径 B recurrent HMoE 只作为对照/备用，不作为正式主线。
@@ -28,5 +44,6 @@
 - [M2 Causal Transformer HMoE 目标架构](m2_causal_transformer_hmoe/README.zh.md)
 - [M3 Optimal-Stopping Model Selection](m3_optimal_stopping_model_selection/README.zh.md)
 - [M3-S1 Censored Optimal-Stopping Timing Contract](m3_s1_censored_optimal_stopping_timing_contract/README.zh.md)
+- [M3-S2 开火时机可学习性审计](m3_s2_fire_timing_learnability_audit/README.zh.md)
 - 英文主文：
   [Temporal HMoE Policy Plan](temporal_hmoe_policy_plan_20260525.md)

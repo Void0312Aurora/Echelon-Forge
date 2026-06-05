@@ -123,6 +123,9 @@ shaping、PPO loss 与 first-event supervision 混在同一个补丁面里。
 - P5 没有验收 learned executable fire timing：deterministic release 仍然 flat，
   stochastic release 仍主要由 sampling 产生，且 executable hybrid action branch 仍与 M3
   stopping head 分离。
+- 后续根因审计已移至
+  [M3-S2 开火时机可学习性审计](../m3_s2_fire_timing_learnability_audit/README.zh.md)，
+  该审计判定当前 return/effects 路径下 release 可达，但 legal timing 不可识别。
 - 如果 grouped stopping objective 仍无法表达 timing evidence，再把 M2 sequence memory
   当作后续候选。
 - 当 M3-S1 取代 actor teaching path 后，将 A7 local repairs 作为证据归档。

@@ -131,6 +131,10 @@ This subproject can be marked accepted only when:
 - P5 did not accept learned executable fire timing: deterministic release remains
   flat, stochastic release remains sampling-driven, and the executable hybrid
   action branch is still separate from the M3 stopping head.
+- Follow-up root-cause audit moved to
+  [M3-S2 Fire-Timing Learnability Audit](../m3_s2_fire_timing_learnability_audit/README.md),
+  which found release reachability but not legal timing identifiability in the
+  current return/effects path.
 - Treat M2 sequence memory as a later candidate if grouped stopping objectives
   still cannot represent the timing evidence.
 - Keep A7 local repairs archived as evidence once M3-S1 supersedes the actor
