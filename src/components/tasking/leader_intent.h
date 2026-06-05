@@ -2,13 +2,14 @@
 
 #include "components/tasking/air/leader_intent_air.h"
 #include "components/tasking/common/leader_intent_core.h"
+#include "components/tasking/ground/leader_intent_ground.h"
 #include "components/tasking/naval/leader_intent_naval.h"
 
 /**
  * LeaderIntent
  * Internal Leader-layer output before mapping into MissionCommand.
  */
-struct LeaderIntent : LeaderIntentCore, LeaderIntentAir, LeaderIntentNaval {};
+struct LeaderIntent : LeaderIntentCore, LeaderIntentAir, LeaderIntentNaval, LeaderIntentGround {};
 
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
@@ -16,7 +17,8 @@ using LeaderIntentCompatibilityTransportShell = LeaderIntent;
 inline constexpr bool kLeaderIntentCompatibilityTransportShell = true;
 
 static_assert(
-    kLeaderIntentAirOwnedDomainSlice && kLeaderIntentNavalOwnedDomainSlice,
+    kLeaderIntentAirOwnedDomainSlice && kLeaderIntentNavalOwnedDomainSlice &&
+        kLeaderIntentGroundOwnedDomainSlice,
     "LeaderIntent compatibility shells must project to explicit owner slices."
 );
 
@@ -58,6 +60,20 @@ leader_intent_naval_owner_slice(
     return intent;
 }
 
+[[nodiscard]] inline const LeaderIntentGround&
+leader_intent_ground_owner_slice(
+    const LeaderIntentCompatibilityTransportShell& intent
+) noexcept {
+    return intent;
+}
+
+[[nodiscard]] inline LeaderIntentGround&
+leader_intent_ground_owner_slice(
+    LeaderIntentCompatibilityTransportShell& intent
+) noexcept {
+    return intent;
+}
+
 [[nodiscard]] inline LeaderIntentAir::RecoveryDirective
 leader_intent_air_recovery_directive(
     const LeaderIntentCompatibilityTransportShell& intent
@@ -84,4 +100,13 @@ leader_intent_naval_command_authority(
     const LeaderIntentCompatibilityTransportShell& intent
 ) noexcept {
     return leader_intent_naval_command_authority(leader_intent_naval_owner_slice(intent));
+}
+
+[[nodiscard]] inline LeaderIntentGround::StaticStatusDirective
+leader_intent_ground_static_status_directive(
+    const LeaderIntentCompatibilityTransportShell& intent
+) noexcept {
+    return leader_intent_ground_static_status_directive(
+        leader_intent_ground_owner_slice(intent)
+    );
 }

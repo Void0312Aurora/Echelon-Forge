@@ -2,10 +2,11 @@
 
 `components/command` 是飞行员动作、任务命令、命令链路和 legacy 控制命令的归属目录。旧 `components/physics/action.h` 仍保留为 compatibility umbrella include。
 
-和 tasking 一样，command 侧当前按 common foundation 加 air/naval extensions 说明，而不是
-`air + ship` 二分法。`common` 承载跨域命令传输与共享执行意图，`air` 承载成熟的航空执行面，
-`naval` 承载已落地的第一阶段舰艇/海上 command slice。ground command/tasking
-bootstrap evidence 还没有在这里作为维护中的 command 子域落地。
+和 tasking 一样，command 侧当前按 common foundation 加 air/naval/ground extensions
+说明，而不是 `air + ship` 二分法。`common` 承载跨域命令传输与共享执行意图，`air`
+承载成熟的航空执行面，`naval` 承载已落地的第一阶段舰艇/海上 command slice，
+`ground` 承载早期 static G0/G1 task metadata command slice。ground movement、
+sensing、fires、terrain 与 damage control 仍然 held。
 
 ## 允许
 
@@ -26,7 +27,7 @@ bootstrap evidence 还没有在这里作为维护中的 command 子域落地。
 - `common command` 放跨域共享执行语义：例如 command transport、latency/drop、pending delivery，以及可复用于多个域的基础命令向量。
 - `air command` 放当前明显航空化的执行面：`PilotAction`、现有 legacy flight control surface，以及带 route/recovery/takeoff/runway/formation 语义的 command 扩展。
 - `naval command` 单独建模当前舰艇/海上执行 DTO slice，包括站位、舰载直升机发收舰、OTH relay 和 naval surface-engagement command code。不应把 air 的 heading/altitude/runway/recovery 组合直接泛化成 “ship command”。
-- `ground command` 还不是维护中的 C++ command slice。land movement/sensing/fires 控制在 ground schema/runtime owner 明确前不要塞进 `common/`。
+- `ground command` 在 `MissionCommandGround` 中保存当前 static task metadata slice：objective/area 引用、static task mode、tactical commander ID 与 tactical cadence。在 ground schema/runtime owner 明确前，不要把 land movement/sensing/fires control 塞进 `common/`。
 
 ## `MissionCommand` 备注
 
@@ -62,12 +63,13 @@ maintained system 内部继续手写 `MovementCommand`/`ActionCommand` 探测逻
 - `command_link.h`
 - `legacy_command.h`
 - `naval/mission_command_naval.h`
+- `ground/mission_command_ground.h`
 
 WP0 文档口径：
 
 - 优先把真正共享的 command transport / base intent 识别出来。
 - air 特有语义已从共享层中剥离到 `MissionCommandAir`，但当前仍保持 flat 兼容外壳。
 - naval-specific command 语义已落到 `MissionCommandNaval`，不使用 “air + ship” 二分法。
-- ground command 语义仍 held；在维护中的 ground command schema 引入前，只使用共享 typed setup/capability evidence。
+- ground command 现在已有维护中的 static task metadata owner slice；route movement、terrain、sensing、fires、damage 与 combat command 语义仍 held。
 
 新代码应 include 具体头文件，不应继续依赖 `components/physics/action.h`。

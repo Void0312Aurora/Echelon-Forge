@@ -83,6 +83,11 @@ class GroundRealismGradientMvpScenarioTests(unittest.TestCase):
         expected_task_group_id: int,
         expected_supported_node_id: int,
         expected_supporting_node_id: int,
+        expected_ground_task_mode: Any,
+        expected_ground_status_phase: Any,
+        expected_objective_area_id: int,
+        expected_objective_node_id: int,
+        expected_ground_commander_id: int,
     ) -> None:
         task = sim.get_task_order(agent_id)
         intent = sim.get_leader_intent(agent_id)
@@ -98,6 +103,11 @@ class GroundRealismGradientMvpScenarioTests(unittest.TestCase):
         self.assertEqual(int(task.task_group_id), expected_task_group_id)
         self.assertEqual(int(task.supported_node_id), expected_supported_node_id)
         self.assertEqual(int(task.supporting_node_id), expected_supporting_node_id)
+        self.assertEqual(task.ground_task_mode, expected_ground_task_mode)
+        self.assertEqual(int(task.objective_area_id), expected_objective_area_id)
+        self.assertEqual(int(task.objective_node_id), expected_objective_node_id)
+        self.assertEqual(int(task.ground_commander_id), expected_ground_commander_id)
+        self.assertAlmostEqual(float(task.tactical_cadence_hz), 1.0)
 
         for status in (intent, report):
             self.assertTrue(bool(status.active))
@@ -107,6 +117,12 @@ class GroundRealismGradientMvpScenarioTests(unittest.TestCase):
             self.assertEqual(status.coordination_mode, expected_coordination_mode)
             self.assertEqual(int(status.task_group_id), expected_task_group_id)
             self.assertEqual(int(status.tactical_unit_id), expected_supporting_node_id)
+            self.assertEqual(status.ground_status_phase, expected_ground_status_phase)
+            self.assertEqual(status.ground_task_mode, expected_ground_task_mode)
+            self.assertEqual(int(status.objective_area_id), expected_objective_area_id)
+            self.assertEqual(int(status.objective_node_id), expected_objective_node_id)
+            self.assertEqual(int(status.ground_commander_id), expected_ground_commander_id)
+            self.assertAlmostEqual(float(status.tactical_cadence_hz), 1.0)
 
     def test_ground_static_occupy_g1_boundary_and_semantics(self) -> None:
         scenario, sim, loader, agent_id = self._load("occupy")
@@ -128,7 +144,17 @@ class GroundRealismGradientMvpScenarioTests(unittest.TestCase):
             expected_task_group_id=4401,
             expected_supported_node_id=4401,
             expected_supporting_node_id=4401,
+            expected_ground_task_mode=ef_py.GroundTaskMode.OccupyStatic,
+            expected_ground_status_phase=ef_py.GroundStatusPhase.OccupyingStatic,
+            expected_objective_area_id=4401,
+            expected_objective_node_id=4401,
+            expected_ground_commander_id=4401,
         )
+        cmd = tasking_bridge.build_kernel_mission_command(loader)
+        self.assertEqual(cmd.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(cmd.objective_area_id), 4401)
+        self.assertEqual(int(cmd.objective_node_id), 4401)
+        self.assertEqual(int(cmd.ground_commander_id), 4401)
 
     def test_ground_support_relationship_g1_boundary_and_semantics(self) -> None:
         scenario, sim, loader, agent_id = self._load("support")
@@ -150,7 +176,17 @@ class GroundRealismGradientMvpScenarioTests(unittest.TestCase):
             expected_task_group_id=4501,
             expected_supported_node_id=4601,
             expected_supporting_node_id=4501,
+            expected_ground_task_mode=ef_py.GroundTaskMode.SupportStatic,
+            expected_ground_status_phase=ef_py.GroundStatusPhase.SupportingStatic,
+            expected_objective_area_id=4601,
+            expected_objective_node_id=4601,
+            expected_ground_commander_id=4501,
         )
+        cmd = tasking_bridge.build_kernel_mission_command(loader)
+        self.assertEqual(cmd.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+        self.assertEqual(int(cmd.objective_area_id), 4601)
+        self.assertEqual(int(cmd.objective_node_id), 4601)
+        self.assertEqual(int(cmd.ground_commander_id), 4501)
 
 
 if __name__ == "__main__":

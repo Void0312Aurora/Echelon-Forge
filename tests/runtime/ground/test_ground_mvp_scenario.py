@@ -54,6 +54,11 @@ class GroundMvpScenarioTests(unittest.TestCase):
         self.assertEqual(int(task.task_group_id), 4301)
         self.assertEqual(int(task.supported_node_id), 4301)
         self.assertEqual(int(task.supporting_node_id), 4301)
+        self.assertEqual(task.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(task.objective_area_id), 4301)
+        self.assertEqual(int(task.objective_node_id), 4301)
+        self.assertEqual(int(task.ground_commander_id), 4301)
+        self.assertAlmostEqual(float(task.tactical_cadence_hz), 1.0)
 
         self.assertTrue(bool(intent.active))
         self.assertEqual(intent.service_profile, ef_py.ServiceProfile.Army)
@@ -61,6 +66,12 @@ class GroundMvpScenarioTests(unittest.TestCase):
         self.assertEqual(intent.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
         self.assertEqual(intent.coordination_mode, ef_py.CoordinationMode.Independent)
         self.assertEqual(int(intent.tactical_unit_id), 4301)
+        self.assertEqual(intent.ground_status_phase, ef_py.GroundStatusPhase.OccupyingStatic)
+        self.assertEqual(intent.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(intent.objective_area_id), 4301)
+        self.assertEqual(int(intent.objective_node_id), 4301)
+        self.assertEqual(int(intent.ground_commander_id), 4301)
+        self.assertAlmostEqual(float(intent.tactical_cadence_hz), 1.0)
 
         self.assertTrue(bool(report.active))
         self.assertEqual(report.service_profile, ef_py.ServiceProfile.Army)
@@ -68,6 +79,12 @@ class GroundMvpScenarioTests(unittest.TestCase):
         self.assertEqual(report.tactical_unit_type, ef_py.TacticalUnitType.TacticalUnit)
         self.assertEqual(report.coordination_mode, ef_py.CoordinationMode.Independent)
         self.assertEqual(int(report.tactical_unit_id), 4301)
+        self.assertEqual(report.ground_status_phase, ef_py.GroundStatusPhase.OccupyingStatic)
+        self.assertEqual(report.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(report.objective_area_id), 4301)
+        self.assertEqual(int(report.objective_node_id), 4301)
+        self.assertEqual(int(report.ground_commander_id), 4301)
+        self.assertAlmostEqual(float(report.tactical_cadence_hz), 1.0)
 
     def test_ground_mvp_scenario_documents_compatibility_boundary(self) -> None:
         with open(_SCENARIO_PATH, "r", encoding="utf-8") as handle:
@@ -101,6 +118,11 @@ class GroundMvpScenarioTests(unittest.TestCase):
         self.assertAlmostEqual(float(cmd.cmd_speed_mps), float(loader.leader_intent.cmd_speed_mps), places=6)
         self.assertEqual(int(cmd.formation_id), 0)
         self.assertFalse(bool(cmd.authorization_to_fire))
+        self.assertEqual(cmd.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(cmd.objective_area_id), 4301)
+        self.assertEqual(int(cmd.objective_node_id), 4301)
+        self.assertEqual(int(cmd.ground_commander_id), 4301)
+        self.assertAlmostEqual(float(cmd.tactical_cadence_hz), 1.0, places=6)
 
 
 if __name__ == "__main__":

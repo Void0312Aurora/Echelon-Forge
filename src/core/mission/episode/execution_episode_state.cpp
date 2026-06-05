@@ -15,6 +15,10 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
     const auto rhs_stationing = mission_command_naval_stationing_directive(rhs);
     const auto lhs_embarked_helo = mission_command_naval_embarked_helo_directive(lhs);
     const auto rhs_embarked_helo = mission_command_naval_embarked_helo_directive(rhs);
+    const auto lhs_ground_static_task =
+        mission_command_ground_static_task_directive(lhs);
+    const auto rhs_ground_static_task =
+        mission_command_ground_static_task_directive(rhs);
 
     return lhs_core.cmd_heading_deg == rhs_core.cmd_heading_deg &&
         lhs_core.cmd_altitude_m == rhs_core.cmd_altitude_m &&
@@ -23,6 +27,7 @@ bool mission_commands_equal(const MissionCommand& lhs, const MissionCommand& rhs
         lhs_core.route_ref_id == rhs_core.route_ref_id &&
         lhs_stationing == rhs_stationing &&
         lhs_embarked_helo == rhs_embarked_helo &&
+        lhs_ground_static_task == rhs_ground_static_task &&
         lhs_recovery == rhs_recovery &&
         lhs_takeoff == rhs_takeoff &&
         lhs_formation == rhs_formation &&

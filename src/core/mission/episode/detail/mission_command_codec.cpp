@@ -252,6 +252,7 @@ void write_mission_command_fields_to_json(const MissionCommand& command, nlohman
     const auto formation = mission_command_air_formation_directive(command);
     const auto stationing = mission_command_naval_stationing_directive(command);
     const auto embarked_helo = mission_command_naval_embarked_helo_directive(command);
+    const auto ground_static_task = mission_command_ground_static_task_directive(command);
 
     (*mission_json)["command_code"] = core.command_code;
     (*mission_json)["target_heading"] = core.cmd_heading_deg;
@@ -265,6 +266,12 @@ void write_mission_command_fields_to_json(const MissionCommand& command, nlohman
     (*mission_json)["launch_helo"] = embarked_helo.launch_helo;
     (*mission_json)["recover_helo"] = embarked_helo.recover_helo;
     (*mission_json)["relay_oth_targeting"] = embarked_helo.relay_oth_targeting;
+    (*mission_json)["ground_task_mode"] =
+        static_cast<int>(ground_static_task.ground_task_mode);
+    (*mission_json)["objective_area_id"] = ground_static_task.objective_area_id;
+    (*mission_json)["objective_node_id"] = ground_static_task.objective_node_id;
+    (*mission_json)["ground_commander_id"] = ground_static_task.ground_commander_id;
+    (*mission_json)["tactical_cadence_hz"] = ground_static_task.tactical_cadence_hz;
     (*mission_json)["recovery_base_id"] = recovery.recovery_base_id;
     (*mission_json)["recovery_runway_id"] = recovery.recovery_runway_id;
     (*mission_json)["recovery_approach_type"] = recovery_approach_type_name(recovery.recovery_approach_type);
@@ -304,6 +311,13 @@ MissionCommand build_mission_command_from_json(const nlohmann::json& mission_jso
     command.launch_helo = json_bool_or(mission_json, "launch_helo", false);
     command.recover_helo = json_bool_or(mission_json, "recover_helo", false);
     command.relay_oth_targeting = json_bool_or(mission_json, "relay_oth_targeting", false);
+    auto& ground = mission_command_ground_owner_slice(command);
+    ground.ground_task_mode =
+        static_cast<GroundTaskMode>(json_int_or(mission_json, "ground_task_mode", 0));
+    ground.objective_area_id = json_uint64_or(mission_json, "objective_area_id", 0);
+    ground.objective_node_id = json_uint64_or(mission_json, "objective_node_id", 0);
+    ground.ground_commander_id = json_uint64_or(mission_json, "ground_commander_id", 0);
+    ground.tactical_cadence_hz = json_double_or(mission_json, "tactical_cadence_hz", 1.0);
     command.recovery_base_id = json_uint64_or(mission_json, "recovery_base_id", 0);
     command.recovery_runway_id = json_uint64_or(mission_json, "recovery_runway_id", 0);
     command.recovery_approach_type = parse_recovery_approach_type(mission_json);

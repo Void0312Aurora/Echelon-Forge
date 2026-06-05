@@ -148,6 +148,10 @@ class GroundProfileSemanticTests(unittest.TestCase):
         self.assertEqual(int(order.supported_node_id), 5201)
         self.assertEqual(int(order.supporting_node_id), 5301)
         self.assertEqual(int(order.officer_in_tactical_command), 5101)
+        self.assertEqual(order.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+        self.assertEqual(int(order.objective_area_id), 5201)
+        self.assertEqual(int(order.objective_node_id), 5201)
+        self.assertEqual(int(order.ground_commander_id), 5101)
 
         intent = ef_py.LeaderIntent()
         apply_leader_intent_common_core_defaults(intent, order=order, task_name="TASK_SUPPORT", default_tactical_unit_id=99)
@@ -158,6 +162,11 @@ class GroundProfileSemanticTests(unittest.TestCase):
         self.assertEqual(int(intent.task_group_id), 6101)
         self.assertEqual(int(intent.tactical_unit_id), 5301)
         self.assertEqual(int(intent.officer_in_tactical_command), 5101)
+        self.assertEqual(intent.ground_status_phase, ef_py.GroundStatusPhase.SupportingStatic)
+        self.assertEqual(intent.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+        self.assertEqual(int(intent.objective_area_id), 5201)
+        self.assertEqual(int(intent.objective_node_id), 5201)
+        self.assertEqual(int(intent.ground_commander_id), 5101)
 
         report = ef_py.PilotReport()
         apply_pilot_report_common_core_defaults(report, order=order, task_name="TASK_SUPPORT", default_tactical_unit_id=99)
@@ -168,23 +177,23 @@ class GroundProfileSemanticTests(unittest.TestCase):
         self.assertEqual(int(report.task_group_id), 6101)
         self.assertEqual(int(report.tactical_unit_id), 5301)
         self.assertEqual(int(report.officer_in_tactical_command), 5101)
+        self.assertEqual(report.ground_status_phase, ef_py.GroundStatusPhase.SupportingStatic)
+        self.assertEqual(report.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+        self.assertEqual(int(report.objective_area_id), 5201)
+        self.assertEqual(int(report.objective_node_id), 5201)
+        self.assertEqual(int(report.ground_commander_id), 5101)
 
-    def test_ground_mission_command_builder_is_minimal_compatibility_shell(self) -> None:
+    def test_ground_mission_command_builder_populates_ground_static_command_slice(self) -> None:
+        task = ef_py.TaskOrder()
+        task.service_profile = ef_py.ServiceProfile.Army
+        task.ground_task_mode = ef_py.GroundTaskMode.OccupyStatic
+        task.objective_area_id = 7101
+        task.objective_node_id = 7201
+        task.ground_commander_id = 7301
+        task.tactical_cadence_hz = 1.0
         loader = SimpleNamespace(
-            mission_cmd={
-                "command_code": 7,
-                "target_heading": 90.0,
-                "target_altitude": 12.0,
-                "target_speed": 4.5,
-                "formation_id": 3,
-                "form_offset_x": 1.0,
-                "form_offset_y": 2.0,
-                "form_offset_z": 0.0,
-                "assigned_target_id": 77,
-                "authorization_to_fire": True,
-                "takeoff_procedure_code": 99,
-                "recovery_runway_id": 88,
-            },
+            task_order=task,
+            mission_cmd={"command_code": 7},
             leader_intent=None,
         )
 
@@ -193,14 +202,34 @@ class GroundProfileSemanticTests(unittest.TestCase):
         self.assertEqual(build_kernel_mission_command.__module__, "python.rl.profile.ground_profile")
         self.assertTrue(bool(cmd.active))
         self.assertEqual(int(cmd.command_code), 7)
-        self.assertAlmostEqual(float(cmd.cmd_heading_deg), 90.0)
-        self.assertAlmostEqual(float(cmd.cmd_altitude_m), 12.0)
-        self.assertAlmostEqual(float(cmd.cmd_speed_mps), 4.5)
-        self.assertEqual(int(cmd.formation_id), 3)
-        self.assertAlmostEqual(float(cmd.form_offset_x), 1.0)
-        self.assertAlmostEqual(float(cmd.form_offset_y), 2.0)
-        self.assertEqual(int(cmd.assigned_target_id), 77)
-        self.assertTrue(bool(cmd.authorization_to_fire))
+        self.assertEqual(cmd.ground_task_mode, ef_py.GroundTaskMode.OccupyStatic)
+        self.assertEqual(int(cmd.objective_area_id), 7101)
+        self.assertEqual(int(cmd.objective_node_id), 7201)
+        self.assertEqual(int(cmd.ground_commander_id), 7301)
+        self.assertAlmostEqual(float(cmd.tactical_cadence_hz), 1.0)
+
+    def test_ground_mission_command_builder_infers_static_support_mode_without_air_fields(self) -> None:
+        task = ef_py.TaskOrder()
+        task.service_profile = ef_py.ServiceProfile.Army
+        task.supported_node_id = 8101
+        task.supporting_node_id = 8201
+        task.parent_node_id = 8301
+        loader = SimpleNamespace(
+            task_order=task,
+            mission_cmd={},
+            leader_intent=None,
+            c2_task_name="TASK_SUPPORT",
+        )
+
+        cmd = build_kernel_mission_command(loader)
+
+        self.assertTrue(bool(cmd.active))
+        self.assertEqual(cmd.ground_task_mode, ef_py.GroundTaskMode.SupportStatic)
+        self.assertEqual(int(cmd.objective_area_id), 8101)
+        self.assertEqual(int(cmd.objective_node_id), 8101)
+        self.assertEqual(int(cmd.ground_commander_id), 8301)
+        self.assertEqual(int(cmd.formation_id), 0)
+        self.assertAlmostEqual(float(cmd.cmd_altitude_m), 0.0)
 
     def test_ground_recovery_approach_inference_returns_binding_enum(self) -> None:
         none_value = getattr(ef_py.RecoveryApproachType, "None")

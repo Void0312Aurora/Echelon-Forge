@@ -3,11 +3,12 @@
 `components/command` is the home directory for pilot actions, mission commands, command links, and legacy control commands. The old `components/physics/action.h` is retained as a compatibility umbrella include.
 
 Similar to tasking, the command side is now documented as a common foundation
-with air and naval extensions, rather than an `air + ship` split. `common`
-carries cross-domain command transport and shared execution intent, `air`
-carries the mature aviation execution surface, and `naval` carries the
-maintained first-stage ship/maritime command slice. Ground command/tasking
-bootstrap evidence has not landed here as a maintained command subdomain.
+with air, naval, and ground extensions, rather than an `air + ship` split.
+`common` carries cross-domain command transport and shared execution intent,
+`air` carries the mature aviation execution surface, `naval` carries the
+maintained first-stage ship/maritime command slice, and `ground` carries the
+early static G0/G1 task metadata command slice. Ground movement, sensing,
+fires, terrain, and damage controls remain held.
 
 ## Allowed
 
@@ -28,7 +29,7 @@ bootstrap evidence has not landed here as a maintained command subdomain.
 - `common command` holds cross-domain shared execution semantics: for example, command transport, latency/drop, pending delivery, and basic command vectors reusable across multiple domains.
 - `air command` holds the currently aviation-specific execution surface: `PilotAction`, existing legacy flight control surfaces, and command extensions with route/recovery/takeoff/runway/formation semantics.
 - `naval command` models the current ship/maritime execution DTO slice separately, including stationing, embarked helo launch/recovery, OTH relay, and naval surface-engagement command codes. Do not directly generalize air’s heading/altitude/runway/recovery combinations into a “ship command”.
-- `ground command` is not a maintained C++ command slice yet. Keep land movement/sensing/fires control out of `common/` until the ground schema/runtime owner is defined.
+- `ground command` holds the current static task metadata slice in `MissionCommandGround`: objective/area references, static task mode, tactical commander ID, and tactical cadence. Keep land movement/sensing/fires control out of `common/` until the ground schema/runtime owner is defined.
 
 ## Notes on `MissionCommand`
 
@@ -64,12 +65,13 @@ Already implemented:
 - `command_link.h`
 - `legacy_command.h`
 - `naval/mission_command_naval.h`
+- `ground/mission_command_ground.h`
 
 WP0 document scope:
 
 - Prioritize identifying truly shared command transport / base intent.
 - Air-specific semantics have been separated from the shared layer into `MissionCommandAir`, but a flat compatibility shell is still maintained.
 - Naval-specific command semantics have landed in `MissionCommandNaval`, without using the “air + ship” dichotomy.
-- Ground command semantics remain held; use only shared typed setup/capability evidence until a maintained ground command schema is introduced.
+- Ground command now has a maintained static task metadata owner slice; route movement, terrain, sensing, fires, damage, and combat command semantics remain held.
 
 New code should include specific header files and should no longer depend on `components/physics/action.h`.

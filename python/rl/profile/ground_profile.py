@@ -40,6 +40,77 @@ def _defend_task_family() -> Any:
     return getattr(ef_py.TaskFamily, "Defend")
 
 
+def _ground_task_mode_default() -> Any:
+    namespace = getattr(ef_py, "GroundTaskMode", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _ground_status_phase_default() -> Any:
+    namespace = getattr(ef_py, "GroundStatusPhase", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def infer_ground_task_mode(
+    *,
+    task_name: str | None = None,
+    phase_name: str | None = None,
+    order: Any | None = None,
+) -> Any:
+    namespace = getattr(ef_py, "GroundTaskMode", None)
+    if namespace is None:
+        return 0
+
+    current = getattr(order, "ground_task_mode", _ground_task_mode_default()) if order is not None else _ground_task_mode_default()
+    if not is_default_enum(current, _ground_task_mode_default()):
+        return current
+
+    name = str(task_name or "").strip().upper()
+    if name == "TASK_OCCUPY":
+        return getattr(namespace, "OccupyStatic", _ground_task_mode_default())
+    if name == "TASK_SUPPORT":
+        return getattr(namespace, "SupportStatic", _ground_task_mode_default())
+
+    phase = str(phase_name or "").strip().lower()
+    if phase in {"occupy", "defend"}:
+        return getattr(namespace, "OccupyStatic", _ground_task_mode_default())
+    if phase == "support":
+        return getattr(namespace, "SupportStatic", _ground_task_mode_default())
+    if phase in {"hold", "holding", "static"}:
+        return getattr(namespace, "HoldStatic", _ground_task_mode_default())
+    return _ground_task_mode_default()
+
+
+def infer_ground_status_phase(
+    *,
+    ground_task_mode: Any = None,
+    phase_name: str | None = None,
+) -> Any:
+    namespace = getattr(ef_py, "GroundStatusPhase", None)
+    if namespace is None:
+        return 0
+
+    phase = str(phase_name or "").strip().lower()
+    if phase in {"complete", "completed"}:
+        return getattr(namespace, "Complete", _ground_status_phase_default())
+    if phase in {"preparing", "prepare"}:
+        return getattr(namespace, "Preparing", _ground_status_phase_default())
+
+    mode_value = enum_value(ground_task_mode, enum_value(_ground_task_mode_default()))
+    task_mode = getattr(ef_py, "GroundTaskMode", None)
+    if task_mode is not None:
+        if mode_value == enum_value(getattr(task_mode, "OccupyStatic", 0)):
+            return getattr(namespace, "OccupyingStatic", _ground_status_phase_default())
+        if mode_value == enum_value(getattr(task_mode, "SupportStatic", 0)):
+            return getattr(namespace, "SupportingStatic", _ground_status_phase_default())
+        if mode_value == enum_value(getattr(task_mode, "HoldStatic", 0)):
+            return getattr(namespace, "HoldingStatic", _ground_status_phase_default())
+    return getattr(namespace, "Assigned", _ground_status_phase_default())
+
+
 def infer_ground_task_family(*, task_name: str | None = None, task_type: Any = None, phase_name: str | None = None) -> Any:
     name = str(task_name or "").strip().upper()
     if name == "TASK_MOVE":
@@ -159,6 +230,10 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
         "coordination_mode": ef_py.CoordinationMode,
         "assignee_kind": ef_py.AssigneeKind,
     }
+    if hasattr(ef_py, "GroundTaskMode"):
+        enum_fields["ground_task_mode"] = ef_py.GroundTaskMode
+    if hasattr(ef_py, "GroundStatusPhase"):
+        enum_fields["ground_status_phase"] = ef_py.GroundStatusPhase
     for field_name, namespace in enum_fields.items():
         if field_name not in normalized:
             continue
@@ -177,6 +252,10 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
             default_value = authority_scope_default()
         elif field_name == "coordination_mode":
             default_value = coordination_mode_default()
+        elif field_name == "ground_task_mode":
+            default_value = _ground_task_mode_default()
+        elif field_name == "ground_status_phase":
+            default_value = _ground_status_phase_default()
         normalized[field_name] = enum_or_default(namespace, normalized.get(field_name), default_value)
 
     if "service_profile" not in normalized:
@@ -250,13 +329,89 @@ def _mission_float_value(leader_intent: Any, mission_cmd: dict[str, Any], field_
     return float(mission_cmd.get(field_name, mission_cmd.get(fallback_name, default)))
 
 
+def _mission_positive_int_value(
+    *,
+    leader_intent: Any,
+    task_order: Any,
+    mission_cmd: dict[str, Any],
+    field_name: str,
+    fallback_names: tuple[str, ...] = (),
+) -> int:
+    for source in (leader_intent, task_order):
+        if source is None:
+            continue
+        for name in (field_name, *fallback_names):
+            if not hasattr(source, name):
+                continue
+            value = coerce_positive_int(getattr(source, name, 0))
+            if value > 0:
+                return value
+    for name in (field_name, *fallback_names):
+        value = coerce_positive_int(mission_cmd.get(name, 0))
+        if value > 0:
+            return value
+    return 0
+
+
+def _mission_positive_float_value(
+    *,
+    leader_intent: Any,
+    task_order: Any,
+    mission_cmd: dict[str, Any],
+    field_name: str,
+    default: float,
+) -> float:
+    for source in (leader_intent, task_order):
+        if source is None or not hasattr(source, field_name):
+            continue
+        try:
+            value = float(getattr(source, field_name, default))
+        except Exception:
+            continue
+        if value > 0.0:
+            return value
+    try:
+        value = float(mission_cmd.get(field_name, default))
+    except Exception:
+        return float(default)
+    return value if value > 0.0 else float(default)
+
+
+def _mission_ground_task_mode(
+    *,
+    leader_intent: Any,
+    task_order: Any,
+    mission_cmd: dict[str, Any],
+    task_name: str | None,
+    phase_name: str | None,
+) -> Any:
+    namespace = getattr(ef_py, "GroundTaskMode", None)
+    if namespace is None:
+        return 0
+    default_value = _ground_task_mode_default()
+    for source in (leader_intent, task_order):
+        if source is None or not hasattr(source, "ground_task_mode"):
+            continue
+        value = enum_or_default(namespace, getattr(source, "ground_task_mode", default_value), default_value)
+        if not is_default_enum(value, default_value):
+            return value
+    if "ground_task_mode" in mission_cmd:
+        value = enum_or_default(namespace, mission_cmd.get("ground_task_mode"), default_value)
+        if not is_default_enum(value, default_value):
+            return value
+    return infer_ground_task_mode(task_name=task_name, phase_name=phase_name, order=task_order)
+
+
 def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
-    """Compatibility shell only; G1 does not define ground command semantics."""
+    """Build the G0/G1 ground static command slice through MissionCommandGround."""
 
     cmd = ef_py.MissionCommand()
     cmd.active = True
     mission_cmd = getattr(loader, "mission_cmd", {}) or {}
     leader_intent = getattr(loader, "leader_intent", None)
+    task_order = getattr(loader, "task_order", None)
+    task_name = str(getattr(loader, "c2_task_name", "") or mission_cmd.get("task_name", "") or "").strip().upper() or None
+    phase_name = str(getattr(loader, "mission_phase_name", "") or mission_cmd.get("phase_name", "") or "").strip().lower() or None
 
     cmd.command_code = _mission_int_value(leader_intent, mission_cmd, "command_code")
     cmd.cmd_heading_deg = _mission_float_value(leader_intent, mission_cmd, "cmd_heading_deg", "target_heading")
@@ -273,6 +428,46 @@ def build_kernel_mission_command(loader: Any) -> ef_py.MissionCommand:
         cmd.authorization_to_fire = bool(getattr(leader_intent, "authorization_to_fire", False))
     else:
         cmd.authorization_to_fire = bool(mission_cmd.get("authorization_to_fire", False))
+    if hasattr(cmd, "ground_task_mode"):
+        cmd.ground_task_mode = _mission_ground_task_mode(
+            leader_intent=leader_intent,
+            task_order=task_order,
+            mission_cmd=mission_cmd,
+            task_name=task_name,
+            phase_name=phase_name,
+        )
+    if hasattr(cmd, "objective_area_id"):
+        cmd.objective_area_id = _mission_positive_int_value(
+            leader_intent=leader_intent,
+            task_order=task_order,
+            mission_cmd=mission_cmd,
+            field_name="objective_area_id",
+            fallback_names=("supported_node_id", "task_group_id"),
+        )
+    if hasattr(cmd, "objective_node_id"):
+        cmd.objective_node_id = _mission_positive_int_value(
+            leader_intent=leader_intent,
+            task_order=task_order,
+            mission_cmd=mission_cmd,
+            field_name="objective_node_id",
+            fallback_names=("supported_node_id", "supporting_node_id", "assignee_id"),
+        )
+    if hasattr(cmd, "ground_commander_id"):
+        cmd.ground_commander_id = _mission_positive_int_value(
+            leader_intent=leader_intent,
+            task_order=task_order,
+            mission_cmd=mission_cmd,
+            field_name="ground_commander_id",
+            fallback_names=("officer_in_tactical_command", "parent_node_id", "task_group_id"),
+        )
+    if hasattr(cmd, "tactical_cadence_hz"):
+        cmd.tactical_cadence_hz = _mission_positive_float_value(
+            leader_intent=leader_intent,
+            task_order=task_order,
+            mission_cmd=mission_cmd,
+            field_name="tactical_cadence_hz",
+            default=1.0,
+        )
     return cmd
 
 

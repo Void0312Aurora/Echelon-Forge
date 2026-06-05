@@ -6,6 +6,7 @@
 #include "components/systems/comm.h"
 #include "components/tasking/air/air_tasking_enums.h"
 #include "components/tasking/common/core_tasking_enums.h"
+#include "components/tasking/ground/ground_tasking_enums.h"
 #include "components/tasking/leader_intent.h"
 #include "components/tasking/naval/naval_tasking_enums.h"
 #include "components/tasking/pilot_report.h"
@@ -115,6 +116,21 @@ void bind_command(nb::module_& m) {
         .value("Defend", TaskFamily::Defend)
         .value("Recover", TaskFamily::Recover)
         .value("Withdraw", TaskFamily::Withdraw);
+
+    nb::enum_<GroundTaskMode>(m, "GroundTaskMode")
+        .value("Unspecified", GroundTaskMode::Unspecified)
+        .value("HoldStatic", GroundTaskMode::HoldStatic)
+        .value("OccupyStatic", GroundTaskMode::OccupyStatic)
+        .value("SupportStatic", GroundTaskMode::SupportStatic);
+
+    nb::enum_<GroundStatusPhase>(m, "GroundStatusPhase")
+        .value("Unspecified", GroundStatusPhase::Unspecified)
+        .value("Assigned", GroundStatusPhase::Assigned)
+        .value("Preparing", GroundStatusPhase::Preparing)
+        .value("HoldingStatic", GroundStatusPhase::HoldingStatic)
+        .value("OccupyingStatic", GroundStatusPhase::OccupyingStatic)
+        .value("SupportingStatic", GroundStatusPhase::SupportingStatic)
+        .value("Complete", GroundStatusPhase::Complete);
 
     nb::enum_<NavalWarfareRole>(m, "NavalWarfareRole")
         .value("Unspecified", NavalWarfareRole::Unspecified)
@@ -267,6 +283,50 @@ void bind_command(nb::module_& m) {
             &PilotReportNaval::officer_in_tactical_command
         );
 
+    nb::class_<PilotReportGround::StaticStatusDirective>(
+        m,
+        "PilotReportGroundStaticStatusDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "ground_status_phase",
+            &PilotReportGround::StaticStatusDirective::ground_status_phase
+        )
+        .def_rw(
+            "ground_task_mode",
+            &PilotReportGround::StaticStatusDirective::ground_task_mode
+        )
+        .def_rw(
+            "objective_area_id",
+            &PilotReportGround::StaticStatusDirective::objective_area_id
+        )
+        .def_rw(
+            "objective_node_id",
+            &PilotReportGround::StaticStatusDirective::objective_node_id
+        )
+        .def_rw(
+            "ground_commander_id",
+            &PilotReportGround::StaticStatusDirective::ground_commander_id
+        )
+        .def_rw(
+            "tactical_cadence_hz",
+            &PilotReportGround::StaticStatusDirective::tactical_cadence_hz
+        )
+        .def_rw(
+            "readiness_ratio",
+            &PilotReportGround::StaticStatusDirective::readiness_ratio
+        );
+
+    nb::class_<PilotReportGround>(m, "PilotReportGround")
+        .def(nb::init<>())
+        .def_rw("ground_status_phase", &PilotReportGround::ground_status_phase)
+        .def_rw("ground_task_mode", &PilotReportGround::ground_task_mode)
+        .def_rw("objective_area_id", &PilotReportGround::objective_area_id)
+        .def_rw("objective_node_id", &PilotReportGround::objective_node_id)
+        .def_rw("ground_commander_id", &PilotReportGround::ground_commander_id)
+        .def_rw("tactical_cadence_hz", &PilotReportGround::tactical_cadence_hz)
+        .def_rw("readiness_ratio", &PilotReportGround::readiness_ratio);
+
     nb::class_<PilotReport>(m, "PilotReport")
         .def(nb::init<>())
         .def_rw("report_type", &PilotReport::report_type)
@@ -279,8 +339,13 @@ void bind_command(nb::module_& m) {
         .def_rw("task_group_id", &PilotReport::task_group_id)
         .def_rw("role_code", &PilotReport::role_code)
         .def_rw("warfare_role_code", &PilotReport::warfare_role_code)
+        .def_rw("ground_status_phase", &PilotReport::ground_status_phase)
+        .def_rw("ground_task_mode", &PilotReport::ground_task_mode)
         .def_rw("coordination_mode", &PilotReport::coordination_mode)
         .def_rw("officer_in_tactical_command", &PilotReport::officer_in_tactical_command)
+        .def_rw("objective_area_id", &PilotReport::objective_area_id)
+        .def_rw("objective_node_id", &PilotReport::objective_node_id)
+        .def_rw("ground_commander_id", &PilotReport::ground_commander_id)
         .def_rw("element_id", &PilotReport::element_id)
         .def_rw("phase_id", &PilotReport::phase_id)
         .def_rw("formation_role_id", &PilotReport::formation_role_id)
@@ -294,6 +359,8 @@ void bind_command(nb::module_& m) {
         .def_rw("bearing_error_deg", &PilotReport::bearing_error_deg)
         .def_rw("closure_mps", &PilotReport::closure_mps)
         .def_rw("separation_m", &PilotReport::separation_m)
+        .def_rw("tactical_cadence_hz", &PilotReport::tactical_cadence_hz)
+        .def_rw("readiness_ratio", &PilotReport::readiness_ratio)
         .def_rw("active", &PilotReport::active);
 
     m.def(
@@ -329,6 +396,25 @@ void bind_command(nb::module_& m) {
                 &pilot_report_naval_owner_slice(report),
                 report_obj
             );
+        },
+        nb::arg("report")
+    );
+    m.def(
+        "pilot_report_ground_owner_slice",
+        [](nb::handle report_obj) {
+            auto& report = nb::cast<PilotReport&>(report_obj);
+            return nb::inst_reference(
+                nb::type<PilotReportGround>(),
+                &pilot_report_ground_owner_slice(report),
+                report_obj
+            );
+        },
+        nb::arg("report")
+    );
+    m.def(
+        "pilot_report_ground_static_status_directive",
+        [](const PilotReport& report) {
+            return pilot_report_ground_static_status_directive(report);
         },
         nb::arg("report")
     );
@@ -374,6 +460,11 @@ void bind_command(nb::module_& m) {
         .def_rw("launch_helo", &MissionCommand::launch_helo)
         .def_rw("recover_helo", &MissionCommand::recover_helo)
         .def_rw("relay_oth_targeting", &MissionCommand::relay_oth_targeting)
+        .def_rw("ground_task_mode", &MissionCommand::ground_task_mode)
+        .def_rw("objective_area_id", &MissionCommand::objective_area_id)
+        .def_rw("objective_node_id", &MissionCommand::objective_node_id)
+        .def_rw("ground_commander_id", &MissionCommand::ground_commander_id)
+        .def_rw("tactical_cadence_hz", &MissionCommand::tactical_cadence_hz)
         .def_rw("recovery_base_id", &MissionCommand::recovery_base_id)
         .def_rw("recovery_runway_id", &MissionCommand::recovery_runway_id)
         .def_rw("recovery_approach_type", &MissionCommand::recovery_approach_type)
@@ -398,6 +489,60 @@ void bind_command(nb::module_& m) {
         )
         .def_rw("authorization_to_fire", &MissionCommand::authorization_to_fire)
         .def_rw("active", &MissionCommand::active);
+
+    nb::class_<MissionCommandGround::StaticTaskDirective>(
+        m,
+        "MissionCommandGroundStaticTaskDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "ground_task_mode",
+            &MissionCommandGround::StaticTaskDirective::ground_task_mode
+        )
+        .def_rw(
+            "objective_area_id",
+            &MissionCommandGround::StaticTaskDirective::objective_area_id
+        )
+        .def_rw(
+            "objective_node_id",
+            &MissionCommandGround::StaticTaskDirective::objective_node_id
+        )
+        .def_rw(
+            "ground_commander_id",
+            &MissionCommandGround::StaticTaskDirective::ground_commander_id
+        )
+        .def_rw(
+            "tactical_cadence_hz",
+            &MissionCommandGround::StaticTaskDirective::tactical_cadence_hz
+        );
+
+    nb::class_<MissionCommandGround>(m, "MissionCommandGround")
+        .def(nb::init<>())
+        .def_rw("ground_task_mode", &MissionCommandGround::ground_task_mode)
+        .def_rw("objective_area_id", &MissionCommandGround::objective_area_id)
+        .def_rw("objective_node_id", &MissionCommandGround::objective_node_id)
+        .def_rw("ground_commander_id", &MissionCommandGround::ground_commander_id)
+        .def_rw("tactical_cadence_hz", &MissionCommandGround::tactical_cadence_hz);
+
+    m.def(
+        "mission_command_ground_owner_slice",
+        [](nb::handle command_obj) {
+            auto& command = nb::cast<MissionCommand&>(command_obj);
+            return nb::inst_reference(
+                nb::type<MissionCommandGround>(),
+                &mission_command_ground_owner_slice(command),
+                command_obj
+            );
+        },
+        nb::arg("command")
+    );
+    m.def(
+        "mission_command_ground_static_task_directive",
+        [](const MissionCommand& command) {
+            return mission_command_ground_static_task_directive(command);
+        },
+        nb::arg("command")
+    );
 
     nb::class_<TaskOrderCore>(m, "TaskOrderCore")
         .def(nb::init<>())
@@ -613,6 +758,40 @@ void bind_command(nb::module_& m) {
         )
         .def_rw("naval_station_type", &TaskOrderNaval::naval_station_type);
 
+    nb::class_<TaskOrderGround::StaticTaskDirective>(
+        m,
+        "TaskOrderGroundStaticTaskDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "ground_task_mode",
+            &TaskOrderGround::StaticTaskDirective::ground_task_mode
+        )
+        .def_rw(
+            "objective_area_id",
+            &TaskOrderGround::StaticTaskDirective::objective_area_id
+        )
+        .def_rw(
+            "objective_node_id",
+            &TaskOrderGround::StaticTaskDirective::objective_node_id
+        )
+        .def_rw(
+            "ground_commander_id",
+            &TaskOrderGround::StaticTaskDirective::ground_commander_id
+        )
+        .def_rw(
+            "tactical_cadence_hz",
+            &TaskOrderGround::StaticTaskDirective::tactical_cadence_hz
+        );
+
+    nb::class_<TaskOrderGround>(m, "TaskOrderGround")
+        .def(nb::init<>())
+        .def_rw("ground_task_mode", &TaskOrderGround::ground_task_mode)
+        .def_rw("objective_area_id", &TaskOrderGround::objective_area_id)
+        .def_rw("objective_node_id", &TaskOrderGround::objective_node_id)
+        .def_rw("ground_commander_id", &TaskOrderGround::ground_commander_id)
+        .def_rw("tactical_cadence_hz", &TaskOrderGround::tactical_cadence_hz);
+
     nb::class_<TaskOrderNavalStationingDirective>(
         m,
         "TaskOrderNavalStationingDirective"
@@ -641,11 +820,15 @@ void bind_command(nb::module_& m) {
         .def_rw("supporting_node_id", &TaskOrder::supporting_node_id)
         .def_rw("role_code", &TaskOrder::role_code)
         .def_rw("warfare_role_code", &TaskOrder::warfare_role_code)
+        .def_rw("ground_task_mode", &TaskOrder::ground_task_mode)
         .def_rw("coordination_mode", &TaskOrder::coordination_mode)
         .def_rw("relative_slot_code", &TaskOrder::relative_slot_code)
         .def_rw("assignee_kind", &TaskOrder::assignee_kind)
         .def_rw("recovery_site_id", &TaskOrder::recovery_site_id)
         .def_rw("officer_in_tactical_command", &TaskOrder::officer_in_tactical_command)
+        .def_rw("objective_area_id", &TaskOrder::objective_area_id)
+        .def_rw("objective_node_id", &TaskOrder::objective_node_id)
+        .def_rw("ground_commander_id", &TaskOrder::ground_commander_id)
         .def_rw("element_id", &TaskOrder::element_id)
         .def_rw("package_id", &TaskOrder::package_id)
         .def_rw("lead_aircraft_id", &TaskOrder::lead_aircraft_id)
@@ -683,7 +866,8 @@ void bind_command(nb::module_& m) {
         .def_rw("join_policy_id", &TaskOrder::join_policy_id)
         .def_rw("rejoin_policy_id", &TaskOrder::rejoin_policy_id)
         .def_rw("mutual_support_mode", &TaskOrder::mutual_support_mode)
-        .def_rw("support_sector_id", &TaskOrder::support_sector_id);
+        .def_rw("support_sector_id", &TaskOrder::support_sector_id)
+        .def_rw("tactical_cadence_hz", &TaskOrder::tactical_cadence_hz);
 
     m.def(
         "task_order_shared_core",
@@ -721,6 +905,18 @@ void bind_command(nb::module_& m) {
             return nb::inst_reference(
                 nb::type<TaskOrderNaval>(),
                 &task_order_naval_owner_slice(order),
+                order_obj
+            );
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_ground_owner_slice",
+        [](nb::handle order_obj) {
+            auto& order = nb::cast<TaskOrder&>(order_obj);
+            return nb::inst_reference(
+                nb::type<TaskOrderGround>(),
+                &task_order_ground_owner_slice(order),
                 order_obj
             );
         },
@@ -766,6 +962,13 @@ void bind_command(nb::module_& m) {
         "task_order_naval_stationing_directive",
         [](const TaskOrder& order) {
             return task_order_naval_stationing_directive(order);
+        },
+        nb::arg("order")
+    );
+    m.def(
+        "task_order_ground_static_task_directive",
+        [](const TaskOrder& order) {
+            return task_order_ground_static_task_directive(order);
         },
         nb::arg("order")
     );
@@ -857,6 +1060,20 @@ void bind_command(nb::module_& m) {
         },
         nb::arg("contract")
     );
+    m.def(
+        "task_order_maintained_ground_static_task",
+        [](nb::handle contract_obj) {
+            auto& contract = nb::cast<TaskOrderMaintainedBatchContract&>(
+                contract_obj
+            );
+            return nb::inst_reference(
+                nb::type<TaskOrderGround::StaticTaskDirective>(),
+                &contract.ground_static_task,
+                contract_obj
+            );
+        },
+        nb::arg("contract")
+    );
 
     nb::class_<LeaderIntentCore>(m, "LeaderIntentCore")
         .def(nb::init<>())
@@ -930,6 +1147,45 @@ void bind_command(nb::module_& m) {
             &LeaderIntentNaval::officer_in_tactical_command
         );
 
+    nb::class_<LeaderIntentGround::StaticStatusDirective>(
+        m,
+        "LeaderIntentGroundStaticStatusDirective"
+    )
+        .def(nb::init<>())
+        .def_rw(
+            "ground_status_phase",
+            &LeaderIntentGround::StaticStatusDirective::ground_status_phase
+        )
+        .def_rw(
+            "ground_task_mode",
+            &LeaderIntentGround::StaticStatusDirective::ground_task_mode
+        )
+        .def_rw(
+            "objective_area_id",
+            &LeaderIntentGround::StaticStatusDirective::objective_area_id
+        )
+        .def_rw(
+            "objective_node_id",
+            &LeaderIntentGround::StaticStatusDirective::objective_node_id
+        )
+        .def_rw(
+            "ground_commander_id",
+            &LeaderIntentGround::StaticStatusDirective::ground_commander_id
+        )
+        .def_rw(
+            "tactical_cadence_hz",
+            &LeaderIntentGround::StaticStatusDirective::tactical_cadence_hz
+        );
+
+    nb::class_<LeaderIntentGround>(m, "LeaderIntentGround")
+        .def(nb::init<>())
+        .def_rw("ground_status_phase", &LeaderIntentGround::ground_status_phase)
+        .def_rw("ground_task_mode", &LeaderIntentGround::ground_task_mode)
+        .def_rw("objective_area_id", &LeaderIntentGround::objective_area_id)
+        .def_rw("objective_node_id", &LeaderIntentGround::objective_node_id)
+        .def_rw("ground_commander_id", &LeaderIntentGround::ground_commander_id)
+        .def_rw("tactical_cadence_hz", &LeaderIntentGround::tactical_cadence_hz);
+
     nb::class_<LeaderIntent>(m, "LeaderIntent")
         .def(nb::init<>())
         .def_rw("phase_id", &LeaderIntent::phase_id)
@@ -941,10 +1197,15 @@ void bind_command(nb::module_& m) {
         .def_rw("task_group_id", &LeaderIntent::task_group_id)
         .def_rw("role_code", &LeaderIntent::role_code)
         .def_rw("warfare_role_code", &LeaderIntent::warfare_role_code)
+        .def_rw("ground_status_phase", &LeaderIntent::ground_status_phase)
+        .def_rw("ground_task_mode", &LeaderIntent::ground_task_mode)
         .def_rw("coordination_mode", &LeaderIntent::coordination_mode)
         .def_rw("relative_slot_code", &LeaderIntent::relative_slot_code)
         .def_rw("recovery_site_id", &LeaderIntent::recovery_site_id)
         .def_rw("officer_in_tactical_command", &LeaderIntent::officer_in_tactical_command)
+        .def_rw("objective_area_id", &LeaderIntent::objective_area_id)
+        .def_rw("objective_node_id", &LeaderIntent::objective_node_id)
+        .def_rw("ground_commander_id", &LeaderIntent::ground_commander_id)
         .def_rw("command_code", &LeaderIntent::command_code)
         .def_rw("route_ref_id", &LeaderIntent::route_ref_id)
         .def_rw("recovery_base_id", &LeaderIntent::recovery_base_id)
@@ -985,6 +1246,7 @@ void bind_command(nb::module_& m) {
         .def_rw("approach_armed", &LeaderIntent::approach_armed)
         .def_rw("commit_to_land", &LeaderIntent::commit_to_land)
         .def_rw("abort_flag", &LeaderIntent::abort_flag)
+        .def_rw("tactical_cadence_hz", &LeaderIntent::tactical_cadence_hz)
         .def_rw("active", &LeaderIntent::active);
 
     m.def(
@@ -1020,6 +1282,25 @@ void bind_command(nb::module_& m) {
                 &leader_intent_naval_owner_slice(intent),
                 intent_obj
             );
+        },
+        nb::arg("intent")
+    );
+    m.def(
+        "leader_intent_ground_owner_slice",
+        [](nb::handle intent_obj) {
+            auto& intent = nb::cast<LeaderIntent&>(intent_obj);
+            return nb::inst_reference(
+                nb::type<LeaderIntentGround>(),
+                &leader_intent_ground_owner_slice(intent),
+                intent_obj
+            );
+        },
+        nb::arg("intent")
+    );
+    m.def(
+        "leader_intent_ground_static_status_directive",
+        [](const LeaderIntent& intent) {
+            return leader_intent_ground_static_status_directive(intent);
         },
         nb::arg("intent")
     );

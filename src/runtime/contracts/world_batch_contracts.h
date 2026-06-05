@@ -564,12 +564,14 @@ struct MissionCommandMaintainedBatchContract {
     using shared_core_owner_slice = MissionCommandSharedCoreOwnerSlice;
     using air_owner_slice = MissionCommandAirOwnerSlice;
     using naval_owner_slice = MissionCommandNavalOwnerSlice;
+    using ground_owner_slice = MissionCommandGroundOwnerSlice;
     using shared_core_type = MissionCommandSharedCoreDirective;
     using air_recovery_type = MissionCommandAir::RecoveryDirective;
     using air_takeoff_type = MissionCommandAir::TakeoffDirective;
     using air_formation_type = MissionCommandAir::FormationDirective;
     using naval_stationing_type = MissionCommandNaval::StationingDirective;
     using naval_embarked_helo_type = MissionCommandNaval::EmbarkedHeloDirective;
+    using ground_static_task_type = MissionCommandGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
     shared_core_type shared_core{};
@@ -578,6 +580,7 @@ struct MissionCommandMaintainedBatchContract {
     air_formation_type air_formation{};
     naval_stationing_type naval_stationing{};
     naval_embarked_helo_type naval_embarked_helo{};
+    ground_static_task_type ground_static_task{};
 
     static_assert(
         kMaintainedBatchTruth,
@@ -596,6 +599,7 @@ mission_command_maintained_batch_contract(
         .air_formation = mission_command_air_formation_directive(command),
         .naval_stationing = mission_command_naval_stationing_directive(command),
         .naval_embarked_helo = mission_command_naval_embarked_helo_directive(command),
+        .ground_static_task = mission_command_ground_static_task_directive(command),
     };
 }
 
@@ -649,6 +653,13 @@ inline void apply_mission_command_maintained_batch_contract_to_compatibility_she
     naval.recover_helo = contract.naval_embarked_helo.recover_helo;
     naval.relay_oth_targeting =
         contract.naval_embarked_helo.relay_oth_targeting;
+
+    auto& ground = mission_command_ground_owner_slice(command);
+    ground.ground_task_mode = contract.ground_static_task.ground_task_mode;
+    ground.objective_area_id = contract.ground_static_task.objective_area_id;
+    ground.objective_node_id = contract.ground_static_task.objective_node_id;
+    ground.ground_commander_id = contract.ground_static_task.ground_commander_id;
+    ground.tactical_cadence_hz = contract.ground_static_task.tactical_cadence_hz;
 }
 
 [[nodiscard]] inline MissionCommandCompatibilityTransportShell
@@ -902,10 +913,22 @@ inline void apply_task_order_naval_stationing_directive(
     naval.naval_station_type = directive.naval_station_type;
 }
 
+inline void apply_task_order_ground_static_task_directive(
+    TaskOrderGroundOwnerSlice& ground,
+    const TaskOrderGround::StaticTaskDirective& directive
+) noexcept {
+    ground.ground_task_mode = directive.ground_task_mode;
+    ground.objective_area_id = directive.objective_area_id;
+    ground.objective_node_id = directive.objective_node_id;
+    ground.ground_commander_id = directive.ground_commander_id;
+    ground.tactical_cadence_hz = directive.tactical_cadence_hz;
+}
+
 struct TaskOrderMaintainedBatchContract {
     using shared_core_owner_slice = TaskOrderSharedCoreOwnerSlice;
     using air_owner_slice = TaskOrderAirOwnerSlice;
     using naval_owner_slice = TaskOrderNavalOwnerSlice;
+    using ground_owner_slice = TaskOrderGroundOwnerSlice;
     using shared_core_type = TaskOrderSharedCoreDirective;
     using air_tasking_identity_type = TaskOrderAirTaskingIdentityDirective;
     using air_stationing_type = TaskOrderAirStationingDirective;
@@ -914,6 +937,7 @@ struct TaskOrderMaintainedBatchContract {
     using air_formation_type = TaskOrderAirFormationDirective;
     using naval_command_authority_type = TaskOrderNaval::CommandAuthorityDirective;
     using naval_stationing_type = TaskOrderNavalStationingDirective;
+    using ground_static_task_type = TaskOrderGround::StaticTaskDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
     shared_core_type shared_core{};
@@ -924,6 +948,7 @@ struct TaskOrderMaintainedBatchContract {
     air_formation_type air_formation{};
     naval_command_authority_type naval_command_authority{};
     naval_stationing_type naval_stationing{};
+    ground_static_task_type ground_static_task{};
 
     static_assert(
         kMaintainedBatchTruth,
@@ -944,6 +969,7 @@ task_order_maintained_batch_contract(
         .air_formation = task_order_air_formation_directive(order),
         .naval_command_authority = task_order_naval_command_authority(order),
         .naval_stationing = task_order_naval_stationing_directive(order),
+        .ground_static_task = task_order_ground_static_task_directive(order),
     };
 }
 
@@ -969,6 +995,11 @@ inline void apply_task_order_maintained_batch_contract_to_compatibility_shell(
     apply_task_order_naval_stationing_directive(
         naval,
         contract.naval_stationing
+    );
+    auto& ground = task_order_ground_owner_slice(order);
+    apply_task_order_ground_static_task_directive(
+        ground,
+        contract.ground_static_task
     );
 }
 
@@ -1016,11 +1047,13 @@ struct LeaderIntentMaintainedBatchContract {
     using shared_core_owner_slice = LeaderIntentCore;
     using air_owner_slice = LeaderIntentAirOwnerSlice;
     using naval_owner_slice = LeaderIntentNavalOwnerSlice;
+    using ground_owner_slice = LeaderIntentGroundOwnerSlice;
     using shared_core_type = LeaderIntentCore;
     using air_recovery_type = LeaderIntentAir::RecoveryDirective;
     using air_takeoff_type = LeaderIntentAir::TakeoffDirective;
     using air_formation_type = LeaderIntentAir::FormationDirective;
     using naval_command_authority_type = LeaderIntentNaval::CommandAuthorityDirective;
+    using ground_static_status_type = LeaderIntentGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
     shared_core_type shared_core{};
@@ -1033,6 +1066,7 @@ struct LeaderIntentMaintainedBatchContract {
     air_takeoff_type air_takeoff{};
     air_formation_type air_formation{};
     naval_command_authority_type naval_command_authority{};
+    ground_static_status_type ground_static_status{};
 
     static_assert(
         kMaintainedBatchTruth,
@@ -1055,6 +1089,7 @@ leader_intent_maintained_batch_contract(
         .air_takeoff = leader_intent_air_takeoff_directive(intent),
         .air_formation = leader_intent_air_formation_directive(intent),
         .naval_command_authority = leader_intent_naval_command_authority(intent),
+        .ground_static_status = leader_intent_ground_static_status_directive(intent),
     };
 }
 
@@ -1086,6 +1121,17 @@ inline void apply_leader_intent_maintained_batch_contract_to_compatibility_shell
         contract.naval_command_authority.warfare_role_code;
     naval.officer_in_tactical_command =
         contract.naval_command_authority.officer_in_tactical_command;
+
+    auto& ground = leader_intent_ground_owner_slice(intent);
+    ground.ground_status_phase =
+        contract.ground_static_status.ground_status_phase;
+    ground.ground_task_mode = contract.ground_static_status.ground_task_mode;
+    ground.objective_area_id = contract.ground_static_status.objective_area_id;
+    ground.objective_node_id = contract.ground_static_status.objective_node_id;
+    ground.ground_commander_id =
+        contract.ground_static_status.ground_commander_id;
+    ground.tactical_cadence_hz =
+        contract.ground_static_status.tactical_cadence_hz;
 }
 
 [[nodiscard]] inline LeaderIntentCompatibilityTransportShell
@@ -1132,14 +1178,17 @@ struct PilotReportMaintainedBatchContract {
     using shared_core_owner_slice = PilotReportCore;
     using air_owner_slice = PilotReportAirOwnerSlice;
     using naval_owner_slice = PilotReportNavalOwnerSlice;
+    using ground_owner_slice = PilotReportGroundOwnerSlice;
     using shared_core_type = PilotReportCore;
     using air_owner_slice_type = PilotReportAirOwnerSlice;
     using naval_command_authority_type = PilotReportNaval::CommandAuthorityDirective;
+    using ground_static_status_type = PilotReportGround::StaticStatusDirective;
     static constexpr bool kMaintainedBatchTruth = true;
 
     shared_core_type shared_core{};
     air_owner_slice_type air{};
     naval_command_authority_type naval_command_authority{};
+    ground_static_status_type ground_static_status{};
 
     static_assert(
         kMaintainedBatchTruth,
@@ -1155,6 +1204,7 @@ pilot_report_maintained_batch_contract(
         .shared_core = pilot_report_shared_core(report),
         .air = pilot_report_air_owner_slice(report),
         .naval_command_authority = pilot_report_naval_command_authority(report),
+        .ground_static_status = pilot_report_ground_static_status_directive(report),
     };
 }
 
@@ -1169,6 +1219,17 @@ inline void apply_pilot_report_maintained_batch_contract_to_compatibility_shell(
         contract.naval_command_authority.warfare_role_code;
     naval.officer_in_tactical_command =
         contract.naval_command_authority.officer_in_tactical_command;
+    auto& ground = pilot_report_ground_owner_slice(report);
+    ground.ground_status_phase =
+        contract.ground_static_status.ground_status_phase;
+    ground.ground_task_mode = contract.ground_static_status.ground_task_mode;
+    ground.objective_area_id = contract.ground_static_status.objective_area_id;
+    ground.objective_node_id = contract.ground_static_status.objective_node_id;
+    ground.ground_commander_id =
+        contract.ground_static_status.ground_commander_id;
+    ground.tactical_cadence_hz =
+        contract.ground_static_status.tactical_cadence_hz;
+    ground.readiness_ratio = contract.ground_static_status.readiness_ratio;
 }
 
 [[nodiscard]] inline PilotReportCompatibilityTransportShell

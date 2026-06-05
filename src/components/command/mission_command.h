@@ -2,13 +2,14 @@
 
 #include "components/command/air/mission_command_air.h"
 #include "components/command/common/mission_command_core.h"
+#include "components/command/ground/mission_command_ground.h"
 #include "components/command/naval/mission_command_naval.h"
 
 /**
  * MissionCommand
  * Implements [aim.md]: The high-level intent from Commander.
  */
-struct MissionCommand : MissionCommandCore, MissionCommandAir, MissionCommandNaval {};
+struct MissionCommand : MissionCommandCore, MissionCommandAir, MissionCommandNaval, MissionCommandGround {};
 
 // Flat umbrella retained only as a compatibility/transport shell.
 // Shared-core and domain slices remain the maintained owner surfaces.
@@ -18,7 +19,8 @@ inline constexpr bool kMissionCommandCompatibilityTransportShell = true;
 inline constexpr bool kMissionCommandSharedCoreOwnedSurface = true;
 
 static_assert(
-    kMissionCommandAirOwnedDomainSlice && kMissionCommandNavalOwnedDomainSlice,
+    kMissionCommandAirOwnedDomainSlice && kMissionCommandNavalOwnedDomainSlice &&
+        kMissionCommandGroundOwnedDomainSlice,
     "MissionCommand compatibility shells must project to explicit owner slices."
 );
 static_assert(
@@ -114,6 +116,20 @@ mission_command_naval_owner_slice(
     return command;
 }
 
+[[nodiscard]] inline const MissionCommandGround&
+mission_command_ground_owner_slice(
+    const MissionCommandCompatibilityTransportShell& command
+) noexcept {
+    return command;
+}
+
+[[nodiscard]] inline MissionCommandGround&
+mission_command_ground_owner_slice(
+    MissionCommandCompatibilityTransportShell& command
+) noexcept {
+    return command;
+}
+
 [[nodiscard]] inline MissionCommandAir::RecoveryDirective
 mission_command_air_recovery_directive(
     const MissionCommandCompatibilityTransportShell& command
@@ -148,5 +164,14 @@ mission_command_naval_embarked_helo_directive(
 ) noexcept {
     return mission_command_naval_embarked_helo_directive(
         mission_command_naval_owner_slice(command)
+    );
+}
+
+[[nodiscard]] inline MissionCommandGround::StaticTaskDirective
+mission_command_ground_static_task_directive(
+    const MissionCommandCompatibilityTransportShell& command
+) noexcept {
+    return mission_command_ground_static_task_directive(
+        mission_command_ground_owner_slice(command)
     );
 }

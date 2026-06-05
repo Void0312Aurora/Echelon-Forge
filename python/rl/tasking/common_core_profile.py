@@ -200,6 +200,10 @@ def _normalize_common_task_order_spec(order_spec: dict[str, Any] | None) -> dict
         enum_fields["takeoff_clearance_id"] = ef_py.TakeoffClearanceState
     if hasattr(ef_py, "RunwaySlotPosition"):
         enum_fields["runway_slot_id"] = ef_py.RunwaySlotPosition
+    if hasattr(ef_py, "GroundTaskMode"):
+        enum_fields["ground_task_mode"] = ef_py.GroundTaskMode
+    if hasattr(ef_py, "GroundStatusPhase"):
+        enum_fields["ground_status_phase"] = ef_py.GroundStatusPhase
     for field_name, namespace in enum_fields.items():
         if field_name not in normalized:
             continue
@@ -218,6 +222,10 @@ def _normalize_common_task_order_spec(order_spec: dict[str, Any] | None) -> dict
             default_value = _authority_scope_default()
         elif field_name == "coordination_mode":
             default_value = _coordination_mode_default()
+        elif field_name == "ground_task_mode":
+            default_value = _ground_task_mode_default()
+        elif field_name == "ground_status_phase":
+            default_value = _ground_status_phase_default()
         normalized[field_name] = _enum_or_default(namespace, normalized.get(field_name), default_value)
 
     task_name = str(normalized.get("task_name", "") or "").strip().upper() or None
@@ -448,6 +456,130 @@ def normalize_task_order_spec(order_spec: dict[str, Any] | None) -> dict[str, An
     return _profile_module_for_context(spec=order_spec).normalize_task_order_spec(order_spec)
 
 
+def _ground_task_mode_default() -> Any:
+    namespace = getattr(ef_py, "GroundTaskMode", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _ground_status_phase_default() -> Any:
+    namespace = getattr(ef_py, "GroundStatusPhase", None)
+    if namespace is None:
+        return 0
+    return getattr(namespace, "Unspecified", 0)
+
+
+def _ground_positive_int(value: Any) -> int:
+    try:
+        resolved = int(value)
+    except Exception:
+        return 0
+    return resolved if resolved > 0 else 0
+
+
+def _copy_ground_static_task_spec(target: Any, spec: dict[str, Any] | None, *, include_status: bool = False) -> Any:
+    if not isinstance(spec, dict):
+        return target
+    ground_task_mode = getattr(ef_py, "GroundTaskMode", None)
+    if ground_task_mode is not None and "ground_task_mode" in spec and hasattr(target, "ground_task_mode"):
+        target.ground_task_mode = _enum_or_default(
+            ground_task_mode,
+            spec.get("ground_task_mode"),
+            getattr(target, "ground_task_mode", _ground_task_mode_default()),
+        )
+    ground_status_phase = getattr(ef_py, "GroundStatusPhase", None)
+    if (
+        include_status
+        and ground_status_phase is not None
+        and "ground_status_phase" in spec
+        and hasattr(target, "ground_status_phase")
+    ):
+        target.ground_status_phase = _enum_or_default(
+            ground_status_phase,
+            spec.get("ground_status_phase"),
+            getattr(target, "ground_status_phase", _ground_status_phase_default()),
+        )
+    for name in ("objective_area_id", "objective_node_id", "ground_commander_id"):
+        if name in spec and hasattr(target, name):
+            setattr(target, name, _ground_positive_int(spec.get(name, getattr(target, name))))
+    if "tactical_cadence_hz" in spec and hasattr(target, "tactical_cadence_hz"):
+        target.tactical_cadence_hz = max(
+            0.0,
+            float(spec.get("tactical_cadence_hz", getattr(target, "tactical_cadence_hz", 1.0)) or 0.0),
+        )
+    if include_status and "readiness_ratio" in spec and hasattr(target, "readiness_ratio"):
+        target.readiness_ratio = max(
+            0.0,
+            min(1.0, float(spec.get("readiness_ratio", getattr(target, "readiness_ratio", 0.0)) or 0.0)),
+        )
+    return target
+
+
+def _ground_first_positive(source: Any, names: tuple[str, ...]) -> int:
+    if source is None:
+        return 0
+    for name in names:
+        if not hasattr(source, name):
+            continue
+        value = _ground_positive_int(getattr(source, name, 0))
+        if value > 0:
+            return value
+    return 0
+
+
+def _apply_ground_static_defaults(
+    target: Any,
+    *,
+    order: Any | None = None,
+    task_name: str | None = None,
+    phase_name: str | None = None,
+    include_status: bool = False,
+) -> Any:
+    if target is None:
+        return target
+    source = order if order is not None else target
+    if hasattr(target, "ground_task_mode"):
+        default_mode = _ground_task_mode_default()
+        current_mode = getattr(target, "ground_task_mode", default_mode)
+        if _is_default_enum(current_mode, default_mode):
+            inherited_mode = getattr(order, "ground_task_mode", default_mode) if order is not None else default_mode
+            if not _is_default_enum(inherited_mode, default_mode):
+                target.ground_task_mode = inherited_mode
+            else:
+                target.ground_task_mode = _ground_profile.infer_ground_task_mode(
+                    task_name=task_name,
+                    phase_name=phase_name,
+                    order=source,
+                )
+    if hasattr(target, "objective_area_id") and _ground_positive_int(getattr(target, "objective_area_id", 0)) <= 0:
+        area_id = _ground_first_positive(source, ("objective_area_id", "supported_node_id", "task_group_id"))
+        if area_id > 0:
+            target.objective_area_id = int(area_id)
+    if hasattr(target, "objective_node_id") and _ground_positive_int(getattr(target, "objective_node_id", 0)) <= 0:
+        node_id = _ground_first_positive(source, ("objective_node_id", "supported_node_id", "supporting_node_id", "assignee_id"))
+        if node_id > 0:
+            target.objective_node_id = int(node_id)
+    if hasattr(target, "ground_commander_id") and _ground_positive_int(getattr(target, "ground_commander_id", 0)) <= 0:
+        commander_id = _ground_first_positive(
+            source,
+            ("ground_commander_id", "officer_in_tactical_command", "parent_node_id", "task_group_id"),
+        )
+        if commander_id > 0:
+            target.ground_commander_id = int(commander_id)
+    if hasattr(target, "tactical_cadence_hz") and float(getattr(target, "tactical_cadence_hz", 0.0) or 0.0) <= 0.0:
+        cadence_hz = float(getattr(source, "tactical_cadence_hz", 1.0) or 1.0)
+        target.tactical_cadence_hz = cadence_hz if cadence_hz > 0.0 else 1.0
+    if include_status and hasattr(target, "ground_status_phase"):
+        default_phase = _ground_status_phase_default()
+        if _is_default_enum(getattr(target, "ground_status_phase", default_phase), default_phase):
+            target.ground_status_phase = _ground_profile.infer_ground_status_phase(
+                ground_task_mode=getattr(target, "ground_task_mode", _ground_task_mode_default()),
+                phase_name=phase_name,
+            )
+    return target
+
+
 def task_observation_codes(task: Any | None, *, fallback_phase_id: int = 0) -> tuple[float, float, float]:
     return _profile_module_for_context(task).task_observation_codes(task, fallback_phase_id=fallback_phase_id)
 
@@ -537,6 +669,7 @@ def apply_task_order_common_core_spec(order: Any, spec: dict[str, Any] | None) -
             order.naval_station_type = _enum_or_default(namespace, spec.get("naval_station_type"), order.naval_station_type)
     if "takeoff_interval_s" in spec:
         order.takeoff_interval_s = float(spec.get("takeoff_interval_s", getattr(order, "takeoff_interval_s", 0.0)))
+    _copy_ground_static_task_spec(order, spec)
     return order
 
 
@@ -585,6 +718,7 @@ def apply_leader_intent_common_core_spec(intent: Any, spec: dict[str, Any] | Non
             setattr(intent, name, int(spec.get(name, getattr(intent, name))))
     if "takeoff_interval_s" in spec:
         intent.takeoff_interval_s = float(spec.get("takeoff_interval_s", getattr(intent, "takeoff_interval_s", 0.0)))
+    _copy_ground_static_task_spec(intent, spec, include_status=True)
     return intent
 
 
@@ -616,6 +750,7 @@ def apply_pilot_report_common_core_spec(report: Any, spec: dict[str, Any] | None
     for name in ("tactical_unit_id", "task_group_id", "role_code", "officer_in_tactical_command", "element_id"):
         if name in spec:
             setattr(report, name, int(spec.get(name, getattr(report, name))))
+    _copy_ground_static_task_spec(report, spec, include_status=True)
     return report
 
 
@@ -712,6 +847,8 @@ def apply_task_order_common_core_defaults(
                 otc_id = _coerce_positive_int(getattr(order, "parent_node_id", 0))
         if otc_id > 0:
             order.officer_in_tactical_command = int(otc_id)
+    if profile_name == "ground":
+        _apply_ground_static_defaults(order, task_name=task_name, phase_name=phase_name)
     return order
 
 
@@ -834,6 +971,14 @@ def apply_leader_intent_common_core_defaults(
                 tactical_unit_type=getattr(intent, "tactical_unit_type", order_unit_type),
                 order=order if order is not None else intent,
             )
+    if profile_name == "ground":
+        _apply_ground_static_defaults(
+            intent,
+            order=order,
+            task_name=task_name,
+            phase_name=phase_name,
+            include_status=True,
+        )
     return intent
 
 
@@ -932,4 +1077,12 @@ def apply_pilot_report_common_core_defaults(
                 tactical_unit_type=getattr(report, "tactical_unit_type", order_unit_type),
                 order=order if order is not None else report,
             )
+    if profile_name == "ground":
+        _apply_ground_static_defaults(
+            report,
+            order=order,
+            task_name=task_name,
+            phase_name=phase_name,
+            include_status=True,
+        )
     return report

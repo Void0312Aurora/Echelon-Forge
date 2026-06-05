@@ -16,12 +16,18 @@ MISSION_COMMAND_AIR_HEADER = (
 MISSION_COMMAND_NAVAL_HEADER = (
     REPO_ROOT / "src" / "components" / "command" / "naval" / "mission_command_naval.h"
 )
+MISSION_COMMAND_GROUND_HEADER = (
+    REPO_ROOT / "src" / "components" / "command" / "ground" / "mission_command_ground.h"
+)
 TASK_ORDER_HEADER = REPO_ROOT / "src" / "components" / "tasking" / "task_order.h"
 TASK_ORDER_AIR_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "air" / "task_order_air.h"
 )
 TASK_ORDER_NAVAL_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "naval" / "task_order_naval.h"
+)
+TASK_ORDER_GROUND_HEADER = (
+    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "task_order_ground.h"
 )
 LEADER_INTENT_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "leader_intent.h"
@@ -32,6 +38,9 @@ LEADER_INTENT_AIR_HEADER = (
 LEADER_INTENT_NAVAL_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "naval" / "leader_intent_naval.h"
 )
+LEADER_INTENT_GROUND_HEADER = (
+    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "leader_intent_ground.h"
+)
 PILOT_REPORT_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "pilot_report.h"
 )
@@ -40,6 +49,9 @@ PILOT_REPORT_AIR_HEADER = (
 )
 PILOT_REPORT_NAVAL_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "naval" / "pilot_report_naval.h"
+)
+PILOT_REPORT_GROUND_HEADER = (
+    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "pilot_report_ground.h"
 )
 WORLD_BATCH_CONTRACTS_HEADER = (
     REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
@@ -109,11 +121,13 @@ def test_wp22_command_and_tasking_headers_name_compatibility_shells_and_owner_sl
         "mission_command_shared_core_directive(",
         "mission_command_air_owner_slice(",
         "mission_command_naval_owner_slice(",
+        "mission_command_ground_owner_slice(",
         "mission_command_air_recovery_directive(",
         "mission_command_air_takeoff_directive(",
         "mission_command_air_formation_directive(",
         "mission_command_naval_stationing_directive(",
         "mission_command_naval_embarked_helo_directive(",
+        "mission_command_ground_static_task_directive(",
     ):
         assert token in mission_text
 
@@ -127,9 +141,11 @@ def test_wp22_command_and_tasking_headers_name_compatibility_shells_and_owner_sl
         "task_order_shared_core_directive(",
         "task_order_air_owner_slice(",
         "task_order_naval_owner_slice(",
+        "task_order_ground_owner_slice(",
         "task_order_air_recovery_directive(",
         "task_order_air_takeoff_directive(",
         "task_order_naval_command_authority(",
+        "task_order_ground_static_task_directive(",
     ):
         assert token in task_order_text
 
@@ -139,10 +155,12 @@ def test_wp22_command_and_tasking_headers_name_compatibility_shells_and_owner_sl
         "leader_intent_shared_core(",
         "leader_intent_air_owner_slice(",
         "leader_intent_naval_owner_slice(",
+        "leader_intent_ground_owner_slice(",
         "leader_intent_air_recovery_directive(",
         "leader_intent_air_takeoff_directive(",
         "leader_intent_air_formation_directive(",
         "leader_intent_naval_command_authority(",
+        "leader_intent_ground_static_status_directive(",
     ):
         assert token in leader_text
 
@@ -152,7 +170,9 @@ def test_wp22_command_and_tasking_headers_name_compatibility_shells_and_owner_sl
         "pilot_report_shared_core(",
         "pilot_report_air_owner_slice(",
         "pilot_report_naval_owner_slice(",
+        "pilot_report_ground_owner_slice(",
         "pilot_report_naval_command_authority(",
+        "pilot_report_ground_static_status_directive(",
     ):
         assert token in pilot_text
 
@@ -177,6 +197,14 @@ def test_wp22_air_and_naval_slice_headers_mark_named_owner_surfaces() -> None:
             "mission_command_naval_stationing_directive(",
             "mission_command_naval_embarked_helo_directive(",
         ),
+        MISSION_COMMAND_GROUND_HEADER: (
+            "using MissionCommandGroundOwnerSlice = MissionCommandGround;",
+            "inline constexpr bool kMissionCommandGroundOwnedDomainSlice = true;",
+            "struct StaticTaskDirective",
+            "mission_command_ground_static_task_directive(",
+            "GroundTaskMode",
+            "tactical_cadence_hz",
+        ),
         TASK_ORDER_AIR_HEADER: (
             "using TaskOrderAirOwnerSlice = TaskOrderAir;",
             "inline constexpr bool kTaskOrderAirOwnedDomainSlice = true;",
@@ -190,6 +218,14 @@ def test_wp22_air_and_naval_slice_headers_mark_named_owner_surfaces() -> None:
             "inline constexpr bool kTaskOrderNavalOwnedDomainSlice = true;",
             "struct CommandAuthorityDirective",
             "task_order_naval_command_authority(",
+        ),
+        TASK_ORDER_GROUND_HEADER: (
+            "using TaskOrderGroundOwnerSlice = TaskOrderGround;",
+            "inline constexpr bool kTaskOrderGroundOwnedDomainSlice = true;",
+            "struct StaticTaskDirective",
+            "task_order_ground_static_task_directive(",
+            "GroundTaskMode",
+            "tactical_cadence_hz",
         ),
         LEADER_INTENT_AIR_HEADER: (
             "using LeaderIntentAirOwnerSlice = LeaderIntentAir;",
@@ -207,6 +243,14 @@ def test_wp22_air_and_naval_slice_headers_mark_named_owner_surfaces() -> None:
             "struct CommandAuthorityDirective",
             "leader_intent_naval_command_authority(",
         ),
+        LEADER_INTENT_GROUND_HEADER: (
+            "using LeaderIntentGroundOwnerSlice = LeaderIntentGround;",
+            "inline constexpr bool kLeaderIntentGroundOwnedDomainSlice = true;",
+            "struct StaticStatusDirective",
+            "leader_intent_ground_static_status_directive(",
+            "GroundStatusPhase",
+            "tactical_cadence_hz",
+        ),
         PILOT_REPORT_AIR_HEADER: (
             "using PilotReportAirOwnerSlice = PilotReportAir;",
             "inline constexpr bool kPilotReportAirOwnedDomainSlice = true;",
@@ -216,6 +260,14 @@ def test_wp22_air_and_naval_slice_headers_mark_named_owner_surfaces() -> None:
             "inline constexpr bool kPilotReportNavalOwnedDomainSlice = true;",
             "struct CommandAuthorityDirective",
             "pilot_report_naval_command_authority(",
+        ),
+        PILOT_REPORT_GROUND_HEADER: (
+            "using PilotReportGroundOwnerSlice = PilotReportGround;",
+            "inline constexpr bool kPilotReportGroundOwnedDomainSlice = true;",
+            "struct StaticStatusDirective",
+            "pilot_report_ground_static_status_directive(",
+            "GroundStatusPhase",
+            "readiness_ratio",
         ),
     }
 
@@ -227,7 +279,7 @@ def test_wp22_air_and_naval_slice_headers_mark_named_owner_surfaces() -> None:
 
 def test_wp22_cross_domain_aggregate_shell_allowlist_stays_closed_and_marked() -> None:
     aggregate_pattern = re.compile(
-        r"struct\s+(\w+)\s*:\s*(\w+Core),\s*(\w+Air),\s*(\w+Naval)\s*\{\s*\};"
+        r"struct\s+(\w+)\s*:\s*(\w+Core),\s*(\w+Air),\s*(\w+Naval),\s*(\w+Ground)\s*\{\s*\};"
     )
     matches: list[tuple[str, str]] = []
 
@@ -286,12 +338,14 @@ def test_wp24_command_chain_maintained_contracts_are_slice_based_and_shell_assig
         "using shared_core_owner_slice = MissionCommandSharedCoreOwnerSlice;",
         "using air_owner_slice = MissionCommandAirOwnerSlice;",
         "using naval_owner_slice = MissionCommandNavalOwnerSlice;",
+        "using ground_owner_slice = MissionCommandGroundOwnerSlice;",
         "using shared_core_type = MissionCommandSharedCoreDirective;",
         "using air_recovery_type = MissionCommandAir::RecoveryDirective;",
         "using air_takeoff_type = MissionCommandAir::TakeoffDirective;",
         "using air_formation_type = MissionCommandAir::FormationDirective;",
         "using naval_stationing_type = MissionCommandNaval::StationingDirective;",
         "using naval_embarked_helo_type = MissionCommandNaval::EmbarkedHeloDirective;",
+        "using ground_static_task_type = MissionCommandGround::StaticTaskDirective;",
         "MissionCommandMaintainedBatchContract is the controlled MissionCommand maintained batch read/write shape.",
         "mission_command_maintained_batch_contract(",
         "mission_command_compatibility_shell_from_maintained_batch_contract(",
@@ -302,6 +356,7 @@ def test_wp24_command_chain_maintained_contracts_are_slice_based_and_shell_assig
         "using shared_core_owner_slice = LeaderIntentCore;",
         "using air_owner_slice = LeaderIntentAirOwnerSlice;",
         "using naval_owner_slice = LeaderIntentNavalOwnerSlice;",
+        "using ground_owner_slice = LeaderIntentGroundOwnerSlice;",
         "LeaderIntentMaintainedBatchContract is the controlled LeaderIntent maintained batch read/write shape.",
         "leader_intent_maintained_batch_contract(",
         "leader_intent_compatibility_shell_from_maintained_batch_contract(",
@@ -312,6 +367,7 @@ def test_wp24_command_chain_maintained_contracts_are_slice_based_and_shell_assig
         "using shared_core_owner_slice = PilotReportCore;",
         "using air_owner_slice = PilotReportAirOwnerSlice;",
         "using naval_owner_slice = PilotReportNavalOwnerSlice;",
+        "using ground_owner_slice = PilotReportGroundOwnerSlice;",
         "PilotReportMaintainedBatchContract is the controlled PilotReport maintained batch read/write shape.",
         "pilot_report_maintained_batch_contract(",
         "pilot_report_compatibility_shell_from_maintained_batch_contract(",
@@ -343,21 +399,37 @@ def test_wp22_task_order_maintained_batch_contract_stays_controlled_and_slice_ba
         "using shared_core_owner_slice = TaskOrderSharedCoreOwnerSlice;",
         "using air_owner_slice = TaskOrderAirOwnerSlice;",
         "using naval_owner_slice = TaskOrderNavalOwnerSlice;",
+        "using ground_owner_slice = TaskOrderGroundOwnerSlice;",
         "using shared_core_type = TaskOrderSharedCoreDirective;",
+        "using air_tasking_identity_type = TaskOrderAirTaskingIdentityDirective;",
+        "using air_stationing_type = TaskOrderAirStationingDirective;",
         "using air_recovery_type = TaskOrderAir::RecoveryDirective;",
         "using air_takeoff_type = TaskOrderAir::TakeoffDirective;",
+        "using air_formation_type = TaskOrderAirFormationDirective;",
         "using naval_command_authority_type = TaskOrderNaval::CommandAuthorityDirective;",
+        "using naval_stationing_type = TaskOrderNavalStationingDirective;",
+        "using ground_static_task_type = TaskOrderGround::StaticTaskDirective;",
         "static constexpr bool kMaintainedBatchTruth = true;",
         "shared_core_type shared_core{};",
+        "air_tasking_identity_type air_tasking_identity{};",
+        "air_stationing_type air_stationing{};",
         "air_recovery_type air_recovery{};",
         "air_takeoff_type air_takeoff{};",
+        "air_formation_type air_formation{};",
         "naval_command_authority_type naval_command_authority{};",
+        "naval_stationing_type naval_stationing{};",
+        "ground_static_task_type ground_static_task{};",
         "TaskOrderMaintainedBatchContract is the controlled TaskOrder maintained batch read/write shape.",
         "task_order_maintained_batch_contract(",
         ".shared_core = task_order_shared_core_directive(order),",
+        ".air_tasking_identity = task_order_air_tasking_identity_directive(order),",
+        ".air_stationing = task_order_air_stationing_directive(order),",
         ".air_recovery = task_order_air_recovery_directive(order),",
         ".air_takeoff = task_order_air_takeoff_directive(order),",
+        ".air_formation = task_order_air_formation_directive(order),",
         ".naval_command_authority = task_order_naval_command_authority(order),",
+        ".naval_stationing = task_order_naval_stationing_directive(order),",
+        ".ground_static_task = task_order_ground_static_task_directive(order),",
         "struct WorldTaskOrderMaintainedAssignment {",
         "using contract_type = TaskOrderMaintainedBatchContract;",
         "WorldTaskOrderMaintainedAssignment transports only the controlled TaskOrder maintained batch contract.",
@@ -386,6 +458,7 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
         "mission_command_air_formation_directive(command)",
         "mission_command_naval_stationing_directive(command)",
         "mission_command_naval_embarked_helo_directive(command)",
+        "mission_command_ground_static_task_directive(command)",
     ):
         assert token in codec_text
 
@@ -402,6 +475,8 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
         "mission_command_naval_stationing_directive(rhs)",
         "mission_command_naval_embarked_helo_directive(lhs)",
         "mission_command_naval_embarked_helo_directive(rhs)",
+        "mission_command_ground_static_task_directive(lhs)",
+        "mission_command_ground_static_task_directive(rhs)",
     ):
         assert token in state_text
 
@@ -424,6 +499,11 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
         "command.launch_helo",
         "command.recover_helo",
         "command.relay_oth_targeting",
+        "command.ground_task_mode",
+        "command.objective_area_id",
+        "command.objective_node_id",
+        "command.ground_commander_id",
+        "command.tactical_cadence_hz",
         "command.recovery_base_id",
         "command.recovery_runway_id",
         "command.recovery_approach_type",
@@ -475,6 +555,16 @@ def test_wp22_maintained_episode_consumers_use_owner_slice_directive_helpers() -
         "rhs.recover_helo",
         "lhs.relay_oth_targeting",
         "rhs.relay_oth_targeting",
+        "lhs.ground_task_mode",
+        "rhs.ground_task_mode",
+        "lhs.objective_area_id",
+        "rhs.objective_area_id",
+        "lhs.objective_node_id",
+        "rhs.objective_node_id",
+        "lhs.ground_commander_id",
+        "rhs.ground_commander_id",
+        "lhs.tactical_cadence_hz",
+        "rhs.tactical_cadence_hz",
         "lhs.recovery_base_id",
         "rhs.recovery_base_id",
         "lhs.recovery_runway_id",
@@ -556,12 +646,16 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             static_assert(kTaskOrderSharedCoreOwnedSurface);
             static_assert(kMissionCommandAirOwnedDomainSlice);
             static_assert(kMissionCommandNavalOwnedDomainSlice);
+            static_assert(kMissionCommandGroundOwnedDomainSlice);
             static_assert(kTaskOrderAirOwnedDomainSlice);
             static_assert(kTaskOrderNavalOwnedDomainSlice);
+            static_assert(kTaskOrderGroundOwnedDomainSlice);
             static_assert(kLeaderIntentAirOwnedDomainSlice);
             static_assert(kLeaderIntentNavalOwnedDomainSlice);
+            static_assert(kLeaderIntentGroundOwnedDomainSlice);
             static_assert(kPilotReportAirOwnedDomainSlice);
             static_assert(kPilotReportNavalOwnedDomainSlice);
+            static_assert(kPilotReportGroundOwnedDomainSlice);
 
             static_assert(std::is_same_v<MissionCommandCompatibilityTransportShell, MissionCommand>);
             static_assert(std::is_same_v<MissionCommandSharedCoreOwnerSlice, MissionCommandCore>);
@@ -589,6 +683,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                           decltype(mission_command_naval_owner_slice(command)),
                           MissionCommandNaval&>);
             static_assert(std::is_same_v<
+                          decltype(mission_command_ground_owner_slice(command)),
+                          MissionCommandGround&>);
+            static_assert(std::is_same_v<
                           decltype(mission_command_air_recovery_directive(command)),
                           MissionCommandAir::RecoveryDirective>);
             static_assert(std::is_same_v<
@@ -603,6 +700,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             static_assert(std::is_same_v<
                           decltype(mission_command_naval_embarked_helo_directive(command)),
                           MissionCommandNaval::EmbarkedHeloDirective>);
+            static_assert(std::is_same_v<
+                          decltype(mission_command_ground_static_task_directive(command)),
+                          MissionCommandGround::StaticTaskDirective>);
 
             static_assert(std::is_same_v<
                           decltype(task_order_shared_core(order)),
@@ -617,6 +717,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                           decltype(task_order_naval_owner_slice(order)),
                           TaskOrderNaval&>);
             static_assert(std::is_same_v<
+                          decltype(task_order_ground_owner_slice(order)),
+                          TaskOrderGround&>);
+            static_assert(std::is_same_v<
                           decltype(task_order_air_recovery_directive(order)),
                           TaskOrderAir::RecoveryDirective>);
             static_assert(std::is_same_v<
@@ -625,6 +728,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             static_assert(std::is_same_v<
                           decltype(task_order_naval_command_authority(order)),
                           TaskOrderNaval::CommandAuthorityDirective>);
+            static_assert(std::is_same_v<
+                          decltype(task_order_ground_static_task_directive(order)),
+                          TaskOrderGround::StaticTaskDirective>);
 
             static_assert(std::is_same_v<
                           decltype(leader_intent_shared_core(intent)),
@@ -635,6 +741,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             static_assert(std::is_same_v<
                           decltype(leader_intent_naval_owner_slice(intent)),
                           LeaderIntentNaval&>);
+            static_assert(std::is_same_v<
+                          decltype(leader_intent_ground_owner_slice(intent)),
+                          LeaderIntentGround&>);
             static_assert(std::is_same_v<
                           decltype(leader_intent_air_recovery_directive(intent)),
                           LeaderIntentAir::RecoveryDirective>);
@@ -647,6 +756,9 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             static_assert(std::is_same_v<
                           decltype(leader_intent_naval_command_authority(intent)),
                           LeaderIntentNaval::CommandAuthorityDirective>);
+            static_assert(std::is_same_v<
+                          decltype(leader_intent_ground_static_status_directive(intent)),
+                          LeaderIntentGround::StaticStatusDirective>);
 
             static_assert(std::is_same_v<
                           decltype(pilot_report_shared_core(report)),
@@ -658,8 +770,14 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                           decltype(pilot_report_naval_owner_slice(report)),
                           PilotReportNaval&>);
             static_assert(std::is_same_v<
+                          decltype(pilot_report_ground_owner_slice(report)),
+                          PilotReportGround&>);
+            static_assert(std::is_same_v<
                           decltype(pilot_report_naval_command_authority(report)),
                           PilotReportNaval::CommandAuthorityDirective>);
+            static_assert(std::is_same_v<
+                          decltype(pilot_report_ground_static_status_directive(report)),
+                          PilotReportGround::StaticStatusDirective>);
 
             command.recovery_base_id = 11;
             command.recovery_runway_id = 12;
@@ -678,6 +796,11 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             command.launch_helo = true;
             command.recover_helo = false;
             command.relay_oth_targeting = true;
+            command.ground_task_mode = GroundTaskMode::OccupyStatic;
+            command.objective_area_id = 17;
+            command.objective_node_id = 18;
+            command.ground_commander_id = 19;
+            command.tactical_cadence_hz = 1.0;
 
             order.recovery_base_id = 21;
             order.recovery_runway_id = 22;
@@ -693,6 +816,11 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             order.task_family = TaskFamily::Escort;
             order.authority_scope = AuthorityScope::Operational;
             order.active = true;
+            order.ground_task_mode = GroundTaskMode::SupportStatic;
+            order.objective_area_id = 27;
+            order.objective_node_id = 28;
+            order.ground_commander_id = 29;
+            order.tactical_cadence_hz = 1.0;
 
             intent.recovery_base_id = 31;
             intent.recovery_runway_id = 32;
@@ -707,9 +835,22 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             intent.form_offset_z = 6.75;
             intent.warfare_role_code = 35;
             intent.officer_in_tactical_command = 36;
+            intent.ground_status_phase = GroundStatusPhase::OccupyingStatic;
+            intent.ground_task_mode = GroundTaskMode::OccupyStatic;
+            intent.objective_area_id = 37;
+            intent.objective_node_id = 38;
+            intent.ground_commander_id = 39;
+            intent.tactical_cadence_hz = 1.0;
 
             report.warfare_role_code = 41;
             report.officer_in_tactical_command = 42;
+            report.ground_status_phase = GroundStatusPhase::SupportingStatic;
+            report.ground_task_mode = GroundTaskMode::SupportStatic;
+            report.objective_area_id = 43;
+            report.objective_node_id = 44;
+            report.ground_commander_id = 45;
+            report.tactical_cadence_hz = 1.0;
+            report.readiness_ratio = 0.75;
 
             const auto command_recovery = mission_command_air_recovery_directive(command);
             const auto command_takeoff = mission_command_air_takeoff_directive(command);
@@ -717,18 +858,22 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
             const auto command_core = mission_command_shared_core_directive(command);
             const auto command_stationing = mission_command_naval_stationing_directive(command);
             const auto command_helo = mission_command_naval_embarked_helo_directive(command);
+            const auto command_ground = mission_command_ground_static_task_directive(command);
 
             const auto order_recovery = task_order_air_recovery_directive(order);
             const auto order_takeoff = task_order_air_takeoff_directive(order);
             const auto order_authority = task_order_naval_command_authority(order);
             const auto order_core = task_order_shared_core_directive(order);
+            const auto order_ground = task_order_ground_static_task_directive(order);
 
             const auto intent_recovery = leader_intent_air_recovery_directive(intent);
             const auto intent_takeoff = leader_intent_air_takeoff_directive(intent);
             const auto intent_formation = leader_intent_air_formation_directive(intent);
             const auto intent_authority = leader_intent_naval_command_authority(intent);
+            const auto intent_ground = leader_intent_ground_static_status_directive(intent);
 
             const auto report_authority = pilot_report_naval_command_authority(report);
+            const auto report_ground = pilot_report_ground_static_status_directive(report);
 
             WorldMissionCommandAssignment mission_assignment{};
             WorldMissionCommandMaintainedAssignment maintained_mission_assignment{};
@@ -808,6 +953,14 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                     command_helo.launch_helo == command.launch_helo &&
                     command_helo.recover_helo == command.recover_helo &&
                     command_helo.relay_oth_targeting == command.relay_oth_targeting &&
+                    command_ground.ground_task_mode == command.ground_task_mode &&
+                    command_ground.objective_area_id == command.objective_area_id &&
+                    command_ground.objective_node_id == command.objective_node_id &&
+                    command_ground.ground_commander_id == command.ground_commander_id &&
+                    command_ground.tactical_cadence_hz == command.tactical_cadence_hz &&
+                    mission_command_maintained_batch_contract(command)
+                            .ground_static_task.objective_area_id ==
+                        command.objective_area_id &&
                     command_core.roe_state == command.roe_state &&
                     command_core.engagement_authority_holder_id ==
                         command.engagement_authority_holder_id &&
@@ -826,6 +979,11 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                     order_authority.warfare_role_code == order.warfare_role_code &&
                     order_authority.officer_in_tactical_command ==
                         order.officer_in_tactical_command &&
+                    order_ground.ground_task_mode == order.ground_task_mode &&
+                    order_ground.objective_area_id == order.objective_area_id &&
+                    order_ground.objective_node_id == order.objective_node_id &&
+                    order_ground.ground_commander_id == order.ground_commander_id &&
+                    order_ground.tactical_cadence_hz == order.tactical_cadence_hz &&
                     order_core.task_id == order.task_id &&
                     order_core.service_profile == order.service_profile &&
                     order_core.task_family == order.task_family &&
@@ -845,6 +1003,8 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                         order.takeoff_interval_s &&
                     task_order_maintained_batch_contract(order).naval_command_authority.warfare_role_code ==
                         order.warfare_role_code &&
+                    task_order_maintained_batch_contract(order).ground_static_task.objective_area_id ==
+                        order.objective_area_id &&
                     intent_recovery.recovery_base_id == intent.recovery_base_id &&
                     intent_recovery.recovery_runway_id == intent.recovery_runway_id &&
                     intent_recovery.recovery_approach_type == intent.recovery_approach_type &&
@@ -859,9 +1019,28 @@ def test_wp22_dto_domain_shell_guard_helpers_compile_without_changing_transport_
                     intent_authority.warfare_role_code == intent.warfare_role_code &&
                     intent_authority.officer_in_tactical_command ==
                         intent.officer_in_tactical_command &&
+                    intent_ground.ground_status_phase == intent.ground_status_phase &&
+                    intent_ground.ground_task_mode == intent.ground_task_mode &&
+                    intent_ground.objective_area_id == intent.objective_area_id &&
+                    intent_ground.objective_node_id == intent.objective_node_id &&
+                    intent_ground.ground_commander_id == intent.ground_commander_id &&
+                    intent_ground.tactical_cadence_hz == intent.tactical_cadence_hz &&
+                    leader_intent_maintained_batch_contract(intent)
+                            .ground_static_status.objective_area_id ==
+                        intent.objective_area_id &&
                     report_authority.warfare_role_code == report.warfare_role_code &&
                     report_authority.officer_in_tactical_command ==
-                        report.officer_in_tactical_command)
+                        report.officer_in_tactical_command &&
+                    report_ground.ground_status_phase == report.ground_status_phase &&
+                    report_ground.ground_task_mode == report.ground_task_mode &&
+                    report_ground.objective_area_id == report.objective_area_id &&
+                    report_ground.objective_node_id == report.objective_node_id &&
+                    report_ground.ground_commander_id == report.ground_commander_id &&
+                    report_ground.tactical_cadence_hz == report.tactical_cadence_hz &&
+                    report_ground.readiness_ratio == report.readiness_ratio &&
+                    pilot_report_maintained_batch_contract(report)
+                            .ground_static_status.readiness_ratio ==
+                        report.readiness_ratio)
                 ? 0
                 : 1;
         }
@@ -896,25 +1075,45 @@ def test_wp22_python_bindings_expose_owner_slice_types_and_projection_helpers() 
         'nb::class_<TaskOrderNaval::CommandAuthorityDirective>(',
         '"TaskOrderNavalCommandAuthorityDirective"',
         'nb::class_<TaskOrderNaval>(m, "TaskOrderNaval")',
+        'nb::class_<TaskOrderGround::StaticTaskDirective>(',
+        '"TaskOrderGroundStaticTaskDirective"',
+        'nb::class_<TaskOrderGround>(m, "TaskOrderGround")',
         'nb::class_<LeaderIntentCore>(m, "LeaderIntentCore")',
         'nb::class_<LeaderIntentAir>(m, "LeaderIntentAir")',
         'nb::class_<LeaderIntentNaval>(m, "LeaderIntentNaval")',
+        'nb::class_<LeaderIntentGround::StaticStatusDirective>(',
+        '"LeaderIntentGroundStaticStatusDirective"',
+        'nb::class_<LeaderIntentGround>(m, "LeaderIntentGround")',
         'nb::class_<PilotReportCore>(m, "PilotReportCore")',
         'nb::class_<PilotReportAir>(m, "PilotReportAir")',
         'nb::class_<PilotReportNaval>(m, "PilotReportNaval")',
+        'nb::class_<PilotReportGround::StaticStatusDirective>(',
+        '"PilotReportGroundStaticStatusDirective"',
+        'nb::class_<PilotReportGround>(m, "PilotReportGround")',
+        'nb::class_<MissionCommandGround::StaticTaskDirective>(',
+        '"MissionCommandGroundStaticTaskDirective"',
+        'nb::class_<MissionCommandGround>(m, "MissionCommandGround")',
         '"task_order_shared_core"',
         '"task_order_shared_core_directive"',
         '"task_order_air_owner_slice"',
         '"task_order_naval_owner_slice"',
+        '"task_order_ground_owner_slice"',
         '"task_order_air_recovery_directive"',
         '"task_order_air_takeoff_directive"',
         '"task_order_naval_command_authority"',
+        '"task_order_ground_static_task_directive"',
         '"leader_intent_shared_core"',
         '"leader_intent_air_owner_slice"',
         '"leader_intent_naval_owner_slice"',
+        '"leader_intent_ground_owner_slice"',
+        '"leader_intent_ground_static_status_directive"',
         '"pilot_report_shared_core"',
         '"pilot_report_air_owner_slice"',
         '"pilot_report_naval_owner_slice"',
+        '"pilot_report_ground_owner_slice"',
+        '"pilot_report_ground_static_status_directive"',
+        '"mission_command_ground_owner_slice"',
+        '"mission_command_ground_static_task_directive"',
         "nb::inst_reference(",
     ):
         assert token in text
