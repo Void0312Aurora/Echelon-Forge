@@ -2,7 +2,7 @@
 
 Status: `2026-06-06` `P0` pass, `P1` shell layout accepted as a slice,
 `P2` map workspace accepted as a slice, and `P3` layer/symbology grouping
-planned next.
+accepted as a slice.
 
 Parent: [Tactical Map Interface Refactor](README.md)
 
@@ -34,6 +34,13 @@ Parent: [Tactical Map Interface Refactor](README.md)
   [test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py).
 - Recorded P2 browser, syntax, and focused regression evidence in
   [P2 workspace acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md).
+- Implemented and accepted `VIZ-TMAP-P3` as grouped tactical layer controls,
+  centralized draw phases, and first-pass symbology styling in
+  [index.html](../../../../examples/viz/web_viz/templates/index.html).
+- Added focused static coverage in
+  [test_tactical_layer_model.py](../../../../tests/viz/test_tactical_layer_model.py).
+- Recorded P3 browser, syntax, and focused regression evidence in
+  [P3 layer/symbology acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md).
 
 ## Maturity Matrix
 
@@ -44,21 +51,21 @@ Parent: [Tactical Map Interface Refactor](README.md)
 | Style/reference baseline | pass | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | Needs implementation evidence before accepted UI claims. |
 | Runtime shell layout | accepted slice | [P1 acceptance](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md) | Does not accept layer grouping, profile defaults, or new simulation behavior. |
 | Multi-map workspace | accepted slice | [P2 acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md) | Tabbed surfaces only; split-map layout remains deferred. |
+| Layer and symbology model | accepted slice | [P3 acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md) | Grouped UI controls and first-pass styling only; no standard-compliance or payload semantics claim. |
 | Profile UI defaults | planned/held until needed | [profile_loader.py](../../../../examples/viz/app/profile_loader.py) | Only add after `P3` layer defaults are stable enough to persist. |
 
 ## Next Recommended Action Order
 
-1. Add grouped layer/symbology rules in `VIZ-TMAP-P3`.
-2. Extend profile UI defaults in `VIZ-TMAP-P4` only if the runtime UI needs
+1. Extend profile UI defaults in `VIZ-TMAP-P4` only if the runtime UI needs
    stable persisted defaults.
-3. Record browser smoke, screenshots, and residuals in `VIZ-TMAP-P5` as later
+2. Record browser smoke, screenshots, and residuals in `VIZ-TMAP-P5` as later
    implementation slices land.
 
 ## Explicit Overclaim Refusals
 
 - This checkpoint does not accept the full tactical-map interface refactor.
-- This checkpoint accepts the first tabbed map-workspace slice only; it does
-  not accept split-map layout.
+- This checkpoint accepts the first tabbed map-workspace slice and grouped
+  layer/symbology slice only; it does not accept split-map layout.
 - This checkpoint does not prove military-standard symbology compliance.
 - This checkpoint does not release terrain-aware movement, LOS, cover,
   passability, weather effects, combat behavior, or environment-runtime

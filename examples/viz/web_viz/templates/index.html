@@ -406,10 +406,8 @@
 
         .tactical-layer-controls {
             display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 5px;
-            row-gap: 5px;
+            flex-direction: column;
+            gap: 8px;
             max-width: 100%;
             pointer-events: auto;
         }
@@ -418,8 +416,57 @@
             color: #607f91;
         }
 
+        .tactical-layer-group {
+            border: 1px solid rgba(55, 88, 105, 0.56);
+            background: rgba(5, 14, 20, 0.58);
+            padding: 7px;
+        }
+
+        .tactical-layer-group[data-layer-group="environment"] {
+            border-left: 2px solid rgba(141, 212, 160, 0.78);
+        }
+
+        .tactical-layer-group[data-layer-group="maneuver"] {
+            border-left: 2px solid rgba(238, 216, 118, 0.78);
+        }
+
+        .tactical-layer-group[data-layer-group="sensors"] {
+            border-left: 2px solid rgba(90, 194, 238, 0.78);
+        }
+
+        .tactical-layer-group[data-layer-group="effects"] {
+            border-left: 2px solid rgba(255, 122, 94, 0.78);
+        }
+
+        .tactical-layer-group-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .tactical-layer-group-title {
+            color: #cfe3ec;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .tactical-layer-group-role {
+            color: #668392;
+            font-size: 9px;
+            text-align: right;
+        }
+
+        .tactical-layer-group-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(58px, 1fr));
+            gap: 5px;
+        }
+
         .tactical-layer-button {
             min-width: 0;
+            width: 100%;
             padding: 5px 6px;
             border-color: #2a4658;
             background: rgba(5, 14, 21, 0.82);
@@ -710,15 +757,7 @@
 
                 <div id="tactical-layer-panel" class="dock-section">
                     <h3>LAYERS</h3>
-                    <div class="tactical-layer-controls" aria-label="Tactical layers">
-                        <button id="btn-layer-environment" class="tactical-layer-button" onclick="toggleTacticalLayer('environment')">ENV</button>
-                        <button id="btn-layer-route" class="tactical-layer-button" onclick="toggleTacticalLayer('route')">ROUTE</button>
-                        <button id="btn-layer-trails" class="tactical-layer-button" onclick="toggleTacticalLayer('trails')">TRAILS</button>
-                        <button id="btn-layer-weapons" class="tactical-layer-button" onclick="toggleTacticalLayer('weapons')">WEAPONS</button>
-                        <button id="btn-layer-tracks" class="tactical-layer-button" onclick="toggleTacticalLayer('tracks')">TRACKS</button>
-                        <button id="btn-layer-sensor-rings" class="tactical-layer-button" onclick="toggleTacticalLayer('sensorRings')">RINGS</button>
-                        <button id="btn-layer-datalinks" class="tactical-layer-button" onclick="toggleTacticalLayer('datalinks')">LINKS</button>
-                    </div>
+                    <div id="tactical-layer-controls" class="tactical-layer-controls" aria-label="Tactical layers"></div>
                 </div>
 
                 <div id="overlay" class="dock-section">
@@ -801,16 +840,206 @@
             panStartX: 0.0,
             panStartY: 0.0,
         };
-        const tacticalLayers = {
-            environment: true,
-            route: true,
-            trails: true,
-            weapons: true,
-            tracks: false,
-            sensorRings: false,
-            datalinks: false,
-        };
-        const tacticalLayerKeys = Object.keys(tacticalLayers);
+        const tacticalLayerCatalog = Object.freeze({
+            environment: {
+                label: 'Environment overlays',
+                shortLabel: 'ENV',
+                summaryLabel: 'ENV',
+                group: 'environment',
+                drawOrder: 10,
+                buttonId: 'btn-layer-environment',
+                defaultEnabled: true,
+            },
+            route: {
+                label: 'Routes and waypoints',
+                shortLabel: 'ROUTE',
+                summaryLabel: 'ROUTE',
+                group: 'maneuver',
+                drawOrder: 20,
+                buttonId: 'btn-layer-route',
+                defaultEnabled: true,
+            },
+            trails: {
+                label: 'Movement trails',
+                shortLabel: 'TRAIL',
+                summaryLabel: 'TRAILS',
+                group: 'maneuver',
+                drawOrder: 30,
+                buttonId: 'btn-layer-trails',
+                defaultEnabled: true,
+            },
+            datalinks: {
+                label: 'Datalinks',
+                shortLabel: 'LINK',
+                summaryLabel: 'LINKS',
+                group: 'sensors',
+                drawOrder: 40,
+                buttonId: 'btn-layer-datalinks',
+                defaultEnabled: false,
+            },
+            sensorRings: {
+                label: 'Sensor rings',
+                shortLabel: 'RING',
+                summaryLabel: 'RINGS',
+                group: 'sensors',
+                drawOrder: 50,
+                buttonId: 'btn-layer-sensor-rings',
+                defaultEnabled: false,
+            },
+            tracks: {
+                label: 'Sensor tracks',
+                shortLabel: 'TRACK',
+                summaryLabel: 'TRACKS',
+                group: 'sensors',
+                drawOrder: 60,
+                buttonId: 'btn-layer-tracks',
+                defaultEnabled: false,
+            },
+            weapons: {
+                label: 'Weapons and effects',
+                shortLabel: 'WEPN',
+                summaryLabel: 'WEAPONS',
+                group: 'effects',
+                drawOrder: 70,
+                buttonId: 'btn-layer-weapons',
+                defaultEnabled: true,
+            },
+        });
+        const tacticalLayerGroups = Object.freeze([
+            { id: 'environment', label: 'ENVIRONMENT', role: 'terrain / areas', layerKeys: ['environment'] },
+            { id: 'maneuver', label: 'MANEUVER', role: 'routes / trails', layerKeys: ['route', 'trails'] },
+            { id: 'sensors', label: 'SENSORS', role: 'tracks / rings / links', layerKeys: ['tracks', 'sensorRings', 'datalinks'] },
+            { id: 'effects', label: 'EFFECTS', role: 'weapons / fires', layerKeys: ['weapons'] },
+        ]);
+        const tacticalDrawPhases = Object.freeze([
+            { id: 'grid', layer: null, order: 0 },
+            { id: 'environment', layer: 'environment', order: tacticalLayerCatalog.environment.drawOrder },
+            { id: 'route', layer: 'route', order: tacticalLayerCatalog.route.drawOrder },
+            { id: 'trails', layer: 'trails', order: tacticalLayerCatalog.trails.drawOrder },
+            { id: 'datalinks', layer: 'datalinks', order: tacticalLayerCatalog.datalinks.drawOrder },
+            { id: 'sensorRings', layer: 'sensorRings', order: tacticalLayerCatalog.sensorRings.drawOrder },
+            { id: 'tracks', layer: 'tracks', order: tacticalLayerCatalog.tracks.drawOrder },
+            { id: 'weapons', layer: 'weapons', order: tacticalLayerCatalog.weapons.drawOrder },
+            { id: 'units', layer: null, order: 80 },
+            { id: 'missileUnits', layer: 'weapons', order: 90 },
+            { id: 'labels', layer: null, order: 100 },
+        ]);
+        const tacticalDrawPhaseById = Object.freeze(Object.fromEntries(
+            tacticalDrawPhases.map((phase) => [phase.id, phase])
+        ));
+        const tacticalSymbology = Object.freeze({
+            canvas: {
+                background: '#081018',
+                emptyText: '#6f8794',
+                plotStroke: '#1a3244',
+                gridStroke: 'rgba(33, 76, 104, 0.78)',
+            },
+            affiliation: {
+                Blue: {
+                    unitFill: '#73cfff',
+                    trailStroke: 'rgba(100, 210, 255, 0.34)',
+                    sensorStroke: 'rgba(90, 210, 255, 0.24)',
+                    weaponColor: '#ffe65a',
+                    weaponTrail: 'rgba(255, 230, 90, 0.9)',
+                    weaponTarget: 'rgba(255, 230, 90, 0.4)',
+                    labelStroke: 'rgba(115, 207, 255, 0.45)',
+                },
+                Red: {
+                    unitFill: '#ff6d6d',
+                    trailStroke: 'rgba(255, 120, 120, 0.34)',
+                    sensorStroke: 'rgba(255, 120, 120, 0.24)',
+                    weaponColor: '#ff5252',
+                    weaponTrail: 'rgba(255, 92, 92, 0.86)',
+                    weaponTarget: 'rgba(255, 82, 82, 0.38)',
+                    labelStroke: 'rgba(255, 109, 109, 0.45)',
+                },
+                Unknown: {
+                    unitFill: '#d7e7ee',
+                    trailStroke: 'rgba(190, 208, 216, 0.26)',
+                    sensorStroke: 'rgba(190, 208, 216, 0.2)',
+                    weaponColor: '#e5d27a',
+                    weaponTrail: 'rgba(229, 210, 122, 0.72)',
+                    weaponTarget: 'rgba(229, 210, 122, 0.35)',
+                    labelStroke: 'rgba(185, 210, 224, 0.35)',
+                },
+            },
+            route: {
+                path: 'rgba(235, 218, 106, 0.62)',
+                defaultStroke: '#e8db7d',
+                flyoverStroke: '#ffb16a',
+                activeStroke: '#89ff8b',
+                defaultFill: 'rgba(232, 219, 125, 0.12)',
+                activeFill: 'rgba(137, 255, 139, 0.18)',
+                activeLabel: '#c8ffd0',
+                sequenceGate: 'rgba(80, 220, 255, 0.45)',
+            },
+            datalink: {
+                stroke: 'rgba(80, 170, 255, 0.28)',
+            },
+            track: {
+                fusedStroke: 'rgba(0, 255, 200, 0.75)',
+                rawStroke: 'rgba(255, 200, 0, 0.78)',
+                fusedDot: '#00ffd0',
+                rawDot: '#ffd04d',
+            },
+            label: {
+                leader: 'rgba(185, 210, 224, 0.35)',
+                background: 'rgba(5, 11, 17, 0.88)',
+                text: '#d7e7ee',
+            },
+            environment: {
+                occlusionCandidate: {
+                    vegetation: {
+                        fill: 'rgba(61, 126, 80, 0.16)',
+                        stroke: 'rgba(128, 216, 154, 0.72)',
+                        label: '#a7e7b8',
+                        dash: [5, 5],
+                    },
+                    structure: {
+                        fill: 'rgba(158, 143, 104, 0.15)',
+                        stroke: 'rgba(232, 210, 143, 0.74)',
+                        label: '#ead599',
+                        dash: [7, 4],
+                    },
+                },
+                surfaces: {
+                    asphalt: {
+                        fill: 'rgba(101, 117, 124, 0.22)',
+                        stroke: 'rgba(168, 187, 194, 0.64)',
+                        label: '#c2d1d8',
+                        dash: [],
+                    },
+                    concrete: {
+                        fill: 'rgba(126, 133, 138, 0.22)',
+                        stroke: 'rgba(204, 214, 218, 0.66)',
+                        label: '#d5e0e4',
+                        dash: [],
+                    },
+                    softdirt: {
+                        fill: 'rgba(137, 106, 65, 0.23)',
+                        stroke: 'rgba(211, 173, 112, 0.68)',
+                        label: '#e1c18b',
+                        dash: [],
+                    },
+                    water: {
+                        fill: 'rgba(54, 119, 146, 0.22)',
+                        stroke: 'rgba(118, 204, 226, 0.64)',
+                        label: '#9ed9e9',
+                        dash: [],
+                    },
+                    default: {
+                        fill: 'rgba(105, 126, 116, 0.21)',
+                        stroke: 'rgba(173, 207, 183, 0.62)',
+                        label: '#bdddc5',
+                        dash: [],
+                    },
+                },
+            },
+        });
+        const tacticalLayers = Object.fromEntries(Object.entries(tacticalLayerCatalog).map(
+            ([key, spec]) => [key, !!spec.defaultEnabled]
+        ));
+        const tacticalLayerKeys = Object.keys(tacticalLayerCatalog);
         const tacticalWorkspaceDefinitions = {
             cop: {
                 label: 'COP',
@@ -1089,17 +1318,68 @@
             refreshAutoLayout({ redraw: true });
         }
 
-        function updateTacticalLayerButtons() {
-            const buttonMap = {
-                environment: document.getElementById('btn-layer-environment'),
-                route: document.getElementById('btn-layer-route'),
-                trails: document.getElementById('btn-layer-trails'),
-                weapons: document.getElementById('btn-layer-weapons'),
-                tracks: document.getElementById('btn-layer-tracks'),
-                sensorRings: document.getElementById('btn-layer-sensor-rings'),
-                datalinks: document.getElementById('btn-layer-datalinks'),
+        function tacticalLayerSpec(layerName) {
+            return tacticalLayerCatalog[layerName] || {
+                label: String(layerName || 'Layer'),
+                shortLabel: String(layerName || 'LAYER').toUpperCase(),
+                summaryLabel: String(layerName || 'LAYER').toUpperCase(),
+                buttonId: '',
             };
-            for (const [key, button] of Object.entries(buttonMap)) {
+        }
+
+        function tacticalAffiliationStyle(side) {
+            return tacticalSymbology.affiliation[String(side || 'Unknown')]
+                || tacticalSymbology.affiliation.Unknown;
+        }
+
+        function isTacticalDrawPhaseEnabled(phaseId) {
+            const phase = tacticalDrawPhaseById[phaseId];
+            if (!phase || !phase.layer) return true;
+            return !!tacticalLayers[phase.layer];
+        }
+
+        function renderTacticalLayerControls() {
+            const container = document.getElementById('tactical-layer-controls');
+            if (!container) return;
+            container.innerHTML = '';
+            for (const group of tacticalLayerGroups) {
+                const groupEl = document.createElement('div');
+                groupEl.className = 'tactical-layer-group';
+                groupEl.dataset.layerGroup = group.id;
+
+                const header = document.createElement('div');
+                header.className = 'tactical-layer-group-header';
+                const title = document.createElement('span');
+                title.className = 'tactical-layer-group-title';
+                title.innerText = group.label;
+                const role = document.createElement('span');
+                role.className = 'tactical-layer-group-role';
+                role.innerText = group.role;
+                header.append(title, role);
+
+                const buttons = document.createElement('div');
+                buttons.className = 'tactical-layer-group-buttons';
+                for (const key of group.layerKeys) {
+                    const spec = tacticalLayerSpec(key);
+                    const button = document.createElement('button');
+                    button.id = spec.buttonId;
+                    button.type = 'button';
+                    button.className = 'tactical-layer-button';
+                    button.dataset.layerKey = key;
+                    button.innerText = spec.shortLabel;
+                    button.setAttribute('aria-label', `${spec.label} layer`);
+                    button.onclick = () => window.toggleTacticalLayer(key);
+                    buttons.appendChild(button);
+                }
+
+                groupEl.append(header, buttons);
+                container.appendChild(groupEl);
+            }
+        }
+
+        function updateTacticalLayerButtons() {
+            for (const key of tacticalLayerKeys) {
+                const button = document.getElementById(tacticalLayerSpec(key).buttonId);
                 if (!button) continue;
                 button.classList.toggle('active', !!tacticalLayers[key]);
                 button.setAttribute('aria-pressed', tacticalLayers[key] ? 'true' : 'false');
@@ -1153,19 +1433,10 @@
             if (!layerSummaryEl) return;
 
             layerSummaryEl.innerHTML = '';
-            const labels = {
-                environment: 'ENV',
-                route: 'ROUTE',
-                trails: 'TRAILS',
-                weapons: 'WEAPONS',
-                tracks: 'TRACKS',
-                sensorRings: 'RINGS',
-                datalinks: 'LINKS',
-            };
             for (const key of tacticalLayerKeys) {
                 const chip = document.createElement('span');
                 chip.className = 'workspace-chip' + (tacticalLayers[key] ? ' active' : '');
-                chip.innerText = labels[key] || key.toUpperCase();
+                chip.innerText = tacticalLayerSpec(key).summaryLabel;
                 layerSummaryEl.appendChild(chip);
             }
         }
@@ -1210,7 +1481,7 @@
         }
 
         function getEnvironmentOverlayEntries() {
-            if (!tacticalLayers.environment || !environmentOverlays) return [];
+            if (!isTacticalDrawPhaseEnabled('environment') || !environmentOverlays) return [];
             const layers = Array.isArray(environmentOverlays.layers) ? environmentOverlays.layers : [];
             const entries = [];
             for (const layer of layers) {
@@ -1282,52 +1553,14 @@
             if (kind === 'occlusion_candidate') {
                 const family = String(attrs.component_family || '').toLowerCase();
                 if (family === 'vegetation') {
-                    return {
-                        fill: 'rgba(61, 126, 80, 0.16)',
-                        stroke: 'rgba(128, 216, 154, 0.72)',
-                        label: '#a7e7b8',
-                        dash: [5, 5],
-                    };
+                    return tacticalSymbology.environment.occlusionCandidate.vegetation;
                 }
-                return {
-                    fill: 'rgba(158, 143, 104, 0.15)',
-                    stroke: 'rgba(232, 210, 143, 0.74)',
-                    label: '#ead599',
-                    dash: [7, 4],
-                };
+                return tacticalSymbology.environment.occlusionCandidate.structure;
             }
 
             const surface = String(attrs.surface || '').toLowerCase();
-            if (surface === 'asphalt') {
-                return {
-                    fill: 'rgba(101, 117, 124, 0.22)',
-                    stroke: 'rgba(168, 187, 194, 0.64)',
-                    label: '#c2d1d8',
-                    dash: [],
-                };
-            }
-            if (surface === 'softdirt') {
-                return {
-                    fill: 'rgba(137, 106, 65, 0.23)',
-                    stroke: 'rgba(211, 173, 112, 0.68)',
-                    label: '#e1c18b',
-                    dash: [],
-                };
-            }
-            if (surface === 'water') {
-                return {
-                    fill: 'rgba(54, 119, 146, 0.22)',
-                    stroke: 'rgba(118, 204, 226, 0.64)',
-                    label: '#9ed9e9',
-                    dash: [],
-                };
-            }
-            return {
-                fill: 'rgba(105, 126, 116, 0.21)',
-                stroke: 'rgba(173, 207, 183, 0.62)',
-                label: '#bdddc5',
-                dash: [],
-            };
+            return tacticalSymbology.environment.surfaces[surface]
+                || tacticalSymbology.environment.surfaces.default;
         }
 
         function drawEnvironmentOverlayLabel(entry, point, style, scale, bounds) {
@@ -1613,7 +1846,7 @@
             document.getElementById('v-roll').innerText = '0.0';
             renderMissionStatus(null);
             tacticalCtx.clearRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
-            tacticalCtx.fillStyle = '#081018';
+            tacticalCtx.fillStyle = tacticalSymbology.canvas.background;
             tacticalCtx.fillRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
             document.getElementById('tactical-scale').innerText = 'SCALE --';
         }
@@ -2282,7 +2515,7 @@
             const links = Array.isArray(tactical.datalinks) ? tactical.datalinks : [];
             const navMarkers = Array.isArray(tactical.nav?.markers) ? tactical.nav.markers : [];
             const weapons = Array.isArray(tactical.weapons) ? tactical.weapons : [];
-            const plottedUnits = tacticalLayers.weapons
+            const plottedUnits = isTacticalDrawPhaseEnabled('weapons')
                 ? unitsList
                 : unitsList.filter((u) => String(u.type || '') !== 'Missile');
             const environmentEntries = getEnvironmentOverlayEntries();
@@ -2290,11 +2523,11 @@
             const width = tacticalCanvas.clientWidth || window.innerWidth;
             const height = tacticalCanvas.clientHeight || window.innerHeight;
             tacticalCtx.clearRect(0, 0, width, height);
-            tacticalCtx.fillStyle = '#081018';
+            tacticalCtx.fillStyle = tacticalSymbology.canvas.background;
             tacticalCtx.fillRect(0, 0, width, height);
 
             if (plottedUnits.length === 0 && navMarkers.length === 0 && environmentEntries.length === 0) {
-                tacticalCtx.fillStyle = '#6f8794';
+                tacticalCtx.fillStyle = tacticalSymbology.canvas.emptyText;
                 tacticalCtx.font = '12px monospace';
                 tacticalCtx.fillText('NO UNITS', 24, 40);
                 return;
@@ -2307,7 +2540,7 @@
                 minY = Math.min(minY, Number(u.y || 0));
                 maxY = Math.max(maxY, Number(u.y || 0));
             }
-            if (tacticalLayers.route) {
+            if (isTacticalDrawPhaseEnabled('route')) {
                 for (const marker of navMarkers) {
                     minX = Math.min(minX, Number(marker.x || 0));
                     maxX = Math.max(maxX, Number(marker.x || 0));
@@ -2315,7 +2548,7 @@
                     maxY = Math.max(maxY, Number(marker.y || 0));
                 }
             }
-            if (tacticalLayers.trails) {
+            if (isTacticalDrawPhaseEnabled('trails')) {
                 tacticalTrailHistory.forEach((points) => {
                     const isMissileTrail = String(points?.[0]?.type || '') === 'Missile';
                     if (isMissileTrail) return;
@@ -2328,7 +2561,7 @@
                     }
                 });
             }
-            if (tacticalLayers.weapons) {
+            if (isTacticalDrawPhaseEnabled('weapons')) {
                 for (const weapon of weapons) {
                     minX = Math.min(minX, Number(weapon.x || 0));
                     maxX = Math.max(maxX, Number(weapon.x || 0));
@@ -2347,7 +2580,7 @@
                     }
                 });
             }
-            if (tacticalLayers.sensorRings) {
+            if (isTacticalDrawPhaseEnabled('sensorRings')) {
                 for (const r of rings) {
                     if (!shouldShowSensorRingForUnit(r)) continue;
                     const range = Number(r.range_m || 0);
@@ -2357,7 +2590,7 @@
                     maxY = Math.max(maxY, Number(r.y || 0) + range);
                 }
             }
-            if (tacticalLayers.datalinks) {
+            if (isTacticalDrawPhaseEnabled('datalinks')) {
                 for (const link of links) {
                     minX = Math.min(minX, Number(link.from_x || 0), Number(link.to_x || 0));
                     maxX = Math.max(maxX, Number(link.from_x || 0), Number(link.to_x || 0));
@@ -2365,7 +2598,7 @@
                     maxY = Math.max(maxY, Number(link.from_y || 0), Number(link.to_y || 0));
                 }
             }
-            if (tacticalLayers.tracks) {
+            if (isTacticalDrawPhaseEnabled('tracks')) {
                 for (const track of tracks) {
                     minX = Math.min(minX, Number(track.x0 || 0), Number(track.x1 || 0));
                     maxX = Math.max(maxX, Number(track.x0 || 0), Number(track.x1 || 0));
@@ -2429,7 +2662,7 @@
 
             const plotRight = plotLeft + plotWidth;
             const plotBottom = plotTop + plotHeight;
-            tacticalCtx.strokeStyle = '#1a3244';
+            tacticalCtx.strokeStyle = tacticalSymbology.canvas.plotStroke;
             tacticalCtx.lineWidth = 1;
             tacticalCtx.strokeRect(plotLeft, plotTop, plotWidth, plotHeight);
 
@@ -2446,7 +2679,7 @@
             const worldMaxY = Math.max(worldA.y, worldB.y);
             const gridStepM = niceGridStepM(110.0 / scale);
 
-            tacticalCtx.strokeStyle = 'rgba(33, 76, 104, 0.78)';
+            tacticalCtx.strokeStyle = tacticalSymbology.canvas.gridStroke;
             tacticalCtx.lineWidth = 1;
             for (
                 let gx = Math.floor(worldMinX / gridStepM) * gridStepM;
@@ -2473,13 +2706,13 @@
                 tacticalCtx.stroke();
             }
 
-            if (environmentEntries.length > 0) {
+            if (isTacticalDrawPhaseEnabled('environment') && environmentEntries.length > 0) {
                 drawEnvironmentOverlays(environmentEntries, toCanvas, scale);
             }
 
-            if (tacticalLayers.route && navMarkers.length > 0) {
+            if (isTacticalDrawPhaseEnabled('route') && navMarkers.length > 0) {
                 if (navMarkers.length >= 2) {
-                    tacticalCtx.strokeStyle = 'rgba(235, 218, 106, 0.62)';
+                    tacticalCtx.strokeStyle = tacticalSymbology.route.path;
                     tacticalCtx.lineWidth = 1.2;
                     tacticalCtx.setLineDash([7, 6]);
                     tacticalCtx.beginPath();
@@ -2497,19 +2730,25 @@
                     const rr = Math.max(5, Math.min(28, radiusM * scale));
                     const active = !!marker.is_active;
                     const mode = String(marker.waypoint_mode || 'flyby').toLowerCase();
-                    tacticalCtx.strokeStyle = active ? '#89ff8b' : mode === 'flyover' ? '#ffb16a' : '#e8db7d';
-                    tacticalCtx.fillStyle = active ? 'rgba(137, 255, 139, 0.18)' : 'rgba(232, 219, 125, 0.12)';
+                    tacticalCtx.strokeStyle = active
+                        ? tacticalSymbology.route.activeStroke
+                        : mode === 'flyover'
+                            ? tacticalSymbology.route.flyoverStroke
+                            : tacticalSymbology.route.defaultStroke;
+                    tacticalCtx.fillStyle = active
+                        ? tacticalSymbology.route.activeFill
+                        : tacticalSymbology.route.defaultFill;
                     tacticalCtx.lineWidth = active ? 1.8 : 1.1;
                     tacticalCtx.beginPath();
                     tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
                     tacticalCtx.fill();
                     tacticalCtx.stroke();
-                    tacticalCtx.fillStyle = active ? '#c8ffd0' : '#e8db7d';
+                    tacticalCtx.fillStyle = active ? tacticalSymbology.route.activeLabel : tacticalSymbology.route.defaultStroke;
                     tacticalCtx.font = '10px monospace';
                     tacticalCtx.fillText(String(marker.name || `WP_${idx + 1}`), p.x + rr + 5, p.y - rr - 3);
                     const sequenceGate = Number(marker.sequence_gate_m || 0);
                     if (active && sequenceGate > radiusM + 1.0) {
-                        tacticalCtx.strokeStyle = 'rgba(80, 220, 255, 0.45)';
+                        tacticalCtx.strokeStyle = tacticalSymbology.route.sequenceGate;
                         tacticalCtx.lineWidth = 1;
                         tacticalCtx.beginPath();
                         tacticalCtx.arc(p.x, p.y, Math.max(rr + 3, sequenceGate * scale), 0, Math.PI * 2);
@@ -2518,11 +2757,11 @@
                 }
             }
 
-            if (tacticalLayers.trails) {
+            if (isTacticalDrawPhaseEnabled('trails')) {
                 tacticalTrailHistory.forEach((points) => {
                     if (!Array.isArray(points) || points.length < 2 || String(points[0]?.type || '') === 'Missile') return;
                     const step = Math.max(1, Math.floor(points.length / 260));
-                    tacticalCtx.strokeStyle = points[0]?.side === 'Red' ? 'rgba(255, 120, 120, 0.34)' : 'rgba(100, 210, 255, 0.34)';
+                    tacticalCtx.strokeStyle = tacticalAffiliationStyle(points[0]?.side).trailStroke;
                     tacticalCtx.lineWidth = 1.2;
                     tacticalCtx.beginPath();
                     let first = true;
@@ -2539,11 +2778,11 @@
                 });
             }
 
-            if (tacticalLayers.datalinks) {
+            if (isTacticalDrawPhaseEnabled('datalinks')) {
                 for (const link of links) {
                     const a = toCanvas(Number(link.from_x || 0), Number(link.from_y || 0));
                     const b = toCanvas(Number(link.to_x || 0), Number(link.to_y || 0));
-                    tacticalCtx.strokeStyle = 'rgba(80, 170, 255, 0.28)';
+                    tacticalCtx.strokeStyle = tacticalSymbology.datalink.stroke;
                     tacticalCtx.lineWidth = 1;
                     tacticalCtx.beginPath();
                     tacticalCtx.moveTo(a.x, a.y);
@@ -2552,12 +2791,12 @@
                 }
             }
 
-            if (tacticalLayers.sensorRings) {
+            if (isTacticalDrawPhaseEnabled('sensorRings')) {
                 for (const ring of rings) {
                     if (!shouldShowSensorRingForUnit(ring)) continue;
                     const p = toCanvas(Number(ring.x || 0), Number(ring.y || 0));
                     const rr = Math.max(2, Number(ring.range_m || 0) * scale);
-                    tacticalCtx.strokeStyle = ring.side === 'Red' ? 'rgba(255, 120, 120, 0.24)' : 'rgba(90, 210, 255, 0.24)';
+                    tacticalCtx.strokeStyle = tacticalAffiliationStyle(ring.side).sensorStroke;
                     tacticalCtx.lineWidth = 1;
                     tacticalCtx.beginPath();
                     tacticalCtx.arc(p.x, p.y, rr, 0, Math.PI * 2);
@@ -2565,29 +2804,33 @@
                 }
             }
 
-            if (tacticalLayers.tracks) {
+            if (isTacticalDrawPhaseEnabled('tracks')) {
                 for (const track of tracks) {
                     const a = toCanvas(Number(track.x0 || 0), Number(track.y0 || 0));
                     const b = toCanvas(Number(track.x1 || 0), Number(track.y1 || 0));
-                    tacticalCtx.strokeStyle = Number(track.source) === 3 ? 'rgba(0, 255, 200, 0.75)' : 'rgba(255, 200, 0, 0.78)';
+                    tacticalCtx.strokeStyle = Number(track.source) === 3
+                        ? tacticalSymbology.track.fusedStroke
+                        : tacticalSymbology.track.rawStroke;
                     tacticalCtx.lineWidth = 1.4;
                     tacticalCtx.beginPath();
                     tacticalCtx.moveTo(a.x, a.y);
                     tacticalCtx.lineTo(b.x, b.y);
                     tacticalCtx.stroke();
-                    tacticalCtx.fillStyle = Number(track.source) === 3 ? '#00ffd0' : '#ffd04d';
+                    tacticalCtx.fillStyle = Number(track.source) === 3
+                        ? tacticalSymbology.track.fusedDot
+                        : tacticalSymbology.track.rawDot;
                     tacticalCtx.beginPath();
                     tacticalCtx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
                     tacticalCtx.fill();
                 }
             }
 
-            if (tacticalLayers.weapons) {
+            if (isTacticalDrawPhaseEnabled('weapons')) {
                 const unitById = new Map(unitsList.map((u) => [Number(u.id), u]));
                 tacticalTrailHistory.forEach((points) => {
                     if (!Array.isArray(points) || points.length < 2 || String(points[0]?.type || '') !== 'Missile') return;
                     const step = Math.max(1, Math.floor(points.length / 240));
-                    tacticalCtx.strokeStyle = points[0]?.side === 'Red' ? 'rgba(255, 92, 92, 0.86)' : 'rgba(255, 230, 90, 0.9)';
+                    tacticalCtx.strokeStyle = tacticalAffiliationStyle(points[0]?.side).weaponTrail;
                     tacticalCtx.lineWidth = 2.2;
                     tacticalCtx.beginPath();
                     let first = true;
@@ -2609,14 +2852,15 @@
                     const rad = (90.0 - hdg) * Math.PI / 180.0;
                     const dirX = Math.cos(rad);
                     const dirY = -Math.sin(rad);
-                    const color = weapon.side === 'Red' ? '#ff5252' : '#ffe65a';
+                    const sideStyle = tacticalAffiliationStyle(weapon.side);
+                    const color = sideStyle.weaponColor;
                     const target = unitById.get(Number(weapon.target_id || 0));
 
                     if (target) {
                         const t = toCanvas(Number(target.x || 0), Number(target.y || 0));
                         tacticalCtx.save();
                         tacticalCtx.setLineDash([4, 5]);
-                        tacticalCtx.strokeStyle = weapon.side === 'Red' ? 'rgba(255, 82, 82, 0.38)' : 'rgba(255, 230, 90, 0.4)';
+                        tacticalCtx.strokeStyle = sideStyle.weaponTarget;
                         tacticalCtx.lineWidth = 1;
                         tacticalCtx.beginPath();
                         tacticalCtx.moveTo(p.x, p.y);
@@ -2661,7 +2905,7 @@
                 const symbol = unitSymbolSpec(u);
                 const len = symbol.len;
                 const wing = symbol.wing;
-                tacticalCtx.fillStyle = u.side === 'Red' ? '#ff6d6d' : '#73cfff';
+                tacticalCtx.fillStyle = tacticalAffiliationStyle(u.side).unitFill;
                 tacticalCtx.beginPath();
                 if (symbol.kind === 'ship') {
                     tacticalCtx.moveTo(p.x + dirX * len, p.y + dirY * len);
@@ -2685,7 +2929,7 @@
                 tacticalCtx.fill();
             }
 
-            if (tacticalLayers.weapons) {
+            if (isTacticalDrawPhaseEnabled('missileUnits')) {
                 const missileUnits = plottedUnits.filter((u) => String(u.type || '') === 'Missile');
                 for (const u of missileUnits) {
                     const p = toCanvas(Number(u.x || 0), Number(u.y || 0));
@@ -2693,7 +2937,7 @@
                     const rad = (90.0 - hdg) * Math.PI / 180.0;
                     const dirX = Math.cos(rad);
                     const dirY = -Math.sin(rad);
-                    const color = u.side === 'Red' ? '#ff5252' : '#ffe65a';
+                    const color = tacticalAffiliationStyle(u.side).weaponColor;
                     tacticalCtx.save();
                     tacticalCtx.shadowBlur = 12;
                     tacticalCtx.shadowColor = color;
@@ -2750,18 +2994,18 @@
                     attempts += 1;
                 }
 
-                tacticalCtx.strokeStyle = 'rgba(185, 210, 224, 0.35)';
+                tacticalCtx.strokeStyle = tacticalSymbology.label.leader;
                 tacticalCtx.lineWidth = 1;
                 tacticalCtx.beginPath();
                 tacticalCtx.moveTo(p.x + 3, p.y - 3);
                 tacticalCtx.lineTo(anchorX - 4, anchorY - 4);
                 tacticalCtx.stroke();
 
-                tacticalCtx.fillStyle = 'rgba(5, 11, 17, 0.88)';
+                tacticalCtx.fillStyle = tacticalSymbology.label.background;
                 tacticalCtx.fillRect(anchorX - 4, anchorY - textHeight - 2, textWidth + 8, textHeight + 6);
-                tacticalCtx.strokeStyle = u.side === 'Red' ? 'rgba(255, 109, 109, 0.45)' : 'rgba(115, 207, 255, 0.45)';
+                tacticalCtx.strokeStyle = tacticalAffiliationStyle(u.side).labelStroke;
                 tacticalCtx.strokeRect(anchorX - 4, anchorY - textHeight - 2, textWidth + 8, textHeight + 6);
-                tacticalCtx.fillStyle = '#d7e7ee';
+                tacticalCtx.fillStyle = tacticalSymbology.label.text;
                 tacticalCtx.fillText(label, anchorX, anchorY);
             }
 
@@ -3435,6 +3679,7 @@
             });
         });
 
+        renderTacticalLayerControls();
         window.setTacticalWorkspace('cop', { skipCapture: true });
 
         // --- Loop ---
