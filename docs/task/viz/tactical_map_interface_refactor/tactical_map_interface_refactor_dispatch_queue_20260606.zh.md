@@ -2,7 +2,8 @@
 
 状态：`2026-06-06`，面向
 [战术地图界面重构](README.zh.md) 的活跃派发队列。`P0` 已通过；第一份
-`P1` 只读 diagnostics packet 已返回 `pass`；主线程 `P1` 壳实现已作为切片接受。
+`P1` 只读 diagnostics packet 已返回 `pass`；主线程 `P1` 壳实现已作为切片接受；
+主线程 `P2` tabbed workspace 实现已作为切片接受。
 
 语言：
 
@@ -41,6 +42,7 @@ diagnostics 返回后由主线程串行实施。
 | `VIZ-TMAP-P0-AUTH` | `VIZ-TMAP-P0` | main thread | 当前主线程 | 在派发前复核父 README 链接、任务簇、当前状态、风格基线和 docs-only validation。 | `docs/task/viz/tactical_map_interface_refactor/**`、`docs/task/viz/README*.md` | authority check；dirty-worktree boundary；validation outcome | pass |
 | `VIZ-TMAP-P1-DIAG-A` | `VIZ-TMAP-P1` | `Carson` | inherited parent / diagnostics | 只读预检当前 `examples/viz` 战术壳和第一版地图优先布局实现边界。 | none | current layout map；exact edit surfaces；recommended first patch shape；responsive risks；validation commands；held capability claims | pass |
 | `VIZ-TMAP-P1-IMPL-MAIN` | `VIZ-TMAP-P1` | main thread | 当前主线程 | 实现第一版地图优先战术壳，并验证窄屏、桌面、空军 profile、陆军 scenario 和 3D toggle smoke 路径。 | `examples/viz/web_viz/templates/index.html`、P1 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
+| `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | 当前主线程 | 将第一版维护中的地图工作区模型实现为 tabbed `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 表面。 | `examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_map_workspace.py`、P2 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 
 ## 返回诊断摘要
 
@@ -79,7 +81,24 @@ diagnostics 返回后由主线程串行实施。
 - 浏览器 smoke 覆盖窄屏、桌面、陆军 ENV、空军 weapons/trails、3D toggle、截图和最终
   `Errors: 0`。
 
-残余仍分配到 `P2`、`P3` 和 `P4`。
+在 `P1` 检查点，残余仍分配到 `P2`、`P3` 和 `P4`。
+
+## 返回 P2 实现摘要
+
+`VIZ-TMAP-P2-IMPL-MAIN` 已作为切片接受。证据记录于
+[P2 工作区验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)。
+
+接受的实现点：
+
+- 第一版地图工作区模型采用 tabbed surfaces，而不是 split-map 布局。
+- `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 是显式 UI workspaces，并有默认图层姿态。
+- Workspace tabs 保持在顶栏，因此进入 `3D Inspect` 后仍可回到地图工作区。
+- 手动图层切换在当前浏览器会话内按 workspace 记忆。
+- 静态回归覆盖 workspace IDs、tab controls、默认图层模型和 UI-only 边界。
+- 浏览器 smoke 覆盖 workspace 切换、桌面和窄屏布局、地图像素采样、3D renderer 可见性、截图和最终
+  `Errors: 0`。
+
+残余仍分配到 `P3` 和 `P4`。
 
 ## Worker Packet 模板
 

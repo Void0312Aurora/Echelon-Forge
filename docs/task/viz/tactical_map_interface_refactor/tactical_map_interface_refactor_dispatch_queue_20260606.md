@@ -3,6 +3,7 @@
 Status: `2026-06-06` active dispatch queue for
 [Tactical Map Interface Refactor](README.md). `P0` is pass; first `P1`
 read-only diagnostics packet returned `pass`; the main-thread `P1` shell
+implementation is accepted as a slice; the main-thread `P2` tabbed workspace
 implementation is accepted as a slice.
 
 Language:
@@ -46,6 +47,7 @@ return.
 | `VIZ-TMAP-P0-AUTH` | `VIZ-TMAP-P0` | main thread | current main thread | Verify parent README link, task clusters, current status, style baseline, and clean docs-only validation before dispatch. | `docs/task/viz/tactical_map_interface_refactor/**`, `docs/task/viz/README*.md` | authority check; dirty-worktree boundary; validation outcome | pass |
 | `VIZ-TMAP-P1-DIAG-A` | `VIZ-TMAP-P1` | `Carson` | inherited parent / diagnostics | Read-only preflight of the existing `examples/viz` tactical shell and first map-first layout implementation boundary. | none | current layout map; exact edit surfaces; recommended first patch shape; responsive risks; validation commands; held capability claims | pass |
 | `VIZ-TMAP-P1-IMPL-MAIN` | `VIZ-TMAP-P1` | main thread | current main thread | Implement the first map-first tactical shell and validate narrow, desktop, air-profile, ground-scenario, and 3D-toggle smoke paths. | `examples/viz/web_viz/templates/index.html`, P1 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
+| `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | current main thread | Implement the first maintained map-workspace model as tabbed `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` surfaces. | `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_map_workspace.py`, P2 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 
 ## Returned Diagnostics Summary
 
@@ -88,7 +90,28 @@ Accepted implementation points:
 - Browser smoke covered narrow, desktop, ground ENV, air weapons/trails, 3D
   toggle, screenshots, and final `Errors: 0`.
 
-Residuals remain assigned to `P2`, `P3`, and `P4`.
+At the `P1` checkpoint, residuals remained assigned to `P2`, `P3`, and `P4`.
+
+## Returned P2 Implementation Summary
+
+`VIZ-TMAP-P2-IMPL-MAIN` is accepted as a slice. Evidence is recorded in
+[P2 workspace acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md).
+
+Accepted implementation points:
+
+- The first map-workspace model uses tabbed surfaces, not split-map layout.
+- `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` are explicit UI
+  workspaces with default layer postures.
+- Workspace tabs stay in the top bar so `3D Inspect` can return to map
+  workspaces without a hidden control.
+- Manual layer toggles are remembered per workspace for the current browser
+  session.
+- Static regression coverage locks the workspace IDs, tab controls, default
+  layer model, and UI-only boundary.
+- Browser smoke covered workspace switching, desktop and narrow layouts, map
+  pixel sampling, 3D renderer visibility, screenshots, and final `Errors: 0`.
+
+Residuals remain assigned to `P3` and `P4`.
 
 ## Worker Packet Template
 

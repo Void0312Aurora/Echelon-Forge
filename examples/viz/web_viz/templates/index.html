@@ -232,6 +232,30 @@
             min-width: 0;
         }
 
+        .workspace-tabs {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+            flex: 0 1 auto;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .workspace-tab {
+            padding: 6px 8px;
+            border-color: rgba(72, 111, 132, 0.62);
+            background: rgba(7, 18, 24, 0.78);
+            color: #8fa8b5;
+            font-size: 11px;
+        }
+
+        .workspace-tab.active {
+            border-color: #52c8e8;
+            background: rgba(19, 68, 82, 0.92);
+            color: #e5f8ff;
+        }
+
         .menu-tag {
             font-size: 11px;
             color: #7f99a8;
@@ -410,6 +434,54 @@
             color: #caedf7;
         }
 
+        .workspace-summary {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            min-width: 0;
+            margin-bottom: 8px;
+        }
+
+        .workspace-name {
+            color: #e2f6ff;
+            font-weight: bold;
+            font-size: 13px;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .workspace-role {
+            color: #7f99a8;
+            font-size: 10px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .workspace-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            min-height: 20px;
+        }
+
+        .workspace-chip {
+            border: 1px solid rgba(67, 105, 124, 0.54);
+            background: rgba(7, 19, 25, 0.76);
+            color: #8fa8b5;
+            padding: 3px 5px;
+            font-size: 10px;
+            line-height: 1.1;
+        }
+
+        .workspace-chip.active {
+            border-color: rgba(83, 198, 224, 0.78);
+            color: #d9f5ff;
+            background: rgba(18, 62, 74, 0.72);
+        }
+
         #tactical-canvas {
             position: absolute;
             inset: 0;
@@ -521,6 +593,12 @@
                 width: 100%;
             }
 
+            .workspace-tabs {
+                order: 3;
+                width: 100%;
+                padding-bottom: 1px;
+            }
+
             .menu-actions {
                 width: 100%;
                 justify-content: flex-start;
@@ -565,6 +643,12 @@
                 <div class="menu-status">
                     <span class="menu-tag">SESSION</span>
                     <span id="viz-session-label">UNLOADED</span>
+                </div>
+                <div id="workspace-tabs" class="workspace-tabs" aria-label="Map workspace">
+                    <button id="workspace-tab-cop" class="workspace-tab" onclick="setTacticalWorkspace('cop')">COP</button>
+                    <button id="workspace-tab-environment" class="workspace-tab" onclick="setTacticalWorkspace('environment')">ENVIRONMENT</button>
+                    <button id="workspace-tab-tracks" class="workspace-tab" onclick="setTacticalWorkspace('tracks')">TRACKS</button>
+                    <button id="workspace-tab-inspect3d" class="workspace-tab" onclick="setTacticalWorkspace('inspect3d')">3D INSPECT</button>
                 </div>
                 <div class="menu-actions">
                     <button id="btn-toggle-left" class="dock-toggle" onclick="toggleVizDock('left')">SETUP</button>
@@ -615,6 +699,15 @@
                 <button class="dock-close" onclick="toggleVizDock('right')">CLOSE</button>
             </div>
             <div class="dock-body">
+                <div id="tactical-workspace-panel" class="dock-section">
+                    <h3>WORKSPACE</h3>
+                    <div class="workspace-summary">
+                        <span id="workspace-name" class="workspace-name">COP</span>
+                        <span id="workspace-role" class="workspace-role">COMMON PICTURE</span>
+                    </div>
+                    <div id="workspace-layer-summary" class="workspace-chip-row"></div>
+                </div>
+
                 <div id="tactical-layer-panel" class="dock-section">
                     <h3>LAYERS</h3>
                     <div class="tactical-layer-controls" aria-label="Tactical layers">
@@ -717,6 +810,68 @@
             sensorRings: false,
             datalinks: false,
         };
+        const tacticalLayerKeys = Object.keys(tacticalLayers);
+        const tacticalWorkspaceDefinitions = {
+            cop: {
+                label: 'COP',
+                role: 'COMMON PICTURE',
+                viewMode: 'MAP',
+                layerDefaults: {
+                    environment: true,
+                    route: true,
+                    trails: true,
+                    weapons: true,
+                    tracks: false,
+                    sensorRings: false,
+                    datalinks: false,
+                },
+            },
+            environment: {
+                label: 'ENVIRONMENT',
+                role: 'ENV / AREAS',
+                viewMode: 'MAP',
+                layerDefaults: {
+                    environment: true,
+                    route: false,
+                    trails: false,
+                    weapons: false,
+                    tracks: false,
+                    sensorRings: false,
+                    datalinks: false,
+                },
+            },
+            tracks: {
+                label: 'TRACKS',
+                role: 'SENSORS / LINKS',
+                viewMode: 'MAP',
+                layerDefaults: {
+                    environment: false,
+                    route: false,
+                    trails: true,
+                    weapons: false,
+                    tracks: true,
+                    sensorRings: true,
+                    datalinks: true,
+                },
+            },
+            inspect3d: {
+                label: '3D INSPECT',
+                role: 'MODEL INSPECT',
+                viewMode: '3D',
+                layerDefaults: {
+                    environment: true,
+                    route: true,
+                    trails: true,
+                    weapons: true,
+                    tracks: false,
+                    sensorRings: false,
+                    datalinks: false,
+                },
+            },
+        };
+        let activeTacticalWorkspace = 'cop';
+        let lastMapTacticalWorkspace = 'cop';
+        const tacticalWorkspaceLayerState = new Map();
 
         // Input State
         const keys = { w: false, a: false, s: false, d: false, q: false, e: false, Shift: false };
@@ -951,6 +1106,91 @@
             }
         }
 
+        function tacticalLayerSnapshot(source = tacticalLayers) {
+            const snapshot = {};
+            for (const key of tacticalLayerKeys) {
+                snapshot[key] = !!source[key];
+            }
+            return snapshot;
+        }
+
+        function applyTacticalLayerSnapshot(snapshot) {
+            const source = snapshot || {};
+            for (const key of tacticalLayerKeys) {
+                tacticalLayers[key] = !!source[key];
+            }
+        }
+
+        function captureActiveWorkspaceLayers() {
+            if (!tacticalWorkspaceDefinitions[activeTacticalWorkspace]) return;
+            tacticalWorkspaceLayerState.set(
+                activeTacticalWorkspace,
+                tacticalLayerSnapshot()
+            );
+        }
+
+        function workspaceLayerDefaults(workspaceId) {
+            const defaults = tacticalWorkspaceDefinitions[workspaceId]?.layerDefaults;
+            return tacticalLayerSnapshot(defaults || tacticalWorkspaceDefinitions.cop.layerDefaults);
+        }
+
+        function updateTacticalWorkspaceUI() {
+            const workspace = tacticalWorkspaceDefinitions[activeTacticalWorkspace] || tacticalWorkspaceDefinitions.cop;
+            document.documentElement.dataset.tacticalWorkspace = activeTacticalWorkspace;
+            for (const workspaceId of Object.keys(tacticalWorkspaceDefinitions)) {
+                const tab = document.getElementById(`workspace-tab-${workspaceId}`);
+                if (!tab) continue;
+                const active = workspaceId === activeTacticalWorkspace;
+                tab.classList.toggle('active', active);
+                tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+            }
+
+            const nameEl = document.getElementById('workspace-name');
+            const roleEl = document.getElementById('workspace-role');
+            const layerSummaryEl = document.getElementById('workspace-layer-summary');
+            if (nameEl) nameEl.innerText = workspace.label;
+            if (roleEl) roleEl.innerText = workspace.role;
+            if (!layerSummaryEl) return;
+
+            layerSummaryEl.innerHTML = '';
+            const labels = {
+                environment: 'ENV',
+                route: 'ROUTE',
+                trails: 'TRAILS',
+                weapons: 'WEAPONS',
+                tracks: 'TRACKS',
+                sensorRings: 'RINGS',
+                datalinks: 'LINKS',
+            };
+            for (const key of tacticalLayerKeys) {
+                const chip = document.createElement('span');
+                chip.className = 'workspace-chip' + (tacticalLayers[key] ? ' active' : '');
+                chip.innerText = labels[key] || key.toUpperCase();
+                layerSummaryEl.appendChild(chip);
+            }
+        }
+
+        window.setTacticalWorkspace = function (workspaceId, options = {}) {
+            const nextId = String(workspaceId || '').trim();
+            const nextWorkspace = tacticalWorkspaceDefinitions[nextId];
+            if (!nextWorkspace) return;
+            if (!options.skipCapture) captureActiveWorkspaceLayers();
+
+            activeTacticalWorkspace = nextId;
+            if (nextWorkspace.viewMode === 'MAP') {
+                lastMapTacticalWorkspace = nextId;
+            }
+
+            const storedLayers = tacticalWorkspaceLayerState.get(nextId);
+            applyTacticalLayerSnapshot(storedLayers || workspaceLayerDefaults(nextId));
+            presentationMode = nextWorkspace.viewMode === '3D' ? '3D' : 'MAP';
+
+            updateTacticalLayerButtons();
+            updateTacticalWorkspaceUI();
+            updatePresentationModeUI();
+            requestTacticalDraw();
+        };
+
         function requestTacticalDraw() {
             tacticalNeedsDraw = true;
         }
@@ -958,7 +1198,9 @@
         window.toggleTacticalLayer = function (layerName) {
             if (!Object.prototype.hasOwnProperty.call(tacticalLayers, layerName)) return;
             tacticalLayers[layerName] = !tacticalLayers[layerName];
+            captureActiveWorkspaceLayers();
             updateTacticalLayerButtons();
+            updateTacticalWorkspaceUI();
             requestTacticalDraw();
         };
 
@@ -1181,10 +1423,12 @@
         }
 
         window.togglePresentationMode = function () {
-            presentationMode = presentationMode === 'MAP' ? '3D' : 'MAP';
             chaseTargetPrev = null;
-            updatePresentationModeUI();
-            if (presentationMode === 'MAP') requestTacticalDraw();
+            if (presentationMode === 'MAP') {
+                window.setTacticalWorkspace('inspect3d');
+                return;
+            }
+            window.setTacticalWorkspace(lastMapTacticalWorkspace || 'cop');
         };
 
         function resizeTacticalCanvas() {
@@ -1951,6 +2195,15 @@
                 tacticalInteraction.panX = 0.0;
                 tacticalInteraction.panY = 0.0;
             }
+            if (presentationMode === '3D') {
+                window.setTacticalWorkspace('inspect3d');
+                return;
+            }
+            if (activeTacticalWorkspace === 'inspect3d') {
+                window.setTacticalWorkspace(lastMapTacticalWorkspace || 'cop');
+                return;
+            }
+            updateTacticalWorkspaceUI();
             updatePresentationModeUI();
             requestTacticalDraw();
         }
@@ -3182,8 +3435,7 @@
             });
         });
 
-        updatePresentationModeUI();
-        updateTacticalLayerButtons();
+        window.setTacticalWorkspace('cop', { skipCapture: true });
 
         // --- Loop ---
         function animate() {
