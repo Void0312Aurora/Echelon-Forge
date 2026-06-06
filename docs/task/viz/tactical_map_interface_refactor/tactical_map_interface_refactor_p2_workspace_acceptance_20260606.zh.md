@@ -68,6 +68,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 ## 残余
 
-- `VIZ-TMAP-P3` 仍需集中管理图层分组、绘制顺序和第一版符号风格。P2 只给每个 workspace 提供默认图层姿态。
-- `VIZ-TMAP-P4` 继续 held，直到具体 workspace/layer 默认值需要通过 profile UI defaults 持久化。
+- 历史说明：在 `P2` 检查点，`VIZ-TMAP-P3` 和 `VIZ-TMAP-P4` 仍为残余。当前状态由
+  [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
+  和 [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) 覆盖。
 - split-map 布局继续推迟，除非后续需求证明它可以保留 `P1` 和本 P2 tabbed 切片已接受的地图优先人体工学。

@@ -5,7 +5,7 @@
   "asset_registry": "examples/viz/assets/registry/default.json",
   "session": {
     "pause_on_done": false,
-    "action_mode": "auto",
+    "action_mode": "naval_station3",
     "zero_randomization": false
   },
   "startup": {

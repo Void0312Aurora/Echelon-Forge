@@ -1,6 +1,6 @@
 # 战术地图界面重构当前状态
 
-状态：`2026-06-06`，`P0` 已通过，`P1` 壳布局已作为切片接受，`P2` 地图工作区已作为切片接受，`P3` 图层/符号分组已作为切片接受。
+状态：`2026-06-06`，`P0` 已通过，`P1` 壳布局已作为切片接受，`P2` 地图工作区已作为切片接受，`P3` 图层/符号分组已作为切片接受，`P4` profile UI 默认值已作为切片接受。
 
 父项：[战术地图界面重构](README.zh.md)
 
@@ -33,6 +33,16 @@
   [test_tactical_layer_model.py](../../../../tests/viz/test_tactical_layer_model.py)。
 - 在 [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
   中记录 P3 浏览器、语法和聚焦回归证据。
+- 在 [profile_loader.py](../../../../examples/viz/app/profile_loader.py) 和
+  [index.html](../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
+  `VIZ-TMAP-P4` profile UI 默认值，用于默认 tactical workspace 和 layer 选择。
+- 增加聚焦 profile/default 回归覆盖：
+  [test_tactical_profile_ui_defaults.py](../../../../tests/viz/test_tactical_profile_ui_defaults.py)。
+- 更新 viz profile fixtures，使空战 forced-fire profile 可持久化完整 COP 图层默认值，海军 contact-report profile
+  可默认进入 `TRACKS` workspace。
+- 将 naval viz profiles 对齐到维护中的 `naval_station3` 动作面，使 profile smoke load 可达到 `READY`。
+- 在 [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)
+  中记录 P4 浏览器、语法、JSON 和聚焦回归证据。
 
 ## 成熟度矩阵
 
@@ -44,17 +54,17 @@
 | Runtime 壳布局 | accepted slice | [P1 验收](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md) | 不接受图层分组、profile 默认值或新的仿真行为。 |
 | 多地图工作区 | accepted slice | [P2 验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md) | 只接受 tabbed surfaces；split-map 布局仍推迟。 |
 | 图层和符号模型 | accepted slice | [P3 验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md) | 只接受分组 UI 控制和第一版样式；不声明标准合规或 payload 语义。 |
-| Profile UI 默认值 | planned/held until needed | [profile_loader.py](../../../../examples/viz/app/profile_loader.py) | 只有 `P3` 图层默认值稳定到值得持久化后才添加。 |
+| Profile UI 默认值 | accepted slice | [P4 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) | 只接受 UI 偏好；不改变 scenario 或仿真语义。 |
 
 ## 下一步推荐顺序
 
-1. 只有当 runtime UI 需要稳定持久默认值时，才在 `VIZ-TMAP-P4` 扩展 profile UI 默认值。
-2. 随后续实现切片落地，在 `VIZ-TMAP-P5` 记录浏览器 smoke、截图和残余。
+1. 在 `VIZ-TMAP-P5` 汇总已接受 `P1` 到 `P4` 切片的浏览器 smoke、截图和残余。
+2. 在 roll-up 决策后通过 `VIZ-TMAP-P6` 同步 closure/archive 指针。
 
 ## 明确拒绝的过度声明
 
 - 本检查点没有接受完整战术地图界面重构。
-- 本检查点只接受第一版 tabbed map-workspace 切片和分组图层/符号切片；不接受 split-map 布局。
+- 本检查点只接受第一版 tabbed map-workspace 切片、分组图层/符号切片和 profile UI-default 切片；不接受 split-map 布局。
 - 本检查点没有证明军用符号标准合规。
 - 本检查点没有释放地形感知机动、LOS、掩蔽、可通行性、天气效果、战斗行为或环境 runtime 变异。
 - 本检查点没有改变 scenario/profile 边界。

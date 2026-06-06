@@ -5,7 +5,7 @@
   "asset_registry": "examples/viz/assets/registry/default.json",
   "session": {
     "pause_on_done": false,
-    "action_mode": "auto",
+    "action_mode": "naval_station3",
     "zero_randomization": false
   },
   "startup": {
@@ -16,6 +16,16 @@
     "presentation_mode": "MAP",
     "camera_mode": "CHASE",
     "focus_unit": "Blue_Screen_DDG51",
-    "tactical_zoom": 1.0
+    "tactical_zoom": 1.0,
+    "tactical_workspace": "tracks",
+    "tactical_layers": {
+      "environment": false,
+      "route": false,
+      "trails": true,
+      "tracks": true,
+      "sensor_rings": true,
+      "datalinks": true,
+      "weapons": false
+    }
   }
 }

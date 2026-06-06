@@ -68,10 +68,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 
 ## 残余
 
-- `VIZ-TMAP-P2` 仍需定义维护中的地图工作区模型，包括第一版 `COP`、`Environment`、
-  `Tracks/Sensors` 和 `3D Inspect` 表面行为。
-- `VIZ-TMAP-P3` 仍需集中图层分组、绘制顺序和第一版符号样式。
-- `VIZ-TMAP-P4` 继续 held，直到具体 workspace/layer 默认值需要通过 profile UI 默认值持久化。
-- naval debug profiles 仍暴露一个既有 runtime action-mode 不匹配：naval tasking scenario
-  需要 `action_mode='naval_station3'`，但当前 profile 路径在 reset 时解析为 `full`。
-  该现象在 smoke 选择期间观察到，不由 `P1` 引入，也不由 `P1` 修复。
+- 历史说明：在 `P1` 检查点，`VIZ-TMAP-P2`、`VIZ-TMAP-P3` 和 `VIZ-TMAP-P4`
+  仍为残余。当前状态由 [P2 工作区验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)、
+  [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
+  和 [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) 覆盖。
+- 历史说明：`P1` smoke 中观察到的 naval debug profile action-mode 不匹配，已由后续 `P4`
+  profile-default 切片修复；naval viz profiles 现在对齐 `action_mode='naval_station3'`。

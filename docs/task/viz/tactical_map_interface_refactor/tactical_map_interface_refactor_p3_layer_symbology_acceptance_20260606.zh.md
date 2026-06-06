@@ -59,7 +59,9 @@ smoke 结束后关闭服务时出现既有 nanobind leak warning。该警告发�
 
 ## 残余
 
-- `VIZ-TMAP-P4` 继续 held，直到稳定的 workspace/layer 默认值需要通过 profile UI defaults 持久化。
+- 历史说明：在 `P3` 检查点，`VIZ-TMAP-P4` 继续 held，直到稳定的 workspace/layer 默认值需要通过
+  profile UI defaults 持久化。当前 P4 状态由
+  [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) 覆盖。
 - 更丰富的地形、道路、建筑、植被、天气和环境产品图层，应先通过 common environment substrate
   进入，再成为新的 tactical layer catalog 条目。
 - 是否拆出专门 JS/CSS 文件仍为可选项，应等单模板 catalog 变得难维护后再处理。

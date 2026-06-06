@@ -77,14 +77,11 @@ evidence aids, not tracked project deliverables.
 
 ## Residuals
 
-- `VIZ-TMAP-P2` must still define the maintained map workspace model, including
-  the first `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` surface
-  behavior.
-- `VIZ-TMAP-P3` must still centralize layer groups, draw order, and first-pass
-  symbology styling.
-- `VIZ-TMAP-P4` remains held until concrete workspace/layer defaults need to be
-  persisted through profile UI defaults.
-- The naval debug profiles still expose an existing runtime action-mode
-  mismatch: naval tasking scenarios require `action_mode='naval_station3'` but
-  the current profile path resolves to `full` during reset. This was observed
-  during smoke selection and is not introduced or repaired by `P1`.
+- Historical note: at the `P1` checkpoint, `VIZ-TMAP-P2`, `VIZ-TMAP-P3`, and
+  `VIZ-TMAP-P4` remained residuals. Current status is superseded by
+  [P2 workspace acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md),
+  [P3 layer/symbology acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md),
+  and [P4 profile-default acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md).
+- Historical note: the naval debug profile action-mode mismatch observed during
+  `P1` smoke is repaired by the later `P4` profile-default slice, which aligns
+  the naval viz profiles with `action_mode='naval_station3'`.

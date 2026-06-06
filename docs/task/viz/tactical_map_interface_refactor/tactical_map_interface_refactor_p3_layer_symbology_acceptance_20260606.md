@@ -76,8 +76,10 @@ attributed to this UI-only layer model.
 
 ## Residuals
 
-- `VIZ-TMAP-P4` remains held until stable workspace/layer defaults need to be
-  persisted through profile UI defaults.
+- Historical note: at the `P3` checkpoint, `VIZ-TMAP-P4` remained held until
+  stable workspace/layer defaults needed to be persisted through profile UI
+  defaults. Current P4 status is superseded by
+  [P4 profile-default acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md).
 - Richer terrain, road, building, vegetation, weather, and environment product
   layers should enter through the common environment substrate before becoming
   new tactical layer catalog entries.

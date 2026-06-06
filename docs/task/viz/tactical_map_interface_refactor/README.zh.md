@@ -1,8 +1,8 @@
 # 战术地图界面重构
 
 状态：`2026-06-06`，活跃的可视化子项目。`P0` 规划与参考基线已建立；
-`P1` 壳布局、`P2` 地图工作区和 `P3` 图层/符号分组已作为切片接受；`P4`
-profile integration 仍为视需要推进/held。
+`P1` 壳布局、`P2` 地图工作区、`P3` 图层/符号分组和 `P4` profile integration
+已作为切片接受；`P5` 验证汇总是下一步。
 
 语言：
 
@@ -43,6 +43,7 @@ profile integration 仍为视需要推进/held。
 | G0 环境叠加 | 已验收的“仅可视化”切片 | [environment_substrate_g0_viz_overlay_sync_acceptance_20260606.zh.md](../../ground/environment_substrate_g0_architecture/environment_substrate_g0_viz_overlay_sync_acceptance_20260606.zh.md) | 这里只是绘制元数据，不释放地形机动、LOS、遮蔽或战斗行为。 |
 | 多地图工作区 | `P2` tabbed workspace 已作为切片接受 | [P2 验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md) | 这里只接受具名 UI 表面和默认图层姿态，不接受 split-map 布局或新的仿真语义。 |
 | 战术图层模型 | `P3` 分组图层/符号切片已接受 | [P3 验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md) | 这里只接受 catalog 化 UI 图层控制和第一版样式，不接受军标合规或新的 payload 语义。 |
+| Profile UI 默认值 | `P4` profile-default 切片已接受 | [P4 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) | 这里只接受 profile 选择的 workspace/layer/view UI 默认值，不接受 scenario 或仿真语义。 |
 | 战术地图风格基线 | `P0` 已通过 | [风格基线](tactical_map_interface_refactor_style_reference_baseline_20260606.zh.md) | 参考资料只指导视觉设计，不构成军标合规声明。 |
 
 ## 范围
@@ -72,7 +73,7 @@ profile integration 仍为视需要推进/held。
 | `P1 Shell Layout` | 将当前 UI 重构为地图优先的战术壳。 | `P0` 通过。 | 窄屏和桌面中地图都是第一视口的主表面。 | accepted slice |
 | `P2 Map Workspace Model` | 增加多个具名地图表面和切换/分屏行为。 | `P1` 壳可以承载地图面板。 | `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 均有明确 UI 角色。 | accepted slice |
 | `P3 Layer And Symbology Model` | 集中管理图层分组、绘制顺序和战术符号风格。 | `P2` 工作区存在。 | 现有叠加层通过分组图层规则渲染，且不扩大能力声明。 | accepted slice |
-| `P4 Profile Integration` | 让 profile 能选择默认工作区/图层，但不改变 scenario 语义。 | `P2` 和 `P3` 足够稳定。 | profile loader 接受并校验地图工作区 UI 默认值。 | planned/held until needed |
+| `P4 Profile Integration` | 让 profile 能选择默认工作区/图层，但不改变 scenario 语义。 | `P2` 和 `P3` 足够稳定。 | profile loader 接受并校验地图工作区 UI 默认值。 | accepted slice |
 | `P5 Validation Evidence` | 记录浏览器、语法和回归证据。 | 实现任务簇通过本地检查。 | 证据文档记录截图、console 状态和残余。 | planned |
 | `P6 Closure And Archive Sync` | 判定 accepted/held/下一切片状态并同步索引。 | `P5` 证据完整。 | README/status/archive 当前权威一致。 | planned |
 
@@ -88,6 +89,8 @@ profile integration 仍为视需要推进/held。
   [tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)
 - P3 图层/符号验收：
   [tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
+- P4 profile-default 验收：
+  [tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)
 
 ## 输出与证据
 
@@ -114,9 +117,8 @@ profile integration 仍为视需要推进/held。
 
 立即项：
 
-- 既然 `P2` workspace tabs 和 `P3` 分组图层默认值已经稳定，判断现在是否需要推进
-  `P4` profile UI defaults 持久化。
-- 如果后续 UI 工作触及同一模板块，需要保持 `P1`/`P2`/`P3` 证据当前有效。
+- 在 `VIZ-TMAP-P5` 汇总 `P1` 到 `P4` 的验证证据。
+- 如果后续 UI 工作触及同一模板或 profile-loader 块，需要保持 `P1`/`P2`/`P3`/`P4` 证据当前有效。
 
 后续项：
 

@@ -83,9 +83,9 @@ evidence aids, not tracked project deliverables.
 
 ## Residuals
 
-- `VIZ-TMAP-P3` must still centralize layer groups, draw order, and first-pass
-  symbology styling. P2 only gives each workspace a default layer posture.
-- `VIZ-TMAP-P4` remains held until concrete workspace/layer defaults need to be
-  persisted through profile UI defaults.
+- Historical note: at the `P2` checkpoint, `VIZ-TMAP-P3` and `VIZ-TMAP-P4`
+  remained residuals. Current status is superseded by
+  [P3 layer/symbology acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md)
+  and [P4 profile-default acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md).
 - Split-map layout remains deferred until a later need proves it can preserve
   the map-first ergonomics accepted by `P1` and this P2 tabbed slice.

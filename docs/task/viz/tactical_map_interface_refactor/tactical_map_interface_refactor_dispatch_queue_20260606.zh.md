@@ -3,7 +3,8 @@
 状态：`2026-06-06`，面向
 [战术地图界面重构](README.zh.md) 的活跃派发队列。`P0` 已通过；第一份
 `P1` 只读 diagnostics packet 已返回 `pass`；主线程 `P1` 壳实现已作为切片接受；
-主线程 `P2` tabbed workspace 实现已作为切片接受；主线程 `P3` 分组图层/符号实现已作为切片接受。
+主线程 `P2` tabbed workspace 实现已作为切片接受；主线程 `P3` 分组图层/符号实现已作为切片接受；
+主线程 `P4` profile-default 实现已作为切片接受。
 
 语言：
 
@@ -44,6 +45,7 @@ diagnostics 返回后由主线程串行实施。
 | `VIZ-TMAP-P1-IMPL-MAIN` | `VIZ-TMAP-P1` | main thread | 当前主线程 | 实现第一版地图优先战术壳，并验证窄屏、桌面、空军 profile、陆军 scenario 和 3D toggle smoke 路径。 | `examples/viz/web_viz/templates/index.html`、P1 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 | `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | 当前主线程 | 将第一版维护中的地图工作区模型实现为 tabbed `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 表面。 | `examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_map_workspace.py`、P2 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 | `VIZ-TMAP-P3-IMPL-MAIN` | `VIZ-TMAP-P3` | main thread | 当前主线程 | 集中管理战术图层分组、绘制阶段和第一版符号样式，同时保持 tactical payload 语义不变。 | `examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_layer_model.py`、P3 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
+| `VIZ-TMAP-P4-IMPL-MAIN` | `VIZ-TMAP-P4` | main thread | 当前主线程 | 扩展 profile UI defaults，用于默认 tactical workspace/layer/view 选择，同时保持 scenario 语义不变。 | `examples/viz/app/profile_loader.py`、`examples/viz/profiles/*.json`、`examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_profile_ui_defaults.py`、P4 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 
 ## 返回诊断摘要
 
@@ -116,7 +118,24 @@ diagnostics 返回后由主线程串行实施。
 - 浏览器 smoke 覆盖分组图层控制、`COP`、`ENVIRONMENT`、`TRACKS`、`3D INSPECT` workspace 切换、截图证据和最终
   `Errors: 0`。
 
-残余只在需要持久化 profile UI defaults 时分配到 `P4`。
+在 `P3` 检查点，残余只在需要持久化 profile UI defaults 时分配到 `P4`。
+
+## 返回 P4 实现摘要
+
+`VIZ-TMAP-P4-IMPL-MAIN` 已作为切片接受。证据记录于
+[P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)。
+
+接受的实现点：
+
+- Profile `ui` 现在可以声明 `tactical_workspace` 和 `tactical_layers`。
+- `profile_loader.py` 规范化 workspace/layer aliases，并过滤未知或非布尔 layer 值。
+- `index.html` 将 profile layer defaults 应用到所选 workspace 默认值之上，并记录为 workspace UI 状态。
+- 既有 air/naval viz profiles 展示持久化 layer/workspace 默认值。
+- Naval viz profiles 已对齐到维护中的 `naval_station3` 动作面，使 profile smoke load 可达到 `READY`。
+- 静态回归锁定 profile loader contract、前端应用路径和 UI-only 边界。
+- 浏览器 smoke 加载 naval contact-report profile，达到 `READY`，应用 `TRACKS`，最终 `Errors: 0`。
+
+残余分配到 `P5` 和 `P6`。
 
 ## Worker Packet 模板
 

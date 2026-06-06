@@ -5,7 +5,8 @@ Status: `2026-06-06` active dispatch queue for
 read-only diagnostics packet returned `pass`; the main-thread `P1` shell
 implementation is accepted as a slice; the main-thread `P2` tabbed workspace
 implementation is accepted as a slice; the main-thread `P3` grouped
-layer/symbology implementation is accepted as a slice.
+layer/symbology implementation is accepted as a slice; the main-thread `P4`
+profile-default implementation is accepted as a slice.
 
 Language:
 
@@ -50,6 +51,7 @@ return.
 | `VIZ-TMAP-P1-IMPL-MAIN` | `VIZ-TMAP-P1` | main thread | current main thread | Implement the first map-first tactical shell and validate narrow, desktop, air-profile, ground-scenario, and 3D-toggle smoke paths. | `examples/viz/web_viz/templates/index.html`, P1 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 | `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | current main thread | Implement the first maintained map-workspace model as tabbed `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` surfaces. | `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_map_workspace.py`, P2 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 | `VIZ-TMAP-P3-IMPL-MAIN` | `VIZ-TMAP-P3` | main thread | current main thread | Centralize tactical layer groups, draw phases, and first-pass symbology styling while preserving tactical payload semantics. | `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_layer_model.py`, P3 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
+| `VIZ-TMAP-P4-IMPL-MAIN` | `VIZ-TMAP-P4` | main thread | current main thread | Extend profile UI defaults for default tactical workspace/layer/view selection while preserving scenario semantics. | `examples/viz/app/profile_loader.py`, `examples/viz/profiles/*.json`, `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_profile_ui_defaults.py`, P4 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 
 ## Returned Diagnostics Summary
 
@@ -136,8 +138,31 @@ Accepted implementation points:
   and `3D INSPECT` workspace switching, screenshot evidence, and final
   `Errors: 0`.
 
-Residuals remain assigned to `P4` only if persisted profile UI defaults are
-needed.
+At the `P3` checkpoint, residuals remained assigned to `P4` only if persisted
+profile UI defaults were needed.
+
+## Returned P4 Implementation Summary
+
+`VIZ-TMAP-P4-IMPL-MAIN` is accepted as a slice. Evidence is recorded in
+[P4 profile-default acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md).
+
+Accepted implementation points:
+
+- Profile `ui` may now specify `tactical_workspace` and `tactical_layers`.
+- `profile_loader.py` normalizes workspace/layer aliases and filters unknown or
+  non-boolean layer values.
+- `index.html` applies profile layer defaults over the selected workspace
+  defaults and records them as workspace UI state.
+- Existing air/naval viz profiles demonstrate persistent layer/workspace
+  defaults.
+- Naval viz profiles were realigned to the maintained `naval_station3` action
+  surface so profile smoke loading reaches `READY`.
+- Static regression coverage locks the profile loader contract, front-end apply
+  path, and UI-only boundary.
+- Browser smoke loaded the naval contact-report profile, reached `READY`,
+  applied `TRACKS`, and ended with `Errors: 0`.
+
+Residuals remain assigned to `P5` and `P6`.
 
 ## Worker Packet Template
 

@@ -20,6 +20,16 @@
     "presentation_mode": "MAP",
     "camera_mode": "CHASE",
     "focus_unit": "Blue_Fighter",
-    "tactical_zoom": 1.2
+    "tactical_zoom": 1.2,
+    "tactical_workspace": "cop",
+    "tactical_layers": {
+      "environment": true,
+      "route": true,
+      "trails": true,
+      "tracks": true,
+      "sensor_rings": true,
+      "datalinks": true,
+      "weapons": true
+    }
   }
 }

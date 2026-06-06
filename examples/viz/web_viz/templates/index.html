@@ -1394,6 +1394,17 @@
             return snapshot;
         }
 
+        function mergeTacticalLayerSnapshot(base, overrides) {
+            const snapshot = tacticalLayerSnapshot(base || tacticalLayers);
+            if (!overrides || typeof overrides !== 'object') return snapshot;
+            for (const key of tacticalLayerKeys) {
+                if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+                    snapshot[key] = !!overrides[key];
+                }
+            }
+            return snapshot;
+        }
+
         function applyTacticalLayerSnapshot(snapshot) {
             const source = snapshot || {};
             for (const key of tacticalLayerKeys) {
@@ -1452,7 +1463,13 @@
                 lastMapTacticalWorkspace = nextId;
             }
 
-            const storedLayers = tacticalWorkspaceLayerState.get(nextId);
+            const requestedLayers = options.layers
+                ? tacticalLayerSnapshot(options.layers)
+                : null;
+            if (requestedLayers) {
+                tacticalWorkspaceLayerState.set(nextId, requestedLayers);
+            }
+            const storedLayers = requestedLayers || tacticalWorkspaceLayerState.get(nextId);
             applyTacticalLayerSnapshot(storedLayers || workspaceLayerDefaults(nextId));
             presentationMode = nextWorkspace.viewMode === '3D' ? '3D' : 'MAP';
 
@@ -2415,6 +2432,8 @@
             const ui = currentProfileUiDefaults || {};
             const nextPresentationMode = String(ui.presentation_mode || '').toUpperCase();
             const nextCameraMode = String(ui.camera_mode || '').toUpperCase();
+            const nextWorkspace = String(ui.tactical_workspace || '').trim();
+            const hasProfileLayerDefaults = ui.tactical_layers && typeof ui.tactical_layers === 'object';
             const nextZoom = Number(ui.tactical_zoom);
 
             if (nextPresentationMode === 'MAP' || nextPresentationMode === '3D') {
@@ -2428,13 +2447,29 @@
                 tacticalInteraction.panX = 0.0;
                 tacticalInteraction.panY = 0.0;
             }
-            if (presentationMode === '3D') {
-                window.setTacticalWorkspace('inspect3d');
+
+            let targetWorkspace = '';
+            if (tacticalWorkspaceDefinitions[nextWorkspace]) {
+                targetWorkspace = nextWorkspace;
+            } else if (presentationMode === '3D') {
+                targetWorkspace = 'inspect3d';
+            } else if (presentationMode === 'MAP' && activeTacticalWorkspace === 'inspect3d') {
+                targetWorkspace = lastMapTacticalWorkspace || 'cop';
+            }
+
+            const baseWorkspace = targetWorkspace || activeTacticalWorkspace || 'cop';
+            const profileLayers = hasProfileLayerDefaults
+                ? mergeTacticalLayerSnapshot(workspaceLayerDefaults(baseWorkspace), ui.tactical_layers)
+                : null;
+
+            if (targetWorkspace) {
+                window.setTacticalWorkspace(targetWorkspace, { skipCapture: true, layers: profileLayers });
                 return;
             }
-            if (activeTacticalWorkspace === 'inspect3d') {
-                window.setTacticalWorkspace(lastMapTacticalWorkspace || 'cop');
-                return;
+            if (profileLayers) {
+                applyTacticalLayerSnapshot(profileLayers);
+                captureActiveWorkspaceLayers();
+                updateTacticalLayerButtons();
             }
             updateTacticalWorkspaceUI();
             updatePresentationModeUI();

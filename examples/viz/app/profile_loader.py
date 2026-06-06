@@ -23,6 +23,49 @@ SESSION_OVERRIDE_FIELDS = {
     "fixed_action",
     "zero_randomization",
 }
+TACTICAL_WORKSPACE_ALIASES = {
+    "cop": "cop",
+    "common": "cop",
+    "commonpicture": "cop",
+    "commonoperationalpicture": "cop",
+    "env": "environment",
+    "environment": "environment",
+    "areas": "environment",
+    "track": "tracks",
+    "tracks": "tracks",
+    "sensor": "tracks",
+    "sensors": "tracks",
+    "sensorlinks": "tracks",
+    "3d": "inspect3d",
+    "inspect3d": "inspect3d",
+    "3dinspect": "inspect3d",
+    "modelinspect": "inspect3d",
+}
+TACTICAL_LAYER_ALIASES = {
+    "env": "environment",
+    "environment": "environment",
+    "route": "route",
+    "routes": "route",
+    "waypoints": "route",
+    "trail": "trails",
+    "trails": "trails",
+    "track": "tracks",
+    "tracks": "tracks",
+    "sensortrack": "tracks",
+    "sensortracks": "tracks",
+    "ring": "sensorRings",
+    "rings": "sensorRings",
+    "sensorring": "sensorRings",
+    "sensorrings": "sensorRings",
+    "datalink": "datalinks",
+    "datalinks": "datalinks",
+    "link": "datalinks",
+    "links": "datalinks",
+    "weapon": "weapons",
+    "weapons": "weapons",
+    "effect": "weapons",
+    "effects": "weapons",
+}
 
 
 def _iter_profile_roots(roots: Iterable[str] | None = None) -> list[str]:
@@ -64,6 +107,46 @@ def _resolve_path(value: str | None, *, profile_dir: str) -> str | None:
     return text
 
 
+def _compact_ui_key(value: object) -> str:
+    text = str(value or "").strip()
+    return "".join(ch for ch in text.lower() if ch.isalnum())
+
+
+def _normalize_ui_bool(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in {0, 1}:
+        return bool(value)
+    if isinstance(value, float) and value in {0.0, 1.0}:
+        return bool(value)
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"1", "true", "yes", "on", "enabled"}:
+            return True
+        if text in {"0", "false", "no", "off", "disabled"}:
+            return False
+    return None
+
+
+def _normalize_tactical_workspace(value: object) -> str | None:
+    return TACTICAL_WORKSPACE_ALIASES.get(_compact_ui_key(value))
+
+
+def _normalize_tactical_layers(raw_layers: object) -> dict:
+    if not isinstance(raw_layers, dict):
+        return {}
+    out: dict = {}
+    for raw_key, raw_value in raw_layers.items():
+        layer_key = TACTICAL_LAYER_ALIASES.get(_compact_ui_key(raw_key))
+        if not layer_key:
+            continue
+        enabled = _normalize_ui_bool(raw_value)
+        if enabled is None:
+            continue
+        out[layer_key] = enabled
+    return out
+
+
 def _normalize_ui_defaults(raw_ui: dict | None) -> dict:
     ui = raw_ui if isinstance(raw_ui, dict) else {}
     out: dict = {}
@@ -79,6 +162,14 @@ def _normalize_ui_defaults(raw_ui: dict | None) -> dict:
     focus_unit = str(ui.get("focus_unit", "")).strip()
     if focus_unit:
         out["focus_unit"] = focus_unit
+
+    tactical_workspace = _normalize_tactical_workspace(ui.get("tactical_workspace"))
+    if tactical_workspace:
+        out["tactical_workspace"] = tactical_workspace
+
+    tactical_layers = _normalize_tactical_layers(ui.get("tactical_layers"))
+    if tactical_layers:
+        out["tactical_layers"] = tactical_layers
 
     try:
         tactical_zoom = float(ui.get("tactical_zoom"))

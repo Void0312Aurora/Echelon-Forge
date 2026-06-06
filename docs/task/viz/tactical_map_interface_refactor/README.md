@@ -2,8 +2,8 @@
 
 Status: `2026-06-06` active visualization subproject. `P0` planning and
 reference baseline are installed; `P1` shell layout, `P2` map workspace, and
-`P3` layer/symbology grouping are accepted as slices; `P4` profile integration
-remains next/held until needed.
+`P3` layer/symbology grouping, and `P4` profile integration are accepted as
+slices; `P5` validation roll-up remains next.
 
 Language:
 
@@ -50,6 +50,7 @@ maintained interface and map-workspace plan on top of them.
 | G0 environment overlays | accepted visualization-only slice | [environment_substrate_g0_viz_overlay_sync_acceptance_20260606.md](../../ground/environment_substrate_g0_architecture/environment_substrate_g0_viz_overlay_sync_acceptance_20260606.md) | This is drawing metadata only, not terrain-aware movement, LOS, cover, or combat behavior. |
 | Multi-map workspace | `P2` tabbed workspace accepted as a slice | [P2 acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md) | This accepts named UI surfaces and default layer postures only, not split-map layout or new simulation semantics. |
 | Tactical layer model | `P3` grouped layer/symbology slice accepted | [P3 acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md) | This accepts cataloged UI layer controls and first-pass styling only, not military-standard compliance or new payload semantics. |
+| Profile UI defaults | `P4` profile-default slice accepted | [P4 acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md) | This accepts profile-selected workspace/layer/view UI defaults only, not scenario or simulation semantics. |
 | Tactical-map style baseline | pass for `P0` | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | References guide visual design only; they do not create military-symbol standard compliance. |
 
 ## Scope
@@ -88,7 +89,7 @@ Out of scope:
 | `P1 Shell Layout` | Rework the current UI into a map-first tactical shell. | `P0` pass. | Map is first-viewport primary surface on narrow and desktop screens. | accepted slice |
 | `P2 Map Workspace Model` | Add multiple named map surfaces and switching/split behavior. | `P1` shell can host map panels. | `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` have explicit UI roles. | accepted slice |
 | `P3 Layer And Symbology Model` | Centralize layer grouping, draw order, and tactical symbol styling. | `P2` workspace exists. | Existing overlays render through grouped layer rules without broader capability claims. | accepted slice |
-| `P4 Profile Integration` | Let profiles select default workspace/layers without changing scenario semantics. | `P2` and `P3` stable enough for defaults. | Profile loader accepts and validates UI defaults for map workspace selection. | planned/held until needed |
+| `P4 Profile Integration` | Let profiles select default workspace/layers without changing scenario semantics. | `P2` and `P3` stable enough for defaults. | Profile loader accepts and validates UI defaults for map workspace selection. | accepted slice |
 | `P5 Validation Evidence` | Capture browser, syntax, and regression evidence. | Implementation clusters pass local checks. | Evidence doc records screenshots, console status, and residuals. | planned |
 | `P6 Closure And Archive Sync` | Decide accepted/held/next-slice state and sync indexes. | `P5` evidence is complete. | README/status/archive surfaces agree on current authority. | planned |
 
@@ -104,6 +105,8 @@ Out of scope:
   [tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md)
 - P3 layer/symbology acceptance:
   [tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md)
+- P4 profile-default acceptance:
+  [tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md)
 
 ## Outputs And Evidence
 
@@ -138,10 +141,9 @@ This subproject can be marked accepted only when:
 
 Immediate:
 
-- Decide whether `P4` profile UI defaults are needed now that `P2` workspace
-  tabs and `P3` grouped layer defaults are stable enough to persist.
-- Keep `P1`/`P2`/`P3` evidence current if later UI work touches the same
-  template blocks.
+- Roll up `P1` through `P4` validation evidence in `VIZ-TMAP-P5`.
+- Keep `P1`/`P2`/`P3`/`P4` evidence current if later UI work touches the same
+  template or profile-loader blocks.
 
 Follow-on:
 
