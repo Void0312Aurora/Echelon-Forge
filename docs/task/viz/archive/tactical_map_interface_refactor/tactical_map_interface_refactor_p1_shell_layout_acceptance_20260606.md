@@ -16,7 +16,7 @@ Chinese companion:
 `VIZ-TMAP-P1` is accepted as a map-first shell-layout slice.
 
 The accepted implementation is the single-template patch in
-[index.html](../../../../examples/viz/web_viz/templates/index.html). It keeps
+[index.html](../../../../../examples/viz/web_viz/templates/index.html). It keeps
 the tactical canvas as the first-viewport surface, moves session setup into a
 collapsible left dock, moves telemetry/mission/unit/layer data into a
 collapsible right dock, and preserves the existing profile, scenario, asset,

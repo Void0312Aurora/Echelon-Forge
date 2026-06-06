@@ -33,7 +33,7 @@ are UI views over accepted payloads; they are not new simulation semantics.
 - Every worker packet must map to exactly one cluster above.
 - Do not create new conversation threads or sessions for this subproject.
 - Subagents are optional; if used, they must follow
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+  [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
   and return the worker packet format below.
 - Do not allow two workers to edit the same `index.html` layout block, profile
   loader contract, public status line, or acceptance table concurrently.

@@ -45,14 +45,16 @@ Updated current-authority surfaces:
 - [dispatch queue](tactical_map_interface_refactor_dispatch_queue_20260606.md)
   and
   [dispatch queue zh](tactical_map_interface_refactor_dispatch_queue_20260606.zh.md)
-- parent [viz README](../README.md) and
-  [viz README zh](../README.zh.md)
+- parent [viz README](../../README.md) and
+  [viz README zh](../../README.zh.md)
 - [archive README](archive/README.md) and
   [archive README zh](archive/README.zh.md)
 
-No local evidence files were moved into `archive/`. The current dated
-acceptance and closure documents remain live evidence for this closed
-subproject. The archive remains reserved for future superseded local records.
+Historical P6 note: no local evidence files were moved into this package's
+nested `archive/` during `P6`; the dated acceptance and closure documents
+remained live evidence at that checkpoint. A later parent-level archival step
+moved the full closed package to
+[../tactical_map_interface_refactor/](../tactical_map_interface_refactor/README.md).
 
 ## Validation
 

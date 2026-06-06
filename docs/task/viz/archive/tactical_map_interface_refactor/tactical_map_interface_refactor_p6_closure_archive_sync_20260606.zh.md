@@ -39,13 +39,15 @@
 - [派发队列](tactical_map_interface_refactor_dispatch_queue_20260606.md)
   和
   [派发队列 zh](tactical_map_interface_refactor_dispatch_queue_20260606.zh.md)
-- 父级 [viz README](../README.md) 和
-  [viz README zh](../README.zh.md)
+- 父级 [viz README](../../README.md) 和
+  [viz README zh](../../README.zh.md)
 - [archive README](archive/README.md) 和
   [archive README zh](archive/README.zh.md)
 
-没有本地证据文件被移动到 `archive/`。当前 dated acceptance 和 closure 文档仍是本 closed
-子项目的 live evidence。archive 保留给未来被取代的本地记录。
+历史 P6 说明：`P6` 期间没有本地证据文件被移动到本包嵌套的 `archive/`；dated acceptance
+和 closure 文档在该检查点仍是 live evidence。后续父级归档步骤已将完整 closed package
+移动到
+[../tactical_map_interface_refactor/](../tactical_map_interface_refactor/README.zh.md)。
 
 ## 验证
 

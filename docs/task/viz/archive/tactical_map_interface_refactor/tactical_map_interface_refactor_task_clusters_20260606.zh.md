@@ -28,7 +28,7 @@
 - 每个 worker packet 必须精确映射到上表的一个 cluster。
 - 本子项目不得创建新的会话线程。
 - subagent 可选；如使用，必须遵循
-  [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)，
+  [Subagent 使用规范](../../../../standards/governance/subagent_usage_policy.zh.md)，
   并返回下方 worker packet 格式。
 - 不允许两个 worker 同时编辑同一段 `index.html` 布局块、profile loader contract、公开状态行或验收表。
 - `P5` 和 `P6` 保持 main thread 串行。

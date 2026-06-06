@@ -17,7 +17,7 @@ closure/archive 同步已关闭。
 - [任务簇](tactical_map_interface_refactor_task_clusters_20260606.zh.md)
 - [当前状态](tactical_map_interface_refactor_current_status_20260606.zh.md)
 - [风格参考基线](tactical_map_interface_refactor_style_reference_baseline_20260606.zh.md)
-- [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
+- [Subagent 使用规范](../../../../standards/governance/subagent_usage_policy.zh.md)
 
 ## 派发边界
 
@@ -159,7 +159,8 @@ diagnostics 返回后由主线程串行实施。
 
 - 父级 viz README、子项目 README、当前状态、任务簇、派发队列和 archive README 已一致表明本 scoped
   refactor 为 `closed`。
-- 没有本地证据文件被移动到 `archive/`；dated acceptance 和 closure 文档仍是 live evidence。
+- 历史 P6 说明：`P6` 期间没有本地证据文件被移动到本包嵌套的 `archive/`；后续父级归档步骤已将完整包移动到
+  `docs/task/viz/archive/tactical_map_interface_refactor/`。
 - 未来战术可视化工作应开启新的任务簇或子项目。
 
 ## Worker Packet 模板

@@ -16,8 +16,8 @@
 `VIZ-TMAP-P2` 作为第一版维护中的地图工作区模型切片接受。
 
 本切片先选择 tabbed map surfaces，而不是 split-map 布局。已接受实现包括
-[index.html](../../../../examples/viz/web_viz/templates/index.html) 中的单模板 patch，以及聚焦静态回归测试
-[test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py)。
+[index.html](../../../../../examples/viz/web_viz/templates/index.html) 中的单模板 patch，以及聚焦静态回归测试
+[test_tactical_map_workspace.py](../../../../../tests/viz/test_tactical_map_workspace.py)。
 
 已接受表面：
 

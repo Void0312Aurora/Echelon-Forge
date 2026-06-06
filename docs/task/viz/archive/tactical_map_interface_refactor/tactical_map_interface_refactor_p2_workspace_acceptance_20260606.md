@@ -17,9 +17,9 @@ Chinese companion:
 
 This slice chooses tabbed map surfaces first, not split-map layout. The accepted
 implementation is the single-template patch in
-[index.html](../../../../examples/viz/web_viz/templates/index.html) plus the
+[index.html](../../../../../examples/viz/web_viz/templates/index.html) plus the
 focused static regression test
-[test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py).
+[test_tactical_map_workspace.py](../../../../../tests/viz/test_tactical_map_workspace.py).
 
 Accepted surfaces:
 

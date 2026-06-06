@@ -22,9 +22,9 @@
 | --- | --- | --- | --- |
 | `P0` 边界/参考 | 持久子项目权威、有限任务簇、状态和风格基线。 | [风格基线](tactical_map_interface_refactor_style_reference_baseline_20260606.zh.md)、[任务簇](tactical_map_interface_refactor_task_clusters_20260606.zh.md) | Runtime UI 实现或仿真行为。 |
 | `P1` 壳布局 | 地图优先战术壳，以及可折叠 `SETUP` 和 `DATA` dock。 | [P1 壳布局验收](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md) | 多地图工作区、图层分组、profile 默认值或新的仿真语义。 |
-| `P2` 工作区模型 | Tabbed `COP`、`Environment`、`Tracks/Sensors` 和 `3D Inspect` 工作区。 | [P2 工作区验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)、[test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py) | Split-map 布局、scenario editor 行为或新的 payload 要求。 |
-| `P3` 图层/符号模型 | 集中 tactical layer catalog、分组控制、绘制阶段和第一版样式。 | [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)、[test_tactical_layer_model.py](../../../../tests/viz/test_tactical_layer_model.py) | MIL-STD-2525/APP-6 合规或 tactical payload 语义变化。 |
-| `P4` Profile UI 默认值 | Profile 选择 tactical workspace 和 layer defaults，作为 UI/runtime 偏好。 | [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)、[test_tactical_profile_ui_defaults.py](../../../../tests/viz/test_tactical_profile_ui_defaults.py) | Scenario schema 变化、真实性/世界参数变异或新的海军行为。 |
+| `P2` 工作区模型 | Tabbed `COP`、`Environment`、`Tracks/Sensors` 和 `3D Inspect` 工作区。 | [P2 工作区验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)、[test_tactical_map_workspace.py](../../../../../tests/viz/test_tactical_map_workspace.py) | Split-map 布局、scenario editor 行为或新的 payload 要求。 |
+| `P3` 图层/符号模型 | 集中 tactical layer catalog、分组控制、绘制阶段和第一版样式。 | [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)、[test_tactical_layer_model.py](../../../../../tests/viz/test_tactical_layer_model.py) | MIL-STD-2525/APP-6 合规或 tactical payload 语义变化。 |
+| `P4` Profile UI 默认值 | Profile 选择 tactical workspace 和 layer defaults，作为 UI/runtime 偏好。 | [P4 profile-default 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)、[test_tactical_profile_ui_defaults.py](../../../../../tests/viz/test_tactical_profile_ui_defaults.py) | Scenario schema 变化、真实性/世界参数变异或新的海军行为。 |
 
 ## 汇总验证
 

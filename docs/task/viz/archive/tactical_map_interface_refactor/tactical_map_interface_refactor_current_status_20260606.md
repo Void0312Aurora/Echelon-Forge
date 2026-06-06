@@ -19,7 +19,7 @@ Parent: [Tactical Map Interface Refactor](README.md)
   read-only preflight packet before runtime implementation.
 - Accepted `VIZ-TMAP-P1-DIAG-A` as `pass` for diagnostics only.
 - Implemented and accepted `VIZ-TMAP-P1` as a map-first shell layout in
-  [index.html](../../../../examples/viz/web_viz/templates/index.html).
+  [index.html](../../../../../examples/viz/web_viz/templates/index.html).
 - Added collapsible `SETUP` and `DATA` docks while preserving the existing
   profile/scenario/asset/run/layer/telemetry/unit DOM IDs.
 - Added a UI-only scenario-only profile placeholder so direct scenario loads do
@@ -27,26 +27,26 @@ Parent: [Tactical Map Interface Refactor](README.md)
 - Recorded P1 browser, syntax, and focused overlay evidence in
   [P1 shell-layout acceptance](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md).
 - Implemented and accepted `VIZ-TMAP-P2` as a tabbed map-workspace model in
-  [index.html](../../../../examples/viz/web_viz/templates/index.html).
+  [index.html](../../../../../examples/viz/web_viz/templates/index.html).
 - Added `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` surfaces with
   explicit UI roles and default layer postures.
 - Added focused static coverage in
-  [test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py).
+  [test_tactical_map_workspace.py](../../../../../tests/viz/test_tactical_map_workspace.py).
 - Recorded P2 browser, syntax, and focused regression evidence in
   [P2 workspace acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md).
 - Implemented and accepted `VIZ-TMAP-P3` as grouped tactical layer controls,
   centralized draw phases, and first-pass symbology styling in
-  [index.html](../../../../examples/viz/web_viz/templates/index.html).
+  [index.html](../../../../../examples/viz/web_viz/templates/index.html).
 - Added focused static coverage in
-  [test_tactical_layer_model.py](../../../../tests/viz/test_tactical_layer_model.py).
+  [test_tactical_layer_model.py](../../../../../tests/viz/test_tactical_layer_model.py).
 - Recorded P3 browser, syntax, and focused regression evidence in
   [P3 layer/symbology acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md).
 - Implemented and accepted `VIZ-TMAP-P4` profile UI defaults for default
   tactical workspace and layer selection in
-  [profile_loader.py](../../../../examples/viz/app/profile_loader.py) and
-  [index.html](../../../../examples/viz/web_viz/templates/index.html).
+  [profile_loader.py](../../../../../examples/viz/app/profile_loader.py) and
+  [index.html](../../../../../examples/viz/web_viz/templates/index.html).
 - Added focused profile/default regression coverage in
-  [test_tactical_profile_ui_defaults.py](../../../../tests/viz/test_tactical_profile_ui_defaults.py).
+  [test_tactical_profile_ui_defaults.py](../../../../../tests/viz/test_tactical_profile_ui_defaults.py).
 - Updated viz profile fixtures so the air forced-fire profile can persist full
   COP layer defaults and the naval contact-report profile can default to the
   `TRACKS` workspace.

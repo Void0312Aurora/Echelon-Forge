@@ -16,7 +16,7 @@
 `VIZ-TMAP-P1` 作为地图优先壳布局切片接受。
 
 已接受实现是
-[index.html](../../../../examples/viz/web_viz/templates/index.html) 中的单模板
+[index.html](../../../../../examples/viz/web_viz/templates/index.html) 中的单模板
 patch。它让 tactical canvas 保持第一视口主表面，把 session setup 放入可折叠左
 dock，把 telemetry、mission、unit list 和 layer controls 放入可折叠右 dock，并保留既有
 profile、scenario、asset、run control、layer control、telemetry 和 unit list DOM ID。

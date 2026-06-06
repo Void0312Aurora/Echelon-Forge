@@ -15,31 +15,31 @@
 - 开启第一份派发队列，并把 `VIZ-TMAP-P1-DIAG-A` 作为 runtime 实现前的只读
   preflight packet 分发出去。
 - 接受 `VIZ-TMAP-P1-DIAG-A` 为 diagnostics-only `pass`。
-- 在 [index.html](../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
+- 在 [index.html](../../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
   `VIZ-TMAP-P1` 地图优先壳布局。
 - 增加可折叠 `SETUP` 与 `DATA` docks，同时保留既有
   profile/scenario/asset/run/layer/telemetry/unit DOM ID。
 - 增加 UI-only scenario-only profile 占位，避免直接加载 scenario 时界面误显第一个 profile 正在生效。
 - 在 [P1 壳布局验收](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.zh.md)
   中记录 P1 浏览器、语法和聚焦 overlay 证据。
-- 在 [index.html](../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
+- 在 [index.html](../../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
   `VIZ-TMAP-P2` tabbed 地图工作区模型。
 - 增加 `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 表面，并为它们记录明确 UI 角色和默认图层姿态。
 - 增加聚焦静态覆盖：
-  [test_tactical_map_workspace.py](../../../../tests/viz/test_tactical_map_workspace.py)。
+  [test_tactical_map_workspace.py](../../../../../tests/viz/test_tactical_map_workspace.py)。
 - 在 [P2 工作区验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md)
   中记录 P2 浏览器、语法和聚焦回归证据。
-- 在 [index.html](../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
+- 在 [index.html](../../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
   `VIZ-TMAP-P3` 分组战术图层控制、集中绘制阶段和第一版符号样式。
 - 增加聚焦静态覆盖：
-  [test_tactical_layer_model.py](../../../../tests/viz/test_tactical_layer_model.py)。
+  [test_tactical_layer_model.py](../../../../../tests/viz/test_tactical_layer_model.py)。
 - 在 [P3 图层/符号验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
   中记录 P3 浏览器、语法和聚焦回归证据。
-- 在 [profile_loader.py](../../../../examples/viz/app/profile_loader.py) 和
-  [index.html](../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
+- 在 [profile_loader.py](../../../../../examples/viz/app/profile_loader.py) 和
+  [index.html](../../../../../examples/viz/web_viz/templates/index.html) 中实现并接受
   `VIZ-TMAP-P4` profile UI 默认值，用于默认 tactical workspace 和 layer 选择。
 - 增加聚焦 profile/default 回归覆盖：
-  [test_tactical_profile_ui_defaults.py](../../../../tests/viz/test_tactical_profile_ui_defaults.py)。
+  [test_tactical_profile_ui_defaults.py](../../../../../tests/viz/test_tactical_profile_ui_defaults.py)。
 - 更新 viz profile fixtures，使空战 forced-fire profile 可持久化完整 COP 图层默认值，海军 contact-report profile
   可默认进入 `TRACKS` workspace。
 - 将 naval viz profiles 对齐到维护中的 `naval_station3` 动作面，使 profile smoke load 可达到 `READY`。

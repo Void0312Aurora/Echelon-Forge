@@ -1,7 +1,8 @@
 # Viz
 
 Status: unified-entry refactor workline remains active; local entry converged on
-`2026-05-18`; the tactical-map interface refactor closed on `2026-06-06`.
+`2026-05-18`; the tactical-map interface refactor closed and was archived on
+`2026-06-06`.
 
 ## Current Status
 
@@ -12,21 +13,26 @@ Status: unified-entry refactor workline remains active; local entry converged on
 - The follow-on default is no longer "design the architecture again", but
   extending registry coverage and cleaning up runtime exit/session noise on top
   of the landed structure.
-- The tactical-map interface refactor is now a closed first slice: map-first
-  shell, tabbed workspaces, grouped tactical layers, profile UI defaults, and
-  validation/closure evidence are accepted within their documented boundaries.
+- The tactical-map interface refactor is now an archived first slice:
+  map-first shell, tabbed workspaces, grouped tactical layers, profile UI
+  defaults, and validation/closure evidence are accepted within their
+  documented boundaries. The original path is a lightweight pointer; the full
+  package lives under
+  [archive/tactical_map_interface_refactor/](./archive/tactical_map_interface_refactor/README.md).
 
 ## Recommended Reading Order
 
 - Active plan and current implementation boundary:
   [viz_unified_entry_session_profile_plan_20260516.md](./archive/viz_unified_entry_session_profile_plan_20260516.md)
-- Tactical map interface refactor:
+- Tactical map interface refactor pointer:
   [tactical_map_interface_refactor/README.md](./tactical_map_interface_refactor/README.md)
+- Archived tactical map interface evidence package:
+  [archive/tactical_map_interface_refactor/README.md](./archive/tactical_map_interface_refactor/README.md)
 
 ## Current Follow-On Focus
 
-- treat the closed tactical map interface refactor as the current map-first UI
-  baseline on top of the unified-entry/profile/session foundation
+- treat the archived tactical map interface refactor as the current map-first
+  UI baseline on top of the unified-entry/profile/session foundation
 - extend asset-registry coverage for more verified naval/air assets
 - clean up runtime exit and repeated session debug flow noise
 - keep visualization convenience separate from realism/world-parameter changes

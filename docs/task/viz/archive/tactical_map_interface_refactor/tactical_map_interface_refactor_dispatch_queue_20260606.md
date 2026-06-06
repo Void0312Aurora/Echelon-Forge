@@ -20,7 +20,7 @@ Authority:
 - [Task clusters](tactical_map_interface_refactor_task_clusters_20260606.md)
 - [Current status](tactical_map_interface_refactor_current_status_20260606.md)
 - [Style reference baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md)
-- [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
+- [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md)
 
 ## Dispatch Boundary
 
@@ -192,8 +192,9 @@ Accepted closure points:
 - The parent viz README, subproject README, current status, task clusters,
   dispatch queue, and archive README now agree that this scoped refactor is
   `closed`.
-- No local evidence file was moved to `archive/`; dated acceptance and closure
-  documents remain live evidence.
+- Historical P6 note: no local evidence file was moved to this package's nested
+  `archive/` during `P6`; a later parent-level archival step moved the full
+  package under `docs/task/viz/archive/tactical_map_interface_refactor/`.
 - Future tactical visualization work should open a new cluster or subproject.
 
 ## Worker Packet Template
