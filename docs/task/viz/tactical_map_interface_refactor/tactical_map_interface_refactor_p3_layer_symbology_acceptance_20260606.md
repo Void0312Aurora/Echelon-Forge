@@ -1,8 +1,10 @@
 # Tactical Map Interface Refactor P3 Layer Symbology Acceptance
 
-Status: `2026-06-06` `VIZ-TMAP-P3` accepted slice. The overall
-tactical-map interface refactor remains active; `P4` profile-default
-persistence is not accepted by this note.
+Status: `2026-06-06` `VIZ-TMAP-P3` accepted slice. Historical slice note: the
+overall tactical-map interface refactor remained active at this checkpoint;
+`P4` profile-default persistence was not accepted by this note. Current
+overall status is superseded by
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md).
 
 Parent: [Tactical Map Interface Refactor](README.md)
 

@@ -2,8 +2,8 @@
 
 Status: `2026-06-06` finite task-cluster plan for
 [Tactical Map Interface Refactor](README.md). `P0` is pass; `P1` shell layout,
-`P2` map workspace, and `P3` layer/symbology grouping are accepted as slices;
-`P4` profile defaults are accepted as a slice; `P5` remains next.
+`P2` map workspace, `P3` layer/symbology grouping, `P4` profile defaults, and
+`P5` validation roll-up are accepted; `P6` closure/archive sync is closed.
 
 ## Boundary Decision
 
@@ -25,8 +25,8 @@ are UI views over accepted payloads; they are not new simulation semantics.
 | `VIZ-TMAP-P2` | main thread or implementation worker | n/a | Add a maintained map-workspace model with named surfaces such as `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect`. | `examples/viz/web_viz/templates/index.html`; optional profile fixture only if needed for defaults | Scenario editor; runtime terrain generation; new simulation payload requirements. | Browser smoke proves map surface switching or split behavior; existing profile loading still works. | Each accepted surface has a clear role, default layer set, and no overlap that hides the map. | Depends on `P1`; can share read-only design review with `P3`. | 2 | accepted slice |
 | `VIZ-TMAP-P3` | implementation worker or integration worker | n/a | Centralize tactical layer groups, draw order, and first-pass symbology styling. | `examples/viz/web_viz/templates/index.html`; optional small JS/CSS extraction if locally justified | Full MIL-STD-2525/APP-6 compliance; changing tactical payload semantics. | Module syntax check; browser screenshot checks for unit, route, track, sensor, weapon, and ENV layers. | Existing overlays render through grouped layer controls with readable affiliation, uncertainty, and environment styling. | Depends on `P1`; can follow `P2` or land after it if write areas overlap. | 2 | accepted slice |
 | `VIZ-TMAP-P4` | integration worker | n/a | Extend profile UI defaults only as needed for default workspace/layer/view selection. | `examples/viz/app/profile_loader.py`, `examples/viz/profiles/*.json`, focused tests under `tests/viz` | Scenario schema changes; training config changes; world/realism parameters. | Focused profile-loader tests plus existing viz smoke load. | Profiles can select default UI workspace/layers while scenarios remain unchanged. | Depends on accepted `P2` or `P3` defaults. | 2 | accepted slice |
-| `VIZ-TMAP-P5` | main thread | n/a | Record validation evidence, screenshots, residuals, and capability boundaries. | New dated acceptance/evidence docs under this subproject; optional screenshot artifacts if the repo keeps them | New feature work; archive moves before acceptance. | Commands from `P1`-`P4`; Playwright or browser smoke evidence; `git diff --check` on touched docs/code. | Evidence is sufficient to decide accepted, partial, or held without relying on chat history. | Depends on implementation clusters. Serial. | 1 | planned |
-| `VIZ-TMAP-P6` | main thread | n/a | Sync parent README, current status, and archive pointers after acceptance decision. | `docs/task/viz/README*.md`, this subproject README/status/archive files | Reopening accepted implementation without a new cluster; deleting historical records. | Link/path inspection; `git diff --check -- docs/task/viz`. | Current authority and archive boundaries agree after the acceptance decision. | Depends on `P5`. Serial. | 1 | planned |
+| `VIZ-TMAP-P5` | main thread | n/a | Record validation evidence, screenshots, residuals, and capability boundaries. | New dated acceptance/evidence docs under this subproject; optional screenshot artifacts if the repo keeps them | New feature work; archive moves before acceptance. | Commands from `P1`-`P4`; Playwright or browser smoke evidence; `git diff --check` on touched docs/code. | Evidence is sufficient to decide accepted, partial, or held without relying on chat history. | Depends on implementation clusters. Serial. | 1 | accepted |
+| `VIZ-TMAP-P6` | main thread | n/a | Sync parent README, current status, and archive pointers after acceptance decision. | `docs/task/viz/README*.md`, this subproject README/status/archive files | Reopening accepted implementation without a new cluster; deleting historical records. | Link/path inspection; `git diff --check -- docs/task/viz`. | Current authority and archive boundaries agree after the acceptance decision. | Depends on `P5`. Serial. | 1 | closed |
 
 ## Dispatch Rules
 
@@ -90,9 +90,9 @@ Browser smoke must cover at least:
 
 Immediate:
 
-- Roll up accepted `P1` through `P4` evidence in `VIZ-TMAP-P5`.
-- Preserve `P1`, `P2`, `P3`, and `P4` evidence if follow-on work touches the
-  same template or profile-loader structure.
+- No immediate task remains inside this closed subproject.
+- Future work that touches the same template or profile-loader structure should
+  open a new cluster and cite the `P1` through `P6` evidence as the baseline.
 
 Follow-on:
 

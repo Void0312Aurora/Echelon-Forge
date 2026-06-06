@@ -1,8 +1,10 @@
 # Tactical Map Interface Refactor P1 Shell Layout Acceptance
 
-Status: `2026-06-06` `VIZ-TMAP-P1` accepted slice. The overall
-tactical-map interface refactor remains active; `P2` map workspace and later
-layer/symbology work are not accepted by this note.
+Status: `2026-06-06` `VIZ-TMAP-P1` accepted slice. Historical slice note: the
+overall tactical-map interface refactor remained active at this checkpoint;
+`P2` map workspace and later layer/symbology work were not accepted by this
+note. Current overall status is superseded by
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md).
 
 Parent: [Tactical Map Interface Refactor](README.md)
 

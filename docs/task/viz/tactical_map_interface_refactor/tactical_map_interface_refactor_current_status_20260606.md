@@ -1,8 +1,8 @@
 # Tactical Map Interface Refactor Current Status
 
-Status: `2026-06-06` `P0` pass, `P1` shell layout accepted as a slice,
-`P2` map workspace accepted as a slice, and `P3` layer/symbology grouping
-accepted as a slice, and `P4` profile UI defaults accepted as a slice.
+Status: `2026-06-06` closed. `P0` pass; `P1` shell layout, `P2` map
+workspace, `P3` layer/symbology grouping, `P4` profile UI defaults, and `P5`
+validation roll-up accepted; `P6` closure/archive sync complete.
 
 Parent: [Tactical Map Interface Refactor](README.md)
 
@@ -54,33 +54,43 @@ Parent: [Tactical Map Interface Refactor](README.md)
   surface so profile smoke loading reaches `READY`.
 - Recorded P4 browser, syntax, JSON, and focused regression evidence in
   [P4 profile-default acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md).
+- Accepted `VIZ-TMAP-P5` as the evidence roll-up for `P1` through `P4`, including
+  fresh module syntax, focused pytest, and profile JSON validation in
+  [P5 validation roll-up](tactical_map_interface_refactor_p5_validation_rollup_20260606.md).
+- Accepted `VIZ-TMAP-P6` as the closure/archive synchronization slice in
+  [P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md).
+- Synchronized the parent viz README, this README/status, task clusters,
+  dispatch queue, and archive pointers so the scoped refactor is now `closed`.
 
 ## Maturity Matrix
 
 | Surface | Status | Evidence | Residual |
 | --- | --- | --- | --- |
-| Subproject authority | pass | [README.md](README.md) | Keep current after implementation starts. |
-| Task clusters | pass | [task clusters](tactical_map_interface_refactor_task_clusters_20260606.md) | Dispatch must stay within finite clusters and round caps. |
-| Style/reference baseline | pass | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | Needs implementation evidence before accepted UI claims. |
+| Subproject authority | closed | [README.md](README.md) | Current authority is synchronized by `P6`; future work needs a new cluster. |
+| Task clusters | closed | [task clusters](tactical_map_interface_refactor_task_clusters_20260606.md) | `P0` through `P6` are complete; new work should not reopen this queue. |
+| Style/reference baseline | pass | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | Reference material guides style only; it is not a standards-compliance claim. |
 | Runtime shell layout | accepted slice | [P1 acceptance](tactical_map_interface_refactor_p1_shell_layout_acceptance_20260606.md) | Does not accept layer grouping, profile defaults, or new simulation behavior. |
 | Multi-map workspace | accepted slice | [P2 acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md) | Tabbed surfaces only; split-map layout remains deferred. |
 | Layer and symbology model | accepted slice | [P3 acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md) | Grouped UI controls and first-pass styling only; no standard-compliance or payload semantics claim. |
 | Profile UI defaults | accepted slice | [P4 acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md) | UI preferences only; no scenario or simulation semantics mutation. |
+| Validation roll-up | accepted | [P5 validation roll-up](tactical_map_interface_refactor_p5_validation_rollup_20260606.md) | Evidence consolidation only; no runtime feature added. |
+| Closure/archive sync | closed | [P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md) | Closes the scoped refactor only; future tactical visualization work needs a new cluster. |
 
 ## Next Recommended Action Order
 
-1. Record browser smoke, screenshots, and residuals in `VIZ-TMAP-P5` across
-   the accepted `P1` through `P4` slices.
-2. Sync closure/archive pointers in `VIZ-TMAP-P6` after the roll-up decision.
+1. Treat this tactical-map interface refactor as closed.
+2. Open a new task cluster or subproject for richer environment-derived layers,
+   split-map layout, symbol registry extraction, or other future tactical
+   visualization work.
 
 ## Explicit Overclaim Refusals
 
-- This checkpoint does not accept the full tactical-map interface refactor.
-- This checkpoint accepts the first tabbed map-workspace slice, grouped
-  layer/symbology slice, and profile UI-default slice only; it does not accept
-  split-map layout.
-- This checkpoint does not prove military-standard symbology compliance.
-- This checkpoint does not release terrain-aware movement, LOS, cover,
+- This closeout accepts only the scoped first tactical-map interface refactor
+  documented by `P1` through `P6`; it does not accept all future tactical
+  visualization ideas.
+- This closeout does not accept split-map layout.
+- This closeout does not prove military-standard symbology compliance.
+- This closeout does not release terrain-aware movement, LOS, cover,
   passability, weather effects, combat behavior, or environment-runtime
   mutation.
-- This checkpoint does not change the scenario/profile boundary.
+- This closeout does not change the scenario/profile boundary.

@@ -1,7 +1,10 @@
 # 战术地图界面重构 P4 Profile Defaults 验收
 
-状态：`2026-06-06`，`VIZ-TMAP-P4` 已作为切片接受。整体战术地图界面重构仍为活跃状态；
-`P5` 验证汇总和 `P6` closure/archive 同步不由本文接受。
+状态：`2026-06-06`，`VIZ-TMAP-P4` 已作为切片接受。历史切片说明：在本检查点，
+整体战术地图界面重构仍为活跃状态；`P5` 验证汇总和 `P6` closure/archive 同步不由本文接受。
+当前整体状态由
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md)
+取代。
 
 父项：[战术地图界面重构](README.zh.md)
 

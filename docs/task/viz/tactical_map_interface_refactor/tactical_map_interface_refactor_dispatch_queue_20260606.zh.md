@@ -1,10 +1,11 @@
 # 战术地图界面重构派发队列
 
 状态：`2026-06-06`，面向
-[战术地图界面重构](README.zh.md) 的活跃派发队列。`P0` 已通过；第一份
+[战术地图界面重构](README.zh.md) 的已闭合派发队列。`P0` 已通过；第一份
 `P1` 只读 diagnostics packet 已返回 `pass`；主线程 `P1` 壳实现已作为切片接受；
 主线程 `P2` tabbed workspace 实现已作为切片接受；主线程 `P3` 分组图层/符号实现已作为切片接受；
-主线程 `P4` profile-default 实现已作为切片接受。
+主线程 `P4` profile-default 实现已作为切片接受；`P5` 验证汇总已接受；`P6`
+closure/archive 同步已关闭。
 
 语言：
 
@@ -46,6 +47,8 @@ diagnostics 返回后由主线程串行实施。
 | `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | 当前主线程 | 将第一版维护中的地图工作区模型实现为 tabbed `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 表面。 | `examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_map_workspace.py`、P2 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 | `VIZ-TMAP-P3-IMPL-MAIN` | `VIZ-TMAP-P3` | main thread | 当前主线程 | 集中管理战术图层分组、绘制阶段和第一版符号样式，同时保持 tactical payload 语义不变。 | `examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_layer_model.py`、P3 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
 | `VIZ-TMAP-P4-IMPL-MAIN` | `VIZ-TMAP-P4` | main thread | 当前主线程 | 扩展 profile UI defaults，用于默认 tactical workspace/layer/view 选择，同时保持 scenario 语义不变。 | `examples/viz/app/profile_loader.py`、`examples/viz/profiles/*.json`、`examples/viz/web_viz/templates/index.html`、`tests/viz/test_tactical_profile_ui_defaults.py`、P4 验收文档 | worker-equivalent implementation summary；commands/outcomes；residuals；held capability claims | accepted slice |
+| `VIZ-TMAP-P5-ROLLUP-MAIN` | `VIZ-TMAP-P5` | main thread | 当前主线程 | 汇总 `P1` 到 `P4` 的验证证据、截图、残余和能力边界。 | P5 验证汇总文档 | worker-equivalent validation summary；commands/outcomes；residuals；held capability claims | accepted |
+| `VIZ-TMAP-P6-CLOSE-MAIN` | `VIZ-TMAP-P6` | main thread | 当前主线程 | 验收决策后同步父级/子项目状态和 archive 指针。 | 父级 viz README、子项目 README/status/task clusters/dispatch/archive 文档、P6 closure 文档 | closure decision；synchronized indexes；archive boundary；validation outcome | closed |
 
 ## 返回诊断摘要
 
@@ -135,7 +138,29 @@ diagnostics 返回后由主线程串行实施。
 - 静态回归锁定 profile loader contract、前端应用路径和 UI-only 边界。
 - 浏览器 smoke 加载 naval contact-report profile，达到 `READY`，应用 `TRACKS`，最终 `Errors: 0`。
 
-残余分配到 `P5` 和 `P6`。
+## 返回 P5 验证摘要
+
+`VIZ-TMAP-P5-ROLLUP-MAIN` 已接受。证据记录于
+[P5 验证汇总](tactical_map_interface_refactor_p5_validation_rollup_20260606.zh.md)。
+
+接受的验证点：
+
+- `P1` 到 `P4` 的浏览器 smoke、截图、console 检查和残余边界被整理到单一汇总。
+- 新的代码面复核通过 embedded module 语法、聚焦 viz pytest 和 profile JSON 解析。
+- `P5` 只改文档，不改变 runtime code，因此浏览器证据继续来自已接受切片文档。
+- 本子项目内的立即实现残余已闭合；更丰富的环境产品、split-map 布局和 symbol registry 抽取保持为后续工作。
+
+## 返回 P6 收口摘要
+
+`VIZ-TMAP-P6-CLOSE-MAIN` 已关闭。证据记录于
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md)。
+
+接受的收口点：
+
+- 父级 viz README、子项目 README、当前状态、任务簇、派发队列和 archive README 已一致表明本 scoped
+  refactor 为 `closed`。
+- 没有本地证据文件被移动到 `archive/`；dated acceptance 和 closure 文档仍是 live evidence。
+- 未来战术可视化工作应开启新的任务簇或子项目。
 
 ## Worker Packet 模板
 

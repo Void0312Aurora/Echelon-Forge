@@ -1,7 +1,10 @@
 # 战术地图界面重构 P2 工作区验收
 
-状态：`2026-06-06`，`VIZ-TMAP-P2` 已作为切片接受。整体战术地图界面重构仍为活跃状态；
-`P3` 图层/符号分组和 `P4` profile 默认值持久化不由本文接受。
+状态：`2026-06-06`，`VIZ-TMAP-P2` 已作为切片接受。历史切片说明：在本检查点，
+整体战术地图界面重构仍为活跃状态；`P3` 图层/符号分组和 `P4` profile 默认值持久化不由本文接受。
+当前整体状态由
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md)
+取代。
 
 父项：[战术地图界面重构](README.zh.md)
 

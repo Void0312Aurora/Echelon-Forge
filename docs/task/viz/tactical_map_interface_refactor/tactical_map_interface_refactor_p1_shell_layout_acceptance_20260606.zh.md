@@ -1,7 +1,10 @@
 # 战术地图界面重构 P1 壳布局验收
 
-状态：`2026-06-06`，`VIZ-TMAP-P1` accepted slice。整个战术地图界面重构仍然
-active；本文不接受 `P2` 地图工作区，也不接受后续图层/符号体系工作。
+状态：`2026-06-06`，`VIZ-TMAP-P1` accepted slice。历史切片说明：在本检查点，
+整个战术地图界面重构仍然 active；本文不接受 `P2` 地图工作区，也不接受后续图层/符号体系工作。
+当前整体状态由
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md)
+取代。
 
 父项：[战术地图界面重构](README.zh.md)
 

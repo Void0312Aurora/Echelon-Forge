@@ -1,7 +1,7 @@
 # Viz
 
 Status: unified-entry refactor workline remains active; local entry converged on
-`2026-05-18`.
+`2026-05-18`; the tactical-map interface refactor closed on `2026-06-06`.
 
 ## Current Status
 
@@ -12,6 +12,9 @@ Status: unified-entry refactor workline remains active; local entry converged on
 - The follow-on default is no longer "design the architecture again", but
   extending registry coverage and cleaning up runtime exit/session noise on top
   of the landed structure.
+- The tactical-map interface refactor is now a closed first slice: map-first
+  shell, tabbed workspaces, grouped tactical layers, profile UI defaults, and
+  validation/closure evidence are accepted within their documented boundaries.
 
 ## Recommended Reading Order
 
@@ -22,11 +25,13 @@ Status: unified-entry refactor workline remains active; local entry converged on
 
 ## Current Follow-On Focus
 
-- advance the tactical map interface refactor as a separate work surface on top
-  of the unified-entry/profile/session foundation
+- treat the closed tactical map interface refactor as the current map-first UI
+  baseline on top of the unified-entry/profile/session foundation
 - extend asset-registry coverage for more verified naval/air assets
 - clean up runtime exit and repeated session debug flow noise
 - keep visualization convenience separate from realism/world-parameter changes
+- open a new task cluster or subproject before adding richer environment
+  layers, split-map layout, or symbol-registry extraction
 - do not treat other files under `archive/` as active unless this README
   promotes them
 

@@ -1,9 +1,9 @@
 # Tactical Map Interface Refactor
 
-Status: `2026-06-06` active visualization subproject. `P0` planning and
-reference baseline are installed; `P1` shell layout, `P2` map workspace, and
-`P3` layer/symbology grouping, and `P4` profile integration are accepted as
-slices; `P5` validation roll-up remains next.
+Status: `2026-06-06` closed visualization subproject. `P0` planning and
+reference baseline are installed; `P1` shell layout, `P2` map workspace,
+`P3` layer/symbology grouping, `P4` profile integration, and `P5` validation
+roll-up are accepted; `P6` closure/archive sync is complete.
 
 Language:
 
@@ -51,6 +51,8 @@ maintained interface and map-workspace plan on top of them.
 | Multi-map workspace | `P2` tabbed workspace accepted as a slice | [P2 acceptance](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.md) | This accepts named UI surfaces and default layer postures only, not split-map layout or new simulation semantics. |
 | Tactical layer model | `P3` grouped layer/symbology slice accepted | [P3 acceptance](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md) | This accepts cataloged UI layer controls and first-pass styling only, not military-standard compliance or new payload semantics. |
 | Profile UI defaults | `P4` profile-default slice accepted | [P4 acceptance](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md) | This accepts profile-selected workspace/layer/view UI defaults only, not scenario or simulation semantics. |
+| Validation roll-up | `P5` accepted | [P5 validation roll-up](tactical_map_interface_refactor_p5_validation_rollup_20260606.md) | This consolidates evidence and boundaries only; it adds no runtime feature. |
+| Closure/archive sync | `P6` closed | [P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md) | This closes the scoped refactor, not every future tactical visualization idea. |
 | Tactical-map style baseline | pass for `P0` | [style baseline](tactical_map_interface_refactor_style_reference_baseline_20260606.md) | References guide visual design only; they do not create military-symbol standard compliance. |
 
 ## Scope
@@ -90,8 +92,8 @@ Out of scope:
 | `P2 Map Workspace Model` | Add multiple named map surfaces and switching/split behavior. | `P1` shell can host map panels. | `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` have explicit UI roles. | accepted slice |
 | `P3 Layer And Symbology Model` | Centralize layer grouping, draw order, and tactical symbol styling. | `P2` workspace exists. | Existing overlays render through grouped layer rules without broader capability claims. | accepted slice |
 | `P4 Profile Integration` | Let profiles select default workspace/layers without changing scenario semantics. | `P2` and `P3` stable enough for defaults. | Profile loader accepts and validates UI defaults for map workspace selection. | accepted slice |
-| `P5 Validation Evidence` | Capture browser, syntax, and regression evidence. | Implementation clusters pass local checks. | Evidence doc records screenshots, console status, and residuals. | planned |
-| `P6 Closure And Archive Sync` | Decide accepted/held/next-slice state and sync indexes. | `P5` evidence is complete. | README/status/archive surfaces agree on current authority. | planned |
+| `P5 Validation Evidence` | Capture browser, syntax, and regression evidence. | Implementation clusters pass local checks. | Evidence doc records screenshots, console status, and residuals. | accepted |
+| `P6 Closure And Archive Sync` | Decide accepted/held/next-slice state and sync indexes. | `P5` evidence is complete. | README/status/archive surfaces agree on current authority. | closed |
 
 ## Task Clusters
 
@@ -107,10 +109,14 @@ Out of scope:
   [tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.md)
 - P4 profile-default acceptance:
   [tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.md)
+- P5 validation roll-up:
+  [tactical_map_interface_refactor_p5_validation_rollup_20260606.md](tactical_map_interface_refactor_p5_validation_rollup_20260606.md)
+- P6 closure/archive sync:
+  [tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md)
 
 ## Outputs And Evidence
 
-Expected maintained outputs:
+Maintained outputs:
 
 - Updated `examples/viz/web_viz/templates/index.html` tactical shell and map
   workspace implementation.
@@ -118,11 +124,11 @@ Expected maintained outputs:
 - Browser smoke screenshots for narrow and desktop map layouts.
 - Syntax checks for embedded module scripts and any Python touched by the
   profile/session surface.
-- Acceptance or closeout evidence before status changes to accepted or closed.
+- Acceptance and closeout evidence in the `P1` through `P6` records above.
 
 ## Acceptance Gate
 
-This subproject can be marked accepted only when:
+This subproject is marked accepted and closed because:
 
 - The tactical map remains visible and primary on at least one narrow viewport
   and one desktop viewport.
@@ -141,9 +147,7 @@ This subproject can be marked accepted only when:
 
 Immediate:
 
-- Roll up `P1` through `P4` validation evidence in `VIZ-TMAP-P5`.
-- Keep `P1`/`P2`/`P3`/`P4` evidence current if later UI work touches the same
-  template or profile-loader blocks.
+- No immediate work remains inside this closed subproject.
 
 Follow-on:
 
@@ -151,6 +155,8 @@ Follow-on:
   environment substrate exposes accepted derived products.
 - Consider a dedicated tactical symbol registry after the layer model proves
   useful in the current template.
+- Open a new task cluster or subproject if later work needs split-map layout or
+  major frontend extraction.
 
 Deferred:
 
@@ -159,6 +165,7 @@ Deferred:
 
 ## Archive
 
-No local records are archived yet. Future superseded notes move under
-[archive/README.md](archive/README.md) after this README or a dated status file
-promotes the replacement authority.
+No local records were moved to archive during closeout. Current dated
+acceptance and closure records remain live evidence for this closed subproject.
+Future superseded notes move under [archive/README.md](archive/README.md) after
+this README or a dated status file promotes the replacement authority.

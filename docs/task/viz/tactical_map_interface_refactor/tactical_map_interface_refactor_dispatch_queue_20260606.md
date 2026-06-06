@@ -1,12 +1,13 @@
 # Tactical Map Interface Refactor Dispatch Queue
 
-Status: `2026-06-06` active dispatch queue for
+Status: `2026-06-06` closed dispatch queue for
 [Tactical Map Interface Refactor](README.md). `P0` is pass; first `P1`
 read-only diagnostics packet returned `pass`; the main-thread `P1` shell
 implementation is accepted as a slice; the main-thread `P2` tabbed workspace
 implementation is accepted as a slice; the main-thread `P3` grouped
 layer/symbology implementation is accepted as a slice; the main-thread `P4`
-profile-default implementation is accepted as a slice.
+profile-default implementation is accepted as a slice; `P5` validation roll-up
+is accepted; `P6` closure/archive sync is closed.
 
 Language:
 
@@ -52,6 +53,8 @@ return.
 | `VIZ-TMAP-P2-IMPL-MAIN` | `VIZ-TMAP-P2` | main thread | current main thread | Implement the first maintained map-workspace model as tabbed `COP`, `Environment`, `Tracks/Sensors`, and `3D Inspect` surfaces. | `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_map_workspace.py`, P2 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 | `VIZ-TMAP-P3-IMPL-MAIN` | `VIZ-TMAP-P3` | main thread | current main thread | Centralize tactical layer groups, draw phases, and first-pass symbology styling while preserving tactical payload semantics. | `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_layer_model.py`, P3 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
 | `VIZ-TMAP-P4-IMPL-MAIN` | `VIZ-TMAP-P4` | main thread | current main thread | Extend profile UI defaults for default tactical workspace/layer/view selection while preserving scenario semantics. | `examples/viz/app/profile_loader.py`, `examples/viz/profiles/*.json`, `examples/viz/web_viz/templates/index.html`, `tests/viz/test_tactical_profile_ui_defaults.py`, P4 acceptance docs | worker-equivalent implementation summary; commands/outcomes; residuals; held capability claims | accepted slice |
+| `VIZ-TMAP-P5-ROLLUP-MAIN` | `VIZ-TMAP-P5` | main thread | current main thread | Roll up validation evidence, screenshots, residuals, and capability boundaries across `P1` through `P4`. | P5 validation roll-up docs | worker-equivalent validation summary; commands/outcomes; residuals; held capability claims | accepted |
+| `VIZ-TMAP-P6-CLOSE-MAIN` | `VIZ-TMAP-P6` | main thread | current main thread | Synchronize parent/subproject status and archive pointers after the acceptance decision. | parent viz README, subproject README/status/task clusters/dispatch/archive docs, P6 closure docs | closure decision; synchronized indexes; archive boundary; validation outcome | closed |
 
 ## Returned Diagnostics Summary
 
@@ -162,7 +165,36 @@ Accepted implementation points:
 - Browser smoke loaded the naval contact-report profile, reached `READY`,
   applied `TRACKS`, and ended with `Errors: 0`.
 
-Residuals remain assigned to `P5` and `P6`.
+## Returned P5 Validation Summary
+
+`VIZ-TMAP-P5-ROLLUP-MAIN` is accepted. Evidence is recorded in
+[P5 validation roll-up](tactical_map_interface_refactor_p5_validation_rollup_20260606.md).
+
+Accepted validation points:
+
+- `P1` through `P4` browser smoke, screenshots, console checks, and residual
+  boundaries are consolidated into a single roll-up.
+- Fresh code-side refresh passed embedded module syntax, focused viz pytest,
+  and profile JSON parsing.
+- Browser evidence remains in the accepted slice documents because `P5` is
+  docs-only and does not change runtime code.
+- Immediate implementation residuals inside this subproject are closed; richer
+  environment products, split-map layout, and symbol registry extraction remain
+  follow-on work.
+
+## Returned P6 Closure Summary
+
+`VIZ-TMAP-P6-CLOSE-MAIN` is closed. Evidence is recorded in
+[P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.md).
+
+Accepted closure points:
+
+- The parent viz README, subproject README, current status, task clusters,
+  dispatch queue, and archive README now agree that this scoped refactor is
+  `closed`.
+- No local evidence file was moved to `archive/`; dated acceptance and closure
+  documents remain live evidence.
+- Future tactical visualization work should open a new cluster or subproject.
 
 ## Worker Packet Template
 

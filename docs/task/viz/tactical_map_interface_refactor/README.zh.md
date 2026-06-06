@@ -1,8 +1,8 @@
 # 战术地图界面重构
 
-状态：`2026-06-06`，活跃的可视化子项目。`P0` 规划与参考基线已建立；
-`P1` 壳布局、`P2` 地图工作区、`P3` 图层/符号分组和 `P4` profile integration
-已作为切片接受；`P5` 验证汇总是下一步。
+状态：`2026-06-06`，已闭合的可视化子项目。`P0` 规划与参考基线已建立；
+`P1` 壳布局、`P2` 地图工作区、`P3` 图层/符号分组、`P4` profile integration
+和 `P5` 验证汇总已接受；`P6` closure/archive 同步已完成。
 
 语言：
 
@@ -44,6 +44,8 @@
 | 多地图工作区 | `P2` tabbed workspace 已作为切片接受 | [P2 验收](tactical_map_interface_refactor_p2_workspace_acceptance_20260606.zh.md) | 这里只接受具名 UI 表面和默认图层姿态，不接受 split-map 布局或新的仿真语义。 |
 | 战术图层模型 | `P3` 分组图层/符号切片已接受 | [P3 验收](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md) | 这里只接受 catalog 化 UI 图层控制和第一版样式，不接受军标合规或新的 payload 语义。 |
 | Profile UI 默认值 | `P4` profile-default 切片已接受 | [P4 验收](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md) | 这里只接受 profile 选择的 workspace/layer/view UI 默认值，不接受 scenario 或仿真语义。 |
+| 验证汇总 | `P5` 已接受 | [P5 验证汇总](tactical_map_interface_refactor_p5_validation_rollup_20260606.zh.md) | 这里只汇总证据和边界，不新增 runtime 功能。 |
+| Closure/archive 同步 | `P6` 已关闭 | [P6 closure/archive sync](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md) | 这只关闭当前 scoped refactor，不代表所有未来战术可视化想法完成。 |
 | 战术地图风格基线 | `P0` 已通过 | [风格基线](tactical_map_interface_refactor_style_reference_baseline_20260606.zh.md) | 参考资料只指导视觉设计，不构成军标合规声明。 |
 
 ## 范围
@@ -74,8 +76,8 @@
 | `P2 Map Workspace Model` | 增加多个具名地图表面和切换/分屏行为。 | `P1` 壳可以承载地图面板。 | `COP`、`Environment`、`Tracks/Sensors`、`3D Inspect` 均有明确 UI 角色。 | accepted slice |
 | `P3 Layer And Symbology Model` | 集中管理图层分组、绘制顺序和战术符号风格。 | `P2` 工作区存在。 | 现有叠加层通过分组图层规则渲染，且不扩大能力声明。 | accepted slice |
 | `P4 Profile Integration` | 让 profile 能选择默认工作区/图层，但不改变 scenario 语义。 | `P2` 和 `P3` 足够稳定。 | profile loader 接受并校验地图工作区 UI 默认值。 | accepted slice |
-| `P5 Validation Evidence` | 记录浏览器、语法和回归证据。 | 实现任务簇通过本地检查。 | 证据文档记录截图、console 状态和残余。 | planned |
-| `P6 Closure And Archive Sync` | 判定 accepted/held/下一切片状态并同步索引。 | `P5` 证据完整。 | README/status/archive 当前权威一致。 | planned |
+| `P5 Validation Evidence` | 记录浏览器、语法和回归证据。 | 实现任务簇通过本地检查。 | 证据文档记录截图、console 状态和残余。 | accepted |
+| `P6 Closure And Archive Sync` | 判定 accepted/held/下一切片状态并同步索引。 | `P5` 证据完整。 | README/status/archive 当前权威一致。 | closed |
 
 ## 任务簇
 
@@ -91,20 +93,24 @@
   [tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md](tactical_map_interface_refactor_p3_layer_symbology_acceptance_20260606.zh.md)
 - P4 profile-default 验收：
   [tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md](tactical_map_interface_refactor_p4_profile_defaults_acceptance_20260606.zh.md)
+- P5 验证汇总：
+  [tactical_map_interface_refactor_p5_validation_rollup_20260606.zh.md](tactical_map_interface_refactor_p5_validation_rollup_20260606.zh.md)
+- P6 closure/archive sync：
+  [tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md](tactical_map_interface_refactor_p6_closure_archive_sync_20260606.zh.md)
 
 ## 输出与证据
 
-预期维护输出：
+已维护输出：
 
 - 更新后的 `examples/viz/web_viz/templates/index.html` 战术壳和地图工作区实现。
 - 如果扩展 profile UI 默认值，则增加聚焦的 profile-loader 测试。
 - 窄屏和桌面地图布局的浏览器 smoke 截图。
 - 嵌入式 module script 语法检查，以及触及 profile/session 面时的 Python 检查。
-- 状态变更为 accepted 或 closed 前的验收或收口证据。
+- 上方 `P1` 到 `P6` 记录中的验收和收口证据。
 
 ## 验收门
 
-只有满足以下条件，本子项目才能标记为 accepted：
+本子项目标记为 accepted 并 closed，依据是：
 
 - 战术地图在至少一个窄屏视口和一个桌面视口中保持可见并作为主表面。
 - 界面支持多个地图表面，或明确记录了 workspace model 的第一版已接受子集。
@@ -117,13 +123,13 @@
 
 立即项：
 
-- 在 `VIZ-TMAP-P5` 汇总 `P1` 到 `P4` 的验证证据。
-- 如果后续 UI 工作触及同一模板或 profile-loader 块，需要保持 `P1`/`P2`/`P3`/`P4` 证据当前有效。
+- 当前 closed 子项目内没有立即工作。
 
 后续项：
 
 - 在通用环境基底释放已验收 derived products 后，再增加更丰富的地形、建筑、道路、植被图层渲染。
 - 当当前模板中的图层模型证明有价值后，考虑专门的战术符号注册表。
+- 如果后续需要 split-map 布局或大型前端抽取，应开启新的任务簇或子项目。
 
 推迟项：
 
@@ -132,4 +138,6 @@
 
 ## 归档
 
-当前尚无本地记录归档。未来被取代的记录会在本 README 或 dated status 文件提升替代权威后，转入 [archive/README.zh.md](archive/README.zh.md)。
+收口期间没有本地记录被移动到 archive。当前 dated acceptance 和 closure 记录仍是这个
+closed 子项目的 live evidence。未来被取代的记录会在本 README 或 dated status 文件提升替代权威后，
+转入 [archive/README.zh.md](archive/README.zh.md)。
