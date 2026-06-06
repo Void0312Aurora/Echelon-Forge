@@ -9,6 +9,9 @@
 
 ## 当前路线
 
+- 标准基线：模型架构词汇与实现 ownership 归
+  [模型架构标准](../../standards/model/README.zh.md)；活跃任务在增加或重新解释
+  model branch、adapter、loss、buffer 或 probe 前，应先引用该标准层。
 - 目标架构：路径 C，sequence-native causal Transformer HMoE/PPO。
 - 先行验证：路径 A，observation-window temporal HMoE。
 - 动作接口：`2026-06-02` 已接受 `M1 空战动作接口拆分` 的 `air_combat_hybrid_v1`

@@ -63,6 +63,7 @@
   [task/game/](task/game/README.zh.md)，以及
   [manual/visualization_guide.zh.md](manual/visualization_guide.zh.md)。
 - 模型、策略与 world-model：
+  [standards/model/](standards/model/README.zh.md)、
   [task/model/](task/model/README.zh.md)、
   [forward/models/hierarchical_moe_execution_policy.zh.md](forward/models/hierarchical_moe_execution_policy.zh.md)、
   [../python/world_model/](../python/world_model)，以及

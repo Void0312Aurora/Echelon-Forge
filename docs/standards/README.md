@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-06-01` authoritative for the maintained standards tree.
+Status: `2026-06-07` authoritative for the maintained standards tree.
 
 This directory defines the standardized modeling baseline the project intends to
 use going forward. Its job is not to restate every active implementation task.
@@ -30,18 +30,24 @@ the standard ownership hierarchy.
 ## Tree Structure
 
 Since `2026-03-23`, the standards documentation is no longer organized around
-an "air first, generalize later" line. Its domain ownership spine now follows:
+an "air first, generalize later" line. Its maintained ownership spine now
+follows:
 
 1. `joint/`
 2. `services/`
 3. `air/`
 4. `naval/`
 5. `ground/`
+6. `model/`
 
 This spine is read together with the cross-domain standards under `foundation/`
 and `bridge/`, including runtime workflow and contract baselines. Those
 documents constrain every domain; they do not form a separate service or
 platform stack.
+
+The `model/` layer is cross-domain. It owns model/policy architecture vocabulary
+for reinforcement-learning components, auxiliary heads, loss ownership, runtime
+action adapters, and diagnostics. It does not own service or domain semantics.
 
 The maintained tree therefore reflects a deliberate modeling split:
 
@@ -56,6 +62,9 @@ The maintained tree therefore reflects a deliberate modeling split:
 - `ground/` defines ground specialization such as platoon-centered tasking,
   move/occupy/support semantics, terrain-masked information assumptions, and
   land command/support extensions.
+- `model/` defines policy/model architecture boundaries that can be reused by
+  air, naval, ground, cooperative, and world-model work without promoting any
+  single domain's task status into a model standard.
 
 Third-domain navigation must route through both layers: `services/army.md`
 owns Army service-profile interpretation, while `ground/` owns maintained
@@ -81,6 +90,9 @@ Use this hierarchy when deciding where a stable concept belongs:
 4. `air/`, `naval/`, and `ground/` own domain specialization. They can define
    platform, mission, environment, and execution semantics that should not be
    promoted into the common core just because one domain implemented them first.
+5. `model/` owns cross-domain model/policy architecture vocabulary: executable
+   branches, auxiliary heads, action adapters, loss ownership, rollout labels,
+   and diagnostic surfaces.
 
 This is an ownership hierarchy, not a maturity ladder. A mature air-combat or
 flight-dynamics implementation does not make air concepts project-wide common
@@ -108,6 +120,7 @@ For new work, read in this order:
 13. [Air Platform Specialization Overview](air/README.md)
 14. [Naval Standards Overview](naval/README.md)
 15. [Ground Standards Overview](ground/README.md)
+16. [Model Architecture Standards Overview](model/README.md)
 
 ## Relationship to Active Task Plans
 
@@ -135,7 +148,8 @@ particular:
   through that split rather than through a new runtime stack.
 - model, training, evaluation, and issue-board tasks may depend on standards
   contracts, but they should cite or pressure the relevant standard owner
-  instead of defining a parallel hierarchy.
+  instead of defining a parallel hierarchy. Model-architecture vocabulary belongs
+  in `model/`.
 - the standards tree should absorb stable shared contracts from task documents
   instead of mirroring the task folder layout or the current rollout maturity of
   each domain.
@@ -167,6 +181,7 @@ Current key repository references include:
 - [docs/task/naval/README.md](../task/naval/README.md)
 - [docs/task/ground/README.md](../task/ground/README.md)
 - [docs/task/simulation_architecture/README.md](../task/simulation_architecture/README.md)
+- [docs/standards/model/README.md](model/README.md)
 - [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
 - [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
 - [src/core/mission/README.md](../../src/core/mission/README.md)
@@ -197,6 +212,7 @@ Current status mapping:
 - `air/*.md`: `Specialization`
 - `naval/*.md`: `Specialization`
 - `ground/*.md`: `Specialization`
+- `model/*.md`: `Authoritative model architecture`
 - `docs/Archive/**`: `Archived`
 - `docs/task/flight_dynamics/archive/**`: task-history archive, not an active standard source
 
@@ -208,6 +224,9 @@ Additional maintained supplements:
 - [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
   - G0 baseline for the first ground tasking vocabulary and architecture
     constraints
+- [model/policy_execution_architecture.md](model/policy_execution_architecture.md)
+  - cross-domain policy execution, auxiliary-head, loss, reward, adapter, and
+    probe ownership baseline
 - [modularization_plan.md](planning/modularization_plan.md)
   - active planning supplement for future codebase structure, not a current
     runtime contract

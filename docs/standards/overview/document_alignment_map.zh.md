@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-状态：`2026-06-01`，文档归属与分层权威说明。
+状态：`2026-06-07`，文档归属与分层权威说明。
 
 本文档用于明确：
 
@@ -60,6 +60,20 @@ Language:
 
 它们不重新定义 doctrine，而是说明当前仓库中的输入、工作流阶段和 DTO
 如何对齐到维护中的标准树。
+
+### 模型架构
+
+当前维护中的模型架构依据：
+
+- [模型架构标准总览](../model/README.zh.md)
+- [策略执行架构基线](../model/policy_execution_architecture.zh.md)
+
+它们负责定义：
+
+- executable policy branches、auxiliary heads、runtime action adapters、losses、
+  rewards、rollout labels 与 probes 之间的模型/策略组件 ownership
+- runtime support constraint 与 learned stopping/timing mechanism 的区别
+- 活跃 `docs/task/model/` 工作如何回映到稳定架构词汇，而不是把任务状态当成标准
 
 ## 当前有效的特化补充
 
@@ -246,4 +260,5 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 2. 军种组织与控制口径放 `services/`
 3. 平台或任务特化放 `air/`、`naval/` 或 `ground/`
 4. 场景/runtime bridge 说明放在 `bridge/`
-5. 过时路线放入 `docs/Archive/` 或对应任务归档树
+5. 模型/策略架构词汇放 `model/`
+6. 过时路线放入 `docs/Archive/` 或对应任务归档树

@@ -69,6 +69,7 @@ new work.
   [task/game/](task/game/README.md), and
   [manual/visualization_guide.md](manual/visualization_guide.md).
 - Model, policy, and world-model work:
+  [standards/model/](standards/model/README.md),
   [task/model/](task/model/README.md),
   [forward/models/hierarchical_moe_execution_policy.md](forward/models/hierarchical_moe_execution_policy.md),
   [../python/world_model/](../python/world_model), and

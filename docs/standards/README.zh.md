@@ -5,7 +5,7 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-状态：`2026-06-01`，当前维护中的标准树权威入口。
+状态：`2026-06-07`，当前维护中的标准树权威入口。
 
 本目录用于定义项目后续采用的标准化建模基线。它的职责不是重复每一份活跃任务文档，而是回答：
 
@@ -31,16 +31,20 @@
 ## 当前结构
 
 从 `2026-03-23` 起，标准化文档不再沿用“空战先行，再尝试泛化”的组织方式，
-而改为以下领域所有权主干：
+而改为以下维护中的所有权主干：
 
 1. `joint/`
 2. `services/`
 3. `air/`
 4. `naval/`
 5. `ground/`
+6. `model/`
 
 这条主干需要与 `foundation/` 和 `bridge/` 下的跨域标准一起阅读，包括 runtime
 workflow 与合同基线。这些文档约束所有领域，不构成一条单独的军种或平台栈。
+
+`model/` 层是跨域标准层。它负责强化学习组件、辅助头、loss ownership、runtime
+action adapter 与 diagnostics 的模型/策略架构词汇，不负责军种或领域语义。
 
 维护中的标准树对应一套明确的分层：
 
@@ -53,6 +57,8 @@ workflow 与合同基线。这些文档约束所有领域，不构成一条单�
 - `ground/` 负责地面域专用语义，例如以 platoon 为中心的 tasking、
   move/occupy/support 语义、terrain-masked information 假设，以及 land
   command/support extension。
+- `model/` 负责可被 air、naval、ground、cooperative 与 world-model 工作复用的
+  policy/model architecture 边界，不把任何单一领域的任务状态提升为模型标准。
 
 第三域导航必须同时经过这两层：`services/army.md` 负责 Army 军种画像解释，
 `ground/` 负责维护中的 ground 特化语义。`army` 与 `land` 作为别名会规范化为
@@ -71,6 +77,8 @@ workflow 与合同基线。这些文档约束所有领域，不构成一条单�
    哪些梯队或单位形态可进入 runtime tight loop，以及军种术语在变成领域机制前应停在哪里。
 4. `air/`、`naval/`、`ground/` 负责领域特化。它们可以定义平台、任务、环境和执行语义；
    某一领域先实现了某个概念，不代表这个概念应提升为 common core。
+5. `model/` 负责跨域模型/策略架构词汇：executable branches、auxiliary heads、
+   action adapters、loss ownership、rollout labels 与 diagnostic surfaces。
 
 这是一套所有权层级，不是成熟度阶梯。空战或飞行动力学实现更成熟，不会让 air 概念自动变成
 项目级 common core。海军或地面 bootstrap 还早，也可以为其 service/profile 与 specialization
@@ -96,6 +104,7 @@ workflow 与合同基线。这些文档约束所有领域，不构成一条单�
 14. [空中平台特化总览](air/README.md)
 15. [海军标准总览](naval/README.md)
 16. [Ground 标准总览](ground/README.zh.md)
+17. [模型架构标准总览](model/README.zh.md)
 
 ## 与活跃任务树的关系
 
@@ -116,7 +125,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - `ground` 任务计划里的概念，可能分属共享语义、`services/army.md` 和 `ground/`；
   `army` 与 `land` 别名应通过这套分层归口，而不是形成新的 runtime stack。
 - model、training、evaluation 与 issue-board 任务可以依赖标准合同，但应引用或推动对应的
-  标准归口，而不是定义一套平行层级。
+  标准归口，而不是定义一套平行层级。模型架构词汇归 `model/`。
 - 标准树应吸收任务文档里已经稳定下来的共享合同，而不是照搬任务目录结构，或照搬各领域当前
   rollout 成熟度。
 
@@ -147,6 +156,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - [docs/task/naval/README.md](../task/naval/README.md)
 - [docs/task/ground/README.md](../task/ground/README.md)
 - [docs/task/simulation_architecture/README.md](../task/simulation_architecture/README.md)
+- [docs/standards/model/README.md](model/README.md)
 - [docs/task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md](../task/flight_dynamics/archive/program/realism_program_convergence_plan_20260517.md)
 - [gym_envs/scenario_loader/core.py](../../gym_envs/scenario_loader/core.py)
 - [src/core/mission/README.md](../../src/core/mission/README.md)
@@ -176,6 +186,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - `air/*.md`：`Specialization`
 - `naval/*.md`：`Specialization`
 - `ground/*.md`：`Specialization`
+- `model/*.md`：`Authoritative model architecture`
 - `docs/Archive/**`：`Archived`
 - `docs/task/flight_dynamics/archive/**`：任务历史归档，不是活跃标准来源
 
@@ -185,6 +196,9 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
   - 第一批海军单位与公开来源可追溯性的参考基准补充页
 - [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
   - 第一批 ground tasking 语汇与架构约束的 G0 基线
+- [model/policy_execution_architecture.md](model/policy_execution_architecture.md)
+  - 跨域 policy execution、auxiliary-head、loss、reward、adapter 与 probe ownership
+    基线
 - [modularization_plan.md](planning/modularization_plan.md)
   - 面向未来代码结构的活跃规划补充页，不是当前 runtime 合同
 

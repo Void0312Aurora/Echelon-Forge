@@ -4,7 +4,7 @@ Language:
 - English canonical: `overview/document_alignment_map.md`
 - Chinese companion: [document_alignment_map.zh.md](document_alignment_map.zh.md)
 
-Status: `2026-06-01` authoritative for document ownership and layering.
+Status: `2026-06-07` authoritative for document ownership and layering.
 
 This document clarifies which standards documents are primary, which are
 specialized supplements, and how active task/workflow documents map back to the
@@ -58,6 +58,22 @@ The current maintained bridge documents are:
 
 They do not redefine doctrine. They explain how current repository inputs,
 workflow stages, and DTOs line up with the maintained standards tree.
+
+### Model Architecture
+
+The current maintained model-architecture references are:
+
+- [Model Architecture Standards Overview](../model/README.md)
+- [Policy Execution Architecture Baseline](../model/policy_execution_architecture.md)
+
+They define:
+
+- model/policy component ownership across executable policy branches, auxiliary
+  heads, runtime action adapters, losses, rewards, rollout labels, and probes
+- the difference between runtime support constraints and learned stopping or
+  timing mechanisms
+- how active `docs/task/model/` work maps back to stable architecture
+  vocabulary without turning task status into a standard
 
 ## Valid Specialized Supplements
 
@@ -261,4 +277,5 @@ When adding a new maintained standards document:
 2. Put service organization/control interpretation in `services/`.
 3. Put platform or mission specialization in `air/`, `naval/`, or `ground/`.
 4. Put scenario/runtime bridge documentation in `bridge/`.
-5. Put superseded work in `docs/Archive/` or the relevant task archive tree.
+5. Put model/policy architecture vocabulary in `model/`.
+6. Put superseded work in `docs/Archive/` or the relevant task archive tree.

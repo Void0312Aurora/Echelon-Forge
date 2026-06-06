@@ -13,6 +13,10 @@ simulation systems.
 
 Current route:
 
+- Standards baseline: model-architecture vocabulary and implementation ownership
+  live under [Model Architecture Standards](../../standards/model/README.md);
+  active tasks should cite that layer before adding or reinterpreting model
+  branches, adapters, losses, buffers, or probes.
 - Target architecture: Path C, sequence-native causal Transformer HMoE/PPO.
 - First validation package: Path A, observation-window temporal HMoE.
 - Action interface: on `2026-06-02`, the M1 air-combat action-interface split
