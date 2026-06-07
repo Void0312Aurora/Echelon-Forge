@@ -240,6 +240,7 @@ else:
             validate_naval_action_mode_for_loader(self.loader, self.action_mode)
 
             self.steps = 0
+            self.loader.steps = int(self.steps)
             self._last_action = None
             self._last_policy_action_intent = None
             reset_naval_station_action_state(self.loader)
@@ -276,6 +277,7 @@ else:
         def step(self, action):
             step_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             self.steps += 1
+            self.loader.steps = int(self.steps)
 
             action_t0 = time.perf_counter() if self.collect_step_timing else 0.0
             action = normalize_action(action, action_space=self.action_space, action_mode=self.action_mode)
@@ -402,6 +404,7 @@ else:
         def _build_obs_from_state(self, inst, raw_truth):
             self._last_inst = inst
             self._last_truth = raw_truth
+            self.loader.steps = int(self.steps)
             obs = build_universal_observation(
                 self.loader,
                 inst,

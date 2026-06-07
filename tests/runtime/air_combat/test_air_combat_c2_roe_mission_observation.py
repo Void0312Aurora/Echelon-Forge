@@ -13,7 +13,8 @@ ensure_repo_imports()
 import ef_py  # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from gym_envs.universal_env import build_universal_observation  # noqa: E402
+from gym_envs.universal_env import UniversalEnv, build_universal_observation  # noqa: E402
+from gym_envs.universal_env_parts import AIR_COMBAT_HYBRID_V1_ACTION_MODE  # noqa: E402
 from python.mission_obs_taxonomy import (  # noqa: E402
     mission_observation_dim,
     mission_observation_field_index,
@@ -27,6 +28,21 @@ _STAGE1_SCENARIO_PATH = resolve_repo_path(
     "1v1",
     "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json",
 )
+_STAGE1_C2_ROE_SCENARIO_PATH = resolve_repo_path(
+    "scenarios",
+    "air_combat",
+    "1v1",
+    "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json",
+)
+
+
+def _hybrid_hold_action() -> np.ndarray:
+    action = np.zeros((12,), dtype=np.float32)
+    action[3] = 0.62
+    action[6] = 1.0
+    action[8] = 1.0
+    action[11] = 1.0
+    return action
 
 
 def _wait_for_assigned_target_track(
@@ -269,6 +285,45 @@ class AirCombatC2RoeMissionObservationTests(unittest.TestCase):
         self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "quality_window_ready")]), 0.0)
         self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "legal_open_age_steps")]), 33.0)
         self.assertEqual(float(stale_mission[mission_observation_field_index(mode, "launch_window_age_steps")]), 0.0)
+
+    def test_air_combat_c2_roe_v2_runtime_window_age_advances_with_env_steps(self) -> None:
+        mode = "air_combat_c2_roe_v2"
+        env = UniversalEnv(
+            _STAGE1_C2_ROE_SCENARIO_PATH,
+            include_visual=False,
+            include_proprio=True,
+            action_mode=AIR_COMBAT_HYBRID_V1_ACTION_MODE,
+            mission_obs_mode=mode,
+            runtime_compatibility_enabled=True,
+        )
+        try:
+            obs, _info = env.reset(seed=20260608)
+            max_legal_age = 0.0
+            first_quality = None
+            for step in range(1, 420):
+                obs, _reward, terminated, truncated, _info = env.step(_hybrid_hold_action())
+                mission = np.asarray(obs["mission"], dtype=np.float32)
+                max_legal_age = max(
+                    max_legal_age,
+                    float(mission[mission_observation_field_index(mode, "legal_open_age_steps")]),
+                )
+                if float(mission[mission_observation_field_index(mode, "quality_window_ready")]) > 0.5:
+                    first_quality = (step, mission)
+                    break
+                if terminated or truncated:
+                    break
+            self.assertIsNotNone(first_quality)
+            quality_step, quality_mission = first_quality
+            self.assertGreaterEqual(quality_step, 1)
+            self.assertGreater(max_legal_age, 0.0)
+            self.assertEqual(float(quality_mission[mission_observation_field_index(mode, "fire_mask_open")]), 1.0)
+            self.assertEqual(float(quality_mission[mission_observation_field_index(mode, "launch_window_open")]), 1.0)
+            self.assertGreaterEqual(
+                float(quality_mission[mission_observation_field_index(mode, "legal_open_age_steps")]),
+                32.0,
+            )
+        finally:
+            env.close()
 
 
 if __name__ == "__main__":
