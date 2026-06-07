@@ -4,12 +4,12 @@
     {
       "allowed_claim": "release-review blocker surface for RES-001/RES-002 is retained",
       "artifact_key": "provenance_identity_review_gate",
-      "content_sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
+      "content_sha256": "c59c6184c602a3dc78242dba08252f7dbafa0b2cf9b82b21940b6342bd00096d",
       "filename": "provenance_identity_review_gate.json",
       "forbidden_claim": "stock descriptor release, source payload rights review, independent review signoff, effect-scale authority, component-probability authority, Pk authority, or deterministic-fuze authority",
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "schema_version": "a2.provenance_identity_review_gate.v1",
-      "sha256": "730329ee9b227ffdd1dc87fbfa644479d99e7b7e1100b7f8c151919395cd8bbb",
+      "sha256": "c59c6184c602a3dc78242dba08252f7dbafa0b2cf9b82b21940b6342bd00096d",
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     }
   ],

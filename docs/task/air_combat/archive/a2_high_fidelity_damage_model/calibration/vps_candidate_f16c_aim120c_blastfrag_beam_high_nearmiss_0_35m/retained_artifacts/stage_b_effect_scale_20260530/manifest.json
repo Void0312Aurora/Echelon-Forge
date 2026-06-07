@@ -28,13 +28,13 @@
     {
       "allowed_claim": "author-side Stage B hard-gate snapshot is retained",
       "artifact_key": "stage_b_effect_scale_snapshot",
-      "content_sha256": "0d771b867a81d77e045f2144ac8e3730ead67e64de7a62fbdd3bfb73b8b8dada",
+      "content_sha256": "46ccabddabf29547c233153df483f23d94eabd742d815c2337aa2ae7dca86d7b",
       "filename": "stage_b_effect_scale_snapshot.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability release, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_stage_b_hard_gate_snapshot_only",
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260530/stage_b_effect_scale_snapshot.json",
       "schema_version": "a2.stage_b_effect_scale_snapshot.v1",
-      "sha256": "0d771b867a81d77e045f2144ac8e3730ead67e64de7a62fbdd3bfb73b8b8dada",
+      "sha256": "46ccabddabf29547c233153df483f23d94eabd742d815c2337aa2ae7dca86d7b",
       "status": "candidate_non_authoritative_stage_b_snapshot"
     },
     {

@@ -6,7 +6,7 @@
       "path": "stage_c_fragility_review_gate.json",
       "role": "Stage C residual fragility review gate and shortest evidence paths",
       "schema_version": "a2.stage_c_fragility_review_gate.v1",
-      "sha256": "a916d001ec0b228ed051c048a8028f65046a0ea4f58ea0e5df62770365fe42e3"
+      "sha256": "253ff1f4ec93ca2ab3aa733cc3c6d0776be5ae2fef1f48528596207787f0d438"
     }
   ],
   "authority_granted": false,

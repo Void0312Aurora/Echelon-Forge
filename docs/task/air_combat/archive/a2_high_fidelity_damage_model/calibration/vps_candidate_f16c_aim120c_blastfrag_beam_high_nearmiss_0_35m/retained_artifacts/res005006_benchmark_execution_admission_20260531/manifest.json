@@ -32,7 +32,7 @@
     "filename": "benchmark_execution_admission_gate.json",
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005006_benchmark_execution_admission_20260531/benchmark_execution_admission_gate.json",
     "schema_version": "a2.res005006_benchmark_execution_admission_gate.v1",
-    "sha256": "430afb766fa278df1944e005dede11b94647ac96651a0fa3af82536a4e6c3a0c"
+    "sha256": "f8cb8b0004bbce2d91b4eb982e6e1234e4a641fe170bbf4d982cdf9b121ed3dd"
   },
   "current_gate_results": {
     "RES-005": "blocked_fail_closed_tp21_selected_debris_outputs_missing",

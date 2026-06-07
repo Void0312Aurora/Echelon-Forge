@@ -4,7 +4,7 @@
     {
       "allowed_claim": "bounded RES-007/RES-008 scope-bucket review gate decision is retained",
       "artifact_key": "scope_bucket_independent_review_gate",
-      "content_sha256": "818e2612ec58ce0c3442dadc5031234ef67ac944f39af6c5028ed7f22b05cbe1",
+      "content_sha256": "e087478a849c02990c39bb6021ae005968373a7e5f65c11a70e0accd60bd22f5",
       "filename": "scope_bucket_independent_review_gate.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability release, Pk authority, deterministic-fuze authority, or validated closure physics",
       "origin_class": "scope_bucket_independent_review_gate_record_only",

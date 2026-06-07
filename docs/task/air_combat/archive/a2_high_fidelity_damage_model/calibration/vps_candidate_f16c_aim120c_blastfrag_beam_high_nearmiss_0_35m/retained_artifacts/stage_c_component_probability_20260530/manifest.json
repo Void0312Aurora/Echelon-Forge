@@ -16,25 +16,25 @@
     {
       "allowed_claim": "author-side candidate Stage C snapshot and provenance surface exist",
       "artifact_key": "stage_c_component_probability_snapshot",
-      "content_sha256": "037969252aaeb27172c6873271ed1812b59d64ad596cfee52adbad0c63d5fc76",
+      "content_sha256": "68fdff8ab326d9f75679f739ace2f25acc55dbe8929d6f0f3fe5750fad35a5e9",
       "filename": "stage_c_component_probability_snapshot.json",
       "forbidden_claim": "validated component fragility truth, stock runtime authority, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_candidate_snapshot_only",
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_snapshot.json",
       "schema_version": "a2.stage_c_component_probability_snapshot.v1",
-      "sha256": "037969252aaeb27172c6873271ed1812b59d64ad596cfee52adbad0c63d5fc76",
+      "sha256": "68fdff8ab326d9f75679f739ace2f25acc55dbe8929d6f0f3fe5750fad35a5e9",
       "status": "candidate_non_authoritative_stage_c_component_probability_snapshot"
     },
     {
       "allowed_claim": "author-side candidate Stage C fragility-surface and repeatability snapshot exist",
       "artifact_key": "stage_c_component_probability_surface_probe",
-      "content_sha256": "92dec92d70e9a850206cfab74f461b4f67c8e03f552fdc58d99209e9dfbe9535",
+      "content_sha256": "1e46ce99781ed82f53528633459fcd92007e801bbb54dc591206d1d1da05a60a",
       "filename": "stage_c_component_probability_surface_probe.json",
       "forbidden_claim": "validated fragility curve, stock runtime authority, Pk authority, or deterministic-fuze authority",
       "origin_class": "author_side_candidate_surface_probe_only",
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_c_component_probability_20260530/stage_c_component_probability_surface_probe.json",
       "schema_version": "a2.stage_c_component_probability_surface_probe.v1",
-      "sha256": "92dec92d70e9a850206cfab74f461b4f67c8e03f552fdc58d99209e9dfbe9535",
+      "sha256": "1e46ce99781ed82f53528633459fcd92007e801bbb54dc591206d1d1da05a60a",
       "status": "candidate_non_authoritative_stage_c_component_probability_surface_probe"
     },
     {

@@ -4,7 +4,7 @@
     {
       "allowed_claim": "RES-011 uncertainty review state is retained",
       "artifact_key": "uncertainty_review_gate",
-      "content_sha256": "689fd974bde350320d3afb67cb5ae5e583511280d80c74979d756568b425c38a",
+      "content_sha256": "0d6ae9053b2f6c4737cb01833ad320fdf532ff49a3b5bf36b88a39c32849dbe4",
       "filename": "uncertainty_review_gate.json",
       "forbidden_claim": "release readiness, stock runtime authority, component-probability authority, Pk authority, deterministic-fuze authority or release-grade uncertainty coverage",
       "origin_class": "uncertainty_review_gate_record_only",

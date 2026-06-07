@@ -3,10 +3,10 @@
   "artifacts": [
     {
       "artifact_id": "geometry_warhead_row_provenance_gate",
-      "content_hash": "sha256:70af8bd0743bd10046eb7a9a0fcb5dc2645881e512ca999fd09106d58cedaf70",
+      "content_hash": "sha256:a9e29825e4f937a9bac3d90bdc0e2bed91d4f885f3310eb180191591ac343cf1",
       "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json",
       "schema_version": "a2.geometry_warhead_row_provenance_gate.v1",
-      "sha256": "70af8bd0743bd10046eb7a9a0fcb5dc2645881e512ca999fd09106d58cedaf70"
+      "sha256": "a9e29825e4f937a9bac3d90bdc0e2bed91d4f885f3310eb180191591ac343cf1"
     }
   ],
   "authority_guard": {
@@ -104,23 +104,23 @@
       "size_bytes": 6253
     },
     {
-      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "content_hash": "sha256:1b11684efb783af99c1dcea69ae43c1b4126bf213e0ceb497f95a6f7147f4908",
       "exists": true,
       "input_id": "mechanism_source_closeout_json",
       "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_artifact",
-      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "sha256": "1b11684efb783af99c1dcea69ae43c1b4126bf213e0ceb497f95a6f7147f4908",
       "size_bytes": 29136
     },
     {
-      "content_hash": "sha256:069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "content_hash": "sha256:1b11684efb783af99c1dcea69ae43c1b4126bf213e0ceb497f95a6f7147f4908",
       "exists": true,
       "input_id": "mechanism_source_closeout_retained_file:docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json",
       "required": false,
       "role": "optional_upstream_closeout_retained_artifact",
-      "sha256": "069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0",
+      "sha256": "1b11684efb783af99c1dcea69ae43c1b4126bf213e0ceb497f95a6f7147f4908",
       "size_bytes": 29136
     }
   ],

@@ -4,7 +4,7 @@
     {
       "allowed_claim": "RES-011/012 are closed only for bounded Stage B effect-scale independent review closeout",
       "artifact_key": "res011012_independent_review_closeout_gate",
-      "content_sha256": "3016c440973bd791507411dac22d3fc2a8cc895a6a4c2d37ba9f28de425ab1f4",
+      "content_sha256": "077c211be1872c784129cd6e5c00da8afe6537813efd216d7a8cc16a02259ee6",
       "filename": "res011012_independent_review_closeout_gate.json",
       "forbidden_claim": "external validation, Stage C component-probability release, stock runtime authority, Pk authority, deterministic-fuze authority, or formal validation manifest promotion",
       "origin_class": "project_internal_independent_review_closeout_gate",

@@ -7,7 +7,7 @@
       "filename": "source_rights_signoff_request_packet.json",
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_signoff_request_20260601/source_rights_signoff_request_packet.json",
       "schema_version": "a2.source_rights_signoff_request_packet.v1",
-      "sha256": "06d14ab4f19209cc256db7cad485b3d7ccd4534f84a92bf33bbe7d3d3cc896a6"
+      "sha256": "456b16c9f2da3836ebc7a485b5dbe7a1e1c8e884a064b84fab7e4b0790bd2d46"
     }
   ],
   "authority_guards": {
@@ -75,7 +75,7 @@
       "required_for_request_packet": true,
       "role": "current_fail_closed_allowed_output_policy_input",
       "schema_version": "a2.source_rights_output_policy_gate.v1",
-      "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+      "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
       "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
     },
     {
@@ -85,7 +85,7 @@
       "required_for_request_packet": true,
       "role": "retained_source_payload_manifest_input",
       "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
-      "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+      "sha256": "98eedda50aa37395337ed5d5aeb969371014a944dcec3bbadf11b6cac4c728a9",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     {
@@ -95,7 +95,7 @@
       "required_for_request_packet": false,
       "role": "optional_current_res005_tp21_hash_only_packet_input",
       "schema_version": "a2.res005_tp21_selected_case_admission_review_gate.v1",
-      "sha256": "9155ebfeef00c83518eb6ec772f9dd79874a0aaf7bcfdb4bef167e36e67ca84a",
+      "sha256": "2ff80d2a936da961835a1d4ff9ec2c9f3a80c5bb62013e21b53ba83bb0e584bb",
       "status": "blocked_fail_closed_tp21_selected_case_admission_review_packet"
     },
     {
@@ -105,7 +105,7 @@
       "required_for_request_packet": false,
       "role": "optional_current_res006_beco_hash_only_packet_input",
       "schema_version": "a2.res006_beco_replacement_tolerance_admission_gate.v1",
-      "sha256": "7b9d2ab91bff50ed8f39becfebbb15d7abc1baccce205077ab9e191ad44012f9",
+      "sha256": "67a955685b43ed3acaf9bb3c811cb779cd3feb1ff554e8200a7a79ba51301a2d",
       "status": "blocked_fail_closed_res006_beco_replacement_tolerance_admission_review"
     }
   ],

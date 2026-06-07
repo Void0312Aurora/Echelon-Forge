@@ -133,7 +133,7 @@
     }
   ],
   "res001_release_signoff_gate": {
-    "content_sha256": "8cc56c581b21c2de2acd2abe292140960091315435c65824bb8b17397d20a445",
+    "content_sha256": "822c496d9a49d8e0af46ce8af608ff3ae2afff9c960992e67c81107f86bfa452",
     "filename": "res001_release_signoff_gate.json",
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res001_release_signoff_20260531/res001_release_signoff_gate.json",
     "schema_version": "a2.res001_release_signoff_gate.v1",

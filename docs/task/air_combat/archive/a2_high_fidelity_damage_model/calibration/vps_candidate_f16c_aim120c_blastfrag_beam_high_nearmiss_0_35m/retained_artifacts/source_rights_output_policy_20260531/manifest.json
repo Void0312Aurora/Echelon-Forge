@@ -117,15 +117,15 @@
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
     "rights_review_status": "public_distribution_statement_supported_candidate_not_signed_off",
     "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
-    "sha256": "2fc93a823a7b39328f6ac3238da08904867a82c5308f981ec04f1cf5bdc4d729",
+    "sha256": "98eedda50aa37395337ed5d5aeb969371014a944dcec3bbadf11b6cac4c728a9",
     "status": "partial_payloads_retained_release_review_blocked"
   },
   "source_rights_output_policy_gate": {
-    "content_sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71",
+    "content_sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
     "filename": "source_rights_output_policy_gate.json",
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
     "schema_version": "a2.source_rights_output_policy_gate.v1",
-    "sha256": "4bbab21fd610dce1b4183e1e6a75e1f781aa8e2e26824ddaa0a5ed6751edcd71"
+    "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2"
   },
   "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
 }

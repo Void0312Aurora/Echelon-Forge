@@ -49,14 +49,14 @@
     "filename": "res005_tp21_debris_admission_gate.json",
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/res005_tp21_debris_admission_gate.json",
     "schema_version": "a2.res005_tp21_debris_admission_gate.v1",
-    "sha256": "d0f64487b4d71762e383f3420d81c31d66591c18e341b95996ec979d9505ff2b"
+    "sha256": "8f86cdebb8892628c9b2c67be97ea70f0abdbfcf7c0a4c148947ba12104ec26e"
   },
   "schema_version": "a2.res005_tp21_debris_admission_retained_manifest.v1",
   "selected_debris_output_anchor_set_artifact": {
     "filename": "selected_debris_output_anchor_set.json",
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/res005_tp21_debris_admission_20260531/selected_debris_output_anchor_set.json",
     "schema_version": "a2.res005_tp21_selected_debris_anchor_set.v1",
-    "sha256": "b17f164da8488bcf232d2e72492baa7febf70079a1cab13171d1de5e75c6b638"
+    "sha256": "dc6d36a6ef9967a8c8850fbe7a24f571fc11ab4deefa505bcc3b756836a852f9"
   },
   "status": "blocked_fail_closed_tp21_debris_admission_gate"
 }
