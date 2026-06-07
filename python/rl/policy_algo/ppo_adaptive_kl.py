@@ -974,6 +974,14 @@ class AdaptiveKLPPO(PPO):
     def _a6_first_event_policy_fire_mask_from_obs(obs: Any, n_envs: int) -> list[bool] | None:
         if not isinstance(obs, dict):
             return None
+        mission = obs.get("mission")
+        if mission is not None:
+            mission_tensor = th.as_tensor(mission)
+            if mission_tensor.ndim == 2 and int(mission_tensor.shape[0]) == int(n_envs):
+                mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission_tensor.shape[1]))
+                if mission_mode is not None and mission_observation_has_field(mission_mode, "quality_window_ready"):
+                    fire_mask = _mission_column(mission_tensor, mission_mode, "quality_window_ready") > 0.5
+                    return [bool(value) for value in fire_mask.detach().cpu().reshape(-1).tolist()]
         explicit_event_mask = obs.get("event_action_mask")
         if explicit_event_mask is not None:
             mask = th.as_tensor(explicit_event_mask)
@@ -986,7 +994,6 @@ class AdaptiveKLPPO(PPO):
             mask = th.as_tensor(explicit_fire_mask).reshape(-1)
             if int(mask.numel()) == int(n_envs):
                 return [bool(value) for value in mask.detach().cpu().tolist()]
-        mission = obs.get("mission")
         if mission is None:
             return None
         mission_tensor = th.as_tensor(mission)

@@ -219,6 +219,17 @@ def _hybrid_fire_event_mask_from_obs(obs: Any, *, batch_size: int, device: th.de
     if not isinstance(obs, dict):
         return None
 
+    mission = obs.get("mission")
+    if mission is not None:
+        mission_tensor = th.as_tensor(mission, device=device)
+        if mission_tensor.ndim == 2:
+            mission_mode = _air_combat_c2_roe_mode_from_dim(int(mission_tensor.shape[1]))
+            if mission_mode is not None and mission_observation_has_field(mission_mode, "quality_window_ready"):
+                fire_mask = _mission_column(mission_tensor, mission_mode, "quality_window_ready") > 0.5
+                if int(fire_mask.shape[0]) != int(batch_size):
+                    return None
+                return fire_mask
+
     explicit_event_mask = obs.get("event_action_mask")
     if explicit_event_mask is not None:
         mask = th.as_tensor(explicit_event_mask, device=device)
@@ -232,7 +243,6 @@ def _hybrid_fire_event_mask_from_obs(obs: Any, *, batch_size: int, device: th.de
         mask = th.as_tensor(explicit_fire_mask, device=device)
         return mask.reshape(-1).to(dtype=th.bool)
 
-    mission = obs.get("mission")
     if mission is None:
         return None
     mission_tensor = th.as_tensor(mission, device=device)

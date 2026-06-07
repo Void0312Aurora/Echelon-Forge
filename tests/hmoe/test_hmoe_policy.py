@@ -78,6 +78,7 @@ class HMoEPolicyTests(unittest.TestCase):
                 "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
                 "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(mission_dim,), dtype=float),
                 "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+                "event_action_mask": spaces.Box(low=0.0, high=1.0, shape=(2,), dtype=float),
             }
         )
 
@@ -1219,7 +1220,7 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertEqual(float(actions[0, 9]), 0.0)
         self.assertEqual(float(actions[1, 9]), 1.0)
 
-    def test_air_combat_c2_roe_v2_explicit_fire_mask_plumbs_into_policy_distribution(self) -> None:
+    def test_air_combat_c2_roe_v2_quality_window_gates_policy_fire_support(self) -> None:
         mode = "air_combat_c2_roe_v2"
         mission_dim = mission_observation_dim(mode)
         observation_space = spaces.Dict(
@@ -1229,6 +1230,7 @@ class HMoEPolicyTests(unittest.TestCase):
                 "rwr": spaces.Box(low=-1.0, high=1.0, shape=(4, 4), dtype=float),
                 "mission": spaces.Box(low=-1.0e6, high=1.0e6, shape=(mission_dim,), dtype=float),
                 "proprio": spaces.Box(low=-1.0, high=7.0, shape=(12,), dtype=float),
+                "event_action_mask": spaces.Box(low=0.0, high=1.0, shape=(2,), dtype=float),
             }
         )
         policy = HierarchicalMoEExecutionPolicy(
@@ -1245,21 +1247,26 @@ class HMoEPolicyTests(unittest.TestCase):
             policy.action_net.bias.zero_()
             policy.action_net.bias[9] = 8.0
             policy.action_net.bias[11] = -2.0
-        mission = th.zeros((2, mission_dim), dtype=th.float32)
+        mission = th.zeros((3, mission_dim), dtype=th.float32)
         mission[1, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+        mission[1, mission_observation_field_index(mode, "quality_window_ready")] = 0.0
+        mission[2, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+        mission[2, mission_observation_field_index(mode, "quality_window_ready")] = 1.0
         obs = {
-            "instruments": th.zeros((2, 42), dtype=th.float32),
-            "contacts": th.zeros((2, 10, 5), dtype=th.float32),
-            "rwr": th.zeros((2, 4, 4), dtype=th.float32),
+            "instruments": th.zeros((3, 42), dtype=th.float32),
+            "contacts": th.zeros((3, 10, 5), dtype=th.float32),
+            "rwr": th.zeros((3, 4, 4), dtype=th.float32),
             "mission": mission,
-            "proprio": th.zeros((2, 12), dtype=th.float32),
+            "proprio": th.zeros((3, 12), dtype=th.float32),
+            "event_action_mask": th.tensor([[1.0, 1.0], [1.0, 1.0], [1.0, 0.0]], dtype=th.float32),
         }
 
         with th.no_grad():
             actions = policy.get_distribution(obs).get_actions(deterministic=True)
 
         self.assertEqual(float(actions[0, 9]), 0.0)
-        self.assertEqual(float(actions[1, 9]), 1.0)
+        self.assertEqual(float(actions[1, 9]), 0.0)
+        self.assertEqual(float(actions[2, 9]), 1.0)
 
     def test_safe_action_bias_initializes_air_combat_hybrid_switch_logits(self) -> None:
         observation_space = spaces.Dict(

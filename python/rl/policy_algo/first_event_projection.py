@@ -128,6 +128,8 @@ def project_air_combat_c2_roe_legal_open_observations(
     mission_projected[rows, _mission_index(mission_mode, "target_contact_present")] = mission_projected.new_tensor(1.0)
     if mission_observation_has_field(mission_mode, "fire_mask_open"):
         mission_projected[rows, _mission_index(mission_mode, "fire_mask_open")] = mission_projected.new_tensor(1.0)
+    if mission_observation_has_field(mission_mode, "quality_window_ready"):
+        mission_projected[rows, _mission_index(mission_mode, "quality_window_ready")] = mission_projected.new_tensor(1.0)
     projected["mission"] = mission_projected
 
     event_mask = projected.get("event_action_mask")

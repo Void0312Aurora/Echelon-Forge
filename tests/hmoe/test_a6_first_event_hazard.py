@@ -419,6 +419,10 @@ class A6FirstEventHazardTests(unittest.TestCase):
             float(projected_mission[0, mission_observation_field_index(mode, "fire_mask_open")].item()),
             1.0,
         )
+        self.assertEqual(
+            float(projected_mission[0, mission_observation_field_index(mode, "quality_window_ready")].item()),
+            1.0,
+        )
         self.assertTrue(th.equal(projection.observations["event_action_mask"][0], th.tensor([1.0, 1.0])))
         self.assertEqual(float(projection.observations["fire_mask"][0].item()), 1.0)
 

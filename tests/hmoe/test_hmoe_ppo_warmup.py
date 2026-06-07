@@ -370,14 +370,22 @@ class HMoEPPOWarmupTests(unittest.TestCase):
 
         self.assertEqual(mask, [True, False])
 
-    def test_a6_policy_fire_mask_uses_c2_roe_v2_explicit_state_completion(self) -> None:
+    def test_a6_policy_fire_mask_uses_c2_roe_v2_quality_window_support(self) -> None:
         mode = "air_combat_c2_roe_v2"
-        mission = th.zeros((2, mission_observation_dim(mode)), dtype=th.float32)
+        mission = th.zeros((3, mission_observation_dim(mode)), dtype=th.float32)
         mission[0, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+        mission[0, mission_observation_field_index(mode, "quality_window_ready")] = 0.0
+        mission[1, mission_observation_field_index(mode, "fire_mask_open")] = 1.0
+        mission[1, mission_observation_field_index(mode, "quality_window_ready")] = 1.0
 
-        mask = AdaptiveKLPPO._a6_first_event_policy_fire_mask_from_obs({"mission": mission}, 2)
+        event_action_mask = th.tensor([[1.0, 1.0], [1.0, 0.0], [1.0, 1.0]], dtype=th.float32)
 
-        self.assertEqual(mask, [True, False])
+        mask = AdaptiveKLPPO._a6_first_event_policy_fire_mask_from_obs(
+            {"mission": mission, "event_action_mask": event_action_mask},
+            3,
+        )
+
+        self.assertEqual(mask, [False, True, False])
 
     def test_a6_launch_window_uses_contact_range_and_track_age_from_policy_obs(self) -> None:
         contacts = th.zeros((2, 10, 5), dtype=th.float32)
