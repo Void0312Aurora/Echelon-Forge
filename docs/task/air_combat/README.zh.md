@@ -129,6 +129,11 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
+- 新的损伤效果 follow-on 是
+  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)：
+  它是 planning 工作面，用来把起爆后的效果转成具体飞机部位损伤，并通过已有动力、燃油、
+  传感器、火灾和飞行消费路径表现出来。它不增加直接坠毁规则、MQ-9 特例击杀规则、
+  Pk 声明、确定性引信声明或 AIM-120C 权威杀伤声明。
 
 ## 当前继续推进重点
 
@@ -139,6 +144,9 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
 - 将 A2 高保真空战毁伤模型作为 sealed retained record 读取；只有用户明确要求时，
   才另启 `G4/G5 authority` 或新的 research expansion
+- 推进
+  [A8 损伤效果链](a8_damage_effect_chain/README.zh.md)，作为具体损伤通过维护中的飞机系统
+  传播的 follow-on，但不增加直接坠毁或特定目标击杀规则
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
@@ -182,6 +190,8 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档
   [archive/a2_high_fidelity_damage_model/README.zh.md](archive/a2_high_fidelity_damage_model/README.zh.md)
+- 损伤效果链 follow-on：
+  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 

@@ -160,6 +160,13 @@ still records `0` releases and legal-open advantage remains negative.
   blast-fragmentation package is accepted as non-authoritative evidence, and
   G4/G5 research packets are closed. Stock authority, Pk, and deterministic
   fuze authority are still not released.
+- The new damage-effect follow-on is
+  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md):
+  it is a planning surface for turning detonation effects into concrete aircraft
+  part damage and then routing those effects through existing propulsion, fuel,
+  sensor, fire, and flight consumers. It does not add a direct crash rule,
+  special MQ-9 kill rule, Pk claim, deterministic fuze claim, or stock AIM-120C
+  lethality claim.
 
 ## Active Follow-On Focus
 
@@ -172,6 +179,10 @@ still records `0` releases and legal-open advantage remains negative.
 - treat the A2 high-fidelity air-combat damage model as a sealed retained
   record; only explicit follow-on requests should open `G4/G5 authority` or new
   research expansion work
+- advance
+  [A8 damage-effect chain](a8_damage_effect_chain/README.md) as the explicit
+  follow-on for concrete damage propagation through maintained aircraft systems,
+  without adding direct crash or special-target kill rules
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
@@ -218,6 +229,8 @@ still records `0` releases and legal-open advantage remains negative.
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive
   [archive/a2_high_fidelity_damage_model/README.md](archive/a2_high_fidelity_damage_model/README.md)
+- Damage-effect chain follow-on:
+  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md)
 - High-fidelity damage-system baseline:
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 
