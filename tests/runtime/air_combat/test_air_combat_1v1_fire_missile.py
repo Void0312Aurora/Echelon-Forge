@@ -280,6 +280,57 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
                 )
                 self.assertGreaterEqual(float(payload.get("max_flight_time_s", 0.0)), 30.0)
 
+    def test_a8_mq9_aim120_validation_fixture_anchors_launcher_weapon_and_non_authority(
+        self,
+    ) -> None:
+        f16 = json.loads(
+            (Path(_DB_PATH) / "aircraft" / "units" / "f16c_block50.json").read_text(
+                encoding="utf-8",
+            )
+        )
+        mq9 = json.loads(
+            (Path(_DB_PATH) / "aircraft" / "units" / "mq9_reaper.json").read_text(
+                encoding="utf-8",
+            )
+        )
+        aim120 = json.loads(
+            (Path(_DB_PATH) / "weapons" / "air_to_air" / "aim_120c.json").read_text(
+                encoding="utf-8",
+            )
+        )
+
+        self.assertEqual(f16["default_loadout"]["1"], "AIM-120C-7")
+        self.assertEqual(f16["default_loadout"]["9"], "AIM-120C-7")
+        self.assertEqual(str(aim120["name"]), "AIM-120C-7")
+        self.assertAlmostEqual(float(aim120["mass_kg"]), 152.0, delta=1.0e-6)
+        self.assertEqual(str(aim120["guidance"]["type"]), "ActiveRadar")
+        self.assertEqual(str(aim120["fuze"]["type"]), "radar_proximity")
+
+        self.assertFalse(bool(mq9["has_ammo"]))
+        self.assertFalse(bool(mq9["has_data_link"]))
+        self.assertFalse(bool(mq9["has_command_link"]))
+        vulnerability = mq9["damage_model"]["vulnerability"]
+        self.assertTrue(bool(vulnerability["synthetic"]))
+        self.assertFalse(bool(vulnerability["calibrated"]))
+        self.assertFalse(bool(vulnerability["pk_authority"]))
+        self.assertFalse(bool(vulnerability["deterministic_fuze_authority"]))
+        self.assertEqual(str(vulnerability["calibration_status"]), "unvalidated")
+
+        component_names = {
+            str(component.get("name", ""))
+            for hitbox in mq9["damage_model"]["hitboxes"]
+            for component in hitbox.get("components", [])
+        }
+        self.assertTrue(
+            {
+                "rear_engine_block",
+                "right_aileron_servo",
+                "right_inboard_flap_servo",
+                "data_link_transceiver",
+                "power_distribution_unit",
+            }.issubset(component_names)
+        )
+
     def test_fire_weapon_bridge_latches_held_trigger_after_one_successful_release(self) -> None:
         sim, blue_id, red_id = _make_direct_fixture()
         _wait_for_track(sim, blue_id, red_id)

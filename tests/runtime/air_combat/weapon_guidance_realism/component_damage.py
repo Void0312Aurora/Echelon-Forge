@@ -1158,6 +1158,72 @@ class ComponentDamageRuntimeMixin:
         self.assertGreater(cooling["ignition_source"], baseline["ignition_source"])
         self.assertGreater(cooling["fire"], baseline["fire"])
 
+    def test_a8_explicit_part_failure_modes_route_to_existing_aircraft_entries(self) -> None:
+        target_name = "F-16C_A8_ExplicitPartFailureModes_Test"
+        with open(
+            resolve_repo_path("examples", "config", "database", "aircraft", "units", "f16c_block50.json"),
+            "r",
+            encoding="utf-8",
+        ) as handle:
+            unit = json.load(handle)
+        unit["name"] = target_name
+        damage_model = unit["damage_model"]
+        damage_model.pop("vulnerability", None)
+        for hitbox in damage_model["hitboxes"]:
+            systems = set(str(system) for system in hitbox.get("systems", []))
+            if "wings" in systems and "flight_control" in systems:
+                hitbox["components"] = [
+                    {
+                        "name": "a8_explicit_failure_payload",
+                        "system": "auxiliary_payload",
+                        "offset": [-0.8, 2.8, 0.0],
+                        "size": [1.2, 1.0, 0.25],
+                        "armor": 0.2,
+                        "threshold_scale": 1.0,
+                        "mechanism_thresholds": {
+                            "blast": 1.0,
+                            "fragmentation": 1.0,
+                            "blast_fragmentation": 1.0,
+                            "continuous_rod": 1.0,
+                            "hit_to_kill": 1.0,
+                        },
+                        "redundancy_group_id": "a8_explicit_failure_payload",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "failure_mode_weights": {
+                            "fuel_leak": 1.0,
+                            "hydraulic_pressure_loss": 1.0,
+                            "electrical_loss": 1.0,
+                            "data_loss": 1.0,
+                            "fire_source": 1.0,
+                        },
+                        "critical": True,
+                    }
+                ]
+
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            target_name,
+            "continuous_rod",
+            (-0.8, 2.8, 0.0),
+            damage=220.0,
+            radius=35.0,
+            overrides=[unit],
+        )
+
+        self.assertEqual(str(event.component_primary_name), "a8_explicit_failure_payload")
+        self.assertEqual(str(event.component_primary_system), "auxiliary_payload")
+        self.assertGreater(int(event.component_failure_count), 0)
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertEqual(len(component_rows), 1)
+        self.assertGreater(float(component_rows[0].mechanism_rod_cut_margin), 0.0)
+        self.assertGreater(float(component_rows[0].mechanism_penetration_margin), 0.0)
+        self.assertGreater(overlay["fuel_leak"], 0.0)
+        self.assertLess(overlay["hydraulic_pressure"], 1.0)
+        self.assertLess(overlay["avionics"], 1.0)
+        self.assertLess(overlay["command_navigation"], 1.0)
+        self.assertGreater(overlay["ignition_source"], 0.0)
+        self.assertGreater(overlay["fire"], 0.0)
+
     def test_phase3_typed_dependency_threshold_can_gate_propagation(self) -> None:
         permissive_name = "F-16C_A2_TypedDependencyThresholdPermissive_Test"
         gated_name = "F-16C_A2_TypedDependencyThresholdGated_Test"

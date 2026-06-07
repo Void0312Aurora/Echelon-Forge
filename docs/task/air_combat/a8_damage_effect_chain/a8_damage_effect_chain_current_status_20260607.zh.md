@@ -1,7 +1,7 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-07` planning checkpoint。A8 已有有边界工作面，并已整合当前会话
-只读结构发现。运行时实现尚未开始。
+状态：`2026-06-07` 第一轮实现检查点。A8 已有有边界工作面，并已整合当前会话
+只读结构发现；第一轮 worker 结果已作为有限运行时/测试切片验收。
 
 ## 本次变化
 
@@ -11,6 +11,35 @@
   MQ-9/AIM-120C 验证和验收。
 - 已整合当前会话的只读 explorer 检查，分别覆盖引信/效果代码、损伤到飞行消费方、
   MQ-9/AIM-120C 验证样例。
+- 已新增第一轮实现派发队列：
+  [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md)。
+- 已验收第一轮 worker：
+  - `A8-W1 Shot Record`：通过。它固定了
+    `EffectsEvent -> DamageReport -> DiagnosticsTrace` 这条已有记录链，
+    没有新增公开字段。
+  - `A8-W2 Part Failure Vocabulary`：部分通过。它把机制载荷映射成内部部件故障类型，
+    并通过已有飞机损伤量表现出来；公开的逐部件故障类型字段仍留给集成阶段。
+  - `A8-W3 Validation Fixtures`：部分通过。它增加 MQ-9/AIM-120C 固定检查和非权威保护；
+    后续飞行消费方检查仍留给 `A8-DEC-E`。
+
+## 2026-06-07 验收检查
+
+已运行命令：
+
+```bash
+git diff --check -- docs/task/air_combat/a8_damage_effect_chain src/components/combat/damage.h src/content/unit_definition_loader.cpp src/models/weapons/detail/default_effects_component_damage_detail.inc src/models/weapons/detail/default_effects_system_effect_detail.inc tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py tests/runtime/air_combat/weapon_guidance_realism
+cmake --build build-workshop -j 8
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+```
+
+结果：
+
+- diff 空白检查：通过。
+- 编译：通过。
+- 武器/引信/损伤链守卫：`164 passed, 1 skipped`。
+- 1v1 发射链测试：`11 passed`。
+- 被跳过的用例是有意保留项：它等待公开射击记录字段和公开具体损伤类型词表。
 
 ## 成熟度矩阵
 
@@ -97,9 +126,10 @@ MQ-9 / AIM-120C 验证结构：
 
 立即：
 
-- 决定射击效果链的最小 public/debug 记录面。
-- 改物理前先冻结首批 MQ-9/AIM-120C 验证样例。
-- 第一轮运行时切口保持在“机制载荷到具体部件故障”层。
+- 增加公开行记录中的具体故障类型名称和严重度，但不能扩大成直接击杀规则。
+- `A8-DEC-E` 只对接已有维护中的消费方：动力、燃油/质量、传感器、火灾和气动/操纵行为。
+- 消费方改动后必须重跑 MQ-9/AIM-120C 固定样例；当前样例证明的是可审计损伤和非权威边界，
+  不是最终飞行响应保真度。
 
 Held：
 
@@ -116,15 +146,13 @@ Deferred：
 
 ## 下一步推荐顺序
 
-1. 用已整合的结构证据冻结射击效果记录形状。
-2. 增加固定样例中记录存在性的测试。
-3. 增加具体部位损伤类型。
-4. 先接最窄的一组消费方：动力、燃油/质量和一个翼面/操纵气动效果。
-5. 运行 MQ-9/AIM-120C 固定验证，再决定 accepted 或 held。
+1. 增加公开行记录中的具体故障类型名称和严重度。
+2. 先接最窄的一组消费方：动力、燃油/质量和一个翼面/操纵气动效果。
+3. 运行 MQ-9/AIM-120C 固定验证，再决定 accepted 或 held。
 
 ## 禁止结论
 
-- A8 仍是 planning，不是 accepted。
+- 这是第一轮已验收切片，不是整个 A8 完成。
 - A8 不证明 AIM-120C 真实杀伤力。
 - A8 不释放击杀概率或确定性引信权威。
 - A8 不用直接击杀规则替代飞行模型。

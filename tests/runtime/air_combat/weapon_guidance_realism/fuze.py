@@ -225,8 +225,32 @@ class FuzeRuntimeMixin:
         self.assertEqual(str(effects.outcome_state), "fuze_no_detonation")
         self.assertLess(float(effects.miss_distance_m), 35.0)
         self.assertAlmostEqual(float(effects.confidence), 0.0, delta=1.0e-6)
+        self.assertEqual(int(effects.component_hit_count), 0)
+        self.assertEqual(int(effects.component_failure_count), 0)
+        self.assertEqual(str(effects.component_primary_name), "")
+        self.assertEqual(list(effects.component_mechanism_load_rows), [])
+        self.assertAlmostEqual(float(effects.spatial_effect_scale), 0.0, delta=1.0e-9)
+        self.assertAlmostEqual(float(effects.mechanism_fragment_energy_j), 0.0, delta=1.0e-9)
+        self.assertAlmostEqual(float(effects.mechanism_blast_overpressure_kpa), 0.0, delta=1.0e-9)
+        self.assertAlmostEqual(float(effects.mechanism_rod_cut_margin), 0.0, delta=1.0e-9)
+        self.assertEqual(int(effects.warhead_spatial_sample_count), 0)
+        self.assertEqual(int(report.source_event_id), int(effects.event_id))
         self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+        self.assertIn("mission=0.000000", str(report.platform_damage_state_delta))
+        self.assertIn("mobility=0.000000", str(report.platform_damage_state_delta))
         self.assertFalse(bool(report.destroyed))
+        damage_trace = next(
+            (
+                trace
+                for trace in events.diagnostics_traces
+                if int(trace.effects_event_id) == int(effects.event_id)
+            ),
+            None,
+        )
+        self.assertIsNotNone(damage_trace)
+        assert damage_trace is not None
+        self.assertEqual(int(damage_trace.damage_report_id), int(report.report_id))
 
     def test_fuze_event_records_detonation_attitude_evidence(self) -> None:
         sim = _make_baseline_kernel()

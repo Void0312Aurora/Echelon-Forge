@@ -69,6 +69,116 @@ class WarheadEffectsRuntimeMixin:
         self.assertAlmostEqual(float(effects.fuze_trigger_radius_m), 35.0, delta=1.0e-6)
         self.assertTrue(bool(effects.fuze_profile_synthetic))
 
+    def test_a8_shot_effect_record_links_fuze_geometry_warhead_part_entry_and_consequence_hook(self) -> None:
+        sim = ef_py.SimulationKernel()
+        sim.reset(20260607)
+        self.assertTrue(sim.load_database(_DB_PATH))
+        attacker_id, target_id = _spawn_structured_f16_pair(sim)
+
+        local = (-0.8, 4.1, 0.0)
+        missile_velocity = (900.0, -250.0, 0.0)
+        profile = _make_warhead_profile(
+            "blast_fragmentation",
+            damage=90.0,
+            radius=35.0,
+        )
+        ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+            attacker_id,
+            target_id,
+            float(local[0]),
+            float(local[1]),
+            float(local[2]),
+            profile,
+            float(missile_velocity[0]),
+            float(missile_velocity[1]),
+            float(missile_velocity[2]),
+        )
+        self.assertTrue(bool(ok))
+
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+        effects = events.effects_events[0]
+        report = events.damage_reports[0]
+        damage_trace = next(
+            (
+                trace
+                for trace in events.diagnostics_traces
+                if int(trace.effects_event_id) == int(effects.event_id)
+            ),
+            None,
+        )
+        self.assertIsNotNone(damage_trace)
+        assert damage_trace is not None
+
+        self.assertEqual(str(effects.trigger_type), "debug_profiled_local_proximity_hit")
+        self.assertEqual(str(effects.outcome_state), "hit")
+        self.assertEqual(str(effects.fuze_type), "proximity")
+        self.assertAlmostEqual(float(effects.fuze_trigger_radius_m), 35.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.fuze_effective_reliability), 1.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_local_forward_m), local[0], delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_local_right_m), local[1], delta=1.0e-6)
+        self.assertAlmostEqual(float(effects.detonation_local_up_m), local[2], delta=1.0e-6)
+        self.assertAlmostEqual(
+            float(effects.miss_distance_m),
+            math.sqrt(local[0] ** 2 + local[1] ** 2 + local[2] ** 2),
+            delta=1.0e-6,
+        )
+        self.assertGreater(float(effects.closure_mps), 0.0)
+
+        self.assertEqual(str(effects.effect_family), "blast_fragmentation")
+        self.assertAlmostEqual(float(effects.warhead_mass_kg), 12.0, delta=1.0e-6)
+        self.assertFalse(bool(effects.warhead_profile_synthetic))
+        self.assertFalse(bool(effects.damage_scalar_synthetic))
+        self.assertTrue(bool(effects.direct_hitbox_intersection))
+        self.assertGreater(float(effects.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(effects.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(float(effects.mechanism_blast_impulse_kpa_ms), 0.0)
+        self.assertGreater(int(effects.warhead_spatial_sample_count), 0)
+
+        self.assertEqual(str(effects.component_primary_name), "right_aileron_actuator")
+        self.assertEqual(str(effects.component_primary_system), "flight_control")
+        self.assertGreater(float(effects.component_failure_probability), 0.0)
+        self.assertEqual(str(effects.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertFalse(bool(effects.component_failure_probability_calibrated))
+        self.assertGreater(int(effects.component_failure_count), 0)
+        self.assertLess(float(effects.component_primary_integrity), 1.0)
+        self.assertGreater(float(effects.component_primary_mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(effects.component_primary_mechanism_blast_overpressure_kpa), 0.0)
+
+        rows = list(effects.component_mechanism_load_rows)
+        self.assertEqual(len(rows), int(effects.component_hit_count))
+        primary_row = next(
+            (
+                row
+                for row in rows
+                if str(row.component_name) == str(effects.component_primary_name)
+            ),
+            None,
+        )
+        self.assertIsNotNone(primary_row)
+        assert primary_row is not None
+        self.assertEqual(str(primary_row.component_system), str(effects.component_primary_system))
+        self.assertTrue(bool(primary_row.direct_hit))
+        self.assertGreater(float(primary_row.component_failure_probability), 0.0)
+        self.assertEqual(str(primary_row.component_failure_probability_source), "synthetic_sigmoid")
+        self.assertFalse(bool(primary_row.component_failure_probability_authority))
+        self.assertEqual(str(primary_row.component_failure_probability_weapon_family), "blast_fragmentation")
+        self.assertGreater(float(primary_row.mechanism_fragment_energy_j), 0.0)
+        self.assertGreater(float(primary_row.mechanism_blast_overpressure_kpa), 0.0)
+        self.assertGreater(int(primary_row.component_dependency_propagation_count), 0)
+        self.assertNotEqual(str(primary_row.component_dependency_target_system), "")
+
+        self.assertEqual(int(report.source_event_id), int(effects.event_id))
+        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertIn("mission=", str(report.platform_damage_state_delta))
+        self.assertIn("mobility=", str(report.platform_damage_state_delta))
+        self.assertIn("sensor=", str(report.platform_damage_state_delta))
+        self.assertIn("survivability=", str(report.platform_damage_state_delta))
+        self.assertFalse(bool(report.destroyed))
+        self.assertNotEqual(str(report.loss_state_to), "lost")
+        self.assertEqual(int(damage_trace.damage_report_id), int(report.report_id))
+
     def test_phase3_warhead_family_changes_structured_air_effect_distribution(self) -> None:
         fuselage = (0.0, 0.0, 0.3)
         wing = (-0.753, 4.0, 0.0)

@@ -1152,6 +1152,50 @@ bool parse_unit_json(
                                 }
                             }
                         }
+                        if (component_json.contains("failure_modes")) {
+                            const auto& failure_modes_json = component_json["failure_modes"];
+                            if (failure_modes_json.is_array()) {
+                                for (const auto& mode_json : failure_modes_json) {
+                                    if (!mode_json.is_string()) {
+                                        continue;
+                                    }
+                                    const std::string mode =
+                                        canonical_part_failure_mode(mode_json.get<std::string>());
+                                    if (is_known_part_failure_mode(mode)) {
+                                        component.failure_mode_weights[mode] =
+                                            std::max(component.failure_mode_weights[mode], 1.0);
+                                    }
+                                }
+                            } else if (failure_modes_json.is_object()) {
+                                for (const auto& [mode_key, value] :
+                                     failure_modes_json.items()) {
+                                    if (!value.is_number()) {
+                                        continue;
+                                    }
+                                    const std::string mode =
+                                        canonical_part_failure_mode(mode_key);
+                                    if (is_known_part_failure_mode(mode)) {
+                                        component.failure_mode_weights[mode] =
+                                            std::clamp(value.get<double>(), 0.0, 2.0);
+                                    }
+                                }
+                            }
+                        }
+                        if (component_json.contains("failure_mode_weights") &&
+                            component_json["failure_mode_weights"].is_object()) {
+                            for (const auto& [mode_key, value] :
+                                 component_json["failure_mode_weights"].items()) {
+                                if (!value.is_number()) {
+                                    continue;
+                                }
+                                const std::string mode =
+                                    canonical_part_failure_mode(mode_key);
+                                if (is_known_part_failure_mode(mode)) {
+                                    component.failure_mode_weights[mode] =
+                                        std::clamp(value.get<double>(), 0.0, 2.0);
+                                }
+                            }
+                        }
                         component.redundancy_group =
                             component_json.value("redundancy_group", component.redundancy_group);
                         component.redundancy_weight =

@@ -110,6 +110,287 @@ double component_system_fragility_scale(
     return std::clamp(scale, 0.84, 1.20);
 }
 
+struct PartFailureModeEntry {
+    std::string mode;
+    double severity = 0.0;
+};
+
+struct PartFailureModeAssessment {
+    std::vector<PartFailureModeEntry> entries;
+    std::string primary_mode;
+    double primary_severity = 0.0;
+    bool explicit_weights = false;
+};
+
+double inferred_part_failure_mode_weight(
+    const std::string& mode,
+    const std::string& system,
+    const DamageComponent* component
+) {
+    const std::string component_name =
+        component ? damage_component_key(*component) : std::string{};
+    const std::string group_key =
+        component ? damage_component_redundancy_group_key(*component) : std::string{};
+
+    if (mode == "puncture") {
+        if (system_is_air_fuel(system) ||
+            system_is_air_propulsion(system) ||
+            system_is_air_sensor(system) ||
+            system_name_matches(system, "avionics") ||
+            system_name_matches(system, "data_link") ||
+            system_name_matches(system, "hydraulic")) {
+            return 1.0;
+        }
+        return system_is_air_structure(system) ? 0.70 : 0.45;
+    }
+    if (mode == "cut") {
+        if (system_is_air_control_surface(system) ||
+            system_is_air_structure(system) ||
+            system_is_air_propulsion(system) ||
+            system_is_air_fuel(system) ||
+            system_name_matches(component_name, "spar") ||
+            system_name_matches(component_name, "propeller")) {
+            return 1.0;
+        }
+        return 0.35;
+    }
+    if (mode == "blast_deformation") {
+        if (system_is_air_structure(system) ||
+            system_is_air_control_surface(system) ||
+            system_is_air_propulsion(system) ||
+            system_is_air_sensor(system) ||
+            system_name_matches(system, "avionics")) {
+            return 1.0;
+        }
+        return 0.55;
+    }
+    if (mode == "fuel_leak") {
+        return system_is_air_fuel(system) ? 1.0 : 0.0;
+    }
+    if (mode == "hydraulic_pressure_loss") {
+        const bool named_control_actuator =
+            system_is_air_control_surface(system) &&
+            (system_name_matches(component_name, "actuator") ||
+             system_name_matches(component_name, "servo") ||
+             system_name_matches(component_name, "cyclic") ||
+             system_name_matches(component_name, "collective"));
+        if (component && (component_is_hydraulic_supply_path(*component) ||
+                          named_control_actuator)) {
+            return 1.0;
+        }
+        return system_name_matches(system, "hydraulic") ? 1.0 : 0.0;
+    }
+    if (mode == "electrical_loss") {
+        if (system_name_matches(system, "avionics") ||
+            system_name_matches(system, "electrical") ||
+            system_name_matches(system, "power") ||
+            system_name_matches(component_name, "power") ||
+            system_name_matches(component_name, "generator") ||
+            system_name_matches(group_key, "power")) {
+            return 1.0;
+        }
+        return 0.0;
+    }
+    if (mode == "data_loss") {
+        if (system_is_air_sensor(system) ||
+            system_name_matches(system, "data_link") ||
+            system_name_matches(system, "avionics") ||
+            system_name_matches(system, "command") ||
+            system_name_matches(system, "navigation")) {
+            return 1.0;
+        }
+        return 0.0;
+    }
+    if (mode == "fire_source") {
+        if (system_is_air_fuel(system) ||
+            system_is_air_propulsion(system) ||
+            system_name_matches(system, "avionics") ||
+            system_name_matches(system, "electrical") ||
+            system_name_matches(system, "power") ||
+            system_name_matches(component_name, "power") ||
+            system_name_matches(component_name, "generator")) {
+            return 1.0;
+        }
+        return 0.0;
+    }
+    if (mode == "structural_weakening") {
+        if (system_is_air_structure(system) ||
+            system_is_air_propulsion(system) ||
+            system_name_matches(component_name, "spar") ||
+            system_name_matches(component_name, "hub") ||
+            system_name_matches(component_name, "mount")) {
+            return 1.0;
+        }
+        return 0.0;
+    }
+    return 0.0;
+}
+
+double part_failure_mode_weight(
+    const std::string& mode,
+    const std::string& system,
+    const DamageComponent* component
+) {
+    if (component && !component->failure_mode_weights.empty()) {
+        const auto it = component->failure_mode_weights.find(mode);
+        return it == component->failure_mode_weights.end()
+            ? 0.0
+            : std::clamp(it->second, 0.0, 2.0);
+    }
+    return inferred_part_failure_mode_weight(mode, system, component);
+}
+
+void add_part_failure_mode(
+    PartFailureModeAssessment& assessment,
+    const std::string& raw_mode,
+    double raw_severity,
+    const std::string& system,
+    const DamageComponent* component
+) {
+    const std::string mode = canonical_part_failure_mode(raw_mode);
+    if (!is_known_part_failure_mode(mode)) {
+        return;
+    }
+    const double weight = part_failure_mode_weight(mode, system, component);
+    const double severity = std::clamp(raw_severity * weight, 0.0, 1.0);
+    if (severity <= 0.015) {
+        return;
+    }
+    for (auto& entry : assessment.entries) {
+        if (entry.mode == mode) {
+            entry.severity = std::max(entry.severity, severity);
+            if (entry.severity > assessment.primary_severity) {
+                assessment.primary_mode = entry.mode;
+                assessment.primary_severity = entry.severity;
+            }
+            return;
+        }
+    }
+    assessment.entries.push_back({mode, severity});
+    if (severity > assessment.primary_severity) {
+        assessment.primary_mode = mode;
+        assessment.primary_severity = severity;
+    }
+}
+
+PartFailureModeAssessment assess_part_failure_modes(
+    double failure_probability,
+    double mechanism_scale,
+    double component_scale,
+    bool direct_hit,
+    const WarheadMechanismLoadEvidence& mechanism_load,
+    const std::string& system,
+    const DamageComponent* component
+) {
+    PartFailureModeAssessment assessment{};
+    assessment.explicit_weights =
+        component && !component->failure_mode_weights.empty();
+    const double fragment_load = std::clamp(
+        std::log1p(std::max(0.0, mechanism_load.fragment_energy_j)) / std::log(2501.0),
+        0.0,
+        1.35);
+    const double density_load = std::clamp(
+        mechanism_load.fragment_areal_density_per_m2 / 140.0,
+        0.0,
+        1.35);
+    const double penetration_load =
+        std::clamp(mechanism_load.penetration_margin / 2.0, 0.0, 1.35);
+    const double blast_load = std::clamp(
+        (mechanism_load.blast_overpressure_kpa / 240.0) +
+            (mechanism_load.blast_impulse_kpa_ms / 850.0),
+        0.0,
+        1.35);
+    const double rod_load =
+        std::clamp(mechanism_load.rod_cut_margin / 1.6, 0.0, 1.35);
+    const double incidence_load = std::clamp(
+        0.45 + 0.55 * std::max(0.0, mechanism_load.surface_incidence_cos),
+        0.45,
+        1.0);
+    const double part_coupling = std::clamp(
+        (direct_hit ? 0.30 : 0.16) +
+            0.46 * std::clamp(failure_probability, 0.0, 1.0) +
+            0.16 * std::clamp(mechanism_scale, 0.0, 1.25) +
+            0.08 * std::clamp(component_scale, 0.40, 1.80),
+        0.0,
+        1.0);
+    const double puncture_channel = std::clamp(
+        0.42 * fragment_load +
+            0.24 * density_load +
+            0.24 * penetration_load +
+            0.10 * incidence_load,
+        0.0,
+        1.45);
+    const double cut_channel = std::clamp(
+        0.66 * rod_load +
+            0.24 * penetration_load +
+            0.10 * incidence_load,
+        0.0,
+        1.45);
+    const double blast_channel = std::clamp(
+        0.82 * blast_load +
+            0.10 * fragment_load +
+            0.08 * incidence_load,
+        0.0,
+        1.45);
+    const double puncture = smoothstep01(puncture_channel / 0.95) * part_coupling;
+    const double cut = smoothstep01(cut_channel / 0.92) * part_coupling;
+    const double blast_deformation =
+        smoothstep01(blast_channel / 0.90) * part_coupling;
+    const double breach = std::max({puncture, cut, 0.45 * blast_deformation});
+    const double power_data_damage =
+        std::max({0.65 * puncture, 0.55 * cut, 0.85 * blast_deformation});
+    const double thermal_source =
+        std::max({0.65 * puncture, 0.50 * cut, 0.75 * blast_deformation});
+    const double structural_damage =
+        std::max({0.45 * puncture, 0.85 * cut, 0.80 * blast_deformation});
+
+    add_part_failure_mode(assessment, "puncture", puncture, system, component);
+    add_part_failure_mode(assessment, "cut", cut, system, component);
+    add_part_failure_mode(
+        assessment,
+        "blast_deformation",
+        blast_deformation,
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "fuel_leak",
+        breach,
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "hydraulic_pressure_loss",
+        std::max(0.72 * breach, 0.55 * cut),
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "electrical_loss",
+        power_data_damage,
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "data_loss",
+        power_data_damage,
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "fire_source",
+        thermal_source,
+        system,
+        component);
+    add_part_failure_mode(
+        assessment,
+        "structural_weakening",
+        structural_damage,
+        system,
+        component);
+    return assessment;
+}
+
 double component_failure_probability(
     double severity,
     double mechanism_scale,
@@ -333,6 +614,144 @@ void apply_component_failure_impulse(
         if (system_is_air_structure(system) || system_is_air_fuel(system) ||
             fire_suppression_path || system_is_air_fire_suppression(system)) {
             platform_damage->survivability_margin -= 0.04 + 0.08 * impulse;
+        }
+    }
+}
+
+void apply_part_failure_mode_state(
+    const std::string& system,
+    const DamageComponent* component,
+    const PartFailureModeAssessment& assessment,
+    ComponentDamageState* component_damage,
+    AircraftDamageState* aircraft_damage,
+    PlatformDamageState* platform_damage
+) {
+    if (assessment.entries.empty()) {
+        return;
+    }
+
+    if (component && component_damage) {
+        const std::string component_key = damage_component_key(*component);
+        auto& mode_severity =
+            component_damage->component_failure_mode_severity[component_key];
+        for (const auto& entry : assessment.entries) {
+            double& accumulated = mode_severity[entry.mode];
+            accumulated = std::max(accumulated, std::clamp(entry.severity, 0.0, 1.0));
+        }
+        if (!assessment.primary_mode.empty()) {
+            component_damage->component_primary_failure_mode[component_key] =
+                assessment.primary_mode;
+        }
+    }
+
+    if (!assessment.explicit_weights) {
+        if (aircraft_damage && component && system_is_air_structure(system)) {
+            for (const auto& entry : assessment.entries) {
+                if (entry.mode != "structural_weakening") {
+                    continue;
+                }
+                const double impulse = std::clamp(entry.severity, 0.0, 1.0);
+                if (impulse > 1.0e-9) {
+                    aircraft_damage->flutter_exposure += 0.01 + 0.05 * impulse;
+                }
+            }
+        }
+        return;
+    }
+
+    for (const auto& entry : assessment.entries) {
+        const double impulse = std::clamp(entry.severity, 0.0, 1.0);
+        if (impulse <= 1.0e-9) {
+            continue;
+        }
+
+        if (aircraft_damage) {
+            if (entry.mode == "puncture") {
+                if (system_is_air_fuel(system)) {
+                    aircraft_damage->fuel_leak_severity += 0.03 + 0.09 * impulse;
+                    aircraft_damage->flammable_fluid_exposure += 0.02 + 0.06 * impulse;
+                }
+                if (system_is_air_propulsion(system)) {
+                    aircraft_damage->propulsion_integrity -= 0.02 + 0.06 * impulse;
+                    aircraft_damage->ignition_source_severity += 0.01 + 0.04 * impulse;
+                }
+                if (system_is_air_structure(system)) {
+                    aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse;
+                }
+                if (system_is_air_sensor(system) || system_name_matches(system, "avionics")) {
+                    aircraft_damage->avionics_integrity -= 0.015 + 0.04 * impulse;
+                }
+            } else if (entry.mode == "cut") {
+                if (system_is_air_control_surface(system)) {
+                    aircraft_damage->flight_control_integrity -= 0.025 + 0.08 * impulse;
+                    aircraft_damage->hydraulic_pressure_availability -= 0.015 + 0.06 * impulse;
+                }
+                if (system_is_air_propulsion(system)) {
+                    aircraft_damage->propulsion_integrity -= 0.025 + 0.07 * impulse;
+                }
+                aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse;
+                aircraft_damage->structural_overstress += 0.01 + 0.04 * impulse;
+            } else if (entry.mode == "blast_deformation") {
+                aircraft_damage->structural_integrity -= 0.02 + 0.06 * impulse;
+                aircraft_damage->structural_overstress += 0.015 + 0.05 * impulse;
+                if (system_is_air_control_surface(system)) {
+                    aircraft_damage->flight_control_integrity -= 0.015 + 0.05 * impulse;
+                    aircraft_damage->control_asymmetry += 0.004 + 0.014 * impulse;
+                }
+                if (system_is_air_propulsion(system)) {
+                    aircraft_damage->propulsion_integrity -= 0.015 + 0.05 * impulse;
+                }
+            } else if (entry.mode == "fuel_leak") {
+                aircraft_damage->fuel_system_integrity -= 0.035 + 0.08 * impulse;
+                aircraft_damage->fuel_leak_severity += 0.05 + 0.16 * impulse;
+                aircraft_damage->flammable_fluid_exposure += 0.04 + 0.12 * impulse;
+                if (component && component_is_lateral_fuel_storage_path(*component)) {
+                    aircraft_damage->fuel_imbalance_severity += 0.03 + 0.09 * impulse;
+                    aircraft_damage->control_asymmetry += 0.004 + 0.015 * impulse;
+                }
+            } else if (entry.mode == "hydraulic_pressure_loss") {
+                aircraft_damage->hydraulic_pressure_availability -= 0.06 + 0.16 * impulse;
+                aircraft_damage->hydraulic_integrity -= 0.025 + 0.08 * impulse;
+                aircraft_damage->flight_control_integrity -= 0.025 + 0.07 * impulse;
+                aircraft_damage->flammable_fluid_exposure += 0.015 + 0.05 * impulse;
+            } else if (entry.mode == "electrical_loss") {
+                aircraft_damage->avionics_integrity -= 0.045 + 0.11 * impulse;
+                aircraft_damage->command_navigation_integrity -= 0.02 + 0.07 * impulse;
+                aircraft_damage->ignition_source_severity += 0.01 + 0.04 * impulse;
+            } else if (entry.mode == "data_loss") {
+                aircraft_damage->avionics_integrity -= 0.035 + 0.08 * impulse;
+                aircraft_damage->command_navigation_integrity -= 0.04 + 0.10 * impulse;
+                aircraft_damage->mission_crew_effectiveness -= 0.01 + 0.03 * impulse;
+            } else if (entry.mode == "fire_source") {
+                aircraft_damage->ignition_source_severity += 0.04 + 0.14 * impulse;
+                aircraft_damage->fire_severity += 0.02 + 0.08 * impulse;
+                if (system_is_air_fuel(system)) {
+                    aircraft_damage->flammable_fluid_exposure += 0.02 + 0.07 * impulse;
+                }
+            } else if (entry.mode == "structural_weakening") {
+                aircraft_damage->structural_integrity -= 0.035 + 0.11 * impulse;
+                aircraft_damage->structural_overstress += 0.02 + 0.08 * impulse;
+                aircraft_damage->flutter_exposure += 0.01 + 0.05 * impulse;
+            }
+        }
+
+        if (platform_damage) {
+            if (entry.mode == "fuel_leak" || entry.mode == "fire_source" ||
+                entry.mode == "structural_weakening" ||
+                entry.mode == "blast_deformation") {
+                platform_damage->survivability_margin -= 0.015 + 0.05 * impulse;
+            }
+            if (entry.mode == "hydraulic_pressure_loss" ||
+                (entry.mode == "cut" && system_is_air_control_surface(system))) {
+                platform_damage->mobility_capability -= 0.015 + 0.05 * impulse;
+            }
+            if (entry.mode == "data_loss" || entry.mode == "electrical_loss") {
+                platform_damage->mission_capability -= 0.015 + 0.05 * impulse;
+                platform_damage->sensor_capability -= 0.01 + 0.04 * impulse;
+            }
+            if (entry.mode == "fire_source") {
+                platform_damage->fire_severity += 0.015 + 0.05 * impulse;
+            }
         }
     }
 }

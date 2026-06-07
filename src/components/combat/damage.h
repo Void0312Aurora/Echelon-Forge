@@ -31,10 +31,49 @@ struct DamageComponent {
     double armor_mm = 0.0;
     double threshold_scale = 1.0;
     std::unordered_map<std::string, double> mechanism_threshold_scales;
+    std::unordered_map<std::string, double> failure_mode_weights;
     double redundancy_group = 0.0;
     double redundancy_weight = 1.0;
     bool critical = true;
 };
+
+inline std::string canonical_part_failure_mode(const std::string& mode) {
+    if (mode == "blast-deformation") {
+        return "blast_deformation";
+    }
+    if (mode == "fuel-leak") {
+        return "fuel_leak";
+    }
+    if (mode == "hydraulic-pressure-loss") {
+        return "hydraulic_pressure_loss";
+    }
+    if (mode == "electrical-loss") {
+        return "electrical_loss";
+    }
+    if (mode == "data-loss") {
+        return "data_loss";
+    }
+    if (mode == "fire-source") {
+        return "fire_source";
+    }
+    if (mode == "structural-weakening") {
+        return "structural_weakening";
+    }
+    return mode;
+}
+
+inline bool is_known_part_failure_mode(const std::string& mode) {
+    const std::string canonical = canonical_part_failure_mode(mode);
+    return canonical == "puncture" ||
+        canonical == "cut" ||
+        canonical == "blast_deformation" ||
+        canonical == "fuel_leak" ||
+        canonical == "hydraulic_pressure_loss" ||
+        canonical == "electrical_loss" ||
+        canonical == "data_loss" ||
+        canonical == "fire_source" ||
+        canonical == "structural_weakening";
+}
 
 inline std::string damage_component_key(const DamageComponent& component) {
     if (!component.name.empty()) {
@@ -199,6 +238,9 @@ struct ComponentDamageState {
     std::unordered_map<std::string, std::string> component_redundancy_group;
     std::unordered_map<std::string, std::string> component_system;
     std::unordered_map<std::string, double> component_redundancy_weight;
+    std::unordered_map<std::string, std::unordered_map<std::string, double>>
+        component_failure_mode_severity;
+    std::unordered_map<std::string, std::string> component_primary_failure_mode;
     std::unordered_map<std::string, double> redundancy_group_availability;
     std::unordered_map<std::string, std::uint32_t> redundancy_group_member_count;
     std::unordered_map<std::string, std::uint32_t> redundancy_group_failed_count;

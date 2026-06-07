@@ -161,6 +161,14 @@ void sample_default_effects_component_failure(
         }
     }
 
+    const PartFailureModeAssessment part_failure_modes = assess_part_failure_modes(
+        failure_probability,
+        mechanism_scale,
+        resolved_component_scale,
+        direct_hit,
+        mechanism_load,
+        system,
+        component);
     const double failure_sample = rand_uniform01(scratch.component_rng_state);
     if (component_row) {
         component_row->component_failure_probability = failure_probability;
@@ -301,6 +309,13 @@ void sample_default_effects_component_failure(
 
     if (failure_sample <= failure_probability) {
         ++scratch.component_failure_count;
+        apply_part_failure_mode_state(
+            system,
+            component,
+            part_failure_modes,
+            context.component_damage,
+            context.aircraft_damage,
+            context.platform_damage);
         apply_component_failure_impulse(
             system,
             failure_probability,

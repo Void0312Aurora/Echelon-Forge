@@ -86,6 +86,8 @@ A2 已经留下了一套有用的结构化损伤运行时，但最近 AIM-120C �
   [a8_damage_effect_chain_task_clusters_20260607.md](a8_damage_effect_chain_task_clusters_20260607.md)
 - 当前状态：
   [a8_damage_effect_chain_current_status_20260607.md](a8_damage_effect_chain_current_status_20260607.md)
+- 派发队列：
+  [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md)
 
 ## 产出和证据
 

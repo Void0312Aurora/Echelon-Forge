@@ -247,6 +247,25 @@ class AircraftDamageRuntimeMixin:
                         float(flight_before.fuel_leak_rate_kg_s),
                     )
 
+    def test_a8_mq9_wing_spar_default_failure_modes_route_to_structural_entries(self) -> None:
+        overlay, _, event = _profiled_local_hit_overlay_for_target(
+            "MQ-9_Reaper",
+            "continuous_rod",
+            (-0.4, 9.3, 0.0),
+            damage=240.0,
+            radius=35.0,
+        )
+
+        self.assertEqual(str(event.component_primary_name), "right_outboard_wing_spar")
+        self.assertEqual(str(event.component_primary_system), "wings")
+        self.assertGreater(int(event.component_failure_count), 0)
+        component_rows = list(event.component_mechanism_load_rows)
+        self.assertTrue(component_rows)
+        self.assertGreater(float(component_rows[0].mechanism_rod_cut_margin), 0.0)
+        self.assertLess(overlay["structure"], 1.0)
+        self.assertGreater(overlay["structural_overstress"], 0.0)
+        self.assertGreater(overlay["flutter_exposure"], 0.0)
+
     def test_phase2_aircraft_consequence_flags_flow_into_damage_report(self) -> None:
         sim = _make_kernel()
         attacker_id, target_id = _spawn_structured_f16_pair(sim)
