@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Mapping, Sequence
 
 import torch as th
@@ -69,6 +70,16 @@ class M3S1GroupedStoppingStats:
     mean_quality_prewindow_logit_margin: float
     mean_quality_prewindow_margin_loss: float
     mean_window_balanced_bce_loss: float
+    mean_prewindow_hazard_mean: float
+    mean_prewindow_hazard_max: float
+    mean_prewindow_hazard_target: float
+    mean_prewindow_hazard_scale_loss: float
+    mean_quality_hazard_target: float
+    mean_quality_hazard_target_loss: float
+    mean_prewindow_logit_ceiling: float
+    mean_prewindow_logit_ceiling_loss: float
+    mean_quality_logit_floor: float
+    mean_quality_logit_floor_loss: float
     mean_loss: float
     max_group_loss: float
 
@@ -97,6 +108,14 @@ def compute_m3s1_grouped_stopping_loss(
     window_contrastive_margin_coef: float = 0.0,
     window_contrastive_margin: float = 0.0,
     window_balanced_bce_coef: float = 0.0,
+    window_prewindow_hazard_scale_coef: float = 0.0,
+    window_prewindow_hazard_target: float = 0.0,
+    window_quality_hazard_target_coef: float = 0.0,
+    window_quality_hazard_target: float = 0.5,
+    window_prewindow_logit_ceiling_coef: float = 0.0,
+    window_prewindow_logit_ceiling: float = -2.0,
+    window_quality_logit_floor_coef: float = 0.0,
+    window_quality_logit_floor: float = 2.0,
     eps: float = 1.0e-8,
     boundary_threshold: float = 0.0,
 ) -> M3S1GroupedStoppingLoss:
@@ -120,6 +139,16 @@ def compute_m3s1_grouped_stopping_loss(
     quality_prewindow_logit_margin_values: list[float] = []
     quality_prewindow_margin_loss_values: list[float] = []
     window_balanced_bce_loss_values: list[float] = []
+    prewindow_hazard_mean_values: list[float] = []
+    prewindow_hazard_max_values: list[float] = []
+    prewindow_hazard_target_values: list[float] = []
+    prewindow_hazard_scale_loss_values: list[float] = []
+    quality_hazard_target_values: list[float] = []
+    quality_hazard_target_loss_values: list[float] = []
+    prewindow_logit_ceiling_values: list[float] = []
+    prewindow_logit_ceiling_loss_values: list[float] = []
+    quality_logit_floor_values: list[float] = []
+    quality_logit_floor_loss_values: list[float] = []
     lambda_values: list[float] = []
 
     group_count = len(groups)
@@ -196,6 +225,16 @@ def compute_m3s1_grouped_stopping_loss(
             quality_prewindow_logit_margin_values.append(0.0)
             quality_prewindow_margin_loss_values.append(0.0)
             window_balanced_bce_loss_values.append(0.0)
+            prewindow_hazard_mean_values.append(0.0)
+            prewindow_hazard_max_values.append(0.0)
+            prewindow_hazard_target_values.append(0.0)
+            prewindow_hazard_scale_loss_values.append(0.0)
+            quality_hazard_target_values.append(0.0)
+            quality_hazard_target_loss_values.append(0.0)
+            prewindow_logit_ceiling_values.append(0.0)
+            prewindow_logit_ceiling_loss_values.append(0.0)
+            quality_logit_floor_values.append(0.0)
+            quality_logit_floor_loss_values.append(0.0)
             lambda_values.append(lambda_mean)
             continue
 
@@ -216,6 +255,16 @@ def compute_m3s1_grouped_stopping_loss(
             quality_prewindow_logit_margin,
             quality_prewindow_margin_loss,
             window_balanced_bce_loss,
+            prewindow_hazard_mean,
+            prewindow_hazard_max,
+            prewindow_hazard_target,
+            prewindow_hazard_scale_loss,
+            quality_hazard_target,
+            quality_hazard_target_loss,
+            prewindow_logit_ceiling,
+            prewindow_logit_ceiling_loss,
+            quality_logit_floor,
+            quality_logit_floor_loss,
             lambda_mean,
         ) = _window_or_no_event_loss(
             supported_logits,
@@ -234,6 +283,14 @@ def compute_m3s1_grouped_stopping_loss(
             window_contrastive_margin_coef=float(window_contrastive_margin_coef),
             window_contrastive_margin=float(window_contrastive_margin),
             window_balanced_bce_coef=float(window_balanced_bce_coef),
+            window_prewindow_hazard_scale_coef=float(window_prewindow_hazard_scale_coef),
+            window_prewindow_hazard_target=float(window_prewindow_hazard_target),
+            window_quality_hazard_target_coef=float(window_quality_hazard_target_coef),
+            window_quality_hazard_target=float(window_quality_hazard_target),
+            window_prewindow_logit_ceiling_coef=float(window_prewindow_logit_ceiling_coef),
+            window_prewindow_logit_ceiling=float(window_prewindow_logit_ceiling),
+            window_quality_logit_floor_coef=float(window_quality_logit_floor_coef),
+            window_quality_logit_floor=float(window_quality_logit_floor),
             eps=eps_value,
         )
         group_losses.append(group_loss)
@@ -247,6 +304,16 @@ def compute_m3s1_grouped_stopping_loss(
         quality_prewindow_logit_margin_values.append(quality_prewindow_logit_margin)
         quality_prewindow_margin_loss_values.append(quality_prewindow_margin_loss)
         window_balanced_bce_loss_values.append(window_balanced_bce_loss)
+        prewindow_hazard_mean_values.append(prewindow_hazard_mean)
+        prewindow_hazard_max_values.append(prewindow_hazard_max)
+        prewindow_hazard_target_values.append(prewindow_hazard_target)
+        prewindow_hazard_scale_loss_values.append(prewindow_hazard_scale_loss)
+        quality_hazard_target_values.append(quality_hazard_target)
+        quality_hazard_target_loss_values.append(quality_hazard_target_loss)
+        prewindow_logit_ceiling_values.append(prewindow_logit_ceiling)
+        prewindow_logit_ceiling_loss_values.append(prewindow_logit_ceiling_loss)
+        quality_logit_floor_values.append(quality_logit_floor)
+        quality_logit_floor_loss_values.append(quality_logit_floor_loss)
         lambda_values.append(lambda_mean)
         if has_window:
             window_group_count += 1
@@ -284,6 +351,16 @@ def compute_m3s1_grouped_stopping_loss(
         mean_quality_prewindow_logit_margin=_mean(quality_prewindow_logit_margin_values),
         mean_quality_prewindow_margin_loss=_mean(quality_prewindow_margin_loss_values),
         mean_window_balanced_bce_loss=_mean(window_balanced_bce_loss_values),
+        mean_prewindow_hazard_mean=_mean(prewindow_hazard_mean_values),
+        mean_prewindow_hazard_max=_mean(prewindow_hazard_max_values),
+        mean_prewindow_hazard_target=_mean(prewindow_hazard_target_values),
+        mean_prewindow_hazard_scale_loss=_mean(prewindow_hazard_scale_loss_values),
+        mean_quality_hazard_target=_mean(quality_hazard_target_values),
+        mean_quality_hazard_target_loss=_mean(quality_hazard_target_loss_values),
+        mean_prewindow_logit_ceiling=_mean(prewindow_logit_ceiling_values),
+        mean_prewindow_logit_ceiling_loss=_mean(prewindow_logit_ceiling_loss_values),
+        mean_quality_logit_floor=_mean(quality_logit_floor_values),
+        mean_quality_logit_floor_loss=_mean(quality_logit_floor_loss_values),
         mean_loss=_mean(loss_values),
         max_group_loss=max(loss_values) if loss_values else 0.0,
     )
@@ -376,8 +453,39 @@ def _window_or_no_event_loss(
     window_contrastive_margin_coef: float,
     window_contrastive_margin: float,
     window_balanced_bce_coef: float,
+    window_prewindow_hazard_scale_coef: float,
+    window_prewindow_hazard_target: float,
+    window_quality_hazard_target_coef: float,
+    window_quality_hazard_target: float,
+    window_prewindow_logit_ceiling_coef: float,
+    window_prewindow_logit_ceiling: float,
+    window_quality_logit_floor_coef: float,
+    window_quality_logit_floor: float,
     eps: float,
-) -> tuple[th.Tensor, float, float, float, float, float, float, float, float, float, float, float]:
+) -> tuple[
+    th.Tensor,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+]:
     hazard, event_mass, p_none, log_survival_before, log_event_mass, log_p_none = _hazard_event_mass(
         logits,
         legal_mask,
@@ -389,6 +497,16 @@ def _window_or_no_event_loss(
     quality_prewindow_logit_margin_value = 0.0
     quality_prewindow_margin_loss_value = 0.0
     window_balanced_bce_loss_value = 0.0
+    prewindow_hazard_mean_value = 0.0
+    prewindow_hazard_max_value = 0.0
+    prewindow_hazard_target_value = 0.0
+    prewindow_hazard_scale_loss_value = 0.0
+    quality_hazard_target_value = 0.0
+    quality_hazard_target_loss_value = 0.0
+    prewindow_logit_ceiling_value = 0.0
+    prewindow_logit_ceiling_loss_value = 0.0
+    quality_logit_floor_value = 0.0
+    quality_logit_floor_loss_value = 0.0
     if has_window:
         first_quality_pos = int(th.nonzero(quality_mask, as_tuple=False).flatten()[0].detach().cpu().item())
         positions = th.arange(int(logits.numel()), device=logits.device)
@@ -423,7 +541,8 @@ def _window_or_no_event_loss(
             loss = loss + float(window_deadline_coef) * -log_p_deadline_tensor
             p_deadline_value = float(p_deadline_tensor.detach().cpu().item())
         if quality_count > 0:
-            quality_anchor = logits[quality_mask].max()
+            quality_logits = logits[quality_mask]
+            quality_anchor = quality_logits.max()
             quality_boundary_margin_loss = th.clamp(
                 float(window_quality_boundary_logit) - quality_anchor,
                 min=0.0,
@@ -432,6 +551,17 @@ def _window_or_no_event_loss(
                 loss = loss + float(window_quality_boundary_coef) * quality_boundary_margin_loss
             quality_boundary_logit_value = float(quality_anchor.detach().cpu().item())
             quality_boundary_margin_loss_value = float(quality_boundary_margin_loss.detach().cpu().item())
+            quality_hazard_target_value = _bounded_probability(float(window_quality_hazard_target), eps=eps)
+            quality_target_logit = _probability_logit(quality_hazard_target_value, eps=eps)
+            quality_hazard_target_loss = th.clamp(quality_target_logit - quality_anchor, min=0.0).pow(2)
+            if float(window_quality_hazard_target_coef) > 0.0:
+                loss = loss + float(window_quality_hazard_target_coef) * quality_hazard_target_loss
+            quality_hazard_target_loss_value = float(quality_hazard_target_loss.detach().cpu().item())
+            quality_logit_floor_loss = th.clamp(float(window_quality_logit_floor) - quality_logits, min=0.0).pow(2).mean()
+            if float(window_quality_logit_floor_coef) > 0.0:
+                loss = loss + float(window_quality_logit_floor_coef) * quality_logit_floor_loss
+            quality_logit_floor_value = float(quality_logits.min().detach().cpu().item())
+            quality_logit_floor_loss_value = float(quality_logit_floor_loss.detach().cpu().item())
         if bool(early_mask.any().detach().cpu().item()):
             prewindow_anchor = logits[early_mask].max()
             quality_prewindow_margin = quality_anchor - prewindow_anchor
@@ -440,6 +570,28 @@ def _window_or_no_event_loss(
                 loss = loss + float(window_contrastive_margin_coef) * margin_loss
             quality_prewindow_logit_margin_value = float(quality_prewindow_margin.detach().cpu().item())
             quality_prewindow_margin_loss_value = float(margin_loss.detach().cpu().item())
+            prewindow_hazard = hazard[early_mask].to(dtype=logits.dtype)
+            prewindow_hazard_mean_value = float(prewindow_hazard.mean().detach().cpu().item())
+            prewindow_hazard_max_value = float(prewindow_hazard.max().detach().cpu().item())
+            prewindow_hazard_target_value = _prewindow_hazard_target(
+                explicit_target=float(window_prewindow_hazard_target),
+                early_mass_budget=float(early_mass_budget),
+                prewindow_count=int(prewindow_hazard.numel()),
+                eps=eps,
+            )
+            prewindow_target_logit = _probability_logit(prewindow_hazard_target_value, eps=eps)
+            prewindow_hazard_scale_loss = th.clamp(logits[early_mask] - prewindow_target_logit, min=0.0).pow(2).mean()
+            if float(window_prewindow_hazard_scale_coef) > 0.0:
+                loss = loss + float(window_prewindow_hazard_scale_coef) * prewindow_hazard_scale_loss
+            prewindow_hazard_scale_loss_value = float(prewindow_hazard_scale_loss.detach().cpu().item())
+            prewindow_logit_ceiling_loss = th.clamp(
+                logits[early_mask] - float(window_prewindow_logit_ceiling),
+                min=0.0,
+            ).pow(2).mean()
+            if float(window_prewindow_logit_ceiling_coef) > 0.0:
+                loss = loss + float(window_prewindow_logit_ceiling_coef) * prewindow_logit_ceiling_loss
+            prewindow_logit_ceiling_value = float(prewindow_anchor.detach().cpu().item())
+            prewindow_logit_ceiling_loss_value = float(prewindow_logit_ceiling_loss.detach().cpu().item())
         bce_mask = (early_mask | quality_mask) & legal_mask
         if float(window_balanced_bce_coef) > 0.0 and bool(bce_mask.any().detach().cpu().item()):
             bce_logits = logits[bce_mask]
@@ -474,6 +626,16 @@ def _window_or_no_event_loss(
         quality_prewindow_logit_margin_value,
         quality_prewindow_margin_loss_value,
         window_balanced_bce_loss_value,
+        prewindow_hazard_mean_value,
+        prewindow_hazard_max_value,
+        prewindow_hazard_target_value,
+        prewindow_hazard_scale_loss_value,
+        quality_hazard_target_value,
+        quality_hazard_target_loss_value,
+        prewindow_logit_ceiling_value,
+        prewindow_logit_ceiling_loss_value,
+        quality_logit_floor_value,
+        quality_logit_floor_loss_value,
         float(hazard.mean().detach().cpu().item()) if int(hazard.numel()) > 0 else 0.0,
     )
 
@@ -523,6 +685,32 @@ def _hazard_event_mass(
     log_p_none = log_survival_after[-1] if int(logits.numel()) > 0 else work_logits.sum() * 0.0
     p_none = th.exp(log_p_none)
     return hazard, event_mass, p_none, log_survival_before, log_event_mass, log_p_none
+
+
+def _bounded_probability(value: float, *, eps: float) -> float:
+    eps_value = float(max(eps, 1.0e-12))
+    return float(min(max(float(value), eps_value), 1.0 - eps_value))
+
+
+def _probability_logit(value: float, *, eps: float) -> float:
+    probability = _bounded_probability(value, eps=eps)
+    return float(math.log(probability) - math.log1p(-probability))
+
+
+def _prewindow_hazard_target(
+    *,
+    explicit_target: float,
+    early_mass_budget: float,
+    prewindow_count: int,
+    eps: float,
+) -> float:
+    if float(explicit_target) > 0.0:
+        return _bounded_probability(float(explicit_target), eps=eps)
+    if int(prewindow_count) <= 0:
+        return 0.0
+    budget = _bounded_probability(float(early_mass_budget), eps=eps)
+    per_step = 1.0 - math.exp(math.log1p(-budget) / float(max(1, int(prewindow_count))))
+    return _bounded_probability(per_step, eps=eps)
 
 
 def _first_tau_position(steps: th.Tensor, accepted_event: th.Tensor, censor_step: int | None) -> int:

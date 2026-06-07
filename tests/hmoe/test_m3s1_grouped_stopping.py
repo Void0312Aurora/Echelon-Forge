@@ -362,6 +362,63 @@ class M3S1GroupedStoppingTests(unittest.TestCase):
         self.assertGreater(float(logits.grad[:800].mean().item()), 0.0)
         self.assertLess(float(logits.grad[800:].mean().item()), 0.0)
 
+    def test_scale_separated_contract_punishes_prewindow_scale_and_quality_anchor_separately(self) -> None:
+        logits = th.cat((th.zeros(800), th.full((100,), -2.0))).requires_grad_()
+        result = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    logits,
+                    legal_mask=[True] * 900,
+                    quality_mask=([False] * 800) + ([True] * 100),
+                )
+            ],
+            early_mass_coef=0.0,
+            window_prewindow_hazard_scale_coef=1.0,
+            window_prewindow_hazard_target=0.0,
+            early_mass_budget=0.02,
+            window_quality_hazard_target_coef=1.0,
+            window_quality_hazard_target=0.75,
+        )
+
+        result.loss.backward()
+
+        self.assertGreater(result.stats.mean_prewindow_hazard_mean, result.stats.mean_prewindow_hazard_target)
+        self.assertGreater(result.stats.mean_prewindow_hazard_scale_loss, 0.0)
+        self.assertAlmostEqual(result.stats.mean_quality_hazard_target, 0.75, places=6)
+        self.assertGreater(result.stats.mean_quality_hazard_target_loss, 0.0)
+        self.assertIsNotNone(logits.grad)
+        assert logits.grad is not None
+        self.assertGreater(float(logits.grad[:800].mean().item()), 0.0)
+        self.assertLess(float(logits.grad[800:].mean().item()), 0.0)
+
+    def test_logit_calibration_contract_pushes_prewindow_down_and_quality_up(self) -> None:
+        logits = th.tensor([0.0, -1.0, -1.0], requires_grad=True)
+        result = compute_m3s1_grouped_stopping_loss(
+            [
+                self._group(
+                    logits,
+                    legal_mask=[True, True, True],
+                    quality_mask=[False, True, True],
+                )
+            ],
+            early_mass_coef=0.0,
+            window_prewindow_logit_ceiling_coef=2.0,
+            window_prewindow_logit_ceiling=-2.0,
+            window_quality_logit_floor_coef=2.0,
+            window_quality_logit_floor=2.0,
+        )
+
+        result.loss.backward()
+
+        self.assertAlmostEqual(result.stats.mean_prewindow_logit_ceiling, 0.0, places=6)
+        self.assertAlmostEqual(result.stats.mean_prewindow_logit_ceiling_loss, 4.0, places=6)
+        self.assertAlmostEqual(result.stats.mean_quality_logit_floor, -1.0, places=6)
+        self.assertAlmostEqual(result.stats.mean_quality_logit_floor_loss, 9.0, places=6)
+        self.assertIsNotNone(logits.grad)
+        assert logits.grad is not None
+        self.assertGreater(float(logits.grad[0].item()), 0.0)
+        self.assertLess(float(logits.grad[1:].mean().item()), 0.0)
+
     def test_legal_mask_blocks_hazard_but_counts_closed_boundary_attempts(self) -> None:
         logits = th.tensor([8.0, 8.0], requires_grad=True)
         result = compute_m3s1_grouped_stopping_loss(

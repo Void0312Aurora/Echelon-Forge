@@ -569,6 +569,38 @@ def _m3_stopping_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, f
     return out
 
 
+def _m3_window_classifier_policy_diagnostics(policy: Any, obs_tensor: Any) -> dict[str, float]:
+    out: dict[str, float] = {}
+    get_m3_window_logits = getattr(policy, "get_m3_window_logits", None)
+    if not callable(get_m3_window_logits):
+        return out
+    out["policy_m3_window_classifier_probe_available"] = 1.0
+    try:
+        logits_tensor = get_m3_window_logits(obs_tensor, detach_latent=True)
+    except TypeError:
+        try:
+            logits_tensor = get_m3_window_logits(obs_tensor)
+        except Exception:
+            return out
+    except Exception:
+        return out
+    if logits_tensor is None:
+        out["policy_m3_window_classifier_enabled"] = 0.0
+        return out
+
+    out["policy_m3_window_classifier_enabled"] = 1.0
+    try:
+        logits = logits_tensor.detach().to(device="cpu").numpy().astype(np.float64).reshape(-1)
+        if logits.size > 0:
+            logit = float(logits[0])
+            out["policy_m3_window_classifier_logit"] = logit
+            out["policy_m3_window_classifier_boundary_cross"] = float(logit >= 0.0)
+            out["policy_m3_window_classifier_prob"] = float(1.0 / (1.0 + np.exp(-np.clip(logit, -60.0, 60.0))))
+    except Exception:
+        pass
+    return out
+
+
 def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, float]:
     policy = getattr(model, "policy", None)
     get_distribution = getattr(policy, "get_distribution", None)
@@ -591,6 +623,7 @@ def _model_policy_diagnostics(model: Any, obs: dict[str, Any]) -> dict[str, floa
     diagnostics = _distribution_policy_diagnostics(distribution)
     with th.no_grad():
         diagnostics.update(_m3_stopping_policy_diagnostics(policy, obs_tensor))
+        diagnostics.update(_m3_window_classifier_policy_diagnostics(policy, obs_tensor))
     return diagnostics
 
 
@@ -1003,6 +1036,9 @@ def _summarize_episode(
     def m3_boundary_cross(row: dict[str, Any]) -> bool:
         return int(row.get("policy_m3_boundary_cross", 0) or 0) > 0
 
+    def m3_window_classifier_boundary_cross(row: dict[str, Any]) -> bool:
+        return int(row.get("policy_m3_window_classifier_boundary_cross", 0) or 0) > 0
+
     def row_sign_frac(key: str, predicate, *, positive: bool) -> float:
         values = []
         for row in rows:
@@ -1131,6 +1167,35 @@ def _summarize_episode(
         "policy_m3_first_boundary_cross_step": first_step(
             lambda row: int(row.get("step", 0)) > 0 and m3_boundary_cross(row)
         ),
+        "policy_m3_window_classifier_head_enabled": row_stat(
+            "policy_m3_window_classifier_enabled",
+            np.max,
+            default=0.0,
+        ),
+        "policy_m3_window_classifier_logit_mean": row_stat(
+            "policy_m3_window_classifier_logit",
+            np.mean,
+            default=0.0,
+        ),
+        "policy_m3_window_classifier_logit_max": row_stat(
+            "policy_m3_window_classifier_logit",
+            np.max,
+            default=0.0,
+        ),
+        "policy_m3_window_classifier_prob_mean": row_stat(
+            "policy_m3_window_classifier_prob",
+            np.mean,
+            default=0.0,
+        ),
+        "policy_m3_window_classifier_prob_max": row_stat(
+            "policy_m3_window_classifier_prob",
+            np.max,
+            default=0.0,
+        ),
+        "policy_m3_window_classifier_boundary_cross_count": count_rows(m3_window_classifier_boundary_cross),
+        "policy_m3_window_classifier_first_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0 and m3_window_classifier_boundary_cross(row)
+        ),
         "a6_event_logit_delta_mean_open": row_stat("policy_event_logit_delta", np.mean, default=0.0, predicate=a6_open_window),
         "a6_event_fire_prob_mean_open": row_stat(
             "policy_event_prob_fire_once_unmasked",
@@ -1191,6 +1256,41 @@ def _summarize_episode(
         ),
         "a7_first_quality_window_m3_boundary_cross_step": first_step(
             lambda row: int(row.get("step", 0)) > 0 and a7_quality_window(row) and m3_boundary_cross(row)
+        ),
+        "a7_prewindow_m3_window_classifier_prob_mean": row_stat(
+            "policy_m3_window_classifier_prob",
+            np.mean,
+            default=0.0,
+            predicate=a7_prewindow,
+        ),
+        "a7_quality_window_m3_window_classifier_prob_mean": row_stat(
+            "policy_m3_window_classifier_prob",
+            np.mean,
+            default=0.0,
+            predicate=a7_quality_window,
+        ),
+        "a7_prewindow_m3_window_classifier_logit_mean": row_stat(
+            "policy_m3_window_classifier_logit",
+            np.mean,
+            default=0.0,
+            predicate=a7_prewindow,
+        ),
+        "a7_quality_window_m3_window_classifier_logit_mean": row_stat(
+            "policy_m3_window_classifier_logit",
+            np.mean,
+            default=0.0,
+            predicate=a7_quality_window,
+        ),
+        "a7_prewindow_m3_window_classifier_boundary_cross_count": count_rows(
+            lambda row: a7_prewindow(row) and m3_window_classifier_boundary_cross(row)
+        ),
+        "a7_quality_window_m3_window_classifier_boundary_cross_count": count_rows(
+            lambda row: a7_quality_window(row) and m3_window_classifier_boundary_cross(row)
+        ),
+        "a7_first_quality_window_m3_window_classifier_boundary_cross_step": first_step(
+            lambda row: int(row.get("step", 0)) > 0
+            and a7_quality_window(row)
+            and m3_window_classifier_boundary_cross(row)
         ),
         "a7_event_credit_advantage_mean_prewindow": row_stat(
             "policy_event_advantage",

@@ -109,6 +109,276 @@ class _M3S1GroupedStoppingDiagnostics:
     event_logit_delta_diagnostic_count: int = 0
 
 
+@dataclass(frozen=True)
+class _M3S2WindowClassifierLoss:
+    loss: th.Tensor
+    unscaled_loss: th.Tensor
+    balanced_bce_loss: th.Tensor
+    prewindow_logit_ceiling_loss: th.Tensor
+    quality_logit_floor_loss: th.Tensor
+    active_count: int
+    positive_count: int
+    negative_count: int
+    group_count: int
+    positive_logit_mean: float
+    negative_logit_mean: float
+    positive_prob_mean: float
+    negative_prob_mean: float
+    accuracy: float
+    replay_enabled: bool = False
+    replay_used: bool = False
+    replay_positive_count: int = 0
+    replay_negative_count: int = 0
+
+
+@dataclass(frozen=True)
+class _M3S2FireBoundaryLoss:
+    loss: th.Tensor
+    unscaled_loss: th.Tensor
+    balanced_bce_loss: th.Tensor
+    negative_logit_ceiling_loss: th.Tensor
+    positive_logit_floor_loss: th.Tensor
+    active_count: int
+    positive_count: int
+    negative_count: int
+    group_count: int
+    executable_positive_logit_mean: float
+    executable_negative_logit_mean: float
+    executable_positive_prob_mean: float
+    executable_negative_prob_mean: float
+    direct_head_positive_delta_mean: float
+    direct_head_negative_delta_mean: float
+    accuracy: float
+    boundary_cross_count: int
+    boundary_cross_in_window_count: int
+
+
+@dataclass
+class _M3S2WindowClassifierReplay:
+    capacity: int
+    storage: str = "latent"
+    positives: th.Tensor | None = None
+    negatives: th.Tensor | None = None
+    positive_observations: dict[str, th.Tensor] | None = None
+    negative_observations: dict[str, th.Tensor] | None = None
+
+    @property
+    def positive_count(self) -> int:
+        if self.storage == "observation":
+            return self._observation_count(self.positive_observations)
+        return 0 if self.positives is None else int(self.positives.shape[0])
+
+    @property
+    def negative_count(self) -> int:
+        if self.storage == "observation":
+            return self._observation_count(self.negative_observations)
+        return 0 if self.negatives is None else int(self.negatives.shape[0])
+
+    def append(
+        self,
+        latents: th.Tensor,
+        labels: th.Tensor,
+        *,
+        observations: dict[str, th.Tensor] | None = None,
+    ) -> None:
+        if int(latents.numel()) <= 0 or int(labels.numel()) <= 0:
+            return
+        flat_labels = labels.detach().reshape(-1).to(device="cpu") > 0.5
+        if self.storage == "observation":
+            if observations is None:
+                raise ValueError("M3-S2 window classifier observation replay requires observations")
+            self._append_observations(observations, flat_labels)
+            return
+
+        flat_latents = latents.detach().reshape(int(latents.shape[0]), -1).to(device="cpu", dtype=th.float32)
+        if int(flat_labels.numel()) != int(flat_latents.shape[0]):
+            raise ValueError("M3-S2 window classifier replay latents and labels must have matching rows")
+        self.positives = self._append_rows(self.positives, flat_latents[flat_labels])
+        self.negatives = self._append_rows(self.negatives, flat_latents[~flat_labels])
+
+    def can_sample(self, *, min_positive: int = 1, min_negative: int = 1) -> bool:
+        return bool(
+            self.positive_count >= max(1, int(min_positive))
+            and self.negative_count >= max(1, int(min_negative))
+        )
+
+    def sample_balanced(
+        self,
+        *,
+        batch_size: int,
+        device: th.device,
+        dtype: th.dtype,
+    ) -> tuple[th.Tensor | dict[str, th.Tensor], th.Tensor] | None:
+        if self.storage == "observation":
+            return self._sample_observations_balanced(batch_size=batch_size, device=device, dtype=dtype)
+        if self.positives is None or self.negatives is None:
+            return None
+        if self.positive_count <= 0 or self.negative_count <= 0:
+            return None
+        per_class = max(1, int(batch_size) // 2)
+        pos_idx = th.randint(self.positive_count, (per_class,), device=th.device("cpu"))
+        neg_idx = th.randint(self.negative_count, (per_class,), device=th.device("cpu"))
+        pos_latents = self.positives[pos_idx]
+        neg_latents = self.negatives[neg_idx]
+        latents = th.cat((pos_latents, neg_latents), dim=0).to(device=device, dtype=dtype)
+        labels = th.cat(
+            (
+                th.ones((per_class,), dtype=dtype),
+                th.zeros((per_class,), dtype=dtype),
+            ),
+            dim=0,
+        ).to(device=device)
+        order = th.randperm(int(labels.numel()), device=device)
+        return latents[order], labels[order]
+
+    def _append_rows(self, current: th.Tensor | None, new_rows: th.Tensor) -> th.Tensor | None:
+        if int(new_rows.numel()) <= 0:
+            return current
+        rows = new_rows.detach().reshape(int(new_rows.shape[0]), -1).to(device="cpu", dtype=th.float32)
+        if current is None:
+            combined = rows
+        else:
+            combined = th.cat((current, rows), dim=0)
+        capacity = max(1, int(self.capacity))
+        if int(combined.shape[0]) > capacity:
+            combined = combined[-capacity:]
+        return combined.contiguous()
+
+    @staticmethod
+    def _observation_count(observations: dict[str, th.Tensor] | None) -> int:
+        if not observations:
+            return 0
+        for value in observations.values():
+            return int(value.shape[0])
+        return 0
+
+    def _append_observations(self, observations: dict[str, th.Tensor], labels: th.Tensor) -> None:
+        if not observations:
+            return
+        flat_labels = labels.reshape(-1).to(device="cpu", dtype=th.bool)
+        row_count = int(flat_labels.numel())
+        cpu_observations: dict[str, th.Tensor] = {}
+        for key, value in observations.items():
+            tensor = value.detach().to(device="cpu")
+            if int(tensor.shape[0]) != row_count:
+                raise ValueError("M3-S2 window classifier replay observations and labels must match rows")
+            cpu_observations[str(key)] = tensor
+        positive_rows = {key: value[flat_labels] for key, value in cpu_observations.items()}
+        negative_rows = {key: value[~flat_labels] for key, value in cpu_observations.items()}
+        self.positive_observations = self._append_observation_rows(self.positive_observations, positive_rows)
+        self.negative_observations = self._append_observation_rows(self.negative_observations, negative_rows)
+
+    def _append_observation_rows(
+        self,
+        current: dict[str, th.Tensor] | None,
+        new_rows: dict[str, th.Tensor],
+    ) -> dict[str, th.Tensor] | None:
+        row_count = self._observation_count(new_rows)
+        if row_count <= 0:
+            return current
+        if current is None:
+            combined = {key: value.contiguous() for key, value in new_rows.items()}
+        else:
+            if set(current.keys()) != set(new_rows.keys()):
+                raise ValueError("M3-S2 window classifier replay observation keys changed")
+            combined = {
+                key: th.cat((current[key], new_rows[key]), dim=0)
+                for key in current.keys()
+            }
+        capacity = max(1, int(self.capacity))
+        if self._observation_count(combined) > capacity:
+            combined = {key: value[-capacity:].contiguous() for key, value in combined.items()}
+        return combined
+
+    def _sample_observations_balanced(
+        self,
+        *,
+        batch_size: int,
+        device: th.device,
+        dtype: th.dtype,
+    ) -> tuple[dict[str, th.Tensor], th.Tensor] | None:
+        if self.positive_observations is None or self.negative_observations is None:
+            return None
+        if self.positive_count <= 0 or self.negative_count <= 0:
+            return None
+        if set(self.positive_observations.keys()) != set(self.negative_observations.keys()):
+            raise ValueError("M3-S2 window classifier replay observation keys differ by class")
+        per_class = max(1, int(batch_size) // 2)
+        pos_idx = th.randint(self.positive_count, (per_class,), device=th.device("cpu"))
+        neg_idx = th.randint(self.negative_count, (per_class,), device=th.device("cpu"))
+        observations = {
+            key: th.cat(
+                (
+                    self.positive_observations[key][pos_idx],
+                    self.negative_observations[key][neg_idx],
+                ),
+                dim=0,
+            ).to(device=device)
+            for key in self.positive_observations.keys()
+        }
+        labels = th.cat(
+            (
+                th.ones((per_class,), dtype=dtype),
+                th.zeros((per_class,), dtype=dtype),
+            ),
+            dim=0,
+        ).to(device=device)
+        order = th.randperm(int(labels.numel()), device=device)
+        observations = {key: value[order] for key, value in observations.items()}
+        return observations, labels[order]
+
+    def calibration_balanced(
+        self,
+        *,
+        max_rows: int,
+        device: th.device,
+        dtype: th.dtype,
+    ) -> tuple[th.Tensor | dict[str, th.Tensor], th.Tensor] | None:
+        if self.positive_count <= 0 or self.negative_count <= 0:
+            return None
+        max_rows = int(max_rows)
+        if max_rows <= 0:
+            max_rows = self.positive_count + self.negative_count
+        per_class = max(1, min(self.positive_count, self.negative_count, max_rows // 2))
+        if self.storage == "observation":
+            if self.positive_observations is None or self.negative_observations is None:
+                return None
+            if set(self.positive_observations.keys()) != set(self.negative_observations.keys()):
+                raise ValueError("M3-S2 window classifier replay observation keys differ by class")
+            observations = {
+                key: th.cat(
+                    (
+                        self.positive_observations[key][-per_class:],
+                        self.negative_observations[key][-per_class:],
+                    ),
+                    dim=0,
+                ).to(device=device)
+                for key in self.positive_observations.keys()
+            }
+            labels = th.cat(
+                (
+                    th.ones((per_class,), dtype=dtype),
+                    th.zeros((per_class,), dtype=dtype),
+                ),
+                dim=0,
+            ).to(device=device)
+            return observations, labels
+        if self.positives is None or self.negatives is None:
+            return None
+        latents = th.cat((self.positives[-per_class:], self.negatives[-per_class:]), dim=0).to(
+            device=device,
+            dtype=dtype,
+        )
+        labels = th.cat(
+            (
+                th.ones((per_class,), dtype=dtype),
+                th.zeros((per_class,), dtype=dtype),
+            ),
+            dim=0,
+        ).to(device=device)
+        return latents, labels
+
+
 def _air_combat_c2_roe_mode_from_dim(dim: int) -> str | None:
     for mode in _AIR_COMBAT_C2_ROE_MODES:
         if int(dim) == int(mission_observation_dim(mode)):
@@ -208,6 +478,14 @@ class AdaptiveKLPPO(PPO):
         m3s2_event_window_contrastive_margin_coef: float = 0.0,
         m3s2_event_window_contrastive_margin: float = 0.0,
         m3s2_event_window_balanced_bce_coef: float = 0.0,
+        m3s2_event_window_prewindow_hazard_scale_coef: float = 0.0,
+        m3s2_event_window_prewindow_hazard_target: float = 0.0,
+        m3s2_event_window_quality_hazard_target_coef: float = 0.0,
+        m3s2_event_window_quality_hazard_target: float = 0.5,
+        m3s2_event_window_prewindow_logit_ceiling_coef: float = 0.0,
+        m3s2_event_window_prewindow_logit_ceiling: float = -2.0,
+        m3s2_event_window_quality_logit_floor_coef: float = 0.0,
+        m3s2_event_window_quality_logit_floor: float = 2.0,
         m3s2_event_window_use_stopping_head: bool = False,
         m3s2_event_window_separate_update_enabled: bool = True,
         m3s2_event_window_dedicated_optimizer_enabled: bool = False,
@@ -215,6 +493,33 @@ class AdaptiveKLPPO(PPO):
         m3s2_event_window_max_grad_norm: float = 2.0,
         m3s2_event_window_support_preserving_collect_enabled: bool = False,
         m3s2_event_window_support_preserving_hold_quality_enabled: bool = False,
+        m3s2_fire_boundary_coef: float = 0.0,
+        m3s2_fire_boundary_negative_logit_ceiling_coef: float = 0.0,
+        m3s2_fire_boundary_negative_logit_ceiling: float = -2.0,
+        m3s2_fire_boundary_positive_logit_floor_coef: float = 0.0,
+        m3s2_fire_boundary_positive_logit_floor: float = 2.0,
+        m3s2_fire_boundary_separate_update_enabled: bool = True,
+        m3s2_fire_boundary_dedicated_optimizer_enabled: bool = True,
+        m3s2_fire_boundary_separate_update_steps: int = 1,
+        m3s2_fire_boundary_max_grad_norm: float = 2.0,
+        m3s2_fire_boundary_support_preserving_collect_enabled: bool = False,
+        m3s2_fire_boundary_support_preserving_hold_quality_enabled: bool = False,
+        m3s2_window_classifier_coef: float = 0.0,
+        m3s2_window_classifier_prewindow_logit_ceiling_coef: float = 0.0,
+        m3s2_window_classifier_prewindow_logit_ceiling: float = -2.0,
+        m3s2_window_classifier_quality_logit_floor_coef: float = 0.0,
+        m3s2_window_classifier_quality_logit_floor: float = 2.0,
+        m3s2_window_classifier_detach_latent: bool = True,
+        m3s2_window_classifier_separate_update_enabled: bool = True,
+        m3s2_window_classifier_dedicated_optimizer_enabled: bool = True,
+        m3s2_window_classifier_separate_update_steps: int = 1,
+        m3s2_window_classifier_max_grad_norm: float = 2.0,
+        m3s2_window_classifier_replay_enabled: bool = False,
+        m3s2_window_classifier_replay_storage: str = "latent",
+        m3s2_window_classifier_replay_capacity: int = 4096,
+        m3s2_window_classifier_replay_batch_size: int = 1024,
+        m3s2_window_classifier_replay_min_positive: int = 1,
+        m3s2_window_classifier_replay_min_negative: int = 1,
         **kwargs,
     ):
         self.kl_penalty_coef = float(kl_penalty_coef)
@@ -329,6 +634,26 @@ class AdaptiveKLPPO(PPO):
         )
         self.m3s2_event_window_contrastive_margin = float(max(0.0, m3s2_event_window_contrastive_margin))
         self.m3s2_event_window_balanced_bce_coef = float(max(0.0, m3s2_event_window_balanced_bce_coef))
+        self.m3s2_event_window_prewindow_hazard_scale_coef = float(
+            max(0.0, m3s2_event_window_prewindow_hazard_scale_coef)
+        )
+        self.m3s2_event_window_prewindow_hazard_target = float(
+            max(0.0, m3s2_event_window_prewindow_hazard_target)
+        )
+        self.m3s2_event_window_quality_hazard_target_coef = float(
+            max(0.0, m3s2_event_window_quality_hazard_target_coef)
+        )
+        self.m3s2_event_window_quality_hazard_target = float(
+            max(0.0, min(1.0, m3s2_event_window_quality_hazard_target))
+        )
+        self.m3s2_event_window_prewindow_logit_ceiling_coef = float(
+            max(0.0, m3s2_event_window_prewindow_logit_ceiling_coef)
+        )
+        self.m3s2_event_window_prewindow_logit_ceiling = float(m3s2_event_window_prewindow_logit_ceiling)
+        self.m3s2_event_window_quality_logit_floor_coef = float(
+            max(0.0, m3s2_event_window_quality_logit_floor_coef)
+        )
+        self.m3s2_event_window_quality_logit_floor = float(m3s2_event_window_quality_logit_floor)
         self.m3s2_event_window_use_stopping_head = bool(m3s2_event_window_use_stopping_head)
         self.m3s2_event_window_separate_update_enabled = bool(m3s2_event_window_separate_update_enabled)
         self.m3s2_event_window_dedicated_optimizer_enabled = bool(m3s2_event_window_dedicated_optimizer_enabled)
@@ -340,6 +665,64 @@ class AdaptiveKLPPO(PPO):
         self.m3s2_event_window_support_preserving_hold_quality_enabled = bool(
             m3s2_event_window_support_preserving_hold_quality_enabled
         )
+        self.m3s2_fire_boundary_coef = float(max(0.0, m3s2_fire_boundary_coef))
+        self.m3s2_fire_boundary_negative_logit_ceiling_coef = float(
+            max(0.0, m3s2_fire_boundary_negative_logit_ceiling_coef)
+        )
+        self.m3s2_fire_boundary_negative_logit_ceiling = float(m3s2_fire_boundary_negative_logit_ceiling)
+        self.m3s2_fire_boundary_positive_logit_floor_coef = float(
+            max(0.0, m3s2_fire_boundary_positive_logit_floor_coef)
+        )
+        self.m3s2_fire_boundary_positive_logit_floor = float(m3s2_fire_boundary_positive_logit_floor)
+        self.m3s2_fire_boundary_separate_update_enabled = bool(m3s2_fire_boundary_separate_update_enabled)
+        self.m3s2_fire_boundary_dedicated_optimizer_enabled = bool(
+            m3s2_fire_boundary_dedicated_optimizer_enabled
+        )
+        self.m3s2_fire_boundary_separate_update_steps = max(1, int(m3s2_fire_boundary_separate_update_steps))
+        self.m3s2_fire_boundary_max_grad_norm = float(max(0.0, m3s2_fire_boundary_max_grad_norm))
+        self.m3s2_fire_boundary_support_preserving_collect_enabled = bool(
+            m3s2_fire_boundary_support_preserving_collect_enabled
+        )
+        self.m3s2_fire_boundary_support_preserving_hold_quality_enabled = bool(
+            m3s2_fire_boundary_support_preserving_hold_quality_enabled
+        )
+        self.m3s2_window_classifier_coef = float(max(0.0, m3s2_window_classifier_coef))
+        self.m3s2_window_classifier_prewindow_logit_ceiling_coef = float(
+            max(0.0, m3s2_window_classifier_prewindow_logit_ceiling_coef)
+        )
+        self.m3s2_window_classifier_prewindow_logit_ceiling = float(
+            m3s2_window_classifier_prewindow_logit_ceiling
+        )
+        self.m3s2_window_classifier_quality_logit_floor_coef = float(
+            max(0.0, m3s2_window_classifier_quality_logit_floor_coef)
+        )
+        self.m3s2_window_classifier_quality_logit_floor = float(m3s2_window_classifier_quality_logit_floor)
+        self.m3s2_window_classifier_detach_latent = bool(m3s2_window_classifier_detach_latent)
+        self.m3s2_window_classifier_separate_update_enabled = bool(
+            m3s2_window_classifier_separate_update_enabled
+        )
+        self.m3s2_window_classifier_dedicated_optimizer_enabled = bool(
+            m3s2_window_classifier_dedicated_optimizer_enabled
+        )
+        self.m3s2_window_classifier_separate_update_steps = max(
+            1,
+            int(m3s2_window_classifier_separate_update_steps),
+        )
+        self.m3s2_window_classifier_max_grad_norm = float(max(0.0, m3s2_window_classifier_max_grad_norm))
+        self.m3s2_window_classifier_replay_enabled = bool(m3s2_window_classifier_replay_enabled)
+        self.m3s2_window_classifier_replay_storage = str(m3s2_window_classifier_replay_storage or "latent").lower()
+        if self.m3s2_window_classifier_replay_storage not in {"latent", "observation"}:
+            raise ValueError("m3s2_window_classifier_replay_storage must be 'latent' or 'observation'")
+        self.m3s2_window_classifier_replay_capacity = max(1, int(m3s2_window_classifier_replay_capacity))
+        self.m3s2_window_classifier_replay_batch_size = max(2, int(m3s2_window_classifier_replay_batch_size))
+        self.m3s2_window_classifier_replay_min_positive = max(
+            1,
+            int(m3s2_window_classifier_replay_min_positive),
+        )
+        self.m3s2_window_classifier_replay_min_negative = max(
+            1,
+            int(m3s2_window_classifier_replay_min_negative),
+        )
         self._m3s1_grouped_stopping_sidecar: _M3S1GroupedStoppingSidecar | None = None
         self._m3s1_last_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
         self._m3s1_last_grouped_stopping_grad_norm = 0.0
@@ -347,6 +730,18 @@ class AdaptiveKLPPO(PPO):
         self._m3s2_last_event_window_loss: M3S1GroupedStoppingLoss | None = None
         self._m3s2_last_event_window_grad_norm = 0.0
         self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+        self._m3s2_last_fire_boundary_loss: _M3S2FireBoundaryLoss | None = None
+        self._m3s2_last_fire_boundary_grad_norm = 0.0
+        self._m3s2_last_window_classifier_loss: _M3S2WindowClassifierLoss | None = None
+        self._m3s2_last_window_classifier_grad_norm = 0.0
+        self._m3s2_window_classifier_replay = (
+            _M3S2WindowClassifierReplay(
+                capacity=self.m3s2_window_classifier_replay_capacity,
+                storage=self.m3s2_window_classifier_replay_storage,
+            )
+            if self.m3s2_window_classifier_replay_enabled
+            else None
+        )
         self._m3s2_support_preserving_collect_legal_open_age: np.ndarray | None = None
         self._m3s2_support_preserving_collect_hold_count = 0
         self._m3s2_support_preserving_collect_candidate_count = 0
@@ -384,14 +779,42 @@ class AdaptiveKLPPO(PPO):
     def _m3s2_event_window_enabled(self) -> bool:
         return bool(float(getattr(self, "m3s2_event_window_coef", 0.0)) > 0.0)
 
+    def _m3s2_fire_boundary_enabled(self) -> bool:
+        return bool(float(getattr(self, "m3s2_fire_boundary_coef", 0.0)) > 0.0)
+
+    def _m3s2_window_classifier_enabled(self) -> bool:
+        return bool(float(getattr(self, "m3s2_window_classifier_coef", 0.0)) > 0.0)
+
     def _m3s1_grouped_stopping_sidecar_enabled(self) -> bool:
-        return bool(self._m3s1_grouped_stopping_enabled() or self._m3s2_event_window_enabled())
+        return bool(
+            self._m3s1_grouped_stopping_enabled()
+            or self._m3s2_event_window_enabled()
+            or self._m3s2_fire_boundary_enabled()
+            or self._m3s2_window_classifier_enabled()
+        )
 
     def _m3s2_support_preserving_collect_enabled(self) -> bool:
         return bool(
-            self._m3s2_event_window_enabled()
-            and self.m3s2_event_window_support_preserving_collect_enabled
+            (
+                (
+                    (self._m3s2_event_window_enabled() or self._m3s2_window_classifier_enabled())
+                    and self.m3s2_event_window_support_preserving_collect_enabled
+                )
+                or (
+                    self._m3s2_fire_boundary_enabled()
+                    and self.m3s2_fire_boundary_support_preserving_collect_enabled
+                )
+            )
             and self.a6_first_event_launch_window_enabled
+        )
+
+    def _m3s2_support_preserving_hold_quality_enabled(self) -> bool:
+        return bool(
+            self.m3s2_event_window_support_preserving_hold_quality_enabled
+            or (
+                self._m3s2_fire_boundary_enabled()
+                and self.m3s2_fire_boundary_support_preserving_hold_quality_enabled
+            )
         )
 
     def _m3s2_support_preserving_collect_masks(
@@ -430,7 +853,7 @@ class AdaptiveKLPPO(PPO):
                 legal_open
                 and (
                     not quality_open
-                    or self.m3s2_event_window_support_preserving_hold_quality_enabled
+                    or self._m3s2_support_preserving_hold_quality_enabled()
                 )
             )
             hold_mask.append(hold)
@@ -472,6 +895,8 @@ class AdaptiveKLPPO(PPO):
             or self._a7_first_event_aux_enabled()
             or self._m3s1_grouped_stopping_enabled()
             or self._m3s2_event_window_enabled()
+            or self._m3s2_fire_boundary_enabled()
+            or self._m3s2_window_classifier_enabled()
         )
 
     def _should_use_device_rollout_buffer(self) -> bool:
@@ -1237,6 +1662,10 @@ class AdaptiveKLPPO(PPO):
         self._m3s2_last_event_window_loss = None
         self._m3s2_last_event_window_grad_norm = 0.0
         self._m3s2_last_event_window_diagnostics = _M3S1GroupedStoppingDiagnostics()
+        self._m3s2_last_fire_boundary_loss = None
+        self._m3s2_last_fire_boundary_grad_norm = 0.0
+        self._m3s2_last_window_classifier_loss = None
+        self._m3s2_last_window_classifier_grad_norm = 0.0
         self._m3s2_support_preserving_collect_hold_count = 0
         self._m3s2_support_preserving_collect_candidate_count = 0
         self._m3s2_support_preserving_collect_quality_count = 0
@@ -1893,10 +2322,32 @@ class AdaptiveKLPPO(PPO):
 
     def _m3s2_event_window_parameters(self) -> list[th.nn.Parameter]:
         if bool(getattr(self, "m3s2_event_window_use_stopping_head", False)):
+            selected: list[th.nn.Parameter] = []
+            stopping_norm = getattr(self.policy, "m3_stopping_norm", None)
+            if stopping_norm is not None:
+                selected.extend(param for param in stopping_norm.parameters() if param.requires_grad)
             stopping_head = getattr(self.policy, "m3_stopping_head", None)
             if stopping_head is not None:
-                return [param for param in stopping_head.parameters() if param.requires_grad]
+                selected.extend(param for param in stopping_head.parameters() if param.requires_grad)
+            if selected:
+                return selected
         return self._a7_event_policy_margin_parameters()
+
+    def _m3s2_fire_boundary_parameters(self) -> list[th.nn.Parameter]:
+        event_head = getattr(self.policy, "hybrid_event_head", None)
+        if event_head is None:
+            return []
+        return [param for param in event_head.parameters() if param.requires_grad]
+
+    def _m3s2_window_classifier_parameters(self) -> list[th.nn.Parameter]:
+        selected: list[th.nn.Parameter] = []
+        classifier_norm = getattr(self.policy, "m3_window_classifier_norm", None)
+        if classifier_norm is not None:
+            selected.extend(param for param in classifier_norm.parameters() if param.requires_grad)
+        classifier_head = getattr(self.policy, "m3_window_classifier_head", None)
+        if classifier_head is not None:
+            selected.extend(param for param in classifier_head.parameters() if param.requires_grad)
+        return selected
 
     def _first_event_policy_margin_separate_update(
         self,
@@ -2267,6 +2718,14 @@ class AdaptiveKLPPO(PPO):
             window_contrastive_margin_coef=float(self.m3s2_event_window_contrastive_margin_coef),
             window_contrastive_margin=float(self.m3s2_event_window_contrastive_margin),
             window_balanced_bce_coef=float(self.m3s2_event_window_balanced_bce_coef),
+            window_prewindow_hazard_scale_coef=float(self.m3s2_event_window_prewindow_hazard_scale_coef),
+            window_prewindow_hazard_target=float(self.m3s2_event_window_prewindow_hazard_target),
+            window_quality_hazard_target_coef=float(self.m3s2_event_window_quality_hazard_target_coef),
+            window_quality_hazard_target=float(self.m3s2_event_window_quality_hazard_target),
+            window_prewindow_logit_ceiling_coef=float(self.m3s2_event_window_prewindow_logit_ceiling_coef),
+            window_prewindow_logit_ceiling=float(self.m3s2_event_window_prewindow_logit_ceiling),
+            window_quality_logit_floor_coef=float(self.m3s2_event_window_quality_logit_floor_coef),
+            window_quality_logit_floor=float(self.m3s2_event_window_quality_logit_floor),
             boundary_threshold=0.0,
         )
 
@@ -2351,6 +2810,576 @@ class AdaptiveKLPPO(PPO):
         self._m3s2_last_event_window_grad_norm = float(max_grad_norm_seen)
         return last_loss
 
+    @staticmethod
+    def _m3s2_masked_float_mean(values: th.Tensor, mask: th.Tensor) -> float:
+        if not bool(mask.any().detach().cpu().item()):
+            return 0.0
+        return float(values[mask].detach().mean().cpu().item())
+
+    def _m3s2_fire_boundary_loss_from_sidecar(self) -> _M3S2FireBoundaryLoss | None:
+        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        if sidecar is None or not sidecar.groups:
+            return None
+        distribution_getter = getattr(self.policy, "get_distribution", None)
+        if not callable(distribution_getter):
+            return None
+
+        executable_logits: list[th.Tensor] = []
+        direct_head_deltas: list[th.Tensor] = []
+        labels: list[th.Tensor] = []
+        group_count = 0
+        for group in sidecar.groups:
+            obs = self._m3s1_observations_for_group(sidecar, group)
+            distribution = distribution_getter(obs)
+            logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+            if not callable(logit_delta_getter):
+                return None
+            event_logit_delta = logit_delta_getter()
+            if event_logit_delta is None:
+                return None
+            flat_logits = event_logit_delta.reshape(-1)
+            if int(flat_logits.numel()) != len(group.row_indices):
+                raise ValueError("M3-S2 fire boundary logits must match grouped sidecar rows")
+
+            supported_logits, supported_legal, desirable, _prewindow, _no_window = (
+                self._m3s1_group_diagnostic_masks(group, flat_logits)
+            )
+            active = supported_legal
+            if not bool(active.any().detach().cpu().item()):
+                continue
+            group_count += 1
+            executable_logits.append(supported_logits[active])
+            labels.append(desirable[active].to(dtype=supported_logits.dtype))
+
+            direct_delta_getter = getattr(self.policy, "get_hybrid_event_head_delta", None)
+            if callable(direct_delta_getter):
+                with th.no_grad():
+                    direct_delta = direct_delta_getter(obs, detach_latent=True)
+                if direct_delta is not None and int(direct_delta.reshape(-1).numel()) == len(group.row_indices):
+                    supported_direct, supported_direct_legal, _direct_desirable, _direct_pre, _direct_none = (
+                        self._m3s1_group_diagnostic_masks(group, direct_delta.reshape(-1))
+                    )
+                    direct_head_deltas.append(supported_direct[supported_direct_legal])
+
+        if not executable_logits:
+            return None
+
+        logits = th.cat(executable_logits, dim=0).reshape(-1)
+        target = th.cat(labels, dim=0).to(device=logits.device, dtype=logits.dtype).reshape(-1)
+        if int(logits.numel()) != int(target.numel()):
+            raise ValueError("M3-S2 fire boundary logits and labels must have matching rows")
+
+        positives = target > 0.5
+        negatives = ~positives
+        zero = logits.new_tensor(0.0)
+        loss_terms: list[th.Tensor] = []
+        if bool(positives.any().detach().cpu().item()):
+            loss_terms.append(
+                F.binary_cross_entropy_with_logits(
+                    logits[positives],
+                    th.ones_like(logits[positives]),
+                    reduction="mean",
+                )
+            )
+        if bool(negatives.any().detach().cpu().item()):
+            loss_terms.append(
+                F.binary_cross_entropy_with_logits(
+                    logits[negatives],
+                    th.zeros_like(logits[negatives]),
+                    reduction="mean",
+                )
+            )
+        if not loss_terms:
+            return None
+        balanced_bce_loss = sum(loss_terms) / float(len(loss_terms))
+
+        negative_logit_ceiling_loss = zero
+        if bool(negatives.any().detach().cpu().item()):
+            negative_logit_ceiling_loss = F.relu(
+                logits[negatives] - float(self.m3s2_fire_boundary_negative_logit_ceiling)
+            ).mean()
+
+        positive_logit_floor_loss = zero
+        if bool(positives.any().detach().cpu().item()):
+            positive_logit_floor_loss = F.relu(
+                float(self.m3s2_fire_boundary_positive_logit_floor) - logits[positives]
+            ).mean()
+
+        unscaled_loss = (
+            balanced_bce_loss
+            + float(self.m3s2_fire_boundary_negative_logit_ceiling_coef) * negative_logit_ceiling_loss
+            + float(self.m3s2_fire_boundary_positive_logit_floor_coef) * positive_logit_floor_loss
+        )
+        loss = float(self.m3s2_fire_boundary_coef) * unscaled_loss
+
+        probs = th.sigmoid(logits.detach())
+        detached_logits = logits.detach()
+        positive_count = int(positives.sum().detach().cpu().item())
+        negative_count = int(negatives.sum().detach().cpu().item())
+        predictions = detached_logits >= 0.0
+        accuracy = float((predictions == positives.detach()).to(dtype=th.float32).mean().detach().cpu().item())
+        boundary_cross_count = int((detached_logits >= 0.0).sum().detach().cpu().item())
+        boundary_cross_in_window_count = int(((detached_logits >= 0.0) & positives).sum().detach().cpu().item())
+
+        direct_positive_mean = 0.0
+        direct_negative_mean = 0.0
+        if direct_head_deltas:
+            direct_values = th.cat(direct_head_deltas, dim=0).reshape(-1)
+            if int(direct_values.numel()) == int(positives.numel()):
+                direct_positive_mean = self._m3s2_masked_float_mean(direct_values, positives)
+                direct_negative_mean = self._m3s2_masked_float_mean(direct_values, negatives)
+
+        return _M3S2FireBoundaryLoss(
+            loss=loss,
+            unscaled_loss=unscaled_loss,
+            balanced_bce_loss=balanced_bce_loss,
+            negative_logit_ceiling_loss=negative_logit_ceiling_loss,
+            positive_logit_floor_loss=positive_logit_floor_loss,
+            active_count=int(logits.numel()),
+            positive_count=positive_count,
+            negative_count=negative_count,
+            group_count=int(group_count),
+            executable_positive_logit_mean=self._m3s2_masked_float_mean(detached_logits, positives),
+            executable_negative_logit_mean=self._m3s2_masked_float_mean(detached_logits, negatives),
+            executable_positive_prob_mean=self._m3s2_masked_float_mean(probs, positives),
+            executable_negative_prob_mean=self._m3s2_masked_float_mean(probs, negatives),
+            direct_head_positive_delta_mean=direct_positive_mean,
+            direct_head_negative_delta_mean=direct_negative_mean,
+            accuracy=accuracy,
+            boundary_cross_count=boundary_cross_count,
+            boundary_cross_in_window_count=boundary_cross_in_window_count,
+        )
+
+    def _m3s2_fire_boundary_dedicated_optimizer(
+        self,
+        selected_ids: set[int],
+    ) -> th.optim.Optimizer | None:
+        if not self.m3s2_fire_boundary_dedicated_optimizer_enabled:
+            return None
+        param_groups: list[dict[str, Any]] = []
+        for group in self.policy.optimizer.param_groups:
+            selected = [
+                param
+                for param in group.get("params", [])
+                if id(param) in selected_ids and bool(getattr(param, "requires_grad", False))
+            ]
+            if not selected:
+                continue
+            cloned_group = {key: value for key, value in group.items() if key != "params"}
+            cloned_group["params"] = selected
+            param_groups.append(cloned_group)
+        if not param_groups:
+            return None
+        optimizer_cls = self.policy.optimizer.__class__
+        defaults = dict(getattr(self.policy.optimizer, "defaults", {}))
+        try:
+            return optimizer_cls(param_groups, **defaults)
+        except TypeError:
+            return th.optim.Adam(param_groups)
+
+    def _m3s2_fire_boundary_auxiliary_update(self) -> _M3S2FireBoundaryLoss | None:
+        self._m3s2_last_fire_boundary_loss = None
+        self._m3s2_last_fire_boundary_grad_norm = 0.0
+        if not self._m3s2_fire_boundary_enabled():
+            return None
+
+        selected_params = (
+            self._m3s2_fire_boundary_parameters()
+            if self.m3s2_fire_boundary_separate_update_enabled
+            else [param for param in self.policy.parameters() if param.requires_grad]
+        )
+        if not selected_params:
+            return None
+        selected_ids = {id(param) for param in selected_params}
+        aux_optimizer = self._m3s2_fire_boundary_dedicated_optimizer(selected_ids)
+        optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
+
+        last_loss: _M3S2FireBoundaryLoss | None = None
+        max_grad_norm_seen = 0.0
+        for _ in range(int(self.m3s2_fire_boundary_separate_update_steps)):
+            fire_boundary_loss = self._m3s2_fire_boundary_loss_from_sidecar()
+            if fire_boundary_loss is None:
+                break
+            last_loss = fire_boundary_loss
+            self._m3s2_last_fire_boundary_loss = fire_boundary_loss
+            if (
+                not fire_boundary_loss.loss.requires_grad
+                or float(fire_boundary_loss.loss.detach().cpu().item()) == 0.0
+                or int(fire_boundary_loss.active_count) <= 0
+            ):
+                break
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            if aux_optimizer is not None:
+                aux_optimizer.zero_grad(set_to_none=True)
+            fire_boundary_loss.loss.backward()
+            if self.m3s2_fire_boundary_separate_update_enabled:
+                for param in self.policy.parameters():
+                    if id(param) not in selected_ids:
+                        param.grad = None
+            max_norm = float(self.m3s2_fire_boundary_max_grad_norm)
+            if max_norm > 0.0:
+                grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
+                grad_norm = float(grad_norm_tensor.detach().cpu().item())
+            else:
+                grad_norm = 0.0
+            max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            optimizer.step()
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            if aux_optimizer is not None:
+                aux_optimizer.zero_grad(set_to_none=True)
+
+        final_loss = self._m3s2_fire_boundary_loss_from_sidecar()
+        if final_loss is not None:
+            last_loss = final_loss
+            self._m3s2_last_fire_boundary_loss = final_loss
+        self._m3s2_last_fire_boundary_grad_norm = float(max_grad_norm_seen)
+        return last_loss
+
+    def _m3s2_window_classifier_loss_from_sidecar(
+        self,
+        *,
+        update_replay: bool = True,
+        refresh_standardization: bool = True,
+    ) -> _M3S2WindowClassifierLoss | None:
+        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        if sidecar is None or not sidecar.groups:
+            return None
+        latent_getter = getattr(self.policy, "get_m3_window_latent", None)
+        logits_from_latent = getattr(self.policy, "get_m3_window_logits_from_latent", None)
+        standardization_updater = getattr(
+            self.policy,
+            "update_m3_window_classifier_input_standardization",
+            None,
+        )
+        if not callable(latent_getter) or not callable(logits_from_latent):
+            return None
+
+        active_latents: list[th.Tensor] = []
+        active_labels: list[th.Tensor] = []
+        active_observations: list[dict[str, th.Tensor]] = []
+        group_count = 0
+        for group in sidecar.groups:
+            obs = self._m3s1_observations_for_group(sidecar, group)
+            latents = latent_getter(
+                obs,
+                detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+            )
+            if latents is None:
+                return None
+            flat_latents = latents.reshape(int(latents.shape[0]), -1)
+            if int(flat_latents.shape[0]) != len(group.row_indices):
+                raise ValueError("M3-S2 window classifier latents must match grouped sidecar rows")
+            supported_latents, supported_legal, desirable, _prewindow, _no_window = (
+                self._m3s1_group_diagnostic_masks(group, flat_latents)
+            )
+            row_positions = th.arange(len(group.row_indices), device=flat_latents.device, dtype=th.long)
+            supported_positions, _supported_legal_for_pos, _desirable_for_pos, _prewindow_for_pos, _no_window_for_pos = (
+                self._m3s1_group_diagnostic_masks(group, row_positions)
+            )
+            active = supported_legal
+            if not bool(active.any().detach().cpu().item()):
+                continue
+            group_count += 1
+            active_latents.append(supported_latents[active])
+            active_labels.append(desirable[active].to(dtype=supported_latents.dtype))
+            active_positions = supported_positions[active].reshape(-1).to(dtype=th.long)
+            active_observations.append(
+                {
+                    key: value.index_select(0, active_positions)
+                    for key, value in obs.items()
+                }
+            )
+
+        if not active_latents:
+            return None
+
+        latents = th.cat(active_latents, dim=0).reshape(-1, int(active_latents[0].shape[-1]))
+        labels = th.cat(active_labels, dim=0).reshape(-1)
+        observations = self._m3s2_concat_observation_batches(active_observations)
+        replay = getattr(self, "_m3s2_window_classifier_replay", None)
+        replay_enabled = bool(self.m3s2_window_classifier_replay_enabled and replay is not None)
+        replay_used = False
+        if replay_enabled and isinstance(replay, _M3S2WindowClassifierReplay):
+            if update_replay:
+                replay.append(latents, labels, observations=observations)
+            standardization_batch = replay.calibration_balanced(
+                max_rows=int(self.m3s2_window_classifier_replay_batch_size),
+                device=self.device,
+                dtype=latents.dtype,
+            )
+            if (
+                refresh_standardization
+                and callable(standardization_updater)
+                and standardization_batch is not None
+            ):
+                standardization_samples, _standardization_labels = standardization_batch
+                if isinstance(standardization_samples, dict):
+                    standardization_latents = latent_getter(
+                        standardization_samples,
+                        detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+                    )
+                    if standardization_latents is None:
+                        return None
+                    standardization_latents = standardization_latents.reshape(
+                        int(standardization_latents.shape[0]),
+                        -1,
+                    )
+                else:
+                    standardization_latents = standardization_samples.reshape(
+                        int(standardization_samples.shape[0]),
+                        -1,
+                    )
+                standardization_updater(standardization_latents)
+            if replay.can_sample(
+                min_positive=int(self.m3s2_window_classifier_replay_min_positive),
+                min_negative=int(self.m3s2_window_classifier_replay_min_negative),
+            ):
+                sampled = replay.sample_balanced(
+                    batch_size=int(self.m3s2_window_classifier_replay_batch_size),
+                    device=self.device,
+                    dtype=latents.dtype,
+                )
+                if sampled is not None:
+                    replay_batch, labels = sampled
+                    if isinstance(replay_batch, dict):
+                        sampled_latents = latent_getter(
+                            replay_batch,
+                            detach_latent=bool(self.m3s2_window_classifier_detach_latent),
+                        )
+                        if sampled_latents is None:
+                            return None
+                        latents = sampled_latents.reshape(int(sampled_latents.shape[0]), -1)
+                    else:
+                        latents = replay_batch.reshape(int(replay_batch.shape[0]), -1)
+                    replay_used = True
+
+        if refresh_standardization and callable(standardization_updater) and not replay_used:
+            standardization_updater(latents)
+        logits = logits_from_latent(latents)
+        if logits is None:
+            return None
+        logits = logits.reshape(-1)
+        labels = labels.to(device=logits.device, dtype=logits.dtype).reshape(-1)
+        if int(logits.numel()) != int(labels.numel()):
+            raise ValueError("M3-S2 window classifier logits and labels must have matching rows")
+        positives = labels > 0.5
+        negatives = ~positives
+        zero = logits.new_tensor(0.0)
+        loss_terms: list[th.Tensor] = []
+        if bool(positives.any().detach().cpu().item()):
+            loss_terms.append(
+                F.binary_cross_entropy_with_logits(
+                    logits[positives],
+                    th.ones_like(logits[positives]),
+                    reduction="mean",
+                )
+            )
+        if bool(negatives.any().detach().cpu().item()):
+            loss_terms.append(
+                F.binary_cross_entropy_with_logits(
+                    logits[negatives],
+                    th.zeros_like(logits[negatives]),
+                    reduction="mean",
+                )
+            )
+        if not loss_terms:
+            return None
+        balanced_bce_loss = sum(loss_terms) / float(len(loss_terms))
+
+        prewindow_logit_ceiling_loss = zero
+        if bool(negatives.any().detach().cpu().item()):
+            prewindow_logit_ceiling_loss = F.relu(
+                logits[negatives] - float(self.m3s2_window_classifier_prewindow_logit_ceiling)
+            ).mean()
+
+        quality_logit_floor_loss = zero
+        if bool(positives.any().detach().cpu().item()):
+            quality_logit_floor_loss = F.relu(
+                float(self.m3s2_window_classifier_quality_logit_floor) - logits[positives]
+            ).mean()
+
+        unscaled_loss = (
+            balanced_bce_loss
+            + float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef) * prewindow_logit_ceiling_loss
+            + float(self.m3s2_window_classifier_quality_logit_floor_coef) * quality_logit_floor_loss
+        )
+        loss = float(self.m3s2_window_classifier_coef) * unscaled_loss
+
+        probs = th.sigmoid(logits.detach())
+        detached_logits = logits.detach()
+        positive_count = int(positives.sum().detach().cpu().item())
+        negative_count = int(negatives.sum().detach().cpu().item())
+        predictions = probs >= 0.5
+        accuracy = float((predictions == positives.detach()).to(dtype=th.float32).mean().detach().cpu().item())
+
+        def _masked_mean(values: th.Tensor, mask: th.Tensor) -> float:
+            if not bool(mask.any().detach().cpu().item()):
+                return 0.0
+            return float(values[mask].mean().detach().cpu().item())
+
+        return _M3S2WindowClassifierLoss(
+            loss=loss,
+            unscaled_loss=unscaled_loss,
+            balanced_bce_loss=balanced_bce_loss,
+            prewindow_logit_ceiling_loss=prewindow_logit_ceiling_loss,
+            quality_logit_floor_loss=quality_logit_floor_loss,
+            active_count=int(logits.numel()),
+            positive_count=positive_count,
+            negative_count=negative_count,
+            group_count=int(group_count),
+            positive_logit_mean=_masked_mean(detached_logits, positives),
+            negative_logit_mean=_masked_mean(detached_logits, negatives),
+            positive_prob_mean=_masked_mean(probs, positives),
+            negative_prob_mean=_masked_mean(probs, negatives),
+            accuracy=accuracy,
+            replay_enabled=replay_enabled,
+            replay_used=replay_used,
+            replay_positive_count=(
+                int(replay.positive_count)
+                if isinstance(replay, _M3S2WindowClassifierReplay)
+                else 0
+            ),
+            replay_negative_count=(
+                int(replay.negative_count)
+                if isinstance(replay, _M3S2WindowClassifierReplay)
+                else 0
+            ),
+        )
+
+    def _m3s2_window_classifier_dedicated_optimizer(
+        self,
+        selected_ids: set[int],
+    ) -> th.optim.Optimizer | None:
+        if not self.m3s2_window_classifier_dedicated_optimizer_enabled:
+            return None
+        param_groups: list[dict[str, Any]] = []
+        for group in self.policy.optimizer.param_groups:
+            selected = [
+                param
+                for param in group.get("params", [])
+                if id(param) in selected_ids and bool(getattr(param, "requires_grad", False))
+            ]
+            if not selected:
+                continue
+            cloned_group = {key: value for key, value in group.items() if key != "params"}
+            cloned_group["params"] = selected
+            param_groups.append(cloned_group)
+        if not param_groups:
+            return None
+        optimizer_cls = self.policy.optimizer.__class__
+        defaults = dict(getattr(self.policy.optimizer, "defaults", {}))
+        try:
+            return optimizer_cls(param_groups, **defaults)
+        except TypeError:
+            return th.optim.Adam(param_groups)
+
+    @staticmethod
+    def _m3s2_concat_observation_batches(
+        batches: list[dict[str, th.Tensor]],
+    ) -> dict[str, th.Tensor] | None:
+        if not batches:
+            return None
+        keys = set(batches[0].keys())
+        for batch in batches[1:]:
+            if set(batch.keys()) != keys:
+                raise ValueError("M3-S2 window classifier sidecar observation keys changed")
+        return {
+            key: th.cat([batch[key] for batch in batches], dim=0)
+            for key in batches[0].keys()
+        }
+
+    def _m3s2_window_classifier_auxiliary_update(self) -> _M3S2WindowClassifierLoss | None:
+        self._m3s2_last_window_classifier_loss = None
+        self._m3s2_last_window_classifier_grad_norm = 0.0
+        if not self._m3s2_window_classifier_enabled():
+            return None
+
+        selected_params = (
+            self._m3s2_window_classifier_parameters()
+            if self.m3s2_window_classifier_separate_update_enabled
+            else [param for param in self.policy.parameters() if param.requires_grad]
+        )
+        if not selected_params:
+            return None
+        selected_ids = {id(param) for param in selected_params}
+        aux_optimizer = self._m3s2_window_classifier_dedicated_optimizer(selected_ids)
+        optimizer = aux_optimizer if aux_optimizer is not None else self.policy.optimizer
+
+        last_loss: _M3S2WindowClassifierLoss | None = None
+        best_loss_value: float | None = None
+        best_param_values: list[th.Tensor] | None = None
+        max_grad_norm_seen = 0.0
+
+        def _capture_selected_params() -> list[th.Tensor]:
+            return [param.detach().clone() for param in selected_params]
+
+        def _restore_selected_params(values: list[th.Tensor]) -> None:
+            with th.no_grad():
+                for param, value in zip(selected_params, values):
+                    param.copy_(value.to(device=param.device, dtype=param.dtype))
+
+        def _maybe_capture_best(candidate: _M3S2WindowClassifierLoss) -> None:
+            nonlocal best_loss_value, best_param_values
+            loss_value = float(candidate.unscaled_loss.detach().cpu().item())
+            if best_loss_value is None or loss_value < best_loss_value:
+                best_loss_value = loss_value
+                best_param_values = _capture_selected_params()
+
+        for step_idx in range(int(self.m3s2_window_classifier_separate_update_steps)):
+            classifier_loss = self._m3s2_window_classifier_loss_from_sidecar(
+                update_replay=(step_idx == 0),
+                refresh_standardization=(step_idx == 0),
+            )
+            if classifier_loss is None:
+                break
+            last_loss = classifier_loss
+            self._m3s2_last_window_classifier_loss = classifier_loss
+            _maybe_capture_best(classifier_loss)
+            if (
+                not classifier_loss.loss.requires_grad
+                or float(classifier_loss.loss.detach().cpu().item()) == 0.0
+                or int(classifier_loss.active_count) <= 0
+            ):
+                break
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            if aux_optimizer is not None:
+                aux_optimizer.zero_grad(set_to_none=True)
+            classifier_loss.loss.backward()
+            if self.m3s2_window_classifier_separate_update_enabled:
+                for param in self.policy.parameters():
+                    if id(param) not in selected_ids:
+                        param.grad = None
+            max_norm = float(self.m3s2_window_classifier_max_grad_norm)
+            if max_norm > 0.0:
+                grad_norm_tensor = th.nn.utils.clip_grad_norm_(selected_params, max_norm)
+                grad_norm = float(grad_norm_tensor.detach().cpu().item())
+            else:
+                grad_norm = 0.0
+            max_grad_norm_seen = max(max_grad_norm_seen, grad_norm)
+            optimizer.step()
+            self.policy.optimizer.zero_grad(set_to_none=True)
+            if aux_optimizer is not None:
+                aux_optimizer.zero_grad(set_to_none=True)
+        final_post_step_loss = self._m3s2_window_classifier_loss_from_sidecar(
+            update_replay=False,
+            refresh_standardization=False,
+        )
+        if final_post_step_loss is not None:
+            last_loss = final_post_step_loss
+            self._m3s2_last_window_classifier_loss = final_post_step_loss
+            _maybe_capture_best(final_post_step_loss)
+        if best_param_values is not None:
+            _restore_selected_params(best_param_values)
+            restored_loss = self._m3s2_window_classifier_loss_from_sidecar(
+                update_replay=False,
+                refresh_standardization=False,
+            )
+            if restored_loss is not None:
+                last_loss = restored_loss
+                self._m3s2_last_window_classifier_loss = restored_loss
+        self._m3s2_last_window_classifier_grad_norm = float(max_grad_norm_seen)
+        return last_loss
+
     def train(self) -> None:  # noqa: C901 - keep SB3-like structure for clarity
         # Switch to train mode (affects batch norm / dropout)
         self.policy.set_training_mode(True)
@@ -2415,6 +3444,8 @@ class AdaptiveKLPPO(PPO):
 
         approx_kl_divs = []
         continue_training = True
+        m3s2_window_classifier_loss: _M3S2WindowClassifierLoss | None = None
+        m3s2_fire_boundary_loss: _M3S2FireBoundaryLoss | None = None
         m3s2_event_window_loss: M3S1GroupedStoppingLoss | None = None
         m3s1_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
 
@@ -2609,6 +3640,8 @@ class AdaptiveKLPPO(PPO):
             if not continue_training:
                 break
 
+        m3s2_window_classifier_loss = self._m3s2_window_classifier_auxiliary_update()
+        m3s2_fire_boundary_loss = self._m3s2_fire_boundary_auxiliary_update()
         m3s2_event_window_loss = self._m3s2_event_window_auxiliary_update()
         m3s1_grouped_stopping_loss = self._m3s1_grouped_stopping_auxiliary_update()
 
@@ -2656,6 +3689,324 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "a6/target_positive_frac",
                 float(np.mean(first_event_hazard_positive_fracs)) if first_event_hazard_positive_fracs else 0.0,
+            )
+        if self._m3s2_window_classifier_enabled():
+            classifier_loss = m3s2_window_classifier_loss or self._m3s2_last_window_classifier_loss
+            self.logger.record("m3s2/window_classifier_coef", float(self.m3s2_window_classifier_coef))
+            self.logger.record(
+                "m3s2/window_classifier_loss",
+                float(classifier_loss.loss.detach().cpu().item()) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_unscaled_loss",
+                float(classifier_loss.unscaled_loss.detach().cpu().item()) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_balanced_bce_loss",
+                float(classifier_loss.balanced_bce_loss.detach().cpu().item()) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_prewindow_logit_ceiling_loss",
+                (
+                    float(classifier_loss.prewindow_logit_ceiling_loss.detach().cpu().item())
+                    if classifier_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_quality_logit_floor_loss",
+                (
+                    float(classifier_loss.quality_logit_floor_loss.detach().cpu().item())
+                    if classifier_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_grad_norm",
+                float(self._m3s2_last_window_classifier_grad_norm),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_group_count",
+                float(classifier_loss.group_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_active_count",
+                float(classifier_loss.active_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_positive_count",
+                float(classifier_loss.positive_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_negative_count",
+                float(classifier_loss.negative_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_positive_logit_mean",
+                float(classifier_loss.positive_logit_mean) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_negative_logit_mean",
+                float(classifier_loss.negative_logit_mean) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_positive_prob_mean",
+                float(classifier_loss.positive_prob_mean) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_negative_prob_mean",
+                float(classifier_loss.negative_prob_mean) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_accuracy",
+                float(classifier_loss.accuracy) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_prewindow_logit_ceiling_coef",
+                float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_prewindow_logit_ceiling",
+                float(self.m3s2_window_classifier_prewindow_logit_ceiling),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_quality_logit_floor_coef",
+                float(self.m3s2_window_classifier_quality_logit_floor_coef),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_quality_logit_floor",
+                float(self.m3s2_window_classifier_quality_logit_floor),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_detach_latent",
+                float(self.m3s2_window_classifier_detach_latent),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_input_standardization_enabled",
+                float(getattr(self.policy, "_m3_window_classifier_input_standardization_enabled", False)),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_input_standardization_momentum",
+                float(getattr(self.policy, "_m3_window_classifier_input_standardization_momentum", 0.0)),
+            )
+            initialized = getattr(
+                self.policy,
+                "m3_window_classifier_input_standardization_initialized",
+                None,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_input_standardization_initialized",
+                (
+                    float(initialized.detach().cpu().item())
+                    if initialized is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_separate_update_enabled",
+                float(self.m3s2_window_classifier_separate_update_enabled),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_dedicated_optimizer_enabled",
+                float(self.m3s2_window_classifier_dedicated_optimizer_enabled),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_separate_update_steps",
+                int(self.m3s2_window_classifier_separate_update_steps),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_enabled",
+                float(self.m3s2_window_classifier_replay_enabled),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_storage_observation",
+                float(self.m3s2_window_classifier_replay_storage == "observation"),
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_used",
+                float(classifier_loss.replay_used) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_positive_count",
+                float(classifier_loss.replay_positive_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_negative_count",
+                float(classifier_loss.replay_negative_count) if classifier_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/window_classifier_replay_batch_size",
+                int(self.m3s2_window_classifier_replay_batch_size),
+            )
+        if self._m3s2_fire_boundary_enabled():
+            fire_boundary_loss = m3s2_fire_boundary_loss or self._m3s2_last_fire_boundary_loss
+            active_count = float(fire_boundary_loss.active_count) if fire_boundary_loss is not None else 0.0
+            boundary_cross_count = (
+                float(fire_boundary_loss.boundary_cross_count)
+                if fire_boundary_loss is not None
+                else 0.0
+            )
+            boundary_cross_in_window_count = (
+                float(fire_boundary_loss.boundary_cross_in_window_count)
+                if fire_boundary_loss is not None
+                else 0.0
+            )
+            self.logger.record("m3s2/fb_coef", float(self.m3s2_fire_boundary_coef))
+            self.logger.record(
+                "m3s2/fb_loss",
+                (
+                    float(fire_boundary_loss.loss.detach().cpu().item())
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_unscaled_loss",
+                (
+                    float(fire_boundary_loss.unscaled_loss.detach().cpu().item())
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_bce_loss",
+                (
+                    float(fire_boundary_loss.balanced_bce_loss.detach().cpu().item())
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_neg_ceiling_loss",
+                (
+                    float(fire_boundary_loss.negative_logit_ceiling_loss.detach().cpu().item())
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_pos_floor_loss",
+                (
+                    float(fire_boundary_loss.positive_logit_floor_loss.detach().cpu().item())
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record("m3s2/fb_grad_norm", float(self._m3s2_last_fire_boundary_grad_norm))
+            self.logger.record(
+                "m3s2/fb_group_count",
+                float(fire_boundary_loss.group_count) if fire_boundary_loss is not None else 0.0,
+            )
+            self.logger.record("m3s2/fb_active_count", active_count)
+            self.logger.record(
+                "m3s2/fb_positive_count",
+                float(fire_boundary_loss.positive_count) if fire_boundary_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/fb_negative_count",
+                float(fire_boundary_loss.negative_count) if fire_boundary_loss is not None else 0.0,
+            )
+            self.logger.record(
+                "m3s2/fb_pos_logit_mean",
+                (
+                    float(fire_boundary_loss.executable_positive_logit_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_neg_logit_mean",
+                (
+                    float(fire_boundary_loss.executable_negative_logit_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_pos_prob_mean",
+                (
+                    float(fire_boundary_loss.executable_positive_prob_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_neg_prob_mean",
+                (
+                    float(fire_boundary_loss.executable_negative_prob_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_direct_pos_delta_mean",
+                (
+                    float(fire_boundary_loss.direct_head_positive_delta_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_direct_neg_delta_mean",
+                (
+                    float(fire_boundary_loss.direct_head_negative_delta_mean)
+                    if fire_boundary_loss is not None
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_accuracy",
+                float(fire_boundary_loss.accuracy) if fire_boundary_loss is not None else 0.0,
+            )
+            self.logger.record("m3s2/fb_cross_count", boundary_cross_count)
+            self.logger.record(
+                "m3s2/fb_cross_ratio",
+                boundary_cross_count / active_count if active_count > 0.0 else 0.0,
+            )
+            self.logger.record("m3s2/fb_cross_in_window_count", boundary_cross_in_window_count)
+            self.logger.record(
+                "m3s2/fb_cross_in_window_ratio",
+                (
+                    boundary_cross_in_window_count / boundary_cross_count
+                    if boundary_cross_count > 0.0
+                    else 0.0
+                ),
+            )
+            self.logger.record(
+                "m3s2/fb_separate_update_enabled",
+                float(self.m3s2_fire_boundary_separate_update_enabled),
+            )
+            self.logger.record(
+                "m3s2/fb_dedicated_optimizer_enabled",
+                float(self.m3s2_fire_boundary_dedicated_optimizer_enabled),
+            )
+            self.logger.record(
+                "m3s2/fb_separate_update_steps",
+                int(self.m3s2_fire_boundary_separate_update_steps),
+            )
+            self.logger.record(
+                "m3s2/fb_neg_ceiling_coef",
+                float(self.m3s2_fire_boundary_negative_logit_ceiling_coef),
+            )
+            self.logger.record(
+                "m3s2/fb_neg_ceiling",
+                float(self.m3s2_fire_boundary_negative_logit_ceiling),
+            )
+            self.logger.record(
+                "m3s2/fb_pos_floor_coef",
+                float(self.m3s2_fire_boundary_positive_logit_floor_coef),
+            )
+            self.logger.record(
+                "m3s2/fb_pos_floor",
+                float(self.m3s2_fire_boundary_positive_logit_floor),
+            )
+            self.logger.record(
+                "m3s2/fb_support_collect_enabled",
+                float(self.m3s2_fire_boundary_support_preserving_collect_enabled),
+            )
+            self.logger.record(
+                "m3s2/fb_support_hold_quality_enabled",
+                float(self.m3s2_fire_boundary_support_preserving_hold_quality_enabled),
             )
         if self._m3s2_event_window_enabled():
             sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
@@ -2720,6 +4071,46 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "m3s2/window_balanced_bce_loss",
                 float(stats.mean_window_balanced_bce_loss) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_hazard_mean",
+                float(stats.mean_prewindow_hazard_mean) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_hazard_max",
+                float(stats.mean_prewindow_hazard_max) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_hazard_target",
+                float(stats.mean_prewindow_hazard_target) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_hazard_scale_loss",
+                float(stats.mean_prewindow_hazard_scale_loss) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/quality_hazard_target",
+                float(stats.mean_quality_hazard_target) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/quality_hazard_target_loss",
+                float(stats.mean_quality_hazard_target_loss) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_logit_ceiling",
+                float(stats.mean_prewindow_logit_ceiling) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/prewindow_logit_ceiling_loss",
+                float(stats.mean_prewindow_logit_ceiling_loss) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/quality_logit_floor",
+                float(stats.mean_quality_logit_floor) if stats else 0.0,
+            )
+            self.logger.record(
+                "m3s2/quality_logit_floor_loss",
+                float(stats.mean_quality_logit_floor_loss) if stats else 0.0,
             )
             self.logger.record("m3s2/event_logit_delta_mean", float(diagnostics.stop_logit_mean))
             self.logger.record("m3s2/event_logit_delta_window_mean", float(diagnostics.stop_logit_desirable_mean))
@@ -2805,6 +4196,38 @@ class AdaptiveKLPPO(PPO):
             self.logger.record(
                 "m3s2/ew_balanced_bce_coef",
                 float(self.m3s2_event_window_balanced_bce_coef),
+            )
+            self.logger.record(
+                "m3s2/ew_prewindow_hazard_scale_coef",
+                float(self.m3s2_event_window_prewindow_hazard_scale_coef),
+            )
+            self.logger.record(
+                "m3s2/ew_prewindow_hazard_target",
+                float(self.m3s2_event_window_prewindow_hazard_target),
+            )
+            self.logger.record(
+                "m3s2/ew_quality_hazard_target_coef",
+                float(self.m3s2_event_window_quality_hazard_target_coef),
+            )
+            self.logger.record(
+                "m3s2/ew_quality_hazard_target",
+                float(self.m3s2_event_window_quality_hazard_target),
+            )
+            self.logger.record(
+                "m3s2/ew_prewindow_logit_ceiling_coef",
+                float(self.m3s2_event_window_prewindow_logit_ceiling_coef),
+            )
+            self.logger.record(
+                "m3s2/ew_prewindow_logit_ceiling",
+                float(self.m3s2_event_window_prewindow_logit_ceiling),
+            )
+            self.logger.record(
+                "m3s2/ew_quality_logit_floor_coef",
+                float(self.m3s2_event_window_quality_logit_floor_coef),
+            )
+            self.logger.record(
+                "m3s2/ew_quality_logit_floor",
+                float(self.m3s2_event_window_quality_logit_floor),
             )
             self.logger.record(
                 "m3s2/support_preserving_collect_enabled",

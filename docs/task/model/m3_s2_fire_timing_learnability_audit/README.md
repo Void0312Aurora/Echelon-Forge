@@ -1,10 +1,16 @@
 # M3-S2 Fire-Timing Learnability Audit
 
-Status: `2026-06-06` active audit slice; oracle evidence passed,
+Status: `2026-06-07` active audit slice; oracle evidence passed,
 event-window remediation probe implemented, support-preserving collect repair
 partially accepted, boundary-dedicated short training direction improved,
-log-domain cumulative-hazard repair accepted, behavioral deterministic fire
-timing still held.
+log-domain cumulative-hazard repair accepted, scale-separated stopping contract
+implemented, chain-breakpoint localization accepted, behavioral deterministic
+fire timing still held, head-normalization calibration negative evidence
+recorded, explicit window-classifier replay tested with local classifier
+separation but behavior still held, calibrated standardization tested with
+negative integration evidence, standardization contract breakpoint localized,
+execution-support classifier mismatch confirmed, direct fire-boundary owner
+wired through active nonfinite-probe training with behavior still held.
 
 Language:
 
@@ -58,6 +64,14 @@ rejected and then fail to generate a later event.
 | Boundary dedicated short train | partial direction repair / behavior held | 8k run raises logged `m3s2/q_boundary_logit` from about `-5.95` to `-4.71`; deterministic probe still records `0` releases; stochastic probe samples one authorized release at step `623`. | This is online direction evidence, not deterministic timing acceptance. |
 | Single-batch window signal | localized | On the latest forced-hold batch, raw mission fields, frozen extractor features, and frozen actor latent are linearly separable, but active M3-S2 overfit and row-wise BCE on the current action path collapse to all-positive/all-high transport. | The remaining break is the executable event-logit contract, not missing observation signal. |
 | Stopping-head log-domain adapter | partial numerical repair / behavior held | Log-domain grouped stopping loss lowers deterministic M3 stop probability from about `0.47` to `0.145` in an 8k run, but deterministic release remains `0` and stochastic still samples early at step `5`. | It restores long-prewindow survival gradients; it does not learn the quality-window pulse. |
+| Scale-separated stopping contract | diagnostic accepted / behavior held | 8k run lowers logged prewindow hazard from `0.413` to `0.218`, but prewindow and quality logits move down together; deterministic release remains `0`, stochastic still releases early at step `7`. | The contract is wired, but the current executable stopping/action transport still does not learn a prewindow-vs-quality discriminator. |
+| Chain breakpoint localization | root localized | On one fixed real forced-hold trajectory, labels pass, standardized frozen actor latent learns `0 / 840` prewindow and `1040 / 1040` quality boundaries, folded head produces one quality pulse, but raw M3 head optimization leaves prewindow positives. | The first localized break is M3 head optimization conditioning/calibration, not missing state signal or action adapter behavior. |
+| Head-normalized calibration | negative integration evidence | The 8k run enables M3 LayerNorm and explicit prewindow/quality logit margins, lowers deterministic M3 stop probability to `0.118269`, but deterministic release remains `0`; real-update probing lowers loss by lowering quality logits from `-2.003` to `-2.965`. | Capacity exists, but the online M3-S2 objective still admits global hazard suppression as the lower-loss direction. |
+| Window classifier replay | local classifier repair / behavior held | Balanced latent and observation replay make online classifier batches separate positive and negative logits, but saved deterministic probes still record `release_count = 0` and quality-window classifier logits around `-8.24`; stochastic probing releases early at step `48` before quality rows. | Replay fixes a local batch-imbalance issue, not the saved actor/executable trajectory boundary. |
+| Calibrated classifier standardization | negative integration evidence | Deterministic latest-balanced standardization avoids random replay-batch coordinate refresh, but the 8k final still records `release_count = 0`; fixed-chain final quality classifier logit mean is `-9.902827` while a fresh head fits the same latent perfectly. | The failure is still online head optimization/training-distribution contract, not standardization randomness. |
+| Classifier standardization contract | root localized / behavior held | On the fixed `model_event_hold` trajectory, saved buffers give quality logit mean `-9.837499` and `0 / 1080` quality boundaries. Recomputing only the classifier input standardization buffers on that fixed batch changes quality logit mean to `2.195754` and `1053 / 1080` quality boundaries. | The executable path is using an inference-time normalization contract calibrated to replay/support batches, not to the execution-support trajectory. |
+| Classifier execution-support contract | root localized / behavior held | Actor-gradient isolation and post-update best-restore make classifier logs reliable; the 8k run still records deterministic `release_count = 0`, saved quality-window classifier logit mean `-6.336187`, while a fresh standardized head on the same fixed execution latent reaches `1080 / 1080` quality boundaries. | The remaining break is training/replay support versus deterministic execution-support mismatch, not missing state signal, adapter wiring, or final-step logging. |
+| Direct fire-boundary owner | wiring accepted / behavior held | Active M3-S2 now trains the executable `hybrid_event_head` directly, and `NonFiniteTrainingProbe.traced_train()` runs the same update. The 8k run emits `m3s2/fb_*` metrics and raises open-window fire probability to `0.489228` at step `6144`, but final deterministic diagnostics still record `0` fire requests/releases. | The update path is no longer missing; remaining failure is unstable online support/label distribution and boundary calibration. |
 | Edge-trigger adapter | hazard | `forced_fire` high from reset creates a rejected `no_target` pulse and no later release. | This is action-transport semantics, not C2/ROE failure. |
 
 ## Scope
@@ -127,6 +141,24 @@ Out of scope:
   [m3_s2_single_batch_window_signal_probe_20260606.md](m3_s2_single_batch_window_signal_probe_20260606.md)
 - Stopping-head log-domain short-train evidence:
   [m3_s2_stopping_head_adapter_log_domain_short_train_20260606.md](m3_s2_stopping_head_adapter_log_domain_short_train_20260606.md)
+- Scale-separated stopping contract short-train evidence:
+  [m3_s2_scale_separated_stopping_contract_short_train_20260606.md](m3_s2_scale_separated_stopping_contract_short_train_20260606.md)
+- Chain breakpoint localization evidence:
+  [m3_s2_chain_breakpoint_probe_20260606.md](m3_s2_chain_breakpoint_probe_20260606.md)
+- Head-normalized calibration short-train evidence:
+  [m3_s2_head_norm_calibration_short_train_20260606.md](m3_s2_head_norm_calibration_short_train_20260606.md)
+- Window classifier short-train evidence:
+  [m3_s2_window_classifier_short_train_20260606.md](m3_s2_window_classifier_short_train_20260606.md)
+- Window classifier replay short-train evidence:
+  [m3_s2_window_classifier_replay_short_train_20260606.md](m3_s2_window_classifier_replay_short_train_20260606.md)
+- Window classifier calibrated-standardization evidence:
+  [m3_s2_window_classifier_calibrated_standardization_short_train_20260606.md](m3_s2_window_classifier_calibrated_standardization_short_train_20260606.md)
+- Window classifier standardization-contract evidence:
+  [m3_s2_window_classifier_standardization_contract_probe_20260606.md](m3_s2_window_classifier_standardization_contract_probe_20260606.md)
+- Window classifier execution-support short-train evidence:
+  [m3_s2_window_classifier_execution_support_short_train_20260606.md](m3_s2_window_classifier_execution_support_short_train_20260606.md)
+- Direct fire-boundary owner evidence:
+  [m3_s2_direct_fire_boundary_probe_20260607.md](m3_s2_direct_fire_boundary_probe_20260607.md)
 - Current status:
   [m3_s2_fire_timing_learnability_audit_current_status_20260605.md](m3_s2_fire_timing_learnability_audit_current_status_20260605.md)
 - Aggregate artifact:
@@ -148,6 +180,13 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
+- Direct fire-boundary ownership is now wired through the active training path.
+  The earlier no-effect short train was caused by `NonFiniteTrainingProbe`
+  replacing `model.train()` with an older traced copy that skipped the new
+  direct boundary update. After the fix, `m3s2/fb_*` metrics appear from step
+  `512`, and open-window fire probability reaches `0.489228` at step `6144`.
+  Behavior is still held: the same 8k run never records `fire_once_requested`,
+  and final open-window probability falls back to `0.0238934`.
 - Current reward breakpoint: the oracle surface has a mathematical optimum, but
   the optimum is a late close-range win because positive per-step shaping
   rewards delayed termination among already-winning shots.
@@ -195,6 +234,37 @@ This subproject can be marked accepted only when:
   probability drops from about `0.47` to `0.145`. This is still far too high for
   an `800`-step one-shot prewindow, so stochastic probing can still release early
   at step `5`, and deterministic quality-window crossing remains absent.
+- The scale-separated stopping contract makes the desired scales explicit, but
+  the online model still moves prewindow and quality logits almost identically.
+  The 8k run lowers window-bearing prewindow hazard from `0.413` to `0.218`
+  against an inferred target of `0.000651`; meanwhile the quality boundary logit
+  falls from `-0.346` to `-1.273`. Deterministic behavior remains no-fire and
+  stochastic behavior still samples an early release at step `7`.
+- The chain breakpoint probe localizes the remaining break. On the same fixed
+  real trajectory, the label support is valid (`840` prewindow rows and `1040`
+  quality rows), a standardized linear head on frozen actor latent reaches
+  perfect separation, and the folded head produces a single quality-window
+  edge-trigger pulse through the action adapter. The direct raw M3 head nearly
+  learns but leaves a handful of prewindow positives, which is enough to fail
+  one-shot stopping. The next repair should target head normalization,
+  calibration, and the online auxiliary optimizer contract.
+- The head-normalized calibration repair is now tested and held. It wires M3
+  `LayerNorm`, explicit logit ceiling/floor losses, logging, diagnostics, and
+  active config support. The short train lowers deterministic M3 stop probability
+  from the previous scale-separated `0.157226` to `0.118269`, but prewindow and
+  quality probabilities remain nearly identical, deterministic release is still
+  `0`, and real-update probing lowers loss by pushing quality logits farther
+  negative. The remaining issue is the mathematical objective: global hazard
+  suppression is still an easier loss-reducing direction than a quality-window
+  boundary.
+- The current strongest breakpoint is now the executable classifier
+  standardization contract. The saved
+  `m3_window_classifier_input_mean/std` buffers place the fixed
+  execution-support trajectory far off-center (`saved_z_mean_abs_mean =
+  2.439337`, `saved_z_std_mean = 0.633167`), yielding `0 / 1080` quality
+  boundaries. Recomputing only those buffers on the fixed batch immediately
+  raises quality boundary crossings to `1053 / 1080`, proving the head contains
+  usable timing signal but is evaluated under the wrong normalization contract.
 - Secondary breakpoint: the hybrid fire transport is edge-triggered. A high
   signal before target acquisition can consume the pulse as `no_target` and
   produce no later release.

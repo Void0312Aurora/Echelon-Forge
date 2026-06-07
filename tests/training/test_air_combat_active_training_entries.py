@@ -8,6 +8,13 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+from python.rl.policy_algo.model_contracts import (
+    FaultStage,
+    MechanismRole,
+    active_model_contracts_for_config,
+    validate_training_config_contract,
+)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AIR_COMBAT_ACTIVE_DIR = REPO_ROOT / "examples" / "config" / "training" / "active" / "air_combat"
@@ -83,6 +90,10 @@ STAGE1_C2_ROE_SCENARIO = (
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _violation_dicts(config: dict[str, Any]) -> list[dict[str, Any]]:
+    return [violation.as_dict() for violation in validate_training_config_contract(config)]
 
 
 class AirCombatActiveTrainingEntryTests(unittest.TestCase):
@@ -555,54 +566,76 @@ class AirCombatActiveTrainingEntryTests(unittest.TestCase):
         m3_hyper = dict(m3s2.get("hyperparameters", {}))
         state_policy_kwargs = dict(state_hyper.pop("policy_kwargs", {}))
         m3_policy_kwargs = dict(m3_hyper.pop("policy_kwargs", {}))
-        self.assertTrue(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_stopping_head", False)))
-        self.assertAlmostEqual(float(m3_policy_kwargs.pop("m3_stopping_head_lr_scale", 0.0)), 10.0, places=6)
+        self.assertFalse(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_stopping_head", True)))
+        self.assertFalse(bool(m3_policy_kwargs.pop("hybrid_event_use_m3_window_classifier_head", True)))
         self.assertEqual(m3_policy_kwargs, state_policy_kwargs)
 
         m3_knobs = {
             key: m3_hyper.pop(key, None)
             for key in (
-                "m3s2_event_window_coef",
-                "m3s2_event_window_early_mass_coef",
-                "m3s2_event_window_early_mass_budget",
-                "m3s2_event_window_early_survival_coef",
-                "m3s2_event_window_no_event_coef",
-                "m3s2_event_window_delay_coef",
-                "m3s2_event_window_deadline_coef",
-                "m3s2_event_window_deadline_steps",
-                "m3s2_event_window_quality_boundary_coef",
-                "m3s2_event_window_quality_boundary_logit",
-                "m3s2_event_window_contrastive_margin_coef",
-                "m3s2_event_window_contrastive_margin",
-                "m3s2_event_window_balanced_bce_coef",
-                "m3s2_event_window_use_stopping_head",
-                "m3s2_event_window_separate_update_enabled",
-                "m3s2_event_window_dedicated_optimizer_enabled",
-                "m3s2_event_window_separate_update_steps",
-                "m3s2_event_window_max_grad_norm",
-                "m3s2_event_window_support_preserving_collect_enabled",
-                "m3s2_event_window_support_preserving_hold_quality_enabled",
+                "m3s2_fire_boundary_coef",
+                "m3s2_fire_boundary_negative_logit_ceiling_coef",
+                "m3s2_fire_boundary_negative_logit_ceiling",
+                "m3s2_fire_boundary_positive_logit_floor_coef",
+                "m3s2_fire_boundary_positive_logit_floor",
+                "m3s2_fire_boundary_separate_update_enabled",
+                "m3s2_fire_boundary_dedicated_optimizer_enabled",
+                "m3s2_fire_boundary_separate_update_steps",
+                "m3s2_fire_boundary_max_grad_norm",
+                "m3s2_fire_boundary_support_preserving_collect_enabled",
+                "m3s2_fire_boundary_support_preserving_hold_quality_enabled",
             )
         }
         self.assertEqual(m3_hyper, state_hyper)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_coef"]), 1.0, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_early_mass_budget"]), 0.02, places=6)
-        self.assertGreater(float(m3_knobs["m3s2_event_window_early_survival_coef"]), 0.0)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_delay_coef"]), 0.5, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_deadline_coef"]), 0.5, places=6)
-        self.assertEqual(int(m3_knobs["m3s2_event_window_deadline_steps"]), 64)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_quality_boundary_coef"]), 20.0, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_quality_boundary_logit"]), 0.0, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_contrastive_margin_coef"]), 2.0, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_contrastive_margin"]), 2.0, places=6)
-        self.assertAlmostEqual(float(m3_knobs["m3s2_event_window_balanced_bce_coef"]), 20.0, places=6)
-        self.assertTrue(bool(m3_knobs["m3s2_event_window_use_stopping_head"]))
-        self.assertTrue(bool(m3_knobs["m3s2_event_window_separate_update_enabled"]))
-        self.assertTrue(bool(m3_knobs["m3s2_event_window_dedicated_optimizer_enabled"]))
-        self.assertEqual(int(m3_knobs["m3s2_event_window_separate_update_steps"]), 8)
-        self.assertGreater(float(m3_knobs["m3s2_event_window_max_grad_norm"]), 0.0)
-        self.assertTrue(bool(m3_knobs["m3s2_event_window_support_preserving_collect_enabled"]))
-        self.assertTrue(bool(m3_knobs["m3s2_event_window_support_preserving_hold_quality_enabled"]))
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_coef"]), 20.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_negative_logit_ceiling_coef"]), 5.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_negative_logit_ceiling"]), -2.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_positive_logit_floor_coef"]), 5.0, places=6)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_positive_logit_floor"]), 2.0, places=6)
+        self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_separate_update_enabled"]))
+        self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_dedicated_optimizer_enabled"]))
+        self.assertEqual(int(m3_knobs["m3s2_fire_boundary_separate_update_steps"]), 32)
+        self.assertAlmostEqual(float(m3_knobs["m3s2_fire_boundary_max_grad_norm"]), 5.0, places=6)
+        self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_support_preserving_collect_enabled"]))
+        self.assertTrue(bool(m3_knobs["m3s2_fire_boundary_support_preserving_hold_quality_enabled"]))
+        self.assertEqual(_violation_dicts(m3s2), [])
+
+    def test_stage1_m3s2_model_contract_names_fault_localization_gates(self) -> None:
+        m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+        contracts = active_model_contracts_for_config(m3s2)
+
+        self.assertEqual([contract.mechanism_id for contract in contracts], ["m3s2.direct_fire_boundary_event_head"])
+        contract = contracts[0]
+        self.assertEqual(contract.role, MechanismRole.EXECUTABLE)
+        self.assertIn(FaultStage.LABEL, contract.required_probe_stages)
+        self.assertIn(FaultStage.OPTIMIZER, contract.required_probe_stages)
+        self.assertIn(FaultStage.ADAPTER, contract.required_probe_stages)
+        self.assertIn(FaultStage.EVALUATION, contract.required_probe_stages)
+        self.assertIn("executable fire boundary", contract.held_boundary)
+
+    def test_stage1_m3s2_contract_blocks_adapter_override(self) -> None:
+        m3s2 = _load_json(STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG)
+        policy_kwargs = m3s2["hyperparameters"]["policy_kwargs"]
+        policy_kwargs["hybrid_event_use_m3_window_classifier_head"] = True
+
+        violations = _violation_dicts(m3s2)
+
+        self.assertIn(
+            {
+                "mechanism_id": "m3s2.direct_fire_boundary_event_head",
+                "path": "hyperparameters.policy_kwargs.hybrid_event_use_m3_window_classifier_head",
+                "expected": "false",
+                "actual": True,
+                "reason": "Direct fire boundary owns executable hold/fire logits and must not be overridden by classifier adapter.",
+            },
+            violations,
+        )
+
+    def test_air_combat_active_training_entries_satisfy_model_contract_gates(self) -> None:
+        for config_path in sorted(AIR_COMBAT_ACTIVE_DIR.glob("*.json")):
+            with self.subTest(config=config_path.name):
+                cfg = _load_json(config_path)
+                self.assertEqual(_violation_dicts(cfg), [])
 
     def test_stage1_c2_roe_temporal_probe_pairs_with_c2_roe_reactive_baseline(self) -> None:
         c2_roe = _load_json(STAGE1_C2_ROE_CONFIG)

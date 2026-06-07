@@ -28,7 +28,7 @@ from python.rl.policy_algo.first_event_hazard import (
     FirstEventHazardLabels,
 )
 from python.rl.policy_algo.policies import HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy
-from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO, _M3S2WindowClassifierReplay
 from python.rl.support.nonfinite_probe import NonFiniteTrainingProbe
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import configure
@@ -1067,6 +1067,209 @@ class HMoEPPOWarmupTests(unittest.TestCase):
                 self.assertFalse(changed, name)
         self.assertTrue(selected_changed)
 
+    def test_m3s2_window_classifier_auxiliary_update_separates_quality_window_logits(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_window_classifier_coef=2.0,
+            m3s2_window_classifier_prewindow_logit_ceiling_coef=1.0,
+            m3s2_window_classifier_prewindow_logit_ceiling=-1.0,
+            m3s2_window_classifier_quality_logit_floor_coef=1.0,
+            m3s2_window_classifier_quality_logit_floor=1.0,
+            m3s2_window_classifier_detach_latent=True,
+            m3s2_window_classifier_separate_update_enabled=True,
+            m3s2_window_classifier_dedicated_optimizer_enabled=True,
+            m3s2_window_classifier_separate_update_steps=8,
+            m3s2_window_classifier_max_grad_norm=5.0,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_use_m3_window_classifier_head": True,
+                "m3_window_classifier_head_lr_scale": 20.0,
+                "m3_window_classifier_head_norm_enabled": True,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        self.assertTrue(model._m3s2_window_classifier_enabled())
+        self.assertTrue(model._m3s1_grouped_stopping_sidecar_enabled())
+        self.assertTrue(model._first_event_label_collection_enabled())
+        assert model.policy.m3_window_classifier_head is not None
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+        self.assertEqual(sidecar.groups[0].quality_mask, (False, False, True, True))
+
+        before_loss = model._m3s2_window_classifier_loss_from_sidecar()
+        self.assertIsNotNone(before_loss)
+        assert before_loss is not None
+        self.assertEqual(before_loss.positive_count, 2)
+        self.assertEqual(before_loss.negative_count, 2)
+        self.assertAlmostEqual(float(before_loss.positive_prob_mean), 0.5, places=6)
+        self.assertAlmostEqual(float(before_loss.negative_prob_mean), 0.5, places=6)
+
+        before = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+        classifier_loss = model._m3s2_window_classifier_auxiliary_update()
+
+        self.assertIsNotNone(classifier_loss)
+        assert classifier_loss is not None
+        self.assertGreater(float(model._m3s2_last_window_classifier_grad_norm), 0.0)
+        self.assertEqual(classifier_loss.positive_count, 2)
+        self.assertEqual(classifier_loss.negative_count, 2)
+
+        after_loss = model._m3s2_window_classifier_loss_from_sidecar()
+        self.assertIsNotNone(after_loss)
+        assert after_loss is not None
+        self.assertGreater(after_loss.positive_logit_mean, after_loss.negative_logit_mean)
+        self.assertGreater(after_loss.positive_prob_mean, after_loss.negative_prob_mean)
+
+        selected_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before[name], param.detach())
+            if name.startswith("m3_window_classifier_"):
+                selected_changed = selected_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(selected_changed)
+
+    def test_m3s2_window_classifier_replay_balances_single_class_rollouts(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=2,
+            batch_size=2,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_window_classifier_coef=2.0,
+            m3s2_window_classifier_prewindow_logit_ceiling_coef=1.0,
+            m3s2_window_classifier_prewindow_logit_ceiling=-1.0,
+            m3s2_window_classifier_quality_logit_floor_coef=1.0,
+            m3s2_window_classifier_quality_logit_floor=1.0,
+            m3s2_window_classifier_detach_latent=True,
+            m3s2_window_classifier_separate_update_enabled=True,
+            m3s2_window_classifier_dedicated_optimizer_enabled=True,
+            m3s2_window_classifier_separate_update_steps=32,
+            m3s2_window_classifier_max_grad_norm=5.0,
+            m3s2_window_classifier_replay_enabled=True,
+            m3s2_window_classifier_replay_storage="observation",
+            m3s2_window_classifier_replay_capacity=16,
+            m3s2_window_classifier_replay_batch_size=16,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_use_m3_window_classifier_head": True,
+                "m3_window_classifier_head_lr_scale": 50.0,
+                "m3_window_classifier_head_norm_enabled": True,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.m3_window_classifier_head is not None
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+        callback = _NoopCallback()
+        callback.init_callback(model)
+
+        ok = model.collect_rollouts(env, callback, model.rollout_buffer, n_rollout_steps=model.n_steps)
+        self.assertTrue(ok)
+        first_sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(first_sidecar)
+        assert first_sidecar is not None
+        self.assertEqual(first_sidecar.groups[0].quality_mask, (False, False))
+        first_loss = model._m3s2_window_classifier_auxiliary_update()
+        self.assertIsNotNone(first_loss)
+        assert first_loss is not None
+        self.assertTrue(first_loss.replay_enabled)
+        self.assertFalse(first_loss.replay_used)
+        self.assertEqual(first_loss.replay_positive_count, 0)
+        self.assertEqual(first_loss.replay_negative_count, 2)
+
+        ok = model.collect_rollouts(env, callback, model.rollout_buffer, n_rollout_steps=model.n_steps)
+        self.assertTrue(ok)
+        second_sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(second_sidecar)
+        assert second_sidecar is not None
+        self.assertEqual(second_sidecar.groups[0].quality_mask, (True, True))
+        second_loss = model._m3s2_window_classifier_auxiliary_update()
+
+        self.assertIsNotNone(second_loss)
+        assert second_loss is not None
+        self.assertTrue(second_loss.replay_used)
+        self.assertEqual(second_loss.positive_count, second_loss.negative_count)
+        self.assertEqual(second_loss.replay_positive_count, 2)
+        self.assertEqual(second_loss.replay_negative_count, 2)
+        self.assertGreater(second_loss.positive_logit_mean, second_loss.negative_logit_mean)
+        self.assertGreater(float(model._m3s2_last_window_classifier_grad_norm), 0.0)
+
+    def test_m3s2_window_classifier_replay_calibration_is_latest_balanced_population(self) -> None:
+        replay = _M3S2WindowClassifierReplay(capacity=8, storage="latent")
+        latents = th.arange(15, dtype=th.float32).reshape(5, 3)
+        labels = th.tensor([1.0, 1.0, 1.0, 0.0, 0.0], dtype=th.float32)
+
+        replay.append(latents, labels)
+        sampled = replay.calibration_balanced(
+            max_rows=4,
+            device=th.device("cpu"),
+            dtype=th.float32,
+        )
+
+        self.assertIsNotNone(sampled)
+        assert sampled is not None
+        calibration_latents, calibration_labels = sampled
+        self.assertTrue(th.is_tensor(calibration_latents))
+        self.assertTrue(
+            th.allclose(
+                calibration_latents,
+                th.cat((latents[1:3], latents[3:5]), dim=0),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                calibration_labels,
+                th.tensor([1.0, 1.0, 0.0, 0.0], dtype=th.float32),
+            )
+        )
+
     def test_m3s2_support_preserving_collect_masks_until_quality_ready(self) -> None:
         env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
         model = AdaptiveKLPPO(
@@ -1272,6 +1475,189 @@ class HMoEPPOWarmupTests(unittest.TestCase):
         self.assertIn("m3s2/q_boundary_loss", logged)
         self.assertIn("m3s2/q_pre_margin", logged)
         self.assertIn("m3s2/q_pre_margin_loss", logged)
+
+    def test_m3s2_fire_boundary_update_only_writes_executable_event_head(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_fire_boundary_coef=20.0,
+            m3s2_fire_boundary_negative_logit_ceiling_coef=4.0,
+            m3s2_fire_boundary_negative_logit_ceiling=-1.0,
+            m3s2_fire_boundary_positive_logit_floor_coef=4.0,
+            m3s2_fire_boundary_positive_logit_floor=1.0,
+            m3s2_fire_boundary_separate_update_enabled=True,
+            m3s2_fire_boundary_dedicated_optimizer_enabled=True,
+            m3s2_fire_boundary_separate_update_steps=96,
+            m3s2_fire_boundary_max_grad_norm=10.0,
+            m3s2_fire_boundary_support_preserving_collect_enabled=True,
+            m3s2_fire_boundary_support_preserving_hold_quality_enabled=True,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+                "hybrid_event_use_m3_stopping_head": False,
+                "hybrid_event_use_m3_window_classifier_head": False,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        assert model.policy.hybrid_event_head is not None
+        with th.no_grad():
+            model.policy.action_net.weight.zero_()
+            model.policy.action_net.bias.zero_()
+            model.policy.action_net.bias[9] = -2.0
+            model.policy.action_net.bias[11] = 0.0
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+        sidecar = getattr(model, "_m3s1_grouped_stopping_sidecar", None)
+        self.assertIsNotNone(sidecar)
+        assert sidecar is not None
+        self.assertEqual(len(sidecar.groups), 1)
+        group = sidecar.groups[0]
+        self.assertEqual(tuple(group.quality_mask), (False, False, True, True))
+        self.assertEqual(tuple(group.accepted_event), (False, False, False, False))
+
+        obs = model._m3s1_observations_for_group(sidecar, group)
+        with th.no_grad():
+            before_delta = model.policy.get_distribution(obs).fire_event_logit_delta()
+        self.assertIsNotNone(before_delta)
+        assert before_delta is not None
+        self.assertTrue(th.allclose(before_delta, th.full_like(before_delta, -2.0)))
+        before_params = {
+            name: param.detach().clone()
+            for name, param in model.policy.named_parameters()
+        }
+
+        fire_boundary_loss = model._m3s2_fire_boundary_auxiliary_update()
+
+        self.assertIsNotNone(fire_boundary_loss)
+        assert fire_boundary_loss is not None
+        self.assertEqual(fire_boundary_loss.positive_count, 2)
+        self.assertEqual(fire_boundary_loss.negative_count, 2)
+        self.assertGreater(float(model._m3s2_last_fire_boundary_grad_norm), 0.0)
+        self.assertGreater(fire_boundary_loss.executable_positive_logit_mean, 0.0)
+        self.assertLess(fire_boundary_loss.executable_negative_logit_mean, 0.0)
+        with th.no_grad():
+            after_dist = model.policy.get_distribution(obs)
+            after_delta = after_dist.fire_event_logit_delta()
+            after_actions = after_dist.mode()
+        self.assertIsNotNone(after_delta)
+        assert after_delta is not None
+        self.assertTrue(th.all(after_delta[2:] > 0.0), after_delta)
+        self.assertTrue(th.all(after_delta[:2] < 0.0), after_delta)
+        self.assertTrue(th.all(after_actions[2:, 9] > 0.5))
+        self.assertTrue(th.all(after_actions[:2, 9] < 0.5))
+
+        event_head_changed = False
+        for name, param in model.policy.named_parameters():
+            changed = not th.allclose(before_params[name], param.detach())
+            if name.startswith("hybrid_event_head."):
+                event_head_changed = event_head_changed or changed
+            else:
+                self.assertFalse(changed, name)
+        self.assertTrue(event_head_changed)
+
+    def test_nonfinite_probe_traced_train_runs_m3s2_fire_boundary_update(self) -> None:
+        env = DummyVecEnv([_TinyM3S1HybridAirCombatEnv])
+        model = AdaptiveKLPPO(
+            HierarchicalMoEExecutionPolicy,
+            env,
+            learning_rate=_WarmupSchedule(),
+            n_steps=4,
+            batch_size=4,
+            n_epochs=1,
+            gamma=0.99,
+            gae_lambda=0.95,
+            normalize_advantage=False,
+            a6_first_event_launch_window_enabled=True,
+            a6_first_event_launch_window_min_range_m=1.0,
+            a6_first_event_launch_window_max_range_m=2000.0,
+            a6_first_event_launch_window_max_track_age_s=10.0,
+            m3s2_fire_boundary_coef=20.0,
+            m3s2_fire_boundary_negative_logit_ceiling_coef=4.0,
+            m3s2_fire_boundary_negative_logit_ceiling=-1.0,
+            m3s2_fire_boundary_positive_logit_floor_coef=4.0,
+            m3s2_fire_boundary_positive_logit_floor=1.0,
+            m3s2_fire_boundary_separate_update_enabled=True,
+            m3s2_fire_boundary_dedicated_optimizer_enabled=True,
+            m3s2_fire_boundary_separate_update_steps=4,
+            m3s2_fire_boundary_max_grad_norm=10.0,
+            m3s2_fire_boundary_support_preserving_collect_enabled=True,
+            m3s2_fire_boundary_support_preserving_hold_quality_enabled=True,
+            policy_kwargs={
+                "net_arch": {"pi": [32], "vf": [32]},
+                "hybrid_action_spec": "air_combat_hybrid_v1",
+                "hybrid_event_head_lr_scale": 10.0,
+                "hybrid_event_use_m3_stopping_head": False,
+                "hybrid_event_use_m3_window_classifier_head": False,
+            },
+        )
+        model.set_logger(configure(format_strings=[]))
+        probe = NonFiniteTrainingProbe(
+            report_path=f"{gettempdir()}/m3s2_fire_boundary_probe_test.json",
+            history_limit=64,
+        )
+        probe.install(model)
+        assert model.policy.hybrid_event_head is not None
+        with th.no_grad():
+            model.policy.action_net.weight.zero_()
+            model.policy.action_net.bias.zero_()
+            model.policy.action_net.bias[9] = -2.0
+            model.policy.action_net.bias[11] = 0.0
+
+        model._last_obs = env.reset()
+        model._last_episode_starts = np.ones((env.num_envs,), dtype=bool)
+        model.ep_info_buffer = deque(maxlen=model._stats_window_size)
+        model.ep_success_buffer = deque(maxlen=model._stats_window_size)
+
+        callback = _NoopCallback()
+        callback.init_callback(model)
+        ok = model.collect_rollouts(
+            env,
+            callback,
+            model.rollout_buffer,
+            n_rollout_steps=model.n_steps,
+        )
+        self.assertTrue(ok)
+
+        model.train()
+
+        fire_boundary_loss = getattr(model, "_m3s2_last_fire_boundary_loss", None)
+        self.assertIsNotNone(fire_boundary_loss)
+        assert fire_boundary_loss is not None
+        self.assertEqual(fire_boundary_loss.positive_count, 2)
+        self.assertEqual(fire_boundary_loss.negative_count, 2)
+        self.assertGreater(float(model._m3s2_last_fire_boundary_grad_norm), 0.0)
+        logged = model.logger.name_to_value
+        self.assertEqual(float(logged["m3s2/fb_coef"]), 20.0)
+        self.assertEqual(float(logged["m3s2/fb_active_count"]), 4.0)
+        self.assertEqual(float(logged["m3s2/fb_positive_count"]), 2.0)
+        self.assertEqual(float(logged["m3s2/fb_negative_count"]), 2.0)
+        self.assertGreater(float(logged["m3s2/fb_grad_norm"]), 0.0)
 
     def test_a7_separate_credit_update_only_writes_credit_head(self) -> None:
         env = DummyVecEnv([_TinyA6HybridAirCombatEnv])

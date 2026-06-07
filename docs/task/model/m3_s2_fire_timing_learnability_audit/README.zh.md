@@ -1,9 +1,14 @@
 # M3-S2 开火时机可学习性审计
 
-状态：`2026-06-06` active audit slice；oracle 证据已通过，
+状态：`2026-06-07` active audit slice；oracle 证据已通过，
 event-window remediation probe 已实现，support-preserving collect repair 已部分接受，
 boundary-dedicated 短训方向已改善，log-domain cumulative-hazard repair 已接受，
-behavioral deterministic fire timing 仍 held。
+scale-separated stopping contract 已实现，chain-breakpoint localization 已接受，
+behavioral deterministic fire timing 仍 held，head-normalization calibration 负向证据已记录，
+显式窗口分类器 replay 已测试，局部 classifier 可分离但行为仍 held，
+calibrated standardization 已测试并记录负向集成证据，standardization contract
+断点已局部化，execution-support classifier mismatch 已确认，direct fire-boundary
+owner 已接入 active nonfinite-probe training 但行为仍 held。
 
 语言：
 
@@ -54,6 +59,14 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 | Boundary dedicated short train | partial direction repair / behavior held | 8k run 将 logged `m3s2/q_boundary_logit` 从约 `-5.95` 抬到 `-4.71`；deterministic probe 仍记录 `0` releases；stochastic probe 在第 `623` 步采样到一次授权发射。 | 这是在线方向证据，不是 deterministic timing 验收。 |
 | Single-batch window signal | localized | 最新 forced-hold batch 中，raw mission fields、frozen extractor features 与 frozen actor latent 都线性可分；但 active M3-S2 overfit 与 current action path 上的 row-wise BCE 都坍缩为 all-positive/all-high transport。 | 剩余断点是 executable event-logit contract，不是缺少观测信号。 |
 | Stopping-head log-domain adapter | partial numerical repair / behavior held | log-domain grouped stopping loss 在 8k run 中将 deterministic M3 stop probability 从约 `0.47` 降到 `0.145`，但 deterministic release 仍为 `0`，stochastic 仍在第 `5` 步提前采样 release。 | 它恢复长 prewindow survival gradient；没有学会 quality-window pulse。 |
+| Scale-separated stopping contract | diagnostic accepted / behavior held | 8k run 将 logged prewindow hazard 从 `0.413` 降到 `0.218`，但 prewindow 与 quality logits 同步下移；deterministic release 仍为 `0`，stochastic 仍在第 `7` 步提前 release。 | contract 已接线，但当前 executable stopping/action transport 仍没有学出 prewindow-vs-quality discriminator。 |
+| Chain breakpoint localization | root localized | 一条固定真实 forced-hold 轨迹上，label 通过；standardized frozen actor latent 学到 prewindow `0 / 840`、quality `1040 / 1040` boundary；folded head 能产生一次 quality pulse；raw M3 head 优化仍残留 prewindow positives。 | 第一个局部断点是 M3 head optimization conditioning/calibration，不是缺少状态信号或 action adapter 行为。 |
+| Head-normalized calibration | negative integration evidence | 8k run 启用 M3 LayerNorm 与显式 prewindow/quality logit margins，将 deterministic M3 stop probability 降到 `0.118269`，但 deterministic release 仍为 `0`；real-update probe 通过把 quality logits 从 `-2.003` 压到 `-2.965` 来降低 loss。 | capacity 存在，但在线 M3-S2 objective 仍把 global hazard suppression 当作更容易的 loss 下降方向。 |
+| Window classifier replay | local classifier repair / behavior held | Balanced latent 与 observation replay 让在线 classifier batch 中正/负 logit 分离，但 saved deterministic probe 仍记录 `release_count = 0`，quality-window classifier logit 约 `-8.24`；stochastic probe 在 quality rows 前第 `48` 步早发。 | Replay 修复的是局部 batch imbalance，不是 saved actor/executable trajectory boundary。 |
+| Calibrated classifier standardization | negative integration evidence | deterministic latest-balanced standardization 避免随机 replay-batch 坐标刷新，但 8k final 仍记录 `release_count = 0`；fixed-chain final quality classifier logit mean 为 `-9.902827`，而 fresh head 在同一 latent 上可完美拟合。 | 失败仍是 online head optimization/training-distribution contract，不是 standardization randomness。 |
+| Classifier standardization contract | root localized / behavior held | 在固定 `model_event_hold` 轨迹上，保存的 buffer 给出 quality logit mean `-9.837499` 与 `0 / 1080` 个 quality boundaries。只在该 fixed batch 上重算 classifier 输入标准化 buffer 后，quality logit mean 变为 `2.195754`，quality boundaries 变为 `1053 / 1080`。 | executable path 使用的是按 replay/support batches 校准的 inference-time normalization contract，而不是 execution-support 轨迹合同。 |
+| Classifier execution-support contract | root localized / behavior held | actor-gradient isolation 与 post-update best-restore 让 classifier logs 可信；8k run 仍记录 deterministic `release_count = 0`、saved quality-window classifier logit mean `-6.336187`，但同一 fixed execution latent 上的 fresh standardized head 达到 `1080 / 1080` quality boundaries。 | 剩余断点是 training/replay support 与 deterministic execution-support 错配，而不是缺少状态信号、adapter 接线或 final-step logging。 |
+| Direct fire-boundary owner | wiring accepted / behavior held | Active M3-S2 现在直接训练 executable `hybrid_event_head`，且 `NonFiniteTrainingProbe.traced_train()` 也运行同一 update。8k run 记录 `m3s2/fb_*` 指标，并在 step `6144` 将 open-window fire probability 提到 `0.489228`，但 final deterministic diagnostics 仍记录 `0` fire requests/releases。 | update path 不再缺失；剩余失败是 online support/label distribution 与 boundary calibration 不稳定。 |
 | Edge-trigger adapter | hazard | `forced_fire` 从 reset 高电平会产生 `no_target` 拒绝，之后无发射。 | 这是 action transport 语义，不是 C2/ROE 失败。 |
 
 ## 范围
@@ -120,6 +133,24 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
   [m3_s2_single_batch_window_signal_probe_20260606.zh.md](m3_s2_single_batch_window_signal_probe_20260606.zh.md)
 - Stopping-head log-domain 短训 evidence：
   [m3_s2_stopping_head_adapter_log_domain_short_train_20260606.zh.md](m3_s2_stopping_head_adapter_log_domain_short_train_20260606.zh.md)
+- 尺度分离 stopping contract 短训 evidence：
+  [m3_s2_scale_separated_stopping_contract_short_train_20260606.zh.md](m3_s2_scale_separated_stopping_contract_short_train_20260606.zh.md)
+- 链路断点定位 evidence：
+  [m3_s2_chain_breakpoint_probe_20260606.zh.md](m3_s2_chain_breakpoint_probe_20260606.zh.md)
+- 停止头归一化与校准短训 evidence：
+  [m3_s2_head_norm_calibration_short_train_20260606.zh.md](m3_s2_head_norm_calibration_short_train_20260606.zh.md)
+- 窗口分类器短训 evidence：
+  [m3_s2_window_classifier_short_train_20260606.zh.md](m3_s2_window_classifier_short_train_20260606.zh.md)
+- 窗口分类器 replay 短训 evidence：
+  [m3_s2_window_classifier_replay_short_train_20260606.zh.md](m3_s2_window_classifier_replay_short_train_20260606.zh.md)
+- 窗口分类器校准标准化短训 evidence：
+  [m3_s2_window_classifier_calibrated_standardization_short_train_20260606.zh.md](m3_s2_window_classifier_calibrated_standardization_short_train_20260606.zh.md)
+- 窗口分类器标准化合同 evidence：
+  [m3_s2_window_classifier_standardization_contract_probe_20260606.zh.md](m3_s2_window_classifier_standardization_contract_probe_20260606.zh.md)
+- 窗口分类器 execution-support 短训 evidence：
+  [m3_s2_window_classifier_execution_support_short_train_20260606.zh.md](m3_s2_window_classifier_execution_support_short_train_20260606.zh.md)
+- Direct fire-boundary owner evidence：
+  [m3_s2_direct_fire_boundary_probe_20260607.zh.md](m3_s2_direct_fire_boundary_probe_20260607.zh.md)
 - Current status：
   [m3_s2_fire_timing_learnability_audit_current_status_20260605.zh.md](m3_s2_fire_timing_learnability_audit_current_status_20260605.zh.md)
 - Aggregate artifact：
@@ -137,6 +168,12 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 
 ## 残余与下一步
 
+- Direct fire-boundary ownership 已经接入 active training path。先前短训无效果的原因是
+  `NonFiniteTrainingProbe` 用旧的 traced copy 覆盖了 `model.train()`，没有运行新的
+  direct boundary update。修复后，`m3s2/fb_*` metrics 从 step `512` 起出现，
+  open-window fire probability 在 step `6144` 达到 `0.489228`。行为仍 held：
+  同一 8k run 从未记录 `fire_once_requested`，final open-window probability 又降到
+  `0.0238934`。
 - 当前 reward breakpoint：oracle surface 存在数学最优点，但该最优点是 late close-range win，
   因为正向 per-step shaping 会在 already-winning shots 之间奖励更晚终止。
 - 当前 reachability breakpoint：reward surface 不能解释 no-fire，因为 oracle release 与 terminal
@@ -172,6 +209,28 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
   均值从约 `0.47` 降到 `0.145`。但这对 `800` 步 one-shot prewindow 仍远远过高，
   stochastic probing 仍会在第 `5` 步提前 release，deterministic quality-window crossing
   仍缺失。
+- 尺度分离 stopping contract 明确了目标尺度，但在线模型仍让 prewindow 与 quality logits
+  几乎同步移动。8k run 中，有窗口样本的 prewindow hazard 从 `0.413` 降到 `0.218`，
+  目标为 inferred `0.000651`；与此同时 quality boundary logit 从 `-0.346` 降到
+  `-1.273`。deterministic behavior 仍不发，stochastic behavior 仍在第 `7` 步提前采样 release。
+- 链路断点定位把剩余断点局部化。在同一条固定真实轨迹上，label support 有效
+  （`840` 个 prewindow rows 与 `1040` 个 quality rows），standardized frozen actor latent
+  上的线性 head 可以完美分离，folded head 通过 action adapter 能产生一次 quality-window
+  edge-trigger pulse。直接优化 raw M3 head 时几乎成功，但仍残留少量 prewindow positives；
+  对 one-shot stopping 来说，这几个 positive 足以失败。下一步应修复 head normalization、
+  calibration 与在线 auxiliary optimizer contract。
+- head-normalized calibration 修复已测试但仍 held。该切片接入 M3 `LayerNorm`、显式 logit
+  ceiling/floor losses、logging、diagnostics 与 active config。短训将 deterministic M3 stop
+  probability 从上一轮 scale-separated 的 `0.157226` 降到 `0.118269`，但 prewindow 与 quality
+  probabilities 仍几乎相同，deterministic release 仍为 `0`；real-update probe 通过把
+  quality logits 继续压低来降低 loss。剩余问题是数学目标：global hazard suppression
+  仍是比 quality-window boundary 更容易的 loss 下降方向。
+- 当前最强断点转为 executable classifier standardization contract。保存的
+  `m3_window_classifier_input_mean/std` buffer 会让固定 execution-support 轨迹明显偏心
+  （`saved_z_mean_abs_mean = 2.439337`，`saved_z_std_mean = 0.633167`），
+  因而 quality boundary 为 `0 / 1080`。只重算该 fixed batch 的 buffer 后，
+  quality boundary 立刻升至 `1053 / 1080`，说明 head 内已有可用 timing signal，
+  但执行时处在错误的 normalization contract 下。
 - 次级 breakpoint：hybrid fire transport 是 edge-triggered。target acquisition 前高电平会消耗
   pulse 并以 `no_target` 拒绝，之后不再发射。
 - 后续方向应按 model-contract change 评估，而不是继续调系数：real-row

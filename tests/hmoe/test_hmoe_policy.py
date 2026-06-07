@@ -189,6 +189,39 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertEqual(float(stats["a6/event_head_enabled"]), 1.0)
         self.assertAlmostEqual(float(stats["a6/event_head_delta_abs_mean"]), 0.0, places=6)
 
+    def test_hybrid_event_head_is_executable_when_m3_adapters_are_disabled(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            hybrid_event_use_m3_stopping_head=False,
+            hybrid_event_use_m3_window_classifier_head=False,
+        )
+        assert policy.hybrid_event_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -5.0
+            policy.action_net.bias[11] = 0.0
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.copy_(th.tensor([0.0, 6.0], dtype=th.float32))
+
+        obs = self._make_authorized_fire_obs(batch_size=2)
+        with th.no_grad():
+            direct_delta = policy.get_hybrid_event_head_delta(obs)
+            distribution = policy.get_distribution(obs)
+            executable_delta = distribution.fire_event_logit_delta()
+            actions = distribution.mode()
+
+        self.assertIsNotNone(direct_delta)
+        self.assertIsNotNone(executable_delta)
+        assert direct_delta is not None
+        assert executable_delta is not None
+        self.assertTrue(th.allclose(direct_delta, th.full_like(direct_delta, 6.0)))
+        self.assertTrue(th.allclose(executable_delta, th.full_like(executable_delta, 1.0)))
+        self.assertTrue(th.all(actions[:, 9] > 0.5))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s2/event_adapter_enabled"]), 0.0)
+        self.assertEqual(float(stats["m3s2/window_classifier_event_adapter_enabled"]), 0.0)
+
     def test_hybrid_event_credit_head_is_disabled_by_default(self) -> None:
         policy = self._make_air_combat_hybrid_policy()
 
@@ -388,6 +421,93 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertEqual(float(stats["m3s2/event_adapter_enabled"]), 1.0)
         self.assertAlmostEqual(float(stats["m3s2/event_adapter_logit_mean"]), 3.0, places=6)
 
+    def test_m3_window_classifier_head_can_override_hybrid_fire_event_delta(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            hybrid_event_use_m3_window_classifier_head=True,
+            m3_window_classifier_head_lr_scale=5.0,
+            m3_window_classifier_head_norm_enabled=True,
+        )
+
+        self.assertIsNotNone(policy.hybrid_event_head)
+        self.assertIsNotNone(policy.m3_window_classifier_head)
+        self.assertIsNotNone(policy.m3_window_classifier_norm)
+        self.assertEqual(
+            [group.get("name") for group in policy.optimizer.param_groups],
+            ["shared", "hybrid_event_head", "m3_window_classifier_head", "hmoe"],
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.m3_window_classifier_head is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.action_net.bias[9] = -2.0
+            policy.action_net.bias[11] = 0.5
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.copy_(th.tensor([0.25, 1.25], dtype=th.float32))
+            policy.m3_window_classifier_head.weight.zero_()
+            policy.m3_window_classifier_head.bias.fill_(4.0)
+        obs = self._make_authorized_fire_obs(batch_size=4)
+
+        with th.no_grad():
+            distribution = policy.get_distribution(obs)
+            delta = distribution.fire_event_logit_delta()
+            mode = distribution.mode()
+            window_logits = policy.get_m3_window_logits(obs)
+
+        assert delta is not None
+        assert window_logits is not None
+        self.assertTrue(th.allclose(delta, th.full((4,), 4.0)))
+        self.assertTrue(th.allclose(window_logits, th.full((4,), 4.0)))
+        self.assertTrue(th.allclose(mode[:, 9], th.ones((4,), dtype=mode.dtype)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s2/event_adapter_enabled"]), 1.0)
+        self.assertEqual(float(stats["m3s2/window_classifier_event_adapter_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["m3s2/event_adapter_logit_mean"]), 4.0, places=6)
+
+    def test_m3_window_classifier_event_adapter_does_not_receive_actor_gradients(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            hybrid_event_head_lr_scale=8.0,
+            hybrid_event_use_m3_window_classifier_head=True,
+            m3_window_classifier_head_lr_scale=5.0,
+            m3_window_classifier_head_norm_enabled=True,
+        )
+        assert policy.hybrid_event_head is not None
+        assert policy.m3_window_classifier_head is not None
+        assert policy.m3_window_classifier_norm is not None
+        with th.no_grad():
+            policy.action_net.weight.zero_()
+            policy.action_net.bias.zero_()
+            policy.hybrid_event_head.weight.zero_()
+            policy.hybrid_event_head.bias.zero_()
+            policy.m3_window_classifier_head.weight.zero_()
+            policy.m3_window_classifier_head.bias.fill_(4.0)
+        obs = self._make_authorized_fire_obs(batch_size=4)
+        actions = th.zeros((4, 12), dtype=th.float32)
+
+        policy.optimizer.zero_grad(set_to_none=True)
+        distribution = policy.get_distribution(obs)
+        actor_loss = -distribution.log_prob(actions).mean()
+        self.assertTrue(bool(actor_loss.requires_grad))
+        actor_loss.backward()
+
+        classifier_params = list(policy.m3_window_classifier_head.parameters()) + list(
+            policy.m3_window_classifier_norm.parameters()
+        )
+        for param in classifier_params:
+            self.assertTrue(param.grad is None or th.allclose(param.grad, th.zeros_like(param.grad)))
+
+        policy.optimizer.zero_grad(set_to_none=True)
+        direct_logits = policy.get_m3_window_logits(obs)
+        assert direct_logits is not None
+        direct_logits.mean().backward()
+        self.assertTrue(
+            any(
+                param.grad is not None and float(param.grad.detach().abs().sum().item()) > 0.0
+                for param in classifier_params
+            )
+        )
+
     def test_hybrid_event_credit_head_exposes_hold_fire_values_without_changing_event_logits(self) -> None:
         observation_space = spaces.Dict(
             {
@@ -481,19 +601,46 @@ class HMoEPolicyTests(unittest.TestCase):
         with th.no_grad():
             stopping = policy.get_m3_stopping(obs)
             logits = policy.get_m3_stopping_logits(obs)
+            window_logits = policy.get_m3_window_logits(obs)
 
         self.assertIsNone(policy.m3_stopping_head)
+        self.assertIsNone(policy.m3_stopping_norm)
+        self.assertIsNone(policy.m3_window_classifier_head)
+        self.assertIsNone(policy.m3_window_classifier_norm)
         self.assertIsNone(stopping)
         self.assertIsNone(logits)
+        self.assertIsNone(window_logits)
         self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "hmoe"])
         self.assertAlmostEqual(
             float(policy._get_constructor_parameters().get("m3_stopping_head_lr_scale", -1.0)),
             0.0,
             places=6,
         )
+        self.assertFalse(bool(policy._get_constructor_parameters().get("m3_stopping_head_norm_enabled", True)))
+        self.assertAlmostEqual(
+            float(policy._get_constructor_parameters().get("m3_window_classifier_head_lr_scale", -1.0)),
+            0.0,
+            places=6,
+        )
+        self.assertFalse(
+            bool(policy._get_constructor_parameters().get("m3_window_classifier_head_norm_enabled", True))
+        )
+        self.assertTrue(
+            bool(policy._get_constructor_parameters().get("m3_window_classifier_event_adapter_detach", False))
+        )
+        self.assertFalse(
+            bool(
+                policy._get_constructor_parameters().get(
+                    "m3_window_classifier_input_standardization_enabled",
+                    True,
+                )
+            )
+        )
         stats = policy.get_hmoe_route_stats()
         self.assertEqual(float(stats["m3s1/stopping_head_enabled"]), 0.0)
         self.assertAlmostEqual(float(stats["m3s1/stopping_head_lr_scale"]), 0.0, places=6)
+        self.assertEqual(float(stats["m3s2/window_classifier_head_enabled"]), 0.0)
+        self.assertAlmostEqual(float(stats["m3s2/window_classifier_head_lr_scale"]), 0.0, places=6)
 
     def test_m3_stopping_head_gets_dedicated_optimizer_lane_and_zero_outputs(self) -> None:
         policy = self._make_air_combat_hybrid_policy(m3_stopping_head_lr_scale=5.0)
@@ -528,6 +675,124 @@ class HMoEPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(float(stats["m3s1/stopping_head_lr_scale"]), 5.0, places=6)
         self.assertAlmostEqual(float(stats["m3s1/stop_logit_mean"]), 0.0, places=6)
         self.assertAlmostEqual(float(stats["m3s1/hazard_mean"]), 0.5, places=6)
+
+    def test_m3_window_classifier_head_gets_dedicated_optimizer_lane_and_zero_outputs(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            m3_window_classifier_head_lr_scale=5.0,
+            m3_window_classifier_head_norm_enabled=True,
+        )
+
+        self.assertIsNotNone(policy.m3_window_classifier_head)
+        self.assertIsNotNone(policy.m3_window_classifier_norm)
+        assert policy.m3_window_classifier_head is not None
+        assert policy.m3_window_classifier_norm is not None
+        self.assertEqual(
+            [group.get("name") for group in policy.optimizer.param_groups],
+            ["shared", "m3_window_classifier_head", "hmoe"],
+        )
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1].get("lr_scale", 0.0)), 5.0, places=6)
+        self.assertAlmostEqual(float(policy.optimizer.param_groups[1]["lr"]), 3.0e-4 * 5.0, places=10)
+        self.assertTrue(
+            th.allclose(
+                policy.m3_window_classifier_head.weight.detach(),
+                th.zeros_like(policy.m3_window_classifier_head.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_window_classifier_head.bias.detach(),
+                th.zeros_like(policy.m3_window_classifier_head.bias),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_window_classifier_norm.weight.detach(),
+                th.ones_like(policy.m3_window_classifier_norm.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_window_classifier_norm.bias.detach(),
+                th.zeros_like(policy.m3_window_classifier_norm.bias),
+            )
+        )
+
+        obs = self._make_authorized_fire_obs(batch_size=3)
+        with th.no_grad():
+            logits = policy.get_m3_window_logits(obs)
+
+        self.assertIsNotNone(logits)
+        assert logits is not None
+        self.assertTrue(th.allclose(logits, th.zeros_like(logits)))
+        stats = policy.get_hmoe_route_stats()
+        self.assertEqual(float(stats["m3s2/window_classifier_head_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["m3s2/window_classifier_head_lr_scale"]), 5.0, places=6)
+        self.assertAlmostEqual(float(stats["m3s2/window_classifier_prob_mean"]), 0.5, places=6)
+
+    def test_m3_window_classifier_input_standardization_updates_saved_buffers(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            m3_window_classifier_head_lr_scale=5.0,
+            m3_window_classifier_input_standardization_enabled=True,
+            m3_window_classifier_input_standardization_momentum=1.0,
+        )
+        self.assertIsNotNone(policy.m3_window_classifier_head)
+        self.assertTrue(
+            bool(
+                policy._get_constructor_parameters().get(
+                    "m3_window_classifier_input_standardization_enabled",
+                    False,
+                )
+            )
+        )
+
+        latent_dim = int(policy.mlp_extractor.latent_dim_pi)
+        latent = th.arange(4 * latent_dim, dtype=th.float32).reshape(4, latent_dim)
+        updated = policy.update_m3_window_classifier_input_standardization(latent)
+
+        self.assertTrue(updated)
+        self.assertAlmostEqual(
+            float(policy.m3_window_classifier_input_standardization_initialized.item()),
+            1.0,
+            places=6,
+        )
+        standardized = policy._m3_window_classifier_latent(latent)
+        self.assertTrue(th.allclose(standardized.mean(dim=0), th.zeros((latent_dim,)), atol=1.0e-5))
+        self.assertTrue(th.allclose(standardized.std(dim=0, unbiased=False), th.ones((latent_dim,)), atol=1.0e-5))
+
+    def test_m3_stopping_head_norm_uses_dedicated_optimizer_lane_and_zero_outputs(self) -> None:
+        policy = self._make_air_combat_hybrid_policy(
+            m3_stopping_head_lr_scale=5.0,
+            m3_stopping_head_norm_enabled=True,
+        )
+
+        self.assertIsNotNone(policy.m3_stopping_head)
+        self.assertIsNotNone(policy.m3_stopping_norm)
+        assert policy.m3_stopping_head is not None
+        assert policy.m3_stopping_norm is not None
+        self.assertEqual([group.get("name") for group in policy.optimizer.param_groups], ["shared", "m3_stopping_head", "hmoe"])
+        stopping_param_ids = {id(param) for param in policy.optimizer.param_groups[1]["params"]}
+        expected_param_ids = {
+            id(param)
+            for module in (policy.m3_stopping_norm, policy.m3_stopping_head)
+            for param in module.parameters()
+        }
+        self.assertEqual(stopping_param_ids, expected_param_ids)
+        self.assertTrue(th.allclose(policy.m3_stopping_norm.weight.detach(), th.ones_like(policy.m3_stopping_norm.weight)))
+        self.assertTrue(th.allclose(policy.m3_stopping_norm.bias.detach(), th.zeros_like(policy.m3_stopping_norm.bias)))
+        self.assertTrue(th.allclose(policy.m3_stopping_head.weight.detach(), th.zeros_like(policy.m3_stopping_head.weight)))
+        self.assertTrue(th.allclose(policy.m3_stopping_head.bias.detach(), th.zeros_like(policy.m3_stopping_head.bias)))
+        self.assertTrue(bool(policy._get_constructor_parameters().get("m3_stopping_head_norm_enabled", False)))
+
+        obs = self._make_authorized_fire_obs(batch_size=3)
+        with th.no_grad():
+            stopping = policy.get_m3_stopping(obs)
+
+        self.assertIsNotNone(stopping)
+        assert stopping is not None
+        self.assertTrue(th.allclose(stopping.stopping_logit, th.zeros_like(stopping.stopping_logit)))
+        stats = policy.get_hmoe_parameter_stats()
+        self.assertEqual(float(stats["m3s1/stop_params/norm_enabled"]), 1.0)
+        self.assertAlmostEqual(float(stats["m3s1/stop_params/norm_weight_mean"]), 1.0, places=6)
 
     def test_m3_stopping_head_is_independent_from_executable_event_logits(self) -> None:
         policy = self._make_air_combat_hybrid_policy(
@@ -1108,11 +1373,17 @@ class HMoEPolicyTests(unittest.TestCase):
         )
 
     def test_initialize_hmoe_from_shared_action_head_zeroes_m3_stopping_head(self) -> None:
-        policy = self._make_air_combat_hybrid_policy(m3_stopping_head_lr_scale=5.0)
+        policy = self._make_air_combat_hybrid_policy(
+            m3_stopping_head_lr_scale=5.0,
+            m3_stopping_head_norm_enabled=True,
+        )
         assert policy.m3_stopping_head is not None
+        assert policy.m3_stopping_norm is not None
         with th.no_grad():
             policy.m3_stopping_head.weight.fill_(1.0)
             policy.m3_stopping_head.bias.fill_(1.0)
+            policy.m3_stopping_norm.weight.fill_(2.0)
+            policy.m3_stopping_norm.bias.fill_(3.0)
 
         policy.initialize_hmoe_from_shared_action_head()
 
@@ -1126,6 +1397,18 @@ class HMoEPolicyTests(unittest.TestCase):
             th.allclose(
                 policy.m3_stopping_head.bias.detach(),
                 th.zeros_like(policy.m3_stopping_head.bias),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_stopping_norm.weight.detach(),
+                th.ones_like(policy.m3_stopping_norm.weight),
+            )
+        )
+        self.assertTrue(
+            th.allclose(
+                policy.m3_stopping_norm.bias.detach(),
+                th.zeros_like(policy.m3_stopping_norm.bias),
             )
         )
 

@@ -65,7 +65,7 @@ DEFAULT_MODEL = resolve_repo_path(
 
 PARAM_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("event_head", ("hybrid_event_head.",)),
-    ("m3_stopping_head", ("m3_stopping_head.",)),
+    ("m3_stopping_head", ("m3_stopping_norm.", "m3_stopping_head.")),
     ("action_net", ("action_net.",)),
     ("actor_mlp", ("mlp_extractor.policy_net.",)),
     ("shared_mlp", ("mlp_extractor.shared_net.",)),
@@ -93,6 +93,26 @@ class RealM3S2Group:
 def _model_action(model: Any, obs: Any, *, deterministic: bool) -> np.ndarray:
     action, _state = model.predict(obs, deterministic=bool(deterministic))
     return np.asarray(action, dtype=np.float32).reshape(-1)
+
+
+def _collector_action_for_m3s2(
+    model: Any,
+    env: Any,
+    obs: Any,
+    *,
+    collector_action: str,
+    stochastic: bool,
+) -> np.ndarray:
+    mode = str(collector_action or "").strip().lower()
+    if mode == "hold":
+        return _hold_action(env)
+    if mode in {"model", "model_event_hold"}:
+        action = _model_action(model, obs, deterministic=not bool(stochastic))
+        if mode == "model_event_hold" and int(action.size) > 9:
+            action = action.copy()
+            action[9] = 0.0
+        return action
+    raise ValueError(f"unknown collector_action: {collector_action}")
 
 
 def _param_group_name(name: str) -> str:
@@ -245,12 +265,13 @@ def collect_real_m3s2_batch(
                 obs_tensor = _obs_to_cpu(model.policy, obs)
                 policy_fire_mask = _policy_fire_mask_from_obs(obs_tensor, 1)
                 policy_launch_window = _policy_launch_window_from_obs(obs_tensor, 1, hyper=hyper)
-                if str(collector_action) == "hold":
-                    action = _hold_action(env)
-                elif str(collector_action) == "model":
-                    action = _model_action(model, obs, deterministic=not bool(stochastic))
-                else:
-                    raise ValueError(f"unknown collector_action: {collector_action}")
+                action = _collector_action_for_m3s2(
+                    model,
+                    env,
+                    obs,
+                    collector_action=str(collector_action),
+                    stochastic=bool(stochastic),
+                )
                 new_obs, _reward, terminated, truncated, info = env.step(action)
                 row = info if isinstance(info, dict) else {}
                 mask_open = (
@@ -352,6 +373,22 @@ def _m3s2_loss_from_real_groups(policy: Any, obs: dict[str, th.Tensor], groups: 
         window_contrastive_margin_coef=float(hyper.get("m3s2_event_window_contrastive_margin_coef", 0.0)),
         window_contrastive_margin=float(hyper.get("m3s2_event_window_contrastive_margin", 0.0)),
         window_balanced_bce_coef=float(hyper.get("m3s2_event_window_balanced_bce_coef", 0.0)),
+        window_prewindow_hazard_scale_coef=float(
+            hyper.get("m3s2_event_window_prewindow_hazard_scale_coef", 0.0)
+        ),
+        window_prewindow_hazard_target=float(hyper.get("m3s2_event_window_prewindow_hazard_target", 0.0)),
+        window_quality_hazard_target_coef=float(
+            hyper.get("m3s2_event_window_quality_hazard_target_coef", 0.0)
+        ),
+        window_quality_hazard_target=float(hyper.get("m3s2_event_window_quality_hazard_target", 0.5)),
+        window_prewindow_logit_ceiling_coef=float(
+            hyper.get("m3s2_event_window_prewindow_logit_ceiling_coef", 0.0)
+        ),
+        window_prewindow_logit_ceiling=float(hyper.get("m3s2_event_window_prewindow_logit_ceiling", -2.0)),
+        window_quality_logit_floor_coef=float(
+            hyper.get("m3s2_event_window_quality_logit_floor_coef", 0.0)
+        ),
+        window_quality_logit_floor=float(hyper.get("m3s2_event_window_quality_logit_floor", 2.0)),
         boundary_threshold=0.0,
     )
 
@@ -493,6 +530,16 @@ def run_update_scope(
                     ),
                     "contrastive_margin_loss": float(loss_obj.stats.mean_quality_prewindow_margin_loss),
                     "balanced_bce_loss": float(loss_obj.stats.mean_window_balanced_bce_loss),
+                    "prewindow_hazard_mean": float(loss_obj.stats.mean_prewindow_hazard_mean),
+                    "prewindow_hazard_max": float(loss_obj.stats.mean_prewindow_hazard_max),
+                    "prewindow_hazard_target": float(loss_obj.stats.mean_prewindow_hazard_target),
+                    "prewindow_hazard_scale_loss": float(loss_obj.stats.mean_prewindow_hazard_scale_loss),
+                    "quality_hazard_target": float(loss_obj.stats.mean_quality_hazard_target),
+                    "quality_hazard_target_loss": float(loss_obj.stats.mean_quality_hazard_target_loss),
+                    "prewindow_logit_ceiling": float(loss_obj.stats.mean_prewindow_logit_ceiling),
+                    "prewindow_logit_ceiling_loss": float(loss_obj.stats.mean_prewindow_logit_ceiling_loss),
+                    "quality_logit_floor": float(loss_obj.stats.mean_quality_logit_floor),
+                    "quality_logit_floor_loss": float(loss_obj.stats.mean_quality_logit_floor_loss),
                 }
             )
     after = summarize_real_logits(model.policy, obs, groups, hyper)
@@ -601,6 +648,14 @@ def _apply_loss_overrides(hyper: dict[str, Any], args: argparse.Namespace) -> No
         "m3s2_event_window_contrastive_margin_coef": getattr(args, "contrastive_margin_coef", None),
         "m3s2_event_window_contrastive_margin": getattr(args, "contrastive_margin", None),
         "m3s2_event_window_balanced_bce_coef": getattr(args, "balanced_bce_coef", None),
+        "m3s2_event_window_prewindow_hazard_scale_coef": getattr(args, "prewindow_hazard_scale_coef", None),
+        "m3s2_event_window_prewindow_hazard_target": getattr(args, "prewindow_hazard_target", None),
+        "m3s2_event_window_quality_hazard_target_coef": getattr(args, "quality_hazard_target_coef", None),
+        "m3s2_event_window_quality_hazard_target": getattr(args, "quality_hazard_target", None),
+        "m3s2_event_window_prewindow_logit_ceiling_coef": getattr(args, "prewindow_logit_ceiling_coef", None),
+        "m3s2_event_window_prewindow_logit_ceiling": getattr(args, "prewindow_logit_ceiling", None),
+        "m3s2_event_window_quality_logit_floor_coef": getattr(args, "quality_logit_floor_coef", None),
+        "m3s2_event_window_quality_logit_floor": getattr(args, "quality_logit_floor", None),
     }
     for key, value in overrides.items():
         if value is not None:
@@ -617,7 +672,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--episodes", type=int, default=1)
     parser.add_argument("--max-steps", type=int, default=2400)
     parser.add_argument("--seed", type=int, default=20260525)
-    parser.add_argument("--collector-action", choices=("hold", "model"), default="hold")
+    parser.add_argument("--collector-action", choices=("hold", "model", "model_event_hold"), default="hold")
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--scopes", default="current,current_plus_features")
     parser.add_argument("--update-steps", type=int, default=4)
@@ -637,6 +692,14 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--contrastive-margin-coef", type=float, default=None)
     parser.add_argument("--contrastive-margin", type=float, default=None)
     parser.add_argument("--balanced-bce-coef", type=float, default=None)
+    parser.add_argument("--prewindow-hazard-scale-coef", type=float, default=None)
+    parser.add_argument("--prewindow-hazard-target", type=float, default=None)
+    parser.add_argument("--quality-hazard-target-coef", type=float, default=None)
+    parser.add_argument("--quality-hazard-target", type=float, default=None)
+    parser.add_argument("--prewindow-logit-ceiling-coef", type=float, default=None)
+    parser.add_argument("--prewindow-logit-ceiling", type=float, default=None)
+    parser.add_argument("--quality-logit-floor-coef", type=float, default=None)
+    parser.add_argument("--quality-logit-floor", type=float, default=None)
     parser.add_argument("--json-out", default="")
     return parser.parse_args()
 

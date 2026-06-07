@@ -131,11 +131,11 @@
   - 该条目只能证明 M3 stop-boundary movement；在 stopping head 与 hybrid event action path 连接或对照前，executable fire timing 仍 held。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
-  - Stage-1 M3-S2 executable event-window 短探针，复用 A7 显式状态补全 observation surface。
-  - 复用 grouped survival/event-mass evidence，但通过 `m3s2_event_window_*` 直接训练 hybrid event action logit delta，而不是打开 independent M3-S1 stopping head。
-  - 增加 deterministic quality-boundary anchor 和 quality-vs-prewindow contrastive margin，使目标变成“在窗口内形成一个可执行边界”，而不只是很高的累计 stochastic event mass。
-  - 使用 dedicated M3-S2 auxiliary optimizer path，避免 event-window updates 复用 PPO Adam 状态。
-  - 从 2026-06-06 support-preserving repair 起，collection 可在 legal-open support window 内 forced hold，从而保住 M3-S2 active rows；deterministic learned-policy release 仍 held at `0`。
+  - Stage-1 M3-S2 direct fire-boundary 短探针，复用 A7 显式状态补全 observation surface。
+  - 保留 HMoE 与 `air_combat_hybrid_v1`，但在该配置中让 `hybrid_event_head` 成为唯一 executable hold/fire owner；M3 stopping 与 window-classifier event adapter 均显式关闭。
+  - 复用 grouped sidecar 的 legal/quality rows 作为 boundary labels，在最终 executable fire-minus-hold logit 上计算 loss，并将 dedicated auxiliary update 限定为只写 `hybrid_event_head` 参数。
+  - 使用显式 logit calibration：非质量 legal rows 被压到负 ceiling 以下，quality-window rows 被推向正 floor。
+  - 使用 support-preserving collection，并保留 quality-window hold，使 sidecar 可以看到完整 legal-to-quality transition 后再谈行为验收。
   - 使用 8k budget 形成 validation evidence；行为验收仍需要 learned-policy release probes。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)

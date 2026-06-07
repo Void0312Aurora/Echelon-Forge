@@ -447,6 +447,12 @@ class NonFiniteTrainingProbe:
             if hasattr(algo, "_m3s2_last_event_window_loss"):
                 algo._m3s2_last_event_window_loss = None
                 algo._m3s2_last_event_window_grad_norm = 0.0
+            if hasattr(algo, "_m3s2_last_window_classifier_loss"):
+                algo._m3s2_last_window_classifier_loss = None
+                algo._m3s2_last_window_classifier_grad_norm = 0.0
+            if hasattr(algo, "_m3s2_last_fire_boundary_loss"):
+                algo._m3s2_last_fire_boundary_loss = None
+                algo._m3s2_last_fire_boundary_grad_norm = 0.0
             diagnostics = getattr(algo, "_m3s1_last_grouped_stopping_diagnostics", None)
             if diagnostics is not None:
                 try:
@@ -472,6 +478,14 @@ class NonFiniteTrainingProbe:
 
         def m3s2_event_window_enabled(algo) -> bool:
             enabled = getattr(algo, "_m3s2_event_window_enabled", None)
+            return bool(callable(enabled) and enabled())
+
+        def m3s2_window_classifier_enabled(algo) -> bool:
+            enabled = getattr(algo, "_m3s2_window_classifier_enabled", None)
+            return bool(callable(enabled) and enabled())
+
+        def m3s2_fire_boundary_enabled(algo) -> bool:
+            enabled = getattr(algo, "_m3s2_fire_boundary_enabled", None)
             return bool(callable(enabled) and enabled())
 
         def traced_collect_rollouts(self, env, callback, rollout_buffer, n_rollout_steps: int) -> bool:
@@ -760,6 +774,7 @@ class NonFiniteTrainingProbe:
             approx_kl_divs = []
             continue_training = True
             m3s2_event_window_loss = None
+            m3s2_fire_boundary_loss = None
             m3s1_grouped_stopping_loss = None
 
             tracer.check_named_tensors("train.params.start", _parameter_payload(self.policy))
@@ -1046,6 +1061,55 @@ class NonFiniteTrainingProbe:
                 if not continue_training:
                     break
 
+            m3s2_window_classifier_loss = None
+            classifier_update_fn = getattr(self, "_m3s2_window_classifier_auxiliary_update", None)
+            if callable(classifier_update_fn):
+                m3s2_window_classifier_loss = classifier_update_fn()
+                if m3s2_window_classifier_loss is not None:
+                    tracer.check(
+                        "train.m3s2_window_classifier_loss",
+                        m3s2_window_classifier_loss.loss,
+                    )
+                    tracer.check(
+                        "train.m3s2_window_classifier_unscaled_loss",
+                        m3s2_window_classifier_loss.unscaled_loss,
+                    )
+                    tracer.check(
+                        "train.m3s2_window_classifier_grad_norm",
+                        np.asarray(
+                            [float(getattr(self, "_m3s2_last_window_classifier_grad_norm", 0.0))],
+                            dtype=np.float32,
+                        ),
+                    )
+                    tracer.check_named_tensors(
+                        "train.params.post_m3s2_window_classifier_update",
+                        _parameter_payload(self.policy),
+                    )
+
+            fire_boundary_update_fn = getattr(self, "_m3s2_fire_boundary_auxiliary_update", None)
+            if callable(fire_boundary_update_fn):
+                m3s2_fire_boundary_loss = fire_boundary_update_fn()
+                if m3s2_fire_boundary_loss is not None:
+                    tracer.check(
+                        "train.m3s2_fire_boundary_loss",
+                        m3s2_fire_boundary_loss.loss,
+                    )
+                    tracer.check(
+                        "train.m3s2_fire_boundary_unscaled_loss",
+                        m3s2_fire_boundary_loss.unscaled_loss,
+                    )
+                    tracer.check(
+                        "train.m3s2_fire_boundary_grad_norm",
+                        np.asarray(
+                            [float(getattr(self, "_m3s2_last_fire_boundary_grad_norm", 0.0))],
+                            dtype=np.float32,
+                        ),
+                    )
+                    tracer.check_named_tensors(
+                        "train.params.post_m3s2_fire_boundary_update",
+                        _parameter_payload(self.policy),
+                    )
+
             m3s2_update_fn = getattr(self, "_m3s2_event_window_auxiliary_update", None)
             if callable(m3s2_update_fn):
                 m3s2_event_window_loss = m3s2_update_fn()
@@ -1155,6 +1219,273 @@ class NonFiniteTrainingProbe:
                     if first_event_hazard_positive_fracs
                     else 0.0,
                 )
+            if m3s2_window_classifier_enabled(self):
+                classifier_loss = m3s2_window_classifier_loss or getattr(
+                    self,
+                    "_m3s2_last_window_classifier_loss",
+                    None,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_coef",
+                    float(getattr(self, "m3s2_window_classifier_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_loss",
+                    (
+                        float(classifier_loss.loss.detach().cpu().item())
+                        if classifier_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_unscaled_loss",
+                    (
+                        float(classifier_loss.unscaled_loss.detach().cpu().item())
+                        if classifier_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_balanced_bce_loss",
+                    (
+                        float(classifier_loss.balanced_bce_loss.detach().cpu().item())
+                        if classifier_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_grad_norm",
+                    float(getattr(self, "_m3s2_last_window_classifier_grad_norm", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_active_count",
+                    float(classifier_loss.active_count) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_positive_count",
+                    float(classifier_loss.positive_count) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_negative_count",
+                    float(classifier_loss.negative_count) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_positive_logit_mean",
+                    float(classifier_loss.positive_logit_mean) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_negative_logit_mean",
+                    float(classifier_loss.negative_logit_mean) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_accuracy",
+                    float(classifier_loss.accuracy) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_replay_enabled",
+                    float(getattr(self, "m3s2_window_classifier_replay_enabled", False)),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_replay_storage_observation",
+                    float(getattr(self, "m3s2_window_classifier_replay_storage", "latent") == "observation"),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_replay_used",
+                    float(getattr(classifier_loss, "replay_used", False)) if classifier_loss is not None else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_replay_positive_count",
+                    (
+                        float(getattr(classifier_loss, "replay_positive_count", 0))
+                        if classifier_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/window_classifier_replay_negative_count",
+                    (
+                        float(getattr(classifier_loss, "replay_negative_count", 0))
+                        if classifier_loss is not None
+                        else 0.0
+                    ),
+                )
+            if m3s2_fire_boundary_enabled(self):
+                fire_boundary_loss = m3s2_fire_boundary_loss or getattr(
+                    self,
+                    "_m3s2_last_fire_boundary_loss",
+                    None,
+                )
+                active_count = float(getattr(fire_boundary_loss, "active_count", 0.0)) if fire_boundary_loss else 0.0
+                boundary_cross_count = (
+                    float(getattr(fire_boundary_loss, "boundary_cross_count", 0.0))
+                    if fire_boundary_loss
+                    else 0.0
+                )
+                boundary_cross_in_window_count = (
+                    float(getattr(fire_boundary_loss, "boundary_cross_in_window_count", 0.0))
+                    if fire_boundary_loss
+                    else 0.0
+                )
+                self.logger.record("m3s2/fb_coef", float(getattr(self, "m3s2_fire_boundary_coef", 0.0)))
+                self.logger.record(
+                    "m3s2/fb_loss",
+                    (
+                        float(fire_boundary_loss.loss.detach().cpu().item())
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_unscaled_loss",
+                    (
+                        float(fire_boundary_loss.unscaled_loss.detach().cpu().item())
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_bce_loss",
+                    (
+                        float(fire_boundary_loss.balanced_bce_loss.detach().cpu().item())
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_neg_ceiling_loss",
+                    (
+                        float(fire_boundary_loss.negative_logit_ceiling_loss.detach().cpu().item())
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_pos_floor_loss",
+                    (
+                        float(fire_boundary_loss.positive_logit_floor_loss.detach().cpu().item())
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_grad_norm",
+                    float(getattr(self, "_m3s2_last_fire_boundary_grad_norm", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/fb_group_count",
+                    float(getattr(fire_boundary_loss, "group_count", 0.0)) if fire_boundary_loss else 0.0,
+                )
+                self.logger.record("m3s2/fb_active_count", active_count)
+                self.logger.record(
+                    "m3s2/fb_positive_count",
+                    float(getattr(fire_boundary_loss, "positive_count", 0.0)) if fire_boundary_loss else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/fb_negative_count",
+                    float(getattr(fire_boundary_loss, "negative_count", 0.0)) if fire_boundary_loss else 0.0,
+                )
+                self.logger.record(
+                    "m3s2/fb_pos_logit_mean",
+                    (
+                        float(fire_boundary_loss.executable_positive_logit_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_neg_logit_mean",
+                    (
+                        float(fire_boundary_loss.executable_negative_logit_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_pos_prob_mean",
+                    (
+                        float(fire_boundary_loss.executable_positive_prob_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_neg_prob_mean",
+                    (
+                        float(fire_boundary_loss.executable_negative_prob_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_direct_pos_delta_mean",
+                    (
+                        float(fire_boundary_loss.direct_head_positive_delta_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_direct_neg_delta_mean",
+                    (
+                        float(fire_boundary_loss.direct_head_negative_delta_mean)
+                        if fire_boundary_loss is not None
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_accuracy",
+                    float(getattr(fire_boundary_loss, "accuracy", 0.0)) if fire_boundary_loss else 0.0,
+                )
+                self.logger.record("m3s2/fb_cross_count", boundary_cross_count)
+                self.logger.record(
+                    "m3s2/fb_cross_ratio",
+                    boundary_cross_count / active_count if active_count > 0.0 else 0.0,
+                )
+                self.logger.record("m3s2/fb_cross_in_window_count", boundary_cross_in_window_count)
+                self.logger.record(
+                    "m3s2/fb_cross_in_window_ratio",
+                    (
+                        boundary_cross_in_window_count / boundary_cross_count
+                        if boundary_cross_count > 0.0
+                        else 0.0
+                    ),
+                )
+                self.logger.record(
+                    "m3s2/fb_separate_update_enabled",
+                    float(bool(getattr(self, "m3s2_fire_boundary_separate_update_enabled", False))),
+                )
+                self.logger.record(
+                    "m3s2/fb_dedicated_optimizer_enabled",
+                    float(bool(getattr(self, "m3s2_fire_boundary_dedicated_optimizer_enabled", False))),
+                )
+                self.logger.record(
+                    "m3s2/fb_separate_update_steps",
+                    int(getattr(self, "m3s2_fire_boundary_separate_update_steps", 1)),
+                )
+                self.logger.record(
+                    "m3s2/fb_neg_ceiling_coef",
+                    float(getattr(self, "m3s2_fire_boundary_negative_logit_ceiling_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/fb_neg_ceiling",
+                    float(getattr(self, "m3s2_fire_boundary_negative_logit_ceiling", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/fb_pos_floor_coef",
+                    float(getattr(self, "m3s2_fire_boundary_positive_logit_floor_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/fb_pos_floor",
+                    float(getattr(self, "m3s2_fire_boundary_positive_logit_floor", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/fb_support_collect_enabled",
+                    float(bool(getattr(self, "m3s2_fire_boundary_support_preserving_collect_enabled", False))),
+                )
+                self.logger.record(
+                    "m3s2/fb_support_hold_quality_enabled",
+                    float(bool(getattr(self, "m3s2_fire_boundary_support_preserving_hold_quality_enabled", False))),
+                )
             if m3s2_event_window_enabled(self):
                 sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
                 stats = (
@@ -1231,6 +1562,34 @@ class NonFiniteTrainingProbe:
                 self.logger.record(
                     "m3s2/window_balanced_bce_loss",
                     stat_value("mean_window_balanced_bce_loss"),
+                )
+                self.logger.record("m3s2/prewindow_hazard_mean", stat_value("mean_prewindow_hazard_mean"))
+                self.logger.record("m3s2/prewindow_hazard_max", stat_value("mean_prewindow_hazard_max"))
+                self.logger.record("m3s2/prewindow_hazard_target", stat_value("mean_prewindow_hazard_target"))
+                self.logger.record(
+                    "m3s2/prewindow_hazard_scale_loss",
+                    stat_value("mean_prewindow_hazard_scale_loss"),
+                )
+                self.logger.record("m3s2/quality_hazard_target", stat_value("mean_quality_hazard_target"))
+                self.logger.record(
+                    "m3s2/quality_hazard_target_loss",
+                    stat_value("mean_quality_hazard_target_loss"),
+                )
+                self.logger.record(
+                    "m3s2/prewindow_logit_ceiling",
+                    stat_value("mean_prewindow_logit_ceiling"),
+                )
+                self.logger.record(
+                    "m3s2/prewindow_logit_ceiling_loss",
+                    stat_value("mean_prewindow_logit_ceiling_loss"),
+                )
+                self.logger.record(
+                    "m3s2/quality_logit_floor",
+                    stat_value("mean_quality_logit_floor"),
+                )
+                self.logger.record(
+                    "m3s2/quality_logit_floor_loss",
+                    stat_value("mean_quality_logit_floor_loss"),
                 )
                 self.logger.record("m3s2/event_logit_delta_mean", diag_value("stop_logit_mean"))
                 self.logger.record("m3s2/event_logit_delta_window_mean", diag_value("stop_logit_desirable_mean"))
@@ -1328,6 +1687,38 @@ class NonFiniteTrainingProbe:
                 self.logger.record(
                     "m3s2/ew_balanced_bce_coef",
                     float(getattr(self, "m3s2_event_window_balanced_bce_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_prewindow_hazard_scale_coef",
+                    float(getattr(self, "m3s2_event_window_prewindow_hazard_scale_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_prewindow_hazard_target",
+                    float(getattr(self, "m3s2_event_window_prewindow_hazard_target", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_quality_hazard_target_coef",
+                    float(getattr(self, "m3s2_event_window_quality_hazard_target_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_quality_hazard_target",
+                    float(getattr(self, "m3s2_event_window_quality_hazard_target", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_prewindow_logit_ceiling_coef",
+                    float(getattr(self, "m3s2_event_window_prewindow_logit_ceiling_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_prewindow_logit_ceiling",
+                    float(getattr(self, "m3s2_event_window_prewindow_logit_ceiling", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_quality_logit_floor_coef",
+                    float(getattr(self, "m3s2_event_window_quality_logit_floor_coef", 0.0)),
+                )
+                self.logger.record(
+                    "m3s2/ew_quality_logit_floor",
+                    float(getattr(self, "m3s2_event_window_quality_logit_floor", 0.0)),
                 )
                 support_enabled = getattr(self, "_m3s2_support_preserving_collect_enabled", None)
                 self.logger.record(

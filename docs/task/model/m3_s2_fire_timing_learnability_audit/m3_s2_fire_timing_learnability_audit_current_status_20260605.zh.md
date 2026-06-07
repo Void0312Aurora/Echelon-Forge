@@ -2,9 +2,13 @@
 
 父级：[README.zh.md](README.zh.md)。
 
-状态：`2026-06-06` diagnosis active；support-preserving collect repair 已部分接受，
+状态：`2026-06-07` diagnosis active；support-preserving collect repair 已部分接受，
 boundary-dedicated 短训方向已改善，log-domain cumulative-hazard repair 已接受，
-behavioral event timing 仍 held。
+scale-separated stopping contract 已实现，chain-breakpoint localization 已接受，
+behavioral event timing 仍 held，head-normalization calibration 负向证据已记录，
+window-classifier replay 负向行为证据已记录，calibrated standardization 负向集成证据已记录，
+classifier standardization contract 断点已局部化，execution-support classifier mismatch
+已确认，direct fire-boundary training path 已在 nonfinite-probe tracing 下恢复，但行为仍 held。
 
 ## 形式对象
 
@@ -46,6 +50,14 @@ learned policy 必须同时解决两个问题：
 | policy observation/latent 是否包含窗口信号？ | yes | 固定 forced-hold batch 上，raw mission fields、frozen extractor features 与 frozen actor latent 都线性可分；窗口分类 accuracy 约 `100%`。 |
 | 当前 executable action path 能否过拟合该划分？ | no | Boundary-only 与 active-contract overfits 会抬高所有 legal logits；`current` 与 `current_plus_features` 上的 row-wise BCE 坍缩为 all-positive majority-class behavior。 |
 | log-domain cumulative-hazard repair 是否改善 stopping-head adapter？ | partially | 它将 deterministic M3 stop probability 从约 `0.47` 降到 `0.145`，但 deterministic release 仍为 `0`，stochastic 仍在第 `5` 步提前采样一次授权 release。 |
+| 显式尺度分离 stopping contract 是否解决窗口脉冲？ | no | 它将 logged prewindow hazard 从 `0.413` 降到 `0.218`，但 quality logits 与 prewindow logits 同步下降；deterministic release 仍为 `0`，stochastic 仍在第 `7` 步提前 release。 |
+| 固定链路断点在哪里？ | M3 head optimization conditioning | 固定 forced-hold 轨迹上，label、standardized frozen actor latent、folded-head action adapter 与 edge-trigger pulse 都通过；direct raw M3 head fitting 仍残留 prewindow positives。 |
+| head normalization 加显式 logit calibration 是否解决？ | no | 8k run 将 deterministic M3 stop probability 降到 `0.118269`，但 deterministic release 仍为 `0`；real-update probe 通过同时压低 prewindow 与 quality logits 来降低 loss，其中 quality mean 从 `-2.003` 降到 `-2.965`。 |
+| balanced window-classifier replay 是否解决？ | no | Latent 与 observation replay 都能在训练 batch 上分开正/负 classifier logits，但 saved deterministic probe 仍记录 `release_count = 0`，quality-window classifier logits 约 `-8.24`；observation-replay stochastic probe 在第 `48` 步、quality-window rows 出现前早发一次。 |
+| deterministic calibrated standardization 是否解决？ | no | latest-balanced calibration 避免每个 auxiliary step 随机刷新标准化，但 8k final 仍 `release_count = 0`；fixed-chain final 的 current quality classifier logit mean 为 `-9.902827`，fresh head 同轨迹 `200` 步可完美分离。 |
+| classifier 输入 standardization contract 在推理时是否对齐？ | no | 固定 `model_event_hold` 轨迹上，保存的 buffer 给出 quality logit mean `-9.837499` 与 `0 / 1080` 个 quality boundaries。只重算该 fixed batch 的 `m3_window_classifier_input_mean/std` 后，quality logit mean 变为 `2.195754`，quality boundaries 变为 `1053 / 1080`。 |
+| actor-gradient isolation 与 post-update classifier restore 是否解决行为？ | no | 8k best-restore run 的 post-update replay batch 指标可分离，但 deterministic execution 仍记录 `release_count = 0`；fixed-chain current quality classifier logit mean 为 `-6.339776`，同一 execution latent 上 fresh standardized head 达到 `1080 / 1080` quality boundaries。 |
+| direct executable fire-boundary ownership 是否解决行为？ | wiring yes，behavior no | `NonFiniteTrainingProbe.traced_train()` 先前漏掉新的 direct boundary update。修复后 8k run 记录 `m3s2/fb_*` 更新，open-window fire probability 在 step `6144` 达到 `0.489228`，但 `fire_once_requested_count`、`release_executed_count` 与 mode-fire 仍为 `0`。 |
 | target acquisition 前高标量是否能后来恢复？ | no | `forced_fire` 记录 `{"no_target": 2}` 且无 release，因为后续没有新的 rising edge。 |
 
 ## 根因陈述
@@ -124,6 +136,47 @@ log-sum-exp 与 log survival 项。聚焦 real-update probe 现在能把 prewind
 `0 / 1040` quality-boundary crossings，因此剩余合同问题是尺度分离：prewindow hazard
 必须接近 `1 / horizon`，同时 quality window 仍需要 deterministic pulse。
 
+显式尺度分离 stopping contract 直接验证了这一判断。contract 已接入 loss、logs、
+diagnostics、active config 和 focused tests。8k 短训中，有窗口样本的 update 推导出
+prewindow target `0.000651`；logged prewindow hazard 从 `0.413` 降到 `0.218`，
+说明新项确实生效。但是 quality-window logits 也跟着 prewindow logits 同步下降：
+quality boundary logit 从 `-0.346` 降到 `-1.273`，quality target loss 从
+`2.086` 升到 `5.627`，boundary crossing 仍为 `0`。deterministic probing 再次记录
+`release_count = 0`；stochastic probing 仍在第 `7` 步提前采样 release。这把“尺度分离”
+从假设推进为负向集成结果：当前 executable stopping/action contract 仍缺少已学会的
+prewindow-versus-quality discriminator。
+
+链路断点定位 probe 把这个诊断转成固定 yes/no 阶梯。在最新 scale-separated checkpoint 上，
+一条 forced-hold 轨迹包含 `840` 个 prewindow rows 与 `1040` 个 quality rows。
+standardized frozen actor latent 上的线性 head 能完美分离：prewindow boundary
+`0 / 840`，quality boundary `1040 / 1040`，separation margin 超过 `10`。
+将该 standardized head 折叠回 raw latent space 并安装为 M3 stopping head 后，
+action transport 行为正确：event mode 在 prewindow `0 / 840`，在 quality `1040 / 1040`，
+edge-trigger 模拟在 row `281` 产生一次合法 quality pulse。相反，当前 learned head 的
+quality boundary 是 `0 / 1040`，event mode fire 为 `0`。在同一 frozen latent 上直接优化
+raw M3 head 几乎能通过，但根据学习率仍残留 `4` 到 `6` 个 prewindow positives，并漏掉
+`2` 到 `5` 个 quality rows。因此第一个局部断点是 M3 head optimization
+conditioning/calibration，而不是 labels、latent signal、adapter behavior 或 edge-trigger
+semantics。
+
+head-normalized calibration 修复验证了最直接的下一假设，但结果仍 held。M3 `LayerNorm`、
+显式 prewindow/quality logit margins、dedicated optimizer membership、logs、diagnostics
+和 active config support 均已接线。8k 短训将 deterministic M3 stop probability 从上一轮
+scale-separated 的 `0.157226` 降到 `0.118269`，但 prewindow 与 quality probabilities
+仍几乎相同，deterministic release 仍为 `0`。real-update probe 更尖锐：在一批包含
+`1040` 个 quality rows 的 forced-hold 样本上，`current` updates 将 loss 从 `634.18`
+降到 `557.86`，同时把 quality mean logit 从 `-2.003` 继续压到 `-2.965`。更容易的
+loss 下降方向仍是 global hazard suppression，而不是 quality-window boundary formation。
+
+direct fire-boundary owner 修复定位了一个具体实现断点。active M3-S2 短训启用
+`NonFiniteTrainingProbe`，而 probe 曾用 copied training loop 覆盖 `model.train()`，
+但该路径没有调用 `_m3s2_fire_boundary_auxiliary_update()`。同步 traced train path 后，
+active 8k run 从 step `512` 起记录 `m3s2/fb_*` metrics；open-window fire probability
+在 `4096` 达到 `0.373841`，在 `6144` 达到 `0.489228`。行为仍未验收：
+deterministic mode fire 仍为 `0`，final open-window probability 回落到 `0.0238934`，
+且没有记录 `fire_once_requested` 或 release。剩余断点因此不是 update path 缺失，而是
+online support/label distribution 与 boundary calibration 不稳定。
+
 ## Learned-Policy 可达性证据
 
 维护证据页：
@@ -194,30 +247,67 @@ log-sum-exp 与 log survival 项。聚焦 real-update probe 现在能把 prewind
   `experiments_tmp/m3s2_stopping_head_adapter_log_domain_8k_20260606_r1/m3s2_stochastic_probe.json`
   与
   `experiments_tmp/m3s2_stopping_head_adapter_8k_20260606_r1/m3s2_real_update_stopping_head_probe_log_domain.json`。
+- 尺度分离 stopping contract 短训记录了 active prewindow scale pressure，但没有学出边界：
+  deterministic `release_count = 0`，stochastic `first_release_step = 7`，
+  final deterministic `policy_m3_stop_prob_mean = 0.157226`，且没有 M3 boundary crossing。
+  Artifacts：
+  `experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/final_model.zip`、
+  `experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/m3s2_deterministic_probe.json`
+  与
+  `experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/m3s2_stochastic_probe.json`。
+- 链路断点定位 probe 记录当前局部根因：
+  `first_breakpoint = m3_head_optimization_conditioning`、
+  `fresh_latent_linear_probe_pass = true`、`adapter_projection_pass = true`、
+  `edge_trigger_pass = true`、`current_policy_distribution_pass = false`。
+  Artifacts：
+  `experiments_tmp/m3s2_chain_breakpoint_probe_20260606_scale_contract_r3_3kfit.json`
+  与
+  `experiments_tmp/m3s2_chain_breakpoint_probe_20260606_scale_contract_r3_3kfit_lr003.json`。
+- head-normalized calibration 短训记录负向集成结果：deterministic `release_count = 0`，
+  stochastic `first_release_step = 14`，fresh normalized-head-input probe 通过，而
+  real-update probe 记录 `any_update_raises_quality_logit = false`。Artifacts：
+  `experiments_tmp/m3s2_head_norm_calibration_8k_20260606_r1/final_model.zip`、
+  `experiments_tmp/m3s2_head_norm_calibration_8k_20260606_r1/m3s2_deterministic_probe.json`、
+  `experiments_tmp/m3s2_head_norm_calibration_8k_20260606_r1/m3s2_stochastic_probe.json`、
+  `experiments_tmp/m3s2_head_norm_calibration_8k_20260606_r1/m3s2_chain_breakpoint_probe.json`
+  与
+  `experiments_tmp/m3s2_head_norm_calibration_8k_20260606_r1/m3s2_real_update_path_probe.json`。
+- 显式 window-classifier integration 已接线但行为仍 held：focused tests 通过，synthetic
+  sidecar update 能分离 quality 与 non-quality rows；但 8k Stage-1 run 记录
+  deterministic `release_count = 0`，stochastic `first_release_step = 5` 且发生在任何
+  quality rows 前，online classifier logits 仍只形成很弱分离。Artifacts：
+  `experiments_tmp/m3s2_window_classifier_8k_20260606_r1/final_model.zip`、
+  `experiments_tmp/m3s2_window_classifier_8k_20260606_r1/m3s2_deterministic_probe.json`
+  与
+  `experiments_tmp/m3s2_window_classifier_8k_20260606_r1/m3s2_stochastic_probe.json`。
+- calibrated-standardization window-classifier run 给出当前最强根因证据。保存的 buffer
+  在固定 `model_event_hold` 轨迹上得到 `quality_logit_mean = -9.837499` 与
+  `quality_boundary_count = 0 / 1080`。不改变 classifier 权重，只在 fixed batch 上重算
+  `m3_window_classifier_input_mean/std` 后，得到 `quality_logit_mean = 2.195754`
+  与 `quality_boundary_count = 1053 / 1080`。head 内含 timing signal，但 executable path
+  在按 replay 校准的 normalization contract 下运行，未与 execution-support 轨迹对齐。
+  Artifact：
+  `experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/m3s2_chain_breakpoint_probe_final_model_event_hold_recalibration_r1.json`。
 
 ## 推荐下一切片
 
-不要把 M2 memory 作为第一修复。memory 可能帮助表示历史，但当前证据要求先审计
-action/event reachability，再打开新的 sequence-model 实现。
+不要把 M2 memory 作为第一修复。memory 可能帮助表示历史，但最新证据显示，当前 no-fire
+plateau 的直接原因是 classifier normalization contract 断裂：保存的 executable
+standardization buffers 校准到 replay/support batches，并把 execution-support 轨迹整体推到负侧。
 
-下一切片应作为 contract repair 打开，包含八个候选方向：
+下一切片应作为 classifier standardization-contract repair 打开，包含以下候选方向：
 
-1. Deterministic boundary contract：保留 quality-window positive bag objective 作为 actor
-   主目标，并要求至少一个 supported quality-window logit 向 deterministic mode 移动。
-2. Isolated auxiliary optimization：通过 dedicated optimizer path，让 M3-S2 event-window
-   updates 避免复用 PPO Adam 状态。
-3. Event-to-pulse adapter：将 selected stopping/event decision 转成 `fire_mask` 下的
-   executable low-high-low pulse，并审计 deterministic stop boundary 是否能产生真实 release。
-4. Reward contract repair：阻止正向 per-step shaping 把更晚 terminal success 排到更早
-   terminal success 前面。
-5. Learned-policy reachability audit：判定 no-fire 来自 logits/probability、mask support、
-   edge consumption、action projection 还是 PPO credit。
-6. Actor event-label calibration：训练 signed event-logit target，将 prewindow hazard
-   推向 `1 / horizon` 尺度，同时要求 quality-window logit crossing 高于 deterministic mode。
-7. Supported-window maintenance：将 training support-preserving path 保持为 diagnostic guard，
-   但不把它计为 behavior acceptance。
-8. Cumulative-hazard contract：直接记录并约束 group-level prewindow cumulative event risk，
-   因为安全的每步尺度接近 `1 / horizon`，而不是普通逐行分类里的“小概率”。
+1. 从 executable classifier path 移除 mutable population standardization，依赖 per-sample
+   `LayerNorm` 加 linear classifier head。
+2. 若保留 population standardization，则用稳定的 execution-support population 校准，而不是
+   latest-balanced replay，并在 deterministic evaluation 前冻结。
+3. 增加 post-update diagnostics：每次都在固定 `model_event_hold` support 轨迹上评估 saved
+   executable head，避免把 training-batch separation 误当成 execution readiness。
+4. 保持 deterministic boundary contract：要求 quality-window boundary crossing，且不能有
+   prewindow pulse consumption；不能只看 replay accuracy。
+5. 将 support-preserving collection 保持为 diagnostic guard，但不计为 behavior acceptance。
+6. standardization contract 修复后，再复查 event-to-pulse adapter 与 reward-contract 缺陷；
+   二者仍是验收门。
 
 M2 只应在 action-event adapter 与 reward contract 有明确验收门后继续作为候选，或者由 M2
 明确承担 stopping output 到 executable pulse 的 adapter。
@@ -328,6 +418,23 @@ experiments_tmp/m3s2_stopping_head_adapter_log_domain_8k_20260606_r1/m3s2_determ
 experiments_tmp/m3s2_stopping_head_adapter_log_domain_8k_20260606_r1/m3s2_stochastic_probe.json
 ```
 
+M3-S2 尺度分离 stopping contract 短训 artifacts：
+
+```text
+experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/final_model.zip
+experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/m3s2_deterministic_probe.json
+experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/m3s2_stochastic_probe.json
+```
+
+M3-S2 window-classifier standardization-contract artifacts：
+
+```text
+experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/final_model.zip
+experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/m3s2_chain_breakpoint_probe_final_model_event_hold_recalibration_r1.json
+experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/m3s2_chain_breakpoint_probe_final_model_event_hold_stochastic_r1.json
+experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/m3s2_chain_breakpoint_probe_final_model_event_hold_fit64_lr003.json
+```
+
 Event-window implementation evidence：
 
 ```text
@@ -338,4 +445,8 @@ docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_structural_toy_probe_
 docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_real_update_path_probe_20260606.zh.md
 docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_boundary_optimizer_contract_probe_20260606.zh.md
 docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_stopping_head_adapter_log_domain_short_train_20260606.zh.md
+docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_scale_separated_stopping_contract_short_train_20260606.zh.md
+docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_chain_breakpoint_probe_20260606.zh.md
+docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_window_classifier_standardization_contract_probe_20260606.zh.md
+docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_direct_fire_boundary_probe_20260607.zh.md
 ```
