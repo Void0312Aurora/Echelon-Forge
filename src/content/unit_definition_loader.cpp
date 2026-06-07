@@ -1257,6 +1257,7 @@ bool parse_unit_json(
         missile_tuning.max_speed = def.flight_model.max_speed;
         missile_tuning.turn_rate = def.flight_model.max_turn_rate;
         missile_tuning.max_lateral_g = def.flight_model.max_g;
+        parse_missile_tuning_json_fields(entry, &missile_tuning);
 
         if (entry.contains("missile_tuning") && entry["missile_tuning"].is_object()) {
             parse_missile_tuning_json_fields(entry["missile_tuning"], &missile_tuning);

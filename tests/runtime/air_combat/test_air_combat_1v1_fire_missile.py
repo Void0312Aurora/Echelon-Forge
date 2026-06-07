@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import unittest
+from pathlib import Path
 import numpy as np
 
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
@@ -258,11 +260,25 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
         missile_runtime = sim.debug_get_missile_runtime_state(next(iter(new_missile_ids)))
         self.assertAlmostEqual(float(missile_runtime["mass_total_kg"]), 152.0, delta=1.0e-6)
         self.assertAlmostEqual(float(missile_runtime["max_speed_mps"]), 1372.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(missile_runtime["max_flight_time_s"]), 45.0, delta=1.0e-6)
         self.assertEqual(int(missile_runtime["sensor_type"]), int(ef_py.SensorType.Radar))
 
         post_fire = sim.get_agent_observation(blue_id)
         self.assertEqual(int(getattr(post_fire, "missiles_remaining", -1)), 3)
         self.assertFalse(bool(getattr(post_fire, "can_fire", True)))
+
+    def test_air_to_air_weapon_database_defines_bvr_flight_time(self) -> None:
+        for filename in ("aim_120c.json", "r77_1.json"):
+            with self.subTest(filename=filename):
+                payload = json.loads(
+                    (
+                        Path(_DB_PATH)
+                        / "weapons"
+                        / "air_to_air"
+                        / filename
+                    ).read_text(encoding="utf-8")
+                )
+                self.assertGreaterEqual(float(payload.get("max_flight_time_s", 0.0)), 30.0)
 
     def test_fire_weapon_bridge_latches_held_trigger_after_one_successful_release(self) -> None:
         sim, blue_id, red_id = _make_direct_fixture()

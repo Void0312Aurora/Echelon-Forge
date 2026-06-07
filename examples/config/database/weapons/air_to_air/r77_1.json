@@ -2,6 +2,7 @@
     "name": "R-77-1",
     "type": "Missile",
     "mass_kg": 190.0,
+    "max_flight_time_s": 45.0,
     "flight_model": {
         "max_speed": 1300.0,
         "max_g": 40.0,
