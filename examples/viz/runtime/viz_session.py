@@ -86,12 +86,32 @@ def _unnormalize_action(action: np.ndarray, low: np.ndarray, high: np.ndarray) -
 
 
 COMMAND_CODE_TO_NAME = {int(v): str(k).upper() for k, v in COMMAND_NAME_TO_CODE.items()}
+GROUND_TASKING_PROFILE_ALIASES = {"army", "ground", "land"}
 DEFAULT_C2_TASK_SEQUENCE = [
     "TASK_SCRAMBLE",
     "TASK_CAP",
     "TASK_RTB",
     "TASK_RECOVER_LAND",
 ]
+
+
+def _scenario_tasking_profile(scenario_data: object) -> str:
+    if not isinstance(scenario_data, dict):
+        return ""
+    candidates = [scenario_data.get("tasking_profile")]
+    for key in ("mission_command", "task_order"):
+        section = scenario_data.get(key)
+        if isinstance(section, dict):
+            candidates.append(section.get("tasking_profile"))
+    for candidate in candidates:
+        text = str(candidate or "").strip().lower()
+        if text:
+            return text
+    return ""
+
+
+def _is_ground_tasking_profile(tasking_profile: str | None) -> bool:
+    return str(tasking_profile or "").strip().lower() in GROUND_TASKING_PROFILE_ALIASES
 
 
 def _pretty_label(name: str | None) -> str:
@@ -1421,6 +1441,19 @@ class VizSession:
                     if self.nav_data is None or prev_idx != idx or gate_changed:
                         self.nav_data = new_nav
                         self.socketio.emit("nav_setup", self.nav_data)
+                    return
+
+                tasking_profile = _scenario_tasking_profile(getattr(sim_env.loader, "scenario_data", None))
+                if _is_ground_tasking_profile(tasking_profile):
+                    self.nav_data = {
+                        "markers": [],
+                        "mission": {
+                            "command_code": cmd_code,
+                            "tasking_profile": tasking_profile,
+                        },
+                        "action_mode": str(action_mode),
+                    }
+                    self.socketio.emit("nav_setup", self.nav_data)
                     return
 
                 pos0 = sim_env.sim.get_unit_position(sim_env.agent_id)

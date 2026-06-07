@@ -27,6 +27,7 @@ def test_viz_profile_loader_accepts_tactical_workspace_and_layer_defaults(tmp_pa
                     "focus_unit": "Blue_Lead",
                     "tactical_zoom": 1.4,
                     "tactical_workspace": "tracks",
+                    "map_only": "true",
                     "tactical_layers": {
                         "environment": False,
                         "route": False,
@@ -49,6 +50,7 @@ def test_viz_profile_loader_accepts_tactical_workspace_and_layer_defaults(tmp_pa
         "camera_mode": "FREE",
         "focus_unit": "Blue_Lead",
         "tactical_workspace": "tracks",
+        "map_only": True,
         "tactical_layers": {
             "environment": False,
             "route": False,
@@ -69,6 +71,7 @@ def test_viz_profile_loader_filters_unknown_tactical_ui_defaults() -> None:
             "presentation_mode": "dashboard",
             "camera_mode": "orbit",
             "tactical_workspace": "not-a-workspace",
+            "map_only": "disabled",
             "tactical_layers": {
                 "sensor-rings": "on",
                 "links": "0",
@@ -79,6 +82,7 @@ def test_viz_profile_loader_filters_unknown_tactical_ui_defaults() -> None:
     )
 
     assert defaults == {
+        "map_only": False,
         "tactical_layers": {
             "sensorRings": True,
             "datalinks": False,
@@ -120,8 +124,10 @@ def test_tactical_profile_ui_defaults_are_applied_without_scenario_mutation() ->
 
     assert "const nextWorkspace = String(ui.tactical_workspace || '').trim();" in text
     assert "const hasProfileLayerDefaults = ui.tactical_layers && typeof ui.tactical_layers === 'object';" in text
+    assert "const nextMapOnly = typeof ui.map_only === 'boolean' ? ui.map_only : null;" in text
     assert "mergeTacticalLayerSnapshot(workspaceLayerDefaults(baseWorkspace), ui.tactical_layers)" in text
     assert "window.setTacticalWorkspace(targetWorkspace, { skipCapture: true, layers: profileLayers });" in text
+    assert "window.toggleMapOnlyMode(nextMapOnly)" in text
     assert "captureActiveWorkspaceLayers();" in text
 
     assert "socket.emit('viz_load_profile'" in text

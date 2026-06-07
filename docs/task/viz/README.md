@@ -28,6 +28,12 @@ Status: unified-entry refactor workline remains active; local entry converged on
   [tactical_map_interface_refactor/README.md](./tactical_map_interface_refactor/README.md)
 - Archived tactical map interface evidence package:
   [archive/tactical_map_interface_refactor/README.md](./archive/tactical_map_interface_refactor/README.md)
+- Active map-only viewer follow-on:
+  [map_only_viewer_mode/README.md](./map_only_viewer_mode/README.md)
+- Active environment overlay visual-elements follow-on:
+  [environment_overlay_visual_elements/README.md](./environment_overlay_visual_elements/README.md)
+- Active bilingual display follow-on:
+  [bilingual_display/README.md](./bilingual_display/README.md)
 
 ## Current Follow-On Focus
 
@@ -38,6 +44,12 @@ Status: unified-entry refactor workline remains active; local entry converged on
 - keep visualization convenience separate from realism/world-parameter changes
 - open a new task cluster or subproject before adding richer environment
   layers, split-map layout, or symbol-registry extraction
+- continue map-only viewing and profile/object-binding work from
+  [map_only_viewer_mode/README.md](./map_only_viewer_mode/README.md)
+- continue generated environment-overlay readability work from
+  [environment_overlay_visual_elements/README.md](./environment_overlay_visual_elements/README.md)
+- continue bilingual UI display work from
+  [bilingual_display/README.md](./bilingual_display/README.md)
 - do not treat other files under `archive/` as active unless this README
   promotes them
 

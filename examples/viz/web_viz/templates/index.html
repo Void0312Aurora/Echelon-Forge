@@ -47,6 +47,35 @@
             pointer-events: auto;
         }
 
+        .map-only-exit {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 10;
+            border-color: rgba(82, 200, 232, 0.9);
+            background: rgba(5, 18, 24, 0.86);
+            color: #dff8ff;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+        }
+
+        html[data-map-only="true"] #viz-menubar,
+        html[data-map-only="true"] .viz-dock,
+        html[data-map-only="true"] #controls-help {
+            display: none;
+            pointer-events: none;
+        }
+
+        html[data-map-only="true"] .map-only-exit {
+            display: block;
+        }
+
+        html[data-map-only="true"] #tactical-header {
+            top: 12px;
+            left: 16px;
+            right: 96px;
+        }
+
         #overlay {
             position: static;
             width: 100%;
@@ -677,21 +706,22 @@
     <div id="tactical-panel">
         <div id="tactical-header">
             <div class="tactical-header-left">
-                <span>TACTICAL VIEW</span>
+                <span data-i18n="ui.tacticalView">TACTICAL VIEW</span>
             </div>
             <span id="tactical-scale">SCALE --</span>
         </div>
         <canvas id="tactical-canvas"></canvas>
     </div>
+    <button id="btn-map-only-exit" class="map-only-exit" onclick="toggleMapOnlyMode(false)">EXIT MAP</button>
 
     <div id="viz-shell">
         <div id="viz-menubar">
             <div class="menu-row menu-row--status">
                 <div class="menu-status">
-                    <span class="menu-tag">SESSION</span>
+                    <span class="menu-tag" data-i18n="ui.session">SESSION</span>
                     <span id="viz-session-label">UNLOADED</span>
                 </div>
-                <div id="workspace-tabs" class="workspace-tabs" aria-label="Map workspace">
+                <div id="workspace-tabs" class="workspace-tabs" aria-label="Map workspace" data-i18n-aria="ui.mapWorkspace">
                     <button id="workspace-tab-cop" class="workspace-tab" onclick="setTacticalWorkspace('cop')">COP</button>
                     <button id="workspace-tab-environment" class="workspace-tab" onclick="setTacticalWorkspace('environment')">ENVIRONMENT</button>
                     <button id="workspace-tab-tracks" class="workspace-tab" onclick="setTacticalWorkspace('tracks')">TRACKS</button>
@@ -700,6 +730,8 @@
                 <div class="menu-actions">
                     <button id="btn-toggle-left" class="dock-toggle" onclick="toggleVizDock('left')">SETUP</button>
                     <button id="btn-toggle-right" class="dock-toggle" onclick="toggleVizDock('right')">DATA</button>
+                    <button id="btn-map-only" onclick="toggleMapOnlyMode()">MAP ONLY</button>
+                    <button id="btn-language" onclick="toggleUiLanguage()">中文</button>
                     <button id="btn-reload" onclick="reloadCurrentScenario()">RELOAD</button>
                     <button id="btn-stop" onclick="stopCurrentSession()">STOP</button>
                     <div id="ui-controls">
@@ -716,25 +748,25 @@
 
         <aside id="left-dock" class="viz-dock viz-dock--left">
             <div class="dock-header">
-                <span>SESSION SETUP</span>
-                <button class="dock-close" onclick="toggleVizDock('left')">CLOSE</button>
+                <span data-i18n="ui.sessionSetup">SESSION SETUP</span>
+                <button class="dock-close" onclick="toggleVizDock('left')" data-i18n="ui.close">CLOSE</button>
             </div>
             <div class="dock-body">
                 <div class="menu-row menu-row--selectors">
                     <div class="menu-field">
-                        <span class="menu-tag">PROFILE</span>
+                        <span class="menu-tag" data-i18n="ui.profile">PROFILE</span>
                         <select id="profile-select"></select>
-                        <button id="btn-load-profile" onclick="loadSelectedProfile()">LOAD PROFILE</button>
+                        <button id="btn-load-profile" onclick="loadSelectedProfile()" data-i18n="ui.loadProfile">LOAD PROFILE</button>
                     </div>
                     <div class="menu-field">
-                        <span class="menu-tag">SCENARIO</span>
+                        <span class="menu-tag" data-i18n="ui.scenario">SCENARIO</span>
                         <select id="scenario-select"></select>
-                        <button id="btn-load" onclick="loadSelectedScenario()">LOAD</button>
+                        <button id="btn-load" onclick="loadSelectedScenario()" data-i18n="ui.load">LOAD</button>
                     </div>
                     <div class="menu-field">
-                        <span class="menu-tag">ASSET SET</span>
+                        <span class="menu-tag" data-i18n="ui.assetSet">ASSET SET</span>
                         <select id="asset-registry-select"></select>
-                        <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()">LOAD ASSET SET</button>
+                        <button id="btn-load-asset-registry" onclick="loadSelectedAssetRegistry()" data-i18n="ui.loadAssetSet">LOAD ASSET SET</button>
                     </div>
                 </div>
             </div>
@@ -742,12 +774,12 @@
 
         <aside id="right-dock" class="viz-dock viz-dock--right">
             <div class="dock-header">
-                <span>TACTICAL DATA</span>
-                <button class="dock-close" onclick="toggleVizDock('right')">CLOSE</button>
+                <span data-i18n="ui.tacticalData">TACTICAL DATA</span>
+                <button class="dock-close" onclick="toggleVizDock('right')" data-i18n="ui.close">CLOSE</button>
             </div>
             <div class="dock-body">
                 <div id="tactical-workspace-panel" class="dock-section">
-                    <h3>WORKSPACE</h3>
+                    <h3 data-i18n="ui.workspace">WORKSPACE</h3>
                     <div class="workspace-summary">
                         <span id="workspace-name" class="workspace-name">COP</span>
                         <span id="workspace-role" class="workspace-role">COMMON PICTURE</span>
@@ -756,42 +788,42 @@
                 </div>
 
                 <div id="tactical-layer-panel" class="dock-section">
-                    <h3>LAYERS</h3>
-                    <div id="tactical-layer-controls" class="tactical-layer-controls" aria-label="Tactical layers"></div>
+                    <h3 data-i18n="ui.layers">LAYERS</h3>
+                    <div id="tactical-layer-controls" class="tactical-layer-controls" aria-label="Tactical layers" data-i18n-aria="ui.tacticalLayers"></div>
                 </div>
 
                 <div id="overlay" class="dock-section">
-                    <h3>TELEMETRY</h3>
-                    <div class="data-row"><span class="label">TIME</span><span id="v-time" class="value">0.00 s</span></div>
+                    <h3 data-i18n="ui.telemetry">TELEMETRY</h3>
+                    <div class="data-row"><span class="label" data-i18n="ui.time">TIME</span><span id="v-time" class="value">0.00 s</span></div>
                     <div id="focused-unit-stats">
-                        <div class="data-row"><span class="label">UNIT</span><span id="v-name" class="value">--</span></div>
-                        <div class="data-row"><span class="label">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
-                        <div class="data-row"><span class="label">IAS / GS</span><span id="v-spd" class="value">0.0 / 0.0 m/s</span></div>
-                        <div class="data-row"><span class="label">HEADING</span><span id="v-hdg" class="value">000</span></div>
-                        <div class="data-row"><span class="label">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
-                        <div class="data-row"><span class="label">ROLL</span><span id="v-roll" class="value">0.0</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.unit">UNIT</span><span id="v-name" class="value">--</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.altAsl">ALT (ASL)</span><span id="v-alt" class="value">0.0 m</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.iasGs">IAS / GS</span><span id="v-spd" class="value">0.0 / 0.0 m/s</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.heading">HEADING</span><span id="v-hdg" class="value">000</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.pitch">PITCH</span><span id="v-pitch" class="value">0.0</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.roll">ROLL</span><span id="v-roll" class="value">0.0</span></div>
                     </div>
                     <div class="section-spacer">
-                        <h3>MISSION</h3>
-                        <div class="data-row"><span class="label">C2 TASK</span><span id="m-task" class="value">--</span></div>
-                        <div class="data-row"><span class="label">PHASE</span><span id="m-phase" class="value">--</span></div>
-                        <div class="data-row"><span class="label">COMMAND</span><span id="m-command" class="value">--</span></div>
-                        <div class="data-row"><span class="label">WAYPOINT</span><span id="m-waypoint" class="value">--</span></div>
-                        <div class="label">SEQUENCE</div>
+                        <h3 data-i18n="ui.mission">MISSION</h3>
+                        <div class="data-row"><span class="label" data-i18n="ui.c2Task">C2 TASK</span><span id="m-task" class="value">--</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.phase">PHASE</span><span id="m-phase" class="value">--</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.command">COMMAND</span><span id="m-command" class="value">--</span></div>
+                        <div class="data-row"><span class="label" data-i18n="ui.waypoint">WAYPOINT</span><span id="m-waypoint" class="value">--</span></div>
+                        <div class="label" data-i18n="ui.sequence">SEQUENCE</div>
                         <div id="m-sequence" class="task-sequence"></div>
-                        <div class="label" style="margin-top: 10px;">RECENT SWITCHES</div>
+                        <div class="label" style="margin-top: 10px;" data-i18n="ui.recentSwitches">RECENT SWITCHES</div>
                         <div id="mission-history"></div>
                     </div>
                 </div>
 
                 <div id="unit-list" class="dock-section">
-                    <h3>UNITS</h3>
+                    <h3 data-i18n="ui.units">UNITS</h3>
                     <div id="unit-list-content"></div>
                 </div>
             </div>
         </aside>
 
-        <div id="controls-help">[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume</div>
+        <div id="controls-help" data-i18n="ui.controlsHelp">[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume</div>
     </div>
 
     <script type="module">
@@ -821,6 +853,8 @@
         const VISUAL_EXTRAPOLATION_LIMIT_MS = 180.0;
         const TACTICAL_RENDER_INTERVAL_MS = 1000.0 / 30.0;
         let presentationMode = 'MAP';
+        let mapOnlyMode = false;
+        let uiLanguage = 'en';
         let lastTacticalState = null;
         let environmentOverlays = null;
         let tacticalViewport = null;
@@ -840,6 +874,391 @@
             panStartX: 0.0,
             panStartY: 0.0,
         };
+        const I18N_TEXT = Object.freeze({
+            en: {
+                'ui.tacticalView': 'TACTICAL VIEW',
+                'ui.scaleEmpty': 'SCALE --',
+                'ui.session': 'SESSION',
+                'ui.unloaded': 'UNLOADED',
+                'ui.ready': 'READY',
+                'ui.running': 'RUNNING',
+                'ui.paused': 'PAUSED',
+                'ui.loading': 'LOADING',
+                'ui.profileSuffix': 'PROFILE',
+                'ui.mapWorkspace': 'Map workspace',
+                'ui.setup': 'SETUP',
+                'ui.data': 'DATA',
+                'ui.mapOnly': 'MAP ONLY',
+                'ui.exitMap': 'EXIT MAP',
+                'ui.reload': 'RELOAD',
+                'ui.stop': 'STOP',
+                'ui.view': 'VIEW',
+                'ui.slow': 'SLOW',
+                'ui.fast': 'FAST',
+                'ui.speed': 'SPD',
+                'ui.start': 'START',
+                'ui.pause': 'PAUSE',
+                'ui.resume': 'RESUME',
+                'ui.presentationMap': 'MAP',
+                'ui.presentation3d': '3D',
+                'ui.cameraChase': 'CHASE',
+                'ui.cameraFree': 'FREE',
+                'ui.waypointShort': 'WP',
+                'ui.languageButton': '中文',
+                'ui.sessionSetup': 'SESSION SETUP',
+                'ui.close': 'CLOSE',
+                'ui.profile': 'PROFILE',
+                'ui.scenario': 'SCENARIO',
+                'ui.assetSet': 'ASSET SET',
+                'ui.loadProfile': 'LOAD PROFILE',
+                'ui.load': 'LOAD',
+                'ui.loadAssetSet': 'LOAD ASSET SET',
+                'ui.tacticalData': 'TACTICAL DATA',
+                'ui.workspace': 'WORKSPACE',
+                'ui.layers': 'LAYERS',
+                'ui.tacticalLayers': 'Tactical layers',
+                'ui.telemetry': 'TELEMETRY',
+                'ui.time': 'TIME',
+                'ui.unit': 'UNIT',
+                'ui.altAsl': 'ALT (ASL)',
+                'ui.iasGs': 'IAS / GS',
+                'ui.heading': 'HEADING',
+                'ui.pitch': 'PITCH',
+                'ui.roll': 'ROLL',
+                'ui.mission': 'MISSION',
+                'ui.c2Task': 'C2 TASK',
+                'ui.phase': 'PHASE',
+                'ui.command': 'COMMAND',
+                'ui.waypoint': 'WAYPOINT',
+                'ui.sequence': 'SEQUENCE',
+                'ui.recentSwitches': 'RECENT SWITCHES',
+                'ui.units': 'UNITS',
+                'ui.controlsHelp': '[Map Wheel] Zoom | [Map Drag] Pan | [WASD/QE] 3D Free Camera | [Mouse Drag] 3D Orbit | [Space] Pause / Resume',
+                'ui.noProfiles': '-- NO PROFILES --',
+                'ui.scenarioOnly': 'Scenario only (no profile active)',
+                'ui.scenarioOnlyTitle': 'The current session was loaded directly from a scenario.',
+                'ui.noScenarios': '-- NO SCENARIOS --',
+                'ui.noAssetSets': '-- NO ASSET SETS --',
+                'ui.noUnits': 'NO UNITS',
+                'ui.unitFallback': 'Unit',
+                'ui.layerSuffix': 'layer',
+                'ui.grid': 'grid',
+                'ui.zoom': 'zoom',
+                'ui.meters': 'M',
+                'ui.kilometers': 'KM',
+                'workspace.cop.label': 'COP',
+                'workspace.cop.role': 'COMMON PICTURE',
+                'workspace.environment.label': 'ENVIRONMENT',
+                'workspace.environment.role': 'ENV / AREAS',
+                'workspace.tracks.label': 'TRACKS',
+                'workspace.tracks.role': 'SENSORS / LINKS',
+                'workspace.inspect3d.label': '3D INSPECT',
+                'workspace.inspect3d.role': 'MODEL / ASSET',
+                'layer.environment.label': 'Environment overlays',
+                'layer.environment.short': 'ENV',
+                'layer.environment.summary': 'ENV',
+                'layer.route.label': 'Routes and waypoints',
+                'layer.route.short': 'ROUTE',
+                'layer.route.summary': 'ROUTE',
+                'layer.trails.label': 'Movement trails',
+                'layer.trails.short': 'TRAIL',
+                'layer.trails.summary': 'TRAILS',
+                'layer.datalinks.label': 'Datalinks',
+                'layer.datalinks.short': 'LINK',
+                'layer.datalinks.summary': 'LINKS',
+                'layer.sensorRings.label': 'Sensor rings',
+                'layer.sensorRings.short': 'RING',
+                'layer.sensorRings.summary': 'RINGS',
+                'layer.tracks.label': 'Sensor tracks',
+                'layer.tracks.short': 'TRACK',
+                'layer.tracks.summary': 'TRACKS',
+                'layer.weapons.label': 'Weapons and effects',
+                'layer.weapons.short': 'WEPN',
+                'layer.weapons.summary': 'WEAPONS',
+                'layerGroup.environment.label': 'ENVIRONMENT',
+                'layerGroup.environment.role': 'terrain / areas',
+                'layerGroup.maneuver.label': 'MANEUVER',
+                'layerGroup.maneuver.role': 'routes / trails',
+                'layerGroup.sensors.label': 'SENSORS',
+                'layerGroup.sensors.role': 'tracks / rings / links',
+                'layerGroup.effects.label': 'EFFECTS',
+                'layerGroup.effects.role': 'weapons / fires',
+                'env.surface': 'SURFACE',
+                'env.candidate': 'CANDIDATE',
+                'env.structure': 'STRUCTURE',
+                'env.vegetation': 'VEGETATION',
+                'env.water': 'WATER',
+                'env.asphalt': 'ASPHALT',
+                'env.concrete': 'CONCRETE',
+                'env.softdirt': 'SOFTDIRT',
+                'env.hardpacked': 'HARDPACKED',
+                'env.height': 'H',
+                'env.surfaceCode': 'SURF',
+                'env.surfaceIndexCode': 'SURF-IDX',
+                'env.structureCode': 'STRUCT',
+                'env.vegetationCode': 'VEG',
+                'env.occlusionCode': 'OCC',
+                'mission.task_scramble': 'Scramble',
+                'mission.task_cap': 'CAP',
+                'mission.task_rtb': 'RTB',
+                'mission.task_recover_land': 'Recover Land',
+                'mission.idle': 'Idle',
+                'mission.takeoff': 'Takeoff',
+                'mission.cruise': 'Cruise',
+                'mission.rtb': 'RTB',
+                'mission.landing': 'Landing',
+            },
+            zh: {
+                'ui.tacticalView': '战术视图',
+                'ui.scaleEmpty': '比例尺 --',
+                'ui.session': '会话',
+                'ui.unloaded': '未加载',
+                'ui.ready': '就绪',
+                'ui.running': '运行中',
+                'ui.paused': '已暂停',
+                'ui.loading': '加载中',
+                'ui.profileSuffix': '配置',
+                'ui.mapWorkspace': '地图工作区',
+                'ui.setup': '设置',
+                'ui.data': '数据',
+                'ui.mapOnly': '仅地图',
+                'ui.exitMap': '退出地图',
+                'ui.reload': '重载',
+                'ui.stop': '停止',
+                'ui.view': '视图',
+                'ui.slow': '减速',
+                'ui.fast': '加速',
+                'ui.speed': '速率',
+                'ui.start': '开始',
+                'ui.pause': '暂停',
+                'ui.resume': '继续',
+                'ui.presentationMap': '地图',
+                'ui.presentation3d': '3D',
+                'ui.cameraChase': '跟随',
+                'ui.cameraFree': '自由',
+                'ui.waypointShort': '航点',
+                'ui.languageButton': 'EN',
+                'ui.sessionSetup': '会话设置',
+                'ui.close': '关闭',
+                'ui.profile': '配置',
+                'ui.scenario': '场景',
+                'ui.assetSet': '资产集',
+                'ui.loadProfile': '加载配置',
+                'ui.load': '加载',
+                'ui.loadAssetSet': '加载资产集',
+                'ui.tacticalData': '战术数据',
+                'ui.workspace': '工作区',
+                'ui.layers': '图层',
+                'ui.tacticalLayers': '战术图层',
+                'ui.telemetry': '遥测',
+                'ui.time': '时间',
+                'ui.unit': '单位',
+                'ui.altAsl': '海拔',
+                'ui.iasGs': '空速 / 地速',
+                'ui.heading': '航向',
+                'ui.pitch': '俯仰',
+                'ui.roll': '横滚',
+                'ui.mission': '任务',
+                'ui.c2Task': '指挥任务',
+                'ui.phase': '阶段',
+                'ui.command': '命令',
+                'ui.waypoint': '航路点',
+                'ui.sequence': '序列',
+                'ui.recentSwitches': '近期切换',
+                'ui.units': '单位',
+                'ui.controlsHelp': '[滚轮] 缩放地图 | [拖拽] 平移地图 | [WASD/QE] 3D 自由相机 | [鼠标拖拽] 3D 环视 | [空格] 暂停 / 继续',
+                'ui.noProfiles': '-- 无配置 --',
+                'ui.scenarioOnly': '仅场景（无配置）',
+                'ui.scenarioOnlyTitle': '当前会话直接从场景加载。',
+                'ui.noScenarios': '-- 无场景 --',
+                'ui.noAssetSets': '-- 无资产集 --',
+                'ui.noUnits': '无单位',
+                'ui.unitFallback': '单位',
+                'ui.layerSuffix': '图层',
+                'ui.grid': '网格',
+                'ui.zoom': '缩放',
+                'ui.meters': '米',
+                'ui.kilometers': '公里',
+                'workspace.cop.label': '态势图',
+                'workspace.cop.role': '共同态势',
+                'workspace.environment.label': '环境',
+                'workspace.environment.role': '环境 / 区域',
+                'workspace.tracks.label': '航迹',
+                'workspace.tracks.role': '传感器 / 链路',
+                'workspace.inspect3d.label': '3D 检查',
+                'workspace.inspect3d.role': '模型 / 资产',
+                'layer.environment.label': '环境叠加',
+                'layer.environment.short': '环境',
+                'layer.environment.summary': '环境',
+                'layer.route.label': '路线与航路点',
+                'layer.route.short': '路线',
+                'layer.route.summary': '路线',
+                'layer.trails.label': '移动轨迹',
+                'layer.trails.short': '轨迹',
+                'layer.trails.summary': '轨迹',
+                'layer.datalinks.label': '数据链',
+                'layer.datalinks.short': '链路',
+                'layer.datalinks.summary': '链路',
+                'layer.sensorRings.label': '传感器范围',
+                'layer.sensorRings.short': '范围',
+                'layer.sensorRings.summary': '范围',
+                'layer.tracks.label': '传感器航迹',
+                'layer.tracks.short': '航迹',
+                'layer.tracks.summary': '航迹',
+                'layer.weapons.label': '武器与效果',
+                'layer.weapons.short': '武器',
+                'layer.weapons.summary': '武器',
+                'layerGroup.environment.label': '环境',
+                'layerGroup.environment.role': '地形 / 区域',
+                'layerGroup.maneuver.label': '机动',
+                'layerGroup.maneuver.role': '路线 / 轨迹',
+                'layerGroup.sensors.label': '传感器',
+                'layerGroup.sensors.role': '航迹 / 范围 / 链路',
+                'layerGroup.effects.label': '效果',
+                'layerGroup.effects.role': '武器 / 火力',
+                'env.surface': '地表',
+                'env.candidate': '候选',
+                'env.structure': '建筑',
+                'env.vegetation': '植被',
+                'env.water': '水体',
+                'env.asphalt': '沥青',
+                'env.concrete': '混凝土',
+                'env.softdirt': '软土',
+                'env.hardpacked': '硬实地',
+                'env.height': '高',
+                'env.surfaceCode': '地表',
+                'env.surfaceIndexCode': '地表索引',
+                'env.structureCode': '建筑',
+                'env.vegetationCode': '植被',
+                'env.occlusionCode': '遮蔽',
+                'mission.task_scramble': '起飞警戒',
+                'mission.task_cap': '空中巡逻',
+                'mission.task_rtb': '返航',
+                'mission.task_recover_land': '回收着陆',
+                'mission.idle': '待机',
+                'mission.takeoff': '起飞',
+                'mission.cruise': '巡航',
+                'mission.rtb': '返航',
+                'mission.landing': '着陆',
+            },
+        });
+        const ENVIRONMENT_LABEL_ZH = Object.freeze({
+            'ao test terrain extent': '测试地形范围',
+            'blue base hardstand': '蓝方基地硬化地面',
+            'msr asphalt east west': '东西向沥青主补给路',
+            'village north south road': '村庄南北道路',
+            'dirt track to treeline': '通向林线土路',
+            'village center concrete yard': '村庄中心混凝土院',
+            'soft field west': '西侧软质田地',
+            'irrigation ditch water': '灌溉水渠',
+            'contact line degraded ground': '接触线退化地面',
+            'vegetation north tree belt': '北侧林带',
+            'vegetation west tree patch': '西侧树丛',
+            'vegetation south orchard': '南侧果园',
+        });
+        function i18n(key, fallback = '') {
+            const lang = I18N_TEXT[uiLanguage] || I18N_TEXT.en;
+            return String(lang[key] ?? I18N_TEXT.en[key] ?? fallback ?? key);
+        }
+
+        function updateStaticI18nText() {
+            for (const el of document.querySelectorAll('[data-i18n]')) {
+                el.innerText = i18n(el.dataset.i18n, el.innerText);
+            }
+            for (const el of document.querySelectorAll('[data-i18n-aria]')) {
+                el.setAttribute('aria-label', i18n(el.dataset.i18nAria, el.getAttribute('aria-label') || ''));
+            }
+            document.documentElement.lang = uiLanguage === 'zh' ? 'zh-CN' : 'en';
+        }
+
+        function localizedLayerText(layerKey, field) {
+            const spec = tacticalLayerSpec(layerKey);
+            const fallback = field === 'short'
+                ? spec.shortLabel
+                : field === 'summary'
+                    ? spec.summaryLabel
+                    : spec.label;
+            return i18n(`layer.${layerKey}.${field}`, fallback);
+        }
+
+        function localizedWorkspaceText(workspaceId, field) {
+            const workspace = tacticalWorkspaceDefinitions[workspaceId] || tacticalWorkspaceDefinitions.cop;
+            return i18n(`workspace.${workspaceId}.${field}`, workspace[field] || '');
+        }
+
+        function updateWorkspaceTabLabels() {
+            for (const workspaceId of Object.keys(tacticalWorkspaceDefinitions)) {
+                const tab = document.getElementById(`workspace-tab-${workspaceId}`);
+                if (tab) tab.innerText = localizedWorkspaceText(workspaceId, 'label');
+            }
+        }
+
+        function formatSpeedButton(value) {
+            return `${i18n('ui.speed')}: ${formatSpeed(value)}x`;
+        }
+
+        function localizePresentationMode(mode) {
+            return String(mode || '').toUpperCase() === '3D'
+                ? i18n('ui.presentation3d')
+                : i18n('ui.presentationMap');
+        }
+
+        function localizeCameraMode(mode) {
+            return String(mode || '').toUpperCase() === 'FREE'
+                ? i18n('ui.cameraFree')
+                : i18n('ui.cameraChase');
+        }
+
+        function formatTacticalScaleText(kmPer100px, gridStepM, zoomPct) {
+            if (uiLanguage === 'zh') {
+                return `100 px = ${kmPer100px.toFixed(1)}公里 | ${i18n('ui.grid')} ${(gridStepM / 1000.0).toFixed(1)}公里 | ${i18n('ui.zoom')} ${zoomPct}%`;
+            }
+            return `100 px = ${kmPer100px.toFixed(1)} km | ${i18n('ui.grid')} ${(gridStepM / 1000.0).toFixed(1)} km | ${i18n('ui.zoom')} ${zoomPct}%`;
+        }
+
+        function normalizeI18nToken(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const tail = raw.split(':').filter(Boolean).pop() || raw;
+            return tail
+                .replace(/^deterministic[-_]/i, '')
+                .replace(/^test[-_]/i, '')
+                .replace(/[-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        function localizeEnvironmentToken(value) {
+            const token = normalizeI18nToken(value);
+            if (!token) return '';
+            if (uiLanguage !== 'zh') return '';
+            if (ENVIRONMENT_LABEL_ZH[token]) return ENVIRONMENT_LABEL_ZH[token];
+            const villageHouse = token.match(/^village house (\d+)$/);
+            if (villageHouse) return `村屋 ${villageHouse[1]}`;
+            if (token === 'structure') return i18n('env.structure');
+            if (token === 'vegetation') return i18n('env.vegetation');
+            if (token === 'surface') return i18n('env.surface');
+            if (token === 'candidate') return i18n('env.candidate');
+            if (token === 'water') return i18n('env.water');
+            if (token === 'asphalt') return i18n('env.asphalt');
+            if (token === 'concrete') return i18n('env.concrete');
+            if (token === 'softdirt') return i18n('env.softdirt');
+            if (token === 'hardpacked') return i18n('env.hardpacked');
+            return '';
+        }
+
+        function localizeMissionLabel(value) {
+            const raw = String(value || '').trim();
+            if (!raw || raw === '--') return '--';
+            const key = raw
+                .replace(/^TASK_/, 'task_')
+                .replace(/([a-z])([A-Z])/g, '$1_$2')
+                .replace(/[\s/-]+/g, '_')
+                .toLowerCase();
+            return i18n(`mission.${key}`, raw.replace(/^TASK_/, '').replaceAll('_', ' '));
+        }
+
         const tacticalLayerCatalog = Object.freeze({
             environment: {
                 label: 'Environment overlays',
@@ -1034,6 +1453,13 @@
                         dash: [],
                     },
                 },
+                marker: {
+                    halo: 'rgba(3, 8, 12, 0.88)',
+                    textBackground: 'rgba(4, 10, 14, 0.82)',
+                    sourceText: '#92dcff',
+                    leader: 'rgba(154, 205, 214, 0.58)',
+                    anchorFill: '#071116',
+                },
             },
         });
         const tacticalLayers = Object.fromEntries(Object.entries(tacticalLayerCatalog).map(
@@ -1167,6 +1593,9 @@
         const rightDockPanel = document.getElementById('right-dock');
         const controlsHelpPanel = document.getElementById('controls-help');
         const uiControlsPanel = document.getElementById('ui-controls');
+        const mapOnlyButton = document.getElementById('btn-map-only');
+        const mapOnlyExitButton = document.getElementById('btn-map-only-exit');
+        const languageButton = document.getElementById('btn-language');
 
         function applyResponsiveDockDefaults() {
             if (dockUserTouched) return;
@@ -1187,7 +1616,7 @@
             const rightDockBox = measure(rightDockPanel, 324, 0);
             const controlsHelpBox = measure(controlsHelpPanel, 340, 0);
             const uiControlsBox = measure(uiControlsPanel, 220, 0);
-            const topbarHeight = vizMenubar?.offsetHeight || 50;
+            const topbarHeight = mapOnlyMode ? 0 : (vizMenubar?.offsetHeight || 50);
             return {
                 viewportWidth: window.innerWidth,
                 viewportHeight: window.innerHeight,
@@ -1213,6 +1642,45 @@
         function applyAutoLayout(mode, measurements) {
             const rootStyle = document.documentElement.style;
             const gutter = measurements.gutter;
+            if (mapOnlyMode) {
+                const topOffset = 0;
+                const inset = 16;
+                rootStyle.setProperty('--viz-top-offset', `${topOffset}px`);
+                rootStyle.setProperty('--left-dock-width', `${measurements.leftDockWidth || 348}px`);
+                rootStyle.setProperty('--right-dock-width', `${measurements.rightDockWidth || 324}px`);
+                rootStyle.setProperty('--map-left-inset', `${inset}px`);
+                rootStyle.setProperty('--map-right-inset', `${inset}px`);
+                rootStyle.setProperty('--map-bottom-inset', `${inset}px`);
+                rootStyle.setProperty('--controls-help-bottom', `${inset}px`);
+                document.documentElement.dataset.layoutMode = 'map-only';
+                document.documentElement.dataset.leftDock = 'closed';
+                document.documentElement.dataset.rightDock = 'closed';
+
+                const leftToggle = document.getElementById('btn-toggle-left');
+                const rightToggle = document.getElementById('btn-toggle-right');
+                for (const toggle of [leftToggle, rightToggle]) {
+                    toggle?.classList.remove('active');
+                    toggle?.setAttribute('aria-pressed', 'false');
+                }
+                if (leftDockPanel) {
+                    leftDockPanel.setAttribute('aria-hidden', 'true');
+                    leftDockPanel.inert = true;
+                }
+                if (rightDockPanel) {
+                    rightDockPanel.setAttribute('aria-hidden', 'true');
+                    rightDockPanel.inert = true;
+                }
+
+                layoutState.mode = 'map-only';
+                layoutState.measurements = {
+                    ...measurements,
+                    leftInset: inset,
+                    rightInset: inset,
+                    bottomInset: inset,
+                    topOffset,
+                };
+                return;
+            }
             const topOffset = measurements.topOffset;
             const overlayDockMode = mode === 'narrow';
             const leftDockWidth = Math.max(300, Math.min(380, measurements.leftDockWidth || 348));
@@ -1264,6 +1732,9 @@
         }
 
         function computeTacticalPaddingFromLayout() {
+            if (mapOnlyMode) {
+                return { left: 16, right: 16, top: 44, bottom: 16 };
+            }
             const measurements = layoutState.measurements || {};
             const gutter = measurements.gutter || 20;
             return {
@@ -1298,22 +1769,97 @@
 
         window.toggleVizDock = function (side) {
             if (!Object.prototype.hasOwnProperty.call(dockState, side)) return;
+            if (mapOnlyMode) window.toggleMapOnlyMode(false);
             dockUserTouched = true;
             dockState[side] = !dockState[side];
             refreshAutoLayout({ redraw: true });
         };
 
+        function updateMapOnlyControls() {
+            document.documentElement.dataset.mapOnly = mapOnlyMode ? 'true' : 'false';
+            if (mapOnlyButton) {
+                mapOnlyButton.innerText = mapOnlyMode ? i18n('ui.exitMap') : i18n('ui.mapOnly');
+                mapOnlyButton.classList.toggle('active', mapOnlyMode);
+                mapOnlyButton.setAttribute('aria-pressed', mapOnlyMode ? 'true' : 'false');
+            }
+            if (mapOnlyExitButton) {
+                mapOnlyExitButton.innerText = i18n('ui.exitMap');
+                mapOnlyExitButton.hidden = !mapOnlyMode;
+                mapOnlyExitButton.setAttribute('aria-hidden', mapOnlyMode ? 'false' : 'true');
+            }
+        }
+
+        function updateLanguageUi() {
+            updateStaticI18nText();
+            updateWorkspaceTabLabels();
+            if (languageButton) languageButton.innerText = i18n('ui.languageButton');
+            const btnLeft = document.getElementById('btn-toggle-left');
+            const btnRight = document.getElementById('btn-toggle-right');
+            const btnReload = document.getElementById('btn-reload');
+            const btnStop = document.getElementById('btn-stop');
+            const btnSpeedDown = document.getElementById('btn-speed-down');
+            const btnSpeedUp = document.getElementById('btn-speed-up');
+            if (btnLeft) btnLeft.innerText = i18n('ui.setup');
+            if (btnRight) btnRight.innerText = i18n('ui.data');
+            if (btnReload) btnReload.innerText = i18n('ui.reload');
+            if (btnStop) btnStop.innerText = i18n('ui.stop');
+            if (btnSpeedDown) btnSpeedDown.innerText = i18n('ui.slow');
+            if (btnSpeedUp) btnSpeedUp.innerText = i18n('ui.fast');
+            document.getElementById('btn-speed').innerText = formatSpeedButton(simSpeed);
+            updateSessionLabelText();
+            renderTacticalLayerControls();
+            updateTacticalLayerButtons();
+            updateTacticalWorkspaceUI();
+            updatePresentationModeUI();
+            syncRunControl();
+            renderProfileOptions(vizProfileList);
+            renderScenarioOptions(vizScenarioList);
+            renderAssetRegistryOptions(vizAssetRegistryList);
+            if (currentScenario && vizScenarioList.includes(currentScenario)) {
+                document.getElementById('scenario-select').value = currentScenario;
+            }
+            if (currentProfile) document.getElementById('profile-select').value = currentProfile;
+            if (currentAssetRegistry?.path) {
+                document.getElementById('asset-registry-select').value = currentAssetRegistry.path;
+            }
+            if (!lastTacticalState) {
+                const scaleEl = document.getElementById('tactical-scale');
+                if (scaleEl) scaleEl.innerText = i18n('ui.scaleEmpty');
+            }
+            requestTacticalDraw();
+        }
+
+        window.toggleUiLanguage = function () {
+            uiLanguage = uiLanguage === 'zh' ? 'en' : 'zh';
+            updateLanguageUi();
+        };
+
+        window.toggleMapOnlyMode = function (force) {
+            const next = typeof force === 'boolean' ? force : !mapOnlyMode;
+            if (next === mapOnlyMode) return;
+            mapOnlyMode = next;
+            if (mapOnlyMode && presentationMode !== 'MAP') {
+                window.setTacticalWorkspace(lastMapTacticalWorkspace || 'cop', { skipCapture: true });
+                return;
+            }
+            updatePresentationModeUI();
+        };
+
         function updatePresentationModeUI() {
             const mapMode = presentationMode === 'MAP';
             const cameraButton = document.getElementById('btn-cam');
+            if (!mapMode && mapOnlyMode) {
+                mapOnlyMode = false;
+            }
+            updateMapOnlyControls();
             vizShell?.classList.toggle('viz-shell--3d', !mapMode);
             tacticalPanel.classList.toggle('hidden', !mapMode);
             renderer.domElement.style.opacity = mapMode ? '0.16' : '1.0';
             renderer.domElement.style.pointerEvents = mapMode ? 'none' : 'auto';
             controls.enabled = !mapMode;
             controls.enablePan = (!mapMode && viewMode !== 'CHASE');
-            document.getElementById('btn-view').innerText = `VIEW: ${presentationMode}`;
-            cameraButton.innerText = `3D: ${viewMode}`;
+            document.getElementById('btn-view').innerText = `${i18n('ui.view')}: ${localizePresentationMode(presentationMode)}`;
+            cameraButton.innerText = `3D: ${localizeCameraMode(viewMode)}`;
             cameraButton.style.display = mapMode ? 'none' : '';
             refreshAutoLayout({ redraw: true });
         }
@@ -1351,10 +1897,10 @@
                 header.className = 'tactical-layer-group-header';
                 const title = document.createElement('span');
                 title.className = 'tactical-layer-group-title';
-                title.innerText = group.label;
+                title.innerText = i18n(`layerGroup.${group.id}.label`, group.label);
                 const role = document.createElement('span');
                 role.className = 'tactical-layer-group-role';
-                role.innerText = group.role;
+                role.innerText = i18n(`layerGroup.${group.id}.role`, group.role);
                 header.append(title, role);
 
                 const buttons = document.createElement('div');
@@ -1366,8 +1912,8 @@
                     button.type = 'button';
                     button.className = 'tactical-layer-button';
                     button.dataset.layerKey = key;
-                    button.innerText = spec.shortLabel;
-                    button.setAttribute('aria-label', `${spec.label} layer`);
+                    button.innerText = localizedLayerText(key, 'short');
+                    button.setAttribute('aria-label', `${localizedLayerText(key, 'label')} ${i18n('ui.layerSuffix')}`);
                     button.onclick = () => window.toggleTacticalLayer(key);
                     buttons.appendChild(button);
                 }
@@ -1439,15 +1985,15 @@
             const nameEl = document.getElementById('workspace-name');
             const roleEl = document.getElementById('workspace-role');
             const layerSummaryEl = document.getElementById('workspace-layer-summary');
-            if (nameEl) nameEl.innerText = workspace.label;
-            if (roleEl) roleEl.innerText = workspace.role;
+            if (nameEl) nameEl.innerText = localizedWorkspaceText(activeTacticalWorkspace, 'label');
+            if (roleEl) roleEl.innerText = localizedWorkspaceText(activeTacticalWorkspace, 'role');
             if (!layerSummaryEl) return;
 
             layerSummaryEl.innerHTML = '';
             for (const key of tacticalLayerKeys) {
                 const chip = document.createElement('span');
                 chip.className = 'workspace-chip' + (tacticalLayers[key] ? ' active' : '');
-                chip.innerText = tacticalLayerSpec(key).summaryLabel;
+                chip.innerText = localizedLayerText(key, 'summary');
                 layerSummaryEl.appendChild(chip);
             }
         }
@@ -1580,22 +2126,215 @@
                 || tacticalSymbology.environment.surfaces.default;
         }
 
-        function drawEnvironmentOverlayLabel(entry, point, style, scale, bounds) {
-            const label = String(entry?.label || '').trim();
-            if (!label) return;
+        function formatEnvironmentMeters(value) {
+            const meters = Number(value);
+            if (!Number.isFinite(meters)) return '';
+            if (uiLanguage === 'zh') {
+                if (Math.abs(meters) >= 1000) return `${(meters / 1000.0).toFixed(1)}公里`;
+                if (Math.abs(meters) >= 100) return `${Math.round(meters)}米`;
+                return `${meters.toFixed(1).replace(/\.0$/, '')}米`;
+            }
+            if (Math.abs(meters) >= 1000) return `${(meters / 1000.0).toFixed(1)}${i18n('ui.kilometers')}`;
+            if (Math.abs(meters) >= 100) return `${Math.round(meters)}${i18n('ui.meters')}`;
+            return `${meters.toFixed(1).replace(/\.0$/, '')}${i18n('ui.meters')}`;
+        }
+
+        function compactEnvironmentLabel(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const localized = localizeEnvironmentToken(raw);
+            if (localized) return localized.length > 14 ? `${localized.slice(0, 12)}...` : localized;
+            const tail = raw.split(':').filter(Boolean).pop() || raw;
+            const cleaned = tail
+                .replace(/^deterministic[-_]/i, '')
+                .replace(/^test[-_]/i, '')
+                .replace(/[-_]+/g, ' ')
+                .trim();
+            const text = (cleaned || raw).toUpperCase();
+            return text.length > 28 ? `${text.slice(0, 25)}...` : text;
+        }
+
+        function environmentOverlayTypeCode(entry) {
+            const kind = String(entry?.overlay_kind || '').toLowerCase();
+            const attrs = entry?.attributes || {};
+            if (kind === 'occlusion_candidate') {
+                const family = String(attrs.component_family || '').toLowerCase();
+                if (family === 'vegetation') return i18n('env.vegetationCode');
+                if (family === 'structure') return i18n('env.structureCode');
+                return i18n('env.occlusionCode');
+            }
+            const source = String(attrs.source || entry?.layer_source || '').toLowerCase();
+            if (source.includes('surface_zone_index')) return i18n('env.surfaceIndexCode');
+            return i18n('env.surfaceCode');
+        }
+
+        function environmentOverlayDetailText(entry, bounds) {
+            const kind = String(entry?.overlay_kind || '').toLowerCase();
+            const attrs = entry?.attributes || {};
+            if (kind === 'occlusion_candidate') {
+                const height = finiteNumber(attrs.height_m);
+                const family = compactEnvironmentLabel(attrs.component_family || 'candidate');
+                return height === null ? family : `${family} ${i18n('env.height')} ${formatEnvironmentMeters(height)}`;
+            }
+            const geometry = entry?.geometry || {};
+            const width = finiteNumber(geometry.width, bounds.maxX - bounds.minX);
+            const length = finiteNumber(geometry.length, bounds.maxY - bounds.minY);
+            const surface = compactEnvironmentLabel(attrs.surface || 'surface');
+            if (width === null || length === null) return surface;
+            return `${surface} ${formatEnvironmentMeters(width)} x ${formatEnvironmentMeters(length)}`;
+        }
+
+        function environmentOverlayLabelPriority(entry) {
+            const kind = String(entry?.overlay_kind || '').toLowerCase();
+            const attrs = entry?.attributes || {};
+            if (kind === 'occlusion_candidate') {
+                const family = String(attrs.component_family || '').toLowerCase();
+                if (family === 'vegetation') return 0.75;
+                if (family === 'structure') return 1.0;
+                return 0.9;
+            }
+            const surface = String(attrs.surface || '').toLowerCase();
+            if (surface === 'water') return 1.8;
+            if (surface === 'asphalt' || surface === 'concrete') return 1.15;
+            return 0.95;
+        }
+
+        function environmentOverlayLabelLod(entry, bounds, scale) {
             const widthPx = Math.max(0, (bounds.maxX - bounds.minX) * scale);
             const heightPx = Math.max(0, (bounds.maxY - bounds.minY) * scale);
-            if (Math.max(widthPx, heightPx) < 36) return;
-            const clipped = label.length > 28 ? `${label.slice(0, 25)}...` : label;
+            const maxDimPx = Math.max(widthPx, heightPx);
+            const minDimPx = Math.min(widthPx, heightPx);
+            const footprintPx = Math.sqrt(Math.max(0, widthPx * heightPx));
+            const zoom = Math.max(0.35, finiteNumber(tacticalInteraction.zoom, 1.0) || 1.0);
+            const zoomWeight = Math.sqrt(zoom);
+            const priority = environmentOverlayLabelPriority(entry);
+            const labelScore = Math.max(
+                footprintPx * 1.1,
+                maxDimPx * 0.42,
+                minDimPx * 3.8
+            ) * priority * zoomWeight;
+            const detailScore = (
+                Math.min(maxDimPx, 260.0) * 0.32
+                + minDimPx * 4.2
+                + footprintPx * 0.6
+            ) * priority * zoomWeight;
+
+            if (labelScore < 82.0) return { level: 'hidden', alpha: 0.0 };
+            const alpha = Math.max(0.35, Math.min(1.0, (labelScore - 82.0) / 28.0));
+            if (zoom >= 1.25 && detailScore >= 150.0) {
+                return { level: 'detail', alpha };
+            }
+            return { level: 'summary', alpha };
+        }
+
+        function environmentLabelBoxesOverlap(a, b) {
+            return !(
+                a.right < b.left
+                || a.left > b.right
+                || a.bottom < b.top
+                || a.top > b.bottom
+            );
+        }
+
+        function drawEnvironmentOverlayAnchor(center, style, bounds, scale) {
+            const widthPx = Math.max(0, (bounds.maxX - bounds.minX) * scale);
+            const heightPx = Math.max(0, (bounds.maxY - bounds.minY) * scale);
+            const radius = Math.max(3.5, Math.min(7.0, Math.max(widthPx, heightPx) * 0.16 + 3.0));
+            tacticalCtx.save();
+            tacticalCtx.lineWidth = 4;
+            tacticalCtx.strokeStyle = tacticalSymbology.environment.marker.halo;
+            tacticalCtx.beginPath();
+            tacticalCtx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            tacticalCtx.stroke();
+            tacticalCtx.fillStyle = tacticalSymbology.environment.marker.anchorFill;
+            tacticalCtx.fill();
+            tacticalCtx.lineWidth = 1.4;
+            tacticalCtx.strokeStyle = style.stroke;
+            tacticalCtx.beginPath();
+            tacticalCtx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            tacticalCtx.stroke();
+            tacticalCtx.beginPath();
+            tacticalCtx.moveTo(center.x - radius - 2, center.y);
+            tacticalCtx.lineTo(center.x + radius + 2, center.y);
+            tacticalCtx.moveTo(center.x, center.y - radius - 2);
+            tacticalCtx.lineTo(center.x, center.y + radius + 2);
+            tacticalCtx.stroke();
+            tacticalCtx.restore();
+        }
+
+        function drawEnvironmentOverlayCallout(entry, center, style, scale, bounds, labelLod, placedLabelBoxes = []) {
+            const lod = labelLod || environmentOverlayLabelLod(entry, bounds, scale);
+            if (!lod || lod.level === 'hidden') return;
+            const typeCode = environmentOverlayTypeCode(entry);
+            const label = compactEnvironmentLabel(entry?.label || entry?.attributes?.source_object_id || entry?.overlay_id);
+            const detail = environmentOverlayDetailText(entry, bounds);
+            if (!label && !detail) return;
+
+            const widthPx = Math.max(0, (bounds.maxX - bounds.minX) * scale);
+            const heightPx = Math.max(0, (bounds.maxY - bounds.minY) * scale);
+            const maxDimPx = Math.max(widthPx, heightPx);
+            const offsetX = Math.max(14, Math.min(42, maxDimPx * 0.35 + 12));
+            const offsetY = Math.max(12, Math.min(28, maxDimPx * 0.22 + 10));
+            const primary = [typeCode, label].filter(Boolean).join(' ');
+            const lines = lod.level === 'detail'
+                ? [primary, detail].filter(Boolean)
+                : [primary || detail].filter(Boolean);
+            if (lines.length === 0) return;
+
+            tacticalCtx.save();
+            tacticalCtx.globalAlpha *= Math.max(0.35, Math.min(1.0, Number(lod.alpha || 1.0)));
             tacticalCtx.font = '10px monospace';
-            const textWidth = tacticalCtx.measureText(clipped).width;
-            tacticalCtx.fillStyle = 'rgba(4, 10, 14, 0.72)';
-            tacticalCtx.fillRect(point.x - 4, point.y - 10, textWidth + 8, 14);
-            tacticalCtx.fillStyle = style.label;
-            tacticalCtx.fillText(clipped, point.x, point.y);
+            const textWidth = Math.max(...lines.map((line) => tacticalCtx.measureText(line).width));
+            const boxWidth = textWidth + 10;
+            const boxHeight = lines.length * 12 + 6;
+            const canvasWidth = tacticalCanvas.clientWidth || window.innerWidth;
+            const canvasHeight = tacticalCanvas.clientHeight || window.innerHeight;
+            let boxX = center.x + offsetX;
+            if (boxX + boxWidth > canvasWidth - 8) boxX = center.x - offsetX - boxWidth;
+            boxX = Math.max(8, Math.min(canvasWidth - boxWidth - 8, boxX));
+            let boxY = center.y - offsetY - boxHeight;
+            if (boxY < 8) boxY = center.y + offsetY;
+            boxY = Math.max(8, Math.min(canvasHeight - boxHeight - 8, boxY));
+            const leaderEndX = Math.max(4, Math.min(canvasWidth - 4, boxX));
+            const leaderEndY = boxY + boxHeight;
+
+            tacticalCtx.strokeStyle = tacticalSymbology.environment.marker.leader;
+            tacticalCtx.lineWidth = 1;
+            const labelBox = {
+                left: boxX - 5,
+                top: boxY - 4,
+                right: boxX + boxWidth + 5,
+                bottom: boxY + boxHeight + 4,
+            };
+            if (placedLabelBoxes.some((other) => environmentLabelBoxesOverlap(labelBox, other))) {
+                tacticalCtx.restore();
+                return;
+            }
+            placedLabelBoxes.push(labelBox);
+
+            tacticalCtx.setLineDash([3, 4]);
+            tacticalCtx.beginPath();
+            tacticalCtx.moveTo(center.x, center.y);
+            tacticalCtx.lineTo(leaderEndX, leaderEndY);
+            tacticalCtx.stroke();
+            tacticalCtx.setLineDash([]);
+
+            tacticalCtx.fillStyle = tacticalSymbology.environment.marker.textBackground;
+            tacticalCtx.strokeStyle = style.stroke;
+            tacticalCtx.lineWidth = 1;
+            tacticalCtx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            tacticalCtx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            tacticalCtx.fillStyle = tacticalSymbology.environment.marker.sourceText;
+            tacticalCtx.fillText(lines[0], boxX + 5, boxY + 12);
+            if (lines.length > 1) {
+                tacticalCtx.fillStyle = style.label;
+                tacticalCtx.fillText(lines[1], boxX + 5, boxY + 24);
+            }
+            tacticalCtx.restore();
         }
 
         function drawEnvironmentOverlays(entries, toCanvas, scale) {
+            const placedLabelBoxes = [];
             for (const entry of entries) {
                 const geometry = entry?.geometry || {};
                 const geometryType = String(geometry.geometry_type || '').toLowerCase();
@@ -1627,7 +2366,9 @@
                 }
                 tacticalCtx.setLineDash([]);
                 const center = toCanvas((bounds.minX + bounds.maxX) * 0.5, (bounds.minY + bounds.maxY) * 0.5);
-                drawEnvironmentOverlayLabel(entry, center, style, scale, bounds);
+                drawEnvironmentOverlayAnchor(center, style, bounds, scale);
+                const labelLod = environmentOverlayLabelLod(entry, bounds, scale);
+                drawEnvironmentOverlayCallout(entry, center, style, scale, bounds, labelLod, placedLabelBoxes);
                 tacticalCtx.restore();
             }
         }
@@ -1865,7 +2606,7 @@
             tacticalCtx.clearRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
             tacticalCtx.fillStyle = tacticalSymbology.canvas.background;
             tacticalCtx.fillRect(0, 0, tacticalCanvas.clientWidth || window.innerWidth, tacticalCanvas.clientHeight || window.innerHeight);
-            document.getElementById('tactical-scale').innerText = 'SCALE --';
+            document.getElementById('tactical-scale').innerText = i18n('ui.scaleEmpty');
         }
 
         function makeHorizontalRing(radius, color, y = 0.0) {
@@ -2183,20 +2924,20 @@
             const btnStart = document.getElementById('btn-start');
             if (!sessionControlState.loaded) {
                 btnStart.disabled = true;
-                btnStart.innerText = 'START';
+                btnStart.innerText = i18n('ui.start');
                 return;
             }
             if (!sessionControlState.ready) {
                 btnStart.disabled = true;
-                btnStart.innerText = 'LOADING';
+                btnStart.innerText = i18n('ui.loading');
                 return;
             }
             btnStart.disabled = false;
             if (sessionControlState.paused) {
-                btnStart.innerText = 'RESUME';
+                btnStart.innerText = i18n('ui.resume');
                 return;
             }
-            btnStart.innerText = sessionControlState.running ? 'PAUSE' : 'START';
+            btnStart.innerText = sessionControlState.running ? i18n('ui.pause') : i18n('ui.start');
         }
 
         window.startSim = function () {
@@ -2241,7 +2982,7 @@
             if (items.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.innerText = '-- NO PROFILES --';
+                option.innerText = i18n('ui.noProfiles');
                 select.appendChild(option);
                 return;
             }
@@ -2249,8 +2990,8 @@
             if (scenarioOnlySession) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.innerText = 'Scenario only (no profile active)';
-                option.title = 'The current session was loaded directly from a scenario.';
+                option.innerText = i18n('ui.scenarioOnly');
+                option.title = i18n('ui.scenarioOnlyTitle');
                 select.appendChild(option);
             }
             items.forEach((profile) => {
@@ -2277,7 +3018,7 @@
             if (items.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.innerText = '-- NO SCENARIOS --';
+                option.innerText = i18n('ui.noScenarios');
                 select.appendChild(option);
                 return;
             }
@@ -2299,7 +3040,7 @@
             if (items.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.innerText = '-- NO ASSET SETS --';
+                option.innerText = i18n('ui.noAssetSets');
                 select.appendChild(option);
                 return;
             }
@@ -2325,7 +3066,6 @@
             const btnLoad = document.getElementById('btn-load');
             const btnLoadProfile = document.getElementById('btn-load-profile');
             const btnLoadAssetRegistry = document.getElementById('btn-load-asset-registry');
-            const label = document.getElementById('viz-session-label');
 
             const session = appStatus?.session || null;
             const loaded = !!appStatus?.loaded && !!session;
@@ -2368,7 +3108,7 @@
 
             if (!loaded) {
                 resetVizScene();
-                label.innerText = currentProfile ? `UNLOADED | PROFILE ${currentProfile}` : 'UNLOADED';
+                updateSessionLabelText();
                 btnReload.disabled = true;
                 btnStop.disabled = true;
                 btnLoad.disabled = vizScenarioList.length === 0;
@@ -2379,9 +3119,7 @@
                 return;
             }
 
-            const state = session.paused ? 'PAUSED' : session.running ? 'RUNNING' : session.ready ? 'READY' : 'LOADING';
-            const profileSuffix = currentProfile ? ` | PROFILE ${currentProfile}` : '';
-            label.innerText = `${state} | ${currentScenario || '--'}${profileSuffix}`;
+            updateSessionLabelText();
             btnLoad.disabled = false;
             btnReload.disabled = false;
             btnStop.disabled = false;
@@ -2434,6 +3172,7 @@
             const nextCameraMode = String(ui.camera_mode || '').toUpperCase();
             const nextWorkspace = String(ui.tactical_workspace || '').trim();
             const hasProfileLayerDefaults = ui.tactical_layers && typeof ui.tactical_layers === 'object';
+            const nextMapOnly = typeof ui.map_only === 'boolean' ? ui.map_only : null;
             const nextZoom = Number(ui.tactical_zoom);
 
             if (nextPresentationMode === 'MAP' || nextPresentationMode === '3D') {
@@ -2464,6 +3203,7 @@
 
             if (targetWorkspace) {
                 window.setTacticalWorkspace(targetWorkspace, { skipCapture: true, layers: profileLayers });
+                if (nextMapOnly !== null) window.toggleMapOnlyMode(nextMapOnly);
                 return;
             }
             if (profileLayers) {
@@ -2473,6 +3213,7 @@
             }
             updateTacticalWorkspaceUI();
             updatePresentationModeUI();
+            if (nextMapOnly !== null) window.toggleMapOnlyMode(nextMapOnly);
             requestTacticalDraw();
         }
 
@@ -2531,13 +3272,33 @@
         function setSpeed(value) {
             simSpeed = Number(value);
             socket.emit('set_speed', { value });
-            document.getElementById('btn-speed').innerText = `SPD: ${formatSpeed(value)}x`;
+            document.getElementById('btn-speed').innerText = formatSpeedButton(value);
         }
 
         function formatSpeed(value) {
             const speed = Number(value);
             if (!Number.isFinite(speed)) return '1';
             return speed >= 1 ? String(Math.round(speed)) : speed.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+        }
+
+        function updateSessionLabelText() {
+            const label = document.getElementById('viz-session-label');
+            if (!label) return;
+            if (!sessionControlState.loaded) {
+                label.innerText = currentProfile
+                    ? `${i18n('ui.unloaded')} | ${i18n('ui.profileSuffix')} ${currentProfile}`
+                    : i18n('ui.unloaded');
+                return;
+            }
+            const stateKey = sessionControlState.paused
+                ? 'ui.paused'
+                : sessionControlState.running
+                    ? 'ui.running'
+                    : sessionControlState.ready
+                        ? 'ui.ready'
+                        : 'ui.loading';
+            const profileSuffix = currentProfile ? ` | ${i18n('ui.profileSuffix')} ${currentProfile}` : '';
+            label.innerText = `${i18n(stateKey)} | ${currentScenario || '--'}${profileSuffix}`;
         }
 
         function drawTacticalView(state) {
@@ -2564,7 +3325,7 @@
             if (plottedUnits.length === 0 && navMarkers.length === 0 && environmentEntries.length === 0) {
                 tacticalCtx.fillStyle = tacticalSymbology.canvas.emptyText;
                 tacticalCtx.font = '12px monospace';
-                tacticalCtx.fillText('NO UNITS', 24, 40);
+                tacticalCtx.fillText(i18n('ui.noUnits'), 24, 40);
                 return;
             }
 
@@ -3057,7 +3818,7 @@
             };
             const kmPer100px = (100.0 / scale) / 1000.0;
             const zoomPct = Math.round(tacticalInteraction.zoom * 100);
-            document.getElementById('tactical-scale').innerText = `100 px = ${kmPer100px.toFixed(1)} km | grid ${(gridStepM / 1000.0).toFixed(1)} km | zoom ${zoomPct}%`;
+            document.getElementById('tactical-scale').innerText = formatTacticalScaleText(kmPer100px, gridStepM, zoomPct);
         }
 
         window.adjustSpeed = function (dir) {
@@ -3075,6 +3836,11 @@
         window.addEventListener('keydown', (e) => {
             const tagName = String(e.target?.tagName || '').toUpperCase();
             const k = e.key.toLowerCase();
+            if (e.key === 'Escape' && mapOnlyMode) {
+                e.preventDefault();
+                window.toggleMapOnlyMode(false);
+                return;
+            }
             if (keys.hasOwnProperty(k)) keys[k] = true;
             if (e.key === 'Shift') keys.Shift = true;
             if (e.code === 'Space' && !e.repeat && !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(tagName)) {
@@ -3501,10 +4267,10 @@
                 return;
             }
 
-            taskEl.innerText = status.c2_task_label || status.c2_task || '--';
-            phaseEl.innerText = status.phase_label || status.phase_name || '--';
+            taskEl.innerText = localizeMissionLabel(status.c2_task_label || status.c2_task || '--');
+            phaseEl.innerText = localizeMissionLabel(status.phase_label || status.phase_name || '--');
             const cmdCode = Number.isFinite(status.command_code) ? status.command_code : '--';
-            cmdEl.innerText = `${status.command_name || '--'} (${cmdCode})`;
+            cmdEl.innerText = `${localizeMissionLabel(status.command_name || '--')} (${cmdCode})`;
 
             if (Number(status.waypoint_total || 0) > 0) {
                 const activeWp = Number(status.active_waypoint || 0);
@@ -3519,12 +4285,11 @@
             seqEl.innerHTML = '';
             sequence.forEach((taskName, idx) => {
                 const chip = document.createElement('span');
-                const label = String(taskName || '').replace(/^TASK_/, '').replaceAll('_', ' ');
                 chip.className = 'task-chip';
                 if (idx < activeIdx) chip.classList.add('done');
                 else if (idx === activeIdx) chip.classList.add('active');
                 else chip.classList.add('pending');
-                chip.innerText = label;
+                chip.innerText = localizeMissionLabel(taskName);
                 seqEl.appendChild(chip);
             });
 
@@ -3541,10 +4306,10 @@
 
                 const text = document.createElement('span');
                 text.className = 'history-text';
-                const taskLabel = entry.c2_task_label || entry.c2_task || '--';
-                const phaseLabel = entry.phase_label || entry.phase_name || '--';
+                const taskLabel = localizeMissionLabel(entry.c2_task_label || entry.c2_task || '--');
+                const phaseLabel = localizeMissionLabel(entry.phase_label || entry.phase_name || '--');
                 const waypointText = entry.waypoint_text && entry.waypoint_text !== '--'
-                    ? ` | WP ${entry.waypoint_text}`
+                    ? ` | ${i18n('ui.waypointShort')} ${entry.waypoint_text}`
                     : '';
                 text.innerText = `${taskLabel} / ${phaseLabel}${waypointText}`;
 
@@ -3698,7 +4463,7 @@
             const value = Number(data?.value);
             if (!Number.isFinite(value) || value < 0.05) return;
             simSpeed = value;
-            document.getElementById('btn-speed').innerText = `SPD: ${formatSpeed(simSpeed)}x`;
+            document.getElementById('btn-speed').innerText = formatSpeedButton(simSpeed);
         });
 
         socket.on('viz_app_status', (status) => {
@@ -3716,6 +4481,7 @@
 
         renderTacticalLayerControls();
         window.setTacticalWorkspace('cop', { skipCapture: true });
+        updateLanguageUi();
 
         // --- Loop ---
         function animate() {

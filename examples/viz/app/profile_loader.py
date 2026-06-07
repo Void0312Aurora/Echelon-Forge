@@ -171,6 +171,10 @@ def _normalize_ui_defaults(raw_ui: dict | None) -> dict:
     if tactical_layers:
         out["tactical_layers"] = tactical_layers
 
+    map_only = _normalize_ui_bool(ui.get("map_only"))
+    if map_only is not None:
+        out["map_only"] = map_only
+
     try:
         tactical_zoom = float(ui.get("tactical_zoom"))
     except Exception:

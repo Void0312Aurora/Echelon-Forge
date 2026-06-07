@@ -22,6 +22,12 @@
   [tactical_map_interface_refactor/README.zh.md](./tactical_map_interface_refactor/README.zh.md)
 - 已归档的战术地图界面证据包：
   [archive/tactical_map_interface_refactor/README.zh.md](./archive/tactical_map_interface_refactor/README.zh.md)
+- 活跃的纯地图查看 follow-on：
+  [map_only_viewer_mode/README.zh.md](./map_only_viewer_mode/README.zh.md)
+- 活跃的环境 overlay 可视元素 follow-on：
+  [environment_overlay_visual_elements/README.zh.md](./environment_overlay_visual_elements/README.zh.md)
+- 活跃的双语显示 follow-on：
+  [bilingual_display/README.zh.md](./bilingual_display/README.zh.md)
 
 ## 当前继续推进重点
 
@@ -30,6 +36,12 @@
 - 清理 runtime 退出路径和重复会话调试噪音
 - 继续保持“可视化便利性”和“真实性/世界参数”分层
 - 若要加入更丰富环境图层、split-map 布局或 symbol registry 抽取，先开启新的任务簇或子项目
+- 纯地图查看和 profile/object-binding 工作从
+  [map_only_viewer_mode/README.zh.md](./map_only_viewer_mode/README.zh.md) 继续
+- generated environment overlay 的可读性增强从
+  [environment_overlay_visual_elements/README.zh.md](./environment_overlay_visual_elements/README.zh.md) 继续
+- 中英双语 UI 显示从
+  [bilingual_display/README.zh.md](./bilingual_display/README.zh.md) 继续
 - 除非本 README 明确提升，不要把 `archive/` 下其他文件当作 active 入口
 
 较早的大体量冻结/设计快照现已转入 [archive/README.zh.md](./archive/README.zh.md)。
