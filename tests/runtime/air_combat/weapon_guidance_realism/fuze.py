@@ -179,6 +179,55 @@ class FuzeRuntimeMixin:
             or int(effects.component_hit_count) > 0
         )
 
+    def test_proximity_fuze_reliability_failure_records_no_detonation(self) -> None:
+        sim = _make_baseline_kernel()
+        sim.set_time_step(0.02)
+
+        profile = ef_py.FuzeProfile()
+        profile.type = "radar_proximity"
+        profile.trigger_radius_m = 35.0
+        profile.delay_s = 0.0
+        profile.reliability = 0.0
+        profile.synthetic = False
+        profile.provenance = "test_no_detonation_record"
+
+        tuning = sim.get_missile_tuning()
+        tuning.fuze_profile = profile
+        tuning.has_fuze_profile = True
+        sim.set_missile_tuning(tuning)
+
+        blue_id, red_id = _spawn_geometry_pair(
+            sim,
+            red_x=13000.0,
+            red_y=9000.0,
+            red_heading=270.0,
+            red_vx=-260.0,
+            red_vy=0.0,
+        )
+        missile_id = int(sim.fire_missile(blue_id, red_id))
+        self.assertGreater(missile_id, 0)
+
+        result = _drive_missile_with_truth_track(
+            sim,
+            missile_id,
+            red_id,
+            max_steps=3600,
+        )
+        self.assertFalse(bool(result["missile_active"]))
+        self.assertTrue(sim.is_unit_active(red_id))
+
+        events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.effects_events), 1)
+        self.assertGreaterEqual(len(events.damage_reports), 1)
+        effects = events.effects_events[-1]
+        report = events.damage_reports[-1]
+        self.assertEqual(str(effects.trigger_type), "proximity_fuze")
+        self.assertEqual(str(effects.outcome_state), "fuze_no_detonation")
+        self.assertLess(float(effects.miss_distance_m), 35.0)
+        self.assertAlmostEqual(float(effects.confidence), 0.0, delta=1.0e-6)
+        self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+        self.assertFalse(bool(report.destroyed))
+
     def test_fuze_event_records_detonation_attitude_evidence(self) -> None:
         sim = _make_baseline_kernel()
         sim.set_time_step(0.02)
