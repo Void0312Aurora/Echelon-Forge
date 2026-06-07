@@ -1215,8 +1215,37 @@ class ComponentDamageRuntimeMixin:
         self.assertGreater(int(event.component_failure_count), 0)
         component_rows = list(event.component_mechanism_load_rows)
         self.assertEqual(len(component_rows), 1)
-        self.assertGreater(float(component_rows[0].mechanism_rod_cut_margin), 0.0)
-        self.assertGreater(float(component_rows[0].mechanism_penetration_margin), 0.0)
+        row = component_rows[0]
+        self.assertGreater(float(row.mechanism_rod_cut_margin), 0.0)
+        self.assertGreater(float(row.mechanism_penetration_margin), 0.0)
+        self.assertEqual(str(row.component_failure_mode_source), "component_failure_mode_weights")
+        self.assertFalse(bool(row.component_failure_mode_authority))
+        modes = {
+            str(name): float(severity)
+            for name, severity in zip(
+                row.component_failure_mode_names,
+                row.component_failure_mode_severities,
+            )
+        }
+        self.assertEqual(
+            set(modes),
+            {
+                "fuel_leak",
+                "hydraulic_pressure_loss",
+                "electrical_loss",
+                "data_loss",
+                "fire_source",
+            },
+        )
+        self.assertIn(str(row.component_failure_primary_mode), modes)
+        self.assertAlmostEqual(
+            float(row.component_failure_primary_mode_severity),
+            modes[str(row.component_failure_primary_mode)],
+            delta=1.0e-12,
+        )
+        for mode, severity in modes.items():
+            self.assertGreater(severity, 0.0, mode)
+            self.assertLessEqual(severity, 1.0, mode)
         self.assertGreater(overlay["fuel_leak"], 0.0)
         self.assertLess(overlay["hydraulic_pressure"], 1.0)
         self.assertLess(overlay["avionics"], 1.0)

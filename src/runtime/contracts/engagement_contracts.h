@@ -44,6 +44,12 @@ struct ComponentMechanismLoadRow {
     std::string component_failure_probability_evidence_component_name;
     std::string component_failure_probability_evidence_component_system;
     std::string component_failure_probability_evidence_component_redundancy_group_id;
+    std::string component_failure_primary_mode = "none";
+    double component_failure_primary_mode_severity = 0.0;
+    std::vector<std::string> component_failure_mode_names;
+    std::vector<double> component_failure_mode_severities;
+    std::string component_failure_mode_source = "none";
+    bool component_failure_mode_authority = false;
     double mechanism_fragment_energy_j = 0.0;
     double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;

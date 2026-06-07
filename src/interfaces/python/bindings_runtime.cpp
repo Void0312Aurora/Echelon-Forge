@@ -634,6 +634,24 @@ void bind_runtime(nb::module_& m) {
             "component_failure_probability_evidence_component_redundancy_group_id",
             &ComponentMechanismLoadRow::component_failure_probability_evidence_component_redundancy_group_id)
         .def_rw(
+            "component_failure_primary_mode",
+            &ComponentMechanismLoadRow::component_failure_primary_mode)
+        .def_rw(
+            "component_failure_primary_mode_severity",
+            &ComponentMechanismLoadRow::component_failure_primary_mode_severity)
+        .def_rw(
+            "component_failure_mode_names",
+            &ComponentMechanismLoadRow::component_failure_mode_names)
+        .def_rw(
+            "component_failure_mode_severities",
+            &ComponentMechanismLoadRow::component_failure_mode_severities)
+        .def_rw(
+            "component_failure_mode_source",
+            &ComponentMechanismLoadRow::component_failure_mode_source)
+        .def_rw(
+            "component_failure_mode_authority",
+            &ComponentMechanismLoadRow::component_failure_mode_authority)
+        .def_rw(
             "mechanism_fragment_energy_j",
             &ComponentMechanismLoadRow::mechanism_fragment_energy_j)
         .def_rw(

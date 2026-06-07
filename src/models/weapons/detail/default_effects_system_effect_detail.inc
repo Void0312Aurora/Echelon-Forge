@@ -171,6 +171,7 @@ void sample_default_effects_component_failure(
         component);
     const double failure_sample = rand_uniform01(scratch.component_rng_state);
     if (component_row) {
+        populate_component_failure_mode_row(*component_row, part_failure_modes);
         component_row->component_failure_probability = failure_probability;
         component_row->component_failure_probability_source =
             failure_probability_source;

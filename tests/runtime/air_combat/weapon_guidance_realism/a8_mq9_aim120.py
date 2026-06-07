@@ -3,13 +3,6 @@ from __future__ import annotations
 from .helpers import *
 
 
-_A8_MQ9_AIM120_INTEGRATION_FOLLOWUPS = (
-    "A8-W1 shot-effect record fields for staged fuze/warhead/part/consequence assertions",
-    "A8-W2 concrete damage-mode vocabulary for cut/leak/data-loss/power-loss assertions",
-    "A8-DEC-E consumer checks for sustained post-hit aerodynamic response",
-)
-
-
 def _spawn_f16_mq9_pair(
     sim: ef_py.SimulationKernel,
     *,
@@ -142,6 +135,51 @@ def _assert_mq9_event_is_non_authoritative(testcase: unittest.TestCase, event: o
 
 def _component_rows_by_name(event: object) -> dict[str, object]:
     return {str(row.component_name): row for row in event.component_mechanism_load_rows}
+
+
+def _failure_modes_by_name(row: object) -> dict[str, float]:
+    return {
+        str(name): float(severity)
+        for name, severity in zip(
+            row.component_failure_mode_names,
+            row.component_failure_mode_severities,
+        )
+    }
+
+
+def _assert_component_row_exposes_public_failure_modes(
+    testcase: unittest.TestCase,
+    row: object,
+    *,
+    expected_any: set[str],
+) -> dict[str, float]:
+    modes = _failure_modes_by_name(row)
+    testcase.assertEqual(
+        len(modes),
+        len(list(row.component_failure_mode_names)),
+        "mode names must stay one-to-one with severities",
+    )
+    testcase.assertGreater(len(modes), 0)
+    testcase.assertIn(str(row.component_failure_primary_mode), modes)
+    testcase.assertAlmostEqual(
+        float(row.component_failure_primary_mode_severity),
+        modes[str(row.component_failure_primary_mode)],
+        delta=1.0e-12,
+    )
+    testcase.assertGreater(
+        len(expected_any.intersection(modes)),
+        0,
+        f"expected at least one of {sorted(expected_any)} in {sorted(modes)}",
+    )
+    testcase.assertEqual(
+        str(row.component_failure_mode_source),
+        "synthetic_inferred_part_failure_modes",
+    )
+    testcase.assertFalse(bool(row.component_failure_mode_authority))
+    for mode, severity in modes.items():
+        testcase.assertGreater(severity, 0.0, mode)
+        testcase.assertLessEqual(severity, 1.0, mode)
+    return modes
 
 
 class A8Mq9Aim120ValidationRuntimeMixin:
@@ -278,7 +316,17 @@ class A8Mq9Aim120ValidationRuntimeMixin:
                 self.assertTrue(bool(effect.direct_hitbox_intersection))
                 self.assertEqual(str(effect.component_primary_name), case["component"])
                 self.assertEqual(str(effect.component_primary_system), "flight_control")
-                self.assertIn(case["component"], _component_rows_by_name(effect))
+                rows_by_name = _component_rows_by_name(effect)
+                self.assertIn(case["component"], rows_by_name)
+                _assert_component_row_exposes_public_failure_modes(
+                    self,
+                    rows_by_name[case["component"]],
+                    expected_any={
+                        "cut",
+                        "blast_deformation",
+                        "hydraulic_pressure_loss",
+                    },
+                )
                 self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
                 self.assertFalse(bool(report.destroyed))
                 _assert_mq9_event_is_non_authoritative(self, effect)
@@ -365,13 +413,22 @@ class A8Mq9Aim120ValidationRuntimeMixin:
         _before, _after, effect, _report = _profiled_mq9_aim120_hit((-4.4, 0.0, 0.0))
         _assert_mq9_event_is_non_authoritative(self, effect)
 
-    @unittest.skip(
-        "A8-W1/W2 integration follow-up: requires public shot-effect record "
-        "fields and concrete damage-mode vocabulary"
-    )
-    def test_a8_mq9_aim120_stage_record_contract_after_w1_w2_lands(self) -> None:
-        self.assertEqual(
-            _A8_MQ9_AIM120_INTEGRATION_FOLLOWUPS,
-            (),
-            "Remove this scaffold once W1/W2 expose authoritative test fields.",
+    def test_a8_mq9_aim120_public_failure_mode_rows_are_non_authoritative(self) -> None:
+        _before, _after, effect, report = _profiled_mq9_aim120_hit((-0.4, 8.0, 0.0))
+        self.assertEqual(str(effect.component_primary_name), "right_aileron_servo")
+        self.assertEqual(str(effect.component_primary_system), "flight_control")
+        self.assertFalse(bool(report.destroyed))
+        _assert_mq9_event_is_non_authoritative(self, effect)
+
+        rows_by_name = _component_rows_by_name(effect)
+        self.assertIn("right_aileron_servo", rows_by_name)
+        modes = _assert_component_row_exposes_public_failure_modes(
+            self,
+            rows_by_name["right_aileron_servo"],
+            expected_any={
+                "cut",
+                "blast_deformation",
+                "hydraulic_pressure_loss",
+            },
         )
+        self.assertNotIn("fuel_leak", modes)

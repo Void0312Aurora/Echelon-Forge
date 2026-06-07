@@ -1,7 +1,7 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-07` 第一轮实现检查点。A8 已有有边界工作面，并已整合当前会话
-只读结构发现；第一轮 worker 结果已作为有限运行时/测试切片验收。
+状态：`2026-06-07` 第二轮实现检查点。A8 已有有边界工作面，并已整合当前会话
+只读结构发现；前两轮 worker 结果已作为有限运行时/测试切片验收。
 
 ## 本次变化
 
@@ -21,6 +21,13 @@
     并通过已有飞机损伤量表现出来；公开的逐部件故障类型字段仍留给集成阶段。
   - `A8-W3 Validation Fixtures`：部分通过。它增加 MQ-9/AIM-120C 固定检查和非权威保护；
     后续飞行消费方检查仍留给 `A8-DEC-E`。
+- 已验收第二轮 worker：
+  - `A8-W4 Public Failure Mode Rows`：通过。它把具体模拟故障类型暴露到公开逐部件射击记录和
+    Python 绑定中，同时保持 `component_failure_mode_authority=false`。
+  - `A8-W5 Propulsion Fuel Mass Consumer Scout`：只读证据通过。它确认了动力/燃油/质量的最窄
+    消费路径，以及发动机调参可能绕过损伤缩放的风险。
+  - `A8-W6 Aero Control Consumer Scout`：只读证据通过。它确认了操纵/气动响应的最窄切口，
+    同时说明真正的力和力矩变化仍需 `A8-DEC-E` 实现。
 
 ## 2026-06-07 验收检查
 
@@ -41,14 +48,34 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 - 1v1 发射链测试：`11 passed`。
 - 被跳过的用例是有意保留项：它等待公开射击记录字段和公开具体损伤类型词表。
 
+## 2026-06-07 第二轮验收检查
+
+已运行命令：
+
+```bash
+git diff --check -- docs/task/air_combat/a8_damage_effect_chain src/runtime/contracts/engagement_contracts.h src/interfaces/python/bindings_runtime.cpp src/models/weapons/detail/default_effects_component_damage_detail.inc src/models/weapons/detail/default_effects_system_effect_detail.inc tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/component_damage.py
+cmake --build build-workshop -j 8
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
+```
+
+结果：
+
+- diff 空白检查：通过。
+- 编译：通过。
+- 武器/引信/损伤链守卫：`165 passed`。
+- 1v1 发射链测试：`11 passed`。
+- 交战记录合同形状测试：`4 passed`。
+
 ## 成熟度矩阵
 
 | 区域 | Accepted | Active | Held | Deferred |
 | --- | --- | --- | --- | --- |
 | 引信和起爆事件路径 | 近炸静默消失问题近期已修复，并有运行时测试保护。 | A8 必须把已记录事件作为链路第一段。 | 确定性引信真值未验收。 | 真实引信校准。 |
-| 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组和飞机状态字段。 | A8 必须决定哪些字段成为标准效果解释。 | 只有完整度/能力数字还不够。 | 大范围目标族数据校准。 |
-| 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷和受影响部件。 | A8 必须把估计转换成可审计损伤类型。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
-| 部位损伤到飞机行为 | 动力、燃油、传感器和粗略飞行限制已经消费部分损伤状态。 | A8 必须把具体损伤推入维护中的消费方。 | 气动/操纵后果仍太间接。 | 完整飞机专用飞控律校准。 |
+| 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组、飞机状态字段和公开逐部件故障类型行。 | A8 必须保持解释非权威，并绑定在射击记录上。 | 只有完整度/能力数字仍不够。 | 大范围目标族数据校准。 |
+| 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷，并公开模拟部件故障类型。 | A8 必须通过测试保持 synthetic 词表可审计。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
+| 部位损伤到飞机行为 | 动力、燃油、传感器和粗略飞行限制已经消费部分损伤状态；W5/W6 已确认下一步窄切口。 | A8 必须在 `A8-DEC-E` 中实现维护中的消费方。 | 气动/操纵后果在力和力矩上仍太间接。 | 完整飞机专用飞控律校准。 |
 | MQ-9 / AIM-120C 验证 | 测试夹具和配置存在。 | A8 应构建尾部、翼面/操纵、燃油/火灾、传感器/数据链固定样例。 | 一次 live smoke 结果不足以验收。 | 击杀概率或真实世界杀伤声明。 |
 
 ## 已整合的只读发现
@@ -126,8 +153,8 @@ MQ-9 / AIM-120C 验证结构：
 
 立即：
 
-- 增加公开行记录中的具体故障类型名称和严重度，但不能扩大成直接击杀规则。
-- `A8-DEC-E` 只对接已有维护中的消费方：动力、燃油/质量、传感器、火灾和气动/操纵行为。
+- 将 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参上限、燃油/质量泄漏行为，
+  以及一个翼面/操纵气动或控制响应。
 - 消费方改动后必须重跑 MQ-9/AIM-120C 固定样例；当前样例证明的是可审计损伤和非权威边界，
   不是最终飞行响应保真度。
 
@@ -146,13 +173,13 @@ Deferred：
 
 ## 下一步推荐顺序
 
-1. 增加公开行记录中的具体故障类型名称和严重度。
-2. 先接最窄的一组消费方：动力、燃油/质量和一个翼面/操纵气动效果。
+1. 接入最窄的动力/燃油/质量消费方切片。
+2. 接入一个翼面/操纵气动效果。
 3. 运行 MQ-9/AIM-120C 固定验证，再决定 accepted 或 held。
 
 ## 禁止结论
 
-- 这是第一轮已验收切片，不是整个 A8 完成。
+- 这些是已验收切片，不是整个 A8 完成。
 - A8 不证明 AIM-120C 真实杀伤力。
 - A8 不释放击杀概率或确定性引信权威。
 - A8 不用直接击杀规则替代飞行模型。

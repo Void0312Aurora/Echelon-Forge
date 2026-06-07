@@ -1,8 +1,8 @@
 # A8 Damage Effect Chain Current Status
 
-Status: `2026-06-07` first implementation checkpoint. A8 has a bounded work
+Status: `2026-06-07` second implementation checkpoint. A8 has a bounded work
 surface, current-session read-only structure findings are integrated, and the
-first worker wave has been accepted as a limited runtime/test slice.
+first two worker waves have been accepted as limited runtime/test slices.
 
 ## What Changed
 
@@ -29,6 +29,16 @@ first worker wave has been accepted as a limited runtime/test slice.
   - `A8-W3 Validation Fixtures`: partial pass. It adds fixed MQ-9/AIM-120C
     checks and non-authority guards, while leaving later flight-consumer checks
     for `A8-DEC-E`.
+- Accepted the second worker wave:
+  - `A8-W4 Public Failure Mode Rows`: pass. It exposes concrete simulated
+    failure modes on public component shot rows and Python bindings while
+    keeping `component_failure_mode_authority=false`.
+  - `A8-W5 Propulsion Fuel Mass Consumer Scout`: pass as read-only evidence. It
+    identifies the narrow propulsion/fuel/mass consumer path and the engine
+    tuning bypass risk.
+  - `A8-W6 Aero Control Consumer Scout`: pass as read-only evidence. It
+    identifies the narrow control/aero response path and confirms that actual
+    force/moment behavior still needs `A8-DEC-E` implementation.
 
 ## Acceptance Check 2026-06-07
 
@@ -50,14 +60,34 @@ Outcomes:
 - The skipped guard is intentional: it waits for public shot-effect record
   fields and public concrete damage-mode vocabulary.
 
+## Second Acceptance Check 2026-06-07
+
+Commands run:
+
+```bash
+git diff --check -- docs/task/air_combat/a8_damage_effect_chain src/runtime/contracts/engagement_contracts.h src/interfaces/python/bindings_runtime.cpp src/models/weapons/detail/default_effects_component_damage_detail.inc src/models/weapons/detail/default_effects_system_effect_detail.inc tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/component_damage.py
+cmake --build build-workshop -j 8
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
+```
+
+Outcomes:
+
+- Diff whitespace check: pass.
+- Build: pass.
+- Weapon guidance realism guards: `165 passed`.
+- 1v1 fire missile tests: `11 passed`.
+- Engagement contract shape tests: `4 passed`.
+
 ## Maturity Matrix
 
 | Area | Accepted | Active | Held | Deferred |
 | --- | --- | --- | --- | --- |
 | Fuze and detonation event path | Proximity-fuze disappearance was recently repaired and guarded by runtime tests. | A8 must use the recorded event as the first stage of the chain. | Deterministic fuze truth is not accepted. | Real fuze calibration. |
-| Structured parts and aircraft damage state | Named hitboxes, components, groups, and aircraft state fields exist. | A8 must decide which fields become the standard effect explanation. | Current integrity/capability numbers are not enough by themselves. | Broad target-family data calibration. |
-| Warhead action to part damage | Default effects code already estimates fragment/blast/rod-like loads and affected parts. | A8 must turn the estimate into auditable damage modes. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
-| Part damage to aircraft behavior | Propulsion, fuel, sensor, and broad flight limits consume some damage state. | A8 must push concrete damage through maintained consumers. | Aerodynamic/control consequences are still too indirect. | Full aircraft-specific flight-control law calibration. |
+| Structured parts and aircraft damage state | Named hitboxes, components, groups, aircraft state fields, and public component failure-mode rows exist. | A8 must keep the explanation non-authoritative and tied to shot rows. | Current integrity/capability numbers are still not enough by themselves. | Broad target-family data calibration. |
+| Warhead action to part damage | Default effects code estimates fragment/blast/rod-like loads and now exposes simulated part-failure modes. | A8 must keep the synthetic vocabulary auditable through tests. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
+| Part damage to aircraft behavior | Propulsion, fuel, sensor, and broad flight limits consume some damage state; W5/W6 identified the next narrow hooks. | A8 must implement maintained consumers in `A8-DEC-E`. | Aerodynamic/control consequences are still too indirect in forces and moments. | Full aircraft-specific flight-control law calibration. |
 | MQ-9 / AIM-120C validation | Test fixtures and configs exist. | A8 should make fixed rear, wing/control, fuel/fire, and sensor/data-link cases. | A live smoke result is not enough for acceptance. | Probability of kill or real-world lethality claims. |
 
 ## Read-Only Findings Integrated
@@ -151,10 +181,9 @@ Plain expected examples:
 
 Immediate:
 
-- Expose the concrete part-failure vocabulary in public shot/component rows
-  without widening it into a direct kill rule.
-- Keep `A8-DEC-E` focused on maintained consumers: propulsion, fuel/mass,
-  sensors, fire, and aerodynamic/control behavior.
+- Implement `A8-DEC-E` as maintained consumer work, not as a direct kill rule:
+  propulsion tuning cap, fuel/mass leak behavior, and one wing/control
+  aerodynamic or control response.
 - Re-run fixed MQ-9/AIM-120C cases after consumer integration changes, because
   the current fixtures prove auditable damage and non-authority, not final
   flight-response fidelity.
@@ -174,14 +203,14 @@ Deferred:
 
 ## Next Recommended Order
 
-1. Add the public row fields for concrete damage mode names and severities.
-2. Connect the first narrow set of consumers: propulsion, fuel/mass, and one
+1. Connect the first narrow propulsion/fuel/mass consumer slice.
+2. Connect one
    wing/control aerodynamic effect.
 3. Run MQ-9/AIM-120C fixed validations and decide accepted or held.
 
 ## Forbidden Conclusions
 
-- This is a first accepted slice, not full A8 completion.
+- These are accepted slices, not full A8 completion.
 - A8 does not prove real AIM-120C lethality.
 - A8 does not release probability of kill or deterministic fuze authority.
 - A8 does not replace the flight model with a direct kill rule.
