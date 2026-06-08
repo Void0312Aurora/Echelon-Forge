@@ -1,8 +1,9 @@
 # A8 Damage Effect Chain
 
 Status: `2026-06-08` active implementation. The shot record, part-failure
-vocabulary, public failure-mode rows, propulsion-consumer slice, and one
-wing/control aerodynamic-consumer slice are in place.
+vocabulary, public failure-mode rows, propulsion-consumer slice, one
+wing/control aerodynamic-consumer slice, and fixed fuel-leak/mass-response
+evidence are in place.
 
 Language:
 
@@ -54,7 +55,8 @@ simulation responds.
 | Warhead-to-part effect model | primary cut point | `default_effects_model.cpp` and detail files compute mechanism loads, affected components, and current failure probability. | This is the first implementation cut point, but the current values are estimates, not AIM-120C truth. |
 | Damage-to-aircraft state | active input | `AircraftDamageStateUpdate` maps parts into propulsion, fuel, sensors, fire, and broad flight limits. | Keep this as the downstream bridge; do not replace it with a direct kill rule. |
 | Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics now consumes structural, hydraulic, axis-control, and asymmetry damage as limited coefficient/authority changes. | The aero response is still synthetic and scalar; it is not aircraft-specific control-law calibration. |
-| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, a fixed MQ-9 right-aileron aero-response check, and a 300 s stabilized long-run response check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
+| Fuel and mass consumers | active evidence | A fixed center-fuel-cell hit now exposes fuel-leak and fire-source modes, then drains fuel and mass through the maintained runtime path. | This is leak/mass and fire-risk evidence, not a full fire-spread or crash lifecycle. |
+| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, fixed MQ-9 right-aileron short/long response checks, and a fixed center-fuel-cell leak/mass response check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
 
 ## Scope
 
@@ -91,8 +93,8 @@ Out of scope:
 | `P1 Structure Evidence` | Confirm the current hit, effect, part, and flight-consumer structure. | P0 docs exist. | Read-only findings identify code entry points, gaps, and safe write sets. | pass for planning |
 | `P2 Shot Effect Record` | Define the per-shot record that explains what happened and why. | P1 confirms fields and consumers. | Tests can assert fuze, detonation, part effect, and consequence stages. | pass |
 | `P3 Part Effect Vocabulary` | Represent physical damage types instead of one generic damage amount. | P2 record is stable. | Component damage records can name leaks, cuts, fire sources, data loss, and structure weakening. | pass |
-| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion and wing/control aero consumers pass |
-| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | partial pass |
+| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion, wing/control aero, and fuel-leak/mass evidence pass |
+| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | partial pass: includes fixed fuel-leak/mass case |
 | `P6 Acceptance` | Decide accepted or held and record residuals. | P5 evidence complete. | Parent README and status docs state the honest capability and remaining gaps. | planned |
 
 ## Task Clusters
@@ -106,6 +108,8 @@ Out of scope:
 - Latest implementation notes:
   [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)
   and [a8_w8_aero_consumer_20260608.md](a8_w8_aero_consumer_20260608.md)
+  plus the fifth-wave acceptance in
+  [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md).
 
 ## Outputs And Evidence
 
@@ -116,7 +120,7 @@ Expected outputs:
 - Updated propagation from component damage into existing propulsion, fuel/mass,
   sensor, fire, and flight/aerodynamic consumers.
 - Focused MQ-9 / AIM-120C regression tests for rear-engine, wing/control,
-  fuel/fire, and sensor/data-link cases.
+  fuel/leak/mass, fire-risk, and sensor/data-link cases.
 - Documentation that keeps estimated engineering behavior separate from real
   weapon lethality claims.
 
@@ -141,14 +145,16 @@ This subproject can be marked accepted only when:
 ## Residuals And Next Steps
 
 - Public shot rows, concrete part-failure vocabulary, fixed MQ-9/AIM-120C
-  checks, the tuned-engine propulsion consumer, and one wing/control
-  aerodynamic consumer are integrated.
+  checks, the tuned-engine propulsion consumer, one wing/control aerodynamic
+  consumer, and one center-fuel-cell leak/mass runtime check are integrated.
 - The next runtime step should broaden consumer coverage only through existing
-  maintained systems, with particular care around fuel/mass/fire and
-  aircraft-specific control-law calibration.
+  maintained systems, with particular care around broader fire behavior,
+  sensor/data-link consequences, and aircraft-specific control-law calibration.
 - Long-run right-aileron damage can drive the damaged MQ-9 to near-ground
   response while the clean baseline holds level flight, but ground-impact crash
-  propagation is still not implemented as a maintained outcome.
+  propagation is still not implemented as a maintained outcome. The current
+  ground-contact path needs a public lifecycle state or residue surface before
+  it can be accepted as more than immediate deletion/loss.
 - Full calibration of fragment patterns, blast loads, target vulnerability, and
   aircraft-specific failure thresholds remains deferred.
 

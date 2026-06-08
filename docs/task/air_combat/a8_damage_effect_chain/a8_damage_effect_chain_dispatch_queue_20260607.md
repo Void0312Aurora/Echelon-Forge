@@ -150,8 +150,8 @@ flight dynamics tuning runtime `3 passed`, 1v1 fire-missile tests `11 passed,
 
 ## Fourth Dispatch Wave 2026-06-08
 
-Status: dispatched to current-session subagents only. No new conversation
-threads are allowed.
+Status: reviewed and accepted on 2026-06-08. No new conversation threads were
+created.
 
 This wave keeps one implementation writer and two non-overlapping support
 workers. The implementation packet owns the code cut; scouts must not edit the
@@ -201,7 +201,7 @@ MQ-9 response checks `2 passed, 167 deselected`, weapon guidance realism guards
 `169 passed`, flight dynamics realism guards `4 passed`, flight dynamics tuning
 runtime `3 passed`, and 1v1 fire-missile tests `11 passed`.
 
-## Residuals
+## Fourth-Wave Residuals
 
 - Public failure-mode rows are now mergeable, but they remain synthetic and
   non-authoritative.
@@ -212,5 +212,64 @@ runtime `3 passed`, and 1v1 fire-missile tests `11 passed`.
 - Long-run right-aileron damage reaches the near-ground response under stable
   throttle, but ground impact/crash-state propagation is not yet a maintained
   outcome.
+- No consumer packet may add direct crash, direct disappearance, MQ-9 special
+  handling, probability-of-kill claims, or an independent can-fly verdict.
+
+## Fifth Dispatch Wave 2026-06-08
+
+Status: reviewed and accepted on 2026-06-08. No new conversation threads were
+created.
+
+This wave keeps one bounded test/implementation worker and one read-only
+lifecycle scout. The writer owns fuel/fire/mass downstream evidence only. The
+scout owns the next crash/ground-impact lifecycle design evidence and must not
+patch files.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W11 Fuel/Fire/Mass Consumer Evidence` | `A8-DEC-E/F` | Popper | inherited / high | Prefer tests under `tests/runtime/air_combat/weapon_guidance_realism/` and collector import only; production edits only if an existing maintained fuel/fire/mass path is proven unreachable and the blocker is described first. | Add the smallest deterministic MQ-9/AIM-120C-like profiled-hit evidence that fuel-system, leak, mass, fire-risk, or propulsion/fuel effects continue through maintained runtime paths after the immediate shot record. Prefer existing helpers and fixed local-hit cases over live-only acceptance. | No direct crash/disappearance rule, no ground-impact lifecycle implementation, no MQ-9 special kill rule, no real-world lethality or Pk claim, no broad fuel-system rewrite. | `cmake --build build-workshop --target ef_py -j2`; focused new/changed pytest selector; `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py` if collector or shared guards change. | Required worker packet with status, touched files, commands/outcomes, remaining paths, behavior risks, integration notes. |
+| `A8-W12 Ground-Impact Lifecycle Scout` | `A8-DEC-E/G` | McClintock | inherited / high | Read-only. | Identify the smallest maintained path for a damaged aircraft that reaches ground contact to become one of: still-observable landed airframe, crashed wreck, or debris/fragment residue. Inspect current ground-contact, health/loss-state, engagement report, runtime facade, and entity lifecycle surfaces. Return exact file/line evidence and a recommended follow-up writer packet. | No code edits, no docs edits, no direct touch-kill proposal, no independent can-fly verdict, no one-size-fits-all deletion rule, no real-world lethality claim. | File/line evidence; proposed exact tests and acceptance gates for the next implementation packet. | Required worker packet with touched files `none`, commands/outcomes, remaining paths, behavior risks, integration notes. |
+
+Fifth-wave integration rules:
+
+- `A8-W11` is the only writer in this wave.
+- `A8-W12` is read-only and must not patch files.
+- The main thread owns final review, verification, and status synchronization.
+- If W11 finds fuel/fire/mass effects already covered by existing tests, it
+  should return the evidence and avoid adding duplicate tests.
+- If W12 finds that crash/ground-impact lifecycle requires a new public object
+  or event contract, it must return `partial` or `blocked` with the smallest
+  replacement path rather than inventing a direct deletion rule.
+
+## Fifth Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W11 Fuel/Fire/Mass Consumer Evidence` | pass | Added a fixed center-fuel-cell MQ-9/AIM-120C-like profiled-hit check. The immediate shot row exposes `fuel_leak` and `fire_source`, the damage report remains non-authoritative and does not claim destruction, and later runtime steps drain fuel and mass through maintained systems. |
+| `A8-W12 Ground-Impact Lifecycle Scout` | partial | Accepted as read-only evidence only. The scout found ground-contact detection and existing loss/destruct paths, but no public landed-airframe, crashed-wreck, or debris/residue lifecycle surface. This does not unlock direct touch-kill or direct disappearance behavior. |
+| `A8-DEC-E Consumer Integration` | partial | Propulsion tuning, one wing/control aero response, and one fixed fuel-leak/mass runtime response are landed. Broader fire behavior, sensor/data-link consequences, aircraft-specific control laws, and ground-impact lifecycle remain held. |
+| `A8-DEC-F MQ-9 / AIM-120C Validation` | partial pass | Fixed MQ-9/AIM-120C validation now covers non-authoritative shot rows, right-aileron short/long response, and center-fuel-cell leak/mass response. It still does not prove real-world lethality or final crash behavior. |
+
+Accepted validation:
+
+```bash
+git diff --check -- docs/task/air_combat/a8_damage_effect_chain/a8_damage_effect_chain_dispatch_queue_20260607.md tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'center_fuel_hit_continues_into_leak_and_mass_runtime_path'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes: diff whitespace check pass, focused Python lint pass, fixed
+center-fuel-cell leak/mass runtime check `1 passed, 169 deselected`, and weapon
+guidance realism guards `170 passed`.
+
+Current residuals after fifth-wave acceptance:
+
+- The fuel case proves leakage, mass change, and fire-source marking through
+  maintained runtime paths. It does not yet prove broader fire spread, fuel-feed
+  interruption, or crash behavior.
+- The ground-impact path needs a public lifecycle or residue contract before it
+  can be accepted. The next writer packet should test safe runway contact,
+  damaged-aircraft crash/wreck publication, and low-speed non-crash contact.
 - No consumer packet may add direct crash, direct disappearance, MQ-9 special
   handling, probability-of-kill claims, or an independent can-fly verdict.

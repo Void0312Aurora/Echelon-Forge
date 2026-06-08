@@ -122,6 +122,76 @@ def _profiled_mq9_aim120_hit(
     )
 
 
+def _mq9_fuel_mass_state_after_optional_center_fuel_hit(
+    *,
+    damaged: bool,
+    steps: int = 60,
+) -> dict[str, object]:
+    sim = _kernel_with_unit_overrides([])
+    sim.set_time_step(1.0 / 60.0)
+    attacker_id, target_id = _spawn_attacker_and_named_target(sim, "MQ-9_Reaper")
+
+    pilot = ef_py.PilotAction()
+    pilot.active = True
+    pilot.throttle = 0.65
+    sim.set_pilot_action(target_id, pilot)
+    for _ in range(5):
+        sim.step()
+
+    state: dict[str, object] = {
+        "before_overlay": _aircraft_damage_overlay(sim, target_id),
+        "before_fuel": [float(value) for value in sim.get_unit_fuel(target_id)],
+        "before_mass": [float(value) for value in sim.debug_get_mass_state(target_id)],
+        "before_debug": sim.get_flight_dynamics_debug_view(target_id),
+        "effect": None,
+        "report": None,
+    }
+
+    if damaged:
+        ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+            attacker_id,
+            target_id,
+            -0.4,
+            0.0,
+            0.0,
+            _make_warhead_profile("blast_fragmentation", damage=90.0, radius=35.0),
+            900.0,
+            -250.0,
+            0.0,
+        )
+        if not ok:
+            raise AssertionError("profiled MQ-9/AIM-120C center fuel hit failed")
+        events = sim.export_recent_engagement_events()
+        if len(events.effects_events) != 1:
+            raise AssertionError("expected one MQ-9/AIM-120C fuel effects event")
+        if len(events.damage_reports) != 1:
+            raise AssertionError("expected one MQ-9/AIM-120C fuel damage report")
+        state["effect"] = events.effects_events[0]
+        state["report"] = events.damage_reports[0]
+
+    state.update(
+        {
+            "hit_overlay": _aircraft_damage_overlay(sim, target_id),
+            "hit_fuel": [float(value) for value in sim.get_unit_fuel(target_id)],
+            "hit_mass": [float(value) for value in sim.debug_get_mass_state(target_id)],
+            "hit_debug": sim.get_flight_dynamics_debug_view(target_id),
+        }
+    )
+
+    for _ in range(int(steps)):
+        sim.step()
+
+    state.update(
+        {
+            "after_overlay": _aircraft_damage_overlay(sim, target_id),
+            "after_fuel": [float(value) for value in sim.get_unit_fuel(target_id)],
+            "after_mass": [float(value) for value in sim.debug_get_mass_state(target_id)],
+            "after_debug": sim.get_flight_dynamics_debug_view(target_id),
+        }
+    )
+    return state
+
+
 def _assert_mq9_event_is_non_authoritative(testcase: unittest.TestCase, event: object) -> None:
     testcase.assertTrue(bool(event.vulnerability_profile_present))
     testcase.assertTrue(bool(event.vulnerability_profile_synthetic))
@@ -401,6 +471,60 @@ class A8Mq9Aim120ValidationRuntimeMixin:
 
                 for field in case["drops"]:
                     self.assertLess(after[field], before[field], field)
+
+    def test_a8_mq9_aim120_center_fuel_hit_continues_into_leak_and_mass_runtime_path(
+        self,
+    ) -> None:
+        baseline = _mq9_fuel_mass_state_after_optional_center_fuel_hit(damaged=False)
+        damaged = _mq9_fuel_mass_state_after_optional_center_fuel_hit(damaged=True)
+
+        effect = damaged["effect"]
+        report = damaged["report"]
+        self.assertIsNotNone(effect)
+        self.assertIsNotNone(report)
+        assert effect is not None
+        assert report is not None
+
+        self.assertTrue(bool(effect.direct_hitbox_intersection))
+        self.assertEqual(str(effect.component_primary_name), "center_fuel_cell")
+        self.assertEqual(str(effect.component_primary_system), "fuel")
+        self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+        self.assertFalse(bool(report.destroyed))
+        self.assertFalse(bool(report.forced_landing))
+        self.assertEqual(str(report.loss_state_to), "combat_capable")
+        _assert_mq9_event_is_non_authoritative(self, effect)
+
+        rows_by_name = _component_rows_by_name(effect)
+        self.assertIn("center_fuel_cell", rows_by_name)
+        modes = _assert_component_row_exposes_public_failure_modes(
+            self,
+            rows_by_name["center_fuel_cell"],
+            expected_any={"puncture", "fuel_leak", "fire_source"},
+        )
+        self.assertIn("fuel_leak", modes)
+        self.assertIn("fire_source", modes)
+
+        hit_overlay = damaged["hit_overlay"]
+        before_overlay = damaged["before_overlay"]
+        self.assertLess(hit_overlay["fuel"], before_overlay["fuel"])
+        self.assertGreater(hit_overlay["fuel_leak"], before_overlay["fuel_leak"])
+        self.assertGreater(hit_overlay["fire"], before_overlay["fire"])
+        self.assertGreater(hit_overlay["flammable_fluid"], before_overlay["flammable_fluid"])
+
+        # The shot record names the damage path; maintained runtime systems drain mass later.
+        self.assertAlmostEqual(damaged["hit_fuel"][0], damaged["before_fuel"][0], delta=1.0e-6)
+        self.assertAlmostEqual(damaged["hit_mass"][1], damaged["before_mass"][1], delta=1.0e-6)
+        self.assertAlmostEqual(float(damaged["hit_debug"].fuel_leak_rate_kg_s), 0.0, delta=1.0e-9)
+
+        baseline_fuel_loss = baseline["before_fuel"][0] - baseline["after_fuel"][0]
+        damaged_fuel_loss = damaged["before_fuel"][0] - damaged["after_fuel"][0]
+        self.assertGreater(damaged_fuel_loss, baseline_fuel_loss + 2.0)
+        self.assertGreater(float(damaged["after_debug"].fuel_leak_rate_kg_s), 1.0)
+        self.assertAlmostEqual(float(baseline["after_debug"].fuel_leak_rate_kg_s), 0.0, delta=1.0e-9)
+        self.assertLess(damaged["after_fuel"][0], baseline["after_fuel"][0] - 2.0)
+        self.assertLess(damaged["after_mass"][3], baseline["after_mass"][3] - 2.0)
+        self.assertAlmostEqual(damaged["after_mass"][1], damaged["after_fuel"][0], delta=1.0e-6)
+        self.assertAlmostEqual(damaged["after_mass"][3], damaged["after_mass"][5], delta=1.0e-6)
 
     def test_a8_mq9_aim120_explicit_non_authority_guard_for_fixture_and_events(
         self,
