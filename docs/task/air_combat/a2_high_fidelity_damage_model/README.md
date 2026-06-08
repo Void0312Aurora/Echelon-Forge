@@ -12,5 +12,10 @@ aircraft damage/effects runtime record. It does not release stock authority,
 Pk authority, deterministic fuze authority, or broader weapon-outcome
 authority.
 
+A new A2 child idea seed is parked at
+[damage_consequence_reward_surface/README.md](damage_consequence_reward_surface/README.md).
+It only records the direction of rewarding damage consequences instead of a
+single kill flag; it does not reopen the sealed A2 package or create A9.
+
 Reopen this line only through an explicit authority-promotion or new research
 request. Default air-combat work continues from [../README.md](../README.md).

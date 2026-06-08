@@ -2,39 +2,20 @@
 
 Status: active `1v1` workline; default entry converged on `2026-05-18`;
 `2026-05-25` opened the staged `1v1` realism-gradient curriculum; `2026-06-03`
-accepted the bounded A3 C2/ROE release-discipline layer with M2 still held.
-`2026-06-03` also opened A4 as the authorized-first-shot training-signal
-follow-on; after A4 reward/routing evidence remained held, A5 opened the
-constrained event-action model track and is now held after short learned-policy
-evidence. A6 has completed its first event-value / first-event timing evidence
-wave, deadline-bootstrap re-scope wave, event-head update-strength audit, and
-event-head optimization learned evidence; it remains held on launch-window
-timing quality. `2026-06-04` opened A7 as the counterfactual event-value /
-advantage-credit head follow-on; its policy-head prototype and focused PPO
-auxiliary-credit integration, config/diagnostics, focused validation, and short
-learned evidence are now complete. A7 remains held because deterministic
-probing still makes `0` releases and quality-window event advantage remains
-negative. The A7 target-construction audit has traced the structural blocker to
-missing shadow-quality target repair after early stochastic accepted release;
-`A7-EVC-J` has repaired that label-censoring path, but its 32k repair probe still
-leaves learned first-shot timing held. `A7-EVC-M` then implemented projected
-legal-open credit, and `A7-EVC-N` evaluated it in a short learned run; projection
-remained candidate-starved. `A7-EVC-Q/R` then added and tested direct
-legal-open opportunity credit, and `A7-EVC-S` tested explicit state completion
-with `air_combat_c2_roe_v2`. `A7-EVC-T` then verified the value/policy
-breakpoint with an offline fixed-batch fit: legal-open positives are locally
-separable by the credit head, but the learned checkpoint remains negative/hold.
-`A7-EVC-U` then localized the online blocker to shared PPO global clipping plus
-shared actor/features coupling, while excluding direct PPO credit-head
-overwrite. `A7-EVC-V` has now repaired that update contract with a protected
-credit-head-only value lane and positive-only delta alignment. A7 still remains
-held: the 8k observation improves credit advantage, but deterministic probing
-still records `0` releases and legal-open advantage remains negative.
-`2026-06-08` accepted A8 for the bounded damage-effect-chain slice: missile
+accepted the bounded A3 C2/ROE release-discipline layer. `2026-06-08` closes
+A4-A7 as historical firing-learning lines, not as current blockers. The current
+bounded firing gate is accepted by the model-side M3-S2 package after the A5
+weapon-arm action-frame fix:
+[../model/archive/m3_s2_fire_timing_learnability_audit/README.md](../model/archive/m3_s2_fire_timing_learnability_audit/README.md).
+`2026-06-08` also accepted A8 for the bounded damage-effect-chain slice: missile
 effects can now be inspected as concrete part damage and maintained-system
 responses, while calibrated weapon truth, aircraft-specific control laws,
 platform-family expansion, real-world lethality authority, and first-class
-debris/residue objects remain separate follow-up work.
+debris/residue objects remain separate follow-up work. On the same date, A1
+added the Stage-2 C2/ROE training entry and completed the first 8k
+init-from-Stage-1 short train. Single-seed deterministic/stochastic probes
+preserved one authorized release, but had no effects/damage/kill, so Stage-2 is
+still not accepted.
 
 ## Current Status
 
@@ -45,117 +26,43 @@ debris/residue objects remain separate follow-up work.
   training entry are all connected.
 - In the `2026-05-24` 8k HMoE probe, early episodes were not dominated by
   `failfast_deep_stall`; termination concentrated on `combat_loss`.
-- The main blocker is now training reachability rather than entry wiring:
-  weapon switch actions start effectively unreachable, the smoke red fighter
-  opens fire immediately, and HMoE routing still concentrates on `nav/vector`
-  under `mission_obs_mode=basic`.
+- The old training-reachability blocker is no longer the current firing status.
+  M3-S2 batch validation accepts the bounded firing gate for the active
+  scenario/config pair: the learned policy requests and executes one authorized
+  `fire_once` release with zero rejected requests, violations, or
+  repeat-before-assessment releases.
 - The first training entry should move to the staged curriculum under
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
   instead of the historical smoke fixture.
-- The repeated-launch issue now routes first through the accepted bounded
+- A1's current progression point is the Stage-2 C2/ROE maneuvering-target entry:
+  [a1_stage2_c2_roe_entry_and_short_train_20260608.md](a1_1v1_realism_gradient/a1_stage2_c2_roe_entry_and_short_train_20260608.md).
+  It runs, transfers one authorized release from the Stage-1 M3-S2 final model,
+  and has one 8k short-train record; this is evidence for entering the next
+  training stage, not Stage-2 outcome or batch firing acceptance.
+- The repeated-launch issue routes through the accepted bounded
   C2/ROE layer in
   [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md):
   policy-visible weapons-control status, target identity, fire authorization,
   single-shot-then-assess / salvo / reattack permission, and mission-observation
-  constraints are wired. P4 probes can split authorized release from violation
-  release. The `2026-06-03` 32k A3 learned-policy probe shows that the
-  deterministic model does not fire and stochastic probing still produces
-  violation releases; post-launch mission observation now dynamically exposes
-  `shot_budget_remaining=0` / `pending_assessment=1`. The post-fix
-  reactive/temporal comparison shows temporal stochastic probing can remove
-  violation releases, but deterministic weapon employment still does not fire;
-  M2 release remains held.
-- The immediate follow-on was
+  constraints are wired. A3 remains the legality/discipline authority, not the
+  current firing-closure package.
+- Closed historical firing-learning line:
   [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md):
-  reward shaping and policy-routing evidence must make an authorized first shot
-  trainable before M2 is reconsidered. The first A4 reward-side probe shows
-  once-per-episode weapon-chain shaping is not enough: deterministic still does
-  not fire, while stochastic probing still produces violation releases. The
-  subsequent routing probe adds an explicit `combat_weapons` HMoE family.
-  The retained routed 32k evidence modestly improves stochastic discipline
-  but still leaves deterministic at 0 fire/release. A naive A4-only
-  pulse-prior relaxation was tested and rejected because it increased violation
-  releases without making deterministic policy fire. Binary diagnostics then
-  showed authorized-window `fire_weapon` remains near `0.22%` probability /
-  `-6.11` max logit; a bounded fire-opportunity penalty trial was also rejected
-  because it did not move deterministic fire and worsened stochastic release
-  discipline. A4 is therefore held as evidence that reward/routing repair is
-  not the root fix.
-- The active model-level follow-on is
+  A4 is closed in place. Its retained conclusion is that reward shaping,
+  routing, diagnostics, and an opportunity penalty did not solve firing.
+- Closed historical structural event-action line:
   [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md):
-  convert weapon release from a per-step binary/threshold control into a
-  constrained event action with explicit engagement state, action mask,
-  `hold/fire_once` semantics, post-launch `FiredAssess` suppression, and an
-  explicit reattack gate. The A5 short learned-policy probe fixes stochastic
-  release discipline to one authorized release per episode with no violations,
-  but deterministic policy still makes zero `fire_once` requests. A5 remains
-  held; the next fix should target event-value / first-event timing rather than
-  reward-only legality tuning. M2 remains held.
-- The new follow-on is
+  A5 is closed in place. It contributed the constrained `hold/fire_once` surface
+  and the later weapon-arm action-frame fix used by M3-S2.
+- Closed historical first-event timing line:
   [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md):
-  the first masked first-event hazard / bounded curriculum implementation now
-  has live PPO labels and diagnostics, but short learned evidence still leaves
-  deterministic policy at `0` `fire_once` requests with event probability near
-  `0.25%`. The deadline-bootstrap re-scope then doubles deterministic
-  open-window probability to about `0.49%`, but deterministic requests remain
-  `0`; stochastic probing keeps `3/3` authorized releases and zero
-  violation/repeat/budget issues, with one `weapon_not_ready` rejected request.
-  The event-head update audit then shows A6 gradients are live but current
-  optimizer/head scaling leaves the event delta near `-5`. The bounded
-  event-head lane fixes that narrow blocker: deterministic probing now executes
-  one authorized release, and stochastic probing preserves `3/3` one-shot
-  authorized releases with zero rejected/violation/repeat/budget issues. A6 is
-  still held because release timing collapses to near-immediate
-  authorization/contact. The launch-window contract then suppressed early
-  deterministic fire without producing accepted timing, and the root-cause
-  re-scope assigns the current blocker to on-policy first-event censoring plus
-  missing counterfactual hold/fire credit. The active follow-on is
-  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md).
-- A7
-  [event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  is now the implementation line for the first-event timing residual: the
-  policy-level event-credit head API, focused PPO auxiliary-credit loss, active
-  config, callback/process-probe diagnostics, and cumulative early-fire
-  diagnostics are in place. The valid A7 r3 short evidence keeps A5 one-shot
-  legality intact but remains held: deterministic probing records `0` releases,
-  stochastic probing fires early at steps `14`, `47`, and `2`, and
-  quality-window advantage is still negative. The target-construction audit
-  named the failing link: early stochastic accepted release censored later
-  quality-window positives from A7 labels. `A7-EVC-J` now fixes that
-  label-censoring path, and repaired label reconstruction restores thousands of
-  shadow-quality positives, but the repair probe still records deterministic
-  `0` releases, early stochastic releases, and negative quality-window advantage.
-  The post-repair projection audit and L contract selected the next mechanism:
-  project shadow-quality evidence onto a legal-open decision surface and align
-  positive value/delta only there. `A7-EVC-M` now implements that projected
-  legal-open prototype and focused tests show projected positive event-logit
-  pressure. `A7-EVC-N` has now run the short projection learned evidence:
-  projection is enabled and ordinary event-credit remains live, but projected
-  active rows stay at `0.0`; deterministic probing still records `0` releases,
-  and stochastic probing releases early at steps `2`, `47`, and `5`. `A7-EVC-O`
-  has closed the root-cause audit: M projection is candidate-starved when train
-  rollouts contain no accepted releases, because its `shadow_quality` source
-  appears only after early sampled release. `A7-EVC-P` has selected direct
-  legal-open quality opportunity credit, and `A7-EVC-Q` has implemented the
-  focused source/loss/diagnostic path. `A7-EVC-R` has now run bounded short
-  opportunity learned evidence: legal-open source counts are live, deterministic
-  remains `0` releases, stochastic release steps are `3`, `44`, and `10`, and
-  quality-window advantage remains negative. `A7-EVC-S` then tested explicit
-  state completion: `air_combat_c2_roe_v2` exposes legal/window age and
-  readiness, and open-window fire probability rises, but deterministic probing
-  still records `0` releases and quality-window advantage remains negative.
-  `A7-EVC-T` verifies that fixed legal-open positives can be fit to positive
-  advantage with the credit head alone. `A7-EVC-U` then shows that PPO+A7
-  global clipping crushes credit-head effective gradient budget and that A7
-  value/delta gradients conflict in shared actor/features. `A7-EVC-V` now
-  implements the protected online credit-update contract: separate
-  detached-latent credit-head value update, protected clip budget,
-  positive-only delta alignment, active config wiring, and nonfinite-probe
-  parity. The 8k observation improves credit advantage but remains held, so the
-  active next step is update-window/curriculum diagnosis rather than another
-  blind coefficient-tuning run. A3/A5
-  legality stays authoritative, and
-  HMoE redesign/M2 remain held.
+  A6 is closed in place. Its retained conclusion is that hazard/deadline/window
+  labels exposed useful timing evidence but did not become the current firing
+  authority.
+- Closed historical event-credit/timing line:
+  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md):
+  A7 is closed in place. Its retained conclusion is that event-credit work is
+  timing-quality research history, while current launch closure belongs to M3-S2.
 - The high-fidelity damage-model line now has a lightweight pointer at
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md);
   the full package lives under
@@ -199,11 +106,11 @@ debris/residue objects remain separate follow-up work.
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
 - validate the staged `1v1` scenarios in
   `scenarios/air_combat/1v1/` from weapon employment through limited reciprocal
-  weapons
-- advance
-  [A7 event-value / advantage-credit head](a7_event_value_advantage_credit_head/README.md)
-  through update-window/curriculum diagnosis after the V protected-update
-  repair before any M2 reconsideration
+  weapons; the next immediate step is Stage-2 firing-retention batch validation,
+  not Stage-3 or self-play
+- treat A4-A7 as closed historical records; current launch closure is the M3-S2
+  bounded firing gate, and new timing-quality work should open as a separate
+  model follow-on
 
 ## Recommended Reading Order
 
@@ -220,22 +127,26 @@ debris/residue objects remain separate follow-up work.
   [air_combat_1v1_stall_rootcause_followup_20260516.md](archive/air_combat_1v1_stall_rootcause_followup_20260516.md)
 - Current staged curriculum:
   [a1_1v1_realism_gradient/README.md](a1_1v1_realism_gradient/README.md)
+- A1 Stage-2 C2/ROE entry and short train:
+  [a1_stage2_c2_roe_entry_and_short_train_20260608.md](a1_1v1_realism_gradient/a1_stage2_c2_roe_entry_and_short_train_20260608.md)
 - C2/ROE release-discipline accepted layer:
   [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md)
-- Authorized first-shot training-signal follow-on:
+- Current bounded firing closure:
+  [M3-S2 fire-timing learnability archive](../model/archive/m3_s2_fire_timing_learnability_audit/README.md)
+- Closed historical firing-learning records:
+  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md),
+  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md),
+  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md),
+  and
+  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md)
+- A4 reward/routing evidence:
   [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md)
   and reward evidence:
-  [a4_authorized_first_shot_reward_probe_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.md)
+  [a4_authorized_first_shot_reward_probe_20260603.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.md)
   plus routing evidence:
-  [a4_authorized_first_shot_routing_probe_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.md)
+  [a4_authorized_first_shot_routing_probe_20260603.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.md)
   and binary diagnostics:
-  [a4_authorized_first_shot_binary_diagnostics_20260603.md](a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.md)
-- Constrained event-action model follow-on:
-  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md)
-- Event-value / first-event timing follow-on:
-  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md)
-- Event-value / advantage-credit head implementation contract:
-  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md)
+  [a4_authorized_first_shot_binary_diagnostics_20260603.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.md)
 - High-fidelity damage-model sealed record:
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive

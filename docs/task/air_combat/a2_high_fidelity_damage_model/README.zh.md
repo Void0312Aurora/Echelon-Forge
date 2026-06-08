@@ -10,5 +10,9 @@
 aircraft damage/effects runtime 记录。它不释放 stock authority、Pk authority、
 deterministic fuze authority 或更广的 weapon-outcome authority。
 
+新建但暂不展开的 A2 子项目想法：
+[damage_consequence_reward_surface/README.zh.md](damage_consequence_reward_surface/README.zh.md)。
+它只记录“按损伤后果而非单一 kill 给训练奖励”的方向，不重开已封存 A2 包，也不创建 A9。
+
 只有在明确 authority-promotion 或新 research 请求下才重开本线。默认空战工作继续从
 [../README.zh.md](../README.zh.md) 进入。
