@@ -1,7 +1,7 @@
 # M3-S2 Fire-Closure Validation 2026-06-08
 
 Status: `fire behavior reproduced / focused stochastic gate cleaned after A5
-master-arm alignment fix; batch closure pending`.
+master-arm alignment fix; superseded by bounded batch validation`.
 
 ## Question
 
@@ -121,18 +121,19 @@ fact: deterministic learned-policy execution and the checked stochastic
 trajectories emit one legal accepted authorized `fire_once` release without
 rejection, violation, or repeat-before-assessment.
 
-This clears the previously localized `weapon_not_ready` transport fault. It is
-still not a formal batch closure result because this note only reruns focused
-single-episode deterministic/stochastic checks around the known release window.
-The next gate is a bounded multi-episode/multi-seed validation run.
+This clears the previously localized `weapon_not_ready` transport fault. This
+note is superseded by
+[m3_s2_fire_closure_batch_validation_20260608.md](m3_s2_fire_closure_batch_validation_20260608.md),
+which runs the bounded multi-episode/multi-seed validation and accepts the
+firing gate for the active scenario/config pair.
 
 Damage/effects observations are explicitly not part of this decision. They
 remain A8/task evidence, not the firing-closure gate.
 
 ## Next Verification Step
 
-Before upgrading the status to closure, run a bounded batch validation that
-requires all checked episodes to satisfy:
+The superseding bounded batch validation requires all checked episodes to
+satisfy:
 
 - exactly one accepted authorized release;
 - zero violation releases;
@@ -141,6 +142,6 @@ requires all checked episodes to satisfy:
   exception;
 - reported first-release timing and event-mode support.
 
-If stochastic rejects return in batch validation, the next model/runtime work
-should target request cleanliness and readiness alignment, not kill-chain
-effects.
+If stochastic rejects return in future regression validation, the next
+model/runtime work should target request cleanliness and readiness alignment,
+not kill-chain effects.

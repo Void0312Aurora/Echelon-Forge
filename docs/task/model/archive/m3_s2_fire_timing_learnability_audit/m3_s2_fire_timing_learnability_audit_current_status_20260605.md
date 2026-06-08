@@ -63,7 +63,7 @@ The learned policy has to solve two problems simultaneously:
 | Does deterministic calibrated standardization solve it? | no | Latest-balanced calibration avoids random replay-batch standardization refresh, but the 8k final still records `release_count = 0`; fixed-chain final current quality classifier logit mean is `-9.902827`, while a fresh head perfectly separates the same latent in `200` steps. |
 | Is the classifier input standardization contract aligned at inference? | no | On the fixed `model_event_hold` trajectory, saved buffers give quality logit mean `-9.837499` and `0 / 1080` quality boundaries. Recomputing only `m3_window_classifier_input_mean/std` on that fixed batch changes quality logit mean to `2.195754` and quality boundaries to `1053 / 1080`. |
 | Do actor-gradient isolation and post-update classifier restore solve behavior? | no | The 8k best-restore run reports separated post-update replay batches, but deterministic execution still records `release_count = 0`; fixed-chain current quality classifier logit mean is `-6.339776`, while a fresh standardized head on the same execution latent reaches `1080 / 1080` quality boundaries. |
-| Does direct executable fire-boundary ownership solve behavior? | improved, focused firing gate clean, batch not accepted | The 2026-06-08 continuation run initialized from r3 records one deterministic authorized release at step `423`, zero violations/repeats, and one effects/damage report. The stochastic `weapon_not_ready` reject was localized to the A5 effective-action frame: `fire_once` was sampled while the weapon arming switch (`master_arm`) was off. After deriving `master_arm = 1` for a requested `fire_once`, focused stochastic checks record `1 / 1 / 0` requested/accepted/rejected. |
+| Does direct executable fire-boundary ownership solve behavior? | bounded firing gate accepted, timing/effects held | The 2026-06-08 continuation run initialized from r3 records one deterministic authorized release at step `423`. After the A5 weapon-arm action-frame fix, bounded batch validation across `8` deterministic and `8` stochastic episodes passes `16 / 16`: every episode records `1 / 1 / 0` requested/accepted/rejected, one authorized release, zero violations, and zero repeat-before-assessment releases. |
 | Can a high scalar before target acquisition recover later? | no | `forced_fire` records `{"no_target": 2}` and no release because no later rising edge occurs. |
 
 ## Root-Cause Statement
@@ -214,11 +214,13 @@ with one deterministic authorized release at step `423`. The remaining
 stochastic firing reject was not a kill-chain problem: it was an action-frame
 mismatch where the policy requested `fire_once` while the weapon arming switch
 (`master_arm`) was off. The A5 effective-action fix now derives `master_arm = 1`
-for a requested `fire_once`, and focused stochastic checks record `1 / 1 / 0`
-requested/accepted/rejected with zero violations and zero repeat releases. The
-slice is still not batch accepted: deterministic damage has `health_delta =
-0.0`, post-release effect quality is not a kill-model authority claim, and
-multi-seed/multi-episode closure remains pending.
+for a requested `fire_once`. The follow-up batch validation checks `8`
+deterministic and `8` stochastic episodes across seeds `20260608..20260615`;
+all `16` episodes pass the firing gate with zero rejected requests, zero
+violations, and zero repeat-before-assessment releases. The release gate is
+therefore closed for this active scenario/config pair. Timing quality,
+post-release effect quality, and kill-chain behavior remain separate held
+claims.
 
 ## Learned-Policy Reachability Evidence
 
@@ -517,15 +519,15 @@ experiments_tmp/m3s2_direct_fire_boundary_initfrom_8k_20260608_r1/m3s2_stochasti
 Event-window implementation evidence:
 
 ```text
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_event_window_supervision_probe_20260605.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_cumulative_hazard_support_collapse_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_support_preserving_collect_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_structural_toy_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_real_update_path_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_boundary_optimizer_contract_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_stopping_head_adapter_log_domain_short_train_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_scale_separated_stopping_contract_short_train_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_chain_breakpoint_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_window_classifier_standardization_contract_probe_20260606.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_direct_fire_boundary_probe_20260607.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_event_window_supervision_probe_20260605.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_cumulative_hazard_support_collapse_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_support_preserving_collect_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_structural_toy_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_real_update_path_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_boundary_optimizer_contract_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_stopping_head_adapter_log_domain_short_train_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_scale_separated_stopping_contract_short_train_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_chain_breakpoint_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_window_classifier_standardization_contract_probe_20260606.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_direct_fire_boundary_probe_20260607.md
 ```

@@ -1,7 +1,7 @@
 # M3-S2 发射闭合验证 2026-06-08
 
 状态：`fire behavior reproduced / focused stochastic gate cleaned after A5
-weapon-arm action-frame fix; batch closure pending`。
+weapon-arm action-frame fix; superseded by bounded batch validation`。
 
 ## 问题
 
@@ -120,16 +120,17 @@ learned-policy execution 与已检查 stochastic trajectories 都能发出一次
 授权的 `fire_once` release，并且没有 rejection、violation 或
 repeat-before-assessment。
 
-这清除了此前局部化的 `weapon_not_ready` 动作转换问题。但它仍不是正式 batch
-closure result，因为本记录只围绕已知 release window 跑了单 episode 的 focused
-deterministic/stochastic checks。下一道 gate 是有边界的多 episode / 多 seed validation。
+这清除了此前局部化的 `weapon_not_ready` 动作转换问题。本记录已被
+[m3_s2_fire_closure_batch_validation_20260608.zh.md](m3_s2_fire_closure_batch_validation_20260608.zh.md)
+接续；后者运行有边界的多 episode / 多 seed validation，并对该 active
+scenario/config pair 验收 firing gate。
 
 Damage/effects observations 不属于本判定。它们仍归 A8/task evidence，而不是
 firing-closure gate。
 
 ## 下一步验证
 
-升级为 closure 前，应运行有边界的 batch validation，并要求所有被检查 episode 满足：
+接续的有边界 batch validation 要求所有被检查 episode 满足：
 
 - exactly one accepted authorized release；
 - zero violation releases；
@@ -137,5 +138,5 @@ firing-closure gate。
 - zero rejected `fire_once` requests，或存在显式接受的有界 reject 例外；
 - 报告 first-release timing 与 event-mode support。
 
-如果 batch validation 中 stochastic rejects 再次出现，下一步模型/runtime 工作应优先处理
-request cleanliness 与 readiness alignment，而不是 kill-chain effects。
+如果未来 regression validation 中 stochastic rejects 再次出现，下一步 model/runtime
+工作应优先处理 request cleanliness 与 readiness alignment，而不是 kill-chain effects。

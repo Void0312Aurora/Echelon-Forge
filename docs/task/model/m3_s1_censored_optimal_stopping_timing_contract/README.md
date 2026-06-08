@@ -133,8 +133,9 @@ This subproject can be marked accepted only when:
   action branch is still separate from the M3 stopping head.
 - Follow-up root-cause audit moved to
   [M3-S2 Fire-Timing Learnability Audit](../m3_s2_fire_timing_learnability_audit/README.md),
-  which found release reachability but not legal timing identifiability in the
-  current return/effects path.
+  now archived as bounded firing-gate evidence: release execution is accepted
+  for the active scenario/config pair, while legal timing quality and effects
+  quality remain held.
 - Treat M2 sequence memory as a later candidate if grouped stopping objectives
   still cannot represent the timing evidence.
 - Keep A7 local repairs archived as evidence once M3-S1 supersedes the actor

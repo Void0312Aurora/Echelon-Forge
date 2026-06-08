@@ -1,6 +1,10 @@
 # M3-S2 开火时机可学习性审计任务簇
 
-状态：`2026-06-05`，对应 [README.zh.md](README.zh.md) 的有限任务簇计划。
+状态：`历史任务簇计划已归档；dispatch 已于 2026-06-08 关闭`。
+
+保留的写入范围是归档证据包。原
+`docs/task/model/m3_s2_fire_timing_learnability_audit/` 路径现在只保留
+pointer README。
 
 ## 边界决定
 
@@ -11,13 +15,15 @@ training tune，不得削弱 C2/ROE，也不得宣称 learned-policy success。
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `M3S2-P0 Boundary` | main thread | n/a | 定义 masked edge-triggered stopping 对象与断点。 | `docs/task/model/m3_s2_fire_timing_learnability_audit/**` | 新算法声明；训练修改。 | Markdown inspection。 | README 命名形式对象、范围与验收门。 | First；serial。 | 1 | pass |
+| `M3S2-P0 Boundary` | main thread | n/a | 定义 masked edge-triggered stopping 对象与断点。 | `docs/task/model/archive/m3_s2_fire_timing_learnability_audit/**` | 新算法声明；训练修改。 | Markdown inspection。 | README 命名形式对象、范围与验收门。 | First；serial。 | 1 | pass |
 | `M3S2-P1 Diagnostic Tooling` | main thread | n/a | 增加 hold、legal-mask oracle pulse modes 与 aggregate verdict runner。 | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tools/diagnostics/air_combat_fire_timing_learnability_audit.py`；focused tests | reward tuning；policy changes；C2/ROE weakening。 | `py_compile`；focused pytest。 | tooling 可区分 hold、early high、legal pulse、delayed legal pulse。 | After P0；serial。 | 2 | pass |
 | `M3S2-P2 Oracle Evidence` | read-only diagnostics worker | n/a | 运行有边界 Stage-1 oracle audit 并保留 artifact。 | `experiments_tmp/air_combat_fire_timing_learnability_audit_20260605.json`；evidence note | long training；model acceptance。 | Audit command exits 0；JSON verdict present。 | Verdict 命名 release reachability、reward delta、timing spread、effects visibility 与 edge hazard。 | After P1；serial。 | 1 | pass |
-| `M3S2-P3 Root-Cause Synthesis` | main thread | n/a | 判定当前 blocker 是 action adapter、reward/effects observability 还是 optimizer。 | current status 与 oracle evidence docs | 在同一 packet 打开 P4 remediation。 | Markdown inspection；evidence links。 | status 命名 primary 与 secondary breakpoint，不 overclaim。 | After P2；serial。 | 1 | active |
-| `M3S2-P4 Remediation Selection` | future worker | n/a | 从已接受诊断中起草下一实现切片。 | new task 或 follow-up plan only | 未选择就实现；默认释放 M2。 | Review against P3 evidence。 | 选定一个有边界下一切片，或明确 held。 | After P3；serial。 | 1 | planned |
+| `M3S2-P3 Root-Cause Synthesis` | main thread | n/a | 判定当前 blocker 是 action adapter、reward/effects observability 还是 optimizer。 | current status 与 oracle evidence docs | 在同一 packet 打开 P4 remediation。 | Markdown inspection；evidence links。 | status 命名 primary 与 secondary breakpoint，不 overclaim。 | After P2；serial。 | 1 | accepted |
+| `M3S2-P4 Remediation Selection` | future worker | n/a | 从已接受诊断中起草下一实现切片。 | new task 或 follow-up plan only | 未选择就实现；默认释放 M2。 | Review against P3 evidence。 | 选定一个有边界下一切片，或明确 held。 | After P3；serial。 | 1 | held / follow-on only |
 
-## 分发规则
+## 历史分发规则
+
+本归档不再保留 active worker dispatch；以下规则仅作为 sealed packet 的历史约束保留。
 
 - 每个 worker packet 必须映射到上表一个 cluster。
 - Diagnostics worker 只能把实验 artifact 写入 `experiments_tmp/`，除非显式分配 docs。

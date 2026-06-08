@@ -58,7 +58,7 @@ learned policy 必须同时解决两个问题：
 | deterministic calibrated standardization 是否解决？ | no | latest-balanced calibration 避免每个 auxiliary step 随机刷新标准化，但 8k final 仍 `release_count = 0`；fixed-chain final 的 current quality classifier logit mean 为 `-9.902827`，fresh head 同轨迹 `200` 步可完美分离。 |
 | classifier 输入 standardization contract 在推理时是否对齐？ | no | 固定 `model_event_hold` 轨迹上，保存的 buffer 给出 quality logit mean `-9.837499` 与 `0 / 1080` 个 quality boundaries。只重算该 fixed batch 的 `m3_window_classifier_input_mean/std` 后，quality logit mean 变为 `2.195754`，quality boundaries 变为 `1053 / 1080`。 |
 | actor-gradient isolation 与 post-update classifier restore 是否解决行为？ | no | 8k best-restore run 的 post-update replay batch 指标可分离，但 deterministic execution 仍记录 `release_count = 0`；fixed-chain current quality classifier logit mean 为 `-6.339776`，同一 execution latent 上 fresh standardized head 达到 `1080 / 1080` quality boundaries。 |
-| direct executable fire-boundary ownership 是否解决行为？ | improved, focused firing gate clean, batch not accepted | `2026-06-08` continuation run 从 r3 初始化，deterministic probe 在 step `423` 记录一次 authorized release、零 violation/repeat，并有一次 effects/damage report。stochastic 的 `weapon_not_ready` 已定位为 A5 有效动作帧问题：模型采样到了 `fire_once`，但同一帧武器保险开关（代码字段 `master_arm`）是关的。修复为请求 `fire_once` 时派生 `master_arm = 1` 后，focused stochastic checks 记录 `1 / 1 / 0` requested/accepted/rejected。 |
+| direct executable fire-boundary ownership 是否解决行为？ | bounded firing gate accepted, timing/effects held | `2026-06-08` continuation run 从 r3 初始化，deterministic probe 在 step `423` 记录一次 authorized release。A5 武器保险动作帧修复后，bounded batch validation 检查 `8` 个 deterministic episode 与 `8` 个 stochastic episode，结果 `16 / 16` 通过：每个 episode 都记录 `1 / 1 / 0` requested/accepted/rejected、一次 authorized release、零 violation、零 repeat-before-assessment release。 |
 | target acquisition 前高标量是否能后来恢复？ | no | `forced_fire` 记录 `{"no_target": 2}` 且无 release，因为后续没有新的 rising edge。 |
 
 ## 根因陈述
@@ -177,10 +177,11 @@ r3 run 证明 `m3s2/fb_*` updates 已经 live，但 deterministic release 仍为
 deterministic authorized release 的结果，release step 为 `423`。剩余 stochastic
 拒绝不是杀伤链问题，而是动作帧不一致：模型请求 `fire_once`，但同一帧武器保险开关
 （代码字段 `master_arm`）是关的。A5 有效动作修复后，请求 `fire_once` 会同时派生
-`master_arm = 1`；focused stochastic checks 记录 `1 / 1 / 0`
-requested/accepted/rejected，且 violation 与 repeat release 均为 `0`。它仍不是 batch
-验收：deterministic damage 的 `health_delta = 0.0`，post-release effect quality
-不是 kill-model authority claim，多 seed / 多 episode closure 仍 pending。
+`master_arm = 1`。后续 batch validation 检查 seeds `20260608..20260615` 上
+`8` 个 deterministic episode 与 `8` 个 stochastic episode；全部 `16` 个 episode
+通过 firing gate，rejected requests、violations、repeat-before-assessment releases
+均为 `0`。因此，对该 active scenario/config pair，release gate 已闭合。Timing
+quality、post-release effect quality 与 kill-chain behavior 仍是独立 held claim。
 
 ## Learned-Policy 可达性证据
 
@@ -443,15 +444,15 @@ experiments_tmp/m3s2_window_classifier_calibrated_std_8k_20260606_r2/m3s2_chain_
 Event-window implementation evidence：
 
 ```text
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_event_window_supervision_probe_20260605.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_cumulative_hazard_support_collapse_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_support_preserving_collect_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_structural_toy_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_real_update_path_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_boundary_optimizer_contract_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_stopping_head_adapter_log_domain_short_train_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_scale_separated_stopping_contract_short_train_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_chain_breakpoint_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_window_classifier_standardization_contract_probe_20260606.zh.md
-docs/task/model/m3_s2_fire_timing_learnability_audit/m3_s2_direct_fire_boundary_probe_20260607.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_event_window_supervision_probe_20260605.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_cumulative_hazard_support_collapse_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_support_preserving_collect_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_structural_toy_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_real_update_path_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_boundary_optimizer_contract_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_stopping_head_adapter_log_domain_short_train_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_scale_separated_stopping_contract_short_train_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_chain_breakpoint_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_window_classifier_standardization_contract_probe_20260606.zh.md
+docs/task/model/archive/m3_s2_fire_timing_learnability_audit/m3_s2_direct_fire_boundary_probe_20260607.zh.md
 ```
