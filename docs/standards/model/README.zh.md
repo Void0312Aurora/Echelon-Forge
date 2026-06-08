@@ -4,7 +4,7 @@
 - 英文规范页：[README.md](README.md)
 - 中文配套页：`README.zh.md`
 
-状态：`2026-06-07`，维护中的模型与策略架构标准入口。
+状态：`2026-06-08`，维护中的模型与策略架构标准入口。
 
 本目录负责仓库级的模型架构词汇：强化学习策略、辅助头、rollout label、loss、
 reward、probe 与 runtime action adapter。它是标准面，不是任务追踪面。
@@ -19,6 +19,8 @@ reward、probe 与 runtime action adapter。它是标准面，不是任务追踪
   constraint、reward surface 与 diagnostics 之间的区别；
 - 当前维护中的 PPO/HMoE 训练入口所使用的策略执行图；
 - stopping、window-prior、event-action、credit 机制的 ownership 边界；
+- 空战 policy 的 learned-firing evidence 边界：合法 executable release behavior
+  必须和 timing quality、下游武器效应分开；
 - 未来任务新增 model branch、adapter、loss、buffer 或 probe 时必须写清的文档项。
 
 本目录不负责：
@@ -30,6 +32,10 @@ reward、probe 与 runtime action adapter。它是标准面，不是任务追踪
 
 这些内容归对应的 `joint/`、`services/`、领域特化、`bridge/`、task 或 runtime
 文档所有。
+
+对当前空战训练而言，“模型学会发射”是模型侧行为声明：executable event path 在既有
+A3/A5 gate 下产生合法且被接受的 `fire_once` release。它不是 missile probability
+of kill、effects-chain realism、health delta 或 damage/kill 验收声明。
 
 ## 维护文档
 
@@ -82,6 +88,9 @@ reward、probe 与 runtime action adapter。它是标准面，不是任务追踪
   都是 model contract 的一部分，必须说明其 support population。
 - Deterministic 与 stochastic probes 是评估面。它们可以验证模型合同，但不是模型
   组件本身。
+- Learned-firing evidence 必须先报告 request、acceptance、rejection、release、
+  authority、repeat-suppression 与 timing 字段，之后才能和 timing-quality 或
+  downstream-effects 证据比较。
 
 ## 与任务工作的关系
 

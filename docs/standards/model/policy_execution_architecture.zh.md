@@ -4,7 +4,7 @@
 - 英文规范页：[policy_execution_architecture.md](policy_execution_architecture.md)
 - 中文配套页：`policy_execution_architecture.zh.md`
 
-状态：`2026-06-07`，维护中的策略执行架构与模型组件 ownership 基线。
+状态：`2026-06-08`，维护中的策略执行架构与模型组件 ownership 基线。
 
 本文档记录当前 PPO/HMoE 工作使用的标准模型拆解。它不声明任何活跃训练已经解决
 开火时机、记忆或弹药管理。它的目标是防止把模型机制、runtime 约束、reward、
@@ -144,6 +144,55 @@ lambda_t = executable event hazard after soft combination and legal masking
   后的 effective rising-edge pulse，不是持续保持的 raw policy command。A5 state
   machine 消费该 pulse，并可能在进入 `PilotAction` 前清除 transport 中的
   `fire_weapon` value。
+
+## 空战 Learned-Firing 标准
+
+当前空战模型优先级比完整 fire-timing 或 kill-chain closure 更窄：证明 learned
+executable policy 能在既有 C2/ROE 与 A5 runtime gate 下发出合法且被接受的
+`fire_once` release。
+
+Learned-firing 声明的范围：
+
+- 范围内：executable event path 选择 `fire_once`，A5 adapter 接受该 pulse，并且
+  runtime 记录一个保持授权合法性的导弹 release。
+- 范围内：release 后的一次性抑制、rejection accounting 与 authority legality。
+- 范围外：probability of kill、missile effects realism、miss distance、damage
+  reports、health deltas、loss-state transitions 与 target kill acceptance。这些字段
+  可以作为 diagnostics 记录，但不能作为 learned-firing 声明的 gate。
+- 除非单独声明，否则范围外：timing optimality、quality-window closure、M2
+  acceptance 以及 learned damage/effects behavior。
+
+Release-behavior ownership 边界：
+
+- active M3-S2 路线是通过 `m3s2_event_window_*` updates 与 `hybrid_event_head`
+  直接拥有 executable event-logit behavior 的 direct fire-boundary owner；
+  support-preserving collection 作为会改变 rollout action 的 collection
+  intervention 单独记录。
+- `m3_stopping_head`、`m3_window_classifier_head` 与
+  `hybrid_event_credit_head` 只有在任务启用并记录它们接入 executable event path 的
+  adapter coupling 时，才能成为 release behavior 的 authority。
+- A3/A5 合法性强于模型学习证据。Learned firing run 不得削弱 masks、authority
+  checks、weapon-readiness checks、ammunition checks、one-shot suppression 或
+  `FiredAssess` semantics。
+
+最低进展证据：
+
+- learned-policy deterministic probe，而不是 oracle 或 forced-action probe；
+- `fire_once_requested_count >= 1` 且 `fire_once_accepted_count >= 1`；
+- `release_count >= 1` 且 `authorized_release_count >= 1`；
+- `violation_release_count = 0`；
+- `repeat_release_before_assessment_count = 0`；
+- 记录 `first_release_step`、event-mode/event-probability diagnostics，以及出现
+  rejection 时的 rejection counters。
+
+上述最低条件只是进展门槛，不能作为完整验收。Learned firing acceptance 声明还必须
+证明 deterministic probes 在任务声明的 seed/episode 集上稳定，stochastic probes
+不引入未受控的 rejected requests，并且所有 rejection reasons 都有报告和有界计数。
+Timing-window quality 应与 firing gate 并列报告，但除非任务显式声明 learned fire
+timing，否则它是单独 closure。
+
+具体 run evidence、checkpoint 名称、release step、rejection reason 与 held/pass
+判定归 `docs/task/model/`。标准层只定义 gate 本身，以及任务文档必须报告的字段。
 
 ## Loss 与 Reward Ownership
 

@@ -4,7 +4,7 @@ Language:
 - English canonical: `policy_execution_architecture.md`
 - Chinese companion: [policy_execution_architecture.zh.md](policy_execution_architecture.zh.md)
 
-Status: `2026-06-07` authoritative baseline for maintained policy execution
+Status: `2026-06-08` authoritative baseline for maintained policy execution
 architecture and model-component ownership.
 
 This document records the standard model decomposition used by current
@@ -152,6 +152,60 @@ Rules:
   pulse after hybrid action normalization, not a held raw policy command. The A5
   state machine consumes that pulse and may clear the transported `fire_weapon`
   value before `PilotAction`.
+
+## Air-Combat Learned-Firing Standard
+
+The current air-combat model priority is narrower than full fire-timing or
+kill-chain closure: prove that the learned executable policy can emit a legal
+accepted `fire_once` release under the existing C2/ROE and A5 runtime gates.
+
+Scope of the learned-firing claim:
+
+- In scope: the executable event path chooses `fire_once`, the A5 adapter accepts
+  the pulse, and the runtime records a missile release that remains authorized.
+- In scope: one-shot suppression after release, rejection accounting, and
+  authority legality.
+- Out of scope: probability of kill, missile effects realism, miss distance,
+  damage reports, health deltas, loss-state transitions, and target kill
+  acceptance. These fields may be logged as diagnostics, but they must not gate
+  the learned-firing claim.
+- Out of scope unless claimed separately: timing optimality, quality-window
+  closure, M2 acceptance, and learned damage/effects behavior.
+
+Release-behavior ownership boundary:
+
+- The active M3-S2 route is direct fire-boundary ownership of executable
+  event-logit behavior through `m3s2_event_window_*` updates and
+  `hybrid_event_head`, with support-preserving collection documented as an
+  action-changing rollout intervention.
+- `m3_stopping_head`, `m3_window_classifier_head`, and
+  `hybrid_event_credit_head` are not release-behavior authority unless a task
+  enables and documents their adapter coupling into the executable event path.
+- A3/A5 legality remains stronger than model learning evidence. A learned
+  firing run must not weaken masks, authority checks, weapon-readiness checks,
+  ammunition checks, one-shot suppression, or `FiredAssess` semantics.
+
+Minimum progress evidence:
+
+- a learned-policy deterministic probe, not an oracle or forced-action probe;
+- `fire_once_requested_count >= 1` and `fire_once_accepted_count >= 1`;
+- `release_count >= 1` and `authorized_release_count >= 1`;
+- `violation_release_count = 0`;
+- `repeat_release_before_assessment_count = 0`;
+- recorded `first_release_step`, event-mode/event-probability diagnostics, and
+  rejection counters when present.
+
+That minimum is a progress threshold, not full acceptance. A learned firing
+acceptance claim must additionally show that deterministic probes are
+stable across the task-declared seed/episode set, stochastic probes do not
+introduce uncontrolled rejected requests, and all rejection reasons are reported
+with bounded counts. Timing-window quality should be reported next to the
+firing gate, but it is a separate closure unless the task explicitly claims
+learned fire timing.
+
+Run-specific evidence, checkpoint names, release steps, rejection reasons, and
+held/pass decisions belong in `docs/task/model/`. The standards layer should
+only define the gate and required fields those task documents must report.
 
 ## Loss And Reward Ownership
 

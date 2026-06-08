@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-06-07` authoritative entrypoint for maintained model and policy
+Status: `2026-06-08` authoritative entrypoint for maintained model and policy
 architecture standards.
 
 This directory owns repository-wide model-architecture vocabulary for
@@ -23,6 +23,9 @@ The model standards layer defines:
   entries;
 - ownership boundaries for stopping, window-prior, event-action, and credit
   mechanisms;
+- the learned-firing evidence boundary for air-combat policies, where legal
+  executable release behavior is separated from timing quality and downstream
+  weapon effects;
 - required documentation when a future task adds a model branch, adapter, loss,
   buffer, or probe.
 
@@ -35,6 +38,12 @@ It does not own:
 
 Those belong to the relevant `joint/`, `services/`, domain-specialization,
 `bridge/`, task, or runtime documents.
+
+For active air-combat training, this means "the model learned to fire" is a
+model-side behavioral claim about the executable event path producing legal
+accepted `fire_once` releases under the existing A3/A5 gates. It is not a
+claim about missile probability of kill, effects-chain realism, health deltas,
+or damage/kill acceptance.
 
 ## Maintained Documents
 
@@ -91,6 +100,9 @@ The maintained model standard currently maps to these implementation surfaces:
   population.
 - Deterministic and stochastic probes are evaluation surfaces. They can validate
   a model contract, but they are not model components.
+- Learned-firing evidence must report request, acceptance, rejection, release,
+  authority, repeat-suppression, and timing fields before it can be compared to
+  timing-quality or downstream-effects evidence.
 
 ## Relationship To Task Work
 
