@@ -30,6 +30,11 @@ overwrite. `A7-EVC-V` has now repaired that update contract with a protected
 credit-head-only value lane and positive-only delta alignment. A7 still remains
 held: the 8k observation improves credit advantage, but deterministic probing
 still records `0` releases and legal-open advantage remains negative.
+`2026-06-08` accepted A8 for the bounded damage-effect-chain slice: missile
+effects can now be inspected as concrete part damage and maintained-system
+responses, while calibrated weapon truth, aircraft-specific control laws,
+platform-family expansion, real-world lethality authority, and first-class
+debris/residue objects remain separate follow-up work.
 
 ## Current Status
 
@@ -160,15 +165,17 @@ still records `0` releases and legal-open advantage remains negative.
   blast-fragmentation package is accepted as non-authoritative evidence, and
   G4/G5 research packets are closed. Stock authority, Pk, and deterministic
   fuze authority are still not released.
-- The new damage-effect follow-on is
-  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md):
-  it is the active surface for turning detonation effects into concrete aircraft
-  part damage and then routing those effects through existing propulsion, fuel,
-  sensor, fire, and flight consumers. Current accepted slices cover propulsion,
-  one wing/control aerodynamic response, fuel-leak/mass response, broader-fire
-  consequence checks, data-link mission/sensor consequence, and a narrow
-  ground-contact lifecycle state with debris/residue objects deferred. It still
-  does not add a direct crash rule, special MQ-9 kill rule, Pk claim,
+- The A8 damage-effect chain now has a lightweight pointer at
+  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the
+  full package lives under
+  [archive/a8_damage_effect_chain/](archive/a8_damage_effect_chain/README.md).
+  It is archived as an accepted bounded slice that turns detonation effects into
+  concrete aircraft part damage and then routes those effects through existing
+  propulsion, fuel, sensor, fire, and flight consumers. Accepted evidence covers
+  propulsion, one wing/control aerodynamic response, fuel-leak/mass response,
+  broader-fire consequence checks, data-link mission/sensor consequence, and a
+  narrow ground-contact lifecycle state with debris/residue objects deferred.
+  It still does not add a direct crash rule, special MQ-9 kill rule, Pk claim,
   deterministic fuze claim, or stock AIM-120C lethality claim.
 
 ## Active Follow-On Focus
@@ -182,13 +189,11 @@ still records `0` releases and legal-open advantage remains negative.
 - treat the A2 high-fidelity air-combat damage model as a sealed retained
   record; only explicit follow-on requests should open `G4/G5 authority` or new
   research expansion work
-- advance
-  [A8 damage-effect chain](a8_damage_effect_chain/README.md) as the explicit
-  follow-on for concrete damage propagation through maintained aircraft systems,
-  without adding direct crash or special-target kill rules; current accepted
-  slices cover propulsion, one limited wing/control aero response, fuel/mass
-  leakage, broader-fire consequence, data-link mission/sensor consequence, and
-  ground-contact lifecycle observability with debris/residue objects deferred
+- read
+  [A8 damage-effect chain](a8_damage_effect_chain/README.md) as an archived
+  accepted record for concrete damage propagation through maintained aircraft
+  systems, without adding direct crash or special-target kill rules; reopen only
+  for explicit calibration, platform expansion, or debris/residue object work
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize

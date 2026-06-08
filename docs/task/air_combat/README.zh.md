@@ -25,6 +25,9 @@ actor/features coupling，并排除 direct PPO credit-head overwrite。`A7-EVC-V
 已用 protected credit-head-only value lane 与 positive-only delta alignment 修复
 该 update contract。A7 仍 held：8k observation 改善了 credit advantage，但
 deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
+`2026-06-08` 已按有边界损伤效果链切片验收 A8：导弹效果现在可以被检查为具体部件损伤
+和维护中系统响应；校准后的武器真值、飞机专用飞控律、平台族扩展、真实世界杀伤权威和
+一等碎片/残留对象仍是单独后续工作。
 
 ## 当前状态
 
@@ -129,10 +132,12 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
-- 新的损伤效果 follow-on 是
-  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)：
-  它是 active 工作面，用来把起爆后的效果转成具体飞机部位损伤，并通过已有动力、燃油、
-  传感器、火灾和飞行消费路径表现出来。当前已验收切片覆盖动力、一段翼面/操纵气动响应、
+- A8 损伤效果链现在在
+  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)
+  保留轻量指针；完整包位于
+  [archive/a8_damage_effect_chain/](archive/a8_damage_effect_chain/README.zh.md)。
+  它已作为有边界切片验收并归档：起爆后的效果可转成具体飞机部位损伤，并通过已有动力、
+  燃油、传感器、火灾和飞行消费路径表现出来。已验收证据覆盖动力、一段翼面/操纵气动响应、
   燃油泄漏/质量响应、更完整火灾后果检查、数据链任务/传感器后果，以及窄的地面接触生命周期状态；
   碎片/残留对象后置。它仍不增加直接坠毁规则、MQ-9 特例击杀规则、Pk 声明、确定性引信声明或
   AIM-120C 权威杀伤声明。
@@ -146,11 +151,10 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
 - 拆分 `combat_loss`、被击落实体失效和终端 crash penalty 的诊断语义
 - 将 A2 高保真空战毁伤模型作为 sealed retained record 读取；只有用户明确要求时，
   才另启 `G4/G5 authority` 或新的 research expansion
-- 推进
-  [A8 损伤效果链](a8_damage_effect_chain/README.zh.md)，作为具体损伤通过维护中的飞机系统
-  传播的 follow-on，但不增加直接坠毁或特定目标击杀规则；当前已验收切片覆盖动力、一段有限
-  翼面/操纵气动响应、燃油/质量泄漏、更完整火灾后果、数据链任务/传感器后果和地面接触生命周期
-  可观察性；碎片/残留对象后置
+- 将
+  [A8 损伤效果链](a8_damage_effect_chain/README.zh.md) 作为已归档 accepted record 读取：
+  具体损伤可通过维护中的飞机系统传播，但不增加直接坠毁或特定目标击杀规则；只有明确要求校准、
+  平台扩展或碎片/残留对象工作时才重开
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外

@@ -1,8 +1,9 @@
 # A8 Damage Effect Chain Dispatch Queue
 
-Status: `2026-06-08` active implementation dispatch queue for
+Status: `2026-06-08` accepted dispatch and validation record for
 [README.md](README.md). This queue starts A8 from the already accepted planning
-boundary and tracks the bounded implementation waves through `A8-DEC-E`.
+boundary and tracks the bounded implementation waves through P6 acceptance with
+explicit deferred residuals.
 
 ## Dispatch Boundary
 
@@ -55,14 +56,17 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 
 Add narrower tests named by each worker packet before acceptance.
 
-## Current Dispatch State
+## First Dispatch State
+
+This section records the first wave state only; later sections supersede it
+with the accepted P6 decision.
 
 | Packet | State | Notes |
 | --- | --- | --- |
 | `A8-W1 Shot Record` | pass | Accepted existing linked shot record shape through focused guard tests; no new public fields added. |
 | `A8-W2 Part Failure Vocabulary` | partial | Accepted internal failure-mode vocabulary and existing-aircraft-state routing. W4 later exposed the public row fields. |
 | `A8-W3 Validation Fixtures` | partial pass | Accepted fixed MQ-9/AIM-120C fixtures and non-authority guards; A8-DEC-E flight-consumer checks remain held. |
-| `A8-DEC-E Consumer Integration` | held | Starts after W5/W6 scout evidence is integrated into a narrow implementation packet. |
+| `A8-DEC-E Consumer Integration` | deferred to later waves | Started after W5/W6 scout evidence and is superseded by the later accepted consumer-integration slices below. |
 
 ## Second Dispatch Wave
 
@@ -470,3 +474,35 @@ Ninth-wave integration rules:
   report instead of editing files.
 - The main thread owns final P6 wording, parent README/status sync, archive
   decisions, validation reconciliation, and any commit.
+
+## Ninth Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W19 P6 Acceptance Readiness Audit` | pass | Accepted as read-only evidence. It found no blocker against the stated A8 gate and recommended `accepted-with-deferred-residuals`: the bounded damage-effect chain is inspectable and guarded, while calibration, aircraft-specific control law fidelity, platform-family expansion, real-world authority claims, and first-class debris/residue objects remain deferred. |
+| `A8-W20 P6 Final Validation Runner` | pass | Accepted as read-only validation. A8 docs/test diff hygiene, Python lint, full weapon-guidance realism guards, and a focused W13-W18 selector all passed. |
+| `A8-DEC-G Acceptance And Index Sync` | pass | Main-thread P6 sync may mark A8 accepted for the bounded damage-effect-chain slice, provided the deferred residuals remain explicit and no real-world lethality claim is added. |
+
+Accepted validation:
+
+```bash
+git diff --check -- docs/task/air_combat tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'ground_contact_lifecycle or engine_damage_scales_actual_thrust or data_link_hit_continues or left_wing_fuel_hit_grows_fire or rear_engine_hit_seeds_engine_fire_zone or right_aileron_damage_long_run_reaches_ground_response'
+```
+
+Outcomes: diff whitespace check pass, focused Python lint pass, weapon guidance
+realism guards `176 passed`, and focused W13-W18 regression selector `8 passed,
+168 deselected`.
+
+P6 acceptance decision:
+
+- A8 is accepted for the bounded damage-effect-chain slice.
+- Accepted evidence covers public shot rows, concrete synthetic failure modes,
+  propulsion, wing/control aero, fuel/leak/mass, broader fire, data-link
+  mission/sensor consequence, and original-entity ground-contact lifecycle
+  observability.
+- Deferred residuals: calibrated warhead/fire/target-vulnerability truth,
+  aircraft-specific control-law fidelity, platform-family expansion, real-world
+  Pk/fuze/stock lethality authority, and first-class debris/residue objects.

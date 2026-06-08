@@ -14,6 +14,9 @@ Current entry:
   sealed high-fidelity damage-model research/candidate record.
 - [a3_c2_roe_release_discipline/](a3_c2_roe_release_discipline/README.md):
   accepted C2/ROE release-discipline contract and evidence packet.
+- [a8_damage_effect_chain/](a8_damage_effect_chain/README.md):
+  accepted bounded damage-effect-chain evidence packet with calibration,
+  stock-lethality, and debris/residue residuals deferred.
 - [air_combat_1v1_entry_analysis_20260516.md](air_combat_1v1_entry_analysis_20260516.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.md](air_combat_1v1_f16c_baseline_progress_20260516.md)
 - [air_combat_1v1_freeze_plan_20260516.md](air_combat_1v1_freeze_plan_20260516.md)

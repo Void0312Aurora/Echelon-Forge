@@ -1,8 +1,8 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-08` 第八轮实现检查点。A8 已有有边界工作面，并已整合当前会话
-结构发现；有限动力消费方、翼面/操纵气动消费方、固定燃油泄漏/质量响应证据、固定更完整火灾
-后果证据、固定数据链任务/传感器后果证据，以及窄的地面接触生命周期表面已经落地。
+状态：`2026-06-08` accepted with deferred residuals。A8 已按有边界的损伤效果链切片验收；
+有限动力消费方、翼面/操纵气动消费方、固定燃油泄漏/质量响应证据、固定更完整火灾后果证据、
+固定数据链任务/传感器后果证据，以及窄的地面接触生命周期表面已经落地。
 
 ## 本次变化
 
@@ -68,6 +68,13 @@
   - `A8-W18 Debris/Residue Lifecycle Decision Scout`：只读证据通过。对本 A8 切片来说，
     原实体 `landed_airframe` / `crashed_wreck` 生命周期可观察性已经足够；一等碎片/残留对象
     后置，不作为 A8 阻塞项。
+- 已验收第九轮 P6 readiness 工作：
+  - `A8-W19 P6 Acceptance Readiness Audit`：只读证据通过。它没有发现既定 A8 验收门槛下的阻塞，
+    并建议将有边界切片验收，同时明确后置残余。
+  - `A8-W20 P6 Final Validation Runner`：只读验证通过。A8 文档/测试 diff、Python lint、完整
+    weapon-guidance realism 守卫和 W13-W18 聚焦选择器均通过。
+- 主线程 P6 决定：A8 按有边界的损伤效果链切片 accepted。后置残余仍包括校准级战斗部/火灾/目标真值、
+  飞机专用飞控律保真、平台族扩展、真实世界 Pk/引信/stock 杀伤权威和一等碎片/残留对象。
 
 ## 2026-06-07 验收检查
 
@@ -235,6 +242,24 @@ python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards
 - 更完整火灾后果检查：`2 passed, 174 deselected`。
 - 武器/引信/损伤链守卫：`176 passed`。
 
+## 2026-06-08 第九轮 P6 验收检查
+
+已运行命令：
+
+```bash
+git diff --check -- docs/task/air_combat tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'ground_contact_lifecycle or engine_damage_scales_actual_thrust or data_link_hit_continues or left_wing_fuel_hit_grows_fire or rear_engine_hit_seeds_engine_fire_zone or right_aileron_damage_long_run_reaches_ground_response'
+```
+
+结果：
+
+- A8 文档/测试 diff 空白检查：通过。
+- A8 Python lint：通过。
+- 武器/引信/损伤链守卫：`176 passed`。
+- W13-W18 聚焦回归选择器：`8 passed, 168 deselected`。
+
 ## 成熟度矩阵
 
 | 区域 | Accepted | Active | Held | Deferred |
@@ -242,9 +267,9 @@ python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards
 | 引信和起爆事件路径 | 近炸静默消失问题近期已修复，并有运行时测试保护。 | A8 必须把已记录事件作为链路第一段。 | 确定性引信真值未验收。 | 真实引信校准。 |
 | 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组、飞机状态字段和公开逐部件故障类型行。 | A8 必须保持解释非权威，并绑定在射击记录上。 | 只有完整度/能力数字仍不够。 | 大范围目标族数据校准。 |
 | 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷，并公开模拟部件故障类型。 | A8 必须通过测试保持 synthetic 词表可审计。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
-| 部位损伤到飞机行为 | 推进损伤即使在显式发动机调参启用时也能进入运行时推力；翼面/操纵损伤现在能进入有限气动系数、力矩和轴向控制能力；固定油箱损伤能进入泄漏/质量运行时响应；固定火灾样例能进入火势增长、二次损伤、火区播种和动力后果；固定数据链损伤能进入任务/传感器运行时响应。 | A8 后续只能通过维护中的系统继续扩大消费方覆盖。 | 当前气动响应仍是 synthetic 且偏标量化；火灾检查是确定性工程证据，不是已校准火灾真值；数据链样例证明的是平台状态后果，不是主动报文流量；左右符号保真和飞机专用飞控律未验收。 | 完整飞机专用飞控律校准和发布级火灾生命周期校准。 |
+| 部位损伤到飞机行为 | 推进损伤即使在显式发动机调参启用时也能进入运行时推力；翼面/操纵损伤现在能进入有限气动系数、力矩和轴向控制能力；固定油箱损伤能进入泄漏/质量运行时响应；固定火灾样例能进入火势增长、二次损伤、火区播种和动力后果；固定数据链损伤能进入任务/传感器运行时响应。 | 已按有边界 A8 切片验收。 | 当前气动响应仍是 synthetic 且偏标量化；火灾检查是确定性工程证据，不是已校准火灾真值；数据链样例证明的是平台状态后果，不是主动报文流量；左右符号保真和飞机专用飞控律未验收。 | 完整飞机专用飞控律校准和发布级火灾生命周期校准。 |
 | 地面接触生命周期 | 安全接触和严重接触现在有公开调试生命周期状态；构造的严重撞击可以观察为 `crashed_wreck`，实体仍保持 active。 | A8 接受本切片的原实体可观察性。 | 该生命周期不会让武器命中更早坠毁，也不生成物理碎片。 | 完整残骸/残留对象模型。 |
-| MQ-9 / AIM-120C 验证 | 已有测试夹具、固定部件样例、非权威检查、固定右副翼气动响应检查、300 秒右副翼长时程检查、固定中心油箱泄漏/质量检查、固定更完整火灾检查、固定数据链任务/传感器后果检查和地面接触生命周期检查。 | A8 应决定当前维护消费方集合是否足够进入最终验收，并明确校准后置。 | 一次 live smoke 结果不足以验收；燃油/火灾/数据链后果或坠毁残骸生命周期测试也不是真实击杀证明。 | 击杀概率或真实世界杀伤声明。 |
+| MQ-9 / AIM-120C 验证 | 已有测试夹具、固定部件样例、非权威检查、固定右副翼气动响应检查、300 秒右副翼长时程检查、固定中心油箱泄漏/质量检查、固定更完整火灾检查、固定数据链任务/传感器后果检查和地面接触生命周期检查。 | 已按固定 MQ-9/AIM-120C-like 工程检查验收。 | 一次 live smoke 结果不足以验收；燃油/火灾/数据链后果或坠毁残骸生命周期测试也不是真实击杀证明。 | 击杀概率或真实世界杀伤声明。 |
 
 ## 已整合的只读发现
 
@@ -307,29 +332,28 @@ MQ-9 / AIM-120C 验证结构：
 ## 证据链接
 
 - 引信和战斗损伤更新：
-  [damage_system.h](../../../../src/systems/combat/damage_system.h)
+  [damage_system.h](../../../../../src/systems/combat/damage_system.h)
 - 损伤部件/状态定义：
-  [damage.h](../../../../src/components/combat/damage.h)
+  [damage.h](../../../../../src/components/combat/damage.h)
 - 默认武器效果：
-  [default_effects_model.cpp](../../../../src/models/weapons/default_effects_model.cpp)
+  [default_effects_model.cpp](../../../../../src/models/weapons/default_effects_model.cpp)
 - 气动消费方：
-  [aerodynamics_system.h](../../../../src/systems/physics/aerodynamics_system.h)
+  [aerodynamics_system.h](../../../../../src/systems/physics/aerodynamics_system.h)
 - 动力消费方：
-  [propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
+  [propulsion_system.h](../../../../../src/systems/physics/propulsion_system.h)
 - MQ-9 结构化损伤配置：
-  [mq9_reaper.json](../../../../examples/config/database/aircraft/units/mq9_reaper.json)
+  [mq9_reaper.json](../../../../../examples/config/database/aircraft/units/mq9_reaper.json)
 - AIM-120C 武器配置：
-  [aim_120c.json](../../../../examples/config/database/weapons/air_to_air/aim_120c.json)
+  [aim_120c.json](../../../../../examples/config/database/weapons/air_to_air/aim_120c.json)
 - 当前回归入口：
-  [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/air_combat/test_weapon_guidance_realism_guards.py)
+  [test_weapon_guidance_realism_guards.py](../../../../../tests/runtime/air_combat/test_weapon_guidance_realism_guards.py)
 
 ## 残余登记
 
 立即：
 
-- 继续把 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参、一段翼面/操纵气动响应、
-  一个固定燃油泄漏/质量响应、一组固定更完整火灾响应和一个固定数据链任务/传感器响应已经落地。
-- 决定当前维护消费方集合是否足够进入 A8 `P6` 验收，并把校准和平台族扩展后置。
+- A8 `P6` 已按有边界损伤效果链切片验收：动力调参、一段翼面/操纵气动响应、一个固定燃油泄漏/质量响应、
+  一组固定更完整火灾响应、一个固定数据链任务/传感器响应和原实体地面接触生命周期可观察性已经落地。
 - 保持新的地面接触生命周期路径足够窄：它覆盖已着陆机体和坠毁残骸可观察性；碎片或完整残骸对象模型后置。
 
 Held：
@@ -345,11 +369,13 @@ Deferred：
 - 真实世界击杀概率。
 - 确定性引信真值。
 - 完整多平台飞机损伤数据集。
+- 完整飞机专用飞控律校准和发布级火灾生命周期校准。
+- 一等碎片/残留对象建模。
 
-## 下一步推荐顺序
+## 后续顺序
 
-1. 决定当前有限 `A8-DEC-E` 消费方集合是 accepted 还是仍需继续 held 等待更多维护消费方。
-2. 只有在残余明确 hold 或 closed 后，才同步 A8 最终验收。
+1. 除非新任务明确重开校准级战斗部/火灾真值、平台族扩展或一等残留对象，否则保持 A8 关闭。
+2. 真实世界杀伤力、Pk 和引信权威应作为单独数据准入问题处理，不作为 A8 验收后续。
 
 ## 禁止结论
 
