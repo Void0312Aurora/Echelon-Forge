@@ -1,8 +1,8 @@
 # A8 Damage Effect Chain
 
 Status: `2026-06-08` active implementation. The shot record, part-failure
-vocabulary, public failure-mode rows, and the first propulsion-consumer slice
-are in place; wing/control aerodynamic response remains active work.
+vocabulary, public failure-mode rows, propulsion-consumer slice, and one
+wing/control aerodynamic-consumer slice are in place.
 
 Language:
 
@@ -53,8 +53,8 @@ simulation responds.
 | Part-level damage inventory | active input | `damage.h` plus MQ-9 JSON define hit boxes, named parts, groups, and dependencies. | The names are engineering scaffolds until calibrated data replaces them. |
 | Warhead-to-part effect model | primary cut point | `default_effects_model.cpp` and detail files compute mechanism loads, affected components, and current failure probability. | This is the first implementation cut point, but the current values are estimates, not AIM-120C truth. |
 | Damage-to-aircraft state | active input | `AircraftDamageStateUpdate` maps parts into propulsion, fuel, sensors, fire, and broad flight limits. | Keep this as the downstream bridge; do not replace it with a direct kill rule. |
-| Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics and the default control model do not yet fully consume damaged structure, control authority, and asymmetry. | A damaged wing, a stuck control surface, or left/right asymmetry is not yet strongly visible in forces and moments. |
-| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, and a tuned-engine propulsion damage check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
+| Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics now consumes structural, hydraulic, axis-control, and asymmetry damage as limited coefficient/authority changes. | The aero response is still synthetic and scalar; it is not aircraft-specific control-law calibration. |
+| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, and a fixed MQ-9 right-aileron aero-response check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
 
 ## Scope
 
@@ -91,7 +91,7 @@ Out of scope:
 | `P1 Structure Evidence` | Confirm the current hit, effect, part, and flight-consumer structure. | P0 docs exist. | Read-only findings identify code entry points, gaps, and safe write sets. | pass for planning |
 | `P2 Shot Effect Record` | Define the per-shot record that explains what happened and why. | P1 confirms fields and consumers. | Tests can assert fuze, detonation, part effect, and consequence stages. | pass |
 | `P3 Part Effect Vocabulary` | Represent physical damage types instead of one generic damage amount. | P2 record is stable. | Component damage records can name leaks, cuts, fire sources, data loss, and structure weakening. | pass |
-| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion tuning consumer pass |
+| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion and wing/control aero consumers pass |
 | `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | partial pass |
 | `P6 Acceptance` | Decide accepted or held and record residuals. | P5 evidence complete. | Parent README and status docs state the honest capability and remaining gaps. | planned |
 
@@ -103,8 +103,9 @@ Out of scope:
   [a8_damage_effect_chain_current_status_20260607.md](a8_damage_effect_chain_current_status_20260607.md)
 - Dispatch queue:
   [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md)
-- Latest implementation note:
+- Latest implementation notes:
   [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)
+  and [a8_w8_aero_consumer_20260608.md](a8_w8_aero_consumer_20260608.md)
 
 ## Outputs And Evidence
 
@@ -140,9 +141,11 @@ This subproject can be marked accepted only when:
 ## Residuals And Next Steps
 
 - Public shot rows, concrete part-failure vocabulary, fixed MQ-9/AIM-120C
-  checks, and the tuned-engine propulsion consumer are integrated.
-- The next runtime step should target one wing/control aerodynamic or axis
-  response without adding a direct crash or can-fly shortcut.
+  checks, the tuned-engine propulsion consumer, and one wing/control
+  aerodynamic consumer are integrated.
+- The next runtime step should broaden consumer coverage only through existing
+  maintained systems, with particular care around fuel/mass/fire and
+  aircraft-specific control-law calibration.
 - Full calibration of fragment patterns, blast loads, target vulnerability, and
   aircraft-specific failure thresholds remains deferred.
 

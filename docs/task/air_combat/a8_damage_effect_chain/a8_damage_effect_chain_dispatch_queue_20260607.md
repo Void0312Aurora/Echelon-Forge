@@ -172,12 +172,40 @@ Fourth-wave integration rules:
   crash/can-fly shortcut, it must return `blocked` with the smallest safe
   replacement path.
 
+## Fourth Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W8 Wing/Control Aero Consumer` | pass | Structural, hydraulic, axis-control, and control-asymmetry damage now affect maintained aerodynamic coefficients and moments. Main-thread integration added the fixed MQ-9/AIM-120C right-aileron response check proposed by W9. |
+| `A8-W9 MQ-9/AIM-120C Consumer Validation Scout` | pass | Read-only scout identified the smallest deterministic fixed MQ-9 right-aileron response selector and warned against live-only acceptance. |
+| `A8-W10 Integration Guard Scout` | pass | Read-only scout identified the collection/docs/CI gates; main-thread integration collected the new mixin, formatted the changed C++ file, and synchronized status docs. |
+| `A8-DEC-E Consumer Integration` | partial | Propulsion tuning and one wing/control aero response are landed. Broader fuel/fire, sensor/data-link, and aircraft-specific control-law fidelity remain held. |
+
+Accepted validation:
+
+```bash
+clang-format --dry-run -Werror src/systems/physics/aerodynamics_system.h
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path or wing_control_damage_reaches_neutral_aero_response'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+```
+
+Outcomes: clang-format pass, focused Python lint pass, build pass, focused W8
+aero/MQ-9 response checks `2 passed, 166 deselected`, weapon guidance realism
+guards `168 passed`, flight dynamics realism guards `4 passed`, flight dynamics
+tuning runtime `3 passed`, and 1v1 fire-missile tests `11 passed`.
+
 ## Residuals
 
 - Public failure-mode rows are now mergeable, but they remain synthetic and
   non-authoritative.
-- `A8-DEC-E` should continue with one narrow control/aero response. The
-  propulsion tuning consumer is landed; fuel/mass leakage already has a
-  maintained runtime path and remains covered by existing A8 guards.
+- `A8-DEC-E` now has propulsion tuning and one narrow control/aero response.
+  Fuel/mass leakage already has a maintained runtime path and remains covered
+  by existing A8 guards, but broader downstream fuel/fire and sensor/data-link
+  response tests remain held.
 - No consumer packet may add direct crash, direct disappearance, MQ-9 special
   handling, probability-of-kill claims, or an independent can-fly verdict.

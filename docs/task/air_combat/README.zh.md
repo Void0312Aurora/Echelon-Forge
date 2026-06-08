@@ -131,9 +131,9 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
 - 新的损伤效果 follow-on 是
   [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)：
-  它是 planning 工作面，用来把起爆后的效果转成具体飞机部位损伤，并通过已有动力、燃油、
-  传感器、火灾和飞行消费路径表现出来。它不增加直接坠毁规则、MQ-9 特例击杀规则、
-  Pk 声明、确定性引信声明或 AIM-120C 权威杀伤声明。
+  它是 active 工作面，用来把起爆后的效果转成具体飞机部位损伤，并通过已有动力、燃油、
+  传感器、火灾和飞行消费路径表现出来。动力和一段翼面/操纵气动消费方切片已经落地。
+  它仍不增加直接坠毁规则、MQ-9 特例击杀规则、Pk 声明、确定性引信声明或 AIM-120C 权威杀伤声明。
 
 ## 当前继续推进重点
 
@@ -146,7 +146,8 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   才另启 `G4/G5 authority` 或新的 research expansion
 - 推进
   [A8 损伤效果链](a8_damage_effect_chain/README.zh.md)，作为具体损伤通过维护中的飞机系统
-  传播的 follow-on，但不增加直接坠毁或特定目标击杀规则
+  传播的 follow-on，但不增加直接坠毁或特定目标击杀规则；当前已验收切片覆盖动力和一段有限
+  翼面/操纵气动响应
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外

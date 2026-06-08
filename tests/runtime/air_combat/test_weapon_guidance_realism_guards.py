@@ -3,6 +3,9 @@ from __future__ import annotations
 import unittest
 
 from tests.runtime.air_combat.weapon_guidance_realism.aircraft_damage import AircraftDamageRuntimeMixin
+from tests.runtime.air_combat.weapon_guidance_realism.a8_aero_consumer import (
+    A8AeroConsumerRuntimeMixin,
+)
 from tests.runtime.air_combat.weapon_guidance_realism.a8_mq9_aim120 import (
     A8Mq9Aim120ValidationRuntimeMixin,
 )
@@ -26,6 +29,7 @@ class WeaponGuidanceRealismGuardTests(
     FuzeRuntimeMixin,
     WarheadEffectsRuntimeMixin,
     A8Mq9Aim120ValidationRuntimeMixin,
+    A8AeroConsumerRuntimeMixin,
     AircraftDamageRuntimeMixin,
     ComponentDamageRuntimeMixin,
     DefaultEffectsModularizationRuntimeMixin,

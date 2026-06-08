@@ -1,8 +1,9 @@
 # A8 Damage Effect Chain Current Status
 
-Status: `2026-06-08` third implementation checkpoint. A8 has a bounded work
-surface, current-session structure findings are integrated, and the first
-propulsion consumer slice has landed as a limited `A8-DEC-E` runtime/test slice.
+Status: `2026-06-08` fourth implementation checkpoint. A8 has a bounded work
+surface, current-session structure findings are integrated, and limited
+propulsion plus wing/control aerodynamic consumer slices have landed under
+`A8-DEC-E`.
 
 ## What Changed
 
@@ -45,6 +46,14 @@ propulsion consumer slice has landed as a limited `A8-DEC-E` runtime/test slice.
     computed, closing the tuning-bypass risk without adding a direct kill rule.
     Evidence note:
     [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md).
+- Accepted the second `A8-DEC-E` implementation slice:
+  - `A8-W8 Wing/Control Aero Consumer`: pass. It makes structural, hydraulic,
+    roll/pitch/yaw control, and control-asymmetry damage affect maintained
+    aerodynamic coefficients and moments, without adding a direct crash or
+    independent flight verdict. Main-thread validation also added a fixed
+    MQ-9/AIM-120C right-aileron response check following `A8-W9` scout
+    guidance. Evidence note:
+    [a8_w8_aero_consumer_20260608.md](a8_w8_aero_consumer_20260608.md).
 
 ## Acceptance Check 2026-06-07
 
@@ -110,6 +119,32 @@ Outcomes:
 - 1v1 fire-missile tests: `11 passed, 2 subtests passed`.
 - Flight dynamics realism guards: `4 passed`.
 
+## Fourth Acceptance Check 2026-06-08
+
+Commands run:
+
+```bash
+clang-format --dry-run -Werror src/systems/physics/aerodynamics_system.h
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path or wing_control_damage_reaches_neutral_aero_response'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+```
+
+Outcomes:
+
+- Changed C++ file clang-format gate: pass.
+- Focused Python lint: pass.
+- Build: pass.
+- Focused W8 aero/MQ-9 response checks: `2 passed, 166 deselected`.
+- Weapon guidance realism guards: `168 passed`.
+- Flight dynamics realism guards: `4 passed`.
+- Flight dynamics tuning runtime: `3 passed`.
+- 1v1 fire-missile tests: `11 passed`.
+
 ## Maturity Matrix
 
 | Area | Accepted | Active | Held | Deferred |
@@ -117,8 +152,8 @@ Outcomes:
 | Fuze and detonation event path | Proximity-fuze disappearance was recently repaired and guarded by runtime tests. | A8 must use the recorded event as the first stage of the chain. | Deterministic fuze truth is not accepted. | Real fuze calibration. |
 | Structured parts and aircraft damage state | Named hitboxes, components, groups, aircraft state fields, and public component failure-mode rows exist. | A8 must keep the explanation non-authoritative and tied to shot rows. | Current integrity/capability numbers are still not enough by themselves. | Broad target-family data calibration. |
 | Warhead action to part damage | Default effects code estimates fragment/blast/rod-like loads and now exposes simulated part-failure modes. | A8 must keep the synthetic vocabulary auditable through tests. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
-| Part damage to aircraft behavior | Propulsion damage now reaches runtime thrust even when explicit engine tuning is active; fuel, sensor, fire, and broad flight limits also consume some damage state. | A8 should implement one wing/control aerodynamic or axis-authority response next. | Aerodynamic/control consequences are still too indirect in forces and moments. | Full aircraft-specific flight-control law calibration. |
-| MQ-9 / AIM-120C validation | Test fixtures and configs exist. | A8 should make fixed rear, wing/control, fuel/fire, and sensor/data-link cases. | A live smoke result is not enough for acceptance. | Probability of kill or real-world lethality claims. |
+| Part damage to aircraft behavior | Propulsion damage reaches runtime thrust even when explicit engine tuning is active; wing/control damage now reaches limited aerodynamic coefficients, moments, and axis authority; fuel, sensor, fire, and broad flight limits also consume some damage state. | A8 should keep broadening consumers only through maintained systems. | Current aero response is synthetic and scalar; left/right sign fidelity and aircraft-specific control laws are not accepted. | Full aircraft-specific flight-control law calibration. |
+| MQ-9 / AIM-120C validation | Test fixtures, fixed component cases, non-authority checks, and a fixed right-aileron aero-response check exist. | A8 should continue with rear/fuel/fire/sensor downstream response coverage. | A live smoke result is not enough for acceptance. | Probability of kill or real-world lethality claims. |
 
 ## Read-Only Findings Integrated
 
@@ -146,9 +181,10 @@ Damage-to-flight structure:
   reduce thrust and then forces. `A8-W7` closes the narrow tuning-bypass risk:
   explicit engine tuning now receives the same propulsion-damage scale before
   runtime thrust is computed.
-- Aerodynamics and the default control model are the main weak points. They do
-  not yet fully consume damaged structure, damaged control surfaces, left/right
-  asymmetry, or reduced axis authority as forces and moments.
+- Aerodynamics now consumes a limited set of damaged structure, damaged control
+  path, and asymmetry fields as lift/drag scaling and roll/pitch/yaw moments.
+  This is an engineering response path, not calibrated aircraft-specific
+  control law behavior.
 - Existing `flight_control_kill`, `propulsion_kill`, and forced-landing fields
   should stay report/status outputs, not become a new shortcut around flight
   simulation.
@@ -213,11 +249,9 @@ Plain expected examples:
 Immediate:
 
 - Continue `A8-DEC-E` as maintained consumer work, not as a direct kill rule:
-  the propulsion tuning cap is landed; the next narrow slice is one
-  wing/control aerodynamic or axis-authority response.
-- Re-run fixed MQ-9/AIM-120C cases after consumer integration changes, because
-  the current fixtures prove auditable damage and non-authority, not final
-  flight-response fidelity.
+  propulsion tuning and one wing/control aerodynamic response are landed.
+- Extend fixed MQ-9/AIM-120C downstream checks for rear, fuel/fire, and
+  sensor/data-link cases after each additional consumer slice.
 
 Held:
 
@@ -234,9 +268,11 @@ Deferred:
 
 ## Next Recommended Order
 
-1. Connect one wing/control aerodynamic or axis-authority effect.
-2. Re-run MQ-9/AIM-120C fixed validations against the added consumer behavior.
-3. Decide accepted or held for `A8-DEC-E`, then update final A8 acceptance.
+1. Add downstream response checks for rear propulsion, fuel/fire, and
+   sensor/data-link cases.
+2. Decide whether the current limited `A8-DEC-E` consumer set is accepted or
+   still held for more maintained consumers.
+3. Sync final A8 acceptance only after residuals are explicitly held or closed.
 
 ## Forbidden Conclusions
 

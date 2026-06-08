@@ -1,7 +1,7 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-08` 第三轮实现检查点。A8 已有有边界工作面，并已整合当前会话
-结构发现；第一段动力消费方已作为有限 `A8-DEC-E` 运行时/测试切片落地。
+状态：`2026-06-08` 第四轮实现检查点。A8 已有有边界工作面，并已整合当前会话
+结构发现；有限动力消费方和翼面/操纵气动消费方切片已在 `A8-DEC-E` 下落地。
 
 ## 本次变化
 
@@ -33,6 +33,12 @@
     `AircraftDamageState.propulsion_integrity`，关闭调参绕过损伤缩放的风险，同时没有加入直接击杀规则。
     证据说明：
     [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)。
+- 已验收第二段 `A8-DEC-E` 实现：
+  - `A8-W8 Wing/Control Aero Consumer`：通过。结构、液压、滚转/俯仰/偏航操纵能力和操纵不对称
+    现在会影响维护中的气动系数和力矩；没有加入直接坠毁规则，也没有加入独立飞行判决。
+    主线程验收时也根据 `A8-W9` 侦察建议补了一条固定 MQ-9/AIM-120C 右副翼响应检查。
+    证据说明：
+    [a8_w8_aero_consumer_20260608.md](a8_w8_aero_consumer_20260608.md)。
 
 ## 2026-06-07 验收检查
 
@@ -97,6 +103,32 @@ python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards
 - 1v1 发射链测试：`11 passed, 2 subtests passed`。
 - 飞行动力学真实感守卫：`4 passed`。
 
+## 2026-06-08 第四轮验收检查
+
+已运行命令：
+
+```bash
+clang-format --dry-run -Werror src/systems/physics/aerodynamics_system.h
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path or wing_control_damage_reaches_neutral_aero_response'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+```
+
+结果：
+
+- 触碰 C++ 文件 clang-format 门：通过。
+- 聚焦 Python lint：通过。
+- 编译：通过。
+- W8 气动/MQ-9 响应聚焦检查：`2 passed, 166 deselected`。
+- 武器/引信/损伤链守卫：`168 passed`。
+- 飞行动力学真实感守卫：`4 passed`。
+- 飞行动力学调参运行时：`3 passed`。
+- 1v1 发射链测试：`11 passed`。
+
 ## 成熟度矩阵
 
 | 区域 | Accepted | Active | Held | Deferred |
@@ -104,8 +136,8 @@ python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards
 | 引信和起爆事件路径 | 近炸静默消失问题近期已修复，并有运行时测试保护。 | A8 必须把已记录事件作为链路第一段。 | 确定性引信真值未验收。 | 真实引信校准。 |
 | 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组、飞机状态字段和公开逐部件故障类型行。 | A8 必须保持解释非权威，并绑定在射击记录上。 | 只有完整度/能力数字仍不够。 | 大范围目标族数据校准。 |
 | 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷，并公开模拟部件故障类型。 | A8 必须通过测试保持 synthetic 词表可审计。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
-| 部位损伤到飞机行为 | 推进损伤现在即使在显式发动机调参启用时也能进入运行时推力；燃油、传感器、火灾和粗略飞行限制也消费部分损伤状态。 | A8 下一步应实现一个翼面/操纵气动或轴向控制响应。 | 气动/操纵后果在力和力矩上仍太间接。 | 完整飞机专用飞控律校准。 |
-| MQ-9 / AIM-120C 验证 | 测试夹具和配置存在。 | A8 应构建尾部、翼面/操纵、燃油/火灾、传感器/数据链固定样例。 | 一次 live smoke 结果不足以验收。 | 击杀概率或真实世界杀伤声明。 |
+| 部位损伤到飞机行为 | 推进损伤即使在显式发动机调参启用时也能进入运行时推力；翼面/操纵损伤现在能进入有限气动系数、力矩和轴向控制能力；燃油、传感器、火灾和粗略飞行限制也消费部分损伤状态。 | A8 后续只能通过维护中的系统继续扩大消费方覆盖。 | 当前气动响应仍是 synthetic 且偏标量化；左右符号保真和飞机专用飞控律未验收。 | 完整飞机专用飞控律校准。 |
+| MQ-9 / AIM-120C 验证 | 已有测试夹具、固定部件样例、非权威检查和固定右副翼气动响应检查。 | A8 应继续补尾部/燃油/火灾/传感器的下游响应覆盖。 | 一次 live smoke 结果不足以验收。 | 击杀概率或真实世界杀伤声明。 |
 
 ## 已整合的只读发现
 
@@ -125,8 +157,8 @@ python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards
   `FlightModel`、`Propulsion`、`Mass`、`Sensor` 和 `PlatformDamageState`。
 - 动力是现有最强消费方，因为推进损伤可以降低推力，再进入受力计算。`A8-W7` 已关闭窄的调参绕过风险：
   显式发动机调参会在运行时推力计算前接受同一推进损伤缩放。
-- 气动和默认控制模型是主要弱点。它们还没有充分把结构破损、舵面破损、左右不对称或轴向控制能力下降
-  表现成力和力矩。
+- 气动系统现在会把有限结构破损、操纵通路破损和不对称字段消费成升力/阻力缩放以及滚转/俯仰/偏航力矩。
+  这是工程响应路径，不是已校准的飞机专用飞控律。
 - 现有 `flight_control_kill`、`propulsion_kill` 和 forced-landing 字段应保持报告/状态输出，
   不应变成绕过飞行仿真的新捷径。
 
@@ -182,10 +214,8 @@ MQ-9 / AIM-120C 验证结构：
 
 立即：
 
-- 继续把 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参上限已经落地；
-  下一段是一个翼面/操纵气动或轴向控制响应。
-- 消费方改动后必须重跑 MQ-9/AIM-120C 固定样例；当前样例证明的是可审计损伤和非权威边界，
-  不是最终飞行响应保真度。
+- 继续把 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参和一段翼面/操纵气动响应已经落地。
+- 每新增一个消费方切片后，继续扩展 MQ-9/AIM-120C 固定下游检查，尤其是尾部、燃油/火灾和传感器/数据链。
 
 Held：
 
@@ -202,9 +232,9 @@ Deferred：
 
 ## 下一步推荐顺序
 
-1. 接入一个翼面/操纵气动或轴向控制效果。
-2. 用新增消费方行为重跑 MQ-9/AIM-120C 固定验证。
-3. 决定 `A8-DEC-E` accepted 或 held，再同步 A8 最终验收。
+1. 补充尾部动力、燃油/火灾和传感器/数据链的下游响应检查。
+2. 决定当前有限 `A8-DEC-E` 消费方集合是 accepted 还是仍需继续 held 等待更多维护消费方。
+3. 只有在残余明确 hold 或 closed 后，才同步 A8 最终验收。
 
 ## 禁止结论
 
