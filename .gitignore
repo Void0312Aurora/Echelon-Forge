@@ -70,6 +70,8 @@ docs/plan/results/
 docs/plan/results/**
 docs/plan/architecture/review/
 docs/plan/architecture/review/**
+docs/paper/
+docs/paper/**
 /archive/
 !tools/archive/
 !tools/archive/**
