@@ -182,6 +182,34 @@ def _assert_component_row_exposes_public_failure_modes(
     return modes
 
 
+def _a8_engine_tuned_f16_override() -> dict:
+    with open(
+        resolve_repo_path(
+            "examples",
+            "config",
+            "database",
+            "aircraft",
+            "units",
+            "f16c_block50.json",
+        ),
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        unit = json.load(handle)
+    unit["name"] = "F-16C_A8_EngineTuned"
+    unit["engine_tuning"] = {
+        "enabled": True,
+        "mil_thrust_n": 76310.0,
+        "ab_thrust_n": 131000.0,
+        "throttle_ab_threshold": 0.9,
+        "tau_spool_up_s": 0.4,
+        "tau_spool_down_s": 0.3,
+        "tsfc_mil_kg_per_nh": 0.76,
+        "tsfc_ab_kg_per_nh": 1.90,
+    }
+    return unit
+
+
 class A8Mq9Aim120ValidationRuntimeMixin:
     def test_a8_mq9_aim120_near_range_live_chain_records_launch_effect_damage(
         self,
@@ -432,3 +460,47 @@ class A8Mq9Aim120ValidationRuntimeMixin:
             },
         )
         self.assertNotIn("fuel_leak", modes)
+
+    def test_a8_engine_damage_scales_actual_thrust_with_explicit_engine_tuning(self) -> None:
+        sim = _kernel_with_unit_overrides([_a8_engine_tuned_f16_override()])
+        attacker_id, target_id = _spawn_attacker_and_named_target(
+            sim,
+            "F-16C_A8_EngineTuned",
+        )
+        pilot = ef_py.PilotAction()
+        pilot.active = True
+        pilot.throttle = 1.0
+        sim.set_pilot_action(target_id, pilot)
+        for _ in range(120):
+            sim.step()
+
+        before = sim.get_flight_dynamics_debug_view(target_id)
+        self.assertGreater(float(before.current_thrust_n), 10000.0)
+        self.assertAlmostEqual(float(before.mil_thrust_n), 76310.0, delta=1.0)
+
+        ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+            attacker_id,
+            target_id,
+            -5.8,
+            0.0,
+            0.0,
+            _make_warhead_profile("blast_fragmentation", damage=140.0, radius=35.0),
+            900.0,
+            -250.0,
+            0.0,
+        )
+        self.assertTrue(bool(ok))
+        events = sim.export_recent_engagement_events()
+        self.assertEqual(len(events.effects_events), 1)
+        effect = events.effects_events[0]
+        self.assertEqual(str(effect.component_primary_name), "engine_core")
+        self.assertEqual(str(effect.component_primary_system), "engine")
+
+        overlay = _aircraft_damage_overlay(sim, target_id)
+        self.assertLess(overlay["propulsion"], 1.0)
+        for _ in range(8):
+            sim.step()
+
+        after = sim.get_flight_dynamics_debug_view(target_id)
+        self.assertLess(float(after.mil_thrust_n), float(before.mil_thrust_n))
+        self.assertLess(float(after.current_thrust_n), float(before.current_thrust_n) * 0.80)

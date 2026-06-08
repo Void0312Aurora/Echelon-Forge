@@ -1,8 +1,8 @@
 # A8 Damage Effect Chain Current Status
 
-Status: `2026-06-07` second implementation checkpoint. A8 has a bounded work
-surface, current-session read-only structure findings are integrated, and the
-first two worker waves have been accepted as limited runtime/test slices.
+Status: `2026-06-08` third implementation checkpoint. A8 has a bounded work
+surface, current-session structure findings are integrated, and the first
+propulsion consumer slice has landed as a limited `A8-DEC-E` runtime/test slice.
 
 ## What Changed
 
@@ -39,6 +39,12 @@ first two worker waves have been accepted as limited runtime/test slices.
   - `A8-W6 Aero Control Consumer Scout`: pass as read-only evidence. It
     identifies the narrow control/aero response path and confirms that actual
     force/moment behavior still needs `A8-DEC-E` implementation.
+- Accepted the first `A8-DEC-E` implementation slice:
+  - `A8-W7 Propulsion Tuning Consumer`: pass. It makes explicit engine tuning
+    consume `AircraftDamageState.propulsion_integrity` before runtime thrust is
+    computed, closing the tuning-bypass risk without adding a direct kill rule.
+    Evidence note:
+    [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md).
 
 ## Acceptance Check 2026-06-07
 
@@ -80,6 +86,30 @@ Outcomes:
 - 1v1 fire missile tests: `11 passed`.
 - Engagement contract shape tests: `4 passed`.
 
+## Third Acceptance Check 2026-06-08
+
+Commands run:
+
+```bash
+git diff --check -- src/systems/physics/propulsion_system.h tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py docs/task/air_combat/a8_damage_effect_chain
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_a8_engine_damage_scales_actual_thrust_with_explicit_engine_tuning
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+```
+
+Outcomes:
+
+- Diff whitespace check: pass.
+- Build: pass.
+- Focused A8 tuned-engine propulsion consumer test: `1 passed`.
+- Weapon guidance realism guards: `166 passed, 239 subtests passed`.
+- Flight dynamics tuning runtime: `3 passed`.
+- 1v1 fire-missile tests: `11 passed, 2 subtests passed`.
+- Flight dynamics realism guards: `4 passed`.
+
 ## Maturity Matrix
 
 | Area | Accepted | Active | Held | Deferred |
@@ -87,7 +117,7 @@ Outcomes:
 | Fuze and detonation event path | Proximity-fuze disappearance was recently repaired and guarded by runtime tests. | A8 must use the recorded event as the first stage of the chain. | Deterministic fuze truth is not accepted. | Real fuze calibration. |
 | Structured parts and aircraft damage state | Named hitboxes, components, groups, aircraft state fields, and public component failure-mode rows exist. | A8 must keep the explanation non-authoritative and tied to shot rows. | Current integrity/capability numbers are still not enough by themselves. | Broad target-family data calibration. |
 | Warhead action to part damage | Default effects code estimates fragment/blast/rod-like loads and now exposes simulated part-failure modes. | A8 must keep the synthetic vocabulary auditable through tests. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
-| Part damage to aircraft behavior | Propulsion, fuel, sensor, and broad flight limits consume some damage state; W5/W6 identified the next narrow hooks. | A8 must implement maintained consumers in `A8-DEC-E`. | Aerodynamic/control consequences are still too indirect in forces and moments. | Full aircraft-specific flight-control law calibration. |
+| Part damage to aircraft behavior | Propulsion damage now reaches runtime thrust even when explicit engine tuning is active; fuel, sensor, fire, and broad flight limits also consume some damage state. | A8 should implement one wing/control aerodynamic or axis-authority response next. | Aerodynamic/control consequences are still too indirect in forces and moments. | Full aircraft-specific flight-control law calibration. |
 | MQ-9 / AIM-120C validation | Test fixtures and configs exist. | A8 should make fixed rear, wing/control, fuel/fire, and sensor/data-link cases. | A live smoke result is not enough for acceptance. | Probability of kill or real-world lethality claims. |
 
 ## Read-Only Findings Integrated
@@ -113,8 +143,9 @@ Damage-to-flight structure:
   `AircraftDamageState`, then into `FlightModel`, `Propulsion`, `Mass`,
   `Sensor`, and `PlatformDamageState` each frame.
 - Propulsion is the strongest existing consumer, because degraded propulsion can
-  reduce thrust and then forces. There is a potential tuning-bypass risk when an
-  active engine tuning overrides damaged propulsion values.
+  reduce thrust and then forces. `A8-W7` closes the narrow tuning-bypass risk:
+  explicit engine tuning now receives the same propulsion-damage scale before
+  runtime thrust is computed.
 - Aerodynamics and the default control model are the main weak points. They do
   not yet fully consume damaged structure, damaged control surfaces, left/right
   asymmetry, or reduced axis authority as forces and moments.
@@ -181,9 +212,9 @@ Plain expected examples:
 
 Immediate:
 
-- Implement `A8-DEC-E` as maintained consumer work, not as a direct kill rule:
-  propulsion tuning cap, fuel/mass leak behavior, and one wing/control
-  aerodynamic or control response.
+- Continue `A8-DEC-E` as maintained consumer work, not as a direct kill rule:
+  the propulsion tuning cap is landed; the next narrow slice is one
+  wing/control aerodynamic or axis-authority response.
 - Re-run fixed MQ-9/AIM-120C cases after consumer integration changes, because
   the current fixtures prove auditable damage and non-authority, not final
   flight-response fidelity.
@@ -203,10 +234,9 @@ Deferred:
 
 ## Next Recommended Order
 
-1. Connect the first narrow propulsion/fuel/mass consumer slice.
-2. Connect one
-   wing/control aerodynamic effect.
-3. Run MQ-9/AIM-120C fixed validations and decide accepted or held.
+1. Connect one wing/control aerodynamic or axis-authority effect.
+2. Re-run MQ-9/AIM-120C fixed validations against the added consumer behavior.
+3. Decide accepted or held for `A8-DEC-E`, then update final A8 acceptance.
 
 ## Forbidden Conclusions
 

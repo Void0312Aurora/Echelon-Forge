@@ -94,7 +94,7 @@ Second-wave integration rules:
 | `A8-W4 Public Failure Mode Rows` | pass | Public component rows now expose simulated failure-mode names, severities, source, and non-authority flag. |
 | `A8-W5 Propulsion Fuel Mass Consumer Scout` | pass | Read-only evidence identifies the propulsion/fuel/mass path and engine-tuning bypass risk. |
 | `A8-W6 Aero Control Consumer Scout` | pass | Read-only evidence identifies the control/aero hook and confirms force/moment response still needs implementation. |
-| `A8-DEC-E Consumer Integration` | held | No production consumer changes landed in this wave. |
+| `A8-DEC-E Consumer Integration` | partial | W7 landed the propulsion tuning consumer; one wing/control aero response remains. |
 
 ## Integration Acceptance 2026-06-07
 
@@ -124,11 +124,36 @@ Outcomes: diff check pass, build pass, `165 passed` for the realism guards,
 `11 passed` for 1v1 fire-missile tests, and `4 passed` for engagement contract
 shape tests.
 
+## Third Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W7 Propulsion Tuning Consumer` | pass | Explicit engine tuning now consumes propulsion damage before current thrust is computed. |
+| `A8-DEC-E Consumer Integration` | partial | Propulsion tuning bypass is closed; wing/control aero response remains active. |
+
+Accepted validation:
+
+```bash
+git diff --check -- src/systems/physics/propulsion_system.h tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py docs/task/air_combat/a8_damage_effect_chain
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_a8_engine_damage_scales_actual_thrust_with_explicit_engine_tuning
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+```
+
+Outcomes: diff check pass, build pass, focused A8 propulsion consumer test
+`1 passed`, weapon guidance realism guards `166 passed, 239 subtests passed`,
+flight dynamics tuning runtime `3 passed`, 1v1 fire-missile tests `11 passed,
+2 subtests passed`, and flight dynamics realism guards `4 passed`.
+
 ## Residuals
 
 - Public failure-mode rows are now mergeable, but they remain synthetic and
   non-authoritative.
-- `A8-DEC-E` should split into narrow implementation packets: propulsion/fuel
-  first, then one control/aero response.
+- `A8-DEC-E` should continue with one narrow control/aero response. The
+  propulsion tuning consumer is landed; fuel/mass leakage already has a
+  maintained runtime path and remains covered by existing A8 guards.
 - No consumer packet may add direct crash, direct disappearance, MQ-9 special
   handling, probability-of-kill claims, or an independent can-fly verdict.

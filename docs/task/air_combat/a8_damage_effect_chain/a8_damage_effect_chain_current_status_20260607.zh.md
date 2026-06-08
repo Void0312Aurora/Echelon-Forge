@@ -1,7 +1,7 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-07` 第二轮实现检查点。A8 已有有边界工作面，并已整合当前会话
-只读结构发现；前两轮 worker 结果已作为有限运行时/测试切片验收。
+状态：`2026-06-08` 第三轮实现检查点。A8 已有有边界工作面，并已整合当前会话
+结构发现；第一段动力消费方已作为有限 `A8-DEC-E` 运行时/测试切片落地。
 
 ## 本次变化
 
@@ -28,6 +28,11 @@
     消费路径，以及发动机调参可能绕过损伤缩放的风险。
   - `A8-W6 Aero Control Consumer Scout`：只读证据通过。它确认了操纵/气动响应的最窄切口，
     同时说明真正的力和力矩变化仍需 `A8-DEC-E` 实现。
+- 已验收第一段 `A8-DEC-E` 实现：
+  - `A8-W7 Propulsion Tuning Consumer`：通过。显式发动机调参现在会在计算运行时推力前消费
+    `AircraftDamageState.propulsion_integrity`，关闭调参绕过损伤缩放的风险，同时没有加入直接击杀规则。
+    证据说明：
+    [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)。
 
 ## 2026-06-07 验收检查
 
@@ -68,6 +73,30 @@ python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
 - 1v1 发射链测试：`11 passed`。
 - 交战记录合同形状测试：`4 passed`。
 
+## 2026-06-08 第三轮验收检查
+
+已运行命令：
+
+```bash
+git diff --check -- src/systems/physics/propulsion_system.h tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py docs/task/air_combat/a8_damage_effect_chain
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_a8_engine_damage_scales_actual_thrust_with_explicit_engine_tuning
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
+python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
+python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
+```
+
+结果：
+
+- diff 空白检查：通过。
+- 编译：通过。
+- 调参发动机动力消费方聚焦测试：`1 passed`。
+- 武器/引信/损伤链守卫：`166 passed, 239 subtests passed`。
+- 飞行动力学调参运行时：`3 passed`。
+- 1v1 发射链测试：`11 passed, 2 subtests passed`。
+- 飞行动力学真实感守卫：`4 passed`。
+
 ## 成熟度矩阵
 
 | 区域 | Accepted | Active | Held | Deferred |
@@ -75,7 +104,7 @@ python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
 | 引信和起爆事件路径 | 近炸静默消失问题近期已修复，并有运行时测试保护。 | A8 必须把已记录事件作为链路第一段。 | 确定性引信真值未验收。 | 真实引信校准。 |
 | 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组、飞机状态字段和公开逐部件故障类型行。 | A8 必须保持解释非权威，并绑定在射击记录上。 | 只有完整度/能力数字仍不够。 | 大范围目标族数据校准。 |
 | 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷，并公开模拟部件故障类型。 | A8 必须通过测试保持 synthetic 词表可审计。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
-| 部位损伤到飞机行为 | 动力、燃油、传感器和粗略飞行限制已经消费部分损伤状态；W5/W6 已确认下一步窄切口。 | A8 必须在 `A8-DEC-E` 中实现维护中的消费方。 | 气动/操纵后果在力和力矩上仍太间接。 | 完整飞机专用飞控律校准。 |
+| 部位损伤到飞机行为 | 推进损伤现在即使在显式发动机调参启用时也能进入运行时推力；燃油、传感器、火灾和粗略飞行限制也消费部分损伤状态。 | A8 下一步应实现一个翼面/操纵气动或轴向控制响应。 | 气动/操纵后果在力和力矩上仍太间接。 | 完整飞机专用飞控律校准。 |
 | MQ-9 / AIM-120C 验证 | 测试夹具和配置存在。 | A8 应构建尾部、翼面/操纵、燃油/火灾、传感器/数据链固定样例。 | 一次 live smoke 结果不足以验收。 | 击杀概率或真实世界杀伤声明。 |
 
 ## 已整合的只读发现
@@ -94,8 +123,8 @@ python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py
 
 - 当前桥接不是单个飞行判决。损伤进入 `AircraftDamageState` 后，每帧再进入
   `FlightModel`、`Propulsion`、`Mass`、`Sensor` 和 `PlatformDamageState`。
-- 动力是现有最强消费方，因为推进损伤可以降低推力，再进入受力计算。但当有效发动机调参覆盖
-  `Propulsion` 数值时，存在绕开损伤缩放的风险。
+- 动力是现有最强消费方，因为推进损伤可以降低推力，再进入受力计算。`A8-W7` 已关闭窄的调参绕过风险：
+  显式发动机调参会在运行时推力计算前接受同一推进损伤缩放。
 - 气动和默认控制模型是主要弱点。它们还没有充分把结构破损、舵面破损、左右不对称或轴向控制能力下降
   表现成力和力矩。
 - 现有 `flight_control_kill`、`propulsion_kill` 和 forced-landing 字段应保持报告/状态输出，
@@ -153,8 +182,8 @@ MQ-9 / AIM-120C 验证结构：
 
 立即：
 
-- 将 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参上限、燃油/质量泄漏行为，
-  以及一个翼面/操纵气动或控制响应。
+- 继续把 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参上限已经落地；
+  下一段是一个翼面/操纵气动或轴向控制响应。
 - 消费方改动后必须重跑 MQ-9/AIM-120C 固定样例；当前样例证明的是可审计损伤和非权威边界，
   不是最终飞行响应保真度。
 
@@ -173,9 +202,9 @@ Deferred：
 
 ## 下一步推荐顺序
 
-1. 接入最窄的动力/燃油/质量消费方切片。
-2. 接入一个翼面/操纵气动效果。
-3. 运行 MQ-9/AIM-120C 固定验证，再决定 accepted 或 held。
+1. 接入一个翼面/操纵气动或轴向控制效果。
+2. 用新增消费方行为重跑 MQ-9/AIM-120C 固定验证。
+3. 决定 `A8-DEC-E` accepted 或 held，再同步 A8 最终验收。
 
 ## 禁止结论
 

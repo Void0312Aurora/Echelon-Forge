@@ -1,8 +1,8 @@
 # A8 Damage Effect Chain
 
-Status: `2026-06-07` planning with read-only structure evidence integrated. This
-follow-on creates the work surface for turning weapon damage into concrete
-aircraft effects before implementation starts.
+Status: `2026-06-08` active implementation. The shot record, part-failure
+vocabulary, public failure-mode rows, and the first propulsion-consumer slice
+are in place; wing/control aerodynamic response remains active work.
 
 Language:
 
@@ -53,8 +53,8 @@ simulation responds.
 | Part-level damage inventory | active input | `damage.h` plus MQ-9 JSON define hit boxes, named parts, groups, and dependencies. | The names are engineering scaffolds until calibrated data replaces them. |
 | Warhead-to-part effect model | primary cut point | `default_effects_model.cpp` and detail files compute mechanism loads, affected components, and current failure probability. | This is the first implementation cut point, but the current values are estimates, not AIM-120C truth. |
 | Damage-to-aircraft state | active input | `AircraftDamageStateUpdate` maps parts into propulsion, fuel, sensors, fire, and broad flight limits. | Keep this as the downstream bridge; do not replace it with a direct kill rule. |
-| Flight and propulsion consumers | gap | Propulsion mostly consumes degraded thrust; aerodynamics and the default control model do not yet fully consume damaged structure, control authority, and asymmetry. | A damaged wing, a stuck control surface, or left/right asymmetry is not yet strongly visible in forces and moments. |
-| Test evidence | planned | MQ-9, AIM-120C, F-16C launch fixtures, and runtime air-combat guidance tests are available as starting fixtures. | A live missile smoke test alone cannot become real-world lethality evidence. |
+| Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics and the default control model do not yet fully consume damaged structure, control authority, and asymmetry. | A damaged wing, a stuck control surface, or left/right asymmetry is not yet strongly visible in forces and moments. |
+| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, and a tuned-engine propulsion damage check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
 
 ## Scope
 
@@ -89,10 +89,10 @@ Out of scope:
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Create the follow-on work surface without changing runtime behavior. | User requested a standard damage-effect chain and subproject. | README, current status, task clusters, archive index, and parent links exist. | pass |
 | `P1 Structure Evidence` | Confirm the current hit, effect, part, and flight-consumer structure. | P0 docs exist. | Read-only findings identify code entry points, gaps, and safe write sets. | pass for planning |
-| `P2 Shot Effect Record` | Define the per-shot record that explains what happened and why. | P1 confirms fields and consumers. | Tests can assert every shot has fuze, detonation, part effect, and consequence stages. | planned |
-| `P3 Part Effect Vocabulary` | Represent physical damage types instead of one generic damage amount. | P2 record is stable. | Component damage records can name leaks, cuts, fire sources, data loss, and structure weakening. | planned |
-| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | planned |
-| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | planned |
+| `P2 Shot Effect Record` | Define the per-shot record that explains what happened and why. | P1 confirms fields and consumers. | Tests can assert fuze, detonation, part effect, and consequence stages. | pass |
+| `P3 Part Effect Vocabulary` | Represent physical damage types instead of one generic damage amount. | P2 record is stable. | Component damage records can name leaks, cuts, fire sources, data loss, and structure weakening. | pass |
+| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion tuning consumer pass |
+| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | partial pass |
 | `P6 Acceptance` | Decide accepted or held and record residuals. | P5 evidence complete. | Parent README and status docs state the honest capability and remaining gaps. | planned |
 
 ## Task Clusters
@@ -103,6 +103,8 @@ Out of scope:
   [a8_damage_effect_chain_current_status_20260607.md](a8_damage_effect_chain_current_status_20260607.md)
 - Dispatch queue:
   [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md)
+- Latest implementation note:
+  [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)
 
 ## Outputs And Evidence
 
@@ -137,11 +139,10 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- P1 read-only structure confirmation is integrated in the current status. The
-  first implementation cut point is the mechanism-load to concrete part-failure
-  layer, not a new flight-verdict layer.
-- The first runtime step should prefer a narrow shot-effect record and tests
-  before changing aerodynamic behavior.
+- Public shot rows, concrete part-failure vocabulary, fixed MQ-9/AIM-120C
+  checks, and the tuned-engine propulsion consumer are integrated.
+- The next runtime step should target one wing/control aerodynamic or axis
+  response without adding a direct crash or can-fly shortcut.
 - Full calibration of fragment patterns, blast loads, target vulnerability, and
   aircraft-specific failure thresholds remains deferred.
 
