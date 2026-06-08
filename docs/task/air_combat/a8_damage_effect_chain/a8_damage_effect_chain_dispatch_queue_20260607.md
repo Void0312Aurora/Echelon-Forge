@@ -273,3 +273,30 @@ Current residuals after fifth-wave acceptance:
   damaged-aircraft crash/wreck publication, and low-speed non-crash contact.
 - No consumer packet may add direct crash, direct disappearance, MQ-9 special
   handling, probability-of-kill claims, or an independent can-fly verdict.
+
+## Sixth Dispatch Wave 2026-06-08
+
+Status: dispatched to existing current-session subagents only. No new
+conversation threads are allowed.
+
+This wave opens `A8-DEC-H Ground-Impact Lifecycle` instead of extending
+`A8-DEC-E`. The main question is no longer whether a damaged aircraft can fly;
+that remains for the flight/physics systems. The question is how a severe
+ground impact becomes an observable post-impact object state without deleting
+the aircraft as the only result.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W13 Ground-Impact Lifecycle Writer` | `A8-DEC-H` | McClintock | inherited / high | Narrow lifecycle/ground-impact write set only: `src/systems/physics/ground_contact_system.h`, lifecycle or damage-state component/contract files if needed, Python bindings if a new public field is needed, focused tests under `tests/runtime/air_combat/weapon_guidance_realism/` and collector imports. | Implement the smallest maintained public path that distinguishes safe ground contact from severe damaged-aircraft impact. A severe impact should become observable as one of: landed airframe, crashed wreck, or debris/residue. Tests must cover safe runway contact, damaged MQ-9 long-run or constructed severe-impact contact, and low-speed non-crash contact. | No direct touch-kill, no direct disappearance as the public outcome, no MQ-9 special case, no independent can-fly verdict, no real-world lethality claim, no broad terrain/landing rewrite. | `git diff --check` on touched files; clang-format for touched C++; `cmake --build build-workshop --target ef_py -j2` if bindings/C++ change; focused pytest selector; full `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py` if collector/shared guards change. | Required worker packet with status, touched files, commands/outcomes, remaining paths, behavior risks, integration notes. |
+| `A8-W14 Sensor/Data-Link/Fire Consequence Scout` | `A8-DEC-E/F` | Popper | inherited / high | Read-only. | Identify the smallest next non-overlapping checks for sensor/data-link degradation and broader fire behavior after the fuel-leak evidence. Return exact file/line entry points, proposed fixed MQ-9/AIM-120C-like hit cases, and tests that do not overlap W13's lifecycle write set. | No code edits, no docs edits, no ground-impact implementation, no direct crash/disappearance rule, no real-world lethality claim. | File/line evidence; proposed exact pytest selectors and acceptance gates for a later writer packet. | Required scout packet with touched files `none`, commands/outcomes, remaining paths, behavior risks, integration notes. |
+
+Sixth-wave integration rules:
+
+- `A8-W13` is the only writer in this wave.
+- `A8-W14` is read-only and must not patch files.
+- W13 owns only post-impact lifecycle observability. It must not modify the
+  weapon-effect logic to make an aircraft crash sooner.
+- W14 must avoid files W13 needs unless it is only citing them as read-only
+  context.
+- The main thread owns final review, verification, status synchronization, and
+  any commit.
