@@ -88,7 +88,7 @@ compatibility test, not A5 behavior evidence.
 - Event action contract:
   [a5_constrained_event_action_model_event_contract_20260603.md](a5_constrained_event_action_model_event_contract_20260603.md)
 - Air action contract overlay:
-  [../../../standards/air/act.md](../../../standards/air/act.md)
+  [../../../standards/air/act.md](../../../../standards/air/act.md)
 - Implementation evidence:
   [a5_constrained_event_action_model_implementation_evidence_20260603.md](a5_constrained_event_action_model_implementation_evidence_20260603.md)
 - Short learned-policy probe:

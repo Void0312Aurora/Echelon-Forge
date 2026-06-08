@@ -84,7 +84,7 @@ Balancing guard 属于 A7，但它只是 credit head 的支持机制，不是主
 ## Head Placement
 
 第一版 A7 implementation 应在
-[policies.py](../../../../python/rl/policy_algo/policies.py) 中把 A7 head 作为
+[policies.py](../../../../../python/rl/policy_algo/policies.py) 中把 A7 head 作为
 `hybrid_event_head` 的 policy-level sibling：
 
 - 暴露 `Q_hold`、`Q_fire_once` 与 `A_event`；

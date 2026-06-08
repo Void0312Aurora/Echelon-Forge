@@ -44,7 +44,7 @@ event-value 或 first-event timing。
   source、stochastic collection handling 与 cumulative hazard diagnostics。
 - 若 cluster 超过 round cap，先停下重新 scope，再考虑新 wave。
 - 遵从
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.zh.md)。
+  [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.zh.md)。
 
 ## Worker Packet 要求
 

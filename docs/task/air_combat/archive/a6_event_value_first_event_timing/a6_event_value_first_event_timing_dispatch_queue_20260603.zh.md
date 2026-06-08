@@ -63,7 +63,7 @@ return packet:
 
 - 本工作严禁创建新的会话线程。
 - 若使用 subagents，每个 worker 必须映射到一个 cluster，并遵从
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.zh.md)。
+  [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.zh.md)。
 - `experiments_tmp` 不入 staging。
 - A7 定义并验证 counterfactual objective 与 cumulative hazard diagnostics 前，不恢复 L
   training 或 L weight search。

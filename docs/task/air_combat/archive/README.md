@@ -14,6 +14,18 @@ Current entry:
   sealed high-fidelity damage-model research/candidate record.
 - [a3_c2_roe_release_discipline/](a3_c2_roe_release_discipline/README.md):
   accepted C2/ROE release-discipline contract and evidence packet.
+- [a4_authorized_first_shot_training_signal/](a4_authorized_first_shot_training_signal/README.md):
+  closed historical firing-signal evidence showing reward/routing did not solve
+  launch closure.
+- [a5_constrained_event_action_model/](a5_constrained_event_action_model/README.md):
+  closed historical constrained event-action packet that provides the
+  `hold/fire_once` surface and A5 weapon-arm alignment context for M3-S2.
+- [a6_event_value_first_event_timing/](a6_event_value_first_event_timing/README.md):
+  closed historical first-event timing packet for hazard, deadline, and
+  launch-window evidence.
+- [a7_event_value_advantage_credit_head/](a7_event_value_advantage_credit_head/README.md):
+  closed historical event-credit/timing packet for future timing-quality
+  research reference.
 - [a8_damage_effect_chain/](a8_damage_effect_chain/README.md):
   accepted bounded damage-effect-chain evidence packet with calibration,
   stock-lethality, and debris/residue residuals deferred.

@@ -92,7 +92,7 @@ it is a support mechanism for the credit head rather than the main fix.
 
 The first A7 implementation should add a policy-level sibling to
 `hybrid_event_head` inside
-[policies.py](../../../../python/rl/policy_algo/policies.py):
+[policies.py](../../../../../python/rl/policy_algo/policies.py):
 
 - expose `Q_hold`, `Q_fire_once`, and `A_event`;
 - initialize the head at zero so the initial policy is unchanged;

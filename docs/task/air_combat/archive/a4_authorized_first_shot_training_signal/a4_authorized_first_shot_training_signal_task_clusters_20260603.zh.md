@@ -26,7 +26,7 @@ A4 可以修改 reward shaping、维护中的 S1 C2/ROE probe knobs、focused te
 - 不允许两个 worker 同时编辑同一 reward table、scenario、routing contract 或 status line。
 - 短训证据和 closure cluster 必须串行。
 - 若 cluster 超过 round cap，先停止并重新划分范围。
-- 遵从 [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)。
+- 遵从 [Subagent 使用规范](../../../../standards/governance/subagent_usage_policy.zh.md)。
 
 ## Worker Packet Requirements
 

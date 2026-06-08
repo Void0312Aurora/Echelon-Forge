@@ -83,7 +83,7 @@ versus `20`）。因此直接探测旧 checkpoint 只能证明兼容性问题，
 - Event action contract：
   [a5_constrained_event_action_model_event_contract_20260603.zh.md](a5_constrained_event_action_model_event_contract_20260603.zh.md)
 - Air action contract overlay：
-  [../../../standards/air/act.zh.md](../../../standards/air/act.zh.md)
+  [../../../standards/air/act.zh.md](../../../../standards/air/act.zh.md)
 - Implementation evidence：
   [a5_constrained_event_action_model_implementation_evidence_20260603.zh.md](a5_constrained_event_action_model_implementation_evidence_20260603.zh.md)
 - 短训 learned-policy probe：

@@ -30,7 +30,7 @@ M2, self-play, or real-world BVR doctrine claims.
 - Keep short-evidence and closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding another
   wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

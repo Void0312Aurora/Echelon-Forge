@@ -41,7 +41,7 @@ stable.
 - Keep boundary, acceptance, and closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope before adding a
   follow-up wave.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

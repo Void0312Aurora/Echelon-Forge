@@ -48,7 +48,7 @@ directly address event-value or first-event timing.
 - If a cluster exceeds its round cap, stop and re-scope before adding a new
   wave.
 - Follow
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+  [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

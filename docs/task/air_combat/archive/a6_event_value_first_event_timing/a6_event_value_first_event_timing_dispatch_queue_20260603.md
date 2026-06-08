@@ -63,7 +63,7 @@ return packet:
 
 - Do not create separate conversation sessions for this work.
 - If subagents are used, map each worker to one cluster and follow
-  [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+  [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 - Keep `experiments_tmp` out of staging.
 - Do not resume L training or L weight search before A7 defines and validates
   the counterfactual objective and cumulative hazard diagnostics.

@@ -35,7 +35,7 @@ event Q-head；hazard 和 option 模型等 event surface 稳定后再说。
 - 不得创建新的会话线程。如果当前会话可用 subagent，只能在上表 write set 内使用。
 - boundary、acceptance 和 closure cluster 必须串行。
 - 若 cluster 超过 round cap，先停止并重新划分范围，不追加开放式 follow-up wave。
-- 遵从 [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)。
+- 遵从 [Subagent 使用规范](../../../../standards/governance/subagent_usage_policy.zh.md)。
 
 ## Worker Packet Requirements
 
