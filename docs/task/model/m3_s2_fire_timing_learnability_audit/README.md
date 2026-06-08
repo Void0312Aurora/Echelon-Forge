@@ -1,6 +1,6 @@
 # M3-S2 Fire-Timing Learnability Audit
 
-Status: `2026-06-07` active audit slice; oracle evidence passed,
+Status: `2026-06-08` active audit slice; oracle evidence passed,
 event-window remediation probe implemented, support-preserving collect repair
 partially accepted, boundary-dedicated short training direction improved,
 log-domain cumulative-hazard repair accepted, scale-separated stopping contract
@@ -10,7 +10,8 @@ recorded, explicit window-classifier replay tested with local classifier
 separation but behavior still held, calibrated standardization tested with
 negative integration evidence, standardization contract breakpoint localized,
 execution-support classifier mismatch confirmed, direct fire-boundary owner
-wired through active nonfinite-probe training with behavior still held.
+wired through active nonfinite-probe training, and the first continuation run
+produced one deterministic authorized release while behavior remains held.
 
 Language:
 
@@ -71,7 +72,7 @@ rejected and then fail to generate a later event.
 | Calibrated classifier standardization | negative integration evidence | Deterministic latest-balanced standardization avoids random replay-batch coordinate refresh, but the 8k final still records `release_count = 0`; fixed-chain final quality classifier logit mean is `-9.902827` while a fresh head fits the same latent perfectly. | The failure is still online head optimization/training-distribution contract, not standardization randomness. |
 | Classifier standardization contract | root localized / behavior held | On the fixed `model_event_hold` trajectory, saved buffers give quality logit mean `-9.837499` and `0 / 1080` quality boundaries. Recomputing only the classifier input standardization buffers on that fixed batch changes quality logit mean to `2.195754` and `1053 / 1080` quality boundaries. | The executable path is using an inference-time normalization contract calibrated to replay/support batches, not to the execution-support trajectory. |
 | Classifier execution-support contract | root localized / behavior held | Actor-gradient isolation and post-update best-restore make classifier logs reliable; the 8k run still records deterministic `release_count = 0`, saved quality-window classifier logit mean `-6.336187`, while a fresh standardized head on the same fixed execution latent reaches `1080 / 1080` quality boundaries. | The remaining break is training/replay support versus deterministic execution-support mismatch, not missing state signal, adapter wiring, or final-step logging. |
-| Direct fire-boundary owner | wiring accepted / behavior held | Active M3-S2 now trains the executable `hybrid_event_head` directly, and `NonFiniteTrainingProbe.traced_train()` runs the same update. The 8k run emits `m3s2/fb_*` metrics and raises open-window fire probability to `0.489228` at step `6144`, but final deterministic diagnostics still record `0` fire requests/releases. | The update path is no longer missing; remaining failure is unstable online support/label distribution and boundary calibration. |
+| Direct fire-boundary owner | behavior improved / batch closure pending | Active M3-S2 now trains the executable `hybrid_event_head` directly. The 2026-06-08 continuation run from r3 records one deterministic authorized release at step `423`, zero violations/repeats, and one effects/damage report. Fire-closure validation localized the stochastic `weapon_not_ready` rejection to A5 flat-transport master-arm alignment; the A5 fix clears focused stochastic checks with `1 / 1 / 0` requested/accepted/rejected. | This is a real behavior improvement and transport repair, not full closure: multi-seed/multi-episode batch validation and timing/effect quality remain held. |
 | Edge-trigger adapter | hazard | `forced_fire` high from reset creates a rejected `no_target` pulse and no later release. | This is action-transport semantics, not C2/ROE failure. |
 
 ## Scope
@@ -159,6 +160,10 @@ Out of scope:
   [m3_s2_window_classifier_execution_support_short_train_20260606.md](m3_s2_window_classifier_execution_support_short_train_20260606.md)
 - Direct fire-boundary owner evidence:
   [m3_s2_direct_fire_boundary_probe_20260607.md](m3_s2_direct_fire_boundary_probe_20260607.md)
+- Direct fire-boundary continuation evidence:
+  [m3_s2_direct_fire_boundary_continuation_20260608.md](m3_s2_direct_fire_boundary_continuation_20260608.md)
+- Fire-closure validation:
+  [m3_s2_fire_closure_validation_20260608.md](m3_s2_fire_closure_validation_20260608.md)
 - Current status:
   [m3_s2_fire_timing_learnability_audit_current_status_20260605.md](m3_s2_fire_timing_learnability_audit_current_status_20260605.md)
 - Aggregate artifact:
@@ -181,12 +186,14 @@ This subproject can be marked accepted only when:
 ## Residuals And Next Steps
 
 - Direct fire-boundary ownership is now wired through the active training path.
-  The earlier no-effect short train was caused by `NonFiniteTrainingProbe`
-  replacing `model.train()` with an older traced copy that skipped the new
-  direct boundary update. After the fix, `m3s2/fb_*` metrics appear from step
-  `512`, and open-window fire probability reaches `0.489228` at step `6144`.
-  Behavior is still held: the same 8k run never records `fire_once_requested`,
-  and final open-window probability falls back to `0.0238934`.
+  The 2026-06-08 continuation run initialized from r3 and produced one
+  deterministic authorized release at step `423` with zero violations and one
+  effects/damage report. The first stochastic residual was an extra
+  `weapon_not_ready` rejected request; fire-closure validation localized that to
+  A5 flat-transport master-arm alignment, and the focused A5 fix clears the
+  checked stochastic request/accept/reject gate. Batch closure remains pending:
+  deterministic damage has `health_delta = 0.0`, and timing/effect quality is
+  not accepted.
 - Current reward breakpoint: the oracle surface has a mathematical optimum, but
   the optimum is a late close-range win because positive per-step shaping
   rewards delayed termination among already-winning shots.

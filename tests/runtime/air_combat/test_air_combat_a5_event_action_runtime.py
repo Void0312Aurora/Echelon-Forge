@@ -122,6 +122,27 @@ class AirCombatA5EventActionRuntimeTests(unittest.TestCase):
         finally:
             env.close()
 
+    def test_fire_once_derives_master_arm_for_authorized_event(self) -> None:
+        env = self._make_env()
+        try:
+            _obs, _info = env.reset(seed=20260608)
+            _step_until_fire_mask(env, expected_mask=1)
+            missiles_before = _missiles_remaining(env)
+
+            _obs, _reward, _terminated, _truncated, info = env.step(
+                _action(fire=True, master_arm=False, tms_up=False)
+            )
+
+            self.assertTrue(bool(info["fire_once_requested"]))
+            self.assertTrue(bool(info["fire_once_accepted"]))
+            self.assertEqual(info["fire_once_rejected_reason"], "")
+            self.assertTrue(bool(info["release_executed"]))
+            self.assertEqual(_missiles_remaining(env), missiles_before - 1)
+            self.assertEqual(float(env._last_action[8]), 1.0)
+            self.assertEqual(float(env._last_action[9]), 1.0)
+        finally:
+            env.close()
+
     def test_explicit_reattack_command_reopens_fire_mask_without_auto_reattack(self) -> None:
         env = self._make_env()
         try:

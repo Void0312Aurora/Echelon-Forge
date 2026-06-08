@@ -17,6 +17,7 @@ _C2_ROE_CONTRACT_FIELDS = {
     "own_missiles_in_flight_count",
 }
 _C2_ROE_HOLD_ENGAGE_STATES = {3, 4, 5, 6}
+_MASTER_ARM_INDEX = 8
 _FIRE_WEAPON_INDEX = 9
 
 
@@ -62,6 +63,8 @@ def apply_air_combat_event_action_gate(
         return action, None
 
     gated = np.asarray(action, dtype=np.float32).copy()
+    if gated.size > _FIRE_WEAPON_INDEX and float(gated[_FIRE_WEAPON_INDEX]) > 0.5:
+        gated[_MASTER_ARM_INDEX] = 1.0
     support = _build_fire_event_support(
         loader,
         gated,

@@ -2,7 +2,7 @@
 
 Parent: [README.md](README.md).
 
-Status: `2026-06-07` diagnosis active; support-preserving collect repair
+Status: `2026-06-08` diagnosis active; support-preserving collect repair
 partially accepted, boundary-dedicated short training direction improved,
 log-domain cumulative-hazard repair accepted, scale-separated stopping contract
 implemented, chain-breakpoint localization accepted, behavioral event timing
@@ -11,7 +11,8 @@ window-classifier replay negative behavior evidence recorded, calibrated
 standardization negative integration evidence recorded, classifier
 standardization contract breakpoint localized, execution-support classifier
 mismatch confirmed, direct fire-boundary training path restored under
-nonfinite-probe tracing with behavior still held.
+nonfinite-probe tracing, and the first continuation run records one
+deterministic authorized release while behavior remains held.
 
 ## Formal Object
 
@@ -62,7 +63,7 @@ The learned policy has to solve two problems simultaneously:
 | Does deterministic calibrated standardization solve it? | no | Latest-balanced calibration avoids random replay-batch standardization refresh, but the 8k final still records `release_count = 0`; fixed-chain final current quality classifier logit mean is `-9.902827`, while a fresh head perfectly separates the same latent in `200` steps. |
 | Is the classifier input standardization contract aligned at inference? | no | On the fixed `model_event_hold` trajectory, saved buffers give quality logit mean `-9.837499` and `0 / 1080` quality boundaries. Recomputing only `m3_window_classifier_input_mean/std` on that fixed batch changes quality logit mean to `2.195754` and quality boundaries to `1053 / 1080`. |
 | Do actor-gradient isolation and post-update classifier restore solve behavior? | no | The 8k best-restore run reports separated post-update replay batches, but deterministic execution still records `release_count = 0`; fixed-chain current quality classifier logit mean is `-6.339776`, while a fresh standardized head on the same execution latent reaches `1080 / 1080` quality boundaries. |
-| Does direct executable fire-boundary ownership solve behavior? | wiring yes, behavior no | `NonFiniteTrainingProbe.traced_train()` previously skipped the new direct boundary update. After fixing it, the 8k run records `m3s2/fb_*` updates and open-window fire probability reaches `0.489228` at step `6144`, but `fire_once_requested_count`, `release_executed_count`, and mode-fire remain `0`. |
+| Does direct executable fire-boundary ownership solve behavior? | improved, focused firing gate clean, batch not accepted | The 2026-06-08 continuation run initialized from r3 records one deterministic authorized release at step `423`, zero violations/repeats, and one effects/damage report. The stochastic `weapon_not_ready` reject was localized to the A5 effective-action frame: `fire_once` was sampled while the weapon arming switch (`master_arm`) was off. After deriving `master_arm = 1` for a requested `fire_once`, focused stochastic checks record `1 / 1 / 0` requested/accepted/rejected. |
 | Can a high scalar before target acquisition recover later? | no | `forced_fire` records `{"no_target": 2}` and no release because no later rising edge occurs. |
 
 ## Root-Cause Statement
@@ -203,17 +204,21 @@ rows, `current` updates reduce loss from `634.18` to `557.86` while pushing
 quality mean logit from `-2.003` down to `-2.965`. The lower-loss direction is
 still global hazard suppression, not quality-window boundary formation.
 
-The direct fire-boundary owner repair localizes a concrete implementation
-break. Active M3-S2 short training runs with `NonFiniteTrainingProbe` enabled,
-and the probe had replaced `model.train()` with a copied training loop that did
-not call `_m3s2_fire_boundary_auxiliary_update()`. After synchronizing the
-traced train path, the active 8k run records `m3s2/fb_*` metrics from step
-`512`; open-window fire probability reaches `0.373841` at `4096` and
-`0.489228` at `6144`. Behavior is still not accepted: deterministic mode fire
-remains `0`, final open-window probability falls to `0.0238934`, and no
-`fire_once_requested` or release is recorded. The remaining break is therefore
-not a missing update path, but unstable online support/label distribution and
-boundary calibration.
+The direct fire-boundary owner repair first localized a concrete implementation
+break: `NonFiniteTrainingProbe` had replaced `model.train()` with a copied
+training loop that did not call `_m3s2_fire_boundary_auxiliary_update()`. After
+synchronizing the traced train path, the 2026-06-07 r3 run proved that
+`m3s2/fb_*` updates were live but still recorded `0` deterministic releases.
+The 2026-06-08 continuation initialized from r3 is the first active evidence
+with one deterministic authorized release at step `423`. The remaining
+stochastic firing reject was not a kill-chain problem: it was an action-frame
+mismatch where the policy requested `fire_once` while the weapon arming switch
+(`master_arm`) was off. The A5 effective-action fix now derives `master_arm = 1`
+for a requested `fire_once`, and focused stochastic checks record `1 / 1 / 0`
+requested/accepted/rejected with zero violations and zero repeat releases. The
+slice is still not batch accepted: deterministic damage has `health_delta =
+0.0`, post-release effect quality is not a kill-model authority claim, and
+multi-seed/multi-episode closure remains pending.
 
 ## Learned-Policy Reachability Evidence
 
@@ -499,6 +504,14 @@ experiments_tmp/m3s2_direct_fire_boundary_8k_20260607_r3/checkpoints/model_2048_
 experiments_tmp/m3s2_direct_fire_boundary_8k_20260607_r3/checkpoints/model_4096_steps.zip
 experiments_tmp/m3s2_direct_fire_boundary_8k_20260607_r3/checkpoints/model_6144_steps.zip
 experiments_tmp/m3s2_direct_fire_boundary_8k_20260607_r3/checkpoints/model_8192_steps.zip
+```
+
+M3-S2 direct fire-boundary continuation artifacts:
+
+```text
+experiments_tmp/m3s2_direct_fire_boundary_initfrom_8k_20260608_r1/final_model.zip
+experiments_tmp/m3s2_direct_fire_boundary_initfrom_8k_20260608_r1/m3s2_deterministic_probe.json
+experiments_tmp/m3s2_direct_fire_boundary_initfrom_8k_20260608_r1/m3s2_stochastic_probe.json
 ```
 
 Event-window implementation evidence:

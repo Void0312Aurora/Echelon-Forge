@@ -1,6 +1,6 @@
 # M3-S2 开火时机可学习性审计
 
-状态：`2026-06-07` active audit slice；oracle 证据已通过，
+状态：`2026-06-08` active audit slice；oracle 证据已通过，
 event-window remediation probe 已实现，support-preserving collect repair 已部分接受，
 boundary-dedicated 短训方向已改善，log-domain cumulative-hazard repair 已接受，
 scale-separated stopping contract 已实现，chain-breakpoint localization 已接受，
@@ -8,7 +8,8 @@ behavioral deterministic fire timing 仍 held，head-normalization calibration �
 显式窗口分类器 replay 已测试，局部 classifier 可分离但行为仍 held，
 calibrated standardization 已测试并记录负向集成证据，standardization contract
 断点已局部化，execution-support classifier mismatch 已确认，direct fire-boundary
-owner 已接入 active nonfinite-probe training 但行为仍 held。
+owner 已接入 active nonfinite-probe training；首个 continuation run 已产生一次
+deterministic authorized release，但行为仍 held。
 
 语言：
 
@@ -66,7 +67,7 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 | Calibrated classifier standardization | negative integration evidence | deterministic latest-balanced standardization 避免随机 replay-batch 坐标刷新，但 8k final 仍记录 `release_count = 0`；fixed-chain final quality classifier logit mean 为 `-9.902827`，而 fresh head 在同一 latent 上可完美拟合。 | 失败仍是 online head optimization/training-distribution contract，不是 standardization randomness。 |
 | Classifier standardization contract | root localized / behavior held | 在固定 `model_event_hold` 轨迹上，保存的 buffer 给出 quality logit mean `-9.837499` 与 `0 / 1080` 个 quality boundaries。只在该 fixed batch 上重算 classifier 输入标准化 buffer 后，quality logit mean 变为 `2.195754`，quality boundaries 变为 `1053 / 1080`。 | executable path 使用的是按 replay/support batches 校准的 inference-time normalization contract，而不是 execution-support 轨迹合同。 |
 | Classifier execution-support contract | root localized / behavior held | actor-gradient isolation 与 post-update best-restore 让 classifier logs 可信；8k run 仍记录 deterministic `release_count = 0`、saved quality-window classifier logit mean `-6.336187`，但同一 fixed execution latent 上的 fresh standardized head 达到 `1080 / 1080` quality boundaries。 | 剩余断点是 training/replay support 与 deterministic execution-support 错配，而不是缺少状态信号、adapter 接线或 final-step logging。 |
-| Direct fire-boundary owner | wiring accepted / behavior held | Active M3-S2 现在直接训练 executable `hybrid_event_head`，且 `NonFiniteTrainingProbe.traced_train()` 也运行同一 update。8k run 记录 `m3s2/fb_*` 指标，并在 step `6144` 将 open-window fire probability 提到 `0.489228`，但 final deterministic diagnostics 仍记录 `0` fire requests/releases。 | update path 不再缺失；剩余失败是 online support/label distribution 与 boundary calibration 不稳定。 |
+| Direct fire-boundary owner | behavior improved / batch closure pending | Active M3-S2 现在直接训练 executable `hybrid_event_head`。`2026-06-08` 从 r3 初始化的 continuation run 在 deterministic probe 中于 step `423` 记录一次 authorized release、零 violation/repeat，并有一次 effects/damage report。Fire-closure validation 将 stochastic `weapon_not_ready` 定位为 A5 有效动作帧不一致：模型请求 `fire_once`，但同一帧武器保险开关（代码字段 `master_arm`）是关的；A5 fix 后 focused stochastic checks 达到 `1 / 1 / 0` requested/accepted/rejected。 | 这是实际行为进展和动作转换修复，不是完整 closure：multi-seed/multi-episode batch validation 与 timing/effect quality 仍 held。 |
 | Edge-trigger adapter | hazard | `forced_fire` 从 reset 高电平会产生 `no_target` 拒绝，之后无发射。 | 这是 action transport 语义，不是 C2/ROE 失败。 |
 
 ## 范围
@@ -151,6 +152,10 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
   [m3_s2_window_classifier_execution_support_short_train_20260606.zh.md](m3_s2_window_classifier_execution_support_short_train_20260606.zh.md)
 - Direct fire-boundary owner evidence：
   [m3_s2_direct_fire_boundary_probe_20260607.zh.md](m3_s2_direct_fire_boundary_probe_20260607.zh.md)
+- Direct fire-boundary continuation evidence：
+  [m3_s2_direct_fire_boundary_continuation_20260608.zh.md](m3_s2_direct_fire_boundary_continuation_20260608.zh.md)
+- Fire-closure validation：
+  [m3_s2_fire_closure_validation_20260608.zh.md](m3_s2_fire_closure_validation_20260608.zh.md)
 - Current status：
   [m3_s2_fire_timing_learnability_audit_current_status_20260605.zh.md](m3_s2_fire_timing_learnability_audit_current_status_20260605.zh.md)
 - Aggregate artifact：
@@ -168,12 +173,13 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 
 ## 残余与下一步
 
-- Direct fire-boundary ownership 已经接入 active training path。先前短训无效果的原因是
-  `NonFiniteTrainingProbe` 用旧的 traced copy 覆盖了 `model.train()`，没有运行新的
-  direct boundary update。修复后，`m3s2/fb_*` metrics 从 step `512` 起出现，
-  open-window fire probability 在 step `6144` 达到 `0.489228`。行为仍 held：
-  同一 8k run 从未记录 `fire_once_requested`，final open-window probability 又降到
-  `0.0238934`。
+- Direct fire-boundary ownership 已经接入 active training path。`2026-06-08`
+  continuation run 从 r3 初始化，deterministic probe 在 step `423` 产生一次
+  authorized release、零 violation，并记录一次 effects/damage report。首个 stochastic
+  residual 是一次额外 `weapon_not_ready` rejected request；fire-closure validation
+  将它定位为 A5 有效动作帧里 `fire_once` 与武器保险开关（代码字段 `master_arm`）
+  不同步，focused A5 fix 清除了已检查的 stochastic request/accept/reject gate。Batch closure 仍 pending：deterministic
+  damage 的 `health_delta = 0.0`，timing/effect quality 均未验收。
 - 当前 reward breakpoint：oracle surface 存在数学最优点，但该最优点是 late close-range win，
   因为正向 per-step shaping 会在 already-winning shots 之间奖励更晚终止。
 - 当前 reachability breakpoint：reward surface 不能解释 no-fire，因为 oracle release 与 terminal

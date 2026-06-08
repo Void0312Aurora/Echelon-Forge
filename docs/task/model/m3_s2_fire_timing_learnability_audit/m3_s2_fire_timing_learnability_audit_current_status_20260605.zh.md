@@ -2,13 +2,14 @@
 
 父级：[README.zh.md](README.zh.md)。
 
-状态：`2026-06-07` diagnosis active；support-preserving collect repair 已部分接受，
+状态：`2026-06-08` diagnosis active；support-preserving collect repair 已部分接受，
 boundary-dedicated 短训方向已改善，log-domain cumulative-hazard repair 已接受，
 scale-separated stopping contract 已实现，chain-breakpoint localization 已接受，
 behavioral event timing 仍 held，head-normalization calibration 负向证据已记录，
 window-classifier replay 负向行为证据已记录，calibrated standardization 负向集成证据已记录，
 classifier standardization contract 断点已局部化，execution-support classifier mismatch
-已确认，direct fire-boundary training path 已在 nonfinite-probe tracing 下恢复，但行为仍 held。
+已确认，direct fire-boundary training path 已在 nonfinite-probe tracing 下恢复；
+首个 continuation run 已记录一次 deterministic authorized release，但行为仍 held。
 
 ## 形式对象
 
@@ -57,7 +58,7 @@ learned policy 必须同时解决两个问题：
 | deterministic calibrated standardization 是否解决？ | no | latest-balanced calibration 避免每个 auxiliary step 随机刷新标准化，但 8k final 仍 `release_count = 0`；fixed-chain final 的 current quality classifier logit mean 为 `-9.902827`，fresh head 同轨迹 `200` 步可完美分离。 |
 | classifier 输入 standardization contract 在推理时是否对齐？ | no | 固定 `model_event_hold` 轨迹上，保存的 buffer 给出 quality logit mean `-9.837499` 与 `0 / 1080` 个 quality boundaries。只重算该 fixed batch 的 `m3_window_classifier_input_mean/std` 后，quality logit mean 变为 `2.195754`，quality boundaries 变为 `1053 / 1080`。 |
 | actor-gradient isolation 与 post-update classifier restore 是否解决行为？ | no | 8k best-restore run 的 post-update replay batch 指标可分离，但 deterministic execution 仍记录 `release_count = 0`；fixed-chain current quality classifier logit mean 为 `-6.339776`，同一 execution latent 上 fresh standardized head 达到 `1080 / 1080` quality boundaries。 |
-| direct executable fire-boundary ownership 是否解决行为？ | wiring yes，behavior no | `NonFiniteTrainingProbe.traced_train()` 先前漏掉新的 direct boundary update。修复后 8k run 记录 `m3s2/fb_*` 更新，open-window fire probability 在 step `6144` 达到 `0.489228`，但 `fire_once_requested_count`、`release_executed_count` 与 mode-fire 仍为 `0`。 |
+| direct executable fire-boundary ownership 是否解决行为？ | improved, focused firing gate clean, batch not accepted | `2026-06-08` continuation run 从 r3 初始化，deterministic probe 在 step `423` 记录一次 authorized release、零 violation/repeat，并有一次 effects/damage report。stochastic 的 `weapon_not_ready` 已定位为 A5 有效动作帧问题：模型采样到了 `fire_once`，但同一帧武器保险开关（代码字段 `master_arm`）是关的。修复为请求 `fire_once` 时派生 `master_arm = 1` 后，focused stochastic checks 记录 `1 / 1 / 0` requested/accepted/rejected。 |
 | target acquisition 前高标量是否能后来恢复？ | no | `forced_fire` 记录 `{"no_target": 2}` 且无 release，因为后续没有新的 rising edge。 |
 
 ## 根因陈述
@@ -168,14 +169,18 @@ scale-separated 的 `0.157226` 降到 `0.118269`，但 prewindow 与 quality pro
 降到 `557.86`，同时把 quality mean logit 从 `-2.003` 继续压到 `-2.965`。更容易的
 loss 下降方向仍是 global hazard suppression，而不是 quality-window boundary formation。
 
-direct fire-boundary owner 修复定位了一个具体实现断点。active M3-S2 短训启用
-`NonFiniteTrainingProbe`，而 probe 曾用 copied training loop 覆盖 `model.train()`，
-但该路径没有调用 `_m3s2_fire_boundary_auxiliary_update()`。同步 traced train path 后，
-active 8k run 从 step `512` 起记录 `m3s2/fb_*` metrics；open-window fire probability
-在 `4096` 达到 `0.373841`，在 `6144` 达到 `0.489228`。行为仍未验收：
-deterministic mode fire 仍为 `0`，final open-window probability 回落到 `0.0238934`，
-且没有记录 `fire_once_requested` 或 release。剩余断点因此不是 update path 缺失，而是
-online support/label distribution 与 boundary calibration 不稳定。
+direct fire-boundary owner 修复首先定位了一个具体实现断点：`NonFiniteTrainingProbe`
+曾用 copied training loop 覆盖 `model.train()`，但该路径没有调用
+`_m3s2_fire_boundary_auxiliary_update()`。同步 traced train path 后，`2026-06-07`
+r3 run 证明 `m3s2/fb_*` updates 已经 live，但 deterministic release 仍为 `0`。
+`2026-06-08` continuation 从 r3 初始化，是 active evidence 中第一次记录一次
+deterministic authorized release 的结果，release step 为 `423`。剩余 stochastic
+拒绝不是杀伤链问题，而是动作帧不一致：模型请求 `fire_once`，但同一帧武器保险开关
+（代码字段 `master_arm`）是关的。A5 有效动作修复后，请求 `fire_once` 会同时派生
+`master_arm = 1`；focused stochastic checks 记录 `1 / 1 / 0`
+requested/accepted/rejected，且 violation 与 repeat release 均为 `0`。它仍不是 batch
+验收：deterministic damage 的 `health_delta = 0.0`，post-release effect quality
+不是 kill-model authority claim，多 seed / 多 episode closure 仍 pending。
 
 ## Learned-Policy 可达性证据
 
