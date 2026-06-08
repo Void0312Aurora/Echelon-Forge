@@ -164,10 +164,11 @@ still records `0` releases and legal-open advantage remains negative.
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md):
   it is the active surface for turning detonation effects into concrete aircraft
   part damage and then routing those effects through existing propulsion, fuel,
-  sensor, fire, and flight consumers. The propulsion and one wing/control
-  aerodynamic consumer slices are now in place. It still does not add a direct
-  crash rule, special MQ-9 kill rule, Pk claim, deterministic fuze claim, or
-  stock AIM-120C lethality claim.
+  sensor, fire, and flight consumers. Current accepted slices cover propulsion,
+  one wing/control aerodynamic response, fuel-leak/mass response, data-link
+  mission/sensor consequence, and a narrow ground-contact lifecycle state. It
+  still does not add a direct crash rule, special MQ-9 kill rule, Pk claim,
+  deterministic fuze claim, or stock AIM-120C lethality claim.
 
 ## Active Follow-On Focus
 
@@ -184,7 +185,9 @@ still records `0` releases and legal-open advantage remains negative.
   [A8 damage-effect chain](a8_damage_effect_chain/README.md) as the explicit
   follow-on for concrete damage propagation through maintained aircraft systems,
   without adding direct crash or special-target kill rules; current accepted
-  slices cover propulsion and one limited wing/control aero response
+  slices cover propulsion, one limited wing/control aero response, fuel/mass
+  leakage, data-link mission/sensor consequence, and ground-contact lifecycle
+  observability
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize

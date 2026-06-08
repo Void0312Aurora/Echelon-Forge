@@ -1,9 +1,10 @@
 # A8 Damage Effect Chain Current Status
 
-Status: `2026-06-08` sixth implementation checkpoint. A8 has a bounded work
+Status: `2026-06-08` seventh implementation checkpoint. A8 has a bounded work
 surface, current-session structure findings are integrated, and limited
 propulsion, wing/control aerodynamic, fixed fuel-leak/mass consumer evidence,
-and a narrow ground-contact lifecycle surface have landed.
+fixed data-link mission/sensor consequence evidence, and a narrow
+ground-contact lifecycle surface have landed.
 
 ## What Changed
 
@@ -70,8 +71,19 @@ and a narrow ground-contact lifecycle surface have landed.
     distinguishes no contact, landed airframe, and crashed wreck. Severe impact
     no longer relies on `Health.current_hp = 0.0` as the only visible result,
     and tests keep safe/low-speed contact out of the crashed-wreck state.
-  - `A8-W14 Sensor/Data-Link/Fire Consequence Scout`: still held. No accepted
-    sixth-wave scout packet has been integrated yet.
+  - `A8-W14 Sensor/Data-Link/Fire Consequence Scout`: no accepted sixth-wave
+    scout packet was integrated; the seventh-wave W15/W16 packets below replace
+    that open sensor/data-link and fire-consequence gap.
+- Accepted the seventh-wave work:
+  - `A8-W15 Sensor/Data-Link Consequence Writer`: pass. It adds a fixed
+    MQ-9/AIM-120C-like data-link transceiver hit that records `data_loss`,
+    keeps the immediate damage report non-authoritative, and then proves later
+    mission/sensor/survivability plus avionics/crew/navigation degradation
+    through maintained platform state.
+  - `A8-W16 Broader Fire Consequence Scout`: pass as read-only evidence. It
+    identifies the next tests-only writer path for left-wing fuel-cell fire
+    growth and rear-engine fire-zone seeding, while warning that an engine-only
+    fire zone should not be asserted to grow without flammable exposure.
 
 ## Acceptance Check 2026-06-07
 
@@ -205,6 +217,24 @@ Outcomes:
 - Ground-contact lifecycle focused checks: `3 passed, 170 deselected`.
 - Weapon guidance realism guards: `173 passed`.
 
+## Seventh Acceptance Check 2026-06-08
+
+Commands run:
+
+```bash
+git diff --check -- docs/task/air_combat tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'data_link_hit_continues_into_platform_mission_sensor_runtime_path'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes:
+
+- Docs/tests diff whitespace check: pass.
+- Focused Python lint: pass.
+- Data-link mission/sensor consequence check: `1 passed, 173 deselected`.
+- Weapon guidance realism guards: `174 passed`.
+
 ## Maturity Matrix
 
 | Area | Accepted | Active | Held | Deferred |
@@ -212,9 +242,9 @@ Outcomes:
 | Fuze and detonation event path | Proximity-fuze disappearance was recently repaired and guarded by runtime tests. | A8 must use the recorded event as the first stage of the chain. | Deterministic fuze truth is not accepted. | Real fuze calibration. |
 | Structured parts and aircraft damage state | Named hitboxes, components, groups, aircraft state fields, and public component failure-mode rows exist. | A8 must keep the explanation non-authoritative and tied to shot rows. | Current integrity/capability numbers are still not enough by themselves. | Broad target-family data calibration. |
 | Warhead action to part damage | Default effects code estimates fragment/blast/rod-like loads and now exposes simulated part-failure modes. | A8 must keep the synthetic vocabulary auditable through tests. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
-| Part damage to aircraft behavior | Propulsion damage reaches runtime thrust even when explicit engine tuning is active; wing/control damage now reaches limited aerodynamic coefficients, moments, and axis authority; fixed fuel-cell damage reaches leak/mass runtime response. | A8 should keep broadening consumers only through maintained systems. | Current aero response is synthetic and scalar; the fuel case proves leak/mass and fire-source marking, not full fire spread; left/right sign fidelity and aircraft-specific control laws are not accepted. | Full aircraft-specific flight-control law calibration and full fire lifecycle calibration. |
+| Part damage to aircraft behavior | Propulsion damage reaches runtime thrust even when explicit engine tuning is active; wing/control damage now reaches limited aerodynamic coefficients, moments, and axis authority; fixed fuel-cell damage reaches leak/mass runtime response; fixed data-link damage reaches mission/sensor runtime response. | A8 should keep broadening consumers only through maintained systems. | Current aero response is synthetic and scalar; the fuel case proves leak/mass and fire-source marking, not full fire spread; the data-link case proves platform-state consequences, not active message traffic; left/right sign fidelity and aircraft-specific control laws are not accepted. | Full aircraft-specific flight-control law calibration and full fire lifecycle calibration. |
 | Ground-contact lifecycle | Safe contact and severe contact now have a public debug lifecycle state; severe constructed impact can be observed as `crashed_wreck` while the entity remains active. | A8 should decide later whether debris/residue entities are required beyond the debug lifecycle state. | The lifecycle does not make weapon hits crash sooner and does not generate physical fragments. | Full wreck/residue object model. |
-| MQ-9 / AIM-120C validation | Test fixtures, fixed component cases, non-authority checks, a fixed right-aileron aero-response check, a 300 s right-aileron long-run check, a fixed center-fuel-cell leak/mass check, and ground-contact lifecycle checks exist. | A8 should continue with rear propulsion, broader fire, and sensor/data-link coverage. | A live smoke result is not enough for acceptance; a fuel leak or crashed-wreck lifecycle test is not real-world kill proof. | Probability of kill or real-world lethality claims. |
+| MQ-9 / AIM-120C validation | Test fixtures, fixed component cases, non-authority checks, a fixed right-aileron aero-response check, a 300 s right-aileron long-run check, a fixed center-fuel-cell leak/mass check, a fixed data-link mission/sensor consequence check, and ground-contact lifecycle checks exist. | A8 should continue with rear propulsion and broader fire coverage. | A live smoke result is not enough for acceptance; a fuel leak, data-link consequence, or crashed-wreck lifecycle test is not real-world kill proof. | Probability of kill or real-world lethality claims. |
 
 ## Read-Only Findings Integrated
 
@@ -291,7 +321,9 @@ Plain expected examples:
 - Fuel hit: storage damage leaks fuel, changes mass, and marks a fire source;
   wider fire spread and supply-disruption cases still need separate evidence.
 - Nose or fuselage electronics hit: sensor, avionics, or data-link damage can
-  make the aircraft unable to complete its mission without requiring a crash.
+  make the aircraft less able to complete its mission without requiring a
+  crash. The fixed W15 case now proves this through platform mission/sensor
+  state, not through active message traffic.
 
 ## Evidence Links
 
@@ -318,10 +350,10 @@ Immediate:
 
 - Continue `A8-DEC-E` as maintained consumer work, not as a direct kill rule:
   propulsion tuning, one wing/control aerodynamic response, and one fixed
-  fuel-leak/mass response are landed.
-- Extend fixed MQ-9/AIM-120C downstream checks for rear propulsion, broader
-  fire lifecycle, and sensor/data-link cases after each additional consumer
-  slice.
+  fuel-leak/mass response, and one fixed data-link mission/sensor response are
+  landed.
+- Extend fixed MQ-9/AIM-120C downstream checks for rear propulsion and broader
+  fire lifecycle cases after each additional consumer slice.
 - Keep the new ground-contact lifecycle path narrow: it covers landed airframe
   and crashed wreck observability, not debris fragments or a full wreck object
   model.
@@ -342,8 +374,9 @@ Deferred:
 
 ## Next Recommended Order
 
-1. Add downstream response checks for sensor/data-link and broader fire
-   behavior.
+1. Add downstream response checks for broader fire behavior, using the W16
+   left-wing fuel-cell and rear-engine fire-zone evidence as the next writer
+   path.
 2. Decide whether debris/residue needs a first-class object model or whether
    the current `landed_airframe/crashed_wreck` lifecycle state is enough for
    this A8 slice.

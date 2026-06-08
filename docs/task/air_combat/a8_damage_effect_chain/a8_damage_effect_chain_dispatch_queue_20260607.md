@@ -334,8 +334,8 @@ Current residuals after sixth-wave W13 acceptance:
 
 ## Seventh Dispatch Wave 2026-06-08
 
-Status: dispatched to existing current-session subagents only. No new
-conversation threads are allowed.
+Status: reviewed and accepted on 2026-06-08. No new conversation threads were
+created.
 
 This wave returns to the remaining `A8-DEC-E/F` consequence checks after W13
 closed the first ground-contact lifecycle gap. It keeps one writer and one
@@ -355,3 +355,31 @@ Seventh-wave integration rules:
 - W16 must avoid W15's test write set except as read-only context.
 - The main thread owns final review, verification, status synchronization, and
   any commit.
+
+## Seventh Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W15 Sensor/Data-Link Consequence Writer` | pass | Added a fixed MQ-9/AIM-120C-like data-link transceiver hit check. The shot row exposes `data_loss`, remains non-authoritative, and later runtime steps show mission/sensor/survivability plus avionics/crew/navigation degradation through maintained platform state. |
+| `A8-W16 Broader Fire Consequence Scout` | pass | Accepted as read-only evidence. It found a tests-only next writer path using MQ-9 left-wing fuel-cell fire growth and rear-engine fire-zone seeding, while warning not to assert fire growth for engine-only hits without flammable exposure. |
+| `A8-DEC-E Consumer Integration` | partial | Propulsion, wing/control aero, fuel-leak/mass, sensor/data-link mission consequence, and ground-contact lifecycle evidence are now in place. Broader fire behavior and debris/residue entities remain held. |
+
+Accepted validation:
+
+```bash
+git diff --check -- docs/task/air_combat tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_sensor_datalink_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'data_link_hit_continues_into_platform_mission_sensor_runtime_path'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes: docs/tests diff whitespace check pass, focused Python lint pass,
+data-link runtime consequence check `1 passed, 173 deselected`, and weapon
+guidance realism guards `174 passed`.
+
+Current residuals after seventh-wave acceptance:
+
+- Data-link consequence is proven through maintained platform mission/sensor
+  state, not through active MQ-9 data-link message traffic.
+- Broader fire behavior has read-only evidence but no writer slice yet.
+- Debris/residue entities remain outside the accepted W13 lifecycle surface.

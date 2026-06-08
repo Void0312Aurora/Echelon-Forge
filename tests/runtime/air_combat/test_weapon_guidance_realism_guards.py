@@ -9,6 +9,9 @@ from tests.runtime.air_combat.weapon_guidance_realism.a8_aero_consumer import (
 from tests.runtime.air_combat.weapon_guidance_realism.a8_mq9_aim120 import (
     A8Mq9Aim120ValidationRuntimeMixin,
 )
+from tests.runtime.air_combat.weapon_guidance_realism.a8_sensor_datalink_consumer import (
+    A8SensorDataLinkConsumerRuntimeMixin,
+)
 from tests.runtime.air_combat.weapon_guidance_realism.component_damage import ComponentDamageRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.default_effects_modularization import (
     DefaultEffectsModularizationRuntimeMixin,
@@ -30,6 +33,7 @@ class WeaponGuidanceRealismGuardTests(
     WarheadEffectsRuntimeMixin,
     A8Mq9Aim120ValidationRuntimeMixin,
     A8AeroConsumerRuntimeMixin,
+    A8SensorDataLinkConsumerRuntimeMixin,
     AircraftDamageRuntimeMixin,
     ComponentDamageRuntimeMixin,
     DefaultEffectsModularizationRuntimeMixin,

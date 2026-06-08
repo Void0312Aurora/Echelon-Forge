@@ -30,10 +30,10 @@ A8 可以标准化并实现起爆后的损伤效果路径：起爆记录、战�
 | `A8-DEC-B Structure Evidence` | current-session explorers, main-thread integration | inherited model / read-only | 确认当前引信/效果、部件状态、飞行/动力、MQ-9/AIM-120C 测试结构。 | 只更新 A8 current status | 结构未确认前改代码 | 只读扫描和本地链接检查 | 发现明确入口、缺口和安全写入范围。 | after A; 按代码区域并行 | 1 + 1 repair | pass |
 | `A8-DEC-C Shot Effect Record` | current-session worker | high reasoning | 定义每次射击记录，暴露引信、起爆、战斗部作用、受影响部位、损伤类型和后续后果。 | `src/core/interfaces/**`, `src/core/engine/*damage*`, `src/models/weapons/detail/default_effects_result_detail.inc`, `tests/runtime/air_combat/weapon_guidance_realism/**` | 改飞机物理或宣称真实杀伤 | contract tests 和 runtime guidance guards | 测试能解释为什么损伤、未损伤或未起爆。 | after B; 与 D/E public fields 串行 | 2 | pass：公开损伤类型行 |
 | `A8-DEC-D Part Effect Vocabulary` | current-session worker | high reasoning | 增加具体损伤模式，并把战斗部作用映射到结构化飞机部件。 | `src/components/combat/damage.h`, `src/content/unit_definition_loader.cpp`, `src/models/weapons/detail/default_effects_*`, 必要的 MQ-9/F-16 damage JSON，聚焦测试 | 校准脆弱性、大范围数据重写 | component-damage tests 和 loader tests | 部件损伤记录能命名物理或功能损伤，而不是只有完整度数字。 | after C record shape; 与 F 只通过不重叠测试并行 | 2 | pass：synthetic 公开行 |
-| `A8-DEC-E Consumer Integration` | current-session diagnostics workers | high reasoning | 将具体损伤传给动力、燃油/质量、传感器、火灾和飞行/气动行为。 | `src/systems/combat/damage_system.h`, `src/systems/physics/aerodynamics_system.h`, `src/systems/physics/propulsion_system.h`, 相关物理测试 | 直接坠毁规则、独立飞行判决 | 聚焦 runtime tests 和 flight-dynamics guards | 发动机、燃油、传感器、翼面/操纵和结构损伤被维护中的系统消费。 | after D; 物理写入范围串行 | 2 | partial：动力调参、翼面/操纵气动和固定燃油泄漏/质量证据通过 |
-| `A8-DEC-F MQ-9 / AIM-120C Validation` | current-session worker | medium/high reasoning | 构建固定样例，证明尾部发动机、翼面/操纵、燃油/火灾、传感器/数据链结果。 | `tests/runtime/air_combat/**`, 可选 test-only fixtures | 把一次 smoke 当真实概率 | `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py` 加新聚焦测试 | 测试同时检查即时记录和后续飞机响应。 | after C/D/E; B 后可先准备 fixture 计划 | 2 | partial pass：固定样例、非权威保护、调参发动机动力响应、MQ-9 右副翼短/长时程气动响应和中心油箱泄漏/质量响应 |
+| `A8-DEC-E Consumer Integration` | current-session diagnostics workers | high reasoning | 将具体损伤传给动力、燃油/质量、传感器、火灾和飞行/气动行为。 | `src/systems/combat/damage_system.h`, `src/systems/physics/aerodynamics_system.h`, `src/systems/physics/propulsion_system.h`, 相关物理测试 | 直接坠毁规则、独立飞行判决 | 聚焦 runtime tests 和 flight-dynamics guards | 发动机、燃油、传感器、翼面/操纵和结构损伤被维护中的系统消费。 | after D; 物理写入范围串行 | 2 | partial：动力调参、翼面/操纵气动、固定燃油泄漏/质量证据和数据链任务/传感器后果通过 |
+| `A8-DEC-F MQ-9 / AIM-120C Validation` | current-session worker | medium/high reasoning | 构建固定样例，证明尾部发动机、翼面/操纵、燃油/火灾、传感器/数据链结果。 | `tests/runtime/air_combat/**`, 可选 test-only fixtures | 把一次 smoke 当真实概率 | `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py` 加新聚焦测试 | 测试同时检查即时记录和后续飞机响应。 | after C/D/E; B 后可先准备 fixture 计划 | 2 | partial pass：固定样例、非权威保护、调参发动机动力响应、MQ-9 右副翼短/长时程气动响应、中心油箱泄漏/质量响应和数据链任务/传感器响应 |
 | `A8-DEC-H Ground-Impact Lifecycle` | current-session worker plus scout | high reasoning | 当撞击足够严重时，把飞行后的触地转成可观察生命周期状态或残留表面。 | `src/systems/physics/ground_contact_system.h`、生命周期/损伤组件、必要 runtime contracts/bindings、聚焦运行时测试 | 直接触地击杀、直接消失、把安全着陆当坠毁 | 地面接触生命周期测试和受影响 contract/runtime guards | 安全跑道接触仍 active；严重受损撞击记录 landed/crashed/residue 状态；低速接触不制造坠毁。 | after W12 scout; before final G acceptance | 2 | partial pass：已着陆机体/坠毁残骸调试生命周期通过；碎片/残留实体 held |
-| `A8-DEC-G Acceptance And Index Sync` | main thread | n/a | 决定 accepted 或 held，同步父级 README/status，并记录残余。 | A8 README/status/acceptance、父级 air-combat README、必要 archive index | 把 docs-only 工作标成 runtime pass | docs link check 和 accepted validation commands | 能力声明有证据，过度声明继续被拒绝。 | last, after H or explicitly held | 1 | partial pass：第六轮 W13 已验收；W14 held |
+| `A8-DEC-G Acceptance And Index Sync` | main thread | n/a | 决定 accepted 或 held，同步父级 README/status，并记录残余。 | A8 README/status/acceptance、父级 air-combat README、必要 archive index | 把 docs-only 工作标成 runtime pass | docs link check 和 accepted validation commands | 能力声明有证据，过度声明继续被拒绝。 | last, after H or explicitly held | 1 | partial pass：第七轮 W15/W16 已验收；更完整火灾和碎片/残留 held |
 
 ## 派发规则
 
@@ -92,9 +92,9 @@ python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards
 立即：
 
 - 公开射击行、具体部件故障记录、调参发动机动力消费方、一段翼面/操纵气动消费方和一个固定中心油箱
-  泄漏/质量响应检查已经整合。
-- 剩余近期切口应补充尾部动力、更完整火灾行为、传感器/数据链和地面撞击生命周期的下游响应证据，
-  仍不得增加直接坠毁或“还能不能飞”捷径。
+  泄漏/质量响应检查、一个数据链任务/传感器响应检查已经整合。
+- 剩余近期切口应补充尾部动力和更完整火灾行为的下游响应证据，同时把碎片/残留决策继续放在
+  直接坠毁或“还能不能飞”捷径之外。
 - `A8-DEC-H` 现在是地面撞击生命周期工作的专门归宿，避免 `A8-DEC-E` 继续吸收不属于
   飞行消费方本身的后续对象生命周期职责。
 - 第一段 `A8-DEC-H` 实现已经在原实体上暴露已着陆机体和坠毁残骸生命周期状态；碎片/残留对象仍 held。
