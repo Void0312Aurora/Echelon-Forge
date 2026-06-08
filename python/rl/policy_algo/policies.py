@@ -1302,6 +1302,38 @@ class HierarchicalMoEExecutionPolicy(SquashedMultiInputPolicy):
             return None
         return logits[:, 1] - logits[:, 0]
 
+    def get_hybrid_event_fire_boundary_deltas_for_head_update(
+        self,
+        obs: Any,
+    ) -> tuple[th.Tensor, th.Tensor] | None:
+        layout = self._hybrid_action_layout
+        event_head = self.hybrid_event_head
+        if layout is None or event_head is None:
+            return None
+        hold_index = layout.event_hold_param_index
+        fire_index = layout.event_fire_param_index
+        if hold_index is None or fire_index is None or layout.event_action_index is None:
+            return None
+        if self._hybrid_event_use_m3_stopping_head or self._hybrid_event_use_m3_window_classifier_head:
+            return None
+
+        with th.no_grad():
+            features = super().extract_features(obs, self.pi_features_extractor)
+            latent_pi = self.mlp_extractor.forward_actor(features).detach()
+            family_index, subexpert_index = self._route_indices(obs, latent_pi)
+            shared_mean_actions = self.action_net(latent_pi)
+            expert_residual = self.hmoe_head_bank(latent_pi, family_index, subexpert_index)
+            effective_scale = float(self._hmoe_residual_scale) * float(self._hmoe_residual_gate)
+            mean_actions = shared_mean_actions + effective_scale * expert_residual
+            executable_baseline_delta = (
+                mean_actions[:, int(fire_index)] - mean_actions[:, int(hold_index)]
+            ).detach()
+
+        event_logits = event_head(latent_pi)
+        direct_head_delta = event_logits[:, 1] - event_logits[:, 0]
+        executable_delta = executable_baseline_delta + direct_head_delta
+        return executable_delta, direct_head_delta
+
     def get_m3_window_latent(self, obs: Any, *, detach_latent: bool = False) -> th.Tensor:
         if detach_latent:
             with th.no_grad():

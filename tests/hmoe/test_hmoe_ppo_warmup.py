@@ -1560,7 +1560,16 @@ class HMoEPPOWarmupTests(unittest.TestCase):
             for name, param in model.policy.named_parameters()
         }
 
-        fire_boundary_loss = model._m3s2_fire_boundary_auxiliary_update()
+        original_get_distribution = model.policy.get_distribution
+
+        def _fail_get_distribution(_obs):
+            raise AssertionError("M3-S2 event-head-only fire boundary update should not build full distributions")
+
+        object.__setattr__(model.policy, "get_distribution", _fail_get_distribution)
+        try:
+            fire_boundary_loss = model._m3s2_fire_boundary_auxiliary_update()
+        finally:
+            object.__setattr__(model.policy, "get_distribution", original_get_distribution)
 
         self.assertIsNotNone(fire_boundary_loss)
         assert fire_boundary_loss is not None

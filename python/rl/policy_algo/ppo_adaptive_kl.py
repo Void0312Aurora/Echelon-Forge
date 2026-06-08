@@ -2823,12 +2823,43 @@ class AdaptiveKLPPO(PPO):
             return 0.0
         return float(values[mask].detach().mean().cpu().item())
 
+    def _m3s2_fire_boundary_logit_delta(
+        self,
+        obs: dict[str, th.Tensor],
+    ) -> tuple[th.Tensor, th.Tensor | None] | None:
+        if self.m3s2_fire_boundary_separate_update_enabled:
+            fast_delta_getter = getattr(
+                self.policy,
+                "get_hybrid_event_fire_boundary_deltas_for_head_update",
+                None,
+            )
+            if callable(fast_delta_getter):
+                fast_deltas = fast_delta_getter(obs)
+                if fast_deltas is not None:
+                    executable_delta, direct_head_delta = fast_deltas
+                    return executable_delta, direct_head_delta
+
+        distribution_getter = getattr(self.policy, "get_distribution", None)
+        if not callable(distribution_getter):
+            return None
+        distribution = distribution_getter(obs)
+        logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
+        if not callable(logit_delta_getter):
+            return None
+        event_logit_delta = logit_delta_getter()
+        if event_logit_delta is None:
+            return None
+
+        direct_head_delta: th.Tensor | None = None
+        direct_delta_getter = getattr(self.policy, "get_hybrid_event_head_delta", None)
+        if callable(direct_delta_getter):
+            with th.no_grad():
+                direct_head_delta = direct_delta_getter(obs, detach_latent=True)
+        return event_logit_delta, direct_head_delta
+
     def _m3s2_fire_boundary_loss_from_sidecar(self) -> _M3S2FireBoundaryLoss | None:
         sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
         if sidecar is None or not sidecar.groups:
-            return None
-        distribution_getter = getattr(self.policy, "get_distribution", None)
-        if not callable(distribution_getter):
             return None
 
         executable_logits: list[th.Tensor] = []
@@ -2837,13 +2868,10 @@ class AdaptiveKLPPO(PPO):
         group_count = 0
         for group in sidecar.groups:
             obs = self._m3s1_observations_for_group(sidecar, group)
-            distribution = distribution_getter(obs)
-            logit_delta_getter = getattr(distribution, "fire_event_logit_delta", None)
-            if not callable(logit_delta_getter):
+            boundary_deltas = self._m3s2_fire_boundary_logit_delta(obs)
+            if boundary_deltas is None:
                 return None
-            event_logit_delta = logit_delta_getter()
-            if event_logit_delta is None:
-                return None
+            event_logit_delta, direct_delta = boundary_deltas
             flat_logits = event_logit_delta.reshape(-1)
             if int(flat_logits.numel()) != len(group.row_indices):
                 raise ValueError("M3-S2 fire boundary logits must match grouped sidecar rows")
@@ -2858,15 +2886,11 @@ class AdaptiveKLPPO(PPO):
             executable_logits.append(supported_logits[active])
             labels.append(desirable[active].to(dtype=supported_logits.dtype))
 
-            direct_delta_getter = getattr(self.policy, "get_hybrid_event_head_delta", None)
-            if callable(direct_delta_getter):
-                with th.no_grad():
-                    direct_delta = direct_delta_getter(obs, detach_latent=True)
-                if direct_delta is not None and int(direct_delta.reshape(-1).numel()) == len(group.row_indices):
-                    supported_direct, supported_direct_legal, _direct_desirable, _direct_pre, _direct_none = (
-                        self._m3s1_group_diagnostic_masks(group, direct_delta.reshape(-1))
-                    )
-                    direct_head_deltas.append(supported_direct[supported_direct_legal])
+            if direct_delta is not None and int(direct_delta.reshape(-1).numel()) == len(group.row_indices):
+                supported_direct, supported_direct_legal, _direct_desirable, _direct_pre, _direct_none = (
+                    self._m3s1_group_diagnostic_masks(group, direct_delta.reshape(-1))
+                )
+                direct_head_deltas.append(supported_direct[supported_direct_legal])
 
         if not executable_logits:
             return None
