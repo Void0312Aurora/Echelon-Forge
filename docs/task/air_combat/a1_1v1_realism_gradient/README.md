@@ -1,13 +1,14 @@
 # A1 1v1 Realism Gradient
 
-Status: opened on `2026-05-25` to replace the single hard `1v1` smoke entry
-with a staged air-combat training curriculum.
+Status: returned to the A1 mainline on `2026-06-08`; the Stage-1 firing gate is
+bounded-accepted by M3-S2, the Stage-2 C2/ROE entry now exists, and the first
+Stage-2 8k continuation is recorded. Stage-2 training quality is not accepted.
 
 ## Purpose
 
 The current `F-16C_Block50 vs F-16C_Block50` scripted-red smoke fixture proves
 that the weapon bridge and combat terminal hooks are connected, but it is too
-steep for first RL training:
+steep for first RL training. Historically:
 
 - the HMoE policy starts with radar and weapon switch actions near zero, making
   `master_arm` plus `fire_weapon` effectively unreachable under early PPO
@@ -19,6 +20,28 @@ steep for first RL training:
 
 This subproject defines a four-stage curriculum that increases realism only
 when the previous learning loop is reachable and measurable.
+
+## Current Training Position
+
+As of `2026-06-08`:
+
+- Firing closure is no longer owned by the historical A4-A7 subprojects. The
+  current authority is the model-side M3-S2 archive:
+  [M3-S2 Fire Timing Learnability Audit](../../model/archive/m3_s2_fire_timing_learnability_audit/README.md).
+- M3-S2 passed the bounded deterministic/stochastic batch on the active Stage-1
+  C2/ROE scenario/config pair: `16 / 16` checked episodes produced exactly one
+  accepted authorized `fire_once` release, with zero rejected requests,
+  violations, or repeat-before-assessment releases.
+- A1's next step is not "teach the model what firing is" again. It is to
+  transfer that firing behavior into the Stage-2 maneuvering-target entry and
+  check whether release discipline survives.
+- The first Stage-2 entry and short-train record is:
+  [A1 Stage-2 C2/ROE Entry And Short Train 2026-06-08](a1_stage2_c2_roe_entry_and_short_train_20260608.md).
+
+This does not accept hits, damage, kills, or full `combat_win`. Stage-1 and
+Stage-2 probes both show that the model can release, while post-release effects
+remain weak or absent. Those observations are training-quality/effects-chain
+residuals, not evidence that the model cannot fire.
 
 ## Four Stages
 
@@ -116,7 +139,9 @@ Initial files:
 
 - `air_combat_1v1_stage0_drone_weapon_employment_v1.json`
 - `air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
+- `air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json`
 - `air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
+- `air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
 - `air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
 
 The older `scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json`
@@ -139,10 +164,14 @@ with `--model` and without the fixed-action profile.
 
 - Validate and tune the dedicated `MQ-9_Reaper` target surrogate before using it
   as a realism claim beyond early curriculum reachability.
-- Add combat-specific mission observation fields and HMoE routing once the
-  action reachability problem is fixed.
-- Add fire-chain shaping and diagnostics so the curriculum can report why a
-  rollout did or did not launch.
+- The Stage-2 C2/ROE entry can run and can preserve one accepted authorized
+  release, but it still needs batch seed validation; single deterministic and
+  stochastic probes are not stage acceptance.
+- Stage-2 8k continuation showed unstable fire-boundary row coverage, so the
+  next work should tighten window collection and support-preserving behavior
+  before expanding the batch.
+- Add training-quality diagnostics so the curriculum can report why a
+  maneuvering-target rollout launches early, late, or not at all.
 - Validate the long-range scenarios against current sensor and missile runtime
   limits before treating `100+ km` engagements as realistic rather than only a
   planning target.

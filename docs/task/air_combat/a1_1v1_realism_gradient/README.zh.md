@@ -1,12 +1,12 @@
 # A1 1v1 真实度梯度
 
-状态：`2026-05-25` 开启，用分阶段空战课程替换单一高难度 `1v1`
-smoke 入口。
+状态：`2026-06-08` 回到 A1 主线；Stage-1 发射门由 M3-S2 有边界验收，
+Stage-2 C2/ROE 入口已建立并完成第一轮 8k 续训；Stage-2 训练质量尚未验收。
 
 ## 目的
 
 当前 `F-16C_Block50 vs F-16C_Block50` 脚本红方 smoke 场景已经证明武器桥和
-对抗终止钩子接通，但它不适合作为第一轮 RL 训练入口：
+对抗终止钩子接通，但它不适合作为第一轮 RL 训练入口。历史原因是：
 
 - HMoE 策略初始会把雷达和武器开关压在接近 0 的区域，早期 PPO 探索几乎到不了
   `master_arm` 加 `fire_weapon` 的组合；
@@ -14,6 +14,25 @@ smoke 入口。
 - 即使强制蓝方持续开火，也不能稳定在红方命中蓝方前击毁红方。
 
 本子项目定义四阶段课程：只有上一阶段的学习闭环可达、可测，才提升下一层真实度。
+
+## 当前训练位置
+
+截至 `2026-06-08`：
+
+- 发射闭合不再按 A4-A7 历史子项目处理。当前权威是模型侧 M3-S2 归档包：
+  [M3-S2 开火时机可学习性审计](../../model/archive/m3_s2_fire_timing_learnability_audit/README.zh.md)。
+- M3-S2 在 active Stage-1 C2/ROE scenario/config pair 上已通过有边界
+  deterministic/stochastic batch：`16 / 16` 个 episode 都产生一次授权、被接受的
+  `fire_once` release，且 rejected requests、violations 与
+  repeat-before-assessment releases 均为 `0`。
+- A1 的下一步不再是“让模型知道怎么发射”，而是把这个发射能力迁移到 Stage-2
+  机动目标入口，并检查发射纪律是否还能保持。
+- 第一轮 Stage-2 入口和短训记录：
+  [A1 Stage-2 C2/ROE Entry And Short Train 2026-06-08](a1_stage2_c2_roe_entry_and_short_train_20260608.zh.md)。
+
+本状态不验收命中、毁伤、击杀或完整 `combat_win`。Stage-1 和 Stage-2 probes 都显示
+模型能发射，但效果/伤害仍弱或缺失；这些现象记录为后续训练质量和效果链问题，不再把
+它们反推成“模型不会发射”。
 
 ## 四个阶段
 
@@ -100,7 +119,9 @@ smoke 入口。
 
 - `air_combat_1v1_stage0_drone_weapon_employment_v1.json`
 - `air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json`
+- `air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json`
 - `air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
+- `air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
 - `air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
 
 旧的 `scenarios/air_combat/air_combat_1v1_headon_sensor_smoke_v1.json`
@@ -127,7 +148,10 @@ TensorBoard 或一次性诊断图。阶段 0 的首个可视化 profile 是：
 
 - 继续验证并调校专用 `MQ-9_Reaper` 目标替身；在进一步证据前，不把它升级为
   早期课程可达性之外的真实性声明。
-- 修复动作可达性后，增加空战专用 mission observation 字段和 HMoE routing。
-- 增加开火链路 shaping 与诊断，使课程能说明 rollout 为什么发射或未发射。
+- Stage-2 C2/ROE 入口已经能运行并能保持一次授权发射；仍需要批量 seed 验证，
+  不能把单 seed deterministic/stochastic probe 当作阶段验收。
+- Stage-2 8k 续训的 fire-boundary rows 覆盖不稳定，后续应先收紧窗口采集和
+  support-preserving 行为，再扩大 batch。
+- 增加训练质量诊断，使课程能说明 rollout 为什么在机动目标上过早、过晚或不发射。
 - 在把 `100+ km` 交战视为真实训练场景前，需要验证当前传感器和导弹 runtime
   对长距离交战的边界。

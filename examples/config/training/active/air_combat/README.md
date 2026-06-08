@@ -15,12 +15,14 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
     - Used by the Stage-1 M1 hybrid shaped training probe after the live damage chain and hybrid action interface are both available.
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
     - Used by the additive Stage-1 A3 C2/ROE hybrid shaped and temporal shaped probes; legacy M1 baseline entries remain on `mission_obs_mode=basic`.
+  - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
+    - Used by the A1 Stage-2 C2/ROE M3-S2 continuation entry; the goal is to transfer accepted Stage-1 release discipline to the maneuvering-red, red-unarmed scenario.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Early curriculum target: unarmed `MQ-9_Reaper` surrogate for Stage 0 and Stage 1
   - Scripted-red smoke opponent: scenario-declared `F-16C_Block50`
   - Policy architecture: `HierarchicalMoEExecutionPolicy`
-- Stage-2 and Stage-3 `scenarios/air_combat/1v1` files are maintained curriculum scenarios, but no active training config in this directory is paired to them yet.
+- The canonical Stage-2 and Stage-3 `scenarios/air_combat/1v1` files remain maintained curriculum scenarios. This directory currently pairs only the Stage-2 C2/ROE training-shaped entry; Stage-3 still has no active training config.
 
 ## Entries
 
@@ -138,6 +140,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Applies explicit calibration: non-quality legal rows are capped at a negative ceiling while quality-window rows are pushed toward a positive floor.
   - Uses support-preserving collection, including quality-window hold preservation, so the sidecar can see the complete legal-to-quality transition before behavior acceptance is claimed.
   - Uses an 8k budget for validation evidence; behavior acceptance still requires learned-policy release probes.
+
+- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
+  - A1 Stage-2 C2/ROE M3-S2 continuation entry using the maneuvering-red, red-unarmed training-shaped Stage-2 scenario.
+  - Reuses the Stage-1 M3-S2 direct fire-boundary owner and `air_combat_c2_roe_v2` observation surface without weakening A3/A5 legality or the one-shot state machine.
+  - The `2026-06-08` 8k init-from-Stage-1 short train preserved one accepted authorized release in deterministic and stochastic single-episode probes, but had no effects/damage/kill; it is a Stage-2 training entry, not stage acceptance.
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.

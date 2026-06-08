@@ -15,12 +15,14 @@
     - 在杀伤链和 hybrid 动作接口都可用后，由 Stage-1 M1 hybrid shaped 训练探针使用。
   - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json)
     - 由 additive Stage-1 A3 C2/ROE hybrid shaped 与 temporal shaped 探针使用；既有 M1 baseline 条目仍保持 `mission_obs_mode=basic`。
+  - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
+    - 由 A1 Stage-2 C2/ROE M3-S2 续训入口使用；目标是把已验收的 Stage-1 发射纪律迁移到机动红方、红方无武器场景。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
   - 早期课程目标：Stage 0 和 Stage 1 使用无武器 `MQ-9_Reaper` 替身
   - scripted-red smoke 对手：场景声明的 `F-16C_Block50`
   - 策略架构：`HierarchicalMoEExecutionPolicy`
-- Stage-2 和 Stage-3 的 `scenarios/air_combat/1v1` 文件是受维护的课程场景，但本目录目前还没有与它们配对的 active training config。
+- canonical Stage-2 和 Stage-3 的 `scenarios/air_combat/1v1` 文件仍是受维护的课程场景；本目录目前只为 Stage-2 C2/ROE training-shaped 入口提供 active config，Stage-3 仍未配对 active training config。
 
 ## 条目
 
@@ -137,6 +139,13 @@
   - 使用显式 logit calibration：非质量 legal rows 被压到负 ceiling 以下，quality-window rows 被推向正 floor。
   - 使用 support-preserving collection，并保留 quality-window hold，使 sidecar 可以看到完整 legal-to-quality transition 后再谈行为验收。
   - 使用 8k budget 形成 validation evidence；行为验收仍需要 learned-policy release probes。
+
+- [air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json](air_combat_1v1_stage2_evasive_fighter_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json)
+  - A1 Stage-2 C2/ROE M3-S2 续训入口，使用机动红方、红方无武器的 training-shaped Stage-2 场景。
+  - 复用 Stage-1 M3-S2 direct fire-boundary owner 与 `air_combat_c2_roe_v2` observation surface，
+    不削弱 A3/A5 发射合法性和 one-shot 状态机。
+  - `2026-06-08` 8k init-from-Stage-1 短训后的 deterministic/stochastic 单集 probe 都保住一次授权发射，
+    但没有 effects/damage/kill；因此它是 Stage-2 训练入口，不是阶段验收。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。

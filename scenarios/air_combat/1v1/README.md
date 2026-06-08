@@ -15,6 +15,10 @@ The top-level historical smoke scenario remains available at
 - `air_combat_1v1_stage2_evasive_fighter_no_weapons_v1.json`
   - scripted evasive fighter with no usable missiles;
   - intended to exercise pursuit geometry and launch timing without red fire.
+- `air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
+  - Stage-2 scripted evasive fighter with C2/ROE single-shot command fields;
+  - maintained training-shaped entry for transferring the accepted Stage-1
+    firing behavior into the maneuvering-target lane.
 - `air_combat_1v1_stage3_limited_weapons_fighter_v1.json`
   - scripted fighter with limited missiles and a controlled fire window;
   - intended to exercise bounded reciprocal threat before full peer `1v1`.
