@@ -383,3 +383,30 @@ Current residuals after seventh-wave acceptance:
   state, not through active MQ-9 data-link message traffic.
 - Broader fire behavior has read-only evidence but no writer slice yet.
 - Debris/residue entities remain outside the accepted W13 lifecycle surface.
+
+## Eighth Dispatch Wave 2026-06-08
+
+Status: dispatched to current-session subagents on 2026-06-08. No new
+conversation threads were created.
+
+This wave turns the W16 fire scout into one bounded writer and starts a
+separate read-only decision on whether A8 needs first-class debris/residue
+objects before final acceptance. The two packets have disjoint write scopes:
+W17 may write tests and, only if blocked, narrow maintained fire-path code;
+W18 is read-only.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W17 Broader Fire Consequence Writer` | `A8-DEC-E/F` | McClintock | inherited / high | Prefer tests under `tests/runtime/air_combat/weapon_guidance_realism/` plus collector import. Production edits only if existing maintained fire fields are proven unreachable and the blocker is named first. | Add the smallest deterministic MQ-9/AIM-120C-like fixed-hit checks for broader fire behavior: left-wing fuel-cell fire growth and secondary damage through the runtime path; rear-engine fire-zone seeding plus propulsion consequence without falsely requiring fire growth when there is no flammable exposure. Use W16 evidence as the starting point. | No ground-impact/lifecycle edits, no direct crash/disappearance rule, no MQ-9 special kill rule, no real-world lethality or probability claim, no broad fire model rewrite, no assertion that engine-only fire zones must grow without fuel/flame exposure. | `git diff --check` on touched files; focused pytest selector; `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`; `./.venv/bin/python -m ruff check` for touched Python; `cmake --build build-workshop --target ef_py -j2` only if production/binding files change. | Required worker packet with status, touched files, commands/outcomes, remaining paths, behavior risks, integration notes. |
+| `A8-W18 Debris/Residue Lifecycle Decision Scout` | `A8-DEC-H/G` | Harvey | inherited / high | Read-only. | Decide the smallest next A8 decision path for post-crash debris/residue after W13. Inspect landed-airframe/crashed-wreck state, entity active/inactive behavior, loss/destruction surfaces, engagement reports, runtime observation APIs, and object/entity lifecycle mechanisms. Return whether A8 should accept the current original-entity lifecycle state for this slice and defer debris/residue objects, or require a narrow next writer that exposes debris/residue as a separate object/state. | No code edits, no docs edits, no direct touch-kill, no direct disappearance, no independent can-fly verdict, no real-world lethality claim, no broad object-system rewrite. | File/line evidence and proposed acceptance wording or exact writer packet. | Required scout packet with touched files `none`, commands/outcomes, file/line evidence, recommended next step, behavior risks, integration notes. |
+
+Eighth-wave integration rules:
+
+- `A8-W17` is the only writer in this wave.
+- `A8-W18` is read-only and must not patch files.
+- W17 owns fire consequence tests only; if it needs production edits, it must
+  prove the maintained fire path is unreachable first.
+- W18 must not decide final A8 acceptance by itself; it returns evidence and a
+  recommended accept/defer or writer path for main-thread review.
+- The main thread owns final review, verification, status synchronization, and
+  any commit.
