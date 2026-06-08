@@ -192,6 +192,23 @@ def _mq9_fuel_mass_state_after_optional_center_fuel_hit(
     return state
 
 
+def _ground_contact_state(sim: ef_py.SimulationKernel, entity_id: int) -> dict[str, float | bool]:
+    values = [float(value) for value in sim.debug_get_ground_contact_state(int(entity_id))]
+    if len(values) != 9:
+        raise AssertionError("expected nine ground-contact state fields")
+    return {
+        "on_ground": bool(values[0]),
+        "terrain_z": values[1],
+        "lifecycle": values[2],
+        "impact_horizontal_speed": values[3],
+        "impact_sink_rate": values[4],
+        "impact_severity": values[5],
+        "gear_stress": values[6],
+        "gear_collapsed": bool(values[7]),
+        "on_runway": bool(values[8]),
+    }
+
+
 def _assert_mq9_event_is_non_authoritative(testcase: unittest.TestCase, event: object) -> None:
     testcase.assertTrue(bool(event.vulnerability_profile_present))
     testcase.assertTrue(bool(event.vulnerability_profile_synthetic))
@@ -525,6 +542,101 @@ class A8Mq9Aim120ValidationRuntimeMixin:
         self.assertLess(damaged["after_mass"][3], baseline["after_mass"][3] - 2.0)
         self.assertAlmostEqual(damaged["after_mass"][1], damaged["after_fuel"][0], delta=1.0e-6)
         self.assertAlmostEqual(damaged["after_mass"][3], damaged["after_mass"][5], delta=1.0e-6)
+
+    def test_a8_ground_contact_lifecycle_keeps_safe_runway_contact_observable(
+        self,
+    ) -> None:
+        sim = _kernel_with_unit_overrides([])
+        sim.clear_zones()
+        sim.add_zone("a8_runway", 0.0, 0.0, 200.0, 2000.0, 0.0, 0)
+        target_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Red,
+                "MQ-9_Reaper",
+                0.0,
+                0.0,
+                1.4,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                7.0,
+                -0.5,
+            )
+        )
+
+        sim.step()
+        state = _ground_contact_state(sim, target_id)
+
+        self.assertTrue(bool(sim.is_unit_active(target_id)))
+        self.assertTrue(bool(state["on_ground"]))
+        self.assertTrue(bool(state["on_runway"]))
+        self.assertEqual(int(state["lifecycle"]), 1)
+        self.assertFalse(bool(state["gear_collapsed"]))
+        self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
+
+    def test_a8_ground_contact_lifecycle_records_crashed_wreck_without_disappearance(
+        self,
+    ) -> None:
+        sim = _kernel_with_unit_overrides([])
+        sim.clear_zones()
+        target_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Red,
+                "MQ-9_Reaper",
+                5000.0,
+                5000.0,
+                1.2,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                58.0,
+                -6.0,
+            )
+        )
+
+        sim.step()
+        state = _ground_contact_state(sim, target_id)
+
+        self.assertTrue(bool(sim.is_unit_active(target_id)))
+        self.assertTrue(bool(state["on_ground"]))
+        self.assertFalse(bool(state["on_runway"]))
+        self.assertEqual(int(state["lifecycle"]), 2)
+        self.assertGreater(float(state["impact_horizontal_speed"]), 45.0)
+        self.assertGreater(float(state["impact_severity"]), 1.0)
+        self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
+
+    def test_a8_ground_contact_lifecycle_does_not_turn_low_speed_contact_into_crash(
+        self,
+    ) -> None:
+        sim = _kernel_with_unit_overrides([])
+        sim.clear_zones()
+        target_id = int(
+            sim.spawn_unit(
+                ef_py.Side.Red,
+                "MQ-9_Reaper",
+                7000.0,
+                7000.0,
+                1.4,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                4.0,
+                -0.4,
+            )
+        )
+
+        sim.step()
+        state = _ground_contact_state(sim, target_id)
+
+        self.assertTrue(bool(sim.is_unit_active(target_id)))
+        self.assertTrue(bool(state["on_ground"]))
+        self.assertEqual(int(state["lifecycle"]), 1)
+        self.assertNotEqual(int(state["lifecycle"]), 2)
+        self.assertLess(float(state["impact_severity"]), 1.0)
+        self.assertEqual([float(value) for value in sim.get_unit_health(target_id)], [40.0, 40.0])
 
     def test_a8_mq9_aim120_explicit_non_authority_guard_for_fixture_and_events(
         self,

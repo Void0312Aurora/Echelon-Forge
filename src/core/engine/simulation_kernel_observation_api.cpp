@@ -441,6 +441,31 @@ std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_
     return {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 }
 
+std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t entity_id) {
+    auto e = ecs.entity(entity_id);
+    if (!e.is_valid()) {
+        return {};
+    }
+
+    const GroundState* ground = e.get<GroundState>();
+    const GearState* gear = e.get<GearState>();
+    if (!ground) {
+        return {};
+    }
+
+    return {
+        ground->on_ground ? 1.0 : 0.0,
+        ground->terrain_elevation,
+        static_cast<double>(ground->lifecycle),
+        ground->impact_horizontal_speed_mps,
+        ground->impact_sink_rate_mps,
+        ground->impact_severity,
+        gear ? gear->stress : 0.0,
+        (gear && gear->collapsed) ? 1.0 : 0.0,
+        (!gear || gear->on_runway) ? 1.0 : 0.0,
+    };
+}
+
 std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
     if (e.is_valid()) {

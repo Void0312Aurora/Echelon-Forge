@@ -1,8 +1,8 @@
 # A8 损伤效果链当前状态
 
-状态：`2026-06-08` 第五轮实现检查点。A8 已有有边界工作面，并已整合当前会话
-结构发现；有限动力消费方、翼面/操纵气动消费方，以及固定燃油泄漏/质量响应证据已在
-`A8-DEC-E` 下落地。
+状态：`2026-06-08` 第六轮实现检查点。A8 已有有边界工作面，并已整合当前会话
+结构发现；有限动力消费方、翼面/操纵气动消费方、固定燃油泄漏/质量响应证据，以及窄的
+地面接触生命周期表面已经落地。
 
 ## 本次变化
 
@@ -47,6 +47,12 @@
   - `A8-W12 Ground-Impact Lifecycle Scout`：部分通过，只作为只读证据验收。它确认当前
     触地路径可以发现地面接触，但可观察的坠毁/残骸/碎片生命周期还不是维护中的公开表面，
     不能用直接删除替代。
+- 已验收第一段 `A8-DEC-H` 实现：
+  - `A8-W13 Ground-Impact Lifecycle Writer`：通过。既有 subagent 没有返回可用的新包，
+    所以主线程接手实现了窄 writer 切片。地面接触现在通过公开调试状态区分无接触、已着陆机体
+    和坠毁残骸。严重撞击不再把 `Health.current_hp = 0.0` 当成唯一可见结果，测试也保护
+    安全/低速接触不会变成坠毁残骸。
+  - `A8-W14 Sensor/Data-Link/Fire Consequence Scout`：仍 held。第六轮还没有可验收的侦察包被整合。
 
 ## 2026-06-07 验收检查
 
@@ -158,6 +164,26 @@ python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards
 - 武器/引信/损伤链守卫：`170 passed`。
 - `A8-W12` 是只读包，没有文件改动；它的验收只代表下一轮实现包的证据成立，不代表实现已验收。
 
+## 2026-06-08 第六轮验收检查
+
+已运行命令：
+
+```bash
+git diff --check -- src/components/systems/logistics.h src/systems/physics/ground_contact_system.h src/core/engine/simulation_kernel.h src/core/engine/simulation_kernel_observation_api.cpp src/interfaces/python/bindings_core.cpp tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'ground_contact_lifecycle'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+结果：
+
+- diff 空白检查：通过。
+- 聚焦 Python lint：通过。
+- `ef_py` 编译：通过。
+- 地面接触生命周期聚焦检查：`3 passed, 170 deselected`。
+- 武器/引信/损伤链守卫：`173 passed`。
+
 ## 成熟度矩阵
 
 | 区域 | Accepted | Active | Held | Deferred |
@@ -166,7 +192,8 @@ python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards
 | 结构化部件和飞机损伤状态 | 已有命中盒、部件、分组、飞机状态字段和公开逐部件故障类型行。 | A8 必须保持解释非权威，并绑定在射击记录上。 | 只有完整度/能力数字仍不够。 | 大范围目标族数据校准。 |
 | 战斗部作用到部位损伤 | 当前效果代码已估算破片/爆压/切割类载荷，并公开模拟部件故障类型。 | A8 必须通过测试保持 synthetic 词表可审计。 | 当前数值不是 AIM-120C 真值。 | 发布级战斗部建模。 |
 | 部位损伤到飞机行为 | 推进损伤即使在显式发动机调参启用时也能进入运行时推力；翼面/操纵损伤现在能进入有限气动系数、力矩和轴向控制能力；固定油箱损伤能进入泄漏/质量运行时响应。 | A8 后续只能通过维护中的系统继续扩大消费方覆盖。 | 当前气动响应仍是 synthetic 且偏标量化；燃油样例证明的是泄漏/质量和火源标记，不是完整火灾蔓延；左右符号保真和飞机专用飞控律未验收。 | 完整飞机专用飞控律校准和完整火灾生命周期校准。 |
-| MQ-9 / AIM-120C 验证 | 已有测试夹具、固定部件样例、非权威检查、固定右副翼气动响应检查、300 秒右副翼长时程检查和固定中心油箱泄漏/质量检查。 | A8 应继续补尾部动力、更完整火灾、传感器/数据链和地面撞击生命周期覆盖。 | 一次 live smoke 结果不足以验收；燃油泄漏测试也不是坠毁或击毁证明。 | 击杀概率或真实世界杀伤声明。 |
+| 地面接触生命周期 | 安全接触和严重接触现在有公开调试生命周期状态；构造的严重撞击可以观察为 `crashed_wreck`，实体仍保持 active。 | A8 后续应决定是否还需要 debris/residue 实体，而不只是调试生命周期状态。 | 该生命周期不会让武器命中更早坠毁，也不生成物理碎片。 | 完整残骸/残留对象模型。 |
+| MQ-9 / AIM-120C 验证 | 已有测试夹具、固定部件样例、非权威检查、固定右副翼气动响应检查、300 秒右副翼长时程检查、固定中心油箱泄漏/质量检查和地面接触生命周期检查。 | A8 应继续补尾部动力、更完整火灾和传感器/数据链覆盖。 | 一次 live smoke 结果不足以验收；燃油泄漏或坠毁残骸生命周期测试也不是真实击杀证明。 | 击杀概率或真实世界杀伤声明。 |
 
 ## 已整合的只读发现
 
@@ -190,10 +217,10 @@ python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards
   这是工程响应路径，不是已校准的飞机专用飞控律。
 - 现有 `flight_control_kill`、`propulsion_kill` 和 forced-landing 字段应保持报告/状态输出，
   不应变成绕过飞行仿真的新捷径。
-- 当前触地系统会记录地形高度和触地状态，越野起落架受力也可能通过把血量置零让起落架坍塌。
-  该路径随后会变成 `Lost` 并销毁飞机实体；这不是 A8 需要的维护中坠毁/残骸生命周期。
-- 目前还没有公开的机体生命周期或残留对象类型来表示已着陆机体、坠毁残骸或碎片。把武器损伤报告
-  直接复用于地面撞击，会把“武器效果”和“后续坠毁”混在同一类事件里。
+- 当前触地系统会记录地形高度和触地状态。`A8-W13` 已改变越野/严重撞击路径，让起落架坍塌和
+  严重撞击发布地面接触生命周期状态，而不是把 `Health=0` 当成唯一可观察路径。
+- 目前还没有公开残留对象类型来表示碎片。把武器损伤报告直接复用于地面撞击，会把“武器效果”
+  和“后续坠毁”混在同一类事件里。
 
 MQ-9 / AIM-120C 验证结构：
 
@@ -251,8 +278,7 @@ MQ-9 / AIM-120C 验证结构：
   以及一个固定燃油泄漏/质量响应已经落地。
 - 每新增一个消费方切片后，继续扩展 MQ-9/AIM-120C 固定下游检查，尤其是尾部动力、更完整火灾生命周期
   和传感器/数据链。
-- 如果近地受损飞机不应继续 active，需要补一条维护中的地面撞击生命周期路径，而不是直接触地击杀捷径。
-  下一轮 writer 应通过公开表面表达已着陆机体、坠毁残骸或碎片/残留之一，而不是只把原飞机删除。
+- 保持新的地面接触生命周期路径足够窄：它覆盖已着陆机体和坠毁残骸可观察性，不覆盖碎片或完整残骸对象模型。
 
 Held：
 
@@ -270,8 +296,9 @@ Deferred：
 
 ## 下一步推荐顺序
 
-1. 实现地面撞击生命周期 writer 包，覆盖安全跑道接触、受损飞机坠毁/残骸、低速非坠毁检查。
-2. 补充传感器/数据链和更完整火灾行为的下游响应检查。
+1. 补充传感器/数据链和更完整火灾行为的下游响应检查。
+2. 决定 debris/residue 是否需要一等对象模型，或当前 `landed_airframe/crashed_wreck` 生命周期状态
+   对本 A8 切片是否足够。
 3. 决定当前有限 `A8-DEC-E` 消费方集合是 accepted 还是仍需继续 held 等待更多维护消费方。
 4. 只有在残余明确 hold 或 closed 后，才同步 A8 最终验收。
 

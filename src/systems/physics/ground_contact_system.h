@@ -10,7 +10,6 @@
 #include "components/systems/logistics.h" // For GroundState
 #include "components/physics/performance.h" // For LandingGear
 #include "components/physics/control_law.h" // For ControlLawState (FBW filtered inputs)
-#include "components/combat/health.h"        // For Health
 #include "core/interfaces/environment_model.h"
 
 namespace {
@@ -48,6 +47,10 @@ namespace {
     constexpr double kTireVrefRollMps = 1.0;               // Smoothing speed for rolling resistance
     constexpr double kTireVrefBrakeMps = 0.5;              // Smoothing speed for braking force
     constexpr double kEnvironmentScalarCanonicalQuantum = 0x1p-76;
+    constexpr double kHardLandingSinkRateMps = 9.0;
+    constexpr double kSevereImpactSinkRateMps = 15.0;
+    constexpr double kOffroadCrashSpeedMps = 45.0;
+    constexpr double kPavedCrashSpeedMps = 95.0;
 
     inline double canonicalize_environment_scalar(double value) {
         if (!std::isfinite(value) || kEnvironmentScalarCanonicalQuantum <= 0.0) {
@@ -88,7 +91,7 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     // 1. Detection: Query Environment
                     // Use current position (x, y)
                     auto terrain = env->get_terrain_at(transform[i].x, transform[i].y);
-                    
+
                     double terrain_z = canonicalize_environment_scalar(terrain.elevation);
                     ground[i].terrain_elevation = terrain_z;
                     
@@ -106,7 +109,16 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     bool is_touching = (penetration > 0.0);
                     ground[i].on_ground = is_touching;
                     
-	                    if (!is_touching) continue;
+	                    if (!is_touching) {
+	                        if (ground[i].lifecycle != GroundImpactLifecycle::CrashedWreck &&
+	                            ground[i].lifecycle != GroundImpactLifecycle::DebrisFragmentResidue) {
+	                            ground[i].lifecycle = GroundImpactLifecycle::None;
+	                            ground[i].impact_horizontal_speed_mps = 0.0;
+	                            ground[i].impact_sink_rate_mps = 0.0;
+	                            ground[i].impact_severity = 0.0;
+	                        }
+	                        continue;
+	                    }
 	                    
 	                    // 2. Normal Force (Spring-Damper)
 	                    double f_spring = kGroundSpring * penetration;
@@ -171,6 +183,48 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     double vx = velocity[i].vx;
                     double vy = velocity[i].vy;
                     double v_h_sq = vx*vx + vy*vy;
+                    double v_h = std::sqrt(std::max(0.0, v_h_sq));
+                    const double sink_rate_mps = std::max(0.0, -velocity[i].vz);
+                    ground[i].impact_horizontal_speed_mps = v_h;
+                    ground[i].impact_sink_rate_mps = sink_rate_mps;
+
+                    double gear_mu_roll = 0.02; // Default paved-surface rolling coefficient
+                    if (const LandingGear* lg = it.entity(i).get<LandingGear>()) {
+                        gear_mu_roll = std::max(0.0, lg->rolling_friction_coeff);
+                    }
+
+                    double mu_rolling = gear_mu_roll;
+
+                    using Surface = IEnvironmentModel::SurfaceType;
+                    bool is_offroad = false;
+
+                    switch (terrain.type) {
+                        case Surface::Concrete:   mu_rolling = std::max(0.01, gear_mu_roll); break;
+                        case Surface::Asphalt:    mu_rolling = std::max(0.0125, gear_mu_roll * 1.25); break;
+                        case Surface::HardPacked: mu_rolling = std::max(0.05, gear_mu_roll * 2.5); is_offroad = true; break;
+                        case Surface::SoftDirt:   mu_rolling = std::max(0.15, gear_mu_roll * 7.5); is_offroad = true; break;
+                        case Surface::Water:      mu_rolling = std::max(0.80, gear_mu_roll * 20.0); is_offroad = true; break; // Sinking
+                        case Surface::Obstacle:   mu_rolling = std::max(1.0, gear_mu_roll * 25.0);  is_offroad = true; break; // Collision
+                        default:                  mu_rolling = std::max(0.10, gear_mu_roll * 5.0); is_offroad = true; break;
+                    }
+
+                    const double sink_severity = sink_rate_mps / kSevereImpactSinkRateMps;
+                    const double speed_reference =
+                        is_offroad ? kOffroadCrashSpeedMps : kPavedCrashSpeedMps;
+                    const double speed_severity = v_h / std::max(1.0, speed_reference);
+                    const double impact_severity = std::max(sink_severity, speed_severity);
+                    const bool severe_impact =
+                        sink_rate_mps >= kSevereImpactSinkRateMps ||
+                        (is_offroad && v_h >= kOffroadCrashSpeedMps && sink_rate_mps >= 2.0) ||
+                        (!is_offroad && v_h >= kPavedCrashSpeedMps &&
+                         sink_rate_mps >= kHardLandingSinkRateMps);
+                    ground[i].impact_severity = impact_severity;
+                    if (ground[i].lifecycle != GroundImpactLifecycle::CrashedWreck &&
+                        ground[i].lifecycle != GroundImpactLifecycle::DebrisFragmentResidue) {
+                        ground[i].lifecycle = severe_impact
+                            ? GroundImpactLifecycle::CrashedWreck
+                            : GroundImpactLifecycle::LandedAirframe;
+                    }
                     const ResolvedAirControlInput control_input = resolve_air_control_input(
                         it.entity(i).get<PilotAction>(),
                         it.entity(i).get<MissionCommandControlState>(),
@@ -181,29 +235,6 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                     double brake_amount = ground_control.brake_amount;
                     
                     if (v_h_sq > 0.001) {
-                         double v_h = std::sqrt(v_h_sq);
-                         
-                         // --- Surface Logic ---
-                         double gear_mu_roll = 0.02; // Default paved-surface rolling coefficient
-                         if (const LandingGear* lg = it.entity(i).get<LandingGear>()) {
-                             gear_mu_roll = std::max(0.0, lg->rolling_friction_coeff);
-                         }
-
-                         double mu_rolling = gear_mu_roll;
-                         
-                         using Surface = IEnvironmentModel::SurfaceType;
-                         bool is_offroad = false;
-
-                         switch (terrain.type) {
-                             case Surface::Concrete:   mu_rolling = std::max(0.01, gear_mu_roll); break;
-                             case Surface::Asphalt:    mu_rolling = std::max(0.0125, gear_mu_roll * 1.25); break;
-                             case Surface::HardPacked: mu_rolling = std::max(0.05, gear_mu_roll * 2.5); is_offroad = true; break;
-                             case Surface::SoftDirt:   mu_rolling = std::max(0.15, gear_mu_roll * 7.5); is_offroad = true; break;
-                             case Surface::Water:      mu_rolling = std::max(0.80, gear_mu_roll * 20.0); is_offroad = true; break; // Sinking
-                             case Surface::Obstacle:   mu_rolling = std::max(1.0, gear_mu_roll * 25.0);  is_offroad = true; break; // Collision
-                             default:                  mu_rolling = std::max(0.10, gear_mu_roll * 5.0); is_offroad = true; break;
-                         }
-                         
                          // --- Gear State Update ---
                          // Track whether on paved surface and accumulate stress if off-road at speed
                          GearState* gear = it.entity(i).get_mut<GearState>();
@@ -231,11 +262,8 @@ inline void register_ground_contact_system(flecs::world& ecs, IEnvironmentModel*
                                  // Check for collapse
                                  if (gear->stress >= 1.0) {
                                      gear->collapsed = true;
-                                     // Gear collapse → aircraft crash
-                                     Health* health = it.entity(i).get_mut<Health>();
-                                     if (health) {
-                                         health->current_hp = 0.0;
-                                     }
+                                     ground[i].lifecycle = GroundImpactLifecycle::CrashedWreck;
+                                     ground[i].impact_severity = std::max(ground[i].impact_severity, 1.0);
                                  }
                              }
                          } else {

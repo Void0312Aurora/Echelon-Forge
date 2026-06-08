@@ -168,6 +168,7 @@ public:
     std::vector<double> debug_get_logistics_node(uint64_t entity_id); // [supply_radius, infinite, underway_enabled, min_sep, max_sep, max_rel_speed, fuel_rate, missile_rate, dry_rate]
     std::vector<double> debug_get_resupply_state(uint64_t entity_id); // [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]
     std::vector<double> debug_get_data_link_state(uint64_t entity_id); // [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]
+    std::vector<double> debug_get_ground_contact_state(uint64_t entity_id); // [on_ground, terrain_z, lifecycle, impact_h_speed, impact_sink_rate, impact_severity, gear_stress, gear_collapsed, on_runway]
     std::vector<CommPacket> get_unit_messages(uint64_t entity_id);
     void send_message_command(uint64_t entity_id, uint64_t recipient_id, int msg_type, uint64_t msg_arg);
     void set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles);

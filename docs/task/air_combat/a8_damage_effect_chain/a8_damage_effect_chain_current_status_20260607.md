@@ -1,9 +1,9 @@
 # A8 Damage Effect Chain Current Status
 
-Status: `2026-06-08` fifth implementation checkpoint. A8 has a bounded work
+Status: `2026-06-08` sixth implementation checkpoint. A8 has a bounded work
 surface, current-session structure findings are integrated, and limited
-propulsion, wing/control aerodynamic, and fixed fuel-leak/mass consumer evidence
-has landed under `A8-DEC-E`.
+propulsion, wing/control aerodynamic, fixed fuel-leak/mass consumer evidence,
+and a narrow ground-contact lifecycle surface have landed.
 
 ## What Changed
 
@@ -63,6 +63,15 @@ has landed under `A8-DEC-E`.
     evidence only. It confirms the current ground-contact path can detect
     ground contact, but the observable crash/wreck/debris lifecycle is not yet
     a maintained public surface and must not be replaced by direct deletion.
+- Accepted the first `A8-DEC-H` implementation slice:
+  - `A8-W13 Ground-Impact Lifecycle Writer`: pass. Existing subagent return
+    did not provide a usable new packet, so the main thread implemented the
+    narrow writer slice. Ground contact now exposes a public debug state that
+    distinguishes no contact, landed airframe, and crashed wreck. Severe impact
+    no longer relies on `Health.current_hp = 0.0` as the only visible result,
+    and tests keep safe/low-speed contact out of the crashed-wreck state.
+  - `A8-W14 Sensor/Data-Link/Fire Consequence Scout`: still held. No accepted
+    sixth-wave scout packet has been integrated yet.
 
 ## Acceptance Check 2026-06-07
 
@@ -176,6 +185,26 @@ Outcomes:
 - `A8-W12` was read-only and made no file changes; its acceptance is evidence
   for the next writer packet, not implementation acceptance.
 
+## Sixth Acceptance Check 2026-06-08
+
+Commands run:
+
+```bash
+git diff --check -- src/components/systems/logistics.h src/systems/physics/ground_contact_system.h src/core/engine/simulation_kernel.h src/core/engine/simulation_kernel_observation_api.cpp src/interfaces/python/bindings_core.cpp tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'ground_contact_lifecycle'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes:
+
+- Diff whitespace check: pass.
+- Focused Python lint: pass.
+- `ef_py` build: pass.
+- Ground-contact lifecycle focused checks: `3 passed, 170 deselected`.
+- Weapon guidance realism guards: `173 passed`.
+
 ## Maturity Matrix
 
 | Area | Accepted | Active | Held | Deferred |
@@ -184,7 +213,8 @@ Outcomes:
 | Structured parts and aircraft damage state | Named hitboxes, components, groups, aircraft state fields, and public component failure-mode rows exist. | A8 must keep the explanation non-authoritative and tied to shot rows. | Current integrity/capability numbers are still not enough by themselves. | Broad target-family data calibration. |
 | Warhead action to part damage | Default effects code estimates fragment/blast/rod-like loads and now exposes simulated part-failure modes. | A8 must keep the synthetic vocabulary auditable through tests. | Current values are not AIM-120C truth. | Release-grade warhead modeling. |
 | Part damage to aircraft behavior | Propulsion damage reaches runtime thrust even when explicit engine tuning is active; wing/control damage now reaches limited aerodynamic coefficients, moments, and axis authority; fixed fuel-cell damage reaches leak/mass runtime response. | A8 should keep broadening consumers only through maintained systems. | Current aero response is synthetic and scalar; the fuel case proves leak/mass and fire-source marking, not full fire spread; left/right sign fidelity and aircraft-specific control laws are not accepted. | Full aircraft-specific flight-control law calibration and full fire lifecycle calibration. |
-| MQ-9 / AIM-120C validation | Test fixtures, fixed component cases, non-authority checks, a fixed right-aileron aero-response check, a 300 s right-aileron long-run check, and a fixed center-fuel-cell leak/mass check exist. | A8 should continue with rear propulsion, broader fire, sensor/data-link, and ground-impact lifecycle coverage. | A live smoke result is not enough for acceptance; a fuel leak test is not a crash or kill proof. | Probability of kill or real-world lethality claims. |
+| Ground-contact lifecycle | Safe contact and severe contact now have a public debug lifecycle state; severe constructed impact can be observed as `crashed_wreck` while the entity remains active. | A8 should decide later whether debris/residue entities are required beyond the debug lifecycle state. | The lifecycle does not make weapon hits crash sooner and does not generate physical fragments. | Full wreck/residue object model. |
+| MQ-9 / AIM-120C validation | Test fixtures, fixed component cases, non-authority checks, a fixed right-aileron aero-response check, a 300 s right-aileron long-run check, a fixed center-fuel-cell leak/mass check, and ground-contact lifecycle checks exist. | A8 should continue with rear propulsion, broader fire, and sensor/data-link coverage. | A live smoke result is not enough for acceptance; a fuel leak or crashed-wreck lifecycle test is not real-world kill proof. | Probability of kill or real-world lethality claims. |
 
 ## Read-Only Findings Integrated
 
@@ -219,14 +249,13 @@ Damage-to-flight structure:
 - Existing `flight_control_kill`, `propulsion_kill`, and forced-landing fields
   should stay report/status outputs, not become a new shortcut around flight
   simulation.
-- The current ground-contact system records terrain height and contact state,
-  and off-runway gear stress can collapse gear by setting health to zero. That
-  path then becomes `Lost` and the aircraft entity is destructed, which is not
-  the maintained crash/wreck lifecycle A8 needs.
+- The current ground-contact system records terrain height and contact state.
+  `A8-W13` changed the off-runway/severe-impact path so gear collapse and severe
+  impact publish a ground-contact lifecycle state instead of making `Health=0`
+  the only observable path.
 - There is not yet a public airframe lifecycle or residue object type for
-  landed airframe, crashed wreck, or debris fragments. Reusing weapon damage
-  reports for ground impact would blur "weapon effect" and "later crash" into
-  one event.
+  debris fragments. Reusing weapon damage reports for ground impact would blur
+  "weapon effect" and "later crash" into one event.
 
 MQ-9 / AIM-120C validation structure:
 
@@ -293,11 +322,9 @@ Immediate:
 - Extend fixed MQ-9/AIM-120C downstream checks for rear propulsion, broader
   fire lifecycle, and sensor/data-link cases after each additional consumer
   slice.
-- Add a maintained ground-impact lifecycle path if near-ground damaged aircraft
-  should stop being active instead of remaining observable after contact with
-  the ground. The next writer should expose one of landed airframe, crashed
-  wreck, or debris/residue through a public surface rather than deleting the
-  original aircraft as the only observable result.
+- Keep the new ground-contact lifecycle path narrow: it covers landed airframe
+  and crashed wreck observability, not debris fragments or a full wreck object
+  model.
 
 Held:
 
@@ -315,10 +342,11 @@ Deferred:
 
 ## Next Recommended Order
 
-1. Implement the ground-impact lifecycle writer packet, with safe runway
-   contact, damaged-aircraft crash/wreck, and low-speed non-crash checks.
-2. Add downstream response checks for sensor/data-link and broader fire
+1. Add downstream response checks for sensor/data-link and broader fire
    behavior.
+2. Decide whether debris/residue needs a first-class object model or whether
+   the current `landed_airframe/crashed_wreck` lifecycle state is enough for
+   this A8 slice.
 3. Decide whether the current limited `A8-DEC-E` consumer set is accepted or
    still held for more maintained consumers.
 4. Sync final A8 acceptance only after residuals are explicitly held or closed.

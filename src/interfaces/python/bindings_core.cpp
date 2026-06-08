@@ -886,6 +886,8 @@ void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<Simulat
              "Debug: get [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]")
         .def("debug_get_data_link_state", &SimulationKernel::debug_get_data_link_state, nb::arg("entity_id"),
              "Debug: get [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]")
+        .def("debug_get_ground_contact_state", &SimulationKernel::debug_get_ground_contact_state, nb::arg("entity_id"),
+             "Debug: get [on_ground, terrain_z, lifecycle, impact_h_speed, impact_sink_rate, impact_severity, gear_stress, gear_collapsed, on_runway]")
         .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
         .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
         .def("debug_get_mass_state", &SimulationKernel::debug_get_mass_state,

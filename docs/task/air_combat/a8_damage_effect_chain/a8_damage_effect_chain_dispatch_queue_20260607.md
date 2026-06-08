@@ -276,8 +276,8 @@ Current residuals after fifth-wave acceptance:
 
 ## Sixth Dispatch Wave 2026-06-08
 
-Status: dispatched to existing current-session subagents only. No new
-conversation threads are allowed.
+Status: W13 accepted on 2026-06-08 after main-thread takeover. W14 remains
+held; no new conversation threads were created.
 
 This wave opens `A8-DEC-H Ground-Impact Lifecycle` instead of extending
 `A8-DEC-E`. The main question is no longer whether a damaged aircraft can fly;
@@ -300,3 +300,34 @@ Sixth-wave integration rules:
   context.
 - The main thread owns final review, verification, status synchronization, and
   any commit.
+
+## Sixth Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W13 Ground-Impact Lifecycle Writer` | pass | Main thread implemented the narrow writer slice after the existing agent returned no usable new packet. `GroundState` now exposes no-contact, landed-airframe, and crashed-wreck lifecycle states through `debug_get_ground_contact_state`. Severe impact and gear collapse no longer use `Health=0` as the only public result. |
+| `A8-W14 Sensor/Data-Link/Fire Consequence Scout` | held | No accepted scout packet has been integrated yet. Sensor/data-link and broader fire consequences remain the next non-overlapping scout/writer area. |
+| `A8-DEC-H Ground-Impact Lifecycle` | partial pass | Safe runway contact stays active/observable, constructed severe impact records crashed-wreck state while the entity remains active, and low-speed contact does not create a crash. Debris/residue entities are still not implemented. |
+
+Accepted validation:
+
+```bash
+git diff --check -- src/components/systems/logistics.h src/systems/physics/ground_contact_system.h src/core/engine/simulation_kernel.h src/core/engine/simulation_kernel_observation_api.cpp src/interfaces/python/bindings_core.cpp tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_mq9_aim120.py
+cmake --build build-workshop --target ef_py -j2
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'ground_contact_lifecycle'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes: diff whitespace check pass, focused Python lint pass, `ef_py` build
+pass, ground-contact lifecycle checks `3 passed, 170 deselected`, and weapon
+guidance realism guards `173 passed`.
+
+Current residuals after sixth-wave W13 acceptance:
+
+- `crashed_wreck` is a public lifecycle state on the original entity, not a
+  separate debris cloud or residue entity.
+- W13 does not modify weapon-effect logic and does not make AIM-120C impacts
+  crash sooner.
+- W14 remains held; sensor/data-link and broader fire runtime consequences are
+  still the next non-overlapping area.

@@ -88,9 +88,20 @@ struct ResupplyState {
     NavalResupplyStage naval_stage{NavalResupplyStage::None};
 };
 
+enum class GroundImpactLifecycle : int {
+    None = 0,
+    LandedAirframe = 1,
+    CrashedWreck = 2,
+    DebrisFragmentResidue = 3,
+};
+
 // Ground Contact State
 struct GroundState {
     bool on_ground;
     double terrain_elevation;
     double surface_friction{0.6}; // Default friction
+    GroundImpactLifecycle lifecycle{GroundImpactLifecycle::None};
+    double impact_horizontal_speed_mps{0.0};
+    double impact_sink_rate_mps{0.0};
+    double impact_severity{0.0};
 };
