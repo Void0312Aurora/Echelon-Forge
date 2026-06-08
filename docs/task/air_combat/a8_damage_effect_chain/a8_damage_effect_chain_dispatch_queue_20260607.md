@@ -1,8 +1,8 @@
 # A8 Damage Effect Chain Dispatch Queue
 
-Status: `2026-06-07` first implementation dispatch queue for
+Status: `2026-06-08` active implementation dispatch queue for
 [README.md](README.md). This queue starts A8 from the already accepted planning
-boundary and read-only structure evidence.
+boundary and tracks the bounded implementation waves through `A8-DEC-E`.
 
 ## Dispatch Boundary
 
@@ -147,6 +147,30 @@ Outcomes: diff check pass, build pass, focused A8 propulsion consumer test
 `1 passed`, weapon guidance realism guards `166 passed, 239 subtests passed`,
 flight dynamics tuning runtime `3 passed`, 1v1 fire-missile tests `11 passed,
 2 subtests passed`, and flight dynamics realism guards `4 passed`.
+
+## Fourth Dispatch Wave 2026-06-08
+
+Status: dispatched to current-session subagents only. No new conversation
+threads are allowed.
+
+This wave keeps one implementation writer and two non-overlapping support
+workers. The implementation packet owns the code cut; scouts must not edit the
+same production or test files.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W8 Wing/Control Aero Consumer` | `A8-DEC-E` | Popper | inherited / high | `src/systems/physics/aerodynamics_system.h`; optional new focused test module under `tests/runtime/air_combat/weapon_guidance_realism/` and collector import if needed | Make one narrow wing/control damage response visible through maintained aerodynamic forces, moments, or axis authority. Consume existing `AircraftDamageState` fields such as structural integrity, roll/pitch/yaw control integrity, hydraulic pressure, and control asymmetry. | No direct crash/disappearance rule, no independent can-fly verdict, no MQ-9 special rule, no real-world lethality or Pk claim, no broad flight-model rewrite. | `cmake --build build-workshop --target ef_py -j2`; focused new/changed test; `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`; `python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py` | Required worker packet with touched files, commands/outcomes, risks, residuals. |
+| `A8-W9 MQ-9/AIM-120C Consumer Validation Scout` | `A8-DEC-F` | McClintock | inherited / high | Read-only | Identify the smallest deterministic MQ-9/AIM-120C validation checks that should prove W8's downstream response after integration. Prefer existing A8 fixture helpers and avoid live-only flaky acceptance. | No production edits, no test edits, no direct kill expectation, no real-world lethality claim. | File/line evidence and proposed exact pytest selectors. | Required worker packet with touched files `none`, commands/outcomes, risks, residuals. |
+| `A8-W10 Integration Guard Scout` | `A8-DEC-G` | Plato | inherited / high | Read-only | Review A8 docs/status/test surfaces for what must change after W8 returns, and identify any architecture or CI gates likely to fail. | No acceptance marking, no archive move, no code/test edits. | File/line evidence and proposed integration checklist. | Required worker packet with touched files `none`, commands/outcomes, risks, residuals. |
+
+Fourth-wave integration rules:
+
+- `A8-W8` is the only writer in this wave.
+- `A8-W9` and `A8-W10` are read-only and must not patch files.
+- The main thread owns final merge, verification, and status synchronization.
+- If W8 cannot make a narrow maintained-system response without a direct
+  crash/can-fly shortcut, it must return `blocked` with the smallest safe
+  replacement path.
 
 ## Residuals
 
