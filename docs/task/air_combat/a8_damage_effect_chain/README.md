@@ -4,9 +4,11 @@ Status: `2026-06-08` active implementation. The shot record, part-failure
 vocabulary, public failure-mode rows, propulsion-consumer slice, one
 wing/control aerodynamic-consumer slice, and fixed fuel-leak/mass-response
 evidence are in place. A fixed data-link hit now reaches later mission/sensor
-degradation through the maintained platform state, and a narrow ground-contact
-lifecycle surface separates safe landed airframes from severe crashed-wreck
-contacts without deleting the aircraft as the only public outcome.
+degradation through the maintained platform state. Fixed broader-fire checks now
+cover fuel-cell fire growth and rear-engine fire-zone seeding through maintained
+runtime state. A narrow ground-contact lifecycle surface separates safe landed
+airframes from severe crashed-wreck contacts without deleting the aircraft as
+the only public outcome.
 
 Language:
 
@@ -59,9 +61,10 @@ simulation responds.
 | Damage-to-aircraft state | active input | `AircraftDamageStateUpdate` maps parts into propulsion, fuel, sensors, fire, and broad flight limits. | Keep this as the downstream bridge; do not replace it with a direct kill rule. |
 | Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics now consumes structural, hydraulic, axis-control, and asymmetry damage as limited coefficient/authority changes. | The aero response is still synthetic and scalar; it is not aircraft-specific control-law calibration. |
 | Fuel and mass consumers | active evidence | A fixed center-fuel-cell hit now exposes fuel-leak and fire-source modes, then drains fuel and mass through the maintained runtime path. | This is leak/mass and fire-risk evidence, not a full fire-spread or crash lifecycle. |
+| Fire consumers | active evidence | A fixed left-wing fuel-cell hit grows fire and secondary damage; a rear-engine hit seeds engine fire-zone state and later propulsion loss without requiring fire growth when no flammable exposure exists. | This is deterministic engineering evidence, not calibrated fire truth. |
 | Sensor and data-link consumers | active evidence | A fixed data-link transceiver hit exposes `data_loss`, remains non-authoritative, and later reduces mission/sensor/survivability plus avionics/crew/navigation state through maintained platform damage. | This proves a mission/sensing consequence, not active MQ-9 message traffic or a crash requirement. |
-| Ground-contact lifecycle | active implementation | Ground contact now exposes `landed_airframe` versus `crashed_wreck` state through a debug surface, with tests for safe runway contact, severe impact, and low-speed non-crash contact. | This is not debris-fragment generation and does not make weapon hits crash sooner. |
-| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, fixed MQ-9 right-aileron short/long response checks, fixed center-fuel-cell leak/mass response, fixed data-link mission/sensor response, and ground-contact lifecycle checks exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
+| Ground-contact lifecycle | active implementation | Ground contact now exposes `landed_airframe` versus `crashed_wreck` state through a debug surface, with tests for safe runway contact, severe impact, and low-speed non-crash contact. | This is accepted as original-entity observability for A8; first-class debris/residue objects are deferred. |
+| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, fixed MQ-9 right-aileron short/long response checks, fixed center-fuel-cell leak/mass response, fixed broader-fire response, fixed data-link mission/sensor response, and ground-contact lifecycle checks exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
 
 ## Scope
 
@@ -98,9 +101,9 @@ Out of scope:
 | `P1 Structure Evidence` | Confirm the current hit, effect, part, and flight-consumer structure. | P0 docs exist. | Read-only findings identify code entry points, gaps, and safe write sets. | pass for planning |
 | `P2 Shot Effect Record` | Define the per-shot record that explains what happened and why. | P1 confirms fields and consumers. | Tests can assert fuze, detonation, part effect, and consequence stages. | pass |
 | `P3 Part Effect Vocabulary` | Represent physical damage types instead of one generic damage amount. | P2 record is stable. | Component damage records can name leaks, cuts, fire sources, data loss, and structure weakening. | pass |
-| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, and sensor damage alter the maintained simulation paths. | partial: propulsion, wing/control aero, fuel-leak/mass, and data-link mission/sensor evidence pass |
-| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel, and sensor/data-link outcomes over time. | partial pass: includes fixed fuel-leak/mass and data-link mission/sensor cases |
-| `P6 Acceptance` | Decide accepted or held and record residuals. | P5 evidence complete. | Parent README and status docs state the honest capability and remaining gaps. | planned; seventh-wave partial pass |
+| `P4 Consumer Integration` | Feed concrete damage into propulsion, fuel, sensors, fire, and flight forces. | P3 effects exist. | Engine, wing/control, fuel, sensor, and fire damage alter the maintained simulation paths. | partial pass: propulsion, wing/control aero, fuel-leak/mass, broader fire, and data-link mission/sensor evidence pass |
+| `P5 Scenario Validation` | Prove the chain with fixed MQ-9 / AIM-120C cases. | P4 implementation passes focused tests. | Tests explain rear, wing/control, fuel/fire, and sensor/data-link outcomes over time. | partial pass: includes fixed fuel-leak/mass, broader fire, and data-link mission/sensor cases |
+| `P6 Acceptance` | Decide accepted or held and record residuals. | P5 evidence complete. | Parent README and status docs state the honest capability and remaining gaps. | planned; eighth-wave partial pass |
 
 ## Task Clusters
 
@@ -113,7 +116,7 @@ Out of scope:
 - Latest implementation notes:
   [a8_w7_propulsion_tuning_consumer_20260608.md](a8_w7_propulsion_tuning_consumer_20260608.md)
   and [a8_w8_aero_consumer_20260608.md](a8_w8_aero_consumer_20260608.md)
-  plus the seventh-wave acceptance in
+  plus the eighth-wave acceptance in
   [a8_damage_effect_chain_dispatch_queue_20260607.md](a8_damage_effect_chain_dispatch_queue_20260607.md).
 
 ## Outputs And Evidence
@@ -125,7 +128,7 @@ Expected outputs:
 - Updated propagation from component damage into existing propulsion, fuel/mass,
   sensor, fire, and flight/aerodynamic consumers.
 - Focused MQ-9 / AIM-120C regression tests for rear-engine, wing/control,
-  fuel/leak/mass, fire-risk, and sensor/data-link cases.
+  fuel/leak/mass, fire behavior, and sensor/data-link cases.
 - Documentation that keeps estimated engineering behavior separate from real
   weapon lethality claims.
 
@@ -153,17 +156,18 @@ This subproject can be marked accepted only when:
 
 - Public shot rows, concrete part-failure vocabulary, fixed MQ-9/AIM-120C
   checks, the tuned-engine propulsion consumer, one wing/control aerodynamic
-  consumer, one center-fuel-cell leak/mass runtime check, one data-link
-  mission/sensor runtime check, and one ground-contact lifecycle surface are
-  integrated.
+  consumer, one center-fuel-cell leak/mass runtime check, one broader-fire
+  runtime check pair, one data-link mission/sensor runtime check, and one
+  ground-contact lifecycle surface are integrated.
 - The next runtime step should broaden consumer coverage only through existing
-  maintained systems, with particular care around broader fire behavior, rear
-  propulsion/fuel cases, and aircraft-specific control-law calibration.
+  maintained systems, with particular care around aircraft-specific control-law
+  calibration and platform-family expansion.
 - Long-run right-aileron damage can drive the damaged MQ-9 to near-ground
   response while the clean baseline holds level flight. Severe ground contact
   can now be observed as `crashed_wreck`, while safe or low-speed contact stays
   observable as `landed_airframe`.
-- Debris/residue entities and broader fire behavior remain follow-up work.
+- Debris/residue entities are deferred; original-entity `landed_airframe` /
+  `crashed_wreck` observability is accepted for this A8 slice.
 - Full calibration of fragment patterns, blast loads, target vulnerability, and
   aircraft-specific failure thresholds remains deferred.
 

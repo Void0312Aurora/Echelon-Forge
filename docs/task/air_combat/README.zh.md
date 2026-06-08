@@ -133,8 +133,9 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
   [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)：
   它是 active 工作面，用来把起爆后的效果转成具体飞机部位损伤，并通过已有动力、燃油、
   传感器、火灾和飞行消费路径表现出来。当前已验收切片覆盖动力、一段翼面/操纵气动响应、
-  燃油泄漏/质量响应、数据链任务/传感器后果，以及窄的地面接触生命周期状态。它仍不增加
-  直接坠毁规则、MQ-9 特例击杀规则、Pk 声明、确定性引信声明或 AIM-120C 权威杀伤声明。
+  燃油泄漏/质量响应、更完整火灾后果检查、数据链任务/传感器后果，以及窄的地面接触生命周期状态；
+  碎片/残留对象后置。它仍不增加直接坠毁规则、MQ-9 特例击杀规则、Pk 声明、确定性引信声明或
+  AIM-120C 权威杀伤声明。
 
 ## 当前继续推进重点
 
@@ -148,7 +149,8 @@ deterministic probing 仍记录 `0` releases，legal-open advantage 仍为负。
 - 推进
   [A8 损伤效果链](a8_damage_effect_chain/README.zh.md)，作为具体损伤通过维护中的飞机系统
   传播的 follow-on，但不增加直接坠毁或特定目标击杀规则；当前已验收切片覆盖动力、一段有限
-  翼面/操纵气动响应、燃油/质量泄漏、数据链任务/传感器后果和地面接触生命周期可观察性
+  翼面/操纵气动响应、燃油/质量泄漏、更完整火灾后果、数据链任务/传感器后果和地面接触生命周期
+  可观察性；碎片/残留对象后置
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外

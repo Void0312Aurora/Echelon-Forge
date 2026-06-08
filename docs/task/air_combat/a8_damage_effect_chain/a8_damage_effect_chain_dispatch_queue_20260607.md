@@ -377,7 +377,7 @@ Outcomes: docs/tests diff whitespace check pass, focused Python lint pass,
 data-link runtime consequence check `1 passed, 173 deselected`, and weapon
 guidance realism guards `174 passed`.
 
-Current residuals after seventh-wave acceptance:
+Residuals before eighth-wave dispatch:
 
 - Data-link consequence is proven through maintained platform mission/sensor
   state, not through active MQ-9 data-link message traffic.
@@ -410,3 +410,35 @@ Eighth-wave integration rules:
   recommended accept/defer or writer path for main-thread review.
 - The main thread owns final review, verification, status synchronization, and
   any commit.
+
+## Eighth Dispatch Acceptance 2026-06-08
+
+| Packet | State | Notes |
+| --- | --- | --- |
+| `A8-W17 Broader Fire Consequence Writer` | pass | Added fixed MQ-9/AIM-120C-like fire-consequence checks. A left-wing fuel-cell hit now proves fire growth, fuel loss, and secondary flight/avionics/crew damage through maintained runtime state. A rear-engine hit proves engine fire-zone seeding plus propulsion consequence without falsely requiring fire growth when there is no flammable exposure. |
+| `A8-W18 Debris/Residue Lifecycle Decision Scout` | pass | Accepted as read-only evidence. For this A8 slice, the current original-entity `landed_airframe` / `crashed_wreck` lifecycle is sufficient post-impact observability; first-class debris/residue objects are explicitly deferred. |
+| `A8-DEC-E/F Consumer And Validation Coverage` | partial pass | Propulsion, wing/control aero, fuel-leak/mass, data-link mission/sensor consequence, and broader fire consequence checks are now in place. |
+| `A8-DEC-H Ground-Impact Lifecycle` | partial pass | Landed-airframe/crashed-wreck observability is accepted for this slice; debris/residue entity creation remains deferred rather than an A8 blocker. |
+
+Accepted validation:
+
+```bash
+git diff --check -- tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_fire_consequence.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'left_wing_fuel_hit_grows_fire or rear_engine_hit_seeds_engine_fire_zone'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
+```
+
+Outcomes: test diff whitespace check pass, focused Python lint pass, broader
+fire consequence checks `2 passed, 174 deselected`, and weapon guidance realism
+guards `176 passed`.
+
+Current residuals after eighth-wave acceptance:
+
+- Broader fire behavior is now covered by deterministic fixed MQ-9/AIM-120C-like
+  tests, but it remains engineering evidence rather than calibrated fire truth.
+- Debris/residue entities are deferred; the accepted A8 lifecycle surface is
+  original-entity observability via `landed_airframe` and `crashed_wreck`.
+- The remaining A8 decision is whether the current maintained-consumer set is
+  sufficient for final `P6` acceptance with calibration and object-model work
+  explicitly deferred.
