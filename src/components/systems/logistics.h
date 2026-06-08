@@ -3,30 +3,30 @@
 #include "components/basic/common.h" // For UnitType
 
 struct FuelSystem {
-    double internal_fuel_kg;    // Current Internal Fuel
-    double max_internal_fuel_kg;// Capacity
-    
-    double external_fuel_kg;    // Current External Fuel
-    double max_external_fuel_kg;// Capacity
-    
-    double current_flow_rate;   // kg/s
-    bool afterburner_active;    // State flag
-    
+    double internal_fuel_kg;     // Current Internal Fuel
+    double max_internal_fuel_kg; // Capacity
+
+    double external_fuel_kg;     // Current External Fuel
+    double max_external_fuel_kg; // Capacity
+
+    double current_flow_rate; // kg/s
+    bool afterburner_active;  // State flag
+
     // Config parameters
-    double mil_power_flow_rate; // kg/s at 100% throttle
+    double mil_power_flow_rate;     // kg/s at 100% throttle
     double ab_flow_rate_multiplier; // Multiplier ~3-5x
 };
 
 struct MassProperties {
-    double empty_mass_kg;       // Mirrored from Mass until a future single-authority migration
-    double current_total_mass_kg; // Mirrored total-mass readout for aero/logistics consumers
-    double base_drag_index;     // Clean config drag
-    double current_drag_index;  // Calculated drag
+    double empty_mass_kg;          // Mirrored from Mass until a future single-authority migration
+    double current_total_mass_kg;  // Mirrored total-mass readout for aero/logistics consumers
+    double base_drag_index;        // Clean config drag
+    double current_drag_index;     // Calculated drag
     double reference_area_m2{0.0}; // Reference area for aero drag calculations
-    
+
     // Aerodynamic References
-    double wing_span_m{10.0};       // [NEW] Span b
-    double chord_m{3.0};            // [NEW] Mean Aerodynamic Chord c_bar
+    double wing_span_m{10.0}; // [NEW] Span b
+    double chord_m{3.0};      // [NEW] Mean Aerodynamic Chord c_bar
 };
 
 struct WeaponStation {
@@ -43,8 +43,8 @@ struct Loadout {
 
 // Base / Tanker Component
 struct LogisticsNode {
-    double supply_radius_m;     // e.g. 500m for Base, 50m for Tanker
-    bool infinite_supply;       
+    double supply_radius_m; // e.g. 500m for Base, 50m for Tanker
+    bool infinite_supply;
     bool underway_replenishment_enabled{false};
     double underway_min_separation_m{0.0};
     double underway_max_separation_m{0.0};
@@ -80,7 +80,7 @@ enum class NavalResupplyStage {
 };
 
 struct ResupplyState {
-    double time_remaining_s;    // Implementation of "Turnaround Time"
+    double time_remaining_s; // Implementation of "Turnaround Time"
     bool is_refueling;
     bool is_rearming;
     ResupplyKind kind{ResupplyKind::BaseRefuel};

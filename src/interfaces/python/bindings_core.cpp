@@ -35,24 +35,25 @@
 #endif
 
 namespace {
-const char* default_unit_name_for(UnitType type) {
+const char *default_unit_name_for(UnitType type) {
     switch (type) {
-        case UnitType::Aircraft:
-            return "Aircraft";
-        case UnitType::Ship:
-            return "Ship";
-        case UnitType::Submarine:
-            return "Submarine";
-        case UnitType::Ground:
-            return "Ground_Platoon_MVP";
-        case UnitType::Missile:
-            return "Missile";
-        case UnitType::Facility:
-            return "Facility";
-        case UnitType::C2Node:
-            return "AWACS";
-        default:
-            throw std::invalid_argument("Unsupported UnitType for spawn_unit (use type_name string instead)");
+    case UnitType::Aircraft:
+        return "Aircraft";
+    case UnitType::Ship:
+        return "Ship";
+    case UnitType::Submarine:
+        return "Submarine";
+    case UnitType::Ground:
+        return "Ground_Platoon_MVP";
+    case UnitType::Missile:
+        return "Missile";
+    case UnitType::Facility:
+        return "Facility";
+    case UnitType::C2Node:
+        return "AWACS";
+    default:
+        throw std::invalid_argument(
+            "Unsupported UnitType for spawn_unit (use type_name string instead)");
     }
 }
 
@@ -125,31 +126,21 @@ struct FlightDynamicsDebugView {
     double fuel_leak_rate_kg_s = 0.0;
 };
 
-void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& kernel);
-void bind_simulation_kernel_diagnostics_introspection_surface(
-    nb::class_<SimulationKernel>& kernel
-);
+void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &kernel);
+void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<SimulationKernel> &kernel);
 void bind_simulation_kernel_legacy_compatibility_debug_surface(
-    nb::class_<SimulationKernel>& kernel
-);
-void bind_simulation_kernel_diagnostics_override_surface(
-    nb::class_<SimulationKernel>& kernel
-);
+    nb::class_<SimulationKernel> &kernel);
+void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel> &kernel);
 
-flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(
-    SimulationKernel& self,
-    uint64_t entity_id
-) {
+flecs::entity diagnostics_legacy_binding_entity_quarantine_lookup(SimulationKernel &self,
+                                                                  uint64_t entity_id) {
     // WP22-R3 quarantine marker: raw entity binding access must stay localized
     // to diagnostics/legacy helpers instead of widening the maintained surface.
     return self.get_world().entity(entity_id);
 }
 
-void diagnostics_mark_read_only_snapshot(
-    nb::dict& out,
-    const char* diagnostics_surface_kind,
-    const char* runtime_owner_kind
-) {
+void diagnostics_mark_read_only_snapshot(nb::dict &out, const char *diagnostics_surface_kind,
+                                         const char *runtime_owner_kind) {
     out["diagnostics_only"] = true;
     out["quarantined_surface"] = true;
     out["read_only_snapshot"] = true;
@@ -159,28 +150,21 @@ void diagnostics_mark_read_only_snapshot(
     out["runtime_owner_kind"] = runtime_owner_kind;
 }
 
-void diagnostics_quarantined_legacy_movement_bridge_write(
-    flecs::entity e,
-    double target_heading_deg,
-    double target_speed_mps,
-    double target_altitude_m,
-    bool active
-) {
+void diagnostics_quarantined_legacy_movement_bridge_write(flecs::entity e,
+                                                          double target_heading_deg,
+                                                          double target_speed_mps,
+                                                          double target_altitude_m, bool active) {
     // WP22-R1-2 quarantine marker: legacy debug writes must stay bridge-only
     // and must never become maintained command truth or direct component writes.
     if (active) {
-        set_compatibility_autopilot_movement_command(
-            e,
-            target_heading_deg,
-            target_speed_mps,
-            target_altitude_m
-        );
+        set_compatibility_autopilot_movement_command(e, target_heading_deg, target_speed_mps,
+                                                     target_altitude_m);
         return;
     }
     deactivate_compatibility_movement_command(e);
 }
 
-SensorDebugView make_sensor_debug_view(const Sensor& sensor) {
+SensorDebugView make_sensor_debug_view(const Sensor &sensor) {
     SensorDebugView out{};
     out.max_range = sensor.max_range;
     out.detection_prob = sensor.detection_prob;
@@ -201,7 +185,7 @@ SensorDebugView make_sensor_debug_view(const Sensor& sensor) {
     return out;
 }
 
-TrackDebugView make_track_debug_view(const SystemTrack& track) {
+TrackDebugView make_track_debug_view(const SystemTrack &track) {
     TrackDebugView out{};
     out.id = track.track_id;
     out.entity_id = track.entity_id;
@@ -232,7 +216,7 @@ TrackDebugView make_track_debug_view(const SystemTrack& track) {
 }
 } // namespace
 
-void bind_core(nb::module_& m) {
+void bind_core(nb::module_ &m) {
     nb::enum_<Side>(m, "Side")
         .value("Blue", Side::Blue)
         .value("Red", Side::Red)
@@ -560,649 +544,695 @@ void bind_core(nb::module_& m) {
 }
 
 namespace {
-void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel>& kernel) {
+void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &kernel) {
     kernel
         .def("get_instrument_state", &SimulationKernel::get_instrument_state,
              "Get the instrument state for a unit", nb::arg("entity_id"))
-        .def("get_egi_state", &SimulationKernel::get_egi_state,
-             "Get the EGI state for a unit", nb::arg("entity_id"))
+        .def("get_egi_state", &SimulationKernel::get_egi_state, "Get the EGI state for a unit",
+             nb::arg("entity_id"))
         .def("reset", &SimulationKernel::reset, "Reset the simulation", nb::arg("seed") = 42)
-        .def("load_database", &SimulationKernel::load_database, nb::arg("path"), "Load unit definitions from JSON directory")
+        .def("load_database", &SimulationKernel::load_database, nb::arg("path"),
+             "Load unit definitions from JSON directory")
         .def("step", &SimulationKernel::step, "Advance simulation by one fixed tick")
-        .def("get_time_step", &SimulationKernel::get_time_step, "Get the fixed time step in seconds")
-        .def("set_time_step", &SimulationKernel::set_time_step, "Set the fixed time step in seconds")
+        .def("get_time_step", &SimulationKernel::get_time_step,
+             "Get the fixed time step in seconds")
+        .def("set_time_step", &SimulationKernel::set_time_step,
+             "Set the fixed time step in seconds")
         .def("shutdown", &SimulationKernel::shutdown, "Release simulation kernel resources")
-        .def("load_unit_definitions", [](SimulationKernel& self, const std::string& path) {
-            std::string error;
-            bool ok = self.load_unit_definitions(path, &error);
-            if (!ok) {
-                spdlog::warn("Failed to load unit definitions: {}", error);
-            }
-            return ok;
-        }, "Load unit definitions from JSON", nb::arg("path"))
+        .def(
+            "load_unit_definitions",
+            [](SimulationKernel &self, const std::string &path) {
+                std::string error;
+                bool ok = self.load_unit_definitions(path, &error);
+                if (!ok) {
+                    spdlog::warn("Failed to load unit definitions: {}", error);
+                }
+                return ok;
+            },
+            "Load unit definitions from JSON", nb::arg("path"))
         .def("clear_zones", &SimulationKernel::clear_zones, "Clear all environment zones")
-        .def("add_zone", &SimulationKernel::add_zone,
-             "Add a new environment zone",
-             nb::arg("name"), nb::arg("x"), nb::arg("y"), nb::arg("width"), nb::arg("height"), nb::arg("heading"), nb::arg("surface_type"))
+        .def("add_zone", &SimulationKernel::add_zone, "Add a new environment zone", nb::arg("name"),
+             nb::arg("x"), nb::arg("y"), nb::arg("width"), nb::arg("height"), nb::arg("heading"),
+             nb::arg("surface_type"))
         .def("set_wind", &SimulationKernel::set_wind,
              "Set global wind (speed m/s, dir_from_deg NAV, shear m/s per km)",
              nb::arg("speed_mps"), nb::arg("dir_from_deg"), nb::arg("shear_mps_per_km") = 0.0)
         .def("set_maritime_state", &SimulationKernel::set_maritime_state,
              "Set global maritime state (sea state, wave heading deg NAV, wave period s)",
-             nb::arg("sea_state"), nb::arg("wave_heading_deg") = 0.0, nb::arg("wave_period_s") = 8.0)
+             nb::arg("sea_state"), nb::arg("wave_heading_deg") = 0.0,
+             nb::arg("wave_period_s") = 8.0)
         .def("clear_maritime_state", &SimulationKernel::clear_maritime_state,
              "Clear global maritime override so platform defaults can apply again")
-        .def("get_maritime_state", [](SimulationKernel& self) {
-             const auto state = self.get_maritime_state();
-             return std::make_tuple(state.sea_state, state.wave_heading_deg, state.wave_period_s);
-        }, "Get global maritime state as (sea_state, wave_heading_deg, wave_period_s)")
+        .def(
+            "get_maritime_state",
+            [](SimulationKernel &self) {
+                const auto state = self.get_maritime_state();
+                return std::make_tuple(state.sea_state, state.wave_heading_deg,
+                                       state.wave_period_s);
+            },
+            "Get global maritime state as (sea_state, wave_heading_deg, wave_period_s)")
         .def("set_terrain_type", &SimulationKernel::set_terrain_type,
-             "Set terrain profile (e.g. 'flat', 'legacy', 'hill')",
-             nb::arg("terrain_type"))
-        .def("spawn_unit", [](SimulationKernel& self, Side side, const std::string& type,
-                              double x, double y, double z,
-                              double heading, double pitch, double roll,
-                              double vx, double vy, double vz) {
-            auto e = self.spawn_unit(side, type, x, y, z, heading, pitch, roll, vx, vy, vz);
-            return e.id();
-        }, "Spawn a unit by name with orientation and return its Entity ID",
-           nb::arg("side"), nb::arg("type_name"),
-           nb::arg("x"), nb::arg("y"), nb::arg("z"),
-           nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
-           nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
-        .def("spawn_unit", [](SimulationKernel& self, Side side, UnitType type,
-                              double x, double y, double z,
-                              double heading, double pitch, double roll,
-                              double vx, double vy, double vz) {
-            auto e = self.spawn_unit(
-                side,
-                default_unit_name_for(type),
-                x,
-                y,
-                z,
-                heading,
-                pitch,
-                roll,
-                vx,
-                vy,
-                vz
-            );
-            return e.id();
-        }, "Spawn a default unit for the given UnitType with orientation and return its Entity ID",
-           nb::arg("side"), nb::arg("type"),
-           nb::arg("x"), nb::arg("y"), nb::arg("z"),
-           nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
-           nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
+             "Set terrain profile (e.g. 'flat', 'legacy', 'hill')", nb::arg("terrain_type"))
+        .def(
+            "spawn_unit",
+            [](SimulationKernel &self, Side side, const std::string &type, double x, double y,
+               double z, double heading, double pitch, double roll, double vx, double vy,
+               double vz) {
+                auto e = self.spawn_unit(side, type, x, y, z, heading, pitch, roll, vx, vy, vz);
+                return e.id();
+            },
+            "Spawn a unit by name with orientation and return its Entity ID", nb::arg("side"),
+            nb::arg("type_name"), nb::arg("x"), nb::arg("y"), nb::arg("z"),
+            nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
+            nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
+        .def(
+            "spawn_unit",
+            [](SimulationKernel &self, Side side, UnitType type, double x, double y, double z,
+               double heading, double pitch, double roll, double vx, double vy, double vz) {
+                auto e = self.spawn_unit(side, default_unit_name_for(type), x, y, z, heading, pitch,
+                                         roll, vx, vy, vz);
+                return e.id();
+            },
+            "Spawn a default unit for the given UnitType with orientation and return its Entity ID",
+            nb::arg("side"), nb::arg("type"), nb::arg("x"), nb::arg("y"), nb::arg("z"),
+            nb::arg("heading") = 0.0, nb::arg("pitch") = 0.0, nb::arg("roll") = 0.0,
+            nb::arg("vx") = 0.0, nb::arg("vy") = 0.0, nb::arg("vz") = 0.0)
         .def("set_command", &SimulationKernel::set_unit_command, "Set movement command for a unit",
-             nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"), nb::arg("altitude_m"))
+             nb::arg("entity_id"), nb::arg("heading_deg"), nb::arg("speed_mps"),
+             nb::arg("altitude_m"))
         .def("set_stick_command", &SimulationKernel::set_unit_stick_command, "Set stick inputs",
-             nb::arg("entity_id"), nb::arg("stick_roll"), nb::arg("stick_pitch"), nb::arg("throttle"), nb::arg("gear_down") = true)
+             nb::arg("entity_id"), nb::arg("stick_roll"), nb::arg("stick_pitch"),
+             nb::arg("throttle"), nb::arg("gear_down") = true)
         .def("set_action", &SimulationKernel::set_unit_action, "Set normalized action for a unit",
-             nb::arg("entity_id"),
-             nb::arg("turn_rate_cmd"),
-             nb::arg("accel_cmd"),
-             nb::arg("climb_rate_cmd"),
-             nb::arg("fire_cmd"),
-             nb::arg("release_chaff") = false,
-             nb::arg("release_flare") = false,
-             nb::arg("jettison_tanks") = false)
-        .def("set_action_space_config", &SimulationKernel::set_action_space_config, "Override action mapping scales for a unit",
-             nb::arg("entity_id"),
-             nb::arg("max_turn_rate_deg_s"),
-             nb::arg("max_accel_mps2"),
-             nb::arg("max_climb_rate_mps"),
-             nb::arg("min_speed_mps"),
-             nb::arg("max_speed_mps"),
-             nb::arg("min_alt_m"),
-             nb::arg("max_alt_m"))
+             nb::arg("entity_id"), nb::arg("turn_rate_cmd"), nb::arg("accel_cmd"),
+             nb::arg("climb_rate_cmd"), nb::arg("fire_cmd"), nb::arg("release_chaff") = false,
+             nb::arg("release_flare") = false, nb::arg("jettison_tanks") = false)
+        .def("set_action_space_config", &SimulationKernel::set_action_space_config,
+             "Override action mapping scales for a unit", nb::arg("entity_id"),
+             nb::arg("max_turn_rate_deg_s"), nb::arg("max_accel_mps2"),
+             nb::arg("max_climb_rate_mps"), nb::arg("min_speed_mps"), nb::arg("max_speed_mps"),
+             nb::arg("min_alt_m"), nb::arg("max_alt_m"))
         .def("set_pilot_action", &SimulationKernel::set_pilot_action,
-             "Set raw pilot inputs (stick, throttle, etc) for Digital Pilot",
-             nb::arg("entity_id"), nb::arg("action"))
+             "Set raw pilot inputs (stick, throttle, etc) for Digital Pilot", nb::arg("entity_id"),
+             nb::arg("action"))
         .def("set_mission_command", &SimulationKernel::set_mission_command,
-             "Set high-level mission intent for Digital Pilot",
-             nb::arg("entity_id"), nb::arg("command"))
+             "Set high-level mission intent for Digital Pilot", nb::arg("entity_id"),
+             nb::arg("command"))
         .def("set_task_order", &SimulationKernel::set_task_order,
-             "Set the C2 task order for the entity",
-             nb::arg("entity_id"), nb::arg("task_order"))
+             "Set the C2 task order for the entity", nb::arg("entity_id"), nb::arg("task_order"))
         .def("set_leader_intent", &SimulationKernel::set_leader_intent,
-             "Set the leader-layer intent for the entity",
-             nb::arg("entity_id"), nb::arg("leader_intent"))
+             "Set the leader-layer intent for the entity", nb::arg("entity_id"),
+             nb::arg("leader_intent"))
         .def("set_pilot_report", &SimulationKernel::set_pilot_report,
-             "Store the latest pilot report for the entity",
-             nb::arg("entity_id"), nb::arg("pilot_report"))
-        .def("set_command_lag", &SimulationKernel::set_command_lag, "Override command lag time constants for a unit",
-             nb::arg("entity_id"),
-             nb::arg("heading_tau_s"),
-             nb::arg("speed_tau_s"),
-             nb::arg("altitude_tau_s"))
-        .def("set_command_link", &SimulationKernel::set_command_link, "Set command link latency/drop probability",
-             nb::arg("entity_id"), nb::arg("latency_s"), nb::arg("drop_prob"))
-        .def("set_unit_ammo", &SimulationKernel::set_unit_ammo,
-             "Override unit ammo counts",
+             "Store the latest pilot report for the entity", nb::arg("entity_id"),
+             nb::arg("pilot_report"))
+        .def("set_command_lag", &SimulationKernel::set_command_lag,
+             "Override command lag time constants for a unit", nb::arg("entity_id"),
+             nb::arg("heading_tau_s"), nb::arg("speed_tau_s"), nb::arg("altitude_tau_s"))
+        .def("set_command_link", &SimulationKernel::set_command_link,
+             "Set command link latency/drop probability", nb::arg("entity_id"),
+             nb::arg("latency_s"), nb::arg("drop_prob"))
+        .def("set_unit_ammo", &SimulationKernel::set_unit_ammo, "Override unit ammo counts",
              nb::arg("entity_id"), nb::arg("missiles_remaining"), nb::arg("max_missiles"))
         .def("set_weapon_cooldown", &SimulationKernel::set_weapon_cooldown,
-             "Override unit weapon cooldown state",
-             nb::arg("entity_id"), nb::arg("cooldown_s"), nb::arg("last_fire_time"))
-        .def("fire_missile", [](SimulationKernel& self, uint64_t attacker_id, uint64_t target_id) {
-             auto e = self.fire_missile(attacker_id, target_id);
-             return e.id();
-        }, "Fire a missile from attacker to target", nb::arg("attacker_id"), nb::arg("target_id"))
+             "Override unit weapon cooldown state", nb::arg("entity_id"), nb::arg("cooldown_s"),
+             nb::arg("last_fire_time"))
+        .def(
+            "fire_missile",
+            [](SimulationKernel &self, uint64_t attacker_id, uint64_t target_id) {
+                auto e = self.fire_missile(attacker_id, target_id);
+                return e.id();
+            },
+            "Fire a missile from attacker to target", nb::arg("attacker_id"), nb::arg("target_id"))
         .def("fire_naval_weapon", &SimulationKernel::fire_naval_weapon,
-             "Fire a naval weapon mount type at target",
-             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("weapon_type_code"))
+             "Fire a naval weapon mount type at target", nb::arg("attacker_id"),
+             nb::arg("target_id"), nb::arg("weapon_type_code"))
         .def("export_recent_engagement_events", &SimulationKernel::export_recent_engagement_events,
              "Export recently captured engagement events")
-        .def("get_unit_position", [](SimulationKernel& self, uint64_t entity_id) {
-             auto p = self.get_unit_position(entity_id);
-             return std::make_tuple(p[0], p[1], p[2]);
-        }, "Get unit position (x,y,z)")
-        .def("get_unit_velocity", [](SimulationKernel& self, uint64_t entity_id) {
-             auto v = self.get_unit_velocity(entity_id);
-             return std::make_tuple(v[0], v[1], v[2]);
-        }, "Get unit velocity (vx,vy,vz)")
+        .def(
+            "get_unit_position",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                auto p = self.get_unit_position(entity_id);
+                return std::make_tuple(p[0], p[1], p[2]);
+            },
+            "Get unit position (x,y,z)")
+        .def(
+            "get_unit_velocity",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                auto v = self.get_unit_velocity(entity_id);
+                return std::make_tuple(v[0], v[1], v[2]);
+            },
+            "Get unit velocity (vx,vy,vz)")
         .def("get_unit_heading", &SimulationKernel::get_unit_heading,
              "Get unit heading in degrees (NAV: 0=North, CW)", nb::arg("entity_id"))
-        .def("get_unit_type", &SimulationKernel::get_unit_type,
-             "Get unit type enum value", nb::arg("entity_id"))
-        .def("is_unit_active", &SimulationKernel::is_unit_active,
-             "Check if unit exists", nb::arg("entity_id"))
+        .def("get_unit_type", &SimulationKernel::get_unit_type, "Get unit type enum value",
+             nb::arg("entity_id"))
+        .def("is_unit_active", &SimulationKernel::is_unit_active, "Check if unit exists",
+             nb::arg("entity_id"))
         .def("get_all_units", &SimulationKernel::get_all_units, "Get all units state")
         .def("get_detections", &SimulationKernel::get_detections, "Get unit sensor contacts")
-        .def("get_unit_health", &SimulationKernel::get_unit_health, "Get unit health [current, max]")
+        .def("get_unit_health", &SimulationKernel::get_unit_health,
+             "Get unit health [current, max]")
         .def("get_unit_damage_state", &SimulationKernel::get_unit_damage_state,
              "Get unit damage state [mission, mobility, sensor, survivability]")
         .def("get_unit_fuel", &SimulationKernel::get_unit_fuel, nb::arg("entity_id"),
              "Returns [internal, max_internal, external, max_external]")
-        .def("get_task_order", &SimulationKernel::get_task_order, "Get the latest task order", nb::arg("entity_id"))
-        .def("get_leader_intent", &SimulationKernel::get_leader_intent, "Get the latest leader intent", nb::arg("entity_id"))
-        .def("get_mission_command", &SimulationKernel::get_mission_command, "Get the active mission command", nb::arg("entity_id"))
-        .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report", nb::arg("entity_id"))
-        .def("get_agent_observation", &SimulationKernel::get_agent_observation, "Get complete agent observation")
-        .def("get_visual_observation", [](SimulationKernel& self, uint64_t entity_id) {
-             size_t shape[3] = {
-                 static_cast<size_t>(arb::ARB_HEIGHT),
-                 static_cast<size_t>(arb::ARB_WIDTH),
-                 static_cast<size_t>(arb::ARB_CHANNELS),
-             };
-             return visual_tensor_to_numpy<
-                 nb::shape<
-                     static_cast<size_t>(arb::ARB_HEIGHT),
-                     static_cast<size_t>(arb::ARB_WIDTH),
-                     static_cast<size_t>(arb::ARB_CHANNELS)
-                 >
-             >(self.get_visual_observation(entity_id), 3, shape);
-        }, "Get ARB visual observation [H, W, C] tensor", nb::arg("entity_id"))
-        .def("get_visual_observation_downsampled", [](SimulationKernel& self, uint64_t entity_id, int factor) {
-             const int downsample = factor > 1 ? factor : 1;
-             auto downsampled = self.get_visual_observation_downsampled(entity_id, downsample);
-             size_t shape[3] = {
-                 static_cast<size_t>(arb::ARB_HEIGHT / downsample),
-                 static_cast<size_t>(arb::ARB_WIDTH / downsample),
-                 static_cast<size_t>(arb::ARB_CHANNELS),
-             };
-             return visual_tensor_to_numpy<
-                 nb::shape<
-                     nb::any,
-                     nb::any,
-                     static_cast<size_t>(arb::ARB_CHANNELS)
-                 >
-             >(std::move(downsampled), 3, shape);
-        }, "Get ARB visual observation [H/f, W/f, C] tensor", nb::arg("entity_id"), nb::arg("factor"))
+        .def("get_task_order", &SimulationKernel::get_task_order, "Get the latest task order",
+             nb::arg("entity_id"))
+        .def("get_leader_intent", &SimulationKernel::get_leader_intent,
+             "Get the latest leader intent", nb::arg("entity_id"))
+        .def("get_mission_command", &SimulationKernel::get_mission_command,
+             "Get the active mission command", nb::arg("entity_id"))
+        .def("get_pilot_report", &SimulationKernel::get_pilot_report, "Get the latest pilot report",
+             nb::arg("entity_id"))
+        .def("get_agent_observation", &SimulationKernel::get_agent_observation,
+             "Get complete agent observation")
+        .def(
+            "get_visual_observation",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                size_t shape[3] = {
+                    static_cast<size_t>(arb::ARB_HEIGHT),
+                    static_cast<size_t>(arb::ARB_WIDTH),
+                    static_cast<size_t>(arb::ARB_CHANNELS),
+                };
+                return visual_tensor_to_numpy<nb::shape<static_cast<size_t>(arb::ARB_HEIGHT),
+                                                        static_cast<size_t>(arb::ARB_WIDTH),
+                                                        static_cast<size_t>(arb::ARB_CHANNELS)>>(
+                    self.get_visual_observation(entity_id), 3, shape);
+            },
+            "Get ARB visual observation [H, W, C] tensor", nb::arg("entity_id"))
+        .def(
+            "get_visual_observation_downsampled",
+            [](SimulationKernel &self, uint64_t entity_id, int factor) {
+                const int downsample = factor > 1 ? factor : 1;
+                auto downsampled = self.get_visual_observation_downsampled(entity_id, downsample);
+                size_t shape[3] = {
+                    static_cast<size_t>(arb::ARB_HEIGHT / downsample),
+                    static_cast<size_t>(arb::ARB_WIDTH / downsample),
+                    static_cast<size_t>(arb::ARB_CHANNELS),
+                };
+                return visual_tensor_to_numpy<
+                    nb::shape<nb::any, nb::any, static_cast<size_t>(arb::ARB_CHANNELS)>>(
+                    std::move(downsampled), 3, shape);
+            },
+            "Get ARB visual observation [H/f, W/f, C] tensor", nb::arg("entity_id"),
+            nb::arg("factor"))
         .def("get_unit_messages", &SimulationKernel::get_unit_messages, "Get inbox")
-        .def("send_message_command", &SimulationKernel::send_message_command,
-             nb::arg("entity_id"), nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"));
+        .def("send_message_command", &SimulationKernel::send_message_command, nb::arg("entity_id"),
+             nb::arg("recipient_id"), nb::arg("msg_type"), nb::arg("msg_arg"));
 }
 
-void bind_simulation_kernel_diagnostics_introspection_surface(nb::class_<SimulationKernel>& kernel) {
+void bind_simulation_kernel_diagnostics_introspection_surface(
+    nb::class_<SimulationKernel> &kernel) {
     kernel
         .def("debug_apply_proximity_hit", &SimulationKernel::debug_apply_proximity_hit,
              "Testing helper: apply one synthetic proximity hit to a target",
-             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"), nb::arg("fuse_distance"))
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("damage"),
+             nb::arg("fuse_distance"))
         .def("debug_apply_local_proximity_hit", &SimulationKernel::debug_apply_local_proximity_hit,
              "Testing helper: apply one synthetic proximity hit at a target-body local point",
-             nb::arg("attacker_id"), nb::arg("target_id"),
-             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
-             nb::arg("damage"), nb::arg("fuse_distance"))
-        .def("debug_apply_profiled_local_proximity_hit", &SimulationKernel::debug_apply_profiled_local_proximity_hit,
-             "Testing helper: apply one synthetic local proximity hit with an explicit warhead profile",
-             nb::arg("attacker_id"), nb::arg("target_id"),
-             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
-             nb::arg("warhead_profile"))
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("local_forward_m"),
+             nb::arg("local_right_m"), nb::arg("local_up_m"), nb::arg("damage"),
+             nb::arg("fuse_distance"))
+        .def("debug_apply_profiled_local_proximity_hit",
+             &SimulationKernel::debug_apply_profiled_local_proximity_hit,
+             "Testing helper: apply one synthetic local proximity hit with an explicit warhead "
+             "profile",
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("local_forward_m"),
+             nb::arg("local_right_m"), nb::arg("local_up_m"), nb::arg("warhead_profile"))
         .def("debug_apply_profiled_local_proximity_hit_with_velocity",
              &SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity,
-             "Testing helper: apply one synthetic local proximity hit with warhead profile and missile velocity",
-             nb::arg("attacker_id"), nb::arg("target_id"),
-             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
-             nb::arg("warhead_profile"),
+             "Testing helper: apply one synthetic local proximity hit with warhead profile and "
+             "missile velocity",
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("local_forward_m"),
+             nb::arg("local_right_m"), nb::arg("local_up_m"), nb::arg("warhead_profile"),
              nb::arg("missile_vx_mps"), nb::arg("missile_vy_mps"), nb::arg("missile_vz_mps"))
         .def("debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude",
              &SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude,
-             "Testing helper: apply one synthetic local proximity hit with explicit missile velocity and detonation attitude",
-             nb::arg("attacker_id"), nb::arg("target_id"),
-             nb::arg("local_forward_m"), nb::arg("local_right_m"), nb::arg("local_up_m"),
-             nb::arg("warhead_profile"),
+             "Testing helper: apply one synthetic local proximity hit with explicit missile "
+             "velocity and detonation attitude",
+             nb::arg("attacker_id"), nb::arg("target_id"), nb::arg("local_forward_m"),
+             nb::arg("local_right_m"), nb::arg("local_up_m"), nb::arg("warhead_profile"),
              nb::arg("missile_vx_mps"), nb::arg("missile_vy_mps"), nb::arg("missile_vz_mps"),
              nb::arg("detonation_heading_deg"), nb::arg("detonation_pitch_deg"),
              nb::arg("detonation_roll_deg"))
-        .def("get_sensor_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return SensorDebugView{};
-             }
-             const Sensor* sensor = e.get<Sensor>();
-             if (!sensor) {
-                 return SensorDebugView{};
-             }
-             return make_sensor_debug_view(*sensor);
-        }, "Get current runtime sensor tuning fields", nb::arg("entity_id"))
-        .def("get_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             std::vector<TrackDebugView> out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const TrackDatabase* db = e.get<TrackDatabase>();
-             if (!db) {
-                 return out;
-             }
-             out.reserve(db->tracks.size());
-             for (const auto& track : db->tracks) {
-                 out.push_back(make_track_debug_view(track));
-             }
-             return out;
-        }, "Get confirmed/coasted runtime track debug view", nb::arg("entity_id"))
-        .def("get_tentative_track_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             std::vector<TrackDebugView> out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const TrackDatabase* db = e.get<TrackDatabase>();
-             if (!db) {
-                 return out;
-             }
-             out.reserve(db->tentative_tracks.size());
-             for (const auto& track : db->tentative_tracks) {
-                 out.push_back(make_track_debug_view(track));
-             }
-             return out;
-        }, "Get tentative runtime track debug view", nb::arg("entity_id"))
-        .def("get_flight_dynamics_debug_view", [](SimulationKernel& self, uint64_t entity_id) {
-             FlightDynamicsDebugView out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             if (const AeroState* aero = e.get<AeroState>()) {
-                 out.alpha_dot_dps = aero->angle_of_attack_rate_dps;
-                 out.stall_progress = aero->stall_progress;
-             }
-             if (const FlightModel* flight_model = e.get<FlightModel>()) {
-                 out.max_speed = flight_model->max_speed;
-                 out.max_turn_rate = flight_model->max_turn_rate;
-                 out.max_accel = flight_model->max_accel;
-                 out.max_climb_rate = flight_model->max_climb_rate;
-                 out.max_g = flight_model->max_g;
-             }
-             if (const StallState* stall = e.get<StallState>()) {
-                 out.stall_progress = stall->stall_progress;
-                 out.is_stalled = stall->is_stalled;
-                 out.pitch_break_active = stall->pitch_break_active;
-                 out.time_in_stall_s = stall->time_in_stall_s;
-             }
-             if (const Propulsion* propulsion = e.get<Propulsion>()) {
-                 out.mil_thrust_n = propulsion->mil_thrust_n;
-                 out.ab_thrust_n = propulsion->ab_thrust_n;
-                 out.throttle_command = propulsion->throttle_command;
-                 out.throttle_state = propulsion->throttle_state;
-                 out.ab_state = propulsion->ab_state;
-                 out.afterburner_active = propulsion->afterburner_active;
-                 out.current_tsfc = propulsion->current_tsfc;
-                 out.current_thrust_n = propulsion->current_thrust_n;
-             }
-             if (const Mass* mass = e.get<Mass>()) {
-                 out.fuel_leak_rate_kg_s = mass->fuel_leak_rate_kg_s;
-             }
-             return out;
-        }, "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)", nb::arg("entity_id"))
+        .def(
+            "get_sensor_debug_view",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return SensorDebugView{};
+                }
+                const Sensor *sensor = e.get<Sensor>();
+                if (!sensor) {
+                    return SensorDebugView{};
+                }
+                return make_sensor_debug_view(*sensor);
+            },
+            "Get current runtime sensor tuning fields", nb::arg("entity_id"))
+        .def(
+            "get_track_debug_view",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                std::vector<TrackDebugView> out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const TrackDatabase *db = e.get<TrackDatabase>();
+                if (!db) {
+                    return out;
+                }
+                out.reserve(db->tracks.size());
+                for (const auto &track : db->tracks) {
+                    out.push_back(make_track_debug_view(track));
+                }
+                return out;
+            },
+            "Get confirmed/coasted runtime track debug view", nb::arg("entity_id"))
+        .def(
+            "get_tentative_track_debug_view",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                std::vector<TrackDebugView> out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const TrackDatabase *db = e.get<TrackDatabase>();
+                if (!db) {
+                    return out;
+                }
+                out.reserve(db->tentative_tracks.size());
+                for (const auto &track : db->tentative_tracks) {
+                    out.push_back(make_track_debug_view(track));
+                }
+                return out;
+            },
+            "Get tentative runtime track debug view", nb::arg("entity_id"))
+        .def(
+            "get_flight_dynamics_debug_view",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                FlightDynamicsDebugView out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                if (const AeroState *aero = e.get<AeroState>()) {
+                    out.alpha_dot_dps = aero->angle_of_attack_rate_dps;
+                    out.stall_progress = aero->stall_progress;
+                }
+                if (const FlightModel *flight_model = e.get<FlightModel>()) {
+                    out.max_speed = flight_model->max_speed;
+                    out.max_turn_rate = flight_model->max_turn_rate;
+                    out.max_accel = flight_model->max_accel;
+                    out.max_climb_rate = flight_model->max_climb_rate;
+                    out.max_g = flight_model->max_g;
+                }
+                if (const StallState *stall = e.get<StallState>()) {
+                    out.stall_progress = stall->stall_progress;
+                    out.is_stalled = stall->is_stalled;
+                    out.pitch_break_active = stall->pitch_break_active;
+                    out.time_in_stall_s = stall->time_in_stall_s;
+                }
+                if (const Propulsion *propulsion = e.get<Propulsion>()) {
+                    out.mil_thrust_n = propulsion->mil_thrust_n;
+                    out.ab_thrust_n = propulsion->ab_thrust_n;
+                    out.throttle_command = propulsion->throttle_command;
+                    out.throttle_state = propulsion->throttle_state;
+                    out.ab_state = propulsion->ab_state;
+                    out.afterburner_active = propulsion->afterburner_active;
+                    out.current_tsfc = propulsion->current_tsfc;
+                    out.current_thrust_n = propulsion->current_thrust_n;
+                }
+                if (const Mass *mass = e.get<Mass>()) {
+                    out.fuel_leak_rate_kg_s = mass->fuel_leak_rate_kg_s;
+                }
+                return out;
+            },
+            "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)",
+            nb::arg("entity_id"))
         .def("debug_get_aircraft_damage_state", &SimulationKernel::debug_get_aircraft_damage_state,
-             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, hydraulic_pressure, roll_control, pitch_control, yaw_control, control_asymmetry, propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, fuel_leak, fuel_imbalance, flammable_fluid, ignition_source, fire_suppression, smoke_heat, engine_fire_zone, wing_fire_zone, fuselage_fire_zone, mission_fire_zone, structural_overstress, flutter_exposure, forced_landing, flight_control_kill, propulsion_kill, crew_kill]",
+             "Get aircraft-specific damage overlay [structure, flight_control, hydraulic, "
+             "hydraulic_pressure, roll_control, pitch_control, yaw_control, control_asymmetry, "
+             "propulsion, fuel, avionics, crew, pilot, mission_crew, command_navigation, fire, "
+             "fuel_leak, fuel_imbalance, flammable_fluid, ignition_source, fire_suppression, "
+             "smoke_heat, engine_fire_zone, wing_fire_zone, fuselage_fire_zone, mission_fire_zone, "
+             "structural_overstress, flutter_exposure, forced_landing, flight_control_kill, "
+             "propulsion_kill, crew_kill]",
              nb::arg("entity_id"))
         .def("debug_get_aircraft_vulnerability_evidence_state",
              &SimulationKernel::debug_get_aircraft_vulnerability_evidence_state,
-             "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
+             "Get aircraft vulnerability evidence gate [present, synthetic, calibrated_evidence, "
+             "pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
              nb::arg("entity_id"))
         .def("debug_get_aircraft_vulnerability_authority_state",
              &SimulationKernel::debug_get_aircraft_vulnerability_authority_state,
-             "Get aircraft vulnerability authority gate [present, synthetic, calibrated_evidence, effect_scale_authority, component_failure_probability_authority, pk_authority, deterministic_fuze_authority, evidence_dataset_valid]",
+             "Get aircraft vulnerability authority gate [present, synthetic, calibrated_evidence, "
+             "effect_scale_authority, component_failure_probability_authority, pk_authority, "
+             "deterministic_fuze_authority, evidence_dataset_valid]",
              nb::arg("entity_id"))
         .def("debug_get_naval_weapon_counts", &SimulationKernel::debug_get_naval_weapon_counts,
              "Get naval weapon counts [mounts, ready_vls, ready_gun, ready_ciws]")
-        .def("debug_get_naval_stores", &SimulationKernel::debug_get_naval_stores, nb::arg("entity_id"),
-             "Debug: get [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]")
-        .def("debug_get_logistics_node", &SimulationKernel::debug_get_logistics_node, nb::arg("entity_id"),
-             "Debug: get [supply_radius, infinite, underway_enabled, min_sep, max_sep, max_rel_speed, fuel_rate, missile_rate, dry_rate]")
-        .def("debug_get_resupply_state", &SimulationKernel::debug_get_resupply_state, nb::arg("entity_id"),
-             "Debug: get [active, kind, partner_id, stage, time_remaining, is_refueling, is_rearming]")
-        .def("debug_get_data_link_state", &SimulationKernel::debug_get_data_link_state, nb::arg("entity_id"),
-             "Debug: get [report_budget, message_budget, reports_sent_last, messages_sent_last, reports_dropped_last, messages_dropped_last, reports_sent_total, messages_sent_total, reports_dropped_total, messages_dropped_total]")
-        .def("debug_get_ground_contact_state", &SimulationKernel::debug_get_ground_contact_state, nb::arg("entity_id"),
-             "Debug: get [on_ground, terrain_z, lifecycle, impact_h_speed, impact_sink_rate, impact_severity, gear_stress, gear_collapsed, on_runway]")
-        .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time, "Debug: get sensor last_scan_time")
-        .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count, "Debug: get ContactList size")
-        .def("debug_get_mass_state", &SimulationKernel::debug_get_mass_state,
-             "Debug: get [mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]",
-             nb::arg("entity_id"))
-        .def("debug_get_pending_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const PendingMovementCommand* pending = e.get<PendingMovementCommand>();
-             if (!pending) {
-                 return out;
-             }
-             diagnostics_mark_read_only_snapshot(
-                 out,
-                 "diagnostics_pending_transport_shell",
-                 "mission_command_control_state"
-             );
-             out["diagnostics_transport_shell"] = true;
-             out["transport_shell_kind"] = "pending_legacy_movement_command";
-             out["active"] = pending->active;
-             out["deliver_time"] = pending->deliver_time;
-             out["command_shell_active"] = pending->command.active;
-             out["target_heading"] = pending->command.target_heading;
-             out["target_speed"] = pending->command.target_speed;
-             out["target_altitude"] = pending->command.target_altitude;
-             out["use_stick_control"] = pending->command.use_stick_control;
-             // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
-             out["state_access_mode"] = "read_only_transport_shell";
-             out["transport_shell_truth_owner"] = "typed_control_state_pending_delivery";
-             if (const MissionCommandControlState* state = e.get<MissionCommandControlState>()) {
-                 out["current_control_state_present"] = true;
-                 out["current_control_state_active"] = state->active;
-                 out["current_control_target_heading_deg"] = state->target_heading_deg;
-                 out["current_control_target_speed_mps"] = state->target_speed_mps;
-                 out["current_control_target_altitude_m"] = state->target_altitude_m;
-             } else {
-                 out["current_control_state_present"] = false;
-             }
-             return out;
-        }, "Debug diagnostics-only read-only transport shell snapshot for pending legacy movement command state",
-             nb::arg("entity_id"))
-        .def("debug_get_pending_action_command", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const PendingActionCommand* pending = e.get<PendingActionCommand>();
-             if (!pending) {
-                 return out;
-             }
-             diagnostics_mark_read_only_snapshot(
-                 out,
-                 "diagnostics_pending_transport_shell",
-                 "typed_action_delivery"
-             );
-             out["diagnostics_transport_shell"] = true;
-             out["transport_shell_kind"] = "pending_legacy_action_command";
-             out["active"] = pending->active;
-             out["deliver_time"] = pending->deliver_time;
-             out["command_shell_active"] = pending->command.active;
-             out["turn_rate_cmd"] = pending->command.turn_rate_cmd;
-             out["accel_cmd"] = pending->command.accel_cmd;
-             out["climb_rate_cmd"] = pending->command.climb_rate_cmd;
-             out["fire_cmd"] = pending->command.fire_cmd;
-             out["release_chaff"] = pending->command.release_chaff;
-             out["release_flare"] = pending->command.release_flare;
-             out["jettison_tanks"] = pending->command.jettison_tanks;
-             // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
-             out["state_access_mode"] = "read_only_transport_shell";
-             out["transport_shell_truth_owner"] = "typed_action_pending_delivery";
-             return out;
-        }, "Debug diagnostics-only read-only transport shell snapshot for pending legacy action command state",
-             nb::arg("entity_id"))
-        .def("debug_get_pending_mission_command_queue", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             nb::list queued;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 out["queued"] = queued;
-                 return out;
-             }
-             const PendingMissionCommand* pending = e.get<PendingMissionCommand>();
-             if (pending) {
-                 nb::dict pending_out;
-                 pending_out["active"] = pending->active;
-                 pending_out["deliver_time"] = pending->deliver_time;
-                 pending_out["command_code"] = pending->command.command_code;
-                 pending_out["priority"] = mission_command_queue_priority(pending->command);
-                 pending_out["target_heading"] = pending->command.cmd_heading_deg;
-                 pending_out["target_altitude"] = pending->command.cmd_altitude_m;
-                 pending_out["target_speed"] = pending->command.cmd_speed_mps;
-                 pending_out["assigned_target_id"] = pending->command.assigned_target_id;
-                 pending_out["authorization_to_fire"] = pending->command.authorization_to_fire;
-                 out["pending"] = pending_out;
-             }
-             const MissionCommandPendingQueue* queue = e.get<MissionCommandPendingQueue>();
-             if (queue) {
-                 out["size"] = queue->size;
-                 for (std::size_t i = 0; i < queue->size; ++i) {
-                     const auto& entry = queue->entries[i];
-                     nb::dict entry_out;
-                     entry_out["index"] = i;
-                     entry_out["deliver_time"] = entry.deliver_time;
-                     entry_out["command_code"] = entry.command.command_code;
-                     entry_out["priority"] = mission_command_queue_priority(entry.command);
-                     entry_out["target_heading"] = entry.command.cmd_heading_deg;
-                     entry_out["target_altitude"] = entry.command.cmd_altitude_m;
-                     entry_out["target_speed"] = entry.command.cmd_speed_mps;
-                     entry_out["assigned_target_id"] = entry.command.assigned_target_id;
-                     entry_out["authorization_to_fire"] = entry.command.authorization_to_fire;
-                     queued.append(entry_out);
-                 }
-             } else {
-                 out["size"] = 0;
-             }
-             out["queued"] = queued;
-             return out;
-        }, "Debug: get pending mission command queue state", nb::arg("entity_id"))
-        .def("debug_get_embarked_helo", &SimulationKernel::debug_get_embarked_helo,
-             "Debug: get embarked helo entity id for a host",
-             nb::arg("entity_id"))
-        .def("debug_get_missile_runtime_state", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const Missile* missile = e.get<Missile>();
-             const Sensor* sensor = e.get<Sensor>();
-             const Mass* mass = e.get<Mass>();
-             const MassProperties* mass_properties = e.get<MassProperties>();
-             if (!missile) {
-                 return out;
-             }
-             out["max_speed_mps"] = missile->max_speed;
-             out["turn_rate_deg_s"] = missile->turn_rate;
-             out["fuse_distance_m"] = missile->fuse_distance;
-             out["damage"] = missile->damage;
-             out["warhead_family"] = missile->warhead_profile.family;
-             out["warhead_mass_kg"] = missile->warhead_profile.mass_kg;
-             out["warhead_lethal_radius_m"] = missile->warhead_profile.lethal_radius_m;
-             out["warhead_damage_scalar"] = missile->warhead_profile.damage_scalar;
-             out["warhead_profile_synthetic"] = missile->warhead_profile.synthetic;
-             out["warhead_damage_scalar_synthetic"] = missile->warhead_profile.damage_scalar_synthetic;
-             out["warhead_provenance"] = missile->warhead_profile.provenance;
-             out["fuze_type"] = missile->fuze_profile.type;
-             out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
-             out["fuze_delay_s"] = missile->fuze_profile.delay_s;
-             out["fuze_reliability"] = missile->fuze_profile.reliability;
-             out["fuze_profile_synthetic"] = missile->fuze_profile.synthetic;
-             out["fuze_provenance"] = missile->fuze_profile.provenance;
-             out["seeker_fov_deg"] = missile->seeker_fov_deg;
-             out["seeker_lock_range_m"] = missile->seeker_lock_range;
-             out["guidance_delay_s"] = missile->guidance_delay_s;
-             out["guidance_update_period_s"] = missile->guidance_update_period_s;
-             out["max_flight_time_s"] = missile->max_flight_time_s;
-             out["nav_gain"] = missile->nav_gain;
-             out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
-             out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
-             out["proximity_min_local_forward_m"] = missile->proximity_min_local_forward_m;
-             out["proximity_min_local_right_m"] = missile->proximity_min_local_right_m;
-             out["proximity_min_local_up_m"] = missile->proximity_min_local_up_m;
-             out["proximity_engaged"] = missile->proximity_engaged;
-             out["fuze_delay_armed"] = missile->fuze_delay_armed;
-             out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
-             out["fuze_detonation_time_s"] = missile->fuze_detonation_time_s;
-             out["fuze_detonation_heading_deg"] = missile->fuze_detonation_heading_deg;
-             out["fuze_detonation_pitch_deg"] = missile->fuze_detonation_pitch_deg;
-             out["fuze_detonation_roll_deg"] = missile->fuze_detonation_roll_deg;
-             out["fuze_quality"] = missile->fuze_quality;
-             out["fuze_hit_probability"] = missile->fuze_hit_probability;
-             out["fuze_signature_source"] = missile->fuze_signature_source;
-             out["fuze_target_signature"] = missile->fuze_target_signature;
-             out["fuze_signature_scale"] = missile->fuze_signature_scale;
-             out["fuze_effective_reliability"] = missile->fuze_effective_reliability;
-             out["fuze_contact_surface_distance_m"] = missile->fuze_contact_surface_distance_m;
-             out["fuze_contact_penetration_depth_m"] = missile->fuze_contact_penetration_depth_m;
-             out["fuze_contact_surface_tolerance_m"] = missile->fuze_contact_surface_tolerance_m;
-             out["fuze_contact_inside_hitbox"] = missile->fuze_contact_inside_hitbox;
-             out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
-             out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
-             out["seeker_has_range"] = missile->seeker_has_range;
-             out["seeker_mode"] = missile->seeker_mode;
-             out["filtered_bearing_deg"] = missile->filtered_bearing_deg;
-             out["filtered_elevation_deg"] = missile->filtered_elevation_deg;
-             out["filtered_range_m"] = missile->filtered_range_m;
-             out["filtered_closing_speed_mps"] = missile->filtered_closing_speed_mps;
-             out["bearing_rate_deg_s"] = missile->bearing_rate_deg_s;
-             out["elevation_rate_deg_s"] = missile->elevation_rate_deg_s;
-             out["last_track_time_s"] = missile->last_track_time_s;
-             out["track_memory_timeout_s"] = missile->track_memory_timeout_s;
-             out["current_speed_mps"] = missile->current_speed_mps;
-             out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
-             out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
-             out["burnout_time_s"] = missile->burnout_time_s;
-             out["boost_duration_s"] = missile->boost_duration_s;
-             out["sustain_duration_s"] = missile->sustain_duration_s;
-             out["guidance_bearing_filter_tau_s"] = missile->guidance_bearing_filter_tau_s;
-             out["guidance_elevation_filter_tau_s"] = missile->guidance_elevation_filter_tau_s;
-             out["guidance_range_filter_tau_s"] = missile->guidance_range_filter_tau_s;
-             out["guidance_boost_thrust_n"] = missile->guidance_boost_thrust_n;
-             out["guidance_sustain_thrust_n"] = missile->guidance_sustain_thrust_n;
-             out["guidance_cd0_subsonic"] = missile->guidance_cd0_subsonic;
-             out["guidance_cd0_supersonic"] = missile->guidance_cd0_supersonic;
-             out["guidance_induced_drag_k"] = missile->guidance_induced_drag_k;
-             out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
-             out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
-             out["guidance_max_accel_response_g_per_s"] = missile->guidance_max_accel_response_g_per_s;
-             out["seeker_activation_range_m"] = missile->seeker_activation_range_m;
-             out["midcourse_datalink_supported"] = missile->midcourse_datalink_supported;
-             out["terminal_seeker_active"] = missile->terminal_seeker_active;
-             if (sensor) {
-                 out["sensor_max_range_m"] = sensor->max_range;
-                 out["sensor_fov_deg"] = sensor->fov_deg;
-                 out["sensor_scan_period_s"] = sensor->scan_period;
-                 out["sensor_detection_prob"] = sensor->detection_prob;
-                 out["sensor_bearing_noise_std"] = sensor->bearing_noise_std;
-                 out["sensor_range_noise_std"] = sensor->range_noise_std;
-                 out["sensor_track_memory_s"] = sensor->track_memory_s;
-                 out["sensor_type"] = sensor->type;
-             }
-             if (mass) {
-                 out["mass_empty_kg"] = mass->empty_mass_kg;
-                 out["mass_fuel_kg"] = mass->fuel_mass_kg;
-                 out["mass_stores_kg"] = mass->stores_mass_kg;
-                 out["mass_total_kg"] = mass->get_total_kg();
-             }
-             if (mass_properties) {
-                 out["reference_area_m2"] = mass_properties->reference_area_m2;
-             }
-             return out;
-        }, "Debug: get missile runtime guidance state", nb::arg("entity_id"));
-}
-
-void bind_simulation_kernel_legacy_compatibility_debug_surface(nb::class_<SimulationKernel>& kernel) {
-    kernel
-        .def("debug_set_legacy_movement_command", [](SimulationKernel& self,
-                                                     uint64_t entity_id,
-                                                     double target_heading_deg,
-                                                     double target_speed_mps,
-                                                     double target_altitude_m,
-                                                     bool active) {
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 throw std::invalid_argument("Invalid entity ID for debug_set_legacy_movement_command");
-             }
-             diagnostics_quarantined_legacy_movement_bridge_write(
-                 e,
-                 target_heading_deg,
-                 target_speed_mps,
-                 target_altitude_m,
-                 active
-             );
-        }, "Debug quarantined bridge write: sync legacy movement shell through typed control-state compatibility helper only",
+        .def("debug_get_naval_stores", &SimulationKernel::debug_get_naval_stores,
              nb::arg("entity_id"),
-             nb::arg("target_heading_deg"),
-             nb::arg("target_speed_mps"),
-             nb::arg("target_altitude_m"),
-             nb::arg("active") = true)
-        .def("debug_get_legacy_movement_command", [](SimulationKernel& self, uint64_t entity_id) {
-             nb::dict out;
-             auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
-             if (!e.is_valid()) {
-                 return out;
-             }
-             const MovementCommand* movement = e.get<MovementCommand>();
-             if (!movement) {
-                 return out;
-             }
-             diagnostics_mark_read_only_snapshot(
-                 out,
-                 "diagnostics_legacy_mirror",
-                 "mission_command_control_state_bridge"
-             );
-             out["diagnostics_legacy_mirror"] = true;
-             out["mirror_kind"] = "legacy_movement_command";
-             out["active"] = movement->active;
-             out["target_heading"] = movement->target_heading;
-             out["target_speed"] = movement->target_speed;
-             out["target_altitude"] = movement->target_altitude;
-             out["use_stick_control"] = movement->use_stick_control;
-             // WP22-R1-2: read-only legacy movement shell mirror, not maintained truth.
-             out["state_access_mode"] = "read_only_legacy_mirror";
-             out["mirror_truth_owner"] = "typed_control_state_bridge_projection";
-             if (const MissionCommandControlState* state = e.get<MissionCommandControlState>()) {
-                 out["control_state_present"] = true;
-                 out["control_state_active"] = state->active;
-                 out["control_target_heading_deg"] = state->target_heading_deg;
-                 out["control_target_speed_mps"] = state->target_speed_mps;
-                 out["control_target_altitude_m"] = state->target_altitude_m;
-                 out["control_lagged_active"] = state->lagged_active;
-                 out["control_lagged_heading_deg"] = state->lagged_heading_deg;
-                 out["control_lagged_speed_mps"] = state->lagged_speed_mps;
-                 out["control_lagged_altitude_m"] = state->lagged_altitude_m;
-             } else {
-                 out["control_state_present"] = false;
-             }
-             return out;
-        }, "Debug diagnostics-only read-only legacy movement shell mirror plus typed control-state bridge snapshot",
-             nb::arg("entity_id"));
+             "Debug: get [fuel_cur, fuel_max, missile_cur, missile_max, dry_cur, dry_max]")
+        .def("debug_get_logistics_node", &SimulationKernel::debug_get_logistics_node,
+             nb::arg("entity_id"),
+             "Debug: get [supply_radius, infinite, underway_enabled, min_sep, max_sep, "
+             "max_rel_speed, fuel_rate, missile_rate, dry_rate]")
+        .def("debug_get_resupply_state", &SimulationKernel::debug_get_resupply_state,
+             nb::arg("entity_id"),
+             "Debug: get [active, kind, partner_id, stage, time_remaining, is_refueling, "
+             "is_rearming]")
+        .def("debug_get_data_link_state", &SimulationKernel::debug_get_data_link_state,
+             nb::arg("entity_id"),
+             "Debug: get [report_budget, message_budget, reports_sent_last, messages_sent_last, "
+             "reports_dropped_last, messages_dropped_last, reports_sent_total, "
+             "messages_sent_total, reports_dropped_total, messages_dropped_total]")
+        .def("debug_get_ground_contact_state", &SimulationKernel::debug_get_ground_contact_state,
+             nb::arg("entity_id"),
+             "Debug: get [on_ground, terrain_z, lifecycle, impact_h_speed, impact_sink_rate, "
+             "impact_severity, gear_stress, gear_collapsed, on_runway]")
+        .def("debug_get_last_scan_time", &SimulationKernel::debug_get_last_scan_time,
+             "Debug: get sensor last_scan_time")
+        .def("debug_get_contact_count", &SimulationKernel::debug_get_contact_count,
+             "Debug: get ContactList size")
+        .def(
+            "debug_get_mass_state", &SimulationKernel::debug_get_mass_state,
+            "Debug: get [mass_empty, mass_fuel, mass_stores, mass_total, props_empty, props_total]",
+            nb::arg("entity_id"))
+        .def(
+            "debug_get_pending_movement_command",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                nb::dict out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const PendingMovementCommand *pending = e.get<PendingMovementCommand>();
+                if (!pending) {
+                    return out;
+                }
+                diagnostics_mark_read_only_snapshot(out, "diagnostics_pending_transport_shell",
+                                                    "mission_command_control_state");
+                out["diagnostics_transport_shell"] = true;
+                out["transport_shell_kind"] = "pending_legacy_movement_command";
+                out["active"] = pending->active;
+                out["deliver_time"] = pending->deliver_time;
+                out["command_shell_active"] = pending->command.active;
+                out["target_heading"] = pending->command.target_heading;
+                out["target_speed"] = pending->command.target_speed;
+                out["target_altitude"] = pending->command.target_altitude;
+                out["use_stick_control"] = pending->command.use_stick_control;
+                // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+                out["state_access_mode"] = "read_only_transport_shell";
+                out["transport_shell_truth_owner"] = "typed_control_state_pending_delivery";
+                if (const MissionCommandControlState *state = e.get<MissionCommandControlState>()) {
+                    out["current_control_state_present"] = true;
+                    out["current_control_state_active"] = state->active;
+                    out["current_control_target_heading_deg"] = state->target_heading_deg;
+                    out["current_control_target_speed_mps"] = state->target_speed_mps;
+                    out["current_control_target_altitude_m"] = state->target_altitude_m;
+                } else {
+                    out["current_control_state_present"] = false;
+                }
+                return out;
+            },
+            "Debug diagnostics-only read-only transport shell snapshot for pending legacy movement "
+            "command state",
+            nb::arg("entity_id"))
+        .def(
+            "debug_get_pending_action_command",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                nb::dict out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const PendingActionCommand *pending = e.get<PendingActionCommand>();
+                if (!pending) {
+                    return out;
+                }
+                diagnostics_mark_read_only_snapshot(out, "diagnostics_pending_transport_shell",
+                                                    "typed_action_delivery");
+                out["diagnostics_transport_shell"] = true;
+                out["transport_shell_kind"] = "pending_legacy_action_command";
+                out["active"] = pending->active;
+                out["deliver_time"] = pending->deliver_time;
+                out["command_shell_active"] = pending->command.active;
+                out["turn_rate_cmd"] = pending->command.turn_rate_cmd;
+                out["accel_cmd"] = pending->command.accel_cmd;
+                out["climb_rate_cmd"] = pending->command.climb_rate_cmd;
+                out["fire_cmd"] = pending->command.fire_cmd;
+                out["release_chaff"] = pending->command.release_chaff;
+                out["release_flare"] = pending->command.release_flare;
+                out["jettison_tanks"] = pending->command.jettison_tanks;
+                // WP22-R1-2: read-only transport shell snapshot, not maintained truth.
+                out["state_access_mode"] = "read_only_transport_shell";
+                out["transport_shell_truth_owner"] = "typed_action_pending_delivery";
+                return out;
+            },
+            "Debug diagnostics-only read-only transport shell snapshot for pending legacy action "
+            "command state",
+            nb::arg("entity_id"))
+        .def(
+            "debug_get_pending_mission_command_queue",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                nb::dict out;
+                nb::list queued;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    out["queued"] = queued;
+                    return out;
+                }
+                const PendingMissionCommand *pending = e.get<PendingMissionCommand>();
+                if (pending) {
+                    nb::dict pending_out;
+                    pending_out["active"] = pending->active;
+                    pending_out["deliver_time"] = pending->deliver_time;
+                    pending_out["command_code"] = pending->command.command_code;
+                    pending_out["priority"] = mission_command_queue_priority(pending->command);
+                    pending_out["target_heading"] = pending->command.cmd_heading_deg;
+                    pending_out["target_altitude"] = pending->command.cmd_altitude_m;
+                    pending_out["target_speed"] = pending->command.cmd_speed_mps;
+                    pending_out["assigned_target_id"] = pending->command.assigned_target_id;
+                    pending_out["authorization_to_fire"] = pending->command.authorization_to_fire;
+                    out["pending"] = pending_out;
+                }
+                const MissionCommandPendingQueue *queue = e.get<MissionCommandPendingQueue>();
+                if (queue) {
+                    out["size"] = queue->size;
+                    for (std::size_t i = 0; i < queue->size; ++i) {
+                        const auto &entry = queue->entries[i];
+                        nb::dict entry_out;
+                        entry_out["index"] = i;
+                        entry_out["deliver_time"] = entry.deliver_time;
+                        entry_out["command_code"] = entry.command.command_code;
+                        entry_out["priority"] = mission_command_queue_priority(entry.command);
+                        entry_out["target_heading"] = entry.command.cmd_heading_deg;
+                        entry_out["target_altitude"] = entry.command.cmd_altitude_m;
+                        entry_out["target_speed"] = entry.command.cmd_speed_mps;
+                        entry_out["assigned_target_id"] = entry.command.assigned_target_id;
+                        entry_out["authorization_to_fire"] = entry.command.authorization_to_fire;
+                        queued.append(entry_out);
+                    }
+                } else {
+                    out["size"] = 0;
+                }
+                out["queued"] = queued;
+                return out;
+            },
+            "Debug: get pending mission command queue state", nb::arg("entity_id"))
+        .def("debug_get_embarked_helo", &SimulationKernel::debug_get_embarked_helo,
+             "Debug: get embarked helo entity id for a host", nb::arg("entity_id"))
+        .def(
+            "debug_get_missile_runtime_state",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                nb::dict out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const Missile *missile = e.get<Missile>();
+                const Sensor *sensor = e.get<Sensor>();
+                const Mass *mass = e.get<Mass>();
+                const MassProperties *mass_properties = e.get<MassProperties>();
+                if (!missile) {
+                    return out;
+                }
+                out["max_speed_mps"] = missile->max_speed;
+                out["turn_rate_deg_s"] = missile->turn_rate;
+                out["fuse_distance_m"] = missile->fuse_distance;
+                out["damage"] = missile->damage;
+                out["warhead_family"] = missile->warhead_profile.family;
+                out["warhead_mass_kg"] = missile->warhead_profile.mass_kg;
+                out["warhead_lethal_radius_m"] = missile->warhead_profile.lethal_radius_m;
+                out["warhead_damage_scalar"] = missile->warhead_profile.damage_scalar;
+                out["warhead_profile_synthetic"] = missile->warhead_profile.synthetic;
+                out["warhead_damage_scalar_synthetic"] =
+                    missile->warhead_profile.damage_scalar_synthetic;
+                out["warhead_provenance"] = missile->warhead_profile.provenance;
+                out["fuze_type"] = missile->fuze_profile.type;
+                out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
+                out["fuze_delay_s"] = missile->fuze_profile.delay_s;
+                out["fuze_reliability"] = missile->fuze_profile.reliability;
+                out["fuze_profile_synthetic"] = missile->fuze_profile.synthetic;
+                out["fuze_provenance"] = missile->fuze_profile.provenance;
+                out["seeker_fov_deg"] = missile->seeker_fov_deg;
+                out["seeker_lock_range_m"] = missile->seeker_lock_range;
+                out["guidance_delay_s"] = missile->guidance_delay_s;
+                out["guidance_update_period_s"] = missile->guidance_update_period_s;
+                out["max_flight_time_s"] = missile->max_flight_time_s;
+                out["nav_gain"] = missile->nav_gain;
+                out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
+                out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
+                out["proximity_min_local_forward_m"] = missile->proximity_min_local_forward_m;
+                out["proximity_min_local_right_m"] = missile->proximity_min_local_right_m;
+                out["proximity_min_local_up_m"] = missile->proximity_min_local_up_m;
+                out["proximity_engaged"] = missile->proximity_engaged;
+                out["fuze_delay_armed"] = missile->fuze_delay_armed;
+                out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;
+                out["fuze_detonation_time_s"] = missile->fuze_detonation_time_s;
+                out["fuze_detonation_heading_deg"] = missile->fuze_detonation_heading_deg;
+                out["fuze_detonation_pitch_deg"] = missile->fuze_detonation_pitch_deg;
+                out["fuze_detonation_roll_deg"] = missile->fuze_detonation_roll_deg;
+                out["fuze_quality"] = missile->fuze_quality;
+                out["fuze_hit_probability"] = missile->fuze_hit_probability;
+                out["fuze_signature_source"] = missile->fuze_signature_source;
+                out["fuze_target_signature"] = missile->fuze_target_signature;
+                out["fuze_signature_scale"] = missile->fuze_signature_scale;
+                out["fuze_effective_reliability"] = missile->fuze_effective_reliability;
+                out["fuze_contact_surface_distance_m"] = missile->fuze_contact_surface_distance_m;
+                out["fuze_contact_penetration_depth_m"] = missile->fuze_contact_penetration_depth_m;
+                out["fuze_contact_surface_tolerance_m"] = missile->fuze_contact_surface_tolerance_m;
+                out["fuze_contact_inside_hitbox"] = missile->fuze_contact_inside_hitbox;
+                out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
+                out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
+                out["seeker_has_range"] = missile->seeker_has_range;
+                out["seeker_mode"] = missile->seeker_mode;
+                out["filtered_bearing_deg"] = missile->filtered_bearing_deg;
+                out["filtered_elevation_deg"] = missile->filtered_elevation_deg;
+                out["filtered_range_m"] = missile->filtered_range_m;
+                out["filtered_closing_speed_mps"] = missile->filtered_closing_speed_mps;
+                out["bearing_rate_deg_s"] = missile->bearing_rate_deg_s;
+                out["elevation_rate_deg_s"] = missile->elevation_rate_deg_s;
+                out["last_track_time_s"] = missile->last_track_time_s;
+                out["track_memory_timeout_s"] = missile->track_memory_timeout_s;
+                out["current_speed_mps"] = missile->current_speed_mps;
+                out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
+                out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
+                out["burnout_time_s"] = missile->burnout_time_s;
+                out["boost_duration_s"] = missile->boost_duration_s;
+                out["sustain_duration_s"] = missile->sustain_duration_s;
+                out["guidance_bearing_filter_tau_s"] = missile->guidance_bearing_filter_tau_s;
+                out["guidance_elevation_filter_tau_s"] = missile->guidance_elevation_filter_tau_s;
+                out["guidance_range_filter_tau_s"] = missile->guidance_range_filter_tau_s;
+                out["guidance_boost_thrust_n"] = missile->guidance_boost_thrust_n;
+                out["guidance_sustain_thrust_n"] = missile->guidance_sustain_thrust_n;
+                out["guidance_cd0_subsonic"] = missile->guidance_cd0_subsonic;
+                out["guidance_cd0_supersonic"] = missile->guidance_cd0_supersonic;
+                out["guidance_induced_drag_k"] = missile->guidance_induced_drag_k;
+                out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
+                out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
+                out["guidance_max_accel_response_g_per_s"] =
+                    missile->guidance_max_accel_response_g_per_s;
+                out["seeker_activation_range_m"] = missile->seeker_activation_range_m;
+                out["midcourse_datalink_supported"] = missile->midcourse_datalink_supported;
+                out["terminal_seeker_active"] = missile->terminal_seeker_active;
+                if (sensor) {
+                    out["sensor_max_range_m"] = sensor->max_range;
+                    out["sensor_fov_deg"] = sensor->fov_deg;
+                    out["sensor_scan_period_s"] = sensor->scan_period;
+                    out["sensor_detection_prob"] = sensor->detection_prob;
+                    out["sensor_bearing_noise_std"] = sensor->bearing_noise_std;
+                    out["sensor_range_noise_std"] = sensor->range_noise_std;
+                    out["sensor_track_memory_s"] = sensor->track_memory_s;
+                    out["sensor_type"] = sensor->type;
+                }
+                if (mass) {
+                    out["mass_empty_kg"] = mass->empty_mass_kg;
+                    out["mass_fuel_kg"] = mass->fuel_mass_kg;
+                    out["mass_stores_kg"] = mass->stores_mass_kg;
+                    out["mass_total_kg"] = mass->get_total_kg();
+                }
+                if (mass_properties) {
+                    out["reference_area_m2"] = mass_properties->reference_area_m2;
+                }
+                return out;
+            },
+            "Debug: get missile runtime guidance state", nb::arg("entity_id"));
 }
 
-void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel>& kernel) {
+void bind_simulation_kernel_legacy_compatibility_debug_surface(
+    nb::class_<SimulationKernel> &kernel) {
+    kernel
+        .def(
+            "debug_set_legacy_movement_command",
+            [](SimulationKernel &self, uint64_t entity_id, double target_heading_deg,
+               double target_speed_mps, double target_altitude_m, bool active) {
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    throw std::invalid_argument(
+                        "Invalid entity ID for debug_set_legacy_movement_command");
+                }
+                diagnostics_quarantined_legacy_movement_bridge_write(
+                    e, target_heading_deg, target_speed_mps, target_altitude_m, active);
+            },
+            "Debug quarantined bridge write: sync legacy movement shell through typed "
+            "control-state compatibility helper only",
+            nb::arg("entity_id"), nb::arg("target_heading_deg"), nb::arg("target_speed_mps"),
+            nb::arg("target_altitude_m"), nb::arg("active") = true)
+        .def(
+            "debug_get_legacy_movement_command",
+            [](SimulationKernel &self, uint64_t entity_id) {
+                nb::dict out;
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    return out;
+                }
+                const MovementCommand *movement = e.get<MovementCommand>();
+                if (!movement) {
+                    return out;
+                }
+                diagnostics_mark_read_only_snapshot(out, "diagnostics_legacy_mirror",
+                                                    "mission_command_control_state_bridge");
+                out["diagnostics_legacy_mirror"] = true;
+                out["mirror_kind"] = "legacy_movement_command";
+                out["active"] = movement->active;
+                out["target_heading"] = movement->target_heading;
+                out["target_speed"] = movement->target_speed;
+                out["target_altitude"] = movement->target_altitude;
+                out["use_stick_control"] = movement->use_stick_control;
+                // WP22-R1-2: read-only legacy movement shell mirror, not maintained truth.
+                out["state_access_mode"] = "read_only_legacy_mirror";
+                out["mirror_truth_owner"] = "typed_control_state_bridge_projection";
+                if (const MissionCommandControlState *state = e.get<MissionCommandControlState>()) {
+                    out["control_state_present"] = true;
+                    out["control_state_active"] = state->active;
+                    out["control_target_heading_deg"] = state->target_heading_deg;
+                    out["control_target_speed_mps"] = state->target_speed_mps;
+                    out["control_target_altitude_m"] = state->target_altitude_m;
+                    out["control_lagged_active"] = state->lagged_active;
+                    out["control_lagged_heading_deg"] = state->lagged_heading_deg;
+                    out["control_lagged_speed_mps"] = state->lagged_speed_mps;
+                    out["control_lagged_altitude_m"] = state->lagged_altitude_m;
+                } else {
+                    out["control_state_present"] = false;
+                }
+                return out;
+            },
+            "Debug diagnostics-only read-only legacy movement shell mirror plus typed "
+            "control-state bridge snapshot",
+            nb::arg("entity_id"));
+}
+
+void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKernel> &kernel) {
     kernel
         .def("set_contact_list", &SimulationKernel::set_contact_list,
-             "Override the ContactList for a unit or missile",
-             nb::arg("entity_id"), nb::arg("detections"))
+             "Override the ContactList for a unit or missile", nb::arg("entity_id"),
+             nb::arg("detections"))
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
-        .def("get_missile_tuning", &SimulationKernel::get_missile_tuning,
-             nb::rv_policy::copy,
+        .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,
              "Get current missile tuning snapshot");
 }
 } // namespace
