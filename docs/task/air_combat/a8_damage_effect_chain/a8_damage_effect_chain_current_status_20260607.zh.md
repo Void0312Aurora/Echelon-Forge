@@ -112,6 +112,7 @@ clang-format --dry-run -Werror src/systems/physics/aerodynamics_system.h
 ./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 cmake --build build-workshop --target ef_py -j2
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path or wing_control_damage_reaches_neutral_aero_response'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'right_aileron_damage_long_run_reaches_ground_response or right_aileron_damage_changes_roll_response_through_aero_path'
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
 python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
@@ -123,8 +124,9 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 - 触碰 C++ 文件 clang-format 门：通过。
 - 聚焦 Python lint：通过。
 - 编译：通过。
-- W8 气动/MQ-9 响应聚焦检查：`2 passed, 166 deselected`。
-- 武器/引信/损伤链守卫：`168 passed`。
+- W8 气动/MQ-9 短时响应聚焦检查：`2 passed, 166 deselected`。
+- W8 MQ-9 长时程响应聚焦检查：`2 passed, 167 deselected`。
+- 武器/引信/损伤链守卫：`169 passed`。
 - 飞行动力学真实感守卫：`4 passed`。
 - 飞行动力学调参运行时：`3 passed`。
 - 1v1 发射链测试：`11 passed`。
@@ -216,12 +218,14 @@ MQ-9 / AIM-120C 验证结构：
 
 - 继续把 `A8-DEC-E` 做成维护中的消费方工作，而不是直接击杀规则：动力调参和一段翼面/操纵气动响应已经落地。
 - 每新增一个消费方切片后，继续扩展 MQ-9/AIM-120C 固定下游检查，尤其是尾部、燃油/火灾和传感器/数据链。
+- 如果近地受损飞机不应继续 active，需要补一条维护中的地面撞击或坠毁状态路径，而不是直接触地击杀捷径。
 
 Held：
 
 - 结构化飞机的直接坠毁或直接消失行为。
 - 只因为目标是 MQ-9 就更容易杀伤的特例。
 - 绕过已有飞行和动力行为的“还能不能飞”判决。
+- 绕过维护中撞击/坠毁路径的直接触地击杀逻辑。
 
 Deferred：
 

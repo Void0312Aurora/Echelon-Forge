@@ -128,6 +128,7 @@ clang-format --dry-run -Werror src/systems/physics/aerodynamics_system.h
 ./.venv/bin/python -m ruff check tests/runtime/air_combat/weapon_guidance_realism/a8_aero_consumer.py tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 cmake --build build-workshop --target ef_py -j2
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'a8_mq9_aim120_right_aileron_damage_changes_roll_response_through_aero_path or wing_control_damage_reaches_neutral_aero_response'
+python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k 'right_aileron_damage_long_run_reaches_ground_response or right_aileron_damage_changes_roll_response_through_aero_path'
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_realism_guards.py
 python -m pytest -q tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py
@@ -139,8 +140,9 @@ Outcomes:
 - Changed C++ file clang-format gate: pass.
 - Focused Python lint: pass.
 - Build: pass.
-- Focused W8 aero/MQ-9 response checks: `2 passed, 166 deselected`.
-- Weapon guidance realism guards: `168 passed`.
+- Focused W8 aero/MQ-9 short response checks: `2 passed, 166 deselected`.
+- Focused W8 long-run MQ-9 response checks: `2 passed, 167 deselected`.
+- Weapon guidance realism guards: `169 passed`.
 - Flight dynamics realism guards: `4 passed`.
 - Flight dynamics tuning runtime: `3 passed`.
 - 1v1 fire-missile tests: `11 passed`.
@@ -252,12 +254,16 @@ Immediate:
   propulsion tuning and one wing/control aerodynamic response are landed.
 - Extend fixed MQ-9/AIM-120C downstream checks for rear, fuel/fire, and
   sensor/data-link cases after each additional consumer slice.
+- Add a maintained ground-impact or crash-state path if near-ground damaged
+  aircraft should stop being active instead of remaining observable after
+  contact with the ground.
 
 Held:
 
 - Direct crash or direct disappearance behavior for a structured aircraft.
 - Special handling that makes MQ-9 easier to kill only because it is MQ-9.
 - Any "can fly" verdict that bypasses existing flight and propulsion behavior.
+- Direct ground-contact kill logic that bypasses a maintained crash/impact path.
 
 Deferred:
 

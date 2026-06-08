@@ -86,6 +86,53 @@ def _neutral_mq9_after_optional_right_aileron_damage(
     )
 
 
+def _stabilized_mq9_after_optional_right_aileron_damage(
+    *,
+    damaged: bool,
+    steps: int = 18_000,
+) -> tuple[object, dict[str, float], object | None, object | None, bool]:
+    sim = _kernel_with_unit_overrides([])
+    sim.set_time_step(1.0 / 60.0)
+    attacker_id, target_id = _spawn_attacker_and_named_target(sim, "MQ-9_Reaper")
+
+    pilot = ef_py.PilotAction()
+    pilot.active = True
+    pilot.throttle = 0.6
+    sim.set_pilot_action(target_id, pilot)
+
+    effect = None
+    report = None
+    if damaged:
+        ok = sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+            attacker_id,
+            target_id,
+            -0.4,
+            8.0,
+            0.0,
+            _make_warhead_profile("blast_fragmentation", damage=120.0, radius=35.0),
+            900.0,
+            -250.0,
+            0.0,
+        )
+        if not ok:
+            raise AssertionError("profiled MQ-9 right-aileron hit failed")
+        events = sim.export_recent_engagement_events()
+        effect = events.effects_events[-1]
+        report = events.damage_reports[-1]
+
+    for _ in range(int(steps)):
+        sim.set_pilot_action(target_id, pilot)
+        sim.step()
+
+    return (
+        sim.get_instrument_state(target_id),
+        _aircraft_damage_overlay(sim, target_id),
+        effect,
+        report,
+        bool(sim.is_unit_active(target_id)),
+    )
+
+
 class A8AeroConsumerRuntimeMixin:
     def test_a8_wing_control_damage_reaches_neutral_aero_response_without_kill_verdict(
         self,
@@ -150,3 +197,49 @@ class A8AeroConsumerRuntimeMixin:
         self.assertGreater(roll_delta_deg, 5.0)
         self.assertGreater(beta_delta_deg, 2.0)
         self.assertGreater(speed_delta_mps, 2.0)
+
+    def test_a8_mq9_aim120_right_aileron_damage_long_run_reaches_ground_response(
+        self,
+    ) -> None:
+        baseline_inst, baseline_overlay, _baseline_effect, _baseline_report, baseline_active = (
+            _stabilized_mq9_after_optional_right_aileron_damage(damaged=False)
+        )
+        damaged_inst, damaged_overlay, damaged_effect, damaged_report, damaged_active = (
+            _stabilized_mq9_after_optional_right_aileron_damage(damaged=True)
+        )
+
+        self.assertTrue(baseline_active)
+        self.assertGreater(float(baseline_inst.alt_baro), 4_500.0)
+        self.assertGreater(float(baseline_inst.ground_speed), 200.0)
+        self.assertAlmostEqual(baseline_overlay["flight_control"], 1.0, delta=1.0e-6)
+
+        self.assertIsNotNone(damaged_effect)
+        self.assertIsNotNone(damaged_report)
+        assert damaged_effect is not None
+        assert damaged_report is not None
+        self.assertEqual(str(damaged_effect.component_primary_name), "right_aileron_servo")
+        self.assertEqual(str(damaged_effect.component_primary_system), "flight_control")
+        self.assertFalse(bool(damaged_report.destroyed))
+        _assert_mq9_event_is_non_authoritative(self, damaged_effect)
+
+        self.assertLess(damaged_overlay["flight_control"], baseline_overlay["flight_control"])
+        self.assertLess(damaged_overlay["roll_control"], baseline_overlay["roll_control"])
+        self.assertGreater(
+            damaged_overlay["control_asymmetry"],
+            baseline_overlay["control_asymmetry"],
+        )
+
+        altitude_delta_m = float(damaged_inst.alt_baro) - float(baseline_inst.alt_baro)
+        speed_delta_mps = float(damaged_inst.ground_speed) - float(baseline_inst.ground_speed)
+        self.assertLess(altitude_delta_m, -4_000.0)
+        self.assertLess(speed_delta_mps, -150.0)
+        self.assertLess(float(damaged_inst.alt_baro), 50.0)
+        self.assertLess(float(damaged_inst.ground_speed), 80.0)
+
+        # Current ground-contact handling leaves the unit active at near-ground altitude.
+        # A future maintained crash/ground-impact path may replace this with inactive.
+        self.assertTrue(
+            damaged_active or float(damaged_inst.alt_baro) < 50.0,
+            "damaged MQ-9 should either remain observable near ground or be removed by a "
+            "maintained crash path",
+        )

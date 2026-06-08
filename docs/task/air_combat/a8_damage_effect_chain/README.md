@@ -54,7 +54,7 @@ simulation responds.
 | Warhead-to-part effect model | primary cut point | `default_effects_model.cpp` and detail files compute mechanism loads, affected components, and current failure probability. | This is the first implementation cut point, but the current values are estimates, not AIM-120C truth. |
 | Damage-to-aircraft state | active input | `AircraftDamageStateUpdate` maps parts into propulsion, fuel, sensors, fire, and broad flight limits. | Keep this as the downstream bridge; do not replace it with a direct kill rule. |
 | Flight and propulsion consumers | active implementation | Propulsion consumes damage even when explicit engine tuning is enabled; aerodynamics now consumes structural, hydraulic, axis-control, and asymmetry damage as limited coefficient/authority changes. | The aero response is still synthetic and scalar; it is not aircraft-specific control-law calibration. |
-| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, and a fixed MQ-9 right-aileron aero-response check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
+| Test evidence | active | MQ-9/AIM-120C fixed checks, public failure-mode guards, a tuned-engine propulsion damage check, a fixed MQ-9 right-aileron aero-response check, and a 300 s stabilized long-run response check exist. | Runtime tests are engineering checks, not real-world lethality evidence. |
 
 ## Scope
 
@@ -146,6 +146,9 @@ This subproject can be marked accepted only when:
 - The next runtime step should broaden consumer coverage only through existing
   maintained systems, with particular care around fuel/mass/fire and
   aircraft-specific control-law calibration.
+- Long-run right-aileron damage can drive the damaged MQ-9 to near-ground
+  response while the clean baseline holds level flight, but ground-impact crash
+  propagation is still not implemented as a maintained outcome.
 - Full calibration of fragment patterns, blast loads, target vulnerability, and
   aircraft-specific failure thresholds remains deferred.
 
