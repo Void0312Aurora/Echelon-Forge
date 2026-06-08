@@ -331,3 +331,27 @@ Current residuals after sixth-wave W13 acceptance:
   crash sooner.
 - W14 remains held; sensor/data-link and broader fire runtime consequences are
   still the next non-overlapping area.
+
+## Seventh Dispatch Wave 2026-06-08
+
+Status: dispatched to existing current-session subagents only. No new
+conversation threads are allowed.
+
+This wave returns to the remaining `A8-DEC-E/F` consequence checks after W13
+closed the first ground-contact lifecycle gap. It keeps one writer and one
+read-only scout with disjoint scope.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W15 Sensor/Data-Link Consequence Writer` | `A8-DEC-E/F` | Popper | inherited / high | Prefer tests under `tests/runtime/air_combat/weapon_guidance_realism/` and collector imports. Production/binding edits only if an existing maintained sensor/data-link consequence surface is proven unreachable and the blocker is named first. | Add the smallest deterministic MQ-9/AIM-120C-like fixed-hit check showing data-link, avionics, power, or sensor damage continues beyond the immediate shot row into an observable maintained runtime consequence. Prefer existing `debug_get_data_link_state`, contact/message surfaces, `AircraftDamageState`, or mission/sensor capability readouts. | No ground-impact/lifecycle edits, no direct crash/disappearance rule, no MQ-9 special kill rule, no real-world lethality or probability claim, no broad data-link rewrite. | `git diff --check` on touched files; focused pytest selector; `python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`; `cmake --build build-workshop --target ef_py -j2` only if production/binding files change. | Required worker packet with status, touched files, commands/outcomes, remaining paths, behavior risks, integration notes. |
+| `A8-W16 Broader Fire Consequence Scout` | `A8-DEC-E/F` | McClintock | inherited / high | Read-only. | Identify the smallest next writer path for broader fire behavior after W11's fuel-leak/fire-source evidence. Inspect aircraft damage fire fields, mass/fuel leak runtime, platform fire severity, fire suppression fields, and any exposed debug/test surfaces. Return exact file/line evidence and proposed fixed MQ-9/AIM-120C-like hit cases. | No code edits, no docs edits, no sensor/data-link writer changes, no ground-impact lifecycle changes, no direct crash/disappearance rule, no real-world lethality claim. | File/line evidence; proposed exact pytest selectors and acceptance gates for a later writer packet. | Required scout packet with touched files `none`, commands/outcomes, remaining paths, behavior risks, integration notes. |
+
+Seventh-wave integration rules:
+
+- `A8-W15` is the only writer in this wave.
+- `A8-W16` is read-only and must not patch files.
+- W15 must prove a maintained downstream consequence; it must not add a fake
+  mission-failed flag just to satisfy the test.
+- W16 must avoid W15's test write set except as read-only context.
+- The main thread owns final review, verification, status synchronization, and
+  any commit.
