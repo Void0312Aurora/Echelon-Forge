@@ -218,6 +218,11 @@ class ExecutionEpisodeStateTests(unittest.TestCase):
         self.assertAlmostEqual(float(mission_cmd["form_offset_x"]), 180.0, places=6)
         self.assertEqual(int(mission_cmd["assigned_target_id"]), 9001)
         self.assertTrue(bool(mission_cmd["authorization_to_fire"]))
+        self.assertEqual(int(mission_cmd["ground_task_mode"]), int(ef_py.GroundTaskMode.Unspecified))
+        self.assertEqual(int(mission_cmd["objective_area_id"]), 0)
+        self.assertEqual(int(mission_cmd["objective_node_id"]), 0)
+        self.assertEqual(int(mission_cmd["ground_commander_id"]), 0)
+        self.assertAlmostEqual(float(mission_cmd["tactical_cadence_hz"]), 1.0, places=6)
 
         reward_breakdown = json.loads(str(state.last_reward_breakdown_json))
         self.assertAlmostEqual(float(reward_breakdown["total"]), 1.27, places=6)

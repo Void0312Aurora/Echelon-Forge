@@ -231,6 +231,10 @@ def _canonical_runtime_mission_command_json(
         ("embarked_helo_entity_id", "embarked_helo_entity_id"),
         ("assigned_target_track_id", "assigned_target_track_id"),
         ("assigned_target_source_id", "assigned_target_source_id"),
+        ("ground_task_mode", "ground_task_mode"),
+        ("objective_area_id", "objective_area_id"),
+        ("objective_node_id", "objective_node_id"),
+        ("ground_commander_id", "ground_commander_id"),
     )
     for out_key, attr_name in scalar_int_fields:
         if hasattr(kernel_cmd, attr_name):
@@ -244,6 +248,7 @@ def _canonical_runtime_mission_command_json(
         ("station_radius_m", "station_radius_m"),
         ("station_bearing_deg", "station_bearing_deg"),
         ("assigned_target_snapshot_time_s", "assigned_target_snapshot_time_s"),
+        ("tactical_cadence_hz", "tactical_cadence_hz"),
     )
     for out_key, attr_name in scalar_float_fields:
         if hasattr(kernel_cmd, attr_name):
