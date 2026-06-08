@@ -442,3 +442,31 @@ Current residuals after eighth-wave acceptance:
 - The remaining A8 decision is whether the current maintained-consumer set is
   sufficient for final `P6` acceptance with calibration and object-model work
   explicitly deferred.
+
+## Ninth Dispatch Wave 2026-06-08
+
+Status: dispatched to current-session subagents on 2026-06-08. No new
+conversation threads were created.
+
+This wave is a `P6` readiness wave. It does not add new behavior. It asks one
+agent to audit whether the accepted slices satisfy A8's stated acceptance gate,
+and another agent to run the final validation/readiness checks. The main thread
+keeps all acceptance wording, parent-index synchronization, archive decisions,
+and commits serial.
+
+| Packet | Cluster | Owner | Model / reasoning | Write set | Goal | Non-goals | Validation | Return packet |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A8-W19 P6 Acceptance Readiness Audit` | `A8-DEC-G` | Harvey | inherited / high | Read-only. | Compare A8 README acceptance gates, current status, task clusters, and dispatch history against the actual landed tests and implementation evidence. Return whether A8 should be marked accepted now, marked held, or accepted with explicitly deferred calibration/object-model residuals. Identify any blocker that must be fixed before final acceptance. | No code edits, no docs edits, no new physics claim, no real-world lethality/Pk/fuze authority claim, no direct crash rule, no demand for first-class debris unless it is a true blocker in the stated A8 gate. | File/line evidence; optional read-only command results. | Required scout packet with status, touched files `none`, acceptance recommendation, blocker list, residual wording, behavior risks, integration notes. |
+| `A8-W20 P6 Final Validation Runner` | `A8-DEC-G` | McClintock | inherited / high | Read-only; do not edit files. | Run the smallest final validation set needed before main-thread P6 acceptance sync. At minimum include A8 docs/tests diff check, Python lint for A8 test modules touched in recent waves, full weapon-guidance realism guards, and any focused command you believe is needed to catch regressions from W13-W18. Report exact commands and outcomes. | No code edits, no docs edits, no acceptance wording edits, no new tests, no broad unrelated suite expansion unless a focused failure suggests it. | Exact command outcomes. | Required validation packet with status, touched files `none`, commands/outcomes, failures or flakes, residual risks, integration notes. |
+
+Ninth-wave integration rules:
+
+- Both packets are read-only.
+- Neither packet may mark A8 accepted on its own; they return evidence for
+  main-thread P6 review.
+- If W19 finds an acceptance blocker, it must name the exact gate and evidence
+  gap rather than proposing a broad new model.
+- If W20 finds a failing gate, it should stop at the smallest useful failure
+  report instead of editing files.
+- The main thread owns final P6 wording, parent README/status sync, archive
+  decisions, validation reconciliation, and any commit.
