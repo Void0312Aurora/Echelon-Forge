@@ -89,9 +89,9 @@
 
 | manifest 项 | 作用 |
 | --- | --- |
-| `tests/architecture/test_runtime_facade_layering.py` | facade layering guard |
-| `tests/architecture/test_wp5_design_boundary_gates.py` | design boundary gate |
-| `tests/architecture/test_cmake_target_readiness.py` | CMake target readiness |
+| `tests/architecture/runtime_facade/test_layering.py` | facade layering guard |
+| `tests/architecture/runtime_facade/test_design_boundary_gates.py` | design boundary gate |
+| `tests/architecture/build/test_cmake_target_readiness.py` | CMake target readiness |
 | `tests/runtime/core/test_env_config.py` | runtime env config |
 | `tests/runtime/engagement` | engagement 目录整组 |
 | `tests/runtime/facade/test_facade_step_evidence_gates.py` | facade evidence gates |

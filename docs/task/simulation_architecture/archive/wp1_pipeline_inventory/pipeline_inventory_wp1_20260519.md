@@ -134,8 +134,8 @@ Existing tests already cover several important boundaries:
 
 | Validation area | Evidence | Notes |
 |-----------------|----------|-------|
-| Facade layering | [test_runtime_facade_layering.py](../../../tests/architecture/test_runtime_facade_layering.py:41) | Blocks raw runtime escape outside adapters and checks contract header hygiene. |
-| Build layering | [test_cmake_target_readiness.py](../../../tests/architecture/test_cmake_target_readiness.py:25) | Protects grouped source readiness for future target splits. |
+| Facade layering | [test_runtime_facade_layering.py](../../../tests/architecture/runtime_facade/test_layering.py:41) | Blocks raw runtime escape outside adapters and checks contract header hygiene. |
+| Build layering | [test_cmake_target_readiness.py](../../../tests/architecture/build/test_cmake_target_readiness.py:25) | Protects grouped source readiness for future target splits. |
 | Facade behavior | [test_runtime_facade.py](../../../tests/runtime/facade/test_runtime_facade.py:213) | Covers setup, observation export, execution batch stepping, and state advancement. |
 | Mission/runtime bridge | [test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py:86) | Strong `P2/P6/P10` coverage around mission observation, route guidance, live tracks, and datalink. |
 | Sensor/track realism | [test_sensor_situation_realism_p0.py](../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py:62) | Strong `P6` coverage. |

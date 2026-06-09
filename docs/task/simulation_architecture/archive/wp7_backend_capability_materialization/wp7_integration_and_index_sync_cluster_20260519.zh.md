@@ -106,5 +106,5 @@ WP7 线现在作为文档与实现准备状态验收，而不是 capability prom
 ```bash
 git diff --check
 rg -n "WP7|backend capability materialization|acceptance review|RuntimeCapabilities|maintained_status|projection_eligibility|multi-fidelity|promotion gate" docs/task/simulation_architecture docs/plan/architecture docs/task/review
-python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_facade_layering.py -q
+python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_layering.py -q
 ```

@@ -46,8 +46,8 @@ runtime/world handles，同时保留并显式约束 compatibility surfaces。
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
-python -m pytest -q tests/architecture/test_wp16_legacy_path_gates.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "compatibility_view"
 ```
 

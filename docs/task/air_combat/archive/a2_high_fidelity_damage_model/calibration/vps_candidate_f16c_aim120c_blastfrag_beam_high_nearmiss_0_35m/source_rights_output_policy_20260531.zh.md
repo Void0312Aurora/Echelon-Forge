@@ -102,6 +102,5 @@
 
 ```bash
 python tools/maintenance/a2_blastfrag_source_rights_output_policy.py --write-retained-artifacts
-python -m pytest -q tests/architecture/test_a2_blastfrag_source_rights_output_policy.py
-python -m pytest -q tests/architecture/test_a2_blastfrag_source_payload_pack.py tests/architecture/test_a2_blastfrag_source_rights_output_policy.py
+python -m pytest -q tests/architecture/damage_model/test_source_payload_output_policy.py
 ```

@@ -39,7 +39,7 @@
 - `src/tools/experimental/gpu_phase0/*.cpp`
 - `tests/test_gpu_runtime_bindings.py:20-260, 543-590`
 - `tests/runtime/facade/test_runtime_facade.py:524-554`
-- `tests/architecture/test_runtime_facade_layering.py:436-494`
+- `tests/architecture/runtime_facade/test_layering.py:436-494`
 - `tests/world_batch/test_world_batch_runtime.py:1131-1320`
 - `tests/world_batch/test_world_batch_vec_env.py:681-728`
 
@@ -74,7 +74,7 @@
 | `src/tools/experimental/gpu_phase0/*` | diagnostics-export-only | phase-0 probes 是独立 binary，用于 measurement 和 parity reporting。README 明确禁止它们成为默认 runtime backend，或被 facade / core runtime 依赖。 | `src/tools/experimental/gpu_phase0/README.md:3-21`; `src/tools/experimental/gpu_phase0/*.cpp` |
 | `WorldBatchRuntime` GPU candidate-ID 调用点 (`get_sensor_candidate_ids_batch`, `get_visual_candidate_ids_batch`, `get_comm_candidate_ids_batch`) | host-owned helper | runtime 负责最终过滤与排序。GPU broadphase 只在显式 `use_gpu` flag 下提供 candidate bitset。 | `src/core/engine/world_batch_runtime.cpp:703-900` |
 | `src/gpu/*_cuda.cu` device kernels | blocked-unknown | kernel 内部只通过受保护的 experimental wrapper 间接访问。这里还没有证据支持其成为 maintained surface。 | `src/gpu/*_cuda.cu` |
-| `tests/test_gpu_runtime_bindings.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/architecture/test_runtime_facade_layering.py` | diagnostics-export-only | 这些测试把 capability flag 固定为 `false`，检查 helper binding 存在，并阻止 `RuntimeFacade` 或 core runtime 依赖 GPU helper 实现细节。 | `tests/test_gpu_runtime_bindings.py:20-260, 543-590`; `tests/runtime/facade/test_runtime_facade.py:524-554`; `tests/architecture/test_runtime_facade_layering.py:436-494` |
+| `tests/test_gpu_runtime_bindings.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/architecture/runtime_facade/test_layering.py` | diagnostics-export-only | 这些测试把 capability flag 固定为 `false`，检查 helper binding 存在，并阻止 `RuntimeFacade` 或 core runtime 依赖 GPU helper 实现细节。 | `tests/test_gpu_runtime_bindings.py:20-260, 543-590`; `tests/runtime/facade/test_runtime_facade.py:524-554`; `tests/architecture/runtime_facade/test_layering.py:436-494` |
 
 ## Capability Facts
 
@@ -86,7 +86,7 @@
 - `tests/runtime/facade/test_runtime_facade.py` 将 facade 结果锁定为
   `supports_resident_state == false`、`supports_exact_gpu_backend == false`、
   `supports_shadow_compare == false`。
-- `tests/architecture/test_runtime_facade_layering.py` 禁止 `RuntimeFacade`
+- `tests/architecture/runtime_facade/test_layering.py` 禁止 `RuntimeFacade`
   引入或调用 GPU helper/probe 代码，也禁止 core runtime 投影 GPU / resident /
   shadow capability support。
 

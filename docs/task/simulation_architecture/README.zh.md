@@ -971,7 +971,7 @@ WP6 工作流地图：
   [parity budget 注册表](archive/wp6_backend_profile_policy/wp6_parity_budget_registry_20260519.zh.md)。
 - `WP6-C Resident-State And Backend Capability Alignment`：
   [resident-state 边界规则](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.zh.md)，以及
-  [runtime facade layering 测试](../../../tests/architecture/test_runtime_facade_layering.py)、
+  [runtime facade layering 测试](../../../tests/architecture/runtime_facade/test_layering.py)、
   [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade.py) 和
   [GPU runtime binding 测试](../../../tests/test_gpu_runtime_bindings.py) 中的 capability-projection guard。
 - `WP6-D Integration And Index Sync`：

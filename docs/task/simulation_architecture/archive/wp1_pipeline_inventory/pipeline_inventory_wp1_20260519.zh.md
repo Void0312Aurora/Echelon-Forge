@@ -111,8 +111,8 @@ WP2 应把 `P0-P10` 视作语义阶段词汇，并用 stage-node contract 定义
 
 | 验证区域 | 证据 | 说明 |
 |----------|------|------|
-| Facade layering | [test_runtime_facade_layering.py](../../../tests/architecture/test_runtime_facade_layering.py:41) | 阻止 adapter 外部 raw runtime 逃逸，并检查 contract header hygiene。 |
-| Build layering | [test_cmake_target_readiness.py](../../../tests/architecture/test_cmake_target_readiness.py:25) | 保护未来 target split 所需的 grouped source readiness。 |
+| Facade layering | [test_runtime_facade_layering.py](../../../tests/architecture/runtime_facade/test_layering.py:41) | 阻止 adapter 外部 raw runtime 逃逸，并检查 contract header hygiene。 |
+| Build layering | [test_cmake_target_readiness.py](../../../tests/architecture/build/test_cmake_target_readiness.py:25) | 保护未来 target split 所需的 grouped source readiness。 |
 | Facade behavior | [test_runtime_facade.py](../../../tests/runtime/facade/test_runtime_facade.py:213) | 覆盖 setup、observation export、execution batch stepping 与 state advancement。 |
 | Mission/runtime bridge | [test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py:86) | 对 mission observation、route guidance、live track、datalink 有较强 `P2/P6/P10` 覆盖。 |
 | Sensor/track realism | [test_sensor_situation_realism_p0.py](../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py:62) | 对 `P6` 有较强覆盖。 |

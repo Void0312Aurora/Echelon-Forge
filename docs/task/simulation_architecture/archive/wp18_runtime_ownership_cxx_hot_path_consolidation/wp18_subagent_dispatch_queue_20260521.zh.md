@@ -45,7 +45,7 @@
 |--------|------------|-------------------|------|-------------|
 | `WP18-B` | worker | `gpt-5.4`, xhigh | 使用 `ExecutionEpisodeController` 与既有 facade/runtime state exports 实现第一条 execution-episode ownership sink。 | Execution episode facade/runtime seams 与聚焦测试；不编辑 `ScenarioLoader` internals 或 C++ hot-path reward logic。 |
 | `WP18-C` | worker | `gpt-5.4`, high | 添加 `ScenarioLoader` state-shell responsibility classification guard，并保留 public loader APIs。 | `gym_envs/scenario_loader/runtime_state.py`、窄 loader classification tests 与 WP18-C docs；不编辑 C++ runtime logic。 |
-| `WP18-D` | worker | `gpt-5.4`, high | 添加 maintained-path raw runtime/world/batch access guard prework，不删除 compatibility APIs。 | `tests/architecture/test_runtime_facade_layering.py` 与 allowlist docs/comments；final hard bans 等 B/C。 |
+| `WP18-D` | worker | `gpt-5.4`, high | 添加 maintained-path raw runtime/world/batch access guard prework，不删除 compatibility APIs。 | `tests/architecture/runtime_facade/test_layering.py` 与 allowlist docs/comments；final hard bans 等 B/C。 |
 | `WP18-E` | worker | `gpt-5.4`, xhigh | 若能避开 B/C ownership 冲突，实现低风险 reward/termination metadata first slice。 | C++ reward/termination metadata helper/binding 或 Python compiled-path consume seam 加聚焦测试；不改变 request build/consume ownership。 |
 
 ## Second-Wave Return State
@@ -62,8 +62,8 @@
 - `cmake --build build-workshop --target ef_core ef_py -j4` 通过。
 - `git diff --check` 通过。
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary` 通过；WP18 仍在推进中，因此 acceptance review 继续保持缺席。
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py` 通过：`17 passed`。
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp16_legacy_path_gates.py` 通过：`6 passed`。
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` 通过：`17 passed`。
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py` 通过：`6 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_state.py` 通过：`5 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_scenario_loader_execution_step_runtime.py -k "state or runtime or reward or termination"` 通过：`11 passed, 8 subtests passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "execution or episode or batch"` 通过：`4 passed, 14 deselected`。
@@ -95,7 +95,7 @@
 
 - `git diff --check` 通过。
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary` 通过；WP18 仍在推进中，因此 acceptance review 继续保持缺席。
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py` 通过：`18 passed`。
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` 通过：`18 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_state.py` 通过：`5 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "execution_episode_controller_mainline or compatibility_view or facade"` 通过：`11 passed, 27 deselected`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_facade_step_evidence_gates.py` 通过：`1 passed`。

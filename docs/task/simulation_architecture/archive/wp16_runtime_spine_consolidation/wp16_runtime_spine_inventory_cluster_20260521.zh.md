@@ -61,7 +61,7 @@ adapters 或 experiment scaffolding 绕过该主干。
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp16_runtime_spine_inventory.py
+python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 ```
 
 如果 worker 用 audit tool 而不是 test，需要返回精确命令与输出摘要。

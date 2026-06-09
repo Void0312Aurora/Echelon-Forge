@@ -167,7 +167,7 @@ Suggested next steps:
 
 1. Continue to push new requirements first as facade-shaped adapter methods, rather than flowing back into raw runtime access.
 2. Continue offloading `ScenarioLoader`'s compat facade; do not stuff new state synchronization back into `core.py`.
-3. Keep `tests/architecture/test_runtime_facade_layering.py` and world-setup compat tests as gatekeeping lines.
+3. Keep `tests/architecture/runtime_facade/test_layering.py` and world-setup compat tests as gatekeeping lines.
 
 ### 2.7 Documentation Calibration Still Needs to Transition from "Freeze Analysis" to "Current Status"
 

@@ -104,5 +104,5 @@ component probability 就不能被提升为 authority。
 
 ```bash
 python tools/maintenance/a2_blastfrag_stage_c_fragility_review_gate.py --output /tmp/a2_stage_c_fragility_review_gate.json
-pytest -q tests/architecture/test_a2_blastfrag_stage_c_fragility_review_gate.py
+pytest -q tests/architecture/damage_model/test_component_fragility_validation_chain.py
 ```

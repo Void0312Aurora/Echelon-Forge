@@ -68,7 +68,7 @@ The completed publication line cites these implementation-ready outputs:
 3. [WP6-C1 resident-state boundary rules](wp6_resident_state_boundary_rules_20260519.md)
    as the resident-state ownership and sync gate.
 4. Capability-projection guards in
-   [runtime facade layering tests](../../../tests/architecture/test_runtime_facade_layering.py),
+   [runtime facade layering tests](../../../tests/architecture/runtime_facade/test_layering.py),
    [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade.py),
    and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
 5. [WP6 acceptance review](../review/wp6_backend_profile_policy_acceptance_review_20260519.md)

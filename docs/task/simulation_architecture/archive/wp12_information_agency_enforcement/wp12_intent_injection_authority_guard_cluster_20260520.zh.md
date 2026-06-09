@@ -57,7 +57,7 @@ facade-compatible injection seam 时，才可以产出 `ActionIntentPacket` 或
 - `python/rl/runtime/agent_shim.py`
 - `tests/runtime/facade/test_runtime_facade_window_loop_injection.py`
 - `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`
-- `tests/architecture/test_policy_belief_boundaries.py`
+- `tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py`
 
 优先方式：
 

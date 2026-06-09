@@ -60,5 +60,5 @@
 
 ```bash
 python tools/maintenance/a2_blastfrag_release_provenance_closeout_gate.py --output /tmp/a2_release_provenance_closeout_gate.json
-pytest -q tests/architecture/test_a2_blastfrag_release_provenance_closeout_gate.py
+pytest -q tests/architecture/damage_model/test_provenance_identity_release_gates.py
 ```

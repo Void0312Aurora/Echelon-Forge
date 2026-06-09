@@ -1123,7 +1123,7 @@ WP6 workstream map:
 - `WP6-C Resident-State And Backend Capability Alignment`:
   [resident-state boundary rules](archive/wp6_backend_profile_policy/wp6_resident_state_boundary_rules_20260519.md)
   plus capability-projection guards in
-  [runtime facade layering tests](../../../tests/architecture/test_runtime_facade_layering.py),
+  [runtime facade layering tests](../../../tests/architecture/runtime_facade/test_layering.py),
   [runtime facade tests](../../../tests/runtime/facade/test_runtime_facade.py),
   and [GPU runtime binding tests](../../../tests/test_gpu_runtime_bindings.py).
 - `WP6-D Integration And Index Sync`:

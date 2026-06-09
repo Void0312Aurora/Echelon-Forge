@@ -22,7 +22,7 @@ Inputs:
 - current `python/rl/runtime/world_batch/adapter.py`
 - current `python/rl/runtime/world_batch_vec_env.py`
 - current `python/rl/runtime/cooperative_world_batch_vec_env.py`
-- current `tests/architecture/test_runtime_facade_layering.py`
+- current `tests/architecture/runtime_facade/test_layering.py`
 - current `tests/runtime/facade/test_runtime_facade.py`
 - [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md)
 
@@ -213,7 +213,7 @@ Decision rule:
 ```bash
 git diff --check
 rg -n "WP7.5|Training Path Facade Bridge|facade.runtime|step_execution_batch|export_observation_packet|ObservationBatchRequest|ObservationBatchPacket|ExecutionBatchStepRequest|WorldBatchVecEnv" docs/task/simulation_architecture docs/task/review python/rl/runtime tests/architecture tests/runtime/facade
-python -m pytest tests/architecture/test_runtime_facade_layering.py tests/runtime/facade/test_runtime_facade.py tests/runtime/facade/test_facade_step_evidence_gates.py -q
+python -m pytest tests/architecture/runtime_facade/test_layering.py tests/runtime/facade/test_runtime_facade.py tests/runtime/facade/test_facade_step_evidence_gates.py -q
 ```
 
 Implementation rounds may add narrower or broader `pytest` targets, but they

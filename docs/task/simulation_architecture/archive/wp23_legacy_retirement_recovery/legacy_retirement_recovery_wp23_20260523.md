@@ -135,8 +135,8 @@ Salvage classification:
 | Command/control typed-state narrowing | `src/components/command/default_factory_legacy_spawn_compat.h:9-18`, `src/systems/core/operation_system.h:46-111`, `src/systems/systems/command_link_system.h:29-120` | `keep-after-audit` with residual blockers | Keep guarded narrowing, but do not call it retirement while `MovementCommand`, `LaggedCommand`, `ActionCommand`, and pending shells remain behavior-bearing compatibility surfaces. |
 | TaskOrder maintained-batch contract and wiring | `src/runtime/contracts/world_batch_contracts.h:563-720`, `src/core/engine/world_batch_runtime.h:109-116`, `src/core/engine/world_batch_runtime.cpp:738-857`, `src/runtime/facade/runtime_facade.h:97-129`, `src/runtime/facade/runtime_facade.cpp:2649-2768`, `src/interfaces/python/bindings_runtime.cpp:1165-1173`, `src/interfaces/python/bindings_runtime.cpp:1444-1457`, `src/interfaces/python/bindings_runtime.cpp:1535-1582`, `src/interfaces/python/bindings_runtime.cpp:1692-1735`, `python/rl/runtime/world_batch/adapter.py:118-141`, `python/rl/runtime/world_batch/adapter.py:773-887`, `python/rl/runtime/world_batch_vec_env.py:1261-1315` | `audit-before-keep` | Do not accept as pass yet. It introduces a maintained-looking TaskOrder path while whole-shell write/read, observation packet, bindings, and Python fallback paths remain live. |
 | TaskOrder / LeaderIntent / PilotReport whole-shell assignments | `src/runtime/contracts/world_batch_contracts.h:596-655`, `src/core/engine/world_batch_runtime.cpp:766-797`, `src/runtime/facade/runtime_facade.cpp:2655-2665`, `src/interfaces/python/bindings_runtime.cpp:1444-1469` | `delete-or-migrate-target` for maintained truth; `blocked-target` for public API | Must not be accepted as maintained truth. Delete/migrate only after public replacements are proven; otherwise mark blocked. |
-| Observation task-order whole-shell read | `src/runtime/facade/runtime_facade.cpp:2779-2788`, `src/runtime/facade/runtime_facade.cpp:3008-3031`, `src/interfaces/python/bindings_runtime.cpp:1105-1117`, `tests/architecture/test_runtime_facade_layering.py:1000-1004` | `blocked-target` | Remains whole-shell read surface. Cannot be called retired while `ObservationBatchPacket.task_orders` is public. |
-| Runtime/world/batch escape hatches | `src/runtime/facade/runtime_facade.cpp:2498-2503`, `src/core/engine/world_batch_runtime.h:65-68`, `python/rl/runtime/world_batch_vec_env.py:302-306`, `tests/architecture/test_runtime_facade_layering.py:499-608` | `blocked-target` | Keep guarded as explicit compatibility/diagnostics only. Deletion is blocked by public consumers and diagnostics paths. |
+| Observation task-order whole-shell read | `src/runtime/facade/runtime_facade.cpp:2779-2788`, `src/runtime/facade/runtime_facade.cpp:3008-3031`, `src/interfaces/python/bindings_runtime.cpp:1105-1117`, `tests/architecture/runtime_facade/test_layering.py:1000-1004` | `blocked-target` | Remains whole-shell read surface. Cannot be called retired while `ObservationBatchPacket.task_orders` is public. |
+| Runtime/world/batch escape hatches | `src/runtime/facade/runtime_facade.cpp:2498-2503`, `src/core/engine/world_batch_runtime.h:65-68`, `python/rl/runtime/world_batch_vec_env.py:302-306`, `tests/architecture/runtime_facade/test_layering.py:499-608` | `blocked-target` | Keep guarded as explicit compatibility/diagnostics only. Deletion is blocked by public consumers and diagnostics paths. |
 | Default-factory legacy command projection | `src/components/command/default_factory_legacy_spawn_compat.h:36-54`, `src/components/command/default_factory_legacy_spawn_compat.h:101-121` | `delete-or-migrate-target` with blocker | Must migrate to typed control-state-only spawn before deletion. Current state still projects `MovementCommand` and `LaggedCommand`. |
 | Python maintained path fallbacks | `python/rl/runtime/world_batch/adapter.py:118-141`, `python/rl/runtime/world_batch/adapter.py:773-887`, `python/rl/runtime/world_batch_vec_env.py:1261-1315` | `rollback-candidate` if fallback hides truth | Keep only if C proves explicit representation selection. Silent `hasattr` fallback can otherwise preserve dual truth. |
 
@@ -208,7 +208,7 @@ Rationale:
 - Existing tests document coexistence rather than retirement:
   `tests/world_batch/test_world_batch_runtime.py:921-964` validates maintained
   write followed by legacy read, and
-  `tests/architecture/test_runtime_facade_layering.py:976-1008` explicitly
+  `tests/architecture/runtime_facade/test_layering.py:976-1008` explicitly
   checks that maintained APIs and legacy shells remain together.
 
 WP23-C outcome:
@@ -265,9 +265,9 @@ Rationale:
   compatibility view in
   `tests/world_batch/test_world_batch_vec_env.py:669-704`.
 - Current architecture guards localize, but do not remove, escape-hatch
-  consumers: `tests/architecture/test_runtime_facade_layering.py:499-607`
+  consumers: `tests/architecture/runtime_facade/test_layering.py:499-607`
   checks that `.batch_runtime` and `RuntimeFacade.runtime()` consumers stay in
-  explicit allowlists; `tests/architecture/test_wp16_legacy_path_gates.py:43-86`
+  explicit allowlists; `tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py:43-86`
   preserves public compatibility surfaces until replacement gates exist.
 - TaskOrder whole-shell public APIs remain live across C++ and Python bindings:
   `set_task_orders_batch` / `get_task_orders_batch` remain bound for both
@@ -306,9 +306,9 @@ Reason:
 - `WP23-D` blocked the public runtime/world/batch/diagnostics exits and found no
   deletion-ready implementation surface.
 - Existing guards already localize the most important escape hatches:
-  `tests/architecture/test_runtime_facade_layering.py:499-607` covers
+  `tests/architecture/runtime_facade/test_layering.py:499-607` covers
   `.batch_runtime` and `RuntimeFacade.runtime()` allowlists, while
-  `tests/architecture/test_wp16_legacy_path_gates.py:43-86` keeps public
+  `tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py:43-86` keeps public
   compatibility surfaces tied to replacement gates.
 - Adding a small guard-only patch now would not delete or migrate any business
   surface, and would risk converting `blocked` into another permanent
@@ -395,7 +395,7 @@ should normally include relevant subsets of:
 ```bash
 git diff --check
 cmake --build build-workshop --target ef_py -j4
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 python -m pytest -q tests/architecture/test_wp22_dto_domain_shell_guard.py
 python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py
 python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py

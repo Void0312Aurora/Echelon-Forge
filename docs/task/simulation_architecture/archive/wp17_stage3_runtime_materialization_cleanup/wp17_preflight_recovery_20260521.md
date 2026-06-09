@@ -71,11 +71,11 @@ orchestration remains out of scope.
 Reported passing checks included:
 
 ```bash
-python -m pytest -q tests/runtime/facade/test_runtime_facade.py tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp14_boundary_guards.py tests/architecture/test_wp16_legacy_path_gates.py
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
-python -m pytest -q tests/architecture/test_wp16_legacy_path_gates.py
+python -m pytest -q tests/runtime/facade/test_runtime_facade.py tests/architecture/runtime_facade/test_layering.py tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "compatibility_view or execution_episode_controller_mainline or shadow_compare"
-python -m pytest -q tests/architecture/test_wp16_clock_domain_enforcement.py
+python -m pytest -q tests/architecture/runtime_spine/test_clock_domain_enforcement.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "capabilities or fidelity"
 python -m pytest -q tests/test_gpu_runtime_bindings.py -k "capabilities or fidelity"

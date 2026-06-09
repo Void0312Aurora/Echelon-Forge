@@ -71,7 +71,7 @@ Expected final validation set:
 ```powershell
 git diff --check
 cmake --build build-local-win -j4
-python -m pytest -q tests\architecture\test_wp13_backend_profile_contracts.py tests\architecture\test_wp13_parity_budget_contracts.py tests\architecture\test_wp13_fidelity_profile_contracts.py
+python -m pytest -q tests/architecture/runtime_profiles/test_runtime_profile_contracts.py
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py tests\test_gpu_runtime_bindings.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_bindings_policy_surface.py

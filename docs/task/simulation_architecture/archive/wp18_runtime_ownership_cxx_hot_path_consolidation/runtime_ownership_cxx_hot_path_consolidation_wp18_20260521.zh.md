@@ -131,7 +131,7 @@ Worker 规则：
 ```bash
 git diff --check
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "execution_episode_controller_mainline or compatibility_view"
 ```
 

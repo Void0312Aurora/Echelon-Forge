@@ -55,7 +55,7 @@ A-D 落地后检查：
 - `tests/runtime/facade/test_runtime_facade.py`
 - `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`
 - `tests/runtime/bindings/test_bindings_policy_surface.py`
-- `tests/architecture/test_runtime_facade_layering.py`
+- `tests/architecture/runtime_facade/test_layering.py`
 
 首选做法：
 
@@ -92,7 +92,7 @@ git diff --check
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_facade_layering.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_layering.py
 ```
 
 ## 6. 交接契约

@@ -151,7 +151,7 @@ WP19-D 复用 WP25 的 barrier vocabulary，但当前 runtime 只把其中一部
 
 当前守卫姿态：
 
-- 现有 `tests/architecture/test_runtime_facade_layering.py` 已经阻止 facade 耦合 GPU
+- 现有 `tests/architecture/runtime_facade/test_layering.py` 已经阻止 facade 耦合 GPU
   helper implementation，且阻止 probe-driven capability promotion；
 - WP19-D 应把 resident-state sync preflight 保持在同一条 fail-closed 路线上：
   blocked resident-state candidate、`supports_resident_state == false`，以及
@@ -187,7 +187,7 @@ WP19-D 复用 WP25 的 barrier vocabulary，但当前 runtime 只把其中一部
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary
 ```
 

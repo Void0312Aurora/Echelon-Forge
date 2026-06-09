@@ -12,7 +12,7 @@
 - [WP5 验证套件](validation_harness_wp5_20260519.zh.md)
 - [WP4 facade 对齐验收审查](../review/wp4_facade_alignment_acceptance_review_20260519.zh.md)
 - [WP4-I compatibility guard 笔记](wp4_compat_guard_notes_20260519.zh.md)
-- 当前 `tests/architecture/test_runtime_facade_layering.py`
+- 当前 `tests/architecture/runtime_facade/test_layering.py`
 - 当前 `tests/runtime/facade/`
 
 ## 1. 目的

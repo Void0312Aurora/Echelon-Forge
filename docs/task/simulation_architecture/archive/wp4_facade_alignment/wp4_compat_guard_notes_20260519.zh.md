@@ -8,7 +8,7 @@
 - [WP4 第一波验收审查](../review/wp4_first_wave_acceptance_review_20260519.zh.md)
 - [WP4-A surface inventory 初稿](wp4_surface_inventory_wp4a_20260519.zh.md)
 - [WP4-D/E policy-binding 对齐笔记](wp4_policy_binding_alignment_notes_20260519.zh.md)
-- `tests/architecture/test_runtime_facade_layering.py`
+- `tests/architecture/runtime_facade/test_layering.py`
 
 本文记录当前 compatibility-only 路径的 guard 覆盖情况。本文不移除
 compatibility adapter，也不实现 facade/runtime 变更。

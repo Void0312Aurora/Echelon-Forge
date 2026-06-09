@@ -209,21 +209,21 @@ Current fact:
 
 ### 7) WP14 boundary guards explicitly freeze the first public gap
 
-`tests/architecture/test_wp14_boundary_guards.py` and related WP14 tests are the
+`tests/architecture/platform_spawn/test_boundary_guards.py` and related WP14 tests are the
 current proof that the public gap is intentional, not accidental.
 
 Evidence:
 
 - no public `spawn_platform` surface in runtime/bindings/scenario compatibility
-  layers at [test_wp14_boundary_guards.py](../../../../tests/architecture/test_wp14_boundary_guards.py:26)
+  layers at [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:26)
 - `RuntimeCapabilities` remains backend/fidelity-only at
-  [test_wp14_boundary_guards.py](../../../../tests/architecture/test_wp14_boundary_guards.py:43)
+  [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:43)
 - legacy `WorldSpawnRequest.type_name` surfaces remain present at
-  [test_wp14_boundary_guards.py](../../../../tests/architecture/test_wp14_boundary_guards.py:94)
+  [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:94)
 - typed requests are explicitly additive and not auto-materialized at
-  [test_wp14_boundary_guards.py](../../../../tests/architecture/test_wp14_boundary_guards.py:140)
+  [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:140)
 - typed DTO validation stays declarative/fail-closed at
-  [test_wp14_boundary_guards.py](../../../../tests/architecture/test_wp14_boundary_guards.py:176)
+  [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:176)
 - contract header tests keep `RuntimeCapabilities` out of
   `platform_capability_contracts.h` at
   [test_wp14_platform_capability_contracts.py](../../../../tests/architecture/test_wp14_platform_capability_contracts.py:51)
@@ -327,18 +327,18 @@ sed -n '1,260p' src/core/engine/world_batch_runtime.h
 sed -n '1,260p' src/core/engine/world_batch_runtime.cpp
 sed -n '1,260p' src/models/core/default_unit_factory.h
 sed -n '1,240p' tests/architecture/test_wp14_platform_capability_contracts.py
-sed -n '1,240p' tests/architecture/test_wp14_boundary_guards.py
+sed -n '1,240p' tests/architecture/platform_spawn/test_boundary_guards.py
 sed -n '1,260p' tests/architecture/test_wp14_additive_platform_spawn_dto.py
 sed -n '1,260p' tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
 sed -n '1,260p' tests/world_batch/test_world_batch_runtime.py
 sed -n '1,260p' tests/architecture/test_wp14_resolved_spawn_plan_evidence.py
-sed -n '1,260p' tests/architecture/test_runtime_facade_layering.py
+sed -n '1,260p' tests/architecture/runtime_facade/test_layering.py
 sed -n '1,220p' tests/architecture/test_wp14_content_definition_lowering.py
 nl -ba src/runtime/facade/runtime_facade.cpp | sed -n '1310,1365p'
 nl -ba src/core/engine/world_batch_runtime.cpp | sed -n '510,560p'
 nl -ba src/models/core/default_unit_factory.h | sed -n '320,700p'
 nl -ba src/interfaces/python/bindings_runtime.cpp | sed -n '280,440p'
-nl -ba tests/architecture/test_wp14_boundary_guards.py | sed -n '1,260p'
+nl -ba tests/architecture/platform_spawn/test_boundary_guards.py | sed -n '1,260p'
 nl -ba tests/architecture/test_wp14_platform_capability_contracts.py | sed -n '1,260p'
 nl -ba tests/architecture/test_wp14_content_definition_lowering.py | sed -n '1,220p'
 nl -ba tests/architecture/test_wp14_resolved_spawn_plan_evidence.py | sed -n '1,220p'

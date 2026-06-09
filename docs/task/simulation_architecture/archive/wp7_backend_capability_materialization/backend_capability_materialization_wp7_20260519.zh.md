@@ -141,7 +141,7 @@ WP7 只有在以下条件满足后才能验收：
 ```bash
 git diff --check
 rg -n "WP7|backend capability|registry materialization|RuntimeCapabilities|promotion|multi-fidelity|fidelity profile" docs/task/simulation_architecture docs/plan/architecture docs/task/review
-python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_facade_layering.py -q
+python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_layering.py -q
 ```
 
 实现阶段可以收窄或扩展 pytest 目标，但必须保留 capability projection、GPU helper

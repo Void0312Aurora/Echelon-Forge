@@ -88,7 +88,7 @@ Recalculated anchors 的来源是本机 headless LibreOffice reopen/recalculate 
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_res006_beco_recalculation_admission_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res006_beco_recalculation_admission_gate.py
+pytest -q tests/architecture/damage_model/test_benchmark_recalculation_admission_chain.py
 ```
 
 本轮聚焦测试结果：`4 passed in 6.31s`。

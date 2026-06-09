@@ -173,7 +173,7 @@ Worker 规则：
 ```bash
 git diff --check
 cmake --build build-workshop -j4
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_policy_belief_boundaries.py tests/runtime/test_agent_shim.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/runtime/test_agent_shim.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contract_shape.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade tests/runtime/bindings
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP12

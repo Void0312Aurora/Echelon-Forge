@@ -197,7 +197,7 @@ git diff --check
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_runtime_facade_layering.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP13
 ```
 

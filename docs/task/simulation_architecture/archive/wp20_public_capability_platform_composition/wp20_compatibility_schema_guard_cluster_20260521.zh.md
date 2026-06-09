@@ -11,7 +11,7 @@
 
 - [WP20 主计划](public_capability_platform_composition_wp20_20260521.zh.md)
 - [WP14 boundary guards](../wp14_capability_composition/wp14_compatibility_validation_acceptance_cluster_20260521.zh.md)
-- `tests/architecture/test_wp14_boundary_guards.py`
+- `tests/architecture/platform_spawn/test_boundary_guards.py`
 
 ## 目的
 
@@ -46,7 +46,7 @@ WP20 的 validation-first publicization guards。
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp14_boundary_guards.py tests/architecture/test_runtime_facade_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade/test_layering.py
 ```
 
 ## 交付

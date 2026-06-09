@@ -85,6 +85,6 @@
 
 ```bash
 python tools/maintenance/a2_blastfrag_source_payload_pack.py --write-retained-artifacts
-python -m pytest -q tests/architecture/test_a2_blastfrag_source_payload_pack.py
-python -m pytest -q tests/architecture/test_a2_blastfrag_source_payload_pack.py tests/architecture/test_a2_blastfrag_source_rights_output_policy.py tests/architecture/test_a2_blastfrag_mechanism_comparison_hashes.py
+python -m pytest -q tests/architecture/damage_model/test_source_payload_output_policy.py
+python -m pytest -q tests/architecture/damage_model/test_source_payload_output_policy.py tests/architecture/damage_model/test_mechanism_source_evidence_closeout.py
 ```

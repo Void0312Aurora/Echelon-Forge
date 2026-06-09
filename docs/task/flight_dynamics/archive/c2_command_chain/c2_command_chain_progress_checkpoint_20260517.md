@@ -162,7 +162,7 @@ Key files:
 - [RuntimeFacade README](../../../../src/runtime/facade/README.md)
 - [RuntimeFacade header](../../../../src/runtime/facade/runtime_facade.h)
 - [adapter.py](../../../../python/rl/runtime/world_batch/adapter.py)
-- [Runtime facade layering tests](../../../../tests/architecture/test_runtime_facade_layering.py)
+- [Runtime facade layering tests](../../../../tests/architecture/runtime_facade/test_layering.py)
 - [World setup compat tests](../../../../tests/runtime/core/test_world_setup_compat.py)
 
 ### 1.7 Air-to-Air Weapon Bridging Test Enhancement

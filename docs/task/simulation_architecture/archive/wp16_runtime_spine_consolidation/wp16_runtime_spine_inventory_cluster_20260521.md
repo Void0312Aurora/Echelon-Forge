@@ -66,7 +66,7 @@ Out of scope:
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp16_runtime_spine_inventory.py
+python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 ```
 
 If the worker implements an audit tool instead of a test, return the exact

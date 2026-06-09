@@ -80,10 +80,10 @@ As of `2026-05-17`, the main thread has, through two batches of delegation, recl
    - `tests/runtime/core/test_kernel_observation_sanity.py`
    - `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`
    - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
-   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/architecture/runtime_facade/test_layering.py`
    - Current result: `47 passed`
 8. This round's new lane closure regression:
-   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/architecture/runtime_facade/test_layering.py`
    - `tests/world_batch/test_world_batch_vec_env.py`
    - `tests/runtime/link/test_command_link_qos.py`
    - `tests/runtime/mission/test_mission_command_roe_fields.py`
@@ -251,7 +251,7 @@ Low-risk subtasks already achieved this round:
    - Removed independent 3D vector type from `missile_guidance_math.h`
 3. `A2a runtime facade adapter tightening`
    - `world_batch_vec_env.py` / `leader_world_batch_runtime.py` have already been pulled back into a single Python main line for raw world/runtime business penetration
-   - `tests/architecture/test_runtime_facade_layering.py` has added layer guards
+   - `tests/architecture/runtime_facade/test_layering.py` has added layer guards
 4. `A2b ScenarioLoader state-shell extraction`
    - `core.py` + `runtime_state.py` have formed the first phase state shell
    - The synchronization contract for execution episode state (route/mission/reward/runtime cache) has been leveled
@@ -274,7 +274,7 @@ Suggested `Lane A` subtasks for next round delegation:
 
 1. `A2a-1 runtime facade adapter tightening` wrap-up
    - Continue compressing the usage surface of `batch_runtime` / raw runtime as maintenance interfaces
-   - Keep `tests/architecture/test_runtime_facade_layering.py` as the gatekeeping line
+   - Keep `tests/architecture/runtime_facade/test_layering.py` as the gatekeeping line
 2. `A2b-1 ScenarioLoader state-shell extraction` wrap-up
    - Keep `runtime_state.py` as the single synchronization surface for execution episode state
    - Avoid mission/route/post-transition/runtime cache from flowing back into `core.py`

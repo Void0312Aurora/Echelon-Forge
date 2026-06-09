@@ -61,7 +61,7 @@ rejected，以及原因。
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp16_clock_domain_enforcement.py
+python -m pytest -q tests/architecture/runtime_spine/test_clock_domain_enforcement.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py -k "clock or window or barrier or evidence"
 ```
 

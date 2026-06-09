@@ -21,5 +21,5 @@
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_res005_tp21_debris_admission_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res005_tp21_debris_admission_gate.py
+pytest -q tests/architecture/damage_model/test_external_benchmark_output_admission.py
 ```

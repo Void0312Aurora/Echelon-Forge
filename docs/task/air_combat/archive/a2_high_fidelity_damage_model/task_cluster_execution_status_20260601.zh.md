@@ -141,7 +141,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 vali
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\runtime\bindings\test_bindings_engagement_surface.py tests\runtime\engagement
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_wp22_structural_guardrails.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_source_admission_audit.py tests\architecture\test_a2_blastfrag_geometry_warhead_row_provenance_gate.py tests\architecture\test_a2_blastfrag_res003_target_geometry_closeout_gate.py tests\architecture\test_a2_blastfrag_res004_warhead_scope_closeout_gate.py tests\architecture\test_a2_blastfrag_res011012_independent_review_closeout_gate.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_blastfrag_geometry_warhead_row_provenance_gate.py tests/architecture/damage_model/test_scope_closeout_gates.py tests/architecture/damage_model/test_blastfrag_res011012_independent_review_closeout_gate.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_source_admission_audit.py --strict
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_retained_manifest_integrity.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_retained_manifest_integrity.py
@@ -166,7 +166,9 @@ git diff --check
 - RES-005 selected-case candidate packet tests：`6 passed`
 - RES-006 lineage/tolerance packet tests：`3 passed`
 - source-rights signoff request packet tests：`7 passed`
-- external signoff intake contracts tests：`11 passed`
+- signoff intake contract tests：`5 passed`
+- external signoff packet template tests：`4 passed`
+- signoff intake fixture contract tests：`2 passed`
 - signoff admission preflight tests：`4 passed`
 - retained mechanism admission regression tests：`22 passed`
 - retained mechanism admission focused suite：`50 passed`
@@ -179,10 +181,10 @@ git diff --check
 本轮当前工作区复核：
 
 ```bash
-python -m pytest -q tests/architecture/test_a2_retained_manifest_integrity.py tests/architecture/test_a2_candidate_vps_bundle.py tests/architecture/test_a2_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
+python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integrity.py tests/architecture/damage_model/test_candidate_vps_bundle.py tests/architecture/damage_model/test_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
-python -m pytest -q tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py tests/architecture/test_a2_blastfrag_res006_beco_recalculation_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/test_a2_blastfrag_res006_beco_lineage_tolerance_review_packet.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_res006_beco_replacement_tolerance_admission_gate.py
+python -m pytest -q tests/architecture/damage_model/test_blastfrag_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission_chain.py tests/architecture/damage_model/test_external_benchmark_output_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_blastfrag_source_rights_signoff_request_packet.py
 python tools/maintenance/a2_retained_manifest_integrity.py
 python tools/maintenance/a2_source_admission_audit.py --strict
 python tools/maintenance/a2_candidate_vps_bundle.py

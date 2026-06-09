@@ -37,8 +37,8 @@
 第一轮后的主线程验证：
 
 - `git diff --check` 通过。
-- `python -m py_compile tests/architecture/test_runtime_facade_layering.py tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_dto_contracts_batch1.py` 通过。
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py` 通过：`22 passed`。
+- `python -m py_compile tests/architecture/runtime_facade/test_layering.py tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_dto_contracts_batch1.py` 通过。
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` 通过：`22 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py` 通过：`12 passed`。
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"` 通过：`2 passed, 4 deselected`。
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary` 通过。

@@ -22,7 +22,7 @@ Inputs:
 - Current `src/runtime/facade/runtime_facade.cpp`
 - Current `tests/runtime/facade/test_runtime_facade.py`
 - Current `tests/test_gpu_runtime_bindings.py`
-- Current `tests/architecture/test_runtime_facade_layering.py`
+- Current `tests/architecture/runtime_facade/test_layering.py`
 
 ## 1. Projection Thesis
 
@@ -166,7 +166,7 @@ set already contains narrow guards:
 |-----------------|----------------|
 | `tests/runtime/facade/test_runtime_facade.py` | Facade capability expectations keep current false support fields false. |
 | `tests/test_gpu_runtime_bindings.py` | GPU helper/probe bindings can exist while support claims remain false. |
-| `tests/architecture/test_runtime_facade_layering.py` | Facade/core sources must not include or call GPU helper/probe implementation markers. |
+| `tests/architecture/runtime_facade/test_layering.py` | Facade/core sources must not include or call GPU helper/probe implementation markers. |
 
 If a test is added later, keep it narrow. It should check one of the contracts
 above and should skip or use docs-only expectations when the future

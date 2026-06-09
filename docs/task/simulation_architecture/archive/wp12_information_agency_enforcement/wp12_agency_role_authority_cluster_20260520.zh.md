@@ -49,7 +49,7 @@ decision-model reference 与 action interface。
 - `src/interfaces/python/bindings_runtime.cpp`
 - `tests/runtime/mission/test_policy_contract_shape.py`
 - `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`
-- `tests/architecture/test_policy_belief_boundaries.py`
+- `tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py`
 
 优先方式：
 

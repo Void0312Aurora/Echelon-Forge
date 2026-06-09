@@ -85,7 +85,7 @@ maintained capability evidence。
 ```bash
 git diff --check
 python -m pytest -q tests/test_gpu_runtime_bindings.py
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 ```
 
 ## 交付

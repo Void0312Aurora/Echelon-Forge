@@ -86,5 +86,5 @@ Fail-closed requirement：reviewer 必须选择具体 TP-21 debris comparison ca
 
 ```bash
 python tools/maintenance/a2_blastfrag_mechanism_comparison_hashes.py --write-retained-artifacts
-python -m pytest -q tests/architecture/test_a2_blastfrag_mechanism_comparison_hashes.py
+python -m pytest -q tests/architecture/damage_model/test_mechanism_source_evidence_closeout.py
 ```

@@ -14,7 +14,7 @@ Inputs:
 - [Naval current progress](../naval_current_progress_20260524.md)
 - [N4 threat / ROE bridge](../n4_threat_roe_bridge/README.md)
 - [N5 RL action surface split](../n5_rl_action_surface_split/README.md)
-- [Common / air / naval split plan](../../common_air_naval/common_air_naval_modular_split_plan_20260515.md)
+- [Common / air / naval split plan (archived)](../../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.md)
 - [Command boundary README](../../../../src/components/command/README.md)
 - [Naval standards](../../../standards/naval/README.md)
 - [Subproject creation standard](../../../agent/rules/subproject_creation_standard.md)

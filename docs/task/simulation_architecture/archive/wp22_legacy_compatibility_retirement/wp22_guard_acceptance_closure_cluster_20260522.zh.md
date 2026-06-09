@@ -61,7 +61,7 @@ public escape hatches 与 default-factory typed control-state blocker 仍然开�
 
 最新本地预检：
 
-- `python3 -m pytest -q tests/architecture/test_wp22_default_factory_legacy_seed_guard.py tests/architecture/test_wp22_structural_guardrails.py tests/architecture/test_runtime_facade_layering.py -k "wp22 or bindings or world_batch_runtime or gpu_visual_binding or visual_binding_raw_world_access or escape_hatch or batch_runtime"` -> `32 passed, 16 deselected`
+- `python3 -m pytest -q tests/architecture/test_wp22_default_factory_legacy_seed_guard.py tests/architecture/test_wp22_structural_guardrails.py tests/architecture/runtime_facade/test_layering.py -k "wp22 or bindings or world_batch_runtime or gpu_visual_binding or visual_binding_raw_world_access or escape_hatch or batch_runtime"` -> `32 passed, 16 deselected`
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP22 --summary` -> `0` 个 canonical acceptance review；必需 zh companion 存在
 - `git diff --check` -> 通过
 

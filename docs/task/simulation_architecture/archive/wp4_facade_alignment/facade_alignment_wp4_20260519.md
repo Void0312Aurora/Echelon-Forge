@@ -142,7 +142,7 @@ Parallelization rule:
 | Information-state boundary | `ObservationBatchRequest` / `ObservationBatchPacket`, `AgentObservation` paths, and observation-related Python adapters. | Keep `World Truth`, `ObservationPacket`, and `DecisionBelief` separate. |
 | Python exposure | `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/bindings/test_bindings_engagement_surface.py`. | Keep `ef_py` aligned with the maintained C++ surface. |
 | Policy/orchestration adapters | `python/rl/runtime/world_batch_vec_env.py`, `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/multi_agent_runtime.py`. | Make facade-shaped requests explicit and keep raw runtime use compatibility-only. |
-| Compatibility boundaries | `tests/architecture/test_runtime_facade_layering.py`, `tests/runtime/facade/test_runtime_facade.py`. | Prevent maintained paths from relying on raw runtime handles. |
+| Compatibility boundaries | `tests/architecture/runtime_facade/test_layering.py`, `tests/runtime/facade/test_runtime_facade.py`. | Prevent maintained paths from relying on raw runtime handles. |
 
 ## 7. Write-Scope Rules For Subagents
 

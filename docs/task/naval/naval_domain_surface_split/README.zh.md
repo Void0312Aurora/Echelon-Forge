@@ -13,7 +13,7 @@
 - [海军当前进展追踪](../naval_current_progress_20260524.zh.md)
 - [N4 威胁 / ROE bridge](../n4_threat_roe_bridge/README.zh.md)
 - [N5 RL 动作面拆分](../n5_rl_action_surface_split/README.zh.md)
-- [通用 / 空中 / 海军拆分计划](../../common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
+- [通用 / 空中 / 海军拆分计划（已归档）](../../archive/common_air_naval/common_air_naval_modular_split_plan_20260515.zh.md)
 - [Command 边界 README](../../../../src/components/command/README.zh.md)
 - [海军标准](../../../standards/naval/README.zh.md)
 - [子项目创建标准](../../../agent/rules/subproject_creation_standard.zh.md)

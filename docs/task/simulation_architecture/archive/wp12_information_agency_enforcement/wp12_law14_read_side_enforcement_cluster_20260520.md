@@ -51,7 +51,7 @@ Inspect before editing:
 
 - `python/rl/runtime/agent_shim.py`
 - `tests/runtime/test_agent_shim.py`
-- `tests/architecture/test_policy_belief_boundaries.py`
+- `tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py`
 - `src/runtime/contracts/policy_contracts.h`
 - `src/runtime/facade/runtime_facade_types.h`
 - `src/interfaces/python/bindings_runtime.cpp`

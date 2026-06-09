@@ -81,10 +81,10 @@
    - `tests/runtime/core/test_kernel_observation_sanity.py`
    - `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`
    - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
-   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/architecture/runtime_facade/test_layering.py`
    - 当前结果：`47 passed`
 7. 本轮新增 lane 收口回归：
-   - `tests/architecture/test_runtime_facade_layering.py`
+   - `tests/architecture/runtime_facade/test_layering.py`
    - `tests/world_batch/test_world_batch_vec_env.py`
    - `tests/runtime/link/test_command_link_qos.py`
    - `tests/runtime/mission/test_mission_command_roe_fields.py`
@@ -255,7 +255,7 @@
 3. `A2a runtime facade adapter tightening`
    - `world_batch_vec_env.py` / `leader_world_batch_runtime.py`
      已先收回一轮 Python 主线 raw world/runtime 业务穿透
-   - `tests/architecture/test_runtime_facade_layering.py` 已补层级守卫
+   - `tests/architecture/runtime_facade/test_layering.py` 已补层级守卫
 4. `A2b ScenarioLoader state-shell extraction`
    - `core.py` + `runtime_state.py` 已形成第一阶段状态壳
    - execution episode state 的 route/mission/reward/runtime cache 同步合同已补平
@@ -280,7 +280,7 @@
 
 1. `A2a-1 runtime facade adapter tightening` 收尾
    - 继续压缩 `batch_runtime` / raw runtime 作为维护接口的使用面
-   - 保持 `tests/architecture/test_runtime_facade_layering.py` 为守门线
+   - 保持 `tests/architecture/runtime_facade/test_layering.py` 为守门线
 2. `A2b-1 ScenarioLoader state-shell extraction` 收尾
    - 保持 `runtime_state.py` 作为 execution episode state 的单一同步面
    - 避免 mission/route/post-transition/runtime cache 再回流到 `core.py`

@@ -48,7 +48,7 @@ Inspect before editing:
 - `src/runtime/facade/runtime_facade_types.h`
 - `src/runtime/contracts/backend_profile_contracts.h`
 - `src/runtime/contracts/fidelity_profile_contracts.h`
-- `tests/architecture/test_runtime_facade_layering.py`
+- `tests/architecture/runtime_facade/test_layering.py`
 
 Preferred approach:
 
