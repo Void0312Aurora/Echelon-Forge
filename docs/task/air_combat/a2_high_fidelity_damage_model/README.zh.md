@@ -18,8 +18,11 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
   已归档的 MLF-1 杀伤链合同基础，只作为后续阶段的字段和边界证据。
 - [missile_lethality_geometry_fuze/README.zh.md](missile_lethality_geometry_fuze/README.zh.md)：
   已归档的 MLF-2 导弹接近几何与引信评估证据包；它证明最近点、引信评估和起爆 handoff 可观察，但不实现破片、结构解体、Pk 或具体弹种击毁结论。
+- [missile_lethality_warhead_effects/README.zh.md](missile_lethality_warhead_effects/README.zh.md)：
+  MLF-3 规划子项目，聚焦起爆后的通用战斗部作用、破片/爆风载荷、空间覆盖和部件受载；它不实现连续杆、结构解体、残骸、Pk 或具体弹种击毁结论。
 
 后续战斗部作用、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，不能继续写入已归档的 MLF-2 包。
+MLF-3 是新的 follow-on，不重开已封存 A2 包。
 
 这些 follow-on 不重开已封存 A2 包，也不创建 A9。
 

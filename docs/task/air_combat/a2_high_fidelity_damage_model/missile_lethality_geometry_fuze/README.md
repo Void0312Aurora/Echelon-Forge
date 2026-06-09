@@ -19,6 +19,8 @@ breakup, debris/wreck objects, Pk, or AIM-120C/MQ-9 calibration inside this
 archived MLF-2 subproject. The next phase must be created as a separate
 `docs/agent` subproject.
 
+Current MLF-3 subproject: [../missile_lethality_warhead_effects/README.md](../missile_lethality_warhead_effects/README.md).
+
 Reusable conclusion: after a missile reaches the target area, the system can
 now explain the nearest point, whether the fuze armed, whether it triggered,
 why it did not trigger or failed, and whether detonation state was handed to

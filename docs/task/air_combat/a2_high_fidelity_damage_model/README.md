@@ -25,10 +25,16 @@ Current A2 follow-ons:
   evaluation; it proves that nearest point, fuze evaluation, and detonation
   handoff are observable, but it does not implement fragmentation, structural
   breakup, Pk, or weapon-specific kill conclusions.
+- [missile_lethality_warhead_effects/README.md](missile_lethality_warhead_effects/README.md):
+  MLF-3 planning subproject for post-detonation generic warhead effects,
+  fragment/blast loads, spatial coverage, and component load; it does not
+  implement continuous rod, structural breakup, debris/wreck, Pk, or
+  weapon-specific kill conclusions.
 
 Follow-on warhead effects, breakup/debris, Pk, or weapon-specific calibration
 need a separate `docs/agent` subproject and must not continue inside the
 archived MLF-2 package.
+MLF-3 is a new follow-on; it does not reopen the sealed A2 package.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 
