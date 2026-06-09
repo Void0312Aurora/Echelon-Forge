@@ -2,8 +2,8 @@
 #include "core/interfaces/environment_model.h"
 #include "components/basic/common.h"
 #include "components/systems/ew.h"
-#include "components/naval/ship_platform.h"
 #include "components/combat/weapon.h"
+#include "models/naval/naval_sensor_maritime_adapter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -126,83 +126,6 @@ double horizon_distance_m(double h1_m, double h2_m) {
     const double h1 = std::max(0.0, h1_m);
     const double h2 = std::max(0.0, h2_m);
     return 3570.0 * (std::sqrt(h1) + std::sqrt(h2));
-}
-
-IEnvironmentModel::MaritimeState maritime_state_for(
-    const EnvironmentModelRef* env_ref,
-    const flecs::entity& entity
-) {
-    if (env_ref && env_ref->model) {
-        const auto state = env_ref->model->get_maritime_state();
-        if (state.configured) {
-            return state;
-        }
-    }
-
-    IEnvironmentModel::MaritimeState state{};
-    const ShipPlatform* ship = entity.get<ShipPlatform>();
-    if (!ship) {
-        return state;
-    }
-
-    state.configured = true;
-    state.sea_state = std::max(0.0, ship->sea_state);
-    state.wave_heading_deg = ship->wave_heading_deg;
-    state.wave_period_s = std::max(2.0, ship->wave_period_s);
-    return state;
-}
-
-double maritime_sea_clutter_loss(
-    const Sensor& sensor,
-    const EnvironmentModelRef* env_ref,
-    const flecs::entity& owner,
-    const flecs::entity& target,
-    double dist_m,
-    double dz_m
-) {
-    if (!sensor.sea_clutter_enabled || sensor.sea_clutter_sensitivity <= 0.0) {
-        return 1.0;
-    }
-    const auto maritime_state = maritime_state_for(env_ref, owner);
-    const double sea_state = maritime_state.sea_state;
-    if (sea_state <= 0.0) {
-        return 1.0;
-    }
-
-    const KeyEntity* target_key = target.get<KeyEntity>();
-    const bool target_is_ship =
-        target_key && target_key->type == UnitType::Ship;
-    if (!target_is_ship) {
-        return 1.0;
-    }
-
-    const double antenna_height = std::max(1.0, sensor.antenna_height_m);
-    const double grazing_rad = std::atan2(std::abs(dz_m) + 2.0, std::max(1.0, dist_m));
-    const double grazing_deg = grazing_rad * 180.0 / M_PI;
-    const double low_grazing_factor = std::clamp((5.0 - grazing_deg) / 5.0, 0.0, 1.0);
-    const double sea_state_loss =
-        sea_state * std::max(0.0, sensor.sea_state_loss_per_level) *
-        std::clamp(sensor.sea_clutter_sensitivity, 0.0, 1.0);
-    const double height_relief = std::clamp(antenna_height / 40.0, 0.0, 0.5);
-    const double net_loss = std::max(0.0, sea_state_loss * (0.55 + 0.45 * low_grazing_factor) - height_relief);
-    return std::clamp(1.0 - net_loss, 0.05, 1.0);
-}
-
-double maritime_ducting_bonus_m(
-    const Sensor& sensor,
-    const EnvironmentModelRef* env_ref,
-    const flecs::entity& owner
-) {
-    if (!sensor.enable_ducting) {
-        return 0.0;
-    }
-    const auto maritime_state = maritime_state_for(env_ref, owner);
-    const double sea_state = maritime_state.sea_state;
-    const double calm_bias = std::clamp((3.0 - sea_state) / 3.0, 0.0, 1.0);
-    const double gain_factor = std::max(1.0, sensor.ducting_gain_factor);
-    const double bonus_cap = std::max(0.0, sensor.ducting_max_bonus_m);
-    const double requested_extension_m = sensor.max_range * (gain_factor - 1.0);
-    return std::min(bonus_cap, requested_extension_m * calm_bias);
 }
 
 bool entity_has_radar_emitter(const flecs::entity& entity, Sensor* out_emitter) {
@@ -343,7 +266,7 @@ public:
             double maritime_bonus_m = 0.0;
             if (sensor.type == static_cast<int>(SensorType::Radar) &&
                 sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
-                maritime_bonus_m = maritime_ducting_bonus_m(sensor, env_ref, owner);
+                maritime_bonus_m = naval::sensor::maritime_radar_ducting_bonus_m(sensor, env_ref, owner);
             }
             double effective_max_range = sensor.max_range + maritime_bonus_m;
             double max_sq = effective_max_range * effective_max_range;
@@ -355,12 +278,11 @@ public:
                 sensor.enforce_radar_horizon &&
                 sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
                 const double owner_height = std::max(1.0, sensor.antenna_height_m);
-                double target_height = std::max(0.0, sensor.target_height_bias_m);
-                if (const ShipPlatform* target_ship = target_e.get<ShipPlatform>()) {
-                    target_height = std::max(target_height, target_ship->height_above_waterline_m * 0.25);
-                } else if (target_t.z > 0.0) {
-                    target_height = std::max(target_height, target_t.z);
-                }
+                const double target_height = naval::sensor::maritime_radar_target_height_m(
+                    sensor,
+                    target_e,
+                    target_t
+                );
                 // Treat the configured max_range for maritime radars as the baseline
                 // public-runtime horizon proxy. This avoids double-penalizing modules
                 // such as SPS-67 whose public runtime range is already calibrated from
@@ -455,7 +377,14 @@ public:
                 double attenuation_factor = aspect_factor * weath_factor * sun_factor;
                 if (sensor.type == static_cast<int>(SensorType::Radar) &&
                     sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
-                    attenuation_factor *= maritime_sea_clutter_loss(sensor, env_ref, owner, target_e, dist, dz);
+                    attenuation_factor *= naval::sensor::maritime_radar_sea_clutter_loss(
+                        sensor,
+                        env_ref,
+                        owner,
+                        target_e,
+                        dist,
+                        dz
+                    );
                 }
                 double rcs = rcs_for_detection(target_e, owner_transform, target_t);
                 if (sensor.type == static_cast<int>(SensorType::ESM)) {

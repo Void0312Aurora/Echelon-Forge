@@ -31,41 +31,7 @@ namespace {
 #include "models/weapons/detail/default_effects_spatial_projection_detail.inc"
 #include "models/weapons/detail/default_effects_result_detail.inc"
 #include "models/weapons/detail/default_effects_legacy_detail.inc"
-
-bool is_structured_damage_air_target(flecs::entity target_entity) {
-    const KeyEntity* key = target_entity.get<KeyEntity>();
-    return key &&
-        (key->type == UnitType::Aircraft || key->type == UnitType::C2Node) &&
-        target_entity.get<HitboxConfig>() != nullptr &&
-        target_entity.get<SystemHealth>() != nullptr &&
-        target_entity.get<PlatformDamageState>() != nullptr;
-}
-
-void clamp_platform_damage_state(PlatformDamageState* state) {
-    if (!state) return;
-    state->mission_capability = std::clamp(state->mission_capability, 0.0, 1.0);
-    state->mobility_capability = std::clamp(state->mobility_capability, 0.0, 1.0);
-    state->sensor_capability = std::clamp(state->sensor_capability, 0.0, 1.0);
-    state->survivability_margin = std::clamp(state->survivability_margin, 0.0, 1.0);
-
-    state->mission_kill = state->mission_capability <= 0.25;
-    state->mobility_kill = state->mobility_capability <= 0.25;
-    state->sensor_kill = state->sensor_capability <= 0.25;
-
-    if (state->survivability_margin <= 0.0) {
-        state->loss_state = PlatformLossState::Lost;
-    } else if (state->mobility_kill) {
-        state->loss_state = PlatformLossState::MobilityKill;
-    } else if (state->sensor_kill) {
-        state->loss_state = PlatformLossState::SensorKill;
-    } else if (state->mission_kill) {
-        state->loss_state = PlatformLossState::MissionKill;
-    } else {
-        state->loss_state = PlatformLossState::CombatCapable;
-    }
-}
-
-#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"
+#include "models/weapons/detail/default_effects_domain_routing_detail.inc"
 
 class DefaultEffectsModel : public IEffectsModel {
 public:
@@ -81,7 +47,9 @@ public:
             score = attacker.get_mut<Score>();
         }
         
-        const bool structured_air_target = is_structured_damage_air_target(target_entity);
+        const DefaultEffectsDomainTargetSelection domain_target =
+            route_default_effects_target_domain(target_entity);
+        const bool structured_air_target = domain_target.structured_damage_target;
 
         Health* hp = target_entity.get_mut<Health>();
         if (hp && !structured_air_target &&
@@ -93,10 +61,10 @@ public:
         const HitboxConfig* hitboxes = target_entity.get<HitboxConfig>();
         SystemHealth* sys_health = target_entity.get_mut<SystemHealth>();
         PlatformDamageState* platform_damage = target_entity.get_mut<PlatformDamageState>();
-        AircraftDamageState* aircraft_damage = target_entity.get_mut<AircraftDamageState>();
+        AircraftDamageState* aircraft_damage = domain_target.aircraft_damage;
         ComponentDamageState* component_damage = target_entity.get_mut<ComponentDamageState>();
         const AircraftVulnerabilityProfile* aircraft_vulnerability =
-            target_entity.get<AircraftVulnerabilityProfile>();
+            domain_target.aircraft_vulnerability;
         const Transform* t_tgt = target_entity.get<Transform>();
         const Transform* t_msl = missile_entity.get<Transform>();
 
@@ -175,18 +143,16 @@ public:
                 sys_health,
                 resolve_system_severity,
                 apply_system_effect);
-            if (resolve_default_effects_air_platform_consequences(
+            if (resolve_default_effects_domain_platform_consequences(
+                    domain_target,
                     scratch,
                     target_entity,
                     missile,
-                    structured_air_target,
-                    aircraft_vulnerability,
                     local_imp,
                     closure_mps,
                     severity,
                     warhead_effects,
                     platform_damage,
-                    aircraft_damage,
                     component_damage,
                     hp)) {
                 populate_result();
