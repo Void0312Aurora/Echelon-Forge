@@ -53,9 +53,10 @@ For lifecycle cleanup across this tree, see the
   `execution` / HMoE `1v1` path, staged `1v1` curriculum, and air-combat damage
   runtime. Use linked archive snapshots only for traceability; do not treat old
   air-combat snapshots as the whole-project center.
-- [common_air_naval/](common_air_naval/README.md): `active` cooperative/common
-  integration mainline for the common/air/naval split. The local README
-  separates still-active carry-over work from superseded pre-implementation
+- [common_air_naval/](archive/common_air_naval/README.md): `archived` —
+  WP0-WP8 complete (common/air/naval DTO split, profile dispatch seam,
+  MissionCommand compatibility split). Residual naval runtime expansion and
+  air-first helper migration continue via standalone task sheets.
   analysis in archive.
 - [simulation_architecture/](simulation_architecture/README.md): `active`
   simulation-system architecture and runtime-lifecycle backbone. Start here
@@ -68,7 +69,9 @@ For lifecycle cleanup across this tree, see the
   record, while current surface-split work continues in the domain-surface
   package. Limited engagement remains a separate N5 package, not an excuse to
   reopen N4.
-- [performance_runtime/](performance_runtime/README.md): `planning`
+- [performance_runtime/](archive/performance_runtime/README.md): `archived` —
+  optimization layering and benchmark-oriented analysis frozen; legacy planning
+  chain treated as reference material.
   runtime-performance line. Use it for optimization ordering, benchmark
   boundaries, and hot-path analysis; archived planning chains are reference
   material, not active execution entrypoints.
@@ -109,11 +112,15 @@ For lifecycle cleanup across this tree, see the
   analysis navigation for flight, sensor/situation, weapon/guidance, naval, and
   C2 closure records. Use it for historical context and closure markers, not as
   the active root of project planning.
-- [code_redundancy/](code_redundancy/README.md): `archived` code-redundancy
+- [code_redundancy/](archive/code_redundancy/README.md): `archived` code-redundancy
   workline.
-- [diagnostics_eval/](diagnostics_eval/README.md): `archived` diagnostics/eval
+- [diagnostics_eval/](archive/diagnostics_eval/README.md): `archived` diagnostics/eval
   convergence records.
-- [python_rl/](python_rl/README.md): `archived` `python/rl` convergence records.
+- [python_rl/](archive/python_rl/README.md): `archived` `python/rl` convergence records.
+- [game/](archive/game/README.md): `archived` game frontend integration exploration.
+
+For the full archived subproject catalog with work descriptions, see the
+[Archive Registry](archive_registry.md).
 
 ## Working Rules
 
@@ -121,7 +128,7 @@ For lifecycle cleanup across this tree, see the
 2. Treat deeper dated docs as evidence, closure records, or supporting plans
    unless a local README explicitly promotes them.
 3. When a task crosses domains, route the cross-cutting decision through
-   `common_air_naval/`, `simulation_architecture/`, `review/`, or `issues/`
+   `simulation_architecture/`, `review/`, or `issues/`
    instead of overloading an old air-first entry.
 4. When an area's lifecycle changes, update that local README first, then adjust
    this root navigation.

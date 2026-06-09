@@ -41,9 +41,9 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
   当前成熟度最高的领域执行切片。这里导航维护中的 `execution` / HMoE `1v1`
   路径、分阶段 `1v1` curriculum，以及空战 damage runtime。链接到的 archive
   快照只用于追溯；不要把旧空战快照当成全项目中心。
-- [cooperative/common 集成](common_air_naval/README.zh.md)：`active` 的
-  cooperative/common 集成主线，负责 `common / air / naval` 拆分后的跨域收敛。
-  局部 README 会区分仍活跃的承接工作和 archive 中已被替代的前置分析。
+- [cooperative/common 集成](archive/common_air_naval/README.zh.md)：`archived` —
+  WP0-WP8 已完成（common/air/naval DTO 拆分、profile dispatch seam、MissionCommand 兼容拆分）。
+  后续 naval runtime 扩展和 air-first helper 迁移由独立任务单继续推进。
 - [仿真架构](simulation_architecture/README.zh.md)：`active` 的仿真系统架构与
   runtime lifecycle 主干。开始武器、海军、传感器/航迹、facade、backend 或跨域
   runtime 的大范围工作前，应先从这里收敛任务。已闭合的临时架构 lane 现在进入其
@@ -53,7 +53,7 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
   action/observation repair 保留为已接受的 N4 证据记录，当前 surface-split 工作
   继续进入 domain-surface package。limited engagement 仍属于单独 N5 package，
   不应借此重新打开 N4。
-- [runtime 性能](performance_runtime/README.zh.md)：`planning` 的 runtime 性能线。
+- [runtime 性能](archive/performance_runtime/README.zh.md)：`archived` — 优化分层与 benchmark 导向分析已冻结，旧规划链路视作参考材料。
   用于优化排序、benchmark 边界和 hot-path 分析；已归档的旧规划链是参考材料，
   不是 active execution 入口。
 
@@ -88,16 +88,19 @@ naval N4 是已闭合的 pre-fire 线；ground 是早期 tasking/runtime bootstr
 - [flight_dynamics](flight_dynamics/README.zh.md)：`archived` / reference 的真实性
   分析导航，用于 flight、sensor/situation、weapon/guidance、naval 与 C2 closure
   记录。它适合查历史上下文和 closure marker，不是当前项目规划根入口。
-- [code_redundancy](code_redundancy/README.zh.md)：`archived` 的代码冗余工作线。
-- [diagnostics_eval](diagnostics_eval/README.zh.md)：`archived` 的诊断/评估收敛记录。
-- [python_rl](python_rl/README.zh.md)：`archived` 的 `python/rl` 收敛记录。
+- [code_redundancy](archive/code_redundancy/README.zh.md)：`archived` 的代码冗余工作线。
+- [diagnostics_eval](archive/diagnostics_eval/README.zh.md)：`archived` 的诊断/评估收敛记录。
+- [python_rl](archive/python_rl/README.zh.md)：`archived` 的 `python/rl` 收敛记录。
+- [game](archive/game/README.zh.md)：`archived` 的游戏前端集成探索。
+
+已归档子项目的完整清单与工作描述见 [归档注册表](archive_registry.zh.md)。
 
 ## 工作规则
 
 1. 先从与当前工作匹配的 task-area 局部 `README` 进入。
 2. 除非局部 README 明确提升，否则更深层 dated 文档应视为证据、closure 记录或
    支撑计划。
-3. 跨领域任务请通过 `common_air_naval/`、`simulation_architecture/`、`review/`
+3. 跨领域任务请通过 `simulation_architecture/`、`review/`
    或 `issues/` 收敛，不要继续把旧 air-first 入口扩大成通用入口。
 4. 当某个区域生命周期发生变化，先更新局部 README，再调整这个根导航。
 5. 已完成子项目如果不破坏 active gate，应移入对应区域的 `archive/`；否则应在父级
