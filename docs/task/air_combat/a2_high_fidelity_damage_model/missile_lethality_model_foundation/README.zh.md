@@ -13,6 +13,8 @@
 不要在这个已归档的 MLF-1 子项目内继续展开 MLF-2。MLF-2 已按
 `docs/agent` 子项目标准单独创建，后续工作必须从新的 MLF-2 目录进入。
 
-当前 MLF-2 子项目：[../missile_lethality_geometry_fuze/README.zh.md](../missile_lethality_geometry_fuze/README.zh.md)。
+已归档 MLF-2 子项目：[../missile_lethality_geometry_fuze/README.zh.md](../missile_lethality_geometry_fuze/README.zh.md)。
 
 MLF-2 从受控接近几何和引信评估开始：用距离、方位、闭合速度、高度差和目标姿态解释触发、未触发、延迟和失败，再把起爆状态交给后续战斗部作用模型或具体弹种讨论。
+
+MLF-2 已完成归档。后续战斗部作用、结构解体、残骸、Pk 或具体弹种校准不得继续写入 MLF-1 或 MLF-2 已归档目录。

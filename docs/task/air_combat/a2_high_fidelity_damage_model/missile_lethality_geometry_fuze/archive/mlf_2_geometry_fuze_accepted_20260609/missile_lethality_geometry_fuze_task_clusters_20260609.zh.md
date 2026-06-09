@@ -1,16 +1,16 @@
 # A2 MLF-2 导弹接近几何与引信评估任务簇
 
-状态：`2026-06-09` finite task-cluster plan for [README.zh.md](README.zh.md)。MLF-2B、MLF-2C、MLF-2D、MLF-2E 和 MLF-2F 已验收，下一步进入 MLF-2G 验收收尾。
+状态：`2026-06-09` archived finite task-cluster plan for [README.zh.md](README.zh.md)。MLF-2B、MLF-2C、MLF-2D、MLF-2E、MLF-2F 和 MLF-2G 已验收。
 
 英文辅文：[missile_lethality_geometry_fuze_task_clusters_20260609.md](missile_lethality_geometry_fuze_task_clusters_20260609.md)
 
 父子项目链接：
 
-- A2 指针：[../README.zh.md](../README.zh.md)
+- A2 指针：[../../../README.zh.md](../../../README.zh.md)
 - 当前 README：[README.zh.md](README.zh.md)
 - 当前状态：[missile_lethality_geometry_fuze_current_status_20260609.zh.md](missile_lethality_geometry_fuze_current_status_20260609.zh.md)
 - 派发队列：[missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md)
-- MLF-1 证据包：[../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md)
+- MLF-1 证据包：[../../../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md](../../../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.zh.md)
 
 ## 边界决定
 
@@ -28,7 +28,7 @@ MLF-2 的输出不是“击毁”。输出是：最近接近几何、引信是�
 | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / future fuze worker | n/a | 写入解保、接触、近炸、延迟、未触发和失败原因 | `src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.h`；`src/core/engine/simulation_kernel_engagement_event_store.cpp`；`src/systems/combat/damage_system.h`；相关 geometry/fuze tests | 破片/连续杆、结构解体、直接 kill、真实 fuze authority | `ef_py` build；4 个导弹几何/引信聚焦测试；7 个 engagement event capture 回归；diff check | 接触和近炸判定分开；没有触发也有 failure/no-trigger reason | after 2C field ids; can parallel with 2E after APIs freeze | 2 | pass |
 | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / main thread | n/a | 让 process probe 按一枚弹输出 geometry/fuze 阶段行和 summary | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py`；本子项目证据记录 | reward 语义、runtime 物理判定、旧字段长期别名 | `tests/diagnostics/test_air_combat_process_probe.py -q` | 不依赖 `last_effect_*` 判断触发原因；无起爆也能报告原因 | after 2C/2D API names freeze | 2 | pass |
 | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / main thread | n/a | 将起爆状态交给现有效果模型，未触发路径明确不产生物理效果 | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py`；本子项目证据记录 | 战斗部机制、目标破碎、训练胜负、实体删除 | 3 个引信 gate 聚焦测试 | 起爆才进入后续效果；未触发、失败、未解保不沉默消失 | after 2C/2D/2E | 2 | pass |
-| `MLF-2G Acceptance And Archive Prep` | main thread | n/a | 汇总证据，更新状态、父级导航和残余地图 | 本子项目 README/status/task cluster/dispatch queue/archive index；A2 README | 过度声明真实 AIM-120C/MQ-9、Pk 或结构解体 | docs diff check + referenced focused tests | accepted/held 状态与证据一致，并明确 MLF-3+ 残余 | last, serial | 1 | planned / ready |
+| `MLF-2G Acceptance And Archive Prep` | main thread | n/a | 汇总证据，更新状态、父级导航和残余地图 | 本子项目 README/status/task cluster/dispatch queue/archive index；A2 README | 过度声明真实 AIM-120C/MQ-9、Pk 或结构解体 | docs diff check + referenced focused tests | accepted/held 状态与证据一致，并明确 MLF-3+ 残余 | last, serial | 1 | pass |
 
 ## 派发规则
 

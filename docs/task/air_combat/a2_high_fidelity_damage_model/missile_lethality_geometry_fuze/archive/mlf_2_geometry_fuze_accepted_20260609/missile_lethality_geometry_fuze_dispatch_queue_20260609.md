@@ -1,6 +1,6 @@
 # A2 MLF-2 Dispatch Queue
 
-Status: `2026-06-09` active dispatch queue; `MLF-2B`, `MLF-2C`, `MLF-2D`, `MLF-2E`, and `MLF-2F` are accepted. The next packet should be `MLF-2G-C1` acceptance closeout.
+Status: `2026-06-09` archived dispatch queue; `MLF-2B`, `MLF-2C`, `MLF-2D`, `MLF-2E`, `MLF-2F`, and `MLF-2G` are accepted. No packet is currently running.
 
 Chinese main text: [missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md)
 
@@ -10,7 +10,7 @@ Parent task clusters: [missile_lethality_geometry_fuze_task_clusters_20260609.md
 
 This queue is only for MLF-2 approach geometry and fuze evaluation. Dispatches must not create a new conversation thread and must not enter fragmentation, continuous rod, structural breakup, debris/wreck, Pk, or AIM-120C/MQ-9 case calibration.
 
-## Pending Packets
+## Dispatched Packets
 
 | Packet | Cluster | Assignee | Write set | Required output | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -24,13 +24,13 @@ This queue is only for MLF-2 approach geometry and fuze evaluation. Dispatches m
 | `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/diagnostics/test_air_combat_process_probe.py` | Export geometry/fuze stage rows per munition without relying on old `last_effect_*`. | accepted |
 | `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | Audit the minimum gate where only detonation enters the effects model and no-trigger paths have event, reason, and no effects. | accepted |
 | `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | Pin runtime handoff gate behavior: triggered path has one effects/damage record, contact near-miss has no effects/damage record, reliability failure remains a zero-damage transitional record. | accepted |
-| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | Summarize evidence and update accepted/held state plus residual map. | ready |
+| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | Summarize evidence and update accepted/held state plus residual map. | accepted |
 
 ## Current Dispatch Recommendation
 
-No packet is currently running. `MLF-2F-W1` is accepted; the next step should be `MLF-2G-C1` acceptance closeout.
+No packet is currently running. `MLF-2G-C1` is accepted; this queue is closed with the MLF-2 archive.
 
-`MLF-2G-C1` must not add runtime features, enter warhead effects, or expand MLF-2 into kill, breakup, or Pk conclusions.
+Follow-on work must not add runtime features, enter warhead effects, or expand MLF-2 into kill, breakup, or Pk conclusions in this queue.
 
 ## Returned Dispatch Records
 
@@ -130,6 +130,15 @@ Main thread hardened tests and accepted the slice.
 - Main-thread revalidation: `py_compile` passed; 3 focused fuze gate pytest cases passed.
 - Limits: runtime physics, effects model, and reward were not changed; zero-damage transitional records remain until downstream consumers fully migrate.
 
+### MLF-2G-C1
+
+Main thread executed and accepted this packet.
+
+- Touched files: this subproject README, current status, task clusters, dispatch queue, archive index, and A2/MLF-1 navigation READMEs.
+- Implementation: moved the complete MLF-2 evidence package under `archive/mlf_2_geometry_fuze_accepted_20260609/`; converted the current MLF-2 directory to a lightweight pointer; synchronized accepted/held status and the MLF-3+ residual map.
+- Acceptance conclusion: MLF-2 can explain missile nearest point, fuze arming/trigger/failure reason, and detonation handoff; it still does not implement warhead effects, fragmentation, debris/wreck, Pk, or weapon-specific lethality.
+- Limits: timed fuze, guidance-expiry recorder access, zero-damage transitional record removal, and finer target attitude remain future-phase work.
+
 ## Worker Packet Contract
 
 ```md
@@ -145,5 +154,5 @@ integration notes:
 
 - The main thread owns returned-packet acceptance and queue updates.
 - Status lines, task-cluster status, and parent README updates must be serial after acceptance.
-- No worker packet is currently running.
+- No worker packet is currently running, and the queue is closed with the MLF-2 archive.
 - If a worker finds that current runtime cannot reproduce controlled geometry input, it should return blocked/partial with the gap instead of routing around it through a direct-kill rule.

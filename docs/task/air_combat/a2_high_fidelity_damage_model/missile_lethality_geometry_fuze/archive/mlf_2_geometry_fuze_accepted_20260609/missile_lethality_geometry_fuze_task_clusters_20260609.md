@@ -1,16 +1,16 @@
 # A2 MLF-2 Missile Approach Geometry And Fuze Evaluation Task Clusters
 
-Status: `2026-06-09` finite task-cluster plan for [README.md](README.md). MLF-2B, MLF-2C, MLF-2D, MLF-2E, and MLF-2F are accepted; MLF-2G acceptance closeout is next.
+Status: `2026-06-09` archived finite task-cluster plan for [README.md](README.md). MLF-2B, MLF-2C, MLF-2D, MLF-2E, MLF-2F, and MLF-2G are accepted.
 
 Chinese main text: [missile_lethality_geometry_fuze_task_clusters_20260609.zh.md](missile_lethality_geometry_fuze_task_clusters_20260609.zh.md)
 
 Parent links:
 
-- A2 pointer: [../README.md](../README.md)
+- A2 pointer: [../../../README.md](../../../README.md)
 - Current README: [README.md](README.md)
 - Current status: [missile_lethality_geometry_fuze_current_status_20260609.md](missile_lethality_geometry_fuze_current_status_20260609.md)
 - Dispatch queue: [missile_lethality_geometry_fuze_dispatch_queue_20260609.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.md)
-- MLF-1 evidence package: [../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md](../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md)
+- MLF-1 evidence package: [../../../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md](../../../missile_lethality_model_foundation/archive/mlf_1_chain_contract_accepted_20260609/README.md)
 
 ## Boundary Decision
 
@@ -28,7 +28,7 @@ MLF-2 does not output "kill". It outputs nearest-approach geometry, armed state,
 | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / future fuze worker | n/a | Write armed/contact/proximity/delay/no-trigger/failure reasons | `src/core/interfaces/engagement_event_recorder.h`; `src/core/engine/simulation_kernel_engagement_event_store.h`; `src/core/engine/simulation_kernel_engagement_event_store.cpp`; `src/systems/combat/damage_system.h`; related geometry/fuze tests | fragmentation/rod, structural breakup, direct kill, real fuze authority | `ef_py` build; 4 missile geometry/fuze focused tests; 7 engagement event capture regressions; diff check | contact and proximity decisions are separate; no-trigger cases include reason | after 2C field ids; can parallel with 2E after APIs freeze | 2 | pass |
 | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / main thread | n/a | Make process probe emit geometry/fuze stage rows and summary per munition | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/diagnostics/test_air_combat_process_probe.py`; this subproject evidence record | reward semantics, runtime physics decision, long-term legacy aliases | `tests/diagnostics/test_air_combat_process_probe.py -q` | trigger reason does not depend on `last_effect_*`; no-detonation cases report reasons | after 2C/2D API names freeze | 2 | pass |
 | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` / main thread | n/a | Hand detonation state to existing effects model; no-trigger path explicitly produces no physical effect | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py`; this subproject evidence record | warhead mechanism, target breakup, training win/loss, entity deletion | 3 focused fuze gate tests | only detonation enters later effects; no-trigger/failure/not-armed cases do not silently disappear | after 2C/2D/2E | 2 | pass |
-| `MLF-2G Acceptance And Archive Prep` | main thread | n/a | Summarize evidence and update status, parent navigation, and residual map | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | overclaiming real AIM-120C/MQ-9, Pk, or breakup authority | docs diff check + referenced focused tests | accepted/held state matches evidence and MLF-3+ residuals are explicit | last, serial | 1 | planned / ready |
+| `MLF-2G Acceptance And Archive Prep` | main thread | n/a | Summarize evidence and update status, parent navigation, and residual map | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | overclaiming real AIM-120C/MQ-9, Pk, or breakup authority | docs diff check + referenced focused tests | accepted/held state matches evidence and MLF-3+ residuals are explicit | last, serial | 1 | pass |
 
 ## Dispatch Rules
 

@@ -1,6 +1,6 @@
 # A2 MLF-2 派发队列
 
-状态：`2026-06-09` active dispatch queue；`MLF-2B`、`MLF-2C`、`MLF-2D`、`MLF-2E` 和 `MLF-2F` 已验收，下一步应执行 `MLF-2G` 验收收尾。
+状态：`2026-06-09` archived dispatch queue；`MLF-2B`、`MLF-2C`、`MLF-2D`、`MLF-2E`、`MLF-2F` 和 `MLF-2G` 已验收，当前没有运行中的派发包。
 
 英文辅文：[missile_lethality_geometry_fuze_dispatch_queue_20260609.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.md)
 
@@ -10,7 +10,7 @@
 
 本队列只用于 MLF-2 接近几何和引信评估。任何派发都不得创建新的会话线程，不得进入破片、连续杆、结构解体、残骸、Pk 或 AIM-120C/MQ-9 个案校准。
 
-## 待派发包
+## 已派发包
 
 | Packet | Cluster | Assignee | Write set | Required output | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -24,13 +24,13 @@
 | `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py` | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | accepted |
 | `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | 审计起爆才进入效果模型、未触发路径有事件有原因无效果的最小 gate。 | accepted |
 | `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | 用测试钉住 runtime handoff gate：触发路径一次效果/损伤记录，接触近失无效果/损伤记录，可靠性失败为零伤害过渡记录。 | accepted |
-| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | 汇总证据，更新 accepted/held 状态和后续残余地图。 | ready |
+| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | 汇总证据，更新 accepted/held 状态和后续残余地图。 | accepted |
 
 ## 当前派发建议
 
-当前没有运行中的派发包。`MLF-2F-W1` 已验收；下一步应执行 `MLF-2G-C1` 验收收尾。
+当前没有运行中的派发包。`MLF-2G-C1` 已验收；本队列随 MLF-2 归档关闭。
 
-`MLF-2G-C1` 不新增 runtime 功能，不进入战斗部效果，不把 MLF-2 结论扩展成击毁、碎裂或 Pk 结论。
+后续不得在本队列中新增 runtime 功能、战斗部效果，或把 MLF-2 结论扩展成击毁、碎裂或 Pk 结论。
 
 ## 已返回派发包记录
 
@@ -130,6 +130,15 @@ Worker 返回 `pass`，未修改文件。
 - 主线程复验：`py_compile` 通过；3 个引信 gate 聚焦 pytest 通过。
 - 限制：未改变 runtime 物理、效果模型或 reward；零伤害过渡事件仍保留，后续如要删除需等待下游消费面完全迁移。
 
+### MLF-2G-C1
+
+主线程执行并验收。
+
+- 触碰文件：本子项目 README、current status、task clusters、dispatch queue、archive index，以及 A2/MLF-1 导航 README。
+- 实现内容：把完整 MLF-2 证据包移入 `archive/mlf_2_geometry_fuze_accepted_20260609/`；当前 MLF-2 目录改为轻量指针；同步 accepted/held 状态和 MLF-3+ 残余地图。
+- 验收结论：MLF-2 已能解释导弹最近点、引信解保/触发/失败原因和起爆 handoff；它仍不实现战斗部效果、碎裂、残骸、Pk 或具体弹种杀伤结论。
+- 限制：timed fuze、guidance expiry recorder、零伤害过渡记录删除和更细目标姿态仍留给后续阶段。
+
 ## Worker Packet 合同
 
 ```md
@@ -145,5 +154,5 @@ integration notes:
 
 - 主线程负责验收返回包和更新本队列。
 - status line、任务簇状态和父级 README 只能在验收后串行更新。
-- 当前队列没有运行中的 worker。
+- 当前队列没有运行中的 worker，且已随 MLF-2 归档关闭。
 - 如果 worker 发现现有 runtime 无法受控复现几何输入，应返回 blocked/partial 并说明缺口，不要绕到直接击毁规则。

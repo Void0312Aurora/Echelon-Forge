@@ -21,9 +21,14 @@ Current A2 follow-ons:
   archived MLF-1 chain-contract foundation, retained as field and boundary
   evidence for later stages.
 - [missile_lethality_geometry_fuze/README.md](missile_lethality_geometry_fuze/README.md):
-  current MLF-2 subproject for controlled approach geometry and fuze evaluation;
-  it does not implement fragmentation, structural breakup, Pk, or
-  weapon-specific kill conclusions.
+  archived MLF-2 evidence package for missile approach geometry and fuze
+  evaluation; it proves that nearest point, fuze evaluation, and detonation
+  handoff are observable, but it does not implement fragmentation, structural
+  breakup, Pk, or weapon-specific kill conclusions.
+
+Follow-on warhead effects, breakup/debris, Pk, or weapon-specific calibration
+need a separate `docs/agent` subproject and must not continue inside the
+archived MLF-2 package.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 
