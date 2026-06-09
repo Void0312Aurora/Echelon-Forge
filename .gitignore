@@ -63,9 +63,9 @@ docs/temp/
 docs/temp/**
 docs/**/temp/
 docs/**/temp/**
-!docs/**/temp/
-!docs/**/temp/README.md
-!docs/**/temp/README.zh.md
+Temp/
+Temp/**
+g0-viz-env-overlay-smoke.png
 docs/plan/results/
 docs/plan/results/**
 docs/plan/architecture/review/
