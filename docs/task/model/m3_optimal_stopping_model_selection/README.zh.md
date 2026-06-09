@@ -12,11 +12,11 @@
 
 - 父级模型任务索引：[模型任务](../README.zh.md)
 - A7 当前证据：
-  [A7 当前状态](../../air_combat/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
+  [A7 当前状态](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_current_status_20260604.zh.md)
 - A7 执行断点：
-  [A7 执行断点分析](../../air_combat/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md)
+  [A7 执行断点分析](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_execution_breakpoint_analysis_20260605.zh.md)
 - A7 event-policy margin 修复：
-  [A7 Event-Policy Margin 修复](../../air_combat/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md)
+  [A7 Event-Policy Margin 修复](../../air_combat/archive/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_event_policy_margin_repair_20260605.zh.md)
 - 子项目标准：
   [子项目创建标准](../../../agent/rules/subproject_creation_standard.zh.md)
 - 分发规则：

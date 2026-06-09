@@ -12,7 +12,7 @@ and the current domain entries for air combat, naval, ground, and simulation
 architecture.
 
 To determine the state of this historical stream, use the `2026-05-18` closure
-markers in the analysis docs, not `program/` or `archive/`.
+markers in the analysis docs, not `archive/program/` or `archive/`.
 
 ## Historical Subproject Navigation
 
@@ -21,7 +21,7 @@ markers in the analysis docs, not `program/` or `archive/`.
 - [weapon_guidance](./weapon_guidance/README.md): weapon chain, seeker, guidance, fuze, and damage analysis.
 - [naval](./naval/README.md): historical naval realism analysis that now points forward to the active naval task line.
 - [c2_command_chain](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` frozen analysis baseline.
-- [program](./program/README.md): deprecated mainline-status snapshot entry, kept only for history.
+- [program](./archive/program/README.md): deprecated mainline-status snapshot entry, kept only for history.
 
 ## Cross-Directory Linked Entry Points
 
@@ -57,7 +57,7 @@ markers in the analysis docs, not `program/` or `archive/`.
    is the local navigation entrypoint.
 2. `*_analysis_*` docs are authoritative for current state when their closure
    marker says so.
-3. `program/` is deprecated and `archive/` is history only.
+3. `archive/program/` is deprecated and `archive/` is history only.
 4. Do not open new active multi-domain implementation streams under this
    directory. Route them through the task root and the current domain-specific
    entries instead.

@@ -13,7 +13,7 @@ Inputs:
 
 - [Temporal HMoE Policy Plan](../temporal_hmoe_policy_plan_20260525.md)
 - [M1 Temporal Window HMoE](../m1_temporal_window_hmoe/README.zh.md)
-- [A3 C2/ROE Release Discipline](../../air_combat/a3_c2_roe_release_discipline/README.md)
+- [A3 C2/ROE Release Discipline](../../air_combat/archive/a3_c2_roe_release_discipline/README.md)
 - [Pilot Action Contract](../../../standards/air/act.md)
 - Current action adapter:
   [actions.py](../../../../gym_envs/universal_env_parts/actions.py)

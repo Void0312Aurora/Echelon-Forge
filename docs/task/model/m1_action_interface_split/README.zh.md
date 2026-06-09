@@ -12,7 +12,7 @@
 
 - [时间 HMoE 策略计划](../temporal_hmoe_policy_plan_20260525.zh.md)
 - [M1 观测窗口 HMoE 验证](../m1_temporal_window_hmoe/README.zh.md)
-- [A3 C2/ROE 发射纪律](../../air_combat/a3_c2_roe_release_discipline/README.zh.md)
+- [A3 C2/ROE 发射纪律](../../air_combat/archive/a3_c2_roe_release_discipline/README.zh.md)
 - [Pilot Action Contract](../../../standards/air/act.md)
 - 当前动作适配：
   [actions.py](../../../../gym_envs/universal_env_parts/actions.py)

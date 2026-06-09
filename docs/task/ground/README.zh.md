@@ -147,8 +147,8 @@
   [../../standards/ground/README.zh.md](../../standards/ground/README.zh.md)
 - Ground 最小任务结构：
   [../../standards/ground/minimal_task_structure.zh.md](../../standards/ground/minimal_task_structure.zh.md)
-- `common / air / naval` 拆分承接线：
-  [../common_air_naval/README.zh.md](../common_air_naval/README.zh.md)
+- `common / air / naval` 拆分（已归档）：
+  [../archive/common_air_naval/README.zh.md](../archive/common_air_naval/README.zh.md)
 
 ## 已封存 / 归档子项目记录
 
@@ -160,25 +160,25 @@ follow-on package，不要在这些已接受记录内继续追加实现任务。
 - Ground bootstrap 计划：
   [archive/ground_domain_bootstrap_plan_20260521.zh.md](archive/ground_domain_bootstrap_plan_20260521.zh.md)
 - G0 边界冻结：
-  [g0_boundary_freeze/README.zh.md](g0_boundary_freeze/README.zh.md)
+  [archive/g0_boundary_freeze/README.zh.md](archive/g0_boundary_freeze/README.zh.md)
 - G1 合同骨架：
-  [g1_contract_skeleton/README.zh.md](g1_contract_skeleton/README.zh.md)
+  [archive/g1_contract_skeleton/README.zh.md](archive/g1_contract_skeleton/README.zh.md)
 - G2 内容 / 测试种子：
-  [g2_content_test_seed/README.zh.md](g2_content_test_seed/README.zh.md)
+  [archive/g2_content_test_seed/README.zh.md](archive/g2_content_test_seed/README.zh.md)
 - G3 执行面设计：
-  [g3_execution_surface_design/README.zh.md](g3_execution_surface_design/README.zh.md)
+  [archive/g3_execution_surface_design/README.zh.md](archive/g3_execution_surface_design/README.zh.md)
 - G4 tasking runtime 切片：
-  [g4_runtime_slice/README.zh.md](g4_runtime_slice/README.zh.md)
+  [archive/g4_runtime_slice/README.zh.md](archive/g4_runtime_slice/README.zh.md)
 - G5 MVP 场景 shell：
-  [g5_mvp_scenario/README.zh.md](g5_mvp_scenario/README.zh.md)
+  [archive/g5_mvp_scenario/README.zh.md](archive/g5_mvp_scenario/README.zh.md)
 - G6 realism-gradient 静态 fixture：
-  [g6_realism_gradient_mvp_scenarios/README.zh.md](g6_realism_gradient_mvp_scenarios/README.zh.md)
+  [archive/g6_realism_gradient_mvp_scenarios/README.zh.md](archive/g6_realism_gradient_mvp_scenarios/README.zh.md)
 - G6-C route-move boundary guardrails：
-  [g6_route_move_boundary/README.zh.md](g6_route_move_boundary/README.zh.md)
+  [archive/g6_route_move_boundary/README.zh.md](archive/g6_route_move_boundary/README.zh.md)
 - G6-D route-move release decision：
-  [g6_route_move_release_decision/README.zh.md](g6_route_move_release_decision/README.zh.md)
+  [archive/g6_route_move_release_decision/README.zh.md](archive/g6_route_move_release_decision/README.zh.md)
 - G6-E native ground platform schema 证据：
-  [g6_native_ground_platform_schema/README.zh.md](g6_native_ground_platform_schema/README.zh.md)
+  [archive/g6_native_ground_platform_schema/README.zh.md](archive/g6_native_ground_platform_schema/README.zh.md)
 - Environment substrate G0 architecture：
   [environment_substrate_g0_architecture/README.zh.md](environment_substrate_g0_architecture/README.zh.md)
 - Environment substrate G0-J static manifest contract：
@@ -228,3 +228,5 @@ G0-G4 现在作为 ground tasking 的 accepted baseline 封存：
   combat 与 broad `MissionCommand` growth 继续 held；当前
   `MissionCommandGround` 路径只承载 static task metadata authoring
 - 所有委派工作都通过 subagent queue 分发
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

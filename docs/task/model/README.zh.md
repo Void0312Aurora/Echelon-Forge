@@ -43,3 +43,5 @@
   [archive/m3_s2_fire_timing_learnability_audit](archive/m3_s2_fire_timing_learnability_audit/README.zh.md)
 - 英文主文：
   [Temporal HMoE Policy Plan](temporal_hmoe_policy_plan_20260525.md)
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

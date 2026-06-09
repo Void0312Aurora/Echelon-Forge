@@ -12,16 +12,16 @@
 - 战术地图界面重构现在是已归档的第一切片：地图优先壳、tabbed workspaces、分组战术图层、
   profile UI 默认值，以及验证/收口证据，都在文档边界内接受。原路径只保留轻量 pointer；
   完整包位于
-  [archive/tactical_map_interface_refactor/](./archive/tactical_map_interface_refactor/README.zh.md)。
+  [archive/archive/tactical_map_interface_refactor/](./archive/archive/tactical_map_interface_refactor/README.zh.md)。
 
 ## 推荐阅读顺序
 
 - 活跃计划与当前实现边界：
   [viz_unified_entry_session_profile_plan_20260516.zh.md](./archive/viz_unified_entry_session_profile_plan_20260516.zh.md)
 - 战术地图界面重构 pointer：
-  [tactical_map_interface_refactor/README.zh.md](./tactical_map_interface_refactor/README.zh.md)
-- 已归档的战术地图界面证据包：
   [archive/tactical_map_interface_refactor/README.zh.md](./archive/tactical_map_interface_refactor/README.zh.md)
+- 已归档的战术地图界面证据包：
+  [archive/archive/tactical_map_interface_refactor/README.zh.md](./archive/archive/tactical_map_interface_refactor/README.zh.md)
 - 活跃的纯地图查看 follow-on：
   [map_only_viewer_mode/README.zh.md](./map_only_viewer_mode/README.zh.md)
 - 活跃的环境 overlay 可视元素 follow-on：
@@ -45,3 +45,5 @@
 - 除非本 README 明确提升，不要把 `archive/` 下其他文件当作 active 入口
 
 较早的大体量冻结/设计快照现已转入 [archive/README.zh.md](./archive/README.zh.md)。
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

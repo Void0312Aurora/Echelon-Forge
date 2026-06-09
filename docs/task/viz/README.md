@@ -18,16 +18,16 @@ Status: unified-entry refactor workline remains active; local entry converged on
   defaults, and validation/closure evidence are accepted within their
   documented boundaries. The original path is a lightweight pointer; the full
   package lives under
-  [archive/tactical_map_interface_refactor/](./archive/tactical_map_interface_refactor/README.md).
+  [archive/archive/tactical_map_interface_refactor/](./archive/archive/tactical_map_interface_refactor/README.md).
 
 ## Recommended Reading Order
 
 - Active plan and current implementation boundary:
   [viz_unified_entry_session_profile_plan_20260516.md](./archive/viz_unified_entry_session_profile_plan_20260516.md)
 - Tactical map interface refactor pointer:
-  [tactical_map_interface_refactor/README.md](./tactical_map_interface_refactor/README.md)
-- Archived tactical map interface evidence package:
   [archive/tactical_map_interface_refactor/README.md](./archive/tactical_map_interface_refactor/README.md)
+- Archived tactical map interface evidence package:
+  [archive/archive/tactical_map_interface_refactor/README.md](./archive/archive/tactical_map_interface_refactor/README.md)
 - Active map-only viewer follow-on:
   [map_only_viewer_mode/README.md](./map_only_viewer_mode/README.md)
 - Active environment overlay visual-elements follow-on:

@@ -28,9 +28,9 @@
 | Runtime wiring | pass | `UniversalEnv`、`WorldBatchVecEnv` 聚焦测试 | cooperative world-batch 不是当前 active air-combat route。 |
 | HMoE hybrid policy | pass | HMoE forward/evaluate 与 tiny PPO smoke | 连续轴熵沿用 `-log_prob` sampled fallback。 |
 | Active config migration | pass | training-entry tests、JSON bootstrap、32-step train smoke、1000-step load/predict smoke、Stage-1 range-gate diagnostics | learned policy 仍未通过。 |
-| A3 C2/ROE interpretation | pass | [A3 P4 探针证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md) | 它分类 release 行为，但不证明 learned policy 质量。 |
-| A3 learned-policy probe | held | [A3 learned-policy 探针证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.zh.md) | 32k deterministic 不发射，stochastic 仍违规多发；已补 post-launch mission observation 动态状态。 |
-| A3 reactive/temporal comparison | held | [A3 reactive/temporal 对照证据](../../air_combat/a3_c2_roe_release_discipline/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md) | temporal stochastic 将违规发射从 8 次降到 0 次，但 deterministic policy 仍不发射。 |
+| A3 C2/ROE interpretation | pass | [A3 P4 探针证据](../../air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_p4_probe_evidence_20260603.zh.md) | 它分类 release 行为，但不证明 learned policy 质量。 |
+| A3 learned-policy probe | held | [A3 learned-policy 探针证据](../../air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_learned_policy_probe_20260603.zh.md) | 32k deterministic 不发射，stochastic 仍违规多发；已补 post-launch mission observation 动态状态。 |
+| A3 reactive/temporal comparison | held | [A3 reactive/temporal 对照证据](../../air_combat/archive/a3_c2_roe_release_discipline/a3_c2_roe_reactive_temporal_comparison_20260603.zh.md) | temporal stochastic 将违规发射从 8 次降到 0 次，但 deterministic policy 仍不发射。 |
 | Shaped S1 training recovery | partial | 65,536-step shaped run 完成，训练窗口内飞行状态健康且没有 deep-stall/combat-loss 回归 | deterministic policy 仍不发射；stochastic policy 会早发/多发，武器使用尚未验收。 |
 | Action-interface closure | accepted | [m1_action_interface_split_acceptance_20260602.zh.md](m1_action_interface_split_acceptance_20260602.zh.md) | M1 temporal evidence 与 M2 release 仍 held。 |
 

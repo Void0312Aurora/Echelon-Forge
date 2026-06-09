@@ -31,24 +31,24 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   该入口已能运行、能从 Stage-1 M3-S2 final model 迁移一次授权发射，并完成一轮 8k 短训；
   但只构成进入下一训练阶段的证据，不构成 Stage-2 战果或批量发射验收。
 - 重复发射问题进入已 accepted 的有边界 C2/ROE 层：
-  [a3_c2_roe_release_discipline/README.zh.md](a3_c2_roe_release_discipline/README.zh.md)：
+  [archive/a3_c2_roe_release_discipline/README.zh.md](archive/a3_c2_roe_release_discipline/README.zh.md)：
   武器控制状态、目标身份、开火授权、single-shot-then-assess / salvo / reattack
   许可和策略可观察的 mission observation 约束已经接入。A3 仍是合法性/纪律权威，
   但不是当前发射闭合包。
 - 已关闭的历史 firing-learning 线路：
-  [a4_authorized_first_shot_training_signal/README.zh.md](a4_authorized_first_shot_training_signal/README.zh.md)：
+  [archive/a4_authorized_first_shot_training_signal/README.zh.md](archive/a4_authorized_first_shot_training_signal/README.zh.md)：
   A4 原地关闭。保留结论是 reward shaping、routing、diagnostics 和 opportunity penalty
   没有解决发射。
 - 已关闭的历史结构性 event-action 线路：
-  [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)：
+  [archive/a5_constrained_event_action_model/README.zh.md](archive/a5_constrained_event_action_model/README.zh.md)：
   A5 原地关闭。它贡献了受约束 `hold/fire_once` 表面，以及后续 M3-S2 使用的
   weapon-arm action-frame fix。
 - 已关闭的历史 first-event timing 线路：
-  [a6_event_value_first_event_timing/README.zh.md](a6_event_value_first_event_timing/README.zh.md)：
+  [archive/a6_event_value_first_event_timing/README.zh.md](archive/a6_event_value_first_event_timing/README.zh.md)：
   A6 原地关闭。保留结论是 hazard/deadline/window labels 暴露了有用 timing evidence，
   但没有成为当前 firing authority。
 - 已关闭的历史 event-credit/timing 线路：
-  [a7_event_value_advantage_credit_head/README.zh.md](a7_event_value_advantage_credit_head/README.zh.md)：
+  [archive/a7_event_value_advantage_credit_head/README.zh.md](archive/a7_event_value_advantage_credit_head/README.zh.md)：
   A7 原地关闭。保留结论是 event-credit work 属于 timing-quality research history，
   当前 launch closure 属于 M3-S2。
 - 高真实度毁伤模型现在在
@@ -59,9 +59,9 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
 - A8 损伤效果链现在在
-  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)
+  [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
   保留轻量指针；完整包位于
-  [archive/a8_damage_effect_chain/](archive/a8_damage_effect_chain/README.zh.md)。
+  [archive/archive/a8_damage_effect_chain/](archive/archive/a8_damage_effect_chain/README.zh.md)。
   它已作为有边界切片验收并归档：起爆后的效果可转成具体飞机部位损伤，并通过已有动力、
   燃油、传感器、火灾和飞行消费路径表现出来。已验收证据覆盖动力、一段翼面/操纵气动响应、
   燃油泄漏/质量响应、更完整火灾后果检查、数据链任务/传感器后果，以及窄的地面接触生命周期状态；
@@ -78,7 +78,7 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - 将 A2 高保真空战毁伤模型作为 sealed retained record 读取；只有用户明确要求时，
   才另启 `G4/G5 authority` 或新的 research expansion
 - 将
-  [A8 损伤效果链](a8_damage_effect_chain/README.zh.md) 作为已归档 accepted record 读取：
+  [A8 损伤效果链](archive/a8_damage_effect_chain/README.zh.md) 作为已归档 accepted record 读取：
   具体损伤可通过维护中的飞机系统传播，但不增加直接坠毁或特定目标击杀规则；只有明确要求校准、
   平台扩展或碎片/残留对象工作时才重开
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
@@ -107,30 +107,32 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - A1 Stage-2 C2/ROE 入口与短训：
   [a1_stage2_c2_roe_entry_and_short_train_20260608.zh.md](a1_1v1_realism_gradient/a1_stage2_c2_roe_entry_and_short_train_20260608.zh.md)
 - C2/ROE 发射纪律 accepted 层：
-  [a3_c2_roe_release_discipline/README.zh.md](a3_c2_roe_release_discipline/README.zh.md)
+  [archive/a3_c2_roe_release_discipline/README.zh.md](archive/a3_c2_roe_release_discipline/README.zh.md)
 - 当前有边界发射闭合：
   [M3-S2 fire-timing learnability archive](../model/archive/m3_s2_fire_timing_learnability_audit/README.zh.md)
 - 已关闭的历史 firing-learning records：
-  [a4_authorized_first_shot_training_signal/README.zh.md](a4_authorized_first_shot_training_signal/README.zh.md)、
-  [a5_constrained_event_action_model/README.zh.md](a5_constrained_event_action_model/README.zh.md)、
-  [a6_event_value_first_event_timing/README.zh.md](a6_event_value_first_event_timing/README.zh.md)
+  [archive/a4_authorized_first_shot_training_signal/README.zh.md](archive/a4_authorized_first_shot_training_signal/README.zh.md)、
+  [archive/a5_constrained_event_action_model/README.zh.md](archive/a5_constrained_event_action_model/README.zh.md)、
+  [archive/a6_event_value_first_event_timing/README.zh.md](archive/a6_event_value_first_event_timing/README.zh.md)
   和
-  [a7_event_value_advantage_credit_head/README.zh.md](a7_event_value_advantage_credit_head/README.zh.md)
+  [archive/a7_event_value_advantage_credit_head/README.zh.md](archive/a7_event_value_advantage_credit_head/README.zh.md)
 - A4 reward/routing 证据：
-  [a4_authorized_first_shot_training_signal/README.zh.md](a4_authorized_first_shot_training_signal/README.zh.md)
+  [archive/a4_authorized_first_shot_training_signal/README.zh.md](archive/a4_authorized_first_shot_training_signal/README.zh.md)
   及 reward 证据：
-  [a4_authorized_first_shot_reward_probe_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.zh.md)
+  [a4_authorized_first_shot_reward_probe_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.zh.md)
   和 routing 证据：
-  [a4_authorized_first_shot_routing_probe_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.zh.md)
+  [a4_authorized_first_shot_routing_probe_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.zh.md)
   以及 binary diagnostics：
-  [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
+  [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档
   [archive/a2_high_fidelity_damage_model/README.zh.md](archive/a2_high_fidelity_damage_model/README.zh.md)
 - 损伤效果链 follow-on：
-  [a8_damage_effect_chain/README.zh.md](a8_damage_effect_chain/README.zh.md)
+  [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 
 历史带日期快照现统一放入 [archive/README.zh.md](archive/README.zh.md)。
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

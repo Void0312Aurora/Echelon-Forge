@@ -4,12 +4,10 @@
 
 ## 架构审查
 
-- [架构计划审查（temp-01 响应）](architecture_plan_review_20260519.zh.md) ([English](architecture_plan_review_20260519.md))
-- [Temp-02 SCAL 架构愿景审查](temp-02_review_20260519.zh.md) ([English](temp-02_review_20260519.md))
+- [架构重构审计 — God File、遗留代码与结构不一致 2026-05-22](architecture_refactoring_audit_20260522.zh.md) ([English](architecture_refactoring_audit_20260522.md))
 
 ## 路线图
 
-- [剩余工作整合与后续路线图 2026-05-20](consolidated_remaining_work_and_roadmap_20260520.zh.md) ([English](consolidated_remaining_work_and_roadmap_20260520.md))
 - [Post-WP9 架构路线规划 — 缺口分析 2026-05-20](post_wp9_gap_analysis_20260520.zh.md) ([English](post_wp9_gap_analysis_20260520.md))
 - [Stage 3 平台扩展主线计划 2026-05-21](stage3_platform_expansion_mainline_plan_20260521.md)
 
@@ -18,11 +16,13 @@
 - [项目实现审查与行动评价 2026-06-01](project_implementation_review_20260601.zh.md)
 - [文档系统就绪度审查 2026-06-01](documentation_system_readiness_review_20260601.zh.md) ([English](documentation_system_readiness_review_20260601.md))
 - [Engineering Governance P0](engineering_governance_p0/README.zh.md)：active remediation slice，用于 CI lint gate、smoke dependency constraints、C++ warning policy 和版本号对齐。
-- [Engineering Governance P1](engineering_governance_p1/README.zh.md)：closed local-pass remediation slice，用于失效架构守卫修复、scenario compiler 集中 shape validation、adapter capability probing 收敛和 diagnostics callback owner 拆分。
 
 ## 领域审查
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.zh.md) ([English](ground_domain_bootstrap_plan_review_20260521.md))
+- [陆军域缺陷清单与迁移差距分析 2026-05-22](ground_domain_defect_inventory_20260522.zh.md) ([English](ground_domain_defect_inventory_20260522.md))
+- [域分离现状审计 2026-06-09](domain_separation_audit_20260609.zh.md) ([English](domain_separation_audit_20260609.md))
+- [域分离大拆分](domain_separation_split/README.zh.md)：active subproject，用于直接推进 components、systems、models 三层的 Air / Naval / Ground ownership split。
 
 ## 测试系统评估
 
@@ -38,5 +38,8 @@
 
 ## 归档
 
-已完成的 WP 验收审查、存在争议的 WP21 closure 记录、被取代的波次审查、
-原始文档及历史快照见 [archive/](./archive/README.zh.md)。
+已完成的架构审查（temp-01 响应、temp-02 SCAL 愿景）、WP9 整合路线图、已闭合的 P1 治理修复、
+已完成的 WP 验收审查、存在争议的 WP21 closure 记录、被取代的波次审查
+和原始文档见 [archive/](./archive/README.zh.md)。
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

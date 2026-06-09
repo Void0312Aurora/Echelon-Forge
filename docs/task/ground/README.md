@@ -160,8 +160,8 @@ without creating a new vertical runtime path.
   [../../standards/ground/README.md](../../standards/ground/README.md)
 - Ground minimal task structure:
   [../../standards/ground/minimal_task_structure.md](../../standards/ground/minimal_task_structure.md)
-- Common/air/naval split carry-over:
-  [../common_air_naval/README.md](../common_air_naval/README.md)
+- Common/air/naval split (archived):
+  [../archive/common_air_naval/README.md](../archive/common_air_naval/README.md)
 
 ## Sealed / Archived Subproject Records
 
@@ -181,19 +181,19 @@ editing these accepted records in place.
 - G2 content/test seed:
   [g2_content_test_seed/README.md](g2_content_test_seed/README.md)
 - G3 execution-surface design:
-  [g3_execution_surface_design/README.md](g3_execution_surface_design/README.md)
+  [archive/g3_execution_surface_design/README.md](archive/g3_execution_surface_design/README.md)
 - G4 tasking runtime slice:
-  [g4_runtime_slice/README.md](g4_runtime_slice/README.md)
+  [archive/g4_runtime_slice/README.md](archive/g4_runtime_slice/README.md)
 - G5 MVP scenario shell:
-  [g5_mvp_scenario/README.md](g5_mvp_scenario/README.md)
+  [archive/g5_mvp_scenario/README.md](archive/g5_mvp_scenario/README.md)
 - G6 realism-gradient static fixtures:
-  [g6_realism_gradient_mvp_scenarios/README.md](g6_realism_gradient_mvp_scenarios/README.md)
+  [archive/g6_realism_gradient_mvp_scenarios/README.md](archive/g6_realism_gradient_mvp_scenarios/README.md)
 - G6-C route-move boundary guardrails:
-  [g6_route_move_boundary/README.md](g6_route_move_boundary/README.md)
+  [archive/g6_route_move_boundary/README.md](archive/g6_route_move_boundary/README.md)
 - G6-D route-move release decision:
-  [g6_route_move_release_decision/README.md](g6_route_move_release_decision/README.md)
+  [archive/g6_route_move_release_decision/README.md](archive/g6_route_move_release_decision/README.md)
 - G6-E native ground platform schema evidence:
-  [g6_native_ground_platform_schema/README.md](g6_native_ground_platform_schema/README.md)
+  [archive/g6_native_ground_platform_schema/README.md](archive/g6_native_ground_platform_schema/README.md)
 - Environment substrate G0 architecture:
   [environment_substrate_g0_architecture/README.md](environment_substrate_g0_architecture/README.md)
 - Environment substrate G0-J static manifest contract:

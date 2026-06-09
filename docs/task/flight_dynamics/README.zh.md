@@ -11,7 +11,7 @@ flight、sensor、weapon、naval 与 C2 分析拆分如何进入当前多域任�
 simulation architecture 等领域入口开始。
 
 若要判断本历史流的状态，优先看各分析文档中的 `2026-05-18` 收口标记，不要再把
-`program/` 或 `archive/` 当作当前参考来源。
+`archive/program/` 或 `archive/` 当作当前参考来源。
 
 ## 历史子项目导航
 
@@ -20,7 +20,7 @@ simulation architecture 等领域入口开始。
 - [weapon_guidance 子项目](./weapon_guidance/README.md): 武器链、导引头、制导与近炸 / 毁伤分析。
 - [naval 子项目](./naval/README.md): 历史海战真实性分析；当前工作应转向活跃 naval task line。
 - [c2_command_chain 子项目](./c2_command_chain/README.md): `MissionCommand / CommandLink / DataLink / ROE / naval command-chain` 冻结分析基线。
-- [program 子目录](./program/README.md): 已失效的主线状态快照入口，仅保留历史留痕。
+- [program 子目录](./archive/program/README.md): 已失效的主线状态快照入口，仅保留历史留痕。
 
 ## 跨目录关联入口
 
@@ -54,5 +54,7 @@ simulation architecture 等领域入口开始。
 
 1. 每个子方向使用一个子项目文件夹，并由该目录下的 `README.md` 作为本地导航入口。
 2. `*_analysis_*` 文档中的 `2026-05-18` 收口标记是当前可信口径。
-3. `program/` 已失效，`archive/` 仅保留历史留痕。
+3. `archive/program/` 已失效，`archive/` 仅保留历史留痕。
 4. 不在本目录下新开活跃多域实现流；新工作应通过 task 根目录和当前领域入口承接。
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

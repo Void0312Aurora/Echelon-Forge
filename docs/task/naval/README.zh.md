@@ -9,12 +9,12 @@
 - 最新状态总结应以 [海军当前进展追踪](./naval_current_progress_20260524.zh.md) 为准。
 - N4 威胁/ROE bridge 已作为开火前场景与 active training-entry gate 闭合。原任务路径现在只保留轻量指针；
   完整 closure/evidence package 位于
-  [archive/n4_threat_roe_bridge/](./archive/n4_threat_roe_bridge/README.zh.md)：
-  [naval_n4_closure_20260525.zh.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
+  [archive/archive/n4_threat_roe_bridge/](./archive/archive/n4_threat_roe_bridge/README.zh.md)：
+  [naval_n4_closure_20260525.zh.md](./archive/archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)。
 - RL action/observation surface split 已实现，并保留为已接受的 N4 training-entry repair 记录。
   原任务路径现在只保留轻量指针；完整 packet 位于
-  [archive/n5_rl_action_surface_split/](./archive/n5_rl_action_surface_split/README.zh.md)：
-  [naval_n5_rl_action_surface_split_cluster_20260526.zh.md](./archive/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.zh.md)。
+  [archive/archive/n5_rl_action_surface_split/](./archive/archive/n5_rl_action_surface_split/README.zh.md)：
+  [naval_n5_rl_action_surface_split_cluster_20260526.zh.md](./archive/archive/n5_rl_action_surface_split/naval_n5_rl_action_surface_split_cluster_20260526.zh.md)。
   尽管目录名带 `N5`，它当前是 N4 pre-fire training-entry repair，不是 N5 武器
   交战释放。新的海军 surface-split 工作应继续进入下面的 domain-surface split package。
 - 当前领域执行面拆分追踪于
@@ -40,13 +40,13 @@
 新的 active 子项目入口使用。
 
 - 已闭合的 N4 场景扩大化子项目：
-  [n4_threat_roe_bridge/README.zh.md](./n4_threat_roe_bridge/README.zh.md)
+  [archive/n4_threat_roe_bridge/README.zh.md](./archive/n4_threat_roe_bridge/README.zh.md)
 - N4 闭合记录：
-  [archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
+  [archive/archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md](./archive/archive/n4_threat_roe_bridge/naval_n4_closure_20260525.zh.md)
 - 已实现的 N4 RL action/observation repair，尽管目录名带 `N5`：
-  [n5_rl_action_surface_split/README.zh.md](./n5_rl_action_surface_split/README.zh.md)
-  与
   [archive/n5_rl_action_surface_split/README.zh.md](./archive/n5_rl_action_surface_split/README.zh.md)
+  与
+  [archive/archive/n5_rl_action_surface_split/README.zh.md](./archive/archive/n5_rl_action_surface_split/README.zh.md)
 
 ## 当前继续推进重点
 
@@ -68,3 +68,5 @@
 - 在扩展多舰队高保真海战前，优先稳住 maritime state、传感器/LOS、武器命令链和训练入口
 
 较早的场景边界冻结快照和 backlog 现已转入 [archive/README.zh.md](./archive/README.zh.md)。
+
+已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。
