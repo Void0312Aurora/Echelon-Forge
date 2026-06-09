@@ -623,6 +623,16 @@ def main():
             batch_observation_backend = str(runtime_cfg.get("batch_observation_backend", "auto"))
             policy_observation_torch_bridge = bool(runtime_cfg.get("policy_observation_torch_bridge", True))
             observation_return_mode = str(runtime_cfg.get("observation_return_mode", "copy"))
+            post_launch_assessment_cfg = (
+                runtime_cfg.get("air_combat_post_launch_assessment", {})
+                if isinstance(runtime_cfg.get("air_combat_post_launch_assessment", {}), dict)
+                else {}
+            )
+            hyper_cfg = train_config.get("hyperparameters", {})
+            hyper_cfg = hyper_cfg if isinstance(hyper_cfg, dict) else {}
+            post_launch_assessment_gamma = float(
+                post_launch_assessment_cfg.get("gamma", hyper_cfg.get("gamma", 0.999))
+            )
             vec_env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
                 n_envs=n_envs,
@@ -632,6 +642,20 @@ def main():
                 policy_observation_torch_bridge=policy_observation_torch_bridge,
                 observation_return_mode=observation_return_mode,
                 action_wrapper_kwargs=world_batch_action_wrapper_kwargs,
+                air_combat_post_launch_assessment_enabled=bool(
+                    post_launch_assessment_cfg.get("enabled", False)
+                ),
+                air_combat_post_launch_assessment_stages=post_launch_assessment_cfg.get("stages"),
+                air_combat_post_launch_assessment_max_steps=int(
+                    post_launch_assessment_cfg.get("max_steps", 0)
+                ),
+                air_combat_post_launch_assessment_timeout_s=float(
+                    post_launch_assessment_cfg.get("timeout_s", 0.0)
+                ),
+                air_combat_post_launch_assessment_gamma=post_launch_assessment_gamma,
+                air_combat_post_launch_assessment_blue_throttle=float(
+                    post_launch_assessment_cfg.get("blue_throttle", 0.65)
+                ),
                 **env_settings,
             )
             vec_env.seed(training_seed)
@@ -660,6 +684,13 @@ def main():
                 "World batch observation return mode: "
                 f"mode={vec_env.observation_return_mode}"
             )
+            if bool(post_launch_assessment_cfg.get("enabled", False)):
+                print(
+                    "Air-combat post-launch assessment: "
+                    f"enabled=True max_steps={int(post_launch_assessment_cfg.get('max_steps', 0))} "
+                    f"timeout_s={float(post_launch_assessment_cfg.get('timeout_s', 0.0))} "
+                    f"gamma={post_launch_assessment_gamma}"
+                )
             if world_batch_action_wrapper_kwargs:
                 print("World batch action preprocessing: multi_timescale_action=enabled")
             active_batched_execution_inference = False

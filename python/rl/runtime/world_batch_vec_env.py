@@ -106,6 +106,17 @@ _RuntimeFacadeAdapter = RuntimeFacadeAdapter
 _build_loader_step_info = build_loader_step_info
 _compute_loader_step_outcome = compute_loader_step_outcome
 
+_POST_LAUNCH_ASSESSMENT_REWARD_KEYS = {
+    "combat_win_bonus",
+    "combat_loss_penalty",
+    "combat_draw_reward",
+}
+_POST_LAUNCH_ASSESSMENT_REWARD_PREFIXES = (
+    "air_combat_target_",
+    "air_combat_self_",
+)
+_POST_LAUNCH_ASSESSMENT_DEFAULT_STAGES = {"A1-S1", "A1-S2"}
+
 
 def _float32_view(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
@@ -124,6 +135,50 @@ def _execution_instrument_vector(loader: ScenarioLoader, truth: Any, inst: Any, 
         int(max_rwr),
     )
     return np.asarray(inst_vec, dtype=np.float32)
+
+
+def _as_stage_set(value: Any) -> set[str]:
+    if value is None:
+        return set(_POST_LAUNCH_ASSESSMENT_DEFAULT_STAGES)
+    if isinstance(value, str):
+        parts = [part.strip() for part in value.replace(";", ",").split(",")]
+        return {part for part in parts if part}
+    try:
+        return {str(part).strip() for part in value if str(part).strip()}
+    except TypeError:
+        return {str(value).strip()} if str(value).strip() else set()
+
+
+def _scenario_stage(loader: ScenarioLoader) -> str:
+    scenario = getattr(loader, "scenario_data", {})
+    scenario = scenario if isinstance(scenario, dict) else {}
+    realism = scenario.get("realism_gradient", {})
+    realism = realism if isinstance(realism, dict) else {}
+    stage = str(realism.get("stage", "") or "").strip()
+    if stage:
+        return stage
+    source_path = str(getattr(loader, "_scenario_source_path", "") or "").lower()
+    if "stage1" in source_path or "a1-s1" in source_path:
+        return "A1-S1"
+    if "stage2" in source_path or "a1-s2" in source_path:
+        return "A1-S2"
+    return ""
+
+
+def _post_launch_reward_from_breakdown(breakdown: Any) -> float:
+    if not isinstance(breakdown, dict):
+        return 0.0
+    total = 0.0
+    for key, value in breakdown.items():
+        key_s = str(key)
+        if key_s in _POST_LAUNCH_ASSESSMENT_REWARD_KEYS or key_s.startswith(
+            _POST_LAUNCH_ASSESSMENT_REWARD_PREFIXES
+        ):
+            try:
+                total += float(value)
+            except Exception:
+                continue
+    return float(total)
 
 
 class WorldBatchVecEnv(VecEnv):
@@ -164,6 +219,12 @@ class WorldBatchVecEnv(VecEnv):
         policy_observation_torch_bridge: bool = True,
         observation_return_mode: str = "copy",
         action_wrapper_kwargs: dict[str, Any] | None = None,
+        air_combat_post_launch_assessment_enabled: bool = False,
+        air_combat_post_launch_assessment_stages: Sequence[str] | str | None = None,
+        air_combat_post_launch_assessment_max_steps: int = 0,
+        air_combat_post_launch_assessment_timeout_s: float = 0.0,
+        air_combat_post_launch_assessment_gamma: float = 0.999,
+        air_combat_post_launch_assessment_blue_throttle: float = 0.65,
     ):
         if render_mode not in (None,):
             raise ValueError("WorldBatchVecEnv currently only supports render_mode=None.")
@@ -202,6 +263,41 @@ class WorldBatchVecEnv(VecEnv):
         self.policy_observation_torch_bridge = bool(policy_observation_torch_bridge)
         self.observation_return_mode = _normalize_observation_return_mode(observation_return_mode)
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
+        self.air_combat_post_launch_assessment_enabled = bool(air_combat_post_launch_assessment_enabled)
+        self.air_combat_post_launch_assessment_stages = _as_stage_set(
+            air_combat_post_launch_assessment_stages
+        )
+        self.air_combat_post_launch_assessment_max_steps = max(
+            0,
+            int(air_combat_post_launch_assessment_max_steps),
+        )
+        try:
+            self.air_combat_post_launch_assessment_timeout_s = max(
+                0.0,
+                float(air_combat_post_launch_assessment_timeout_s),
+            )
+        except Exception:
+            self.air_combat_post_launch_assessment_timeout_s = 0.0
+        try:
+            self.air_combat_post_launch_assessment_gamma = float(
+                air_combat_post_launch_assessment_gamma
+            )
+        except Exception:
+            self.air_combat_post_launch_assessment_gamma = 0.999
+        if not np.isfinite(self.air_combat_post_launch_assessment_gamma):
+            self.air_combat_post_launch_assessment_gamma = 0.999
+        self.air_combat_post_launch_assessment_gamma = float(
+            np.clip(self.air_combat_post_launch_assessment_gamma, 0.0, 1.0)
+        )
+        try:
+            self.air_combat_post_launch_assessment_blue_throttle = float(
+                air_combat_post_launch_assessment_blue_throttle
+            )
+        except Exception:
+            self.air_combat_post_launch_assessment_blue_throttle = 0.65
+        self.air_combat_post_launch_assessment_blue_throttle = float(
+            np.clip(self.air_combat_post_launch_assessment_blue_throttle, 0.0, 1.0)
+        )
         self.last_step_timing: dict[str, float] = {}
         self.last_reset_timing: dict[str, float] = {}
         self.last_observation_build_timing: dict[str, float] = {}
@@ -1408,6 +1504,199 @@ class WorldBatchVecEnv(VecEnv):
             else:
                 self.buf_obs[key][env_idx] = obs[key]  # type: ignore[index]
 
+    def _air_combat_post_launch_assessment_limit_steps(self, env_idx: int) -> int:
+        handle = self._handles[int(env_idx)]
+        dt = float(resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx)))
+        limits: list[int] = []
+        if self.air_combat_post_launch_assessment_max_steps > 0:
+            limits.append(int(self.air_combat_post_launch_assessment_max_steps))
+        if self.air_combat_post_launch_assessment_timeout_s > 0.0 and dt > 1.0e-9:
+            limits.append(max(1, int(np.ceil(self.air_combat_post_launch_assessment_timeout_s / dt))))
+        remaining = max(0, int(handle.max_steps) - int(handle.steps))
+        if remaining > 0:
+            limits.append(int(remaining))
+        if not limits:
+            return 0
+        return max(0, min(limits))
+
+    def _air_combat_post_launch_assessment_should_run(
+        self,
+        env_idx: int,
+        *,
+        terminated: bool,
+        truncated: bool,
+    ) -> bool:
+        if not self.air_combat_post_launch_assessment_enabled:
+            return False
+        if self.execution_episode_controller_mainline:
+            return False
+        if not is_air_combat_hybrid_action_mode(self.action_mode):
+            return False
+        if bool(terminated or truncated):
+            return False
+        handle = self._handles[int(env_idx)]
+        stage = _scenario_stage(handle.loader)
+        if self.air_combat_post_launch_assessment_stages and stage not in self.air_combat_post_launch_assessment_stages:
+            return False
+        event_info = getattr(handle.loader, "_last_air_combat_event_action_info", None)
+        if not (isinstance(event_info, dict) and bool(event_info.get("release_executed", False))):
+            return False
+        return self._air_combat_post_launch_assessment_limit_steps(env_idx) > 0
+
+    def _air_combat_post_launch_assessment_action(self) -> np.ndarray:
+        action = np.zeros(tuple(self.action_space.shape), dtype=np.float32)
+        if action.size > 3:
+            action[3] = float(self.air_combat_post_launch_assessment_blue_throttle)
+        if is_air_combat_hybrid_action_mode(self.action_mode):
+            if action.size > 6:
+                action[6] = 1.0
+            if action.size > 8:
+                action[8] = 0.0
+            if action.size > 9:
+                action[9] = 0.0
+            if action.size > 10:
+                action[10] = 0.0
+            if action.size > 11:
+                action[11] = 0.0
+        elif self.action_mode == "full":
+            if action.size > 9:
+                action[9] = 1.0
+            if action.size > 13:
+                action[13] = 0.0
+            if action.size > 14:
+                action[14] = 0.0
+            if action.size > 15:
+                action[15] = 0.0
+            if action.size > 16:
+                action[16] = 0.0
+        return normalize_action(action, action_space=self.action_space, action_mode=self.action_mode)
+
+    def _run_air_combat_post_launch_assessment(
+        self,
+        env_idx: int,
+        *,
+        obs: dict[str, np.ndarray],
+        reward: float,
+        terminated: bool,
+        truncated: bool,
+        mission_status: Any,
+    ) -> tuple[dict[str, np.ndarray], float, bool, bool, Any, dict[str, Any]]:
+        handle = self._handles[int(env_idx)]
+        limit_steps = self._air_combat_post_launch_assessment_limit_steps(env_idx)
+        if limit_steps <= 0:
+            return obs, float(reward), bool(terminated), bool(truncated), mission_status, {}
+
+        managed_action = self._air_combat_post_launch_assessment_action()
+        gamma = float(self.air_combat_post_launch_assessment_gamma)
+        discount = gamma
+        discounted_extra_reward = 0.0
+        undiscounted_extra_reward = 0.0
+        steps_run = 0
+        last_reason = ""
+        final_status = mission_status
+        final_terminated = bool(terminated)
+        final_truncated = bool(truncated)
+        final_obs = obs
+        assessment_t0 = time.perf_counter()
+
+        for _ in range(int(limit_steps)):
+            if final_terminated or final_truncated:
+                break
+
+            inst_now = handle.last_inst if self.action_mode != "full" else None
+            assignment = ef_py.WorldPilotActionAssignment()
+            assignment.world_index = int(env_idx)
+            assignment.entity_id = int(handle.agent_id)
+            assignment.action = build_pilot_action(
+                managed_action,
+                action_mode=self.action_mode,
+                inst_now=inst_now,
+            )
+            handle.last_action = managed_action.astype(np.float32, copy=True)
+            handle.loader._last_action_mode = str(self.action_mode)
+            handle.loader._last_effective_action = handle.last_action.astype(np.float32, copy=True)
+
+            self._set_pilot_actions_batch([assignment])
+            self._step_runtime_worlds([int(env_idx)])
+
+            _target_indices, truth_list, inst_list = self._read_truth_and_inst_batch([int(env_idx)])
+            if not truth_list or not inst_list:
+                break
+            handle.steps += 1
+            handle.loader.steps = int(handle.steps)
+            handle.last_truth = truth_list[0]
+            handle.last_inst = inst_list[0]
+
+            sim_time = float(handle.steps) * float(
+                resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
+            )
+            handle.loader.update_behaviors(
+                sim_time,
+                truth=handle.last_truth,
+                inst=handle.last_inst,
+                sync_to_kernel=False,
+            )
+            self._sync_command_chain_batch([int(env_idx)])
+
+            inst_vec = _execution_instrument_vector(
+                handle.loader,
+                handle.last_truth,
+                handle.last_inst,
+                max_contacts=int(self.max_contacts),
+                max_rwr=int(self.max_rwr),
+            )
+            reward_obs = {"instruments": inst_vec}
+            step_reward, step_terminated, step_truncated, step_status = _compute_loader_step_outcome(
+                handle.loader,
+                obs=reward_obs,
+                steps=handle.steps,
+                max_steps=handle.max_steps,
+                truth=handle.last_truth,
+                inst_state=handle.last_inst,
+                step_evaluation=None,
+            )
+            consequence_reward = _post_launch_reward_from_breakdown(
+                getattr(handle.loader, "last_reward_breakdown", None)
+            )
+            undiscounted_extra_reward += float(consequence_reward)
+            discounted_extra_reward += float(discount) * float(consequence_reward)
+            discount *= gamma
+            steps_run += 1
+            final_status = step_status
+            final_terminated = bool(step_terminated)
+            final_truncated = bool(step_truncated)
+            last_reason = str(getattr(handle.loader, "last_termination_reason", "") or "")
+
+        if not bool(final_terminated or final_truncated):
+            final_terminated = True
+            final_truncated = False
+            last_reason = "post_launch_assessment_timeout"
+
+        final_obs = self._build_observation_from_cached_state(int(env_idx))
+        elapsed_s = float(steps_run) * float(
+            resolve_loader_time_step(handle.loader, default=self._world_time_step(env_idx))
+        )
+        info = {
+            "post_launch_assessment": True,
+            "post_launch_assessment_steps": int(steps_run),
+            "post_launch_assessment_sim_time_s": float(elapsed_s),
+            "post_launch_assessment_discounted_reward": float(discounted_extra_reward),
+            "post_launch_assessment_undiscounted_reward": float(undiscounted_extra_reward),
+            "post_launch_assessment_gamma": float(gamma),
+            "post_launch_assessment_reward_mode": "combat_consequence_terms",
+            "post_launch_assessment_wall_time_ms": float((time.perf_counter() - assessment_t0) * 1000.0),
+        }
+        if last_reason:
+            info["post_launch_assessment_terminal_reason"] = str(last_reason)
+        return (
+            final_obs,
+            float(reward) + float(discounted_extra_reward),
+            bool(final_terminated),
+            bool(final_truncated),
+            final_status,
+            info,
+        )
+
     def _obs_from_buf(self) -> VecEnvObs:
         if self.observation_return_mode == "view":
             obs_dict = OrderedDict((key, value) for key, value in self.buf_obs.items())
@@ -1684,6 +1973,27 @@ class WorldBatchVecEnv(VecEnv):
                     inst_state=handle.last_inst,
                     step_evaluation=cached_step_eval if isinstance(cached_step_eval, dict) else None,
                 )
+            post_launch_assessment_info: dict[str, Any] = {}
+            if self._air_combat_post_launch_assessment_should_run(
+                env_idx,
+                terminated=bool(terminated),
+                truncated=bool(truncated),
+            ):
+                (
+                    obs,
+                    reward,
+                    terminated,
+                    truncated,
+                    mission_status,
+                    post_launch_assessment_info,
+                ) = self._run_air_combat_post_launch_assessment(
+                    env_idx,
+                    obs=obs,
+                    reward=float(reward),
+                    terminated=bool(terminated),
+                    truncated=bool(truncated),
+                    mission_status=mission_status,
+                )
             include_full_step_info = not (
                 self.step_info_mode == "off"
                 or (self.step_info_mode == "terminal" and not bool(terminated or truncated))
@@ -1731,6 +2041,15 @@ class WorldBatchVecEnv(VecEnv):
                 obs, reward, info = handle.action_controller.finalize_step_result(obs, reward, info, prepared)
             if is_air_combat_hybrid_action_mode(self.action_mode):
                 add_air_combat_event_action_info(info, handle.loader)
+            if post_launch_assessment_info:
+                info.update(post_launch_assessment_info)
+                reason_before = str(info.get("termination_reason", "") or "").strip().lower()
+                if reason_before in {"", "running"} and isinstance(
+                    post_launch_assessment_info.get("post_launch_assessment_terminal_reason"), str
+                ):
+                    info["termination_reason"] = str(
+                        post_launch_assessment_info["post_launch_assessment_terminal_reason"]
+                    )
             if shadow_reports[env_idx] is not None:
                 info["execution_episode_controller_shadow_compare"] = shadow_reports[env_idx]
             handle.episode_return += float(reward)
