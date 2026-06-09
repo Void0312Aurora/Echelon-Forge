@@ -1,6 +1,6 @@
 # A2 MLF-2 派发队列
 
-状态：`2026-06-09` active dispatch queue；`MLF-2B`、`MLF-2C`、`MLF-2D` 和 `MLF-2E` 已验收，下一步应派发 `MLF-2F-I1` runtime handoff gate 审计。
+状态：`2026-06-09` active dispatch queue；`MLF-2B`、`MLF-2C`、`MLF-2D`、`MLF-2E` 和 `MLF-2F` 已验收，下一步应执行 `MLF-2G` 验收收尾。
 
 英文辅文：[missile_lethality_geometry_fuze_dispatch_queue_20260609.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.md)
 
@@ -22,13 +22,15 @@
 | `MLF-2D-W1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.h`；`src/core/engine/simulation_kernel_engagement_event_store.cpp`；`src/systems/combat/damage_system.h`；相关 geometry/fuze tests | 写入解保、触发、未触发、延迟和失败原因。 | accepted |
 | `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only diagnostics/probe path audit; no runtime edits | 找出 process probe/诊断导出消费最近接近和引信评估事件的最小路径。 | accepted |
 | `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py` | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | accepted |
-| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | future integration auditor | read-only weapon lifecycle/effects invocation audit; no runtime edits | 审计起爆才进入效果模型、未触发路径有事件有原因无效果的最小 gate。 | ready |
+| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | 审计起爆才进入效果模型、未触发路径有事件有原因无效果的最小 gate。 | accepted |
+| `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | 用测试钉住 runtime handoff gate：触发路径一次效果/损伤记录，接触近失无效果/损伤记录，可靠性失败为零伤害过渡记录。 | accepted |
+| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | 汇总证据，更新 accepted/held 状态和后续残余地图。 | ready |
 
 ## 当前派发建议
 
-当前没有运行中的派发包。`MLF-2E-W1` 已验收；下一包应为 `MLF-2F-I1`，只读审计 runtime handoff gate。
+当前没有运行中的派发包。`MLF-2F-W1` 已验收；下一步应执行 `MLF-2G-C1` 验收收尾。
 
-`MLF-2F-I1` 不改 runtime，不进入战斗部效果，不把 gate 审计当成击毁结论。
+`MLF-2G-C1` 不新增 runtime 功能，不进入战斗部效果，不把 MLF-2 结论扩展成击毁、碎裂或 Pk 结论。
 
 ## 已返回派发包记录
 
@@ -109,6 +111,24 @@ Worker 返回 `pass`，未修改文件。
 - 测试覆盖：标准事件-only 未起爆路径；标准事件存在时抑制旧效果事件 nearest/fuze 重复投影；既有 fallback 和 CSV 输出保持。
 - 主线程复验：`py_compile` 通过；`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q` 17 个测试通过。
 - 限制：platform/lifecycle 仍来自 `DamageReport` 投影；未实现 runtime handoff gate；不改变 reward 或效果模型。
+
+### MLF-2F-I1
+
+Worker 返回 `pass`，未修改文件。
+
+- 效果模型调用点：`damage_system.h` 中 `fuze_delay_armed` 且到达 `fuze_detonation_time_s` 后调用 `effects_ref->model->on_proximity_hit(...)`。
+- 触发路径：`fuze_armed` 写入最近接近和引信评估事件，随后只在延迟解析块进入现有效果模型，并记录一次 `EffectsEvent` / `DamageReport`。
+- 未触发路径：`miss_outside_trigger_radius` 写事件后销毁导弹，不调用效果模型，不写效果/损伤报告；`fuze_no_terminal_track` 和 `fuze_no_detonation` 不调用效果模型，但仍保留零伤害过渡 `EffectsEvent` / `DamageReport`。
+- 限制：timed fuze 标准事件覆盖仍 held；max-flight-time / guidance expiry 仍缺 recorder access。
+
+### MLF-2F-W1
+
+主线程测试硬化并验收。
+
+- 触碰文件：`tests/runtime/air_combat/weapon_guidance_realism/fuze.py`。
+- 实现内容：收紧现有引信测试，确认延迟触发路径只有一条最近接近、一条引信评估、一条效果事件和一条损伤报告；可靠性失败为一条零伤害过渡记录；接触近失无效果事件和无损伤报告。
+- 主线程复验：`py_compile` 通过；3 个引信 gate 聚焦 pytest 通过。
+- 限制：未改变 runtime 物理、效果模型或 reward；零伤害过渡事件仍保留，后续如要删除需等待下游消费面完全迁移。
 
 ## Worker Packet 合同
 

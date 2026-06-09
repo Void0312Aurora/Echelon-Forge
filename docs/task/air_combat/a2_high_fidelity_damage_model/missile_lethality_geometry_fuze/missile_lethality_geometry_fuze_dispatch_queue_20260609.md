@@ -1,6 +1,6 @@
 # A2 MLF-2 Dispatch Queue
 
-Status: `2026-06-09` active dispatch queue; `MLF-2B`, `MLF-2C`, `MLF-2D`, and `MLF-2E` are accepted. The next packet should be `MLF-2F-I1` runtime handoff gate audit.
+Status: `2026-06-09` active dispatch queue; `MLF-2B`, `MLF-2C`, `MLF-2D`, `MLF-2E`, and `MLF-2F` are accepted. The next packet should be `MLF-2G-C1` acceptance closeout.
 
 Chinese main text: [missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.zh.md)
 
@@ -22,13 +22,15 @@ This queue is only for MLF-2 approach geometry and fuze evaluation. Dispatches m
 | `MLF-2D-W1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/core/interfaces/engagement_event_recorder.h`; `src/core/engine/simulation_kernel_engagement_event_store.h`; `src/core/engine/simulation_kernel_engagement_event_store.cpp`; `src/systems/combat/damage_system.h`; related geometry/fuze tests | Write armed, trigger, no-trigger, delay, and failure reasons. | accepted |
 | `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only diagnostics/probe path audit; no runtime edits | Find the minimum path for process probe / diagnostic export consumption of nearest-approach and fuze-evaluation events. | accepted |
 | `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/diagnostics/test_air_combat_process_probe.py` | Export geometry/fuze stage rows per munition without relying on old `last_effect_*`. | accepted |
-| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | future integration auditor | read-only weapon lifecycle/effects invocation audit; no runtime edits | Audit the minimum gate where only detonation enters the effects model and no-trigger paths have event, reason, and no effects. | ready |
+| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | Audit the minimum gate where only detonation enters the effects model and no-trigger paths have event, reason, and no effects. | accepted |
+| `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | Pin runtime handoff gate behavior: triggered path has one effects/damage record, contact near-miss has no effects/damage record, reliability failure remains a zero-damage transitional record. | accepted |
+| `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | Summarize evidence and update accepted/held state plus residual map. | ready |
 
 ## Current Dispatch Recommendation
 
-No packet is currently running. `MLF-2E-W1` is accepted; the next packet should be `MLF-2F-I1`, a read-only runtime handoff gate audit.
+No packet is currently running. `MLF-2F-W1` is accepted; the next step should be `MLF-2G-C1` acceptance closeout.
 
-`MLF-2F-I1` must not edit runtime, enter warhead effects, or make gate audit equivalent to a kill conclusion.
+`MLF-2G-C1` must not add runtime features, enter warhead effects, or expand MLF-2 into kill, breakup, or Pk conclusions.
 
 ## Returned Dispatch Records
 
@@ -109,6 +111,24 @@ Main thread implemented and accepted.
 - Test coverage: standard-event-only no-detonation path; standard events suppress duplicate effects fallback rows; existing fallback and CSV output remain.
 - Main-thread revalidation: `py_compile` passed; `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q` passed with 17 tests.
 - Limits: platform/lifecycle remains projected from `DamageReport`; runtime handoff gate is not implemented; reward and effects model are unchanged.
+
+### MLF-2F-I1
+
+Worker returned `pass` and touched no files.
+
+- Effects-model call point: `damage_system.h` calls `effects_ref->model->on_proximity_hit(...)` only in the `fuze_delay_armed` block after `fuze_detonation_time_s` is reached.
+- Triggered path: `fuze_armed` writes nearest-approach and fuze-evaluation events, then later enters the existing effects model once and records one `EffectsEvent` / `DamageReport`.
+- No-trigger paths: `miss_outside_trigger_radius` records events and destroys the missile without effects-model call or effects/damage records; `fuze_no_terminal_track` and `fuze_no_detonation` do not call the effects model, but still keep zero-damage transitional `EffectsEvent` / `DamageReport`.
+- Limits: timed fuze standard event coverage remains held; max-flight-time / guidance expiry still lacks recorder access.
+
+### MLF-2F-W1
+
+Main thread hardened tests and accepted the slice.
+
+- Touched file: `tests/runtime/air_combat/weapon_guidance_realism/fuze.py`.
+- Implementation: tightened existing fuze tests so delayed triggered path has exactly one nearest-approach event, one fuze-evaluation event, one effects event, and one damage report; reliability failure is one zero-damage transitional record; contact near-miss has no effects event and no damage report.
+- Main-thread revalidation: `py_compile` passed; 3 focused fuze gate pytest cases passed.
+- Limits: runtime physics, effects model, and reward were not changed; zero-damage transitional records remain until downstream consumers fully migrate.
 
 ## Worker Packet Contract
 

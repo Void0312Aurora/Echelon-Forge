@@ -149,8 +149,21 @@ class FuzeRuntimeMixin:
 
         self.assertTrue(armed_seen)
         events = sim.export_recent_engagement_events()
-        self.assertGreaterEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.nearest_approach_events), 1)
+        self.assertEqual(len(events.fuze_evaluation_events), 1)
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
+        nearest = events.nearest_approach_events[-1]
+        fuze = events.fuze_evaluation_events[-1]
         effects = events.effects_events[-1]
+        self.assertEqual(str(nearest.header.reason), "fuze_armed")
+        self.assertEqual(str(fuze.header.stage), "fuze_evaluation")
+        self.assertEqual(str(fuze.header.status), "evaluated")
+        self.assertEqual(str(fuze.header.reason), "fuze_armed")
+        self.assertEqual(int(fuze.header.parent_event_id), int(nearest.header.event_id))
+        self.assertTrue(bool(fuze.armed))
+        self.assertTrue(bool(fuze.triggered))
+        self.assertEqual(str(fuze.failure_reason), "")
         self.assertEqual(str(effects.fuze_type), "radar_proximity")
         self.assertAlmostEqual(float(effects.fuze_delay_s), 0.08, delta=1.0e-6)
         self.assertEqual(str(effects.fuze_signature_source), "target_rcs_aspect")
@@ -217,10 +230,10 @@ class FuzeRuntimeMixin:
         self.assertTrue(sim.is_unit_active(red_id))
 
         events = sim.export_recent_engagement_events()
-        self.assertGreaterEqual(len(events.nearest_approach_events), 1)
-        self.assertGreaterEqual(len(events.fuze_evaluation_events), 1)
-        self.assertGreaterEqual(len(events.effects_events), 1)
-        self.assertGreaterEqual(len(events.damage_reports), 1)
+        self.assertEqual(len(events.nearest_approach_events), 1)
+        self.assertEqual(len(events.fuze_evaluation_events), 1)
+        self.assertEqual(len(events.effects_events), 1)
+        self.assertEqual(len(events.damage_reports), 1)
         nearest = events.nearest_approach_events[-1]
         fuze = events.fuze_evaluation_events[-1]
         effects = events.effects_events[-1]
@@ -406,8 +419,8 @@ class FuzeRuntimeMixin:
         contact_result, contact_events, contact_missile_id, contact_red_id = run_with_fuze("contact")
         self.assertFalse(bool(contact_result["missile_active"]))
         self.assertLess(float(contact_result["truth_min_dist_m"]), 35.0)
-        self.assertGreaterEqual(len(contact_events.nearest_approach_events), 1)
-        self.assertGreaterEqual(len(contact_events.fuze_evaluation_events), 1)
+        self.assertEqual(len(contact_events.nearest_approach_events), 1)
+        self.assertEqual(len(contact_events.fuze_evaluation_events), 1)
         self.assertEqual(len(contact_events.effects_events), 0)
         self.assertEqual(len(contact_events.damage_reports), 0)
         contact_nearest = contact_events.nearest_approach_events[-1]

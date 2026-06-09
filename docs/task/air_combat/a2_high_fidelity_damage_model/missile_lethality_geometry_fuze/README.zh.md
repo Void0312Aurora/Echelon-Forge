@@ -1,6 +1,6 @@
 # A2 MLF-2 导弹接近几何与引信评估
 
-状态：`2026-06-09` MLF-2E accepted / MLF-2F next。MLF-2B 受控几何、MLF-2C 最近接近事件、MLF-2D 引信评估事件和 MLF-2E 诊断投影已验收；下一步进入 runtime handoff gate 审计。
+状态：`2026-06-09` MLF-2F accepted / MLF-2G next。MLF-2B 受控几何、MLF-2C 最近接近事件、MLF-2D 引信评估事件、MLF-2E 诊断投影和 MLF-2F runtime handoff gate 已验收；下一步进入验收收尾。
 
 语言：
 
@@ -31,7 +31,7 @@ MLF-2 的目标是把“导弹接近目标后发生了什么”拆成两个可�
 | --- | --- | --- | --- |
 | MLF-1 杀伤链合同 | accepted / archived | MLF-1 证据包已归档 | 只定义链路和消费边界，不实现几何/引信物理 |
 | 当前近炸逻辑 | active legacy surface | 武器生命周期和效果事件已有近炸/命中字段 | 仍不能完整解释未触发、延迟、失败和接触/近炸差异 |
-| MLF-2 子项目 | active / partial runtime accepted | 本 README、任务簇、状态、派发队列、`MLF-2B`/`MLF-2C`/`MLF-2D`/`MLF-2E` 聚焦测试 | 已验收最近接近、引信评估和诊断投影；尚未验收 runtime handoff gate |
+| MLF-2 子项目 | active / partial runtime accepted | 本 README、任务簇、状态、派发队列、`MLF-2B`/`MLF-2C`/`MLF-2D`/`MLF-2E`/`MLF-2F` 聚焦测试 | 已验收最近接近、引信评估、诊断投影和 runtime handoff gate；尚未执行 closeout |
 
 ## 范围
 
@@ -60,8 +60,8 @@ MLF-2 的目标是把“导弹接近目标后发生了什么”拆成两个可�
 | `MLF-2C Nearest Approach` | 写入最近接近事件 | MLF-2B | 未起爆也能记录最近接近和原因 | pass |
 | `MLF-2D Fuze Evaluation` | 写入引信评估事件 | MLF-2C | 接触、近炸、未解保、错过窗口、延迟和故障分开记录 | pass |
 | `MLF-2E Diagnostics` | 导出可读诊断 | MLF-2C/2D | probe 能按一枚弹输出几何和引信阶段行 | pass |
-| `MLF-2F Runtime Gate` | 对接现有发射/效果链 | MLF-2D/2E | 起爆状态传给后续效果模型，未触发不会沉默消失 | planned / ready for audit |
-| `MLF-2G Closure` | 验收并同步父级导航 | MLF-2B-F 通过 | 当前状态、残余和 archive 边界一致 | planned |
+| `MLF-2F Runtime Gate` | 对接现有发射/效果链 | MLF-2D/2E | 起爆状态传给后续效果模型，未触发不会沉默消失 | pass |
+| `MLF-2G Closure` | 验收并同步父级导航 | MLF-2B-F 通过 | 当前状态、残余和 archive 边界一致 | planned / ready |
 
 ## 任务簇
 
@@ -76,16 +76,17 @@ MLF-2 的目标是把“导弹接近目标后发生了什么”拆成两个可�
 - 本 README 固定目标和边界。
 - 任务簇文档限定有限工作包。
 - 当前状态文档记录 MLF-2B 和 MLF-2C 已验收。
-- 派发队列记录 MLF-2E 已验收，MLF-2F-I1 待派发。
+- 派发队列记录 MLF-2F 已验收，MLF-2G-C1 待执行。
 - 受控几何测试能改变距离、闭合速度、方位和高度差。
 - 最近接近事件已经能从 live 路径写出；未起爆和错过目标路径也有最近点与原因。
 - 最近点时间已从终端判定帧修正为最近点刷新时刻。
 - 引信评估事件已经能记录解保/触发、未触发和失败原因，并与同一枚弹的最近接近事件相连。
 - 诊断 probe 优先消费标准最近接近和引信评估事件；旧 `EffectsEvent` 投影只作为缺省回退。
+- runtime handoff gate 已被聚焦测试覆盖：触发路径才产生现有效果/损伤记录，接触近失没有效果/损伤记录，可靠性失败只有零伤害过渡记录。
 
 后续实现证据至少需要：
 
-- runtime handoff gate 覆盖：起爆才进入效果模型，未触发路径有事件、有原因、无效果。
+- MLF-2G closeout：汇总 accepted/held 证据并同步 archive 边界。
 - 受控几何测试继续补足延迟和 held 路径。
 - process probe 能报告没有起爆的原因。
 - 旧 `last_effect_*` 字段没有扩展为长期接口。
@@ -103,7 +104,7 @@ MLF-2 的目标是把“导弹接近目标后发生了什么”拆成两个可�
 
 ## 残余和下一步
 
-- 下一步应派发 `MLF-2F-I1`，审计 runtime handoff gate 写入范围。
+- 下一步应执行 `MLF-2G-C1`，完成验收收尾。
 - `MLF-2E` 需要等 `MLF-2D` 字段名称冻结后再展开。
 - 破片、连续杆、结构断裂、残骸和 Pk 仍是 MLF-3 及以后阶段。
 - 具体 AIM-120C/MQ-9 结论必须等 MLF-2 和至少一个后续战斗部作用模型通过后再讨论。
