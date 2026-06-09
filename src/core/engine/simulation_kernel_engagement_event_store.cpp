@@ -460,89 +460,94 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     effects.munition = engagement_ref(munition_entity_id);
     effects.target = engagement_ref(target_id);
 
-    WarheadMechanismEvent warhead_event{};
-    warhead_event.header.source_time_s = event_time_s;
-    warhead_event.header.confidence = effects.confidence;
-    warhead_event.header.reason = effects.warhead_profile_synthetic
-        ? "generic_research_synthetic_warhead_profile"
-        : "generic_research_warhead_profile";
-    warhead_event.mechanism_family = effects.effect_family;
-    warhead_event.warhead_mass_kg = effects.warhead_mass_kg;
-    warhead_event.lethal_radius_m = effects.warhead_lethal_radius_m;
-    warhead_event.fragment_energy_j = effects.mechanism_fragment_energy_j;
-    warhead_event.fragment_density_per_m2 =
-        effects.mechanism_fragment_areal_density_per_m2;
-    warhead_event.blast_overpressure_kpa = effects.mechanism_blast_overpressure_kpa;
-    warhead_event.blast_impulse_kpa_ms = effects.mechanism_blast_impulse_kpa_ms;
-    warhead_event.blast_scaled_distance_m_kg13 =
-        effects.mechanism_blast_scaled_distance_m_kg13;
-    warhead_event.rod_cut_margin = effects.mechanism_rod_cut_margin;
-    warhead_event.penetration_margin = effects.mechanism_penetration_margin;
-    warhead_event.surface_incidence_cos = effects.mechanism_surface_incidence_cos;
-    (void)record_warhead_mechanism_event({
-        .munition_entity_id = munition_entity_id,
-        .target_id = target_id,
-        .chain_id = chain_id,
-        .parent_event_id = effects_event_id,
-        .event = std::move(warhead_event),
-    });
-
-    SpatialCoverageEvent spatial_event{};
-    spatial_event.header.source_time_s = event_time_s;
-    spatial_event.header.confidence = effects.confidence;
-    spatial_event.header.reason = "generic_research_spatial_projection";
-    spatial_event.projected_hitbox_count = effects.projected_hitbox_count;
-    spatial_event.sample_count = effects.warhead_spatial_sample_count;
-    spatial_event.hit_estimate = effects.warhead_spatial_hit_estimate;
-    spatial_event.hit_fraction = effects.warhead_spatial_hit_fraction;
-    spatial_event.energy_scale = effects.warhead_spatial_energy_scale;
-    spatial_event.pattern_scale = effects.warhead_spatial_pattern_scale;
-    spatial_event.orientation_axis_forward = effects.warhead_orientation_axis_forward;
-    spatial_event.orientation_axis_right = effects.warhead_orientation_axis_right;
-    spatial_event.orientation_axis_up = effects.warhead_orientation_axis_up;
-    (void)record_spatial_coverage_event({
-        .munition_entity_id = munition_entity_id,
-        .target_id = target_id,
-        .chain_id = chain_id,
-        .parent_event_id = effects_event_id,
-        .event = std::move(spatial_event),
-    });
-
-    for (const ComponentMechanismLoadRow& row : effects.component_mechanism_load_rows) {
-        if (row.component_name.empty() && row.component_system.empty()) {
-            continue;
-        }
-        ComponentLoadEvent component_event{};
-        component_event.header.source_time_s = event_time_s;
-        component_event.header.confidence = effects.confidence;
-        component_event.header.reason = "generic_research_component_load_projection";
-        component_event.component_name = row.component_name;
-        component_event.component_system = row.component_system;
-        component_event.component_redundancy_group_id =
-            row.component_redundancy_group_id;
-        component_event.direct_hit = row.direct_hit;
-        component_event.distance_m = row.distance_m;
-        component_event.effect_scale = row.effect_scale;
-        component_event.fragment_energy_j = row.mechanism_fragment_energy_j;
-        component_event.fragment_density_per_m2 =
-            row.mechanism_fragment_areal_density_per_m2;
-        component_event.penetration_margin = row.mechanism_penetration_margin;
-        component_event.blast_overpressure_kpa = row.mechanism_blast_overpressure_kpa;
-        component_event.blast_impulse_kpa_ms = row.mechanism_blast_impulse_kpa_ms;
-        component_event.blast_scaled_distance_m_kg13 =
-            row.mechanism_blast_scaled_distance_m_kg13;
-        component_event.rod_cut_margin = row.mechanism_rod_cut_margin;
-        component_event.surface_incidence_cos = row.mechanism_surface_incidence_cos;
-        component_event.load_source = row.direct_hit
-            ? "direct_component_hit"
-            : "spatial_component_projection";
-        (void)record_component_load_event({
+    const bool effects_reached_warhead_loads =
+        effects.outcome_state != "fuze_no_detonation" &&
+        effects.outcome_state != "fuze_no_terminal_track";
+    if (effects_reached_warhead_loads) {
+        WarheadMechanismEvent warhead_event{};
+        warhead_event.header.source_time_s = event_time_s;
+        warhead_event.header.confidence = effects.confidence;
+        warhead_event.header.reason = effects.warhead_profile_synthetic
+            ? "generic_research_synthetic_warhead_profile"
+            : "generic_research_warhead_profile";
+        warhead_event.mechanism_family = effects.effect_family;
+        warhead_event.warhead_mass_kg = effects.warhead_mass_kg;
+        warhead_event.lethal_radius_m = effects.warhead_lethal_radius_m;
+        warhead_event.fragment_energy_j = effects.mechanism_fragment_energy_j;
+        warhead_event.fragment_density_per_m2 =
+            effects.mechanism_fragment_areal_density_per_m2;
+        warhead_event.blast_overpressure_kpa = effects.mechanism_blast_overpressure_kpa;
+        warhead_event.blast_impulse_kpa_ms = effects.mechanism_blast_impulse_kpa_ms;
+        warhead_event.blast_scaled_distance_m_kg13 =
+            effects.mechanism_blast_scaled_distance_m_kg13;
+        warhead_event.rod_cut_margin = effects.mechanism_rod_cut_margin;
+        warhead_event.penetration_margin = effects.mechanism_penetration_margin;
+        warhead_event.surface_incidence_cos = effects.mechanism_surface_incidence_cos;
+        (void)record_warhead_mechanism_event({
             .munition_entity_id = munition_entity_id,
             .target_id = target_id,
             .chain_id = chain_id,
             .parent_event_id = effects_event_id,
-            .event = std::move(component_event),
+            .event = std::move(warhead_event),
         });
+
+        SpatialCoverageEvent spatial_event{};
+        spatial_event.header.source_time_s = event_time_s;
+        spatial_event.header.confidence = effects.confidence;
+        spatial_event.header.reason = "generic_research_spatial_projection";
+        spatial_event.projected_hitbox_count = effects.projected_hitbox_count;
+        spatial_event.sample_count = effects.warhead_spatial_sample_count;
+        spatial_event.hit_estimate = effects.warhead_spatial_hit_estimate;
+        spatial_event.hit_fraction = effects.warhead_spatial_hit_fraction;
+        spatial_event.energy_scale = effects.warhead_spatial_energy_scale;
+        spatial_event.pattern_scale = effects.warhead_spatial_pattern_scale;
+        spatial_event.orientation_axis_forward = effects.warhead_orientation_axis_forward;
+        spatial_event.orientation_axis_right = effects.warhead_orientation_axis_right;
+        spatial_event.orientation_axis_up = effects.warhead_orientation_axis_up;
+        (void)record_spatial_coverage_event({
+            .munition_entity_id = munition_entity_id,
+            .target_id = target_id,
+            .chain_id = chain_id,
+            .parent_event_id = effects_event_id,
+            .event = std::move(spatial_event),
+        });
+
+        for (const ComponentMechanismLoadRow& row : effects.component_mechanism_load_rows) {
+            if (row.component_name.empty() && row.component_system.empty()) {
+                continue;
+            }
+            ComponentLoadEvent component_event{};
+            component_event.header.source_time_s = event_time_s;
+            component_event.header.confidence = effects.confidence;
+            component_event.header.reason = "generic_research_component_load_projection";
+            component_event.component_name = row.component_name;
+            component_event.component_system = row.component_system;
+            component_event.component_redundancy_group_id =
+                row.component_redundancy_group_id;
+            component_event.direct_hit = row.direct_hit;
+            component_event.distance_m = row.distance_m;
+            component_event.effect_scale = row.effect_scale;
+            component_event.fragment_energy_j = row.mechanism_fragment_energy_j;
+            component_event.fragment_density_per_m2 =
+                row.mechanism_fragment_areal_density_per_m2;
+            component_event.penetration_margin = row.mechanism_penetration_margin;
+            component_event.blast_overpressure_kpa = row.mechanism_blast_overpressure_kpa;
+            component_event.blast_impulse_kpa_ms = row.mechanism_blast_impulse_kpa_ms;
+            component_event.blast_scaled_distance_m_kg13 =
+                row.mechanism_blast_scaled_distance_m_kg13;
+            component_event.rod_cut_margin = row.mechanism_rod_cut_margin;
+            component_event.surface_incidence_cos = row.mechanism_surface_incidence_cos;
+            component_event.load_source = row.direct_hit
+                ? "direct_component_hit"
+                : "spatial_component_projection";
+            (void)record_component_load_event({
+                .munition_entity_id = munition_entity_id,
+                .target_id = target_id,
+                .chain_id = chain_id,
+                .parent_event_id = effects_event_id,
+                .event = std::move(component_event),
+            });
+        }
     }
 
     recent_engagement_events_.effects_events.push_back(std::move(effects));

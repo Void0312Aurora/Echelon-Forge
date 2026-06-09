@@ -470,6 +470,101 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         self.assertEqual(component_rows[0]["component_system"], "flight_control")
         self.assertEqual(component_rows[0]["component_load_source"], "direct_component_hit")
 
+    def test_standard_warhead_spatial_and_component_events_only_suppress_same_chain_effects(self) -> None:
+        events = _dummy_lethality_events()
+        events.warhead_mechanism_events = [_standard_warhead_event()]
+        events.spatial_coverage_events = [_standard_spatial_event()]
+        events.component_load_events = [_standard_component_load_event()]
+        events.effects_events.append(
+            SimpleNamespace(
+                event_id=111,
+                munition=_entity(501),
+                target=_entity(200),
+                miss_distance_m=18.0,
+                nearest_approach_time_s=5.0,
+                detonation_local_forward_m=3.0,
+                detonation_local_right_m=4.0,
+                detonation_local_up_m=5.0,
+                fuze_type="proximity",
+                direct_hitbox_intersection=False,
+                effect_family="blast_fragmentation",
+                warhead_mass_kg=10.0,
+                warhead_lethal_radius_m=30.0,
+                mechanism_fragment_energy_j=480.0,
+                mechanism_fragment_areal_density_per_m2=11.0,
+                mechanism_blast_overpressure_kpa=12.0,
+                mechanism_blast_impulse_kpa_ms=25.0,
+                mechanism_blast_scaled_distance_m_kg13=3.2,
+                mechanism_rod_cut_margin=0.0,
+                mechanism_penetration_margin=0.2,
+                mechanism_surface_incidence_cos=0.6,
+                projected_hitbox_count=2,
+                warhead_spatial_sample_count=180,
+                warhead_spatial_hit_estimate=0.8,
+                warhead_spatial_hit_fraction=0.004,
+                warhead_spatial_energy_scale=0.5,
+                warhead_spatial_pattern_scale=0.9,
+                component_hit_count=3,
+                component_mechanism_load_rows=[],
+            )
+        )
+        events.diagnostics_traces.append(
+            SimpleNamespace(
+                chain_id=302,
+                launch_event_id=302,
+                effects_event_id=111,
+                damage_report_id=0,
+                munition=_entity(501),
+            )
+        )
+
+        rows = probe._lethality_chain_rows(
+            episode=7,
+            step=12,
+            sim_time_s=4.5,
+            engagement_events=events,
+        )
+
+        standard_kind_by_stage = {
+            "warhead_mechanism": "WarheadMechanismEvent",
+            "spatial_coverage": "SpatialCoverageEvent",
+            "component_load": "ComponentLoadEvent",
+        }
+        for stage in ("warhead_mechanism", "spatial_coverage", "component_load"):
+            stage_rows = [row for row in rows if row["stage"] == stage]
+            self.assertEqual(
+                [(row["chain_id"], row["source_event_kind"]) for row in stage_rows],
+                [(301, standard_kind_by_stage[stage]), (302, "EffectsEvent")],
+            )
+            self.assertFalse(
+                any(
+                    row["chain_id"] == 301 and row["source_event_kind"] == "EffectsEvent"
+                    for row in stage_rows
+                )
+            )
+
+        warhead_302 = next(
+            row
+            for row in rows
+            if row["stage"] == "warhead_mechanism" and row["chain_id"] == 302
+        )
+        spatial_302 = next(
+            row
+            for row in rows
+            if row["stage"] == "spatial_coverage" and row["chain_id"] == 302
+        )
+        component_302 = next(
+            row
+            for row in rows
+            if row["stage"] == "component_load" and row["chain_id"] == 302
+        )
+        self.assertEqual(warhead_302["source_event_kind"], "EffectsEvent")
+        self.assertAlmostEqual(warhead_302["fragment_density_per_m2"], 11.0, places=6)
+        self.assertEqual(spatial_302["source_event_kind"], "EffectsEvent")
+        self.assertEqual(spatial_302["projected_hitbox_count"], 2)
+        self.assertEqual(component_302["source_event_kind"], "EffectsEvent")
+        self.assertEqual(component_302["component_hit_count"], 3)
+
     def test_run_probe_payload_and_chain_csv_include_lethality_chain_rows(self) -> None:
         class DummyInstrumentState:
             ias = 180.0
