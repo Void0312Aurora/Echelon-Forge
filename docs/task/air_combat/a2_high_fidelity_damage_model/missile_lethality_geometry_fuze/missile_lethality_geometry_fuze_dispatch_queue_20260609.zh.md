@@ -1,6 +1,6 @@
 # A2 MLF-2 派发队列
 
-状态：`2026-06-09` active dispatch queue；`MLF-2B`、`MLF-2C` 和 `MLF-2D` 已验收，下一步应派发 `MLF-2E-X1` 诊断投影路径审计。
+状态：`2026-06-09` active dispatch queue；`MLF-2B`、`MLF-2C`、`MLF-2D` 和 `MLF-2E` 已验收，下一步应派发 `MLF-2F-I1` runtime handoff gate 审计。
 
 英文辅文：[missile_lethality_geometry_fuze_dispatch_queue_20260609.md](missile_lethality_geometry_fuze_dispatch_queue_20260609.md)
 
@@ -20,15 +20,15 @@
 | `MLF-2C-W1` | `MLF-2C NearestApproachEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/components/combat/weapon.h`；`src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.h`；`src/core/engine/simulation_kernel_engagement_event_store.cpp`；`src/core/engine/simulation_kernel_weapon_release_service.cpp`；`src/interfaces/python/bindings_core.cpp`；`src/systems/combat/damage_system.h`；相关 geometry/fuze tests | 写入最近接近事件，未起爆也能记录最近点和原因；最近点时间取自最近点刷新时刻。 | accepted |
 | `MLF-2D-X1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only writer-path audit; no runtime/contract/test edits | 找出 live missile lifecycle 中写入 `FuzeEvaluationEvent` 的最小 producer 路径。 | accepted |
 | `MLF-2D-W1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.h`；`src/core/engine/simulation_kernel_engagement_event_store.cpp`；`src/systems/combat/damage_system.h`；相关 geometry/fuze tests | 写入解保、触发、未触发、延迟和失败原因。 | accepted |
-| `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | next diagnostics auditor | read-only diagnostics/probe path audit; no runtime edits | 找出 process probe/诊断导出消费最近接近和引信评估事件的最小路径。 | ready |
-| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | future diagnostics worker | diagnostics probe/tests/status evidence | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | blocked until 2E-X1 accepted |
-| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | future integration worker | weapon lifecycle/effects invocation guard/tests | 起爆才进入效果模型；未触发路径有事件、有原因、无效果。 | blocked until 2C/2D/2E pass |
+| `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only diagnostics/probe path audit; no runtime edits | 找出 process probe/诊断导出消费最近接近和引信评估事件的最小路径。 | accepted |
+| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py` | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | accepted |
+| `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | future integration auditor | read-only weapon lifecycle/effects invocation audit; no runtime edits | 审计起爆才进入效果模型、未触发路径有事件有原因无效果的最小 gate。 | ready |
 
 ## 当前派发建议
 
-当前没有运行中的派发包。`MLF-2D-W1` 已验收；下一包应为 `MLF-2E-X1`，只读审计诊断导出路径。
+当前没有运行中的派发包。`MLF-2E-W1` 已验收；下一包应为 `MLF-2F-I1`，只读审计 runtime handoff gate。
 
-`MLF-2E-X1` 不改 runtime，不进入战斗部效果，不把诊断输出当成击毁结论。
+`MLF-2F-I1` 不改 runtime，不进入战斗部效果，不把 gate 审计当成击毁结论。
 
 ## 已返回派发包记录
 
@@ -90,6 +90,25 @@ Worker 返回 `pass`；主线程复验通过。
 - 分支覆盖：`miss_outside_trigger_radius`、`fuze_no_terminal_track`、`fuze_no_detonation`、`fuze_armed` 各写一条引信评估事件；延迟起爆后续 damage application 不重复写第二条。
 - 主线程复验：`py_compile` 通过；`cmake --build build-workshop --target ef_py -j2` 通过；4 个导弹几何/引信聚焦 pytest 通过；`tests/runtime/engagement/test_live_engagement_event_capture.py -q` 7 个测试通过；相关 diff check 通过。
 - 限制：timed fuze evaluation 仍 held；max-flight-time 过期仍缺 recorder access；诊断 probe 尚未消费 `FuzeEvaluationEvent`。
+
+### MLF-2E-X1
+
+Worker 返回 `pass`，未修改文件。
+
+- 现状：`tools/diagnostics/air_combat_stage0_process_probe.py` 已有 `nearest_approach` 和 `fuze` 诊断行，但此前主要从 `EffectsEvent` 投影；无 `EffectsEvent` 的未触发/近失路径不能完整读出。
+- 缺口：probe 尚未消费 `nearest_approach_events` 和 `fuze_evaluation_events`。
+- 推荐实现：标准事件优先，旧 `EffectsEvent` 投影只在同一 chain/munition 缺少标准 nearest/fuze 行时作为回退。
+- 限制：不改 runtime 物理、不改效果模型、不改 reward、不推断击毁/坠毁/Pk。
+
+### MLF-2E-W1
+
+主线程实现并验收。
+
+- 触碰文件：`tools/diagnostics/air_combat_stage0_process_probe.py`、`tests/diagnostics/test_air_combat_process_probe.py`。
+- 实现内容：`_lethality_chain_rows()` 优先投影 `NearestApproachEvent` / `FuzeEvaluationEvent`；旧 `EffectsEvent` nearest/fuze 投影只作为同一 chain/munition 缺省回退；新增诊断字段包括 `closure_mps`、`aspect_bucket`、`fuze_armed`、`fuze_triggered`、`fuze_failure_reason`、`fuze_reliability`、`fuze_sample` 和接触证据。
+- 测试覆盖：标准事件-only 未起爆路径；标准事件存在时抑制旧效果事件 nearest/fuze 重复投影；既有 fallback 和 CSV 输出保持。
+- 主线程复验：`py_compile` 通过；`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q` 17 个测试通过。
+- 限制：platform/lifecycle 仍来自 `DamageReport` 投影；未实现 runtime handoff gate；不改变 reward 或效果模型。
 
 ## Worker Packet 合同
 

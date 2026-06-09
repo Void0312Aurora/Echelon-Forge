@@ -119,7 +119,20 @@ LETHALITY_CHAIN_ROW_FIELDS = (
     "local_forward_m",
     "local_right_m",
     "local_up_m",
+    "closure_mps",
+    "aspect_bucket",
     "fuze_type",
+    "fuze_armed",
+    "fuze_triggered",
+    "fuze_failure_reason",
+    "fuze_delay_s",
+    "fuze_reliability",
+    "fuze_sample",
+    "fuze_trigger_radius_m",
+    "contact_surface_distance_m",
+    "contact_penetration_depth_m",
+    "contact_surface_tolerance_m",
+    "contact_inside_hitbox",
     "direct_hitbox_intersection",
     "projected_hitbox_count",
     "component_hit_count",
@@ -238,7 +251,20 @@ def _lethality_base_row(
         "local_forward_m": float("nan"),
         "local_right_m": float("nan"),
         "local_up_m": float("nan"),
+        "closure_mps": float("nan"),
+        "aspect_bucket": "",
         "fuze_type": "",
+        "fuze_armed": 0,
+        "fuze_triggered": 0,
+        "fuze_failure_reason": "",
+        "fuze_delay_s": float("nan"),
+        "fuze_reliability": float("nan"),
+        "fuze_sample": float("nan"),
+        "fuze_trigger_radius_m": float("nan"),
+        "contact_surface_distance_m": float("nan"),
+        "contact_penetration_depth_m": float("nan"),
+        "contact_surface_tolerance_m": float("nan"),
+        "contact_inside_hitbox": 0,
         "direct_hitbox_intersection": 0,
         "projected_hitbox_count": 0,
         "component_hit_count": 0,
@@ -251,6 +277,36 @@ def _lethality_base_row(
         "loss_state": "",
     }
     return row
+
+
+def _lethality_header_base_kwargs(
+    *,
+    episode: int,
+    step: int,
+    sim_time_s: float,
+    event: Any,
+    stage: str,
+    source_event_kind: str,
+) -> dict[str, Any]:
+    header = getattr(event, "header", None)
+    event_id = _event_id(header, "event_id")
+    chain_id = _event_id(header, "chain_id") or event_id
+    return {
+        "episode": episode,
+        "step": step,
+        "sim_time_s": sim_time_s,
+        "chain_id": chain_id,
+        "event_id": event_id,
+        "parent_event_id": _event_id(header, "parent_event_id"),
+        "stage": stage,
+        "source_event_kind": source_event_kind,
+        "source_event_id": event_id,
+        "munition_id": _entity_id(getattr(header, "munition", None)),
+        "target_id": _entity_id(getattr(header, "target", None)),
+        "evidence_level": str(getattr(header, "evidence_level", "") or "uncalibrated"),
+        "reason": str(getattr(header, "reason", "") or ""),
+        "status": str(getattr(header, "status", "") or "observed"),
+    }
 
 
 def _lethality_chain_rows(
@@ -267,6 +323,75 @@ def _lethality_chain_rows(
         if _event_id(effect, "event_id") > 0
     }
     rows: list[dict[str, Any]] = []
+    standard_nearest_keys: set[tuple[int, int]] = set()
+    standard_fuze_keys: set[tuple[int, int]] = set()
+
+    for nearest_event in list(getattr(engagement_events, "nearest_approach_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=nearest_event,
+            stage="nearest_approach",
+            source_event_kind="NearestApproachEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "miss_distance_m": _finite_float(getattr(nearest_event, "miss_distance_m", float("nan"))),
+                "nearest_approach_time_s": _finite_float(
+                    getattr(nearest_event, "nearest_approach_time_s", float("nan"))
+                ),
+                "local_forward_m": _finite_float(getattr(nearest_event, "local_forward_m", float("nan"))),
+                "local_right_m": _finite_float(getattr(nearest_event, "local_right_m", float("nan"))),
+                "local_up_m": _finite_float(getattr(nearest_event, "local_up_m", float("nan"))),
+                "closure_mps": _finite_float(getattr(nearest_event, "closure_mps", float("nan"))),
+                "aspect_bucket": str(getattr(nearest_event, "aspect_bucket", "") or ""),
+            }
+        )
+        rows.append(row)
+        standard_nearest_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
+
+    for fuze_event in list(getattr(engagement_events, "fuze_evaluation_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=fuze_event,
+            stage="fuze",
+            source_event_kind="FuzeEvaluationEvent",
+        )
+        failure_reason = str(getattr(fuze_event, "failure_reason", "") or "")
+        if not base_kwargs["reason"]:
+            base_kwargs["reason"] = failure_reason
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "fuze_type": str(getattr(fuze_event, "fuze_type", "") or ""),
+                "fuze_armed": int(bool(getattr(fuze_event, "armed", False))),
+                "fuze_triggered": int(bool(getattr(fuze_event, "triggered", False))),
+                "fuze_failure_reason": failure_reason,
+                "fuze_delay_s": _finite_float(getattr(fuze_event, "delay_s", float("nan"))),
+                "fuze_reliability": _finite_float(getattr(fuze_event, "reliability", float("nan"))),
+                "fuze_sample": _finite_float(getattr(fuze_event, "sample", float("nan"))),
+                "fuze_trigger_radius_m": _finite_float(getattr(fuze_event, "trigger_radius_m", float("nan"))),
+                "contact_surface_distance_m": _finite_float(
+                    getattr(fuze_event, "contact_surface_distance_m", float("nan"))
+                ),
+                "contact_penetration_depth_m": _finite_float(
+                    getattr(fuze_event, "contact_penetration_depth_m", float("nan"))
+                ),
+                "contact_surface_tolerance_m": _finite_float(
+                    getattr(fuze_event, "contact_surface_tolerance_m", float("nan"))
+                ),
+                "contact_inside_hitbox": int(bool(getattr(fuze_event, "contact_inside_hitbox", False))),
+                "direct_hitbox_intersection": int(
+                    bool(getattr(fuze_event, "direct_hitbox_intersection", False))
+                ),
+            }
+        )
+        rows.append(row)
+        standard_fuze_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
 
     for effect in list(getattr(engagement_events, "effects_events", []) or []):
         effect_id = _event_id(effect, "event_id")
@@ -291,29 +416,33 @@ def _lethality_chain_rows(
             "evidence_level": evidence_level,
             "reason": "transitional_effects_event_projection",
         }
+        fallback_key = (int(chain_id), int(munition_id))
 
-        nearest = _lethality_base_row(stage="nearest_approach", **base_kwargs)
-        nearest.update(
-            {
-                "miss_distance_m": _finite_float(getattr(effect, "miss_distance_m", float("nan"))),
-                "nearest_approach_time_s": _finite_float(
-                    getattr(effect, "nearest_approach_time_s", float("nan"))
-                ),
-                "local_forward_m": _finite_float(getattr(effect, "detonation_local_forward_m", float("nan"))),
-                "local_right_m": _finite_float(getattr(effect, "detonation_local_right_m", float("nan"))),
-                "local_up_m": _finite_float(getattr(effect, "detonation_local_up_m", float("nan"))),
-            }
-        )
-        rows.append(nearest)
+        if fallback_key not in standard_nearest_keys:
+            nearest = _lethality_base_row(stage="nearest_approach", **base_kwargs)
+            nearest.update(
+                {
+                    "miss_distance_m": _finite_float(getattr(effect, "miss_distance_m", float("nan"))),
+                    "nearest_approach_time_s": _finite_float(
+                        getattr(effect, "nearest_approach_time_s", float("nan"))
+                    ),
+                    "local_forward_m": _finite_float(getattr(effect, "detonation_local_forward_m", float("nan"))),
+                    "local_right_m": _finite_float(getattr(effect, "detonation_local_right_m", float("nan"))),
+                    "local_up_m": _finite_float(getattr(effect, "detonation_local_up_m", float("nan"))),
+                    "closure_mps": _finite_float(getattr(effect, "closure_mps", float("nan"))),
+                }
+            )
+            rows.append(nearest)
 
-        fuze = _lethality_base_row(stage="fuze", **base_kwargs)
-        fuze.update(
-            {
-                "fuze_type": str(getattr(effect, "fuze_type", "") or ""),
-                "direct_hitbox_intersection": int(bool(getattr(effect, "direct_hitbox_intersection", False))),
-            }
-        )
-        rows.append(fuze)
+        if fallback_key not in standard_fuze_keys:
+            fuze = _lethality_base_row(stage="fuze", **base_kwargs)
+            fuze.update(
+                {
+                    "fuze_type": str(getattr(effect, "fuze_type", "") or ""),
+                    "direct_hitbox_intersection": int(bool(getattr(effect, "direct_hitbox_intersection", False))),
+                }
+            )
+            rows.append(fuze)
 
         spatial = _lethality_base_row(stage="spatial_coverage", **base_kwargs)
         spatial.update({"projected_hitbox_count": int(getattr(effect, "projected_hitbox_count", 0) or 0)})
@@ -442,7 +571,12 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         "lethality_chain_local_right_m": local[1],
         "lethality_chain_local_up_m": local[2],
         "lethality_chain_local_norm_m": local_norm,
+        "lethality_chain_closure_mps": _finite_float(nearest.get("closure_mps", float("nan"))),
+        "lethality_chain_aspect_bucket": str(nearest.get("aspect_bucket", "") or ""),
         "lethality_chain_fuze_type": str(fuze.get("fuze_type", "") or ""),
+        "lethality_chain_fuze_armed": int(fuze.get("fuze_armed", 0) or 0),
+        "lethality_chain_fuze_triggered": int(fuze.get("fuze_triggered", 0) or 0),
+        "lethality_chain_fuze_failure_reason": str(fuze.get("fuze_failure_reason", "") or ""),
         "lethality_chain_direct_hitbox_intersection": int(fuze.get("direct_hitbox_intersection", 0) or 0),
         "lethality_chain_projected_hitbox_count": int(spatial.get("projected_hitbox_count", 0) or 0),
         "lethality_chain_component_hit_count": int(component.get("component_hit_count", 0) or 0),
@@ -1766,7 +1900,14 @@ def _summarize_episode(
         ),
         "lethality_chain_local_up_m": float(chain_snapshot.get("lethality_chain_local_up_m", float("nan"))),
         "lethality_chain_local_norm_m": float(chain_snapshot.get("lethality_chain_local_norm_m", float("nan"))),
+        "lethality_chain_closure_mps": float(chain_snapshot.get("lethality_chain_closure_mps", float("nan"))),
+        "lethality_chain_aspect_bucket": str(chain_snapshot.get("lethality_chain_aspect_bucket", "")),
         "lethality_chain_fuze_type": str(chain_snapshot.get("lethality_chain_fuze_type", "")),
+        "lethality_chain_fuze_armed": bool(int(chain_snapshot.get("lethality_chain_fuze_armed", 0) or 0)),
+        "lethality_chain_fuze_triggered": bool(int(chain_snapshot.get("lethality_chain_fuze_triggered", 0) or 0)),
+        "lethality_chain_fuze_failure_reason": str(
+            chain_snapshot.get("lethality_chain_fuze_failure_reason", "")
+        ),
         "lethality_chain_direct_hitbox_intersection": bool(
             int(chain_snapshot.get("lethality_chain_direct_hitbox_intersection", 0) or 0)
         ),

@@ -1,6 +1,6 @@
 # A2 MLF-2 Missile Approach Geometry And Fuze Evaluation
 
-Status: `2026-06-09` MLF-2D accepted / MLF-2E next. MLF-2B controlled geometry, MLF-2C nearest-approach events, and MLF-2D fuze-evaluation events are accepted. Diagnostics projection is next.
+Status: `2026-06-09` MLF-2E accepted / MLF-2F next. MLF-2B controlled geometry, MLF-2C nearest-approach events, MLF-2D fuze-evaluation events, and MLF-2E diagnostics projection are accepted. Runtime handoff gate audit is next.
 
 Language:
 
@@ -31,7 +31,7 @@ This subproject does not answer whether an AIM-120C would shred an MQ-9, and it 
 | --- | --- | --- | --- |
 | MLF-1 kill-chain contract | accepted / archived | MLF-1 evidence package is archived | Defines chain and consumer boundaries only; no geometry/fuze physics |
 | Current proximity behavior | active legacy surface | Weapon lifecycle and effects events already carry proximity/direct-hit fields | Still does not fully explain no-trigger, delay, failure, or contact/proximity differences |
-| MLF-2 subproject | active / partial runtime accepted | This README, task clusters, status, dispatch queue, and `MLF-2B`/`MLF-2C`/`MLF-2D` focused tests | Nearest-approach and fuze-evaluation events are accepted; diagnostics projection is not accepted yet |
+| MLF-2 subproject | active / partial runtime accepted | This README, task clusters, status, dispatch queue, and `MLF-2B`/`MLF-2C`/`MLF-2D`/`MLF-2E` focused tests | Nearest-approach, fuze-evaluation, and diagnostics projection are accepted; runtime handoff gate is not accepted yet |
 
 ## Scope
 
@@ -59,8 +59,8 @@ Out of scope:
 | `MLF-2B Geometry Fixtures` | Design controlled approach scenarios | MLF-2A | Tests can vary range, aspect, speed, and attitude | pass |
 | `MLF-2C Nearest Approach` | Write nearest-approach events | MLF-2B | No-detonation cases still record nearest approach and reason | pass |
 | `MLF-2D Fuze Evaluation` | Write fuze-evaluation events | MLF-2C | Contact, proximity, not-armed, missed-window, delay, and failure are separate | pass |
-| `MLF-2E Diagnostics` | Export readable diagnostics | MLF-2C/2D | Probe can emit geometry and fuze rows per munition | planned / ready for audit |
-| `MLF-2F Runtime Gate` | Wire into the existing launch/effects chain | MLF-2D/2E | Detonation state reaches later effects model; no-trigger cases do not silently disappear | planned |
+| `MLF-2E Diagnostics` | Export readable diagnostics | MLF-2C/2D | Probe can emit geometry and fuze rows per munition | pass |
+| `MLF-2F Runtime Gate` | Wire into the existing launch/effects chain | MLF-2D/2E | Detonation state reaches later effects model; no-trigger cases do not silently disappear | planned / ready for audit |
 | `MLF-2G Closure` | Accept and sync parent navigation | MLF-2B-F pass | Current status, residuals, and archive boundary agree | planned |
 
 ## Task Clusters
@@ -76,15 +76,16 @@ Current evidence is partial runtime evidence:
 - This README fixes goals and boundaries.
 - The task-cluster document limits the work packages.
 - The current-status document records that MLF-2B and MLF-2C are accepted.
-- The dispatch queue records accepted MLF-2D and ready `MLF-2E-X1`.
+- The dispatch queue records accepted MLF-2E and ready `MLF-2F-I1`.
 - Controlled geometry tests can vary range, closure, aspect, and altitude offset.
 - Nearest-approach events are live-written; no-detonation and miss paths record nearest point and reason.
 - Nearest-point time now comes from the nearest-point update moment instead of the later terminal decision frame.
 - Fuze-evaluation events now record armed/triggered, no-trigger, and failure reasons, and link to the same munition's nearest-approach event.
+- The diagnostics probe prioritizes standard nearest-approach and fuze-evaluation events; old `EffectsEvent` projection is fallback only.
 
 Later implementation evidence needs at least:
 
-- Diagnostic coverage for `FuzeEvaluationEvent`.
+- Runtime handoff gate coverage: only detonation enters the effects model, and no-trigger paths have event, reason, and no effects.
 - Controlled geometry tests should still fill delay and held-path coverage.
 - Process-probe output that reports no-detonation reasons.
 - No expansion of old `last_effect_*` fields into long-term interfaces.
@@ -102,7 +103,7 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- Next step is to dispatch `MLF-2E-X1` to audit diagnostics projection scope.
+- Next step is to dispatch `MLF-2F-I1` to audit runtime handoff gate scope.
 - `MLF-2E` should wait until `MLF-2D` field names freeze.
 - Fragmentation, continuous rod, structural breakup, debris/wreck, and Pk remain MLF-3+ work.
 - Specific AIM-120C/MQ-9 conclusions should wait until MLF-2 and at least one later warhead-effect model pass.

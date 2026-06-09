@@ -34,6 +34,88 @@ def _entity(entity_id: int) -> SimpleNamespace:
     return SimpleNamespace(entity_id=int(entity_id), world_index=0)
 
 
+def _header(
+    *,
+    chain_id: int,
+    event_id: int,
+    parent_event_id: int,
+    stage: str,
+    status: str,
+    reason: str,
+    munition_id: int = 501,
+    target_id: int = 200,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        schema_version=1,
+        chain_id=int(chain_id),
+        event_id=int(event_id),
+        parent_event_id=int(parent_event_id),
+        stage=str(stage),
+        status=str(status),
+        reason=str(reason),
+        source_time_s=4.25,
+        source_frame=0,
+        munition=_entity(munition_id),
+        shooter=_entity(100),
+        target=_entity(target_id),
+        producer_node_id="test",
+        fidelity_mode="runtime",
+        evidence_level="observed_runtime",
+        confidence=1.0,
+    )
+
+
+def _standard_nearest_event(reason: str = "fuze_no_detonation") -> SimpleNamespace:
+    return SimpleNamespace(
+        header=_header(
+            chain_id=301,
+            event_id=102,
+            parent_event_id=301,
+            stage="nearest_approach",
+            status="observed",
+            reason=reason,
+        ),
+        nearest_approach_time_s=4.25,
+        miss_distance_m=12.5,
+        local_forward_m=1.0,
+        local_right_m=2.0,
+        local_up_m=2.0,
+        closure_mps=725.0,
+        aspect_bucket="beam",
+    )
+
+
+def _standard_fuze_event(
+    *,
+    reason: str = "fuze_no_detonation",
+    armed: bool = True,
+    triggered: bool = False,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        header=_header(
+            chain_id=301,
+            event_id=103,
+            parent_event_id=102,
+            stage="fuze_evaluation",
+            status="evaluated",
+            reason=reason,
+        ),
+        fuze_type="radar_proximity",
+        armed=armed,
+        triggered=triggered,
+        failure_reason="" if triggered else reason,
+        delay_s=0.0,
+        reliability=0.0 if not triggered else 0.98,
+        sample=0.42,
+        trigger_radius_m=35.0,
+        contact_surface_distance_m=0.0,
+        contact_penetration_depth_m=0.0,
+        contact_surface_tolerance_m=0.0,
+        contact_inside_hitbox=False,
+        direct_hitbox_intersection=False,
+    )
+
+
 def _dummy_lethality_events() -> SimpleNamespace:
     effect = SimpleNamespace(
         event_id=101,
@@ -172,6 +254,83 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         lifecycle = next(row for row in rows if row["stage"] == "lifecycle")
         self.assertEqual(lifecycle["loss_state"], "lost")
         self.assertEqual(lifecycle["destroyed"], 1)
+
+    def test_lethality_chain_rows_use_standard_geometry_and_fuze_events_without_effects(self) -> None:
+        rows = probe._lethality_chain_rows(
+            episode=7,
+            step=12,
+            sim_time_s=4.5,
+            engagement_events=SimpleNamespace(
+                nearest_approach_events=[_standard_nearest_event()],
+                fuze_evaluation_events=[_standard_fuze_event()],
+                effects_events=[],
+                damage_reports=[],
+                diagnostics_traces=[],
+            ),
+        )
+
+        self.assertEqual([row["stage"] for row in rows], ["nearest_approach", "fuze"])
+        for row in rows:
+            for field in probe.LETHALITY_CHAIN_ROW_FIELDS:
+                self.assertIn(field, row)
+            self.assertFalse(any(str(key).startswith("last_effect_") for key in row))
+            self.assertEqual(row["chain_id"], 301)
+            self.assertEqual(row["munition_id"], 501)
+            self.assertEqual(row["target_id"], 200)
+            self.assertEqual(row["evidence_level"], "observed_runtime")
+
+        nearest = rows[0]
+        self.assertEqual(nearest["source_event_kind"], "NearestApproachEvent")
+        self.assertEqual(nearest["source_event_id"], 102)
+        self.assertEqual(nearest["status"], "observed")
+        self.assertEqual(nearest["reason"], "fuze_no_detonation")
+        self.assertAlmostEqual(nearest["miss_distance_m"], 12.5, places=6)
+        self.assertAlmostEqual(nearest["closure_mps"], 725.0, places=6)
+        self.assertEqual(nearest["aspect_bucket"], "beam")
+
+        fuze = rows[1]
+        self.assertEqual(fuze["source_event_kind"], "FuzeEvaluationEvent")
+        self.assertEqual(fuze["source_event_id"], 103)
+        self.assertEqual(fuze["parent_event_id"], 102)
+        self.assertEqual(fuze["status"], "evaluated")
+        self.assertEqual(fuze["reason"], "fuze_no_detonation")
+        self.assertEqual(fuze["fuze_type"], "radar_proximity")
+        self.assertEqual(fuze["fuze_armed"], 1)
+        self.assertEqual(fuze["fuze_triggered"], 0)
+        self.assertEqual(fuze["fuze_failure_reason"], "fuze_no_detonation")
+        self.assertAlmostEqual(fuze["fuze_reliability"], 0.0, places=6)
+        self.assertAlmostEqual(fuze["fuze_sample"], 0.42, places=6)
+        self.assertAlmostEqual(fuze["fuze_trigger_radius_m"], 35.0, places=6)
+
+        snapshot = probe._lethality_chain_snapshot_columns(rows)
+        self.assertAlmostEqual(snapshot["lethality_chain_closure_mps"], 725.0, places=6)
+        self.assertEqual(snapshot["lethality_chain_aspect_bucket"], "beam")
+        self.assertEqual(snapshot["lethality_chain_fuze_armed"], 1)
+        self.assertEqual(snapshot["lethality_chain_fuze_triggered"], 0)
+        self.assertEqual(snapshot["lethality_chain_fuze_failure_reason"], "fuze_no_detonation")
+
+    def test_standard_geometry_and_fuze_events_suppress_effects_fallback_rows(self) -> None:
+        events = _dummy_lethality_events()
+        events.nearest_approach_events = [_standard_nearest_event(reason="fuze_armed")]
+        events.fuze_evaluation_events = [_standard_fuze_event(reason="fuze_armed", triggered=True)]
+
+        rows = probe._lethality_chain_rows(
+            episode=7,
+            step=12,
+            sim_time_s=4.5,
+            engagement_events=events,
+        )
+
+        self.assertEqual([row["stage"] for row in rows], list(probe.LETHALITY_CHAIN_STAGES))
+        nearest_rows = [row for row in rows if row["stage"] == "nearest_approach"]
+        fuze_rows = [row for row in rows if row["stage"] == "fuze"]
+        self.assertEqual(len(nearest_rows), 1)
+        self.assertEqual(nearest_rows[0]["source_event_kind"], "NearestApproachEvent")
+        self.assertEqual(nearest_rows[0]["reason"], "fuze_armed")
+        self.assertEqual(len(fuze_rows), 1)
+        self.assertEqual(fuze_rows[0]["source_event_kind"], "FuzeEvaluationEvent")
+        self.assertEqual(fuze_rows[0]["fuze_triggered"], 1)
+        self.assertEqual(fuze_rows[0]["fuze_failure_reason"], "")
 
     def test_run_probe_payload_and_chain_csv_include_lethality_chain_rows(self) -> None:
         class DummyInstrumentState:
