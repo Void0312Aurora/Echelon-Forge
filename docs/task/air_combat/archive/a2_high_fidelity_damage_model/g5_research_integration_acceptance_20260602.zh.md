@@ -34,7 +34,7 @@ python tools/maintenance/a2_retained_manifest_integrity.py
 python tools/maintenance/a2_source_admission_audit.py --strict
 python tools/maintenance/a2_candidate_vps_bundle.py --output /tmp/a2_candidate_vps_bundle_g5_research_acceptance.json
 python -m pytest -q tests/architecture/test_a2_candidate_vps_bundle.py tests/architecture/test_a2_source_admission_audit.py tests/architecture/test_a2_retained_manifest_integrity.py
-python -m pytest -q tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/test_a2_blastfrag_signoff_intake_contract.py tests/architecture/test_a2_blastfrag_external_signoff_packet_template.py tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py tests/architecture/test_a2_blastfrag_signoff_intake_fixture_contract.py
+python -m pytest -q tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py
 rg -n "pk_authorit[y].*true|deterministic_fuze_authorit[y].*true|stock_descriptor_create[d].*true|replacement_allowe[d].*false" docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_*.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods
 git diff --check
 ```

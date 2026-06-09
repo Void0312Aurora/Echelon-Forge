@@ -166,9 +166,7 @@ git diff --check
 - RES-005 selected-case candidate packet tests：`6 passed`
 - RES-006 lineage/tolerance packet tests：`3 passed`
 - source-rights signoff request packet tests：`7 passed`
-- signoff intake contract tests：`5 passed`
-- external signoff packet template tests：`4 passed`
-- signoff intake fixture contract tests：`2 passed`
+- external signoff intake contracts tests：`11 passed`
 - signoff admission preflight tests：`4 passed`
 - retained mechanism admission regression tests：`22 passed`
 - retained mechanism admission focused suite：`50 passed`
@@ -184,7 +182,7 @@ git diff --check
 python -m pytest -q tests/architecture/test_a2_retained_manifest_integrity.py tests/architecture/test_a2_candidate_vps_bundle.py tests/architecture/test_a2_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
-python -m pytest -q tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py tests/architecture/test_a2_blastfrag_res006_beco_recalculation_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/test_a2_blastfrag_signoff_intake_fixture_contract.py tests/architecture/test_a2_blastfrag_signoff_intake_contract.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/test_a2_blastfrag_res006_beco_lineage_tolerance_review_packet.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_external_signoff_packet_template.py tests/architecture/test_a2_blastfrag_res006_beco_replacement_tolerance_admission_gate.py
+python -m pytest -q tests/architecture/test_a2_blastfrag_signoff_admission_preflight.py tests/architecture/test_a2_blastfrag_res006_beco_recalculation_admission_gate.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_candidate_packet.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/test_a2_blastfrag_source_rights_signoff_request_packet.py tests/architecture/test_a2_blastfrag_res006_beco_lineage_tolerance_review_packet.py tests/architecture/test_a2_blastfrag_res005_tp21_selected_case_admission_gate.py tests/architecture/test_a2_blastfrag_res006_beco_replacement_tolerance_admission_gate.py
 python tools/maintenance/a2_retained_manifest_integrity.py
 python tools/maintenance/a2_source_admission_audit.py --strict
 python tools/maintenance/a2_candidate_vps_bundle.py
