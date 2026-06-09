@@ -118,7 +118,7 @@ Entry:
 - Priority: `MovementCommand(use_stick_control=true)` (direct stick) takes precedence over `LaggedCommand` (autopilot targets).
 
 Entry:
-- `src/systems/physics/control_system.h`
+- `src/systems/air/control_system.h`
 
 ### 4.2 DefaultControlModel: Two Dynamics Paths
 

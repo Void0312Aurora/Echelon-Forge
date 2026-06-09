@@ -60,4 +60,4 @@ setup/type/capability evidence 与 aircraft/terrain ground-contact primitive。
 - `ef_py.SimulationKernel.set_action(...)`：归一化 autopilot 动作（turn/accel/climb）
 - `ef_py.SimulationKernel.set_stick_command(...)`：直接杆舵（roll/pitch/throttle/gear）
 
-更详细的“物理引擎基础清单”见：`docs/manual/physics_engine_inventory.md`。
+更详细的”物理引擎基础清单”见：[物理引擎基础清单](physics_engine_inventory.zh.md)。

@@ -97,6 +97,7 @@ SimulationKernel / WorldBatchRuntime
 边界入口：
 
 - [src/components/README.md](../../src/components/README.md)
+- [src/components/air/README.md](../../src/components/air/README.md)
 - [src/components/command/README.md](../../src/components/command/README.md)
 - [src/components/command/common/README.md](../../src/components/command/common/README.md)
 - [src/components/command/air/README.md](../../src/components/command/air/README.md)
@@ -126,6 +127,7 @@ SimulationKernel / WorldBatchRuntime
 
 - [src/systems/README.md](../../src/systems/README.md)
 - [src/systems/core/README.md](../../src/systems/core/README.md)
+- [src/systems/air/README.md](../../src/systems/air/README.md)
 - [src/systems/physics/README.md](../../src/systems/physics/README.md)
 - [src/systems/combat/README.md](../../src/systems/combat/README.md)
 - [src/systems/systems/README.md](../../src/systems/systems/README.md)
@@ -452,7 +454,7 @@ SimulationKernel / WorldBatchRuntime
 2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
 3. [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../src/core/mission/README.md)
-5. [tests/architecture/test_runtime_facade_layering.py](../../tests/architecture/test_runtime_facade_layering.py)
+5. [tests/architecture/runtime_facade/test_layering.py](../../tests/architecture/runtime_facade/test_layering.py)
 
 ## 11. 维护说明
 

@@ -114,7 +114,7 @@
 - 优先级：`MovementCommand(use_stick_control=true)`（直接杆舵）优先于 `LaggedCommand`（自动驾驶目标）。
 
 入口：
-- `src/systems/physics/control_system.h`
+- `src/systems/air/control_system.h`
 
 ### 4.2 DefaultControlModel：两条动力学路径
 
