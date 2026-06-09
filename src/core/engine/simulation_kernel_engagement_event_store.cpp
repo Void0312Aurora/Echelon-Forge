@@ -4,6 +4,7 @@
 #include "components/combat/health.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <utility>
@@ -133,6 +134,122 @@ std::uint64_t SimulationKernelEngagementEventStore::record_legacy_launch_event(
     return event_id;
 }
 
+std::uint64_t SimulationKernelEngagementEventStore::record_nearest_approach_event(
+    EngagementNearestApproachEventRecord record
+) {
+    const double event_time_s = std::isfinite(record.event.nearest_approach_time_s)
+        ? record.event.nearest_approach_time_s
+        : record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    std::uint64_t launch_event_id = 0;
+    if (record.munition_entity_id != 0) {
+        for (auto it = recent_engagement_events_.launch_events.rbegin();
+             it != recent_engagement_events_.launch_events.rend();
+             ++it) {
+            if (it->has_spawned_munition &&
+                it->spawned_munition.entity_id == record.munition_entity_id) {
+                launch_event_id = it->event_id;
+                break;
+            }
+        }
+    }
+
+    NearestApproachEvent event = std::move(record.event);
+    event.header.event_id = event_id;
+    event.header.chain_id = launch_event_id != 0 ? launch_event_id : event_id;
+    event.header.parent_event_id = launch_event_id;
+    event.header.stage = "nearest_approach";
+    if (event.header.status.empty() || event.header.status == "not_evaluated") {
+        event.header.status = "observed";
+    }
+    event.header.source_time_s = event_time_s;
+    event.header.munition = engagement_ref(record.munition_entity_id);
+    event.header.shooter = engagement_ref(record.shooter_id);
+    event.header.target = engagement_ref(record.target_id);
+    event.header.producer_node_id = "damage_system.proximity_fuze";
+    if (event.header.fidelity_mode.empty() || event.header.fidelity_mode == "unspecified") {
+        event.header.fidelity_mode = "runtime";
+    }
+    if (event.header.evidence_level.empty() || event.header.evidence_level == "uncalibrated") {
+        event.header.evidence_level = "observed_runtime";
+    }
+    if (event.header.confidence <= 0.0) {
+        event.header.confidence = 1.0;
+    }
+
+    recent_engagement_events_.nearest_approach_events.push_back(std::move(event));
+    while (recent_engagement_events_.nearest_approach_events.size() > kMaxRecentEngagementEvents) {
+        recent_engagement_events_.nearest_approach_events.erase(
+            recent_engagement_events_.nearest_approach_events.begin());
+    }
+    return event_id;
+}
+
+std::uint64_t SimulationKernelEngagementEventStore::record_fuze_evaluation_event(
+    EngagementFuzeEvaluationEventRecord record
+) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    std::uint64_t launch_event_id = 0;
+    if (record.munition_entity_id != 0) {
+        for (auto it = recent_engagement_events_.launch_events.rbegin();
+             it != recent_engagement_events_.launch_events.rend();
+             ++it) {
+            if (it->has_spawned_munition &&
+                it->spawned_munition.entity_id == record.munition_entity_id) {
+                launch_event_id = it->event_id;
+                break;
+            }
+        }
+    }
+
+    std::uint64_t nearest_event_id = 0;
+    if (record.munition_entity_id != 0) {
+        for (auto it = recent_engagement_events_.nearest_approach_events.rbegin();
+             it != recent_engagement_events_.nearest_approach_events.rend();
+             ++it) {
+            if (it->header.munition.entity_id == record.munition_entity_id) {
+                nearest_event_id = it->header.event_id;
+                break;
+            }
+        }
+    }
+
+    FuzeEvaluationEvent event = std::move(record.event);
+    event.header.event_id = event_id;
+    event.header.chain_id = launch_event_id != 0 ? launch_event_id : event_id;
+    event.header.parent_event_id = nearest_event_id != 0 ? nearest_event_id : launch_event_id;
+    event.header.stage = "fuze_evaluation";
+    if (event.header.status.empty() || event.header.status == "not_evaluated") {
+        event.header.status = "evaluated";
+    }
+    event.header.source_time_s = event_time_s;
+    event.header.munition = engagement_ref(record.munition_entity_id);
+    event.header.shooter = engagement_ref(record.shooter_id);
+    event.header.target = engagement_ref(record.target_id);
+    event.header.producer_node_id = "damage_system.proximity_fuze";
+    if (event.header.fidelity_mode.empty() || event.header.fidelity_mode == "unspecified") {
+        event.header.fidelity_mode = "runtime";
+    }
+    if (event.header.evidence_level.empty() || event.header.evidence_level == "uncalibrated") {
+        event.header.evidence_level = "observed_runtime";
+    }
+    if (event.header.confidence <= 0.0) {
+        event.header.confidence = event.triggered ? 1.0 : std::clamp(event.reliability, 0.0, 1.0);
+    }
+
+    recent_engagement_events_.fuze_evaluation_events.push_back(std::move(event));
+    while (recent_engagement_events_.fuze_evaluation_events.size() > kMaxRecentEngagementEvents) {
+        recent_engagement_events_.fuze_evaluation_events.erase(
+            recent_engagement_events_.fuze_evaluation_events.begin());
+    }
+    return event_id;
+}
+
 std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     EngagementEffectsDamageEventRecord record
 ) {
@@ -246,6 +363,18 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
         out.effects_events.end(),
         [](const EffectsEvent& lhs, const EffectsEvent& rhs) {
             return lhs.event_id < rhs.event_id;
+        });
+    std::sort(
+        out.nearest_approach_events.begin(),
+        out.nearest_approach_events.end(),
+        [](const NearestApproachEvent& lhs, const NearestApproachEvent& rhs) {
+            return lhs.header.event_id < rhs.header.event_id;
+        });
+    std::sort(
+        out.fuze_evaluation_events.begin(),
+        out.fuze_evaluation_events.end(),
+        [](const FuzeEvaluationEvent& lhs, const FuzeEvaluationEvent& rhs) {
+            return lhs.header.event_id < rhs.header.event_id;
         });
     std::sort(
         out.damage_reports.begin(),

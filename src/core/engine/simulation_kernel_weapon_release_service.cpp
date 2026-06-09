@@ -753,6 +753,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.fuze_profile = missile_fuze_profile;
     missile.rng_state = missile_seed;
     missile.proximity_min_dist_m = std::numeric_limits<double>::infinity();
+    missile.proximity_min_time_s = std::numeric_limits<double>::quiet_NaN();
     missile.proximity_last_dist_m = std::numeric_limits<double>::infinity();
     missile.proximity_min_local_forward_m = std::numeric_limits<double>::quiet_NaN();
     missile.proximity_min_local_right_m = std::numeric_limits<double>::quiet_NaN();

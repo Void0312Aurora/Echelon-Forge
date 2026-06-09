@@ -1094,6 +1094,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
                 out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
+                out["proximity_min_time_s"] = missile->proximity_min_time_s;
                 out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
                 out["proximity_min_local_forward_m"] = missile->proximity_min_local_forward_m;
                 out["proximity_min_local_right_m"] = missile->proximity_min_local_right_m;

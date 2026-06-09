@@ -21,6 +21,9 @@ from tests.runtime.air_combat.weapon_guidance_realism.default_effects_modulariza
 )
 from tests.runtime.air_combat.weapon_guidance_realism.edge_cases import BoundaryCaseRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.fuze import FuzeRuntimeMixin
+from tests.runtime.air_combat.weapon_guidance_realism.geometry_fixtures import (
+    GeometryFixtureRuntimeMixin,
+)
 from tests.runtime.air_combat.weapon_guidance_realism.launch_guidance import LaunchGuidanceRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.missile_dynamics import MissileDynamicsRuntimeMixin
 from tests.runtime.air_combat.weapon_guidance_realism.vulnerability_authority import VulnerabilityAuthorityRuntimeMixin
@@ -32,6 +35,7 @@ from tests.runtime.air_combat.weapon_guidance_realism.warhead_effects import War
 
 class WeaponGuidanceRealismGuardTests(
     LaunchGuidanceRuntimeMixin,
+    GeometryFixtureRuntimeMixin,
     FuzeRuntimeMixin,
     WarheadEffectsRuntimeMixin,
     A8Mq9Aim120ValidationRuntimeMixin,

@@ -217,10 +217,42 @@ class FuzeRuntimeMixin:
         self.assertTrue(sim.is_unit_active(red_id))
 
         events = sim.export_recent_engagement_events()
+        self.assertGreaterEqual(len(events.nearest_approach_events), 1)
+        self.assertGreaterEqual(len(events.fuze_evaluation_events), 1)
         self.assertGreaterEqual(len(events.effects_events), 1)
         self.assertGreaterEqual(len(events.damage_reports), 1)
+        nearest = events.nearest_approach_events[-1]
+        fuze = events.fuze_evaluation_events[-1]
         effects = events.effects_events[-1]
         report = events.damage_reports[-1]
+        self.assertEqual(str(nearest.header.stage), "nearest_approach")
+        self.assertEqual(str(nearest.header.status), "observed")
+        self.assertEqual(str(nearest.header.reason), "fuze_no_detonation")
+        self.assertEqual(int(nearest.header.munition.entity_id), missile_id)
+        self.assertEqual(int(nearest.header.target.entity_id), red_id)
+        self.assertAlmostEqual(
+            float(nearest.miss_distance_m),
+            float(result["proximity_min_dist_m"]),
+            delta=1.0e-6,
+        )
+        self.assertAlmostEqual(
+            float(nearest.nearest_approach_time_s),
+            float(effects.nearest_approach_time_s),
+            delta=sim.get_time_step() + 1.0e-6,
+        )
+        self.assertEqual(str(fuze.header.stage), "fuze_evaluation")
+        self.assertEqual(str(fuze.header.status), "evaluated")
+        self.assertEqual(str(fuze.header.reason), "fuze_no_detonation")
+        self.assertEqual(int(fuze.header.chain_id), int(nearest.header.chain_id))
+        self.assertEqual(int(fuze.header.parent_event_id), int(nearest.header.event_id))
+        self.assertEqual(int(fuze.header.munition.entity_id), missile_id)
+        self.assertEqual(int(fuze.header.target.entity_id), red_id)
+        self.assertTrue(bool(fuze.armed))
+        self.assertFalse(bool(fuze.triggered))
+        self.assertEqual(str(fuze.failure_reason), "fuze_no_detonation")
+        self.assertAlmostEqual(float(fuze.reliability), 0.0, delta=1.0e-6)
+        self.assertGreaterEqual(float(fuze.sample), 0.0)
+        self.assertLessEqual(float(fuze.sample), 1.0)
         self.assertEqual(str(effects.trigger_type), "proximity_fuze")
         self.assertEqual(str(effects.outcome_state), "fuze_no_detonation")
         self.assertLess(float(effects.miss_distance_m), 35.0)
@@ -323,7 +355,7 @@ class FuzeRuntimeMixin:
         self.assertEqual(str(effects.fuze_type), "radar_proximity")
 
     def test_contact_fuze_does_not_trigger_from_near_miss_radius(self) -> None:
-        def run_with_fuze(fuze_type: str) -> tuple[dict[str, float | bool], object]:
+        def run_with_fuze(fuze_type: str) -> tuple[dict[str, float | bool], object, int, int]:
             sim = _make_baseline_kernel()
             sim.set_time_step(0.02)
 
@@ -357,9 +389,11 @@ class FuzeRuntimeMixin:
                 red_id,
                 max_steps=3600,
             )
-            return result, sim.export_recent_engagement_events()
+            return result, sim.export_recent_engagement_events(), missile_id, red_id
 
-        proximity_result, proximity_events = run_with_fuze("radar_proximity")
+        proximity_result, proximity_events, _proximity_missile_id, _proximity_red_id = (
+            run_with_fuze("radar_proximity")
+        )
         self.assertFalse(bool(proximity_result["missile_active"]))
         self.assertLess(float(proximity_result["truth_min_dist_m"]), 35.0)
         self.assertGreaterEqual(len(proximity_events.effects_events), 1)
@@ -369,11 +403,27 @@ class FuzeRuntimeMixin:
         self.assertFalse(bool(proximity_effect.direct_hitbox_intersection))
         self.assertGreater(int(proximity_effect.projected_hitbox_count), 0)
 
-        contact_result, contact_events = run_with_fuze("contact")
+        contact_result, contact_events, contact_missile_id, contact_red_id = run_with_fuze("contact")
         self.assertFalse(bool(contact_result["missile_active"]))
         self.assertLess(float(contact_result["truth_min_dist_m"]), 35.0)
+        self.assertGreaterEqual(len(contact_events.nearest_approach_events), 1)
+        self.assertGreaterEqual(len(contact_events.fuze_evaluation_events), 1)
         self.assertEqual(len(contact_events.effects_events), 0)
         self.assertEqual(len(contact_events.damage_reports), 0)
+        contact_nearest = contact_events.nearest_approach_events[-1]
+        contact_fuze = contact_events.fuze_evaluation_events[-1]
+        self.assertEqual(str(contact_nearest.header.reason), "miss_outside_trigger_radius")
+        self.assertEqual(str(contact_fuze.header.stage), "fuze_evaluation")
+        self.assertEqual(str(contact_fuze.header.status), "evaluated")
+        self.assertEqual(str(contact_fuze.header.reason), "miss_outside_trigger_radius")
+        self.assertEqual(int(contact_fuze.header.chain_id), int(contact_nearest.header.chain_id))
+        self.assertEqual(int(contact_fuze.header.parent_event_id), int(contact_nearest.header.event_id))
+        self.assertEqual(int(contact_fuze.header.munition.entity_id), contact_missile_id)
+        self.assertEqual(int(contact_fuze.header.target.entity_id), contact_red_id)
+        self.assertFalse(bool(contact_fuze.armed))
+        self.assertFalse(bool(contact_fuze.triggered))
+        self.assertEqual(str(contact_fuze.failure_reason), "miss_outside_trigger_radius")
+        self.assertEqual(str(contact_fuze.fuze_type), "contact")
 
     def test_contact_fuze_records_surface_and_penetration_evidence(self) -> None:
         sim = _make_baseline_kernel()

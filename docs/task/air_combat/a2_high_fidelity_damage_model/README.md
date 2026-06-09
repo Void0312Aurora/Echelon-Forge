@@ -18,8 +18,12 @@ Current A2 follow-ons:
   bounded training feedback for damage consequences rather than a single kill
   flag.
 - [missile_lethality_model_foundation/README.md](missile_lethality_model_foundation/README.md):
-  archived MLF-1 chain-contract foundation. It does not carry MLF-2 work; the
-  next geometry/fuze phase must be created as a separate subproject.
+  archived MLF-1 chain-contract foundation, retained as field and boundary
+  evidence for later stages.
+- [missile_lethality_geometry_fuze/README.md](missile_lethality_geometry_fuze/README.md):
+  current MLF-2 subproject for controlled approach geometry and fuze evaluation;
+  it does not implement fragmentation, structural breakup, Pk, or
+  weapon-specific kill conclusions.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 

@@ -34,6 +34,20 @@ struct EngagementEffectsDamageEventRecord {
     EffectsEvent effects{};
 };
 
+struct EngagementNearestApproachEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    NearestApproachEvent event{};
+};
+
+struct EngagementFuzeEvaluationEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    FuzeEvaluationEvent event{};
+};
+
 class IEngagementEventRecorder {
 public:
     virtual ~IEngagementEventRecorder() = default;
@@ -44,6 +58,14 @@ public:
 
     virtual std::uint64_t record_effects_damage_event(
         EngagementEffectsDamageEventRecord record
+    ) = 0;
+
+    virtual std::uint64_t record_nearest_approach_event(
+        EngagementNearestApproachEventRecord record
+    ) = 0;
+
+    virtual std::uint64_t record_fuze_evaluation_event(
+        EngagementFuzeEvaluationEventRecord record
     ) = 0;
 };
 

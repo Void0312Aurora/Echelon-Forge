@@ -24,6 +24,14 @@ public:
         EngagementEffectsDamageEventRecord record
     ) override;
 
+    std::uint64_t record_nearest_approach_event(
+        EngagementNearestApproachEventRecord record
+    ) override;
+
+    std::uint64_t record_fuze_evaluation_event(
+        EngagementFuzeEvaluationEventRecord record
+    ) override;
+
     std::uint64_t record_legacy_launch_event(
         std::uint64_t shooter_id,
         std::uint64_t target_id,
