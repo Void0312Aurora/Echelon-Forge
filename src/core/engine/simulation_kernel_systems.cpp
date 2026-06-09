@@ -33,6 +33,7 @@
 #include "systems/combat/pilot_weapon_release_system.h"
 #include "systems/core/operation_system.h"
 #include "systems/naval/naval_mission_weapon_release_system.h"
+#include "systems/naval/naval_logistics_system.h"
 #include "systems/air/aero_state_system.h"
 #include "systems/air/aerodynamics_system.h"
 #include "systems/air/control_system.h"
@@ -203,7 +204,8 @@ void SimulationKernel::register_components_and_systems() {
     register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system(ecs);         // Phase 7: Damage/Effects
     register_ew_system(ecs);             // Phase 8: EW Actions
-    register_logistics_system(ecs);      // Phase 9: Logistics
+    register_logistics_system(ecs);       // Phase 9: Common/base logistics
+    register_naval_logistics_system(ecs); // Phase 9.1: Naval underway replenishment
 
     ecs.set<EffectsModelRef>({effects_model_.get()});
     ecs.set<EngagementEventRecorderRef>({engagement_event_store_.get()});

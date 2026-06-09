@@ -32,6 +32,8 @@ than owned here as a full N4 mission runtime.
   - Token-level runtime for launch/recovery of embarked helicopters and OTH relay behavior.
 - [naval_mission_weapon_release_system.h](naval_mission_weapon_release_system.h)
   - Naval mission-command weapon-release bridge into the shared weapon release service.
+- [naval_logistics_system.h](naval_logistics_system.h)
+  - Naval underway replenishment progression for abstract stores transfer.
 
 ## Dependency Direction
 

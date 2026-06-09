@@ -31,6 +31,8 @@ contract/facade packet 暴露，而不是由这里持有为完整 N4 mission run
   - 舰载直升机发收舰与 OTH relay token-level runtime。
 - [naval_mission_weapon_release_system.h](naval_mission_weapon_release_system.h)
   - 接入共享 weapon release service 的 naval mission-command weapon-release bridge。
+- [naval_logistics_system.h](naval_logistics_system.h)
+  - 抽象 stores 转运的海上航行补给推进逻辑。
 
 ## 依赖方向
 
