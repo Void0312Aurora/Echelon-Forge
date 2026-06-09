@@ -51,7 +51,7 @@ interfaces/python
 - `python/scenario/runtime/world_setup.py` 的 maintained setup target 会拒绝 raw runtime shaped target。
 - `gym_envs/universal_env.py` raw `SimulationKernel` path 默认 fail closed。
 - `train.py` 要求非 world-batch 路径显式启用 `runtime_compatibility_enabled`。
-- `tests/architecture/test_runtime_facade_layering.py` 用 AST/文本扫描守住这些边界。
+- `tests/architecture/runtime_facade/test_layering.py` 用 AST/文本扫描守住这些边界。
 
 评价：符合一般行业方向，而且不是只靠文档，已有守卫测试。弱点是底层仍存在很宽的 `SimulationKernel` public API，高层收口并不等于底层已经完全拆干净。
 
@@ -143,10 +143,10 @@ interfaces/python
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python -m pytest -q \
-  tests/architecture/test_cmake_target_readiness.py \
-  tests/architecture/test_runtime_facade_layering.py \
-  tests/architecture/test_wp22_tasking_bridge_retirement.py \
-  tests/architecture/test_wp22_structural_guardrails.py \
+  tests/architecture/build/test_cmake_target_readiness.py \
+  tests/architecture/runtime_facade/test_layering.py \
+  tests/architecture/command_tasking/test_tasking_bridge_retirement.py \
+  tests/architecture/structural_boundaries/test_structural_guardrails.py \
   tests/runtime/facade/test_runtime_facade.py \
   tests/runtime/core/test_world_setup_compat.py \
   tests/runtime/mission/test_mission_command_split_semantics.py \
@@ -164,7 +164,7 @@ cmo_python -m pytest -q \
 唯一失败：
 
 ```text
-tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
+tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
 ```
 
 失败原因是测试仍使用旧文本锚点查找：

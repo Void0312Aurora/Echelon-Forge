@@ -193,5 +193,56 @@
 
 ---
 
-*由工程规范评估会话生成，2026-06-03。*
+## P0 修复跟进（2026-06-03 执行）
+
+本轮评估完成后，`2026-06-03` P0 工程治理切口已改变部分原始缺口状态：
+
+### 已修复
+
+| 项目 | 修复内容 | 验证 |
+|------|----------|------|
+| CI smoke 依赖安装 | 改为通过 `requirements/constraints-smoke.txt` 安装 `pytest numpy ruff` | `pip install --dry-run -c requirements/constraints-smoke.txt pytest numpy ruff` ✅ |
+| CI lint gate | 加入 `ruff check .` 与 changed-file `clang-format --dry-run -Werror` | `ruff check .` ✅；changed-file `clang-format` local gate ✅ |
+| CMake 版本对齐 | project version 从 `0.1.0` 对齐为 `0.2.0`，与 `pyproject.toml` 一致 | 双文件确认 `0.2.0` ✅ |
+| CMake warning policy | 项目 targets 添加非 fatal warning flags：GNU/Clang/AppleClang `-Wall -Wextra -Wpedantic`，MSVC `/W4` | CMake build 通过，non-fatal warnings 可见 ✅ |
+| Ruff baseline | tracked Python 最小 Ruff baseline 本地通过；修正少量 F821 undefined-name 问题 | `ruff check .` pass ✅ |
+| CTest smoke | `ef_test_all` C++ smoke | `100% tests passed, 0 tests failed out of 1` ✅ |
+
+### 仍未解决
+
+| 项目 | 状态 |
+|------|------|
+| Remote GitHub Actions | 尚未实际运行（仅本地验证） |
+| CI 多平台/多 Python 版本/缓存 | 仍是单平台 ubuntu、单 Python 3.11、无 cache |
+| Ruff 规则扩展 | 仍停留在最小 `E9, F821-F823` baseline |
+| clang-format 全仓 | 只检查 changed C/C++ files，whole-repo formatting baseline 仍有大量既有债 |
+| C++ warning cleanup | warnings 已可见但未清理，未升级为 warnings-as-errors |
+| clang-tidy / sanitizer lanes | 仍未接入 CI |
+
+### 关键可复现命令口径
+
+以下命令用于核验本评估中的量化指标，建议固化为维护脚本以避免每次手工复算导致口径漂移：
+
+```bash
+# Git 提交指标
+git log -50 --pretty=%H
+git show -s --format=%s <commit>
+git show -s --format=%b <commit>
+git diff-tree --no-commit-id --name-only -r <commit>
+
+# Python 代码指标（tracked python/ 口径）
+git ls-files | rg '^python/.*\.py$' | xargs rg -n 'except Exception' | wc -l
+git ls-files | rg '^python/.*\.py$' | xargs rg -n '\bhasattr\(' | wc -l
+git ls-files | rg '^python/.*\.py$' | xargs rg -n 'from __future__ import annotations' | wc -l
+
+# C++ 指标
+git grep -n -E '\b(CHECK|CHECK_FALSE|REQUIRE|REQUIRE_FALSE|ASSERT|EXPECT)[A-Za-z_]*[[:space:]]*\(' -- '*.cpp' '*.h' | wc -l
+
+# 大文件检测
+git ls-files -z '*.py' '*.cpp' '*.h' '*.json' | xargs -0 wc -l | awk '$1 > 3000 {print}'
+```
+
+---
+
+*由工程规范评估会话生成，2026-06-03。P0 修复跟进于同日完成。*
 *所有数据来自实际 git log、文件阅读和 grep 分析。*

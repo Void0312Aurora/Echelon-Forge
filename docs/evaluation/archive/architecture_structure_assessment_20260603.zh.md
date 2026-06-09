@@ -68,7 +68,7 @@ gpu
 - `EF_GPU_MAINTAINED_HELPER_SOURCES`
 - `EF_GPU_EXPERIMENT_SOURCES`
 
-`tests/architecture/test_cmake_target_readiness.py` 会检查这些 source group 存在，并要求 `add_library(ef_core STATIC)` 与 `nanobind_add_module(ef_py)` 消费分组变量，而不是重新退化成扁平文件列表。
+`tests/architecture/build/test_cmake_target_readiness.py` 会检查这些 source group 存在，并要求 `add_library(ef_core STATIC)` 与 `nanobind_add_module(ef_py)` 消费分组变量，而不是重新退化成扁平文件列表。
 
 这说明构建层也在为结构边界服务。
 
@@ -84,7 +84,7 @@ gpu
 - 不得重新引入 `RuntimeFacade.runtime_compatibility_quarantine()`。
 - 不应缓存 raw `WorldBatchRuntime`。
 
-`tests/architecture/test_runtime_facade_layering.py` 直接测试这些边界，包括：
+`tests/architecture/runtime_facade/test_layering.py` 直接测试这些边界，包括：
 
 - `RuntimeFacade` header 不应暴露 `runtime_compatibility_quarantine`。
 - runtime contract/facade type headers 不应 include `core/engine/*`。
@@ -190,8 +190,8 @@ gpu
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python -m pytest -q \
-  tests/architecture/test_cmake_target_readiness.py \
-  tests/architecture/test_runtime_facade_layering.py \
+  tests/architecture/build/test_cmake_target_readiness.py \
+  tests/architecture/runtime_facade/test_layering.py \
   tests/architecture/test_wp22_tasking_bridge_retirement.py \
   tests/architecture/test_wp22_structural_guardrails.py
 ```

@@ -87,7 +87,7 @@ Full-project architecture quality assessment. Evaluating whether implementations
 |-----------|----------|
 | `tests/` | 227 tracked Python test files and 86 active JSON contract files when `tests/contracts/Archive/` is excluded. CI/test suites are organized into smoke, focused, local/manual, and contract paths. |
 | `python/testing/contracts/` | Shared runners dispatch on JSON `"type"` field. Handlers: `loader_command_chain`, `route_generator`, `env_regression`, `unit_regression`, `scripted_bridge`. |
-| `tests/architecture/` | 86 architecture test files and 442 test functions in the current tree; many enforce layering rules, import constraints, documentation contracts, and compatibility quarantine boundaries. |
+| `tests/architecture/` | 87 architecture test files and 444 collected pytest tests in the current tree, grouped by semantic guard owner; many enforce layering rules, import constraints, documentation contracts, and compatibility quarantine boundaries. |
 
 **Pattern**: Test intent encoded as data (JSON), execution via shared runners. More maintainable than per-regression Python scripts.
 
@@ -118,6 +118,20 @@ python/training/ (consumes everything; not imported by lower layers)
 - `python/scenario/` → `python/rl/`: 0 imports in the current AST scan
 - `python/rl/` → `python/scenario/`: more than 5 imports in the current scan, but in the intended high-to-low consumption direction
 - Module-level AST cycle scan found 0 cycles; top-level grouping claims should specify the counting convention
+
+### 8. Build-System and Architecture-Guard Structural Evidence
+
+Beyond the seven architectural strengths above, the following structural evidence further demonstrates genuine architecture rather than feature-stacking:
+
+| Evidence | Location | Detail |
+|----------|----------|--------|
+| CMake source groups aligned with future target boundaries | `CMakeLists.txt` | 11 explicit source groups (`EF_CORE_ENGINE_SOURCES`, `EF_RUNTIME_FACADE_SOURCES`, `EF_GPU_MAINTAINED_HELPER_SOURCES`, etc.), guarded by `tests/architecture/build/test_cmake_target_readiness.py` |
+| Python/Gym production path isolates raw kernel | `gym_envs/universal_env.py`, `train.py` | raw `SimulationKernel` path defaults to fail-closed; training entry requires explicit `runtime_compatibility_enabled` opt-in |
+| command/tasking split into owner slices | `src/components/command/` | `MissionCommand` projects via inheritance from `MissionCommandCore`/`Air`/`Naval` into owner slices with `static_assert` constraints |
+| weapon release / engagement event extracted from kernel | `simulation_kernel_systems.cpp` | Architecture tests forbid kernel from directly inheriting `IWeaponReleaseService` or `IEngagementEventRecorder`; weapon release registered via named helpers |
+| Architecture guard tests are executable | `tests/architecture/` | 87 test files, 444 collected pytest tests directly scanning source/docs to enforce layering, include constraints, and compatibility quarantine boundaries |
+
+**P1-A stale guard fix**: The original evaluation cycle found `test_a2_structured_air_effects_do_not_write_rl_score_authority` failing because the test searched for the old text anchor `if (hp && !structured_air_target) {` in `default_effects_model.cpp`. P1-A updated the guard to check the current split-file owner relationship: legacy score authority lives in `default_effects_legacy_detail.inc::apply_legacy_health_damage()`, structured air consequence path lives in `default_effects_air_platform_resolution_detail.inc::resolve_default_effects_air_platform_consequences()`, with confirmation that the structured block contains no `score->`. This was a stale static guard, not a runtime regression — P1-A fixed it, confirmed passing in the latest focused rerun. This case illustrates that architecture tests are valuable but text-based anchors must be maintained in sync with implementation refactoring.
 
 ---
 
@@ -230,7 +244,19 @@ step/reset exceptions occur.
 | File size discipline | **Mixed** | Several important files are oversized: `runtime_facade.cpp` and `tests/world_batch/test_world_batch_vec_env.py` are both 3092 lines; `world_batch_vec_env.py` and `default_unit_factory.h` are also large. P1 reduced `training_callbacks.py` to 413 lines while moving diagnostics helpers to `python/training/diagnostics.py` (1295 lines). |
 | Codebase cleanliness | **Good, scope-dependent** | Code/tooling scope has few TODO/FIXME/HACK markers and no bare `except:` in the current grep. Whole-repo/document/archive counts are higher, so this should not be quoted as "entire codebase" without scope. |
 | Comment density | **Needs Attention** | Training callbacks and world-batch env code are under-explained for their complexity. Exact density numbers should be recomputed before citation. |
-| Test coverage | **Strong but not complete** | 227 tracked Python test files, 86 active JSON contracts, 86 architecture test files, and smoke/contract suites are strong evidence; this does not prove full physics/domain/training correctness. |
+| Test coverage | **Strong but not complete** | 227 tracked Python test files, 86 active JSON contracts, 87 architecture test files, and smoke/contract suites are strong evidence; this does not prove full physics/domain/training correctness. |
+
+### Architecture Reality Check
+
+| Question | Verdict | Evidence |
+|----------|---------|----------|
+| Are there clear architecture boundaries? | **Yes** | `src/README.md`, `python/README.md`, `runtime/facade/README.md` all define responsibilities and prohibitions |
+| Are they just directory decorations? | **No** | CMake source groups and `tests/architecture/*` enforce the boundaries |
+| Is production/raw runtime isolated? | **Yes** | `UniversalEnv` raw path defaults to fail-closed; training entry requires explicit compatibility opt-in |
+| Is everything fully decoupled? | **No** | `SimulationKernel` public API remains broad; `MissionCommand` remains a compatibility shell |
+| Is there feature-stacking risk? | **Localized risk** | Large files, bindings layer, facade cpp, unit factory, and damage system remain oversized |
+| Should the overall architecture be dismissed? | **No** | Boundaries are codified in code, build system, and tests |
+| Should it be declared fully mature? | **No** | README and sub-documents explicitly state that air/naval/ground maturity levels differ |
 
 ---
 

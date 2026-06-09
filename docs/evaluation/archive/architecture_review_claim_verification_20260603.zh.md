@@ -20,8 +20,8 @@
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python -m pytest -q \
-  tests/architecture/test_cmake_target_readiness.py \
-  tests/architecture/test_runtime_facade_layering.py \
+  tests/architecture/build/test_cmake_target_readiness.py \
+  tests/architecture/runtime_facade/test_layering.py \
   tests/architecture/test_wp22_tasking_bridge_retirement.py \
   tests/architecture/test_wp22_structural_guardrails.py \
   tests/runtime/facade/test_runtime_facade.py \

@@ -87,7 +87,7 @@
 |------|------|
 | `tests/` | tracked Python 测试文件 227 个；排除 `tests/contracts/Archive/` 后活跃 JSON contract 文件 86 个。测试套件按 smoke、focused、local/manual、contract 等路径组织。 |
 | `python/testing/contracts/` | 共享运行器根据 JSON `"type"` 字段分发。处理程序：`loader_command_chain`、`route_generator`、`env_regression`、`unit_regression`、`scripted_bridge`。 |
-| `tests/architecture/` | 当前有 86 个 architecture test 文件、442 个 test 函数，其中大量检查分层规则、导入约束、文档合同和 compatibility quarantine boundary。 |
+| `tests/architecture/` | 当前有 87 个 architecture test 文件、444 个 pytest 收集项，并按语义 guard owner 分组；其中大量检查分层规则、导入约束、文档合同和 compatibility quarantine boundary。 |
 
 **模式**：测试意图编码为数据（JSON），通过共享运行器执行。比每次回归手写 Python 脚本更易维护。
 
@@ -118,6 +118,20 @@ python/training/（消费所有内容；不被更低层导入）
 - `python/scenario/` → `python/rl/`：当前 AST 扫描中为 0
 - `python/rl/` → `python/scenario/`：当前扫描超过 5 次，但方向仍属于预期的高层消费低层 runtime/scenario path
 - 模块级 AST cycle 扫描为 0；顶层分组循环声明应先定义统计口径
+
+### 8. 构建层与架构守卫的结构性证据
+
+除上述 7 项架构优势外，以下结构性证据进一步证明项目具备真实架构主线：
+
+| 证据 | 位置 | 说明 |
+|------|------|------|
+| CMake source group 按未来 target 边界分组 | `CMakeLists.txt` | `EF_CORE_ENGINE_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_GPU_MAINTAINED_HELPER_SOURCES` 等 11 个显式分组，由 `tests/architecture/build/test_cmake_target_readiness.py` 守卫 |
+| Python/Gym 生产路径隔离 raw kernel | `gym_envs/universal_env.py`、`train.py` | raw `SimulationKernel` 路径默认 fail closed；训练入口要求显式 `runtime_compatibility_enabled` opt-in |
+| command/tasking 已拆 owner slice | `src/components/command/` | `MissionCommand` 通过继承 `MissionCommandCore`/`Air`/`Naval` 投影到 owner slices，`static_assert` 约束 shell 映射 |
+| weapon release / engagement event 从 kernel 拆出 | `simulation_kernel_systems.cpp` | 架构测试禁止 kernel 直接继承 `IWeaponReleaseService` 或 `IEngagementEventRecorder`；weapon release 通过 named helper 注册 |
+| 架构守卫测试可执行 | `tests/architecture/` | 87 个 test 文件、444 个 pytest 收集项，直接扫描源码/文档守住分层、include 约束、compatibility quarantine boundary |
+
+**P1-A stale guard 修复**：原评估轮次 `test_a2_structured_air_effects_do_not_write_rl_score_authority` 因测试在 `default_effects_model.cpp` 中查找旧文本锚点 `if (hp && !structured_air_target) {` 而失败。P1-A 已将该 guard 改为检查当前 split-file owner 关系：legacy score authority 位于 `default_effects_legacy_detail.inc::apply_legacy_health_damage()`，structured air consequence path 位于 `default_effects_air_platform_resolution_detail.inc::resolve_default_effects_air_platform_consequences()`，并确认 structured block 不含 `score->`。该失败是 stale static guard，不是 runtime 行为回归——P1-A 已修复，最新聚焦复跑通过。这一案例说明架构测试有价值，但文本型锚点在实现重构后必须同步维护。
 
 ---
 
@@ -229,7 +243,19 @@ helper-module maintainability 或 typed diagnostics contracts，而不是继续�
 | 文件大小纪律 | **混合** | 多个关键文件偏大：`runtime_facade.cpp` 与 `tests/world_batch/test_world_batch_vec_env.py` 均为 3092 行；`world_batch_vec_env.py` 与 `default_unit_factory.h` 也偏大。P1 已将 `training_callbacks.py` 降到 413 行，同时将 diagnostics helpers 移入 1295 行的 `python/training/diagnostics.py`。 |
 | 代码库清洁度 | **良好但依赖口径** | 代码/工具 scope 的 TODO/FIXME/HACK 较少，当前 grep 未发现裸 `except:`。全仓/文档/archive 口径更高，因此不能不加限定地称为 entire codebase。 |
 | 注释密度 | **需要关注** | training callback 与 world-batch env 代码相对复杂度解释不足。精确密度数字应重新计算后再引用。 |
-| 测试覆盖率 | **强但不完整** | tracked Python test 文件 227 个、活跃 JSON contract 86 个、architecture test 文件 86 个、smoke/contract suites 都是强证据；但不能证明完整 physics/domain/training correctness。 |
+| 测试覆盖率 | **强但不完整** | tracked Python test 文件 227 个、活跃 JSON contract 86 个、architecture test 文件 87 个、smoke/contract suites 都是强证据；但不能证明完整 physics/domain/training correctness。 |
+
+### 架构真实性判断表
+
+| 问题 | 判断 | 证据 |
+|------|------|------|
+| 是否有明确架构边界 | **有** | `src/README.md`、`python/README.md`、`runtime/facade/README.md` 均给出职责和禁止项 |
+| 是否只是目录摆设 | **不是** | CMake source group 和 `tests/architecture/*` 会检查边界 |
+| 是否存在 production/raw runtime 隔离 | **有** | `UniversalEnv` raw path 默认 fail closed，训练入口要求显式 compatibility opt-in |
+| 是否已经完全解耦 | **没有** | `SimulationKernel` public API 仍很宽，`MissionCommand` 仍是兼容壳 |
+| 是否存在功能堆砌风险 | **有局部风险** | 大文件、绑定层、facade cpp、unit factory、damage system 仍较大 |
+| 是否应否定整体架构 | **不应** | 多处边界已进入代码、构建和测试 |
+| 是否应宣称完整成熟 | **不应** | README 和局部文档均明确 air/naval/ground 成熟度不同 |
 
 ---
 
