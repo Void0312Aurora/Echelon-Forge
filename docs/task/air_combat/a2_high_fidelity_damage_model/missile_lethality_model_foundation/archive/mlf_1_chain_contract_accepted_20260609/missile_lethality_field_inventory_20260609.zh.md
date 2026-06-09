@@ -84,7 +84,7 @@
 | `last_effect_direct_hitbox_intersection` | diagnostics probe | 把 contact/hitbox 几何和引信结果压成一个最后值 | `FuzeEvaluationEvent.contact_*` + `SpatialCoverageEvent.projected_hitbox_count` | MLF-1C 标准字段落地后删除 | `MLF-1C` |
 | `last_effect_projected_hitbox_count` | diagnostics probe | 空间覆盖摘要缺少方向、采样和部件暴露上下文 | `SpatialCoverageEvent.*` | MLF-1C 标准字段落地后删除 | `MLF-1C` |
 | `last_effect_component_hit_count` | diagnostics probe | 只给数量，不给部件身份、机制载荷、失效模式 | `ComponentLoadEvent` / `ComponentDamageEvent` 展开 row | MLF-1C 能展开 component rows 后删除 | `MLF-1C` |
-| `last_effect_fuze_type` | diagnostics probe | 引信类型不是引信判定原因；仍缺 armed/triggered/failure | `FuzeEvaluationEvent.fuze_type`、`triggered`、`failure_reason` | MLF-1C/MLF-2A 字段落地后删除 | `MLF-1C` / `MLF-2A` |
+| `last_effect_fuze_type` | diagnostics probe | 引信类型不是引信判定原因；仍缺 armed/triggered/failure | `FuzeEvaluationEvent.fuze_type`、`triggered`、`failure_reason` | MLF-1C 标准投影后删除；更完整引信字段由未来独立 MLF-2 子项目处理 | `MLF-1C` / future standalone `MLF-2` |
 | `last_damage_report_id` | diagnostics probe | 只定位最后损伤报告，不保证同一枚弹链路 | staged projection 中的 `damage_report_id` / `parent_event_id` | MLF-1C 标准 projection 后删除 | `MLF-1C` |
 | `last_damage_loss_state` | diagnostics probe | loss 摘要不能区分部件损伤、结构解体、触地残骸 | `PlatformConsequenceEvent.loss_state_*` + `LifecycleTransitionEvent` | MLF-1C/1D 完成后删除 | `MLF-1C` / `MLF-1D` |
 | `last_damage_system_health_delta` | diagnostics probe | 单一最小能力 delta 会掩盖具体子系统和方向 | 标准平台后果字段：mission/mobility/sensor/survivability before/after 或 delta | MLF-1D reward/probe 迁移后删除 | `MLF-1D` |

@@ -18,9 +18,8 @@ Current A2 follow-ons:
   bounded training feedback for damage consequences rather than a single kill
   flag.
 - [missile_lethality_model_foundation/README.md](missile_lethality_model_foundation/README.md):
-  ordered foundation for generic missile lethality models: encounter geometry,
-  fuze behavior, warhead mechanisms, target vulnerability, structural failure,
-  wreck/debris objects, and statistical checks.
+  archived MLF-1 chain-contract foundation. It does not carry MLF-2 work; the
+  next geometry/fuze phase must be created as a separate subproject.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 

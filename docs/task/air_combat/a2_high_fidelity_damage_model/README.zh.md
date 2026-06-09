@@ -15,7 +15,7 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
 - [damage_consequence_reward_surface/README.zh.md](damage_consequence_reward_surface/README.zh.md)：
   将“按损伤后果而非单一 kill 给训练奖励”的方向升级为有边界奖励扩展切片。
 - [missile_lethality_model_foundation/README.zh.md](missile_lethality_model_foundation/README.zh.md)：
-  规划通用导弹杀伤模型基础，按顺序建设命中几何、引信、战斗部作用、目标脆弱性、结构失效、残骸对象和统计校验。
+  已归档的 MLF-1 杀伤链合同基础。它不继续承载 MLF-2；下一步几何/引信阶段必须单独新建子项目。
 
 这些 follow-on 不重开已封存 A2 包，也不创建 A9。
 
