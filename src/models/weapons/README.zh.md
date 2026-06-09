@@ -26,10 +26,12 @@ runtime，也不拥有 ground fires/damage runtime。
 
 `detail/default_effects_*_detail.inc` 文件是 `default_effects_model.cpp` 的私有
 实现片段。namespace 级片段用于保持 helper 的本地链接，并把 `on_proximity_hit`
-拆为 direct-hit、spatial-projection、system-effect、air-platform-resolution、
-result-population 与 legacy/fallback 子模块。air-platform 片段已把 platform-only、
-aircraft sensor/avionics、aircraft propulsion/fuel、aircraft control/hydraulic、
-aircraft crew-role、aircraft mission/combat、aircraft structure-spatial 和
-aircraft fire-zone consequence 处理收进命名 helper；任何进一步 air-platform
-重构都应重新建立结构性任务。
-它们不是独立 API，也不是新的模型入口。
+拆为 direct-hit、spatial-projection、system-effect、domain routing、
+result-population 与 legacy/fallback 子模块。它们不是独立 API，也不是新的模型入口。
+
+`detail/default_effects_domain_routing_detail.inc` 是 Air/Naval/Ground effects
+ownership 的 generic router。Air consequence handling 位于
+`models/air/default_effects_air_domain.h`；naval 与 ground 路径当前只是显式
+placeholder owner shell，等待各自 damage fidelity 拥有 runtime owner。
+`detail/default_effects_air_platform_resolution_detail.inc` 仅作为指向 air-owned
+helper 的 compatibility bridge 保留。

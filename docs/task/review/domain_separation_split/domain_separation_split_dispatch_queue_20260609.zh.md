@@ -66,3 +66,8 @@ integration notes:
 | `2026-06-09` | `Q1-B` | DS-C1-B | worker `Cicero` | pass | weapon component split 已落地，采用 umbrella-header compatibility；combined `ef_py` build 与 diff checks 通过。 |
 | `2026-06-09` | `Q2-A` | DS-S1-A | worker `Popper` | pass | combat damage system split 已落地；combined `ef_py`、include search 与 diff checks 通过。 |
 | `2026-06-09` | `Q2-B` | DS-S1-B | worker `Galileo` | pass | Air runtime ownership validation 已落地；旧 physics/tuning wrapper 保持 include-only。 |
+| `2026-06-10` | `Q2-C` | DS-S1-C | main thread | pass | Naval underway resupply 已抽到 `systems/naval`；`build-local-win` `ef_py`、聚焦 naval underway tests 与 diff checks 通过。 |
+| `2026-06-10` | `Q3-A` | DS-M1-A | worker `Nash` (`gpt-5.4`/high) | pass | effects model 已通过 common domain router 路由到 Air owner helper 与 Naval/Ground placeholder path；聚焦 effects tests 通过。 |
+| `2026-06-10` | `Q3-B` | DS-M1-B | worker `Kierkegaard` (`gpt-5.4`/high) | pass | generic sensor model 已通过 `models/naval` adapter 路由 ship-specific maritime 读取；聚焦 naval sensor tests 通过。 |
+| `2026-06-10` | `Q4-A` | DS-T1-A | main thread | partial | 已新增并通过聚焦 domain split guard；更宽 architecture 文件仍在无关/direct-sim 与 Windows linker baseline 上失败。 |
+| `2026-06-10` | `Q4-B` | DS-D1-A | main thread | partial | source/task docs 已同步实现表面；最终子项目 acceptance 因 Air helper residual 与更宽 architecture failure 保持 held。 |

@@ -1,6 +1,6 @@
 # Domain Separation Split
 
-Status: `2026-06-09` active planning and dispatch surface for the direct Air / Naval / Ground domain split; overall subproject is not accepted.
+Status: `2026-06-10` active integration surface for the direct Air / Naval / Ground domain split; implementation clusters have landed, but overall subproject is not accepted.
 
 Language:
 
@@ -38,8 +38,9 @@ acceptance gates.
 | Combat damage components | held | `src/components/combat/damage.h` | Air/Naval/Common remain mixed; Ground damage is absent. |
 | Combat damage systems | held | `src/systems/combat/damage_system.h` | Air/Naval/Common ECS logic remains mixed. |
 | Weapon components | held | `src/components/combat/weapon.h` | Naval weapon types remain in the generic file; Ground is absent. |
-| Platform systems | held | `src/systems/systems/logistics_system.h` | Naval underway resupply remains mixed into a generic platform-system file. |
-| Model layer | held | `src/models/weapons/default_effects_model.cpp`, `src/models/systems/default_sensor_model.cpp` | Effects and sensor routing remain air/naval coupled. |
+| Platform systems | partial | `src/systems/naval/naval_logistics_system.h`, `src/systems/systems/logistics_system.h` | Naval underway resupply is extracted; Air propulsion helper residual still needs adapter or retention decision. |
+| Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`, `src/models/air/default_effects_air_domain.h`, `src/models/naval/naval_sensor_maritime_adapter.h` | Effects and sensor ship-specific ownership now route through domain helpers; Naval/Ground effects remain placeholders. |
+| Architecture guards | partial | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | Focused domain split guard passes; broader existing architecture gates still fail on unrelated baselines. |
 
 ## Scope
 
@@ -76,11 +77,11 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze authority, non-goals, and task clusters. | Audit exists. | README, status, queue, and cluster plan exist. | pass |
-| `P1 Components` | Split damage and weapon component ownership. | P0 files exist. | Common/air/naval/ground headers compile with compatibility wrappers. | planned |
-| `P2 Systems` | Split ECS system ownership. | P1 component surfaces compile. | Damage, air, naval logistics, and generic system registration are separated. | planned |
-| `P3 Models` | Route default effects and sensor behavior by domain ownership. | P1/P2 surfaces exist. | Generic model files stop depending directly on domain-only structs except through routers/adapters. | planned |
-| `P4 Validation` | Add and run build, runtime, and architecture guards. | Implementation clusters land. | Focused checks pass; residual risks are recorded. | planned |
-| `P5 Closure` | Sync docs, indexes, and compatibility-deprecation notes. | P4 evidence exists. | Acceptance file is updated without overclaiming whole-domain maturity. | planned |
+| `P1 Components` | Split damage and weapon component ownership. | P0 files exist. | Common/air/naval/ground headers compile with compatibility wrappers. | pass |
+| `P2 Systems` | Split ECS system ownership. | P1 component surfaces compile. | Damage, air, naval logistics, and generic system registration are separated. | partial |
+| `P3 Models` | Route default effects and sensor behavior by domain ownership. | P1/P2 surfaces exist. | Generic model files stop depending directly on domain-only structs except through routers/adapters. | pass |
+| `P4 Validation` | Add and run build, runtime, and architecture guards. | Implementation clusters land. | Focused checks pass; residual risks are recorded. | partial |
+| `P5 Closure` | Sync docs, indexes, and compatibility-deprecation notes. | P4 evidence exists. | Acceptance file is updated without overclaiming whole-domain maturity. | partial |
 
 ## Task Clusters
 

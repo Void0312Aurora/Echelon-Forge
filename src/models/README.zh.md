@@ -2,10 +2,11 @@
 
 `models/` 保存可替换的领域模型实现。它为 `systems/` 和 `core/engine` 提供 control、environment、sensor、effects、guidance、unit factory 等能力。
 
-model 层是 multi-domain aware，但成熟度不均。air control 与 execution-adjacent
-model 仍最深入；naval 支持包括平台、sensor/acoustic、weapon-mount helper；
-ground 支持仅限 unit-factory capability evidence，例如 deferred flat mobility
-和 land tactics metadata。
+model 层是 multi-domain aware，但成熟度不均。air control、air effects 与
+execution-adjacent model 仍最深入；naval 支持包括平台、sensor/acoustic、
+weapon-mount helper 和显式 effects placeholder routing；ground 支持仅限
+unit-factory capability evidence 和显式 effects placeholder routing，不宣称完整
+ground runtime 成熟度。
 
 ## 允许
 
@@ -27,6 +28,8 @@ ground 支持仅限 unit-factory capability evidence，例如 deferred flat mobi
 - `air/`：飞行控制等航空模型。
 - `core/`：unit factory 等基础模型实现。
 - `environment/`：环境模型和 snapshot。
+- `ground/`：尚无 runtime fidelity 时的 ground-owned model placeholder routing。
+- `naval/`：naval-owned model adapter 与 placeholder routing。
 - `systems/`：传感器和 acoustic helper 等平台系统模型。
 - `weapons/`：effects、guidance 和 naval weapon-mount helper。
 
@@ -35,21 +38,28 @@ ground 支持仅限 unit-factory capability evidence，例如 deferred flat mobi
 - [air/README.md](air/README.md)
 - [core/README.md](core/README.md)
 - [environment/README.md](environment/README.md)
+- [ground/README.md](ground/README.md)
+- [naval/README.md](naval/README.md)
 - [systems/README.md](systems/README.md)
 - [weapons/README.md](weapons/README.md)
 
 ## 当前文件落点
 
 - `air/`
-  - `default_control_model.cpp`
+  - `default_control_model.cpp`, `default_effects_air_domain.h`
 - `core/`
   - `default_unit_factory.h`
 - `environment/`
   - `default_environment_model.cpp`, `default_environment_snapshot.h`
+- `ground/`
+  - `default_effects_ground_domain.h`
+- `naval/`
+  - `default_effects_naval_domain.h`, `naval_sensor_maritime_adapter.h`
 - `systems/`
   - `default_sensor_model.cpp`, `default_acoustic_model.cpp`
 - `weapons/`
-  - `default_effects_model.cpp`, `default_guidance_model.cpp`, `naval_weapon_mounts.h`
+  - `default_effects_model.cpp`, `default_guidance_model.cpp`,
+    `naval_weapon_mounts.h`, `detail/default_effects_domain_routing_detail.inc`
 
 ## 迁移备注
 

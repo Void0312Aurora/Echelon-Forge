@@ -29,11 +29,13 @@ System scheduling is placed in `systems/combat`, state is placed in `components/
 `detail/default_effects_*_detail.inc` files are private implementation
 fragments for `default_effects_model.cpp`. Namespace-level fragments keep helper
 linkage local while splitting `on_proximity_hit` into direct-hit,
-spatial-projection, system-effect, air-platform-resolution, result-population,
-and legacy/fallback submodules. They are not standalone APIs or additional
-model entry points. The air-platform fragment now keeps platform-only,
-aircraft sensor/avionics, aircraft propulsion/fuel, aircraft
-control/hydraulic, aircraft crew-role, aircraft mission/combat, and aircraft
-structure-spatial, and aircraft fire-zone consequence handling in named
-helpers. Any further air-platform restructuring must be opened as a new
-structure-only task.
+spatial-projection, system-effect, domain routing, result-population, and
+legacy/fallback submodules. They are not standalone APIs or additional model
+entry points.
+
+`detail/default_effects_domain_routing_detail.inc` is the generic router for
+Air/Naval/Ground effects ownership. Air consequence handling lives in
+`models/air/default_effects_air_domain.h`; naval and ground routes are explicit
+placeholder owner shells until their damage fidelity work has runtime owners.
+`detail/default_effects_air_platform_resolution_detail.inc` is retained only as
+a compatibility bridge to the air-owned helper.

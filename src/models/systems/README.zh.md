@@ -3,7 +3,9 @@
 `models/systems` 保存平台系统相关模型实现，例如 sensor 和 acoustic model 默认实现。
 
 本目录在 sensing/contact 侧是 multi-domain aware，包括 air/visual sensor
-行为和 naval/acoustic helper。它不拥有 full ground sensing 或 land C2 runtime 行为。
+行为和 naval/acoustic helper。ship-specific maritime sensor state 通过
+`models/naval/naval_sensor_maritime_adapter.h` 路由，不由 generic sensor model
+直接拥有。它不拥有 full ground sensing 或 land C2 runtime 行为。
 
 ## 允许
 

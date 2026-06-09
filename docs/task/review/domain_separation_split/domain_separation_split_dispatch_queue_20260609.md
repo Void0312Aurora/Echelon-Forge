@@ -69,3 +69,8 @@ integration notes:
 | `2026-06-09` | `Q1-B` | DS-C1-B | worker `Cicero` | pass | Weapon component split landed with umbrella-header compatibility; combined `ef_py` build and diff checks passed. |
 | `2026-06-09` | `Q2-A` | DS-S1-A | worker `Popper` | pass | Combat damage system split landed; combined `ef_py`, include search, and diff checks passed. |
 | `2026-06-09` | `Q2-B` | DS-S1-B | worker `Galileo` | pass | Air runtime ownership validation landed; old physics/tuning wrappers remain include-only. |
+| `2026-06-10` | `Q2-C` | DS-S1-C | main thread | pass | Naval underway resupply extracted to `systems/naval`; `build-local-win` `ef_py`, focused naval underway tests, and diff checks passed. |
+| `2026-06-10` | `Q3-A` | DS-M1-A | worker `Nash` (`gpt-5.4`/high) | pass | Effects model now routes through common domain router with Air owner helper and Naval/Ground placeholder paths; focused effects tests passed. |
+| `2026-06-10` | `Q3-B` | DS-M1-B | worker `Kierkegaard` (`gpt-5.4`/high) | pass | Generic sensor model now routes ship-specific maritime reads through `models/naval` adapter; focused naval sensor tests passed. |
+| `2026-06-10` | `Q4-A` | DS-T1-A | main thread | partial | Focused domain split guard added and passes; broader architecture files still fail on unrelated/direct-sim and Windows linker baselines. |
+| `2026-06-10` | `Q4-B` | DS-D1-A | main thread | partial | Source/task docs synced for implemented surfaces; final subproject acceptance held on residual Air helper dependency and broader architecture failures. |

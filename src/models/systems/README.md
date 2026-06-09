@@ -3,7 +3,9 @@
 `models/systems` stores platform-system related model implementations, e.g., the default sensor and acoustic model implementations.
 
 The directory is multi-domain aware for sensing/contacts, including air/visual
-sensor behavior and naval/acoustic helpers. It does not own full ground sensing
+sensor behavior and naval/acoustic helpers. Ship-specific maritime sensor state
+is routed through `models/naval/naval_sensor_maritime_adapter.h` rather than
+owned directly in the generic sensor model. It does not own full ground sensing
 or land C2 runtime behavior.
 
 ## Allowed

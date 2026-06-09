@@ -1,6 +1,6 @@
 # 域分离大拆分
 
-状态：`2026-06-09` active planning and dispatch surface，用于直接推进 Air / Naval / Ground 域拆分；整个子项目尚未验收。
+状态：`2026-06-10` active integration surface，用于直接推进 Air / Naval / Ground 域拆分；实现簇已落地，但整个子项目尚未验收。
 
 语言：
 
@@ -33,8 +33,9 @@
 | Combat damage component | held | `src/components/combat/damage.h` | Air/Naval/Common 仍混合；Ground damage 缺失。 |
 | Combat damage system | held | `src/systems/combat/damage_system.h` | Air/Naval/Common ECS 逻辑仍混合。 |
 | Weapon component | held | `src/components/combat/weapon.h` | Naval weapon 类型仍在 generic 文件；Ground 缺失。 |
-| Platform system | held | `src/systems/systems/logistics_system.h` | Naval underway resupply 仍混入 generic platform-system 文件。 |
-| Model layer | held | `src/models/weapons/default_effects_model.cpp`、`src/models/systems/default_sensor_model.cpp` | effects 与 sensor routing 仍有 air/naval 耦合。 |
+| Platform system | partial | `src/systems/naval/naval_logistics_system.h`、`src/systems/systems/logistics_system.h` | Naval underway resupply 已抽出；Air propulsion helper residual 仍需 adapter 或保留决定。 |
+| Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`、`src/models/air/default_effects_air_domain.h`、`src/models/naval/naval_sensor_maritime_adapter.h` | effects 与 sensor ship-specific ownership 已通过 domain helper 路由；Naval/Ground effects 仍是 placeholder。 |
+| Architecture guards | partial | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | 聚焦 domain split guard 通过；更宽既有 architecture gate 仍在无关 baseline 上失败。 |
 
 ## 范围
 
@@ -61,11 +62,11 @@
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 固化权威、非目标与任务簇。 | 审计已存在。 | README、状态、队列和任务簇计划存在。 | pass |
-| `P1 Components` | 拆分 damage 与 weapon component ownership。 | P0 文件存在。 | common/air/naval/ground 头文件和兼容 wrapper 可编译。 | planned |
-| `P2 Systems` | 拆分 ECS system ownership。 | P1 component surface 可编译。 | damage、air、naval logistics 与 generic system registration 已分离。 | planned |
-| `P3 Models` | 按域路由 default effects 和 sensor 行为。 | P1/P2 surface 存在。 | generic model 文件不再直接拥有 domain-only struct 依赖，除非通过 router/adapter。 | planned |
-| `P4 Validation` | 增加并运行 build、runtime、architecture guard。 | 实现簇落地。 | 聚焦检查通过，残余风险记录。 | planned |
-| `P5 Closure` | 同步文档、索引和兼容弃用说明。 | P4 evidence 存在。 | acceptance 文件更新，且不夸大整体域成熟度。 | planned |
+| `P1 Components` | 拆分 damage 与 weapon component ownership。 | P0 文件存在。 | common/air/naval/ground 头文件和兼容 wrapper 可编译。 | pass |
+| `P2 Systems` | 拆分 ECS system ownership。 | P1 component surface 可编译。 | damage、air、naval logistics 与 generic system registration 已分离。 | partial |
+| `P3 Models` | 按域路由 default effects 和 sensor 行为。 | P1/P2 surface 存在。 | generic model 文件不再直接拥有 domain-only struct 依赖，除非通过 router/adapter。 | pass |
+| `P4 Validation` | 增加并运行 build、runtime、architecture guard。 | 实现簇落地。 | 聚焦检查通过，残余风险记录。 | partial |
+| `P5 Closure` | 同步文档、索引和兼容弃用说明。 | P4 evidence 存在。 | acceptance 文件更新，且不夸大整体域成熟度。 | partial |
 
 ## 任务簇
 

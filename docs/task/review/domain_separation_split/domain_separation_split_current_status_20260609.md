@@ -1,6 +1,6 @@
 # Domain Separation Split Current Status
 
-Status: `2026-06-09` current status record with DS-P0-B inventory; subproject is active, not accepted.
+Status: `2026-06-10` integration status after DS-S1-C / DS-M1 / DS-T1-A dispatch; subproject is active, not accepted.
 
 Parent: [Domain Separation Split](README.md)
 
@@ -10,10 +10,13 @@ The audit has been promoted into an executable subproject. The direct large
 split is approved as the planning frame: no Naval demonstration-domain gate is
 required before splitting the mixed Air/Naval/Ground ownership hotspots.
 
-No combat/model ownership hotspot is accepted yet. The current worktree contains
-a partial candidate for Air runtime ownership (`systems/air`, `components/air`),
-but that candidate remains under `DS-S1-B` until the acceptance gates and parent
-indexes are finalized.
+The main combat/model ownership hotspots named in the 2026-06-09 dispatch have
+implementation evidence now: component ownership, combat damage systems, naval
+logistics extraction, effects routing, and sensor routing are implemented and
+focused-validated. The subproject is still not accepted because broader
+architecture gates are failing on pre-existing/unrelated surfaces and an Air
+propulsion helper dependency still needs either a named adapter or an explicit
+retention decision before final G2/G4 closure.
 
 DS-P0-B has produced a read-only ownership inventory for the current hotspots.
 This inventory is diagnostic fact-gathering only. It is not implementation
@@ -25,14 +28,14 @@ acceptance and does not change any cluster status by itself.
 | --- | --- | --- | --- | --- |
 | Subproject docs | Owner surface created | `docs/task/review/domain_separation_split/**` | pass | DS-C1-A / DS-C1-B dispatch |
 | Parent review index | Linked | `docs/task/review/README*` | pass | Keep synced during DS-D1-A |
-| Air runtime systems | Canonical Air owner with compatibility wrappers | `src/systems/air/**`, `src/components/air/**`, old physics/tuning wrappers | pass | DS-S1-C logistics helper dependency remains |
+| Air runtime systems | Canonical Air owner with compatibility wrappers | `src/systems/air/**`, `src/components/air/**`, old physics/tuning wrappers | pass | Air propulsion helper dependency still needs final adapter/retention decision |
 | Combat damage data | Domain-owned headers with compatibility umbrella | `src/components/combat/{common,air,naval,ground}/damage_*.h`; `src/components/combat/damage.h` | pass | DS-S1-A system split |
-| Combat damage ECS | Domain-owned system headers with compatibility umbrella | `src/systems/combat/damage_system_{common,air,naval,ground}.h`; `src/systems/combat/damage_system.h` | pass | Effects/model routing still pending |
+| Combat damage ECS | Domain-owned system headers with compatibility umbrella | `src/systems/combat/damage_system_{common,air,naval,ground}.h`; `src/systems/combat/damage_system.h` | pass | Watch compatibility umbrella retention |
 | Weapon data | Domain-owned headers with compatibility umbrella | `src/components/combat/{common,air,naval,ground}/weapon_*.h`; `src/components/combat/weapon.h` | pass | Direct include migration in later clusters |
-| Naval logistics | Mixed generic platform system | `src/systems/systems/logistics_system.h` | held | DS-S1-C |
-| Effects model | Air-shaped generic default | `src/models/weapons/default_effects_model.cpp` | held | DS-M1-A |
-| Sensor model | Ship dependency in generic model | `src/models/systems/default_sensor_model.cpp` | held | DS-M1-B |
-| Architecture guards | Partial existing guard surface | `tests/architecture/**` | planned | DS-T1-A |
+| Naval logistics | Naval underway resupply owned in `systems/naval` | `src/systems/naval/naval_logistics_system.h`; `src/systems/systems/logistics_system.h`; `src/core/engine/simulation_kernel_systems.cpp` | pass | Broader Air propulsion helper residual remains separate |
+| Effects model | Generic router with Air/Naval/Ground owner paths | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`; `src/models/air/default_effects_air_domain.h`; `src/models/naval/default_effects_naval_domain.h`; `src/models/ground/default_effects_ground_domain.h` | pass | Naval/Ground paths are placeholders only |
+| Sensor model | Generic sensor routes ship-specific reads through Naval adapter | `src/models/systems/default_sensor_model.cpp`; `src/models/naval/naval_sensor_maritime_adapter.h` | pass | Acoustic model `ShipPlatform` access is outside DS-M1-B |
+| Architecture guards | Focused domain split guard added | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | partial | Focused selector passes; broader existing architecture selectors still fail |
 
 ## DS-P0-B Inventory
 
@@ -60,10 +63,10 @@ already dirty from other work; DS-P0-B only records the current observed state.
 
 ## Immediate Next Actions
 
-1. Dispatch `DS-S1-C` for naval logistics extraction now that `DS-S1-A` has released registration ownership.
-2. Dispatch `DS-M1-A` effects routing only after confirming it can consume the new damage owner headers without behavior drift.
-3. Keep `DS-M1-B` sensor routing independent from effects routing unless interface changes force serialization.
-4. Keep DS-D1-A serial for final docs/manual/source README synchronization.
+1. Decide whether the remaining Air propulsion helper dependency in generic physics/logistics should become a named adapter or an explicit retained compatibility dependency.
+2. Treat broader architecture failures as held residuals until the existing direct-sim allowlist and Windows snippet link failures are handled outside this domain split.
+3. Keep Naval/Ground effects paths documented as placeholder ownership shells; do not claim full domain damage fidelity.
+4. Re-run full acceptance only after the residuals above are closed or explicitly accepted by a follow-on package.
 
 ## Status Legend
 

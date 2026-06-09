@@ -230,6 +230,34 @@ DEFAULT_EFFECTS_MODEL = (
     / "weapons"
     / "default_effects_model.cpp"
 )
+DEFAULT_SENSOR_MODEL = (
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "systems"
+    / "default_sensor_model.cpp"
+)
+GENERIC_LOGISTICS_SYSTEM = (
+    REPO_ROOT
+    / "src"
+    / "systems"
+    / "systems"
+    / "logistics_system.h"
+)
+NAVAL_LOGISTICS_SYSTEM = (
+    REPO_ROOT
+    / "src"
+    / "systems"
+    / "naval"
+    / "naval_logistics_system.h"
+)
+NAVAL_SENSOR_MARITIME_ADAPTER = (
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "naval"
+    / "naval_sensor_maritime_adapter.h"
+)
 DEFAULT_EFFECTS_LEGACY_DETAIL = (
     REPO_ROOT
     / "src"
@@ -242,9 +270,16 @@ DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL = (
     REPO_ROOT
     / "src"
     / "models"
+    / "air"
+    / "default_effects_air_domain.h"
+)
+DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL = (
+    REPO_ROOT
+    / "src"
+    / "models"
     / "weapons"
     / "detail"
-    / "default_effects_air_platform_resolution_detail.inc"
+    / "default_effects_domain_routing_detail.inc"
 )
 STRUCTURAL_DOC_EN = (
     REPO_ROOT
@@ -1001,10 +1036,19 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     text = _text(DEFAULT_EFFECTS_MODEL)
     legacy_text = _text(DEFAULT_EFFECTS_LEGACY_DETAIL)
     air_platform_text = _text(DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL)
+    routing_text = _text(DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL)
 
     assert (
         '#include "models/weapons/detail/default_effects_legacy_detail.inc"'
         in text
+    )
+    assert (
+        '#include "models/weapons/detail/default_effects_domain_routing_detail.inc"'
+        in text
+    )
+    assert (
+        '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"'
+        not in text
     )
     assert re.search(
         r"if\s*\(\s*hp\s*&&\s*!structured_air_target\s*&&\s*"
@@ -1024,15 +1068,53 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     assert "score->hits_landed" in legacy_block
     assert "score->kills_confirmed" in legacy_block
 
+    assert '#include "models/air/default_effects_air_domain.h"' in routing_text
+    assert '#include "models/naval/default_effects_naval_domain.h"' in routing_text
+    assert '#include "models/ground/default_effects_ground_domain.h"' in routing_text
+    assert "route_default_effects_target_domain(" in routing_text
+    assert "DefaultEffectsTargetDomain::NavalPlaceholder" in routing_text
+    assert "DefaultEffectsTargetDomain::GroundPlaceholder" in routing_text
+
     structured_block = _extract_function_block(
         air_platform_text,
-        "bool resolve_default_effects_air_platform_consequences(",
+        "inline bool resolve_default_effects_air_domain_consequences(",
     )
     assert "platform_damage && structured_air_target && scratch.structure_hit" in (
         structured_block
     )
     assert "score->" not in structured_block
     assert "Score*" not in structured_block
+
+
+def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> None:
+    systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
+    logistics_text = _text(GENERIC_LOGISTICS_SYSTEM)
+    naval_logistics_text = _text(NAVAL_LOGISTICS_SYSTEM)
+    sensor_text = _text(DEFAULT_SENSOR_MODEL)
+    maritime_adapter_text = _text(NAVAL_SENSOR_MARITIME_ADAPTER)
+    effects_text = _text(DEFAULT_EFFECTS_MODEL)
+    routing_text = _text(DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL)
+
+    assert "NavalUnderwayResupply" not in logistics_text
+    assert "underway_replenishment_enabled" not in logistics_text
+    assert "NavalUnderwayResupply" in naval_logistics_text
+    assert "underway_replenishment_enabled" in naval_logistics_text
+    assert '#include "systems/naval/naval_logistics_system.h"' in systems_text
+    assert "register_logistics_system(ecs);" in systems_text
+    assert "register_naval_logistics_system(ecs);" in systems_text
+
+    assert "components/naval/ship_platform.h" not in sensor_text
+    assert "ShipPlatform" not in sensor_text
+    assert '#include "models/naval/naval_sensor_maritime_adapter.h"' in sensor_text
+    assert "components/naval/ship_platform.h" in maritime_adapter_text
+    assert "ShipPlatform" in maritime_adapter_text
+
+    assert "is_structured_damage_air_target" not in effects_text
+    assert "default_effects_air_platform_resolution_detail.inc" not in effects_text
+    assert "route_default_effects_target_domain(" in routing_text
+    assert '#include "models/air/default_effects_air_domain.h"' in routing_text
+    assert '#include "models/naval/default_effects_naval_domain.h"' in routing_text
+    assert '#include "models/ground/default_effects_ground_domain.h"' in routing_text
 
 
 def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:

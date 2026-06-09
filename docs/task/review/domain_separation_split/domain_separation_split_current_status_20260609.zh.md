@@ -1,6 +1,6 @@
 # 域分离大拆分当前状态
 
-状态：`2026-06-09` 带 DS-P0-B 清单的当前状态记录；子项目 active，尚未 accepted。
+状态：`2026-06-10`，DS-S1-C / DS-M1 / DS-T1-A 分发后的集成状态；子项目 active，尚未 accepted。
 
 父级：[域分离大拆分](README.zh.md)
 
@@ -8,7 +8,11 @@
 
 审计已经提升为可执行子项目。直接大拆分是当前规划框架：拆分 Air/Naval/Ground 混合热点前，不要求先完成 Naval 示范域。
 
-combat/model ownership hotspot 尚无验收结果。当前工作树中存在 Air runtime ownership 的 partial candidate（`systems/air`、`components/air`），但在验收门槛和索引收口前，它仍归入 `DS-S1-B`。
+2026-06-09 派发表中命名的主要 combat/model ownership hotspot 已有实现证据：
+component ownership、combat damage system、naval logistics extraction、effects
+routing 和 sensor routing 均已落地并通过聚焦验证。子项目仍未 accepted，因为更宽的
+architecture gate 仍在既有/无关表面失败，且 Air propulsion helper dependency 仍需在最终
+G2/G4 收口前转成命名 adapter 或显式保留决定。
 
 DS-P0-B 已产出当前热点的只读 ownership inventory。该清单只是诊断事实收集，不是实现验收，也不会单独改变任何任务簇状态。
 
@@ -18,14 +22,14 @@ DS-P0-B 已产出当前热点的只读 ownership inventory。该清单只是诊�
 | --- | --- | --- | --- | --- |
 | 子项目文档 | owner surface 已创建 | `docs/task/review/domain_separation_split/**` | pass | DS-C1-A / DS-C1-B 分发 |
 | 父级 review index | 已链接 | `docs/task/review/README*` | pass | DS-D1-A 期间保持同步 |
-| Air runtime systems | canonical Air owner 加 compatibility wrappers | `src/systems/air/**`, `src/components/air/**`，旧 physics/tuning wrappers | pass | DS-S1-C logistics helper dependency remain |
+| Air runtime systems | canonical Air owner 加 compatibility wrappers | `src/systems/air/**`, `src/components/air/**`，旧 physics/tuning wrappers | pass | Air propulsion helper dependency 仍需最终 adapter/保留决定 |
 | Combat damage data | domain-owned header 加 compatibility umbrella | `src/components/combat/{common,air,naval,ground}/damage_*.h`；`src/components/combat/damage.h` | pass | DS-S1-A system split |
-| Combat damage ECS | domain-owned system headers 加 compatibility umbrella | `src/systems/combat/damage_system_{common,air,naval,ground}.h`；`src/systems/combat/damage_system.h` | pass | effects/model routing 仍 pending |
+| Combat damage ECS | domain-owned system headers 加 compatibility umbrella | `src/systems/combat/damage_system_{common,air,naval,ground}.h`；`src/systems/combat/damage_system.h` | pass | 继续跟踪 compatibility umbrella 保留理由 |
 | Weapon data | domain-owned header 加 compatibility umbrella | `src/components/combat/{common,air,naval,ground}/weapon_*.h`；`src/components/combat/weapon.h` | pass | 后续簇迁移 direct include |
-| Naval logistics | generic platform system 混合 | `src/systems/systems/logistics_system.h` | held | DS-S1-C |
-| Effects model | air-shaped generic default | `src/models/weapons/default_effects_model.cpp` | held | DS-M1-A |
-| Sensor model | generic model 中存在 ship 依赖 | `src/models/systems/default_sensor_model.cpp` | held | DS-M1-B |
-| Architecture guards | 已有部分 guard surface | `tests/architecture/**` | planned | DS-T1-A |
+| Naval logistics | Naval underway resupply 由 `systems/naval` 拥有 | `src/systems/naval/naval_logistics_system.h`；`src/systems/systems/logistics_system.h`；`src/core/engine/simulation_kernel_systems.cpp` | pass | 更宽的 Air propulsion helper residual 另行处理 |
+| Effects model | generic router 加 Air/Naval/Ground owner path | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`；`src/models/air/default_effects_air_domain.h`；`src/models/naval/default_effects_naval_domain.h`；`src/models/ground/default_effects_ground_domain.h` | pass | Naval/Ground 路径仅为 placeholder |
+| Sensor model | generic sensor 通过 Naval adapter 路由 ship-specific 读取 | `src/models/systems/default_sensor_model.cpp`；`src/models/naval/naval_sensor_maritime_adapter.h` | pass | Acoustic model 的 `ShipPlatform` 访问不属于 DS-M1-B |
+| Architecture guards | 已新增聚焦 domain split guard | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | partial | 聚焦 selector 通过；更宽既有 architecture selector 仍失败 |
 
 ## DS-P0-B 清单
 
@@ -47,10 +51,10 @@ DS-P0-B 已产出当前热点的只读 ownership inventory。该清单只是诊�
 
 ## 立即下一步
 
-1. 现在 `DS-S1-A` 已释放 registration ownership，可分发 `DS-S1-C` 进行 naval logistics extraction。
-2. `DS-M1-A` effects routing 只在确认可消费新 damage owner headers 且无行为漂移后推进。
-3. `DS-M1-B` sensor routing 与 effects routing 保持独立，除非 interface change 迫使串行。
-4. DS-D1-A 保持串行，用于最终 docs/manual/source README 同步。
+1. 决定 generic physics/logistics 中剩余 Air propulsion helper dependency 是转成命名 adapter，还是作为显式 retained compatibility dependency 保留。
+2. 将更宽 architecture 失败作为 held residual 处理，直到既有 direct-sim allowlist 和 Windows snippet link failure 在本拆分之外解决。
+3. Naval/Ground effects 路径只作为 placeholder ownership shell 记录，不宣称完整 domain damage fidelity。
+4. 上述 residual 关闭或被后续包显式接受后，再重跑完整 acceptance。
 
 ## 状态说明
 
