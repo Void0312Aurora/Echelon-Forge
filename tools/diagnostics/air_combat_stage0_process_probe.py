@@ -87,6 +87,50 @@ A5_FIRE_MASK_COMPONENT_NAMES = (
     "fire_mask_ammo_available",
     "fire_mask_reattack_allowed",
 )
+TARGET_DAMAGE_CONSEQUENCE_REWARD_PREFIX = "air_combat_target_damage_consequence_"
+SELF_DAMAGE_CONSEQUENCE_REWARD_PREFIX = "air_combat_self_damage_consequence_"
+LETHALITY_CHAIN_SCHEMA_VERSION = 1
+LETHALITY_CHAIN_STAGES = (
+    "nearest_approach",
+    "fuze",
+    "spatial_coverage",
+    "component_load",
+    "platform_consequence",
+    "lifecycle",
+)
+LETHALITY_CHAIN_ROW_FIELDS = (
+    "schema_version",
+    "episode",
+    "step",
+    "sim_time_s",
+    "chain_id",
+    "event_id",
+    "parent_event_id",
+    "stage",
+    "status",
+    "reason",
+    "source_event_kind",
+    "source_event_id",
+    "munition_id",
+    "target_id",
+    "evidence_level",
+    "miss_distance_m",
+    "nearest_approach_time_s",
+    "local_forward_m",
+    "local_right_m",
+    "local_up_m",
+    "fuze_type",
+    "direct_hitbox_intersection",
+    "projected_hitbox_count",
+    "component_hit_count",
+    "damage_report_id",
+    "system_health_delta",
+    "mission_kill",
+    "mobility_kill",
+    "sensor_kill",
+    "destroyed",
+    "loss_state",
+)
 
 
 def _action_columns_for_mode(action_mode: str) -> dict[str, int]:
@@ -115,6 +159,323 @@ def _stable_json(value: Any) -> str:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     except Exception:
         return ""
+
+
+def _entity_id(value: Any) -> int:
+    try:
+        return int(getattr(value, "entity_id", value) or 0)
+    except Exception:
+        return 0
+
+
+def _event_id(value: Any, name: str) -> int:
+    try:
+        return int(getattr(value, name, 0) or 0)
+    except Exception:
+        return 0
+
+
+def _lethality_evidence_level(effect: Any | None) -> str:
+    if effect is None:
+        return "training_synthetic"
+    if bool(getattr(effect, "fuze_profile_synthetic", False)) or bool(
+        getattr(effect, "warhead_profile_synthetic", False)
+    ) or bool(getattr(effect, "damage_scalar_synthetic", False)):
+        return "training_synthetic"
+    if bool(getattr(effect, "vulnerability_calibrated_evidence", False)):
+        return "engineering_assumption"
+    return "uncalibrated"
+
+
+def _lethality_trace_indexes(engagement_events: Any) -> tuple[dict[int, Any], dict[int, Any]]:
+    trace_by_effect: dict[int, Any] = {}
+    trace_by_damage: dict[int, Any] = {}
+    for trace in list(getattr(engagement_events, "diagnostics_traces", []) or []):
+        effects_event_id = _event_id(trace, "effects_event_id")
+        damage_report_id = _event_id(trace, "damage_report_id")
+        if effects_event_id > 0:
+            trace_by_effect[effects_event_id] = trace
+        if damage_report_id > 0:
+            trace_by_damage[damage_report_id] = trace
+    return trace_by_effect, trace_by_damage
+
+
+def _lethality_base_row(
+    *,
+    episode: int,
+    step: int,
+    sim_time_s: float,
+    chain_id: int,
+    event_id: int,
+    parent_event_id: int,
+    stage: str,
+    source_event_kind: str,
+    source_event_id: int,
+    munition_id: int,
+    target_id: int,
+    evidence_level: str,
+    reason: str,
+    status: str = "projected",
+) -> dict[str, Any]:
+    row = {
+        "schema_version": int(LETHALITY_CHAIN_SCHEMA_VERSION),
+        "episode": int(episode),
+        "step": int(step),
+        "sim_time_s": float(sim_time_s),
+        "chain_id": int(chain_id),
+        "event_id": int(event_id),
+        "parent_event_id": int(parent_event_id),
+        "stage": str(stage),
+        "status": str(status),
+        "reason": str(reason),
+        "source_event_kind": str(source_event_kind),
+        "source_event_id": int(source_event_id),
+        "munition_id": int(munition_id),
+        "target_id": int(target_id),
+        "evidence_level": str(evidence_level),
+        "miss_distance_m": float("nan"),
+        "nearest_approach_time_s": float("nan"),
+        "local_forward_m": float("nan"),
+        "local_right_m": float("nan"),
+        "local_up_m": float("nan"),
+        "fuze_type": "",
+        "direct_hitbox_intersection": 0,
+        "projected_hitbox_count": 0,
+        "component_hit_count": 0,
+        "damage_report_id": 0,
+        "system_health_delta": float("nan"),
+        "mission_kill": 0,
+        "mobility_kill": 0,
+        "sensor_kill": 0,
+        "destroyed": 0,
+        "loss_state": "",
+    }
+    return row
+
+
+def _lethality_chain_rows(
+    *,
+    episode: int,
+    step: int,
+    sim_time_s: float,
+    engagement_events: Any,
+) -> list[dict[str, Any]]:
+    trace_by_effect, trace_by_damage = _lethality_trace_indexes(engagement_events)
+    effect_by_id = {
+        _event_id(effect, "event_id"): effect
+        for effect in list(getattr(engagement_events, "effects_events", []) or [])
+        if _event_id(effect, "event_id") > 0
+    }
+    rows: list[dict[str, Any]] = []
+
+    for effect in list(getattr(engagement_events, "effects_events", []) or []):
+        effect_id = _event_id(effect, "event_id")
+        trace = trace_by_effect.get(effect_id)
+        chain_id = _event_id(trace, "chain_id") if trace is not None else effect_id
+        munition_id = _entity_id(getattr(trace, "munition", None)) if trace is not None else 0
+        if munition_id <= 0:
+            munition_id = _entity_id(getattr(effect, "munition", None))
+        target_id = _entity_id(getattr(effect, "target", None))
+        evidence_level = _lethality_evidence_level(effect)
+        base_kwargs = {
+            "episode": episode,
+            "step": step,
+            "sim_time_s": sim_time_s,
+            "chain_id": chain_id,
+            "event_id": effect_id,
+            "parent_event_id": _event_id(trace, "launch_event_id") if trace is not None else 0,
+            "source_event_kind": "EffectsEvent",
+            "source_event_id": effect_id,
+            "munition_id": munition_id,
+            "target_id": target_id,
+            "evidence_level": evidence_level,
+            "reason": "transitional_effects_event_projection",
+        }
+
+        nearest = _lethality_base_row(stage="nearest_approach", **base_kwargs)
+        nearest.update(
+            {
+                "miss_distance_m": _finite_float(getattr(effect, "miss_distance_m", float("nan"))),
+                "nearest_approach_time_s": _finite_float(
+                    getattr(effect, "nearest_approach_time_s", float("nan"))
+                ),
+                "local_forward_m": _finite_float(getattr(effect, "detonation_local_forward_m", float("nan"))),
+                "local_right_m": _finite_float(getattr(effect, "detonation_local_right_m", float("nan"))),
+                "local_up_m": _finite_float(getattr(effect, "detonation_local_up_m", float("nan"))),
+            }
+        )
+        rows.append(nearest)
+
+        fuze = _lethality_base_row(stage="fuze", **base_kwargs)
+        fuze.update(
+            {
+                "fuze_type": str(getattr(effect, "fuze_type", "") or ""),
+                "direct_hitbox_intersection": int(bool(getattr(effect, "direct_hitbox_intersection", False))),
+            }
+        )
+        rows.append(fuze)
+
+        spatial = _lethality_base_row(stage="spatial_coverage", **base_kwargs)
+        spatial.update({"projected_hitbox_count": int(getattr(effect, "projected_hitbox_count", 0) or 0)})
+        rows.append(spatial)
+
+        component = _lethality_base_row(stage="component_load", **base_kwargs)
+        component_hit_count = int(getattr(effect, "component_hit_count", 0) or 0)
+        component_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
+        if component_hit_count <= 0 and component_rows:
+            component_hit_count = int(sum(1 for item in component_rows if bool(getattr(item, "direct_hit", False))))
+        component.update({"component_hit_count": int(component_hit_count)})
+        rows.append(component)
+
+    for report in list(getattr(engagement_events, "damage_reports", []) or []):
+        report_id = _event_id(report, "report_id")
+        source_event_id = _event_id(report, "source_event_id")
+        trace = trace_by_damage.get(report_id) or trace_by_effect.get(source_event_id)
+        source_effect = effect_by_id.get(source_event_id)
+        chain_id = _event_id(trace, "chain_id") if trace is not None else source_event_id or report_id
+        munition_id = _entity_id(getattr(trace, "munition", None)) if trace is not None else _entity_id(
+            getattr(source_effect, "munition", None)
+        )
+        target_id = _entity_id(getattr(report, "target", None)) or _entity_id(getattr(source_effect, "target", None))
+        evidence_level = _lethality_evidence_level(source_effect)
+        base_kwargs = {
+            "episode": episode,
+            "step": step,
+            "sim_time_s": sim_time_s,
+            "chain_id": chain_id,
+            "event_id": report_id,
+            "parent_event_id": source_event_id,
+            "source_event_kind": "DamageReport",
+            "source_event_id": report_id,
+            "munition_id": munition_id,
+            "target_id": target_id,
+            "evidence_level": evidence_level,
+            "reason": "transitional_damage_report_projection",
+        }
+
+        platform = _lethality_base_row(stage="platform_consequence", **base_kwargs)
+        platform.update(
+            {
+                "damage_report_id": report_id,
+                "system_health_delta": _finite_float(getattr(report, "system_health_delta", float("nan"))),
+                "mission_kill": int(bool(getattr(report, "mission_kill", False))),
+                "mobility_kill": int(bool(getattr(report, "mobility_kill", False))),
+                "sensor_kill": int(bool(getattr(report, "sensor_kill", False))),
+                "destroyed": int(bool(getattr(report, "destroyed", False))),
+                "loss_state": str(getattr(report, "loss_state_to", "") or ""),
+            }
+        )
+        rows.append(platform)
+
+        lifecycle = _lethality_base_row(stage="lifecycle", **base_kwargs)
+        lifecycle.update(
+            {
+                "damage_report_id": report_id,
+                "destroyed": int(bool(getattr(report, "destroyed", False))),
+                "loss_state": str(getattr(report, "loss_state_to", "") or ""),
+            }
+        )
+        rows.append(lifecycle)
+
+    return rows
+
+
+def _append_unique_lethality_chain_rows(
+    out: list[dict[str, Any]],
+    seen: set[tuple[int, int, int, str, str, int]],
+    rows: list[dict[str, Any]],
+) -> None:
+    for row in rows:
+        key = (
+            int(row.get("episode", 0) or 0),
+            int(row.get("chain_id", 0) or 0),
+            int(row.get("event_id", 0) or 0),
+            str(row.get("stage", "") or ""),
+            str(row.get("source_event_kind", "") or ""),
+            int(row.get("source_event_id", 0) or 0),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(dict(row))
+
+
+def _project_current_lethality_chain_rows(*, episode: int, step: int, sim_time_s: float, sim: Any) -> list[dict[str, Any]]:
+    try:
+        engagement_events = sim.export_recent_engagement_events()
+    except Exception:
+        return []
+    return _lethality_chain_rows(
+        episode=int(episode),
+        step=int(step),
+        sim_time_s=float(sim_time_s),
+        engagement_events=engagement_events,
+    )
+
+
+def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    def last_stage(stage: str) -> dict[str, Any] | None:
+        matches = [row for row in chain_rows if str(row.get("stage", "")) == str(stage)]
+        return matches[-1] if matches else None
+
+    nearest = last_stage("nearest_approach") or {}
+    fuze = last_stage("fuze") or {}
+    spatial = last_stage("spatial_coverage") or {}
+    component = last_stage("component_load") or {}
+    platform = last_stage("platform_consequence") or {}
+    lifecycle = last_stage("lifecycle") or {}
+    local = (
+        _finite_float(nearest.get("local_forward_m", float("nan"))),
+        _finite_float(nearest.get("local_right_m", float("nan"))),
+        _finite_float(nearest.get("local_up_m", float("nan"))),
+    )
+    local_norm = math.sqrt(sum(value * value for value in local)) if all(math.isfinite(value) for value in local) else float("nan")
+    return {
+        "lethality_chain_row_count": int(len(chain_rows)),
+        "lethality_chain_chain_count": int(len({int(row.get("chain_id", 0) or 0) for row in chain_rows})),
+        "lethality_chain_stages_json": _stable_json(sorted({str(row.get("stage", "")) for row in chain_rows})),
+        "lethality_chain_miss_distance_m": _finite_float(nearest.get("miss_distance_m", float("nan"))),
+        "lethality_chain_nearest_approach_time_s": _finite_float(
+            nearest.get("nearest_approach_time_s", float("nan"))
+        ),
+        "lethality_chain_local_forward_m": local[0],
+        "lethality_chain_local_right_m": local[1],
+        "lethality_chain_local_up_m": local[2],
+        "lethality_chain_local_norm_m": local_norm,
+        "lethality_chain_fuze_type": str(fuze.get("fuze_type", "") or ""),
+        "lethality_chain_direct_hitbox_intersection": int(fuze.get("direct_hitbox_intersection", 0) or 0),
+        "lethality_chain_projected_hitbox_count": int(spatial.get("projected_hitbox_count", 0) or 0),
+        "lethality_chain_component_hit_count": int(component.get("component_hit_count", 0) or 0),
+        "lethality_chain_damage_report_id": int(platform.get("damage_report_id", lifecycle.get("damage_report_id", 0)) or 0),
+        "lethality_chain_system_health_delta": _finite_float(platform.get("system_health_delta", float("nan"))),
+        "lethality_chain_mission_kill": int(platform.get("mission_kill", 0) or 0),
+        "lethality_chain_mobility_kill": int(platform.get("mobility_kill", 0) or 0),
+        "lethality_chain_sensor_kill": int(platform.get("sensor_kill", 0) or 0),
+        "lethality_chain_destroyed": int(
+            platform.get("destroyed", lifecycle.get("destroyed", 0)) or 0
+        ),
+        "lethality_chain_loss_state": str(platform.get("loss_state", lifecycle.get("loss_state", "")) or ""),
+    }
+
+
+def _reward_terms_prefix_total(reward_terms: Any, prefix: str) -> float:
+    if not isinstance(reward_terms, dict):
+        return 0.0
+    total = 0.0
+    for key, value in reward_terms.items():
+        if str(key).startswith(prefix):
+            total += _finite_float(value, 0.0)
+    return float(total)
+
+
+def _damage_consequence_reward_columns(reward_terms: Any) -> dict[str, float]:
+    target_total = _reward_terms_prefix_total(reward_terms, TARGET_DAMAGE_CONSEQUENCE_REWARD_PREFIX)
+    self_total = _reward_terms_prefix_total(reward_terms, SELF_DAMAGE_CONSEQUENCE_REWARD_PREFIX)
+    return {
+        "damage_consequence_reward_total": float(target_total + self_total),
+        "target_damage_consequence_reward_total": float(target_total),
+        "self_damage_consequence_reward_total": float(self_total),
+    }
 
 
 def _a7_launch_window_config_from_train_config(train_config: dict[str, Any] | None) -> dict[str, float]:
@@ -715,13 +1076,18 @@ def _snapshot_row(
     engagement_events = sim.export_recent_engagement_events()
     effects_events = list(getattr(engagement_events, "effects_events", []) or [])
     damage_reports = list(getattr(engagement_events, "damage_reports", []) or [])
-    last_effect = effects_events[-1] if effects_events else None
-    last_report = damage_reports[-1] if damage_reports else None
+    sim_time_s = _finite_float(getattr(truth, "sim_time", step * sim.get_time_step()))
+    lethality_chain_rows = _lethality_chain_rows(
+        episode=int(episode),
+        step=int(step),
+        sim_time_s=float(sim_time_s),
+        engagement_events=engagement_events,
+    )
 
     row: dict[str, Any] = {
         "episode": int(episode),
         "step": int(step),
-        "sim_time_s": _finite_float(getattr(truth, "sim_time", step * sim.get_time_step())),
+        "sim_time_s": float(sim_time_s),
         "reward": float(reward),
         "total_reward_term": _finite_float(reward_terms.get("total", float("nan"))) if isinstance(reward_terms, dict) else float("nan"),
         "combat_win_bonus": _finite_float(reward_terms.get("combat_win_bonus", 0.0)) if isinstance(reward_terms, dict) else 0.0,
@@ -754,54 +1120,9 @@ def _snapshot_row(
         ),
         "effects_event_count": int(len(effects_events)),
         "damage_report_count": int(len(damage_reports)),
-        "last_effect_miss_distance_m": (
-            _finite_float(getattr(last_effect, "miss_distance_m", float("nan"))) if last_effect is not None else float("nan")
-        ),
-        "last_effect_detonation_local_forward_m": (
-            _finite_float(getattr(last_effect, "detonation_local_forward_m", float("nan")))
-            if last_effect is not None
-            else float("nan")
-        ),
-        "last_effect_detonation_local_right_m": (
-            _finite_float(getattr(last_effect, "detonation_local_right_m", float("nan")))
-            if last_effect is not None
-            else float("nan")
-        ),
-        "last_effect_detonation_local_up_m": (
-            _finite_float(getattr(last_effect, "detonation_local_up_m", float("nan")))
-            if last_effect is not None
-            else float("nan")
-        ),
-        "last_effect_direct_hitbox_intersection": int(
-            bool(getattr(last_effect, "direct_hitbox_intersection", False)) if last_effect is not None else False
-        ),
-        "last_effect_projected_hitbox_count": int(
-            getattr(last_effect, "projected_hitbox_count", 0) if last_effect is not None else 0
-        ),
-        "last_effect_component_hit_count": int(
-            getattr(last_effect, "component_hit_count", 0) if last_effect is not None else 0
-        ),
-        "last_effect_fuze_type": str(getattr(last_effect, "fuze_type", "") or "") if last_effect is not None else "",
-        "last_damage_report_id": int(getattr(last_report, "report_id", 0) or 0) if last_report is not None else 0,
-        "last_damage_loss_state": str(getattr(last_report, "loss_state_to", "") or "") if last_report is not None else "",
-        "last_damage_system_health_delta": (
-            _finite_float(getattr(last_report, "system_health_delta", float("nan")))
-            if last_report is not None
-            else float("nan")
-        ),
-        "last_damage_mission_kill": int(
-            bool(getattr(last_report, "mission_kill", False)) if last_report is not None else False
-        ),
-        "last_damage_mobility_kill": int(
-            bool(getattr(last_report, "mobility_kill", False)) if last_report is not None else False
-        ),
-        "last_damage_sensor_kill": int(
-            bool(getattr(last_report, "sensor_kill", False)) if last_report is not None else False
-        ),
-        "last_damage_destroyed": int(
-            bool(getattr(last_report, "destroyed", False)) if last_report is not None else False
-        ),
     }
+    row.update(_lethality_chain_snapshot_columns(lethality_chain_rows))
+    row.update(_damage_consequence_reward_columns(reward_terms))
     action_mode = str(getattr(base, "action_mode", "full"))
     columns = _action_columns_for_mode(action_mode)
     effective_action = getattr(base, "_last_action", None)
@@ -872,6 +1193,7 @@ def _snapshot_row(
 def _summarize_episode(
     rows: list[dict[str, Any]],
     launch_window_config: dict[str, Any] | None = None,
+    lethality_chain_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if not rows:
         return {}
@@ -889,16 +1211,12 @@ def _summarize_episode(
         if math.isfinite(float(row.get("target_range_geom_m", float("nan"))))
     ]
     initial_target_health = float(rows[0].get("target_health", float("nan")))
-    detonation_local = (
-        float(final.get("last_effect_detonation_local_forward_m", float("nan"))),
-        float(final.get("last_effect_detonation_local_right_m", float("nan"))),
-        float(final.get("last_effect_detonation_local_up_m", float("nan"))),
-    )
-    detonation_local_norm = (
-        math.sqrt(sum(value * value for value in detonation_local))
-        if all(math.isfinite(value) for value in detonation_local)
-        else float("nan")
-    )
+    chain_snapshot = _lethality_chain_snapshot_columns(list(lethality_chain_rows or []))
+    if not lethality_chain_rows:
+        chain_snapshot = {
+            key: final.get(key, value)
+            for key, value in chain_snapshot.items()
+        }
     fire_steps = [int(row["step"]) for row in rows if int(row.get("action_fire_weapon_on", 0)) > 0]
     fire_switch_steps: list[int] = []
     release_steps: list[int] = []
@@ -1068,6 +1386,11 @@ def _summarize_episode(
     def count_rows(predicate) -> int:
         return int(sum(1 for row in rows if int(row.get("step", 0)) > 0 and bool(predicate(row))))
 
+    def first_nonzero_reward_step(key: str) -> int | None:
+        return first_step(
+            lambda row: int(row.get("step", 0)) > 0 and abs(_finite_float(row.get(key, 0.0), 0.0)) > 1.0e-12
+        )
+
     reason = str(final.get("termination_reason", "")) or (
         "truncated" if int(final.get("truncated", 0)) else "terminated" if int(final.get("terminated", 0)) else "running"
     )
@@ -1078,6 +1401,14 @@ def _summarize_episode(
         "terminated": bool(int(final.get("terminated", 0))),
         "truncated": bool(int(final.get("truncated", 0))),
         "total_reward": float(sum(float(row.get("reward", 0.0)) for row in rows if int(row.get("step", 0)) > 0)),
+        "damage_consequence_reward_total": row_stat("damage_consequence_reward_total", np.sum, default=0.0),
+        "target_damage_consequence_reward_total": row_stat("target_damage_consequence_reward_total", np.sum, default=0.0),
+        "self_damage_consequence_reward_total": row_stat("self_damage_consequence_reward_total", np.sum, default=0.0),
+        "first_damage_consequence_reward_step": first_nonzero_reward_step("damage_consequence_reward_total"),
+        "first_target_damage_consequence_reward_step": first_nonzero_reward_step(
+            "target_damage_consequence_reward_total"
+        ),
+        "first_self_damage_consequence_reward_step": first_nonzero_reward_step("self_damage_consequence_reward_total"),
         "first_contact_step": first_step(lambda row: int(row.get("target_contact", 0)) > 0),
         "first_can_fire_step": first_step(lambda row: int(row.get("can_fire", 0)) > 0),
         "first_authorized_step": first_step(lambda row: int(row.get("authorization_to_fire", 0)) > 0),
@@ -1089,7 +1420,7 @@ def _summarize_episode(
         "first_effects_event_step": first_step(lambda row: int(row.get("effects_event_count", 0)) > 0),
         "first_damage_report_step": first_step(lambda row: int(row.get("damage_report_count", 0)) > 0),
         "first_damage_progress_step": first_step(
-            lambda row: float(row.get("last_damage_system_health_delta", 0.0)) < 0.0
+            lambda row: float(row.get("lethality_chain_system_health_delta", 0.0)) < 0.0
         ),
         "first_target_health_drop_step": first_step(
             lambda row: math.isfinite(initial_target_health)
@@ -1418,29 +1749,40 @@ def _summarize_episode(
         "min_release_interval_steps": min(release_intervals) if release_intervals else None,
         "effects_event_count": int(final.get("effects_event_count", 0)),
         "damage_report_count": int(final.get("damage_report_count", 0)),
-        "last_effect_miss_distance_m": float(final.get("last_effect_miss_distance_m", float("nan"))),
-        "last_effect_detonation_local_forward_m": float(
-            final.get("last_effect_detonation_local_forward_m", float("nan"))
+        "lethality_chain_row_count": int(chain_snapshot.get("lethality_chain_row_count", 0) or 0),
+        "lethality_chain_chain_count": int(chain_snapshot.get("lethality_chain_chain_count", 0) or 0),
+        "lethality_chain_stages_json": str(chain_snapshot.get("lethality_chain_stages_json", "[]") or "[]"),
+        "lethality_chain_miss_distance_m": float(
+            chain_snapshot.get("lethality_chain_miss_distance_m", float("nan"))
         ),
-        "last_effect_detonation_local_right_m": float(
-            final.get("last_effect_detonation_local_right_m", float("nan"))
+        "lethality_chain_nearest_approach_time_s": float(
+            chain_snapshot.get("lethality_chain_nearest_approach_time_s", float("nan"))
         ),
-        "last_effect_detonation_local_up_m": float(
-            final.get("last_effect_detonation_local_up_m", float("nan"))
+        "lethality_chain_local_forward_m": float(
+            chain_snapshot.get("lethality_chain_local_forward_m", float("nan"))
         ),
-        "last_effect_detonation_local_norm_m": detonation_local_norm,
-        "last_effect_direct_hitbox_intersection": bool(
-            int(final.get("last_effect_direct_hitbox_intersection", 0))
+        "lethality_chain_local_right_m": float(
+            chain_snapshot.get("lethality_chain_local_right_m", float("nan"))
         ),
-        "last_effect_projected_hitbox_count": int(final.get("last_effect_projected_hitbox_count", 0)),
-        "last_effect_component_hit_count": int(final.get("last_effect_component_hit_count", 0)),
-        "last_effect_fuze_type": str(final.get("last_effect_fuze_type", "")),
-        "last_damage_loss_state": str(final.get("last_damage_loss_state", "")),
-        "last_damage_system_health_delta": float(final.get("last_damage_system_health_delta", float("nan"))),
-        "last_damage_mission_kill": bool(int(final.get("last_damage_mission_kill", 0))),
-        "last_damage_mobility_kill": bool(int(final.get("last_damage_mobility_kill", 0))),
-        "last_damage_sensor_kill": bool(int(final.get("last_damage_sensor_kill", 0))),
-        "last_damage_destroyed": bool(int(final.get("last_damage_destroyed", 0))),
+        "lethality_chain_local_up_m": float(chain_snapshot.get("lethality_chain_local_up_m", float("nan"))),
+        "lethality_chain_local_norm_m": float(chain_snapshot.get("lethality_chain_local_norm_m", float("nan"))),
+        "lethality_chain_fuze_type": str(chain_snapshot.get("lethality_chain_fuze_type", "")),
+        "lethality_chain_direct_hitbox_intersection": bool(
+            int(chain_snapshot.get("lethality_chain_direct_hitbox_intersection", 0) or 0)
+        ),
+        "lethality_chain_projected_hitbox_count": int(
+            chain_snapshot.get("lethality_chain_projected_hitbox_count", 0) or 0
+        ),
+        "lethality_chain_component_hit_count": int(chain_snapshot.get("lethality_chain_component_hit_count", 0) or 0),
+        "lethality_chain_damage_report_id": int(chain_snapshot.get("lethality_chain_damage_report_id", 0) or 0),
+        "lethality_chain_system_health_delta": float(
+            chain_snapshot.get("lethality_chain_system_health_delta", float("nan"))
+        ),
+        "lethality_chain_mission_kill": bool(int(chain_snapshot.get("lethality_chain_mission_kill", 0) or 0)),
+        "lethality_chain_mobility_kill": bool(int(chain_snapshot.get("lethality_chain_mobility_kill", 0) or 0)),
+        "lethality_chain_sensor_kill": bool(int(chain_snapshot.get("lethality_chain_sensor_kill", 0) or 0)),
+        "lethality_chain_destroyed": bool(int(chain_snapshot.get("lethality_chain_destroyed", 0) or 0)),
+        "lethality_chain_loss_state": str(chain_snapshot.get("lethality_chain_loss_state", "")),
     }
 
 
@@ -1458,6 +1800,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     base_env = _base_env(env)
     action_mode = str(getattr(base_env, "action_mode", "full"))
     rows: list[dict[str, Any]] = []
+    lethality_chain_rows: list[dict[str, Any]] = []
+    lethality_chain_seen: set[tuple[int, int, int, str, str, int]] = set()
     episode_summaries: list[dict[str, Any]] = []
     try:
         for ep in range(int(args.episodes)):
@@ -1472,6 +1816,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             legal_mask_fired = False
             legal_open_age_steps = 0
             ep_rows: list[dict[str, Any]] = []
+            ep_chain_rows: list[dict[str, Any]] = []
             initial_row = _snapshot_row(
                 episode=ep,
                 step=0,
@@ -1488,6 +1833,14 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             )
             rows.append(initial_row)
             ep_rows.append(initial_row)
+            initial_chain_rows = _project_current_lethality_chain_rows(
+                episode=ep,
+                step=0,
+                sim_time_s=float(initial_row.get("sim_time_s", 0.0)),
+                sim=base_env.sim,
+            )
+            _append_unique_lethality_chain_rows(lethality_chain_rows, lethality_chain_seen, initial_chain_rows)
+            _append_unique_lethality_chain_rows(ep_chain_rows, set(), initial_chain_rows)
             for step in range(1, max_steps + 1):
                 policy_diagnostics: dict[str, Any] = {}
                 if args.mode == "forced_fire":
@@ -1546,11 +1899,36 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
                 )
                 rows.append(row)
                 ep_rows.append(row)
+                current_chain_rows = _project_current_lethality_chain_rows(
+                    episode=ep,
+                    step=step,
+                    sim_time_s=float(row.get("sim_time_s", 0.0)),
+                    sim=base_env.sim,
+                )
+                _append_unique_lethality_chain_rows(lethality_chain_rows, lethality_chain_seen, current_chain_rows)
+                ep_seen = {
+                    (
+                        int(existing.get("episode", 0) or 0),
+                        int(existing.get("chain_id", 0) or 0),
+                        int(existing.get("event_id", 0) or 0),
+                        str(existing.get("stage", "") or ""),
+                        str(existing.get("source_event_kind", "") or ""),
+                        int(existing.get("source_event_id", 0) or 0),
+                    )
+                    for existing in ep_chain_rows
+                }
+                _append_unique_lethality_chain_rows(ep_chain_rows, ep_seen, current_chain_rows)
                 prev_missiles = int(row.get("missiles_remaining", prev_missiles))
                 release_count_so_far += int(row.get("missile_release_delta", 0) or 0)
                 if bool(terminated or truncated):
                     break
-            episode_summaries.append(_summarize_episode(ep_rows, launch_window_config=launch_window_config))
+            episode_summaries.append(
+                _summarize_episode(
+                    ep_rows,
+                    launch_window_config=launch_window_config,
+                    lethality_chain_rows=ep_chain_rows,
+                )
+            )
     finally:
         try:
             env.close()
@@ -1569,12 +1947,16 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "seed": int(args.seed),
         "episodes": int(args.episodes),
         "rows": len(rows),
+        "lethality_chain_rows": lethality_chain_rows,
         "termination_reasons": dict(sorted(reasons.items())),
         "episode_summaries": episode_summaries,
     }
     if args.csv_out:
         write_csv(args.csv_out, rows)
         payload["csv_out"] = os.path.abspath(args.csv_out)
+    if args.chain_csv_out:
+        write_csv(args.chain_csv_out, lethality_chain_rows)
+        payload["chain_csv_out"] = os.path.abspath(args.chain_csv_out)
     if args.json_out:
         write_json(args.json_out, payload)
     if args.plot_out:
@@ -1682,6 +2064,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max_steps", type=int, default=0)
     parser.add_argument("--stochastic", action="store_true", help="Use stochastic policy prediction in --mode model.")
     parser.add_argument("--csv_out", default="")
+    parser.add_argument("--chain_csv_out", default="")
     parser.add_argument("--json_out", default="")
     parser.add_argument("--plot_out", default="")
     return parser

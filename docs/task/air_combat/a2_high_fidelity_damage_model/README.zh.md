@@ -10,9 +10,14 @@
 aircraft damage/effects runtime 记录。它不释放 stock authority、Pk authority、
 deterministic fuze authority 或更广的 weapon-outcome authority。
 
-新建但暂不展开的 A2 子项目想法：
-[damage_consequence_reward_surface/README.zh.md](damage_consequence_reward_surface/README.zh.md)。
-它只记录“按损伤后果而非单一 kill 给训练奖励”的方向，不重开已封存 A2 包，也不创建 A9。
+当前 A2 follow-on：
+
+- [damage_consequence_reward_surface/README.zh.md](damage_consequence_reward_surface/README.zh.md)：
+  将“按损伤后果而非单一 kill 给训练奖励”的方向升级为有边界奖励扩展切片。
+- [missile_lethality_model_foundation/README.zh.md](missile_lethality_model_foundation/README.zh.md)：
+  规划通用导弹杀伤模型基础，按顺序建设命中几何、引信、战斗部作用、目标脆弱性、结构失效、残骸对象和统计校验。
+
+这些 follow-on 不重开已封存 A2 包，也不创建 A9。
 
 只有在明确 authority-promotion 或新 research 请求下才重开本线。默认空战工作继续从
 [../README.zh.md](../README.zh.md) 进入。

@@ -272,6 +272,77 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
             ),
         )
 
+    def test_lethality_chain_event_public_fields_expose_mlf1b_shape(self) -> None:
+        self.assertTrue(
+            {
+                "schema_version",
+                "chain_id",
+                "event_id",
+                "parent_event_id",
+                "stage",
+                "status",
+                "reason",
+                "source_time_s",
+                "source_frame",
+                "munition",
+                "shooter",
+                "target",
+                "producer_node_id",
+                "fidelity_mode",
+                "evidence_level",
+                "confidence",
+            }.issubset(public_fields(ef_py.LethalityChainHeader()))
+        )
+        self.assertTrue(
+            {
+                "header",
+                "miss_distance_m",
+                "nearest_approach_time_s",
+                "local_forward_m",
+                "local_right_m",
+                "local_up_m",
+                "closure_mps",
+                "aspect_bucket",
+            }.issubset(public_fields(ef_py.NearestApproachEvent()))
+        )
+        self.assertTrue(
+            {
+                "header",
+                "fuze_type",
+                "armed",
+                "triggered",
+                "failure_reason",
+                "delay_s",
+                "reliability",
+                "sample",
+            }.issubset(public_fields(ef_py.FuzeEvaluationEvent()))
+        )
+        self.assertTrue({"header", "mechanism_family"}.issubset(
+            public_fields(ef_py.WarheadMechanismEvent())
+        ))
+        self.assertTrue({"header", "sample_count"}.issubset(
+            public_fields(ef_py.SpatialCoverageEvent())
+        ))
+        self.assertTrue({"header", "component_name"}.issubset(
+            public_fields(ef_py.ComponentLoadEvent())
+        ))
+        self.assertTrue({"header", "integrity_before", "integrity_after"}.issubset(
+            public_fields(ef_py.ComponentDamageEvent())
+        ))
+        self.assertTrue({"header", "mission_capability_before"}.issubset(
+            public_fields(ef_py.PlatformConsequenceEvent())
+        ))
+        self.assertTrue({"header", "breakup_state"}.issubset(
+            public_fields(ef_py.StructuralBreakupEvent())
+        ))
+        self.assertTrue({"header", "lifecycle_from", "lifecycle_to"}.issubset(
+            public_fields(ef_py.LifecycleTransitionEvent())
+        ))
+        self.assertTrue({"header", "consumed_event_ids", "fact_source"}.issubset(
+            public_fields(ef_py.TrainingProjectionEvent())
+        ))
+        self.assertFalse(ef_py.TrainingProjectionEvent().fact_source)
+
     def test_component_mechanism_load_row_public_fields_match_expected_binding_surface(self) -> None:
         self.assertTupleEqual(
             public_fields(ef_py.ComponentMechanismLoadRow()),
@@ -286,6 +357,12 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "component_dependency_source_availability",
                 "component_dependency_target_system",
                 "component_dependency_threshold",
+                "component_failure_mode_authority",
+                "component_failure_mode_names",
+                "component_failure_mode_severities",
+                "component_failure_mode_source",
+                "component_failure_primary_mode",
+                "component_failure_primary_mode_severity",
                 "component_failure_probability",
                 "component_failure_probability_aspect_bucket",
                 "component_failure_probability_authority",
@@ -522,22 +599,78 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
                 "barrier_detail",
                 "barrier_id",
                 "barrier_sequence",
+                "component_damage_events",
+                "component_load_events",
                 "damage_reports",
                 "diagnostics_provenance",
                 "diagnostics_traces",
                 "effects_events",
+                "fuze_evaluation_events",
                 "launch_events",
                 "launch_requests",
+                "lifecycle_transition_events",
                 "munition_lifecycle_packets",
+                "nearest_approach_events",
                 "packet_provenance",
+                "platform_consequence_events",
                 "producer_node_id",
                 "refs",
                 "snapshot_version",
                 "source_time_s",
+                "spatial_coverage_events",
+                "structural_breakup_events",
                 "trace_ids",
                 "track_packets",
+                "training_projection_events",
+                "warhead_mechanism_events",
             ),
         )
+
+    def test_lethality_chain_vectors_round_trip_on_python_packets(self) -> None:
+        header = ef_py.LethalityChainHeader()
+        header.chain_id = 7001
+        header.event_id = 7002
+        header.parent_event_id = 7000
+        header.stage = "nearest_approach"
+        header.status = "pass"
+        header.reason = "shape_contract_unit_test"
+        header.evidence_level = "training_synthetic"
+        header.munition = _engagement_ref(303)
+        header.shooter = _engagement_ref(101)
+        header.target = _engagement_ref(202)
+
+        nearest = ef_py.NearestApproachEvent()
+        nearest.header = header
+        nearest.miss_distance_m = 2.5
+
+        projection = ef_py.TrainingProjectionEvent()
+        projection.header = header
+        projection.consumed_event_ids = [nearest.header.event_id]
+        projection.consumer_node_id = "unit-test-consumer"
+
+        packet = ef_py.EngagementEventPacket()
+        packet.nearest_approach_events = [nearest]
+        packet.fuze_evaluation_events = [ef_py.FuzeEvaluationEvent()]
+        packet.warhead_mechanism_events = [ef_py.WarheadMechanismEvent()]
+        packet.spatial_coverage_events = [ef_py.SpatialCoverageEvent()]
+        packet.component_load_events = [ef_py.ComponentLoadEvent()]
+        packet.component_damage_events = [ef_py.ComponentDamageEvent()]
+        packet.platform_consequence_events = [ef_py.PlatformConsequenceEvent()]
+        packet.structural_breakup_events = [ef_py.StructuralBreakupEvent()]
+        packet.lifecycle_transition_events = [ef_py.LifecycleTransitionEvent()]
+        packet.training_projection_events = [projection]
+
+        recent = ef_py.RecentEngagementEvents()
+        recent.nearest_approach_events = [nearest]
+        recent.training_projection_events = [projection]
+
+        self.assertEqual(float(packet.nearest_approach_events[0].miss_distance_m), 2.5)
+        self.assertEqual(
+            int(packet.training_projection_events[0].consumed_event_ids[0]),
+            int(nearest.header.event_id),
+        )
+        self.assertFalse(packet.training_projection_events[0].fact_source)
+        self.assertEqual(int(recent.nearest_approach_events[0].header.chain_id), 7001)
 
     def test_live_engagement_packet_binding_surface_exposes_wp11_vertical_slice_chain(self) -> None:
         packet, _, target_id, missile_id = _make_launch_damage_packet()

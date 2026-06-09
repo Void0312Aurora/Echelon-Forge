@@ -9,6 +9,170 @@ struct EngagementEntityRef {
     std::uint64_t entity_id = 0;
 };
 
+struct LethalityChainHeader {
+    std::uint32_t schema_version = 1;
+    std::uint64_t chain_id = 0;
+    std::uint64_t event_id = 0;
+    std::uint64_t parent_event_id = 0;
+    std::string stage = "unknown";
+    std::string status = "not_evaluated";
+    std::string reason;
+    double source_time_s = 0.0;
+    std::uint64_t source_frame = 0;
+    EngagementEntityRef munition{};
+    EngagementEntityRef shooter{};
+    EngagementEntityRef target{};
+    std::string producer_node_id;
+    std::string fidelity_mode = "unspecified";
+    std::string evidence_level = "uncalibrated";
+    double confidence = 0.0;
+};
+
+struct NearestApproachEvent {
+    LethalityChainHeader header{};
+    double nearest_approach_time_s = 0.0;
+    double miss_distance_m = 0.0;
+    double local_forward_m = 0.0;
+    double local_right_m = 0.0;
+    double local_up_m = 0.0;
+    double closure_mps = 0.0;
+    std::string aspect_bucket = "unknown";
+};
+
+struct FuzeEvaluationEvent {
+    LethalityChainHeader header{};
+    std::string fuze_type = "unknown";
+    bool armed = false;
+    bool triggered = false;
+    std::string failure_reason;
+    double delay_s = 0.0;
+    double reliability = 1.0;
+    double sample = 1.0;
+    double trigger_radius_m = 0.0;
+    double contact_surface_distance_m = 0.0;
+    double contact_penetration_depth_m = 0.0;
+    double contact_surface_tolerance_m = 0.0;
+    bool contact_inside_hitbox = false;
+    bool direct_hitbox_intersection = false;
+};
+
+struct WarheadMechanismEvent {
+    LethalityChainHeader header{};
+    std::string mechanism_family = "unknown";
+    double warhead_mass_kg = 0.0;
+    double lethal_radius_m = 0.0;
+    double fragment_energy_j = 0.0;
+    double fragment_density_per_m2 = 0.0;
+    double blast_overpressure_kpa = 0.0;
+    double blast_impulse_kpa_ms = 0.0;
+    double blast_scaled_distance_m_kg13 = 0.0;
+    double rod_cut_margin = 0.0;
+    double penetration_margin = 0.0;
+    double surface_incidence_cos = 0.0;
+};
+
+struct SpatialCoverageEvent {
+    LethalityChainHeader header{};
+    std::uint32_t projected_hitbox_count = 0;
+    std::uint32_t sample_count = 0;
+    double hit_estimate = 0.0;
+    double hit_fraction = 0.0;
+    double energy_scale = 1.0;
+    double pattern_scale = 1.0;
+    double orientation_axis_forward = 0.0;
+    double orientation_axis_right = 0.0;
+    double orientation_axis_up = 0.0;
+};
+
+struct ComponentLoadEvent {
+    LethalityChainHeader header{};
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
+    bool direct_hit = false;
+    double distance_m = 0.0;
+    double effect_scale = 0.0;
+    double fragment_energy_j = 0.0;
+    double fragment_density_per_m2 = 0.0;
+    double penetration_margin = 0.0;
+    double blast_overpressure_kpa = 0.0;
+    double blast_impulse_kpa_ms = 0.0;
+    double blast_scaled_distance_m_kg13 = 0.0;
+    double rod_cut_margin = 0.0;
+    double surface_incidence_cos = 0.0;
+    std::string load_source = "unprojected";
+};
+
+struct ComponentDamageEvent {
+    LethalityChainHeader header{};
+    std::string component_name;
+    std::string component_system;
+    std::string component_redundancy_group_id;
+    double integrity_before = 1.0;
+    double integrity_after = 1.0;
+    std::string failure_mode = "none";
+    double failure_severity = 0.0;
+    double failure_probability = 0.0;
+    double failure_sample = 1.0;
+};
+
+struct PlatformConsequenceEvent {
+    LethalityChainHeader header{};
+    double mission_capability_before = 1.0;
+    double mission_capability_after = 1.0;
+    double mobility_capability_before = 1.0;
+    double mobility_capability_after = 1.0;
+    double sensor_capability_before = 1.0;
+    double sensor_capability_after = 1.0;
+    double survivability_capability_before = 1.0;
+    double survivability_capability_after = 1.0;
+    bool mission_kill = false;
+    bool mobility_kill = false;
+    bool sensor_kill = false;
+    bool survivability_kill = false;
+    bool flight_control_kill = false;
+    bool propulsion_kill = false;
+    bool forced_landing = false;
+    bool crew_kill = false;
+    double control_delta = 0.0;
+    double engine_delta = 0.0;
+    double fuel_leak_delta = 0.0;
+    std::string fire_state = "unknown";
+};
+
+struct StructuralBreakupEvent {
+    LethalityChainHeader header{};
+    std::string breakup_state = "none";
+    std::string break_mode = "none";
+    std::string detached_part_ref;
+    std::uint32_t detached_part_count = 0;
+    bool airframe_breakup = false;
+    std::uint64_t cause_event_id = 0;
+};
+
+struct LifecycleTransitionEvent {
+    LethalityChainHeader header{};
+    std::string lifecycle_from = "unknown";
+    std::string lifecycle_to = "unknown";
+    std::string ground_lifecycle = "unknown";
+    EngagementEntityRef wreck_entity{};
+    std::uint32_t debris_count = 0;
+    bool terminal = false;
+    std::uint64_t terminal_projection_id = 0;
+};
+
+struct TrainingProjectionEvent {
+    LethalityChainHeader header{};
+    std::vector<std::uint64_t> consumed_event_ids;
+    std::string consumer_node_id;
+    std::string consumer_version;
+    std::string projection_kind = "training_consumer";
+    std::string reward_term;
+    double reward_delta = 0.0;
+    std::string terminal_reason;
+    bool fact_source = false;
+};
+
 struct ComponentMechanismLoadRow {
     std::string component_name;
     std::string component_system;

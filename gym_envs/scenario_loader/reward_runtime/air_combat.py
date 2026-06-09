@@ -13,6 +13,94 @@ _LOSS_PROGRESS_BONUS_DEFAULTS = {
     "survivability_kill": 250.0,
     "lost": 250.0,
 }
+_AIRCRAFT_DAMAGE_STATE_FIELDS = (
+    "structural_integrity",
+    "flight_control_integrity",
+    "hydraulic_integrity",
+    "hydraulic_pressure_availability",
+    "roll_control_integrity",
+    "pitch_control_integrity",
+    "yaw_control_integrity",
+    "control_asymmetry",
+    "propulsion_integrity",
+    "fuel_system_integrity",
+    "avionics_integrity",
+    "crew_effectiveness",
+    "pilot_effectiveness",
+    "mission_crew_effectiveness",
+    "command_navigation_integrity",
+    "fire_severity",
+    "fuel_leak_severity",
+    "fuel_imbalance_severity",
+    "flammable_fluid_exposure",
+    "ignition_source_severity",
+    "fire_suppression_integrity",
+    "smoke_heat_exposure",
+    "engine_fire_zone_severity",
+    "wing_fire_zone_severity",
+    "fuselage_fire_zone_severity",
+    "mission_fire_zone_severity",
+    "structural_overstress",
+    "flutter_exposure",
+    "forced_landing_required",
+    "flight_control_kill",
+    "propulsion_kill",
+    "crew_kill",
+)
+_AIRCRAFT_DAMAGE_DECREASE_FIELDS = {
+    "structural_integrity": 20.0,
+    "flight_control_integrity": 35.0,
+    "hydraulic_integrity": 20.0,
+    "hydraulic_pressure_availability": 20.0,
+    "roll_control_integrity": 25.0,
+    "pitch_control_integrity": 25.0,
+    "yaw_control_integrity": 25.0,
+    "propulsion_integrity": 35.0,
+    "fuel_system_integrity": 20.0,
+    "avionics_integrity": 25.0,
+    "crew_effectiveness": 25.0,
+    "pilot_effectiveness": 25.0,
+    "mission_crew_effectiveness": 25.0,
+    "command_navigation_integrity": 25.0,
+    "fire_suppression_integrity": 15.0,
+}
+_AIRCRAFT_DAMAGE_INCREASE_FIELDS = {
+    "control_asymmetry": 25.0,
+    "fire_severity": 50.0,
+    "fuel_leak_severity": 40.0,
+    "fuel_imbalance_severity": 20.0,
+    "flammable_fluid_exposure": 20.0,
+    "ignition_source_severity": 25.0,
+    "smoke_heat_exposure": 20.0,
+    "engine_fire_zone_severity": 45.0,
+    "wing_fire_zone_severity": 35.0,
+    "fuselage_fire_zone_severity": 35.0,
+    "mission_fire_zone_severity": 35.0,
+    "structural_overstress": 30.0,
+    "flutter_exposure": 20.0,
+}
+_AIRCRAFT_DAMAGE_FLAG_FIELDS = {
+    "forced_landing_required": 100.0,
+    "flight_control_kill": 125.0,
+    "propulsion_kill": 125.0,
+    "crew_kill": 125.0,
+}
+_GROUND_CONTACT_STATE_FIELDS = (
+    "on_ground",
+    "terrain_z",
+    "lifecycle",
+    "impact_h_speed",
+    "impact_sink_rate",
+    "impact_severity",
+    "gear_stress",
+    "gear_collapsed",
+    "on_runway",
+)
+_GROUND_CONSEQUENCE_REWARD_FIELDS = (
+    "ground_crashed_wreck",
+    "ground_gear_collapse",
+    "ground_impact",
+)
 _C2_ROE_CONTRACT_FIELDS = {
     "wcs_state",
     "target_identity_state",
@@ -151,6 +239,28 @@ def air_combat_damage_shaping_enabled(loader: Any) -> bool:
     if explicit is not None:
         return _as_bool(explicit, True)
     return is_air_combat_profile(loader)
+
+
+def air_combat_damage_consequence_shaping_enabled(loader: Any) -> bool:
+    explicit = _cfg_value(loader, "air_combat_damage_consequence_shaping_enabled", None)
+    if explicit is None:
+        explicit = _cfg_value(loader, "combat_damage_consequence_shaping_enabled", None)
+    if explicit is not None:
+        return _as_bool(explicit, False)
+    field_names = (
+        set(_AIRCRAFT_DAMAGE_DECREASE_FIELDS)
+        | set(_AIRCRAFT_DAMAGE_INCREASE_FIELDS)
+        | set(_AIRCRAFT_DAMAGE_FLAG_FIELDS)
+        | set(_GROUND_CONSEQUENCE_REWARD_FIELDS)
+    )
+    for role in ("target", "self"):
+        prefix = f"air_combat_{role}_damage_consequence"
+        if abs(_cfg_float(loader, f"{prefix}_scale", 0.0)) > 0.0:
+            return True
+        for field in field_names:
+            if abs(_cfg_float(loader, f"{prefix}_{field}_scale", 0.0)) > 0.0:
+                return True
+    return False
 
 
 def air_combat_release_shaping_enabled(loader: Any) -> bool:
@@ -338,12 +448,17 @@ def _damage_report_terminal_reason(loader: Any, report: Any) -> str | None:
     return None
 
 
-def _recent_damage_reports(sim: Any) -> list[Any]:
+def _recent_engagement_events(sim: Any) -> Any | None:
     if sim is None or not hasattr(sim, "export_recent_engagement_events"):
-        return []
+        return None
     try:
-        events = sim.export_recent_engagement_events()
+        return sim.export_recent_engagement_events()
     except Exception:
+        return None
+
+
+def _recent_damage_reports_from_events(events: Any) -> list[Any]:
+    if events is None:
         return []
     try:
         reports = list(getattr(events, "damage_reports", []) or [])
@@ -351,6 +466,52 @@ def _recent_damage_reports(sim: Any) -> list[Any]:
         return []
     reports.sort(key=lambda report: int(getattr(report, "report_id", 0) or 0))
     return reports
+
+
+def _recent_damage_reports(sim: Any) -> list[Any]:
+    return _recent_damage_reports_from_events(_recent_engagement_events(sim))
+
+
+def _entity_id_from_ref(value: Any) -> int:
+    try:
+        return int(getattr(value, "entity_id", 0) or 0)
+    except Exception:
+        return 0
+
+
+def _header(value: Any) -> Any:
+    return getattr(value, "header", None)
+
+
+def _header_event_id(value: Any) -> int:
+    header = _header(value)
+    for owner, field in ((header, "event_id"), (value, "event_id"), (value, "report_id")):
+        if owner is None:
+            continue
+        try:
+            parsed = int(getattr(owner, field, 0) or 0)
+        except Exception:
+            parsed = 0
+        if parsed > 0:
+            return parsed
+    return 0
+
+
+def _header_target_id(value: Any) -> int:
+    header = _header(value)
+    if header is not None:
+        target_id = _entity_id_from_ref(getattr(header, "target", None))
+        if target_id > 0:
+            return target_id
+    return _entity_id_from_ref(getattr(value, "target", None))
+
+
+def _finite_attr(value: Any, field: str, default: float = 0.0) -> float:
+    try:
+        parsed = float(getattr(value, field, default) or default)
+    except Exception:
+        return float(default)
+    return parsed if math.isfinite(parsed) else float(default)
 
 
 def _parse_platform_damage_delta(value: Any) -> dict[str, float]:
@@ -373,21 +534,424 @@ def _parse_platform_damage_delta(value: Any) -> dict[str, float]:
     return out
 
 
-def _loss_progress_states(report: Any) -> set[str]:
+def _capability_delta_projection(before: float, after: float) -> float:
+    before = float(before)
+    after = float(after)
+    if not math.isfinite(before) or not math.isfinite(after):
+        return 0.0
+    return after - before
+
+
+def _platform_consequence_fact_projection(event: Any) -> dict[str, Any]:
+    before_values = {
+        "mission": _finite_attr(event, "mission_capability_before", 1.0),
+        "mobility": _finite_attr(event, "mobility_capability_before", 1.0),
+        "sensor": _finite_attr(event, "sensor_capability_before", 1.0),
+        "survivability": _finite_attr(event, "survivability_capability_before", 1.0),
+    }
+    after_values = {
+        "mission": _finite_attr(event, "mission_capability_after", 1.0),
+        "mobility": _finite_attr(event, "mobility_capability_after", 1.0),
+        "sensor": _finite_attr(event, "sensor_capability_after", 1.0),
+        "survivability": _finite_attr(event, "survivability_capability_after", 1.0),
+    }
+    return {
+        "source": "platform_consequence_event",
+        "event_id": _header_event_id(event),
+        "target_id": _header_target_id(event),
+        "damage_report_id": 0,
+        "system_health_delta": min(after_values.values()) - min(before_values.values()),
+        "capability_deltas": {
+            field: _capability_delta_projection(before_values[field], after_values[field])
+            for field in _DAMAGE_DELTA_FIELDS
+        },
+        "loss_state_from": "",
+        "loss_state_to": "",
+        "destroyed": False,
+        "mission_kill": bool(getattr(event, "mission_kill", False)),
+        "mobility_kill": bool(getattr(event, "mobility_kill", False)),
+        "sensor_kill": bool(getattr(event, "sensor_kill", False)),
+        "survivability_kill": bool(getattr(event, "survivability_kill", False)),
+    }
+
+
+def _lifecycle_transition_fact_projection(event: Any) -> dict[str, Any]:
+    lifecycle_to = _normalized_token(getattr(event, "lifecycle_to", ""))
+    return {
+        "source": "lifecycle_transition_event",
+        "event_id": _header_event_id(event),
+        "target_id": _header_target_id(event),
+        "damage_report_id": 0,
+        "system_health_delta": 0.0,
+        "capability_deltas": {},
+        "loss_state_from": str(getattr(event, "lifecycle_from", "") or ""),
+        "loss_state_to": str(getattr(event, "lifecycle_to", "") or ""),
+        "destroyed": bool(getattr(event, "terminal", False) and lifecycle_to == "lost"),
+        "mission_kill": False,
+        "mobility_kill": False,
+        "sensor_kill": False,
+        "survivability_kill": False,
+    }
+
+
+def _transitional_damage_report_fact_projection(report: Any) -> dict[str, Any]:
+    # MLF-1D transitional fallback only. Delete when the event store writes
+    # PlatformConsequenceEvent and LifecycleTransitionEvent for runtime scenarios.
+    return {
+        "source": "transitional_damage_report_projection",
+        "event_id": _report_id(report),
+        "target_id": _report_target_id(report),
+        "damage_report_id": _report_id(report),
+        "system_health_delta": _finite_attr(report, "system_health_delta", 0.0),
+        "capability_deltas": _parse_platform_damage_delta(
+            getattr(report, "platform_damage_state_delta", "")
+        ),
+        "loss_state_from": str(getattr(report, "loss_state_from", "") or ""),
+        "loss_state_to": str(getattr(report, "loss_state_to", "") or ""),
+        "destroyed": bool(getattr(report, "destroyed", False)),
+        "mission_kill": bool(getattr(report, "mission_kill", False)),
+        "mobility_kill": bool(getattr(report, "mobility_kill", False)),
+        "sensor_kill": bool(getattr(report, "sensor_kill", False)),
+        "survivability_kill": bool(getattr(report, "survivability_kill", False)),
+    }
+
+
+def _standard_damage_fact_projections(events: Any) -> list[dict[str, Any]]:
+    facts: list[dict[str, Any]] = []
+    for event in list(getattr(events, "platform_consequence_events", []) or []):
+        facts.append(_platform_consequence_fact_projection(event))
+    for event in list(getattr(events, "lifecycle_transition_events", []) or []):
+        facts.append(_lifecycle_transition_fact_projection(event))
+    facts.sort(key=lambda item: int(item.get("event_id", 0) or 0))
+    return facts
+
+
+def _recent_damage_fact_projections(events: Any) -> list[dict[str, Any]]:
+    standard_facts = _standard_damage_fact_projections(events)
+    if standard_facts:
+        return standard_facts
+    return [
+        _transitional_damage_report_fact_projection(report)
+        for report in _recent_damage_reports_from_events(events)
+    ]
+
+
+def _damage_fact_id(fact: dict[str, Any]) -> int:
+    try:
+        return int(fact.get("event_id", 0) or 0)
+    except Exception:
+        return 0
+
+
+def _damage_fact_target_id(fact: dict[str, Any]) -> int:
+    try:
+        return int(fact.get("target_id", 0) or 0)
+    except Exception:
+        return 0
+
+
+def _float_state_map(values: Any, field_names: tuple[str, ...]) -> dict[str, float]:
+    try:
+        raw_values = list(values) if values is not None else []
+    except Exception:
+        return {}
+    out: dict[str, float] = {}
+    for idx, field in enumerate(field_names):
+        if idx >= len(raw_values):
+            break
+        try:
+            parsed = float(raw_values[idx])
+        except Exception:
+            continue
+        if math.isfinite(parsed):
+            out[field] = parsed
+    return out
+
+
+def _damage_consequence_store(loader: Any) -> dict[str, Any]:
+    store = getattr(loader, "_air_combat_reward_damage_consequence_state", None)
+    if not isinstance(store, dict):
+        store = {}
+        setattr(loader, "_air_combat_reward_damage_consequence_state", store)
+    return store
+
+
+def _damage_consequence_snapshot(sim: Any, entity_id: int) -> dict[str, Any]:
+    snapshot: dict[str, Any] = {
+        "entity_id": int(entity_id or 0),
+        "aircraft": {},
+        "ground": {},
+    }
+    if sim is None or int(entity_id or 0) <= 0:
+        return snapshot
+    if hasattr(sim, "debug_get_aircraft_damage_state"):
+        try:
+            snapshot["aircraft"] = _float_state_map(
+                sim.debug_get_aircraft_damage_state(int(entity_id)),
+                _AIRCRAFT_DAMAGE_STATE_FIELDS,
+            )
+        except Exception:
+            snapshot["aircraft"] = {}
+    if hasattr(sim, "debug_get_ground_contact_state"):
+        try:
+            snapshot["ground"] = _float_state_map(
+                sim.debug_get_ground_contact_state(int(entity_id)),
+                _GROUND_CONTACT_STATE_FIELDS,
+            )
+        except Exception:
+            snapshot["ground"] = {}
+    return snapshot
+
+
+def _ground_contact_terminal_state(sim: Any, entity_id: int) -> dict[str, Any]:
+    if sim is None or int(entity_id or 0) <= 0 or not hasattr(sim, "debug_get_ground_contact_state"):
+        return {}
+    try:
+        ground = _float_state_map(
+            sim.debug_get_ground_contact_state(int(entity_id)),
+            _GROUND_CONTACT_STATE_FIELDS,
+        )
+    except Exception:
+        return {}
+    lifecycle = int(float(ground.get("lifecycle", 0.0) or 0.0))
+    if lifecycle >= 2:
+        return {
+            "reason": "ground_crashed_wreck",
+            "loss_state": "ground_crashed_wreck",
+            "ground_lifecycle": lifecycle,
+            "ground_impact_severity": float(ground.get("impact_severity", 0.0) or 0.0),
+            "ground_impact_horizontal_speed_mps": float(ground.get("impact_h_speed", 0.0) or 0.0),
+            "ground_impact_sink_rate_mps": float(ground.get("impact_sink_rate", 0.0) or 0.0),
+        }
+    return {}
+
+
+def _ground_lifecycle_ordinal(value: Any) -> int:
+    try:
+        return int(float(value))
+    except Exception:
+        token = _normalized_token(value)
+    if token in {"ground_crashed_wreck", "crashed_wreck", "wreck"}:
+        return 2
+    if token in {"safe_ground_contact", "ground_contact", "on_ground"}:
+        return 1
+    return 0
+
+
+def _lifecycle_transition_terminal_reason(loader: Any, event: Any) -> str | None:
+    ground_lifecycle = _ground_lifecycle_ordinal(getattr(event, "ground_lifecycle", ""))
+    if ground_lifecycle >= 2:
+        return "ground_crashed_wreck"
+    lifecycle_to = _normalized_token(getattr(event, "lifecycle_to", ""))
+    terminal_states = _terminal_damage_states(loader)
+    if bool(getattr(event, "terminal", False)) and lifecycle_to == "lost":
+        return "lost"
+    if lifecycle_to in terminal_states:
+        return lifecycle_to
+    return None
+
+
+def _standard_lifecycle_terminal_state(
+    loader: Any,
+    events: Any,
+    entity_id: int,
+) -> tuple[bool, dict[str, Any]]:
+    lifecycle_events = [
+        event
+        for event in list(getattr(events, "lifecycle_transition_events", []) or [])
+        if _header_target_id(event) == int(entity_id or 0)
+    ]
+    if not lifecycle_events:
+        return False, {}
+    lifecycle_events.sort(key=_header_event_id)
+    terminal_state: dict[str, Any] = {}
+    for event in lifecycle_events:
+        reason = _lifecycle_transition_terminal_reason(loader, event)
+        if reason is None:
+            continue
+        ground_lifecycle = _ground_lifecycle_ordinal(getattr(event, "ground_lifecycle", ""))
+        terminal_state = {
+            "reason": reason,
+            "loss_state": reason if reason == "ground_crashed_wreck" else str(getattr(event, "lifecycle_to", "") or ""),
+            "lifecycle_event_id": _header_event_id(event),
+        }
+        if ground_lifecycle >= 2:
+            terminal_state["ground_lifecycle"] = ground_lifecycle
+    return True, terminal_state
+
+
+def _damage_consequence_scale(loader: Any, role: str, field: str, default: float) -> float:
+    global_scale = abs(_cfg_float(loader, f"air_combat_{role}_damage_consequence_scale", 1.0))
+    field_scale = abs(_cfg_float(loader, f"air_combat_{role}_damage_consequence_{field}_scale", default))
+    return float(global_scale * field_scale)
+
+
+def _clipped_positive_delta(loader: Any, value: float) -> float:
+    if not math.isfinite(value) or value <= 0.0:
+        return 0.0
+    clip = _cfg_float(loader, "air_combat_damage_consequence_delta_clip", 1.0)
+    if math.isfinite(clip) and clip > 0.0:
+        return min(float(value), float(clip))
+    return float(value)
+
+
+def _apply_aircraft_consequence_shaping(
+    loader: Any,
+    rb: dict[str, float],
+    *,
+    role: str,
+    previous: dict[str, float],
+    current: dict[str, float],
+) -> float:
+    sign = 1.0 if role == "target" else -1.0
+    suffix = "progress" if role == "target" else "penalty"
+    total = 0.0
+
+    for field, default_scale in _AIRCRAFT_DAMAGE_DECREASE_FIELDS.items():
+        if field not in previous or field not in current:
+            continue
+        magnitude = _clipped_positive_delta(loader, float(previous[field]) - float(current[field]))
+        if magnitude <= 0.0:
+            continue
+        scale = _damage_consequence_scale(loader, role, field, default_scale)
+        total += _add_term(
+            rb,
+            f"air_combat_{role}_damage_consequence_{field}_{suffix}",
+            sign * magnitude * scale,
+        )
+
+    for field, default_scale in _AIRCRAFT_DAMAGE_INCREASE_FIELDS.items():
+        if field not in previous or field not in current:
+            continue
+        magnitude = _clipped_positive_delta(loader, float(current[field]) - float(previous[field]))
+        if magnitude <= 0.0:
+            continue
+        scale = _damage_consequence_scale(loader, role, field, default_scale)
+        total += _add_term(
+            rb,
+            f"air_combat_{role}_damage_consequence_{field}_{suffix}",
+            sign * magnitude * scale,
+        )
+
+    for field, default_scale in _AIRCRAFT_DAMAGE_FLAG_FIELDS.items():
+        if field not in previous or field not in current:
+            continue
+        if float(previous[field]) >= 0.5 or float(current[field]) < 0.5:
+            continue
+        scale = _damage_consequence_scale(loader, role, field, default_scale)
+        total += _add_term(
+            rb,
+            f"air_combat_{role}_damage_consequence_{field}_{suffix}",
+            sign * scale,
+        )
+
+    return total
+
+
+def _apply_ground_consequence_shaping(
+    loader: Any,
+    rb: dict[str, float],
+    *,
+    role: str,
+    previous: dict[str, float],
+    current: dict[str, float],
+) -> float:
+    sign = 1.0 if role == "target" else -1.0
+    suffix = "progress" if role == "target" else "penalty"
+    total = 0.0
+
+    prev_lifecycle = int(float(previous.get("lifecycle", 0.0) or 0.0))
+    current_lifecycle = int(float(current.get("lifecycle", 0.0) or 0.0))
+    if prev_lifecycle < 2 <= current_lifecycle:
+        scale = _damage_consequence_scale(loader, role, "ground_crashed_wreck", 250.0)
+        total += _add_term(
+            rb,
+            f"air_combat_{role}_damage_consequence_ground_crashed_wreck_{suffix}",
+            sign * scale,
+        )
+
+    prev_gear_collapsed = float(previous.get("gear_collapsed", 0.0) or 0.0) >= 0.5
+    current_gear_collapsed = float(current.get("gear_collapsed", 0.0) or 0.0) >= 0.5
+    if not prev_gear_collapsed and current_gear_collapsed:
+        scale = _damage_consequence_scale(loader, role, "ground_gear_collapse", 100.0)
+        total += _add_term(
+            rb,
+            f"air_combat_{role}_damage_consequence_ground_gear_collapse_{suffix}",
+            sign * scale,
+        )
+
+    impact_threshold = _cfg_float(loader, "air_combat_damage_consequence_ground_impact_min_severity", 1.0)
+    prev_impact = float(previous.get("impact_severity", 0.0) or 0.0)
+    current_impact = float(current.get("impact_severity", 0.0) or 0.0)
+    if current_impact >= impact_threshold:
+        impact_delta = current_impact - max(prev_impact, impact_threshold)
+        magnitude = _clipped_positive_delta(loader, impact_delta)
+        if magnitude > 0.0:
+            scale = _damage_consequence_scale(loader, role, "ground_impact", 75.0)
+            total += _add_term(
+                rb,
+                f"air_combat_{role}_damage_consequence_ground_impact_{suffix}",
+                sign * magnitude * scale,
+            )
+
+    return total
+
+
+def _apply_damage_consequence_shaping(
+    loader: Any,
+    sim: Any,
+    rb: dict[str, float],
+    *,
+    role: str,
+    entity_id: int,
+) -> float:
+    snapshot = _damage_consequence_snapshot(sim, int(entity_id or 0))
+    if not snapshot["aircraft"] and not snapshot["ground"]:
+        return 0.0
+
+    store = _damage_consequence_store(loader)
+    previous = store.get(role)
+    store[role] = snapshot
+    if not isinstance(previous, dict) or int(previous.get("entity_id", 0) or 0) != int(entity_id or 0):
+        return 0.0
+
+    total = 0.0
+    prev_aircraft = previous.get("aircraft", {})
+    if isinstance(prev_aircraft, dict) and snapshot["aircraft"]:
+        total += _apply_aircraft_consequence_shaping(
+            loader,
+            rb,
+            role=role,
+            previous=prev_aircraft,
+            current=snapshot["aircraft"],
+        )
+    prev_ground = previous.get("ground", {})
+    if isinstance(prev_ground, dict) and snapshot["ground"]:
+        total += _apply_ground_consequence_shaping(
+            loader,
+            rb,
+            role=role,
+            previous=prev_ground,
+            current=snapshot["ground"],
+        )
+    return total
+
+
+def _loss_progress_states(fact: dict[str, Any]) -> set[str]:
     states: set[str] = set()
-    from_state = _normalized_token(getattr(report, "loss_state_from", ""))
-    to_state = _normalized_token(getattr(report, "loss_state_to", ""))
+    from_state = _normalized_token(fact.get("loss_state_from", ""))
+    to_state = _normalized_token(fact.get("loss_state_to", ""))
     if to_state and to_state != from_state and to_state != "combat_capable":
         states.add(to_state)
-    if bool(getattr(report, "destroyed", False)):
+    if bool(fact.get("destroyed", False)):
         states.add("lost")
-    if bool(getattr(report, "mission_kill", False)):
+    if bool(fact.get("mission_kill", False)):
         states.add("mission_kill")
-    if bool(getattr(report, "mobility_kill", False)):
+    if bool(fact.get("mobility_kill", False)):
         states.add("mobility_kill")
-    if bool(getattr(report, "sensor_kill", False)):
+    if bool(fact.get("sensor_kill", False)):
         states.add("sensor_kill")
-    if bool(getattr(report, "survivability_kill", False)):
+    if bool(fact.get("survivability_kill", False)):
         states.add("survivability_kill")
     return states
 
@@ -732,10 +1296,10 @@ def _apply_release_shaping(
     return total, False
 
 
-def _apply_report_shaping(
+def _apply_damage_fact_shaping(
     loader: Any,
     rb: dict[str, float],
-    report: Any,
+    fact: dict[str, Any],
     *,
     role: str,
 ) -> float:
@@ -743,7 +1307,7 @@ def _apply_report_shaping(
     total = 0.0
 
     try:
-        system_delta = float(getattr(report, "system_health_delta", 0.0) or 0.0)
+        system_delta = float(fact.get("system_health_delta", 0.0) or 0.0)
     except Exception:
         system_delta = 0.0
     if math.isfinite(system_delta):
@@ -758,7 +1322,9 @@ def _apply_report_shaping(
             )
 
     subsystem_scale = abs(_cfg_float(loader, f"air_combat_{role}_subsystem_progress_scale", 2.0))
-    for field, delta in _parse_platform_damage_delta(getattr(report, "platform_damage_state_delta", "")).items():
+    capability_deltas = fact.get("capability_deltas", {})
+    capability_deltas = capability_deltas if isinstance(capability_deltas, dict) else {}
+    for field, delta in capability_deltas.items():
         magnitude = max(0.0, -float(delta))
         if magnitude <= 0.0:
             continue
@@ -769,7 +1335,7 @@ def _apply_report_shaping(
             sign * magnitude * scale,
         )
 
-    for state in sorted(_loss_progress_states(report)):
+    for state in sorted(_loss_progress_states(fact)):
         default_bonus = _LOSS_PROGRESS_BONUS_DEFAULTS.get(state, 0.0)
         bonus = abs(_cfg_float(loader, f"air_combat_{role}_{state}_progress_bonus", default_bonus))
         if bonus <= 0.0:
@@ -799,28 +1365,52 @@ def apply_air_combat_reward_surface(
     release_shaping_enabled = air_combat_release_shaping_enabled(loader)
     c2_roe_shaping_enabled = air_combat_c2_roe_release_discipline_enabled(loader)
     damage_shaping_enabled = air_combat_damage_shaping_enabled(loader)
-    if not release_shaping_enabled and not c2_roe_shaping_enabled and not damage_shaping_enabled:
+    damage_consequence_shaping_enabled = air_combat_damage_consequence_shaping_enabled(loader)
+    if (
+        not release_shaping_enabled
+        and not c2_roe_shaping_enabled
+        and not damage_shaping_enabled
+        and not damage_consequence_shaping_enabled
+    ):
         return float(reward), bool(terminated), bool(truncated), status, rb, None
 
-    reports = _recent_damage_reports(sim)
-    report_ids = [_report_id(report) for report in reports if _report_id(report) > 0]
-    max_report_id = max(report_ids, default=0)
-    last_report_id = int(getattr(loader, "_air_combat_reward_last_report_id", 0) or 0)
-    if max_report_id > 0 and max_report_id < last_report_id:
-        last_report_id = 0
+    events = _recent_engagement_events(sim) if damage_shaping_enabled else None
+    damage_facts = _recent_damage_fact_projections(events) if damage_shaping_enabled else []
+    fact_ids = [_damage_fact_id(fact) for fact in damage_facts if _damage_fact_id(fact) > 0]
+    max_fact_id = max(fact_ids, default=0)
+    last_fact_id = int(getattr(loader, "_air_combat_reward_last_report_id", 0) or 0)
+    if max_fact_id > 0 and max_fact_id < last_fact_id:
+        last_fact_id = 0
+
+    agent_id = int(getattr(loader, "agent_id", 0) or 0)
+    target_id = int(getattr(loader, "primary_target_id", 0) or 0)
+    next_reward = float(reward)
+    consumed_max_fact_id = last_fact_id
 
     if bool(terminated):
         current_missiles = _truth_missiles_remaining(truth)
         if current_missiles is not None:
             setattr(loader, "_air_combat_reward_prev_missiles", int(current_missiles))
-        if max_report_id > last_report_id:
-            setattr(loader, "_air_combat_reward_last_report_id", int(max_report_id))
-        return float(reward), bool(terminated), bool(truncated), status, rb, None
-
-    agent_id = int(getattr(loader, "agent_id", 0) or 0)
-    target_id = int(getattr(loader, "primary_target_id", 0) or 0)
-    next_reward = float(reward)
-    consumed_max_report_id = last_report_id
+        if damage_consequence_shaping_enabled:
+            if target_id > 0:
+                next_reward += _apply_damage_consequence_shaping(
+                    loader,
+                    sim,
+                    rb,
+                    role="target",
+                    entity_id=target_id,
+                )
+            if agent_id > 0:
+                next_reward += _apply_damage_consequence_shaping(
+                    loader,
+                    sim,
+                    rb,
+                    role="self",
+                    entity_id=agent_id,
+                )
+        if max_fact_id > last_fact_id:
+            setattr(loader, "_air_combat_reward_last_report_id", int(max_fact_id))
+        return next_reward, bool(terminated), bool(truncated), status, rb, None
 
     if release_shaping_enabled or c2_roe_shaping_enabled:
         release_delta, _released = _apply_release_shaping(
@@ -832,22 +1422,41 @@ def apply_air_combat_reward_surface(
         )
         next_reward += float(release_delta)
 
-    if not damage_shaping_enabled:
+    if not damage_shaping_enabled and not damage_consequence_shaping_enabled:
         return next_reward, bool(terminated), bool(truncated), status, rb, None
 
-    for report in reports:
-        report_id = _report_id(report)
-        if report_id <= last_report_id:
-            continue
-        consumed_max_report_id = max(consumed_max_report_id, report_id)
-        report_target_id = _report_target_id(report)
-        if target_id > 0 and report_target_id == target_id:
-            next_reward += _apply_report_shaping(loader, rb, report, role="target")
-        elif agent_id > 0 and report_target_id == agent_id:
-            next_reward += _apply_report_shaping(loader, rb, report, role="self")
+    if damage_shaping_enabled:
+        for fact in damage_facts:
+            fact_id = _damage_fact_id(fact)
+            if fact_id <= last_fact_id:
+                continue
+            consumed_max_fact_id = max(consumed_max_fact_id, fact_id)
+            fact_target_id = _damage_fact_target_id(fact)
+            if target_id > 0 and fact_target_id == target_id:
+                next_reward += _apply_damage_fact_shaping(loader, rb, fact, role="target")
+            elif agent_id > 0 and fact_target_id == agent_id:
+                next_reward += _apply_damage_fact_shaping(loader, rb, fact, role="self")
 
-    if consumed_max_report_id != int(getattr(loader, "_air_combat_reward_last_report_id", 0) or 0):
-        setattr(loader, "_air_combat_reward_last_report_id", int(consumed_max_report_id))
+    if damage_consequence_shaping_enabled:
+        if target_id > 0:
+            next_reward += _apply_damage_consequence_shaping(
+                loader,
+                sim,
+                rb,
+                role="target",
+                entity_id=target_id,
+            )
+        if agent_id > 0:
+            next_reward += _apply_damage_consequence_shaping(
+                loader,
+                sim,
+                rb,
+                role="self",
+                entity_id=agent_id,
+            )
+
+    if consumed_max_fact_id != int(getattr(loader, "_air_combat_reward_last_report_id", 0) or 0):
+        setattr(loader, "_air_combat_reward_last_report_id", int(consumed_max_fact_id))
     return next_reward, bool(terminated), bool(truncated), status, rb, None
 
 
@@ -872,7 +1481,16 @@ def combat_entity_terminal_state(loader: Any, sim: Any, entity_id: int) -> dict[
     if entity_id <= 0 or not active or not air_combat_damage_terminal_enabled(loader):
         return state
 
-    for report in _recent_damage_reports(sim):
+    events = _recent_engagement_events(sim)
+    has_standard_lifecycle, lifecycle_terminal = _standard_lifecycle_terminal_state(loader, events, entity_id)
+    if has_standard_lifecycle:
+        if lifecycle_terminal:
+            state["neutralized"] = True
+            state["actionable"] = False
+            state.update(lifecycle_terminal)
+        return state
+
+    for report in _recent_damage_reports_from_events(events):
         if _report_target_id(report) != entity_id:
             continue
         reason = _damage_report_terminal_reason(loader, report)
@@ -883,4 +1501,9 @@ def combat_entity_terminal_state(loader: Any, sim: Any, entity_id: int) -> dict[
         state["reason"] = reason
         state["damage_report_id"] = int(getattr(report, "report_id", 0) or 0)
         state["loss_state"] = str(getattr(report, "loss_state_to", "") or "")
+    ground_terminal = _ground_contact_terminal_state(sim, entity_id)
+    if ground_terminal:
+        state["neutralized"] = True
+        state["actionable"] = False
+        state.update(ground_terminal)
     return state

@@ -190,6 +190,11 @@
     "air_combat_roe_premature_second_shot_penalty": 0.0,
     "air_combat_roe_shot_budget_violation_penalty": 0.0,
     "air_combat_roe_authorized_salvo_bonus": 0.0,
-    "air_combat_roe_authorized_reattack_bonus": 0.0
+    "air_combat_roe_authorized_reattack_bonus": 0.0,
+    "air_combat_damage_consequence_shaping_enabled": true,
+    "air_combat_damage_consequence_delta_clip": 0.5,
+    "air_combat_damage_consequence_ground_impact_min_severity": 1.0,
+    "air_combat_target_damage_consequence_scale": 0.05,
+    "air_combat_self_damage_consequence_scale": 0.02
   }
 }

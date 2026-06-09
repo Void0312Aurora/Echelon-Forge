@@ -17,6 +17,7 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
     - Used by the additive Stage-1 A3 C2/ROE hybrid shaped and temporal shaped probes; legacy M1 baseline entries remain on `mission_obs_mode=basic`.
   - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
     - Used by the A1 Stage-2 C2/ROE M3-S2 continuation entry; the goal is to transfer accepted Stage-1 release discipline to the maneuvering-red, red-unarmed scenario.
+    - As of DCR-D, explicitly opts in low-weight damage consequence reward terms for synthetic training shaping only.
 - Current baseline is:
   - Blue learner: `F-16C_Block50`
   - Early curriculum target: unarmed `MQ-9_Reaper` surrogate for Stage 0 and Stage 1
@@ -145,6 +146,12 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - A1 Stage-2 C2/ROE M3-S2 continuation entry using the maneuvering-red, red-unarmed training-shaped Stage-2 scenario.
   - Reuses the Stage-1 M3-S2 direct fire-boundary owner and `air_combat_c2_roe_v2` observation surface without weakening A3/A5 legality or the one-shot state machine.
   - The `2026-06-08` 8k init-from-Stage-1 short train preserved one accepted authorized release in deterministic and stochastic single-episode probes, but had no effects/damage/kill; it is a Stage-2 training entry, not stage acceptance.
+  - The paired Stage-2 training-shaped scenario now explicitly enables low-weight damage consequence shaping:
+    `air_combat_damage_consequence_shaping_enabled=true`,
+    `air_combat_target_damage_consequence_scale=0.05`,
+    `air_combat_self_damage_consequence_scale=0.02`, and
+    `air_combat_damage_consequence_delta_clip=0.5`.
+  - Those terms are synthetic training feedback from observed consequence state only. They do not close launch behavior, assert real Pk/kill authority, change weapon or damage runtime, or count as Stage-2 acceptance evidence.
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 M1 hybrid temporal shaped comparison probe.

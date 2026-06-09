@@ -17,6 +17,7 @@
     - 由 additive Stage-1 A3 C2/ROE hybrid shaped 与 temporal shaped 探针使用；既有 M1 baseline 条目仍保持 `mission_obs_mode=basic`。
   - [air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json](../../../../../scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json)
     - 由 A1 Stage-2 C2/ROE M3-S2 续训入口使用；目标是把已验收的 Stage-1 发射纪律迁移到机动红方、红方无武器场景。
+    - 从 DCR-D 起，它显式 opt-in 低权重 damage consequence reward terms；这些项只作为 synthetic training shaping。
 - 当前基线为：
   - 蓝方学习者：`F-16C_Block50`
   - 早期课程目标：Stage 0 和 Stage 1 使用无武器 `MQ-9_Reaper` 替身
@@ -146,6 +147,12 @@
     不削弱 A3/A5 发射合法性和 one-shot 状态机。
   - `2026-06-08` 8k init-from-Stage-1 短训后的 deterministic/stochastic 单集 probe 都保住一次授权发射，
     但没有 effects/damage/kill；因此它是 Stage-2 训练入口，不是阶段验收。
+  - 配对的 Stage-2 training-shaped 场景现在显式启用低权重 damage consequence shaping：
+    `air_combat_damage_consequence_shaping_enabled=true`、
+    `air_combat_target_damage_consequence_scale=0.05`、
+    `air_combat_self_damage_consequence_scale=0.02`，以及
+    `air_combat_damage_consequence_delta_clip=0.5`。
+  - 这些项只从已经观测到的 consequence state 提供 synthetic 训练反馈；它们不闭合发射行为，不声明真实 Pk/击杀权威，不改变 weapon 或 damage runtime，也不构成 Stage-2 验收证据。
 
 - [air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json](air_combat_1v1_stage1_bvr_nonmaneuvering_target_hybrid_temporal_shaped_world_batch_probe_v1.json)
   - Stage-1 的 M1 hybrid temporal shaped 对照探针。

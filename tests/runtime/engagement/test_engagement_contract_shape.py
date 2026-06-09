@@ -83,6 +83,122 @@ def test_engagement_contract_header_exposes_cross_domain_launch_surface() -> Non
     )
 
 
+def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> None:
+    header = _header_text()
+
+    common_header_fields = (
+        "schema_version",
+        "chain_id",
+        "event_id",
+        "parent_event_id",
+        "stage",
+        "status",
+        "reason",
+        "source_time_s",
+        "source_frame",
+        "munition",
+        "shooter",
+        "target",
+        "producer_node_id",
+        "fidelity_mode",
+        "evidence_level",
+        "confidence",
+    )
+    _assert_fields_present(_struct_body(header, "LethalityChainHeader"), common_header_fields)
+
+    event_fields = {
+        "NearestApproachEvent": (
+            "header",
+            "miss_distance_m",
+            "nearest_approach_time_s",
+            "local_forward_m",
+            "local_right_m",
+            "local_up_m",
+            "closure_mps",
+            "aspect_bucket",
+        ),
+        "FuzeEvaluationEvent": (
+            "header",
+            "fuze_type",
+            "armed",
+            "triggered",
+            "failure_reason",
+            "delay_s",
+            "reliability",
+            "sample",
+        ),
+        "WarheadMechanismEvent": (
+            "header",
+            "mechanism_family",
+            "fragment_energy_j",
+            "fragment_density_per_m2",
+            "blast_overpressure_kpa",
+            "rod_cut_margin",
+        ),
+        "SpatialCoverageEvent": (
+            "header",
+            "projected_hitbox_count",
+            "sample_count",
+            "hit_estimate",
+            "hit_fraction",
+            "energy_scale",
+            "pattern_scale",
+        ),
+        "ComponentLoadEvent": (
+            "header",
+            "component_name",
+            "component_system",
+            "direct_hit",
+            "distance_m",
+            "effect_scale",
+            "load_source",
+        ),
+        "ComponentDamageEvent": (
+            "header",
+            "component_name",
+            "integrity_before",
+            "integrity_after",
+            "failure_mode",
+            "failure_probability",
+        ),
+        "PlatformConsequenceEvent": (
+            "header",
+            "mission_capability_before",
+            "mission_capability_after",
+            "mobility_capability_before",
+            "mobility_capability_after",
+            "fire_state",
+        ),
+        "StructuralBreakupEvent": (
+            "header",
+            "breakup_state",
+            "break_mode",
+            "detached_part_count",
+            "airframe_breakup",
+            "cause_event_id",
+        ),
+        "LifecycleTransitionEvent": (
+            "header",
+            "lifecycle_from",
+            "lifecycle_to",
+            "ground_lifecycle",
+            "wreck_entity",
+            "debris_count",
+        ),
+        "TrainingProjectionEvent": (
+            "header",
+            "consumed_event_ids",
+            "consumer_node_id",
+            "consumer_version",
+            "projection_kind",
+            "reward_term",
+            "fact_source",
+        ),
+    }
+    for struct_name, fields in event_fields.items():
+        _assert_fields_present(_struct_body(header, struct_name), fields)
+
+
 def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface() -> None:
     header = _header_text()
 

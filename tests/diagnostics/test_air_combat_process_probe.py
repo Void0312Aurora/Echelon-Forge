@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import math
+import os
+import tempfile
 import unittest
+from argparse import Namespace
+from types import SimpleNamespace
 
 import numpy as np
 import torch as th
@@ -24,6 +28,55 @@ class _DummyHybridDistribution:
 
     def _fire_event_logits(self):
         return th.tensor([[1.0, 3.0]], dtype=th.float32)
+
+
+def _entity(entity_id: int) -> SimpleNamespace:
+    return SimpleNamespace(entity_id=int(entity_id), world_index=0)
+
+
+def _dummy_lethality_events() -> SimpleNamespace:
+    effect = SimpleNamespace(
+        event_id=101,
+        munition=_entity(501),
+        target=_entity(200),
+        miss_distance_m=12.5,
+        nearest_approach_time_s=4.25,
+        detonation_local_forward_m=1.0,
+        detonation_local_right_m=2.0,
+        detonation_local_up_m=2.0,
+        fuze_type="proximity",
+        direct_hitbox_intersection=True,
+        projected_hitbox_count=3,
+        component_hit_count=2,
+        component_mechanism_load_rows=[],
+        fuze_profile_synthetic=True,
+        warhead_profile_synthetic=True,
+        damage_scalar_synthetic=True,
+        vulnerability_calibrated_evidence=False,
+    )
+    report = SimpleNamespace(
+        report_id=201,
+        target=_entity(200),
+        source_event_id=101,
+        system_health_delta=-0.35,
+        mission_kill=True,
+        mobility_kill=False,
+        sensor_kill=True,
+        destroyed=True,
+        loss_state_to="lost",
+    )
+    trace = SimpleNamespace(
+        chain_id=301,
+        launch_event_id=301,
+        effects_event_id=101,
+        damage_report_id=201,
+        munition=_entity(501),
+    )
+    return SimpleNamespace(
+        effects_events=[effect],
+        damage_reports=[report],
+        diagnostics_traces=[trace],
+    )
 
 
 class AirCombatProcessProbeTests(unittest.TestCase):
@@ -78,6 +131,283 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         )
         self.assertEqual(columns["fire_mask_c2_authorized"], 1)
         self.assertEqual(columns["fire_mask_not_pending_assessment"], 0)
+
+    def test_lethality_chain_rows_project_effect_and_damage_into_standard_stages(self) -> None:
+        rows = probe._lethality_chain_rows(
+            episode=7,
+            step=12,
+            sim_time_s=4.5,
+            engagement_events=_dummy_lethality_events(),
+        )
+
+        self.assertEqual([row["stage"] for row in rows], list(probe.LETHALITY_CHAIN_STAGES))
+        for row in rows:
+            for field in probe.LETHALITY_CHAIN_ROW_FIELDS:
+                self.assertIn(field, row)
+            self.assertFalse(any(str(key).startswith("last_effect_") for key in row))
+            self.assertFalse(any(str(key).startswith("last_damage_") for key in row))
+            self.assertEqual(row["schema_version"], 1)
+            self.assertEqual(row["chain_id"], 301)
+            self.assertEqual(row["munition_id"], 501)
+            self.assertEqual(row["target_id"], 200)
+            self.assertEqual(row["status"], "projected")
+
+        nearest = next(row for row in rows if row["stage"] == "nearest_approach")
+        self.assertAlmostEqual(nearest["miss_distance_m"], 12.5, places=6)
+        self.assertAlmostEqual(nearest["local_forward_m"], 1.0, places=6)
+        self.assertEqual(nearest["source_event_kind"], "EffectsEvent")
+        self.assertEqual(nearest["source_event_id"], 101)
+
+        fuze = next(row for row in rows if row["stage"] == "fuze")
+        self.assertEqual(fuze["fuze_type"], "proximity")
+        self.assertEqual(fuze["direct_hitbox_intersection"], 1)
+
+        platform = next(row for row in rows if row["stage"] == "platform_consequence")
+        self.assertEqual(platform["parent_event_id"], 101)
+        self.assertEqual(platform["damage_report_id"], 201)
+        self.assertAlmostEqual(platform["system_health_delta"], -0.35, places=6)
+        self.assertEqual(platform["mission_kill"], 1)
+        self.assertEqual(platform["sensor_kill"], 1)
+
+        lifecycle = next(row for row in rows if row["stage"] == "lifecycle")
+        self.assertEqual(lifecycle["loss_state"], "lost")
+        self.assertEqual(lifecycle["destroyed"], 1)
+
+    def test_run_probe_payload_and_chain_csv_include_lethality_chain_rows(self) -> None:
+        class DummyInstrumentState:
+            ias = 180.0
+            alt_baro = 1200.0
+            alt_radar = 900.0
+            pitch = 2.0
+            roll = 0.5
+            aoa = 1.0
+
+        class DummyUnit:
+            def __init__(self, unit_id: int) -> None:
+                self.id = unit_id
+
+        class DummySim:
+            def __init__(self) -> None:
+                self.time = 0.0
+                self.events = SimpleNamespace(effects_events=[], damage_reports=[], diagnostics_traces=[])
+
+            def get_agent_observation(self, _agent_id: int):
+                return SimpleNamespace(
+                    contacts=[],
+                    missiles_remaining=2,
+                    sim_time=self.time,
+                    health=100.0,
+                    can_fire=False,
+                )
+
+            def get_instrument_state(self, _agent_id: int):
+                return DummyInstrumentState()
+
+            def get_all_units(self):
+                return [DummyUnit(100), DummyUnit(200)]
+
+            def is_unit_active(self, _unit_id: int) -> bool:
+                return True
+
+            def get_unit_health(self, _unit_id: int):
+                return [75.0]
+
+            def get_unit_position(self, unit_id: int):
+                return (0.0, 0.0, 0.0) if unit_id == 100 else (3000.0, 4000.0, 0.0)
+
+            def get_time_step(self) -> float:
+                return 0.1
+
+            def export_recent_engagement_events(self):
+                return self.events
+
+        class DummyEnv:
+            def __init__(self) -> None:
+                self.sim = DummySim()
+                self.agent_id = 100
+                self.loader = SimpleNamespace(primary_target_id=200, mission_cmd={})
+                self.action_mode = "air_combat_hybrid_v1"
+                self.unwrapped = self
+
+            def reset(self, seed: int | None = None):
+                self.sim.time = 0.0
+                self.sim.events = SimpleNamespace(effects_events=[], damage_reports=[], diagnostics_traces=[])
+                return {}, {}
+
+            def step(self, _action):
+                self.sim.time = 0.1
+                self.sim.events = _dummy_lethality_events()
+                return {}, 0.0, True, False, {"termination_reason": "combat_timeout", "reward_terms": {}}
+
+            def close(self) -> None:
+                pass
+
+        old_build_env = probe._build_env
+        try:
+            probe._build_env = lambda *_args, **_kwargs: DummyEnv()
+            with tempfile.TemporaryDirectory() as tmpdir:
+                chain_csv_out = os.path.join(tmpdir, "chain.csv")
+                payload = probe.run_probe(
+                    Namespace(
+                        scenario="dummy.json",
+                        train_config="",
+                        mode="hold_fire",
+                        fire_range_m=12000.0,
+                        fire_delay_steps=0,
+                        legal_fire_range_m=0.0,
+                        model="",
+                        algo="auto",
+                        device="auto",
+                        episodes=1,
+                        seed=17,
+                        max_steps=1,
+                        stochastic=False,
+                        csv_out="",
+                        chain_csv_out=chain_csv_out,
+                        json_out="",
+                        plot_out="",
+                    )
+                )
+
+                self.assertIn("lethality_chain_rows", payload)
+                self.assertEqual(len(payload["lethality_chain_rows"]), len(probe.LETHALITY_CHAIN_STAGES))
+                self.assertEqual(payload["episode_summaries"][0]["lethality_chain_row_count"], 6)
+                self.assertEqual(payload["episode_summaries"][0]["lethality_chain_chain_count"], 1)
+                self.assertTrue(os.path.exists(chain_csv_out))
+                with open(chain_csv_out, "r", encoding="utf-8") as f:
+                    header = f.readline().strip().split(",")
+                self.assertIn("chain_id", header)
+                self.assertIn("stage", header)
+                self.assertNotIn("last_effect_miss_distance_m", header)
+                self.assertNotIn("last_damage_report_id", header)
+        finally:
+            probe._build_env = old_build_env
+
+    def test_snapshot_row_aggregates_damage_consequence_reward_terms(self) -> None:
+        class DummyTrack:
+            id = 200
+            range = 5000.0
+            closing_speed = 250.0
+            time_since_update = 0.2
+
+        class DummyTruth:
+            contacts = [DummyTrack()]
+            missiles_remaining = 2
+            sim_time = 4.0
+            health = 100.0
+            can_fire = False
+
+        class DummyInstrumentState:
+            ias = 180.0
+            alt_baro = 1200.0
+            alt_radar = 900.0
+            pitch = 2.0
+            roll = 0.5
+            aoa = 1.0
+
+        class DummyUnit:
+            def __init__(self, unit_id: int) -> None:
+                self.id = unit_id
+
+        class DummyEngagementEvents:
+            effects_events = []
+            damage_reports = []
+
+        class DummySim:
+            def get_agent_observation(self, _agent_id: int):
+                return DummyTruth()
+
+            def get_instrument_state(self, _agent_id: int):
+                return DummyInstrumentState()
+
+            def get_all_units(self):
+                return [DummyUnit(100), DummyUnit(200)]
+
+            def is_unit_active(self, _unit_id: int) -> bool:
+                return True
+
+            def get_unit_health(self, _unit_id: int):
+                return [75.0]
+
+            def get_unit_position(self, unit_id: int):
+                return (0.0, 0.0, 0.0) if unit_id == 100 else (3000.0, 4000.0, 0.0)
+
+            def get_time_step(self) -> float:
+                return 0.1
+
+            def export_recent_engagement_events(self):
+                return DummyEngagementEvents()
+
+        class DummyLoader:
+            primary_target_id = 200
+            mission_cmd = {}
+
+        class DummyEnv:
+            sim = DummySim()
+            agent_id = 100
+            loader = DummyLoader()
+            action_mode = "air_combat_hybrid_v1"
+
+        row = probe._snapshot_row(
+            episode=0,
+            step=4,
+            env=DummyEnv(),
+            action=None,
+            reward=0.0,
+            terminated=False,
+            truncated=False,
+            info={
+                "reward_terms": {
+                    "air_combat_target_damage_consequence_propulsion_integrity_progress": 0.25,
+                    "air_combat_target_damage_consequence_fire_severity_progress": "0.5",
+                    "air_combat_self_damage_consequence_flight_control_integrity_penalty": -0.125,
+                    "air_combat_self_damage_consequence_nonfinite_penalty": math.nan,
+                    "air_combat_damage_consequence_unscoped": 99.0,
+                }
+            },
+            initial_units={100, 200},
+            prev_missiles=2,
+        )
+
+        self.assertAlmostEqual(row["target_damage_consequence_reward_total"], 0.75, places=6)
+        self.assertAlmostEqual(row["self_damage_consequence_reward_total"], -0.125, places=6)
+        self.assertAlmostEqual(row["damage_consequence_reward_total"], 0.625, places=6)
+
+    def test_episode_summary_reports_damage_consequence_reward_totals(self) -> None:
+        def row(step: int, *, target_reward: float = 0.0, self_reward: float = 0.0) -> dict:
+            total = target_reward + self_reward
+            return {
+                "episode": 0,
+                "step": step,
+                "reward": total,
+                "terminated": int(step == 3),
+                "truncated": 0,
+                "termination_reason": "combat_timeout" if step == 3 else "",
+                "target_range_geom_m": 12000.0 - step,
+                "target_health": 100.0,
+                "target_active": 1,
+                "missiles_remaining": 4,
+                "missile_release": 0,
+                "damage_consequence_reward_total": total,
+                "target_damage_consequence_reward_total": target_reward,
+                "self_damage_consequence_reward_total": self_reward,
+            }
+
+        summary = probe._summarize_episode(
+            [
+                row(0, target_reward=100.0),
+                row(1, self_reward=-0.2),
+                row(2, target_reward=0.5),
+                row(3, target_reward=0.25),
+            ]
+        )
+
+        self.assertAlmostEqual(summary["target_damage_consequence_reward_total"], 0.75, places=6)
+        self.assertAlmostEqual(summary["self_damage_consequence_reward_total"], -0.2, places=6)
+        self.assertAlmostEqual(summary["damage_consequence_reward_total"], 0.55, places=6)
+        self.assertEqual(summary["first_damage_consequence_reward_step"], 1)
+        self.assertEqual(summary["first_target_damage_consequence_reward_step"], 2)
+        self.assertEqual(summary["first_self_damage_consequence_reward_step"], 1)
 
     def test_build_env_applies_multi_timescale_wrapper_from_train_config(self) -> None:
         class DummyEnv:
@@ -154,20 +484,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
                 "effective_action_fire_weapon": float(fire),
                 "effects_event_count": 0,
                 "damage_report_count": 0,
-                "last_effect_miss_distance_m": math.nan,
-                "last_effect_detonation_local_forward_m": math.nan,
-                "last_effect_detonation_local_right_m": math.nan,
-                "last_effect_detonation_local_up_m": math.nan,
-                "last_effect_direct_hitbox_intersection": 0,
-                "last_effect_projected_hitbox_count": 0,
-                "last_effect_component_hit_count": 0,
-                "last_effect_fuze_type": "",
-                "last_damage_loss_state": "",
-                "last_damage_system_health_delta": math.nan,
-                "last_damage_mission_kill": 0,
-                "last_damage_mobility_kill": 0,
-                "last_damage_sensor_kill": 0,
-                "last_damage_destroyed": 0,
             }
 
         summary = probe._summarize_episode(
@@ -239,20 +555,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
                 "policy_logit_fire_weapon": fire_logit,
                 "effects_event_count": 0,
                 "damage_report_count": 0,
-                "last_effect_miss_distance_m": math.nan,
-                "last_effect_detonation_local_forward_m": math.nan,
-                "last_effect_detonation_local_right_m": math.nan,
-                "last_effect_detonation_local_up_m": math.nan,
-                "last_effect_direct_hitbox_intersection": 0,
-                "last_effect_projected_hitbox_count": 0,
-                "last_effect_component_hit_count": 0,
-                "last_effect_fuze_type": "",
-                "last_damage_loss_state": "",
-                "last_damage_system_health_delta": math.nan,
-                "last_damage_mission_kill": 0,
-                "last_damage_mobility_kill": 0,
-                "last_damage_sensor_kill": 0,
-                "last_damage_destroyed": 0,
             }
 
         summary = probe._summarize_episode(
@@ -323,20 +625,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
                 "policy_event_mask_fire_once": mask,
                 "effects_event_count": 0,
                 "damage_report_count": 0,
-                "last_effect_miss_distance_m": math.nan,
-                "last_effect_detonation_local_forward_m": math.nan,
-                "last_effect_detonation_local_right_m": math.nan,
-                "last_effect_detonation_local_up_m": math.nan,
-                "last_effect_direct_hitbox_intersection": 0,
-                "last_effect_projected_hitbox_count": 0,
-                "last_effect_component_hit_count": 0,
-                "last_effect_fuze_type": "",
-                "last_damage_loss_state": "",
-                "last_damage_system_health_delta": math.nan,
-                "last_damage_mission_kill": 0,
-                "last_damage_mobility_kill": 0,
-                "last_damage_sensor_kill": 0,
-                "last_damage_destroyed": 0,
             }
 
         summary = probe._summarize_episode(
@@ -442,20 +730,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
                 "c2_roe_legacy_fallback_release_count": 0,
                 "effects_event_count": 0,
                 "damage_report_count": 0,
-                "last_effect_miss_distance_m": math.nan,
-                "last_effect_detonation_local_forward_m": math.nan,
-                "last_effect_detonation_local_right_m": math.nan,
-                "last_effect_detonation_local_up_m": math.nan,
-                "last_effect_direct_hitbox_intersection": 0,
-                "last_effect_projected_hitbox_count": 0,
-                "last_effect_component_hit_count": 0,
-                "last_effect_fuze_type": "",
-                "last_damage_loss_state": "",
-                "last_damage_system_health_delta": math.nan,
-                "last_damage_mission_kill": 0,
-                "last_damage_mobility_kill": 0,
-                "last_damage_sensor_kill": 0,
-                "last_damage_destroyed": 0,
             }
 
         summary = probe._summarize_episode(

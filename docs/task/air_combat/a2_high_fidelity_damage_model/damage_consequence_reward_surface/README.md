@@ -1,7 +1,9 @@
-# A2 Damage Consequence Reward Surface Idea
+# A2 Damage Consequence Reward Surface
 
-Status: `2026-06-08` idea seed / held. This records the direction only; it is
-not expanded into implementation, dispatch, or acceptance work.
+Status: `2026-06-09` active A2 follow-on / DCR-A-D validated; DCR-E probe
+export is ready. A candidate Stage-2 learned-policy probe produced no release,
+effects, or damage; the next work should use controlled kill-chain probes or
+replay artifacts to produce consequence evidence.
 
 Language:
 
@@ -14,19 +16,22 @@ Inputs:
 - A2 sealed package: [../../archive/a2_high_fidelity_damage_model/README.md](../../archive/a2_high_fidelity_damage_model/README.md)
 - A8 damage-effect chain: [../../a8_damage_effect_chain/README.md](../../a8_damage_effect_chain/README.md)
 - Current air-combat entry: [../../README.md](../../README.md)
+- Reward runtime entry: [../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
+- Focused reward tests: [../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py](../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py)
 
 ## Purpose
 
-Record a possible follow-on direction: air-combat training should not wait only
-for a `kill` or inactive target. Higher-value training signal may come from what
-the shot actually caused: mission-system loss, sensor/data-link degradation,
-mobility degradation, fuel leak, fire growth, loss of control, ground contact, or
-crash.
+Extend air-combat training feedback beyond `kill` or inactive target outcomes.
+Higher-value training signal can come from what the shot actually caused:
+mission-system loss, sensor/data-link degradation, mobility degradation, fuel
+leak, fire growth, loss of control, severe ground impact, or crash.
 
 This belongs under A2 rather than a new A9 because the first question is damage
 model fidelity and consequence interpretation; reward design comes after that.
-This note does not start implementation, declare acceptance, or promote A8's
-bounded damage-effect chain into stock AIM-120C / MQ-9 lethality authority.
+This follow-on consumes existing runtime consequences as training signal. It
+does not reopen the sealed A2 archive package, declare stock AIM-120C / MQ-9
+lethality authority, or promote A8's bounded damage-effect chain into real-world
+weapon-outcome authority.
 
 ## Current State
 
@@ -34,62 +39,96 @@ bounded damage-effect chain into stock AIM-120C / MQ-9 lethality authority.
 | --- | --- | --- | --- |
 | A2 high-fidelity damage model | archived / sealed | A2 archive retains research/candidate evidence | Does not release Pk, deterministic fuze, or stock weapon-outcome authority |
 | A8 damage-effect chain | accepted bounded slice | Detonation can be inspected as concrete part damage and maintained-system response | Does not add direct crash rules, MQ-9 special kill rules, or debris/residue objects |
-| Current training feedback | suspected too narrow | Nonterminal damage can produce small progress rewards; delayed fire, ground contact, crash, and inactive outcomes are not yet a primary feedback surface | Legacy `Health` or one `kill` flag must not be treated as the complete kill-chain evaluation |
+| Current training feedback | active extension | Nonterminal damage reports already provide one-shot system/capability/loss-state shaping; delayed fire, fuel, ground contact, crash, and aircraft internal consequences are being added as a bounded follow-on | Legacy `Health` or one `kill` flag must not be treated as the complete kill-chain evaluation |
 
 ## Scope
 
-Tentatively in scope:
+In scope:
 
-- Record only the idea of consequence-graded rewards.
-- Place future work as an A2 research / calibration / consequence-fidelity follow-on.
-- Preserve a possible minimal witness: MQ-9 / AIM-120C-like synthetic training
-  calibration, continuous consequence observation, and reward surface design.
+- Maintain a task-cluster plan before runtime changes.
+- Add configurable reward terms that read already observable damage consequences.
+- Prefer delta/transition rewards for delayed consequences, so waiting beside a
+  burning or crashed target is not rewarded repeatedly by default.
+- Keep training synthetic reward calibration separate from real weapon/target
+  authority.
+- Preserve a minimal witness through unit tests, controlled kill-chain probes,
+  and later Stage-2 training metrics.
 
-Out of scope for now:
+Out of scope:
 
-- No code, scenario, training config, or reward-weight changes.
 - No A9 creation.
 - No reopening of the sealed A2 archive package.
 - No real Pk, real fuze, real AIM-120C lethality, or MQ-9 special-kill claim.
 - No direct-crash rule as a substitute for the damage chain.
+- No training-speed work; multi-world scaling remains a separate performance
+  topic.
+- No acceptance claim until repeated training/evaluation evidence exists.
 
 ## Phase Plan
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Idea Seed` | Freeze the location and boundary. | Current discussion. | This README exists and is linked from the A2 pointer. | held |
-| `P1 Boundary` | If explicitly expanded, define rewardable consequences, observable fields, and forbidden claims. | User asks to expand. | Task-cluster document exists. | not started |
-| `P2 Evidence` | Verify delayed consequences are stable and observable. | P1 complete. | Minimal witness and diagnostics are pinned. | not started |
-| `P3 Reward Surface` | Design the training reward surface. | P2 complete. | Candidate tests and training config exist. | not started |
+| `P0 Idea Seed` | Freeze the location and boundary. | Current discussion. | This README exists and is linked from the A2 pointer. | pass |
+| `P1 Boundary` | Define rewardable consequences, observable fields, and forbidden claims. | User asks to return to reward extension. | Task-cluster document exists. | pass |
+| `P2 Runtime Surface` | Add bounded reward consumption of existing consequence state. | P1 boundary held. | Focused unit tests cover delta/transition semantics. | pass |
+| `P3 Consequence Probe` | Prepare reporting for controlled kill-chain probes and future Stage-2 training consumers. | P2 tests pass. | Stage-2 opt-in exists and process probe can report consequence terms separately from firing terms. | partial |
+| `P4 Closure` | Record accepted slice or residuals. | P3 evidence exists. | README/status and parent pointers are consistent. | planned |
+
+## Task Clusters
+
+- Task cluster plan:
+  [damage_consequence_reward_surface_task_clusters_20260609.md](damage_consequence_reward_surface_task_clusters_20260609.md)
+- Active dispatch queue:
+  [damage_consequence_reward_surface_dispatch_queue_20260609.md](damage_consequence_reward_surface_dispatch_queue_20260609.md)
 
 ## Outputs And Evidence
 
-- The only current output is this idea-seed README.
-- There is no task cluster, dispatch packet, implementation, or acceptance record.
+- Active task-cluster plan for bounded reward extension.
+- `gym_envs/scenario_loader/reward_runtime/air_combat.py` now has optional
+  consequence-delta shaping for aircraft damage and severe ground-contact
+  transitions.
+- `tests/runtime/air_combat/test_air_combat_reward_surface.py` covers target
+  progress, self penalty, no-repeat static damage, and safe-ground-contact
+  refusal.
+- `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
+  explicitly opts in low-weight consequence shaping for synthetic training
+  feedback only.
+- `tools/diagnostics/air_combat_stage0_process_probe.py` can now export
+  per-step and per-episode DCR reward totals by target/self prefix.
+- On `2026-06-09`,
+  `experiments_tmp/a1_stage2_c2_roe_m3s2_initfrom_stage1_8k_20260608_r1/final_model.zip`
+  was used for a 2 episode x 512 step model-mode probe. The model kept radar and
+  master arm enabled but never fired; release/effects/damage/DCR reward stayed
+  at 0, so it is not consequence evidence.
+- Runtime/test outputs remain under the task-cluster acceptance gate until a
+  controlled consequence-chain probe or equivalent replay artifact exists.
 
 ## Acceptance Gate
 
-This note cannot be marked accepted. If expanded later, acceptance would first
-need evidence that:
+This follow-on can be marked accepted only when:
 
 - damage-consequence fields are stably observable and do not rely on legacy
   `Health` as the main truth;
 - consequence reward weights do not encourage obvious simulation exploits;
 - training synthetic calibration is kept separate from real weapon/target
   authority;
-- sealed A2 and accepted A8 boundaries are not overclaimed.
+- sealed A2 and accepted A8 boundaries are not overclaimed;
+- a controlled consequence-chain probe, replay artifact, or later Stage-2 run
+  reports the new consequence terms separately from launch/firing terms.
 
 ## Residuals And Next Steps
 
-- A later explicit request decides whether this idea seed becomes a full A2
-  follow-on.
-- If upgraded, add a task-cluster document before changing reward code.
-- The likely first step is continuous consequence diagnostics: mission,
-  mobility, sensor, survivability, aircraft internal damage, fuel/fire,
-  ground-contact lifecycle, and inactive transitions in one acceptance table.
+- First slice: reward runtime reads aircraft damage and ground-contact debug
+  state as configurable delta/transition shaping.
+- Stage-2 now opts in with conservative weights as a future training consumer;
+  the current candidate model does not fire, so it is not kill-chain evidence.
+- Next evidence step: run a controlled hit/fixed-release/replay probe that
+  preserves effects, damage reports, and DCR reward-term timing in one record.
+- Later: build a continuous consequence diagnostics table for mission, mobility,
+  sensor, survivability, aircraft internal damage, fuel/fire, ground-contact
+  lifecycle, and inactive transitions.
 
 ## Archive
 
-If this direction expands, replace or promote this note through a current-status
-and task-cluster document. If abandoned, move it into the local A2 archive as a
-held idea seed.
+Superseded planning records move under a local `archive/` directory only after a
+replacement current-status or closeout surface exists.
