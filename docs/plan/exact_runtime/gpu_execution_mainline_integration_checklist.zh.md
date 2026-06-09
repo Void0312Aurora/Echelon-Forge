@@ -211,7 +211,7 @@ Phase 3 在运行时边界可用，但只有视觉有真实的维护消费者。
 - [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - [src/gpu/gpu_interaction_broadphase_runtime.h](../../../src/gpu/gpu_interaction_broadphase_runtime.h)
 - [src/models/systems/default_sensor_model.cpp](../../../src/models/systems/default_sensor_model.cpp)
-- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
+- [tests/gpu/test_gpu_runtime_bindings.py](../../../tests/gpu/test_gpu_runtime_bindings.py)
 
 验收标准：
 
@@ -240,7 +240,7 @@ Phase 3 在运行时边界可用，但只有视觉有真实的维护消费者。
 - [src/core/engine/world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
 - [src/gpu/README.md](../../../src/gpu/README.md)
 - [src/gpu/experimental/README.md](../../../src/gpu/experimental/README.md)
-- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
+- [tests/gpu/test_gpu_runtime_bindings.py](../../../tests/gpu/test_gpu_runtime_bindings.py)
 
 验收标准：
 

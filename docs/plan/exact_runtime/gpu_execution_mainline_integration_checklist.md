@@ -289,7 +289,7 @@ Primary files:
 - [src/core/engine/world_batch_runtime.cpp](../../../src/core/engine/world_batch_runtime.cpp)
 - [src/gpu/gpu_interaction_broadphase_runtime.h](../../../src/gpu/gpu_interaction_broadphase_runtime.h)
 - [src/models/systems/default_sensor_model.cpp](../../../src/models/systems/default_sensor_model.cpp)
-- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
+- [tests/gpu/test_gpu_runtime_bindings.py](../../../tests/gpu/test_gpu_runtime_bindings.py)
 
 Acceptance:
 
@@ -378,7 +378,7 @@ Primary files:
 - [src/core/engine/world_batch_runtime.h](../../../src/core/engine/world_batch_runtime.h)
 - [src/gpu/README.md](../../../src/gpu/README.md)
 - [src/gpu/experimental/README.md](../../../src/gpu/experimental/README.md)
-- [tests/test_gpu_runtime_bindings.py](../../../tests/test_gpu_runtime_bindings.py)
+- [tests/gpu/test_gpu_runtime_bindings.py](../../../tests/gpu/test_gpu_runtime_bindings.py)
 
 Acceptance:
 

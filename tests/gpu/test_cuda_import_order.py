@@ -8,7 +8,7 @@ import unittest
 
 class CudaImportOrderTests(unittest.TestCase):
     def test_world_batch_vec_env_import_after_torch_runtime_setup(self) -> None:
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         build_gpu = os.path.join(repo_root, "build-gpu")
         flecs_build = os.path.join(build_gpu, "_deps", "flecs-build")
         env = dict(os.environ)

@@ -14,6 +14,14 @@
   - 按能力域与共享 surface 分组的运行时契约测试，位于 `air_combat/`、`bindings/`、`core/`、`engagement/`、`execution/`、`facade/`、`ground/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
 - `architecture/`
   - 源码/文档护栏和治理检查，与运行时行为测试有意分离。
+  - 通过一层语义子目录显式标出 guard owner：`build/`、
+    `causal_runtime/`、`command_tasking/`、`compatibility_quarantine/`、
+    `damage_model/`、`governance/`、`ground/`、`platform_spawn/`、
+    `policy_execution/`、`runtime_facade/`、`runtime_profiles/`、
+    `runtime_spine/` 和 `structural_boundaries/`。
+  - 文件名应优先描述架构不变量。WP/A2 等历史工作包标签只在追溯必要时保留在
+    测试名、注释或任务文档中；`RES`、`TP21`、`BECO` 这类残差/来源标签若属于
+    被守护的领域契约，可以继续保留。
 - `eval/`
   - 维护的 CLI 级别评估回归测试。
 - `training/`
@@ -36,8 +44,11 @@
   - 建议性的 suite 治理元数据，包括测试系统矩阵草案和 focused/local suite manifest。
   - 这些文件本身不会改变 CI wiring。
 - `diagnostics/`
-  - 临时 diagnostics/import-order holding area。活跃探索脚本已被清理；`test_diagnostics_import_order.py` 是当前唯一仍留在这里的维护态 pytest 回归。
-  - 此文件夹长期不应托管稳定回归测试；ownership 明确后，应将确定性检查迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
+  - Diagnostics 与外部代理集成测试，包括 ARMA proxy backend 回归。
+  - 长期不应托管稳定回归测试；ownership 明确后，应将确定性检查迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
+- `gpu/`
+  - GPU 运行时绑定和 CUDA 集成回归测试。与 `src/gpu/` 和 Python GPU bindings 对齐。
+  - GPU 测试默认通过 `EF_ENABLE_CUDA_EXPERIMENTS` 门控；CUDA 不可用时应优雅跳过。
 - `scenarios/`
   - 当内联 JSON 不实用时可复用的场景装置，例如导入的预制依赖项。
 

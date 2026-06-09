@@ -18,6 +18,16 @@
 - `architecture/`
   - Source/documentation guardrails and governance checks that intentionally
     stay separate from runtime behavior tests.
+  - One-level semantic subfolders keep guard ownership visible:
+    `build/`, `causal_runtime/`, `command_tasking/`,
+    `compatibility_quarantine/`, `damage_model/`, `governance/`, `ground/`,
+    `platform_spawn/`, `policy_execution/`, `runtime_facade/`,
+    `runtime_profiles/`, `runtime_spine/`, and `structural_boundaries/`.
+  - File names should describe the architectural invariant first. Historical
+    work-package labels such as WP/A2 belong in test names, comments, or task
+    docs only when they are needed for traceability; residual/source labels
+    such as `RES`, `TP21`, and `BECO` may remain when they are part of the
+    guarded domain contract.
 - `eval/`
   - Maintained CLI-level evaluation regression tests.
 - `training/`
@@ -40,8 +50,11 @@
   - Advisory suite governance metadata, including the draft test-system matrix and focused/local suite manifests.
   - These files do not change CI wiring on their own.
 - `diagnostics/`
-  - Temporary diagnostics/import-order holding area. The active exploratory scripts have been cleaned out; `test_diagnostics_import_order.py` is the only maintained pytest regression currently left here.
+  - Diagnostics and external proxy integration tests, including ARMA proxy backend regressions.
   - This folder should not host stable regression tests long term; once ownership is clear, migrate deterministic checks back into `runtime/`, `world_batch/`, `scenario/`, `leader/`, or `contracts/`.
+- `gpu/`
+  - GPU runtime binding and CUDA integration regression tests. Aligned with `src/gpu/` and Python GPU bindings.
+  - GPU tests are gated behind `EF_ENABLE_CUDA_EXPERIMENTS` by default; they should skip gracefully when CUDA is unavailable.
 - `scenarios/`
   - Reusable scenario fixtures when inline JSON is not practical, for example imported prefab dependencies.
 
