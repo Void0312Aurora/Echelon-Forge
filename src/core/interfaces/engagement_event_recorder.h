@@ -48,6 +48,33 @@ struct EngagementFuzeEvaluationEventRecord {
     FuzeEvaluationEvent event{};
 };
 
+struct EngagementWarheadMechanismEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    WarheadMechanismEvent event{};
+};
+
+struct EngagementSpatialCoverageEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    SpatialCoverageEvent event{};
+};
+
+struct EngagementComponentLoadEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    ComponentLoadEvent event{};
+};
+
 class IEngagementEventRecorder {
 public:
     virtual ~IEngagementEventRecorder() = default;
@@ -66,6 +93,18 @@ public:
 
     virtual std::uint64_t record_fuze_evaluation_event(
         EngagementFuzeEvaluationEventRecord record
+    ) = 0;
+
+    virtual std::uint64_t record_warhead_mechanism_event(
+        EngagementWarheadMechanismEventRecord record
+    ) = 0;
+
+    virtual std::uint64_t record_spatial_coverage_event(
+        EngagementSpatialCoverageEventRecord record
+    ) = 0;
+
+    virtual std::uint64_t record_component_load_event(
+        EngagementComponentLoadEventRecord record
     ) = 0;
 };
 

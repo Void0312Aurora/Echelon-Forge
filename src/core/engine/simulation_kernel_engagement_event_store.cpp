@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdint>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -16,6 +18,78 @@ EngagementEntityRef engagement_ref(uint64_t entity_id) {
         .world_index = 0,
         .entity_id = entity_id,
     };
+}
+
+std::uint64_t current_source_frame(flecs::world& ecs) {
+    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    return info && info->frame_count_total > 0
+        ? static_cast<std::uint64_t>(info->frame_count_total)
+        : 0;
+}
+
+std::uint64_t find_launch_event_id_for_munition(
+    const RecentEngagementEvents& events,
+    std::uint64_t munition_entity_id
+) {
+    if (munition_entity_id == 0) {
+        return 0;
+    }
+    for (auto it = events.launch_events.rbegin(); it != events.launch_events.rend(); ++it) {
+        if (it->has_spawned_munition && it->spawned_munition.entity_id == munition_entity_id) {
+            return it->event_id;
+        }
+    }
+    return 0;
+}
+
+template <typename Event>
+void cap_recent_events(std::vector<Event>& events, std::size_t max_size) {
+    while (events.size() > max_size) {
+        events.erase(events.begin());
+    }
+}
+
+void complete_lethality_header(
+    LethalityChainHeader& header,
+    const std::string& stage,
+    const std::string& default_status,
+    double event_time_s,
+    std::uint64_t event_id,
+    std::uint64_t chain_id,
+    std::uint64_t parent_event_id,
+    std::uint64_t munition_entity_id,
+    std::uint64_t shooter_id,
+    std::uint64_t target_id,
+    std::uint64_t source_frame
+) {
+    header.event_id = event_id;
+    header.chain_id = chain_id != 0 ? chain_id : event_id;
+    header.parent_event_id = parent_event_id;
+    header.stage = stage;
+    if (header.status.empty() || header.status == "not_evaluated") {
+        header.status = default_status;
+    }
+    header.source_time_s = event_time_s;
+    if (header.source_frame == 0) {
+        header.source_frame = source_frame;
+    }
+    header.munition = engagement_ref(munition_entity_id);
+    header.shooter = engagement_ref(shooter_id);
+    header.target = engagement_ref(target_id);
+    if (header.producer_node_id.empty()) {
+        header.producer_node_id = "damage_system.warhead_effects";
+    }
+    if (header.fidelity_mode.empty() || header.fidelity_mode == "unspecified") {
+        header.fidelity_mode = "research_runtime";
+    }
+    if (header.evidence_level.empty() || header.evidence_level == "uncalibrated") {
+        header.evidence_level = "engineering_assumption";
+    }
+    if (header.confidence <= 0.0) {
+        header.confidence = 1.0;
+    } else {
+        header.confidence = std::clamp(header.confidence, 0.0, 1.0);
+    }
 }
 
 std::string loss_state_to_string(PlatformLossState state) {
@@ -250,6 +324,108 @@ std::uint64_t SimulationKernelEngagementEventStore::record_fuze_evaluation_event
     return event_id;
 }
 
+std::uint64_t SimulationKernelEngagementEventStore::record_warhead_mechanism_event(
+    EngagementWarheadMechanismEventRecord record
+) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    const std::uint64_t launch_event_id = record.chain_id != 0
+        ? record.chain_id
+        : find_launch_event_id_for_munition(
+            recent_engagement_events_,
+            record.munition_entity_id);
+
+    WarheadMechanismEvent event = std::move(record.event);
+    complete_lethality_header(
+        event.header,
+        "warhead_mechanism",
+        "applied",
+        event_time_s,
+        event_id,
+        launch_event_id,
+        record.parent_event_id,
+        record.munition_entity_id,
+        record.shooter_id,
+        record.target_id,
+        current_source_frame(ecs_));
+
+    recent_engagement_events_.warhead_mechanism_events.push_back(std::move(event));
+    cap_recent_events(
+        recent_engagement_events_.warhead_mechanism_events,
+        kMaxRecentEngagementEvents);
+    return event_id;
+}
+
+std::uint64_t SimulationKernelEngagementEventStore::record_spatial_coverage_event(
+    EngagementSpatialCoverageEventRecord record
+) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    const std::uint64_t launch_event_id = record.chain_id != 0
+        ? record.chain_id
+        : find_launch_event_id_for_munition(
+            recent_engagement_events_,
+            record.munition_entity_id);
+
+    SpatialCoverageEvent event = std::move(record.event);
+    complete_lethality_header(
+        event.header,
+        "spatial_coverage",
+        "projected",
+        event_time_s,
+        event_id,
+        launch_event_id,
+        record.parent_event_id,
+        record.munition_entity_id,
+        record.shooter_id,
+        record.target_id,
+        current_source_frame(ecs_));
+
+    recent_engagement_events_.spatial_coverage_events.push_back(std::move(event));
+    cap_recent_events(
+        recent_engagement_events_.spatial_coverage_events,
+        kMaxRecentEngagementEvents);
+    return event_id;
+}
+
+std::uint64_t SimulationKernelEngagementEventStore::record_component_load_event(
+    EngagementComponentLoadEventRecord record
+) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    const std::uint64_t launch_event_id = record.chain_id != 0
+        ? record.chain_id
+        : find_launch_event_id_for_munition(
+            recent_engagement_events_,
+            record.munition_entity_id);
+
+    ComponentLoadEvent event = std::move(record.event);
+    complete_lethality_header(
+        event.header,
+        "component_load",
+        "projected",
+        event_time_s,
+        event_id,
+        launch_event_id,
+        record.parent_event_id,
+        record.munition_entity_id,
+        record.shooter_id,
+        record.target_id,
+        current_source_frame(ecs_));
+
+    recent_engagement_events_.component_load_events.push_back(std::move(event));
+    cap_recent_events(
+        recent_engagement_events_.component_load_events,
+        kMaxRecentEngagementEvents);
+    return event_id;
+}
+
 std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     EngagementEffectsDamageEventRecord record
 ) {
@@ -283,6 +459,92 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     effects.event_id = effects_event_id;
     effects.munition = engagement_ref(munition_entity_id);
     effects.target = engagement_ref(target_id);
+
+    WarheadMechanismEvent warhead_event{};
+    warhead_event.header.source_time_s = event_time_s;
+    warhead_event.header.confidence = effects.confidence;
+    warhead_event.header.reason = effects.warhead_profile_synthetic
+        ? "generic_research_synthetic_warhead_profile"
+        : "generic_research_warhead_profile";
+    warhead_event.mechanism_family = effects.effect_family;
+    warhead_event.warhead_mass_kg = effects.warhead_mass_kg;
+    warhead_event.lethal_radius_m = effects.warhead_lethal_radius_m;
+    warhead_event.fragment_energy_j = effects.mechanism_fragment_energy_j;
+    warhead_event.fragment_density_per_m2 =
+        effects.mechanism_fragment_areal_density_per_m2;
+    warhead_event.blast_overpressure_kpa = effects.mechanism_blast_overpressure_kpa;
+    warhead_event.blast_impulse_kpa_ms = effects.mechanism_blast_impulse_kpa_ms;
+    warhead_event.blast_scaled_distance_m_kg13 =
+        effects.mechanism_blast_scaled_distance_m_kg13;
+    warhead_event.rod_cut_margin = effects.mechanism_rod_cut_margin;
+    warhead_event.penetration_margin = effects.mechanism_penetration_margin;
+    warhead_event.surface_incidence_cos = effects.mechanism_surface_incidence_cos;
+    (void)record_warhead_mechanism_event({
+        .munition_entity_id = munition_entity_id,
+        .target_id = target_id,
+        .chain_id = chain_id,
+        .parent_event_id = effects_event_id,
+        .event = std::move(warhead_event),
+    });
+
+    SpatialCoverageEvent spatial_event{};
+    spatial_event.header.source_time_s = event_time_s;
+    spatial_event.header.confidence = effects.confidence;
+    spatial_event.header.reason = "generic_research_spatial_projection";
+    spatial_event.projected_hitbox_count = effects.projected_hitbox_count;
+    spatial_event.sample_count = effects.warhead_spatial_sample_count;
+    spatial_event.hit_estimate = effects.warhead_spatial_hit_estimate;
+    spatial_event.hit_fraction = effects.warhead_spatial_hit_fraction;
+    spatial_event.energy_scale = effects.warhead_spatial_energy_scale;
+    spatial_event.pattern_scale = effects.warhead_spatial_pattern_scale;
+    spatial_event.orientation_axis_forward = effects.warhead_orientation_axis_forward;
+    spatial_event.orientation_axis_right = effects.warhead_orientation_axis_right;
+    spatial_event.orientation_axis_up = effects.warhead_orientation_axis_up;
+    (void)record_spatial_coverage_event({
+        .munition_entity_id = munition_entity_id,
+        .target_id = target_id,
+        .chain_id = chain_id,
+        .parent_event_id = effects_event_id,
+        .event = std::move(spatial_event),
+    });
+
+    for (const ComponentMechanismLoadRow& row : effects.component_mechanism_load_rows) {
+        if (row.component_name.empty() && row.component_system.empty()) {
+            continue;
+        }
+        ComponentLoadEvent component_event{};
+        component_event.header.source_time_s = event_time_s;
+        component_event.header.confidence = effects.confidence;
+        component_event.header.reason = "generic_research_component_load_projection";
+        component_event.component_name = row.component_name;
+        component_event.component_system = row.component_system;
+        component_event.component_redundancy_group_id =
+            row.component_redundancy_group_id;
+        component_event.direct_hit = row.direct_hit;
+        component_event.distance_m = row.distance_m;
+        component_event.effect_scale = row.effect_scale;
+        component_event.fragment_energy_j = row.mechanism_fragment_energy_j;
+        component_event.fragment_density_per_m2 =
+            row.mechanism_fragment_areal_density_per_m2;
+        component_event.penetration_margin = row.mechanism_penetration_margin;
+        component_event.blast_overpressure_kpa = row.mechanism_blast_overpressure_kpa;
+        component_event.blast_impulse_kpa_ms = row.mechanism_blast_impulse_kpa_ms;
+        component_event.blast_scaled_distance_m_kg13 =
+            row.mechanism_blast_scaled_distance_m_kg13;
+        component_event.rod_cut_margin = row.mechanism_rod_cut_margin;
+        component_event.surface_incidence_cos = row.mechanism_surface_incidence_cos;
+        component_event.load_source = row.direct_hit
+            ? "direct_component_hit"
+            : "spatial_component_projection";
+        (void)record_component_load_event({
+            .munition_entity_id = munition_entity_id,
+            .target_id = target_id,
+            .chain_id = chain_id,
+            .parent_event_id = effects_event_id,
+            .event = std::move(component_event),
+        });
+    }
+
     recent_engagement_events_.effects_events.push_back(std::move(effects));
     while (recent_engagement_events_.effects_events.size() > kMaxRecentEngagementEvents) {
         recent_engagement_events_.effects_events.erase(recent_engagement_events_.effects_events.begin());
@@ -374,6 +636,24 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
         out.fuze_evaluation_events.begin(),
         out.fuze_evaluation_events.end(),
         [](const FuzeEvaluationEvent& lhs, const FuzeEvaluationEvent& rhs) {
+            return lhs.header.event_id < rhs.header.event_id;
+        });
+    std::sort(
+        out.warhead_mechanism_events.begin(),
+        out.warhead_mechanism_events.end(),
+        [](const WarheadMechanismEvent& lhs, const WarheadMechanismEvent& rhs) {
+            return lhs.header.event_id < rhs.header.event_id;
+        });
+    std::sort(
+        out.spatial_coverage_events.begin(),
+        out.spatial_coverage_events.end(),
+        [](const SpatialCoverageEvent& lhs, const SpatialCoverageEvent& rhs) {
+            return lhs.header.event_id < rhs.header.event_id;
+        });
+    std::sort(
+        out.component_load_events.begin(),
+        out.component_load_events.end(),
+        [](const ComponentLoadEvent& lhs, const ComponentLoadEvent& rhs) {
             return lhs.header.event_id < rhs.header.event_id;
         });
     std::sort(

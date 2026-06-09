@@ -146,7 +146,13 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     damage_bridge_header = _read("src/core/interfaces/weapon_release_damage_bridge.h")
 
     assert "struct EngagementEffectsDamageEventRecord" in recorder_header
+    assert "struct EngagementWarheadMechanismEventRecord" in recorder_header
+    assert "struct EngagementSpatialCoverageEventRecord" in recorder_header
+    assert "struct EngagementComponentLoadEventRecord" in recorder_header
     assert "record_effects_damage_event(\n        EngagementEffectsDamageEventRecord record" in recorder_header
+    assert "record_warhead_mechanism_event(\n        EngagementWarheadMechanismEventRecord record" in recorder_header
+    assert "record_spatial_coverage_event(\n        EngagementSpatialCoverageEventRecord record" in recorder_header
+    assert "record_component_load_event(\n        EngagementComponentLoadEventRecord record" in recorder_header
     assert "record_effects_damage_event_legacy(" not in recorder_header
     for source_name, source_text in (
         ("engagement_event_recorder.h", recorder_header),
@@ -161,6 +167,9 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     assert "engagement_event_store_->record_effects_damage_event(" in damage_api
     assert "SimulationKernelEngagementEventStore::record_legacy_launch_event(" in store_impl
     assert "SimulationKernelEngagementEventStore::record_effects_damage_event(" in store_impl
+    assert "SimulationKernelEngagementEventStore::record_warhead_mechanism_event(" in store_impl
+    assert "SimulationKernelEngagementEventStore::record_spatial_coverage_event(" in store_impl
+    assert "SimulationKernelEngagementEventStore::record_component_load_event(" in store_impl
     assert "const std::uint64_t munition_entity_id = record.munition_entity_id;" in store_impl
     assert "const std::uint64_t target_id = record.target_id;" in store_impl
     assert "const double event_time_s = record.effects.detonation_time_s;" in store_impl
@@ -212,6 +221,7 @@ def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted
     assert "const std::uint64_t trace_id = next_engagement_event_id_++;" in store_impl
     for comparator in (
         "lhs.event_id < rhs.event_id",
+        "lhs.header.event_id < rhs.header.event_id",
         "lhs.report_id < rhs.report_id",
         "lhs.trace_id < rhs.trace_id",
     ):
@@ -288,6 +298,23 @@ def _make_pilot_fire_action() -> ef_py.PilotAction:
     action.fire_weapon = True
     action.throttle = 0.8
     return action
+
+
+def _make_research_warhead_profile(
+    family: str = "blast_fragmentation",
+    *,
+    damage: float = 90.0,
+    radius: float = 35.0,
+) -> ef_py.WarheadProfile:
+    profile = ef_py.WarheadProfile()
+    profile.family = family
+    profile.mass_kg = 12.0
+    profile.lethal_radius_m = float(radius)
+    profile.damage_scalar = float(damage)
+    profile.synthetic = False
+    profile.damage_scalar_synthetic = False
+    profile.provenance = "test_generic_research_profile"
+    return profile
 
 
 def _make_facade_window_launch() -> tuple[ef_py.RuntimeFacade, int, int, int]:
@@ -482,15 +509,113 @@ def test_debug_damage_records_effects_damage_and_trace_reports() -> None:
     assert sim.debug_apply_proximity_hit(attacker_id, target_id, 120.0, 80.0)
     events = sim.export_recent_engagement_events()
     assert len(events.effects_events) == 1
+    assert len(events.warhead_mechanism_events) == 1
+    assert len(events.spatial_coverage_events) == 1
+    assert list(events.component_load_events) == []
     assert len(events.damage_reports) == 1
     assert len(events.diagnostics_traces) == 1
-    assert int(events.effects_events[0].target.entity_id) == target_id
-    assert str(events.effects_events[0].outcome_state) == "hit"
+    effects = events.effects_events[0]
+    warhead = events.warhead_mechanism_events[0]
+    spatial = events.spatial_coverage_events[0]
+    assert int(effects.target.entity_id) == target_id
+    assert str(effects.outcome_state) == "hit"
+    assert int(warhead.header.parent_event_id) == int(effects.event_id)
+    assert int(spatial.header.parent_event_id) == int(effects.event_id)
+    assert str(warhead.header.stage) == "warhead_mechanism"
+    assert str(spatial.header.stage) == "spatial_coverage"
+    assert str(warhead.header.fidelity_mode) == "research_runtime"
+    assert str(warhead.header.evidence_level) == "engineering_assumption"
+    assert str(warhead.header.reason).startswith("generic_research_")
+    assert str(spatial.header.reason) == "generic_research_spatial_projection"
+    assert float(warhead.fragment_energy_j) == float(effects.mechanism_fragment_energy_j)
+    assert float(warhead.blast_overpressure_kpa) == float(effects.mechanism_blast_overpressure_kpa)
+    assert int(spatial.sample_count) == int(effects.warhead_spatial_sample_count)
+    assert int(spatial.projected_hitbox_count) == int(effects.projected_hitbox_count)
     assert int(events.damage_reports[0].target.entity_id) == target_id
-    assert int(events.damage_reports[0].source_event_id) == int(events.effects_events[0].event_id)
+    assert int(events.damage_reports[0].source_event_id) == int(effects.event_id)
     assert float(events.damage_reports[0].hp_delta) < 0.0
-    assert int(events.diagnostics_traces[0].effects_event_id) == int(events.effects_events[0].event_id)
+    assert int(events.diagnostics_traces[0].effects_event_id) == int(effects.event_id)
     assert int(events.diagnostics_traces[0].damage_report_id) == int(events.damage_reports[0].report_id)
+
+
+def test_profiled_air_hit_records_standard_component_load_events() -> None:
+    sim = ef_py.SimulationKernel()
+    sim.reset(771)
+    if not sim.load_database(_DB_PATH):
+        raise AssertionError("failed to load runtime database")
+
+    attacker_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Blue,
+            "Aircraft",
+            0.0,
+            0.0,
+            5000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            250.0,
+            0.0,
+        )
+    )
+    target_id = int(
+        sim.spawn_unit(
+            ef_py.Side.Red,
+            "F-16C_Block50",
+            0.0,
+            1000.0,
+            5000.0,
+            180.0,
+            0.0,
+            0.0,
+            0.0,
+            -200.0,
+            0.0,
+        )
+    )
+
+    assert sim.debug_apply_profiled_local_proximity_hit_with_velocity(
+        attacker_id,
+        target_id,
+        -0.8,
+        4.1,
+        0.0,
+        _make_research_warhead_profile(),
+        900.0,
+        -250.0,
+        0.0,
+    )
+    events = sim.export_recent_engagement_events()
+    assert len(events.effects_events) == 1
+    effects = events.effects_events[0]
+    source_rows = [
+        row
+        for row in effects.component_mechanism_load_rows
+        if str(row.component_name) or str(row.component_system)
+    ]
+    component_loads = list(events.component_load_events)
+    assert source_rows
+    assert len(component_loads) == len(source_rows)
+
+    first_row = source_rows[0]
+    first_load = component_loads[0]
+    assert int(first_load.header.parent_event_id) == int(effects.event_id)
+    assert int(first_load.header.chain_id) == int(effects.event_id)
+    assert str(first_load.header.stage) == "component_load"
+    assert str(first_load.header.fidelity_mode) == "research_runtime"
+    assert str(first_load.header.evidence_level) == "engineering_assumption"
+    assert str(first_load.header.reason) == "generic_research_component_load_projection"
+    assert str(first_load.component_name) == str(first_row.component_name)
+    assert str(first_load.component_system) == str(first_row.component_system)
+    assert bool(first_load.direct_hit) == bool(first_row.direct_hit)
+    assert float(first_load.distance_m) == float(first_row.distance_m)
+    assert float(first_load.effect_scale) == float(first_row.effect_scale)
+    assert float(first_load.fragment_energy_j) == float(first_row.mechanism_fragment_energy_j)
+    assert float(first_load.blast_overpressure_kpa) == float(
+        first_row.mechanism_blast_overpressure_kpa
+    )
+    assert str(first_load.load_source) in {"direct_component_hit", "spatial_component_projection"}
 
 
 def test_facade_exports_recent_live_engagement_events_from_maintained_window_path() -> None:

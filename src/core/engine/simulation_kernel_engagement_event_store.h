@@ -32,6 +32,18 @@ public:
         EngagementFuzeEvaluationEventRecord record
     ) override;
 
+    std::uint64_t record_warhead_mechanism_event(
+        EngagementWarheadMechanismEventRecord record
+    ) override;
+
+    std::uint64_t record_spatial_coverage_event(
+        EngagementSpatialCoverageEventRecord record
+    ) override;
+
+    std::uint64_t record_component_load_event(
+        EngagementComponentLoadEventRecord record
+    ) override;
+
     std::uint64_t record_legacy_launch_event(
         std::uint64_t shooter_id,
         std::uint64_t target_id,
