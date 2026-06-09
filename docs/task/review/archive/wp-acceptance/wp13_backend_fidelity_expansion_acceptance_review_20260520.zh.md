@@ -42,9 +42,9 @@ backend 与 fidelity claim 转成可查询、可拒绝、有证据支撑的 runt
 | Gate | 结论 | 证据 |
 |------|------|------|
 | `WP13-A Runtime Capability Query And Rejection Surface` | pass | `src/runtime/facade/runtime_facade_types.h`、`src/runtime/facade/runtime_facade.cpp`、`src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/facade/test_runtime_facade.py` 与 `tests/runtime/bindings/test_bindings_runtime_dto_surface.py` 暴露保守 profile、budget、evidence 与 rejection metadata，同时保持 exact GPU、resident-state、shadow 与 multi-fidelity support 为 false。 |
-| `WP13-B Backend Profile Registry Runtime Gate` | pass | `src/runtime/contracts/backend_profile_contracts.h` 与 `tests/architecture/test_wp13_backend_profile_contracts.py` 定义 code-owned backend profile records、validators、maintained/candidate/diagnostics-only status boundaries 与 fail-closed capability gate helpers。 |
-| `WP13-C Parity Budget Evidence Gate` | pass | `src/runtime/contracts/parity_budget_contracts.h` 与 `tests/architecture/test_wp13_parity_budget_contracts.py` 定义 profile-owned parity budget records、comparison domains、mismatch policy、acceptance gate metadata，以及 missing、incompatible、candidate 或 diagnostics-only budgets 的拒绝行为。 |
-| `WP13-D Fidelity Profile Request Gate` | pass | `src/runtime/contracts/fidelity_profile_contracts.h` 与 `tests/architecture/test_wp13_fidelity_profile_contracts.py` 定义 `FidelityProfileRequest`、`FidelityProfileAdmissionResult`、CPU exact baseline request helper，并对 unsupported fidelity labels 和 backend claims fail closed。 |
+| `WP13-B Backend Profile Registry Runtime Gate` | pass | `src/runtime/contracts/backend_profile_contracts.h` 与 `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` 定义 code-owned backend profile records、validators、maintained/candidate/diagnostics-only status boundaries 与 fail-closed capability gate helpers。 |
+| `WP13-C Parity Budget Evidence Gate` | pass | `src/runtime/contracts/parity_budget_contracts.h` 与 `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` 定义 profile-owned parity budget records、comparison domains、mismatch policy、acceptance gate metadata，以及 missing、incompatible、candidate 或 diagnostics-only budgets 的拒绝行为。 |
+| `WP13-D Fidelity Profile Request Gate` | pass | `src/runtime/contracts/fidelity_profile_contracts.h` 与 `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` 定义 `FidelityProfileRequest`、`FidelityProfileAdmissionResult`、CPU exact baseline request helper，并对 unsupported fidelity labels 和 backend claims fail closed。 |
 | `WP13-E Facade And Binding Proof` | pass | `src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/bindings/test_bindings_runtime_dto_surface.py`、`tests/runtime/bindings/test_bindings_policy_surface.py`、`tests/runtime/facade/test_runtime_facade.py` 与 `tests/test_gpu_runtime_bindings.py` 证明 profile、budget、capability 与 fidelity admission data 可通过 maintained surfaces 查看，不依赖 raw backend access。 |
 | `WP13-F Integration And Acceptance Handoff` | pass | 本审查记录 A-E 状态、validation commands、residuals、route/index updates、Windows-local validation commands 与保守 support boundary。 |
 
@@ -54,8 +54,7 @@ backend 与 fidelity claim 转成可查询、可拒绝、有证据支撑的 runt
 
 ```powershell
 cmake --build build-local-win -j4
-python -m pytest -q tests\architecture\test_wp13_fidelity_profile_contracts.py
-python -m pytest -q tests\architecture\test_wp13_backend_profile_contracts.py tests\architecture\test_wp13_parity_budget_contracts.py tests\architecture\test_wp13_fidelity_profile_contracts.py
+python -m pytest -q tests/architecture/runtime_profiles/test_runtime_profile_contracts.py
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_bindings_policy_surface.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py tests\test_gpu_runtime_bindings.py

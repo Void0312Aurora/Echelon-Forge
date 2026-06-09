@@ -2,7 +2,7 @@
 
 # Post-WP9 架构路线图 — 差距分析
 
-状态：`2026-05-20` 针对架构基线的精确差距分析。
+状态：`2026-05-20` 针对架构基线的精确差距分析；`2026-06-09` 代码审阅更新（标记已闭合项）。
 来源：[post_wp9 路线图](../simulation_architecture/post_wp9_architecture_route_plan_20260520.md)
 权威依据：[仿真系统架构设计](../../plan/architecture/simulation_system_architecture_design.md)
 
@@ -52,10 +52,10 @@
 |----------|-------------------|------------|-------------------|
 | `ObservationViewSpec` | §8: 版本格式、必需/可选字段、检查点兼容性 | ✅ WP9 DTO-4 | ❌ 检查点兼容性未在运行时检查 |
 | `ObservationPacket` | §8: 在声明屏障处采样、源时间、模式元数据 | ✅ WP9 DTO-3 (+ 元数据字段) | ❌ 屏障 ID 是否已填充？ |
-| `DecisionBelief` | §8: 边界规则 — 仅当源自 ObservationPacket 时才维护；使用 World Truth 时为仅诊断 | ✅ WP9 DTO-8 | ❌ 无边界运行时执行 |
+| `DecisionBelief` | §8: 边界规则 — 仅当源自 ObservationPacket 时才维护；使用 World Truth 时为仅诊断 | ✅ WP9 DTO-8；C++ 类型 + 规范变换已实现 | ❌ 边界运行时强制执行仍未完成 |
 | `AgentRole` | §8: 5 部分模式 — 角色、权限范围、信息状态源、决策模型引用、动作接口 | ✅ WP9 DTO-7 | ❌ 权限范围未执行；信息状态源未验证 |
 | `ActionIntentPacket` | §8: effective_time, valid_until, merge_policy, source_layer, source_id, input_snapshot_version | ✅ WP9 DTO-5 | ❌ effective_time 未由调度器执行；merge_policy 未应用 |
-| **`ActionHoldPolicy`** | **§8: 在控制速率和物理速率滴答之间的保持最后、插值、过期或丢弃语义** | **❌ DTO 从未创建** | **❌** |
+| **`ActionHoldPolicy`** | **§8: 在控制速率和物理速率滴答之间的保持最后、插值、过期或丢弃语义** | **✅ DTO 已创建（2026-06-09 确认）** | ❌ 运行时消费仍未实现 |
 | `CoordinationIntentPacket` | §8: 源类型/ID、目标名单、merge_policy | ✅ WP9 DTO-6 | ❌ merge_policy 未执行 |
 | `RewardSpec` / `RewardReport` | §8: 事实/塑造分离 | ✅ WP9 DTO-1 | ❌ 事实边界未在运行时验证 |
 | `TerminationSpec` / `EpisodeStatus` | §8: 按源层的终止/截断分离 | ✅ WP9 DTO-2 | ⚠️ 字段存在但 reason_source 属性未机器检查 |
@@ -69,7 +69,7 @@
 | **窗口编排循环** | §8 设计推论 9: "在窗口开始时，外观收集到达的跨层请求，将其转换为状态写入或事件入队，然后运行 DAG。" | 轨道 1 和轨道 2 均未明确处理窗口循环。轨道 1 涵盖屏障和快照；轨道 2 涵盖外观导出。连接它们的循环——收集 → 注入 → DAG → 提交 → 导出——未被命名为可交付成果。 |
 | **外部图输入注入** | §8: "外部图输入在调度窗口屏障之前注入。" 跨层请求字段: `source_layer, source_id, input_snapshot_version, effective_time, valid_until, merge_policy` | DTO 已包含字段 (WP9)，但注入机制——外观在窗口边界收集请求，转换为状态写入/事件，使其在 input_injection 屏障后可见——没有实现计划。 |
 | **策略节奏示例** | §8: 详细示例，策略 10 Hz，平台控制 20 Hz，物理 60 Hz，显示窗口 N 和 N+1 时序 | 没有轨道计划实现使该示例可运行的多速率调度。轨道 2 提到"外观垂直切片"，但描述的切片是交战/观察，而非策略/控制/物理多速率。 |
-| **ActionHoldPolicy 运行时** | §8 设计推论 5: "策略推理节奏是一级时钟域。以 10 Hz 运行的策略...仅当 ActionHoldPolicy 声明一个策略输出如何被多个控制滴答消费时才是合法的。" | **ActionHoldPolicy 没有 DTO (在 WP9 中从未创建)。没有轨道处理保持最后/插值/过期运行时。** |
+| **ActionHoldPolicy 运行时** | §8 设计推论 5: "策略推理节奏是一级时钟域。以 10 Hz 运行的策略...仅当 ActionHoldPolicy 声明一个策略输出如何被多个控制滴答消费时才是合法的。" | **DTO 已存在（2026-06-09 确认，含全 Python bindings + 架构测试），但运行时消费仍未实现。** |
 
 ### 3.3 评估
 
@@ -127,7 +127,7 @@ post_wp9 覆盖范围：没有轨道明确处理代理图运行时实体化。�
 
 | 合约族 | 架构文档引用 | WP9 | post_wp9 |
 |--------|-------------|-----|----------|
-| `ActionHoldPolicy` | §9：“策略动作、有效性窗口、保持/插值/过期以及控制速率对齐” | ❌ 未创建 | 未涉及 |
+| `ActionHoldPolicy` | §9：”策略动作、有效性窗口、保持/插值/过期以及控制速率对齐” | ✅ DTO 已创建 | 运行时消费未实现 |
 | `Capability` / `CapabilityBundle` | §9：“用于机动、感知、通信、发射、生存、指挥和条令配置的带类型平台能力组合” | ❌ 未创建 | 轨道4在概念上涉及，但DTO必须在运行时之前创建 |
 
 ## 7. 第10节——领域扩展模型
@@ -146,7 +146,7 @@ post_wp9轨道4覆盖了这一点。✅
 
 | ID | 差距 | 架构文档引用 | 应添加至 |
 |----|------|-------------|---------|
-| **GAP-1** | `ActionHoldPolicy` DTO从未创建。架构§8和§9将其定义为合约族。 | §8、§9 | 轨道2（作为前置条件DTO，在外观切片证明策略→控制→物理节奏之前） |
+| **GAP-1** | `ActionHoldPolicy` DTO 已创建（2026-06-09 确认：C++ struct + Python bindings + 架构测试），但运行时消费仍未实现。 | §8、§9 | 轨道2（运行时消费：保持/插值/过期逻辑） |
 | **GAP-2** | 调度窗口编排循环。收集→注入→DAG→提交→导出。 | §8设计推论9 | 轨道1（该循环将StateStore、EventQueue、Barrier和StageNodeManifest连接为工作调度器） |
 | **GAP-3** | 跨层请求注入语义。`effective_time`、`valid_until`、调度窗口可见性。 | §8跨层请求字段表 + 策略节奏示例 | 轨道1或轨道2（注入是窗口循环的一部分，并非独立关注点） |
 | **GAP-4** | 信息状态来源标签。运行时强制标签（在ObservationPacket和DecisionBelief上），用于区分数据来自哪个信息层。 | §3六层模型 + 5条转换规则 | 轨道2（外观导出路径是添加来源标签的自然位置） |
@@ -185,7 +185,7 @@ post_wp9轨道4覆盖了这一点。✅
 
 该轨道应显式交付：
 
-3. **`ActionHoldPolicy` DTO**——在切片能够演示策略→控制→物理节奏之前的前置条件。字段：`hold_last`、`interpolate`、`expiry`、`drop`，带有有效持续时间和刷新节奏。
+3. **`ActionHoldPolicy` DTO**——**✅ 已创建**（2026-06-09 确认）。剩余工作是运行时消费：保持/插值/过期逻辑。
 
 4. **信息状态来源标签**——在现有的ObservationPacket元数据字段（WP9 DTO-3）上，演示快照携带标识其采样自哪个信息层的来源标签。
 
@@ -206,6 +206,6 @@ post_wp9的五轨道路线在排序逻辑上是正确的。因果基础必须先
 然而，post_wp9对轨道1和轨道2为了将架构文档第7节和第8节变为现实所必须交付的内容描述不足。具体来说：
 
 - **轨道1**拥有原语（StateStore、EventQueue、Barrier、Manifest），但没有将它们连接起来的**调度窗口循环**（GAP-2/GAP-3）。
-- **轨道2**拥有外观导出路径，但没有**ActionHoldPolicy**（GAP-1）和**信息状态来源标签**（GAP-4）。
+- **轨道2**拥有外观导出路径。**ActionHoldPolicy** DTO 已创建（GAP-1 DTO 侧闭合），但运行时消费和**信息状态来源标签**（GAP-4）仍未实现。
 
 这四项不是架构发现。它们是对架构文档中已完全指定的需求的实现。将它们添加到轨道1和轨道2并不会扩大范围——它使现有范围精确到足以验证。

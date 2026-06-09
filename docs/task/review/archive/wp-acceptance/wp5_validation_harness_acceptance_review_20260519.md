@@ -26,9 +26,9 @@ failures.
 
 `tests/smoke/ci_smoke_suite.json` now includes:
 
-1. `tests/architecture/test_runtime_facade_layering.py`
+1. `tests/architecture/runtime_facade/test_layering.py`
 2. `tests/architecture/test_wp5_design_boundary_gates.py`
-3. `tests/architecture/test_cmake_target_readiness.py`
+3. `tests/architecture/build/test_cmake_target_readiness.py`
 4. `tests/runtime/core/test_env_config.py`
 5. `tests/runtime/engagement`
 6. `tests/runtime/facade/test_facade_step_evidence_gates.py`
@@ -44,7 +44,7 @@ The tier rationale is recorded in
 Focused WP5 command:
 
 ```bash
-python -m pytest -q tests/architecture/test_wp5_design_boundary_gates.py tests/architecture/test_runtime_facade_layering.py tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
+python -m pytest -q tests/architecture/test_wp5_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
 ```
 
 Result: `38 passed`.

@@ -1,6 +1,6 @@
 # Architecture Refactoring Audit — God Files, Legacy Code, And Structural Inconsistencies
 
-Status: `2026-05-22` compiled from cross-codebase architecture audit.
+Status: `2026-05-22` compiled from cross-codebase architecture audit; `2026-06-09` update: architecture tests restructured into 14 subdirectories.
 Scope: 364 files (197 .h + 49 .cpp + 118 .py) across three parallel analysis streams.
 
 ## 1. Executive Summary

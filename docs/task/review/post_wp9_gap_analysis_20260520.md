@@ -1,6 +1,6 @@
 # Post-WP9 Architecture Route Plan — Gap Analysis
 
-Status: `2026-05-20` precise gap analysis against the architecture baseline.
+Status: `2026-05-20` precise gap analysis against the architecture baseline; `2026-06-09` code-review update (closed items marked).
 Source: [post_wp9 route plan](../simulation_architecture/post_wp9_architecture_route_plan_20260520.md)
 Authority: [simulation system architecture design](../../plan/architecture/simulation_system_architecture_design.md)
 

@@ -56,8 +56,8 @@ guardrails，并让默认 compiled reward-breakdown metadata path 转向 C++ 权
 cmake --build build-workshop --target ef_core ef_py -j4
 git diff --check
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp16_legacy_path_gates.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_state.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_scenario_loader_execution_step_runtime.py -k "state or runtime or reward or termination"
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "execution or episode or batch"
@@ -95,7 +95,7 @@ bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/te
 ```bash
 git diff --check
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "execution_episode_controller_mainline or compatibility_view or facade"
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_batch_prepare.py -k "reward or termination or breakdown"
 ```

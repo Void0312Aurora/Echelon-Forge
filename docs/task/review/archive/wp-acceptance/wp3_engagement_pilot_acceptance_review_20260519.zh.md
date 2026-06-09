@@ -88,7 +88,7 @@ tests/architecture/                           15 passed in 0.15s
 
 证据：
 - `src/runtime/facade/runtime_facade.h:33-36`：显式逃逸口文档
-- [test_runtime_facade_layering.py](../../../tests/architecture/test_runtime_facade_layering.py)：9 个分层测试通过——逃逸口保持在适配器内、VecEnv 不缓存原始句柄、leader runtime 不触及原始 world 句柄、契约头文件不包含 engine 头文件
+- [test_runtime_facade_layering.py](../../../tests/architecture/runtime_facade/test_layering.py)：9 个分层测试通过——逃逸口保持在适配器内、VecEnv 不缓存原始句柄、leader runtime 不触及原始 world 句柄、契约头文件不包含 engine 头文件
 
 ### 闸门 8 — 本地验证无需 RL 依赖
 

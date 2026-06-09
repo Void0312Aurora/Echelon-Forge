@@ -49,7 +49,7 @@ selected entity 创建 parent/branch worlds 并比较 causal deltas。
 | Gate | 结论 | 证据 |
 |------|------|------|
 | `WP17-A Fact Ledger And Boundary Freeze` | pass | WP17 主计划在声明实现前，已经按当前代码事实校正 runtime capabilities、provider dispatch、capability composition、counterfactual runtime、multi-rate scheduling 与 training/batch business paths。 |
-| `WP17-B Facade Business Migration And Compatibility Cleanup` | pass | `python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch_vec_env.py` 与 `tests/architecture/test_runtime_facade_layering.py` 暴露并守住 facade-shaped execution-episode ready/state reads，同时把 `batch_runtime` 保留为 compatibility view。 |
+| `WP17-B Facade Business Migration And Compatibility Cleanup` | pass | `python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/world_batch_vec_env.py` 与 `tests/architecture/runtime_facade/test_layering.py` 暴露并守住 facade-shaped execution-episode ready/state reads，同时把 `batch_runtime` 保留为 compatibility view。 |
 | `WP17-C Multi-Rate Runtime Example` | pass | `src/runtime/facade/runtime_window_coordinator.h`、`src/runtime/contracts/stage_node_manifest_registry.h`、`tests/runtime/facade/test_runtime_facade_window_loop_injection.py` 与 `tests/world_batch/test_single_world_batch_runtime.py` 证明 selected cadence slice、hold/expiry/barrier evidence，以及稳定的 `selected_slice_cadence_trace_runtime_window_wp17c` reason。 |
 | `WP17-D Fidelity Provider Runtime` | pass | `src/runtime/facade/runtime_facade.h`、`src/runtime/facade/runtime_facade.cpp`、`src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/facade/test_runtime_facade.py` 与 `tests/test_gpu_runtime_bindings.py` 暴露 `admit_fidelity_request()`，接受 reference CPU exact evaluation，并拒绝 resident/exact-GPU/shadow requests。 |
 | `WP17-E Capability Spawn Runtime Promotion` | pass | `src/models/core/default_unit_factory.h`、`tests/architecture/test_wp14_resolved_spawn_plan_evidence.py`、`tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py`、`tests/runtime/engagement/test_air_launch_adapter.py` 与 `tests/runtime/naval/test_naval_ship_database.py` 在保留 type-name 兼容的同时，让 maintained materialization 经过 resolved platform spawn-plan evidence。 |
@@ -64,7 +64,7 @@ git diff --check
 cmake --build build-workshop --target ef_py -j4
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or replay or fidelity or provider"
 python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py tests/architecture/test_wp15_worldline_branch_metadata.py tests/architecture/test_wp15_counterfactual_admission.py
-python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp16_legacy_path_gates.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py -k "cadence or hold or barrier or clock or window"
 python -m pytest -q tests/world_batch/test_single_world_batch_runtime.py -k "runtime_window_evidence or cadence_reason or single"
 python -m pytest -q tests/test_gpu_runtime_bindings.py -k "capabilities or fidelity or provider"

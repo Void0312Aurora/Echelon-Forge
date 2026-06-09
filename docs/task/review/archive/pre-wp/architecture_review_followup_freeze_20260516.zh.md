@@ -113,8 +113,8 @@ cmake --build build-workshop --target ef_core ef_py -j4
 推荐首批验证集合：
 
 1. `cmake --build build-workshop --target ef_core ef_py -j4`
-2. `tests/architecture/test_runtime_facade_layering.py`
-3. `tests/architecture/test_cmake_target_readiness.py`
+2. `tests/architecture/runtime_facade/test_layering.py`
+3. `tests/architecture/build/test_cmake_target_readiness.py`
 4. `tests/runtime/core/test_env_config.py`
 5. `tests/runtime/facade/test_runtime_facade.py`
 6. `tests/world_batch/test_world_batch_runtime.py`
@@ -144,7 +144,7 @@ cmake --build build-workshop --target ef_core ef_py -j4
 4. 已完成本地等价 smoke 验收：
    - `source tools/maintenance/cmo_env.sh`
    - `cmo_env_validate`
-   - `cmo_python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_cmake_target_readiness.py tests/runtime/core/test_env_config.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py`
+   - `cmo_python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/build/test_cmake_target_readiness.py tests/runtime/core/test_env_config.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py`
    - 当前结果：`42 passed`
 
 ### WP-B：`cmo_env.sh` 校验能力与文档收口

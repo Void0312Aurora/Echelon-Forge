@@ -55,7 +55,7 @@ Recorded main-thread validation from the closure handoff:
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_facade_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"
 cmake --build build-workshop --target ef_py -j4

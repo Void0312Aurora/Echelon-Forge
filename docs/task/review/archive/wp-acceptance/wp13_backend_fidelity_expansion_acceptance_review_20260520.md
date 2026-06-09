@@ -44,9 +44,9 @@ Scope caveats are intentional:
 | Gate | Verdict | Evidence |
 |------|---------|----------|
 | `WP13-A Runtime Capability Query And Rejection Surface` | pass | `src/runtime/facade/runtime_facade_types.h`, `src/runtime/facade/runtime_facade.cpp`, `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/facade/test_runtime_facade.py`, and `tests/runtime/bindings/test_bindings_runtime_dto_surface.py` expose conservative profile, budget, evidence, and rejection metadata while keeping exact GPU, resident-state, shadow, and multi-fidelity support false. |
-| `WP13-B Backend Profile Registry Runtime Gate` | pass | `src/runtime/contracts/backend_profile_contracts.h` and `tests/architecture/test_wp13_backend_profile_contracts.py` define code-owned backend profile records, validators, maintained/candidate/diagnostics-only status boundaries, and fail-closed capability gate helpers. |
-| `WP13-C Parity Budget Evidence Gate` | pass | `src/runtime/contracts/parity_budget_contracts.h` and `tests/architecture/test_wp13_parity_budget_contracts.py` define profile-owned parity budget records, comparison domains, mismatch policy, acceptance gate metadata, and rejection behavior for missing, incompatible, candidate, or diagnostics-only budgets. |
-| `WP13-D Fidelity Profile Request Gate` | pass | `src/runtime/contracts/fidelity_profile_contracts.h` and `tests/architecture/test_wp13_fidelity_profile_contracts.py` define `FidelityProfileRequest`, `FidelityProfileAdmissionResult`, the CPU exact baseline request helper, and fail-closed admission for unsupported fidelity labels and backend claims. |
+| `WP13-B Backend Profile Registry Runtime Gate` | pass | `src/runtime/contracts/backend_profile_contracts.h` and `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` define code-owned backend profile records, validators, maintained/candidate/diagnostics-only status boundaries, and fail-closed capability gate helpers. |
+| `WP13-C Parity Budget Evidence Gate` | pass | `src/runtime/contracts/parity_budget_contracts.h` and `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` define profile-owned parity budget records, comparison domains, mismatch policy, acceptance gate metadata, and rejection behavior for missing, incompatible, candidate, or diagnostics-only budgets. |
+| `WP13-D Fidelity Profile Request Gate` | pass | `src/runtime/contracts/fidelity_profile_contracts.h` and `tests/architecture/runtime_profiles/test_runtime_profile_contracts.py` define `FidelityProfileRequest`, `FidelityProfileAdmissionResult`, the CPU exact baseline request helper, and fail-closed admission for unsupported fidelity labels and backend claims. |
 | `WP13-E Facade And Binding Proof` | pass | `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`, `tests/runtime/bindings/test_bindings_policy_surface.py`, `tests/runtime/facade/test_runtime_facade.py`, and `tests/test_gpu_runtime_bindings.py` prove profile, budget, capability, and fidelity admission data are visible through maintained surfaces without raw backend access. |
 | `WP13-F Integration And Acceptance Handoff` | pass | This review records A-E status, validation commands, residuals, route/index updates, Windows-local validation commands, and the conservative support boundary. |
 
@@ -56,8 +56,7 @@ Passed on the Windows local checkout:
 
 ```powershell
 cmake --build build-local-win -j4
-python -m pytest -q tests\architecture\test_wp13_fidelity_profile_contracts.py
-python -m pytest -q tests\architecture\test_wp13_backend_profile_contracts.py tests\architecture\test_wp13_parity_budget_contracts.py tests\architecture\test_wp13_fidelity_profile_contracts.py
+python -m pytest -q tests/architecture/runtime_profiles/test_runtime_profile_contracts.py
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_bindings_policy_surface.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py tests\test_gpu_runtime_bindings.py

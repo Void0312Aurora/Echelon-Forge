@@ -44,7 +44,7 @@ Scope caveats are intentional:
 | `WP10-B Window Loop And Injection` | pass | `src/runtime/facade/runtime_window_coordinator.h`, `runtime_facade_types.h`, `runtime_facade.h`, and `runtime_facade.cpp` expose the minimal window loop, barrier trace, and accepted/deferred/rejected/expired request states; `tests/runtime/facade/test_runtime_facade_window_loop_injection.py` verifies the focused behavior. |
 | `WP10-C Same-Window Edge Validation` | pass | `src/core/engine/same_window_edge_validation.h` validates declared same-window edges using producer publish intent, consumer declaration, shared read/write contracts, and acyclic construction; `tests/architecture/test_wp10_same_window_edge_validation.py` covers passing and failing fixtures. |
 | `WP10-D Event And Snapshot Evidence` | pass | `src/runtime/contracts/engagement_contracts.h`, `src/runtime/facade/runtime_facade_types.h`, `src/runtime/facade/runtime_facade.cpp`, and `src/interfaces/python/bindings_runtime.cpp` expose snapshot, barrier, source-time, producer-node, and diagnostics ancestry metadata; engagement, facade, and binding tests verify visibility. |
-| `WP10-E Integration And Acceptance Handoff` | pass | Final validation passed after explicitly updating the diagnostics-only escape-hatch allowlist in `tests/architecture/test_runtime_facade_layering.py`; this review records commands, residuals, and next-phase handoff. |
+| `WP10-E Integration And Acceptance Handoff` | pass | Final validation passed after explicitly updating the diagnostics-only escape-hatch allowlist in `tests/architecture/runtime_facade/test_layering.py`; this review records commands, residuals, and next-phase handoff. |
 
 ## 3. Validation Commands
 
@@ -54,7 +54,7 @@ Passed:
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_facade.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_wp10_stage_node_manifest_registry.py tests/runtime/facade/test_runtime_facade_window_loop_injection.py tests/architecture/test_wp10_same_window_edge_validation.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/engagement/test_live_engagement_event_capture.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_wp9_infrastructure_closure_docs.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp9_infrastructure_closure_docs.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement tests/runtime/facade tests/runtime/bindings
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP10
 git diff --check
@@ -72,7 +72,7 @@ Observed outcomes:
 
 ## 4. Integration Notes
 
-- `tests/architecture/test_runtime_facade_layering.py` was updated because
+- `tests/architecture/runtime_facade/test_layering.py` was updated because
   `tests/runtime/engagement/test_facade_engagement_export.py` now has two
   diagnostics-only `facade.runtime().world(...)` setup paths. The update keeps
   the escape hatch explicit rather than weakening the guard.

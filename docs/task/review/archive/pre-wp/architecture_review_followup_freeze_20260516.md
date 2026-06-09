@@ -115,8 +115,8 @@ Freeze scope:
 Recommended first batch verification set:
 
 1. `cmake --build build-workshop --target ef_core ef_py -j4`
-2. `tests/architecture/test_runtime_facade_layering.py`
-3. `tests/architecture/test_cmake_target_readiness.py`
+2. `tests/architecture/runtime_facade/test_layering.py`
+3. `tests/architecture/build/test_cmake_target_readiness.py`
 4. `tests/runtime/core/test_env_config.py`
 5. `tests/runtime/facade/test_runtime_facade.py`
 6. `tests/world_batch/test_world_batch_runtime.py`
@@ -146,7 +146,7 @@ Current execution record:
 4. Local equivalent smoke verification completed:
    - `source tools/maintenance/cmo_env.sh`
    - `cmo_env_validate`
-   - `cmo_python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_cmake_target_readiness.py tests/runtime/core/test_env_config.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py`
+   - `cmo_python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/build/test_cmake_target_readiness.py tests/runtime/core/test_env_config.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py`
    - Current result: `42 passed`
 
 ### WP-B: `cmo_env.sh` Validation Capability and Documentation Consolidation

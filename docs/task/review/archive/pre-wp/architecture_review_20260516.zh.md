@@ -34,7 +34,7 @@ interfaces/python → runtime/facade → core/engine + core/mission
 
 - [src/README.md](../../../../src/README.md) 和各层级 README 明确定义了每层允许放什么、禁止放什么
 - [docs/plan/archive/src_layered_refactor_freeze.zh.md](../../../plan/archive/src_layered_refactor_freeze.zh.md) 冻结了 WP1-WP7 的执行记录
-- [tests/architecture/test_runtime_facade_layering.py](../../../../tests/architecture/test_runtime_facade_layering.py) 和 [test_cmake_target_readiness.py](../../../../tests/architecture/test_cmake_target_readiness.py) 将架构约束变成自动验证
+- [tests/architecture/runtime_facade/test_layering.py](../../../../tests/architecture/runtime_facade/test_layering.py) 和 [test_cmake_target_readiness.py](../../../../tests/architecture/build/test_cmake_target_readiness.py) 将架构约束变成自动验证
 
 评价：研究代码库中将架构约束可测试化极为罕见，是最大亮点。
 

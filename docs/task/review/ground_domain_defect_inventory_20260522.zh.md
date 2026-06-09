@@ -1,6 +1,6 @@
 # 陆军域缺陷清单与迁移差距分析
 
-状态: `2026-05-22` 从 G0-G5 基线架构审计中编制。
+状态: `2026-05-22` 从 G0-G5 基线架构审计中编制；`2026-06-09` 代码审阅更新（标记已闭合项）。
 
 ## 1. 目的
 
@@ -17,17 +17,17 @@
 
 ## 3. 缺陷账本
 
-### D-001: 缺少 C++ `command/ground/` 目录 — BLOCKER
+### D-001: 缺少 C++ `command/ground/` 目录 — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/command/` 含 `air/` 和 `naval/` 但无 `ground/`。所有地面命令构造流经标为"兼容壳"的 `ground_profile.py::build_kernel_mission_command()`。
+`src/components/command/ground/` 已存在，含 `mission_command_ground.h` + README（中/英）。
 
-### D-002: 缺少 C++ `tasking/ground/` 目录 — BLOCKER
+### D-002: 缺少 C++ `tasking/ground/` 目录 — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/tasking/` 含 air/naval 的领域枚举和 DTO，ground 无。需创建 `ground_tasking_enums.h`、`task_order_ground.h` 等。
+`src/components/tasking/ground/` 已存在，含完整结构：`ground_tasking_enums.h`、`leader_intent_ground.h`、`pilot_report_ground.h`、`task_order_ground.h` + README（中/英）。
 
-### D-003: MissionCommand 聚合缺少 Ground — HIGH
+### D-003: MissionCommand 聚合缺少 Ground — ~~HIGH~~ **CLOSED 2026-06-09**
 
-`mission_command.h` 以平面继承聚合 Core+Air+Naval，无 Ground。勿将 `MissionCommandGround` 加入平面继承链，应采用能力组合。
+`mission_command.h` 现在通过 `MissionCommandGround` 继承和 `mission_command_ground_owner_slice()` / `mission_command_ground_static_task_directive()` 访问器提供 Ground 投影。
 
 ### D-004: 阶段节点清单无 P2 节点 — HIGH
 
@@ -37,9 +37,9 @@
 
 仅声明 1 Hz 战术评估。运动/感知/火力/导出管线节奏未定义。需扩展时钟域表。
 
-### D-006: C++ 中缺少地面特定枚举 — HIGH
+### D-006: C++ 中缺少地面特定枚举 — ~~HIGH~~ **PARTIAL 2026-06-09**
 
-对比 air（`LeaderPhase`、`TakeoffProcedureType` 等）和 naval（`NavalWarfareRole` 等），ground 无。需定义 `GroundEchelonLevel`、`GroundTacticalPosture`、`GroundSupportRelationship`。
+基础枚举已存在：`GroundTaskMode`、`GroundStatusPhase`（`ground_tasking_enums.h`）。仍缺失：`GroundEchelonLevel`、`GroundTacticalPosture`、`GroundSupportRelationship` 等战术语义枚举。降级为 MEDIUM。
 
 ### D-007: 未对地面评估保真度 — MEDIUM
 
@@ -69,18 +69,19 @@
 
 验证并更新。
 
-### D-014: 无陆军域边界架构测试 — LOW
+### D-014: 无陆军域边界架构测试 — ~~LOW~~ **CLOSED 2026-06-09**
 
-需添加 `tests/architecture/test_ground_domain_boundary.py`。
+`tests/architecture/ground/` 已存在，含 `test_realism_gradient_guardrails.py` 和 `test_tasking_component_boundary.py`。
 
 ## 4. 汇总
 
 | 级别 | 数量 | 项目 |
 |------|------|------|
-| BLOCKER | 2 | D-001, D-002 |
-| HIGH | 4 | D-003-D-006 |
-| MEDIUM | 4 | D-007-D-010 |
-| LOW | 4 | D-011-D-014 |
+| ~~BLOCKER~~ | ~~2~~ 0 | ~~D-001, D-002~~ (均已闭合) |
+| HIGH | ~~4~~ 2 | D-004, D-005 |
+| MEDIUM | ~~4~~ 5 | D-006(降级), D-007-D-010 |
+| LOW | ~~4~~ 3 | D-011-D-013 |
+| **CLOSED** | **5** | D-001, D-002, D-003, D-006(partial→降级), D-014 |
 
 ## 5. 推荐解决顺序
 

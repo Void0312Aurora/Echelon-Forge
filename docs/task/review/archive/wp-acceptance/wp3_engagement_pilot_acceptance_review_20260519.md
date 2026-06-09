@@ -88,7 +88,7 @@ Evidence:
 
 Evidence:
 - `src/runtime/facade/runtime_facade.h:33-36`: explicit escape-hatch documentation
-- [test_runtime_facade_layering.py](../../../tests/architecture/test_runtime_facade_layering.py): 9 layering tests pass — escape hatch stays in adapter, VecEnv does not cache raw handles, leader runtime does not reach raw world handles, contract headers do not include engine headers
+- [test_runtime_facade_layering.py](../../../tests/architecture/runtime_facade/test_layering.py): 9 layering tests pass — escape hatch stays in adapter, VecEnv does not cache raw handles, leader runtime does not reach raw world handles, contract headers do not include engine headers
 - [test_facade_engagement_export.py:173-236](../../../tests/runtime/engagement/test_facade_engagement_export.py#L173-L236): multi-world export retags `spawned_munition.world_index` and `diagnostics_trace.munition.world_index` for `world_index=1`
 - `RecentEngagementEvents` only carries `launch_events`, `effects_events`, `damage_reports`, and `diagnostics_traces`, so there is no `launch_requests` or `munition_lifecycle_packets` retagging path in the recent-event buffer.
 

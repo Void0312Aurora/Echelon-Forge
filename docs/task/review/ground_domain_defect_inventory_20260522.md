@@ -1,6 +1,6 @@
 # Ground Domain — Defect Inventory And Migration Gap Analysis
 
-Status: `2026-05-22` compiled from architecture audit of G0-G5 baseline.
+Status: `2026-05-22` compiled from architecture audit of G0-G5 baseline; `2026-06-09` code-review update (closed items marked).
 Source: cross-domain architecture analysis of air, naval, and ground tasking layers.
 
 ## 1. Purpose
@@ -20,26 +20,17 @@ severity, a concrete file/line reference, and a recommended resolution path.
 
 ## 3. Defect Ledger
 
-### D-001: No C++ `command/ground/` Directory
+### D-001: No C++ `command/ground/` Directory — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-**Severity:** BLOCKER
-**Reference:** `src/components/command/` — contains `air/` and `naval/` but no `ground/`.
-**Impact:** All ground command construction flows through `ground_profile.py::build_kernel_mission_command()`, labeled `"Compatibility shell only; G1 does not define ground command semantics."` — blind field pass-through from raw dict.
-**Resolution:** Create `src/components/command/ground/mission_command_ground.h` only after `MissionCommand` aggregate pattern stabilizes (see D-003). Define minimal ground command vocabulary.
+`src/components/command/ground/` now exists with `mission_command_ground.h` + README (EN/ZH).
 
-### D-002: No C++ `tasking/ground/` Directory
+### D-002: No C++ `tasking/ground/` Directory — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-**Severity:** BLOCKER
-**Reference:** `src/components/tasking/` — contains `air/` and `naval/` with domain-specific enums and DTOs but no `ground/`.
-**Impact:** Ground tasking uses common-core fields only. No ground-specific fields without C++ type definitions.
-**Resolution:** Create `src/components/tasking/ground/` with `ground_tasking_enums.h`, `task_order_ground.h`, `leader_intent_ground.h`, `pilot_report_ground.h`.
+`src/components/tasking/ground/` now exists with full structure: `ground_tasking_enums.h`, `leader_intent_ground.h`, `pilot_report_ground.h`, `task_order_ground.h` + README (EN/ZH).
 
-### D-003: MissionCommand Aggregate Missing Ground
+### D-003: MissionCommand Aggregate Missing Ground — ~~HIGH~~ **CLOSED 2026-06-09**
 
-**Severity:** HIGH
-**Reference:** `src/components/command/mission_command.h` — aggregates `MissionCommandCore + MissionCommandAir + MissionCommandNaval` via flat inheritance. No ground member.
-**Impact:** When ground needs command semantics, adding `MissionCommandGround` to flat inheritance makes the "high-risk caller convergence point" riskier.
-**Resolution:** Do NOT add `MissionCommandGround` to flat inheritance. Use capability composition (field bags or variant members) per Architecture Law 15.
+`mission_command.h` now includes `MissionCommandGround` in the flat inheritance chain with `mission_command_ground_owner_slice()` and `mission_command_ground_static_task_directive()` accessors.
 
 ### D-004: Stage Node Manifest Registry Has No P2 Node
 
@@ -55,12 +46,9 @@ severity, a concrete file/line reference, and a recommended resolution path.
 **Impact:** Only tactical decision rate (1 Hz) is declared. Motion, sensing, fires, observation export cadences are undefined. The 1 Hz is sometimes misread as "the whole ground domain runs at 1 Hz."
 **Resolution:** Extend the clock domain table with ALL planned ground pipelines and their cadence ranges, even if marked "deferred."
 
-### D-006: No Ground-Specific Enums in C++
+### D-006: No Ground-Specific Enums in C++ — ~~HIGH~~ **PARTIAL 2026-06-09**
 
-**Severity:** HIGH
-**Reference:** Compare air (`air_tasking_enums.h`: `LeaderPhase`, `TakeoffProcedureType`, etc.) and naval (`naval_tasking_enums.h`: `NavalWarfareRole`, `NavalStationType`) — ground has none.
-**Impact:** Concepts like echelon, posture, formation_width have no typed representation.
-**Resolution:** Define `GroundEchelonLevel`, `GroundTacticalPosture`, `GroundSupportRelationship` as first-wave enums.
+Basic enums now exist: `GroundTaskMode`, `GroundStatusPhase` (`ground_tasking_enums.h`). Still missing: `GroundEchelonLevel`, `GroundTacticalPosture`, `GroundSupportRelationship`. Downgraded to MEDIUM.
 
 ### D-007: Fidelity Profile Not Evaluated For Ground
 
@@ -111,21 +99,19 @@ severity, a concrete file/line reference, and a recommended resolution path.
 **Impact:** Discoverability gap.
 **Resolution:** Verify and update `scenarios/README.md` if needed.
 
-### D-014: No Architecture Test For Ground Domain Boundary
+### D-014: No Architecture Test For Ground Domain Boundary — ~~LOW~~ **CLOSED 2026-06-09**
 
-**Severity:** LOW
-**Reference:** `tests/architecture/` — contains WP5-WP20 tests but no ground-specific architecture test.
-**Impact:** Architecture invariants not enforced for ground.
-**Resolution:** Add `tests/architecture/test_ground_domain_boundary.py` verifying: bridge dispatch, profile normalization, no private runtime path.
+`tests/architecture/ground/` now exists with `test_realism_gradient_guardrails.py` and `test_tasking_component_boundary.py`.
 
 ## 4. Summary
 
 | Severity | Count | Items |
 |----------|-------|-------|
-| BLOCKER | 2 | D-001, D-002 |
-| HIGH | 4 | D-003, D-004, D-005, D-006 |
-| MEDIUM | 4 | D-007, D-008, D-009, D-010 |
-| LOW | 4 | D-011, D-012, D-013, D-014 |
+| ~~BLOCKER~~ | ~~2~~ 0 | ~~D-001, D-002~~ (both closed) |
+| HIGH | ~~4~~ 2 | D-004, D-005 |
+| MEDIUM | ~~4~~ 5 | D-006(downgraded), D-007, D-008, D-009, D-010 |
+| LOW | ~~4~~ 3 | D-011, D-012, D-013 |
+| **CLOSED** | **5** | D-001, D-002, D-003, D-006(partial→downgraded), D-014 |
 
 ## 5. Recommended Resolution Order
 

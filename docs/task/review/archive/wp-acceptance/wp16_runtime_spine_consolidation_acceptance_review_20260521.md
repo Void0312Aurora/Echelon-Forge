@@ -40,7 +40,7 @@ The accepted slice is the runtime-spine handoff centered on `RuntimeWindowReques
 | `WP16-A Runtime Spine Inventory And Bypass Map` | pass | `tests/architecture/fixtures/wp16_runtime_spine_inventory_20260521.json` and `docs/task/simulation_architecture/wp16_runtime_spine_consolidation/wp16_runtime_spine_inventory_evidence_20260521.md` classify maintained, compatibility, diagnostics-only, deprecated, blocked, and unknown paths with explicit owners and next gates. |
 | `WP16-B Clock-Domain Enforcement And Merge Trace` | pass | `src/runtime/facade/runtime_window_coordinator.h`, `src/runtime/contracts/stage_node_manifest_registry.h`, and `tests/runtime/facade/test_runtime_facade_window_loop_injection.py` prove trigger/skip evidence for the selected slice and fail-closed handling for missing deterministic merge metadata. |
 | `WP16-C Facade And Batch Path Spine Migration` | pass | `src/runtime/facade/runtime_facade.h`, `src/runtime/facade/runtime_facade.cpp`, `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch_vec_env.py`, and `tests/runtime/bindings/test_bindings_engagement_surface.py` preserve compatibility while routing selected maintained consumers through the runtime-window evidence spine or explicit fallback wrappers. |
-| `WP16-D Legacy Path Deprecation And Compatibility Gates` | pass | `docs/task/simulation_architecture/wp16_runtime_spine_consolidation/wp16_legacy_path_gate_evidence_20260521.md` and `tests/architecture/test_wp16_legacy_path_gates.py` keep `WorldBatchRuntime`, `batch_runtime`, `RuntimeFacade.runtime()`, and diagnostics-only paths explicitly bounded rather than silently maintained. |
+| `WP16-D Legacy Path Deprecation And Compatibility Gates` | pass | `docs/task/simulation_architecture/wp16_runtime_spine_consolidation/wp16_legacy_path_gate_evidence_20260521.md` and `tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py` keep `WorldBatchRuntime`, `batch_runtime`, `RuntimeFacade.runtime()`, and diagnostics-only paths explicitly bounded rather than silently maintained. |
 | `WP16-E Generated Documentation And Closure Automation` | pass | `tools/maintenance/wp_doc_closure_audit.py` now reports the WP16 closure state without replacing acceptance authority; generated summaries remain advisory only. |
 | `WP16-F Integration And Acceptance Handoff` | pass | This review records A-E status, exact validation outcomes, residuals, README/route/index sync, and the narrow acceptance boundary. |
 
@@ -50,7 +50,7 @@ Passed in the main thread before this review:
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp16_runtime_spine_inventory.py tests/architecture/test_wp16_clock_domain_enforcement.py tests/architecture/test_wp16_legacy_path_gates.py tests/architecture/test_wp_doc_closure_audit.py
+python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py tests/architecture/runtime_spine/test_clock_domain_enforcement.py tests/architecture/governance/test_doc_closure_audit.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py -k "clock or window or barrier or evidence"
 python -m pytest -q tests/world_batch/test_single_world_batch_runtime.py tests/world_batch/test_world_batch_vec_env.py -k "reset_uses_runtime_facade_compatibly or exposes_batch_runtime_as_compatibility_view or single"
 python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py -k "runtime_window or observation_batch_packet or engagement_event_packet"
