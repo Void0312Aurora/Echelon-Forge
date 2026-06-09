@@ -1,6 +1,6 @@
 # A2 MLF-3 战斗部作用与通用破片/爆风载荷
 
-状态：`2026-06-09` MLF-3B/3E focused pass；MLF-3A accepted。MLF-2 已归档；本子项目单独展开第三阶段，不继续写入 MLF-1 或 MLF-2 已归档目录。
+状态：`2026-06-10` MLF-3B live gate / MLF-3C generic load-shape / MLF-3E diagnostics / MLF-3F no-detonation gate focused pass；MLF-3A accepted。MLF-2 已归档；本子项目单独展开第三阶段，不继续写入 MLF-1 或 MLF-2 已归档目录。
 
 语言：
 
@@ -37,8 +37,8 @@ MLF-3 只接纳通用、未校准、可替换的 research 数据。默认模型�
 | --- | --- | --- | --- |
 | MLF-2 起爆输入 | accepted / archived | [MLF-2 归档](../missile_lethality_geometry_fuze/README.zh.md) | 只说明最近点、引信评估和起爆 handoff |
 | 战斗部 profile 数据 | active scaffold | `WarheadProfile`、`WarheadEffectProfile`、`WarheadSpatialProjectionProfile` | 不是真实战斗部参数权威 |
-| 标准事件 DTO | writer and diagnostics focused pass | `WarheadMechanismEvent`、`SpatialCoverageEvent`、`ComponentLoadEvent` 已在合同、绑定、event-store writer 和诊断投影中存在 | 更广 live geometry / fuze 门待补；参数未校准 |
-| 现有效果模型 | transitional implementation | `default_effects_model` 已有 mechanism / spatial / component 字段 | 仍主要折叠进 `EffectsEvent`，阶段边界不够清楚 |
+| 标准事件 DTO | live writer / diagnostics / no-detonation gate focused pass | `WarheadMechanismEvent`、`SpatialCoverageEvent`、`ComponentLoadEvent` 已在合同、绑定、event-store writer、真实起爆路径测试和诊断投影中存在 | 参数未校准；MLF-3D 空间/部件投影参数面仍未完成 |
+| 现有效果模型 | generic load-shape focused pass | `default_effects_model` 已有 mechanism / spatial / component 字段；`test_mlf3_generic_blast_fragmentation_loads.py` 钉住 range / direction / family 会改变标准载荷事实 | 仍主要折叠进 `EffectsEvent`；默认常量缺少完整 source category / scope / unit / uncertainty / replacement-rule runtime metadata |
 | 历史 Phase 3 测试 | retained scaffold evidence | `tests/runtime/air_combat/weapon_guidance_realism/warhead_effects.py` | 不等于新的 MLF-3 accepted |
 
 ## 范围
@@ -66,11 +66,11 @@ MLF-3 只接纳通用、未校准、可替换的 research 数据。默认模型�
 | 阶段 | 目标 | 入口条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `MLF-3A Boundary And Inventory` | 固定 MLF-3 范围，盘点旧字段和 live 缺口 | MLF-2 archived | README、状态、任务簇和派发队列存在；旧字段/缺口清单可读 | accepted |
-| `MLF-3B Event Writers` | 写入 warhead/spatial/component 标准事件 | MLF-3A | 起爆后有标准事件，且 parent 指向同链路 fuze/effects | focused pass / wider live gate pending |
-| `MLF-3C Generic Blast-Fragmentation` | 建立通用未校准破片/爆风机制载荷 | MLF-3B | 距离、方位、战斗部 family 会改变机制载荷 | planned |
+| `MLF-3B Event Writers` | 写入 warhead/spatial/component 标准事件 | MLF-3A | 起爆后有标准事件，且 parent 指向同链路 fuze/effects | live gate focused pass |
+| `MLF-3C Generic Blast-Fragmentation` | 建立通用未校准破片/爆风机制载荷 | MLF-3B | 距离、方位、战斗部 family 会改变机制载荷 | focused pass |
 | `MLF-3D Spatial Coverage` | 把机制载荷投影到目标 hitbox/component | MLF-3C | 空间覆盖和部件受载可由标准事件诊断 | planned |
 | `MLF-3E Diagnostics Projection` | probe 输出 warhead/spatial/component 行 | MLF-3B-D | 不依赖旧 `EffectsEvent` 才能读出机制原因 | focused pass |
-| `MLF-3F Runtime Handoff Gate` | 保证只有起爆进入战斗部作用，未起爆不产生载荷 | MLF-3B-E | 未起爆路径无 warhead load，起爆路径有一次标准载荷链 | planned |
+| `MLF-3F Runtime Handoff Gate` | 保证只有起爆进入战斗部作用，未起爆不产生载荷 | MLF-3B-E | 未起爆路径无 warhead load，起爆路径有一次标准载荷链 | focused pass |
 | `MLF-3G Acceptance And Archive Prep` | 汇总证据、残余和后续阶段 | MLF-3B-F pass | accepted/held 状态与证据一致 | planned |
 
 ## 任务簇
