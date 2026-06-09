@@ -93,6 +93,7 @@ LETHALITY_CHAIN_SCHEMA_VERSION = 1
 LETHALITY_CHAIN_STAGES = (
     "nearest_approach",
     "fuze",
+    "warhead_mechanism",
     "spatial_coverage",
     "component_load",
     "platform_consequence",
@@ -134,8 +135,30 @@ LETHALITY_CHAIN_ROW_FIELDS = (
     "contact_surface_tolerance_m",
     "contact_inside_hitbox",
     "direct_hitbox_intersection",
+    "mechanism_family",
+    "warhead_mass_kg",
+    "lethal_radius_m",
+    "fragment_energy_j",
+    "fragment_density_per_m2",
+    "blast_overpressure_kpa",
+    "blast_impulse_kpa_ms",
+    "blast_scaled_distance_m_kg13",
+    "rod_cut_margin",
+    "penetration_margin",
+    "surface_incidence_cos",
     "projected_hitbox_count",
+    "spatial_sample_count",
+    "spatial_hit_estimate",
+    "spatial_hit_fraction",
+    "spatial_energy_scale",
+    "spatial_pattern_scale",
     "component_hit_count",
+    "component_name",
+    "component_system",
+    "component_direct_hit",
+    "component_distance_m",
+    "component_effect_scale",
+    "component_load_source",
     "damage_report_id",
     "system_health_delta",
     "mission_kill",
@@ -266,8 +289,30 @@ def _lethality_base_row(
         "contact_surface_tolerance_m": float("nan"),
         "contact_inside_hitbox": 0,
         "direct_hitbox_intersection": 0,
+        "mechanism_family": "",
+        "warhead_mass_kg": float("nan"),
+        "lethal_radius_m": float("nan"),
+        "fragment_energy_j": float("nan"),
+        "fragment_density_per_m2": float("nan"),
+        "blast_overpressure_kpa": float("nan"),
+        "blast_impulse_kpa_ms": float("nan"),
+        "blast_scaled_distance_m_kg13": float("nan"),
+        "rod_cut_margin": float("nan"),
+        "penetration_margin": float("nan"),
+        "surface_incidence_cos": float("nan"),
         "projected_hitbox_count": 0,
+        "spatial_sample_count": 0,
+        "spatial_hit_estimate": float("nan"),
+        "spatial_hit_fraction": float("nan"),
+        "spatial_energy_scale": float("nan"),
+        "spatial_pattern_scale": float("nan"),
         "component_hit_count": 0,
+        "component_name": "",
+        "component_system": "",
+        "component_direct_hit": 0,
+        "component_distance_m": float("nan"),
+        "component_effect_scale": float("nan"),
+        "component_load_source": "",
         "damage_report_id": 0,
         "system_health_delta": float("nan"),
         "mission_kill": 0,
@@ -325,6 +370,9 @@ def _lethality_chain_rows(
     rows: list[dict[str, Any]] = []
     standard_nearest_keys: set[tuple[int, int]] = set()
     standard_fuze_keys: set[tuple[int, int]] = set()
+    standard_warhead_keys: set[tuple[int, int]] = set()
+    standard_spatial_keys: set[tuple[int, int]] = set()
+    standard_component_keys: set[tuple[int, int]] = set()
 
     for nearest_event in list(getattr(engagement_events, "nearest_approach_events", []) or []):
         base_kwargs = _lethality_header_base_kwargs(
@@ -393,6 +441,113 @@ def _lethality_chain_rows(
         rows.append(row)
         standard_fuze_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
 
+    for warhead_event in list(getattr(engagement_events, "warhead_mechanism_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=warhead_event,
+            stage="warhead_mechanism",
+            source_event_kind="WarheadMechanismEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "mechanism_family": str(getattr(warhead_event, "mechanism_family", "") or ""),
+                "warhead_mass_kg": _finite_float(getattr(warhead_event, "warhead_mass_kg", float("nan"))),
+                "lethal_radius_m": _finite_float(getattr(warhead_event, "lethal_radius_m", float("nan"))),
+                "fragment_energy_j": _finite_float(getattr(warhead_event, "fragment_energy_j", float("nan"))),
+                "fragment_density_per_m2": _finite_float(
+                    getattr(warhead_event, "fragment_density_per_m2", float("nan"))
+                ),
+                "blast_overpressure_kpa": _finite_float(
+                    getattr(warhead_event, "blast_overpressure_kpa", float("nan"))
+                ),
+                "blast_impulse_kpa_ms": _finite_float(
+                    getattr(warhead_event, "blast_impulse_kpa_ms", float("nan"))
+                ),
+                "blast_scaled_distance_m_kg13": _finite_float(
+                    getattr(warhead_event, "blast_scaled_distance_m_kg13", float("nan"))
+                ),
+                "rod_cut_margin": _finite_float(getattr(warhead_event, "rod_cut_margin", float("nan"))),
+                "penetration_margin": _finite_float(
+                    getattr(warhead_event, "penetration_margin", float("nan"))
+                ),
+                "surface_incidence_cos": _finite_float(
+                    getattr(warhead_event, "surface_incidence_cos", float("nan"))
+                ),
+            }
+        )
+        rows.append(row)
+        standard_warhead_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
+
+    for spatial_event in list(getattr(engagement_events, "spatial_coverage_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=spatial_event,
+            stage="spatial_coverage",
+            source_event_kind="SpatialCoverageEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "projected_hitbox_count": int(getattr(spatial_event, "projected_hitbox_count", 0) or 0),
+                "spatial_sample_count": int(getattr(spatial_event, "sample_count", 0) or 0),
+                "spatial_hit_estimate": _finite_float(getattr(spatial_event, "hit_estimate", float("nan"))),
+                "spatial_hit_fraction": _finite_float(getattr(spatial_event, "hit_fraction", float("nan"))),
+                "spatial_energy_scale": _finite_float(getattr(spatial_event, "energy_scale", float("nan"))),
+                "spatial_pattern_scale": _finite_float(getattr(spatial_event, "pattern_scale", float("nan"))),
+            }
+        )
+        rows.append(row)
+        standard_spatial_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
+
+    for component_event in list(getattr(engagement_events, "component_load_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=component_event,
+            stage="component_load",
+            source_event_kind="ComponentLoadEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "component_hit_count": 1,
+                "component_name": str(getattr(component_event, "component_name", "") or ""),
+                "component_system": str(getattr(component_event, "component_system", "") or ""),
+                "component_direct_hit": int(bool(getattr(component_event, "direct_hit", False))),
+                "component_distance_m": _finite_float(getattr(component_event, "distance_m", float("nan"))),
+                "component_effect_scale": _finite_float(getattr(component_event, "effect_scale", float("nan"))),
+                "component_load_source": str(getattr(component_event, "load_source", "") or ""),
+                "fragment_energy_j": _finite_float(getattr(component_event, "fragment_energy_j", float("nan"))),
+                "fragment_density_per_m2": _finite_float(
+                    getattr(component_event, "fragment_density_per_m2", float("nan"))
+                ),
+                "blast_overpressure_kpa": _finite_float(
+                    getattr(component_event, "blast_overpressure_kpa", float("nan"))
+                ),
+                "blast_impulse_kpa_ms": _finite_float(
+                    getattr(component_event, "blast_impulse_kpa_ms", float("nan"))
+                ),
+                "blast_scaled_distance_m_kg13": _finite_float(
+                    getattr(component_event, "blast_scaled_distance_m_kg13", float("nan"))
+                ),
+                "rod_cut_margin": _finite_float(getattr(component_event, "rod_cut_margin", float("nan"))),
+                "penetration_margin": _finite_float(
+                    getattr(component_event, "penetration_margin", float("nan"))
+                ),
+                "surface_incidence_cos": _finite_float(
+                    getattr(component_event, "surface_incidence_cos", float("nan"))
+                ),
+            }
+        )
+        rows.append(row)
+        standard_component_keys.add((int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0)))
+
     for effect in list(getattr(engagement_events, "effects_events", []) or []):
         effect_id = _event_id(effect, "event_id")
         trace = trace_by_effect.get(effect_id)
@@ -444,17 +599,73 @@ def _lethality_chain_rows(
             )
             rows.append(fuze)
 
-        spatial = _lethality_base_row(stage="spatial_coverage", **base_kwargs)
-        spatial.update({"projected_hitbox_count": int(getattr(effect, "projected_hitbox_count", 0) or 0)})
-        rows.append(spatial)
+        if fallback_key not in standard_warhead_keys:
+            warhead = _lethality_base_row(stage="warhead_mechanism", **base_kwargs)
+            warhead.update(
+                {
+                    "mechanism_family": str(getattr(effect, "effect_family", "") or ""),
+                    "warhead_mass_kg": _finite_float(getattr(effect, "warhead_mass_kg", float("nan"))),
+                    "lethal_radius_m": _finite_float(
+                        getattr(effect, "warhead_lethal_radius_m", float("nan"))
+                    ),
+                    "fragment_energy_j": _finite_float(
+                        getattr(effect, "mechanism_fragment_energy_j", float("nan"))
+                    ),
+                    "fragment_density_per_m2": _finite_float(
+                        getattr(effect, "mechanism_fragment_areal_density_per_m2", float("nan"))
+                    ),
+                    "blast_overpressure_kpa": _finite_float(
+                        getattr(effect, "mechanism_blast_overpressure_kpa", float("nan"))
+                    ),
+                    "blast_impulse_kpa_ms": _finite_float(
+                        getattr(effect, "mechanism_blast_impulse_kpa_ms", float("nan"))
+                    ),
+                    "blast_scaled_distance_m_kg13": _finite_float(
+                        getattr(effect, "mechanism_blast_scaled_distance_m_kg13", float("nan"))
+                    ),
+                    "rod_cut_margin": _finite_float(
+                        getattr(effect, "mechanism_rod_cut_margin", float("nan"))
+                    ),
+                    "penetration_margin": _finite_float(
+                        getattr(effect, "mechanism_penetration_margin", float("nan"))
+                    ),
+                    "surface_incidence_cos": _finite_float(
+                        getattr(effect, "mechanism_surface_incidence_cos", float("nan"))
+                    ),
+                }
+            )
+            rows.append(warhead)
 
-        component = _lethality_base_row(stage="component_load", **base_kwargs)
-        component_hit_count = int(getattr(effect, "component_hit_count", 0) or 0)
-        component_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
-        if component_hit_count <= 0 and component_rows:
-            component_hit_count = int(sum(1 for item in component_rows if bool(getattr(item, "direct_hit", False))))
-        component.update({"component_hit_count": int(component_hit_count)})
-        rows.append(component)
+        if fallback_key not in standard_spatial_keys:
+            spatial = _lethality_base_row(stage="spatial_coverage", **base_kwargs)
+            spatial.update(
+                {
+                    "projected_hitbox_count": int(getattr(effect, "projected_hitbox_count", 0) or 0),
+                    "spatial_sample_count": int(getattr(effect, "warhead_spatial_sample_count", 0) or 0),
+                    "spatial_hit_estimate": _finite_float(
+                        getattr(effect, "warhead_spatial_hit_estimate", float("nan"))
+                    ),
+                    "spatial_hit_fraction": _finite_float(
+                        getattr(effect, "warhead_spatial_hit_fraction", float("nan"))
+                    ),
+                    "spatial_energy_scale": _finite_float(
+                        getattr(effect, "warhead_spatial_energy_scale", float("nan"))
+                    ),
+                    "spatial_pattern_scale": _finite_float(
+                        getattr(effect, "warhead_spatial_pattern_scale", float("nan"))
+                    ),
+                }
+            )
+            rows.append(spatial)
+
+        if fallback_key not in standard_component_keys:
+            component = _lethality_base_row(stage="component_load", **base_kwargs)
+            component_hit_count = int(getattr(effect, "component_hit_count", 0) or 0)
+            component_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
+            if component_hit_count <= 0 and component_rows:
+                component_hit_count = int(sum(1 for item in component_rows if bool(getattr(item, "direct_hit", False))))
+            component.update({"component_hit_count": int(component_hit_count)})
+            rows.append(component)
 
     for report in list(getattr(engagement_events, "damage_reports", []) or []):
         report_id = _event_id(report, "report_id")
@@ -549,6 +760,7 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
 
     nearest = last_stage("nearest_approach") or {}
     fuze = last_stage("fuze") or {}
+    warhead = last_stage("warhead_mechanism") or {}
     spatial = last_stage("spatial_coverage") or {}
     component = last_stage("component_load") or {}
     platform = last_stage("platform_consequence") or {}
@@ -578,8 +790,19 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         "lethality_chain_fuze_triggered": int(fuze.get("fuze_triggered", 0) or 0),
         "lethality_chain_fuze_failure_reason": str(fuze.get("fuze_failure_reason", "") or ""),
         "lethality_chain_direct_hitbox_intersection": int(fuze.get("direct_hitbox_intersection", 0) or 0),
+        "lethality_chain_mechanism_family": str(warhead.get("mechanism_family", "") or ""),
+        "lethality_chain_fragment_energy_j": _finite_float(warhead.get("fragment_energy_j", float("nan"))),
+        "lethality_chain_fragment_density_per_m2": _finite_float(
+            warhead.get("fragment_density_per_m2", float("nan"))
+        ),
+        "lethality_chain_blast_overpressure_kpa": _finite_float(
+            warhead.get("blast_overpressure_kpa", float("nan"))
+        ),
         "lethality_chain_projected_hitbox_count": int(spatial.get("projected_hitbox_count", 0) or 0),
         "lethality_chain_component_hit_count": int(component.get("component_hit_count", 0) or 0),
+        "lethality_chain_component_name": str(component.get("component_name", "") or ""),
+        "lethality_chain_component_system": str(component.get("component_system", "") or ""),
+        "lethality_chain_component_load_source": str(component.get("component_load_source", "") or ""),
         "lethality_chain_damage_report_id": int(platform.get("damage_report_id", lifecycle.get("damage_report_id", 0)) or 0),
         "lethality_chain_system_health_delta": _finite_float(platform.get("system_health_delta", float("nan"))),
         "lethality_chain_mission_kill": int(platform.get("mission_kill", 0) or 0),

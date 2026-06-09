@@ -116,6 +116,79 @@ def _standard_fuze_event(
     )
 
 
+def _standard_warhead_event() -> SimpleNamespace:
+    return SimpleNamespace(
+        header=_header(
+            chain_id=301,
+            event_id=104,
+            parent_event_id=101,
+            stage="warhead_mechanism",
+            status="applied",
+            reason="generic_research_warhead_profile",
+            target_id=200,
+        ),
+        mechanism_family="blast_fragmentation",
+        warhead_mass_kg=12.0,
+        lethal_radius_m=35.0,
+        fragment_energy_j=540.0,
+        fragment_density_per_m2=17.0,
+        blast_overpressure_kpa=18.0,
+        blast_impulse_kpa_ms=41.0,
+        blast_scaled_distance_m_kg13=2.5,
+        rod_cut_margin=0.0,
+        penetration_margin=0.35,
+        surface_incidence_cos=0.8,
+    )
+
+
+def _standard_spatial_event() -> SimpleNamespace:
+    return SimpleNamespace(
+        header=_header(
+            chain_id=301,
+            event_id=105,
+            parent_event_id=101,
+            stage="spatial_coverage",
+            status="projected",
+            reason="generic_research_spatial_projection",
+            target_id=200,
+        ),
+        projected_hitbox_count=4,
+        sample_count=360,
+        hit_estimate=1.8,
+        hit_fraction=0.005,
+        energy_scale=0.74,
+        pattern_scale=1.1,
+    )
+
+
+def _standard_component_load_event() -> SimpleNamespace:
+    return SimpleNamespace(
+        header=_header(
+            chain_id=301,
+            event_id=106,
+            parent_event_id=101,
+            stage="component_load",
+            status="projected",
+            reason="generic_research_component_load_projection",
+            target_id=200,
+        ),
+        component_name="right_aileron_actuator",
+        component_system="flight_control",
+        direct_hit=True,
+        distance_m=0.7,
+        effect_scale=0.83,
+        fragment_energy_j=420.0,
+        fragment_density_per_m2=13.0,
+        blast_overpressure_kpa=14.0,
+        blast_impulse_kpa_ms=32.0,
+        blast_scaled_distance_m_kg13=2.7,
+        rod_cut_margin=0.0,
+        penetration_margin=0.25,
+        surface_incidence_cos=0.9,
+        load_source="direct_component_hit",
+    )
+
+
 def _dummy_lethality_events() -> SimpleNamespace:
     effect = SimpleNamespace(
         event_id=101,
@@ -128,7 +201,23 @@ def _dummy_lethality_events() -> SimpleNamespace:
         detonation_local_up_m=2.0,
         fuze_type="proximity",
         direct_hitbox_intersection=True,
+        effect_family="blast_fragmentation",
+        warhead_mass_kg=12.0,
+        warhead_lethal_radius_m=35.0,
+        mechanism_fragment_energy_j=540.0,
+        mechanism_fragment_areal_density_per_m2=17.0,
+        mechanism_blast_overpressure_kpa=18.0,
+        mechanism_blast_impulse_kpa_ms=41.0,
+        mechanism_blast_scaled_distance_m_kg13=2.5,
+        mechanism_rod_cut_margin=0.0,
+        mechanism_penetration_margin=0.35,
+        mechanism_surface_incidence_cos=0.8,
         projected_hitbox_count=3,
+        warhead_spatial_sample_count=240,
+        warhead_spatial_hit_estimate=1.2,
+        warhead_spatial_hit_fraction=0.005,
+        warhead_spatial_energy_scale=0.7,
+        warhead_spatial_pattern_scale=1.0,
         component_hit_count=2,
         component_mechanism_load_rows=[],
         fuze_profile_synthetic=True,
@@ -158,6 +247,11 @@ def _dummy_lethality_events() -> SimpleNamespace:
         effects_events=[effect],
         damage_reports=[report],
         diagnostics_traces=[trace],
+        nearest_approach_events=[],
+        fuze_evaluation_events=[],
+        warhead_mechanism_events=[],
+        spatial_coverage_events=[],
+        component_load_events=[],
     )
 
 
@@ -243,6 +337,17 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         fuze = next(row for row in rows if row["stage"] == "fuze")
         self.assertEqual(fuze["fuze_type"], "proximity")
         self.assertEqual(fuze["direct_hitbox_intersection"], 1)
+
+        warhead = next(row for row in rows if row["stage"] == "warhead_mechanism")
+        self.assertEqual(warhead["source_event_kind"], "EffectsEvent")
+        self.assertEqual(warhead["mechanism_family"], "blast_fragmentation")
+        self.assertAlmostEqual(warhead["fragment_energy_j"], 540.0, places=6)
+        self.assertAlmostEqual(warhead["blast_overpressure_kpa"], 18.0, places=6)
+
+        spatial = next(row for row in rows if row["stage"] == "spatial_coverage")
+        self.assertEqual(spatial["source_event_kind"], "EffectsEvent")
+        self.assertEqual(spatial["projected_hitbox_count"], 3)
+        self.assertEqual(spatial["spatial_sample_count"], 240)
 
         platform = next(row for row in rows if row["stage"] == "platform_consequence")
         self.assertEqual(platform["parent_event_id"], 101)
@@ -331,6 +436,39 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         self.assertEqual(fuze_rows[0]["source_event_kind"], "FuzeEvaluationEvent")
         self.assertEqual(fuze_rows[0]["fuze_triggered"], 1)
         self.assertEqual(fuze_rows[0]["fuze_failure_reason"], "")
+
+    def test_standard_warhead_spatial_and_component_events_suppress_effects_fallback_rows(self) -> None:
+        events = _dummy_lethality_events()
+        events.warhead_mechanism_events = [_standard_warhead_event()]
+        events.spatial_coverage_events = [_standard_spatial_event()]
+        events.component_load_events = [_standard_component_load_event()]
+
+        rows = probe._lethality_chain_rows(
+            episode=7,
+            step=12,
+            sim_time_s=4.5,
+            engagement_events=events,
+        )
+
+        warhead_rows = [row for row in rows if row["stage"] == "warhead_mechanism"]
+        spatial_rows = [row for row in rows if row["stage"] == "spatial_coverage"]
+        component_rows = [row for row in rows if row["stage"] == "component_load"]
+        self.assertEqual(len(warhead_rows), 1)
+        self.assertEqual(len(spatial_rows), 1)
+        self.assertEqual(len(component_rows), 1)
+        self.assertEqual(warhead_rows[0]["source_event_kind"], "WarheadMechanismEvent")
+        self.assertEqual(warhead_rows[0]["source_event_id"], 104)
+        self.assertEqual(warhead_rows[0]["reason"], "generic_research_warhead_profile")
+        self.assertEqual(warhead_rows[0]["mechanism_family"], "blast_fragmentation")
+        self.assertAlmostEqual(warhead_rows[0]["fragment_density_per_m2"], 17.0, places=6)
+        self.assertEqual(spatial_rows[0]["source_event_kind"], "SpatialCoverageEvent")
+        self.assertEqual(spatial_rows[0]["projected_hitbox_count"], 4)
+        self.assertEqual(spatial_rows[0]["spatial_sample_count"], 360)
+        self.assertEqual(component_rows[0]["source_event_kind"], "ComponentLoadEvent")
+        self.assertEqual(component_rows[0]["component_hit_count"], 1)
+        self.assertEqual(component_rows[0]["component_name"], "right_aileron_actuator")
+        self.assertEqual(component_rows[0]["component_system"], "flight_control")
+        self.assertEqual(component_rows[0]["component_load_source"], "direct_component_hit")
 
     def test_run_probe_payload_and_chain_csv_include_lethality_chain_rows(self) -> None:
         class DummyInstrumentState:
@@ -430,7 +568,10 @@ class AirCombatProcessProbeTests(unittest.TestCase):
 
                 self.assertIn("lethality_chain_rows", payload)
                 self.assertEqual(len(payload["lethality_chain_rows"]), len(probe.LETHALITY_CHAIN_STAGES))
-                self.assertEqual(payload["episode_summaries"][0]["lethality_chain_row_count"], 6)
+                self.assertEqual(
+                    payload["episode_summaries"][0]["lethality_chain_row_count"],
+                    len(probe.LETHALITY_CHAIN_STAGES),
+                )
                 self.assertEqual(payload["episode_summaries"][0]["lethality_chain_chain_count"], 1)
                 self.assertTrue(os.path.exists(chain_csv_out))
                 with open(chain_csv_out, "r", encoding="utf-8") as f:
