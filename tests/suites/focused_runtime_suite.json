@@ -7,7 +7,7 @@
   "description": "Low-risk local pytest manifest for representative runtime surfaces. This is not wired into CI.",
   "matrix": "tests/suites/test_system_matrix.json",
   "paths": [
-    "tests/architecture/test_runtime_facade_layering.py",
+    "tests/architecture/runtime_facade/test_layering.py",
     "tests/runtime/facade/test_runtime_facade.py",
     "tests/runtime/facade/test_facade_step_evidence_gates.py",
     "tests/runtime/engagement/test_engagement_contract_shape.py",

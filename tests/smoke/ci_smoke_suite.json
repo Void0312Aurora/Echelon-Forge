@@ -1,10 +1,10 @@
 {
   "name": "ci_smoke",
   "paths": [
-    "tests/architecture/test_runtime_facade_layering.py",
-    "tests/architecture/test_ground_tasking_component_boundary.py",
-    "tests/architecture/test_wp5_design_boundary_gates.py",
-    "tests/architecture/test_cmake_target_readiness.py",
+    "tests/architecture/runtime_facade/test_layering.py",
+    "tests/architecture/ground/test_tasking_component_boundary.py",
+    "tests/architecture/runtime_facade/test_design_boundary_gates.py",
+    "tests/architecture/build/test_cmake_target_readiness.py",
     "tests/runtime/core/test_env_config.py",
     "tests/runtime/core/test_kernel_observation_sanity.py",
     "tests/runtime/core/test_mass_component_boundary.py",

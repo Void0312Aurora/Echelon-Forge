@@ -36,7 +36,7 @@
       "label": "Runtime facade",
       "recommended_tier": "smoke",
       "primary_paths": [
-        "tests/architecture/test_runtime_facade_layering.py",
+        "tests/architecture/runtime_facade/test_layering.py",
         "tests/runtime/facade/test_facade_step_evidence_gates.py",
         "tests/runtime/facade/test_runtime_facade.py"
       ],
@@ -114,7 +114,7 @@
       "primary_paths": [
         "tests/runtime/ground/test_ground_native_platform_schema.py",
         "tests/runtime/ground/test_ground_mvp_scenario.py",
-        "tests/architecture/test_ground_realism_gradient_guardrails.py"
+        "tests/architecture/ground/test_realism_gradient_guardrails.py"
       ],
       "contract_paths": [
         "tests/contracts/unit/ground/task_order_ground_minimal_structures.json",
