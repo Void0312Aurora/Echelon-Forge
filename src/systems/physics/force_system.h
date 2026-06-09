@@ -9,7 +9,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
-#include "systems/physics/propulsion_system.h"
+#include "systems/air/propulsion_system.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

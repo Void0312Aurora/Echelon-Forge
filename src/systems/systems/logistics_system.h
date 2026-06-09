@@ -13,7 +13,7 @@
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
-#include "systems/physics/propulsion_system.h"
+#include "systems/air/propulsion_system.h"
 
 inline void register_logistics_system(flecs::world& ecs) {
     // 1. Fuel Consumption System

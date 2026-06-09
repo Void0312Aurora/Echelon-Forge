@@ -2,8 +2,8 @@
 
 `systems/` contains ECS system registration and per-tick mutation logic. Code here consumes `components/` and `models/`, and is registered and scheduled by `core/engine`.
 
-This layer is multi-domain aware but not uniformly mature: air/physics execution
-is the deepest path, naval has ship/submarine and embarked-air token systems,
+This layer is multi-domain aware but not uniformly mature: air execution now has
+an explicit owner directory, physics keeps shared primitives, naval has ship/submarine and embarked-air token systems,
 and ground is limited to terrain/ground-contact primitives rather than a full
 land movement, sensing, fires, or damage runtime.
 
@@ -26,7 +26,8 @@ land movement, sensing, fires, or damage runtime.
 ## Subdirectory Conventions
 
 - `core/`: common operation/lifecycle systems.
-- `physics/`: physics systems for aerodynamics, control, forces, integration, ground contact, instruments, and related logic.
+- `air/`: air-domain flight control, aero state, propulsion, and aerodynamic effects.
+- `physics/`: shared physics primitives such as force clearing, force projection, integration, ground contact, instruments, and related logic.
 - `combat/`: damage, guidance, and combat effect systems.
 - `systems/`: platform-system runtime such as command link, data link, EW, logistics, navigation, sensor, and track manager.
 - `naval/`: ship/submarine motion and embarked aviation token-level runtime.
@@ -35,6 +36,7 @@ land movement, sensing, fires, or damage runtime.
 ## Current Entry Points
 
 - [core/README.md](core/README.md)
+- [air/README.md](air/README.md)
 - [physics/README.md](physics/README.md)
 - [combat/README.md](combat/README.md)
 - [systems/README.md](systems/README.md)
@@ -45,8 +47,9 @@ land movement, sensing, fires, or damage runtime.
 
 - `core/`
   - `operation_system.h`
+- `air/`
+  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`, `propulsion_system.h`
 - `physics/`
-  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`

@@ -18,7 +18,7 @@
 #include "components/naval/embarked_air_ops.h"
 #include "components/naval/ship_platform.h"
 #include "components/naval/submarine_platform.h"
-#include "components/physics/flight_dynamics_tuning.h"
+#include "components/air/flight_dynamics_tuning.h"
 
 
 inline Sensor make_unit_definition_default_sensor() {

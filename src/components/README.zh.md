@@ -21,6 +21,7 @@
 ## 子目录约定
 
 - `basic/`：基础实体标签、阵营、位置、环境数据等底层组件。
+- `air/`：air-domain tuning 和 state component，当前为 flight dynamics tuning。
 - `combat/`：伤害、生命值、武器挂载、评分等战斗状态组件。
 - `physics/`：物理状态、动力学、力、仪表、性能状态和当前 ground-contact primitive。
 - `systems/`：通信、数据链、传感器、声呐、电子战、导航、后勤等平台系统状态组件。
@@ -32,6 +33,7 @@
 ## 当前阅读入口
 
 - [basic/README.md](basic/README.md)
+- [air/README.md](air/README.md)
 - [combat/README.md](combat/README.md)
 - [physics/README.md](physics/README.md)
 - [systems/README.md](systems/README.md)
@@ -44,11 +46,13 @@
 
 - `basic/`
   - `common.h`, `environment_data.h`, `tags.h`
+- `air/`
+  - `flight_dynamics_tuning.h`
 - `combat/`
   - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
 - `physics/`
   - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
-  - `action.h` 仅保留兼容 umbrella 入口
+  - `action.h` 和 `flight_dynamics_tuning.h` 仅保留兼容 umbrella 入口
 - `systems/`
   - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`

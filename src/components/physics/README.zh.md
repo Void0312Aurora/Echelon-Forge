@@ -1,12 +1,14 @@
 # `src/components/physics` 边界
 
-`components/physics` 保存物理和飞行状态 component，包括动力学状态、控制律参数、力、仪表和性能数据。它不应继续吸收 command/tasking 概念。
+`components/physics` 保存共享物理状态 component，包括动力学状态、控制律参数、力、
+仪表和性能数据。它不应继续吸收 command/tasking 概念，也不应继续拥有 air-specific tuning。
 
 ## 允许
 
 - 姿态、速度、加速度、角速度、力和质量等物理状态。
 - 控制律参数、性能 envelope、仪表状态。
 - 与物理系统直接读写的 ECS component。
+- 迁移期保留 air-specific tuning 的 include-only compatibility wrapper。
 
 ## 禁止
 
@@ -21,4 +23,6 @@
 - `components/command/`
 - `components/tasking/`
 
-新增物理 component 可以继续放在本目录；新增命令或任务语义不能继续放在本目录。
+`flight_dynamics_tuning.h` 现在是指向 `components/air/flight_dynamics_tuning.h`
+的 compatibility wrapper。新增物理 component 可以继续放在本目录；新增命令或任务语义不能继续放在本目录，
+新增 air-specific tuning owner 应放入 `components/air`。

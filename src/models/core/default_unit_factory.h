@@ -29,7 +29,7 @@
 #include "components/systems/navigation.h"
 #include "components/systems/sonar.h"
 #include "components/systems/track_management.h"
-#include "components/physics/flight_dynamics_tuning.h"
+#include "components/air/flight_dynamics_tuning.h"
 #include "components/naval/embarked_air_ops.h"
 #include "components/naval/ship_platform.h"
 #include "components/naval/submarine_platform.h"

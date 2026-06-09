@@ -17,7 +17,7 @@
 #include "components/command/command_link_qos.h"
 #include "components/command/legacy_command_bridge.h"
 #include "components/physics/dynamics.h"
-#include "components/physics/flight_dynamics_tuning.h"
+#include "components/air/flight_dynamics_tuning.h"
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/physics/performance.h"

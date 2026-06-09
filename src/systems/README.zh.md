@@ -2,8 +2,8 @@
 
 `systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。
 
-本层是 multi-domain aware，但成熟度不均：air/physics execution 最深入，naval
-已有舰艇/潜艇和舰载航空 token system，ground 只限 terrain/ground-contact
+本层是 multi-domain aware，但成熟度不均：air execution 现在有显式 owner 目录，
+physics 保留共享 primitive，naval 已有舰艇/潜艇和舰载航空 token system，ground 只限 terrain/ground-contact
 primitive，不是 full land movement、sensing、fires 或 damage runtime。
 
 ## 允许
@@ -25,7 +25,8 @@ primitive，不是 full land movement、sensing、fires 或 damage runtime。
 ## 子目录约定
 
 - `core/`：通用 operation / lifecycle system。
-- `physics/`：空气动力、控制、力、积分、地面接触、仪表等物理系统。
+- `air/`：air-domain flight control、aero state、propulsion 和 aerodynamic effect。
+- `physics/`：force clear、force projection、integration、ground contact、instrument 等共享物理 primitive。
 - `combat/`：伤害、制导和战斗效果系统。
 - `systems/`：平台系统 runtime，例如 command link、data link、EW、logistics、navigation、sensor、track manager。
 - `naval/`：舰艇/潜艇运动与舰载航空 token-level runtime。
@@ -34,6 +35,7 @@ primitive，不是 full land movement、sensing、fires 或 damage runtime。
 ## 当前阅读入口
 
 - [core/README.md](core/README.md)
+- [air/README.md](air/README.md)
 - [physics/README.md](physics/README.md)
 - [combat/README.md](combat/README.md)
 - [systems/README.md](systems/README.md)
@@ -44,8 +46,9 @@ primitive，不是 full land movement、sensing、fires 或 damage runtime。
 
 - `core/`
   - `operation_system.h`
+- `air/`
+  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`, `propulsion_system.h`
 - `physics/`
-  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`

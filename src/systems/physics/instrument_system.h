@@ -15,7 +15,7 @@
 #include "components/systems/logistics.h"    // FuelSystem
 #include "components/systems/navigation.h"   // EGI
 #include "core/interfaces/environment_model.h"
-#include "systems/physics/propulsion_system.h"
+#include "systems/air/propulsion_system.h"
 
 namespace {
     inline double inst_rad_to_deg(double rad) { return rad * 180.0 / M_PI; }

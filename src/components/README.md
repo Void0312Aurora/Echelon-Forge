@@ -21,6 +21,7 @@ The current component surface is multi-domain rather than flight-only: air remai
 ## Subdirectory Conventions
 
 - `basic/`: foundational components such as entity tags, factions, positions, and environment data.
+- `air/`: air-domain tuning and state components, currently flight dynamics tuning.
 - `combat/`: combat-state components such as damage, health, weapon mounts, and scoring.
 - `physics/`: physical state, dynamics, forces, instruments, performance state, and current ground-contact primitives.
 - `systems/`: platform-system state components for communications, data links, sensors, sonar, electronic warfare, navigation, logistics, and similar areas.
@@ -32,6 +33,7 @@ The current component surface is multi-domain rather than flight-only: air remai
 ## Current Entry Points
 
 - [basic/README.md](basic/README.md)
+- [air/README.md](air/README.md)
 - [combat/README.md](combat/README.md)
 - [physics/README.md](physics/README.md)
 - [systems/README.md](systems/README.md)
@@ -44,11 +46,13 @@ The current component surface is multi-domain rather than flight-only: air remai
 
 - `basic/`
   - `common.h`, `environment_data.h`, `tags.h`
+- `air/`
+  - `flight_dynamics_tuning.h`
 - `combat/`
   - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
 - `physics/`
   - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
-  - `action.h` remains only as a compatibility umbrella
+  - `action.h` and `flight_dynamics_tuning.h` remain only as compatibility umbrellas
 - `systems/`
   - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`
