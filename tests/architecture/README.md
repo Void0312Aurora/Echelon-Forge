@@ -8,7 +8,7 @@ from data-driven contract regressions under `tests/contracts/`.
 
 Use one semantic directory level under `tests/architecture/`:
 
-- `build/` — build-system and target wiring readiness.
+- `build_system/` — build-system and target wiring readiness.
 - `causal_runtime/` — stage manifests, replay/counterfactual envelopes, and worldline metadata.
 - `command_tasking/` — command/tasking DTO shell and maintained tasking boundaries.
 - `compatibility_quarantine/` — explicitly tolerated legacy escape hatches and allowlists.
@@ -33,3 +33,16 @@ Keep historical labels such as `WP`, `A2`, or task IDs in test function names,
 comments, or task documents when traceability matters. Domain labels such as
 `RES`, `TP21`, `BECO`, and `blastfrag` may remain in file names when they are
 part of the guarded contract rather than project-management bookkeeping.
+
+## Tiering
+
+Do not treat the whole architecture tree as a smoke suite. Promote only cheap,
+high-signal guards to `tests/smoke/ci_smoke_suite.json`; broad source scans,
+AST sweeps, generated-package checks, retained-artifact verification, and
+external/source-admission workflow gates should stay in focused, local, or
+manual tiers until they are split into a small smoke-safe subset.
+
+Record ownership and tier intent in `tests/suites/test_system_matrix.json`
+before adding architecture paths to a concrete suite manifest. The suite runner
+fails on stale paths, so file moves must update the matrix and manifests in the
+same change.

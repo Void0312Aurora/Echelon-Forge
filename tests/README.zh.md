@@ -14,7 +14,7 @@
   - 按能力域与共享 surface 分组的运行时契约测试，位于 `air_combat/`、`bindings/`、`core/`、`engagement/`、`execution/`、`facade/`、`ground/`、`link/`、`mission/`、`multi_agent/`、`naval/` 和 `navigation/` 下。
 - `architecture/`
   - 源码/文档护栏和治理检查，与运行时行为测试有意分离。
-  - 通过一层语义子目录显式标出 guard owner：`build/`、
+  - 通过一层语义子目录显式标出 guard owner：`build_system/`、
     `causal_runtime/`、`command_tasking/`、`compatibility_quarantine/`、
     `damage_model/`、`governance/`、`ground/`、`platform_spawn/`、
     `policy_execution/`、`runtime_facade/`、`runtime_profiles/`、
@@ -144,6 +144,11 @@ source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
 ```
 
+Pytest suite manifest 可以列目录、文件，或
+`tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented`
+这类 pytest node ID。当一个宽 guard 文件里只有少量 smoke-safe 子集应进入 CI gate 时，优先使用 node ID。
+CI smoke 应优先列显式文件或 node ID，而不是目录条目，避免新增测试被意外提升进 CI。
+
 Suite tier 含义：
 
 - `smoke`
@@ -161,7 +166,7 @@ Suite tier 含义：
 只是首批治理 manifest。当前 CI 会运行维护态 pytest smoke 套件、C++ CTest smoke 目标，
 以及维护态 JSON 契约 smoke 套件。
 
-如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。
+如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。对于 node ID 条目，runner 会先检查基础文件路径，再把完整 node ID 交给 pytest。矩阵中凡是在 `suite_membership` 列出 `tests/smoke/ci_smoke_suite.json` 的行，也必须列出允许进入 CI 的具体 `smoke_paths`。
 
 ## 依赖说明
 

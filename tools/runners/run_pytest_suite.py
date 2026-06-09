@@ -27,6 +27,16 @@ def _resolve_repo_or_abs(path: str) -> str:
     return resolve_repo_path(*raw.replace("\\", "/").split("/"))
 
 
+def _resolve_pytest_entry(entry: str) -> tuple[str, str]:
+    raw = str(entry).strip()
+    path_part, separator, node_part = raw.partition("::")
+    resolved_path = _resolve_repo_or_abs(path_part)
+    resolved_entry = resolved_path
+    if separator:
+        resolved_entry = f"{resolved_path}{separator}{node_part}"
+    return resolved_entry, resolved_path
+
+
 def _load_suite(path: str) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -63,8 +73,8 @@ def main() -> int:
     for raw in raw_paths:
         if not isinstance(raw, str):
             raise TypeError("pytest suite path entries must be strings")
-        resolved = _resolve_repo_or_abs(raw)
-        if not os.path.exists(resolved):
+        resolved, check_path = _resolve_pytest_entry(raw)
+        if not os.path.exists(check_path):
             missing_paths.append(str(raw))
             continue
         resolved_paths.append(resolved)

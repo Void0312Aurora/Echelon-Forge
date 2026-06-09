@@ -68,6 +68,7 @@
   - Runs one or more JSON contracts from `tests/contracts/`, or a checked-in suite manifest such as `tests/smoke/ci_contract_suite.json`.
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - Runs a checked-in pytest suite manifest such as `tests/smoke/ci_smoke_suite.json` and fails early on stale path entries.
+  - Suite entries may be directories, files, or pytest node IDs such as `tests/foo/test_bar.py::test_case`; node ID entries still validate the base path before invoking pytest.
 - [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)
   - Thin wrapper around the contract-batch runner with the default `sim_kernel` group.
 

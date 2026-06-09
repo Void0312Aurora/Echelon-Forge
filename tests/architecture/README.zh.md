@@ -7,7 +7,7 @@
 
 `tests/architecture/` 下只使用一层语义目录：
 
-- `build/`：构建系统和 target wiring readiness。
+- `build_system/`：构建系统和 target wiring readiness。
 - `causal_runtime/`：stage manifest、replay/counterfactual envelope 和 worldline metadata。
 - `command_tasking/`：command/tasking DTO shell 和 maintained tasking 边界。
 - `compatibility_quarantine/`：明确容忍的遗留 escape hatch 与 allowlist。
@@ -30,3 +30,14 @@
 当确实需要追溯时，可在测试函数名、注释或任务文档中保留 `WP`、`A2` 等历史标签。
 `RES`、`TP21`、`BECO`、`blastfrag` 等领域标签若本身属于被守护的契约，而不是项目管理标识，
 可以保留在文件名中。
+
+## 分层
+
+不要把整个 architecture 树视为 smoke suite。只有便宜、高信号的 guard 才应进入
+`tests/smoke/ci_smoke_suite.json`；广域源码扫描、AST sweep、生成包检查、
+retained-artifact 校验、外部签核或 source-admission 工作流 gate 应留在
+focused、local 或 manual tier，除非它们已拆成小型 smoke-safe 子集。
+
+将 architecture 路径加入具体 suite manifest 之前，先在
+`tests/suites/test_system_matrix.json` 记录 ownership 和 tier 意图。suite runner
+会把过期路径作为硬失败，因此移动文件时必须在同一次变更里同步 matrix 和 manifest。

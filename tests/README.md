@@ -19,7 +19,7 @@
   - Source/documentation guardrails and governance checks that intentionally
     stay separate from runtime behavior tests.
   - One-level semantic subfolders keep guard ownership visible:
-    `build/`, `causal_runtime/`, `command_tasking/`,
+    `build_system/`, `causal_runtime/`, `command_tasking/`,
     `compatibility_quarantine/`, `damage_model/`, `governance/`, `ground/`,
     `platform_spawn/`, `policy_execution/`, `runtime_facade/`,
     `runtime_profiles/`, `runtime_spine/`, and `structural_boundaries/`.
@@ -152,6 +152,12 @@ source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.json
 ```
 
+Pytest suite manifests may list directories, files, or pytest node IDs such as
+`tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented`.
+Use node IDs when only a smoke-safe subset of a broad guard file should gate CI.
+CI smoke should prefer explicit files or node IDs over directory entries so new
+tests are promoted intentionally.
+
 Suite tiers:
 
 - `smoke`
@@ -172,6 +178,22 @@ smoke suite, C++ CTest smoke target, and the maintained JSON contract smoke suit
 If a smoke path is moved during a refactor, update the checked-in suite manifest
 first. CI and top-level documentation should reference the suite runner instead
 of duplicating individual test-file paths.
+
+## Architecture Suite Governance
+
+Architecture tests are split by execution intent, not just by directory name.
+Only cheap, high-signal guardrails should enter `tests/smoke/ci_smoke_suite.json`.
+Broad source scans, AST sweeps, release-package generation, retained-artifact
+checks, and source-admission workflows belong in `focused`, `local`, or
+`manual` tiers unless they are split into a small manifest-only smoke subset.
+
+When promoting an architecture guard, update
+`tests/suites/test_system_matrix.json` first, then the concrete suite manifest.
+The suite runner treats missing paths as hard failures, so moved architecture
+files must keep the matrix and manifests in lockstep. For node ID entries, the
+runner checks the base file path before handing the full node ID to pytest.
+Rows that list `tests/smoke/ci_smoke_suite.json` in `suite_membership` must also
+list the concrete `smoke_paths` that are allowed into CI.
 
 ## Dependency Notes
 

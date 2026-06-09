@@ -32,6 +32,21 @@
   },
   "systems": [
     {
+      "id": "architecture_build_readiness",
+      "label": "Architecture build readiness",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/architecture/build_system/test_cmake_target_readiness.py"
+      ],
+      "smoke_paths": [
+        "tests/architecture/build_system/test_cmake_target_readiness.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json"
+      ],
+      "governance_notes": "Keep only cheap source-group and target-wiring checks here; missing smoke paths are hard failures through the suite runner."
+    },
+    {
       "id": "runtime_facade",
       "label": "Runtime facade",
       "recommended_tier": "smoke",
@@ -40,11 +55,74 @@
         "tests/runtime/facade/test_facade_step_evidence_gates.py",
         "tests/runtime/facade/test_runtime_facade.py"
       ],
+      "smoke_paths": [
+        "tests/architecture/runtime_facade/test_layering.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
+        "tests/architecture/runtime_facade/test_layering.py::test_world_batch_adapter_removes_direct_runtime_fallback",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_contract_headers_do_not_include_engine_headers",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_public_header_hides_engine_owner_storage",
+        "tests/runtime/facade/test_facade_step_evidence_gates.py",
+        "tests/runtime/facade/test_runtime_facade.py"
+      ],
       "suite_membership": [
         "tests/smoke/ci_smoke_suite.json",
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Keep facade layering and public step evidence in smoke; broader facade loop variants can stay focused/local."
+      "governance_notes": "Keep representative facade layering nodeids and public step evidence in smoke; full layering sweeps stay focused/local."
+    },
+    {
+      "id": "architecture_static_guardrails",
+      "label": "Architecture static guardrails",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/architecture/runtime_facade/test_layering.py",
+        "tests/architecture/compatibility_quarantine/test_guard_enforcement.py",
+        "tests/architecture/structural_boundaries/test_structural_guardrails.py"
+      ],
+      "smoke_paths": [
+        "tests/architecture/runtime_facade/test_layering.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
+        "tests/architecture/runtime_facade/test_layering.py::test_world_batch_adapter_removes_direct_runtime_fallback",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_contract_headers_do_not_include_engine_headers",
+        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_public_header_hides_engine_owner_storage"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json",
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Broad source/AST scans are valuable ownership guards, but smoke promotion should use selected nodeids unless the whole file remains fast."
+    },
+    {
+      "id": "architecture_damage_model_governance",
+      "label": "A2 damage-model governance",
+      "recommended_tier": "manual",
+      "primary_paths": [
+        "tests/architecture/damage_model"
+      ],
+      "tool_paths": [
+        "tools/maintenance/a2_candidate_vps_bundle.py",
+        "tools/maintenance/a2_retained_manifest_integrity.py",
+        "tools/maintenance/a2_source_admission_audit.py"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Release, retained-artifact, source-admission, and package-generation checks are review workflow gates; keep them out of CI smoke unless split into a cheap manifest-only subset."
+    },
+    {
+      "id": "test_suite_governance",
+      "label": "Pytest suite governance",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/runners/test_pytest_suite_manifests.py",
+        "tests/runners/test_run_pytest_suite.py"
+      ],
+      "smoke_paths": [
+        "tests/runners/test_pytest_suite_manifests.py",
+        "tests/runners/test_run_pytest_suite.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json"
+      ],
+      "governance_notes": "Fast meta-tests keep suite manifests path-valid, nodeid-aware, and protected from promoting manual architecture roots into CI smoke."
     },
     {
       "id": "engagement",
@@ -54,11 +132,23 @@
         "tests/runtime/engagement",
         "tests/runtime/bindings/test_bindings_engagement_surface.py"
       ],
+      "smoke_paths": [
+        "tests/runtime/engagement/test_air_launch_adapter.py",
+        "tests/runtime/engagement/test_diagnostics_trace_contract.py",
+        "tests/runtime/engagement/test_engagement_contract_shape.py",
+        "tests/runtime/engagement/test_facade_engagement_evidence_gates.py",
+        "tests/runtime/engagement/test_facade_engagement_export.py",
+        "tests/runtime/engagement/test_launch_adapter_static_shape.py",
+        "tests/runtime/engagement/test_live_engagement_event_capture.py",
+        "tests/runtime/engagement/test_munition_damage_adapter.py",
+        "tests/runtime/engagement/test_naval_launch_adapter.py",
+        "tests/runtime/engagement/test_trace_replay_gates.py"
+      ],
       "suite_membership": [
         "tests/smoke/ci_smoke_suite.json",
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Directory-level smoke coverage already exists; focused suite keeps a smaller explicit adapter subset."
+      "governance_notes": "Smoke uses an explicit file list to avoid accidental CI promotion when new engagement tests are added; focused/local suites can broaden deliberately."
     },
     {
       "id": "world_batch",
@@ -68,6 +158,9 @@
         "tests/world_batch/test_world_batch_runtime.py",
         "tests/world_batch/test_single_world_batch_runtime.py",
         "tests/world_batch/test_world_batch_vec_env.py"
+      ],
+      "smoke_paths": [
+        "tests/world_batch/test_world_batch_runtime.py"
       ],
       "suite_membership": [
         "tests/smoke/ci_smoke_suite.json",
