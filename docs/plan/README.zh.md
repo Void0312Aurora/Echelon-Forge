@@ -6,14 +6,13 @@
 
 语言迁移说明：
 
-- 当前 `docs/plan/` 正在迁移到“英文 `.md` 为主、中文 `.zh.md` 为辅”的双语体系。
-- 迁移计划见 [documentation_bilingual_migration_plan_20260518.md](documentation_bilingual_migration_plan_20260518.md)。
+- 当前 `docs/plan/` 已迁移到”英文 `.md` 为主、中文 `.zh.md` 为辅”的双语体系。
+- 迁移记录见 [archive/documentation_bilingual_migration_plan_20260518.zh.md](archive/documentation_bilingual_migration_plan_20260518.zh.md)。
 - 严格双语维护面聚焦在稳定计划权威层，而不是 `docs/plan/**` 下的每一份历史冻结或候选草案。
-- 在英文 peer 尚未补齐前，现有 `.zh.md` 长文仍作为过渡输入使用，但应在后续批次中补齐英文主文。
 
 ## 一、当前目录结构
 
-`docs/plan/` 当前包含四条维护中的主线子目录，以及两个保留型辅助目录：
+`docs/plan/` 当前包含四条维护中的主线子目录：
 
 - [architecture/README.md](architecture/README.md)
   - 架构主方案、性能调研，以及已归档的 `src/` 分层记录。
@@ -23,16 +22,10 @@
   - 协同训练与协同执行管线主线文档。
 - [exact_runtime/README.md](exact_runtime/README.md)
   - exact runtime / GPU 主线的候选专项计划、检查清单与阶段冻结记录。
-- `archive/README.md`
-  - 已关闭路线、实验归档与历史溯源材料。该目录常为本地保留面，不应假设会上传到共享远端。
-- `results/README.md`
-  - benchmark、评估说明与验收类结果材料。该目录常为本地保留面，不应假设会上传到共享远端。
+- [archive/](archive/README.md)
+  - 已关闭路线、历史溯源材料与双语迁移记录。
 
-说明：
-
-- `archive/` 和 `results/` 当前在本地工作区里可能存在，但它们既不属于“主线计划授权面”，也不应默认视为可同步的共享入口。
-- 更早期的归档设计材料仍主要位于 [docs/Archive/](../Archive)。
-- `results/` 只承载结果与验收材料；它不应被混同为新的计划主文入口。
+更早期的归档设计材料仍主要位于 [docs/Archive/](../Archive)。
 
 ## 二、推荐阅读顺序
 
@@ -103,3 +96,5 @@
 3. 已完成的冻结文档自动转为执行记录，不应继续在原文档上追加未冻结的新范围。
 4. 历史保留或实验归档材料只用于溯源、解释路线演化或回看已放弃方案。
 5. 如果一项新工作同时依赖多份调研、契约或历史计划，应先收敛为新的单一冻结任务单，再进入实现。
+
+已归档计划的完整清单见 [归档注册表](archive_registry.zh.md)。

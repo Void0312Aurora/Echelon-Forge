@@ -281,8 +281,8 @@ Execution status:
 - Completed: The maintained main path of `WorldBatchVecEnv` accesses facade-shaped APIs via `_RuntimeFacadeAdapter`; direct `RuntimeFacade.runtime()` calls are only allowed within that adapter.
 - Completed: The main `WorldBatchVecEnv` class no longer caches raw handles to `_batch_runtime` / `_runtime_facade`; ScenarioLoader low-level world access, legacy visual readback, and visual batch helper all go through adapter methods.
 - Completed: Architecture tests prohibit maintained main classes or new code, outside the adapter, from directly calling `RuntimeFacade.runtime()`, directly instantiating `ef_py.WorldBatchRuntime`, caching raw runtime/facade handles, or re-exposing `.compat_runtime`.
-- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py` passes — `5 passed`.
-- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/test_cuda_import_order.py` passes — `36 passed`.
+- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py` passes — `5 passed`.
+- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/test_cuda_import_order.py` passes — `36 passed`.
 
 ### WP7: CMake Target Split Preparation
 
@@ -318,7 +318,7 @@ Execution status:
 - Completed: Added CMake target readiness architecture check to prevent `ef_core` / `ef_py` from reverting to boundless source file flattening.
 - Completed: Updated `src/README.md` with rules for CMake source group ownership.
 - Verified: `cmake --build build-workshop --target ef_core ef_py -j2` passes.
-- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_runtime_facade_layering.py tests/architecture/test_cmake_target_readiness.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` passes with `62 passed`.
+- Verified: `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/build/test_cmake_target_readiness.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` passes with `62 passed`.
 
 ## 5. Execution Order
 

@@ -22,7 +22,7 @@
 - [x] `WP3` 已新增 facade 级 `BatchWorldSetupRequest` / `BatchWorldSetupResult`，`scenario_runtime` 优先使用 typed setup request。
 - [x] `WP4` 已新增 `ObservationBatchRequest`，`WorldBatchVecEnv` 状态读回优先走 facade observation packet。
 - [x] `WP5` Python 绑定已标注 maintained facade surface 与 simulation compatibility surface。
-- [x] `WP6` 已新增 `tests/architecture/test_runtime_facade_layering.py` 作为依赖方向回归检查。
+- [x] `WP6` 已新增 `tests/architecture/runtime_facade/test_layering.py` 作为依赖方向回归检查。
 - [x] `WP7` target split readiness 已记录 include 阻塞、拆分顺序和进入下一批 target 拆分前的门槛；CMake 源码已按未来 target source groups 分组。
 
 ## 一、当前判断
@@ -200,7 +200,7 @@
 
 主要文件：
 
-- 新增 `tests/architecture/test_runtime_facade_layering.py`
+- 新增 `tests/architecture/runtime_facade/test_layering.py`
 - 或并入 [tests/runtime/facade/test_runtime_facade.py](../../../tests/runtime/facade/test_runtime_facade.py)
 
 验收：
@@ -321,7 +321,7 @@ LD_LIBRARY_PATH=/home/void0312/Workshop/CMO/build-facade-local/_deps/flecs-build
 若新增 architecture 检查：
 
 ```bash
-./.venv/bin/python -m pytest tests/architecture/test_runtime_facade_layering.py
+./.venv/bin/python -m pytest tests/architecture/runtime_facade/test_layering.py
 ```
 
 ## 七、完成标准

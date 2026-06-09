@@ -5,14 +5,13 @@ This document describes the real `docs/plan/` structure currently in the reposit
 
 Language migration note:
 
-- The current `docs/plan/` is being migrated to a bilingual system with English `.md` as primary and Chinese `.zh.md` as secondary.
-- The migration plan can be found at [documentation_bilingual_migration_plan_20260518.md](documentation_bilingual_migration_plan_20260518.md).
-- The strict bilingual maintenance surface is the stable plan authority layer, not every historical freeze or candidate draft under `docs/plan/**`.
-- Until English peers are fully supplemented, existing `.zh.md` long texts will still be used as transitional inputs, but English main texts should be supplemented in subsequent batches.
+- `docs/plan/` has been migrated to a bilingual system with English `.md` as primary and Chinese `.zh.md` as secondary.
+- Migration record: [archive/documentation_bilingual_migration_plan_20260518.md](archive/documentation_bilingual_migration_plan_20260518.md).
+- The strict bilingual maintenance surface is the stable plan authority layer.
 
 ## 1. Current Directory Structure
 
-`docs/plan/` currently contains four active mainline subdirectories and two retained auxiliary directories:
+`docs/plan/` contains four active mainline subdirectories:
 
 - [architecture/README.md](architecture/README.md)
   - Architecture main plan, performance research, and archived `src/` layering records.
@@ -22,16 +21,10 @@ Language migration note:
   - Cooperative training and cooperative execution pipeline mainline documents.
 - [exact_runtime/README.md](exact_runtime/README.md)
   - Candidate special plans, checklists, and phase freeze records for exact runtime / GPU mainline.
-- `archive/README.md`
-  - Closed routes, experimental archives, and historical traceability materials. This directory is often a local retention surface and should not be assumed to be uploaded to shared remotes.
-- `results/README.md`
-  - Benchmark, evaluation documentation, and acceptance result materials. This directory is often a local retention surface and should not be assumed to be uploaded to shared remotes.
+- [archive/](archive/README.md)
+  - Closed routes, historical traceability materials, and bilingual migration record.
 
-Notes:
-
-- `archive/` and `results/` may exist in the local workspace, but they are neither part of the "mainline plan authorization surface" nor should be treated as default shared sync entry points.
 - Earlier archived design materials are mainly located in [docs/Archive/](../Archive).
-- `results/` only holds results and acceptance materials; it should not be confused as a new entry point for main plan documents.
 
 ## 2. Recommended Reading Order
 
@@ -103,3 +96,5 @@ for execution history only:
 3. Completed freeze documents automatically become execution records; new unfrozen scope should not be appended to the original document.
 4. Historical retention or experimental archive materials are only used for traceability, explaining route evolution, or reviewing abandoned solutions.
 5. If a new task depends on multiple research, contracts, or historical plans, it should first be consolidated into a new single frozen task list before entering implementation.
+
+For the full archived plan catalog, see [Archive Registry](archive_registry.zh.md).
