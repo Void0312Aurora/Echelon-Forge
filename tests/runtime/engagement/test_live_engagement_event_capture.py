@@ -19,12 +19,15 @@ _EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN = re.compile(
     r"\((?P<params>[^)]*)\)"
 )
 _DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE = (
-    "EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record("
+    "build_debug_effects_damage_event_record(const DebugEffectsDamageEventRecordInput &input)"
 )
 _DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
     "bool SimulationKernel::debug_apply_proximity_hit(",
     "bool SimulationKernel::debug_apply_local_proximity_hit(",
     "bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(",
+)
+_EFFECTS_EVENT_REF_PATTERN = re.compile(
+    r"EffectsEvent\s*&\s*effects\s*=\s*event_record\.effects;"
 )
 
 
@@ -41,6 +44,31 @@ def _effects_damage_recorder_signatures(text: str) -> list[tuple[str, str]]:
         (match.group("name"), _normalized_cpp_parameters(match.group("params")))
         for match in _EFFECTS_DAMAGE_RECORDER_SIGNATURE_PATTERN.finditer(text)
     ]
+
+
+def _recorder_method_parameters(text: str, method_name: str) -> list[str]:
+    pattern = re.compile(
+        r"(?:virtual\s+)?(?:std::)?uint64_t\s+"
+        r"(?:(?:SimulationKernelEngagementEventStore)::)?"
+        rf"{re.escape(method_name)}\s*"
+        r"\((?P<params>[^)]*)\)"
+    )
+    return [
+        _normalized_cpp_parameters(match.group("params"))
+        for match in pattern.finditer(text)
+    ]
+
+
+def _assert_recorder_method_takes_dto(
+    source_name: str,
+    text: str,
+    method_name: str,
+    dto_name: str,
+) -> None:
+    assert _recorder_method_parameters(text, method_name) == [f"{dto_name} record"], (
+        f"{source_name} must expose {method_name} as a DTO-shaped recorder "
+        f"taking exactly {dto_name} record"
+    )
 
 
 def _assert_effects_damage_recorder_signatures_are_dto_only(
@@ -78,11 +106,11 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
     )
     helper_block = _extract_function_block(text, _DEBUG_DAMAGE_DTO_BUILDER_SIGNATURE)
     assert "EngagementEffectsDamageEventRecord event_record{}" in helper_block
-    assert "EffectsEvent& effects = event_record.effects;" in helper_block
+    assert _EFFECTS_EVENT_REF_PATTERN.search(helper_block) is not None
     assert "engagement_events::apply_effects_result_fields(effects, input.effects_result);" in helper_block
     assert "return event_record;" in helper_block
     assert text.count("EngagementEffectsDamageEventRecord event_record{}") == 1
-    assert text.count("EffectsEvent& effects = event_record.effects;") == 1
+    assert len(_EFFECTS_EVENT_REF_PATTERN.findall(text)) == 1
     assert text.count("engagement_events::apply_effects_result_fields(") == 1
 
     for signature in _DEBUG_DAMAGE_DTO_CALLER_SIGNATURES:
@@ -95,7 +123,7 @@ def _assert_debug_damage_paths_use_dto_builder(text: str) -> None:
             < caller_block.index("impact.destruct();")
         )
         assert "EngagementEffectsDamageEventRecord event_record{}" not in caller_block
-        assert "EffectsEvent& effects = event_record.effects;" not in caller_block
+        assert _EFFECTS_EVENT_REF_PATTERN.search(caller_block) is None
         assert "engagement_events::apply_effects_result_fields(" not in caller_block
 
 
@@ -149,10 +177,30 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     assert "struct EngagementWarheadMechanismEventRecord" in recorder_header
     assert "struct EngagementSpatialCoverageEventRecord" in recorder_header
     assert "struct EngagementComponentLoadEventRecord" in recorder_header
-    assert "record_effects_damage_event(\n        EngagementEffectsDamageEventRecord record" in recorder_header
-    assert "record_warhead_mechanism_event(\n        EngagementWarheadMechanismEventRecord record" in recorder_header
-    assert "record_spatial_coverage_event(\n        EngagementSpatialCoverageEventRecord record" in recorder_header
-    assert "record_component_load_event(\n        EngagementComponentLoadEventRecord record" in recorder_header
+    _assert_recorder_method_takes_dto(
+        "engagement_event_recorder.h",
+        recorder_header,
+        "record_effects_damage_event",
+        "EngagementEffectsDamageEventRecord",
+    )
+    _assert_recorder_method_takes_dto(
+        "engagement_event_recorder.h",
+        recorder_header,
+        "record_warhead_mechanism_event",
+        "EngagementWarheadMechanismEventRecord",
+    )
+    _assert_recorder_method_takes_dto(
+        "engagement_event_recorder.h",
+        recorder_header,
+        "record_spatial_coverage_event",
+        "EngagementSpatialCoverageEventRecord",
+    )
+    _assert_recorder_method_takes_dto(
+        "engagement_event_recorder.h",
+        recorder_header,
+        "record_component_load_event",
+        "EngagementComponentLoadEventRecord",
+    )
     assert "record_effects_damage_event_legacy(" not in recorder_header
     for source_name, source_text in (
         ("engagement_event_recorder.h", recorder_header),
@@ -161,7 +209,12 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
     ):
         _assert_effects_damage_recorder_signatures_are_dto_only(source_name, source_text)
         assert "record_effects_damage_event_legacy(" not in source_text
-    assert "SimulationKernelEngagementEventStore::record_effects_damage_event(\n    EngagementEffectsDamageEventRecord record" in store_impl
+    _assert_recorder_method_takes_dto(
+        "simulation_kernel_engagement_event_store.cpp",
+        store_impl,
+        "record_effects_damage_event",
+        "EngagementEffectsDamageEventRecord",
+    )
     assert "launch_recorder_.record_legacy_launch_event(" in release_service
     assert "damage_recorder_.record_effects_damage_event(" in release_service
     assert "engagement_event_store_->record_effects_damage_event(" in damage_api
