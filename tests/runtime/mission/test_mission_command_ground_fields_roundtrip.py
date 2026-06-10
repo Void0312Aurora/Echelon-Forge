@@ -68,7 +68,7 @@ class MissionCommandGroundFieldRoundtripTests(unittest.TestCase):
         state = ef_py.ExecutionEpisodeState()
         state.has_mission_command = True
         state.mission_command.command_code = 2
-        state.mission_command.ground_task_mode = ef_py.GroundTaskMode.HoldStatic
+        state.mission_command.ground_task_mode = ef_py.GroundTaskMode.MoveStatic
         state.mission_command.objective_area_id = 9101
         state.mission_command.objective_node_id = 9201
         state.mission_command.ground_commander_id = 9301
@@ -91,7 +91,7 @@ class MissionCommandGroundFieldRoundtripTests(unittest.TestCase):
 
         self.assertTrue(bool(exported.has_mission_command_json))
         mission_json = json.loads(str(exported.mission_command_json))
-        self.assertEqual(int(mission_json["ground_task_mode"]), int(ef_py.GroundTaskMode.HoldStatic))
+        self.assertEqual(int(mission_json["ground_task_mode"]), int(ef_py.GroundTaskMode.MoveStatic))
         self.assertEqual(int(mission_json["objective_area_id"]), 9101)
         self.assertEqual(int(mission_json["objective_node_id"]), 9201)
         self.assertEqual(int(mission_json["ground_commander_id"]), 9301)

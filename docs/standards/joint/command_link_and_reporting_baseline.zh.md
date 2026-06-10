@@ -1,5 +1,11 @@
 # Joint 命令链与汇报基线
 
+语言：
+- 英文主文：[command_link_and_reporting_baseline.md](command_link_and_reporting_baseline.md)
+- 中文辅文：`command_link_and_reporting_baseline.zh.md`
+
+状态：`2026-06-10`，与活跃 `MissionCommandCore` target metadata 对齐的权威 joint command-link contract。
+
 本文档记录 `MissionCommand`、`CommandLink`、`DataLink` 和 `ROE` 在 joint/common core 中的最小闭环。
 
 目标不是把所有真实 C2 能力都建出来，而是定义一个已经与当前运行时和测试对齐的最小合同。
@@ -41,6 +47,14 @@
 - `assigned_target_id`
 - `authorization_to_fire`
 
+它还携带 command-context target provenance 字段，用于支撑 ROE 与 assignment
+决策，但不让 common core 负责 track fusion：
+
+- `threat_state`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
+
 运行时测试已经说明，这些字段会经过 Python bindings、episode state 序列化和 controller 导入/导出流程保持一致。
 
 ## 3. 通用命令与军种专用命令字段
@@ -55,6 +69,7 @@ common 命令层应保持中性且小。
 - `target_speed`
 - `roe_state`
 - authority holder / grantor 字段
+- threat 与 assigned-target provenance 字段
 
 军种专用示例：
 
@@ -136,6 +151,10 @@ common core 里的 `CommandLink` 应负责：
 - `engagement_authority_holder_id` 表示谁持有当前 authority
 - `engagement_authority_grantor_id` 表示 authority 的来源
 - `assigned_target_id` 表示 authority 决策绑定的目标
+- `threat_state` 携带当前 runtime profile 使用的 command-context threat classification
+- `assigned_target_track_id` 在 provenance 可用时标识 assigned target 使用的 track record
+- `assigned_target_source_id` 标识提供 assigned target 或 track context 的来源
+- `assigned_target_snapshot_time_s` 记录 assigned target context 的 snapshot time
 - `authorization_to_fire` 表示当前命令是否允许开火
 
 这只是最小合同，不是完整 doctrine 模型。但它足以保持运行时一致、可测。

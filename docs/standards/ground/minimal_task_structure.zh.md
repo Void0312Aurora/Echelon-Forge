@@ -66,6 +66,8 @@ ground specialization 吸收的最小语义集是：
 ### `TASK_MOVE`
 
 - 语义：让以 platoon 为中心的单位向 route、phase line 或 objective reference 机动
+- 当前代码表示：`GroundTaskMode::MoveStatic`；它保留 G0/G1 静态 DTO 边界，
+  不释放 route traversal 或 movement dynamics
 - 当 `Maneuver` enum 存在时，`task_family = Maneuver`；否则使用最接近的通用 route/movement family，并把 ground-specific meaning 保留在 tasking profile
 - 预期 owner：以 platoon 为中心的 tactical unit；更高 echelon 仍是 scenario 或 tasking metadata
 - 默认 `coordination_mode = Independent`，除非声明 support relationship

@@ -119,7 +119,7 @@ void bind_command(nb::module_& m) {
 
     nb::enum_<GroundTaskMode>(m, "GroundTaskMode")
         .value("Unspecified", GroundTaskMode::Unspecified)
-        .value("HoldStatic", GroundTaskMode::HoldStatic)
+        .value("MoveStatic", GroundTaskMode::MoveStatic)
         .value("OccupyStatic", GroundTaskMode::OccupyStatic)
         .value("SupportStatic", GroundTaskMode::SupportStatic);
 

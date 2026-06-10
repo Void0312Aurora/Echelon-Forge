@@ -2,7 +2,7 @@
 
 enum class GroundTaskMode : int {
     Unspecified = 0,
-    HoldStatic = 1,
+    MoveStatic = 1,
     OccupyStatic = 2,
     SupportStatic = 3,
 };

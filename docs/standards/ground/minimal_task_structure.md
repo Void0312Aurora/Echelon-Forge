@@ -72,6 +72,9 @@ The minimal semantic set absorbed by the ground specialization is:
 
 - semantic meaning: move a platoon-centered unit toward a route, phase line, or
   objective reference
+- current code representation: `GroundTaskMode::MoveStatic`; this preserves the
+  G0/G1 static DTO boundary and does not release route traversal or movement
+  dynamics
 - `task_family = Maneuver` when that enum exists; otherwise use the nearest
   generic route/movement family and keep the ground-specific meaning in the
   tasking profile

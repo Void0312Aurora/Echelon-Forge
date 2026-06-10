@@ -42,7 +42,8 @@ def test_ground_tasking_headers_declare_narrow_g0_g1_owner_slices() -> None:
     headers = [enum_text, task_text, intent_text, report_text]
 
     assert "enum class GroundTaskMode" in enum_text
-    assert "HoldStatic = 1" in enum_text
+    assert "MoveStatic = 1" in enum_text
+    assert "HoldStatic" not in enum_text
     assert "OccupyStatic = 2" in enum_text
     assert "SupportStatic = 3" in enum_text
     assert "enum class GroundStatusPhase" in enum_text

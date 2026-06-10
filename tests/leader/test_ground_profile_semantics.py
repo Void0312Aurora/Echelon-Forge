@@ -129,6 +129,11 @@ class GroundProfileSemanticTests(unittest.TestCase):
             self.assertEqual(int(normalized["supporting_node_id"]), 4203)
 
     def test_common_core_defaults_preserve_ground_semantics_and_ids(self) -> None:
+        move_order = ef_py.TaskOrder()
+        move_order.service_profile = ef_py.ServiceProfile.Army
+        apply_task_order_common_core_defaults(move_order, task_name="TASK_MOVE")
+        self.assertEqual(move_order.ground_task_mode, ef_py.GroundTaskMode.MoveStatic)
+
         order = ef_py.TaskOrder()
         order.service_profile = ef_py.ServiceProfile.Army
         order.parent_node_id = 5101

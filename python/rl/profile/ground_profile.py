@@ -73,14 +73,18 @@ def infer_ground_task_mode(
         return getattr(namespace, "OccupyStatic", _ground_task_mode_default())
     if name == "TASK_SUPPORT":
         return getattr(namespace, "SupportStatic", _ground_task_mode_default())
+    if name == "TASK_MOVE":
+        return getattr(namespace, "MoveStatic", _ground_task_mode_default())
 
     phase = str(phase_name or "").strip().lower()
+    if phase in {"move", "movement", "advance", "transit"}:
+        return getattr(namespace, "MoveStatic", _ground_task_mode_default())
     if phase in {"occupy", "defend"}:
         return getattr(namespace, "OccupyStatic", _ground_task_mode_default())
     if phase == "support":
         return getattr(namespace, "SupportStatic", _ground_task_mode_default())
     if phase in {"hold", "holding", "static"}:
-        return getattr(namespace, "HoldStatic", _ground_task_mode_default())
+        return getattr(namespace, "MoveStatic", _ground_task_mode_default())
     return _ground_task_mode_default()
 
 
@@ -106,7 +110,7 @@ def infer_ground_status_phase(
             return getattr(namespace, "OccupyingStatic", _ground_status_phase_default())
         if mode_value == enum_value(getattr(task_mode, "SupportStatic", 0)):
             return getattr(namespace, "SupportingStatic", _ground_status_phase_default())
-        if mode_value == enum_value(getattr(task_mode, "HoldStatic", 0)):
+        if mode_value == enum_value(getattr(task_mode, "MoveStatic", 0)):
             return getattr(namespace, "HoldingStatic", _ground_status_phase_default())
     return getattr(namespace, "Assigned", _ground_status_phase_default())
 

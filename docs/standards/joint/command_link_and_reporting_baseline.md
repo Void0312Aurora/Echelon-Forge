@@ -1,5 +1,11 @@
 # Joint Command Link and Reporting Baseline
 
+Language:
+- English canonical: `command_link_and_reporting_baseline.md`
+- Chinese companion: [command_link_and_reporting_baseline.zh.md](command_link_and_reporting_baseline.zh.md)
+
+Status: `2026-06-10` authoritative joint command-link contract aligned with active `MissionCommandCore` targeting metadata.
+
 This document captures the minimum closed loop for `MissionCommand`, `CommandLink`, `DataLink`, and `ROE` in the joint/common core.
 
 The goal is not to model every real-world C2 feature. The goal is to define the smallest contract that is already consistent with the current runtime and tests.
@@ -41,6 +47,15 @@ The mission command contract also carries authority-bearing fields:
 - `assigned_target_id`
 - `authorization_to_fire`
 
+It also carries command-context target provenance fields that support ROE and
+assignment decisions without making the common core responsible for track
+fusion:
+
+- `threat_state`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
+
 The runtime tests show that these fields are round-tripped through Python bindings, episode state serialization, and controller import/export.
 
 ## 3. Common Command vs Service-Specific Command Fields
@@ -55,6 +70,7 @@ Common examples:
 - `target_speed`
 - `roe_state`
 - authority holder/grantor fields
+- threat and assigned-target provenance fields
 
 Service-specific examples:
 
@@ -136,6 +152,14 @@ The minimum useful interpretation is:
 - `engagement_authority_holder_id` tells who currently holds authority
 - `engagement_authority_grantor_id` tells where that authority came from
 - `assigned_target_id` tells which target is bound to the authority decision
+- `threat_state` carries the command-context threat classification used by
+  current runtime profiles
+- `assigned_target_track_id` identifies the track record used for the assigned
+  target when such provenance is available
+- `assigned_target_source_id` identifies the source that supplied the assigned
+  target or track context
+- `assigned_target_snapshot_time_s` records the snapshot time for the assigned
+  target context
 - `authorization_to_fire` tells whether the command currently permits fire
 
 This is a minimum contract, not a full doctrine model. It is enough to keep the runtime consistent and testable.
