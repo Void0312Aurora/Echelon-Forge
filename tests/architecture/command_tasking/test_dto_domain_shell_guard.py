@@ -8,47 +8,47 @@ from tests.architecture.helpers import REPO_ROOT, compile_cpp_snippet
 
 MISSION_COMMAND_HEADER = REPO_ROOT / "src" / "components" / "command" / "mission_command.h"
 MISSION_COMMAND_AIR_HEADER = (
-    REPO_ROOT / "src" / "components" / "command" / "air" / "mission_command_air.h"
+    REPO_ROOT / "src" / "components" / "domains" / "air" / "command" / "mission_command_air.h"
 )
 MISSION_COMMAND_NAVAL_HEADER = (
-    REPO_ROOT / "src" / "components" / "command" / "naval" / "mission_command_naval.h"
+    REPO_ROOT / "src" / "components" / "domains" / "naval" / "command" / "mission_command_naval.h"
 )
 MISSION_COMMAND_GROUND_HEADER = (
-    REPO_ROOT / "src" / "components" / "command" / "ground" / "mission_command_ground.h"
+    REPO_ROOT / "src" / "components" / "domains" / "ground" / "command" / "mission_command_ground.h"
 )
 TASK_ORDER_HEADER = REPO_ROOT / "src" / "components" / "tasking" / "task_order.h"
 TASK_ORDER_AIR_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "air" / "task_order_air.h"
+    REPO_ROOT / "src" / "components" / "domains" / "air" / "tasking" / "task_order_air.h"
 )
 TASK_ORDER_NAVAL_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "naval" / "task_order_naval.h"
+    REPO_ROOT / "src" / "components" / "domains" / "naval" / "tasking" / "task_order_naval.h"
 )
 TASK_ORDER_GROUND_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "task_order_ground.h"
+    REPO_ROOT / "src" / "components" / "domains" / "ground" / "tasking" / "task_order_ground.h"
 )
 LEADER_INTENT_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "leader_intent.h"
 )
 LEADER_INTENT_AIR_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "air" / "leader_intent_air.h"
+    REPO_ROOT / "src" / "components" / "domains" / "air" / "tasking" / "leader_intent_air.h"
 )
 LEADER_INTENT_NAVAL_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "naval" / "leader_intent_naval.h"
+    REPO_ROOT / "src" / "components" / "domains" / "naval" / "tasking" / "leader_intent_naval.h"
 )
 LEADER_INTENT_GROUND_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "leader_intent_ground.h"
+    REPO_ROOT / "src" / "components" / "domains" / "ground" / "tasking" / "leader_intent_ground.h"
 )
 PILOT_REPORT_HEADER = (
     REPO_ROOT / "src" / "components" / "tasking" / "pilot_report.h"
 )
 PILOT_REPORT_AIR_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "air" / "pilot_report_air.h"
+    REPO_ROOT / "src" / "components" / "domains" / "air" / "tasking" / "pilot_report_air.h"
 )
 PILOT_REPORT_NAVAL_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "naval" / "pilot_report_naval.h"
+    REPO_ROOT / "src" / "components" / "domains" / "naval" / "tasking" / "pilot_report_naval.h"
 )
 PILOT_REPORT_GROUND_HEADER = (
-    REPO_ROOT / "src" / "components" / "tasking" / "ground" / "pilot_report_ground.h"
+    REPO_ROOT / "src" / "components" / "domains" / "ground" / "tasking" / "pilot_report_ground.h"
 )
 WORLD_BATCH_CONTRACTS_HEADER = (
     REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
@@ -59,9 +59,9 @@ MISSION_COMMAND_CODEC_CPP = (
 EXECUTION_EPISODE_STATE_CPP = (
     REPO_ROOT / "src" / "core" / "mission" / "episode" / "execution_episode_state.cpp"
 )
-SHIP_MOTION_SYSTEM_HEADER = REPO_ROOT / "src" / "systems" / "naval" / "ship_motion_system.h"
+SHIP_MOTION_SYSTEM_HEADER = REPO_ROOT / "src" / "systems" / "domains" / "naval" / "ship_motion_system.h"
 EMBARKED_AIR_OPS_SYSTEM_HEADER = (
-    REPO_ROOT / "src" / "systems" / "naval" / "embarked_air_ops_system.h"
+    REPO_ROOT / "src" / "systems" / "domains" / "naval" / "embarked_air_ops_system.h"
 )
 BINDINGS_COMMAND_CPP = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_command.cpp"
 

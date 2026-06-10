@@ -48,7 +48,7 @@ EXPECTED_CLASSIFICATIONS = {
     "tests/world_batch/test_world_batch_vec_env.py": "compatibility_wrapper",
     "tests/runtime/engagement/test_facade_engagement_export.py": "diagnostics_only",
     "tests/runtime/engagement/test_diagnostics_trace_contract.py": "diagnostics_only",
-    "tests/diagnostics/test_diagnostics_import_order.py": "diagnostics_only",
+    "tests/runtime/bindings/test_lazy_binding_resolution.py": "compatibility_wrapper",
     "python/scenario/compiler/generation_request.py": "blocked",
     "src/runtime/contracts/counterfactual_replay_contracts.h": "blocked",
     "tests/training/test_cooperative_diagnostics_callback.py": "unknown_requires_owner",

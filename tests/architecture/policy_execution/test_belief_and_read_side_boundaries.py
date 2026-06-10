@@ -11,8 +11,8 @@ INFORMATION_TRANSFORM_CONTRACTS = (
 )
 FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 AGENT_SHIM = REPO_ROOT / "python" / "rl" / "runtime" / "agent_shim.py"
-RUNTIME_FACADE_LAYERING = (
-    REPO_ROOT / "tests" / "architecture" / "runtime_facade" / "test_layering.py"
+RUNTIME_FACADE_ESCAPE_HATCH_HELPERS = (
+    REPO_ROOT / "tests" / "architecture" / "runtime_facade" / "helpers.py"
 )
 
 
@@ -238,7 +238,7 @@ def test_maintained_intent_entry_points_validate_role_provenance() -> None:
 
 
 def test_law14_boundary_does_not_add_new_raw_runtime_escape_hatch() -> None:
-    layering_source = RUNTIME_FACADE_LAYERING.read_text(encoding="utf-8")
+    layering_source = RUNTIME_FACADE_ESCAPE_HATCH_HELPERS.read_text(encoding="utf-8")
 
     assert "SCOPED_ESCAPE_HATCH_ALLOWLIST" in layering_source
     assert "classification=\"diagnostics_only\"" in layering_source

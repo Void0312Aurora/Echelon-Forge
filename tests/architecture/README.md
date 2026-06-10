@@ -26,7 +26,7 @@ Use one semantic directory level under `tests/architecture/`:
 
 File names should start from the architectural invariant, not from the work
 package that introduced the check. Prefer names such as
-`test_stage_node_manifest_registry.py` or `test_tasking_bridge_retirement.py`
+`test_stage_node_manifest_registry.py` or `test_tasking_bridge_guardrails.py`
 inside the relevant semantic directory.
 
 Keep historical labels such as `WP`, `A2`, or task IDs in test function names,

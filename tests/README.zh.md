@@ -39,13 +39,19 @@
 - `support/`
   - 多个 Python 测试使用的共享假对象和帮助装置。
 - `contracts/`
-  - 用于契约驱动回归的 JSON 规范，按类别分组。
+  - 用于契约驱动回归的维护态 JSON 规范，按类别分组。
+  - 仅为追溯保留的历史规范属于 `archive/contracts/`，不属于此维护根目录。
+- `archive/`
+  - 仅为追溯保留的历史测试资产。
+  - 这些文件不属于活跃 pytest 或 JSON contract 覆盖；只有移回维护态测试 surface 并加入相关 matrix 或 suite 后，才应重新视为活跃覆盖。
 - `suites/`
   - 建议性的 suite 治理元数据，包括测试系统矩阵草案和 focused/local suite manifest。
   - 这些文件本身不会改变 CI wiring。
 - `diagnostics/`
-  - Diagnostics 与外部代理集成测试，包括 ARMA proxy backend 回归。
-  - 长期不应托管稳定回归测试；ownership 明确后，应将确定性检查迁移回 `runtime/`、`world_batch/`、`scenario/`、`leader/` 或 `contracts/`。
+  - 仅用于临时探索性诊断。
+  - 由 diagnostics 稳定下来的回归应进入拥有该能力的测试域，例如
+    `runtime/`、`training/`、`world_batch/`、`scenario/`、`leader/`、
+    `bindings/`、`link/` 或 `contracts/`。
 - `gpu/`
   - GPU 运行时绑定和 CUDA 集成回归测试。与 `src/gpu/` 和 Python GPU bindings 对齐。
   - GPU 测试默认通过 `EF_ENABLE_CUDA_EXPERIMENTS` 门控；CUDA 不可用时应优雅跳过。
@@ -80,6 +86,7 @@
   - 验证包装器驱动的脚本基线是否符合场景成功标准。
 - `env_regression`
   - 验证 `UniversalEnv` 级 reset/step、reward、observation、render、phase、takeoff、landing 和 waypoint 回归。
+  - 新增 env contract 前，优先复用 observation-vector、step-info 这类 assertion-style `check_kind`，不要先添加一次性 env 分支。
 - `unit_regression`
   - 验证纯 Python 控制器/配置/加载器/包装器交接逻辑，无需完整场景步进。
   - 还包含参数化的领导者任务泛化检查，这些检查变异 C2 任务输入并验证发出的任务命令行为。
@@ -145,7 +152,7 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
 ```
 
 Pytest suite manifest 可以列目录、文件，或
-`tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented`
+`tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented`
 这类 pytest node ID。当一个宽 guard 文件里只有少量 smoke-safe 子集应进入 CI gate 时，优先使用 node ID。
 CI smoke 应优先列显式文件或 node ID，而不是目录条目，避免新增测试被意外提升进 CI。
 
@@ -292,3 +299,5 @@ Suite tier 含义：
   - 由虚拟观察和加载器阶段驱动的包装器/控制器交接契约。
 - `tests/contracts/unit/world_model/`
   - 用于离线或模仿学习支持代码的回放/数据集契约。
+- `tests/archive/contracts/`
+  - 仅为追溯保留的历史 JSON contract 规范；不计入维护态 contract 数量，也不应被 batch-runner glob 选中。

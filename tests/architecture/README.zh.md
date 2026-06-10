@@ -24,7 +24,7 @@
 ## 命名
 
 文件名应从架构不变量出发，而不是从引入该检查的工作包编号出发。优先使用
-`test_stage_node_manifest_registry.py` 或 `test_tasking_bridge_retirement.py`
+`test_stage_node_manifest_registry.py` 或 `test_tasking_bridge_guardrails.py`
 这类名称，并放入对应的语义目录。
 
 当确实需要追溯时，可在测试函数名、注释或任务文档中保留 `WP`、`A2` 等历史标签。

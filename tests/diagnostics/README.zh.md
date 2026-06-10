@@ -1,26 +1,14 @@
 # 诊断工具 README
 
-`tests/diagnostics/` 包含探索性和调试导向型脚本。
+`tests/diagnostics/` 只保留临时探索性或调试导向检查。它不是稳定
+pytest 回归的维护目录。
 
-这些脚本不被视为契约回归测试。它们之所以独立存放，通常是因为：
+当前状态：此目录下没有活跃 pytest 脚本。原有稳定检查已提升到对应能力域：
 
-- 运行较长的探索循环
-- 输出丰富的人类可读跟踪信息
-- 依赖于可选的训练/运行时包
-- 用于调查失败原因，而非断言某个单一稳定的不变量
+- `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+- `tests/training/test_fire_timing_diagnostic_contracts.py`
+- `tests/runtime/link/test_external_proxy_backend_contracts.py`
+- `tests/runtime/bindings/test_lazy_binding_resolution.py`
 
-当某个诊断行为稳定为确定性回归时，优先将其迁移至：
-
-- `tests/contracts/` 并配以精简的执行器，或
-- `tests/` 中一个小型、聚焦的测试（如果 contracts 不适合）
-
-此文件夹本身并非通用单元/运行时测试的归宿。如果某个文件开始在 `pytest` 下断言稳定的不变量，它应当移回主 `tests/` 目录树，而不是留在此处。
-
-目前，此文件夹中的活跃探索脚本已被清理。当前唯一留下的维护文件是
-`test_diagnostics_import_order.py`，它是 diagnostics/runtime import-order 行为的
-pytest 回归，不是探索性脚本；等 import-order ownership 明确后，应迁移到主测试域。
-
-如果在此添加新的诊断脚本，它们应是临时的，并明确走向以下两条路径之一：
-
-- 提升至 `tools/diagnostics/` 作为维护人员使用的常备工具，或
-- 在行为稳定后迁移至 `tests/contracts/` / 聚焦的 `tests/` 目录。
+当诊断脚本稳定为确定性回归证据时，应迁移至拥有该能力的测试域，或编码为
+JSON contract。新增到此目录的文件应是短期入口，并在落地前说明目标提升路径。

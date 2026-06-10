@@ -11,10 +11,10 @@ from unittest import mock
 from python.testing.runtime import build_dir, ensure_repo_imports
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-class DiagnosticsImportOrderTests(unittest.TestCase):
+class LazyBindingResolutionTests(unittest.TestCase):
     def _load_module_from_path(self, module_name: str, relative_path: str):
         module_path = REPO_ROOT / relative_path
         spec = importlib.util.spec_from_file_location(module_name, module_path)

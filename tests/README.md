@@ -45,13 +45,19 @@
 - `support/`
   - Shared fakes and helper fixtures used by multiple Python tests.
 - `contracts/`
-  - JSON specs for contract-driven regressions, grouped by category.
+  - Maintained JSON specs for contract-driven regressions, grouped by category.
+  - Historical specs retained only for provenance belong under `archive/contracts/`, not this root.
+- `archive/`
+  - Historical test assets retained for provenance only.
+  - These files are not active pytest or JSON contract coverage until moved back into a maintained test surface and added to the relevant matrix or suite.
 - `suites/`
   - Advisory suite governance metadata, including the draft test-system matrix and focused/local suite manifests.
   - These files do not change CI wiring on their own.
 - `diagnostics/`
-  - Diagnostics and external proxy integration tests, including ARMA proxy backend regressions.
-  - This folder should not host stable regression tests long term; once ownership is clear, migrate deterministic checks back into `runtime/`, `world_batch/`, `scenario/`, `leader/`, or `contracts/`.
+  - Temporary exploratory diagnostics only.
+  - Stable diagnostics-derived regressions belong in the owning capability
+    domain, for example runtime, training, world-batch, scenario, leader,
+    bindings, link, or contracts.
 - `gpu/`
   - GPU runtime binding and CUDA integration regression tests. Aligned with `src/gpu/` and Python GPU bindings.
   - GPU tests are gated behind `EF_ENABLE_CUDA_EXPERIMENTS` by default; they should skip gracefully when CUDA is unavailable.
@@ -88,6 +94,7 @@ When a standalone test is needed, prefer:
   - Validates wrapper-driven scripted baselines against scenario success criteria.
 - `env_regression`
   - Validates `UniversalEnv`-level reset/step, reward, observation, render, phase, takeoff, landing, and waypoint regressions.
+  - Prefer reusable assertion-style `check_kind` values, such as observation-vector and step-info assertions, before adding a new one-off env branch.
 - `unit_regression`
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
   - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
@@ -153,7 +160,7 @@ cmo_python tools/runners/run_pytest_suite.py --suite tests/smoke/ci_smoke_suite.
 ```
 
 Pytest suite manifests may list directories, files, or pytest node IDs such as
-`tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented`.
+`tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented`.
 Use node IDs when only a smoke-safe subset of a broad guard file should gate CI.
 CI smoke should prefer explicit files or node IDs over directory entries so new
 tests are promoted intentionally.
@@ -328,3 +335,5 @@ easier.
   - Wrapper/controller handoff contracts driven by dummy observations and loader phases.
 - `tests/contracts/unit/world_model/`
   - Replay/dataset contracts for offline or imitation-learning support code.
+- `tests/archive/contracts/`
+  - Historical JSON contract specs retained for provenance only; excluded from maintained contract counts and batch-runner globs.

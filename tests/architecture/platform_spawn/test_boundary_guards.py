@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -97,9 +98,15 @@ def test_wp14_boundary_guard_legacy_type_name_spawn_surfaces_remain_present() ->
     bindings_core = _text(BINDINGS_CORE)
     facade_types = _text(RUNTIME_FACADE_TYPES)
 
-    assert "flecs::entity spawn_unit(Side side, const std::string& unit_name," in kernel_header
+    assert re.search(
+        r"flecs::entity\s+spawn_unit\(Side side,\s+const std::string\s*&\s*unit_name,",
+        kernel_header,
+    )
     assert "std::string type_name;" in world_batch_contracts
-    assert 'nb::arg("side"), nb::arg("type_name")' in bindings_core
+    spawn_unit_binding = bindings_core.split('"Spawn a unit by name with orientation and return its Entity ID"', 1)[1]
+    spawn_unit_binding = spawn_unit_binding.split('"Spawn a default unit for the given UnitType', 1)[0]
+    assert 'nb::arg("side")' in spawn_unit_binding
+    assert 'nb::arg("type_name")' in spawn_unit_binding
     assert "std::vector<WorldSpawnRequest> spawn_requests;" in facade_types
 
 

@@ -304,14 +304,15 @@
       ]
     },
     {
-      "path": "tests/diagnostics/test_diagnostics_import_order.py",
-      "classification": "diagnostics_only",
+      "path": "tests/runtime/bindings/test_lazy_binding_resolution.py",
+      "classification": "compatibility_wrapper",
       "owner": "WP16-D",
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
-      "reason": "Import-order coverage protects diagnostics tooling only and does not prove maintained runtime-spine behavior.",
+      "reason": "Lazy import and ef_py binding coverage protects Python bootstrap compatibility; it does not prove maintained runtime-spine behavior.",
       "evidence_markers": [
         "tools.diagnostics.common",
         "test_common_import_prefers_repo_build_ef_py",
+        "LazyBindingResolutionTests",
         "WorldBatchRuntime"
       ]
     },

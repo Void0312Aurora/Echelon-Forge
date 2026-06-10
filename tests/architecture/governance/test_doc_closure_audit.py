@@ -22,7 +22,7 @@ def _write(path: Path, text: str) -> None:
 def test_wp_doc_closure_audit_accepts_current_wp9_package() -> None:
     result = audit.audit_wp(audit.REPO_ROOT, "WP9")
 
-    assert result.folder == "docs/task/simulation_architecture/wp9_contract_infrastructure_closure"
+    assert result.folder == "docs/task/simulation_architecture/archive/wp9_contract_infrastructure_closure"
     assert result.acceptance_reviews
     assert not [issue for issue in result.issues if issue.severity == "error"]
 
@@ -75,7 +75,7 @@ def test_wp_doc_closure_audit_builds_stable_wp16_summary() -> None:
     summary = audit.build_wp_closure_summary(audit.REPO_ROOT, result)
 
     assert summary.primary_task_doc == (
-        "docs/task/simulation_architecture/wp16_runtime_spine_consolidation/"
+        "docs/task/simulation_architecture/archive/wp16_runtime_spine_consolidation/"
         "runtime_spine_consolidation_wp16_20260521.md"
     )
     assert summary.task_status == "2026-05-21 complete / accepted runtime-spine consolidation."
@@ -115,7 +115,7 @@ def test_wp_doc_closure_audit_summary_command_is_read_only_and_stable() -> None:
         "authority: generated-summary-hint-only; canonical acceptance remains the human-reviewed acceptance review."
         in text_output
     )
-    assert "docs/task/review/README.md: mentioned" in text_output
+    assert "docs/task/review/archive/wp-acceptance/README.md: mentioned" in text_output
     assert payload[0]["wp"] == "WP16"
     assert payload[0]["planned_stage"] is False
     assert payload[0]["missing_acceptance_review_expected"] is False

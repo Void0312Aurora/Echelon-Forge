@@ -1,11 +1,11 @@
 {
   "name": "ci_smoke",
   "paths": [
-    "tests/architecture/runtime_facade/test_layering.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
-    "tests/architecture/runtime_facade/test_layering.py::test_world_batch_adapter_removes_direct_runtime_fallback",
-    "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented",
-    "tests/architecture/runtime_facade/test_layering.py::test_runtime_contract_headers_do_not_include_engine_headers",
-    "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_public_header_hides_engine_owner_storage",
+    "tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
+    "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_world_batch_adapter_removes_direct_runtime_fallback",
+    "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented",
+    "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_contract_headers_do_not_include_engine_headers",
+    "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_facade_public_header_hides_engine_owner_storage",
     "tests/architecture/ground/test_tasking_component_boundary.py",
     "tests/architecture/runtime_facade/test_design_boundary_gates.py",
     "tests/architecture/build_system/test_cmake_target_readiness.py",

@@ -51,16 +51,16 @@
       "label": "Runtime facade",
       "recommended_tier": "smoke",
       "primary_paths": [
-        "tests/architecture/runtime_facade/test_layering.py",
+        "tests/architecture/runtime_facade",
         "tests/runtime/facade/test_facade_step_evidence_gates.py",
         "tests/runtime/facade/test_runtime_facade.py"
       ],
       "smoke_paths": [
-        "tests/architecture/runtime_facade/test_layering.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
-        "tests/architecture/runtime_facade/test_layering.py::test_world_batch_adapter_removes_direct_runtime_fallback",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_contract_headers_do_not_include_engine_headers",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_public_header_hides_engine_owner_storage",
+        "tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
+        "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_world_batch_adapter_removes_direct_runtime_fallback",
+        "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented",
+        "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_contract_headers_do_not_include_engine_headers",
+        "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_facade_public_header_hides_engine_owner_storage",
         "tests/runtime/facade/test_facade_step_evidence_gates.py",
         "tests/runtime/facade/test_runtime_facade.py"
       ],
@@ -75,16 +75,16 @@
       "label": "Architecture static guardrails",
       "recommended_tier": "focused",
       "primary_paths": [
-        "tests/architecture/runtime_facade/test_layering.py",
+        "tests/architecture/runtime_facade",
         "tests/architecture/compatibility_quarantine/test_guard_enforcement.py",
-        "tests/architecture/structural_boundaries/test_structural_guardrails.py"
+        "tests/architecture/structural_boundaries"
       ],
       "smoke_paths": [
-        "tests/architecture/runtime_facade/test_layering.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
-        "tests/architecture/runtime_facade/test_layering.py::test_world_batch_adapter_removes_direct_runtime_fallback",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_escape_hatch_is_documented",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_contract_headers_do_not_include_engine_headers",
-        "tests/architecture/runtime_facade/test_layering.py::test_runtime_facade_public_header_hides_engine_owner_storage"
+        "tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py::test_scenario_loader_state_shell_classification_is_architecture_contract",
+        "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_world_batch_adapter_removes_direct_runtime_fallback",
+        "tests/architecture/runtime_facade/test_runtime_escape_hatches.py::test_runtime_facade_escape_hatch_is_documented",
+        "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_contract_headers_do_not_include_engine_headers",
+        "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py::test_runtime_facade_public_header_hides_engine_owner_storage"
       ],
       "suite_membership": [
         "tests/smoke/ci_smoke_suite.json",
@@ -175,12 +175,40 @@
       "primary_paths": [
         "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
         "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
-        "tests/runtime/air_combat/test_weapon_roe_runtime.py"
+        "tests/runtime/air_combat/test_weapon_roe_runtime.py",
+        "tests/runtime/air_combat/test_diagnostics_probe_contracts.py"
       ],
       "suite_membership": [
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Keep representative fixture and ROE coverage local/focused until runtime cost and flake profile are reviewed."
+      "governance_notes": "Keep representative fixture, ROE, and stable diagnostics-projection coverage local/focused until runtime cost and flake profile are reviewed."
+    },
+    {
+      "id": "runtime_link_and_external_proxy",
+      "label": "Runtime link and external proxy",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/runtime/link/test_command_link_qos.py",
+        "tests/runtime/link/test_data_link_qos_runtime.py",
+        "tests/runtime/link/test_external_proxy_backend_contracts.py"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "External proxy backend checks are deterministic protocol/runtime-link regressions, not temporary diagnostics."
+    },
+    {
+      "id": "runtime_binding_resolution",
+      "label": "Runtime binding resolution",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/runtime/bindings/test_lazy_binding_resolution.py",
+        "tests/runtime/bindings/test_bindings_runtime_dto_surface.py"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Lazy import and binding-surface checks protect bootstrap compatibility and should stay under runtime bindings ownership."
     },
     {
       "id": "naval",
@@ -226,7 +254,8 @@
       "primary_paths": [
         "tests/training/test_train_bootstrap.py",
         "tests/training/test_train_entry_cooperative.py",
-        "tests/training/test_cooperative_diagnostics_callback.py"
+        "tests/training/test_cooperative_diagnostics_callback.py",
+        "tests/training/test_fire_timing_diagnostic_contracts.py"
       ],
       "contract_paths": [
         "tests/contracts/unit/training/takeoff_safe_action_bias.json"
@@ -234,7 +263,7 @@
       "suite_membership": [
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Track training bootstrap separately from frozen model contracts so environment-sensitive training checks can remain local."
+      "governance_notes": "Track training bootstrap and deterministic fire-timing diagnostic contracts separately from frozen model contracts so environment-sensitive training checks can remain local."
     },
     {
       "id": "route_generator",

@@ -9,6 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
+from tools.diagnostics import air_combat_fire_timing_learnability_audit as audit  # noqa: E402
 from tools.diagnostics.m3s2_chain_breakpoint_probe import (  # noqa: E402
     _classification_metrics,
     _edge_trigger_summary,
@@ -20,7 +21,116 @@ from tools.diagnostics.m3s2_chain_breakpoint_probe import (  # noqa: E402
     _resolve_adapter_head_kind,
 )
 from tools.diagnostics.m3s2_real_update_path_probe import RealM3S2Group  # noqa: E402
+from tools.diagnostics.m3s2_real_update_path_probe import _build_groups_from_rows  # noqa: E402
 from tools.diagnostics.m3s2_real_update_path_probe import _collector_action_for_m3s2  # noqa: E402
+from tools.diagnostics.m3s2_structural_toy_probe import ToyProbeConfig, run_probe  # noqa: E402
+
+
+class AirCombatFireTimingLearnabilityAuditTests(unittest.TestCase):
+    def test_verdict_identifies_reachable_release_but_unidentifiable_legal_timing(self) -> None:
+        summaries = [
+            {
+                "case": "hold_fire",
+                "mode": "hold_fire",
+                "mean_total_reward": 70.0,
+                "release_episode_count": 0,
+                "effects_episode_count": 0,
+                "damage_episode_count": 0,
+                "target_health_drop_episode_count": 0,
+                "rejected_reason_counts": {},
+            },
+            {
+                "case": "forced_fire_edge_at_reset",
+                "mode": "forced_fire",
+                "mean_total_reward": 70.0,
+                "release_episode_count": 0,
+                "effects_episode_count": 0,
+                "damage_episode_count": 0,
+                "target_health_drop_episode_count": 0,
+                "rejected_reason_counts": {"no_target": 2},
+            },
+            {
+                "case": "legal_mask_fire_delay_0",
+                "mode": "legal_mask_fire",
+                "fire_delay_steps": 0,
+                "mean_total_reward": 520.0,
+                "release_episode_count": 2,
+                "effects_episode_count": 0,
+                "damage_episode_count": 0,
+                "target_health_drop_episode_count": 0,
+                "rejected_reason_counts": {},
+            },
+            {
+                "case": "legal_mask_fire_delay_63",
+                "mode": "legal_mask_fire",
+                "fire_delay_steps": 63,
+                "mean_total_reward": 520.25,
+                "release_episode_count": 2,
+                "effects_episode_count": 0,
+                "damage_episode_count": 0,
+                "target_health_drop_episode_count": 0,
+                "rejected_reason_counts": {},
+            },
+        ]
+
+        verdict = audit._learnability_verdict(summaries, reward_epsilon=1.0)
+
+        self.assertEqual(verdict["primary_breakpoint"], "legal_timing_unidentifiable_from_current_return")
+        self.assertTrue(verdict["release_reachable_with_legal_oracle"])
+        self.assertTrue(verdict["release_vs_hold_reward_distinguishable"])
+        self.assertFalse(verdict["post_release_effect_observable"])
+        self.assertFalse(verdict["legal_timing_reward_distinguishable"])
+        self.assertTrue(verdict["edge_trigger_adapter_hazard"])
+
+    def test_case_summary_counts_release_effects_and_rejection_reasons(self) -> None:
+        summary = audit._case_summary(
+            "legal_mask_fire_delay_0",
+            {
+                "mode": "legal_mask_fire",
+                "fire_delay_steps": 0,
+                "legal_fire_range_m": 0.0,
+                "episode_summaries": [
+                    {
+                        "total_reward": 10.0,
+                        "final_target_health": 80.0,
+                        "release_count": 1,
+                        "fire_once_accepted_count": 1,
+                        "fire_once_rejected_count": 0,
+                        "effects_event_count": 1,
+                        "damage_report_count": 1,
+                        "first_release_step": 5,
+                        "first_effects_event_step": 40,
+                        "first_target_health_drop_step": 40,
+                        "release_steps": [5],
+                        "fire_once_rejected_reason_counts": {},
+                    },
+                    {
+                        "total_reward": 8.0,
+                        "final_target_health": 100.0,
+                        "release_count": 0,
+                        "fire_once_accepted_count": 0,
+                        "fire_once_rejected_count": 1,
+                        "effects_event_count": 0,
+                        "damage_report_count": 0,
+                        "first_release_step": None,
+                        "first_effects_event_step": None,
+                        "first_target_health_drop_step": None,
+                        "release_steps": [],
+                        "fire_once_rejected_reason_counts": {"no_target": 1},
+                    },
+                ],
+            },
+        )
+
+        self.assertEqual(summary["episodes"], 2)
+        self.assertAlmostEqual(summary["mean_total_reward"], 9.0)
+        self.assertAlmostEqual(summary["mean_release_count"], 0.5)
+        self.assertEqual(summary["release_episode_count"], 1)
+        self.assertEqual(summary["effects_episode_count"], 1)
+        self.assertEqual(summary["damage_episode_count"], 1)
+        self.assertEqual(summary["target_health_drop_episode_count"], 1)
+        self.assertEqual(summary["release_steps"], [5])
+        self.assertEqual(summary["rejected_reason_counts"], {"no_target": 1})
 
 
 class M3S2ChainBreakpointProbeTests(unittest.TestCase):
@@ -216,6 +326,78 @@ class M3S2ChainBreakpointProbeTests(unittest.TestCase):
         stages = {stage["stage"]: stage for stage in summary["stages"]}
         self.assertTrue(bool(stages["optimizer"]["passed"]))
         self.assertFalse(bool(stages["evaluation"]["passed"]))
+
+
+class M3S2RealUpdatePathProbeTests(unittest.TestCase):
+    def test_build_groups_marks_quality_after_launch_and_min_age(self) -> None:
+        groups = _build_groups_from_rows(
+            fire_mask=[False, True, True, True, True],
+            fire_once_accepted=[False, False, False, False, False],
+            episode_id=[0, 0, 0, 0, 0],
+            launch_window_open=[False, False, True, True, True],
+            launch_min_age=3,
+        )
+
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0].legal_mask, (False, True, True, True, True))
+        self.assertEqual(groups[0].quality_mask, (False, False, False, True, True))
+        self.assertEqual(groups[0].censoring_kind, "timeout")
+
+    def test_build_groups_early_accepted_before_quality_is_prefix_censored(self) -> None:
+        groups = _build_groups_from_rows(
+            fire_mask=[True, True, True, True],
+            fire_once_accepted=[False, True, False, False],
+            episode_id=[0, 0, 0, 0],
+            launch_window_open=[False, False, True, True],
+            launch_min_age=3,
+        )
+
+        self.assertEqual(groups[0].row_indices, (0, 1))
+        self.assertEqual(groups[0].accepted_event, (False, True))
+        self.assertEqual(groups[0].censoring_kind, "early_event_prefix")
+
+
+class M3S2StructuralToyProbeTests(unittest.TestCase):
+    def _config(self, *, model: str, train_steps: int, learning_rate: float) -> ToyProbeConfig:
+        return ToyProbeConfig(
+            model=model,
+            prewindow_steps=12,
+            quality_steps=24,
+            train_steps=train_steps,
+            learning_rate=learning_rate,
+            initial_logit=-6.0,
+            hidden_size=16,
+            seed=7,
+            early_mass_coef=2.0,
+            early_mass_budget=0.02,
+            early_survival_coef=8.0,
+            window_delay_coef=0.5,
+            window_deadline_coef=0.5,
+            window_deadline_steps=8,
+            max_grad_norm=2.0,
+            prewindow_risk_gate=0.02,
+            window_mass_gate=0.95,
+        )
+
+    def test_free_logits_structural_toy_crosses_quality_boundary(self) -> None:
+        result = run_probe(self._config(model="free_logits", train_steps=500, learning_rate=0.1))
+
+        self.assertTrue(result["verdict"]["structural_toy_pass"])
+        final = result["final"]
+        self.assertLessEqual(float(final["prewindow_cumulative_event_risk"]), 0.02)
+        self.assertEqual(int(final["prewindow_boundary_cross_count"]), 0)
+        self.assertIsNotNone(final["first_quality_boundary_cross_step"])
+        self.assertGreaterEqual(float(final["mean_p_window"]), 0.95)
+
+    def test_mlp_structural_toy_learns_with_explicit_quality_feature(self) -> None:
+        result = run_probe(self._config(model="mlp", train_steps=800, learning_rate=0.02))
+
+        self.assertTrue(result["verdict"]["structural_toy_pass"])
+        final = result["final"]
+        self.assertLessEqual(float(final["prewindow_cumulative_event_risk"]), 0.02)
+        self.assertEqual(int(final["prewindow_boundary_cross_count"]), 0)
+        self.assertIsNotNone(final["first_quality_boundary_cross_step"])
+        self.assertGreaterEqual(float(final["quality_prob_max"]), 0.5)
 
 
 if __name__ == "__main__":

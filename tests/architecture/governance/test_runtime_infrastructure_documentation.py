@@ -7,7 +7,26 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _text(*parts: str) -> str:
-    return (REPO_ROOT.joinpath(*parts)).read_text(encoding="utf-8")
+    path = REPO_ROOT.joinpath(*parts)
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+
+    if len(parts) > 3 and parts[:3] == (
+        "docs",
+        "task",
+        "simulation_architecture",
+    ):
+        archived = REPO_ROOT.joinpath(
+            "docs",
+            "task",
+            "simulation_architecture",
+            "archive",
+            *parts[3:],
+        )
+        if archived.is_file():
+            return archived.read_text(encoding="utf-8")
+
+    raise AssertionError(f"missing documentation path: {path.relative_to(REPO_ROOT)}")
 
 
 def test_wp25_clock_merge_policy_name_is_distinct_from_cross_layer_merge_policy() -> None:

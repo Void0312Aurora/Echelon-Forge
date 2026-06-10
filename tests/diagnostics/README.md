@@ -1,31 +1,16 @@
 # Diagnostics README
 
-`tests/diagnostics/` contains exploratory and debugging-oriented scripts.
+`tests/diagnostics/` is reserved for temporary exploratory or debugging
+checks. It is not a maintained home for stable pytest regressions.
 
-These are not treated as contract regressions. They are kept separate because they typically:
+Current status: no active pytest scripts live in this directory. The former
+stable checks were promoted into capability-owned files:
 
-- run longer exploratory loops
-- emit rich human-readable traces
-- depend on optional training/runtime packages
-- are used to investigate failures rather than assert a single stable invariant
+- `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+- `tests/training/test_fire_timing_diagnostic_contracts.py`
+- `tests/runtime/link/test_external_proxy_backend_contracts.py`
+- `tests/runtime/bindings/test_lazy_binding_resolution.py`
 
-When a diagnostic stabilizes into a deterministic regression, prefer migrating it into:
-
-- `tests/contracts/` plus a thin runner, or
-- a small focused test in `tests/` if contracts are not a good fit
-
-This folder is intentionally not the home for general-purpose unit/runtime
-tests. If a file starts asserting stable invariants under `pytest`, it should be
-moved back into the main `tests/` tree rather than staying here.
-
-At the moment, the active exploratory scripts have been cleaned out of this
-folder. The only maintained file currently left here is
-`test_diagnostics_import_order.py`, a pytest regression for diagnostics/runtime
-import-order behavior. It is stable test evidence, not an exploratory script,
-and should move to a main test domain once import-order ownership is settled.
-
-If new diagnostics are added here, they should be temporary and explicitly on a
-path toward either:
-
-- promotion into `tools/diagnostics/` as a maintained operator-facing tool, or
-- migration into `tests/contracts/` / focused `tests/` once the behavior is stable.
+When a diagnostic stabilizes into deterministic regression evidence, migrate it
+to the owning test domain or encode it as a JSON contract. New files here should
+be short-lived and should document the target promotion path before they land.
