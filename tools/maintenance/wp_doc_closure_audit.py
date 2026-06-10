@@ -135,13 +135,18 @@ def discover_wp_folders(repo_root: Path) -> dict[str, Path]:
     out: dict[str, Path] = {}
     if not sim_dir.exists():
         return out
-    for path in sorted(sim_dir.iterdir()):
-        if not path.is_dir() or not path.name.startswith("wp"):
+    search_roots = (sim_dir, sim_dir / "archive")
+    for search_root in search_roots:
+        if not search_root.exists():
             continue
-        try:
-            out[normalize_wp_key(path.name)] = path
-        except ValueError:
-            continue
+        for path in sorted(search_root.iterdir()):
+            if not path.is_dir() or not path.name.startswith("wp"):
+                continue
+            try:
+                wp_key = normalize_wp_key(path.name)
+            except ValueError:
+                continue
+            out.setdefault(wp_key, path)
     return out
 
 
@@ -214,10 +219,14 @@ def markdown_link_issues(repo_root: Path, paths: list[Path], *, current_wp_token
 
 
 def acceptance_index_paths(repo_root: Path, reviews: list[Path]) -> list[Path]:
-    paths = [
-        repo_root / REVIEW_DIR / "README.md",
-        repo_root / REVIEW_DIR / "README.zh.md",
-    ]
+    paths: list[Path] = []
+    if not reviews or any("archive/wp-acceptance" not in path.as_posix() for path in reviews):
+        paths.extend(
+            [
+                repo_root / REVIEW_DIR / "README.md",
+                repo_root / REVIEW_DIR / "README.zh.md",
+            ]
+        )
     if any("archive/wp-acceptance" in path.as_posix() for path in reviews):
         paths.extend(
             [
@@ -226,6 +235,21 @@ def acceptance_index_paths(repo_root: Path, reviews: list[Path]) -> list[Path]:
             ]
         )
     return paths
+
+
+def downgrade_archived_link_issues(issues: list[Issue]) -> list[Issue]:
+    return [
+        Issue(
+            severity="warning",
+            code="archived-broken-markdown-link",
+            path=issue.path,
+            message=issue.message,
+            owner=issue.owner,
+        )
+        if issue.severity == "error" and issue.code == "broken-markdown-link"
+        else issue
+        for issue in issues
+    ]
 
 
 def file_mentions_any(path: Path, needles: list[str]) -> bool:
@@ -555,7 +579,10 @@ def audit_wp(repo_root: Path, wp_label: str) -> WpAudit:
                     )
                 )
 
-    issues.extend(markdown_link_issues(repo_root, sorted({p for p in [*task_docs, *reviews] if p.exists()})))
+    link_issues = markdown_link_issues(repo_root, sorted({p for p in [*task_docs, *reviews] if p.exists()}))
+    if rel(folder, repo_root).startswith(f"{SIM_ARCH_DIR.as_posix()}/archive/"):
+        link_issues = downgrade_archived_link_issues(link_issues)
+    issues.extend(link_issues)
     index_link_tokens = {
         wp_key,
         wp.lower(),
