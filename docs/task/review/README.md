@@ -17,6 +17,11 @@ Status: active review record.
 - [Documentation System Readiness Review 2026-06-01](documentation_system_readiness_review_20260601.md) ([中文](documentation_system_readiness_review_20260601.zh.md))
 - [Engineering Governance P0](engineering_governance_p0/README.md): active remediation slice for CI lint gates, smoke dependency constraints, C++ warning policy, and version alignment.
 
+## Standards Reviews
+
+- [Standards-Implementation Alignment Review 2026-06-10](archive/standards_implementation_alignment_review_20260610.md) — `archived`: source alignment review that seeded the standards documentation governance closure. ([中文](archive/standards_implementation_alignment_review_20260610.zh.md))
+- [Standards Documentation Governance](archive/standards_documentation_governance/README.md): archived accepted governance lane for closing standards-implementation alignment gaps and maintaining standards drift policy. ([中文](archive/standards_documentation_governance/README.zh.md))
+
 ## Domain Reviews
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.md) ([中文](ground_domain_bootstrap_plan_review_20260521.zh.md))
@@ -43,3 +48,4 @@ reviews, source documents, and historical snapshots are in
 [archive/](./archive/README.md).
 
 - [Domain Separation Split](archive/domain_separation_split/README.md): archived accepted subproject for the direct Air / Naval / Ground ownership split across components, systems, and models.
+- [Standards Documentation Governance](archive/standards_documentation_governance/README.md): archived accepted subproject for standards drift governance; GAP-001 through GAP-005 closed, GAP-006 held pending MLF-3 acceptance.

@@ -17,6 +17,11 @@
 - [文档系统就绪度审查 2026-06-01](documentation_system_readiness_review_20260601.zh.md) ([English](documentation_system_readiness_review_20260601.md))
 - [Engineering Governance P0](engineering_governance_p0/README.zh.md)：active remediation slice，用于 CI lint gate、smoke dependency constraints、C++ warning policy 和版本号对齐。
 
+## 标准化审查
+
+- [标准化-实现对齐审查 2026-06-10](archive/standards_implementation_alignment_review_20260610.zh.md) — `archived`：触发 standards documentation governance closure 的源对齐审查。([English](archive/standards_implementation_alignment_review_20260610.md))
+- [标准化文档治理](archive/standards_documentation_governance/README.zh.md)：已归档 accepted governance lane，用于收口标准化-实现对齐 gap 并维护 standards drift 政策。([English](archive/standards_documentation_governance/README.md))
+
 ## 领域审查
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.zh.md) ([English](ground_domain_bootstrap_plan_review_20260521.md))
@@ -42,5 +47,6 @@
 和原始文档见 [archive/](./archive/README.zh.md)。
 
 - [域分离大拆分](archive/domain_separation_split/README.zh.md)：已归档 accepted subproject，用于直接推进 components、systems、models 三层的 Air / Naval / Ground ownership split。
+- [标准化文档治理](archive/standards_documentation_governance/README.zh.md)：已归档 accepted subproject；GAP-001 至 GAP-005 已关闭，GAP-006 因等待 MLF-3 acceptance 保持 held。
 
 已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。
