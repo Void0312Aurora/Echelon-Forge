@@ -1,11 +1,12 @@
 # A2 MLF-3 归档
 
-状态：`2026-06-10` empty archive / MLF-3G closeout prep active。
+状态：`2026-06-10` archived / MLF-3 accepted。
 
-当前没有已归档记录。
+已归档记录：
+
+- [MLF-3 战斗部作用已验收证据包](mlf_3_warhead_effects_accepted_20260610/README.zh.md)
 
 当前入口：[../README.zh.md](../README.zh.md)
 
-当前收口记录：[../missile_lethality_warhead_effects_acceptance_20260610.zh.md](../missile_lethality_warhead_effects_acceptance_20260610.zh.md)
-
-只有被新的 current-status、acceptance 或 closeout surface 取代的记录才移入本目录。archive 记录不得作为继续派发的默认权威。
+当前 [README](../README.zh.md) 只保留轻量指针。归档记录只作为出处，不得在本目录继续推进连续杆、
+部件失效、结构解体、残骸、Pk 或具体弹种校准。

@@ -6,9 +6,10 @@
 
 父子项目链接：
 
-- A2 指针：[../README.zh.md](../README.zh.md)
-- MLF-2 归档：[../missile_lethality_geometry_fuze/README.zh.md](../missile_lethality_geometry_fuze/README.zh.md)
-- 当前 README：[README.zh.md](README.zh.md)
+- 当前 MLF-3 指针：[../../README.zh.md](../../README.zh.md)
+- A2 指针：[../../../README.zh.md](../../../README.zh.md)
+- MLF-2 归档：[../../../missile_lethality_geometry_fuze/README.zh.md](../../../missile_lethality_geometry_fuze/README.zh.md)
+- 归档包 README：[README.zh.md](README.zh.md)
 - 当前状态：[missile_lethality_warhead_effects_current_status_20260609.zh.md](missile_lethality_warhead_effects_current_status_20260609.zh.md)
 - 派发队列：[missile_lethality_warhead_effects_dispatch_queue_20260609.zh.md](missile_lethality_warhead_effects_dispatch_queue_20260609.zh.md)
 

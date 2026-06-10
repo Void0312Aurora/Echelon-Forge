@@ -8,7 +8,7 @@
 
 | 区域 | 状态 | 证据 | 不能证明什么 |
 | --- | --- | --- | --- |
-| MLF-2 输入 | accepted / archived | [MLF-2 归档指针](../missile_lethality_geometry_fuze/README.zh.md) | 不证明战斗部作用已经高保真 |
+| MLF-2 输入 | accepted / archived | [MLF-2 归档指针](../../../missile_lethality_geometry_fuze/README.zh.md) | 不证明战斗部作用已经高保真 |
 | MLF-3A 盘点 | accepted | [盘点验收记录](missile_lethality_warhead_effects_inventory_20260609.zh.md) | 不证明 writer 或诊断已全部完成 |
 | 标准事件结构 | live gate focused pass | `WarheadMechanismEvent`、`SpatialCoverageEvent`、`ComponentLoadEvent` 已在合同/绑定表面、event-store writer 和真实起爆路径测试中存在 | 不证明参数已校准 |
 | 现有效果模型 | generic load-shape focused pass | `default_effects_model`、`default_effects_warhead_detail.inc`、`default_effects_spatial_projection_detail.inc`；3C 聚焦测试证明 range / direction / family 会改变标准载荷事实 | 不证明阶段边界已标准化，也不证明参数已校准 |

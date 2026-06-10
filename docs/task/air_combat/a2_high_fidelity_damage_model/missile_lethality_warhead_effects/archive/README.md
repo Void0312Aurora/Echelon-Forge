@@ -1,11 +1,14 @@
 # A2 MLF-3 Archive
 
-Status: `2026-06-10` empty archive / MLF-3G closeout prep active.
+Status: `2026-06-10` archived / MLF-3 accepted.
 
-No records are archived yet.
+Archived records:
+
+- [MLF-3 Warhead Effects Accepted Package](mlf_3_warhead_effects_accepted_20260610/README.md)
 
 Current entry: [../README.md](../README.md)
 
-Current closeout record: [../missile_lethality_warhead_effects_acceptance_20260610.md](../missile_lethality_warhead_effects_acceptance_20260610.md)
-
-Only records superseded by a new current-status, acceptance, or closeout surface move here. Archive records must not become the default authority for new dispatches.
+The current [README](../README.md) remains a lightweight pointer only. Archived
+records are provenance and must not be used to continue continuous rod,
+component failure, structural breakup, debris/wreck, Pk, or weapon-specific
+calibration inside this folder.

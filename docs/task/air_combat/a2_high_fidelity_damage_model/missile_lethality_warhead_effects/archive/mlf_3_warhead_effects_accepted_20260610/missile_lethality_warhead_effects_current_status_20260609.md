@@ -8,7 +8,7 @@ Chinese main text: [missile_lethality_warhead_effects_current_status_20260609.zh
 
 | Area | Status | Evidence | What This Does Not Prove |
 | --- | --- | --- | --- |
-| MLF-2 input | accepted / archived | [MLF-2 pointer](../missile_lethality_geometry_fuze/README.md) | Warhead effects are not high-fidelity yet |
+| MLF-2 input | accepted / archived | [MLF-2 pointer](../../../missile_lethality_geometry_fuze/README.md) | Warhead effects are not high-fidelity yet |
 | MLF-3A inventory | accepted | [Inventory acceptance record](missile_lethality_warhead_effects_inventory_20260609.md) | Does not prove all writers or diagnostics are complete |
 | Standard event structs | live gate focused pass | `WarheadMechanismEvent`, `SpatialCoverageEvent`, and `ComponentLoadEvent` exist in contracts, bindings, event-store writers, and real detonation-path tests | Parameters are not calibrated |
 | Current effects model | generic load-shape focused pass | `default_effects_model`, `default_effects_warhead_detail.inc`, `default_effects_spatial_projection_detail.inc`; 3C focused tests prove range / direction / family change standard load facts | Stage boundaries are not standardized and parameters are not calibrated |

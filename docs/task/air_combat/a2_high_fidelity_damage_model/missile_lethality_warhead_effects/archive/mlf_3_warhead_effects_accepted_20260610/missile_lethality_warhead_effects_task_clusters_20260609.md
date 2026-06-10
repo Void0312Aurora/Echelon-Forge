@@ -6,9 +6,10 @@ Chinese main text: [missile_lethality_warhead_effects_task_clusters_20260609.zh.
 
 Parent links:
 
-- A2 pointer: [../README.md](../README.md)
-- MLF-2 archive: [../missile_lethality_geometry_fuze/README.md](../missile_lethality_geometry_fuze/README.md)
-- Current README: [README.md](README.md)
+- Current MLF-3 pointer: [../../README.md](../../README.md)
+- A2 pointer: [../../../README.md](../../../README.md)
+- MLF-2 archive: [../../../missile_lethality_geometry_fuze/README.md](../../../missile_lethality_geometry_fuze/README.md)
+- Archived package README: [README.md](README.md)
 - Current status: [missile_lethality_warhead_effects_current_status_20260609.md](missile_lethality_warhead_effects_current_status_20260609.md)
 - Dispatch queue: [missile_lethality_warhead_effects_dispatch_queue_20260609.md](missile_lethality_warhead_effects_dispatch_queue_20260609.md)
 
