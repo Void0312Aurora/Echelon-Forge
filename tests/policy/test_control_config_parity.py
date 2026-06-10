@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 
-class HMoEControlConfigTests(unittest.TestCase):
+class PolicyControlConfigParityTests(unittest.TestCase):
     def _load_json(self, path: Path) -> dict:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)

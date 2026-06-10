@@ -42,12 +42,12 @@
     "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
     "tests/runtime/air_combat/test_weapon_roe_runtime.py",
     "tests/scenario/test_scenario_compiler.py",
-    "tests/scenario/test_wp15_generation_request_surface.py",
+    "tests/scenario/test_scenario_generation_contracts.py",
     "tests/runners/test_pytest_suite_manifests.py",
     "tests/runners/test_run_pytest_suite.py",
     "tests/runners/test_run_scenario_contract.py",
-    "tests/training/test_train_bootstrap.py",
-    "tests/training/test_naval_active_training_entries.py",
+    "tests/training/test_training_bootstrap_contracts.py",
+    "tests/training/test_naval_training_entry_contracts.py",
     "tests/runtime/test_agent_shim.py",
     "tests/world_batch/test_world_batch_runtime.py"
   ]

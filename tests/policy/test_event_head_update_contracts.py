@@ -35,7 +35,7 @@ def _grad_norm(params) -> float:
     return total**0.5
 
 
-class A6EventHeadUpdateStrengthTests(unittest.TestCase):
+class EventHeadUpdateContractTests(unittest.TestCase):
     def _observation_space(self) -> spaces.Dict:
         return spaces.Dict(
             {

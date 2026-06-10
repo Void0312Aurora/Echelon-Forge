@@ -23,17 +23,20 @@
     测试名、注释或任务文档中；`RES`、`TP21`、`BECO` 这类残差/来源标签若属于
     被守护的领域契约，可以继续保留。
 - `eval/`
-  - 维护的 CLI 级别评估回归测试。
+  - 维护的 evaluation CLI 契约，覆盖 policy-loading、runtime-entry 和领域基线 probe。
 - `training/`
-  - 训练入口和训练回调回归测试。
-- `hmoe/`
-  - HMoE 路由、策略、引导和控制配置回归测试。
+  - 训练 bootstrap/CLI 契约、active-entry gate、诊断回调契约和确定性的
+    fault-localization probe。
+- `policy/`
+  - 策略路由、执行策略 surface、辅助训练更新、事件时序标签、
+    grouped-stopping loss、引导和控制配置回归测试。
 - `world_batch/`
   - 批量内核和 vec-env 适配器测试。
 - `scenario/`
-  - 场景编译器和空间查询测试。
+  - 场景编译器、环境基底/投影契约、场景生成契约和空间查询测试。
 - `leader/`
-  - 领导者层连接和运行时控制测试。
+  - leader tasking profile、command-field projection、phase-control 和
+    runtime-control 测试。
 - `runners/`
   - 用于分组 JSON 契约套件的批量运行程序。
 - `support/`

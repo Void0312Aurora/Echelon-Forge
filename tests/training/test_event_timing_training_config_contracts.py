@@ -78,7 +78,7 @@ def _load_json(path: Path) -> dict:
         return json.load(f)
 
 
-class A6EventValueActiveConfigTests(unittest.TestCase):
+class EventTimingTrainingConfigContractTests(unittest.TestCase):
     def test_active_c2_roe_temporal_config_carries_a6_hazard_knobs(self) -> None:
         cfg = _load_json(A6_ACTIVE_CONFIG)
         hyper = cfg.get("hyperparameters", {})

@@ -10,7 +10,7 @@ from pathlib import Path
 from python.training import build_train_arg_parser, prepare_training_bootstrap
 
 
-class TrainBootstrapTests(unittest.TestCase):
+class TrainingBootstrapContractTests(unittest.TestCase):
     def test_train_cli_accepts_air_combat_hybrid_action_override(self) -> None:
         parser = build_train_arg_parser()
         args = parser.parse_args(

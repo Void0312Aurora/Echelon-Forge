@@ -343,7 +343,7 @@
       ]
     },
     {
-      "path": "tests/training/test_cooperative_diagnostics_callback.py",
+      "path": "tests/training/test_diagnostics_callback_contracts.py",
       "classification": "unknown_requires_owner",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",

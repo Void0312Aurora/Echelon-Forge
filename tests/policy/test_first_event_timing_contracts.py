@@ -34,7 +34,7 @@ from python.rl.policy_algo.first_event_projection import project_air_combat_c2_r
 from python.rl.policy_algo.policies import _HybridActionDistribution, _normalize_hybrid_action_layout
 
 
-class A6FirstEventHazardTests(unittest.TestCase):
+class FirstEventTimingContractTests(unittest.TestCase):
     def _make_air_combat_hybrid_distribution(
         self,
         params: th.Tensor,

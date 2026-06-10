@@ -34,7 +34,7 @@ class _ConstantSchedule:
         return 3.0e-4
 
 
-class HMoEPolicyTests(unittest.TestCase):
+class ExecutionPolicySurfaceTests(unittest.TestCase):
     def _make_air_combat_hybrid_distribution(
         self,
         params: th.Tensor,

@@ -29,17 +29,23 @@
     such as `RES`, `TP21`, and `BECO` may remain when they are part of the
     guarded domain contract.
 - `eval/`
-  - Maintained CLI-level evaluation regression tests.
+  - Maintained evaluation CLI contracts for policy-loading, runtime-entry, and
+    domain baseline probes.
 - `training/`
-  - Train-entry and training-callback regression tests.
-- `hmoe/`
-  - HMoE routing, policy, bootstrap, and control-config regression tests.
+  - Training bootstrap/CLI contracts, active-entry gates, diagnostics-callback
+    contracts, and deterministic fault-localization probes.
+- `policy/`
+  - Policy routing, execution-policy surface, auxiliary training updates,
+    event-timing labels, grouped-stopping loss, bootstrap, and control-config
+    regression tests.
 - `world_batch/`
   - Batch kernel and vec-env adapter tests.
 - `scenario/`
-  - Scenario compiler and spatial-query tests.
+  - Scenario compiler, environment substrate/projection contracts, scenario
+    generation contracts, and spatial-query tests.
 - `leader/`
-  - Leader-layer wiring and runtime-control tests.
+  - Leader tasking profile, command-field projection, phase-control, and
+    runtime-control tests.
 - `runners/`
   - Batch runners for grouped JSON contract suites.
 - `support/`

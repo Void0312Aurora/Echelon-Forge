@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 
-class TrainEntryCooperativeTests(unittest.TestCase):
+class TrainingCliContractTests(unittest.TestCase):
     def test_train_py_accepts_cooperative_execution_agent_layer(self) -> None:
         repo_root = Path(__file__).resolve().parents[2]
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -24,7 +24,14 @@ from tools.maintenance import (  # noqa: E402
 from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
 
 
-FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "a2_signoff_intake"
+FIXTURE_DIR = (
+    REPO_ROOT
+    / "tests"
+    / "architecture"
+    / "damage_model"
+    / "fixtures"
+    / "external_signoff_intake"
+)
 PLACEHOLDER_SHA256 = "0" * 64
 VALID_FIXTURE = "valid_external_signoff_packet_shape.json"
 INVALID_FIXTURE = "invalid_external_signoff_packet_raw_field.json"

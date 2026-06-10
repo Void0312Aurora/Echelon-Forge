@@ -15,7 +15,7 @@ from python.rl.policy_algo.hmoe_routing import (
 )
 
 
-class HMoERoutingTests(unittest.TestCase):
+class PolicyRoutingContractTests(unittest.TestCase):
     def test_route_from_nav_v2_cooperative_takeoff_layout(self) -> None:
         mission = th.tensor(
             [

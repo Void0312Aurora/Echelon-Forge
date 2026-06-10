@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 
 from python.testing.runtime import ensure_repo_imports
@@ -8,14 +9,19 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.scenario.environment_substrate import (  # noqa: E402
+    DEFAULT_BRANCH_IDS,
     EnvironmentBranchMembership,
     EnvironmentCatalogDescriptor,
     EnvironmentComponent,
+    EnvironmentDerivedProductRequest,
     EnvironmentGeneratorEvidenceRef,
     EnvironmentGeneratorRequest,
+    EnvironmentManifest,
     EnvironmentRegionExtent,
     EnvironmentTileScheme,
+    build_deterministic_environment_fixture,
     build_deterministic_generated_environment_manifest,
+    build_environment_derived_products,
     canonical_environment_bytes,
     default_environment_catalog_descriptors,
     derive_environment_seed,
@@ -24,6 +30,16 @@ from python.scenario.environment_substrate import (  # noqa: E402
     validate_environment_generator_request,
     validate_environment_manifest,
 )
+
+
+def _manifest_from_metadata(metadata: dict) -> EnvironmentManifest:
+    return EnvironmentManifest(**deepcopy(metadata))
+
+
+def _environment_fixture() -> EnvironmentManifest:
+    manifest = build_deterministic_environment_fixture()
+    assert validate_environment_manifest(manifest).valid
+    return manifest
 
 
 def _request(seed: int = 20260606) -> EnvironmentGeneratorRequest:
@@ -62,6 +78,79 @@ def _request(seed: int = 20260606) -> EnvironmentGeneratorRequest:
         ),
         output_manifest_id="envmanifest:g0-k-generated-fixture",
         no_held_capability_release=True,
+    )
+
+
+def test_g0_j_static_environment_fixture_validates_deterministically() -> None:
+    fixture_a = build_deterministic_environment_fixture()
+    fixture_b = build_deterministic_environment_fixture()
+
+    validation = validate_environment_manifest(fixture_a)
+
+    assert validation.valid
+    assert not validation.fail_closed
+    assert validation.rejection_reason == ""
+    assert fixture_a.to_metadata() == fixture_b.to_metadata()
+    branch_ids = {
+        branch["branch_id"] for branch in fixture_a.to_metadata()["branch_registry"]
+    }
+    assert set(DEFAULT_BRANCH_IDS) <= branch_ids
+    assert fixture_a.to_metadata()["objects"][1]["components"][0]["family"] == "structure"
+
+
+def test_g0_j_manifest_requires_the_shared_environment_branch_registry() -> None:
+    metadata = build_deterministic_environment_fixture().to_metadata()
+    metadata["branch_registry"] = [
+        branch
+        for branch in metadata["branch_registry"]
+        if branch["branch_id"] != "hydrology"
+    ]
+    manifest = _manifest_from_metadata(metadata)
+
+    validation = validate_environment_manifest(manifest)
+
+    assert not validation.valid
+    assert validation.fail_closed
+    assert validation.rejection_reason == "environment_substrate_required_branch_missing"
+    assert "hydrology" in validation.errors[0]
+
+
+def test_g0_j_manifest_rejects_behavior_semantics_in_untyped_properties() -> None:
+    metadata = build_deterministic_environment_fixture().to_metadata()
+    metadata["objects"][0]["properties"]["speed_multiplier"] = 0.8
+    manifest = _manifest_from_metadata(metadata)
+
+    validation = validate_environment_manifest(manifest)
+
+    assert not validation.valid
+    assert validation.fail_closed
+    assert validation.rejection_reason == "environment_substrate_untyped_behavior_property"
+
+
+def test_g0_j_manifest_rejects_held_runtime_capability_claims() -> None:
+    metadata = build_deterministic_environment_fixture().to_metadata()
+    metadata["capability_claims"] = ["movement"]
+    manifest = _manifest_from_metadata(metadata)
+
+    validation = validate_environment_manifest(manifest)
+
+    assert not validation.valid
+    assert validation.fail_closed
+    assert validation.rejection_reason == "environment_substrate_held_capability_claim"
+
+
+def test_g0_j_manifest_rejects_missing_required_component_attributes() -> None:
+    metadata = build_deterministic_environment_fixture().to_metadata()
+    del metadata["objects"][0]["components"][0]["attributes"]["surface"]
+    manifest = _manifest_from_metadata(metadata)
+
+    validation = validate_environment_manifest(manifest)
+
+    assert not validation.valid
+    assert validation.fail_closed
+    assert (
+        validation.rejection_reason
+        == "environment_substrate_missing_required_component_attribute"
     )
 
 
@@ -293,4 +382,118 @@ def test_g0_k_catalog_rejects_missing_required_component_template() -> None:
     assert (
         validation.rejection_reason
         == "environment_substrate_catalog_required_component_missing"
+    )
+
+
+def test_g0_m_builds_deterministic_metadata_only_derived_product_bundle() -> None:
+    manifest = _environment_fixture()
+    request = EnvironmentDerivedProductRequest(
+        request_id="g0-m-fixture",
+        product_kinds=("surface_zone_index", "occlusion_candidate_index"),
+        source_projection_profile_id="terrain-rect-surface-v1",
+    )
+
+    result_a = build_environment_derived_products(manifest, request)
+    result_b = build_environment_derived_products(manifest, request)
+
+    assert result_a.valid
+    assert not result_a.fail_closed
+    assert result_a.bundle is not None
+    assert canonical_environment_bytes(result_a.to_metadata()) == canonical_environment_bytes(
+        result_b.to_metadata()
+    )
+
+    bundle = result_a.bundle.to_metadata()
+    assert bundle["no_runtime_consumer_release"] is True
+    assert bundle["no_held_capability_release"] is True
+    products = {product["product_kind"]: product for product in bundle["products"]}
+    assert set(products) == {"surface_zone_index", "occlusion_candidate_index"}
+
+    surface_entries = products["surface_zone_index"]["entries"]
+    assert surface_entries == [
+        {
+            "index": 0,
+            "source_object_id": "envobj:test-hardstand",
+            "zone_name": "catalog:port_hardstand",
+            "surface": "Concrete",
+            "rect": {
+                "x": 250.0,
+                "y": -125.0,
+                "width": 80.0,
+                "length": 140.0,
+                "heading": 15.0,
+            },
+            "runtime_consumer_release": False,
+        }
+    ]
+
+    occlusion_entries = products["occlusion_candidate_index"]["entries"]
+    assert occlusion_entries == [
+        {
+            "source_object_id": "envobj:test-village-house",
+            "catalog_ref": "catalog:village_house_light",
+            "component_id": "component:test-house-structure",
+            "component_family": "structure",
+            "bounds_kind": "aabb",
+            "bounds": {
+                "min_x": 300.0,
+                "min_y": 300.0,
+                "max_x": 312.0,
+                "max_y": 310.0,
+            },
+            "layer_membership": ["built_structure"],
+            "runtime_consumer_release": False,
+            "height_m": 5.5,
+        }
+    ]
+    assert products["occlusion_candidate_index"]["evidence"]["no_los_runtime_release"] is True
+    assert products["occlusion_candidate_index"]["evidence"]["no_cover_runtime_release"] is True
+
+
+def test_g0_m_rejects_held_derived_product_kinds() -> None:
+    result = build_environment_derived_products(
+        _environment_fixture(),
+        EnvironmentDerivedProductRequest(
+            request_id="g0-m-held-product",
+            product_kinds=("passability_mask",),
+        ),
+    )
+
+    assert not result.valid
+    assert result.fail_closed
+    assert result.bundle is None
+    assert result.rejection_reason == "environment_substrate_derived_product_held_capability"
+
+
+def test_g0_m_rejects_held_capability_claims() -> None:
+    result = build_environment_derived_products(
+        _environment_fixture(),
+        EnvironmentDerivedProductRequest(
+            request_id="g0-m-held-claim",
+            product_kinds=("occlusion_candidate_index",),
+            capability_claims=("line_of_sight",),
+        ),
+    )
+
+    assert not result.valid
+    assert result.fail_closed
+    assert result.bundle is None
+    assert result.rejection_reason == "environment_substrate_derived_product_held_capability"
+
+
+def test_g0_m_surface_zone_index_requires_projection_profile() -> None:
+    result = build_environment_derived_products(
+        _environment_fixture(),
+        EnvironmentDerivedProductRequest(
+            request_id="g0-m-missing-profile",
+            product_kinds=("surface_zone_index",),
+        ),
+    )
+
+    assert not result.valid
+    assert result.fail_closed
+    assert result.bundle is None
+    assert (
+        result.rejection_reason
+        == "environment_substrate_derived_projection_profile_required"
     )

@@ -248,22 +248,124 @@
       "governance_notes": "Start with schema/guardrail coverage before promoting heavier scenario checks."
     },
     {
-      "id": "training_config",
-      "label": "Training entry/config/bootstrap",
+      "id": "environment_substrate_contracts",
+      "label": "Environment substrate and projection contracts",
       "recommended_tier": "focused",
       "primary_paths": [
-        "tests/training/test_train_bootstrap.py",
-        "tests/training/test_train_entry_cooperative.py",
-        "tests/training/test_cooperative_diagnostics_callback.py",
-        "tests/training/test_fire_timing_diagnostic_contracts.py"
+        "tests/scenario/test_environment_substrate_contracts.py",
+        "tests/scenario/test_environment_projection_contracts.py"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Manifest, generator/catalog, metadata-only derived products, projection payload, and scenario-ingestion checks are one environment-substrate capability surface. Keep G0 labels inside node ids or docs for traceability rather than splitting files by project stage."
+    },
+    {
+      "id": "scenario_compilation_and_generation",
+      "label": "Scenario compilation and generation contracts",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/scenario/test_scenario_compiler.py",
+        "tests/scenario/test_scenario_generation_contracts.py"
+      ],
+      "smoke_paths": [
+        "tests/scenario/test_scenario_compiler.py",
+        "tests/scenario/test_scenario_generation_contracts.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json"
+      ],
+      "governance_notes": "Compiler behavior and scenario generation request/runtime contracts are maintained together as scenario-system coverage. Historical WP labels may remain in test function names for provenance, but new files should use capability-oriented names."
+    },
+    {
+      "id": "leader_tasking_contracts",
+      "label": "Leader tasking contracts",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/leader/test_tasking_profile_contracts.py",
+        "tests/leader/test_command_field_projection_contracts.py",
+        "tests/leader/test_tasking_phase_control_contracts.py",
+        "tests/leader/test_leader_runtime_control_contracts.py"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Leader tests are grouped by tasking-profile normalization, DTO/command-field projection, phase-control behavior, and runtime-control delegation. Domain labels may remain inside node ids where they describe cases, but new files should not be named after individual subprojects or implementation phases."
+    },
+    {
+      "id": "evaluation_cli_contracts",
+      "label": "Evaluation CLI contracts",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/eval/test_evaluation_cli_contracts.py"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Evaluation coverage is maintained as CLI/runtime-entry contracts rather than one file per eval tool or domain baseline. Keep tool and domain names in test cases when they identify the covered entrypoint, but keep the file named for the shared evaluation capability."
+    },
+    {
+      "id": "training_bootstrap_cli",
+      "label": "Training bootstrap and CLI",
+      "recommended_tier": "smoke",
+      "primary_paths": [
+        "tests/training/test_training_bootstrap_contracts.py",
+        "tests/training/test_training_cli_contracts.py"
+      ],
+      "smoke_paths": [
+        "tests/training/test_training_bootstrap_contracts.py"
       ],
       "contract_paths": [
         "tests/contracts/unit/training/takeoff_safe_action_bias.json"
       ],
       "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json",
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Track training bootstrap and deterministic fire-timing diagnostic contracts separately from frozen model contracts so environment-sensitive training checks can remain local."
+      "governance_notes": "Keep bootstrap invariants and train.py acceptance checks under one capability. CI smoke gates the direct bootstrap contract; broader train.py subprocess checks remain explicit local/focused candidates."
+    },
+    {
+      "id": "active_training_entry_gates",
+      "label": "Active training entry gates",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/training/test_air_combat_training_entry_contracts.py",
+        "tests/training/test_event_timing_training_config_contracts.py",
+        "tests/training/test_naval_training_entry_contracts.py"
+      ],
+      "smoke_paths": [
+        "tests/training/test_naval_training_entry_contracts.py"
+      ],
+      "suite_membership": [
+        "tests/smoke/ci_smoke_suite.json"
+      ],
+      "governance_notes": "Maintained active-entry and config-gate coverage. Domain or historical mechanism labels may remain inside node ids for traceability, but new files should be named for the training-entry capability rather than stage labels."
+    },
+    {
+      "id": "training_diagnostics_callbacks",
+      "label": "Training diagnostics callbacks",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/training/test_diagnostics_callback_contracts.py"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Stable callback and helper logging contracts. Keep callback key compatibility here; temporary exploratory diagnostics belong under tools/diagnostics or the owning runtime surface."
+    },
+    {
+      "id": "training_fault_localization",
+      "label": "Training fault localization",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/training/test_fire_timing_fault_localization_contracts.py"
+      ],
+      "suite_membership": [
+        "tests/suites/focused_runtime_suite.json"
+      ],
+      "governance_notes": "Fire-timing and M3-S2 breakpoint contracts live here as deterministic fault-localization coverage, separate from training entry and callback logging checks."
+    },
+    {
+      "id": "policy_behavior",
+      "label": "Policy behavior and auxiliary updates",
+      "recommended_tier": "focused",
+      "primary_paths": [
+        "tests/policy"
+      ],
+      "suite_membership": [],
+      "governance_notes": "Maintained policy-side behavior coverage for routing, execution-policy surfaces, auxiliary update paths, event timing, grouped stopping, bootstrap, and config parity. Historical mechanism labels may remain in test names or metric keys for traceability, but new files should use capability-oriented names. Keep out of CI smoke until a small explicit file or node-id subset is selected."
     },
     {
       "id": "route_generator",

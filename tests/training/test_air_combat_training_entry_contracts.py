@@ -96,7 +96,7 @@ def _violation_dicts(config: dict[str, Any]) -> list[dict[str, Any]]:
     return [violation.as_dict() for violation in validate_training_config_contract(config)]
 
 
-class AirCombatActiveTrainingEntryTests(unittest.TestCase):
+class AirCombatTrainingEntryContractTests(unittest.TestCase):
     def test_stage1_bvr_probe_config_matches_maintained_world_batch_surface(self) -> None:
         cfg = _load_json(STAGE1_CONFIG)
         scenario = _load_json(STAGE1_SCENARIO)

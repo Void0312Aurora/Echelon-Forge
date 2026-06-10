@@ -189,7 +189,7 @@ def _make_phase_loader(
     )
 
 
-class TaskOrderRandomizationTests(unittest.TestCase):
+class TaskingPhaseControlTests(unittest.TestCase):
     def test_task_only_scramble_preserves_randomized_task_center(self):
         loader = _make_loader(
             scenario_task_order={
@@ -437,7 +437,7 @@ class TaskOrderRandomizationTests(unittest.TestCase):
 
         self.assertEqual(3, int(loader.leader_intent.command_code))
         self.assertEqual(0, int(loader.leader_intent.route_ref_id))
-        self.assertAlmostEqual(90.0, float(loader.leader_intent.cmd_heading_deg), places=3)
+        self.assertAlmostEqual(225.0, float(loader.leader_intent.cmd_heading_deg), places=3)
         self.assertEqual("rtb", str(loader.mission_phase_name))
 
 

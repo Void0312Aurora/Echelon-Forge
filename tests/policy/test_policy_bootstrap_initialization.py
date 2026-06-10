@@ -24,7 +24,7 @@ class _DummyModel:
         self.policy = policy
 
 
-class HMoETrainBootstrapTests(unittest.TestCase):
+class PolicyBootstrapInitializationTests(unittest.TestCase):
     def _make_policy(self) -> HierarchicalMoEExecutionPolicy:
         observation_space = spaces.Dict(
             {

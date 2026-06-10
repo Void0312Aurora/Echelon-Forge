@@ -169,7 +169,12 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
             },
             {
                 "name": "execution_config",
-                "execution_train_config_payload": {"env": {"execution_step_runtime_mode": "legacy"}},
+                "execution_train_config_payload": {
+                    "env": {
+                        "execution_step_runtime_mode": "legacy",
+                        "runtime_compatibility_enabled": True,
+                    }
+                },
                 "execution_step_runtime_mode": None,
             },
         )

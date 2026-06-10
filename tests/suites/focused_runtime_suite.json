@@ -20,8 +20,8 @@
     "tests/runtime/naval/test_naval_ship_database.py",
     "tests/runtime/mission/test_naval_mission_command_mapping.py",
     "tests/runtime/ground/test_ground_native_platform_schema.py",
-    "tests/training/test_train_bootstrap.py",
-    "tests/training/test_fire_timing_diagnostic_contracts.py"
+    "tests/training/test_training_bootstrap_contracts.py",
+    "tests/training/test_fire_timing_fault_localization_contracts.py"
   ],
   "notes": [
     "All entries are existing pytest paths.",

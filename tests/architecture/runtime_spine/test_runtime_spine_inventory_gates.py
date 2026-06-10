@@ -51,7 +51,7 @@ EXPECTED_CLASSIFICATIONS = {
     "tests/runtime/bindings/test_lazy_binding_resolution.py": "compatibility_wrapper",
     "python/scenario/compiler/generation_request.py": "blocked",
     "src/runtime/contracts/counterfactual_replay_contracts.h": "blocked",
-    "tests/training/test_cooperative_diagnostics_callback.py": "unknown_requires_owner",
+    "tests/training/test_diagnostics_callback_contracts.py": "unknown_requires_owner",
 }
 
 EXPECTED_SELECTED_NODES = [
@@ -319,7 +319,7 @@ def test_compatibility_and_diagnostics_paths_do_not_upgrade_to_maintained_via_na
         "python/rl/runtime/world_batch/runtime_support.py",
         "tests/runtime/engagement/test_facade_engagement_export.py",
         "tests/runtime/engagement/test_diagnostics_trace_contract.py",
-        "tests/training/test_cooperative_diagnostics_callback.py",
+        "tests/training/test_diagnostics_callback_contracts.py",
     }
 
     for path in allowed_non_maintained:
@@ -336,7 +336,7 @@ def test_compatibility_and_diagnostics_paths_do_not_upgrade_to_maintained_via_na
         == "diagnostics_only"
     )
     assert (
-        entries["tests/training/test_cooperative_diagnostics_callback.py"][
+        entries["tests/training/test_diagnostics_callback_contracts.py"][
             "classification"
         ]
         == "unknown_requires_owner"

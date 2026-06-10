@@ -22,7 +22,7 @@ from python.rl.policy_algo.m3s1_grouped_stopping import (
 )
 
 
-class M3S1GroupedStoppingTests(unittest.TestCase):
+class GroupedStoppingLossContractTests(unittest.TestCase):
     def _group(
         self,
         logits: th.Tensor,

@@ -252,7 +252,7 @@ class _FirstEventLabelBuffer:
         self.labels = labels
 
 
-class HMoEPPOWarmupTests(unittest.TestCase):
+class AuxiliaryTrainingUpdateTests(unittest.TestCase):
     def _make_a7_first_event_label_model(self) -> AdaptiveKLPPO:
         model = object.__new__(AdaptiveKLPPO)
         model.device = th.device("cpu")
