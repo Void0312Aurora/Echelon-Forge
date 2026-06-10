@@ -22,9 +22,12 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
   已归档的 MLF-3 证据包，聚焦起爆后的通用战斗部作用、破片/爆风载荷、空间覆盖、部件受载、
   诊断，以及“未起爆不产生载荷”的运行门；它不实现连续杆、部件失效概率、结构解体、残骸、Pk
   或具体弹种击毁结论。
+- [missile_lethality_continuous_rod/README.zh.md](missile_lethality_continuous_rod/README.zh.md)：
+  MLF-4 planning 子项目，聚焦连续杆和切割机制事实；它先标准化 rod/cut 曝光，再交给后续
+  部件失效、结构解体、残骸、Pk 或具体弹种击毁结论阶段。
 
-后续连续杆、部件失效概率、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，
-不能继续写入已归档的 MLF-2 或 MLF-3 包。
+后续部件失效概率、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，
+不能继续写入已归档的 MLF-2 或 MLF-3 包。连续杆现在从上面的 MLF-4 planning 指针进入。
 MLF-3 已归档，不重开已封存 A2 包。
 
 这些 follow-on 不重开已封存 A2 包，也不创建 A9。

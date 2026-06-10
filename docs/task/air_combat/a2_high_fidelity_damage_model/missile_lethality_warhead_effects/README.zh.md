@@ -14,6 +14,9 @@
 不要在这个已完成的 MLF-3 子项目里继续写连续杆切割、部件失效概率、结构解体、残骸对象、Pk
 或真实 AIM-120C/MQ-9 校准。下一阶段必须按 `docs/agent` 标准另建子项目。
 
+当前 MLF-4 planning 子项目：
+[../missile_lethality_continuous_rod/README.zh.md](../missile_lethality_continuous_rod/README.zh.md)。
+
 可复用结论：引信起爆以后，系统现在可以解释通用战斗部施加了什么载荷、载荷投影到哪里、
 哪些部件收到了标准受载事实；未起爆路径不会生成这些标准战斗部载荷事实。这仍然不直接说明
 目标碎裂、坠毁或被击毁。

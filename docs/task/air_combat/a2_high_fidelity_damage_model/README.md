@@ -31,10 +31,15 @@ Current A2 follow-ons:
   no-detonation no-load gate; it does not implement continuous rod, component
   failure probability, structural breakup, debris/wreck, Pk, or weapon-specific
   kill conclusions.
+- [missile_lethality_continuous_rod/README.md](missile_lethality_continuous_rod/README.md):
+  MLF-4 planning subproject for continuous-rod and cutting-mechanism facts; it
+  standardizes rod/cut exposure before any component failure, structural
+  breakup, debris/wreck, Pk, or weapon-specific kill conclusion.
 
-Follow-on continuous rod, component failure probability, breakup/debris, Pk, or
-weapon-specific calibration need a separate `docs/agent` subproject and must
-not continue inside the archived MLF-2 or MLF-3 packages.
+Follow-on component failure probability, breakup/debris, Pk, or weapon-specific
+calibration need separate `docs/agent` subprojects and must not continue inside
+the archived MLF-2 or MLF-3 packages. Continuous rod now starts at the MLF-4
+planning pointer above.
 MLF-3 is archived; it does not reopen the sealed A2 package.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
