@@ -125,7 +125,7 @@ set(EF_MODEL_DEFAULT_SOURCES
     src/models/systems/default_sensor_model.cpp
     src/models/systems/default_acoustic_model.cpp
     src/models/environment/default_environment_model.cpp
-    src/models/air/default_control_model.cpp
+    src/models/domains/air/default_control_model.cpp
     src/models/weapons/default_guidance_model.cpp
 )
 

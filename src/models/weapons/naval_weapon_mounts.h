@@ -1,6 +1,6 @@
 #pragma once
 
-#include "components/combat/weapon.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 
 #include <algorithm>
 

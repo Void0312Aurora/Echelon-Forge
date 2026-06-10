@@ -13,8 +13,9 @@
 #include "components/physics/performance.h"
 #include "components/combat/scoring.h"
 #include "components/systems/sensor.h"
-#include "components/combat/weapon.h"
-#include "components/combat/damage.h"
+#include "components/domains/air/combat/damage_air.h"
+#include "components/combat/common/damage_common.h"
+#include "components/combat/common/weapon_common.h"
 #include "components/physics/dynamics.h"
 #include "components/basic/common.h"
 

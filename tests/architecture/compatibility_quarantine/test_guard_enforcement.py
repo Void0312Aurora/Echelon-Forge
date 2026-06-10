@@ -69,7 +69,7 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
 }
 
 LEGACY_COMMAND_DIRECT_INCLUDE_ALLOWLIST = {
-    "src/components/command/air/control_input_resolution.h",
+    "src/components/domains/air/command/control_input_resolution.h",
     "src/components/command/command_link.h",
     "src/components/command/default_factory_legacy_spawn_compat.h",
     "src/components/physics/action.h",
@@ -77,7 +77,13 @@ LEGACY_COMMAND_DIRECT_INCLUDE_ALLOWLIST = {
 }
 
 AIR_CONTROL_BRIDGE_HEADER = (
-    REPO_ROOT / "src" / "components" / "command" / "air" / "control_input_resolution.h"
+    REPO_ROOT
+    / "src"
+    / "components"
+    / "domains"
+    / "air"
+    / "command"
+    / "control_input_resolution.h"
 )
 COMMAND_README_EN = REPO_ROOT / "src" / "components" / "command" / "README.md"
 COMMAND_README_ZH = REPO_ROOT / "src" / "components" / "command" / "README.zh.md"
@@ -401,7 +407,7 @@ def test_wp22_air_control_maintained_consumers_use_single_bridge_owned_resolutio
             "control_input.has_primary_flight_control_input",
             "it.entity(i).get<MissionCommandControlState>()",
         ),
-        "src/systems/air/propulsion_system.h": (
+        "src/systems/domains/air/propulsion_system.h": (
             "resolve_air_control_input(",
             "control_input.throttle_command",
             "entity.get<MissionCommandControlState>()",
@@ -430,7 +436,7 @@ def test_wp22_air_control_maintained_consumers_use_single_bridge_owned_resolutio
 
     for relative_path, required_tokens in maintained_consumers.items():
         text = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
-        assert '#include "components/command/air/control_input_resolution.h"' in text
+        assert '#include "components/domains/air/command/control_input_resolution.h"' in text
         assert '#include "components/command/legacy_command.h"' not in text
         for token in required_tokens:
             assert token in text, f"{relative_path} drifted off the bridge-owned resolution seam"
@@ -442,7 +448,12 @@ def test_wp22_air_control_maintained_consumers_use_single_bridge_owned_resolutio
 
 def test_wp22_embarked_air_write_path_stays_bridge_state_first() -> None:
     embarked_air_text = (
-        REPO_ROOT / "src" / "systems" / "naval" / "embarked_air_ops_system.h"
+        REPO_ROOT
+        / "src"
+        / "systems"
+        / "domains"
+        / "naval"
+        / "embarked_air_ops_system.h"
     ).read_text(encoding="utf-8")
     bridge_text = LEGACY_COMMAND_BRIDGE_HEADER.read_text(encoding="utf-8")
 
@@ -505,7 +516,7 @@ def test_wp22_air_control_resolution_contract_prefers_pilot_then_legacy_then_act
         r"""
         #include <cmath>
         #include <iostream>
-        #include "components/command/air/control_input_resolution.h"
+        #include "components/domains/air/command/control_input_resolution.h"
 
         namespace {
         bool nearly_equal(double a, double b) {
@@ -886,7 +897,7 @@ def test_wp22_typed_air_control_overlay_becomes_the_maintained_owner_before_lega
         r"""
         #include <cmath>
         #include <iostream>
-        #include "components/command/air/control_input_resolution.h"
+        #include "components/domains/air/command/control_input_resolution.h"
         #include "components/command/common/mission_command_control_state.h"
 
         namespace {
@@ -995,7 +1006,7 @@ def test_wp22_typed_air_control_overlay_stays_visible_without_active_command_tar
         r"""
         #include <cmath>
         #include <iostream>
-        #include "components/command/air/control_input_resolution.h"
+        #include "components/domains/air/command/control_input_resolution.h"
         #include "components/command/common/mission_command_control_state.h"
 
         namespace {

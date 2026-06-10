@@ -3,10 +3,10 @@
 `models/` 保存可替换的领域模型实现。它为 `systems/` 和 `core/engine` 提供 control、environment、sensor、effects、guidance、unit factory 等能力。
 
 model 层是 multi-domain aware，但成熟度不均。air control、air effects 与
-execution-adjacent model 仍最深入；naval 支持包括平台、sensor/acoustic、
-weapon-mount helper 和显式 effects placeholder routing；ground 支持仅限
-unit-factory capability evidence 和显式 effects placeholder routing，不宣称完整
-ground runtime 成熟度。
+execution-adjacent model 仍最深入，位于 `domains/air`；`domains/naval` 支持包括
+平台、sensor/acoustic、weapon-mount helper 和显式 effects placeholder routing；
+`domains/ground` 支持仅限 unit-factory capability evidence 和显式 effects
+placeholder routing，不宣称完整 ground runtime 成熟度。
 
 ## 允许
 
@@ -25,36 +25,30 @@ ground runtime 成熟度。
 
 ## 子目录约定
 
-- `air/`：飞行控制等航空模型。
 - `core/`：unit factory 等基础模型实现。
+- `domains/`：域自有 model implementation 与 adapter。当前已有 `air/`、`naval/`、`ground/` owner；新增域 model owner 应放到这里，而不是继续摊到 `models/` 根目录。
 - `environment/`：环境模型和 snapshot。
-- `ground/`：尚无 runtime fidelity 时的 ground-owned model placeholder routing。
-- `naval/`：naval-owned model adapter 与 placeholder routing。
 - `systems/`：传感器和 acoustic helper 等平台系统模型。
 - `weapons/`：effects、guidance 和 naval weapon-mount helper。
 
 ## 当前阅读入口
 
-- [air/README.md](air/README.md)
 - [core/README.md](core/README.md)
+- [domains/README.md](domains/README.md)
 - [environment/README.md](environment/README.md)
-- [ground/README.md](ground/README.md)
-- [naval/README.md](naval/README.md)
 - [systems/README.md](systems/README.md)
 - [weapons/README.md](weapons/README.md)
 
 ## 当前文件落点
 
-- `air/`
-  - `default_control_model.cpp`, `default_effects_air_domain.h`
 - `core/`
   - `default_unit_factory.h`
+- `domains/`
+  - `air/default_control_model.cpp`, `air/default_effects_air_domain.h`
+  - `naval/default_effects_naval_domain.h`, `naval/naval_sensor_maritime_adapter.h`
+  - `ground/default_effects_ground_domain.h`
 - `environment/`
   - `default_environment_model.cpp`, `default_environment_snapshot.h`
-- `ground/`
-  - `default_effects_ground_domain.h`
-- `naval/`
-  - `default_effects_naval_domain.h`, `naval_sensor_maritime_adapter.h`
 - `systems/`
   - `default_sensor_model.cpp`, `default_acoustic_model.cpp`
 - `weapons/`

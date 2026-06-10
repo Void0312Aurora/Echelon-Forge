@@ -35,7 +35,5 @@ entry points.
 
 `detail/default_effects_domain_routing_detail.inc` is the generic router for
 Air/Naval/Ground effects ownership. Air consequence handling lives in
-`models/air/default_effects_air_domain.h`; naval and ground routes are explicit
+`models/domains/air/default_effects_air_domain.h`; naval and ground routes are explicit
 placeholder owner shells until their damage fidelity work has runtime owners.
-`detail/default_effects_air_platform_resolution_detail.inc` is retained only as
-a compatibility bridge to the air-owned helper.

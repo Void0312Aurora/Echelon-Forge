@@ -2,8 +2,8 @@
 #include "core/interfaces/environment_model.h"
 #include "components/basic/common.h"
 #include "components/systems/ew.h"
-#include "components/combat/weapon.h"
-#include "models/naval/naval_sensor_maritime_adapter.h"
+#include "components/combat/common/weapon_common.h"
+#include "models/domains/naval/naval_sensor_maritime_adapter.h"
 
 #include <algorithm>
 #include <cmath>

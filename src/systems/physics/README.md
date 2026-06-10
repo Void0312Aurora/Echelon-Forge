@@ -1,8 +1,7 @@
 # `src/systems/physics` Boundary
 
-`systems/physics` contains shared physics progression logic and compatibility
-headers for the former air/flight system locations. The canonical air-domain
-runtime owner is now `systems/air`.
+`systems/physics` contains shared physics progression logic. The canonical
+air-domain runtime owner is `systems/domains/air`.
 
 Ground contact here supports aircraft/terrain interaction and generic physics
 constraints. It is not a land-domain movement model or full ground runtime.
@@ -11,7 +10,6 @@ constraints. It is not a land-domain movement model or full ground runtime.
 
 - Shared systems for forces, instruments, movement, leapfrog integration, ground contact, and related areas.
 - Per-frame updates to `components/physics` and terrain/ground-contact state.
-- Include-only compatibility wrappers for air systems during migration.
 
 ## Forbidden
 
@@ -25,5 +23,5 @@ constraints. It is not a land-domain movement model or full ground runtime.
 If some logic interprets tasking/commands and turns them into physical actions, split it carefully: DTOs belong in `components/command` or `components/tasking`, mission interpretation belongs in `core/mission`, and physical execution belongs here.
 
 Air-only systems such as aerodynamic state, aerodynamic effects, flight control,
-and propulsion should be owned in `systems/air`; old `systems/physics/*` headers
-for those files are compatibility wrappers only.
+and propulsion are owned in `systems/domains/air`; the old `systems/physics/*` air-system
+include paths have been removed.

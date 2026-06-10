@@ -5,11 +5,10 @@
 #include <algorithm>
 #include <iostream>
 #include "components/basic/common.h"
-#include "components/command/air/control_input_resolution.h"
+#include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/performance.h"
-#include "systems/air/propulsion_system.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

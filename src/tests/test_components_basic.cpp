@@ -7,9 +7,9 @@
 
 #include "components/basic/common.h"
 #include "components/basic/tags.h"
-#include "components/combat/damage.h"
+#include "components/combat/common/damage_common.h"
 #include "components/combat/health.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "components/physics/instruments.h"
 #include "components/physics/dynamics.h"
 #include "components/command/pilot_action.h"

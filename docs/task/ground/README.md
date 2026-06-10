@@ -114,7 +114,7 @@ without creating a new vertical runtime path.
   inspection. This is schema evidence only; route movement, terrain, sensing,
   fires, damage, and combat remain held.
 - The first C++ ground static owner-slice infrastructure has landed under
-  `src/components/tasking/ground/` and `src/components/command/ground/`. It
+  `src/components/domains/ground/tasking/` and `src/components/domains/ground/command/`. It
   exposes G0/G1 static task/status metadata through existing compatibility
   shells, maintained batch contracts, JSON round-trip, and Python bindings. It
   does not release route movement, terrain, sensing, fires, damage, or combat.

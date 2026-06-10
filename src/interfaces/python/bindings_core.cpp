@@ -12,12 +12,12 @@
 #include <spdlog/spdlog.h>
 
 #include "components/basic/common.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
 #include "components/command/legacy_command_bridge.h"
 #include "components/physics/dynamics.h"
-#include "components/air/flight_dynamics_tuning.h"
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/physics/performance.h"

@@ -7,7 +7,7 @@
 
 #include <flecs.h>
 
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "runtime/contracts/engagement_contracts.h"
 
 struct EffectsResult {

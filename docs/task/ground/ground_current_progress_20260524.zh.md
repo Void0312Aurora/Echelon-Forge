@@ -25,7 +25,7 @@ derived products。
   `Ground_Platoon_MVP` 可 load/spawn、报告 `UnitType::Ground`，并通过共享面
   暴露静态 runtime inspection state。
 - 第一版 C++ ground owner-slice 基础设施已经落到
-  `src/components/tasking/ground/` 与 `src/components/command/ground/`。它通过
+  `src/components/domains/ground/tasking/` 与 `src/components/domains/ground/command/`。它通过
   现有 compatibility shell 与 maintained batch contract 投影 G0/G1 static
   task/status metadata；不释放 route movement。
 - Python ground profile 现在会从 ground task/status metadata 生成 G0/G1
@@ -248,9 +248,9 @@ Ground 域真实性应随场景实际使用的复杂度提升而提升。项目�
 
 基础设施缺口：
 
-- `src/components/tasking/ground/` 现在包含第一版维护中的 static task/status
+- `src/components/domains/ground/tasking/` 现在包含第一版维护中的 static task/status
   owner slice：`TaskOrderGround`、`LeaderIntentGround` 与 `PilotReportGround`；
-- `src/components/command/ground/` 现在包含 `MissionCommandGround`，这是带
+- `src/components/domains/ground/command/` 现在包含 `MissionCommandGround`，这是带
   JSON round-trip 与 episode equality 支持的 static task metadata owner slice；
 - `python/rl/profile/ground_profile.py` 现在会从 `TaskOrderGround` /
   `LeaderIntentGround` metadata 以及 mission-command override 填充

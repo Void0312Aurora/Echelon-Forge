@@ -31,7 +31,5 @@ result-population 与 legacy/fallback 子模块。它们不是独立 API，也�
 
 `detail/default_effects_domain_routing_detail.inc` 是 Air/Naval/Ground effects
 ownership 的 generic router。Air consequence handling 位于
-`models/air/default_effects_air_domain.h`；naval 与 ground 路径当前只是显式
+`models/domains/air/default_effects_air_domain.h`；naval 与 ground 路径当前只是显式
 placeholder owner shell，等待各自 damage fidelity 拥有 runtime owner。
-`detail/default_effects_air_platform_resolution_detail.inc` 仅作为指向 air-owned
-helper 的 compatibility bridge 保留。

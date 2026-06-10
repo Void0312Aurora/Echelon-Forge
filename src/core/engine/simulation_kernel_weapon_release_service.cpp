@@ -6,7 +6,8 @@
 
 #include "components/basic/tags.h"
 #include "components/combat/scoring.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"

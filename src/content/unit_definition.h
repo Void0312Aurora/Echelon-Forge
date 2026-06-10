@@ -11,14 +11,16 @@
 #include "components/physics/performance.h"
 #include "components/combat/scoring.h"
 #include "components/systems/sensor.h"
-#include "components/combat/weapon.h"
-#include "components/combat/damage.h"
+#include "components/domains/air/combat/damage_air.h"
+#include "components/combat/common/damage_common.h"
+#include "components/combat/common/weapon_common.h"
+#include "components/domains/naval/combat/weapon_naval.h"
 #include "components/systems/ew.h"
 #include "components/systems/sonar.h"
-#include "components/naval/embarked_air_ops.h"
-#include "components/naval/ship_platform.h"
-#include "components/naval/submarine_platform.h"
-#include "components/air/flight_dynamics_tuning.h"
+#include "components/domains/naval/platform/embarked_air_ops.h"
+#include "components/domains/naval/platform/ship_platform.h"
+#include "components/domains/naval/platform/submarine_platform.h"
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 
 
 inline Sensor make_unit_definition_default_sensor() {

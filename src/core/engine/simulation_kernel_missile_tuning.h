@@ -3,7 +3,7 @@
 #include <cmath>
 #include <limits>
 
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 
 struct MissileTuning {
     double max_speed = std::numeric_limits<double>::quiet_NaN();

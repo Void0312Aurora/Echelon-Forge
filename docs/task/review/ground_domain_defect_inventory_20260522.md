@@ -22,11 +22,11 @@ severity, a concrete file/line reference, and a recommended resolution path.
 
 ### D-001: No C++ `command/ground/` Directory — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/command/ground/` now exists with `mission_command_ground.h` + README (EN/ZH).
+`src/components/domains/ground/command/` now exists with `mission_command_ground.h` + README (EN/ZH).
 
 ### D-002: No C++ `tasking/ground/` Directory — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/tasking/ground/` now exists with full structure: `ground_tasking_enums.h`, `leader_intent_ground.h`, `pilot_report_ground.h`, `task_order_ground.h` + README (EN/ZH).
+`src/components/domains/ground/tasking/` now exists with full structure: `ground_tasking_enums.h`, `leader_intent_ground.h`, `pilot_report_ground.h`, `task_order_ground.h` + README (EN/ZH).
 
 ### D-003: MissionCommand Aggregate Missing Ground — ~~HIGH~~ **CLOSED 2026-06-09**
 

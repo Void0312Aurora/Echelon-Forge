@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <limits>
 
-#include "components/naval/ship_platform.h"
-#include "components/naval/submarine_platform.h"
+#include "components/domains/naval/platform/ship_platform.h"
+#include "components/domains/naval/platform/submarine_platform.h"
 #include "components/systems/ew.h"
 #include "core/interfaces/environment_model.h"
 

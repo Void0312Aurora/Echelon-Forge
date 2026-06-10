@@ -6,8 +6,8 @@
 #include "systems/combat/damage_system_common.h"
 
 #include "components/combat/health.h"
-#include "components/combat/naval/damage_naval.h"
-#include "components/naval/ship_platform.h"
+#include "components/domains/naval/combat/damage_naval.h"
+#include "components/domains/naval/platform/ship_platform.h"
 #include "components/physics/dynamics.h"
 
 inline void register_naval_damage_system(flecs::world& ecs) {

@@ -145,9 +145,9 @@ enum class PlatformLossState : int {
     Lost = 4,
 };
 
-// DS-C1-A compatibility baseline: common capability fields stay here while
-// naval flooding/hull-breach fields remain on the legacy shared state until
-// downstream systems can consume a naval-owned state directly.
+// Shared platform damage capability state used by common routing and
+// domain-owned damage systems. Domain-specific helpers may project the fields
+// they own without reintroducing a public aggregate header.
 struct PlatformDamageState {
     double mission_capability = 1.0;
     double mobility_capability = 1.0;

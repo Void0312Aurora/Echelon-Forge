@@ -5,7 +5,7 @@
 #include <flecs.h>
 
 #include "components/basic/common.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 
 class IGuidanceModel {
 public:

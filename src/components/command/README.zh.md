@@ -2,11 +2,10 @@
 
 `components/command` 是飞行员动作、任务命令、命令链路和 legacy 控制命令的归属目录。旧 `components/physics/action.h` 仍保留为 compatibility umbrella include。
 
-和 tasking 一样，command 侧当前按 common foundation 加 air/naval/ground extensions
-说明，而不是 `air + ship` 二分法。`common` 承载跨域命令传输与共享执行意图，`air`
-承载成熟的航空执行面，`naval` 承载已落地的第一阶段舰艇/海上 command slice，
-`ground` 承载早期 static G0/G1 task metadata command slice。ground movement、
-sensing、fires、terrain 与 damage control 仍然 held。
+和 tasking 一样，command 侧当前按 common foundation 加 domain extensions
+说明，而不是 `air + ship` 二分法。`common` 承载跨域命令传输与共享执行意图，
+`components/domains/<domain>/command` 承载各域扩展。ground movement、sensing、
+fires、terrain 与 damage control 仍然 held。
 
 ## 允许
 
@@ -25,15 +24,15 @@ sensing、fires、terrain 与 damage control 仍然 held。
 ## 拆分方向
 
 - `common command` 放跨域共享执行语义：例如 command transport、latency/drop、pending delivery，以及可复用于多个域的基础命令向量。
-- `air command` 放当前明显航空化的执行面：`PilotAction`、现有 legacy flight control surface，以及带 route/recovery/takeoff/runway/formation 语义的 command 扩展。
-- `naval command` 单独建模当前舰艇/海上执行 DTO slice，包括站位、舰载直升机发收舰、OTH relay 和 naval surface-engagement command code。不应把 air 的 heading/altitude/runway/recovery 组合直接泛化成 “ship command”。
-- `ground command` 在 `MissionCommandGround` 中保存当前 static task metadata slice：objective/area 引用、static task mode、tactical commander ID 与 tactical cadence。在 ground schema/runtime owner 明确前，不要把 land movement/sensing/fires control 塞进 `common/`。
+- `components/domains/air/command` 放当前明显航空化的执行面：现有 legacy flight control surface，以及带 route/recovery/takeoff/runway/formation 语义的 command 扩展。
+- `components/domains/naval/command` 单独建模当前舰艇/海上执行 DTO slice，包括站位、舰载直升机发收舰、OTH relay 和 naval surface-engagement command code。不应把 air 的 heading/altitude/runway/recovery 组合直接泛化成 “ship command”。
+- `components/domains/ground/command` 在 `MissionCommandGround` 中保存当前 static task metadata slice：objective/area 引用、static task mode、tactical commander ID 与 tactical cadence。在 ground schema/runtime owner 明确前，不要把 land movement/sensing/fires control 塞进 `common/`。
 
 ## `MissionCommand` 备注
 
 `MissionCommand` 已完成 `common + air` 的第一阶段兼容拆分，但它仍然是 command 侧的高风险 consumer 汇聚点：
 
-- 代码结构上，`mission_command.h` 现在只是兼容 umbrella，对外继续暴露 flat `MissionCommand`，底层已拆为 `common/mission_command_core.h` 与 `air/mission_command_air.h`。
+- 代码结构上，`mission_command.h` 现在只是兼容 umbrella，对外继续暴露 flat `MissionCommand`，底层已拆为 `common/mission_command_core.h` 与 `components/domains/<domain>/command/*`。
 - 语义上，它依然深度耦合 air 执行面，并直接连到命令投递、mission episode 状态、mission runtime JSON codec、仪表/观测和 air control model。
 - 因此后续工作应优先保持现有 flat 兼容层和 consumer 对称性，而不是在这一层贸然推进嵌套对象化或更广泛的领域执行拆分。
 
@@ -44,7 +43,7 @@ sensing、fires、terrain 与 damage control 仍然 held。
 command DTO 可以被 `systems/`、`core/engine`、`core/mission`、`runtime/facade` 和 `interfaces/python` 消费。它不反向依赖这些层。
 
 maintained 的 air-control consumer 必须通过
-`air/control_input_resolution.h` 解析 legacy command fallback，不允许在各个
+`components/domains/air/command/control_input_resolution.h` 解析 legacy command fallback，不允许在各个
 maintained system 内部继续手写 `MovementCommand`/`ActionCommand` 探测逻辑。
 
 当前允许继续依赖 `legacy_command.h` 的显式 compatibility seam：
@@ -62,8 +61,9 @@ maintained system 内部继续手写 `MovementCommand`/`ActionCommand` 探测逻
 - `mission_command.h`
 - `command_link.h`
 - `legacy_command.h`
-- `naval/mission_command_naval.h`
-- `ground/mission_command_ground.h`
+- `components/domains/air/command/mission_command_air.h`
+- `components/domains/naval/command/mission_command_naval.h`
+- `components/domains/ground/command/mission_command_ground.h`
 
 WP0 文档口径：
 

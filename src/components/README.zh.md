@@ -21,24 +21,22 @@
 ## 子目录约定
 
 - `basic/`：基础实体标签、阵营、位置、环境数据等底层组件。
-- `air/`：air-domain tuning 和 state component，当前为 flight dynamics tuning。
-- `combat/`：伤害、生命值、武器挂载、评分等战斗状态组件。
-- `physics/`：物理状态、动力学、力、仪表、性能状态和当前 ground-contact primitive。
-- `systems/`：通信、数据链、传感器、声呐、电子战、导航、后勤等平台系统状态组件。
+- `domains/`：各域自有 component slice。当前已有 `air/`、`naval/`、`ground/`；新增域应放到这里，而不是继续摊到 `components/` 根目录。
+- `combat/`：health、scoring 和共享 weapon/damage primitive 等跨域战斗状态。域专属 combat component 放在 `domains/<domain>/combat/`。
+- `physics/`：共享物理状态、动力学、力、仪表、性能状态和当前 ground-contact primitive。
+- `systems/`：通信、数据链、传感器、声呐、电子战、导航、后勤等跨域平台系统状态组件。
 - `visual/`：视觉传感器输入输出状态。
-- `naval/`：舰艇、潜艇和舰载航空运作的海军平台状态组件。
-- `command/`：目标目录，用于 pilot action、mission command、command link 和 legacy command DTO。
-- `tasking/`：目标目录，用于 task order、leader intent、pilot report 和 C2/tasking 枚举。
+- `command/`：共享 command shell、command link、legacy command DTO 与 command common foundation。域专属 command component 放在 `domains/<domain>/command/`。
+- `tasking/`：共享 tasking shell 与 common C2/tasking foundation。域专属 tasking component 放在 `domains/<domain>/tasking/`。
 
 ## 当前阅读入口
 
 - [basic/README.md](basic/README.md)
-- [air/README.md](air/README.md)
+- [domains/README.md](domains/README.md)
 - [combat/README.md](combat/README.md)
 - [physics/README.md](physics/README.md)
 - [systems/README.md](systems/README.md)
 - [visual/README.md](visual/README.md)
-- [naval/README.md](naval/README.md)
 - [command/README.md](command/README.md)
 - [tasking/README.md](tasking/README.md)
 
@@ -46,29 +44,40 @@
 
 - `basic/`
   - `common.h`, `environment_data.h`, `tags.h`
-- `air/`
-  - `flight_dynamics_tuning.h`
+- `domains/`
+  - `air/platform/flight_dynamics_tuning.h`
+  - `air/combat/damage_air.h`, `air/combat/weapon_air.h`
+  - `air/command/mission_command_air.h`, `air/command/control_input_resolution.h`
+  - `air/tasking/air_tasking_enums.h`, `air/tasking/task_order_air.h`,
+    `air/tasking/leader_intent_air.h`, `air/tasking/pilot_report_air.h`
+  - `naval/platform/ship_platform.h`, `naval/platform/submarine_platform.h`,
+    `naval/platform/embarked_air_ops.h`
+  - `naval/combat/damage_naval.h`, `naval/combat/weapon_naval.h`
+  - `naval/command/mission_command_naval.h`
+  - `naval/tasking/naval_tasking_enums.h`, `naval/tasking/task_order_naval.h`,
+    `naval/tasking/leader_intent_naval.h`, `naval/tasking/pilot_report_naval.h`
+  - `ground/combat/damage_ground.h`, `ground/combat/weapon_ground.h`
+  - `ground/command/mission_command_ground.h`
+  - `ground/tasking/ground_tasking_enums.h`, `ground/tasking/task_order_ground.h`,
+    `ground/tasking/leader_intent_ground.h`, `ground/tasking/pilot_report_ground.h`
 - `combat/`
-  - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
+  - `common/damage_common.h`, `common/weapon_common.h`
+  - `health.h`, `scoring.h`
 - `physics/`
-  - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
-  - `action.h` 和 `flight_dynamics_tuning.h` 仅保留兼容 umbrella 入口
+  - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`, `propulsion_readouts.h`
+  - `action.h` 仅保留 command/tasking compatibility umbrella 入口
 - `systems/`
   - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`
   - `visual_sensor.h`
-- `naval/`
-  - `ship_platform.h`, `submarine_platform.h`, `embarked_air_ops.h`
 - `command/`
   - `pilot_action.h`, `mission_command.h`, `command_link.h`, `legacy_command.h`
   - `common/mission_command_core.h`, `common/comm_message.h`
-  - `air/mission_command_air.h`, `air/control_input_resolution.h`
-  - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`、`air/*`、`naval/*` 为维护中的子域入口
-  - 目前还没有 `ground/*` tasking 或 command component 子树；land tasking/native schema 仍是 bootstrap-only。
+  - `common/*` 保存共享 C2/tasking foundation
+  - `domains/ground/*` 目前仍局限于 G0/G1 tasking/status 与 native schema boundary 字段；land movement、sensing、fires、damage、terrain 和 combat runtime 仍保持 held。
 
 ## 迁移备注
 
-当前 `physics/action.h` 同时承载 command 与 tasking 类型。新增 command/tasking 类型应进入 `components/command` 或 `components/tasking`，不要继续扩展 `components/physics/action.h`。
+当前 `physics/action.h` 同时承载 command 与 tasking 类型。新增共享 command/tasking 类型应进入 `components/command` 或 `components/tasking`；域专属扩展应进入 `components/domains/<domain>/{command,tasking}`。不要继续扩展 `components/physics/action.h`。

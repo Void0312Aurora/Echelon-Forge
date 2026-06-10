@@ -1,15 +1,17 @@
 # `src/components/physics` Boundaries
 
-`components/physics` saves shared physical state components, including dynamic
-state, control law parameters, forces, instruments, and performance data. It
-should no longer absorb command/tasking concepts or air-specific tuning owners.
+`components/physics` saves shared physical state components and readout helpers,
+including dynamic state, control law parameters, forces, instruments,
+performance data, and propulsion readouts. It should no longer absorb
+command/tasking concepts or air-specific tuning owners.
 
 ## Allowed
 
 - Physical states such as attitude, velocity, acceleration, angular velocity, force, and mass.
 - Control law parameters, performance envelope, instrument state.
 - ECS components that directly read/write with the physical system.
-- Include-only compatibility wrappers for air-specific tuning during migration.
+- Shared readout helpers for physics-owned state, such as propulsion fuel-flow
+  and engine-RPM projections.
 
 ## Prohibited
 
@@ -24,8 +26,8 @@ should no longer absorb command/tasking concepts or air-specific tuning owners.
 - `components/command/`
 - `components/tasking/`
 
-`flight_dynamics_tuning.h` is now a compatibility wrapper around
-`components/air/flight_dynamics_tuning.h`. New physical components can continue
+Air flight-dynamics tuning now belongs only in
+`components/domains/air/platform/flight_dynamics_tuning.h`. New physical components can continue
 to be placed in this directory; new command or task semantics cannot continue to
 be placed in this directory, and new air-specific tuning owners belong in
-`components/air`.
+`components/domains/air/platform`.

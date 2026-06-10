@@ -4,7 +4,7 @@
 
 The directory is multi-domain aware for sensing/contacts, including air/visual
 sensor behavior and naval/acoustic helpers. Ship-specific maritime sensor state
-is routed through `models/naval/naval_sensor_maritime_adapter.h` rather than
+is routed through `models/domains/naval/naval_sensor_maritime_adapter.h` rather than
 owned directly in the generic sensor model. It does not own full ground sensing
 or land C2 runtime behavior.
 

@@ -21,7 +21,7 @@ The maintained reporting surface is split into:
 Primary references:
 
 - [src/components/tasking/common/pilot_report_core.h](../../../src/components/tasking/common/pilot_report_core.h)
-- [src/components/tasking/air/pilot_report_air.h](../../../src/components/tasking/air/pilot_report_air.h)
+- [src/components/domains/air/tasking/pilot_report_air.h](../../../src/components/domains/air/tasking/pilot_report_air.h)
 - [python/rl/tasking/leader_tasking.py](../../../python/rl/tasking/leader_tasking.py)
 - [src/runtime/contracts/world_batch_contracts.h](../../../src/runtime/contracts/world_batch_contracts.h)
 

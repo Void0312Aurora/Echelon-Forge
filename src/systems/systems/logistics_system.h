@@ -7,12 +7,12 @@
 #include <flecs.h>
 #include <spdlog/spdlog.h>
 #include "components/basic/common.h"
-#include "components/command/air/control_input_resolution.h"
+#include "components/domains/air/command/control_input_resolution.h"
 #include "components/command/legacy_command_bridge.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/dynamics.h"
+#include "components/physics/propulsion_readouts.h"
 #include "components/systems/logistics.h"
-#include "systems/air/propulsion_system.h"
 
 inline void register_logistics_system(flecs::world& ecs) {
     // 1. Fuel Consumption System
@@ -24,7 +24,7 @@ inline void register_logistics_system(flecs::world& ecs) {
                 double dt = it.delta_time();
 
                 for (auto i : it) {
-                    fuel[i].current_flow_rate = flight_dynamics::propulsion_fuel_flow_kg_per_s(
+                    fuel[i].current_flow_rate = propulsion_readouts::fuel_flow_kg_per_s(
                         propulsion[i],
                         fuel[i].mil_power_flow_rate,
                         fuel[i].ab_flow_rate_multiplier

@@ -19,10 +19,10 @@ project-wide command standard.
 
 Primary references:
 
-- [src/components/tasking/air/task_order_air.h](../../../src/components/tasking/air/task_order_air.h)
-- [src/components/tasking/air/leader_intent_air.h](../../../src/components/tasking/air/leader_intent_air.h)
+- [src/components/domains/air/tasking/task_order_air.h](../../../src/components/domains/air/tasking/task_order_air.h)
+- [src/components/domains/air/tasking/leader_intent_air.h](../../../src/components/domains/air/tasking/leader_intent_air.h)
 - [src/components/command/common/mission_command_core.h](../../../src/components/command/common/mission_command_core.h)
-- [src/components/command/air/mission_command_air.h](../../../src/components/command/air/mission_command_air.h)
+- [src/components/domains/air/command/mission_command_air.h](../../../src/components/domains/air/command/mission_command_air.h)
 - [gym_envs/scenario_loader/runtime_state.py](../../../gym_envs/scenario_loader/runtime_state.py)
 - [tests/runtime/mission/test_mission_command_air_fields_roundtrip.py](../../../tests/runtime/mission/test_mission_command_air_fields_roundtrip.py)
 

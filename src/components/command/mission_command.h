@@ -1,9 +1,9 @@
 #pragma once
 
-#include "components/command/air/mission_command_air.h"
+#include "components/domains/air/command/mission_command_air.h"
 #include "components/command/common/mission_command_core.h"
-#include "components/command/ground/mission_command_ground.h"
-#include "components/command/naval/mission_command_naval.h"
+#include "components/domains/ground/command/mission_command_ground.h"
+#include "components/domains/naval/command/mission_command_naval.h"
 
 /**
  * MissionCommand

@@ -213,6 +213,7 @@ NAVAL_MISSION_WEAPON_RELEASE_SYSTEM = (
     REPO_ROOT
     / "src"
     / "systems"
+    / "domains"
     / "naval"
     / "naval_mission_weapon_release_system.h"
 )
@@ -248,6 +249,7 @@ NAVAL_LOGISTICS_SYSTEM = (
     REPO_ROOT
     / "src"
     / "systems"
+    / "domains"
     / "naval"
     / "naval_logistics_system.h"
 )
@@ -255,6 +257,7 @@ NAVAL_SENSOR_MARITIME_ADAPTER = (
     REPO_ROOT
     / "src"
     / "models"
+    / "domains"
     / "naval"
     / "naval_sensor_maritime_adapter.h"
 )
@@ -266,10 +269,11 @@ DEFAULT_EFFECTS_LEGACY_DETAIL = (
     / "detail"
     / "default_effects_legacy_detail.inc"
 )
-DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL = (
+DEFAULT_EFFECTS_AIR_DOMAIN = (
     REPO_ROOT
     / "src"
     / "models"
+    / "domains"
     / "air"
     / "default_effects_air_domain.h"
 )
@@ -280,6 +284,100 @@ DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL = (
     / "weapons"
     / "detail"
     / "default_effects_domain_routing_detail.inc"
+)
+COMPONENT_DOMAINS_ROOT = REPO_ROOT / "src" / "components" / "domains"
+SYSTEM_DOMAINS_ROOT = REPO_ROOT / "src" / "systems" / "domains"
+MODEL_DOMAINS_ROOT = REPO_ROOT / "src" / "models" / "domains"
+DOMAIN_COMPONENT_REQUIRED_DIRS = (
+    COMPONENT_DOMAINS_ROOT / "air" / "platform",
+    COMPONENT_DOMAINS_ROOT / "air" / "combat",
+    COMPONENT_DOMAINS_ROOT / "air" / "command",
+    COMPONENT_DOMAINS_ROOT / "air" / "tasking",
+    COMPONENT_DOMAINS_ROOT / "naval" / "platform",
+    COMPONENT_DOMAINS_ROOT / "naval" / "combat",
+    COMPONENT_DOMAINS_ROOT / "naval" / "command",
+    COMPONENT_DOMAINS_ROOT / "naval" / "tasking",
+    COMPONENT_DOMAINS_ROOT / "ground" / "combat",
+    COMPONENT_DOMAINS_ROOT / "ground" / "command",
+    COMPONENT_DOMAINS_ROOT / "ground" / "tasking",
+)
+DOMAIN_COMPONENT_RETIRED_FLAT_DIRS = (
+    REPO_ROOT / "src" / "components" / "air",
+    REPO_ROOT / "src" / "components" / "naval",
+    REPO_ROOT / "src" / "components" / "combat" / "air",
+    REPO_ROOT / "src" / "components" / "combat" / "naval",
+    REPO_ROOT / "src" / "components" / "combat" / "ground",
+    REPO_ROOT / "src" / "components" / "command" / "air",
+    REPO_ROOT / "src" / "components" / "command" / "naval",
+    REPO_ROOT / "src" / "components" / "command" / "ground",
+    REPO_ROOT / "src" / "components" / "tasking" / "air",
+    REPO_ROOT / "src" / "components" / "tasking" / "naval",
+    REPO_ROOT / "src" / "components" / "tasking" / "ground",
+)
+DOMAIN_COMPONENT_RETIRED_INCLUDE_PREFIXES = (
+    'components/air/',
+    'components/naval/',
+    'components/combat/air/',
+    'components/combat/naval/',
+    'components/combat/ground/',
+    'components/command/air/',
+    'components/command/naval/',
+    'components/command/ground/',
+    'components/tasking/air/',
+    'components/tasking/naval/',
+    'components/tasking/ground/',
+)
+DOMAIN_SYSTEM_REQUIRED_DIRS = (
+    SYSTEM_DOMAINS_ROOT / "air",
+    SYSTEM_DOMAINS_ROOT / "naval",
+)
+DOMAIN_MODEL_REQUIRED_DIRS = (
+    MODEL_DOMAINS_ROOT / "air",
+    MODEL_DOMAINS_ROOT / "naval",
+    MODEL_DOMAINS_ROOT / "ground",
+)
+DOMAIN_SYSTEM_MODEL_RETIRED_FLAT_DIRS = (
+    REPO_ROOT / "src" / "systems" / "air",
+    REPO_ROOT / "src" / "systems" / "naval",
+    REPO_ROOT / "src" / "systems" / "ground",
+    REPO_ROOT / "src" / "models" / "air",
+    REPO_ROOT / "src" / "models" / "naval",
+    REPO_ROOT / "src" / "models" / "ground",
+)
+DOMAIN_SYSTEM_MODEL_RETIRED_INCLUDE_PREFIXES = (
+    'systems/air/',
+    'systems/naval/',
+    'systems/ground/',
+    'models/air/',
+    'models/naval/',
+    'models/ground/',
+)
+DOMAIN_SEPARATION_RETIRED_PUBLIC_FILES = (
+    REPO_ROOT / "src" / "components" / "combat" / "damage.h",
+    REPO_ROOT / "src" / "components" / "combat" / "weapon.h",
+    REPO_ROOT / "src" / "systems" / "combat" / "damage_system.h",
+    REPO_ROOT / "src" / "components" / "physics" / "flight_dynamics_tuning.h",
+    REPO_ROOT / "src" / "systems" / "physics" / "aero_state_system.h",
+    REPO_ROOT / "src" / "systems" / "physics" / "aerodynamics_system.h",
+    REPO_ROOT / "src" / "systems" / "physics" / "control_system.h",
+    REPO_ROOT / "src" / "systems" / "physics" / "propulsion_system.h",
+    REPO_ROOT
+    / "src"
+    / "models"
+    / "weapons"
+    / "detail"
+    / "default_effects_air_platform_resolution_detail.inc",
+)
+DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS = (
+    '#include "components/combat/damage.h"',
+    '#include "components/combat/weapon.h"',
+    '#include "systems/combat/damage_system.h"',
+    '#include "components/physics/flight_dynamics_tuning.h"',
+    '#include "systems/physics/aero_state_system.h"',
+    '#include "systems/physics/aerodynamics_system.h"',
+    '#include "systems/physics/control_system.h"',
+    '#include "systems/physics/propulsion_system.h"',
+    '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"',
 )
 STRUCTURAL_DOC_EN = (
     REPO_ROOT
@@ -356,6 +454,7 @@ BINDINGS_DIAGNOSTICS_ALLOWLIST = {
     "debug_get_logistics_node",
     "debug_get_resupply_state",
     "debug_get_data_link_state",
+    "debug_get_ground_contact_state",
     "debug_get_last_scan_time",
     "debug_get_contact_count",
     "debug_get_mass_state",
@@ -394,8 +493,9 @@ AIR_CONTROL_RESOLUTION = (
     REPO_ROOT
     / "src"
     / "components"
-    / "command"
+    / "domains"
     / "air"
+    / "command"
     / "control_input_resolution.h"
 )
 
@@ -422,6 +522,21 @@ DEBUG_DAMAGE_DTO_CALLER_SIGNATURES = (
 
 def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _maintained_source_texts() -> list[tuple[Path, str]]:
+    source_roots = (REPO_ROOT / "src", REPO_ROOT / "src" / "tests")
+    suffixes = {".c", ".cc", ".cpp", ".h", ".hpp", ".inc"}
+    files: list[Path] = []
+    for source_root in source_roots:
+        if not source_root.exists():
+            continue
+        files.extend(
+            path
+            for path in source_root.rglob("*")
+            if path.is_file() and path.suffix in suffixes
+        )
+    return [(path, _text(path)) for path in sorted(files)]
 
 
 def _line_count(path: Path) -> int:
@@ -497,11 +612,24 @@ def _simulation_kernel_binding_names() -> list[str]:
     text = _text(BINDINGS_CORE)
     start = text.index('nb::class_<SimulationKernel> simulation_kernel(m, "SimulationKernel");')
     block = text[start:]
-    return re.findall(r'\.def\("([^"]+)"', block)
+    names = re.findall(r'\.def\s*\(\s*"([^"]+)"', block)
+    return list(dict.fromkeys(names))
 
 
 def _extract_function_block(text: str, signature: str) -> str:
     start = text.rindex(signature)
+    return _extract_braced_block_after(text, start)
+
+
+def _extract_binding_lambda_block(text: str, binding_name: str) -> str:
+    pattern = re.compile(rf'\.def\s*\(\s*"{re.escape(binding_name)}"')
+    match = pattern.search(text)
+    if match is None:
+        raise AssertionError(f"could not find binding for {binding_name}")
+    return _extract_braced_block_after(text, match.start())
+
+
+def _extract_braced_block_after(text: str, start: int) -> str:
     brace_start = text.index("{", start)
     depth = 0
     for idx in range(brace_start, len(text)):
@@ -512,7 +640,7 @@ def _extract_function_block(text: str, signature: str) -> str:
             depth -= 1
             if depth == 0:
                 return text[start:idx + 1]
-    raise AssertionError(f"could not extract block for {signature}")
+    raise AssertionError("could not extract braced block")
 
 
 def test_wp22_counterfactual_structural_split_promotes_types_and_validation_owners() -> None:
@@ -657,7 +785,7 @@ def test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_s
         "OnUpdate systems once PilotWeaponRelease has been migrated to a named helper"
     )
     assert '#include "systems/combat/pilot_weapon_release_system.h"' in systems_text
-    assert '#include "systems/naval/naval_mission_weapon_release_system.h"' in systems_text
+    assert '#include "systems/domains/naval/naval_mission_weapon_release_system.h"' in systems_text
     assert "IWeaponReleaseService& weapon_release_service = *this" not in systems_text
     assert "register_pilot_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
     assert "register_naval_mission_weapon_release_system(ecs, *weapon_release_service_)" in systems_text
@@ -868,9 +996,9 @@ def test_wp22_legacy_debug_setter_routes_through_bridge_helpers_not_direct_compo
         text,
         "void bind_simulation_kernel_legacy_compatibility_debug_surface("
     )
-    setter_block = _extract_function_block(
+    setter_block = _extract_binding_lambda_block(
         legacy_block,
-        '.def("debug_set_legacy_movement_command"'
+        "debug_set_legacy_movement_command",
     )
 
     assert "diagnostics_quarantined_legacy_movement_bridge_write(" in setter_block
@@ -903,9 +1031,9 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
         "debug_get_pending_movement_command",
         "debug_get_pending_action_command",
     ):
-        binding_block = _extract_function_block(
+        binding_block = _extract_binding_lambda_block(
             diagnostics_block,
-            f'.def("{binding_name}"'
+            binding_name,
         )
         assert "diagnostics_mark_read_only_snapshot(" in binding_block
         assert '"diagnostics_pending_transport_shell"' in binding_block
@@ -916,9 +1044,9 @@ def test_wp22_debug_movement_mirror_and_pending_shells_carry_quarantine_snapshot
         assert 'out["transport_shell_truth_owner"] =' in binding_block
         assert "read-only transport shell snapshot" in binding_block
 
-    legacy_getter_block = _extract_function_block(
+    legacy_getter_block = _extract_binding_lambda_block(
         legacy_block,
-        '.def("debug_get_legacy_movement_command"'
+        "debug_get_legacy_movement_command",
     )
     assert "diagnostics_mark_read_only_snapshot(" in legacy_getter_block
     assert '"diagnostics_legacy_mirror"' in legacy_getter_block
@@ -1035,7 +1163,7 @@ def test_wp22_command_link_pending_transport_headers_keep_typed_owner_markers_ex
 def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     text = _text(DEFAULT_EFFECTS_MODEL)
     legacy_text = _text(DEFAULT_EFFECTS_LEGACY_DETAIL)
-    air_platform_text = _text(DEFAULT_EFFECTS_AIR_PLATFORM_RESOLUTION_DETAIL)
+    air_platform_text = _text(DEFAULT_EFFECTS_AIR_DOMAIN)
     routing_text = _text(DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL)
 
     assert (
@@ -1045,10 +1173,6 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     assert (
         '#include "models/weapons/detail/default_effects_domain_routing_detail.inc"'
         in text
-    )
-    assert (
-        '#include "models/weapons/detail/default_effects_air_platform_resolution_detail.inc"'
-        not in text
     )
     assert re.search(
         r"if\s*\(\s*hp\s*&&\s*!structured_air_target\s*&&\s*"
@@ -1068,9 +1192,9 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     assert "score->hits_landed" in legacy_block
     assert "score->kills_confirmed" in legacy_block
 
-    assert '#include "models/air/default_effects_air_domain.h"' in routing_text
-    assert '#include "models/naval/default_effects_naval_domain.h"' in routing_text
-    assert '#include "models/ground/default_effects_ground_domain.h"' in routing_text
+    assert '#include "models/domains/air/default_effects_air_domain.h"' in routing_text
+    assert '#include "models/domains/naval/default_effects_naval_domain.h"' in routing_text
+    assert '#include "models/domains/ground/default_effects_ground_domain.h"' in routing_text
     assert "route_default_effects_target_domain(" in routing_text
     assert "DefaultEffectsTargetDomain::NavalPlaceholder" in routing_text
     assert "DefaultEffectsTargetDomain::GroundPlaceholder" in routing_text
@@ -1086,35 +1210,142 @@ def test_a2_structured_air_effects_do_not_write_rl_score_authority() -> None:
     assert "Score*" not in structured_block
 
 
+def test_domain_component_slices_stay_packaged_under_domains_root() -> None:
+    components_readme = _text(REPO_ROOT / "src" / "components" / "README.md")
+    domains_readme = _text(COMPONENT_DOMAINS_ROOT / "README.md")
+
+    for required_dir in DOMAIN_COMPONENT_REQUIRED_DIRS:
+        assert required_dir.is_dir(), (
+            f"{required_dir.relative_to(REPO_ROOT)} is the maintained domain "
+            "component owner directory"
+        )
+
+    for retired_dir in DOMAIN_COMPONENT_RETIRED_FLAT_DIRS:
+        assert not retired_dir.exists(), (
+            f"{retired_dir.relative_to(REPO_ROOT)} is a retired flat domain "
+            "component directory; use src/components/domains/<domain>/..."
+        )
+
+    assert "New domains should follow the same shape" in domains_readme
+    assert "instead of adding more top-level component directories" in domains_readme
+    assert "Domain-specific command components live under" in components_readme
+    assert "components/domains/<domain>" in components_readme
+
+    maintained_sources = _maintained_source_texts()
+    for include_prefix in DOMAIN_COMPONENT_RETIRED_INCLUDE_PREFIXES:
+        offenders = [
+            path.relative_to(REPO_ROOT).as_posix()
+            for path, source_text in maintained_sources
+            if include_prefix in source_text
+        ]
+        assert offenders == [], (
+            f"{include_prefix} is a retired flat domain component include prefix; "
+            f"use components/domains/<domain>/... instead. Offenders: {offenders}"
+        )
+
+
+def test_system_and_model_domain_slices_stay_packaged_under_domains_root() -> None:
+    systems_readme = _text(REPO_ROOT / "src" / "systems" / "README.md")
+    system_domains_readme = _text(SYSTEM_DOMAINS_ROOT / "README.md")
+    models_readme = _text(REPO_ROOT / "src" / "models" / "README.md")
+    model_domains_readme = _text(MODEL_DOMAINS_ROOT / "README.md")
+
+    for required_dir in DOMAIN_SYSTEM_REQUIRED_DIRS + DOMAIN_MODEL_REQUIRED_DIRS:
+        assert required_dir.is_dir(), (
+            f"{required_dir.relative_to(REPO_ROOT)} is the maintained domain "
+            "owner directory"
+        )
+
+    for retired_dir in DOMAIN_SYSTEM_MODEL_RETIRED_FLAT_DIRS:
+        assert not retired_dir.exists(), (
+            f"{retired_dir.relative_to(REPO_ROOT)} is a retired flat domain "
+            "directory; use the layer's domains/<domain>/ directory"
+        )
+
+    assert "new domain runtime owners out of the" in system_domains_readme
+    assert "new domain runtime owners should be added here" in systems_readme
+    assert "New domain model" in model_domains_readme
+    assert "owners should be added here" in model_domains_readme
+    assert "new domain model owners should be" in models_readme
+
+    maintained_sources = _maintained_source_texts()
+    for include_prefix in DOMAIN_SYSTEM_MODEL_RETIRED_INCLUDE_PREFIXES:
+        offenders = [
+            path.relative_to(REPO_ROOT).as_posix()
+            for path, source_text in maintained_sources
+            if include_prefix in source_text
+        ]
+        assert offenders == [], (
+            f"{include_prefix} is a retired flat domain include prefix; "
+            f"use */domains/<domain>/... instead. Offenders: {offenders}"
+        )
+
+
 def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> None:
     systems_text = _text(SIMULATION_KERNEL_SYSTEMS)
     logistics_text = _text(GENERIC_LOGISTICS_SYSTEM)
     naval_logistics_text = _text(NAVAL_LOGISTICS_SYSTEM)
+    instrument_text = _text(REPO_ROOT / "src" / "systems" / "physics" / "instrument_system.h")
+    air_propulsion_text = _text(
+        REPO_ROOT / "src" / "systems" / "domains" / "air" / "propulsion_system.h"
+    )
     sensor_text = _text(DEFAULT_SENSOR_MODEL)
     maritime_adapter_text = _text(NAVAL_SENSOR_MARITIME_ADAPTER)
     effects_text = _text(DEFAULT_EFFECTS_MODEL)
     routing_text = _text(DEFAULT_EFFECTS_DOMAIN_ROUTING_DETAIL)
 
+    for retired_path in DOMAIN_SEPARATION_RETIRED_PUBLIC_FILES:
+        assert not retired_path.exists(), (
+            f"{retired_path.relative_to(REPO_ROOT)} is a retired domain-split "
+            "compatibility/public entry and must not be recreated"
+        )
+
+    maintained_sources = _maintained_source_texts()
+    for include_string in DOMAIN_SEPARATION_RETIRED_INCLUDE_STRINGS:
+        offenders = [
+            path.relative_to(REPO_ROOT).as_posix()
+            for path, source_text in maintained_sources
+            if include_string in source_text
+        ]
+        assert offenders == [], (
+            f"{include_string} is retired by the domain split and still appears in "
+            f"maintained source files: {offenders}"
+        )
+
     assert "NavalUnderwayResupply" not in logistics_text
     assert "underway_replenishment_enabled" not in logistics_text
     assert "NavalUnderwayResupply" in naval_logistics_text
     assert "underway_replenishment_enabled" in naval_logistics_text
-    assert '#include "systems/naval/naval_logistics_system.h"' in systems_text
+    assert '#include "systems/domains/naval/naval_logistics_system.h"' in systems_text
     assert "register_logistics_system(ecs);" in systems_text
     assert "register_naval_logistics_system(ecs);" in systems_text
+    assert '#include "systems/domains/air/propulsion_system.h"' in systems_text
+    assert "register_propulsion_system(ecs);" in systems_text
 
-    assert "components/naval/ship_platform.h" not in sensor_text
+    assert '#include "components/physics/propulsion_readouts.h"' in logistics_text
+    assert '#include "systems/domains/air/propulsion_system.h"' not in logistics_text
+    assert "propulsion_readouts::fuel_flow_kg_per_s(" in logistics_text
+    assert "flight_dynamics::propulsion_fuel_flow_kg_per_s(" not in logistics_text
+    assert '#include "components/physics/propulsion_readouts.h"' in instrument_text
+    assert '#include "systems/domains/air/propulsion_system.h"' not in instrument_text
+    assert "propulsion_readouts::fuel_flow_kg_per_s(" in instrument_text
+    assert "propulsion_readouts::engine_rpm_pct(" in instrument_text
+    assert "flight_dynamics::propulsion_engine_rpm_pct(" not in instrument_text
+    assert "propulsion_fuel_flow_kg_per_s(" not in air_propulsion_text
+    assert "propulsion_engine_rpm_pct(" not in air_propulsion_text
+
+    assert "components/domains/naval/platform/ship_platform.h" not in sensor_text
     assert "ShipPlatform" not in sensor_text
-    assert '#include "models/naval/naval_sensor_maritime_adapter.h"' in sensor_text
-    assert "components/naval/ship_platform.h" in maritime_adapter_text
+    assert '#include "models/domains/naval/naval_sensor_maritime_adapter.h"' in sensor_text
+    assert "components/domains/naval/platform/ship_platform.h" in maritime_adapter_text
     assert "ShipPlatform" in maritime_adapter_text
 
     assert "is_structured_damage_air_target" not in effects_text
     assert "default_effects_air_platform_resolution_detail.inc" not in effects_text
     assert "route_default_effects_target_domain(" in routing_text
-    assert '#include "models/air/default_effects_air_domain.h"' in routing_text
-    assert '#include "models/naval/default_effects_naval_domain.h"' in routing_text
-    assert '#include "models/ground/default_effects_ground_domain.h"' in routing_text
+    assert '#include "models/domains/air/default_effects_air_domain.h"' in routing_text
+    assert '#include "models/domains/naval/default_effects_naval_domain.h"' in routing_text
+    assert '#include "models/domains/ground/default_effects_ground_domain.h"' in routing_text
 
 
 def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_blockers_explicit() -> None:

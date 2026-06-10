@@ -2,14 +2,15 @@
 
 `components/combat` holds combat-related ECS state, such as damage, health, weapon mounts, and scoring state.
 
-The component surface includes generic weapon/damage state and naval weapon
-system data, but it is data only. It is not evidence that a ground fires/damage
-component model or full naval engagement owner has landed.
+The root combat surface now carries only shared combat state and common
+weapon/damage primitives. Air, naval, and ground combat owner slices live under
+`components/domains/<domain>/combat/`.
 
 ## Allowed
 
 - Combat state components: health, damage, weapon, scoring.
-- Naval weapon-system state that remains plain ECS data.
+- Domain-owned combat slices that remain plain ECS data, via
+  `components/domains/<domain>/combat/`.
 - Pure data read and written by weapon systems and damage systems.
 
 ## Disallowed
@@ -17,7 +18,8 @@ component model or full naval engagement owner has landed.
 - Guidance, damage resolution, or firing sequence implementation.
 - Physics motion state, sensor scanning state, or mission state.
 - Python bindings and runtime owner.
-- Ground fires/damage schema ownership.
+- New domain-specific fires/damage schema ownership at the `components/combat`
+  root.
 
 ## Migration Notes
 

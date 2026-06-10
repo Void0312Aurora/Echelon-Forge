@@ -3,12 +3,10 @@
 `components/command` is the home directory for pilot actions, mission commands, command links, and legacy control commands. The old `components/physics/action.h` is retained as a compatibility umbrella include.
 
 Similar to tasking, the command side is now documented as a common foundation
-with air, naval, and ground extensions, rather than an `air + ship` split.
-`common` carries cross-domain command transport and shared execution intent,
-`air` carries the mature aviation execution surface, `naval` carries the
-maintained first-stage ship/maritime command slice, and `ground` carries the
-early static G0/G1 task metadata command slice. Ground movement, sensing,
-fires, terrain, and damage controls remain held.
+with domain extensions, rather than an `air + ship` split. `common` carries
+cross-domain command transport and shared execution intent, while
+`components/domains/<domain>/command` carries each domain extension. Ground
+movement, sensing, fires, terrain, and damage controls remain held.
 
 ## Allowed
 
@@ -27,15 +25,15 @@ fires, terrain, and damage controls remain held.
 ## Split Direction
 
 - `common command` holds cross-domain shared execution semantics: for example, command transport, latency/drop, pending delivery, and basic command vectors reusable across multiple domains.
-- `air command` holds the currently aviation-specific execution surface: `PilotAction`, existing legacy flight control surfaces, and command extensions with route/recovery/takeoff/runway/formation semantics.
-- `naval command` models the current ship/maritime execution DTO slice separately, including stationing, embarked helo launch/recovery, OTH relay, and naval surface-engagement command codes. Do not directly generalize air’s heading/altitude/runway/recovery combinations into a “ship command”.
-- `ground command` holds the current static task metadata slice in `MissionCommandGround`: objective/area references, static task mode, tactical commander ID, and tactical cadence. Keep land movement/sensing/fires control out of `common/` until the ground schema/runtime owner is defined.
+- `components/domains/air/command` holds the currently aviation-specific execution surface: existing legacy flight control surfaces and command extensions with route/recovery/takeoff/runway/formation semantics.
+- `components/domains/naval/command` models the current ship/maritime execution DTO slice separately, including stationing, embarked helo launch/recovery, OTH relay, and naval surface-engagement command codes. Do not directly generalize air's heading/altitude/runway/recovery combinations into a "ship command".
+- `components/domains/ground/command` holds the current static task metadata slice in `MissionCommandGround`: objective/area references, static task mode, tactical commander ID, and tactical cadence. Keep land movement/sensing/fires control out of `common/` until the ground schema/runtime owner is defined.
 
 ## Notes on `MissionCommand`
 
 `MissionCommand` has completed the first stage of compatible splitting into `common + air`, but it remains a high-risk consumer convergence point on the command side:
 
-- In terms of code structure, `mission_command.h` is now only a compatibility umbrella, externally exposing the flat `MissionCommand`, while the underlying layers have been split into `common/mission_command_core.h` and `air/mission_command_air.h`.
+- In terms of code structure, `mission_command.h` is now only a compatibility umbrella, externally exposing the flat `MissionCommand`, while the underlying layers have been split into `common/mission_command_core.h` and `components/domains/<domain>/command/*`.
 - Semantically, it remains deeply coupled with the air execution surface and directly connects to command delivery, mission episode state, mission runtime JSON codec, instrumentation/observation, and the air control model.
 - Therefore, subsequent work should prioritize maintaining the existing flat compatibility layer and consumer symmetry, rather than aggressively pushing toward nested objectification or broader domain-specific execution splits at this layer.
 
@@ -46,7 +44,7 @@ At the code level, `CommandLink` is closer to a truly shared core than `MissionC
 Command DTOs can be consumed by `systems/`, `core/engine`, `core/mission`, `runtime/facade`, and `interfaces/python`. They do not depend on these layers in reverse.
 
 Maintained air-control consumers must resolve legacy command fallback through
-`air/control_input_resolution.h`. Ad-hoc `MovementCommand`/`ActionCommand`
+`components/domains/air/command/control_input_resolution.h`. Ad-hoc `MovementCommand`/`ActionCommand`
 probing inside maintained systems is not an allowed pattern.
 
 Current explicit compatibility seams that may still depend on `legacy_command.h`:
@@ -64,8 +62,9 @@ Already implemented:
 - `mission_command.h`
 - `command_link.h`
 - `legacy_command.h`
-- `naval/mission_command_naval.h`
-- `ground/mission_command_ground.h`
+- `components/domains/air/command/mission_command_air.h`
+- `components/domains/naval/command/mission_command_naval.h`
+- `components/domains/ground/command/mission_command_ground.h`
 
 WP0 document scope:
 

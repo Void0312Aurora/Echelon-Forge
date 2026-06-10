@@ -56,7 +56,7 @@ The maintained air-specialization contract is split across several layers in the
 code base:
 
 - air tasking extensions:
-  [src/components/tasking/air/README.md](../../../src/components/tasking/air/README.md)
+  [src/components/domains/air/tasking/README.md](../../../src/components/domains/air/tasking/README.md)
 - shared command core plus air command extension:
   [src/components/command/common/README.md](../../../src/components/command/common/README.md)
 - action surface:

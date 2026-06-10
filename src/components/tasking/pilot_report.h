@@ -1,9 +1,9 @@
 #pragma once
 
-#include "components/tasking/air/pilot_report_air.h"
+#include "components/domains/air/tasking/pilot_report_air.h"
 #include "components/tasking/common/pilot_report_core.h"
-#include "components/tasking/ground/pilot_report_ground.h"
-#include "components/tasking/naval/pilot_report_naval.h"
+#include "components/domains/ground/tasking/pilot_report_ground.h"
+#include "components/domains/naval/tasking/pilot_report_naval.h"
 
 struct PilotReport : PilotReportCore, PilotReportAir, PilotReportNaval, PilotReportGround {};
 

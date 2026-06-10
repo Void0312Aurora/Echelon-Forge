@@ -19,11 +19,11 @@
 
 ### D-001: 缺少 C++ `command/ground/` 目录 — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/command/ground/` 已存在，含 `mission_command_ground.h` + README（中/英）。
+`src/components/domains/ground/command/` 已存在，含 `mission_command_ground.h` + README（中/英）。
 
 ### D-002: 缺少 C++ `tasking/ground/` 目录 — ~~BLOCKER~~ **CLOSED 2026-06-09**
 
-`src/components/tasking/ground/` 已存在，含完整结构：`ground_tasking_enums.h`、`leader_intent_ground.h`、`pilot_report_ground.h`、`task_order_ground.h` + README（中/英）。
+`src/components/domains/ground/tasking/` 已存在，含完整结构：`ground_tasking_enums.h`、`leader_intent_ground.h`、`pilot_report_ground.h`、`task_order_ground.h` + README（中/英）。
 
 ### D-003: MissionCommand 聚合缺少 Ground — ~~HIGH~~ **CLOSED 2026-06-09**
 

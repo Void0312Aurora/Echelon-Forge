@@ -7,7 +7,7 @@
 #include "components/systems/sensor.h"
 #include "components/systems/track_management.h"
 #include "components/systems/comm.h"
-#include "components/naval/ship_platform.h"
+#include "components/domains/naval/platform/ship_platform.h"
 #include "components/command/legacy_command_bridge.h"
 #include <spdlog/spdlog.h>
 #include <cmath>

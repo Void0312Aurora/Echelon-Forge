@@ -15,7 +15,7 @@
 #include "components/command/legacy_command_bridge.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/health.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
 #include "components/systems/ew.h"

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "components/tasking/air/leader_intent_air.h"
+#include "components/domains/air/tasking/leader_intent_air.h"
 #include "components/tasking/common/leader_intent_core.h"
-#include "components/tasking/ground/leader_intent_ground.h"
-#include "components/tasking/naval/leader_intent_naval.h"
+#include "components/domains/ground/tasking/leader_intent_ground.h"
+#include "components/domains/naval/tasking/leader_intent_naval.h"
 
 /**
  * LeaderIntent

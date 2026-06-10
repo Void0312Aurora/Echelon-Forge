@@ -2,9 +2,10 @@
 
 `systems/` 保存 ECS system registration 和每 tick mutation 逻辑。这里的代码消费 `components/` 与 `models/`，并由 `core/engine` 注册和调度。
 
-本层是 multi-domain aware，但成熟度不均：air execution 现在有显式 owner 目录，
-physics 保留共享 primitive，naval 已有舰艇/潜艇和舰载航空 token system，ground 只限 terrain/ground-contact
-primitive，不是 full land movement、sensing、fires 或 damage runtime。
+本层是 multi-domain aware，但成熟度不均：air execution 现在由 `domains/air` 显式拥有，
+physics 保留共享 primitive，naval 的舰艇/潜艇和舰载航空 token system 位于
+`domains/naval`，ground 只限 terrain/ground-contact primitive，不是 full land
+movement、sensing、fires 或 damage runtime。
 
 ## 允许
 
@@ -25,39 +26,41 @@ primitive，不是 full land movement、sensing、fires 或 damage runtime。
 ## 子目录约定
 
 - `core/`：通用 operation / lifecycle system。
-- `air/`：air-domain flight control、aero state、propulsion 和 aerodynamic effect。
+- `domains/`：域自有 runtime system。当前已有 `air/` 与 `naval/` owner；新增域 runtime owner 应放到这里，而不是继续摊到 `systems/` 根目录。
 - `physics/`：force clear、force projection、integration、ground contact、instrument 等共享物理 primitive。
 - `combat/`：伤害、制导和战斗效果系统。
 - `systems/`：平台系统 runtime，例如 command link、data link、EW、logistics、navigation、sensor、track manager。
-- `naval/`：舰艇/潜艇运动与舰载航空 token-level runtime。
 - `visual/`：视觉观测 system。
 
 ## 当前阅读入口
 
 - [core/README.md](core/README.md)
-- [air/README.md](air/README.md)
+- [domains/README.md](domains/README.md)
 - [physics/README.md](physics/README.md)
 - [combat/README.md](combat/README.md)
 - [systems/README.md](systems/README.md)
-- [naval/README.md](naval/README.md)
 - [visual/README.md](visual/README.md)
 
 ## 当前文件落点
 
 - `core/`
   - `operation_system.h`
-- `air/`
-  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`, `propulsion_system.h`
+- `domains/`
+  - `air/aero_state_system.h`, `air/aerodynamics_system.h`,
+    `air/control_system.h`, `air/propulsion_system.h`
+  - `naval/ship_motion_system.h`, `naval/submarine_motion_system.h`,
+    `naval/embarked_air_ops_system.h`,
+    `naval/naval_mission_weapon_release_system.h`,
+    `naval/naval_logistics_system.h`
 - `physics/`
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`
-  - `damage_system.h`, `guidance_system.h`, `pilot_weapon_release_system.h`
+  - `damage_system_common.h`, `damage_system_air.h`, `damage_system_naval.h`, `damage_system_ground.h`
+  - `guidance_system.h`, `pilot_weapon_release_system.h`
 - `systems/`
   - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
   - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `sonar_system.h`, `track_manager_system.h`
-- `naval/`
-  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`, `naval_mission_weapon_release_system.h`
 - `visual/`
   - `visual_system.h`
 

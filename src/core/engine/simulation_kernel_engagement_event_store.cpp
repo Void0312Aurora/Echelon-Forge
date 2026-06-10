@@ -1,6 +1,7 @@
 #include "simulation_kernel_engagement_event_store.h"
 
-#include "components/combat/damage.h"
+#include "components/domains/air/combat/damage_air.h"
+#include "components/combat/common/damage_common.h"
 #include "components/combat/health.h"
 
 #include <algorithm>

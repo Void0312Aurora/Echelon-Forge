@@ -2,7 +2,7 @@
 
 #include <flecs.h>
 #include "components/basic/common.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "core/interfaces/guidance_model.h"
 
 inline void register_guidance_system(flecs::world& ecs) {

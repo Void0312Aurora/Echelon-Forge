@@ -114,7 +114,7 @@
 - 优先级：`MovementCommand(use_stick_control=true)`（直接杆舵）优先于 `LaggedCommand`（自动驾驶目标）。
 
 入口：
-- `src/systems/air/control_system.h`
+- `src/systems/domains/air/control_system.h`
 
 ### 4.2 DefaultControlModel：两条动力学路径
 
@@ -130,7 +130,7 @@
    - 当前含有阻力与简化能量项，但仍需要进一步把“能量守恒/推重比/阻力”真正用于限制爬升与加速（这也是后续与训练对接的重点）
 
 入口：
-- `src/models/air/default_control_model.cpp`
+- `src/models/domains/air/default_control_model.cpp`
 
 ---
 

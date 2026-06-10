@@ -98,16 +98,16 @@ Responsibilities:
 Boundary entry points:
 
 - [src/components/README.md](../../src/components/README.md)
-- [src/components/air/README.md](../../src/components/air/README.md)
+- [src/components/domains/air/platform/README.md](../../src/components/domains/air/platform/README.md)
 - [src/components/command/README.md](../../src/components/command/README.md)
 - [src/components/command/common/README.md](../../src/components/command/common/README.md)
-- [src/components/command/air/README.md](../../src/components/command/air/README.md)
-- [src/components/command/naval/README.md](../../src/components/command/naval/README.md)
-- [src/components/naval/README.md](../../src/components/naval/README.md)
+- [src/components/domains/air/command/README.md](../../src/components/domains/air/command/README.md)
+- [src/components/domains/naval/command/README.md](../../src/components/domains/naval/command/README.md)
+- [src/components/domains/naval/platform/README.md](../../src/components/domains/naval/platform/README.md)
 - [src/components/tasking/README.md](../../src/components/tasking/README.md)
 - [src/components/tasking/common/README.md](../../src/components/tasking/common/README.md)
-- [src/components/tasking/air/README.md](../../src/components/tasking/air/README.md)
-- [src/components/tasking/naval/README.md](../../src/components/tasking/naval/README.md)
+- [src/components/domains/air/tasking/README.md](../../src/components/domains/air/tasking/README.md)
+- [src/components/domains/naval/tasking/README.md](../../src/components/domains/naval/tasking/README.md)
 
 Typical questions:
 
@@ -128,11 +128,11 @@ Boundary entry points:
 
 - [src/systems/README.md](../../src/systems/README.md)
 - [src/systems/core/README.md](../../src/systems/core/README.md)
-- [src/systems/air/README.md](../../src/systems/air/README.md)
+- [src/systems/domains/air/README.md](../../src/systems/domains/air/README.md)
 - [src/systems/physics/README.md](../../src/systems/physics/README.md)
 - [src/systems/combat/README.md](../../src/systems/combat/README.md)
 - [src/systems/systems/README.md](../../src/systems/systems/README.md)
-- [src/systems/naval/README.md](../../src/systems/naval/README.md)
+- [src/systems/domains/naval/README.md](../../src/systems/domains/naval/README.md)
 - [src/systems/visual/README.md](../../src/systems/visual/README.md)
 
 Typical questions:
@@ -153,7 +153,7 @@ Boundary entry points:
 
 - [src/models/README.md](../../src/models/README.md)
 - [src/models/core/README.md](../../src/models/core/README.md)
-- [src/models/air/README.md](../../src/models/air/README.md)
+- [src/models/domains/air/README.md](../../src/models/domains/air/README.md)
 - [src/models/environment/README.md](../../src/models/environment/README.md)
 - [src/models/systems/README.md](../../src/models/systems/README.md)
 - [src/models/weapons/README.md](../../src/models/weapons/README.md)

@@ -4,7 +4,7 @@
 
 当前维护实现覆盖通用 combat-state 推进、missile guidance 调度、pilot weapon
 release，以及接入共享 weapon release service 的桥接。naval mission-command weapon
-release 在 `systems/naval` 注册；engagement evidence 通过 runtime contracts 和 facade
+release 在 `systems/domains/naval` 注册；engagement evidence 通过 runtime contracts 和 facade
 packet 导出。本目录不表示 ground fires 或 ground damage runtime 已维护。
 
 ## 允许

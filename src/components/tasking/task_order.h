@@ -1,9 +1,9 @@
 #pragma once
 
-#include "components/tasking/air/task_order_air.h"
+#include "components/domains/air/tasking/task_order_air.h"
 #include "components/tasking/common/task_order_core.h"
-#include "components/tasking/ground/task_order_ground.h"
-#include "components/tasking/naval/task_order_naval.h"
+#include "components/domains/ground/tasking/task_order_ground.h"
+#include "components/domains/naval/tasking/task_order_naval.h"
 
 /**
  * TaskOrder

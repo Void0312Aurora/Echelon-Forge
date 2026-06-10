@@ -21,24 +21,32 @@ The current component surface is multi-domain rather than flight-only: air remai
 ## Subdirectory Conventions
 
 - `basic/`: foundational components such as entity tags, factions, positions, and environment data.
-- `air/`: air-domain tuning and state components, currently flight dynamics tuning.
-- `combat/`: combat-state components such as damage, health, weapon mounts, and scoring.
-- `physics/`: physical state, dynamics, forces, instruments, performance state, and current ground-contact primitives.
-- `systems/`: platform-system state components for communications, data links, sensors, sonar, electronic warfare, navigation, logistics, and similar areas.
+- `domains/`: domain-owned component slices. Existing domains are `air/`,
+  `naval/`, and `ground/`; new domains should be added here instead of at the
+  `components/` root.
+- `combat/`: cross-domain combat state such as health, scoring, and shared
+  weapon/damage primitives. Domain-specific combat components live under
+  `domains/<domain>/combat/`.
+- `physics/`: shared physical state, dynamics, forces, instruments,
+  performance state, and current ground-contact primitives.
+- `systems/`: cross-domain platform-system state components for
+  communications, data links, sensors, sonar, electronic warfare, navigation,
+  logistics, and similar areas.
 - `visual/`: visual-sensor input and output state.
-- `naval/`: naval platform state components for ships, submarines, and embarked air operations.
-- `command/`: target directory for pilot actions, mission commands, command links, and legacy command DTOs.
-- `tasking/`: target directory for task orders, leader intent, pilot reports, and C2/tasking enums.
+- `command/`: shared command shell, command links, legacy command DTOs, and
+  command common foundations. Domain-specific command components live under
+  `domains/<domain>/command/`.
+- `tasking/`: shared tasking shell and common C2/tasking foundations.
+  Domain-specific tasking components live under `domains/<domain>/tasking/`.
 
 ## Current Entry Points
 
 - [basic/README.md](basic/README.md)
-- [air/README.md](air/README.md)
+- [domains/README.md](domains/README.md)
 - [combat/README.md](combat/README.md)
 - [physics/README.md](physics/README.md)
 - [systems/README.md](systems/README.md)
 - [visual/README.md](visual/README.md)
-- [naval/README.md](naval/README.md)
 - [command/README.md](command/README.md)
 - [tasking/README.md](tasking/README.md)
 
@@ -46,29 +54,44 @@ The current component surface is multi-domain rather than flight-only: air remai
 
 - `basic/`
   - `common.h`, `environment_data.h`, `tags.h`
-- `air/`
-  - `flight_dynamics_tuning.h`
+- `domains/`
+  - `air/platform/flight_dynamics_tuning.h`
+  - `air/combat/damage_air.h`, `air/combat/weapon_air.h`
+  - `air/command/mission_command_air.h`, `air/command/control_input_resolution.h`
+  - `air/tasking/air_tasking_enums.h`, `air/tasking/task_order_air.h`,
+    `air/tasking/leader_intent_air.h`, `air/tasking/pilot_report_air.h`
+  - `naval/platform/ship_platform.h`, `naval/platform/submarine_platform.h`,
+    `naval/platform/embarked_air_ops.h`
+  - `naval/combat/damage_naval.h`, `naval/combat/weapon_naval.h`
+  - `naval/command/mission_command_naval.h`
+  - `naval/tasking/naval_tasking_enums.h`, `naval/tasking/task_order_naval.h`,
+    `naval/tasking/leader_intent_naval.h`, `naval/tasking/pilot_report_naval.h`
+  - `ground/combat/damage_ground.h`, `ground/combat/weapon_ground.h`
+  - `ground/command/mission_command_ground.h`
+  - `ground/tasking/ground_tasking_enums.h`, `ground/tasking/task_order_ground.h`,
+    `ground/tasking/leader_intent_ground.h`, `ground/tasking/pilot_report_ground.h`
 - `combat/`
-  - `damage.h`, `health.h`, `scoring.h`, `weapon.h`
+  - `common/damage_common.h`, `common/weapon_common.h`
+  - `health.h`, `scoring.h`
 - `physics/`
-  - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`
-  - `action.h` and `flight_dynamics_tuning.h` remain only as compatibility umbrellas
+  - `dynamics.h`, `forces.h`, `instruments.h`, `performance.h`, `control_law.h`, `propulsion_readouts.h`
+  - `action.h` remains only as a command/tasking compatibility umbrella
 - `systems/`
   - `comm.h`, `data_link.h`, `ew.h`, `logistics.h`, `navigation.h`, `sensor.h`, `sonar.h`, `track_management.h`
 - `visual/`
   - `visual_sensor.h`
-- `naval/`
-  - `ship_platform.h`, `submarine_platform.h`, `embarked_air_ops.h`
 - `command/`
   - `pilot_action.h`, `mission_command.h`, `command_link.h`, `legacy_command.h`
   - `common/mission_command_core.h`, `common/comm_message.h`
-  - `air/mission_command_air.h`, `air/control_input_resolution.h`
-  - `naval/mission_command_naval.h`
 - `tasking/`
   - `task_order.h`, `leader_intent.h`, `pilot_report.h`, `tasking_enums.h`
-  - `common/*`, `air/*`, `naval/*`, and `ground/*` are the maintained entry points for the split subdomains
+  - `common/*` contains shared C2/tasking foundations
   - `ground/*` is intentionally limited to G0/G1 tasking/status and native schema boundary fields; land movement, sensing, fires, damage, terrain, and combat runtime remain held.
 
 ## Migration Notes
 
-`physics/action.h` currently carries both command and tasking types. New command/tasking types should go into `components/command` or `components/tasking`; do not keep expanding `components/physics/action.h`.
+`physics/action.h` currently carries both command and tasking types. New shared
+command/tasking types should go into `components/command` or
+`components/tasking`; domain-specific extensions should go into
+`components/domains/<domain>/{command,tasking}`. Do not keep expanding
+`components/physics/action.h`.

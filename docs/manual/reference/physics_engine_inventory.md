@@ -118,7 +118,7 @@ Entry:
 - Priority: `MovementCommand(use_stick_control=true)` (direct stick) takes precedence over `LaggedCommand` (autopilot targets).
 
 Entry:
-- `src/systems/air/control_system.h`
+- `src/systems/domains/air/control_system.h`
 
 ### 4.2 DefaultControlModel: Two Dynamics Paths
 
@@ -134,7 +134,7 @@ Entry:
    - Currently includes drag and simplified energy terms, but still needs to further use "energy conservation/thrust-to-weight ratio/drag" to genuinely limit climb and acceleration (this is also the focus for subsequent training integration)
 
 Entry:
-- `src/models/air/default_control_model.cpp`
+- `src/models/domains/air/default_control_model.cpp`
 
 ---
 

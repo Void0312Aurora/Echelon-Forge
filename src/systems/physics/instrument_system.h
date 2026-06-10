@@ -4,18 +4,18 @@
 #include <cmath>
 #include <algorithm>
 #include "components/basic/common.h"
-#include "components/command/air/control_input_resolution.h"
+#include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/instruments.h"
 #include "components/command/mission_command.h"
 #include "components/physics/forces.h"       // AeroState, ForceAccumulator, AngularVelocity
 #include "components/physics/dynamics.h"     // Mass, Propulsion
 #include "components/physics/performance.h"  // LandingGear
+#include "components/physics/propulsion_readouts.h"
 #include "components/systems/ew.h"           // RWR
-#include "components/combat/weapon.h"        // Ammo
+#include "components/combat/common/weapon_common.h"  // Ammo
 #include "components/systems/logistics.h"    // FuelSystem
 #include "components/systems/navigation.h"   // EGI
 #include "core/interfaces/environment_model.h"
-#include "systems/air/propulsion_system.h"
 
 namespace {
     inline double inst_rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
@@ -155,10 +155,10 @@ inline void register_instrument_system(flecs::world& ecs) {
                     if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {
                         fuel_flow_kg_s = fuel->current_flow_rate;
                     } else {
-                        fuel_flow_kg_s = flight_dynamics::propulsion_fuel_flow_kg_per_s(propulsion[i]);
+                        fuel_flow_kg_s = propulsion_readouts::fuel_flow_kg_per_s(propulsion[i]);
                     }
                     inst[i].fuel_flow_kg_h = fuel_flow_kg_s * 3600.0;
-                    inst[i].engine_rpm_pct = flight_dynamics::propulsion_engine_rpm_pct(propulsion[i]);
+                    inst[i].engine_rpm_pct = propulsion_readouts::engine_rpm_pct(propulsion[i]);
                     inst[i].engine_temp_c = 600.0 + inst[i].engine_rpm_pct * 3.0; // Mocked EGT
                     
                     if (const FuelSystem* fuel = it.entity(i).get<FuelSystem>()) {

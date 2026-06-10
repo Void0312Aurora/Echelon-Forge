@@ -20,7 +20,7 @@ Language:
 - [gym_envs/universal_env_parts/actions.py](../../../gym_envs/universal_env_parts/actions.py)
 - [gym_envs/universal_env.py](../../../gym_envs/universal_env.py)
 - [src/components/command/pilot_action.h](../../../src/components/command/pilot_action.h)
-- [src/components/command/air/control_input_resolution.h](../../../src/components/command/air/control_input_resolution.h)
+- [src/components/domains/air/command/control_input_resolution.h](../../../src/components/domains/air/command/control_input_resolution.h)
 
 ## Action Mode
 

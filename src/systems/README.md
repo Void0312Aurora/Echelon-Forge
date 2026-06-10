@@ -3,9 +3,10 @@
 `systems/` contains ECS system registration and per-tick mutation logic. Code here consumes `components/` and `models/`, and is registered and scheduled by `core/engine`.
 
 This layer is multi-domain aware but not uniformly mature: air execution now has
-an explicit owner directory, physics keeps shared primitives, naval has ship/submarine and embarked-air token systems,
-and ground is limited to terrain/ground-contact primitives rather than a full
-land movement, sensing, fires, or damage runtime.
+an explicit owner under `domains/air`, physics keeps shared primitives, naval
+has ship/submarine and embarked-air token systems under `domains/naval`, and
+ground is limited to terrain/ground-contact primitives rather than a full land
+movement, sensing, fires, or damage runtime.
 
 ## Allowed
 
@@ -26,39 +27,43 @@ land movement, sensing, fires, or damage runtime.
 ## Subdirectory Conventions
 
 - `core/`: common operation/lifecycle systems.
-- `air/`: air-domain flight control, aero state, propulsion, and aerodynamic effects.
+- `domains/`: domain-owned runtime systems. Existing domain owners are `air/`
+  and `naval/`; new domain runtime owners should be added here instead of at
+  the `systems/` root.
 - `physics/`: shared physics primitives such as force clearing, force projection, integration, ground contact, instruments, and related logic.
 - `combat/`: damage, guidance, and combat effect systems.
 - `systems/`: platform-system runtime such as command link, data link, EW, logistics, navigation, sensor, and track manager.
-- `naval/`: ship/submarine motion and embarked aviation token-level runtime.
 - `visual/`: visual observation systems.
 
 ## Current Entry Points
 
 - [core/README.md](core/README.md)
-- [air/README.md](air/README.md)
+- [domains/README.md](domains/README.md)
 - [physics/README.md](physics/README.md)
 - [combat/README.md](combat/README.md)
 - [systems/README.md](systems/README.md)
-- [naval/README.md](naval/README.md)
 - [visual/README.md](visual/README.md)
 
 ## Current File Locations
 
 - `core/`
   - `operation_system.h`
-- `air/`
-  - `aero_state_system.h`, `aerodynamics_system.h`, `control_system.h`, `propulsion_system.h`
+- `domains/`
+  - `air/aero_state_system.h`, `air/aerodynamics_system.h`,
+    `air/control_system.h`, `air/propulsion_system.h`
+  - `naval/ship_motion_system.h`, `naval/submarine_motion_system.h`,
+    `naval/embarked_air_ops_system.h`,
+    `naval/naval_mission_weapon_release_system.h`,
+    `naval/naval_logistics_system.h`
 - `physics/`
   - `force_clear_system.h`, `force_system.h`, `ground_contact_system.h`
   - `instrument_system.h`, `leapfrog_system.h`, `movement_system.h`, `rotational_system.h`
 - `combat/`
-  - `damage_system.h`, `guidance_system.h`, `pilot_weapon_release_system.h`
+  - `damage_system_common.h`, `damage_system_air.h`, `damage_system_naval.h`, `damage_system_ground.h`
+  - `guidance_system.h`, `pilot_weapon_release_system.h`
 - `systems/`
   - `command_link_system.h`, `data_link_system.h`, `ew_system.h`
   - `logistics_system.h`, `navigation_system.h`, `sensor_system.h`, `sonar_system.h`, `track_manager_system.h`
-- `naval/`
-  - `ship_motion_system.h`, `submarine_motion_system.h`, `embarked_air_ops_system.h`, `naval_mission_weapon_release_system.h`
 - `visual/`
   - `visual_system.h`
 

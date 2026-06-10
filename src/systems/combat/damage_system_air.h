@@ -8,7 +8,7 @@
 #include "systems/combat/damage_system_common.h"
 
 #include "components/basic/common.h"
-#include "components/combat/air/damage_air.h"
+#include "components/domains/air/combat/damage_air.h"
 #include "components/combat/health.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"

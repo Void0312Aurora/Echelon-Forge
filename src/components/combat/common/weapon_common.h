@@ -66,9 +66,9 @@ inline std::string fuze_profile_type(const FuzeProfile& profile) {
     return profile.type.empty() ? "proximity" : profile.type;
 }
 
-// Common compatibility: this legacy missile component is still shared by
-// existing systems and bindings. Its seeker/guidance runtime remains air-shaped
-// and should not be read as a complete cross-domain weapon model.
+// Shared missile component used by common guidance/effects surfaces. Its
+// seeker/guidance runtime remains air-shaped and should not be read as a
+// complete cross-domain weapon model.
 struct Missile {
     uint64_t attacker_id;  // Entity ID of the shooter
     uint64_t target_id;    // Entity ID of the target

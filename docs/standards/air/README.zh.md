@@ -53,7 +53,7 @@ Language:
 当前 air specialization 在代码里分散在几层：
 
 - air tasking 扩展：
-  [src/components/tasking/air/README.md](../../../src/components/tasking/air/README.md)
+  [src/components/domains/air/tasking/README.md](../../../src/components/domains/air/tasking/README.md)
 - shared command core 与 air command extension：
   [src/components/command/common/README.md](../../../src/components/command/common/README.md)
 - action surface：

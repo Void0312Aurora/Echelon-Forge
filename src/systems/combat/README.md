@@ -5,7 +5,7 @@
 The maintained implementation covers generic combat-state progression, missile
 guidance scheduling, pilot weapon release, and the bridge into shared weapon
 release services. Naval mission-command weapon release is registered under
-`systems/naval`; engagement evidence is exported through runtime contracts and
+`systems/domains/naval`; engagement evidence is exported through runtime contracts and
 facade packets. This directory does not make ground fires or ground damage a
 maintained runtime.
 

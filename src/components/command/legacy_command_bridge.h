@@ -7,7 +7,7 @@
 
 #include "components/command/command_link.h"
 #include "components/command/common/mission_command_control_state.h"
-#include "components/command/air/control_input_resolution.h"
+#include "components/domains/air/command/control_input_resolution.h"
 #include "components/basic/common.h"
 
 // Compatibility-only bridge seam for quarantined legacy command DTO consumers

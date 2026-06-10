@@ -50,9 +50,9 @@ bool finalize_default_effects_platform_damage(
     return false;
 }
 
-#include "models/air/default_effects_air_domain.h"
-#include "models/naval/default_effects_naval_domain.h"
-#include "models/ground/default_effects_ground_domain.h"
+#include "models/domains/air/default_effects_air_domain.h"
+#include "models/domains/naval/default_effects_naval_domain.h"
+#include "models/domains/ground/default_effects_ground_domain.h"
 
 enum class DefaultEffectsTargetDomain {
     CommonLegacy,

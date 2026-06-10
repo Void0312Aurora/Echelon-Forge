@@ -31,7 +31,7 @@ Current positioning:
   `Ground_Platoon_MVP` loads, spawns, reports `UnitType::Ground`, and exposes
   static runtime inspection state through shared surfaces.
 - The first C++ ground owner-slice infrastructure is now present under
-  `src/components/tasking/ground/` and `src/components/command/ground/`. It
+  `src/components/domains/ground/tasking/` and `src/components/domains/ground/command/`. It
   projects G0/G1 static task/status metadata through the existing compatibility
   shells and maintained batch contracts; it does not release route movement.
 - The Python ground profile now authors the G0/G1 `MissionCommandGround` static
@@ -291,10 +291,10 @@ Contracts and tests:
 
 Infrastructure gaps:
 
-- `src/components/tasking/ground/` now contains the first maintained static
+- `src/components/domains/ground/tasking/` now contains the first maintained static
   task/status owner slices: `TaskOrderGround`, `LeaderIntentGround`, and
   `PilotReportGround`;
-- `src/components/command/ground/` now contains `MissionCommandGround`, a
+- `src/components/domains/ground/command/` now contains `MissionCommandGround`, a
   static task metadata owner slice with JSON round-trip and episode equality
   support;
 - `python/rl/profile/ground_profile.py` now fills `MissionCommandGround`

@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 #include "components/basic/common.h"
-#include "components/combat/weapon.h"
+#include "components/combat/common/weapon_common.h"
 #include "components/command/command_link.h"
 #include "components/command/common/mission_command_control_state.h"
 #include "components/command/mission_command.h"

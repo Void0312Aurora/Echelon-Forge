@@ -101,7 +101,7 @@
   这仅是 schema 证据；route movement、terrain、sensing、fires、damage 和
   combat 仍保持 held。
 - 第一版 C++ ground static owner-slice 基础设施已经落到
-  `src/components/tasking/ground/` 与 `src/components/command/ground/`。它通过现有
+  `src/components/domains/ground/tasking/` 与 `src/components/domains/ground/command/`。它通过现有
   compatibility shell、maintained batch contract、JSON round-trip 与 Python
   binding 暴露 G0/G1 static task/status metadata。它不释放 route movement、
   terrain、sensing、fires、damage 或 combat。

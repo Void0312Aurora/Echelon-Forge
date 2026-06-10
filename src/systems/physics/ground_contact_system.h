@@ -4,7 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include "components/basic/common.h"
-#include "components/command/air/control_input_resolution.h"
+#include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"   // For GroundState

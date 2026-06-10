@@ -4,7 +4,7 @@
 
 #include <flecs.h>
 
-#include "components/combat/weapon.h"
+#include "components/domains/air/combat/weapon_air.h"
 #include "components/command/pilot_action.h"
 #include "core/interfaces/weapon_release_service.h"
 
