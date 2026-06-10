@@ -21,7 +21,7 @@
 | `MLF-2D-X1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only writer-path audit; no runtime/contract/test edits | 找出 live missile lifecycle 中写入 `FuzeEvaluationEvent` 的最小 producer 路径。 | accepted |
 | `MLF-2D-W1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.h`；`src/core/engine/simulation_kernel_engagement_event_store.cpp`；`src/systems/combat/damage_system.h`；相关 geometry/fuze tests | 写入解保、触发、未触发、延迟和失败原因。 | accepted |
 | `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only diagnostics/probe path audit; no runtime edits | 找出 process probe/诊断导出消费最近接近和引信评估事件的最小路径。 | accepted |
-| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py` | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | accepted |
+| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` | 导出每枚弹的几何/引信阶段行，不依赖旧 `last_effect_*`。 | accepted |
 | `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | 审计起爆才进入效果模型、未触发路径有事件有原因无效果的最小 gate。 | accepted |
 | `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | 用测试钉住 runtime handoff gate：触发路径一次效果/损伤记录，接触近失无效果/损伤记录，可靠性失败为零伤害过渡记录。 | accepted |
 | `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | 汇总证据，更新 accepted/held 状态和后续残余地图。 | accepted |
@@ -106,10 +106,10 @@ Worker 返回 `pass`，未修改文件。
 
 主线程实现并验收。
 
-- 触碰文件：`tools/diagnostics/air_combat_stage0_process_probe.py`、`tests/diagnostics/test_air_combat_process_probe.py`。
+- 触碰文件：`tools/diagnostics/air_combat_stage0_process_probe.py`、`tests/runtime/air_combat/test_diagnostics_probe_contracts.py`。
 - 实现内容：`_lethality_chain_rows()` 优先投影 `NearestApproachEvent` / `FuzeEvaluationEvent`；旧 `EffectsEvent` nearest/fuze 投影只作为同一 chain/munition 缺省回退；新增诊断字段包括 `closure_mps`、`aspect_bucket`、`fuze_armed`、`fuze_triggered`、`fuze_failure_reason`、`fuze_reliability`、`fuze_sample` 和接触证据。
 - 测试覆盖：标准事件-only 未起爆路径；标准事件存在时抑制旧效果事件 nearest/fuze 重复投影；既有 fallback 和 CSV 输出保持。
-- 主线程复验：`py_compile` 通过；`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q` 17 个测试通过。
+- 主线程复验：`py_compile` 通过；`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q` 17 个测试通过。
 - 限制：platform/lifecycle 仍来自 `DamageReport` 投影；未实现 runtime handoff gate；不改变 reward 或效果模型。
 
 ### MLF-2F-I1

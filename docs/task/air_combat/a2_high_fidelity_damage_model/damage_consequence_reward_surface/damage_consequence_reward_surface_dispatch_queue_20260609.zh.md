@@ -20,7 +20,7 @@
 | --- | --- | --- | --- | --- | --- |
 | `DCR-D-W1` | `DCR-D Scenario Opt-In` | current-session worker `019eaa3f-40b8-7f72-b078-717e91722ad2` / Schrodinger | `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`；`examples/config/training/active/air_combat/README.md`；`examples/config/training/active/air_combat/README.zh.md` | 判断并在合理时实现 Stage-2 显式低权重后果 reward opt-in，同时更新 active-entry 文档。 | integrated pass |
 | `DCR-E-X1` | `DCR-E Probe Evidence` | read-only explorer `019eaa3f-41c0-7083-a7a7-ef40c0286981` / Hegel | none | 找出最短 probe/replay 路径，用来分开报告 release、effects、damage 和 consequence reward evidence。 | returned pass |
-| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/diagnostics/test_air_combat_process_probe.py` 或窄 diagnostics 测试 | 给 process-probe row/summary 增加 DCR reward 前缀聚合，不改变 release/effects/damage 语义。 | integrated pass |
+| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` 或窄 diagnostics 测试 | 给 process-probe row/summary 增加 DCR reward 前缀聚合，不改变 release/effects/damage 语义。 | integrated pass |
 
 ## 已返回派发包记录
 

@@ -19,7 +19,7 @@ Inputs:
 - Current `src/runtime/facade/runtime_facade_types.h`
 - Current `tests/runtime/facade/test_runtime_facade.py`
 - Current `tests/test_gpu_runtime_bindings.py`
-- Current `tests/architecture/runtime_facade/test_layering.py`
+- Current `tests/architecture/runtime_facade`
 
 ## 1. Purpose
 
@@ -43,7 +43,7 @@ implementation details.
 | `WP7-B1 Projection Source Boundary` | Document or implement where registry metadata enters the runtime facade projection path. | runtime/facade docs, optional C++ projection helper. | High. |
 | `WP7-B2 Deployment Fact Separation` | Keep GPU helper/probe data separate from maintained capability claims. | tests and docs; avoid facade/core GPU linkage. | High. |
 | `WP7-B3 Capability Default Guard` | Preserve current false defaults for exact GPU, device observation, resident-state, and shadow support. | `tests/runtime/facade/`, `tests/test_gpu_runtime_bindings.py`. | Medium-high. |
-| `WP7-B4 Layering Guard` | Ensure facade/core does not call or link GPU helper/probe implementation for capability projection. | `tests/architecture/runtime_facade/test_layering.py`. | Medium-high. |
+| `WP7-B4 Layering Guard` | Ensure facade/core does not call or link GPU helper/probe implementation for capability projection. | `tests/architecture/runtime_facade`. | Medium-high. |
 
 ## 3. Projection Rules
 
@@ -134,4 +134,4 @@ If tests change, run the narrow affected pytest targets. If tests do not
 change, the existing guards remain the planned coverage:
 `tests/runtime/facade/test_runtime_facade.py`,
 `tests/test_gpu_runtime_bindings.py`, and
-`tests/architecture/runtime_facade/test_layering.py`.
+`tests/architecture/runtime_facade`.

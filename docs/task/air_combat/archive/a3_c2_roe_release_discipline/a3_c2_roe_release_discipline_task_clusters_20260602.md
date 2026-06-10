@@ -85,8 +85,8 @@ git diff --check -- docs/task/air_combat docs/task/model
   tests/runtime/air_combat/test_air_combat_reward_surface.py `
   tests/runtime/core/test_env_config.py `
   tests/runtime/mission/test_mission_obs_taxonomy.py `
-  tests/diagnostics/test_air_combat_process_probe.py `
-  tests/training/test_air_combat_active_training_entries.py `
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py `
+  tests/training/test_air_combat_training_entry_contracts.py `
   tests/world_batch/test_world_batch_vec_env.py::WorldBatchVecEnvTests::test_world_batch_vec_env_uses_air_combat_c2_roe_python_owned_mission_observation
 .\tools\maintenance\cmo_env.ps1 python train.py `
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json `

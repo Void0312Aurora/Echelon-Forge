@@ -64,8 +64,8 @@ Commands：
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/hmoe/test_hmoe_routing.py \
-  tests/hmoe/test_hmoe_policy.py
+  tests/policy/test_routing_contracts.py \
+  tests/policy/test_execution_policy_surface.py
 ```
 
 Result：
@@ -74,7 +74,7 @@ Result：
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Result：

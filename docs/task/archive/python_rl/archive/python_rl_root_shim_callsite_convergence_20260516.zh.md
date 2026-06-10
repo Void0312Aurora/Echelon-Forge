@@ -67,7 +67,7 @@
 
 - `tests/runtime/*`
 - `tests/leader/*`
-- `tests/hmoe/*`
+- `tests/policy/*`
 - `tests/world_batch/*`
 - `python/testing/scenario_contract_runner.py` 中直接 patch `python.rl.wrappers` 的两处契约逻辑
 
@@ -78,14 +78,14 @@
 本轮已验证：
 
 - `tests/runtime/mission/test_leader_tasking_runtime.py`
-- `tests/leader/test_common_core_semantics.py`
+- `tests/leader/test_tasking_profile_contracts.py`
 - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
 - `tests/runtime/navigation/test_coarse_route_propagator.py`
 - `tests/test_cuda_import_order.py`
 
 以及后续一轮聚焦验证：
 
-- `tests/leader/test_task_order_randomization.py`
+- `tests/leader/test_tasking_phase_control_contracts.py`
 
 均通过。
 

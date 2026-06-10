@@ -47,7 +47,7 @@ Phase 4 证明了 `WorldBatchRuntime` 和 execution-layer batch rollout 是有�
 - [leader_batched_vec_env.py](/home/void0312/CMO/python/rl/leader_batched_vec_env.py)
 - [leader_world_batch_runtime.py](/home/void0312/CMO/python/rl/leader_world_batch_runtime.py)
 - [leader_perf_probe.py](/home/void0312/CMO/tools/diagnostics/leader_perf_probe.py)
-- [test_performance_knobs.py](/home/void0312/CMO/tests/leader/test_performance_knobs.py)
+- [test_leader_runtime_control_contracts.py](/home/void0312/CMO/tests/leader/test_leader_runtime_control_contracts.py)
 - [test_world_batch_runtime.py](/home/void0312/CMO/tests/world_batch/test_world_batch_runtime.py)
 
 已新增：

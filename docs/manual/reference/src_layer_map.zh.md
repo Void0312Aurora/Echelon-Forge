@@ -454,7 +454,7 @@ SimulationKernel / WorldBatchRuntime
 2. [docs/plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md](../plan/architecture/system_layering_and_engine_encapsulation_plan.zh.md)
 3. [src/runtime/facade/README.md](../../src/runtime/facade/README.md)
 4. [src/core/mission/README.md](../../src/core/mission/README.md)
-5. [tests/architecture/runtime_facade/test_layering.py](../../tests/architecture/runtime_facade/test_layering.py)
+5. [tests/architecture/runtime_facade](../../tests/architecture/runtime_facade)
 
 ## 11. 维护说明
 

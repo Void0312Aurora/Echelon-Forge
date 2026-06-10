@@ -47,7 +47,7 @@ final acceptance.
 |--------|------------|-------------------|------|-------------|
 | `WP18-B` | worker | `gpt-5.4`, xhigh | Implement the first execution-episode ownership sink using `ExecutionEpisodeController` and existing facade/runtime state exports. | Execution episode facade/runtime seams and focused tests. Do not edit `ScenarioLoader` internals or C++ hot-path reward logic. |
 | `WP18-C` | worker | `gpt-5.4`, high | Add a `ScenarioLoader` state-shell responsibility classification guard, preserving public loader APIs. | `gym_envs/scenario_loader/runtime_state.py`, narrow loader classification tests, and WP18-C docs only. Do not edit C++ runtime logic. |
-| `WP18-D` | worker | `gpt-5.4`, high | Add guard prework for maintained-path raw runtime/world/batch access without deleting compatibility APIs. | `tests/architecture/runtime_facade/test_layering.py` and allowlist docs/comments only. Wait for B/C before final hard bans. |
+| `WP18-D` | worker | `gpt-5.4`, high | Add guard prework for maintained-path raw runtime/world/batch access without deleting compatibility APIs. | `tests/architecture/runtime_facade` and allowlist docs/comments only. Wait for B/C before final hard bans. |
 | `WP18-E` | worker | `gpt-5.4`, xhigh | Implement the low-risk reward/termination metadata first slice if it can avoid B/C ownership conflicts. | C++ reward/termination metadata helper/binding or Python compiled-path consume seam plus focused tests. Do not change request build/consume ownership. |
 
 ## Second-Wave Return State
@@ -64,7 +64,7 @@ Main-thread validation after second wave:
 - `cmake --build build-workshop --target ef_core ef_py -j4` passed.
 - `git diff --check` passed.
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary` passed; acceptance review remains intentionally absent while WP18 is active.
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` passed: `17 passed`.
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade` passed: `17 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py` passed: `6 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_state.py` passed: `5 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_scenario_loader_execution_step_runtime.py -k "state or runtime or reward or termination"` passed: `11 passed, 8 subtests passed`.
@@ -97,7 +97,7 @@ Main-thread validation after third wave:
 
 - `git diff --check` passed.
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP18 --summary` passed; acceptance review remains intentionally absent while WP18 is active.
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` passed: `18 passed`.
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade` passed: `18 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/execution/test_execution_episode_state.py` passed: `5 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "execution_episode_controller_mainline or compatibility_view or facade"` passed: `11 passed, 27 deselected`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_facade_step_evidence_gates.py` passed: `1 passed`.

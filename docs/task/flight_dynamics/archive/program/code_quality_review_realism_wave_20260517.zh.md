@@ -164,7 +164,7 @@ namespace Math { struct Vector3 { double x, y, z; }; }
 
 - 本轮主线程已经开始回收这条泄漏：
   `world_batch_vec_env.py` 与 `leader_world_batch_runtime.py` 的部分 world/time-step
-  访问已先收回显式 adapter，且 `tests/architecture/runtime_facade/test_layering.py`
+  访问已先收回显式 adapter，且 `tests/architecture/runtime_facade`
   已补守卫。
 - 但风险并未消失。当前状态更准确的表述是：
   **“raw runtime 逃逸口已从散落业务调用收窄到兼容接口残留，尚未完成最终冻结。”**

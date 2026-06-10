@@ -13,7 +13,7 @@ Inputs:
 - [WP5 validation harness](validation_harness_wp5_20260519.md)
 - [WP4 facade alignment acceptance review](../review/wp4_facade_alignment_acceptance_review_20260519.md)
 - [WP4-I compatibility guard notes](wp4_compat_guard_notes_20260519.md)
-- `tests/architecture/runtime_facade/test_layering.py`
+- `tests/architecture/runtime_facade`
 
 ## Added Gates
 
@@ -35,7 +35,7 @@ Inputs:
 Recommended WP5-E smoke candidates:
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_facade/test_design_boundary_gates.py
+python -m pytest -q tests/architecture/runtime_facade tests/architecture/runtime_facade/test_design_boundary_gates.py
 ```
 
 These are cheap static/design gates and should run before heavier runtime

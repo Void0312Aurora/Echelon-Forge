@@ -40,7 +40,7 @@ proven.
 - `src/tools/experimental/gpu_phase0/*.cpp`
 - `tests/test_gpu_runtime_bindings.py:20-260, 543-590`
 - `tests/runtime/facade/test_runtime_facade.py:524-554`
-- `tests/architecture/runtime_facade/test_layering.py:436-494`
+- `tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py`
 - `tests/world_batch/test_world_batch_runtime.py:1131-1320`
 - `tests/world_batch/test_world_batch_vec_env.py:681-728`
 
@@ -76,7 +76,7 @@ proven.
 | `src/tools/experimental/gpu_phase0/*` | diagnostics-export-only | Phase-0 probes are standalone binaries for measurement and parity reporting. The README forbids them from becoming the default runtime backend or from being depended on by facade/core runtime. | `src/tools/experimental/gpu_phase0/README.md:3-21`; `src/tools/experimental/gpu_phase0/*.cpp` |
 | `WorldBatchRuntime` GPU candidate-ID call sites (`get_sensor_candidate_ids_batch`, `get_visual_candidate_ids_batch`, `get_comm_candidate_ids_batch`) | host-owned helper | The runtime owns the final filtering and sorting. GPU broadphase only supplies candidate bitsets under an explicit `use_gpu` flag. | `src/core/engine/world_batch_runtime.cpp:703-900` |
 | `src/gpu/*_cuda.cu` device kernels | blocked-unknown | Kernel internals are only reachable through guarded experimental wrappers. They are not yet a maintained surface, and there is no evidence here that would justify promotion. | `src/gpu/*_cuda.cu` |
-| `tests/test_gpu_runtime_bindings.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/architecture/runtime_facade/test_layering.py` | diagnostics-export-only | These tests lock the capability flags to `false`, verify helper bindings exist, and prevent `RuntimeFacade` or core runtime from depending on GPU helper implementation details. | `tests/test_gpu_runtime_bindings.py:20-260, 543-590`; `tests/runtime/facade/test_runtime_facade.py:524-554`; `tests/architecture/runtime_facade/test_layering.py:436-494` |
+| `tests/test_gpu_runtime_bindings.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/architecture/runtime_facade` | diagnostics-export-only | These tests lock the capability flags to `false`, verify helper bindings exist, and prevent `RuntimeFacade` or core runtime from depending on GPU helper implementation details. | `tests/test_gpu_runtime_bindings.py:20-260, 543-590`; `tests/runtime/facade/test_runtime_facade.py:524-554`; `tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py` |
 
 ## Capability Facts
 
@@ -88,7 +88,7 @@ proven.
 - `tests/runtime/facade/test_runtime_facade.py` locks the facade result to
   `supports_resident_state == false`, `supports_exact_gpu_backend == false`,
   and `supports_shadow_compare == false`.
-- `tests/architecture/runtime_facade/test_layering.py` forbids
+- `tests/architecture/runtime_facade` forbids
   `RuntimeFacade` from including or calling GPU helper/probe code and forbids
   core runtime from projecting GPU / resident / shadow capability support.
 

@@ -32,7 +32,7 @@ tools/diagnostics/m3s2_real_update_path_probe.py
 测试覆盖：
 
 ```bash
-python -m pytest tests/diagnostics/test_m3s2_real_update_path_probe.py -q
+python -m pytest tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 结果：`2 passed`。

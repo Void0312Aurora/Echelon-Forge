@@ -38,7 +38,7 @@
 | S1 场景 | `scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json` 只设置 `assigned_target_name="Red_Target"` 与 `authorization_to_fire=true`。 | 没有显式 `roe_state`、WCS、target identity、shot policy 或 assessment window。 |
 | shaped S1 场景 | `air_combat_1v1_stage1_bvr_nonmaneuvering_target_training_shaped_v1.json` 有 first-release bonus、repeat-release penalty、invalid-fire penalty。 | 奖励能惩罚重复发射，但无法区分授权齐射、再攻击和违规第二发。 |
 | active config | `examples/config/training/active/air_combat/*stage1*probe*.json` 仍使用 `mission_obs_mode=basic`。 | 策略看不到 ROE/授权/目标分配/shot policy。 |
-| training-entry test | `tests/training/test_air_combat_active_training_entries.py` 当前断言 Stage-1 mission mode 仍是 `basic`，并检查 release shaping。 | A3 需要新增 C2/ROE config 测试，而不是直接破坏既有 M1 对照入口。 |
+| training-entry test | `tests/training/test_air_combat_training_entry_contracts.py` 当前断言 Stage-1 mission mode 仍是 `basic`，并检查 release shaping。 | A3 需要新增 C2/ROE config 测试，而不是直接破坏既有 M1 对照入口。 |
 
 ## Mission Observation 现状
 
@@ -126,7 +126,7 @@ A3 建议新增：
 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | 增加 C2/ROE violation、hold、first-shot、premature-second-shot、salvo/reattack terms。 | `test_air_combat_reward_surface.py` 或新 focused test。 |
 | `tools/diagnostics/air_combat_stage0_process_probe.py` | 增加 C2/ROE 发射纪律指标。 | process-probe JSON/CSV schema test。 |
 | `scenarios/air_combat/1v1/*c2_roe*.json` | 新增 S1 C2/ROE 场景，显式 ROE、授权窗口、shot policy。 | runtime fixture + bootstrap tests。 |
-| `examples/config/training/active/air_combat/*c2_roe*.json` | 新增 A3 probe configs，保留既有 M1 对照入口。 | `tests/training/test_air_combat_active_training_entries.py`。 |
+| `examples/config/training/active/air_combat/*c2_roe*.json` | 新增 A3 probe configs，保留既有 M1 对照入口。 | `tests/training/test_air_combat_training_entry_contracts.py`。 |
 | `src/core/engine/simulation_kernel_weapon_release_service.cpp` | 后续可选：只有在 observation/reward 证据不足后，再考虑 kernel-level shot-budget gate。 | 扩展 `test_weapon_roe_runtime.py`。 |
 
 ## 当前不建议立即修改的面

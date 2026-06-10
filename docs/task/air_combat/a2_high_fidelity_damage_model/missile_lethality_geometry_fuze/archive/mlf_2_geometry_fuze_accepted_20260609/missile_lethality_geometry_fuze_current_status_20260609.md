@@ -13,7 +13,7 @@ Chinese main text: [missile_lethality_geometry_fuze_current_status_20260609.zh.m
 | Controlled geometry scenarios | pass | `MLF-2B-X1` pass; `MLF-2B-W1` pass; main thread revalidated 2 focused tests | Full target attitude control is not proven |
 | Nearest-approach event | pass | `MLF-2C-X1` pass; `MLF-2C-W1` pass; main thread revalidated `ef_py` build, 3 missile geometry/fuze focused tests, and 7 engagement event capture regressions | Fuze trigger/no-trigger/delay/failure is not standardized yet |
 | Fuze-evaluation event | pass | `MLF-2D-X1` pass; `MLF-2D-W1` pass; main thread revalidated `ef_py` build, 4 missile geometry/fuze focused tests, and 7 engagement event capture regressions | Diagnostics probe consumption is not proven yet |
-| Diagnostic projection | pass | `MLF-2E-X1` pass; `MLF-2E-W1` pass; main thread revalidated `tests/diagnostics/test_air_combat_process_probe.py -q` with 17 tests | Effects model or reward semantics have not changed |
+| Diagnostic projection | pass | `MLF-2E-X1` pass; `MLF-2E-W1` pass; main thread revalidated `tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q` with 17 tests | Effects model or reward semantics have not changed |
 | Runtime handoff | pass | `MLF-2F-I1` pass; `MLF-2F-W1` pass; main thread revalidated 3 focused fuze gate tests | Warhead effects or structural breakup are not complete |
 | Acceptance closeout | pass | This archive package, current pointer READMEs, archive index, and A2/MLF-1 navigation are synchronized | MLF-3+ is not complete |
 

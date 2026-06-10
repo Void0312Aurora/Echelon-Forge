@@ -34,16 +34,16 @@ python -m compileall -q \
   python/rl/policy_algo/first_event_hazard.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/training/diagnostics.py \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
-pytest tests/hmoe/test_a6_first_event_hazard.py -q
-pytest tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py -q
+pytest tests/policy/test_first_event_timing_contracts.py -q
+pytest tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 结果：

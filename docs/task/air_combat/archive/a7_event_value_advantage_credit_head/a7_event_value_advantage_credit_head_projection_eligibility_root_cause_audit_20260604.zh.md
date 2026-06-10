@@ -132,11 +132,11 @@ A7 会退回 ordinary deadline/prewindow labels，projection branch 就是 no-op
 已运行命令：
 
 ```bash
-python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/policy/test_auxiliary_training_updates.py
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
 rg -n '<stale O-next current-status patterns>' docs/task/air_combat
-git diff --check -- docs/task/air_combat python/rl tests/hmoe tests/training
-pytest tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
+git diff --check -- docs/task/air_combat python/rl tests/policy tests/training
+pytest tests/policy/test_first_event_timing_contracts.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 观察结果：compileall 通过；focused projection/nonfinite tests 通过，`2 passed`；
@@ -151,7 +151,7 @@ touched files:
 - python/rl/policy_algo/first_event_hazard.py
 - python/rl/policy_algo/ppo_adaptive_kl.py
 - python/rl/support/nonfinite_probe.py
-- tests/hmoe/test_hmoe_ppo_warmup.py
+- tests/policy/test_auxiliary_training_updates.py
 - docs/task/air_combat/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_projection_eligibility_root_cause_audit_20260604.zh.md
 commands/outcomes:
 - TensorBoard N scalar review -> logged train diagnostics 中无 accepted release；projection active/unsupported 均为 zero

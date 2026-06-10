@@ -135,7 +135,7 @@ flowchart TD
 | Information-state boundary | `ObservationBatchRequest` / `ObservationBatchPacket`、`AgentObservation` 路径与 observation 相关 Python adapter。 | 区分 `World Truth`、`ObservationPacket` 与 `DecisionBelief`。 |
 | Python exposure | `src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/bindings/test_bindings_engagement_surface.py`。 | 让 `ef_py` 与维护中的 C++ facade surface 对齐。 |
 | Policy/orchestration adapters | `python/rl/runtime/world_batch_vec_env.py`、`python/rl/runtime/world_batch/adapter.py`、`python/rl/runtime/multi_agent_runtime.py`。 | 让 facade-shaped request 显式化，并把 raw runtime 用法保留为兼容用途。 |
-| Compatibility boundaries | `tests/architecture/runtime_facade/test_layering.py`、`tests/runtime/facade/test_runtime_facade.py`。 | 防止维护中的路径依赖 raw runtime handle。 |
+| Compatibility boundaries | `tests/architecture/runtime_facade`、`tests/runtime/facade/test_runtime_facade.py`。 | 防止维护中的路径依赖 raw runtime handle。 |
 
 ## 七、Subagent 写入范围规则
 

@@ -8,7 +8,7 @@ Inputs:
 - [WP4 first-wave acceptance review](../review/wp4_first_wave_acceptance_review_20260519.md)
 - [WP4-A surface inventory draft](wp4_surface_inventory_wp4a_20260519.md)
 - [WP4-D/E policy-binding alignment notes](wp4_policy_binding_alignment_notes_20260519.md)
-- `tests/architecture/runtime_facade/test_layering.py`
+- `tests/architecture/runtime_facade`
 
 This note reviews the current guard coverage for compatibility-only paths. It
 does not remove compatibility adapters or implement facade/runtime changes.

@@ -43,11 +43,11 @@ authority、reward shaping 或 policy action surface。
 本 slice 已运行 focused gates：
 
 ```bash
-python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_cross_rollout_first_event_state_recovers_shadow_quality_after_boundary -q
-pytest tests/hmoe/test_a6_first_event_hazard.py -q
-python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/policy_algo/first_event_hazard.py python/rl/support/nonfinite_probe.py tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_hmoe_ppo_warmup.py
-pytest tests/hmoe/test_hmoe_ppo_warmup.py -q
+python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/policy/test_auxiliary_training_updates.py
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_cross_rollout_first_event_state_recovers_shadow_quality_after_boundary -q
+pytest tests/policy/test_first_event_timing_contracts.py -q
+python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/policy_algo/first_event_hazard.py python/rl/support/nonfinite_probe.py tests/policy/test_first_event_timing_contracts.py tests/policy/test_auxiliary_training_updates.py
+pytest tests/policy/test_auxiliary_training_updates.py -q
 ```
 
 观察结果：

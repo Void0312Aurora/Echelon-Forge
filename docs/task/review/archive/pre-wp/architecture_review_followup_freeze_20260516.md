@@ -270,11 +270,11 @@ Current execution record:
    - vec-env/backend construction
    - SB3/AdaptiveKLPPO model creation and checkpoint initialization
    - callback / probe / learn / save main loop
-4. A focused smoke test [tests/training/test_train_bootstrap.py](../../../../tests/training/test_train_bootstrap.py) has been added.
+4. A focused smoke test [tests/training/test_training_bootstrap_contracts.py](../../../../tests/training/test_training_bootstrap_contracts.py) has been added.
 5. Validated that `train.py` CLI surface compatibility remains usable:
    - `cmo_python train.py --help`
-   - `cmo_python -m pytest -q tests/training/test_train_bootstrap.py`
-   - `cmo_python -m pytest -q tests/training/test_train_entry_cooperative.py`
+   - `cmo_python -m pytest -q tests/training/test_training_bootstrap_contracts.py`
+   - `cmo_python -m pytest -q tests/training/test_training_cli_contracts.py`
 
 ## 5. Follow-ups Not Executed Within This Document
 

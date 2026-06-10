@@ -135,7 +135,7 @@ Likely write surfaces:
   - do not route the grouped loss through ordinary shuffled PPO minibatches.
 - `python/rl/policy_algo/first_event_*`
   - carry grouped evidence and compute survival/stopping terms.
-- focused tests under `tests/hmoe/**` and `tests/training/**`
+- focused tests under `tests/policy/**` and `tests/training/**`
   - prove the new head is separate from event logits;
   - prove masks remain authoritative;
   - prove closed-mask rows do not update executable fire logits.

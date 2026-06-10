@@ -36,7 +36,7 @@ Two diagnostic issues were fixed before accepting the N evidence:
   `a7/evc_proj_delta_mean`.
 
 Regression coverage:
-`tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_records_a7_projection_credit_stats`.
+`tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_records_a7_projection_credit_stats`.
 
 ## Valid Training Run
 

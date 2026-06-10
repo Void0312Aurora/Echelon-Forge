@@ -159,7 +159,7 @@ flowchart TD
 git diff --check
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp15_*.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or worldline or experiment or setup"
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/scenario/test_scenario_generation_contracts.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py -k "counterfactual or experiment"
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP21 --summary
 ```

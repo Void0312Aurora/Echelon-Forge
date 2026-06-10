@@ -25,7 +25,7 @@ WP16-D。
 | `RuntimeFacade.runtime()` and downstream `runtime().world()` access | `compatibility_wrapper` plus diagnostics-bounded callsites | `WP16-C` / `WP16-D` | `WP16-C Facade And Batch Path Spine Migration` / `WP16-D Legacy Path Deprecation And Compatibility Gates` | escape hatch 仍然对 diagnostics 和 migration adapters 开放；依赖 `runtime().world()` 的 diagnostics tests 仍然是 non-maintained。 |
 | `tests/runtime/engagement/test_facade_engagement_export.py` | `diagnostics_only` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | 该测试验证了 export vocabulary，但它通过 `facade.runtime().world()` 合成 launch/damage，因此不能作为 maintained-spine evidence。 |
 | `tests/runtime/engagement/test_diagnostics_trace_contract.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | trace-chain validation 只保护 diagnostics vocabulary，而不是 default runtime-spine execution。 |
-| `tests/training/test_cooperative_diagnostics_callback.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | 真实 consumer path 仍然缺少显式 packet/barrier/trace linkage，所以 WP16-D 不能默认把它当作 maintained。 |
+| `tests/training/test_diagnostics_callback_contracts.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | 真实 consumer path 仍然缺少显式 packet/barrier/trace linkage，所以 WP16-D 不能默认把它当作 maintained。 |
 
 ## 3. 替换线索与保留边界
 

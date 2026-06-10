@@ -47,7 +47,7 @@ context, and hydrology objects as catalog-composed `EnvironmentObject` records.
 | G0-J static contract | accepted | [G0-J acceptance](environment_substrate_g0_static_manifest_contract_acceptance_20260605.md) | Static manifest, validators, fixture, and contract projection tests only. |
 | G0-K request/tile/seed contract | accepted | [generator.py](../../../../python/scenario/environment_substrate/generator.py), focused tests | Python contract only; no scenario compiler/runtime integration. |
 | G0-K catalog admission rules | accepted | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py), focused tests | Catalog labels remain recipes; no movement/LOS/cover/fires/damage/combat semantics. |
-| G0-K deterministic fixture | accepted | [test_environment_substrate_generator_catalog.py](../../../../tests/scenario/test_environment_substrate_generator_catalog.py) | In-memory generated manifest only; no checked-in generated artifact. |
+| G0-K deterministic fixture | accepted | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | In-memory generated manifest only; no checked-in generated artifact. |
 | Runtime projection and derived products | outside G0-K | G0 residual map and later closure records | G0-L/G0-M are accepted separately; runtime setup and consumers remain held. |
 
 ## Scope
@@ -97,7 +97,7 @@ Accepted outputs:
 - [catalog.py](../../../../python/scenario/environment_substrate/catalog.py);
 - [generator.py](../../../../python/scenario/environment_substrate/generator.py);
 - [package exports](../../../../python/scenario/environment_substrate/__init__.py);
-- [focused generator/catalog tests](../../../../tests/scenario/test_environment_substrate_generator_catalog.py);
+- [focused generator/catalog tests](../../../../tests/scenario/test_environment_substrate_contracts.py);
 - [G0-K acceptance record](environment_substrate_g0_generator_catalog_acceptance_20260606.md).
 
 ## Acceptance Gate

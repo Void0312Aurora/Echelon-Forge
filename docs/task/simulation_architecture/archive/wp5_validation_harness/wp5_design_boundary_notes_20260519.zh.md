@@ -13,7 +13,7 @@
 - [WP5 验证套件](validation_harness_wp5_20260519.zh.md)
 - [WP4 facade 对齐验收审查](../review/wp4_facade_alignment_acceptance_review_20260519.zh.md)
 - [WP4-I compatibility guard 笔记](wp4_compat_guard_notes_20260519.zh.md)
-- `tests/architecture/runtime_facade/test_layering.py`
+- `tests/architecture/runtime_facade`
 
 ## 新增 Gate
 
@@ -33,7 +33,7 @@
 推荐交给 WP5-E 评估的 smoke 候选：
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_facade/test_design_boundary_gates.py
+python -m pytest -q tests/architecture/runtime_facade tests/architecture/runtime_facade/test_design_boundary_gates.py
 ```
 
 这些是低成本 static/design gate，应在更重的 runtime facade 或 engagement evidence

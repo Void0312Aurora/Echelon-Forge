@@ -70,7 +70,7 @@ N4 sits on top of the existing N1-N3 naval screen/contact base.
 | RL preflight | `naval_n4_rl_task_surface_preflight_20260525.md` | observation/action/reward/termination/eval surface frozen |
 | Active entries | `examples/config/training/active/naval/*.json` | contact-report, station-hold, and off-station recovery smoke/probe entries exist and use cooperative single-policy-slot execution |
 | Baseline eval | `tools/eval/eval_naval_n4_baseline.py` | zero-action N4 cooperative baseline checks roster, required naval reward terms, and forbidden air/weapon/damage terms |
-| Regression gate | `tests/training/test_naval_active_training_entries.py` and `tests/training/test_naval_n4_closure_gate.py` | N4 metadata, scenario, docs, and non-claims are checked |
+| Regression gate | `tests/training/test_naval_training_entry_contracts.py` and `tests/training/test_naval_training_entry_contracts.py` | N4 metadata, scenario, docs, and non-claims are checked |
 
 ## Active Entry Scope
 
@@ -122,21 +122,21 @@ package with:
 ## Validation
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_training_bootstrap_contracts.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 
-git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_n4_closure_gate.py tests/training/test_naval_active_training_entries.py
+git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 
 ## Next Work

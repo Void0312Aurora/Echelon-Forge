@@ -13,7 +13,7 @@
 | 受控几何场景 | pass | `MLF-2B-X1` pass；`MLF-2B-W1` pass；主线程复验 2 个聚焦测试 | 不证明目标姿态全量可控 |
 | 最近接近事件 | pass | `MLF-2C-X1` pass；`MLF-2C-W1` pass；主线程复验 `ef_py` 构建、3 个导弹几何/引信聚焦测试和 7 个 engagement event capture 回归 | 不证明引信触发、未触发、延迟和失败已标准化 |
 | 引信评估事件 | pass | `MLF-2D-X1` pass；`MLF-2D-W1` pass；主线程复验 `ef_py` 构建、4 个导弹几何/引信聚焦测试和 7 个 engagement event capture 回归 | 不证明诊断 probe 已消费该事件 |
-| 诊断投影 | pass | `MLF-2E-X1` pass；`MLF-2E-W1` pass；主线程复验 `tests/diagnostics/test_air_combat_process_probe.py -q` 17 个测试通过 | 不证明效果模型或奖励语义已变 |
+| 诊断投影 | pass | `MLF-2E-X1` pass；`MLF-2E-W1` pass；主线程复验 `tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q` 17 个测试通过 | 不证明效果模型或奖励语义已变 |
 | runtime handoff | pass | `MLF-2F-I1` pass；`MLF-2F-W1` pass；主线程复验 3 个引信 gate 聚焦测试通过 | 不证明战斗部效果或结构解体已完成 |
 | 验收收尾 | pass | 本归档包、当前指针 README、archive 索引和 A2/MLF-1 导航已同步 | 不证明 MLF-3+ 已完成 |
 

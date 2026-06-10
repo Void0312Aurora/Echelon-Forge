@@ -62,9 +62,9 @@ git diff --check -- docs/task/air_combat
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/diagnostics/test_air_combat_process_probe.py
+  tests/policy/test_execution_policy_surface.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 learned-policy validation 必须记录 deterministic 与 stochastic probes，且不得 stage

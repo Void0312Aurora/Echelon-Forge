@@ -112,7 +112,7 @@ integration notes:
   tool body; tests retain only negative assertions.
 - The chain rows are still transitional projections from `EffectsEvent` /
   `DamageReport`; real DTO event-store writers remain future work.
-- Local revalidation passed: `test_air_combat_process_probe.py`, `py_compile`,
+- Local revalidation passed: `test_diagnostics_probe_contracts.py`, `py_compile`,
   and the relevant `git diff --check`.
 
 ## Round-4 Dispatch Record
@@ -141,7 +141,7 @@ integration notes:
   event store writes `PlatformConsequenceEvent` and `LifecycleTransitionEvent`
   for live scenarios.
 - Local revalidation passed: `test_air_combat_reward_surface.py`,
-  `test_air_combat_process_probe.py`, `py_compile`, and the relevant
+  `test_diagnostics_probe_contracts.py`, `py_compile`, and the relevant
   `git diff --check`.
 
 ## Round-5 Acceptance Record
@@ -200,7 +200,7 @@ git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_l
 Later code rounds need at least:
 
 ```bash
-python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q
+python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 python -m pytest tests/runtime/air_combat/test_air_combat_reward_surface.py -q
 ```
 

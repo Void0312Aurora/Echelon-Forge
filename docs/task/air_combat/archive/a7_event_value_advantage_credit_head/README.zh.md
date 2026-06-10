@@ -190,14 +190,14 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   `hybrid_event_credit_head_lr_scale`、
   `HierarchicalMoEExecutionPolicy.get_hybrid_event_credit()` 与
   `_HybridActionDistribution.fire_event_q_values()` / `fire_event_advantage()`，
-  由 `tests/hmoe/test_hmoe_policy.py` 覆盖。
+  由 `tests/policy/test_execution_policy_surface.py` 覆盖。
 - PPO auxiliary-credit coupling：`python/rl/policy_algo/first_event_hazard.py`
   中的 `compute_first_event_credit_loss()` 与
   `first_event_credit_batch_from_rollout_data()`，以及
   `python/rl/policy_algo/ppo_adaptive_kl.py` 中的
   `AdaptiveKLPPO._first_event_credit_loss()`，由
-  `tests/hmoe/test_a6_event_head_update_strength.py` 和
-  `tests/hmoe/test_hmoe_ppo_warmup.py` 覆盖。
+  `tests/policy/test_event_head_update_contracts.py` 和
+  `tests/policy/test_auxiliary_training_updates.py` 覆盖。
 - Config and diagnostics：
   [a7_event_value_advantage_credit_head_config_diagnostics_20260604.md](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md)、
   `examples/config/training/active/air_combat/` 下的 A7 active config、

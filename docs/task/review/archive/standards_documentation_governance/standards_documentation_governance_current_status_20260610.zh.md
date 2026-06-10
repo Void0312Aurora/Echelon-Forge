@@ -75,7 +75,7 @@ Batch A：
 
 ```text
 cmake --build build-workshop --target ef_py -j2: pass
-python -m pytest -q tests/architecture/ground/test_tasking_component_boundary.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/leader/test_ground_profile_semantics.py tests/runtime/mission/test_mission_command_roe_fields.py: pass, 24 passed
+python -m pytest -q tests/architecture/ground/test_tasking_component_boundary.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_mission_command_roe_fields.py: pass, 24 passed
 python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py: pass, 5 passed
 python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry docs/standards/bilingual_document_clusters.json: pass, 66 registry pairs synced, no registry drift；既有英文 peer 缺口仍为 docs/standards/foundation/realism_authority_boundary.zh.md
 ```

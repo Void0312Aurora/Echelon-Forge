@@ -24,7 +24,7 @@ Current execution progress:
 - [x] `WP3` New facade-level `BatchWorldSetupRequest` / `BatchWorldSetupResult` have been added; `scenario_runtime` preferentially uses typed setup request.
 - [x] `WP4` New `ObservationBatchRequest` has been added; `WorldBatchVecEnv` state readback preferentially goes through the facade observation packet.
 - [x] `WP5` Python bindings have annotated maintained facade surface and simulation compatibility surface.
-- [x] `WP6` New `tests/architecture/runtime_facade/test_layering.py` has been added as a dependency direction regression check.
+- [x] `WP6` New `tests/architecture/runtime_facade` has been added as a dependency direction regression check.
 - [x] `WP7` Target split readiness has recorded include blocking, split order, and the threshold for entering the next batch of target splits; CMake sources have been grouped according to future target source groups.
 
 ## I. Current Assessment
@@ -202,7 +202,7 @@ Suggested checks:
 
 Main files:
 
-- New `tests/architecture/runtime_facade/test_layering.py`
+- New `tests/architecture/runtime_facade`
 - Or merge into [tests/runtime/facade/test_runtime_facade.py](../../../tests/runtime/facade/test_runtime_facade.py)
 
 Acceptance:
@@ -323,7 +323,7 @@ LD_LIBRARY_PATH=/home/void0312/Workshop/CMO/build-facade-local/_deps/flecs-build
 If new architecture checks:
 
 ```bash
-./.venv/bin/python -m pytest tests/architecture/runtime_facade/test_layering.py
+./.venv/bin/python -m pytest tests/architecture/runtime_facade
 ```
 
 ## VII. Completion Criteria

@@ -57,7 +57,7 @@ Inspect after A-D land:
 - `tests/runtime/facade/test_runtime_facade.py`
 - `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`
 - `tests/runtime/bindings/test_bindings_policy_surface.py`
-- `tests/architecture/runtime_facade/test_layering.py`
+- `tests/architecture/runtime_facade`
 
 Preferred approach:
 
@@ -96,7 +96,7 @@ git diff --check
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_layering.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade
 ```
 
 ## 6. Handoff Contract

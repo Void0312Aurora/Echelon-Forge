@@ -44,16 +44,16 @@ python -m compileall \
 
 ```bash
 pytest \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/diagnostics/test_m3s2_chain_breakpoint_probe.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py \
   -q
 ```
 
 本轮重点结果：
 
-- `tests/hmoe/test_hmoe_ppo_warmup.py`、`tests/training/test_air_combat_active_training_entries.py`、`tests/diagnostics/test_m3s2_chain_breakpoint_probe.py`：`46 passed`。
+- `tests/policy/test_auxiliary_training_updates.py`、`tests/training/test_air_combat_training_entry_contracts.py`、`tests/training/test_fire_timing_fault_localization_contracts.py`：`46 passed`。
 - observation replay 前的更广 HMoE/config sweep：`84 passed`。
 
 ## 短训 A：Latent Replay

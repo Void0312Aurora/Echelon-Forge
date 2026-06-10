@@ -21,7 +21,7 @@
 - 当前 `python/rl/runtime/world_batch/adapter.py`
 - 当前 `python/rl/runtime/world_batch_vec_env.py`
 - 当前 `python/rl/runtime/cooperative_world_batch_vec_env.py`
-- 当前 `tests/architecture/runtime_facade/test_layering.py`
+- 当前 `tests/architecture/runtime_facade`
 - 当前 `tests/runtime/facade/test_runtime_facade.py`
 - [Subagent 使用规范](../../../standards/governance/subagent_usage_policy.zh.md)
 
@@ -198,7 +198,7 @@ allowlist 解释：
 ```bash
 git diff --check
 rg -n "WP7.5|Training Path Facade Bridge|facade.runtime|step_execution_batch|export_observation_packet|ObservationBatchRequest|ObservationBatchPacket|ExecutionBatchStepRequest|WorldBatchVecEnv" docs/task/simulation_architecture docs/task/review python/rl/runtime tests/architecture tests/runtime/facade
-python -m pytest tests/architecture/runtime_facade/test_layering.py tests/runtime/facade/test_runtime_facade.py tests/runtime/facade/test_facade_step_evidence_gates.py -q
+python -m pytest tests/architecture/runtime_facade tests/runtime/facade/test_runtime_facade.py tests/runtime/facade/test_facade_step_evidence_gates.py -q
 ```
 
 实现阶段可以增减 `pytest` target，但必须保留 layering、maintained facade

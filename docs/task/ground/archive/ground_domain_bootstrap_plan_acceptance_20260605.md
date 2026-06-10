@@ -38,7 +38,7 @@ ground records now give stable answers for:
 cmake --build build-workshop --target ef_py -j2
 # [100%] Built target ef_py
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/runtime/ground/test_ground_native_platform_schema.py tests/runtime/ground/test_ground_mvp_scenario.py tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py tests/leader/test_ground_profile_semantics.py tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/runtime/ground/test_ground_native_platform_schema.py tests/runtime/ground/test_ground_mvp_scenario.py tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
 # 40 passed
 
 git diff --check

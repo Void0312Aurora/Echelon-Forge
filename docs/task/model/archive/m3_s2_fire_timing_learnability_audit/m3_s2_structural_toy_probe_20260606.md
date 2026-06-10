@@ -56,13 +56,13 @@ window_deadline_steps = 64
 ```bash
 python -m compileall -q \
   tools/diagnostics/m3s2_structural_toy_probe.py \
-  tests/diagnostics/test_m3s2_structural_toy_probe.py
+  tests/training/test_fire_timing_fault_localization_contracts.py
 ```
 
 Outcome: pass.
 
 ```bash
-python -m pytest tests/diagnostics/test_m3s2_structural_toy_probe.py -q
+python -m pytest tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 Outcome: `2 passed`.

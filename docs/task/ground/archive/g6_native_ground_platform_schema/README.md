@@ -103,7 +103,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
   tests/architecture/ground/test_realism_gradient_guardrails.py \
   tests/runtime/ground/test_ground_mvp_scenario.py \
   tests/runtime/ground/test_ground_realism_gradient_mvp_scenarios.py \
-  tests/leader/test_ground_profile_semantics.py
+  tests/leader/test_tasking_profile_contracts.py
 # 24 passed
 ```
 

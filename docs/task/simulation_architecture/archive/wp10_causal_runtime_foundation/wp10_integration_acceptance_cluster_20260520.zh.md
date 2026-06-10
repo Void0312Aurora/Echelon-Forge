@@ -69,7 +69,7 @@ README/archive/bilingual chores 成为主实现瓶颈。
 
 ```bash
 git diff --check
-pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/governance/test_infrastructure_closure_docs.py
+pytest -q tests/architecture/runtime_facade tests/architecture/governance/test_runtime_infrastructure_documentation.py
 pytest -q tests/runtime/engagement tests/runtime/facade tests/runtime/bindings
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP10
 ```

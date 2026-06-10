@@ -55,9 +55,9 @@
 
 本轮验证覆盖了：
 
-- `tests/hmoe/test_hmoe_routing.py`
-- `tests/hmoe/test_hmoe_policy.py`
-- `tests/hmoe/test_hmoe_train_bootstrap.py`
+- `tests/policy/test_routing_contracts.py`
+- `tests/policy/test_execution_policy_surface.py`
+- `tests/policy/test_policy_bootstrap_initialization.py`
 - `tests/world_batch/test_world_batch_vec_env.py`
 
 并额外确认新路径子包能稳定导出关键接口；根级 shim 已在收尾阶段移除。

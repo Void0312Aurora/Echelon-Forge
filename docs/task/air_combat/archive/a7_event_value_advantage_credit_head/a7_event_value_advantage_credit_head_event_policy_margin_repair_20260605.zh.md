@@ -60,10 +60,10 @@ Focused checks 已通过：
 python -m compileall -q train.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_state_completed_world_batch_probe_v1.json
-pytest tests/training/test_a6_event_value_active_config.py -q
-pytest tests/hmoe/test_a6_event_head_update_strength.py -q
-pytest tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/hmoe/test_hmoe_policy.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py -q
+pytest tests/policy/test_event_head_update_contracts.py -q
+pytest tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/policy/test_execution_policy_surface.py -q
 git diff --check -- <A7 event-policy margin write set>
 ```
 
@@ -82,8 +82,8 @@ safe-bias reversal 的 post-correction checks：
 
 ```bash
 python -m compileall -q train.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/policy_algo/policies.py
-pytest tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_safe_action_bias_initializes_air_combat_hybrid_switch_logits tests/hmoe/test_a6_event_head_update_strength.py tests/training/test_a6_event_value_active_config.py::A6EventValueActiveConfigTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss -q
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_policy_margin_loss_projects_shadow_rows_into_policy_path tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_separate_policy_margin_update_only_writes_event_policy_path tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_legal_open_quality_credit_aligns_event_logits_without_projection -q
+pytest tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_safe_action_bias_initializes_air_combat_hybrid_switch_logits tests/policy/test_event_head_update_contracts.py tests/training/test_event_timing_training_config_contracts.py::EventTimingTrainingConfigContractTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss -q
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_policy_margin_loss_projects_shadow_rows_into_policy_path tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_separate_policy_margin_update_only_writes_event_policy_path tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_legal_open_quality_credit_aligns_event_logits_without_projection -q
 ```
 
 Observed outcomes：compile passed；targeted safe-bias/A7 config/update-strength

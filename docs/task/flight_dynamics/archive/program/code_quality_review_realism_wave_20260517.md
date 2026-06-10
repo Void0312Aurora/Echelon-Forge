@@ -164,7 +164,7 @@ Additional note:
 
 - This round's main thread has already begun recovering this leak:
   some world/time-step accesses in `world_batch_vec_env.py` and `leader_world_batch_runtime.py`
-  have been first moved back to explicit adapter, and `tests/architecture/runtime_facade/test_layering.py`
+  have been first moved back to explicit adapter, and `tests/architecture/runtime_facade`
   has added guards.
 - However, the risk has not disappeared. The current state is more accurately described as:
   **"The raw runtime escape hatch has been narrowed from scattered business calls to compatibility interface remnants, but the final freeze has not yet been completed."**

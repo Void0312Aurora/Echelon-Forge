@@ -381,16 +381,16 @@ from stopping output to executable pulse.
 python -m py_compile \
   tools/diagnostics/air_combat_stage0_process_probe.py \
   tools/diagnostics/air_combat_fire_timing_learnability_audit.py \
-  tests/diagnostics/test_air_combat_process_probe.py \
-  tests/diagnostics/test_air_combat_fire_timing_learnability_audit.py
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py
 ```
 
 Outcome: pass.
 
 ```bash
 python -m pytest \
-  tests/diagnostics/test_air_combat_process_probe.py \
-  tests/diagnostics/test_air_combat_fire_timing_learnability_audit.py -q
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 Outcome: `13 passed`.

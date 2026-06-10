@@ -19,7 +19,7 @@ Inputs:
 - Current `src/interfaces/python/bindings_runtime.cpp`
 - Current `tests/runtime/facade/test_runtime_facade.py`
 - Current `tests/test_gpu_runtime_bindings.py`
-- Current `tests/architecture/runtime_facade/test_layering.py`
+- Current `tests/architecture/runtime_facade`
 
 ## 1. Purpose
 
@@ -68,7 +68,7 @@ Inspect before editing:
 - `src/interfaces/python/bindings_runtime.cpp`
 - `tests/runtime/facade/test_runtime_facade.py`
 - `tests/test_gpu_runtime_bindings.py`
-- `tests/architecture/runtime_facade/test_layering.py`
+- `tests/architecture/runtime_facade`
 
 Preferred approach:
 
@@ -109,7 +109,7 @@ Suggested commands:
 git diff --check
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade
 ```
 
 ## 6. Handoff Contract

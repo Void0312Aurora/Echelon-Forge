@@ -22,7 +22,7 @@ consumers。
 - 对 unknown products、held product kinds、held capability claims、missing request
   IDs、missing product kinds，以及 surface-zone indexes 的 missing projection
   profile IDs fail closed；
-- `tests/scenario/test_environment_substrate_derived_products.py` 下的 focused
+- `tests/scenario/test_environment_substrate_contracts.py` 下的 focused
   tests。
 
 未接受：
@@ -48,14 +48,14 @@ consumers。
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_derived_products.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py
 # 4 passed
 ```
 
 已纳入 G0 closure suite：
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py tests/scenario/test_environment_substrate_projection_setup.py tests/scenario/test_environment_substrate_scenario_ingestion.py tests/scenario/test_environment_substrate_derived_products.py tests/scenario/test_scenario_compiler.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py tests/scenario/test_scenario_compiler.py
 # 59 passed
 ```
 

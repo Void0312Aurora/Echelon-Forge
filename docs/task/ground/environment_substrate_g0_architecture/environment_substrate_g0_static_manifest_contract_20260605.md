@@ -87,10 +87,10 @@ Out of scope:
 - Shared package:
   [python/scenario/environment_substrate](../../../../python/scenario/environment_substrate)
 - Focused tests:
-  [test_environment_substrate_manifest.py](../../../../tests/scenario/test_environment_substrate_manifest.py),
-  [test_environment_substrate_projection.py](../../../../tests/scenario/test_environment_substrate_projection.py)
+  [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py),
+  [test_environment_projection_contracts.py](../../../../tests/scenario/test_environment_projection_contracts.py)
 - Validation:
-  `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py`
+  `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py`
   returned `10 passed`.
 
 ## Acceptance Gate

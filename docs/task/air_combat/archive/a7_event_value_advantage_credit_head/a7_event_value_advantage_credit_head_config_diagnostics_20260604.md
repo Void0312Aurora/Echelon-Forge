@@ -84,37 +84,37 @@ python -m compileall -q \
 Observed: pass.
 
 ```bash
-pytest tests/training/test_a6_event_value_active_config.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py -q
 ```
 
 Observed: `6 passed`.
 
 ```bash
-pytest tests/training/test_a6_event_value_diagnostics_callback.py -q
+pytest tests/training/test_diagnostics_callback_contracts.py -q
 ```
 
 Observed: `5 passed`.
 
 ```bash
-pytest tests/diagnostics/test_a6_event_value_process_probe.py -q
+pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 Observed: `3 passed`.
 
 ```bash
-pytest tests/training/test_air_combat_active_training_entries.py -q
+pytest tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 Observed: `13 passed`.
 
 ```bash
-pytest tests/training/test_cooperative_diagnostics_callback.py -q
+pytest tests/training/test_diagnostics_callback_contracts.py -q
 ```
 
 Observed: `13 passed`.
 
 ```bash
-pytest tests/diagnostics/test_air_combat_process_probe.py -q
+pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 Observed: `9 passed`.
@@ -143,19 +143,19 @@ touched files:
 - examples/config/training/active/air_combat/README.zh.md
 - python/training/diagnostics.py
 - tools/diagnostics/air_combat_stage0_process_probe.py
-- tests/training/test_a6_event_value_active_config.py
-- tests/training/test_air_combat_active_training_entries.py
-- tests/training/test_a6_event_value_diagnostics_callback.py
-- tests/diagnostics/test_a6_event_value_process_probe.py
+- tests/training/test_event_timing_training_config_contracts.py
+- tests/training/test_air_combat_training_entry_contracts.py
+- tests/training/test_diagnostics_callback_contracts.py
+- tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 commands/outcomes:
 - python -m json.tool <A7 active config> -> pass
 - python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py -> pass
-- pytest tests/training/test_a6_event_value_active_config.py -q -> 6 passed
-- pytest tests/training/test_a6_event_value_diagnostics_callback.py -q -> 5 passed
-- pytest tests/diagnostics/test_a6_event_value_process_probe.py -q -> 3 passed
-- pytest tests/training/test_air_combat_active_training_entries.py -q -> 13 passed
-- pytest tests/training/test_cooperative_diagnostics_callback.py -q -> 13 passed
-- pytest tests/diagnostics/test_air_combat_process_probe.py -q -> 9 passed
+- pytest tests/training/test_event_timing_training_config_contracts.py -q -> 6 passed
+- pytest tests/training/test_diagnostics_callback_contracts.py -q -> 5 passed
+- pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q -> 3 passed
+- pytest tests/training/test_air_combat_training_entry_contracts.py -q -> 13 passed
+- pytest tests/training/test_diagnostics_callback_contracts.py -q -> 13 passed
+- pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q -> 9 passed
 remaining paths:
 - `A7-EVC-I Target Construction And Credit Sign Audit` has since closed as
   repair-required evidence.

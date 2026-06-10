@@ -321,8 +321,8 @@ contracts。
 - `python/scenario/environment_substrate/components.py`
 - `python/scenario/environment_substrate/validation.py`
 - `python/scenario/environment_substrate/projection.py`
-- `tests/scenario/test_environment_substrate_manifest.py`
-- `tests/scenario/test_environment_substrate_projection.py`
+- `tests/scenario/test_environment_substrate_contracts.py`
+- `tests/scenario/test_environment_projection_contracts.py`
 - [G0-J static manifest contract](environment_substrate_g0_static_manifest_contract_20260605.zh.md)
 
 G0-J 没有编辑 C++ runtime code。它只引入 static manifest data structures、

@@ -72,12 +72,12 @@ bindings, or new C++ DTO field ownership.
 
 | File | Anchor | Preflight finding |
 |------|--------|-------------------|
-| `tests/leader/test_common_core_semantics.py` | `test_normalize_task_order_spec_backfills_common_core` at lines 77-95 | Existing shared-default behavior must stay intact for air. |
-| `tests/leader/test_naval_profile_semantics.py` | `test_bridge_resolves_naval_profile` at lines 22-24 | Ground alias work must not regress naval resolution. |
-| `tests/leader/test_naval_profile_semantics.py` | `test_normalize_task_order_spec_uses_naval_defaults` at lines 26-41 | Ground work must not leak into naval default mapping. |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_normalize_task_order_spec_backfills_common_core` at lines 77-95 | Existing shared-default behavior must stay intact for air. |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_bridge_resolves_naval_profile` at lines 22-24 | Ground alias work must not regress naval resolution. |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_normalize_task_order_spec_uses_naval_defaults` at lines 26-41 | Ground work must not leak into naval default mapping. |
 | `tests/runtime/mission/test_naval_mission_command_mapping.py` | `test_tasking_profile_for_loader_prefers_explicit_profile_over_service_profile` at lines 32-44 | Explicit `tasking_profile` precedence must remain unchanged after adding ground aliases. |
 | `tests/runtime/mission/test_naval_mission_command_mapping.py` | `test_tasking_profile_for_loader_infers_naval_from_service_profile_when_tasking_profile_missing` at lines 45-56 | Service-profile inference pattern must still work for naval after adding Army inference. |
-| `tests/leader/test_naval_contract_fields.py` | lines 13-93 | Domain-specific DTO additions currently require binding and kernel roundtrip coverage. This is evidence against adding empty ground DTO shells without owned fields. |
+| `tests/leader/test_command_field_projection_contracts.py` | lines 13-93 | Domain-specific DTO additions currently require binding and kernel roundtrip coverage. This is evidence against adding empty ground DTO shells without owned fields. |
 
 ## Proposed Future Implementation Write Scope
 
@@ -199,14 +199,14 @@ Escalation trigger for later work:
 
 ```bash
 git diff --check
-python -m pytest -q tests/leader/test_common_core_semantics.py
-python -m pytest -q tests/leader/test_naval_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 python -m pytest -q tests/runtime/mission/test_naval_mission_command_mapping.py
 ```
 
 ### Focused tests to add in future G1 implementation
 
-Add one new focused file, preferably `tests/leader/test_ground_profile_semantics.py`,
+Add one new focused file, preferably `tests/leader/test_tasking_profile_contracts.py`,
 covering:
 
 1. `resolve_tasking_profile("army" | "ground" | "land")` returns the ground
@@ -294,8 +294,8 @@ Commands run:
 - `nl -ba python/rl/profile/naval_profile.py | sed -n '1,260p'`
 - `nl -ba python/rl/profile/air_profile.py | sed -n '100,260p'`
 - `nl -ba python/rl/profile/air_profile.py | sed -n '520,620p'`
-- `nl -ba tests/leader/test_naval_profile_semantics.py | sed -n '1,220p'`
-- `nl -ba tests/leader/test_common_core_semantics.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_tasking_profile_contracts.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_tasking_profile_contracts.py | sed -n '1,220p'`
 - `rg -n "struct TaskOrder|struct LeaderIntent|struct PilotReport|class TaskOrder|TaskOrder\\b|LeaderIntent\\b|PilotReport\\b|ServiceProfile|TaskFamily|TacticalUnitType|CoordinationMode" src/interfaces src/components src/core`
 - `nl -ba src/components/tasking/README.md | sed -n '1,220p'`
 - `find src/components -maxdepth 3 \\( -path '*/tasking/*' -o -path '*/command/*' \\) | sort`
@@ -313,7 +313,7 @@ Commands run:
 - `nl -ba python/rl/profile/__init__.py | sed -n '1,200p'`
 - `find docs/task/ground/g1_contract_skeleton -maxdepth 1 -type f | sort`
 - `git status --short`
-- `nl -ba tests/leader/test_naval_contract_fields.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_command_field_projection_contracts.py | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/task_order_core.h | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/leader_intent_core.h | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/pilot_report_core.h | sed -n '1,220p'`

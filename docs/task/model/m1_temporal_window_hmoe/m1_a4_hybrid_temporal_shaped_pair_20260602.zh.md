@@ -42,7 +42,7 @@ temporal shaped 条目保留 hybrid shaped 的训练恢复条件：
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/training/test_air_combat_training_entry_contracts.py
 # 7 passed, 6 subtests passed
 ```
 

@@ -52,9 +52,9 @@ This round has switched:
 ## 5. Verification
 
 This round's verification covered:
-- `tests/hmoe/test_hmoe_routing.py`
-- `tests/hmoe/test_hmoe_policy.py`
-- `tests/hmoe/test_hmoe_train_bootstrap.py`
+- `tests/policy/test_routing_contracts.py`
+- `tests/policy/test_execution_policy_surface.py`
+- `tests/policy/test_policy_bootstrap_initialization.py`
 - `tests/world_batch/test_world_batch_vec_env.py`
 
 Additionally confirmed that the new path sub-package can stably export key interfaces; root-level shims were removed in the final stage.

@@ -98,7 +98,7 @@ Out of scope:
 - C++ service and store boundaries under `src/core/engine/` and
   `src/core/interfaces/`.
 - Structural guards in
-  [test_wp22_structural_guardrails.py](../../../../../tests/architecture/structural_boundaries/test_structural_guardrails.py).
+  [test_wp22_structural_guardrails.py](../../../../../tests/architecture/structural_boundaries).
 - Engagement runtime shape tests under
   [tests/runtime/engagement](../../../../../tests/runtime/engagement).
 - Air and naval launch runtime tests listed in the task-cluster validation plan.

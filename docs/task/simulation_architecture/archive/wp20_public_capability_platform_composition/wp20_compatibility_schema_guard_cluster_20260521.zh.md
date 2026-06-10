@@ -46,7 +46,7 @@ WP20 的 validation-first publicization guards。
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade/test_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade
 ```
 
 ## 交付

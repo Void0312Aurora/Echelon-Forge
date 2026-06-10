@@ -147,8 +147,8 @@ admission/result contract。
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_public_typed_platform_spawn_contract.py
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_additive_platform_spawn_dto.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py
 ```
 
 ## 交付

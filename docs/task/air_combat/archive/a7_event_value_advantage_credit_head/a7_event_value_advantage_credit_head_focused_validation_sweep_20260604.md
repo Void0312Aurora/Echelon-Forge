@@ -41,9 +41,9 @@ Observed: pass.
 
 ```bash
 pytest \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_a6_event_head_update_strength.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_event_head_update_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py \
   -q
 ```
 
@@ -51,9 +51,9 @@ Observed: `44 passed`.
 
 ```bash
 pytest \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/training/test_air_combat_active_training_entries.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
   -q
 ```
 
@@ -61,9 +61,8 @@ Observed: `24 passed`.
 
 ```bash
 pytest \
-  tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/diagnostics/test_air_combat_process_probe.py \
-  tests/training/test_cooperative_diagnostics_callback.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
   -q
 ```
 
@@ -75,10 +74,10 @@ git diff --check -- \
   examples/config/training/active/air_combat \
   python/training/diagnostics.py \
   tools/diagnostics/air_combat_stage0_process_probe.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 Observed: pass.
@@ -122,9 +121,9 @@ touched files:
 commands/outcomes:
 - python -m json.tool <A7 active config> -> pass
 - python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py -> pass
-- pytest tests/hmoe/test_hmoe_policy.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q -> 44 passed
-- pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/training/test_air_combat_active_training_entries.py -q -> 24 passed
-- pytest tests/diagnostics/test_a6_event_value_process_probe.py tests/diagnostics/test_air_combat_process_probe.py tests/training/test_cooperative_diagnostics_callback.py -q -> 25 passed
+- pytest tests/policy/test_execution_policy_surface.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q -> 44 passed
+- pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q -> 24 passed
+- pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_diagnostics_callback_contracts.py -q -> 25 passed
 - git diff --check -- <A7 write set> -> pass
 - rg -n "[ \t]$" <new A7 untracked files> -> no matches
 remaining paths:

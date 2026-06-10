@@ -299,7 +299,7 @@ graph LR
 | B1: Ground contact GPU implementation | `src/gpu/gpu_ground_contact.cu` | Normal force, friction, restoring torque |
 | B2: Force computation GPU implementation | `src/gpu/gpu_force_system.cu` | Gravity, thrust |
 | B3: Complete aerodynamic GPU implementation | `src/gpu/gpu_aerodynamics.cu` | Full coefficient tables, control surface effects |
-| B4: Drift verification | `tests/diagnostics/test_exact_world_step_force_parity.py` | Verify force/torque parity |
+| B4: Drift verification | Future parity regression location TBD | Verify force/torque parity |
 
 **Exit criteria**: `force_accumulator` drift reduced below 1000
 
@@ -309,7 +309,7 @@ graph LR
 |------|------|------|
 | C1: Complete control law GPU implementation | `src/gpu/gpu_control_law.cu` | Control model call, trim |
 | C2: Leapfrog integrator GPU implementation | `src/gpu/gpu_leapfrog.cu` | Staggered velocity-position update |
-| C3: Full semantic verification | `tests/diagnostics/test_exact_world_step_full_parity.py` | Parity on all surfaces |
+| C3: Full semantic verification | Future parity regression location TBD | Parity on all surfaces |
 
 **Exit criteria**: Total drift below 100, apply_signature 0 difference
 

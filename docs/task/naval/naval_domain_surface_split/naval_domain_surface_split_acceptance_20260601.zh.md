@@ -35,14 +35,14 @@ compatibility carrier。
 ```bash
 git diff --check -- docs/task/naval examples/config/training/active/naval \
   gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py \
-  python/rl/runtime tests/eval/test_eval_naval_n4_baseline.py \
+  python/rl/runtime tests/eval/test_evaluation_cli_contracts.py \
   tests/runtime/core/test_env_config.py tests/runtime/naval/test_naval_n4_reward_surface.py \
-  tests/training/test_naval_active_training_entries.py tests/world_batch/test_world_batch_vec_env.py
+  tests/training/test_naval_training_entry_contracts.py tests/world_batch/test_world_batch_vec_env.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/core/test_env_config.py \
-  tests/training/test_naval_active_training_entries.py \
-  tests/eval/test_eval_naval_n4_baseline.py \
+  tests/training/test_naval_training_entry_contracts.py \
+  tests/eval/test_evaluation_cli_contracts.py \
   tests/runtime/naval/test_naval_n4_reward_surface.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
@@ -87,9 +87,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 git diff --check -- docs/task/naval
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/training/test_naval_active_training_entries.py \
-  tests/training/test_naval_n4_closure_gate.py \
-  tests/eval/test_eval_naval_n4_baseline.py \
+  tests/training/test_naval_training_entry_contracts.py \
+  tests/training/test_naval_training_entry_contracts.py \
+  tests/eval/test_evaluation_cli_contracts.py \
   tests/runtime/naval/test_naval_n4_reward_surface.py
 ```
 

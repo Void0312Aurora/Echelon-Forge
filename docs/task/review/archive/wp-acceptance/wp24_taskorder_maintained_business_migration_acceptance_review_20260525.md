@@ -60,7 +60,7 @@ PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindin
 PYTHONPATH=build-workshop python -m pytest -q tests/architecture/runtime_facade tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/command_tasking/test_dto_domain_shell_guard.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
-PYTHONPATH=build-workshop python -m pytest -q tests/runtime/ground/test_ground_mvp_scenario.py tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py tests/leader/test_ground_profile_semantics.py tests/leader/test_common_core_semantics.py
+PYTHONPATH=build-workshop python -m pytest -q tests/runtime/ground/test_ground_mvp_scenario.py tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py tests/leader/test_tasking_profile_contracts.py
 ```
 
 Observed outcomes:

@@ -70,12 +70,12 @@
 
 | 文件 | 锚点 | 预检发现 |
 |------|--------|-------------------|
-| `tests/leader/test_common_core_semantics.py` | `test_normalize_task_order_spec_backfills_common_core` 第 77-95 行 | 空中任务的现有共享默认行为必须保持不变。 |
-| `tests/leader/test_naval_profile_semantics.py` | `test_bridge_resolves_naval_profile` 第 22-24 行 | 地面别名工作不得退化海军解析。 |
-| `tests/leader/test_naval_profile_semantics.py` | `test_normalize_task_order_spec_uses_naval_defaults` 第 26-41 行 | 地面工作不得泄漏到海军默认映射中。 |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_normalize_task_order_spec_backfills_common_core` 第 77-95 行 | 空中任务的现有共享默认行为必须保持不变。 |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_bridge_resolves_naval_profile` 第 22-24 行 | 地面别名工作不得退化海军解析。 |
+| `tests/leader/test_tasking_profile_contracts.py` | `test_normalize_task_order_spec_uses_naval_defaults` 第 26-41 行 | 地面工作不得泄漏到海军默认映射中。 |
 | `tests/runtime/mission/test_naval_mission_command_mapping.py` | `test_tasking_profile_for_loader_prefers_explicit_profile_over_service_profile` 第 32-44 行 | 添加地面别名后，显式的 `tasking_profile` 优先级必须保持不變。 |
 | `tests/runtime/mission/test_naval_mission_command_mapping.py` | `test_tasking_profile_for_loader_infers_naval_from_service_profile_when_tasking_profile_missing` 第 45-56 行 | 添加陆军推断后，海军的服务 profile 推断模式必须仍然有效。 |
-| `tests/leader/test_naval_contract_fields.py` | 第 13-93 行 | 领域特定的 DTO 添加目前需要绑定和内核往返覆盖。这证明了在没有自有字段的情况下添加空的地面 DTO shell 是不可取的。 |
+| `tests/leader/test_command_field_projection_contracts.py` | 第 13-93 行 | 领域特定的 DTO 添加目前需要绑定和内核往返覆盖。这证明了在没有自有字段的情况下添加空的地面 DTO shell 是不可取的。 |
 
 ## 提议的未来实现编写范围
 
@@ -173,14 +173,14 @@
 
 ```bash
 git diff --check
-python -m pytest -q tests/leader/test_common_core_semantics.py
-python -m pytest -q tests/leader/test_naval_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 python -m pytest -q tests/runtime/mission/test_naval_mission_command_mapping.py
 ```
 
 ### 后续 G1 实现中应添加的聚焦测试
 
-新增一个聚焦文件，建议命名为 `tests/leader/test_ground_profile_semantics.py`，覆盖以下内容：
+新增一个聚焦文件，建议命名为 `tests/leader/test_tasking_profile_contracts.py`，覆盖以下内容：
 
 1. `resolve_tasking_profile("army" | "ground" | "land")` 返回地面适配器。
 2. `resolve_tasking_profile(ef_py.ServiceProfile.Army)` 返回地面适配器。
@@ -250,8 +250,8 @@ G1 中不强制要求的测试：
 - `nl -ba python/rl/profile/naval_profile.py | sed -n '1,260p'`
 - `nl -ba python/rl/profile/air_profile.py | sed -n '100,260p'`
 - `nl -ba python/rl/profile/air_profile.py | sed -n '520,620p'`
-- `nl -ba tests/leader/test_naval_profile_semantics.py | sed -n '1,220p'`
-- `nl -ba tests/leader/test_common_core_semantics.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_tasking_profile_contracts.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_tasking_profile_contracts.py | sed -n '1,220p'`
 - `rg -n "struct TaskOrder|struct LeaderIntent|struct PilotReport|class TaskOrder|TaskOrder\\b|LeaderIntent\\b|PilotReport\\b|ServiceProfile|TaskFamily|TacticalUnitType|CoordinationMode" src/interfaces src/components src/core`
 - `nl -ba src/components/tasking/README.md | sed -n '1,220p'`
 - `find src/components -maxdepth 3 \\( -path '*/tasking/*' -o -path '*/command/*' \\) | sort`
@@ -269,7 +269,7 @@ G1 中不强制要求的测试：
 - `nl -ba python/rl/profile/__init__.py | sed -n '1,200p'`
 - `find docs/task/ground/g1_contract_skeleton -maxdepth 1 -type f | sort`
 - `git status --short`
-- `nl -ba tests/leader/test_naval_contract_fields.py | sed -n '1,220p'`
+- `nl -ba tests/leader/test_command_field_projection_contracts.py | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/task_order_core.h | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/leader_intent_core.h | sed -n '1,220p'`
 - `nl -ba src/components/tasking/common/pilot_report_core.h | sed -n '1,220p'`

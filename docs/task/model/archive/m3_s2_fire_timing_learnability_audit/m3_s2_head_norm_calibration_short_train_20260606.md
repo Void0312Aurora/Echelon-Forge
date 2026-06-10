@@ -74,17 +74,17 @@ python -m compileall -q \
   tools/diagnostics/m3s2_chain_breakpoint_probe.py
 
 python -m pytest \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_m3_stopping_head_gets_dedicated_optimizer_lane_and_zero_outputs \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_m3_stopping_head_norm_uses_dedicated_optimizer_lane_and_zero_outputs \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_initialize_hmoe_from_shared_action_head_zeroes_m3_stopping_head \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_preserves_m3s2_event_window_training_path \
-  tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
-  tests/diagnostics/test_m3s2_real_update_path_probe.py \
-  tests/diagnostics/test_m3s2_chain_breakpoint_probe.py -q
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_m3_stopping_head_gets_dedicated_optimizer_lane_and_zero_outputs \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_m3_stopping_head_norm_uses_dedicated_optimizer_lane_and_zero_outputs \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_initialize_hmoe_from_shared_action_head_zeroes_m3_stopping_head \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_preserves_m3s2_event_window_training_path \
+  tests/training/test_air_combat_training_entry_contracts.py::AirCombatTrainingEntryContractTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
+  tests/training/test_fire_timing_fault_localization_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 Result: `29 passed in 5.04s`.
@@ -93,8 +93,8 @@ Post-probe test after adding normalized parameter grouping:
 
 ```bash
 python -m pytest \
-  tests/diagnostics/test_m3s2_real_update_path_probe.py \
-  tests/diagnostics/test_m3s2_chain_breakpoint_probe.py -q
+  tests/training/test_fire_timing_fault_localization_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 Result: `5 passed in 2.49s`.

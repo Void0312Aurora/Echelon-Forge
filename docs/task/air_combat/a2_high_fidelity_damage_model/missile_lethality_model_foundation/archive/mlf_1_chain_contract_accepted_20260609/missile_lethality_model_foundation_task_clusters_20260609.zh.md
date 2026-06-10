@@ -76,7 +76,7 @@ integration notes:
 - `MLF-1C` 已验收通过：诊断 payload 输出 `lethality_chain_rows`，CLI 支持 `--chain_csv_out`，每行带 `chain_id`、`event_id`、`stage`、来源事件和证据等级。
 - 旧 `last_effect_*` / `last_damage_*` 已从诊断工具本体移除；测试中只保留“不得出现”的断言。
 - 当前链路行仍是从 `EffectsEvent` / `DamageReport` 生成的过渡投影，真实 DTO event-store writer 仍是后续工作。
-- 本地复验通过：`test_air_combat_process_probe.py`、`py_compile`、相关 `git diff --check`。
+- 本地复验通过：`test_diagnostics_probe_contracts.py`、`py_compile`、相关 `git diff --check`。
 
 ## Round-4 派发记录
 
@@ -90,7 +90,7 @@ integration notes:
 - `MLF-1D` 已验收通过：训练奖励现在优先从 `platform_consequence_events` / `lifecycle_transition_events` 形成消费端事实，旧 `DamageReport` 只留在 `_transitional_damage_report_fact_projection()` 兜底路径。
 - 终局判断优先读取标准生命周期事件；触地仍必须达到 `ground_lifecycle >= 2` 或对应坠毁残骸状态才会被当作失去行动能力，安全接地不会被判定为坠毁。
 - 旧 `DamageReport.platform_damage_state_delta` 字符串解析没有扩散到新路径；删除条件是 runtime event store 能为 live scenario 写入 `PlatformConsequenceEvent` 和 `LifecycleTransitionEvent`。
-- 本地复验通过：`test_air_combat_reward_surface.py`、`test_air_combat_process_probe.py`、`py_compile`、相关 `git diff --check`。
+- 本地复验通过：`test_air_combat_reward_surface.py`、`test_diagnostics_probe_contracts.py`、`py_compile`、相关 `git diff --check`。
 
 ## Round-5 验收记录
 
@@ -124,7 +124,7 @@ git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_l
 进入代码后，至少需要补充：
 
 ```bash
-python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q
+python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 python -m pytest tests/runtime/air_combat/test_air_combat_reward_surface.py -q
 ```
 

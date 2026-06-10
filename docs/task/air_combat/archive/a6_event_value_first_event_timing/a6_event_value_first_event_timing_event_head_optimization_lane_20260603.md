@@ -65,13 +65,13 @@ Focused tests show:
 Validation commands:
 
 ```bash
-.venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_policy.py
+.venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py tests/policy/test_execution_policy_surface.py
 ```
 
 Observed: `28 passed`.
 
 ```bash
-.venv/bin/python -m pytest -q tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py
+.venv/bin/python -m pytest -q tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Observed: `15 passed, 10 subtests passed`.
@@ -80,16 +80,16 @@ Broader focused validation:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/hmoe/test_a6_event_head_update_strength.py \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/training/test_cooperative_diagnostics_callback.py \
-  tests/diagnostics/test_air_combat_process_probe.py
+  tests/policy/test_event_head_update_contracts.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 Observed: `77 passed, 10 subtests passed`.
@@ -97,8 +97,8 @@ Observed: `77 passed, 10 subtests passed`.
 Compile/check:
 
 ```bash
-python -m compileall -q python/rl/policy_algo tests/hmoe tests/training
-git diff --check -- python/rl/policy_algo tests/hmoe tests/training docs/task/air_combat examples/config/training/active/air_combat
+python -m compileall -q python/rl/policy_algo tests/policy tests/training
+git diff --check -- python/rl/policy_algo tests/policy tests/training docs/task/air_combat examples/config/training/active/air_combat
 ```
 
 Observed: pass.
@@ -131,21 +131,21 @@ contract rather than simply increasing event-head LR again.
 status: pass; held timing residual
 touched files:
 - python/rl/policy_algo/policies.py
-- tests/hmoe/test_a6_event_head_update_strength.py
-- tests/hmoe/test_hmoe_policy.py
-- tests/training/test_a6_event_value_active_config.py
-- tests/training/test_air_combat_active_training_entries.py
+- tests/policy/test_event_head_update_contracts.py
+- tests/policy/test_execution_policy_surface.py
+- tests/training/test_event_timing_training_config_contracts.py
+- tests/training/test_air_combat_training_entry_contracts.py
 - examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_deadline_event_head_shaped_world_batch_probe_v1.json
 - examples/config/training/active/air_combat/README.md
 - examples/config/training/active/air_combat/README.zh.md
 - docs/task/air_combat/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_optimization_lane_20260603.md
 - docs/task/air_combat/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_optimization_lane_20260603.zh.md
 commands/outcomes:
-- .venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_policy.py -> 28 passed
-- .venv/bin/python -m pytest -q tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -> 15 passed, 10 subtests passed
-- .venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/diagnostics/test_a6_event_value_process_probe.py tests/training/test_air_combat_active_training_entries.py tests/training/test_cooperative_diagnostics_callback.py tests/diagnostics/test_air_combat_process_probe.py -> 77 passed, 10 subtests passed
-- python -m compileall -q python/rl/policy_algo tests/hmoe tests/training -> pass
-- git diff --check -- python/rl/policy_algo tests/hmoe tests/training docs/task/air_combat examples/config/training/active/air_combat -> pass
+- .venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py tests/policy/test_execution_policy_surface.py -> 28 passed
+- .venv/bin/python -m pytest -q tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -> 15 passed, 10 subtests passed
+- .venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py tests/policy/test_first_event_timing_contracts.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py -> 77 passed, 10 subtests passed
+- python -m compileall -q python/rl/policy_algo tests/policy tests/training -> pass
+- git diff --check -- python/rl/policy_algo tests/policy tests/training docs/task/air_combat examples/config/training/active/air_combat -> pass
 - event-head 32k train plus deterministic/stochastic probes -> deterministic crossing and one-shot authorized releases; held timing residual
 remaining paths:
 - Define launch-window / engagement-quality timing contract.

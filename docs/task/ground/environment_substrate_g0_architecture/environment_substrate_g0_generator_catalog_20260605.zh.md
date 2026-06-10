@@ -45,7 +45,7 @@ hydrology objects，并以 catalog-composed `EnvironmentObject` records 输出�
 | G0-J static contract | accepted | [G0-J acceptance](environment_substrate_g0_static_manifest_contract_acceptance_20260605.zh.md) | 只有 static manifest、validators、fixture 与 contract projection tests。 |
 | G0-K request/tile/seed contract | accepted | [generator.py](../../../../python/scenario/environment_substrate/generator.py)、focused tests | 只有 Python contract；不做 scenario compiler/runtime integration。 |
 | G0-K catalog admission rules | accepted | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py)、focused tests | Catalog labels 仍是 recipes；不释放 movement/LOS/cover/fires/damage/combat semantics。 |
-| G0-K deterministic fixture | accepted | [test_environment_substrate_generator_catalog.py](../../../../tests/scenario/test_environment_substrate_generator_catalog.py) | 只生成内存 manifest；不提交 generated artifact。 |
+| G0-K deterministic fixture | accepted | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | 只生成内存 manifest；不提交 generated artifact。 |
 | Runtime projection and derived products | outside G0-K | G0 residual map 与后续 closure records | G0-L/G0-M 已单独接受；runtime setup 与 consumers 继续 held。 |
 
 ## 范围
@@ -95,7 +95,7 @@ G0-K 已接受范围：
 - [catalog.py](../../../../python/scenario/environment_substrate/catalog.py)；
 - [generator.py](../../../../python/scenario/environment_substrate/generator.py)；
 - [package exports](../../../../python/scenario/environment_substrate/__init__.py)；
-- [focused generator/catalog tests](../../../../tests/scenario/test_environment_substrate_generator_catalog.py)；
+- [focused generator/catalog tests](../../../../tests/scenario/test_environment_substrate_contracts.py)；
 - [G0-K acceptance record](environment_substrate_g0_generator_catalog_acceptance_20260606.zh.md)。
 
 ## 验收门

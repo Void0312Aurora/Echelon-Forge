@@ -21,7 +21,7 @@ hybrid 语义：连续飞行轴、Bernoulli 式开关、categorical 选择器和
 | `M1-AS-C Transition Adapter Probe` | main thread | implementation | 增加 Box-compatible action-mode adapter 路径，验证 pulse/effective-action 行为。 | `gym_envs/universal_env_parts/actions.py`, `gym_envs/universal_env.py`, `python/rl/runtime/world_batch_vec_env.py`, active air-combat probe config, runtime tests | Gym Dict action-space 迁移、导弹释放内核改动 | action adapter tests、world-batch action/proprio tests、training bootstrap test | held `fire_weapon` policy command 只产生 rising-edge 单帧 release intent；effective action 写入 `proprio` | 在 `M1-AS-B` 之后 | 1 + 1 repair | pass |
 | `M1-AS-D Hybrid HMoE Action Distribution` | main thread | high-reasoning implementation | 实现 policy 侧混合动作语义：连续飞行轴 + 离散开关/选择器/pulse 命令，同时保持 PPO log-prob 正确。 | `python/rl/policy_algo/policies.py`, HMoE tests | sequence-native PPO、recurrent hidden state、M2 Causal Transformer 实现 | HMoE forward/evaluate tests、PPO smoke、non-finite probe | 新 surface 的 joint log-prob、deterministic mode 和 action shape 有测试；熵沿用 sampled fallback | 在 `M1-AS-B` 后 | 1 + 1 repair | pass |
 | `M1-AS-E Runtime Surface Wiring` | main thread | implementation | 将已接受动作面接入 `UniversalEnv`、`WorldBatchVecEnv`、temporal history 和 compiled observation bridge。 | `gym_envs/universal_env.py`, `python/rl/runtime/world_batch/state.py`, `python/rl/runtime/world_batch_vec_env.py`, world-batch tests | naval action modes、cooperative weapon release、导弹释放内核 | world-batch temporal/action/proprio tests、single-env compatibility tests | reset/done/terminal observation 与 last-action history 在维护路径一致 | 在 `M1-AS-B` 后；和 `M1-AS-D` 同步 | 1 + 1 repair | pass |
-| `M1-AS-F Active Probe Migration` | main thread | implementation | 增加使用新动作接口的 stage-1 active 空战配置，并和 `full` baseline 配对。 | `examples/config/training/active/air_combat/**`, `tests/training/test_air_combat_active_training_entries.py`, 本子项目 docs | learned-policy acceptance、长训声明 | training-entry pytest、`train.py --test_only` bootstrap、实现可用时的短 smoke | 配置使用相同 scenario、seed 规则和 temporal/reactive extractor 设置 | runtime path 通过后 | 1 + 1 repair | pass |
+| `M1-AS-F Active Probe Migration` | main thread | implementation | 增加使用新动作接口的 stage-1 active 空战配置，并和 `full` baseline 配对。 | `examples/config/training/active/air_combat/**`, `tests/training/test_air_combat_training_entry_contracts.py`, 本子项目 docs | learned-policy acceptance、长训声明 | training-entry pytest、`train.py --test_only` bootstrap、实现可用时的短 smoke | 配置使用相同 scenario、seed 规则和 temporal/reactive extractor 设置 | runtime path 通过后 | 1 + 1 repair | pass |
 | `M1-AS-G Diagnostics And Acceptance` | main thread integration | evidence review | 记录 action reachability、launch attempts、invalid fire attempts、repeated launch interval，以及和 M1 temporal history 的交互证据。 | `tools/diagnostics/**`, `docs/task/model/m1_action_interface_split/**`, M1 evidence docs | M2 实现、战术记忆板、广泛空战成熟度声明 | 聚焦 diagnostics、`git diff --check`、已链接测试结果 | 写入 accepted 或 held residual，父 README 保持同步 | 在 `M1-AS-F` 后；closure 串行 | 1 review + 1 repair | pass |
 
 ## 派发规则
@@ -48,8 +48,8 @@ integration notes:
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/core/test_env_config.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "action or temporal_history"
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_air_combat_active_training_entries.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_air_combat_training_entry_contracts.py
 git diff --check -- docs/task/model docs/standards/air gym_envs python examples/config/training/active/air_combat tests tools
 ```
 
@@ -70,9 +70,9 @@ touched files:
   train.py
   examples/config/training/active/air_combat/**
   tests/runtime/core/test_air_combat_hybrid_action.py
-  tests/hmoe/test_hmoe_policy.py
-  tests/hmoe/test_hmoe_ppo_warmup.py
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_execution_policy_surface.py
+  tests/policy/test_auxiliary_training_updates.py
+  tests/training/test_air_combat_training_entry_contracts.py
 commands/outcomes:
   python -m py_compile ...: pass
   pytest focused hybrid/runtime/HMoE/training entries: 40 passed

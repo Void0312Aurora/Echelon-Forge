@@ -23,14 +23,14 @@ Two training-path issues were found before accepting the A7 learned evidence:
 
 - SB3 stdout key truncation collided on long A7 callback diagnostic names. The
   callback A7 keys were shortened in `python/training/diagnostics.py`, with
-  regression coverage in `tests/training/test_a6_event_value_diagnostics_callback.py`.
+  regression coverage in `tests/training/test_diagnostics_callback_contracts.py`.
 - The A7 active config enables `diagnostics.nonfinite_probe=true`, but
   `NonFiniteTrainingProbe` still used the A6-only first-event gate and did not
   add `_first_event_credit_loss()` in its patched `train()` path. That meant A7
   coefficients could load while the credit head stayed untrained. The probe now
   uses `_first_event_label_collection_enabled()` when available and records A7
   credit-loss metrics, with regression coverage in
-  `tests/hmoe/test_hmoe_ppo_warmup.py`.
+  `tests/policy/test_auxiliary_training_updates.py`.
 
 The pre-fix run
 `experiments_tmp/a7_event_credit_launch_window_32k_20260604_r2` is therefore

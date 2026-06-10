@@ -125,7 +125,7 @@ Accepted environment map:
 
 Accepted G4 release test plan:
 
-- existing `tests/leader/test_ground_profile_semantics.py`
+- existing `tests/leader/test_tasking_profile_contracts.py`
 - existing `tests/contracts/unit/ground/*.json`
 - one focused runtime/shared-batch lifecycle proof for ground assignment/report
   propagation through maintained shared entry points

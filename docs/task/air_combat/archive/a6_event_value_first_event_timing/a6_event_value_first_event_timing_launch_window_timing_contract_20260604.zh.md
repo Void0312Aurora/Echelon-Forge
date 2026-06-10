@@ -92,10 +92,10 @@ Observed：pass。
 
 ```bash
 .venv/bin/python -m pytest \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/training/test_a6_event_value_active_config.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
   -q
 ```
 

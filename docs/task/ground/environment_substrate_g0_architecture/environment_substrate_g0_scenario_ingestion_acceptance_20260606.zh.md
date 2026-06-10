@@ -21,7 +21,7 @@ setup，也不释放 terrain behavior。
 - 对 contract mismatch、invalid surfaces、duplicate zone names、forbidden
   `world_index`、missing provenance、dropped rich attributes 与 held runtime
   claims fail closed；
-- `tests/scenario/test_environment_substrate_scenario_ingestion.py` 下的 focused
+- `tests/scenario/test_environment_projection_contracts.py` 下的 focused
   tests。
 
 未接受：
@@ -45,14 +45,14 @@ setup，也不释放 terrain behavior。
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_scenario_ingestion.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_projection_contracts.py
 # 5 passed
 ```
 
 已纳入 G0 closure suite：
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py tests/scenario/test_environment_substrate_projection_setup.py tests/scenario/test_environment_substrate_scenario_ingestion.py tests/scenario/test_environment_substrate_derived_products.py tests/scenario/test_scenario_compiler.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py tests/scenario/test_scenario_compiler.py
 # 59 passed
 ```
 

@@ -34,13 +34,13 @@ python -m compileall -q \
   tools/diagnostics/m3s2_real_update_path_probe.py
 
 python -m pytest \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_preserves_m3s2_event_window_training_path \
-  tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
-  tests/diagnostics/test_m3s2_real_update_path_probe.py -q
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_preserves_m3s2_event_window_training_path \
+  tests/training/test_air_combat_training_entry_contracts.py::AirCombatTrainingEntryContractTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 结果：`22 passed in 8.17s`。

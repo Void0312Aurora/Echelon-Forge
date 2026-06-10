@@ -14,7 +14,7 @@ A4 可以修改 reward shaping、维护中的 S1 C2/ROE probe knobs、focused te
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `A4-SIG-A Boundary` | main thread | n/a | 创建 A4 范围、阶段计划和残余地图。 | `docs/task/air_combat/a4_authorized_first_shot_training_signal/**`、父级空战 README 链接 | 重开 A3 accepted scope 或 M2 | 链接/可读性检查 | README 和任务簇计划存在，父级文档链接它们。 | first，串行 | 1 | pass |
 | `A4-SIG-B Reward Surface` | main thread | n/a | 增加可配置的授权武器链 reward terms。 | `gym_envs/scenario_loader/reward_runtime/air_combat.py`、`tests/runtime/air_combat/test_air_combat_reward_surface.py` | 静默吞 fire、物理或弹药修改 | `pytest tests/runtime/air_combat/test_air_combat_reward_surface.py` | terms 受授权与 single-shot 状态约束。 | A 之后 | 2 | pass |
-| `A4-SIG-C Scenario Probe` | main thread | n/a | 在维护中的 S1 C2/ROE training-shaped 场景打开保守 shaping knobs。 | `scenarios/air_combat/1v1/*c2_roe_training_shaped*.json`、`tests/training/test_air_combat_active_training_entries.py` | 改动 M1 basic baselines | active-entry pytest | config test 证明 knobs 只在 A3/A4 probe 上打开。 | B 之后；可与 docs 并行 | 2 | pass |
+| `A4-SIG-C Scenario Probe` | main thread | n/a | 在维护中的 S1 C2/ROE training-shaped 场景打开保守 shaping knobs。 | `scenarios/air_combat/1v1/*c2_roe_training_shaped*.json`、`tests/training/test_air_combat_training_entry_contracts.py` | 改动 M1 basic baselines | active-entry pytest | config test 证明 knobs 只在 A3/A4 probe 上打开。 | B 之后；可与 docs 并行 | 2 | pass |
 | `A4-SIG-D Short Evidence` | main thread | n/a | 运行 post-change 有边界 learned-policy probe。 | `docs/task/air_combat/a4_authorized_first_shot_training_signal/*probe*.md`，不 stage `experiments_tmp` | 单次运行即声明 accepted | 记录训练/probe 命令 | deterministic/stochastic fire/release 指标与 A3 证据对比。 | B/C tests 之后 | 2 | pass, held outcome |
 | `A4-SIG-E Routing Review` | main thread | n/a | 判断 HMoE 是否需要空战 weapons route。 | `python/rl/policy_algo/hmoe_routing.py`、`python/rl/policy_algo/policies.py`、`train.py`、C2 configs、相关 tests/docs | 无证据大改 policy | routing、policy 与 active-entry tests | combat-weapons route 已测试并文档化。 | D 之后 | 2 | pass |
 | `A4-SIG-F Binary Diagnostics` | main thread | n/a | 暴露 binary action logits/probabilities，并测试一次有边界 opportunity-penalty reward trial。 | `python/rl/policy_algo/policies.py`、`python/training_callbacks.py`、`tools/diagnostics/air_combat_stage0_process_probe.py`、reward/config tests、A4 evidence docs | failed learned-policy probe 后仍把 reward urgency 当 accepted | focused tests 加 32k/probe evidence | diagnostics 保留；opportunity penalty 已文档化并作为 active default 禁用。 | E 之后 | 2 | pass, held outcome |
@@ -44,9 +44,9 @@ integration notes:
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tests/hmoe/test_hmoe_routing.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_routing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 可选短训证据：

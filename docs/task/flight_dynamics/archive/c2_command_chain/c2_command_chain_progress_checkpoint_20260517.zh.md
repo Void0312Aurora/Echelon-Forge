@@ -161,7 +161,7 @@
 - [RuntimeFacade README](../../../../src/runtime/facade/README.md)
 - [RuntimeFacade header](../../../../src/runtime/facade/runtime_facade.h)
 - [adapter.py](../../../../python/rl/runtime/world_batch/adapter.py)
-- [runtime facade layering tests](../../../../tests/architecture/runtime_facade/test_layering.py)
+- [runtime facade layering tests](../../../../tests/architecture/runtime_facade)
 - [world setup compat tests](../../../../tests/runtime/core/test_world_setup_compat.py)
 
 ### 1.7 空战武器桥接测试补强

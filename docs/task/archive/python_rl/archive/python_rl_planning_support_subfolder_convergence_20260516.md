@@ -112,7 +112,7 @@ Verification in this round is split into two layers:
 2. Focused tests
    - `tests/runtime/navigation/test_coarse_route_propagator.py`
    - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
-   - `tests/hmoe/test_hmoe_policy.py`
+   - `tests/policy/test_execution_policy_surface.py`
    - `tests/world_batch/test_world_batch_vec_env.py`
 
 ## 8. Future suggestions

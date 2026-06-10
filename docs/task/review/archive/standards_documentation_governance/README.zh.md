@@ -93,7 +93,7 @@ P1 验证证据：
 Batch A remediation 验证证据：
 
 - `cmake --build build-workshop --target ef_py -j2` 通过。
-- `python -m pytest -q tests/architecture/ground/test_tasking_component_boundary.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/leader/test_ground_profile_semantics.py tests/runtime/mission/test_mission_command_roe_fields.py` 通过，24 项测试。
+- `python -m pytest -q tests/architecture/ground/test_tasking_component_boundary.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_mission_command_roe_fields.py` 通过，24 项测试。
 - `python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py` 在扩展 closure guard 后通过。
 
 Batch B remediation 验证证据：

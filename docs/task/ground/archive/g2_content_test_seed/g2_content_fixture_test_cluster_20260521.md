@@ -70,7 +70,7 @@ Recommended focused commands:
 
 ```bash
 python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/ground/task_order_ground_profile_defaults.json
-python -m pytest -q tests/leader/test_ground_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 ```
 
 ## Handoff
@@ -119,7 +119,7 @@ Accepted validation:
 ```bash
 python -m json.tool examples/config/database/ground/units/ground_platoon_starter.seed > /tmp/ground_platoon_starter.seed.pretty.json
 python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/ground/task_order_ground_profile_defaults.json tests/contracts/unit/ground/task_order_ground_minimal_structures.json tests/contracts/unit/ground/task_order_ground_support_relationships.json
-python -m pytest -q tests/leader/test_ground_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 ```
 
 Additional integration evidence:

@@ -212,7 +212,7 @@ python tools/maintenance/wp_doc_closure_audit.py --wp WP15
 - `WP15-A`：`git diff --check`；`python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py`。
 - `WP15-B`：`git diff --check`；`python -m pytest -q tests/architecture/causal_runtime/test_worldline_branch_metadata.py`。
 - `WP15-C`：`git diff --check`；`python -m pytest -q tests/architecture/causal_runtime/test_counterfactual_admission.py`；若添加 public surface，补 facade/binding test。
-- `WP15-D`：`git diff --check`；`python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py`；`python -m pytest -q tests/scenario/test_scenario_compiler.py -k "branch or runtime"`。
+- `WP15-D`：`git diff --check`；`python -m pytest -q tests/scenario/test_scenario_generation_contracts.py`；`python -m pytest -q tests/scenario/test_scenario_compiler.py -k "branch or runtime"`。
 - `WP15-E`：`git diff --check`；`python -m pytest -q tests/architecture/causal_runtime/test_experiment_evidence_bridge.py`；若触及 WP8/WP14 表面，补相关 focused tests。
 - `WP15-F`：`git diff --check`；`python -m pytest -q tests/architecture/test_wp15_*.py`；`python -m pytest -q tests/scenario/test_wp15_*.py`；`python tools/maintenance/wp_doc_closure_audit.py --wp WP15`。
 

@@ -26,10 +26,10 @@
   python/rl/policy_algo/policies.py
 
 ./.venv/bin/python -m pytest \
-  tests/hmoe/test_hmoe_policy.py -k "m3_window_classifier" -q
+  tests/policy/test_execution_policy_surface.py -k "m3_window_classifier" -q
 
 ./.venv/bin/python -m pytest \
-  tests/training/test_air_combat_active_training_entries.py -k m3s2 -q
+  tests/training/test_air_combat_training_entry_contracts.py -k m3s2 -q
 ```
 
 结果：

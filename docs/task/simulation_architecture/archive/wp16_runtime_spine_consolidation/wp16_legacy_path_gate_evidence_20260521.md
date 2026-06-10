@@ -25,7 +25,7 @@ identified by `WP16-A`. It is a gate-preparation artifact only:
 | `RuntimeFacade.runtime()` and downstream `runtime().world()` access | `compatibility_wrapper` plus diagnostics-bounded callsites | `WP16-C` / `WP16-D` | `WP16-C Facade And Batch Path Spine Migration` / `WP16-D Legacy Path Deprecation And Compatibility Gates` | Escape hatch is still public for diagnostics and migration adapters only; diagnostics tests that rely on `runtime().world()` stay non-maintained. |
 | `tests/runtime/engagement/test_facade_engagement_export.py` | `diagnostics_only` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | The test proves export vocabulary, but it synthesizes launch/damage through `facade.runtime().world()` and therefore cannot serve as maintained-spine evidence. |
 | `tests/runtime/engagement/test_diagnostics_trace_contract.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | Trace-chain validation protects diagnostics vocabulary only, not default runtime-spine execution. |
-| `tests/training/test_cooperative_diagnostics_callback.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Real consumer path is still missing explicit packet/barrier/trace linkage, so WP16-D must not treat it as maintained by default. |
+| `tests/training/test_diagnostics_callback_contracts.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Real consumer path is still missing explicit packet/barrier/trace linkage, so WP16-D must not treat it as maintained by default. |
 
 ## 3. Replacement Clues And Retention Bounds
 

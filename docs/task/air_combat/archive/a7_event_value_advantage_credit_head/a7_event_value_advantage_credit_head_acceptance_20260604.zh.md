@@ -30,8 +30,8 @@ A7 验收仅限于证明：在既有 A3/A5 legal event surface 下，event-value
 | Gate | Required outcome | Current state |
 | --- | --- | --- |
 | Objective contract | A7 target 提供 counterfactual hold/fire credit，并命名 target source。 | pass：[objective contract](a7_event_value_advantage_credit_head_objective_contract_20260604.zh.md) |
-| Policy head prototype | Head shape、zero init、optimizer lane、default-off behavior、serialization/load 与 A6 coexistence 有测试覆盖。 | pass：`tests/hmoe/test_hmoe_policy.py` |
-| PPO auxiliary credit | Loss、masks、finite stats 与 event-logit coupling 有测试覆盖。 | pass：`tests/hmoe/test_a6_event_head_update_strength.py`、`tests/hmoe/test_hmoe_ppo_warmup.py` |
+| Policy head prototype | Head shape、zero init、optimizer lane、default-off behavior、serialization/load 与 A6 coexistence 有测试覆盖。 | pass：`tests/policy/test_execution_policy_surface.py` |
+| PPO auxiliary credit | Loss、masks、finite stats 与 event-logit coupling 有测试覆盖。 | pass：`tests/policy/test_event_head_update_contracts.py`、`tests/policy/test_auxiliary_training_updates.py` |
 | Config/diagnostics | Active entries 与 callback/process-probe metrics 暴露 A7 credit behavior。 | pass：[config diagnostics evidence](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md) |
 | Legality boundary | A3/A5 masks 与 state machine 继续持有权威。 | required |
 | HMoE risk handling | HMoE gap 在 head placement 与 diagnostics 中被考虑。 | partial：A7-C 将 credit 保持在 policy-head level，且不重设计 HMoE |
@@ -111,9 +111,9 @@ git diff --check -- docs/task/air_combat docs/task/issues
 
 ```bash
 python -m compileall -q python/rl/policy_algo/policies.py
-pytest tests/hmoe/test_hmoe_policy.py -q
-pytest tests/hmoe/test_a6_event_head_update_strength.py -q
-git diff --check -- python/rl/policy_algo/policies.py tests/hmoe/test_hmoe_policy.py
+pytest tests/policy/test_execution_policy_surface.py -q
+pytest tests/policy/test_event_head_update_contracts.py -q
+git diff --check -- python/rl/policy_algo/policies.py tests/policy/test_execution_policy_surface.py
 ```
 
 观察结果：compileall 通过；HMoE policy tests 为 `31 passed`；A6 event-head
@@ -123,9 +123,9 @@ update-strength tests 为 `3 passed`；diff whitespace check 通过。
 
 ```bash
 python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
-pytest tests/hmoe/test_a6_event_head_update_strength.py -q
-pytest tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/hmoe/test_hmoe_policy.py -q
+pytest tests/policy/test_event_head_update_contracts.py -q
+pytest tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/policy/test_execution_policy_surface.py -q
 ```
 
 观察结果：compileall 通过；event-head/credit gradient tests 为 `5 passed`；
@@ -136,12 +136,12 @@ HMoE PPO warmup tests 为 `8 passed`；HMoE policy tests 为 `31 passed`。
 ```bash
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
 python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py
-pytest tests/training/test_a6_event_value_active_config.py -q
-pytest tests/training/test_a6_event_value_diagnostics_callback.py -q
-pytest tests/diagnostics/test_a6_event_value_process_probe.py -q
-pytest tests/training/test_air_combat_active_training_entries.py -q
-pytest tests/training/test_cooperative_diagnostics_callback.py -q
-pytest tests/diagnostics/test_air_combat_process_probe.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py -q
+pytest tests/training/test_diagnostics_callback_contracts.py -q
+pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
+pytest tests/training/test_air_combat_training_entry_contracts.py -q
+pytest tests/training/test_diagnostics_callback_contracts.py -q
+pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 观察结果：JSON 与 compileall 通过；focused config/diagnostics/active tests
@@ -153,9 +153,9 @@ pytest tests/diagnostics/test_air_combat_process_probe.py -q
 ```bash
 python -m json.tool <A7 active config>
 python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py
-pytest tests/hmoe/test_hmoe_policy.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/training/test_air_combat_active_training_entries.py -q
-pytest tests/diagnostics/test_a6_event_value_process_probe.py tests/diagnostics/test_air_combat_process_probe.py tests/training/test_cooperative_diagnostics_callback.py -q
+pytest tests/policy/test_execution_policy_surface.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
+pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_diagnostics_callback_contracts.py -q
 git diff --check -- <A7 write set>
 ```
 
@@ -196,11 +196,11 @@ validation 通过：
 
 ```bash
 python -m compileall -q python/rl/policy_algo/first_event_projection.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
-pytest tests/hmoe/test_a6_first_event_hazard.py -q
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
-pytest tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
+pytest tests/policy/test_first_event_timing_contracts.py -q
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+pytest tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
-pytest tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 观察结果：compileall 与 JSON 通过；focused test groups 分别为 `17 passed`、
@@ -234,8 +234,8 @@ releases，steps 为 `2`、`47`、`5`，且 zero unauthorized/repeat/budget viol
 `A7-EVC-O` projection eligibility root-cause audit：
 
 ```bash
-python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/policy/test_auxiliary_training_updates.py
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_records_a7_projection_credit_stats tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_shadow_quality_projection_aligns_projected_legal_open_event_logits -q
 ```
 
 观察结果：compileall 通过；focused projection/nonfinite tests 通过，`2 passed`；
@@ -260,8 +260,8 @@ legal-open quality positives，保留 `SHADOW_QUALITY` 作为 projection repair�
 `A7-EVC-Q` legal-open opportunity credit prototype：
 
 ```bash
-python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py
-pytest tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
+python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py tests/policy/test_first_event_timing_contracts.py tests/policy/test_auxiliary_training_updates.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py
+pytest tests/policy/test_first_event_timing_contracts.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 观察结果：compileall 通过；combined A6/A7/HMoE/active-config pytest 通过，
@@ -298,12 +298,12 @@ A7 继续 held，因为 timing 与 advantage sign acceptance 仍未满足。
 ```bash
 pytest tests/runtime/mission/test_mission_obs_taxonomy.py \
   tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py \
-  tests/hmoe/test_hmoe_routing.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_air_combat_active_training_entries.py -q
+  tests/policy/test_routing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 观察结果：focused tests 通过，`105 passed`；`git diff --check` 通过。32k
@@ -364,10 +364,10 @@ credit-head effective norm 从约 `0.4855` 压到 `0.00689`。S TensorBoard revi
 `A7-EVC-V` online credit update contract：
 
 ```bash
-python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/policy_algo/policies.py python/rl/support/nonfinite_probe.py tests/hmoe/test_hmoe_ppo_warmup.py
-pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_preserves_a7_event_credit_training_path tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_separate_credit_update_only_writes_credit_head -q
-pytest tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_hybrid_event_credit_head_gets_dedicated_optimizer_lane_and_zero_outputs tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_hybrid_event_credit_head_exposes_hold_fire_values_without_changing_event_logits tests/hmoe/test_a6_event_head_update_strength.py -q
-pytest tests/training/test_a6_event_value_active_config.py::A6EventValueActiveConfigTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_c2_roe_a7_event_credit_probe_is_separate_from_a6_launch_window_baseline -q
+python -m compileall -q python/rl/policy_algo/ppo_adaptive_kl.py python/rl/policy_algo/policies.py python/rl/support/nonfinite_probe.py tests/policy/test_auxiliary_training_updates.py
+pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_preserves_a7_event_credit_training_path tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_separate_credit_update_only_writes_credit_head -q
+pytest tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_hybrid_event_credit_head_gets_dedicated_optimizer_lane_and_zero_outputs tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_hybrid_event_credit_head_exposes_hold_fire_values_without_changing_event_logits tests/policy/test_event_head_update_contracts.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py::EventTimingTrainingConfigContractTests::test_a7_event_credit_config_exposes_credit_head_without_reusing_a6_hazard_loss tests/training/test_air_combat_training_entry_contracts.py::AirCombatTrainingEntryContractTests::test_stage1_c2_roe_a7_event_credit_probe_is_separate_from_a6_launch_window_baseline -q
 ```
 
 结果：compileall 通过；focused separate-update 与 nonfinite-probe tests 为

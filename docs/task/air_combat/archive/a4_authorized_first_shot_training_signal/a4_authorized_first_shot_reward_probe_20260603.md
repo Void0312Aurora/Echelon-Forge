@@ -47,7 +47,7 @@ Focused tests:
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Retained 32k temporal run:
@@ -84,7 +84,7 @@ The stochastic probe used the same command with `--episodes 3 --stochastic`.
 Focused tests passed:
 
 - `tests/runtime/air_combat/test_air_combat_reward_surface.py`: `10 passed`.
-- `tests/training/test_air_combat_active_training_entries.py`: `9 passed, 8 subtests passed`.
+- `tests/training/test_air_combat_training_entry_contracts.py`: `9 passed, 8 subtests passed`.
 
 Training completed and saved
 `experiments_tmp/a4_authorized_first_shot_temporal_once_32k_20260603/final_model.zip`.

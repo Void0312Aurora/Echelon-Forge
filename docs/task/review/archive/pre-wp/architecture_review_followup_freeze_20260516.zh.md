@@ -268,11 +268,11 @@ cmake --build build-workshop --target ef_core ef_py -j4
    - vec-env/backend 构造
    - SB3/AdaptiveKLPPO 模型创建与 checkpoint 初始化
    - callback / probe / learn / save 主循环
-4. 已新增聚焦 bootstrap 的 smoke 测试 [tests/training/test_train_bootstrap.py](../../../../tests/training/test_train_bootstrap.py)。
+4. 已新增聚焦 bootstrap 的 smoke 测试 [tests/training/test_training_bootstrap_contracts.py](../../../../tests/training/test_training_bootstrap_contracts.py)。
 5. 已验证 `train.py` CLI 表面兼容仍保持可用：
    - `cmo_python train.py --help`
-   - `cmo_python -m pytest -q tests/training/test_train_bootstrap.py`
-   - `cmo_python -m pytest -q tests/training/test_train_entry_cooperative.py`
+   - `cmo_python -m pytest -q tests/training/test_training_bootstrap_contracts.py`
+   - `cmo_python -m pytest -q tests/training/test_training_cli_contracts.py`
 
 ## 五、后续但不在本文档内执行
 

@@ -21,7 +21,7 @@ Accepted:
 - fail-closed rejection for unknown profiles, invalid surface codes, dropped
   rich attributes, and held runtime claims;
 - focused tests under
-  `tests/scenario/test_environment_substrate_projection_setup.py`.
+  `tests/scenario/test_environment_projection_contracts.py`.
 
 Not accepted:
 
@@ -38,7 +38,7 @@ Not accepted:
 | --- | --- | --- |
 | G0-L-A/B/C preflight packets returned pass. | [G0-L cluster](environment_substrate_g0_projection_preflight_cluster_20260606.md) | pass |
 | Payload builder does not apply runtime setup. | [projection_setup.py](../../../../python/scenario/environment_substrate/projection_setup.py) | pass |
-| Payload preserves projection evidence and source IDs. | [projection setup tests](../../../../tests/scenario/test_environment_substrate_projection_setup.py) | pass |
+| Payload preserves projection evidence and source IDs. | [projection setup tests](../../../../tests/scenario/test_environment_projection_contracts.py) | pass |
 | Surface mapping is strict and no implicit `SoftDirt` default is used. | projection setup tests | pass |
 | Dropped rich attributes remain rejected for this slice. | projection setup tests | pass |
 | Held runtime claims remain rejected. | projection setup tests | pass |
@@ -46,7 +46,7 @@ Not accepted:
 ## Validation
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py tests/scenario/test_environment_substrate_projection_setup.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 27 passed
 ```
 

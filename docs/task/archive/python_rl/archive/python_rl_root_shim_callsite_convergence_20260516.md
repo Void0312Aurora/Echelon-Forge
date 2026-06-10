@@ -69,7 +69,7 @@ Before removal, the old root paths were mainly concentrated in tests and a small
 
 - `tests/runtime/*`
 - `tests/leader/*`
-- `tests/hmoe/*`
+- `tests/policy/*`
 - `tests/world_batch/*`
 - Two contract logic points that directly patch `python.rl.wrappers` in `python/testing/scenario_contract_runner.py`
 
@@ -80,14 +80,14 @@ These points have now been migrated, and no old-path entry points remain.
 This round has verified:
 
 - `tests/runtime/mission/test_leader_tasking_runtime.py`
-- `tests/leader/test_common_core_semantics.py`
+- `tests/leader/test_tasking_profile_contracts.py`
 - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
 - `tests/runtime/navigation/test_coarse_route_propagator.py`
 - `tests/test_cuda_import_order.py`
 
 And subsequent focused verification:
 
-- `tests/leader/test_task_order_randomization.py`
+- `tests/leader/test_tasking_phase_control_contracts.py`
 
 All passed.
 

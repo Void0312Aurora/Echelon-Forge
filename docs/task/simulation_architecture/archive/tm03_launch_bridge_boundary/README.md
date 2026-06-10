@@ -96,7 +96,7 @@ TM03-C/TM03-D closed with the following focused validation on `2026-05-25`:
 - `git diff --check`: passed.
 - `rg -n '#include "core/engine/simulation_kernel.h"|SimulationKernel&' src/systems/combat/pilot_weapon_release_system.h src/systems/naval/naval_mission_weapon_release_system.h`: no matches.
 - `cmake --build build-workshop --target ef_py -j4`: passed.
-- `PYTHONPATH=build-workshop python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py`: `15 passed`.
+- `PYTHONPATH=build-workshop python -m pytest -q tests/architecture/structural_boundaries`: `15 passed`.
 - `PYTHONPATH=build-workshop python -m pytest -q tests/runtime/air_combat/test_weapon_roe_runtime.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`: `11 passed`.
 - `PYTHONPATH=build-workshop python -m pytest -q tests/runtime/naval/test_naval_ship_database.py -k "mission_command_can_trigger_ciws or mission_command_ciws_release"`: `2 passed, 20 deselected`.
 

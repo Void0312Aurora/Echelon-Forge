@@ -24,9 +24,9 @@ fire gate 的前提下，active M3-S2 config 能否让现有 `hybrid_event_head`
 
 ```bash
 python3 -m pytest -q \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 结果：`93 passed in 37.00s`。

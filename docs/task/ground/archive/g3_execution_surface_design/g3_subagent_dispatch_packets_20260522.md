@@ -157,7 +157,7 @@ Read-only references:
 - `docs/task/ground/g4_runtime_slice/g4_selected_runtime_slice_cluster_20260521.md`
 - `docs/task/ground/g1_contract_skeleton/README.md`
 - `docs/task/ground/g2_content_test_seed/README.md`
-- `tests/leader/test_ground_profile_semantics.py`
+- `tests/leader/test_tasking_profile_contracts.py`
 - `tests/contracts/unit/ground/task_order_ground_profile_defaults.json`
 - `tests/contracts/unit/ground/task_order_ground_minimal_structures.json`
 - `tests/contracts/unit/ground/task_order_ground_support_relationships.json`

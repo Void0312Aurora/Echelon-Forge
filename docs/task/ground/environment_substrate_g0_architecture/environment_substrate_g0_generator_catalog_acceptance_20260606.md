@@ -17,7 +17,7 @@ Accepted:
   environment branches;
 - fail-closed catalog descriptor and catalog admission validation;
 - deterministic in-memory generated `EnvironmentManifest` fixture output;
-- focused tests under `tests/scenario/test_environment_substrate_generator_catalog.py`;
+- focused tests under `tests/scenario/test_environment_substrate_contracts.py`;
 - documentation integration of returned G0-K-A/B/C worker packets.
 
 Not accepted:
@@ -39,14 +39,14 @@ Not accepted:
 | Request, tile, seed, and provenance contract validates and fails closed. | [generator.py](../../../../python/scenario/environment_substrate/generator.py), generator/catalog tests | pass |
 | Catalog descriptors are recipes, not feature-label schema roots. | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py), generator/catalog tests | pass |
 | Catalog admission rejects unknown refs, branch mismatch, missing components, and unsupported roots. | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py), generator/catalog tests | pass |
-| Generated fixture is deterministic and in-memory only. | [test_environment_substrate_generator_catalog.py](../../../../tests/scenario/test_environment_substrate_generator_catalog.py) | pass |
+| Generated fixture is deterministic and in-memory only. | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | pass |
 | G0-J static manifest regressions still pass. | manifest/projection tests | pass |
 | No runtime behavior is released. | G0-K scope and residual boundary | pass |
 
 ## Validation
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 22 passed
 ```
 

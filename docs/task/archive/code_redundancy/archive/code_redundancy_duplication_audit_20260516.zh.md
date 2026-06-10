@@ -129,7 +129,7 @@ _PILOT_REPORT_FIELDS = (
 **2026-05-16 执行更新**：本轮已完成第一批修复：
 - 为 `TaskOrder` / `LeaderIntent` 补齐缺失的 cooperative takeoff 字段镜像；
 - 在 `gym_envs/leader_env.py` 中增加 `_clone_assign_field()`，对 Python `int -> ef_py enum` 赋值失败场景做兼容转换，避免强类型枚举字段被静默丢弃；
-- 在 `tests/leader/test_two_ship_contract_fields.py` 中增加反射校验，要求 Python 字段列表与 `dir(ef_py.TaskOrder/LeaderIntent/PilotReport)` 一致。
+- 在 `tests/leader/test_command_field_projection_contracts.py` 中增加反射校验，要求 Python 字段列表与 `dir(ef_py.TaskOrder/LeaderIntent/PilotReport)` 一致。
 
 **2026-05-16 继续推进**：已进一步将 `_TASK_ORDER_FIELDS` / `_LEADER_INTENT_FIELDS` / `_PILOT_REPORT_FIELDS` 改为直接基于 `dir(ef_py.*())` 的反射生成，并将 clone 主体收敛为统一实现。这样 Python 侧不再单独维护字段名元组，只保留 clone 兼容层本身。
 
@@ -485,7 +485,7 @@ GPU 路径显式声明了 `compute_flight_shaping_reference_cpu_batch()` 和 `co
 
 **2026-05-16 WP-C 执行更新**：当前版本已补齐第一批绑定维护面回归：
 - 保留 nanobind 现有 `.def_rw(...)` 绑定模式，不引入新的自动绑定系统；
-- 在 [tests/leader/test_two_ship_contract_fields.py](../../../../tests/leader/test_two_ship_contract_fields.py) 继续覆盖 `TaskOrder / LeaderIntent / PilotReport` 的反射一致性；
+- 在 [tests/leader/test_command_field_projection_contracts.py](../../../../tests/leader/test_command_field_projection_contracts.py) 继续覆盖 `TaskOrder / LeaderIntent / PilotReport` 的反射一致性；
 - 新增 [tests/runtime/bindings/test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py)，直接固定 `MissionCommand / PilotAction / CommPacket` 的公开字段 surface，降低 `bindings_command.cpp` 漏绑后的静默漂移风险。
 
 剩余保留项：

@@ -105,8 +105,8 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 - Aggregate runner：
   `tools/diagnostics/air_combat_fire_timing_learnability_audit.py`
 - Focused tests：
-  `tests/diagnostics/test_air_combat_process_probe.py`
-  `tests/diagnostics/test_air_combat_fire_timing_learnability_audit.py`
+  `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+  `tests/training/test_fire_timing_fault_localization_contracts.py`
 - Oracle evidence：
   [m3_s2_fire_timing_learnability_oracle_probe_20260605.zh.md](m3_s2_fire_timing_learnability_oracle_probe_20260605.zh.md)
 - Full delay sweep 与 reward-ordering evidence：

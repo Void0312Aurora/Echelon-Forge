@@ -224,8 +224,9 @@ Phase 1 foundation now also landed:
 
 - CPU parity trace runner in
   [generate_exact_world_step_parity_trace.py](/home/void0312/Workshop/CMO/tools/diagnostics/generate_exact_world_step_parity_trace.py)
-- fixed-seed parity trace regression in
-  [test_exact_world_step_parity_trace.py](/home/void0312/Workshop/CMO/tests/diagnostics/test_exact_world_step_parity_trace.py)
+- fixed-seed parity trace regression evidence, now treated as a historical
+  archived diagnostic reference rather than a maintained `tests/diagnostics`
+  entry
 
 Current Phase 1 note:
 
@@ -245,8 +246,8 @@ Phase 2 initial foundation now landed:
   [test_gpu_runtime_bindings.py](/home/void0312/Workshop/CMO/tests/test_gpu_runtime_bindings.py)
 - fixed-seed shadow replay comparator in
   [compare_exact_world_step_shadow_trace.py](/home/void0312/Workshop/CMO/tools/diagnostics/compare_exact_world_step_shadow_trace.py)
-  with regression coverage in
-  [test_exact_world_step_shadow_trace.py](/home/void0312/Workshop/CMO/tests/diagnostics/test_exact_world_step_shadow_trace.py)
+  with historical regression evidence retained as an archived diagnostic
+  reference rather than a maintained `tests/diagnostics` entry
 - hidden-dynamics debug export for packed/live exact states in
   [python_module.cpp](/home/void0312/Workshop/CMO/src/interfaces/python/python_module.cpp),
   now threaded through both parity-trace generation and shadow-trace replay so

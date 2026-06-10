@@ -57,7 +57,7 @@ Run from repo root:
 Recommended compatibility check before closing a larger branch:
 
 ```powershell
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\mission\test_ground_runtime_lifecycle_bridge.py tests\leader\test_ground_profile_semantics.py tests\leader\test_common_core_semantics.py tests\leader\test_naval_profile_semantics.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\mission\test_ground_runtime_lifecycle_bridge.py tests\leader\test_tasking_profile_contracts.py
 ```
 
 ## Residual Map

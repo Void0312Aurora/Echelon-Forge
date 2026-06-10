@@ -60,7 +60,7 @@ default-factory typed control-state blocker open.
 
 Latest local preflight:
 
-- `python3 -m pytest -q tests/architecture/platform_spawn/test_default_factory_legacy_seed_guard.py tests/architecture/structural_boundaries/test_structural_guardrails.py tests/architecture/runtime_facade/test_layering.py -k "wp22 or bindings or world_batch_runtime or gpu_visual_binding or visual_binding_raw_world_access or escape_hatch or batch_runtime"` -> `32 passed, 16 deselected`
+- `python3 -m pytest -q tests/architecture/platform_spawn/test_default_factory_legacy_seed_guard.py tests/architecture/structural_boundaries tests/architecture/runtime_facade -k "wp22 or bindings or world_batch_runtime or gpu_visual_binding or visual_binding_raw_world_access or escape_hatch or batch_runtime"` -> `32 passed, 16 deselected`
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP22 --summary` -> `0` canonical acceptance reviews; required zh peers present
 - `git diff --check` -> pass
 

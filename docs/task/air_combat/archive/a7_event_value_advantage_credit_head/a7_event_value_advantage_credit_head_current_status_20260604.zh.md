@@ -168,7 +168,7 @@ active event-credit rows 又回到 `0`。A7 继续 held。
 | --- | --- | --- | --- |
 | A7 docs | active | README/task clusters/current status/dispatch/acceptance/objective contract 已存在。 | 仅 documentation 与 dispatch surface。 |
 | Objective contract | pass | 已选合同定义 counterfactual target semantics、window balancing、head placement、loss coupling、diagnostics 与 rollback gates。 | 只授权 focused implementation，不释放 broad architecture。 |
-| Policy head prototype | pass | `python/rl/policy_algo/policies.py` 暴露 `hybrid_event_credit_head_lr_scale`、`get_hybrid_event_credit()` 与 distribution-side credit values；`tests/hmoe/test_hmoe_policy.py` 覆盖 default-off、zero init、optimizer lane、A6 coexistence、load smoke 与 bootstrap zeroing。 | 不声明 PPO auxiliary loss 或 training 已完成。 |
+| Policy head prototype | pass | `python/rl/policy_algo/policies.py` 暴露 `hybrid_event_credit_head_lr_scale`、`get_hybrid_event_credit()` 与 distribution-side credit values；`tests/policy/test_execution_policy_surface.py` 覆盖 default-off、zero init、optimizer lane、A6 coexistence、load smoke 与 bootstrap zeroing。 | 不声明 PPO auxiliary loss 或 training 已完成。 |
 | PPO auxiliary credit | pass | `first_event_hazard.py` 增加带 finite masking 与 window mass caps 的 `compute_first_event_credit_loss()`；`ppo_adaptive_kl.py` 增加 A7 coeffs、A7-only label collection、credit loss coupling、delta alignment 与 finite logs；focused HMoE tests 已通过。 | 不声明 learned-policy。 |
 | Config and diagnostics | pass | [config diagnostics evidence](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md) 增加 A7 active entry、callback A7 credit/hazard metrics 与 process-probe A7 summaries。 | 不声明 learned-policy。 |
 | Focused validation | pass | [focused validation sweep](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md) 记录 JSON、compileall、focused pytest 与 diff checks。 | 不声明 learned-policy。 |
@@ -206,12 +206,12 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
 - A7-EVC-AA focused gates：
   - `python -m compileall -q train.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py`：pass。
   - `python -m json.tool <two A7 active configs>`：pass。
-  - `pytest tests/training/test_a6_event_value_active_config.py -q`：pass，
+  - `pytest tests/training/test_event_timing_training_config_contracts.py -q`：pass，
     `7 passed`。
-  - `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`：pass，
+  - `pytest tests/policy/test_event_head_update_contracts.py -q`：pass，
     `7 passed`。
-  - `pytest tests/hmoe/test_hmoe_ppo_warmup.py -q`：pass，`18 passed`。
-  - `pytest tests/hmoe/test_hmoe_policy.py -q`：pass，`32 passed`。
+  - `pytest tests/policy/test_auxiliary_training_updates.py -q`：pass，`18 passed`。
+  - `pytest tests/policy/test_execution_policy_surface.py -q`：pass，`32 passed`。
   - `git diff --check -- <A7 event-policy margin write set>`：pass。
 - A7-EVC-AA short learned observation：
   - r1 deterministic：`0` accepted releases，quality-window fire probability
@@ -234,24 +234,24 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
     为 `84`、`407`、`18`；另一个 episode 未 release；没有
     unauthorized/repeat/salvo/budget issues，但仍没有 effects 或 damage。
 - `python -m compileall -q python/rl/policy_algo/policies.py`：pass。
-- `pytest tests/hmoe/test_hmoe_policy.py -q`：pass，`31 passed`。
-- `pytest tests/hmoe/test_a6_event_head_update_strength.py -q`：pass，`5 passed`。
-- `pytest tests/hmoe/test_hmoe_ppo_warmup.py -q`：pass，`8 passed`。
-- `git diff --check -- python/rl/policy_algo/policies.py tests/hmoe/test_hmoe_policy.py`：pass。
+- `pytest tests/policy/test_execution_policy_surface.py -q`：pass，`31 passed`。
+- `pytest tests/policy/test_event_head_update_contracts.py -q`：pass，`5 passed`。
+- `pytest tests/policy/test_auxiliary_training_updates.py -q`：pass，`8 passed`。
+- `git diff --check -- python/rl/policy_algo/policies.py tests/policy/test_execution_policy_surface.py`：pass。
 - `python -m json.tool <A7 active config>`：pass。
 - `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py`：pass。
-- `pytest tests/training/test_a6_event_value_active_config.py -q`：pass，`6 passed`。
-- `pytest tests/training/test_a6_event_value_diagnostics_callback.py -q`：pass，`5 passed`。
-- `pytest tests/diagnostics/test_a6_event_value_process_probe.py -q`：pass，`3 passed`。
-- `pytest tests/training/test_air_combat_active_training_entries.py -q`：pass，`13 passed`。
-- `pytest tests/training/test_cooperative_diagnostics_callback.py -q`：pass，`13 passed`。
-- `pytest tests/diagnostics/test_air_combat_process_probe.py -q`：pass，`9 passed`。
-- `pytest tests/hmoe/test_hmoe_policy.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q`：pass，`44 passed`。
-- `pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/training/test_air_combat_active_training_entries.py -q`：pass，`24 passed`。
-- `pytest tests/diagnostics/test_a6_event_value_process_probe.py tests/diagnostics/test_air_combat_process_probe.py tests/training/test_cooperative_diagnostics_callback.py -q`：pass，`25 passed`。
+- `pytest tests/training/test_event_timing_training_config_contracts.py -q`：pass，`6 passed`。
+- `pytest tests/training/test_diagnostics_callback_contracts.py -q`：pass，`5 passed`。
+- `pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q`：pass，`3 passed`。
+- `pytest tests/training/test_air_combat_training_entry_contracts.py -q`：pass，`13 passed`。
+- `pytest tests/training/test_diagnostics_callback_contracts.py -q`：pass，`13 passed`。
+- `pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q`：pass，`9 passed`。
+- `pytest tests/policy/test_execution_policy_surface.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q`：pass，`44 passed`。
+- `pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q`：pass，`24 passed`。
+- `pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_diagnostics_callback_contracts.py -q`：pass，`25 passed`。
 - `git diff --check -- <A7 write set>`：pass。
-- `python -m compileall -q python/rl/support/nonfinite_probe.py python/training/diagnostics.py tests/hmoe/test_hmoe_ppo_warmup.py`：pass。
-- `pytest tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_nonfinite_probe_preserves_a7_event_credit_training_path tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_a7_event_credit_only_collects_labels_and_updates_credit_head tests/training/test_a6_event_value_diagnostics_callback.py -q`：pass，`7 passed`。
+- `python -m compileall -q python/rl/support/nonfinite_probe.py python/training/diagnostics.py tests/policy/test_auxiliary_training_updates.py`：pass。
+- `pytest tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_nonfinite_probe_preserves_a7_event_credit_training_path tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_a7_event_credit_only_collects_labels_and_updates_credit_head tests/training/test_diagnostics_callback_contracts.py -q`：pass，`7 passed`。
 - A7 r3 TensorBoard scalar check：`a7/event_credit_loss` 在 step `32768` 存在；
   active count `450.0`；advantage mean `-0.978105`。
 - A7 r3 deterministic probe：`0` requests、`0` releases、`1880` open-window steps，
@@ -266,7 +266,7 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
   - stochastic early-release episodes 随后仍暴露 `1080`、`1061`、`1081` 个
     post-accepted shadow quality states。
 - A7-EVC-J focused repair gates：touched policy/diagnostic files 的 compileall
-  通过；`pytest tests/hmoe/test_a6_first_event_hazard.py -q` 通过，`15 passed`；
+  通过；`pytest tests/policy/test_first_event_timing_contracts.py -q` 通过，`15 passed`；
   focused HMoE/PPO tests 通过，`14 passed`；focused config/diagnostics/active-entry
   tests 通过，`27 passed`。
 - A7-EVC-J 修复后的 label reconstruction：
@@ -284,12 +284,12 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
   `2`，且 `0` unauthorized/repeat/budget violations。
 - A7-EVC-M focused repair gates：`first_event_projection.py`、
   `first_event_hazard.py` 与 `ppo_adaptive_kl.py` 的 compileall 通过；
-  `pytest tests/hmoe/test_a6_first_event_hazard.py -q` 通过，`17 passed`；
+  `pytest tests/policy/test_first_event_timing_contracts.py -q` 通过，`17 passed`；
   focused projected-loss PPO test 通过，`1 passed`；focused HMoE/PPO group
   通过，`15 passed`；JSON parsing 与 active config/entry tests 通过，
   `19 passed`；docs sync 后 combined focused rerun 通过，`51 passed`。
 - A7-EVC-N diagnostic repair gates：`python/rl/policy_algo/ppo_adaptive_kl.py`、
-  `python/rl/support/nonfinite_probe.py` 与 `tests/hmoe/test_hmoe_ppo_warmup.py`
+  `python/rl/support/nonfinite_probe.py` 与 `tests/policy/test_auxiliary_training_updates.py`
   的 compileall 通过；focused projection/nonfinite tests 通过，`3 passed`。
 - A7-EVC-N 32k projection run 在
   `experiments_tmp/a7_projection_credit_32k_20260604_r3` 下完成；TensorBoard
@@ -337,7 +337,7 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
 - A7-EVC-R stochastic probe 记录 `3/3` authorized one-shot releases，steps 为
   `3`、`44`、`10`，且 `0` unauthorized/repeat/budget violations。
 - A7-EVC-S focused state-completion gates 通过：
-  `pytest tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/hmoe/test_hmoe_routing.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py tests/hmoe/test_a6_first_event_hazard.py tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q`
+  `pytest tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/policy/test_routing_contracts.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/policy/test_first_event_timing_contracts.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q`
   为 `105 passed`；`git diff --check` 通过。
 - A7-EVC-S 32k state-completed run 在
   `experiments_tmp/a7_state_completed_opportunity_32k_20260604_r1` 下完成；最终

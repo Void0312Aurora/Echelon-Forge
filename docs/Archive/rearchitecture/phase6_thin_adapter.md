@@ -37,7 +37,7 @@ Phase 5 已经证明两件事：
 - [leader_env.py](/home/void0312/CMO/gym_envs/leader_env.py)
 - [leader_world_batch_runtime.py](/home/void0312/CMO/python/rl/leader_world_batch_runtime.py)
 - [leader_batched_vec_env.py](/home/void0312/CMO/python/rl/leader_batched_vec_env.py)
-- [test_performance_knobs.py](/home/void0312/CMO/tests/leader/test_performance_knobs.py)
+- [test_leader_runtime_control_contracts.py](/home/void0312/CMO/tests/leader/test_leader_runtime_control_contracts.py)
 
 已新增：
 

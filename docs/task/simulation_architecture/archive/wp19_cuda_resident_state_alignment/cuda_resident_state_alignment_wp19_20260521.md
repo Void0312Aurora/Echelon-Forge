@@ -160,7 +160,7 @@ Initial planning validation:
 ```bash
 git diff --check
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_facade
 python -m pytest -q tests/test_gpu_runtime_bindings.py
 ```
 

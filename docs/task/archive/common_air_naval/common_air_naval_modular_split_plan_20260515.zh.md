@@ -245,7 +245,7 @@ src/components/tasking/air/
 
 - `SimulationKernel` / `WorldBatchRuntime` / `RuntimeFacade` 构建通过
 - `bindings_command.cpp` 导出保持兼容性
-- `tests/leader/test_common_core_semantics.py`
+- `tests/leader/test_tasking_profile_contracts.py`
 - `tests/world_batch/test_world_batch_runtime.py`
   相关字段冒烟通过
 
@@ -259,7 +259,7 @@ src/components/tasking/air/
 - 已完成：`TaskOrder`、`LeaderIntent`、`PilotReport` 拆分为 `common/*_core.h` 和 `air/*_air.h`
 - 已完成：旧伞状头文件继续通过 `Core + Air` 兼容壳对外暴露原结构体名称，并维护平坦字段访问
 - 已完成：`bindings_command.cpp` 兼容性导出已验证
-- 已完成：`tests/leader/test_common_core_semantics.py`、`tests/runtime/facade/test_runtime_facade.py` 及 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
+- 已完成：`tests/leader/test_tasking_profile_contracts.py`、`tests/runtime/facade/test_runtime_facade.py` 及 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
 
 ### WP3：提取仅空中枚举与空中扩展
 
@@ -312,7 +312,7 @@ src/components/tasking/air/
 - 已完成：添加 `src/components/tasking/air/air_tasking_enums.h` 作为仅空中枚举所有者
 - 已完成：`tasking_enums.h` 降级为 `通用 + 空中` 兼容伞状头文件
 - 已完成：`task_order_air.h`、`leader_intent_air.h`、`mission_command.h` 及 `bindings_command.cpp` 已改为显式依赖空中枚举所有者
-- 已完成：`ef_core` / `ef_py` 构建通过，并通过 `tests/leader/test_common_core_semantics.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
+- 已完成：`ef_core` / `ef_py` 构建通过，并通过 `tests/leader/test_tasking_profile_contracts.py`、`tests/leader/test_command_field_projection_contracts.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py`、`tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 聚焦验收
 
 ### WP4：Python Profile/分发拆分
 
@@ -375,7 +375,7 @@ gym_envs/leader_semantics_adapter.py
 -   已完成：`python/rl/leader_tasking.py` 中的 `infer_route_ref_id`、`infer_recovery_*`、`build_kernel_mission_command` 现通过 `air_profile` 托管，同时维护旧的入口点和 `ef_py` 补丁兼容性
 -   已完成：`python/rl/tasking_air_adapter.py` 清晰地从 `common_core_profile` 聚合通用核心默认值/规格，并从 `air_profile` 聚合空中语义
 -   已完成：`./.venv/bin/python -m py_compile` 覆盖了 `common_core_profile.py`、`leader_tasking.py`、`tasking_air_adapter.py`、`tasking_bridge.py` 和 `python/rl/profile/*`
--   已完成：`tests/leader/test_common_core_semantics.py`、`tests/leader/test_task_order_randomization.py`、`tests/leader/test_two_ship_contract_fields.py`、`tests/runtime/mission/test_leader_tasking_runtime.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py` 和 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 重点验收通过（`53 passed` + `1 passed`）
+-   已完成：`tests/leader/test_tasking_profile_contracts.py`、`tests/leader/test_tasking_phase_control_contracts.py`、`tests/leader/test_command_field_projection_contracts.py`、`tests/runtime/mission/test_leader_tasking_runtime.py`、`tests/runtime/facade/test_runtime_facade.py`、`tests/runtime/mission/test_mission_runtime.py` 和 `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` 重点验收通过（`53 passed` + `1 passed`）
 -   未完成：进一步物理迁移 `RuleBasedLeaderPhaseManager` / `ScriptedC2TaskManager` 和 `_apply_task_order_overrides`；`multi_agent_runtime.py` 以及更广泛的合约/运行时入口点的分发转换
 
 ### 工作包5：将 `tests/contracts` 迁移至通用优先
@@ -425,7 +425,7 @@ gym_envs/leader_semantics_adapter.py
 -   已完成：`tests/runners/test_contract_batches.py --group same_process` 包含了这两个通用优先合约，并继续覆盖旧的 `task_order_and_mission_link.json` 和 `scenario_loader_mission_semantics.json`
 -   已完成：`./.venv/bin/python -m py_compile python/testing/scenario_contract_runner.py tests/runners/test_contract_batches.py`
 -   已完成：`tests/runners/test_contract_batches.py --group same_process` 重点验收通过（4个合约通过）
--   已完成：`tests/leader/test_common_core_semantics.py` 和 `tests/leader/test_two_ship_contract_fields.py` 重点回归通过（9个通过）
+-   已完成：`tests/leader/test_tasking_profile_contracts.py` 和 `tests/leader/test_command_field_projection_contracts.py` 重点回归通过（9个通过）
 -   未完成：将纯空中合约物理迁移到 `tests/contracts/unit/comm/` 下，以及建立 `unit/air` / `unit/naval` 目录体系；更广泛的单元/运行时合约仍待继续通用优先转换
 
 ### 工作包6：`tests/runtime`、`tools/eval`、`tools/diagnostics` 的适配
@@ -510,10 +510,10 @@ gym_envs/leader_semantics_adapter.py
 - 完成：添加了 `python/rl/profile/naval_profile.py` 和 `python/rl/tasking/naval_adapter.py`，并使 `python/rl/tasking/bridge.py` 能够对 `tasking_profile = naval` / `service_profile = Navy` 进行 profile 感知的派发。
 - 完成：`python/rl/tasking/common_core_profile.py` 现在拥有海军感知的公共核心默认路径，能够维护最小海军语义，例如 `Navy + Escort + Screen + CommandNode` 用于 `task_order / leader_intent / pilot_report`。
 - 完成：添加了 `tests/contracts/unit/naval/task_order_naval_profile_defaults.json` 和 `tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json`；两个最小海军合约均通过执行。
-- 完成：添加了 `tests/leader/test_naval_profile_semantics.py`，该测试与现有的公共核心/运行时回归一起通过验收。
+- 完成：添加了 `tests/leader/test_tasking_profile_contracts.py`，该测试与现有的公共核心/运行时回归一起通过验收。
 - 完成：`TaskOrder / LeaderIntent / PilotReport` 已正式集成 `TaskOrderNaval / LeaderIntentNaval / PilotReportNaval`，不再仅仅是独立的骨架头文件。
 - 完成：`bindings_command.cpp` 现在导出 `NavalWarfareRole` / `NavalStationType`，并公开海军字段，如 `warfare_role_code`、`officer_in_tactical_command`、`naval_station_type`。
-- 完成：`gym_envs/leader_env.py`、`tests/leader/test_naval_contract_fields.py`、`tests/world_batch/test_world_batch_runtime.py` 中的克隆白名单已完成海军字段的绑定/克隆/往返验证。
+- 完成：`gym_envs/leader_env.py`、`tests/leader/test_command_field_projection_contracts.py`、`tests/world_batch/test_world_batch_runtime.py` 中的克隆白名单已完成海军字段的绑定/克隆/往返验证。
 - 未完成：海军 leader/运行时/评估/诊断尚未开始；后续工作应在此骨架上逐步扩展。
 
 ### WP8：MissionCommand 重构推迟

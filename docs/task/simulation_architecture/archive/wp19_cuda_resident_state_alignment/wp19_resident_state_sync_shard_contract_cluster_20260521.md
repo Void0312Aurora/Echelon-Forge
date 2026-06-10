@@ -158,7 +158,7 @@ Default cadence and trigger rules:
 
 Current guard stance:
 
-- existing `tests/architecture/runtime_facade/test_layering.py` coverage already
+- existing `tests/architecture/runtime_facade` coverage already
   blocks facade coupling to GPU helper implementations and probe-driven
   capability promotion;
 - WP19-D should keep resident-state sync preflight in the same fail-closed lane:
@@ -195,7 +195,7 @@ This stream does not justify capability promotion. The main residuals are:
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_facade
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary
 ```
 

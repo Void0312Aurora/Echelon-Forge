@@ -210,7 +210,7 @@ Freeze scope:
 - [src/components/systems/logistics.h](../../../../src/components/systems/logistics.h)
 - [src/systems/systems/logistics_system.h](../../../../src/systems/systems/logistics_system.h)
 - [src/interfaces/python/bindings_command.cpp](../../../../src/interfaces/python/bindings_command.cpp)
-- [tests/leader/test_two_ship_contract_fields.py](../../../../tests/leader/test_two_ship_contract_fields.py)
+- [tests/leader/test_command_field_projection_contracts.py](../../../../tests/leader/test_command_field_projection_contracts.py)
 - Allowed to add minimal regression tests targeting mass component boundaries
 
 Explicitly not doing:
@@ -243,7 +243,7 @@ Current execution record:
    - `cmake --build build-workshop --target ef_py -j4`
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/runtime/core/test_mass_component_boundary.py -q`
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/runtime/bindings/test_bindings_command_surface.py -q`
-   - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/leader/test_two_ship_contract_fields.py -q`
+- `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/leader/test_command_field_projection_contracts.py -q`
    - `PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest tests/runtime/bindings/test_command_api_entity_guards.py tests/runtime/mission/test_mission_command_split_semantics.py -q`
 
 Stop condition:

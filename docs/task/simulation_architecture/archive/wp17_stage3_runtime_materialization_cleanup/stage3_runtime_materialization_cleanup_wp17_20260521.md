@@ -134,7 +134,7 @@ Focused first-wave validation:
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_facade
 python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "execution_episode_controller_mainline or compatibility_view"
 ```
@@ -149,7 +149,7 @@ git diff --check
 cmake --build build-workshop --target ef_py -j4
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or replay or fidelity or provider"
 python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py tests/architecture/causal_runtime/test_worldline_branch_metadata.py tests/architecture/causal_runtime/test_counterfactual_admission.py
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
+python -m pytest -q tests/architecture/runtime_facade tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py -k "cadence or hold or barrier or clock or window"
 python -m pytest -q tests/world_batch/test_single_world_batch_runtime.py -k "runtime_window_evidence or cadence_reason or single"
 python -m pytest -q tests/test_gpu_runtime_bindings.py -k "capabilities or fidelity or provider"

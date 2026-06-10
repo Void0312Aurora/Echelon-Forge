@@ -137,8 +137,8 @@ python/scenario/environment_substrate/
 Focused tests should live under:
 
 ```text
-tests/scenario/test_environment_substrate_manifest.py
-tests/scenario/test_environment_substrate_projection.py
+tests/scenario/test_environment_substrate_contracts.py
+tests/scenario/test_environment_projection_contracts.py
 tests/scenario/test_terrain_system_schema.py
 tests/scenario/test_terrain_system_projection.py
 ```

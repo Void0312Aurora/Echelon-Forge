@@ -165,7 +165,7 @@
 
 1. 继续把新增需求优先做成 facade-shaped adapter 方法，而不是回流 raw runtime 访问。
 2. 继续减载 `ScenarioLoader` 的 compat facade，不要把新状态同步再塞回 `core.py`。
-3. 保持 `tests/architecture/runtime_facade/test_layering.py` 与 world-setup compat 测试为守门线。
+3. 保持 `tests/architecture/runtime_facade` 与 world-setup compat 测试为守门线。
 
 ### 2.7 文档口径仍需从“冻结分析”过渡到“当前现状”
 

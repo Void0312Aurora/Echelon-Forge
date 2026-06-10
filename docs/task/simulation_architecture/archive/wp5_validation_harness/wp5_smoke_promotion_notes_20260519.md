@@ -29,7 +29,7 @@ a candidate fix, not a WP5-E blocker.
 
 | Smoke entry | WP5 tier coverage | Rationale |
 |-------------|------------------|-----------|
-| `tests/architecture/runtime_facade/test_layering.py` | Design, boundary. | Existing architecture guard for facade layering and raw-runtime escape-hatch containment. |
+| `tests/architecture/runtime_facade` | Design, boundary. | Existing architecture guard for facade layering and raw-runtime escape-hatch containment. |
 | `tests/architecture/runtime_facade/test_design_boundary_gates.py` | Design, boundary. | New WP5-B guard for maintained facade header isolation, runtime owner exposure, and deferred broad `sim.*` bans. |
 | `tests/architecture/build/test_cmake_target_readiness.py` | Design. | Existing architecture/build ownership smoke. |
 | `tests/runtime/core/test_env_config.py` | Operational support. | Existing environment/config smoke retained as supporting runtime health. |
@@ -55,7 +55,7 @@ a candidate fix, not a WP5-E blocker.
 Focused WP5 validation command:
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
 ```
 
 Maintained smoke-suite command:

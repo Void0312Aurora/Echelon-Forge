@@ -17,7 +17,7 @@
 - 当前 `src/runtime/facade/runtime_facade_types.h`
 - 当前 `tests/runtime/facade/test_runtime_facade.py`
 - 当前 `tests/test_gpu_runtime_bindings.py`
-- 当前 `tests/architecture/runtime_facade/test_layering.py`
+- 当前 `tests/architecture/runtime_facade`
 
 ## 1. 目的
 
@@ -38,7 +38,7 @@ layering guard。
 | `WP7-B1 Projection Source Boundary` | 文档化或实现 registry metadata 进入 runtime facade projection path 的位置。 | runtime/facade 文档，可选 C++ projection helper。 | 高。 |
 | `WP7-B2 Deployment Fact Separation` | 保持 GPU helper/probe data 与维护中 capability claim 分离。 | 测试与文档；避免 facade/core 链接 GPU。 | 高。 |
 | `WP7-B3 Capability Default Guard` | 保留 exact GPU、device observation、resident-state 与 shadow support 当前 false default。 | `tests/runtime/facade/`、`tests/test_gpu_runtime_bindings.py`。 | 中高。 |
-| `WP7-B4 Layering Guard` | 确保 facade/core 不调用或链接 GPU helper/probe implementation 来投影 capability。 | `tests/architecture/runtime_facade/test_layering.py`。 | 中高。 |
+| `WP7-B4 Layering Guard` | 确保 facade/core 不调用或链接 GPU helper/probe implementation 来投影 capability。 | `tests/architecture/runtime_facade`。 | 中高。 |
 
 ## 3. 投影规则
 
@@ -122,4 +122,4 @@ rg -n "RuntimeCapabilities|maintained_status|projection_eligibility|deployment f
 
 如果测试有改动，运行对应的 narrow pytest target。如果测试未改动，现有 guard 仍是计划覆盖：
 `tests/runtime/facade/test_runtime_facade.py`、`tests/test_gpu_runtime_bindings.py`
-以及 `tests/architecture/runtime_facade/test_layering.py`。
+以及 `tests/architecture/runtime_facade`。

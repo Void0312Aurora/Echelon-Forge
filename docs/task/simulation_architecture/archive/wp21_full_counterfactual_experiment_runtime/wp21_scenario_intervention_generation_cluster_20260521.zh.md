@@ -44,7 +44,7 @@ simulation state。
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/scenario/test_scenario_generation_contracts.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/scenario -k "generation or scenario_loader"
 ```
 

@@ -111,9 +111,9 @@ policy 采样 early release 前就包含 legal-open quality positives。
 
 ```bash
 python -m compileall -q python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/rl/support/nonfinite_probe.py
-pytest tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/training/test_a6_event_value_active_config.py tests/training/test_air_combat_active_training_entries.py -q
-git diff --check -- docs/task/air_combat python/rl tests/hmoe tests/training
+pytest tests/policy/test_first_event_timing_contracts.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
+git diff --check -- docs/task/air_combat python/rl tests/policy tests/training
 ```
 
 完成这些 gates 后的 first short learned-policy probe 应报告：

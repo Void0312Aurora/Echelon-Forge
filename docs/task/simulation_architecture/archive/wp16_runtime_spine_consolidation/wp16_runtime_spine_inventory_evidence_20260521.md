@@ -97,10 +97,10 @@ Consumer and test clues for later streams:
 | `tests/world_batch/test_world_batch_vec_env.py` | `compatibility_wrapper` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Current vec-env tests prove training functionality through the compatibility view, not through selected runtime-window barrier evidence. |
 | `tests/runtime/engagement/test_facade_engagement_export.py` | `diagnostics_only` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Valuable export assertions exist, but the fixture still synthesizes launch/damage through `RuntimeFacade.runtime().world()` escape hatches, so it is not a clean maintained consumer proof yet. |
 | `tests/runtime/engagement/test_diagnostics_trace_contract.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | Synthetic trace-chain contract check is useful for evidence vocabulary, but it is diagnostics shaping rather than maintained runtime-spine execution. |
-| `tests/diagnostics/test_diagnostics_import_order.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | Import-order coverage protects tooling, not maintained runtime-spine behavior. |
+| `tests/runtime/bindings/test_lazy_binding_resolution.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | Import-order coverage protects tooling, not maintained runtime-spine behavior. |
 | `python/scenario/compiler/generation_request.py` | `blocked` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | The request contract fail-closes correctly and requires replay/branch lineage, but it still has no maintained runtime-spine packet/barrier binding to the selected execution slice. |
 | `src/runtime/contracts/counterfactual_replay_contracts.h` | `blocked` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | WP15 admission remains metadata-only and explicitly restore-unsupported, so counterfactual execution cannot yet claim the maintained runtime spine. |
-| `tests/training/test_cooperative_diagnostics_callback.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Training diagnostics metrics are real consumers, but this path does not yet name observation packet ids, barrier ids, or replay/trace refs strongly enough to classify as maintained or diagnostics-only. |
+| `tests/training/test_diagnostics_callback_contracts.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | Training diagnostics metrics are real consumers, but this path does not yet name observation packet ids, barrier ids, or replay/trace refs strongly enough to classify as maintained or diagnostics-only. |
 
 ## 4. Residuals
 
@@ -112,7 +112,7 @@ Residuals that later streams must keep explicit:
 - `generation_request.py` and
   `counterfactual_replay_contracts.h` are blocked by missing maintained runtime
   execution linkage, not by validation gaps.
-- `tests/training/test_cooperative_diagnostics_callback.py` is the current
+- `tests/training/test_diagnostics_callback_contracts.py` is the current
   `unknown_requires_owner` sample and must not drift into `maintained_spine`
   without explicit runtime evidence fields.
 

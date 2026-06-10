@@ -65,7 +65,7 @@ N4 建立在现有 N1-N3 naval screen/contact 基础之上。
 | RL preflight | `naval_n4_rl_task_surface_preflight_20260525.md` | observation/action/reward/termination/eval surface 已冻结 |
 | Active entries | `examples/config/training/active/naval/*.json` | contact-report、station-hold 和离站位恢复 smoke/probe 条目已存在，并使用 cooperative 单策略槽位 execution |
 | Baseline eval | `tools/eval/eval_naval_n4_baseline.py` | 零动作 N4 cooperative 基线检查 roster、必要海军奖励项，以及禁止出现的空军 / 武器 / 毁伤项 |
-| Regression gate | `tests/training/test_naval_active_training_entries.py` 与 `tests/training/test_naval_n4_closure_gate.py` | N4 metadata、scenario、docs 和 non-claims 被测试守住 |
+| Regression gate | `tests/training/test_naval_training_entry_contracts.py` 与 `tests/training/test_naval_training_entry_contracts.py` | N4 metadata、scenario、docs 和 non-claims 被测试守住 |
 
 ## Active Entry 范围
 
@@ -109,21 +109,21 @@ N5 仍然阻塞。打开 `naval_limited_engagement_v1` 需要独立 package，�
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_training_bootstrap_contracts.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 
-git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_n4_closure_gate.py tests/training/test_naval_active_training_entries.py
+git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 
 ## 下一步

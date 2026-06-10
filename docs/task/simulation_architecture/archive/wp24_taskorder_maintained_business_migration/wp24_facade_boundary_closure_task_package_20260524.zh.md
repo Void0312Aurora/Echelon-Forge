@@ -132,7 +132,7 @@ git diff --check
 python -m py_compile python/scenario/runtime/batch_apply.py python/scenario/runtime/world_setup_compat.py python/rl/runtime/world_batch/adapter.py python/rl/runtime/world_batch/command_chain_cache.py python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py python/rl/runtime/multi_agent_runtime.py python/rl/runtime/agent_shim.py gym_envs/universal_env.py train.py
 cmake --build build-workshop --target ef_py -j4
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/test_agent_shim.py
-PYTHONPATH=build-workshop python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/command_tasking/test_dto_domain_shell_guard.py
+PYTHONPATH=build-workshop python -m pytest -q tests/architecture/runtime_facade tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/command_tasking/test_dto_domain_shell_guard.py
 PYTHONPATH=build-workshop python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain or visual"
 PYTHONPATH=build-workshop python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "observation or batch_runtime or task_order or command_chain"
 ```

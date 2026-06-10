@@ -20,10 +20,10 @@ P5 must not become another reward-scale or coefficient sweep.
 
 | Packet | Owner | Write set | Required output | Status |
 | --- | --- | --- | --- | --- |
-| `M3S1-P5A Diagnostics Surface` | diagnostics worker | `python/rl/policy_algo/ppo_adaptive_kl.py`; `tests/hmoe/test_hmoe_ppo_warmup.py` | Focused test evidence that `m3s1/*` validation metrics are emitted without changing loss/reward/legality semantics. | pass |
+| `M3S1-P5A Diagnostics Surface` | diagnostics worker | `python/rl/policy_algo/ppo_adaptive_kl.py`; `tests/policy/test_auxiliary_training_updates.py` | Focused test evidence that `m3s1/*` validation metrics are emitted without changing loss/reward/legality semantics. | pass |
 | `M3S1-P5B Short Training Evidence Path` | read-only explorer | none | Conservative short-training command, artifacts, metrics, and stop criteria. | pass |
 | `M3S1-P5 Integration Review` | main thread | M3-S1 docs, process probe, active probe config | Review worker packets, run focused tests, and decide whether short training can begin. | pass |
-| `M3S1-P5C Nonfinite Probe Drift Repair` | main thread | `python/rl/support/nonfinite_probe.py`; `tests/hmoe/test_hmoe_ppo_warmup.py` | Prove that `--nonfinite_probe` preserves M3-S1 sidecar construction, auxiliary update, and grouped diagnostics. | pass |
+| `M3S1-P5C Nonfinite Probe Drift Repair` | main thread | `python/rl/support/nonfinite_probe.py`; `tests/policy/test_auxiliary_training_updates.py` | Prove that `--nonfinite_probe` preserves M3-S1 sidecar construction, auxiliary update, and grouped diagnostics. | pass |
 | `M3S1-P5 Short Training Run` | main thread | experiment outputs under `experiments_tmp/` | Run the bounded 8k M3-S1 probe and collect deterministic/stochastic process probes. | pass |
 
 ## Required Diagnostic Surface
@@ -44,13 +44,13 @@ P5 must not become another reward-scale or coefficient sweep.
 1. Run focused M3-S1 tests after any P5-A code patch:
 
    ```bash
-   python -m pytest tests/hmoe/test_hmoe_ppo_warmup.py -q -k m3s1
+   python -m pytest tests/policy/test_auxiliary_training_updates.py -q -k m3s1
    ```
 
 2. If focused tests pass, run the broader adjacent gate:
 
    ```bash
-   python -m pytest tests/hmoe/test_m3s1_grouped_stopping.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py -q
+   python -m pytest tests/policy/test_grouped_stopping_loss_contracts.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py -q
    ```
 
 3. Only after diagnostics exist, open a short-training run with explicit output
@@ -67,10 +67,10 @@ P5 must not become another reward-scale or coefficient sweep.
 
 ```bash
 python -m py_compile python/rl/policy_algo/ppo_adaptive_kl.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py
-python -m pytest tests/hmoe/test_hmoe_ppo_warmup.py -q -k m3s1
+  tests/policy/test_auxiliary_training_updates.py
+python -m pytest tests/policy/test_auxiliary_training_updates.py -q -k m3s1
 git diff --check -- python/rl/policy_algo/ppo_adaptive_kl.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py
+  tests/policy/test_auxiliary_training_updates.py
 ```
 
 Outcome:
@@ -186,9 +186,8 @@ The process probe now emits M3 stopping-head diagnostics:
 Additional main-thread checks for the probe/config handoff:
 
 ```bash
-python -m pytest tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/diagnostics/test_air_combat_process_probe.py -q
-python -m pytest tests/training/test_air_combat_active_training_entries.py \
+python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
+python -m pytest tests/training/test_air_combat_training_entry_contracts.py \
   -q -k 'm3s1 or stage1_bvr_probe_bootstraps'
 python -m json.tool \
   examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json
@@ -244,14 +243,13 @@ Repair validation:
 
 ```bash
 python -m py_compile python/rl/support/nonfinite_probe.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py
-python -m pytest tests/hmoe/test_hmoe_ppo_warmup.py \
+  tests/policy/test_auxiliary_training_updates.py
+python -m pytest tests/policy/test_auxiliary_training_updates.py \
   -q -k 'nonfinite_probe_preserves_m3s1 or m3s1_grouped_stopping_auxiliary'
-python -m pytest tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py -q
-python -m pytest tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/diagnostics/test_air_combat_process_probe.py \
-  tests/training/test_air_combat_active_training_entries.py \
+python -m pytest tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py -q
+python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
   -q -k 'm3s1 or stage1_bvr_probe_bootstraps or model_policy_diagnostics_include_m3'
 ```
 

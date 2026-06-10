@@ -116,7 +116,7 @@ flowchart TD
 | `ENV-G0-K-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass：检查 generator/compiler surfaces，并定义 deterministic request、tile、seed 与 provenance contract requirements。 | none；仅 diagnostics packet。 |
 | `ENV-G0-K-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass：为 terrain 与 non-terrain environment branches 定义 generic catalog descriptor/admission rules。 | none；仅 diagnostics packet。 |
 | `ENV-G0-K-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass：定义 generator implementation 前所需 focused tests、determinism gates 与 validator failures。 | none；仅 diagnostics packet。 |
-| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | 当前主线程 | Accepted：整合 G0-K-A/B/C packets，实现有限 Python generator/catalog contract，并只接受 G0-K 的 in-memory deterministic fixture generation。 | `python/scenario/environment_substrate/catalog.py`、`python/scenario/environment_substrate/generator.py`、`python/scenario/environment_substrate/__init__.py`、`tests/scenario/test_environment_substrate_generator_catalog.py`、G0 package docs 与 parent status docs。不做 runtime projection 或 derived products。 |
+| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | 当前主线程 | Accepted：整合 G0-K-A/B/C packets，实现有限 Python generator/catalog contract，并只接受 G0-K 的 in-memory deterministic fixture generation。 | `python/scenario/environment_substrate/catalog.py`、`python/scenario/environment_substrate/generator.py`、`python/scenario/environment_substrate/__init__.py`、`tests/scenario/test_environment_substrate_contracts.py`、G0 package docs 与 parent status docs。不做 runtime projection 或 derived products。 |
 | `ENV-G0-L-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass：检查 Python scenario compiler/setup surfaces，并把 accepted candidate handling 限定到后续 `world_zone_definition` ingestion。 | none；仅 diagnostics packet。 |
 | `ENV-G0-L-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass：检查 C++ batch/world setup contracts，并确认第一版 payload contract 不需要 C++ edits。 | none；仅 diagnostics packet。 |
 | `ENV-G0-L-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass：定义 projection setup payload implementation 前所需 focused tests、fail-closed reason codes 与 held capability gates。 | none；仅 diagnostics packet。 |
@@ -277,7 +277,7 @@ G0-D 接受状态：
 - `TASK_MOVE`、`TASK_OCCUPY` 和 `TASK_SUPPORT` 仅通过公共核心字段默认。
 - 未添加 C++ DTO 外壳、绑定、运行时行为或场景加载器行为。
 - 主线程验证通过：
-  `python -m pytest -q tests/leader/test_ground_profile_semantics.py tests/leader/test_common_core_semantics.py tests/leader/test_naval_profile_semantics.py tests/runtime/mission/test_naval_mission_command_mapping.py`
+`python -m pytest -q tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_naval_mission_command_mapping.py`
   和 `python -m pytest -q tests/leader`。
 
 ### `G2-A 地面夹具种子`
@@ -438,9 +438,9 @@ G0-D 接受状态：
   shared-entry-point lifecycle proof，加上让 ground loaders 通过 maintained
   `tasking_profile` bridge 解析所需的最窄 runtime plumbing
 - 已接受的 baseline tests：
-  `tests/leader/test_ground_profile_semantics.py`、
-  `tests/leader/test_common_core_semantics.py`、
-  `tests/leader/test_naval_profile_semantics.py`、
+  `tests/leader/test_tasking_profile_contracts.py`、
+  `tests/leader/test_tasking_profile_contracts.py`、
+  `tests/leader/test_tasking_profile_contracts.py`、
   `tests/runtime/mission/test_leader_tasking_runtime.py`、
   `tests/contracts/unit/ground/`
 

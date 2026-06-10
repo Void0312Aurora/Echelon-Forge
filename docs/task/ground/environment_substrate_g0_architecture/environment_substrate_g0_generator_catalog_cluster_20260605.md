@@ -22,7 +22,7 @@ hydrology effects, or dynamic environment mutation.
 | `G0-K-D Integration Map` | main thread integration | n/a | Integrate A/B/C packets into a finite G0-K implementation plan. | `docs/task/ground/environment_substrate_g0_architecture/*.md`, parent ground README/progress/queue docs | No runtime projection, no C++ runtime, no scenarios, no derived products. | Local review of packets plus `git diff --check` for touched docs. | Implementation write set named and residuals preserved. | Serial after G0-K-A/B/C return. | 1 | pass |
 | `G0-K-E1 Request And Tile Contract` | main thread implementation | n/a | Implement deterministic generator request, evidence refs, tile scheme, canonical bytes, and seed derivation. | `python/scenario/environment_substrate/generator.py`, `python/scenario/environment_substrate/__init__.py`, focused tests | No scenario compiler reuse, no runtime projection, no ambient randomness. | Focused pytest for request validation and deterministic output. | Request/tile contract validates and fails closed with stable reason codes. | Depends on G0-K-D. | 1 | pass |
 | `G0-K-E2 Catalog Admission Contract` | main thread implementation | n/a | Implement catalog descriptors, catalog admission validation, and default descriptor fixtures. | `python/scenario/environment_substrate/catalog.py`, `python/scenario/environment_substrate/__init__.py`, focused tests | No feature-label schema roots, no behavior claims from labels. | Focused pytest for catalog refs, required components, branch/layer mismatch, and held claims. | Catalog admission rejects invalid descriptors and generated manifests with stable reason codes. | Parallel-safe with E1 only by file, integrated serially in tests. | 1 | pass |
-| `G0-K-E3 Deterministic Manifest Fixture` | main thread implementation | n/a | Build a deterministic in-memory generated manifest fixture from request + catalog descriptors. | `python/scenario/environment_substrate/generator.py`, `tests/scenario/test_environment_substrate_generator_catalog.py` | No checked-in generated data artifact, no runtime setup payload. | Focused pytest plus existing G0-J regressions. | Same request yields byte-identical manifest metadata; different seed changes generated output while preserving lineage. | Depends on E1/E2. | 1 | pass |
+| `G0-K-E3 Deterministic Manifest Fixture` | main thread implementation | n/a | Build a deterministic in-memory generated manifest fixture from request + catalog descriptors. | `python/scenario/environment_substrate/generator.py`, `tests/scenario/test_environment_substrate_contracts.py` | No checked-in generated data artifact, no runtime setup payload. | Focused pytest plus existing G0-J regressions. | Same request yields byte-identical manifest metadata; different seed changes generated output while preserving lineage. | Depends on E1/E2. | 1 | pass |
 | `G0-K-F Documentation And Acceptance` | main thread integration | n/a | Record G0-K implementation acceptance and sync parent status. | G0 package docs plus parent ground README/progress/queue docs | No archive unless a maintained replacement exists. | Focused pytest and `git diff --check`. | G0-K accepted only for Python generator/catalog contract; historical G0-L/G0-M residuals are superseded by G0 closure. | Serial after E1/E2/E3 validation. | 1 | accepted |
 
 ## Dispatch Rules
@@ -35,7 +35,7 @@ hydrology effects, or dynamic environment mutation.
   `python/scenario/environment_substrate/catalog.py`,
   `python/scenario/environment_substrate/generator.py`,
   `python/scenario/environment_substrate/__init__.py`,
-  `tests/scenario/test_environment_substrate_generator_catalog.py`, and status
+  `tests/scenario/test_environment_substrate_contracts.py`, and status
   docs.
 - Do not split the same normative table across workers.
 - Keep generator/catalog contracts separate from G0-L runtime projection and
@@ -71,7 +71,7 @@ git diff --check -- docs/task/ground/environment_substrate_g0_architecture docs/
 Current G0-K focused validation plus G0-J contract regression:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 22 passed
 ```
 

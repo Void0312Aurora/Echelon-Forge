@@ -218,7 +218,7 @@ Smoke Tests Completed:
 - `./.venv/bin/python tools/eval/eval_sb3.py --help`
 - `./.venv/bin/python tools/eval/eval_sb3.py --mode single --help`
 - `./.venv/bin/python tools/eval/eval_sb3.py --mode cooperative --help`
-- `./.venv/bin/python -m pytest -q tests/eval/test_eval_sb3.py`
+- `./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py`
 
 ## 4. Documentation Constraints
 

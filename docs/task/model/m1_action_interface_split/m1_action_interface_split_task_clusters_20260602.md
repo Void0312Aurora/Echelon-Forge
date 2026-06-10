@@ -24,7 +24,7 @@ policy/action-adapter concepts.
 | `M1-AS-C Transition Adapter Probe` | main thread | implementation | Add a Box-compatible action-mode adapter path for pulse/effective-action behavior. | `gym_envs/universal_env_parts/actions.py`, `gym_envs/universal_env.py`, `python/rl/runtime/world_batch_vec_env.py`, active air-combat probe config, runtime tests | Gym Dict action-space migration, missile release kernel changes | action adapter tests, world-batch action/proprio tests, training bootstrap test | held `fire_weapon` policy command produces only a rising-edge one-frame release intent; effective action is visible in `proprio` | after `M1-AS-B` | 1 + 1 repair | pass |
 | `M1-AS-D Hybrid HMoE Action Distribution` | main thread | high-reasoning implementation | Implement policy-side mixed action semantics for continuous flight axes plus discrete switches/selectors/pulse commands, while preserving PPO log-prob correctness. | `python/rl/policy_algo/policies.py`, HMoE tests | sequence-native PPO, recurrent hidden state, M2 Causal Transformer implementation | HMoE forward/evaluate tests, PPO smoke, non-finite probe | joint log-prob, deterministic mode and action shape are tested; entropy uses sampled fallback | after `M1-AS-B` | 1 + 1 repair | pass |
 | `M1-AS-E Runtime Surface Wiring` | main thread | implementation | Wire the accepted action surface through `UniversalEnv`, `WorldBatchVecEnv`, temporal history and compiled observation bridge. | `gym_envs/universal_env.py`, `python/rl/runtime/world_batch/state.py`, `python/rl/runtime/world_batch_vec_env.py`, world-batch tests | naval action modes, cooperative weapon release, missile release kernel | world-batch temporal/action/proprio tests, single-env compatibility tests | reset/done/terminal observation and last-action history agree across maintained paths | after `M1-AS-B`; with `M1-AS-D` | 1 + 1 repair | pass |
-| `M1-AS-F Active Probe Migration` | main thread | implementation | Add stage-1 active air-combat configs using the new action interface and pair them with `full` baselines. | `examples/config/training/active/air_combat/**`, `tests/training/test_air_combat_active_training_entries.py`, docs under this subproject | learned-policy acceptance, long training claim | training-entry pytest, `train.py --test_only` bootstrap, short smoke if implementation available | configs pair with same scenario, seed rules and temporal/reactive extractor settings | after runtime path passes | 1 + 1 repair | pass |
+| `M1-AS-F Active Probe Migration` | main thread | implementation | Add stage-1 active air-combat configs using the new action interface and pair them with `full` baselines. | `examples/config/training/active/air_combat/**`, `tests/training/test_air_combat_training_entry_contracts.py`, docs under this subproject | learned-policy acceptance, long training claim | training-entry pytest, `train.py --test_only` bootstrap, short smoke if implementation available | configs pair with same scenario, seed rules and temporal/reactive extractor settings | after runtime path passes | 1 + 1 repair | pass |
 | `M1-AS-G Diagnostics And Acceptance` | main thread integration | evidence review | Record evidence on action reachability, launch attempts, invalid fire attempts, repeated launch interval and interaction with M1 temporal history. | `tools/diagnostics/**`, `docs/task/model/m1_action_interface_split/**`, M1 evidence docs | M2 implementation, tactical memory board, broad air-combat maturity claim | focused diagnostics, `git diff --check`, linked test results | acceptance or held residuals are documented and parent README remains synchronized | after `M1-AS-F`; closure serial | 1 review + 1 repair | pass |
 
 ## Dispatch Rules
@@ -55,8 +55,8 @@ integration notes:
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/core/test_env_config.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/world_batch/test_world_batch_vec_env.py -k "action or temporal_history"
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_air_combat_active_training_entries.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_air_combat_training_entry_contracts.py
 git diff --check -- docs/task/model docs/standards/air gym_envs python examples/config/training/active/air_combat tests tools
 ```
 
@@ -78,9 +78,9 @@ touched files:
   train.py
   examples/config/training/active/air_combat/**
   tests/runtime/core/test_air_combat_hybrid_action.py
-  tests/hmoe/test_hmoe_policy.py
-  tests/hmoe/test_hmoe_ppo_warmup.py
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_execution_policy_surface.py
+  tests/policy/test_auxiliary_training_updates.py
+  tests/training/test_air_combat_training_entry_contracts.py
 commands/outcomes:
   python -m py_compile ...: pass
   pytest focused hybrid/runtime/HMoE/training entries: 40 passed

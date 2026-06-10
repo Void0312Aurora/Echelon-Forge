@@ -41,9 +41,9 @@ python -m compileall -q \
   python/rl/policy_algo/policies.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 ```bash
@@ -54,9 +54,9 @@ python -m json.tool \
 
 ```bash
 python -m pytest \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
   -q
 ```
 

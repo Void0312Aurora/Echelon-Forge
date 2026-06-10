@@ -243,7 +243,7 @@ Acceptance criteria:
 
 - `SimulationKernel` / `WorldBatchRuntime` / `RuntimeFacade` build passes
 - `bindings_command.cpp` exports maintain compatibility
-- `tests/leader/test_common_core_semantics.py`
+- `tests/leader/test_tasking_profile_contracts.py`
 - `tests/world_batch/test_world_batch_runtime.py`
   related field smoke passes
 
@@ -257,7 +257,7 @@ Current status:
 - Completed: `TaskOrder`, `LeaderIntent`, `PilotReport` split into `common/*_core.h` and `air/*_air.h`
 - Completed: Old umbrella headers continue to expose original struct names externally, and maintain flat field access through `Core + Air` compatibility shells
 - Completed: `bindings_command.cpp` compatibility export verified
-- Completed: `tests/leader/test_common_core_semantics.py`, `tests/runtime/facade/test_runtime_facade.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance
+- Completed: `tests/leader/test_tasking_profile_contracts.py`, `tests/runtime/facade/test_runtime_facade.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance
 
 ### WP3: Extract Air-Only Enums and Air Extension
 
@@ -310,7 +310,7 @@ Current status:
 - Completed: Added `src/components/tasking/air/air_tasking_enums.h` as air-only enum owner
 - Completed: `tasking_enums.h` degenerated to `common + air` compatibility umbrella
 - Completed: `task_order_air.h`, `leader_intent_air.h`, `mission_command.h` and `bindings_command.cpp` changed to explicitly depend on air enum owner
-- Completed: `ef_core` / `ef_py` build passes, and `tests/leader/test_common_core_semantics.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passes
+- Completed: `ef_core` / `ef_py` build passes, and `tests/leader/test_tasking_profile_contracts.py`, `tests/leader/test_command_field_projection_contracts.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py`, `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passes
 
 ### WP4: Python Profile/Dispatch Split
 
@@ -373,7 +373,7 @@ Current status:
 - Completed: `infer_route_ref_id`, `infer_recovery_*`, `build_kernel_mission_command` in `python/rl/leader_tasking.py` are now hosted via `air_profile`, while old entry points and `ef_py` patch compatibility are maintained
 - Completed: `python/rl/tasking_air_adapter.py` clearly aggregates common-core defaults/spec from `common_core_profile` and air semantics from `air_profile`
 - Completed: `./.venv/bin/python -m py_compile` covers `common_core_profile.py`, `leader_tasking.py`, `tasking_air_adapter.py`, `tasking_bridge.py` and `python/rl/profile/*`
-- Completed: `tests/leader/test_common_core_semantics.py`, `tests/leader/test_task_order_randomization.py`, `tests/leader/test_two_ship_contract_fields.py`, `tests/runtime/mission/test_leader_tasking_runtime.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passed (`53 passed` + `1 passed`)
+- Completed: `tests/leader/test_tasking_profile_contracts.py`, `tests/leader/test_tasking_phase_control_contracts.py`, `tests/leader/test_command_field_projection_contracts.py`, `tests/runtime/mission/test_leader_tasking_runtime.py`, `tests/runtime/facade/test_runtime_facade.py`, `tests/runtime/mission/test_mission_runtime.py` and `tests/world_batch/test_world_batch_runtime.py -k command_chain_roundtrip` focused acceptance passed (`53 passed` + `1 passed`)
 - Not completed: further physical migration of `RuleBasedLeaderPhaseManager` / `ScriptedC2TaskManager` and `_apply_task_order_overrides`; dispatch transformation of `multi_agent_runtime.py` and wider contract/runtime entry points
 
 ### WP5: Migrate `tests/contracts` to Common-First
@@ -423,7 +423,7 @@ Current status:
 - Completed: `tests/runners/test_contract_batches.py --group same_process` includes the two common-first contracts, and continues to cover the old `task_order_and_mission_link.json` and `scenario_loader_mission_semantics.json`
 - Completed: `./.venv/bin/python -m py_compile python/testing/scenario_contract_runner.py tests/runners/test_contract_batches.py`
 - Completed: `tests/runners/test_contract_batches.py --group same_process` focused acceptance passed (4 contracts passed)
-- Completed: `tests/leader/test_common_core_semantics.py` and `tests/leader/test_two_ship_contract_fields.py` focused regression passed (9 passed)
+- Completed: `tests/leader/test_tasking_profile_contracts.py` and `tests/leader/test_command_field_projection_contracts.py` focused regression passed (9 passed)
 - Not completed: physical migration of air-only contracts under `tests/contracts/unit/comm/` and establishment of `unit/air` / `unit/naval` directory families; wider unit/runtime contracts still awaiting continued common-first transformation
 
 ### WP6: Adaptation of `tests/runtime`, `tools/eval`, `tools/diagnostics`
@@ -508,10 +508,10 @@ Current status:
 - Done: Added `python/rl/profile/naval_profile.py` and `python/rl/tasking/naval_adapter.py`, and made `python/rl/tasking/bridge.py` perform profile-aware dispatch for `tasking_profile = naval` / `service_profile = Navy`.
 - Done: `python/rl/tasking/common_core_profile.py` now has naval-aware common-core defaulting paths, capable of maintaining minimal naval semantics like `Navy + Escort + Screen + CommandNode` for `task_order / leader_intent / pilot_report`.
 - Done: Added `tests/contracts/unit/naval/task_order_naval_profile_defaults.json` and `tests/contracts/unit/naval/scenario_loader_naval_common_core_semantics.json`; both minimal naval contracts pass execution.
-- Done: Added `tests/leader/test_naval_profile_semantics.py`, which passes acceptance together with existing common-core/runtime regression.
+- Done: Added `tests/leader/test_tasking_profile_contracts.py`, which passes acceptance together with existing common-core/runtime regression.
 - Done: `TaskOrder / LeaderIntent / PilotReport` have officially integrated `TaskOrderNaval / LeaderIntentNaval / PilotReportNaval`, no longer just standalone skeleton header files.
 - Done: `bindings_command.cpp` now exports `NavalWarfareRole` / `NavalStationType`, and exposes naval fields such as `warfare_role_code`, `officer_in_tactical_command`, `naval_station_type`.
-- Done: Clone whitelist in `gym_envs/leader_env.py`, `tests/leader/test_naval_contract_fields.py`, `tests/world_batch/test_world_batch_runtime.py` have completed binding/clone/roundtrip verification for naval fields.
+- Done: Clone whitelist in `gym_envs/leader_env.py`, `tests/leader/test_command_field_projection_contracts.py`, `tests/world_batch/test_world_batch_runtime.py` have completed binding/clone/roundtrip verification for naval fields.
 - Not done: Complete naval leader/runtime/eval/diagnostics have not started; subsequent work should expand incrementally on this skeleton.
 
 ### WP8: MissionCommand Refactoring Deferred

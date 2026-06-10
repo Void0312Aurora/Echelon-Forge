@@ -18,7 +18,7 @@ G0-L-F continuation 单独接受。
 - 当前 `WorldZoneDefinition` compatibility surface 的 strict surface-code admission；
 - 对 unknown profiles、invalid surface codes、dropped rich attributes 与 held runtime
   claims fail closed；
-- `tests/scenario/test_environment_substrate_projection_setup.py` 下的 focused tests。
+- `tests/scenario/test_environment_projection_contracts.py` 下的 focused tests。
 
 未接受：
 
@@ -35,7 +35,7 @@ G0-L-F continuation 单独接受。
 | --- | --- | --- |
 | G0-L-A/B/C preflight packets 返回 pass。 | [G0-L cluster](environment_substrate_g0_projection_preflight_cluster_20260606.zh.md) | pass |
 | Payload builder 不 apply runtime setup。 | [projection_setup.py](../../../../python/scenario/environment_substrate/projection_setup.py) | pass |
-| Payload 保留 projection evidence 与 source IDs。 | [projection setup tests](../../../../tests/scenario/test_environment_substrate_projection_setup.py) | pass |
+| Payload 保留 projection evidence 与 source IDs。 | [projection setup tests](../../../../tests/scenario/test_environment_projection_contracts.py) | pass |
 | Surface mapping 严格，且不使用 implicit `SoftDirt` default。 | projection setup tests | pass |
 | Dropped rich attributes 在本切片继续 reject。 | projection setup tests | pass |
 | Held runtime claims 继续 reject。 | projection setup tests | pass |
@@ -43,7 +43,7 @@ G0-L-F continuation 单独接受。
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py tests/scenario/test_environment_substrate_projection_setup.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 27 passed
 ```
 

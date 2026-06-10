@@ -18,7 +18,7 @@ generated manifest fixture 行为。
   catalog descriptors；
 - fail-closed catalog descriptor 与 catalog admission validation；
 - deterministic in-memory generated `EnvironmentManifest` fixture output；
-- `tests/scenario/test_environment_substrate_generator_catalog.py` 下的 focused
+- `tests/scenario/test_environment_substrate_contracts.py` 下的 focused
   tests；
 - 已返回 G0-K-A/B/C worker packets 的文档集成。
 
@@ -41,14 +41,14 @@ generated manifest fixture 行为。
 | Request、tile、seed 与 provenance contract 可验证并 fail closed。 | [generator.py](../../../../python/scenario/environment_substrate/generator.py)、generator/catalog tests | pass |
 | Catalog descriptors 是 recipes，不是 feature-label schema roots。 | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py)、generator/catalog tests | pass |
 | Catalog admission 拒绝 unknown refs、branch mismatch、missing components 与 unsupported roots。 | [catalog.py](../../../../python/scenario/environment_substrate/catalog.py)、generator/catalog tests | pass |
-| Generated fixture deterministic 且只存在于内存。 | [test_environment_substrate_generator_catalog.py](../../../../tests/scenario/test_environment_substrate_generator_catalog.py) | pass |
+| Generated fixture deterministic 且只存在于内存。 | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | pass |
 | G0-J static manifest regressions 仍通过。 | manifest/projection tests | pass |
 | 未释放 runtime behavior。 | G0-K scope 与 residual boundary | pass |
 
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 22 passed
 ```
 

@@ -21,7 +21,7 @@
 - 当前 `src/runtime/facade/runtime_facade.cpp`
 - 当前 `tests/runtime/facade/test_runtime_facade.py`
 - 当前 `tests/test_gpu_runtime_bindings.py`
-- 当前 `tests/architecture/runtime_facade/test_layering.py`
+- 当前 `tests/architecture/runtime_facade`
 
 ## 1. 投影论点
 
@@ -154,7 +154,7 @@ GPU helper code 会倒置 dependency direction。
 |-------------|--------------|
 | `tests/runtime/facade/test_runtime_facade.py` | Facade capability expectation 保持当前 false support field 为 false。 |
 | `tests/test_gpu_runtime_bindings.py` | GPU helper/probe binding 可以存在，同时 support claim 保持 false。 |
-| `tests/architecture/runtime_facade/test_layering.py` | Facade/core source 不得 include 或调用 GPU helper/probe implementation marker。 |
+| `tests/architecture/runtime_facade` | Facade/core source 不得 include 或调用 GPU helper/probe implementation marker。 |
 
 如果后续新增测试，保持测试窄化。它应该只检查上述 contract 之一，并在未来
 hand-maintained YAML seed 不存在时 skip 或使用 docs-only expectation。WP7-A seed

@@ -16,7 +16,7 @@ M2, self-play, or real-world BVR doctrine claims.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `A4-SIG-A Boundary` | main thread | n/a | Create A4 scope, phase plan, and residual map. | `docs/task/air_combat/a4_authorized_first_shot_training_signal/**`, parent air-combat README links | Reopening A3 accepted scope or M2 | Link/readability check | README and cluster plan exist and parent docs link them. | First, serial | 1 | pass |
 | `A4-SIG-B Reward Surface` | main thread | n/a | Add configurable authorized weapon-chain reward terms. | `gym_envs/scenario_loader/reward_runtime/air_combat.py`, `tests/runtime/air_combat/test_air_combat_reward_surface.py` | Silent fire suppression, physics or ammo changes | `pytest tests/runtime/air_combat/test_air_combat_reward_surface.py` | Terms are gated by authorization and single-shot state. | After A | 2 | pass |
-| `A4-SIG-C Scenario Probe` | main thread | n/a | Enable conservative shaping knobs in maintained S1 C2/ROE training-shaped scenario. | `scenarios/air_combat/1v1/*c2_roe_training_shaped*.json`, `tests/training/test_air_combat_active_training_entries.py` | Changing M1 basic baselines | Active-entry pytest | Config test proves knobs are present only on A3/A4 probe. | After B; can run with docs | 2 | pass |
+| `A4-SIG-C Scenario Probe` | main thread | n/a | Enable conservative shaping knobs in maintained S1 C2/ROE training-shaped scenario. | `scenarios/air_combat/1v1/*c2_roe_training_shaped*.json`, `tests/training/test_air_combat_training_entry_contracts.py` | Changing M1 basic baselines | Active-entry pytest | Config test proves knobs are present only on A3/A4 probe. | After B; can run with docs | 2 | pass |
 | `A4-SIG-D Short Evidence` | main thread | n/a | Run bounded post-change learned-policy probe. | `docs/task/air_combat/a4_authorized_first_shot_training_signal/*probe*.md`, no `experiments_tmp` staging | Claiming acceptance from one run | Train/probe commands recorded | Deterministic/stochastic fire/release metrics are compared to A3 evidence. | After B/C tests | 2 | pass, held outcome |
 | `A4-SIG-E Routing Review` | main thread | n/a | Decide whether HMoE needs an air-combat weapons route. | `python/rl/policy_algo/hmoe_routing.py`, `python/rl/policy_algo/policies.py`, `train.py`, C2 configs, related tests/docs | Large policy rewrite without evidence | Routing, policy, and active-entry tests | A combat-weapons route is tested and documented. | After D | 2 | pass |
 | `A4-SIG-F Binary Diagnostics` | main thread | n/a | Expose binary action logits/probabilities and test one bounded opportunity-penalty reward trial. | `python/rl/policy_algo/policies.py`, `python/training_callbacks.py`, `tools/diagnostics/air_combat_stage0_process_probe.py`, reward/config tests, A4 evidence docs | Treating reward urgency as accepted after a failed learned-policy probe | Focused tests plus 32k/probe evidence | Diagnostics are retained; opportunity penalty is documented and disabled as active default. | After E | 2 | pass, held outcome |
@@ -48,9 +48,9 @@ integration notes:
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tests/hmoe/test_hmoe_routing.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_routing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Optional short evidence run:

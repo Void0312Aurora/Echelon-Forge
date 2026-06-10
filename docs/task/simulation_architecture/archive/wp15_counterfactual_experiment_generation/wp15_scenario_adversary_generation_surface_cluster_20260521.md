@@ -85,7 +85,7 @@ Suggested commands:
 
 ```bash
 git diff --check
-python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
+python -m pytest -q tests/scenario/test_scenario_generation_contracts.py
 python -m pytest -q tests/scenario/test_scenario_compiler.py -k "branch or runtime"
 ```
 

@@ -63,9 +63,9 @@ git diff --check -- docs/task/naval
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/training/test_naval_active_training_entries.py \
-  tests/training/test_naval_n4_closure_gate.py \
-  tests/eval/test_eval_naval_n4_baseline.py \
+  tests/training/test_naval_training_entry_contracts.py \
+  tests/training/test_naval_training_entry_contracts.py \
+  tests/eval/test_evaluation_cli_contracts.py \
   tests/runtime/naval/test_naval_n4_reward_surface.py
 ```
 

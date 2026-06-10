@@ -218,7 +218,7 @@ Current progress:
 - Validation added or updated:
   - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
   - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
-  - `tests/training/test_train_entry_cooperative.py`
+  - `tests/training/test_training_cli_contracts.py`
 - The `step-eval` entry in `ScenarioLoader.compute_full_step(...)` has been changed to optionally consume cached data, and the cooperative VecEnv now directly reuses the prepared `step_evaluation`, avoiding redundant rebuilds on the reward hot path.
 - Regression tests have been added to confirm that when the cache hits, `step-eval` is no longer rebuilt and reward / termination / status remain consistent with the baseline.
 - Current `.venv` benchmark smoke:

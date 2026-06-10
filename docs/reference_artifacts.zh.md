@@ -148,7 +148,7 @@
 - runtime 证据：
   [test_air_combat_1v1_fixture.py](../tests/runtime/air_combat/test_air_combat_1v1_fixture.py)
 - active-entry 证据：
-  [test_air_combat_active_training_entries.py](../tests/training/test_air_combat_active_training_entries.py)
+  [test_air_combat_training_entry_contracts.py](../tests/training/test_air_combat_training_entry_contracts.py)
 
 状态：
 
@@ -170,8 +170,8 @@
   [naval_screen_threat_roe_geometry.json](../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json) 和
   [naval_screen_threat_roe_offstation_recovery.json](../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)。
 - eval/test 证据：
-  [test_eval_naval_n4_baseline.py](../tests/eval/test_eval_naval_n4_baseline.py) 和
-  [test_naval_active_training_entries.py](../tests/training/test_naval_active_training_entries.py)。
+  [test_evaluation_cli_contracts.py](../tests/eval/test_evaluation_cli_contracts.py) 和
+  [test_naval_training_entry_contracts.py](../tests/training/test_naval_training_entry_contracts.py)。
 
 状态：
 

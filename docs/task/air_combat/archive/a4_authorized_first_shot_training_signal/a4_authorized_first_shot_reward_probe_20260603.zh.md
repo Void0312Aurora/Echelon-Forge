@@ -43,7 +43,7 @@ Focused tests：
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 保留的 32k temporal run：
@@ -80,7 +80,7 @@ stochastic probe 使用同一命令，并加 `--episodes 3 --stochastic`。
 Focused tests 已通过：
 
 - `tests/runtime/air_combat/test_air_combat_reward_surface.py`：`10 passed`。
-- `tests/training/test_air_combat_active_training_entries.py`：`9 passed, 8 subtests passed`。
+- `tests/training/test_air_combat_training_entry_contracts.py`：`9 passed, 8 subtests passed`。
 
 训练完成并保存
 `experiments_tmp/a4_authorized_first_shot_temporal_once_32k_20260603/final_model.zip`。

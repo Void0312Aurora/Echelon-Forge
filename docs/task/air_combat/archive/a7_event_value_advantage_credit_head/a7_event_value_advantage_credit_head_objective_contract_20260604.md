@@ -152,7 +152,7 @@ Expected write surfaces for later clusters:
 - a new or extended first-event credit helper under `python/rl/policy_algo/`
 - `python/training/diagnostics.py`
 - `python/training_callbacks.py`
-- focused tests under `tests/hmoe/`, `tests/training/`, and
+- focused tests under `tests/policy/`, `tests/training/`, and
   `tests/diagnostics/`
 - active air-combat training config JSONs
 

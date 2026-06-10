@@ -123,7 +123,7 @@ survival/stopping behavior。A7 credit 不是权威 event-time model。
   - 不让 grouped loss 走 ordinary shuffled PPO minibatches。
 - `python/rl/policy_algo/first_event_*`
   - 承载 grouped evidence，并计算 survival/stopping terms。
-- `tests/hmoe/**` 与 `tests/training/**` 下 focused tests
+- `tests/policy/**` 与 `tests/training/**` 下 focused tests
   - 证明新 head 与 event logits 分离；
   - 证明 masks 继续权威；
   - 证明 closed-mask rows 不更新 executable fire logits。

@@ -93,9 +93,9 @@ shared entry-point lifecycle behavior：
 
 ```bash
 git diff --check
-python -m pytest -q tests/leader/test_ground_profile_semantics.py
-python -m pytest -q tests/leader/test_common_core_semantics.py
-python -m pytest -q tests/leader/test_naval_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 python -m pytest -q tests/runtime/mission/test_leader_tasking_runtime.py
 python -m pytest -q tests/runtime/mission/test_ground_runtime_lifecycle_bridge.py
 python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/ground/task_order_ground_profile_defaults.json tests/contracts/unit/ground/task_order_ground_minimal_structures.json tests/contracts/unit/ground/task_order_ground_support_relationships.json
@@ -143,7 +143,7 @@ python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/ground
 ```bash
 git diff --check -- docs\task\ground python\rl\runtime tests\runtime\mission\test_ground_runtime_lifecycle_bridge.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\mission\test_ground_runtime_lifecycle_bridge.py
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\leader\test_ground_profile_semantics.py tests\leader\test_common_core_semantics.py tests\leader\test_naval_profile_semantics.py tests\runtime\mission\test_leader_tasking_runtime.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\leader\test_tasking_profile_contracts.py tests\runtime\mission\test_leader_tasking_runtime.py
 .\tools\maintenance\cmo_env.ps1 python tools\runners\run_scenario_contract.py --spec tests\contracts\unit\ground\task_order_ground_profile_defaults.json tests\contracts\unit\ground\task_order_ground_minimal_structures.json tests\contracts\unit\ground\task_order_ground_support_relationships.json
 ```
 

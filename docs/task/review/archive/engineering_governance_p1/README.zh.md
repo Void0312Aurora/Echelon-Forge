@@ -90,8 +90,8 @@ Out of scope:
 - `python/training_callbacks.py`
 - `tests/scenario/test_scenario_compiler.py`
 - `tests/world_batch/test_world_batch_vec_env.py`
-- `tests/training/test_cooperative_diagnostics_callback.py`
-- `tests/training/test_a6_event_value_diagnostics_callback.py`
+- `tests/training/test_diagnostics_callback_contracts.py`
+- `tests/training/test_diagnostics_callback_contracts.py`
 - 本任务子项目及父 review index 条目。
 
 Validation evidence:
@@ -102,7 +102,7 @@ Validation evidence:
 - Scenario/prefab shape scan 针对 `scenarios/`、`examples/scenarios/` 和
   `examples/config/prefabs/` 下 50 个 JSON 文件 passed。
 - `./.venv/bin/python -m pytest tests/world_batch/test_world_batch_vec_env.py -k "adapter_capability_snapshot or legacy_task_order_batch_writer_is_removed or task_order_reverse_projection_stays_removed or task_order_write_routes_through_maintained_helper or apply_launch_requests or step_worlds" -q` passed，6 selected tests。
-- `./.venv/bin/python -m pytest tests/training/test_cooperative_diagnostics_callback.py tests/training/test_a6_event_value_diagnostics_callback.py -q` passed，17 tests。
+- `./.venv/bin/python -m pytest tests/training/test_diagnostics_callback_contracts.py tests/training/test_diagnostics_callback_contracts.py -q` passed，17 tests。
 - `./.venv/bin/python -m ruff check ...` 针对触碰 Python 文件 passed。
 - `git diff --check -- ...` 针对触碰 P1 文件 passed。
 

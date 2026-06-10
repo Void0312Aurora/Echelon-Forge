@@ -203,15 +203,15 @@ Current outputs:
   `HierarchicalMoEExecutionPolicy.get_hybrid_event_credit()`, and
   `_HybridActionDistribution.fire_event_q_values()` / `fire_event_advantage()`
   in `python/rl/policy_algo/policies.py`, covered by
-  `tests/hmoe/test_hmoe_policy.py`.
+  `tests/policy/test_execution_policy_surface.py`.
 - PPO auxiliary-credit coupling:
   `compute_first_event_credit_loss()` and
   `first_event_credit_batch_from_rollout_data()` in
   `python/rl/policy_algo/first_event_hazard.py`, plus
   `AdaptiveKLPPO._first_event_credit_loss()` in
   `python/rl/policy_algo/ppo_adaptive_kl.py`, covered by
-  `tests/hmoe/test_a6_event_head_update_strength.py` and
-  `tests/hmoe/test_hmoe_ppo_warmup.py`.
+  `tests/policy/test_event_head_update_contracts.py` and
+  `tests/policy/test_auxiliary_training_updates.py`.
 - Config and diagnostics:
   [a7_event_value_advantage_credit_head_config_diagnostics_20260604.md](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md),
   the A7 active config under `examples/config/training/active/air_combat/`,

@@ -41,12 +41,12 @@
 ```bash
 pytest tests/runtime/mission/test_mission_obs_taxonomy.py \
   tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py \
-  tests/hmoe/test_hmoe_routing.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_air_combat_active_training_entries.py -q
+  tests/policy/test_routing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 结果：`105 passed in 27.58s`。

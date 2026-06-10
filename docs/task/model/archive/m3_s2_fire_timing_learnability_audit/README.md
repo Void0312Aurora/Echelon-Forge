@@ -111,8 +111,8 @@ Out of scope:
 - Aggregate runner:
   `tools/diagnostics/air_combat_fire_timing_learnability_audit.py`
 - Focused tests:
-  `tests/diagnostics/test_air_combat_process_probe.py`
-  `tests/diagnostics/test_air_combat_fire_timing_learnability_audit.py`
+  `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+  `tests/training/test_fire_timing_fault_localization_contracts.py`
 - Oracle evidence:
   [m3_s2_fire_timing_learnability_oracle_probe_20260605.md](m3_s2_fire_timing_learnability_oracle_probe_20260605.md)
 - Full delay sweep and reward-ordering evidence:

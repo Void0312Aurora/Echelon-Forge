@@ -136,10 +136,10 @@ buffer contract，再扩展 buffer。
 
 ```bash
 python -m compileall -q python/rl/policy_algo/first_event_projection.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py
-pytest tests/hmoe/test_a6_first_event_hazard.py -q
-pytest tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py -q
-git diff --check -- docs/task/air_combat docs/task/issues python/rl/policy_algo tests/hmoe tests/training
+pytest tests/policy/test_first_event_timing_contracts.py -q
+pytest tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py -q
+git diff --check -- docs/task/air_combat docs/task/issues python/rl/policy_algo tests/policy tests/training
 ```
 
 这些 gate 后的第一次 learned-policy probe 应保持 short，并报告 deterministic timing、

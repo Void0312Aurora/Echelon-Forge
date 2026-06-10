@@ -142,7 +142,7 @@ release counts、violation/repeat/budget counts、advantage signs 与 `P_early`�
 - `python/rl/policy_algo/` 下新增或扩展 first-event credit helper
 - `python/training/diagnostics.py`
 - `python/training_callbacks.py`
-- `tests/hmoe/`、`tests/training/`、`tests/diagnostics/` 下 focused tests
+- `tests/policy/`、`tests/training/`、`tests/diagnostics/` 下 focused tests
 - active air-combat training config JSONs
 
 `experiments_tmp` 只作为证据输出，不得 stage。

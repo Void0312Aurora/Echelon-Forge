@@ -217,7 +217,7 @@ WP5 当前判断：
 - 已新增 / 更新验证：
   - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py`
   - `tests/runtime/multi_agent/test_multi_agent_benchmark.py`
-  - `tests/training/test_train_entry_cooperative.py`
+  - `tests/training/test_training_cli_contracts.py`
 - 已将 `ScenarioLoader.compute_full_step(...)` 的 step-eval 入口改为可选缓存消费，并在 cooperative vec env 里直接复用已准备的 `step_evaluation`，避免 reward 热路径重复重建。
 - 已补回归测试，确认缓存命中时不再重新构建 step-eval，且 reward / termination / status 与基线一致。
 - 当前 `.venv` benchmark smoke：

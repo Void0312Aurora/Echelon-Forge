@@ -10,27 +10,27 @@ Parent: [M3-S1 Censored Optimal-Stopping Timing Contract](README.md).
 
 | Slice | Status | Touched surface | Evidence | Does not prove |
 | --- | --- | --- | --- | --- |
-| `M3S1-P4A Policy Head Skeleton` | pass | `python/rl/policy_algo/policies.py`; focused `tests/hmoe/test_hmoe_policy.py` entries | optional independent `m3_stopping_head`, getter helpers, separate `m3s1/*` stats, focused policy tests | no PPO integration, threshold calibration, or grouped mass learning |
-| `M3S1-P4B Grouped Evidence/Loss Skeleton` | pass | `python/rl/policy_algo/m3s1_grouped_stopping.py`; `tests/hmoe/test_m3s1_grouped_stopping.py` | grouped evidence carrier plus pure survival/event-mass loss helper and tests | no rollout-buffer sidecar, PPO auxiliary pass, or training config |
-| `M3S1-P4C PPO Auxiliary Integration` | pass | `python/rl/policy_algo/ppo_adaptive_kl.py`; `tests/hmoe/test_hmoe_ppo_warmup.py` | M3-S1 sidecar built before buffer flattening; grouped auxiliary update calls independent stopping head after base PPO loop; focused integration tests | no P5 short training, threshold calibration, or learned-policy success |
+| `M3S1-P4A Policy Head Skeleton` | pass | `python/rl/policy_algo/policies.py`; focused `tests/policy/test_execution_policy_surface.py` entries | optional independent `m3_stopping_head`, getter helpers, separate `m3s1/*` stats, focused policy tests | no PPO integration, threshold calibration, or grouped mass learning |
+| `M3S1-P4B Grouped Evidence/Loss Skeleton` | pass | `python/rl/policy_algo/m3s1_grouped_stopping.py`; `tests/policy/test_grouped_stopping_loss_contracts.py` | grouped evidence carrier plus pure survival/event-mass loss helper and tests | no rollout-buffer sidecar, PPO auxiliary pass, or training config |
+| `M3S1-P4C PPO Auxiliary Integration` | pass | `python/rl/policy_algo/ppo_adaptive_kl.py`; `tests/policy/test_auxiliary_training_updates.py` | M3-S1 sidecar built before buffer flattening; grouped auxiliary update calls independent stopping head after base PPO loop; focused integration tests | no P5 short training, threshold calibration, or learned-policy success |
 
 ## Local Verification
 
 ```bash
 python -m py_compile python/rl/policy_algo/policies.py \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
-  tests/hmoe/test_m3s1_grouped_stopping.py
-python -m pytest tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_m3s1_grouped_stopping.py -q
-python -m pytest tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py -q
-python -m pytest tests/hmoe/test_a6_event_head_update_strength.py \
-  tests/training/test_a6_event_value_active_config.py -q
+  tests/policy/test_grouped_stopping_loss_contracts.py
+python -m pytest tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_grouped_stopping_loss_contracts.py -q
+python -m pytest tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py -q
+python -m pytest tests/policy/test_event_head_update_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py -q
 git diff --check -- python/rl/policy_algo/policies.py \
-  tests/hmoe/test_hmoe_policy.py \
+  tests/policy/test_execution_policy_surface.py \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
+  tests/policy/test_grouped_stopping_loss_contracts.py \
   docs/task/model/m3_s1_censored_optimal_stopping_timing_contract
 ```
 

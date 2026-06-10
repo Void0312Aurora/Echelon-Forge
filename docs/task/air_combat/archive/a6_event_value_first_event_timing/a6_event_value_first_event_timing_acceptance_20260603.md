@@ -111,15 +111,15 @@ Implemented validation gate:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/training/test_cooperative_diagnostics_callback.py \
-  tests/diagnostics/test_air_combat_process_probe.py
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 Observed: `68 passed, 8 subtests passed`.
@@ -128,10 +128,10 @@ Deadline focused gate:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Observed: `26 passed, 9 subtests passed`.
@@ -140,15 +140,15 @@ Deadline full A6/diagnostics gate:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/training/test_cooperative_diagnostics_callback.py \
-  tests/diagnostics/test_air_combat_process_probe.py
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 Observed: `71 passed, 9 subtests passed`.
@@ -156,7 +156,7 @@ Observed: `71 passed, 9 subtests passed`.
 Event-head update-strength gate:
 
 ```bash
-.venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py
+.venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py
 ```
 
 Observed: `2 passed`.
@@ -165,16 +165,16 @@ Event-head optimization gate:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/hmoe/test_a6_event_head_update_strength.py \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_policy.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_active_config.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/diagnostics/test_a6_event_value_process_probe.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/training/test_cooperative_diagnostics_callback.py \
-  tests/diagnostics/test_air_combat_process_probe.py
+  tests/policy/test_event_head_update_contracts.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_execution_policy_surface.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_event_timing_training_config_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 ```
 
 Observed: `77 passed, 10 subtests passed`.
@@ -201,10 +201,10 @@ Observed: pass.
 
 ```bash
 .venv/bin/python -m pytest \
-  tests/hmoe/test_a6_first_event_hazard.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_a6_event_value_diagnostics_callback.py \
-  tests/training/test_a6_event_value_active_config.py \
+  tests/policy/test_first_event_timing_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_diagnostics_callback_contracts.py \
+  tests/training/test_event_timing_training_config_contracts.py \
   -q
 ```
 

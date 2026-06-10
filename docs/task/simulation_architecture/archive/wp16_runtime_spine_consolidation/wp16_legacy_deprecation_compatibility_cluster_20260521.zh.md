@@ -59,7 +59,7 @@
 ```bash
 git diff --check
 python -m pytest -q tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_facade
 ```
 
 ## 6. 交接契约

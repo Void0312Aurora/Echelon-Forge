@@ -31,7 +31,7 @@ Not accepted:
 | --- | --- | --- |
 | Shared namespace, not a ground-private package. | [package](../../../../python/scenario/environment_substrate) | pass |
 | Default registry includes terrain and non-terrain environment branches. | [components.py](../../../../python/scenario/environment_substrate/components.py), manifest tests | pass |
-| Static manifest serializes deterministically. | [test_environment_substrate_manifest.py](../../../../tests/scenario/test_environment_substrate_manifest.py) | pass |
+| Static manifest serializes deterministically. | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | pass |
 | Validators reject missing branch, missing component attributes, untyped behavior properties, and held capability claims. | [validation.py](../../../../python/scenario/environment_substrate/validation.py), manifest tests | pass |
 | Projection rejects unsupported rich features instead of silently defaulting. | [projection.py](../../../../python/scenario/environment_substrate/projection.py), projection tests | pass |
 | No runtime behavior is released. | G0-J scope and cluster boundary | pass |
@@ -39,7 +39,7 @@ Not accepted:
 ## Validation
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 10 passed
 ```
 

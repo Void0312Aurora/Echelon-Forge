@@ -18,7 +18,7 @@ hydrology effects 或 dynamic environment mutation。
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `G0-J-A Static Schema` | main thread | n/a | 新增 shared manifest、branch membership、component、geometry、extent、generation 与 projection-profile data structures。 | `python/scenario/environment_substrate/manifest.py`、package `__init__.py` | 不做 runtime setup、generator 或 C++ code。 | Import 与 deterministic metadata tests。 | Fixture deterministic serialize。 | G0 architecture acceptance 后启动。 | 1 | pass |
 | `G0-J-B Registry And Validation` | main thread | n/a | 新增 default branch/component/layer registries 与 fail-closed validation。 | `python/scenario/environment_substrate/components.py`、`validation.py` | 不释放 runtime capability。 | missing branch、missing component attrs、untyped behavior 与 held claims reject。 | Validation 返回 stable reason codes。 | 依赖 G0-J-A。 | 1 | pass |
-| `G0-J-C Projection Contract` | main thread | n/a | 新增 contract-only `world_zone_definition` projection evidence，并 fail closed 拒绝 unsupported rich features。 | `python/scenario/environment_substrate/projection.py`、`tests/scenario/test_environment_substrate_projection.py` | 不做 compiler/runtime integration 或 actual world setup application。 | Focused projection tests。 | Projection 输出 evidence，并拒绝 dropped rich components、misspelled surface fields、non-rect geometry 与 unsupported targets。 | 依赖 G0-J-A/B。 | 1 | pass |
+| `G0-J-C Projection Contract` | main thread | n/a | 新增 contract-only `world_zone_definition` projection evidence，并 fail closed 拒绝 unsupported rich features。 | `python/scenario/environment_substrate/projection.py`、`tests/scenario/test_environment_projection_contracts.py` | 不做 compiler/runtime integration 或 actual world setup application。 | Focused projection tests。 | Projection 输出 evidence，并拒绝 dropped rich components、misspelled surface fields、non-rect geometry 与 unsupported targets。 | 依赖 G0-J-A/B。 | 1 | pass |
 | `G0-J-D Documentation Sync` | main thread | n/a | 记录 G0-J acceptance evidence 与 parent docs status。 | `docs/task/ground/environment_substrate_g0_architecture/*.md`、ground 父 README/progress/queue docs | 不 archive，不做 generator implementation。 | touched docs 的 `git diff --check`。 | 父级 docs 在 G0-J closeout 时标记 G0-J accepted 与 G0-K held；当前 G0-K acceptance 已取代该 residual。 | tests 后串行。 | 1 | pass |
 
 ## 派发规则
@@ -40,7 +40,7 @@ rejected alternatives 与 explicit held capability claims。
 ## 验证计划
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 ```
 
 结果：`10 passed`。

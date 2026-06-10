@@ -25,7 +25,7 @@ behavioral fire timing 仍 held。
   - 将 grouped stopping event-mass 项改为 log-domain 计算，使
     `-log(p_window)` 与 `-log(p_none)` 不再因概率下溢或 `clamp_min(eps)` 丢梯度；
   - 诊断仍保留 event-mass 数值，但 window mass 与 deadline mass 使用 log-sum-exp。
-- `tests/hmoe/test_m3s1_grouped_stopping.py`
+- `tests/policy/test_grouped_stopping_loss_contracts.py`
   - 新增长 prewindow 回归测试，确认当窗口 hazard 初始过低时，prewindow logits
     收到下降方向，quality-window logits 收到上升方向。
 
@@ -46,12 +46,12 @@ python -m compileall -q \
   tools/diagnostics/m3s2_real_update_path_probe.py
 
 python -m pytest \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_policy.py::HMoEPolicyTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
-  tests/training/test_air_combat_active_training_entries.py::AirCombatActiveTrainingEntryTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
-  tests/diagnostics/test_m3s2_real_update_path_probe.py -q
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_execution_policy_surface.py::ExecutionPolicySurfaceTests::test_m3_stopping_head_can_override_hybrid_fire_event_delta \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_can_train_dedicated_stopping_head_adapter \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_event_window_auxiliary_updates_executable_event_policy_path \
+  tests/training/test_air_combat_training_entry_contracts.py::AirCombatTrainingEntryContractTests::test_stage1_m3s2_event_window_probe_extends_state_completed_config_only \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 结果：`20 passed`。

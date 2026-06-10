@@ -131,7 +131,7 @@ These lists are used in `_clone_task_order()`, `_clone_leader_intent()`, and `_c
 **2026-05-16 Execution Update**: The first round of fixes has been completed:
 - Added missing cooperative takeoff field mirrors for `TaskOrder` / `LeaderIntent`;
 - In `gym_envs/leader_env.py`, added `_clone_assign_field()` to handle failed assignments from Python `int` to `ef_py enum`, preventing strong-typed enum fields from being silently dropped;
-- Added reflective validation in `tests/leader/test_two_ship_contract_fields.py` requiring the Python field lists to match `dir(ef_py.TaskOrder/LeaderIntent/PilotReport)`.
+- Added reflective validation in `tests/leader/test_command_field_projection_contracts.py` requiring the Python field lists to match `dir(ef_py.TaskOrder/LeaderIntent/PilotReport)`.
 
 **2026-05-16 Continued Push**: Further transformed `_TASK_ORDER_FIELDS` / `_LEADER_INTENT_FIELDS` / `_PILOT_REPORT_FIELDS` to be generated directly from `dir(ef_py.*())` reflection, and converged the clone core into a unified implementation. The Python side no longer maintains separate field name tuples, retaining only the clone compatibility layer.
 
@@ -487,7 +487,7 @@ An omission in any of the three locations leads to field loss.
 
 **2026-05-16 WP-C Execution Update**: The current version has added the first batch of binding-maintenance regression:
 - Kept the existing `.def_rw(...)` binding pattern in Nanobind, without introducing a new auto-binding system;
-- Continued coverage of reflection consistency for `TaskOrder / LeaderIntent / PilotReport` in [tests/leader/test_two_ship_contract_fields.py](../../../../tests/leader/test_two_ship_contract_fields.py);
+- Continued coverage of reflection consistency for `TaskOrder / LeaderIntent / PilotReport` in [tests/leader/test_command_field_projection_contracts.py](../../../../tests/leader/test_command_field_projection_contracts.py);
 - Added [tests/runtime/bindings/test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py) to directly pin the public field surfaces of `MissionCommand / PilotAction / CommPacket`, reducing the risk of silent drift after a missed binding in `bindings_command.cpp`.
 
 Remaining items:

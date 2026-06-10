@@ -82,6 +82,6 @@ WP9-D 满足以下条件后可进入 WP9-E：
 
 ```bash
 git diff --check
-pytest tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_facade/test_design_boundary_gates.py tests/runtime/bindings/test_bindings_engagement_surface.py
+pytest tests/architecture/runtime_facade tests/architecture/runtime_facade/test_design_boundary_gates.py tests/runtime/bindings/test_bindings_engagement_surface.py
 rg -n "sim\\.\\*|compatibility_only|diagnostics_only|test_only|Binding surface smoke|EngagementEventPacket" tests docs/task/simulation_architecture/wp9_contract_infrastructure_closure
 ```

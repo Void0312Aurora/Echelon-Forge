@@ -23,7 +23,7 @@ This is an architecture draft, not a frozen execution plan. Full implementation 
 - **WP3** (Python bindings split): All 5 `bindings_*.cpp` files exist. `python_module.cpp` reduced from 3000+ to 23 lines.
 - **WP4** (SimulationKernel boundary): All 7 listed files exist.
 - **WP5** (EpisodeController split): All 3 detail files exist. `mission/` correctly split into `runtime/` and `episode/`.
-- **WP6** (Facade escape hatches): Architecture test exists at `tests/architecture/runtime_facade/test_layering.py`.
+- **WP6** (Facade escape hatches): Architecture test exists at `tests/architecture/runtime_facade`.
 - **WP7** (CMake target prep): All source group variables in CMakeLists.txt.
 
 ### Mismatches (P2)

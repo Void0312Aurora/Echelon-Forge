@@ -22,7 +22,7 @@ acceptance.
 | --- | --- | --- | --- | --- | --- |
 | `DCR-D-W1` | `DCR-D Scenario Opt-In` | current-session worker `019eaa3f-40b8-7f72-b078-717e91722ad2` / Schrodinger | `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`; `examples/config/training/active/air_combat/README.md`; `examples/config/training/active/air_combat/README.zh.md` | Decide and, if justified, implement explicit low-weight Stage-2 consequence reward opt-in plus active-entry docs. | integrated pass |
 | `DCR-E-X1` | `DCR-E Probe Evidence` | read-only explorer `019eaa3f-41c0-7083-a7a7-ef40c0286981` / Hegel | none | Map the shortest probe/replay path for separate release/effects/damage/consequence reward evidence. | returned pass |
-| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/diagnostics/test_air_combat_process_probe.py` or a narrow diagnostics test | Add DCR reward-prefix aggregation to process-probe rows/summaries without changing release/effects/damage semantics. | integrated pass |
+| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/runtime/air_combat/test_diagnostics_probe_contracts.py` or a narrow diagnostics test | Add DCR reward-prefix aggregation to process-probe rows/summaries without changing release/effects/damage semantics. | integrated pass |
 
 ## Returned Packet Notes
 

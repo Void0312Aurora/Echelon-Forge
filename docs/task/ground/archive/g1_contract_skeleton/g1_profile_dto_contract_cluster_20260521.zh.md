@@ -47,8 +47,8 @@
 
 ```bash
 git diff --check
-python -m pytest -q tests/leader/test_common_core_semantics.py
-python -m pytest -q tests/leader/test_naval_profile_semantics.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
+python -m pytest -q tests/leader/test_tasking_profile_contracts.py
 python -m pytest -q tests/runtime/mission/test_naval_mission_command_mapping.py
 ```
 

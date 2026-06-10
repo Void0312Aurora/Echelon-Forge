@@ -81,7 +81,7 @@ source-attributed、遵守 seed/version discipline，并且可以作为 experime
 
 ```bash
 git diff --check
-python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
+python -m pytest -q tests/scenario/test_scenario_generation_contracts.py
 python -m pytest -q tests/scenario/test_scenario_compiler.py -k "branch or runtime"
 ```
 

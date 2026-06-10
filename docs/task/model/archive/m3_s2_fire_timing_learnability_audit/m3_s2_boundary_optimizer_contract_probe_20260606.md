@@ -93,19 +93,19 @@ python -m compileall -q \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
   tools/diagnostics/m3s2_real_update_path_probe.py \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py
 ```
 
 Outcome: pass.
 
 ```bash
 python -m pytest \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py \
-  tests/training/test_air_combat_active_training_entries.py \
-  tests/diagnostics/test_m3s2_real_update_path_probe.py -q
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py \
+  tests/training/test_air_combat_training_entry_contracts.py \
+  tests/training/test_fire_timing_fault_localization_contracts.py -q
 ```
 
 Outcome: `54 passed`.

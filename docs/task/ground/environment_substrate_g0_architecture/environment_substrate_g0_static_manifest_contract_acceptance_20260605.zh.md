@@ -30,7 +30,7 @@ Python-side shared environment substrate contracts 与 focused tests。
 | --- | --- | --- |
 | Shared namespace，不是 ground-private package。 | [package](../../../../python/scenario/environment_substrate) | pass |
 | default registry 包含 terrain 与 non-terrain environment branches。 | [components.py](../../../../python/scenario/environment_substrate/components.py)、manifest tests | pass |
-| static manifest deterministic serialize。 | [test_environment_substrate_manifest.py](../../../../tests/scenario/test_environment_substrate_manifest.py) | pass |
+| static manifest deterministic serialize。 | [test_environment_substrate_contracts.py](../../../../tests/scenario/test_environment_substrate_contracts.py) | pass |
 | validators 拒绝 missing branch、missing component attributes、untyped behavior properties 与 held capability claims。 | [validation.py](../../../../python/scenario/environment_substrate/validation.py)、manifest tests | pass |
 | projection 拒绝 unsupported rich features，而不是 silent default。 | [projection.py](../../../../python/scenario/environment_substrate/projection.py)、projection tests | pass |
 | 不释放 runtime behavior。 | G0-J scope 与 task-cluster boundary | pass |
@@ -38,7 +38,7 @@ Python-side shared environment substrate contracts 与 focused tests。
 ## 验证
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 10 passed
 ```
 

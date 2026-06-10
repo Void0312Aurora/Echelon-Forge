@@ -28,7 +28,7 @@ Binding surface tests 本轮不提升。聚焦试跑发现
 
 | Smoke entry | WP5 tier 覆盖 | 理由 |
 |-------------|---------------|------|
-| `tests/architecture/runtime_facade/test_layering.py` | Design、boundary。 | 既有 facade layering 与 raw-runtime escape-hatch containment 架构 guard。 |
+| `tests/architecture/runtime_facade` | Design、boundary。 | 既有 facade layering 与 raw-runtime escape-hatch containment 架构 guard。 |
 | `tests/architecture/runtime_facade/test_design_boundary_gates.py` | Design、boundary。 | 新增 WP5-B guard，覆盖 maintained facade header isolation、runtime owner exposure 与 deferred broad `sim.*` ban。 |
 | `tests/architecture/build/test_cmake_target_readiness.py` | Design。 | 既有 architecture/build ownership smoke。 |
 | `tests/runtime/core/test_env_config.py` | Operational support。 | 保留既有环境/config smoke，作为 runtime health 支撑。 |
@@ -54,7 +54,7 @@ Binding surface tests 本轮不提升。聚焦试跑发现
 WP5 聚焦验证命令：
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade tests/runtime/facade tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/facade/test_facade_step_evidence_gates.py tests/runtime/test_agent_shim.py
 ```
 
 Maintained smoke-suite 命令：

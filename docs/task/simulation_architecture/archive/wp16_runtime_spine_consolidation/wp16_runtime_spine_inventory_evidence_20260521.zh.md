@@ -96,10 +96,10 @@ RuntimeWindowRequest admission
 | `tests/world_batch/test_world_batch_vec_env.py` | `compatibility_wrapper` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | 当前 vec-env tests 证明的是 training functionality 通过 compatibility view，而不是通过 selected runtime-window barrier evidence。 |
 | `tests/runtime/engagement/test_facade_engagement_export.py` | `diagnostics_only` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | 虽然 export assertions 有价值，但 fixture 仍通过 `RuntimeFacade.runtime().world()` escape hatches 合成 launch/damage，因此还不能算 clean maintained consumer proof。 |
 | `tests/runtime/engagement/test_diagnostics_trace_contract.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | synthetic trace-chain contract check 保护的是 diagnostics vocabulary，而不是 default runtime-spine execution。 |
-| `tests/diagnostics/test_diagnostics_import_order.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | import-order coverage 保护的是 tooling，不是 maintained runtime-spine behavior。 |
+| `tests/runtime/bindings/test_lazy_binding_resolution.py` | `diagnostics_only` | `WP16-D` | `WP16-D Legacy Path Deprecation And Compatibility Gates` | import-order coverage 保护的是 tooling，不是 maintained runtime-spine behavior。 |
 | `python/scenario/compiler/generation_request.py` | `blocked` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | request contract 的 fail-close 是正确的，而且需要 replay/branch lineage，但它仍然没有和 selected execution slice 建立 maintained runtime-spine packet/barrier binding。 |
 | `src/runtime/contracts/counterfactual_replay_contracts.h` | `blocked` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | WP15 admission 仍然是 metadata-only 且明确 restore-unsupported，所以 counterfactual execution 还不能声称拥有 maintained runtime spine。 |
-| `tests/training/test_cooperative_diagnostics_callback.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | training diagnostics metrics 是真实 consumer，但这个路径还没有足够强地命名 observation packet ids、barrier ids 或 replay/trace refs，因此不能分类为 maintained 或 diagnostics-only。 |
+| `tests/training/test_diagnostics_callback_contracts.py` | `unknown_requires_owner` | `WP16-C` | `WP16-C Facade And Batch Path Spine Migration` | training diagnostics metrics 是真实 consumer，但这个路径还没有足够强地命名 observation packet ids、barrier ids 或 replay/trace refs，因此不能分类为 maintained 或 diagnostics-only。 |
 
 ## 4. Residuals
 
@@ -107,7 +107,7 @@ RuntimeWindowRequest admission
 
 - `runtime_facade.*` 与 Python batch adapters 是刻意混合的 surface；已选定的 maintained symbols 已经存在，但默认 caller 仍然会绕过 `run_wp10_window`。
 - `generation_request.py` 与 `counterfactual_replay_contracts.h` 被 blocked 的原因是缺少 maintained runtime execution linkage，而不是验证缺口。
-- `tests/training/test_cooperative_diagnostics_callback.py` 是当前的 `unknown_requires_owner` 样本，在没有显式 runtime evidence fields 之前，不得漂移到 `maintained_spine`。
+- `tests/training/test_diagnostics_callback_contracts.py` 是当前的 `unknown_requires_owner` 样本，在没有显式 runtime evidence fields 之前，不得漂移到 `maintained_spine`。
 
 ## 5. 交接说明
 

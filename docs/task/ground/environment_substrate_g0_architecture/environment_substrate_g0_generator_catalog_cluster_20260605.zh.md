@@ -23,7 +23,7 @@ mutation。
 | `G0-K-D Integration Map` | main thread integration | n/a | 将 A/B/C packets 整合为有限 G0-K implementation plan。 | `docs/task/ground/environment_substrate_g0_architecture/*.md`、ground 父 README/progress/queue docs | 不做 runtime projection、C++ runtime、scenarios 或 derived products。 | 本地 review packets，并对 touched docs 跑 `git diff --check`。 | implementation write set 已命名，residuals 保持。 | G0-K-A/B/C 返回后串行。 | 1 | pass |
 | `G0-K-E1 Request And Tile Contract` | main thread implementation | n/a | 实现 deterministic generator request、evidence refs、tile scheme、canonical bytes 与 seed derivation。 | `python/scenario/environment_substrate/generator.py`、`python/scenario/environment_substrate/__init__.py`、focused tests | 不复用 scenario compiler，不做 runtime projection，不使用 ambient randomness。 | request validation 与 deterministic output focused pytest。 | request/tile contract 使用 stable reason codes 验证并 fail closed。 | 依赖 G0-K-D。 | 1 | pass |
 | `G0-K-E2 Catalog Admission Contract` | main thread implementation | n/a | 实现 catalog descriptors、catalog admission validation 与 default descriptor fixtures。 | `python/scenario/environment_substrate/catalog.py`、`python/scenario/environment_substrate/__init__.py`、focused tests | 不把 feature label 变成 schema root，不从 label 推导 runtime behavior。 | catalog refs、required components、branch/layer mismatch 与 held claims focused pytest。 | catalog admission 使用 stable reason codes 拒绝 invalid descriptors 与 generated manifests。 | 与 E1 文件上可并行，测试中串行集成。 | 1 | pass |
-| `G0-K-E3 Deterministic Manifest Fixture` | main thread implementation | n/a | 从 request 加 catalog descriptors 构建 deterministic in-memory generated manifest fixture。 | `python/scenario/environment_substrate/generator.py`、`tests/scenario/test_environment_substrate_generator_catalog.py` | 不提交 generated data artifact，不输出 runtime setup payload。 | focused pytest 加现有 G0-J regressions。 | 同一 request 产生 byte-identical manifest metadata；不同 seed 改变 generated output 但保留 lineage。 | 依赖 E1/E2。 | 1 | pass |
+| `G0-K-E3 Deterministic Manifest Fixture` | main thread implementation | n/a | 从 request 加 catalog descriptors 构建 deterministic in-memory generated manifest fixture。 | `python/scenario/environment_substrate/generator.py`、`tests/scenario/test_environment_substrate_contracts.py` | 不提交 generated data artifact，不输出 runtime setup payload。 | focused pytest 加现有 G0-J regressions。 | 同一 request 产生 byte-identical manifest metadata；不同 seed 改变 generated output 但保留 lineage。 | 依赖 E1/E2。 | 1 | pass |
 | `G0-K-F Documentation And Acceptance` | main thread integration | n/a | 记录 G0-K implementation acceptance 并同步父级状态。 | G0 package docs 加 ground 父 README/progress/queue docs | 没有 maintained replacement 前不 archive；不释放 G0-L/G0-M。 | focused pytest 与 `git diff --check`。 | G0-K 只接受 Python generator/catalog contract；历史 G0-L/G0-M residuals 已由 G0 closure superseded。 | E1/E2/E3 验证后串行。 | 1 | accepted |
 
 ## 派发规则
@@ -35,7 +35,7 @@ mutation。
   `python/scenario/environment_substrate/catalog.py`、
   `python/scenario/environment_substrate/generator.py`、
   `python/scenario/environment_substrate/__init__.py`、
-  `tests/scenario/test_environment_substrate_generator_catalog.py` 与 status docs。
+  `tests/scenario/test_environment_substrate_contracts.py` 与 status docs。
 - 不把同一 normative table 拆给多个 worker。
 - generator/catalog contracts 必须与 G0-L runtime projection、G0-M derived
   products 分离。
@@ -69,7 +69,7 @@ git diff --check -- docs/task/ground/environment_substrate_g0_architecture docs/
 当前 G0-K focused validation 加 G0-J contract regression：
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 # 22 passed
 ```
 

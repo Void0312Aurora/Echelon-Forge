@@ -134,13 +134,13 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/naval/test_naval_n4_reward_surface.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_training_bootstrap_contracts.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 300
-git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 
 Focused results:
@@ -155,16 +155,16 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/naval/test_naval_n4_reward_surface.py
 # 7 passed
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 # 7 passed, 6 subtests passed
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 # PASS: naval screen threat/ROE pre-fire contract passed
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 # 25 passed, 6 subtests passed
 
-git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_active_training_entries.py tests/training/test_naval_n4_closure_gate.py
+git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_n4_reward_surface.py tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 # passed
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --output_base /tmp/cmo_naval_n5_smoke --run_name naval_station3_smoke

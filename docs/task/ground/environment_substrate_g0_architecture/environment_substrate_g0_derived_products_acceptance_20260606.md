@@ -23,7 +23,7 @@ Accepted:
   capability claims, missing request IDs, missing product kinds, and missing
   projection profile IDs for surface-zone indexes;
 - focused tests under
-  `tests/scenario/test_environment_substrate_derived_products.py`.
+  `tests/scenario/test_environment_substrate_contracts.py`.
 
 Not accepted:
 
@@ -48,14 +48,14 @@ Not accepted:
 ## Validation
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_derived_products.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py
 # 4 passed
 ```
 
 Included in the G0 closure suite:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py tests/scenario/test_environment_substrate_generator_catalog.py tests/scenario/test_environment_substrate_projection_setup.py tests/scenario/test_environment_substrate_scenario_ingestion.py tests/scenario/test_environment_substrate_derived_products.py tests/scenario/test_scenario_compiler.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py tests/scenario/test_scenario_compiler.py
 # 59 passed
 ```
 

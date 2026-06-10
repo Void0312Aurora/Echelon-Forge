@@ -125,7 +125,7 @@ phase releases only two `G1` realism fixtures.
 | `ENV-G0-K-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass: inspected generator/compiler surfaces and defined deterministic request, tile, seed, and provenance contract requirements. | none; diagnostics packet only. |
 | `ENV-G0-K-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass: defined generic catalog descriptor/admission rules across terrain and non-terrain environment branches. | none; diagnostics packet only. |
 | `ENV-G0-K-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass: defined focused tests, determinism gates, and validator failures before generator implementation. | none; diagnostics packet only. |
-| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | current main thread | Accepted: integrated G0-K-A/B/C packets, implemented finite Python generator/catalog contract, and accepted G0-K only for in-memory deterministic fixture generation. | `python/scenario/environment_substrate/catalog.py`, `python/scenario/environment_substrate/generator.py`, `python/scenario/environment_substrate/__init__.py`, `tests/scenario/test_environment_substrate_generator_catalog.py`, G0 package docs, and parent status docs. No runtime projection or derived products. |
+| `ENV-G0-K-D/E/F` | main-thread integration / implementation / acceptance | current main thread | Accepted: integrated G0-K-A/B/C packets, implemented finite Python generator/catalog contract, and accepted G0-K only for in-memory deterministic fixture generation. | `python/scenario/environment_substrate/catalog.py`, `python/scenario/environment_substrate/generator.py`, `python/scenario/environment_substrate/__init__.py`, `tests/scenario/test_environment_substrate_contracts.py`, G0 package docs, and parent status docs. No runtime projection or derived products. |
 | `ENV-G0-L-A` | read-only diagnostics | Huygens / inherited parent / xhigh | Completed/pass: inspected Python scenario compiler/setup surfaces and limited accepted candidate handling to future `world_zone_definition` ingestion. | none; diagnostics packet only. |
 | `ENV-G0-L-B` | read-only diagnostics | Pascal / inherited parent / xhigh | Completed/pass: inspected C++ batch/world setup contracts and confirmed no C++ edits are needed for the first payload contract. | none; diagnostics packet only. |
 | `ENV-G0-L-C` | read-only diagnostics | Carson / inherited parent / xhigh | Completed/pass: defined focused tests, fail-closed reason codes, and held capability gates before projection setup payload implementation. | none; diagnostics packet only. |
@@ -301,7 +301,7 @@ Accepted result:
 - No C++ DTO shells, bindings, runtime behavior, or scenario-loader behavior
   were added.
 - Main-thread validation passed:
-  `python -m pytest -q tests/leader/test_ground_profile_semantics.py tests/leader/test_common_core_semantics.py tests/leader/test_naval_profile_semantics.py tests/runtime/mission/test_naval_mission_command_mapping.py`
+`python -m pytest -q tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_naval_mission_command_mapping.py`
   and `python -m pytest -q tests/leader`.
 
 ### `G2-A Ground Fixture Seed`
@@ -488,9 +488,9 @@ Accepted result:
   shared-entry-point lifecycle proof plus the narrowest runtime plumbing needed
   so ground loaders resolve through the maintained `tasking_profile` bridge
 - accepted baseline tests:
-  `tests/leader/test_ground_profile_semantics.py`,
-  `tests/leader/test_common_core_semantics.py`,
-  `tests/leader/test_naval_profile_semantics.py`,
+  `tests/leader/test_tasking_profile_contracts.py`,
+  `tests/leader/test_tasking_profile_contracts.py`,
+  `tests/leader/test_tasking_profile_contracts.py`,
   `tests/runtime/mission/test_leader_tasking_runtime.py`,
   and `tests/contracts/unit/ground/`
 

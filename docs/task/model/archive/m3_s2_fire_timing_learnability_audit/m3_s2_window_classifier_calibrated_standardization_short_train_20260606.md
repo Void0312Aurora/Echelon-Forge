@@ -30,8 +30,8 @@ Focused tests:
 
 ```text
 ./.venv/bin/python -m pytest \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_window_classifier_replay_calibration_is_latest_balanced_population \
-  tests/hmoe/test_hmoe_ppo_warmup.py::HMoEPPOWarmupTests::test_m3s2_window_classifier_replay_balances_single_class_rollouts -q
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_window_classifier_replay_calibration_is_latest_balanced_population \
+  tests/policy/test_auxiliary_training_updates.py::AuxiliaryTrainingUpdateTests::test_m3s2_window_classifier_replay_balances_single_class_rollouts -q
 
 2 passed
 ```

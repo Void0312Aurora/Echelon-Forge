@@ -44,16 +44,16 @@ python -m compileall -q \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tests/hmoe/test_m3s1_grouped_stopping.py \
-  tests/hmoe/test_hmoe_ppo_warmup.py
+  tests/policy/test_grouped_stopping_loss_contracts.py \
+  tests/policy/test_auxiliary_training_updates.py
 ```
 
 结果：pass。
 
 ```bash
-pytest tests/hmoe/test_m3s1_grouped_stopping.py -q
-pytest tests/hmoe/test_hmoe_ppo_warmup.py -q
-pytest tests/training/test_air_combat_active_training_entries.py -q
+pytest tests/policy/test_grouped_stopping_loss_contracts.py -q
+pytest tests/policy/test_auxiliary_training_updates.py -q
+pytest tests/training/test_air_combat_training_entry_contracts.py -q
 ```
 
 结果：

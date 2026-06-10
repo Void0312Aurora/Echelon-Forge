@@ -24,10 +24,10 @@ a learned `1v1` policy and does not release M2.
 python -m py_compile gym_envs/universal_env_parts/spaces.py gym_envs/universal_env_parts/actions.py gym_envs/universal_env.py python/env_config.py python/rl/policy_algo/policies.py python/rl/runtime/world_batch_vec_env.py train.py python/training/cli.py tools/diagnostics/air_combat_stage0_process_probe.py tools/eval/eval_utils.py tools/eval/sb3_eval_base.py
 # pass
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/training/test_train_bootstrap.py tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_air_combat_active_training_entries.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/training/test_training_bootstrap_contracts.py tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py
 # 46 passed
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/diagnostics/test_air_combat_process_probe.py tests/training/test_train_bootstrap.py tests/eval/test_eval_sb3.py -k "air_combat or cli or single_eval_builds_world_batch_runtime"
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_training_bootstrap_contracts.py tests/eval/test_evaluation_cli_contracts.py -k "air_combat or cli or single_eval_builds_world_batch_runtime"
 # 4 passed, 7 deselected
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop python train.py --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json --train_config /tmp/cmo_m1_air_combat_hybrid_smoke_config.json --output_base /tmp/cmo_m1_hybrid_smoke_runs --run_name m1_hybrid_smoke_20260602 --n_envs 1 --torch_threads 1 --seed 20260602

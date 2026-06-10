@@ -125,8 +125,8 @@ WP23 只有六个有限 cluster。任何 worker 若不能映射到下表，不�
 | Command/control typed-state narrowing | `src/components/command/default_factory_legacy_spawn_compat.h:9-18`、`src/systems/core/operation_system.h:46-111`、`src/systems/systems/command_link_system.h:29-120` | `keep-after-audit` with residual blockers | 保留 guarded narrowing，但只要 `MovementCommand`、`LaggedCommand`、`ActionCommand` 与 pending shells 仍是 behavior-bearing compatibility surfaces，就不能称为 retirement。 |
 | TaskOrder maintained-batch contract and wiring | `src/runtime/contracts/world_batch_contracts.h:563-720`、`src/core/engine/world_batch_runtime.h:109-116`、`src/core/engine/world_batch_runtime.cpp:738-857`、`src/runtime/facade/runtime_facade.h:97-129`、`src/runtime/facade/runtime_facade.cpp:2649-2768`、`src/interfaces/python/bindings_runtime.cpp:1165-1173`、`src/interfaces/python/bindings_runtime.cpp:1444-1457`、`src/interfaces/python/bindings_runtime.cpp:1535-1582`、`src/interfaces/python/bindings_runtime.cpp:1692-1735`、`python/rl/runtime/world_batch/adapter.py:118-141`、`python/rl/runtime/world_batch/adapter.py:773-887`、`python/rl/runtime/world_batch_vec_env.py:1261-1315` | `audit-before-keep` | 暂不接受为 pass。它在 whole-shell write/read、observation packet、bindings 与 Python fallback 仍 live 时，引入了 maintained-looking TaskOrder path。 |
 | TaskOrder / LeaderIntent / PilotReport whole-shell assignments | `src/runtime/contracts/world_batch_contracts.h:596-655`、`src/core/engine/world_batch_runtime.cpp:766-797`、`src/runtime/facade/runtime_facade.cpp:2655-2665`、`src/interfaces/python/bindings_runtime.cpp:1444-1469` | maintained truth 为 `delete-or-migrate-target`；public API 为 `blocked-target` | 不得接受为 maintained truth。只有 public replacement 被证明后才能删除/迁移，否则标 blocked。 |
-| Observation task-order whole-shell read | `src/runtime/facade/runtime_facade.cpp:2779-2788`、`src/runtime/facade/runtime_facade.cpp:3008-3031`、`src/interfaces/python/bindings_runtime.cpp:1105-1117`、`tests/architecture/runtime_facade/test_layering.py:1000-1004` | `blocked-target` | 仍是 whole-shell read surface。`ObservationBatchPacket.task_orders` 公开存在时，不能称 TaskOrder shell retired。 |
-| Runtime/world/batch escape hatches | `src/runtime/facade/runtime_facade.cpp:2498-2503`、`src/core/engine/world_batch_runtime.h:65-68`、`python/rl/runtime/world_batch_vec_env.py:302-306`、`tests/architecture/runtime_facade/test_layering.py:499-608` | `blocked-target` | 只能作为 explicit compatibility/diagnostics 保留。受 public consumers 与 diagnostics paths 阻塞，不能删除。 |
+| Observation task-order whole-shell read | `src/runtime/facade/runtime_facade.cpp:2779-2788`、`src/runtime/facade/runtime_facade.cpp:3008-3031`、`src/interfaces/python/bindings_runtime.cpp:1105-1117`、`tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py` | `blocked-target` | 仍是 whole-shell read surface。`ObservationBatchPacket.task_orders` 公开存在时，不能称 TaskOrder shell retired。 |
+| Runtime/world/batch escape hatches | `src/runtime/facade/runtime_facade.cpp:2498-2503`、`src/core/engine/world_batch_runtime.h:65-68`、`python/rl/runtime/world_batch_vec_env.py:302-306`、`tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py` | `blocked-target` | 只能作为 explicit compatibility/diagnostics 保留。受 public consumers 与 diagnostics paths 阻塞，不能删除。 |
 | Default-factory legacy command projection | `src/components/command/default_factory_legacy_spawn_compat.h:36-54`、`src/components/command/default_factory_legacy_spawn_compat.h:101-121` | `delete-or-migrate-target` with blocker | 删除前必须迁到 typed control-state-only spawn。当前 helper 仍投影 `MovementCommand` 与 `LaggedCommand`。 |
 | Python maintained path fallbacks | `python/rl/runtime/world_batch/adapter.py:118-141`、`python/rl/runtime/world_batch/adapter.py:773-887`、`python/rl/runtime/world_batch_vec_env.py:1261-1315` | 若隐藏 truth 则 `rollback-candidate` | 只有 C 证明 representation selection 是显式的才保留。静默 `hasattr` fallback 可能保留 dual truth。 |
 
@@ -193,7 +193,7 @@ WP23-B 退出：planning complete。Implementation 现在只允许从本表选�
   `python/rl/runtime/world_batch_vec_env.py:1261-1315`。
 - 现有测试验证的是共存，而不是退场：
   `tests/world_batch/test_world_batch_runtime.py:921-964` 验证 maintained write
-  后 legacy read，`tests/architecture/runtime_facade/test_layering.py:976-1008`
+  后 legacy read，`tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py`
   显式检查 maintained APIs 与 legacy shells 同时存在。
 
 WP23-C 结果：
@@ -243,7 +243,7 @@ re-baseline，不得变成另一轮 WP23-C repair wave。
   支撑，并在 `tests/world_batch/test_world_batch_vec_env.py:669-704` 作为显式
   compatibility view 被测试。
 - 当前 architecture guards 是局部化，不是删除：
-  `tests/architecture/runtime_facade/test_layering.py:499-607` 检查 `.batch_runtime`
+  `tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py` 检查 `.batch_runtime`
   与 `RuntimeFacade.runtime()` consumers 留在显式 allowlist；
   `tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py:43-86` 在 replacement gates
   存在前保留 public compatibility surfaces。
@@ -283,7 +283,7 @@ guard/label hardening 任务，用来让上述 blocked state 可执行；任何�
 - `WP23-D` 已 blocked public runtime/world/batch/diagnostics exits，且没有发现
   deletion-ready implementation surface。
 - 现有 guards 已经局部化关键 escape hatches：
-  `tests/architecture/runtime_facade/test_layering.py:499-607` 覆盖 `.batch_runtime`
+  `tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py` 覆盖 `.batch_runtime`
   与 `RuntimeFacade.runtime()` allowlists；
   `tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py:43-86` 将 public compatibility
   surfaces 绑定到 replacement gates。
@@ -363,9 +363,9 @@ integration notes:
 ```bash
 git diff --check
 cmake --build build-workshop --target ef_py -j4
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+python -m pytest -q tests/architecture/runtime_facade
 python -m pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py
-python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py
+python -m pytest -q tests/architecture/structural_boundaries
 python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py
 python -m pytest -q tests/world_batch/test_world_batch_runtime.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py

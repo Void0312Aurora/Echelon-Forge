@@ -200,7 +200,7 @@ tests/world_batch/    (批量执行系统测试 — 最高质量的一批)
 tests/scenario/       (场景编译/加载测试)
 tests/leader/         (领导者/分层RL测试)
 tests/training/       (训练基础设施测试)
-tests/hmoe/           (HMoE 路由测试)
+tests/policy/           (HMoE 路由测试)
 tests/eval/           (评估测试)
 tests/contracts/      (JSON契约 — 声明式、数据驱动)
 ```

@@ -18,7 +18,7 @@ mutation.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `G0-J-A Static Schema` | main thread | n/a | Add shared manifest, branch membership, component, geometry, extent, generation, and projection-profile data structures. | `python/scenario/environment_substrate/manifest.py`, package `__init__.py` | No runtime setup, no generator, no C++ code. | Import and deterministic metadata tests. | Fixture serializes deterministically. | Starts after G0 architecture acceptance. | 1 | pass |
 | `G0-J-B Registry And Validation` | main thread | n/a | Add default branch/component/layer registries and fail-closed validation. | `python/scenario/environment_substrate/components.py`, `validation.py` | No runtime capability release. | Missing branch, missing component attrs, untyped behavior, and held claims reject. | Validation returns stable reason codes. | Depends on G0-J-A. | 1 | pass |
-| `G0-J-C Projection Contract` | main thread | n/a | Add contract-only `world_zone_definition` projection evidence and fail-closed rejection for unsupported rich features. | `python/scenario/environment_substrate/projection.py`, `tests/scenario/test_environment_substrate_projection.py` | No compiler/runtime integration or actual world setup application. | Focused projection tests. | Projection emits evidence and rejects dropped rich components, misspelled surface fields, non-rect geometry, and unsupported targets. | Depends on G0-J-A/B. | 1 | pass |
+| `G0-J-C Projection Contract` | main thread | n/a | Add contract-only `world_zone_definition` projection evidence and fail-closed rejection for unsupported rich features. | `python/scenario/environment_substrate/projection.py`, `tests/scenario/test_environment_projection_contracts.py` | No compiler/runtime integration or actual world setup application. | Focused projection tests. | Projection emits evidence and rejects dropped rich components, misspelled surface fields, non-rect geometry, and unsupported targets. | Depends on G0-J-A/B. | 1 | pass |
 | `G0-J-D Documentation Sync` | main thread | n/a | Record G0-J acceptance evidence and parent docs status. | `docs/task/ground/environment_substrate_g0_architecture/*.md`, parent ground README/progress/queue docs | No archive, no generator implementation. | `git diff --check` for touched docs. | Parent docs marked G0-J accepted and G0-K held at G0-J closeout; current G0-K acceptance supersedes that residual. | Serial after tests. | 1 | pass |
 
 ## Dispatch Rules
@@ -40,7 +40,7 @@ validation outcome, rejected alternatives, and explicit held capability claims.
 ## Validation Plan
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_manifest.py tests/scenario/test_environment_substrate_projection.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/scenario/test_environment_substrate_contracts.py tests/scenario/test_environment_projection_contracts.py
 ```
 
 Result: `10 passed`.

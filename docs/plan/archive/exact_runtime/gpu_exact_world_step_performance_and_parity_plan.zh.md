@@ -296,7 +296,7 @@ graph LR
 | B1: 地面接触 GPU 实现 | `src/gpu/gpu_ground_contact.cu` | 法向力、摩擦力、恢复力矩 |
 | B2: 力计算 GPU 实现 | `src/gpu/gpu_force_system.cu` | 重力、推力 |
 | B3: 完整气动力 GPU 实现 | `src/gpu/gpu_aerodynamics.cu` | 完整系数表、控制面效应 |
-| B4: 漂移验证 | `tests/diagnostics/test_exact_world_step_force_parity.py` | 验证力/力矩对等 |
+| B4: 漂移验证 | 未来 parity 回归位置待定 | 验证力/力矩对等 |
 
 **退出标准**: `force_accumulator` 漂移降至 1000 以下
 
@@ -306,7 +306,7 @@ graph LR
 |------|------|------|
 | C1: 完整控制律 GPU 实现 | `src/gpu/gpu_control_law.cu` | 控制模型调用、配平 |
 | C2: 蛙跳积分器 GPU 实现 | `src/gpu/gpu_leapfrog.cu` | 速度-位置交错更新 |
-| C3: 完整语义验证 | `tests/diagnostics/test_exact_world_step_full_parity.py` | 全表面对等 |
+| C3: 完整语义验证 | 未来 parity 回归位置待定 | 全表面对等 |
 
 **退出标准**: 总漂移降至 100 以下，apply_signature 0 差异
 

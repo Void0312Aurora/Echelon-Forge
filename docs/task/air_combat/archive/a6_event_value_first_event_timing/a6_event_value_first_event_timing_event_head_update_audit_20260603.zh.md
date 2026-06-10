@@ -44,7 +44,7 @@ Focused probes：
 新增 regression / diagnostic test：
 
 ```bash
-.venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py
+.venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py
 ```
 
 结果：`2 passed`。
@@ -109,7 +109,7 @@ optimization lane，然后再考虑 sequence-native release vote。
 ```md
 status: pass
 touched files:
-- tests/hmoe/test_a6_event_head_update_strength.py
+- tests/policy/test_event_head_update_contracts.py
 - docs/task/air_combat/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_update_audit_20260603.md
 - docs/task/air_combat/a6_event_value_first_event_timing/a6_event_value_first_event_timing_event_head_update_audit_20260603.zh.md
 - docs/task/air_combat/a6_event_value_first_event_timing/README.md
@@ -125,10 +125,10 @@ touched files:
 - docs/task/air_combat/README.md
 - docs/task/air_combat/README.zh.md
 commands/outcomes:
-- .venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py -> 2 passed
-- .venv/bin/python -m pytest -q tests/hmoe/test_a6_event_head_update_strength.py tests/hmoe/test_a6_first_event_hazard.py tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_ppo_warmup.py tests/training/test_a6_event_value_active_config.py tests/training/test_a6_event_value_diagnostics_callback.py tests/diagnostics/test_a6_event_value_process_probe.py tests/training/test_air_combat_active_training_entries.py tests/training/test_cooperative_diagnostics_callback.py tests/diagnostics/test_air_combat_process_probe.py -> 73 passed, 9 subtests passed
-- python -m compileall -q tests/hmoe/test_a6_event_head_update_strength.py -> passed
-- git diff --check -- docs/task/air_combat tests/hmoe/test_a6_event_head_update_strength.py -> passed
+- .venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py -> 2 passed
+- .venv/bin/python -m pytest -q tests/policy/test_event_head_update_contracts.py tests/policy/test_first_event_timing_contracts.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py -> 73 passed, 9 subtests passed
+- python -m compileall -q tests/policy/test_event_head_update_contracts.py -> passed
+- git diff --check -- docs/task/air_combat tests/policy/test_event_head_update_contracts.py -> passed
 remaining paths:
 - 实现 A6-EVT-K event-head optimization lane。
 behavior risks:

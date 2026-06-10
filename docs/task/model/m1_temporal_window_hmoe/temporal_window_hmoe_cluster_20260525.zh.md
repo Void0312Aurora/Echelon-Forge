@@ -71,16 +71,16 @@ M1 不应触碰：
 
 - `py_compile` 覆盖 temporal history、world-batch/cooperative runtime、transformer、训练入口；
 - `tests/runtime/core/test_env_config.py`：`7 passed`；
-- `tests/hmoe/test_hmoe_policy.py -k "temporal or transformer"`：`4 passed, 10 deselected`；
+- `tests/policy/test_execution_policy_surface.py -k "temporal or transformer"`：`4 passed, 10 deselected`；
 - `tests/world_batch/test_world_batch_vec_env.py -k "temporal_history"`：`2 passed, 62 deselected`；
-- `tests/training/test_train_bootstrap.py tests/runtime/core/test_env_config.py`：`8 passed`；
+- `tests/training/test_training_bootstrap_contracts.py tests/runtime/core/test_env_config.py`：`8 passed`；
 - `tests/runtime/multi_agent/test_cooperative_world_batch_vec_env.py -k "initializes or reset or observation"`：`4 passed, 26 deselected`；
 - stage-0 temporal PPO smoke 完成 `4096` timesteps，final model 保存到
   `experiments/temporal_stage0_smoke_20260525/final_model.zip`；
 - test-only deterministic rollout 使用同一 world-batch temporal 配置加载 final model 并执行 `1000` 步，无 runtime/shape/non-finite 报错。
 - 2026-06-02 Stage-1 temporal 入口验证：
-  `tests/training/test_air_combat_active_training_entries.py` 通过，覆盖 reactive/temporal 配置配对与 train bootstrap；
-  `tests/hmoe/test_hmoe_policy.py -k "temporal or transformer"` 通过；
+  `tests/training/test_air_combat_training_entry_contracts.py` 通过，覆盖 reactive/temporal 配置配对与 train bootstrap；
+  `tests/policy/test_execution_policy_surface.py -k "temporal or transformer"` 通过；
   `tests/world_batch/test_world_batch_vec_env.py -k "temporal_history"` 通过；
   使用 Stage-1 temporal 配置运行 range-gate 固定诊断，单枚导弹产生 `effects_event_count=1`、
   `damage_report_count=1`、`projected_hitbox_count=3`、`component_hit_count=4`、

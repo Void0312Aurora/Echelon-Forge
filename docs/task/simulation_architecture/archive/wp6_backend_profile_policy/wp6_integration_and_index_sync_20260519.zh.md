@@ -57,7 +57,7 @@
    作为 profile-owned comparison budget 来源。
 3. [WP6-C1 resident-state 边界规则](wp6_resident_state_boundary_rules_20260519.zh.md)
    作为 resident-state ownership 与 sync gate。
-4. [runtime facade layering 测试](../../../tests/architecture/runtime_facade/test_layering.py)、
+4. [runtime facade layering 测试](../../../tests/architecture/runtime_facade)、
    [runtime facade 测试](../../../tests/runtime/facade/test_runtime_facade.py) 与
    [GPU runtime binding 测试](../../../tests/test_gpu_runtime_bindings.py) 中的
    capability-projection guard。

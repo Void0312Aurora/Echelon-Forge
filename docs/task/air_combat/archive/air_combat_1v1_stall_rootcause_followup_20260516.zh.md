@@ -71,14 +71,14 @@
 
 对应测试：
 
-- [test_hmoe_policy.py](../../../../tests/hmoe/test_hmoe_policy.py:151)
-- [test_hmoe_train_bootstrap.py](../../../../tests/hmoe/test_hmoe_train_bootstrap.py:45)
-- [test_hmoe_ppo_warmup.py](../../../../tests/hmoe/test_hmoe_ppo_warmup.py:65)
+- [test_execution_policy_surface.py](../../../../tests/policy/test_execution_policy_surface.py:151)
+- [test_policy_bootstrap_initialization.py](../../../../tests/policy/test_policy_bootstrap_initialization.py:45)
+- [test_auxiliary_training_updates.py](../../../../tests/policy/test_auxiliary_training_updates.py:65)
 
 本地结果：
 
 ```bash
-python -m pytest tests/hmoe/test_hmoe_policy.py tests/hmoe/test_hmoe_train_bootstrap.py tests/hmoe/test_hmoe_ppo_warmup.py -q
+python -m pytest tests/policy/test_execution_policy_surface.py tests/policy/test_policy_bootstrap_initialization.py tests/policy/test_auxiliary_training_updates.py -q
 ```
 
 结果：`16 passed`

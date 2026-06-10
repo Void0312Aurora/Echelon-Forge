@@ -283,8 +283,8 @@ src/core/mission/
 - 已完成：`WorldBatchVecEnv` 的主维护路径通过 `_RuntimeFacadeAdapter` 访问外观形 API；直接调用 `RuntimeFacade.runtime()` 仅在该适配器内允许。
 - 已完成：`WorldBatchVecEnv` 主类不再缓存对 `_batch_runtime` / `_runtime_facade` 的原始句柄；ScenarioLoader 底层世界访问、遗留可视化回读和可视化批处理辅助均通过适配器方法。
 - 已完成：架构测试禁止主维护类或新代码（适配器外部）直接调用 `RuntimeFacade.runtime()`、直接实例化 `ef_py.WorldBatchRuntime`、缓存原始运行时/外观句柄，或重新暴露 `.compat_runtime`。
-- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py` 通过 — `5 passed`。
-- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/test_cuda_import_order.py` 通过 — `36 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade` 通过 — `5 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/test_cuda_import_order.py` 通过 — `36 passed`。
 
 ### WP7：CMake 目标拆分准备
 
@@ -320,7 +320,7 @@ src/core/mission/
 - 已完成：添加 CMake 目标就绪性架构检查，防止 `ef_core` / `ef_py` 回退到无限制的源文件扁平化。
 - 已完成：更新 `src/README.md`，包含 CMake 源文件组所有权规则。
 - 已验证：`cmake --build build-workshop --target ef_core ef_py -j2` 通过。
-- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/build/test_cmake_target_readiness.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` 通过，`62 passed`。
+- 已验证：`PYTHONPATH=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/runtime_facade tests/architecture/build/test_cmake_target_readiness.py tests/world_batch/test_world_batch_vec_env.py tests/runtime/facade/test_runtime_facade.py tests/world_batch/test_world_batch_runtime.py tests/test_cuda_import_order.py tests/test_gpu_runtime_bindings.py` 通过，`62 passed`。
 
 ## 5. 执行顺序
 

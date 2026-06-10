@@ -75,15 +75,15 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py
 python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win
-python -m py_compile tools/diagnostics/air_combat_stage0_process_probe.py tests/diagnostics/test_air_combat_process_probe.py
-python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q
+python -m py_compile tools/diagnostics/air_combat_stage0_process_probe.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py
+python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 python -m json.tool scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json >/dev/null
 git diff --check -- \
   docs/task/air_combat/a2_high_fidelity_damage_model \
   gym_envs/scenario_loader/reward_runtime/air_combat.py \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
   tools/diagnostics/air_combat_stage0_process_probe.py \
-  tests/diagnostics/test_air_combat_process_probe.py \
+  tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
   scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json \
   examples/config/training/active/air_combat/README.md \
   examples/config/training/active/air_combat/README.zh.md

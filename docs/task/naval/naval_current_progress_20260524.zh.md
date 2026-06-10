@@ -287,7 +287,7 @@ N4 RL preflight 已记录在
 已通过：
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/naval/test_naval_ship_database.py tests/runtime/naval/test_naval_screen_scenario.py tests/runtime/naval/test_naval_sensor_realism_runtime.py tests/runtime/naval/test_naval_asw_helo_runtime.py tests/runtime/engagement/test_naval_launch_adapter.py tests/leader/test_naval_profile_semantics.py tests/leader/test_naval_contract_fields.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/runtime/naval/test_naval_ship_database.py tests/runtime/naval/test_naval_screen_scenario.py tests/runtime/naval/test_naval_sensor_realism_runtime.py tests/runtime/naval/test_naval_asw_helo_runtime.py tests/runtime/engagement/test_naval_launch_adapter.py tests/leader/test_tasking_profile_contracts.py tests/leader/test_command_field_projection_contracts.py
 # 49 passed
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_contact_report_geometry.json
@@ -325,7 +325,7 @@ git diff --check -- docs/task/naval
 N4 active training-entry gate：
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py
 # 4 passed, 4 subtests passed
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python train.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json --output_base /tmp/cmo-naval-train.<tmp> --run_name naval_contact_report_threat_roe_smoke_v1
