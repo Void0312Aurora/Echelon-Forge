@@ -1,8 +1,9 @@
 # A2 损伤后果奖励面
 
-状态：`2026-06-09` active A2 follow-on / DCR-A-D 已验证；DCR-E probe 导出
-已具备。候选 Stage-2 learned-policy probe 未触发发射、效果或损伤；下一步应使用受控杀伤链
-probe 或 replay artifact 来形成后果证据。
+状态：`2026-06-11` active A2 follow-on / DCR-A-D 已验证；DCR-E probe 导出和
+diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/effects/damage timing，
+但 DCR totals 仍为 0，因为当前 damage report 没有暴露 DCR 可读的后果字段。`DCR-E-R1`
+已将下一步证据重定界为 controlled consequence fixture probe；DCR-E 仍为 partial。
 
 语言：
 
@@ -76,11 +77,17 @@ probe 或 replay artifact 来形成后果证据。
 - `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
   已显式 opt-in 低权重 consequence shaping，仅作为 synthetic training feedback。
 - `tools/diagnostics/air_combat_stage0_process_probe.py` 现在可以按 target/self 前缀导出逐步和逐 episode 的 DCR reward totals。
+- `tools/diagnostics/air_combat_stage0_process_probe.py --diagnostic_dcr_bridge`
+  现在只在 diagnostics probe 内叠加 DCR reward terms，并输出简洁的
+  `controlled_consequence_bridge_records`；当前 fixed-fire record 仍为
+  `damage_consequence_reward_total=0.0`。
 - `2026-06-09` 使用
   `experiments_tmp/a1_stage2_c2_roe_m3s2_initfrom_stage1_8k_20260608_r1/final_model.zip`
   做 2 episode x 512 step model-mode probe：模型保持雷达和主武器开关打开，但没有触发发射；
   release/effects/damage/DCR reward 均为 0，因此它不是后果证据。
-- 在受控 consequence-chain probe 或等价 replay artifact 存在前，runtime/test 输出仍只构成第一刀切片证据，不构成整项 accepted。
+- DCR-E-P2 只验收为 implementation bridge / blocker record，不作为 consequence evidence。
+- DCR-E-R1 作为只读 re-scope evidence 验收。它建议把
+  `DCR-E-P3 Controlled Consequence Fixture Probe` 作为现有 DCR-E cluster 内的下一实现包。
 
 ## 验收门
 
@@ -96,7 +103,9 @@ probe 或 replay artifact 来形成后果证据。
 
 - 第一刀：reward runtime 读取飞机损伤与触地 debug state，作为可配置变化量/转移 shaping。
 - Stage-2 已用保守权重 opt-in，作为未来训练消费者；当前候选模型不会发射，因此不是杀伤链验证证据。
-- 下一步证据：运行受控命中/固定发射/replay probe，在同一记录中保留 effects、damage reports 和 DCR reward-term timing。
+- 下一步证据：派发 `DCR-E-P3 Controlled Consequence Fixture Probe`，通过 diagnostics/probe
+  surface 产生非零 DCR-readable aircraft/ground consequence snapshot。若 fixture 证据不能收口，
+  再把从 damage-report projections 到 DCR terms 的 reward mapping 作为单独 semantic packet 保留。
 - 后续：构建“连续后果观测诊断”表，把任务/机动/传感/生存能力、飞机内部损伤、燃油/火灾、触地生命周期和 inactive 变化放到同一张验收表中。
 
 ## Archive

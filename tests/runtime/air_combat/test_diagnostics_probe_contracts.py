@@ -804,6 +804,112 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         self.assertEqual(summary["first_target_damage_consequence_reward_step"], 2)
         self.assertEqual(summary["first_self_damage_consequence_reward_step"], 1)
 
+    def test_controlled_consequence_bridge_record_exposes_timing_counts_and_dcr_totals(self) -> None:
+        def row(
+            step: int,
+            *,
+            release: int = 0,
+            effects: int = 0,
+            damage: int = 0,
+            target_reward: float = 0.0,
+            self_reward: float = 0.0,
+        ) -> dict:
+            total = target_reward + self_reward
+            return {
+                "episode": 0,
+                "step": step,
+                "reward": total,
+                "terminated": int(step == 4),
+                "truncated": 0,
+                "termination_reason": "combat_timeout" if step == 4 else "",
+                "target_range_geom_m": 12000.0 - step,
+                "target_health": 100.0,
+                "target_active": 1,
+                "missiles_remaining": 4 - release,
+                "missile_release": release,
+                "missile_release_delta": release,
+                "effects_event_count": effects,
+                "damage_report_count": damage,
+                "damage_consequence_reward_total": total,
+                "target_damage_consequence_reward_total": target_reward,
+                "self_damage_consequence_reward_total": self_reward,
+            }
+
+        chain_rows = [
+            {
+                "episode": 0,
+                "chain_id": 301,
+                "event_id": idx + 1,
+                "stage": stage,
+                "source_event_kind": "test",
+                "source_event_id": idx + 1,
+            }
+            for idx, stage in enumerate(probe.LETHALITY_CHAIN_STAGES)
+        ]
+        summary = probe._summarize_episode(
+            [
+                row(0),
+                row(1, release=1),
+                row(2, effects=1, damage=1),
+                row(3, effects=1, damage=1, target_reward=0.25),
+                row(4, effects=1, damage=1, target_reward=0.5, self_reward=-0.1),
+            ],
+            lethality_chain_rows=chain_rows,
+        )
+
+        record = probe._controlled_consequence_bridge_record(summary)
+
+        self.assertEqual(record["first_release_step"], 1)
+        self.assertEqual(record["first_effects_event_step"], 2)
+        self.assertEqual(record["first_damage_report_step"], 2)
+        self.assertEqual(record["first_damage_consequence_reward_step"], 3)
+        self.assertAlmostEqual(record["target_damage_consequence_reward_total"], 0.75, places=6)
+        self.assertAlmostEqual(record["self_damage_consequence_reward_total"], -0.1, places=6)
+        self.assertAlmostEqual(record["damage_consequence_reward_total"], 0.65, places=6)
+        self.assertEqual(record["effects_event_count"], 1)
+        self.assertEqual(record["damage_report_count"], 1)
+        self.assertEqual(record["lethality_chain_row_count"], len(probe.LETHALITY_CHAIN_STAGES))
+        self.assertEqual(record["lethality_chain_chain_count"], 1)
+        self.assertEqual(
+            record["lethality_chain_stages_json"],
+            probe._stable_json(sorted(probe.LETHALITY_CHAIN_STAGES)),
+        )
+
+    def test_diagnostic_dcr_bridge_overlays_loader_rewards_without_scenario_file_edits(self) -> None:
+        loader = SimpleNamespace(
+            scenario_data={"rewards": {"survival": 0.0}},
+            _compiled_rewards_cfg={"survival": 0.0},
+        )
+        env = SimpleNamespace(unwrapped=SimpleNamespace(loader=loader))
+        overrides = probe._diagnostic_dcr_bridge_overrides(
+            Namespace(
+                diagnostic_dcr_bridge=True,
+                diagnostic_dcr_target_scale=0.5,
+                diagnostic_dcr_self_scale=0.25,
+                diagnostic_dcr_delta_clip=0.75,
+            )
+        )
+
+        probe._apply_diagnostic_dcr_bridge(env, overrides)
+
+        self.assertEqual(loader.scenario_data["rewards"]["survival"], 0.0)
+        self.assertTrue(loader.scenario_data["rewards"]["air_combat_damage_consequence_shaping_enabled"])
+        self.assertAlmostEqual(
+            loader.scenario_data["rewards"]["air_combat_target_damage_consequence_scale"],
+            0.5,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            loader.scenario_data["rewards"]["air_combat_self_damage_consequence_scale"],
+            0.25,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            loader._compiled_rewards_cfg["air_combat_damage_consequence_delta_clip"],
+            0.75,
+            places=6,
+        )
+
     def test_build_env_applies_multi_timescale_wrapper_from_train_config(self) -> None:
         class DummyEnv:
             def __init__(self, *args, **kwargs):

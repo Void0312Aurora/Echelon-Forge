@@ -1,9 +1,10 @@
 # A2 Damage Consequence Reward Surface Task Clusters
 
-Status: `2026-06-09` finite task-cluster plan for
-[README.md](README.md). DCR-A-D are validated; DCR-E probe export is validated
-but a candidate Stage-2 model probe produced no release or damage. Controlled
-consequence-chain evidence is the next non-training gate; DCR-F remains planned.
+Status: `2026-06-11` finite task-cluster plan for
+[README.md](README.md). DCR-A-D are validated; DCR-E probe export,
+diagnostics-only bridge, and read-only re-scope are validated, but fixed-fire
+DCR totals remain zero. Controlled nonzero consequence-chain evidence is still
+the next non-training gate; DCR-F remains planned.
 
 Chinese companion:
 [damage_consequence_reward_surface_task_clusters_20260609.zh.md](damage_consequence_reward_surface_task_clusters_20260609.zh.md)
@@ -29,7 +30,7 @@ again forever for the same consequence.
 | `DCR-B Runtime Reward Surface` | main thread | n/a | Add optional reward terms for aircraft damage deltas and severe ground-contact transitions. | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | Weapon physics changes, direct crash substitute, always-on training behavior shift without config | Focused reward unit tests | Runtime reads consequence state once per step and emits named terms only when configured/enabled. | after A | 2 | pass |
 | `DCR-C Focused Tests` | main thread | n/a | Cover target reward, self penalty, once/delta semantics, and safe ground-contact boundary. | `tests/runtime/air_combat/test_air_combat_reward_surface.py`, optional focused 1v1 fixture tests | Slow training run, broad scenario rewrite | `python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py` | Tests prove the reward layer consumes facts without changing physical authority. | after or with B | 2 | pass |
 | `DCR-D Scenario Opt-In` | current-session worker | n/a | Make Stage-2 able to consume low-weight consequence terms later. | `scenarios/air_combat/1v1/**`, `examples/config/training/active/air_combat/**`, active-entry README | Making Stage-2 training a kill-chain prerequisite, changing launch/firing closure, speed optimization, Stage-3/self-play | Scenario/config smoke or JSON check | Opt-in is explicit and term weights are documented as training synthetic. | after B/C | 1 | pass |
-| `DCR-E Probe Evidence` | read-only diagnostics explorer, then diagnostics worker | n/a | Prepare and run a controlled hit/fixed-release/replay probe that reports launch terms and consequence terms separately. | `tools/diagnostics/air_combat_stage0_process_probe.py`, focused diagnostics tests, later diagnostics output docs under this subproject | Acceptance from one lucky seed, hiding no-effect shots behind release rewards, waiting on learned Stage-2 model as a prerequisite | Controlled probe or replay summary | Evidence shows whether consequence rewards appear after effects/damage, not just after release. | after D | 1 | partial: export ready; controlled chain probe pending |
+| `DCR-E Probe Evidence` | read-only diagnostics explorer, then diagnostics worker | n/a | Prepare and run a controlled hit/fixed-release/replay probe that reports launch terms and consequence terms separately. | `tools/diagnostics/air_combat_stage0_process_probe.py`, focused diagnostics tests, later diagnostics output docs under this subproject | Acceptance from one lucky seed, hiding no-effect shots behind release rewards, waiting on learned Stage-2 model as a prerequisite | Controlled probe or replay summary | Evidence shows whether consequence rewards appear after effects/damage, not just after release. | after D | 1 | partial: export/bridge/re-scope ready; `DCR-E-P3` fixture evidence next |
 | `DCR-F Closure And Index Sync` | main thread | n/a | Mark the accepted slice or residuals and sync parent pointers. | This README/task cluster, `docs/task/air_combat/README*`, A2 pointer README | Overclaiming real lethality or final Stage-2 acceptance | docs diff check and focused tests | Status lines and residual map match evidence. | last, serial | 1 | planned |
 
 ## Dispatch Rules
@@ -123,7 +124,8 @@ python train.py \
 | Residual | Owner | Exit condition |
 | --- | --- | --- |
 | Stage-2 consequence signal may remain sparse | Future training consumer | Controlled chain evidence is already available; later learned-policy probe reports effects/damage/consequence terms after learned release. |
-| Controlled kill-chain consequence evidence missing | DCR-E | A fixed-hit, fixed-release, or replay probe records effects/damage/DCR term timing together. |
+| Controlled kill-chain consequence evidence missing | DCR-E | A fixed-hit, fixed-release, or replay probe records effects/damage and nonzero DCR term timing together. |
+| Fixed-fire bridge has zero DCR totals | DCR-E follow-up | `DCR-E-P3` controlled fixture produces DCR-readable consequence fields, or reward mapping from damage-report projections is separately scoped. |
 | Reward weights are synthetic training knobs | DCR-D/F | Docs and configs label them as training shaping, not weapon truth. |
 | Delayed fire/fuel dynamics may be too weak | Future A2 calibration | A separate fidelity/calibration task changes physical consequence strength. |
 | Throughput may limit evidence collection | Future performance task | Multi-world or equivalent speed work is scoped outside this reward subproject. |

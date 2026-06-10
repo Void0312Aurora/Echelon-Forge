@@ -1,9 +1,11 @@
 # A2 Damage Consequence Reward Surface
 
-Status: `2026-06-09` active A2 follow-on / DCR-A-D validated; DCR-E probe
-export is ready. A candidate Stage-2 learned-policy probe produced no release,
-effects, or damage; the next work should use controlled kill-chain probes or
-replay artifacts to produce consequence evidence.
+Status: `2026-06-11` active A2 follow-on / DCR-A-D validated; DCR-E probe
+export and diagnostics-only bridge are ready. The controlled fixed-fire bridge
+reports release/effects/damage timing, but DCR totals remain zero because the
+current damage report does not expose DCR-readable consequence fields. `DCR-E-R1`
+re-scoped the next evidence step to a controlled consequence fixture probe;
+DCR-E is still partial.
 
 Language:
 
@@ -95,13 +97,20 @@ Out of scope:
   feedback only.
 - `tools/diagnostics/air_combat_stage0_process_probe.py` can now export
   per-step and per-episode DCR reward totals by target/self prefix.
+- `tools/diagnostics/air_combat_stage0_process_probe.py --diagnostic_dcr_bridge`
+  overlays DCR reward terms inside the diagnostics probe only and emits compact
+  `controlled_consequence_bridge_records`; the current fixed-fire record still
+  has `damage_consequence_reward_total=0.0`.
 - On `2026-06-09`,
   `experiments_tmp/a1_stage2_c2_roe_m3s2_initfrom_stage1_8k_20260608_r1/final_model.zip`
   was used for a 2 episode x 512 step model-mode probe. The model kept radar and
   master arm enabled but never fired; release/effects/damage/DCR reward stayed
   at 0, so it is not consequence evidence.
-- Runtime/test outputs remain under the task-cluster acceptance gate until a
-  controlled consequence-chain probe or equivalent replay artifact exists.
+- DCR-E-P2 is accepted only as an implementation bridge / blocker record, not
+  as consequence evidence.
+- DCR-E-R1 is accepted as read-only re-scope evidence. It recommends
+  `DCR-E-P3 Controlled Consequence Fixture Probe` as the next implementation
+  packet inside the existing DCR-E cluster.
 
 ## Acceptance Gate
 
@@ -122,8 +131,11 @@ This follow-on can be marked accepted only when:
   state as configurable delta/transition shaping.
 - Stage-2 now opts in with conservative weights as a future training consumer;
   the current candidate model does not fire, so it is not kill-chain evidence.
-- Next evidence step: run a controlled hit/fixed-release/replay probe that
-  preserves effects, damage reports, and DCR reward-term timing in one record.
+- Next evidence step: dispatch `DCR-E-P3 Controlled Consequence Fixture Probe`
+  to produce a nonzero DCR-readable aircraft/ground consequence snapshot through
+  the diagnostics/probe surface. Reward mapping from damage-report projections
+  remains held as a separate semantic packet if fixture evidence cannot close
+  the gap.
 - Later: build a continuous consequence diagnostics table for mission, mobility,
   sensor, survivability, aircraft internal damage, fuel/fire, ground-contact
   lifecycle, and inactive transitions.

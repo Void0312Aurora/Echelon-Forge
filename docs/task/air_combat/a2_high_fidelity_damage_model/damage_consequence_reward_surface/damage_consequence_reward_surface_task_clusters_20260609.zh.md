@@ -1,9 +1,9 @@
 # A2 损伤后果奖励面任务簇
 
-状态：`2026-06-09`，用于
-[README.zh.md](README.zh.md) 的有限任务簇计划。DCR-A-D 已验证；DCR-E probe 导出已验证，
-候选 Stage-2 模型 probe 未触发发射或损伤；受控 consequence-chain 证据是下一道非训练门槛；DCR-F
-仍为 planned。
+状态：`2026-06-11`，用于
+[README.zh.md](README.zh.md) 的有限任务簇计划。DCR-A-D 已验证；DCR-E probe 导出、
+diagnostics-only bridge 和只读 re-scope 已验证，但 fixed-fire DCR totals 仍为 0。受控非零
+consequence-chain 证据仍是下一道非训练门槛；DCR-F 仍为 planned。
 
 英文规范页：
 [damage_consequence_reward_surface_task_clusters_20260609.md](damage_consequence_reward_surface_task_clusters_20260609.md)
@@ -26,7 +26,7 @@ stock AIM-120C / MQ-9 杀伤，也不能用“直接坠毁规则”替代损伤�
 | `DCR-B Runtime Reward Surface` | main thread | n/a | 为飞机损伤变化量和严重触地转移增加可选奖励项。 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | 武器物理修改、直接坠毁替代规则、无配置的默认训练行为大改 | 聚焦 reward 单测 | runtime 每步读取后果 state，并只在配置/启用时输出命名项。 | after A | 2 | pass |
 | `DCR-C Focused Tests` | main thread | n/a | 覆盖目标奖励、自身受损惩罚、变化量语义和安全触地边界。 | `tests/runtime/air_combat/test_air_combat_reward_surface.py`，可选 1v1 fixture 聚焦测试 | 慢训练、大范围场景重写 | `python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py` | 测试证明奖励层只消费事实，不改变物理权威。 | after or with B | 2 | pass |
 | `DCR-D Scenario Opt-In` | current-session worker | n/a | 让 Stage-2 后续能够消费低权重后果项。 | `scenarios/air_combat/1v1/**`、`examples/config/training/active/air_combat/**`、active-entry README | 把 Stage-2 训练当作杀伤链前置、改发射闭合、提速优化、Stage-3/self-play | 场景/config smoke 或 JSON 检查 | opt-in 是显式的，且权重写明只是训练 synthetic。 | after B/C | 1 | pass |
-| `DCR-E Probe Evidence` | read-only diagnostics explorer，然后 diagnostics worker | n/a | 做受控命中/固定发射/replay probe，把发射项和后果项分开报告。 | `tools/diagnostics/air_combat_stage0_process_probe.py`、聚焦 diagnostics tests、后续本子项目 diagnostics output 文档 | 单 seed 幸运验收、用 release reward 掩盖无效果射击、把 learned Stage-2 model 当作前置 | 受控 probe 或 replay summary | 证据显示后果奖励发生在 effects/damage 之后，而不是只发生在 release 之后。 | after D | 1 | partial：导出已就绪；受控杀伤链 probe 待做 |
+| `DCR-E Probe Evidence` | read-only diagnostics explorer，然后 diagnostics worker | n/a | 做受控命中/固定发射/replay probe，把发射项和后果项分开报告。 | `tools/diagnostics/air_combat_stage0_process_probe.py`、聚焦 diagnostics tests、后续本子项目 diagnostics output 文档 | 单 seed 幸运验收、用 release reward 掩盖无效果射击、把 learned Stage-2 model 当作前置 | 受控 probe 或 replay summary | 证据显示后果奖励发生在 effects/damage 之后，而不是只发生在 release 之后。 | after D | 1 | partial：export/bridge/re-scope ready；下一步为 `DCR-E-P3` fixture evidence |
 | `DCR-F Closure And Index Sync` | main thread | n/a | 按证据标记 accepted slice 或 residual，并同步父级指针。 | 本 README/task cluster、`docs/task/air_combat/README*`、A2 pointer README | 过度声明真实杀伤或 Stage-2 最终验收 | docs diff check 和聚焦测试 | status line 与 residual map 和证据一致。 | last, serial | 1 | planned |
 
 ## 派发规则
@@ -112,7 +112,8 @@ python train.py \
 | Residual | Owner | Exit condition |
 | --- | --- | --- |
 | Stage-2 后果信号可能仍然稀疏 | Future training consumer | 受控杀伤链证据已存在；后续 learned-policy probe 在实际 release 后报告 effects/damage/consequence terms。当前候选模型未发射，不能验收。 |
-| 受控杀伤链后果证据缺失 | DCR-E | fixed-hit、fixed-release 或 replay probe 在同一记录中给出 effects/damage/DCR term timing。 |
+| 受控杀伤链后果证据缺失 | DCR-E | fixed-hit、fixed-release 或 replay probe 在同一记录中给出 effects/damage 与非零 DCR term timing。 |
+| fixed-fire bridge 的 DCR totals 为 0 | DCR-E follow-up | `DCR-E-P3` controlled fixture 产生 DCR-readable consequence fields，或另行定界 damage-report projections 到 DCR terms 的 reward mapping。 |
 | reward 权重只是 synthetic 训练旋钮 | DCR-D/F | 文档和 config 明确它不是武器真值。 |
 | 延迟火灾/燃油动力可能太弱 | Future A2 calibration | 单独 fidelity/calibration 任务改变物理后果强度。 |
 | 吞吐量可能限制证据收集 | Future performance task | 多 world 或等价提速放到奖励子项目之外。 |

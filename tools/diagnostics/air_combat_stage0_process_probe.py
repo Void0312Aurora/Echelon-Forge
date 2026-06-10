@@ -1371,6 +1371,48 @@ def _base_env(env):
     return getattr(env, "unwrapped", env)
 
 
+def _diagnostic_dcr_bridge_overrides(args: argparse.Namespace) -> dict[str, Any]:
+    if not bool(getattr(args, "diagnostic_dcr_bridge", False)):
+        return {}
+    return {
+        "air_combat_damage_consequence_shaping_enabled": True,
+        "air_combat_target_damage_consequence_scale": float(
+            getattr(args, "diagnostic_dcr_target_scale", 1.0)
+        ),
+        "air_combat_self_damage_consequence_scale": float(
+            getattr(args, "diagnostic_dcr_self_scale", 1.0)
+        ),
+        "air_combat_damage_consequence_delta_clip": float(
+            getattr(args, "diagnostic_dcr_delta_clip", 1.0)
+        ),
+    }
+
+
+def _apply_diagnostic_dcr_bridge(env, overrides: dict[str, Any]) -> None:
+    if not overrides:
+        return
+    base = _base_env(env)
+    loader = getattr(base, "loader", None)
+    if loader is None:
+        return
+    scenario_data = getattr(loader, "scenario_data", None)
+    if not isinstance(scenario_data, dict):
+        scenario_data = {}
+        setattr(loader, "scenario_data", scenario_data)
+    rewards = scenario_data.get("rewards", {})
+    if not isinstance(rewards, dict):
+        rewards = {}
+    rewards = dict(rewards)
+    rewards.update(dict(overrides))
+    scenario_data["rewards"] = rewards
+
+    compiled_rewards = getattr(loader, "_compiled_rewards_cfg", None)
+    if isinstance(compiled_rewards, dict):
+        next_compiled = dict(compiled_rewards)
+        next_compiled.update(dict(overrides))
+        setattr(loader, "_compiled_rewards_cfg", next_compiled)
+
+
 def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
     env_cfg = train_config.get("env", {}) if isinstance(train_config, dict) else {}
     env_cfg = env_cfg if isinstance(env_cfg, dict) else {}
@@ -1392,6 +1434,30 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
     if wrapper_class is MultiTimescaleActionWrapper:
         return wrapper_class(env, **dict(wrapper_kwargs or {}))
     return env
+
+
+def _controlled_consequence_bridge_record(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "episode": int(summary.get("episode", 0) or 0),
+        "first_release_step": summary.get("first_release_step"),
+        "first_effects_event_step": summary.get("first_effects_event_step"),
+        "first_damage_report_step": summary.get("first_damage_report_step"),
+        "first_damage_consequence_reward_step": summary.get("first_damage_consequence_reward_step"),
+        "target_damage_consequence_reward_total": float(
+            summary.get("target_damage_consequence_reward_total", 0.0) or 0.0
+        ),
+        "self_damage_consequence_reward_total": float(
+            summary.get("self_damage_consequence_reward_total", 0.0) or 0.0
+        ),
+        "damage_consequence_reward_total": float(
+            summary.get("damage_consequence_reward_total", 0.0) or 0.0
+        ),
+        "effects_event_count": int(summary.get("effects_event_count", 0) or 0),
+        "damage_report_count": int(summary.get("damage_report_count", 0) or 0),
+        "lethality_chain_row_count": int(summary.get("lethality_chain_row_count", 0) or 0),
+        "lethality_chain_chain_count": int(summary.get("lethality_chain_chain_count", 0) or 0),
+        "lethality_chain_stages_json": str(summary.get("lethality_chain_stages_json", "[]") or "[]"),
+    }
 
 
 def _snapshot_row(
@@ -2154,6 +2220,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
     scenario_path = os.path.abspath(args.scenario)
     train_config = load_json_config(os.path.abspath(args.train_config)) if args.train_config else {}
     launch_window_config = _a7_launch_window_config_from_train_config(train_config)
+    diagnostic_dcr_bridge_overrides = _diagnostic_dcr_bridge_overrides(args)
     model = None
     if args.mode == "model":
         if not args.model:
@@ -2171,6 +2238,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         for ep in range(int(args.episodes)):
             rng = np.random.default_rng(int(args.seed) + ep)
             obs, _info = env.reset(seed=int(args.seed) + ep)
+            _apply_diagnostic_dcr_bridge(env, diagnostic_dcr_bridge_overrides)
             base_env = _base_env(env)
             max_steps = int(args.max_steps) if int(args.max_steps) > 0 else int(getattr(base_env, "max_steps", 0) or 1200)
             initial_units = _unit_id_set(base_env.sim)
@@ -2307,6 +2375,8 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "mode": str(args.mode),
         "fire_delay_steps": int(getattr(args, "fire_delay_steps", 0)),
         "legal_fire_range_m": float(getattr(args, "legal_fire_range_m", 0.0)),
+        "diagnostic_dcr_bridge": bool(getattr(args, "diagnostic_dcr_bridge", False)),
+        "diagnostic_dcr_bridge_reward_overrides": dict(diagnostic_dcr_bridge_overrides),
         "model": os.path.abspath(args.model) if args.model else None,
         "seed": int(args.seed),
         "episodes": int(args.episodes),
@@ -2314,6 +2384,10 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
         "lethality_chain_rows": lethality_chain_rows,
         "termination_reasons": dict(sorted(reasons.items())),
         "episode_summaries": episode_summaries,
+        "controlled_consequence_bridge_records": [
+            _controlled_consequence_bridge_record(summary)
+            for summary in episode_summaries
+        ],
     }
     if args.csv_out:
         write_csv(args.csv_out, rows)
@@ -2427,6 +2501,29 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=20260525)
     parser.add_argument("--max_steps", type=int, default=0)
     parser.add_argument("--stochastic", action="store_true", help="Use stochastic policy prediction in --mode model.")
+    parser.add_argument(
+        "--diagnostic_dcr_bridge",
+        action="store_true",
+        help="Enable DCR consequence rewards inside this diagnostics probe only.",
+    )
+    parser.add_argument(
+        "--diagnostic_dcr_target_scale",
+        type=float,
+        default=1.0,
+        help="Probe-only target DCR consequence scale used with --diagnostic_dcr_bridge.",
+    )
+    parser.add_argument(
+        "--diagnostic_dcr_self_scale",
+        type=float,
+        default=1.0,
+        help="Probe-only self DCR consequence scale used with --diagnostic_dcr_bridge.",
+    )
+    parser.add_argument(
+        "--diagnostic_dcr_delta_clip",
+        type=float,
+        default=1.0,
+        help="Probe-only DCR consequence delta clip used with --diagnostic_dcr_bridge.",
+    )
     parser.add_argument("--csv_out", default="")
     parser.add_argument("--chain_csv_out", default="")
     parser.add_argument("--json_out", default="")
