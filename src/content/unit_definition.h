@@ -22,7 +22,6 @@
 #include "components/domains/naval/platform/submarine_platform.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 
-
 inline Sensor make_unit_definition_default_sensor() {
     Sensor sensor{};
     sensor.max_range = 30000.0;
@@ -109,7 +108,6 @@ struct MissileTuningDefinition {
     bool has_fuze_profile = false;
 };
 
-
 // Data Structs for Modules
 struct Engine {
     double mil_thrust_n = 0.0;
@@ -123,7 +121,7 @@ struct Engine {
 
 struct Hardpoint {
     int station_id;
-    std::vector<std::string> supported_types; 
+    std::vector<std::string> supported_types;
     double capacity_kg;
 };
 
@@ -132,7 +130,7 @@ struct Airframe {
     double max_fuel_kg = 0.0;
     double drag_coefficient = 0.02;
     double reference_area = 27.0;
-    
+
     // Procedural Gen Data
     double length_m = 0.0;
     double wingspan_m = 0.0;
@@ -166,21 +164,21 @@ struct NavalLogisticsDefinition {
 struct UnitDefinition {
     UnitType type;
     std::string name;
-    
+
     // Component References (Modular)
     std::string sensor_ref;
     std::vector<std::string> sensor_refs;
     std::string engine_ref;
     std::string ew_suite_ref;
     std::string rcs_profile_ref;
-    
+
     // Modular Data
     std::vector<Hardpoint> hardpoints;
     std::unordered_map<int, std::string> default_loadout;
-    
+
     // Module Definitions (if type == Engine)
     Engine engine_data;
-    
+
     // EW Data (if type == EWSuite)
     // We can reuse UnitDefinition as a generic container or add specific structs
     // For simplicity, let's keep them here for now
@@ -193,10 +191,10 @@ struct UnitDefinition {
     bool has_esm_data = false;
     ESMReceiver esm_data;
     Countermeasures cms_data;
-    
+
     // RCS Data
     RCSProfile rcs_data;
-    
+
     // Platform Data
     Airframe airframe;
     bool has_ship_platform;
@@ -214,7 +212,7 @@ struct UnitDefinition {
     HitboxConfig damage_model;
     bool has_aircraft_vulnerability = false;
     AircraftVulnerabilityProfile aircraft_vulnerability;
-    
+
     // Legacy Inline Components (Backwards Compat)
     Health health;
     bool has_sensor;
@@ -254,7 +252,5 @@ struct UnitDefinition {
 };
 
 struct UnitTypeHash {
-    std::size_t operator()(UnitType type) const {
-        return static_cast<std::size_t>(type);
-    }
+    std::size_t operator()(UnitType type) const { return static_cast<std::size_t>(type); }
 };

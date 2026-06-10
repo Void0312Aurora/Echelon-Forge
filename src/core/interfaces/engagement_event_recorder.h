@@ -76,38 +76,31 @@ struct EngagementComponentLoadEventRecord {
 };
 
 class IEngagementEventRecorder {
-public:
+  public:
     virtual ~IEngagementEventRecorder() = default;
 
-    virtual EngagementDamageStateSnapshot capture_engagement_damage_state(
-        std::uint64_t target_id
-    ) const = 0;
+    virtual EngagementDamageStateSnapshot
+    capture_engagement_damage_state(std::uint64_t target_id) const = 0;
 
-    virtual std::uint64_t record_effects_damage_event(
-        EngagementEffectsDamageEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_effects_damage_event(EngagementEffectsDamageEventRecord record) = 0;
 
-    virtual std::uint64_t record_nearest_approach_event(
-        EngagementNearestApproachEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_nearest_approach_event(EngagementNearestApproachEventRecord record) = 0;
 
-    virtual std::uint64_t record_fuze_evaluation_event(
-        EngagementFuzeEvaluationEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_fuze_evaluation_event(EngagementFuzeEvaluationEventRecord record) = 0;
 
-    virtual std::uint64_t record_warhead_mechanism_event(
-        EngagementWarheadMechanismEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_warhead_mechanism_event(EngagementWarheadMechanismEventRecord record) = 0;
 
-    virtual std::uint64_t record_spatial_coverage_event(
-        EngagementSpatialCoverageEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_spatial_coverage_event(EngagementSpatialCoverageEventRecord record) = 0;
 
-    virtual std::uint64_t record_component_load_event(
-        EngagementComponentLoadEventRecord record
-    ) = 0;
+    virtual std::uint64_t
+    record_component_load_event(EngagementComponentLoadEventRecord record) = 0;
 };
 
 struct EngagementEventRecorderRef {
-    IEngagementEventRecorder* recorder = nullptr;
+    IEngagementEventRecorder *recorder = nullptr;
 };

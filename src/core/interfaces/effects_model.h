@@ -98,17 +98,15 @@ struct EffectsResult {
 };
 
 class IEffectsModel {
-public:
+  public:
     virtual ~IEffectsModel() = default;
 
-    virtual EffectsResult on_proximity_hit(flecs::world world,
-                                           flecs::entity missile_entity,
-                                           const Missile& missile,
-                                           flecs::entity target_entity) = 0;
+    virtual EffectsResult on_proximity_hit(flecs::world world, flecs::entity missile_entity,
+                                           const Missile &missile, flecs::entity target_entity) = 0;
 };
 
 struct EffectsModelRef {
-    IEffectsModel* model;
+    IEffectsModel *model;
 };
 
 std::unique_ptr<IEffectsModel> make_default_effects_model();

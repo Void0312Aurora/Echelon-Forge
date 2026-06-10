@@ -398,11 +398,9 @@ void bind_runtime(nb::module_ &m) {
     nb::class_<PlatformConsequenceEvent>(m, "PlatformConsequenceEvent")
         .def(nb::init<>())
         .def_rw("header", &PlatformConsequenceEvent::header)
-        .def_rw("mission_capability_before",
-                &PlatformConsequenceEvent::mission_capability_before)
+        .def_rw("mission_capability_before", &PlatformConsequenceEvent::mission_capability_before)
         .def_rw("mission_capability_after", &PlatformConsequenceEvent::mission_capability_after)
-        .def_rw("mobility_capability_before",
-                &PlatformConsequenceEvent::mobility_capability_before)
+        .def_rw("mobility_capability_before", &PlatformConsequenceEvent::mobility_capability_before)
         .def_rw("mobility_capability_after", &PlatformConsequenceEvent::mobility_capability_after)
         .def_rw("sensor_capability_before", &PlatformConsequenceEvent::sensor_capability_before)
         .def_rw("sensor_capability_after", &PlatformConsequenceEvent::sensor_capability_after)

@@ -12,7 +12,7 @@ struct TaskOrderGround {
         std::uint64_t ground_commander_id = 0;
         double tactical_cadence_hz = 1.0;
 
-        bool operator==(const StaticTaskDirective&) const = default;
+        bool operator==(const StaticTaskDirective &) const = default;
     };
 
     GroundTaskMode ground_task_mode = GroundTaskMode::Unspecified;
@@ -27,9 +27,7 @@ using TaskOrderGroundOwnerSlice = TaskOrderGround;
 inline constexpr bool kTaskOrderGroundOwnedDomainSlice = true;
 
 [[nodiscard]] inline TaskOrderGround::StaticTaskDirective
-task_order_ground_static_task_directive(
-    const TaskOrderGroundOwnerSlice& ground
-) noexcept {
+task_order_ground_static_task_directive(const TaskOrderGroundOwnerSlice &ground) noexcept {
     return {
         .ground_task_mode = ground.ground_task_mode,
         .objective_area_id = ground.objective_area_id,

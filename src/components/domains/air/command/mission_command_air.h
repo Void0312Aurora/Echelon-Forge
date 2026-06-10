@@ -10,7 +10,7 @@ struct MissionCommandAir {
         std::uint64_t recovery_runway_id = 0;
         RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
 
-        bool operator==(const RecoveryDirective&) const = default;
+        bool operator==(const RecoveryDirective &) const = default;
     };
 
     struct TakeoffDirective {
@@ -19,7 +19,7 @@ struct MissionCommandAir {
         double takeoff_interval_s = 0.0;
         RunwaySlotPosition runway_slot_id = RunwaySlotPosition::Unspecified;
 
-        bool operator==(const TakeoffDirective&) const = default;
+        bool operator==(const TakeoffDirective &) const = default;
     };
 
     struct FormationDirective {
@@ -28,7 +28,7 @@ struct MissionCommandAir {
         double form_offset_y = 0.0;
         double form_offset_z = 0.0;
 
-        bool operator==(const FormationDirective&) const = default;
+        bool operator==(const FormationDirective &) const = default;
     };
 
     std::uint64_t recovery_base_id = 0;
@@ -50,7 +50,7 @@ using MissionCommandAirOwnerSlice = MissionCommandAir;
 inline constexpr bool kMissionCommandAirOwnedDomainSlice = true;
 
 [[nodiscard]] inline MissionCommandAir::RecoveryDirective
-mission_command_air_recovery_directive(const MissionCommandAirOwnerSlice& air) noexcept {
+mission_command_air_recovery_directive(const MissionCommandAirOwnerSlice &air) noexcept {
     return {
         .recovery_base_id = air.recovery_base_id,
         .recovery_runway_id = air.recovery_runway_id,
@@ -59,7 +59,7 @@ mission_command_air_recovery_directive(const MissionCommandAirOwnerSlice& air) n
 }
 
 [[nodiscard]] inline MissionCommandAir::TakeoffDirective
-mission_command_air_takeoff_directive(const MissionCommandAirOwnerSlice& air) noexcept {
+mission_command_air_takeoff_directive(const MissionCommandAirOwnerSlice &air) noexcept {
     return {
         .takeoff_procedure_id = air.takeoff_procedure_id,
         .takeoff_clearance_id = air.takeoff_clearance_id,
@@ -69,7 +69,7 @@ mission_command_air_takeoff_directive(const MissionCommandAirOwnerSlice& air) no
 }
 
 [[nodiscard]] inline MissionCommandAir::FormationDirective
-mission_command_air_formation_directive(const MissionCommandAirOwnerSlice& air) noexcept {
+mission_command_air_formation_directive(const MissionCommandAirOwnerSlice &air) noexcept {
     return {
         .formation_id = air.formation_id,
         .form_offset_x = air.form_offset_x,

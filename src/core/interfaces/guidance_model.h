@@ -8,19 +8,15 @@
 #include "components/combat/common/weapon_common.h"
 
 class IGuidanceModel {
-public:
+  public:
     virtual ~IGuidanceModel() = default;
 
-    virtual void update(flecs::world world,
-                        flecs::entity missile_entity,
-                        Velocity& velocity,
-                        const Transform& transform,
-                        Missile& missile,
-                        double dt) = 0;
+    virtual void update(flecs::world world, flecs::entity missile_entity, Velocity &velocity,
+                        const Transform &transform, Missile &missile, double dt) = 0;
 };
 
 struct GuidanceModelRef {
-    IGuidanceModel* model;
+    IGuidanceModel *model;
 };
 
 std::unique_ptr<IGuidanceModel> make_default_guidance_model();

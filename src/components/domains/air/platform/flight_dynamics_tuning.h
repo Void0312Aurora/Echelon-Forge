@@ -71,66 +71,62 @@ struct StallState {
 };
 
 namespace flight_dynamics {
-    inline double clamp01(double value) {
-        return std::clamp(value, 0.0, 1.0);
-    }
+inline double clamp01(double value) {
+    return std::clamp(value, 0.0, 1.0);
+}
 
-    inline double lerp(double a, double b, double t) {
-        return a + (b - a) * clamp01(t);
-    }
+inline double lerp(double a, double b, double t) {
+    return a + (b - a) * clamp01(t);
+}
 
-    inline double smoothstep01(double x) {
-        x = clamp01(x);
-        return x * x * (3.0 - 2.0 * x);
-    }
+inline double smoothstep01(double x) {
+    x = clamp01(x);
+    return x * x * (3.0 - 2.0 * x);
+}
 
-    inline double lookup_1d(
-        const std::vector<double>& breakpoints,
-        const std::vector<double>& values,
-        double x,
-        double fallback
-    ) {
-        if (breakpoints.empty() || values.empty() || breakpoints.size() != values.size()) {
-            return fallback;
-        }
-        if (x <= breakpoints.front()) {
-            return values.front();
-        }
-        if (x >= breakpoints.back()) {
-            return values.back();
-        }
-        for (std::size_t i = 1; i < breakpoints.size(); ++i) {
-            if (x <= breakpoints[i]) {
-                const double x0 = breakpoints[i - 1];
-                const double x1 = breakpoints[i];
-                const double t = (x - x0) / std::max(1.0e-6, x1 - x0);
-                return lerp(values[i - 1], values[i], t);
-            }
-        }
+inline double lookup_1d(const std::vector<double> &breakpoints, const std::vector<double> &values,
+                        double x, double fallback) {
+    if (breakpoints.empty() || values.empty() || breakpoints.size() != values.size()) {
+        return fallback;
+    }
+    if (x <= breakpoints.front()) {
+        return values.front();
+    }
+    if (x >= breakpoints.back()) {
         return values.back();
     }
-
-    inline const AeroTuning& default_aero_tuning() {
-        static const AeroTuning tuning = [] {
-            AeroTuning value;
-            value.enabled = true;
-            value.mach_breakpoints = {0.0, 0.8, 0.95, 1.1, 1.6, 2.0};
-            value.cl_alpha_scale_vs_mach = {1.00, 1.04, 1.10, 0.96, 0.82, 0.72};
-            value.cd0_add_vs_mach = {0.00, 0.005, 0.025, 0.040, 0.030, 0.025};
-            value.induced_drag_scale_vs_mach = {1.00, 1.00, 1.05, 1.12, 1.05, 1.00};
-            value.cm_alpha_scale_vs_mach = {1.00, 1.00, 0.96, 0.92, 0.86, 0.82};
-            value.stall_alpha_delta_deg_vs_mach = {0.0, -0.5, -1.5, -2.5, -3.0, -3.0};
-            return value;
-        }();
-        return tuning;
+    for (std::size_t i = 1; i < breakpoints.size(); ++i) {
+        if (x <= breakpoints[i]) {
+            const double x0 = breakpoints[i - 1];
+            const double x1 = breakpoints[i];
+            const double t = (x - x0) / std::max(1.0e-6, x1 - x0);
+            return lerp(values[i - 1], values[i], t);
+        }
     }
-
-    inline const EngineTuning& default_engine_tuning() {
-        static const EngineTuning tuning = [] {
-            EngineTuning value;
-            value.enabled = true;
-            return value;
-        }();
-        return tuning;
-    }
+    return values.back();
 }
+
+inline const AeroTuning &default_aero_tuning() {
+    static const AeroTuning tuning = [] {
+        AeroTuning value;
+        value.enabled = true;
+        value.mach_breakpoints = {0.0, 0.8, 0.95, 1.1, 1.6, 2.0};
+        value.cl_alpha_scale_vs_mach = {1.00, 1.04, 1.10, 0.96, 0.82, 0.72};
+        value.cd0_add_vs_mach = {0.00, 0.005, 0.025, 0.040, 0.030, 0.025};
+        value.induced_drag_scale_vs_mach = {1.00, 1.00, 1.05, 1.12, 1.05, 1.00};
+        value.cm_alpha_scale_vs_mach = {1.00, 1.00, 0.96, 0.92, 0.86, 0.82};
+        value.stall_alpha_delta_deg_vs_mach = {0.0, -0.5, -1.5, -2.5, -3.0, -3.0};
+        return value;
+    }();
+    return tuning;
+}
+
+inline const EngineTuning &default_engine_tuning() {
+    static const EngineTuning tuning = [] {
+        EngineTuning value;
+        value.enabled = true;
+        return value;
+    }();
+    return tuning;
+}
+} // namespace flight_dynamics

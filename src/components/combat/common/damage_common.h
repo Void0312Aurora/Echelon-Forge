@@ -36,7 +36,7 @@ struct DamageComponent {
     bool critical = true;
 };
 
-inline std::string canonical_part_failure_mode(const std::string& mode) {
+inline std::string canonical_part_failure_mode(const std::string &mode) {
     if (mode == "blast-deformation") {
         return "blast_deformation";
     }
@@ -61,20 +61,15 @@ inline std::string canonical_part_failure_mode(const std::string& mode) {
     return mode;
 }
 
-inline bool is_known_part_failure_mode(const std::string& mode) {
+inline bool is_known_part_failure_mode(const std::string &mode) {
     const std::string canonical = canonical_part_failure_mode(mode);
-    return canonical == "puncture" ||
-        canonical == "cut" ||
-        canonical == "blast_deformation" ||
-        canonical == "fuel_leak" ||
-        canonical == "hydraulic_pressure_loss" ||
-        canonical == "electrical_loss" ||
-        canonical == "data_loss" ||
-        canonical == "fire_source" ||
-        canonical == "structural_weakening";
+    return canonical == "puncture" || canonical == "cut" || canonical == "blast_deformation" ||
+           canonical == "fuel_leak" || canonical == "hydraulic_pressure_loss" ||
+           canonical == "electrical_loss" || canonical == "data_loss" ||
+           canonical == "fire_source" || canonical == "structural_weakening";
 }
 
-inline std::string damage_component_key(const DamageComponent& component) {
+inline std::string damage_component_key(const DamageComponent &component) {
     if (!component.name.empty()) {
         return component.name;
     }
@@ -84,7 +79,7 @@ inline std::string damage_component_key(const DamageComponent& component) {
     return "unnamed_component";
 }
 
-inline std::string damage_component_redundancy_group_key(const DamageComponent& component) {
+inline std::string damage_component_redundancy_group_key(const DamageComponent &component) {
     if (!component.redundancy_group_id.empty()) {
         return component.redundancy_group_id;
     }

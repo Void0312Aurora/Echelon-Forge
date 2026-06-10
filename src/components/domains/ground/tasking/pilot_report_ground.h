@@ -14,7 +14,7 @@ struct PilotReportGround {
         double tactical_cadence_hz = 1.0;
         double readiness_ratio = 0.0;
 
-        bool operator==(const StaticStatusDirective&) const = default;
+        bool operator==(const StaticStatusDirective &) const = default;
     };
 
     GroundStatusPhase ground_status_phase = GroundStatusPhase::Unspecified;
@@ -31,9 +31,7 @@ using PilotReportGroundOwnerSlice = PilotReportGround;
 inline constexpr bool kPilotReportGroundOwnedDomainSlice = true;
 
 [[nodiscard]] inline PilotReportGround::StaticStatusDirective
-pilot_report_ground_static_status_directive(
-    const PilotReportGroundOwnerSlice& ground
-) noexcept {
+pilot_report_ground_static_status_directive(const PilotReportGroundOwnerSlice &ground) noexcept {
     return {
         .ground_status_phase = ground.ground_status_phase,
         .ground_task_mode = ground.ground_task_mode,

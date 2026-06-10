@@ -37,11 +37,11 @@ uint64_t splitmix64(uint64_t seed) {
     return z ^ (z >> 31);
 }
 
-bool contact_matches_target_id(const ContactList* contacts, uint64_t target_id) {
+bool contact_matches_target_id(const ContactList *contacts, uint64_t target_id) {
     if (!contacts || target_id == 0) {
         return false;
     }
-    for (const auto& c : contacts->contacts) {
+    for (const auto &c : contacts->contacts) {
         if (c.target_id == target_id) {
             return true;
         }
@@ -49,11 +49,11 @@ bool contact_matches_target_id(const ContactList* contacts, uint64_t target_id) 
     return false;
 }
 
-const Detection* find_contact_by_target_id(const ContactList* contacts, uint64_t target_id) {
+const Detection *find_contact_by_target_id(const ContactList *contacts, uint64_t target_id) {
     if (!contacts || target_id == 0) {
         return nullptr;
     }
-    for (const auto& c : contacts->contacts) {
+    for (const auto &c : contacts->contacts) {
         if (c.target_id == target_id) {
             return &c;
         }
@@ -61,12 +61,12 @@ const Detection* find_contact_by_target_id(const ContactList* contacts, uint64_t
     return nullptr;
 }
 
-uint64_t select_primary_hostile_contact_id(const ContactList* contacts) {
+uint64_t select_primary_hostile_contact_id(const ContactList *contacts) {
     if (!contacts) {
         return 0;
     }
-    const Detection* best = nullptr;
-    for (const auto& c : contacts->contacts) {
+    const Detection *best = nullptr;
+    for (const auto &c : contacts->contacts) {
         if (c.target_id == 0) {
             continue;
         }
@@ -77,38 +77,36 @@ uint64_t select_primary_hostile_contact_id(const ContactList* contacts) {
     return best ? best->target_id : 0;
 }
 
-bool entity_is_missile(flecs::world& world, uint64_t entity_id) {
+bool entity_is_missile(flecs::world &world, uint64_t entity_id) {
     const auto entity = world.entity(entity_id);
     if (!entity.is_valid()) {
         return false;
     }
-    const KeyEntity* key = entity.get<KeyEntity>();
+    const KeyEntity *key = entity.get<KeyEntity>();
     return entity.has<Missile>() || (key && key->type == UnitType::Missile);
 }
 
-bool entity_is_surface_target(flecs::world& world, uint64_t entity_id) {
+bool entity_is_surface_target(flecs::world &world, uint64_t entity_id) {
     const auto entity = world.entity(entity_id);
     if (!entity.is_valid()) {
         return false;
     }
-    const KeyEntity* key = entity.get<KeyEntity>();
+    const KeyEntity *key = entity.get<KeyEntity>();
     return key && (key->type == UnitType::Ship || key->type == UnitType::Submarine);
 }
 
-bool mission_authority_matches_shooter(const MissionCommand* mission, uint64_t shooter_id) {
+bool mission_authority_matches_shooter(const MissionCommand *mission, uint64_t shooter_id) {
     if (!mission || !mission->active) {
         return false;
     }
     return mission->engagement_authority_holder_id == 0 ||
-        mission->engagement_authority_holder_id == shooter_id;
+           mission->engagement_authority_holder_id == shooter_id;
 }
 
-bool mission_explicit_release_target_available(
-    const MissionCommand* mission,
-    const ContactList* contacts,
-    uint64_t shooter_id
-) {
-    if (!mission || !mission->active || !mission->authorization_to_fire || mission->assigned_target_id == 0) {
+bool mission_explicit_release_target_available(const MissionCommand *mission,
+                                               const ContactList *contacts, uint64_t shooter_id) {
+    if (!mission || !mission->active || !mission->authorization_to_fire ||
+        mission->assigned_target_id == 0) {
         return false;
     }
     if (!mission_authority_matches_shooter(mission, shooter_id)) {
@@ -117,17 +115,14 @@ bool mission_explicit_release_target_available(
     return contact_matches_target_id(contacts, mission->assigned_target_id);
 }
 
-uint64_t select_closest_matching_contact_id(
-    flecs::world& world,
-    const ContactList* contacts,
-    bool (*predicate)(flecs::world&, uint64_t)
-) {
+uint64_t select_closest_matching_contact_id(flecs::world &world, const ContactList *contacts,
+                                            bool (*predicate)(flecs::world &, uint64_t)) {
     if (!contacts || !predicate) {
         return 0;
     }
 
-    const Detection* best = nullptr;
-    for (const auto& c : contacts->contacts) {
+    const Detection *best = nullptr;
+    for (const auto &c : contacts->contacts) {
         if (c.target_id == 0 || !predicate(world, c.target_id)) {
             continue;
         }
@@ -138,11 +133,8 @@ uint64_t select_closest_matching_contact_id(
     return best ? best->target_id : 0;
 }
 
-uint64_t select_ciws_mission_target_id(
-    flecs::world& world,
-    const ContactList* contacts,
-    const MissionCommand* mission
-) {
+uint64_t select_ciws_mission_target_id(flecs::world &world, const ContactList *contacts,
+                                       const MissionCommand *mission) {
     if (mission && mission->assigned_target_id != 0 &&
         find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr) {
         const auto assigned_target = world.entity(mission->assigned_target_id);
@@ -153,15 +145,13 @@ uint64_t select_ciws_mission_target_id(
     return select_closest_matching_contact_id(world, contacts, entity_is_missile);
 }
 
-uint64_t select_surface_gun_mission_target_id(
-    flecs::world& world,
-    const ContactList* contacts,
-    const MissionCommand* mission
-) {
+uint64_t select_surface_gun_mission_target_id(flecs::world &world, const ContactList *contacts,
+                                              const MissionCommand *mission) {
     if (mission && mission->assigned_target_id != 0 &&
         find_contact_by_target_id(contacts, mission->assigned_target_id) != nullptr) {
         const auto assigned_target = world.entity(mission->assigned_target_id);
-        if (!assigned_target.is_valid() || entity_is_surface_target(world, mission->assigned_target_id)) {
+        if (!assigned_target.is_valid() ||
+            entity_is_surface_target(world, mission->assigned_target_id)) {
             return mission->assigned_target_id;
         }
     }
@@ -171,8 +161,7 @@ uint64_t select_surface_gun_mission_target_id(
 double default_propellant_mass_kg(double total_mass_kg) {
     const double scaled = total_mass_kg * MissileGuidanceDefaults::kPropellantMassFraction;
     return std::clamp(
-        scaled,
-        MissileGuidanceDefaults::kMinPropellantMassKg,
+        scaled, MissileGuidanceDefaults::kMinPropellantMassKg,
         std::max(MissileGuidanceDefaults::kMinPropellantMassKg, total_mass_kg * 0.55));
 }
 
@@ -184,7 +173,8 @@ double fallback_max_lateral_g(double turn_rate_deg_s) {
     return std::clamp(12.0 + 0.4 * std::max(0.0, turn_rate_deg_s), 12.0, 35.0);
 }
 
-double default_boost_thrust_n(double total_mass_kg, double max_speed_mps, double current_speed_mps) {
+double default_boost_thrust_n(double total_mass_kg, double max_speed_mps,
+                              double current_speed_mps) {
     const double delta_v = std::max(200.0, max_speed_mps - current_speed_mps);
     const double nominal_accel = delta_v / std::max(0.5, MissileGuidanceDefaults::kBoostTimeS);
     return std::max(15000.0, total_mass_kg * nominal_accel * 1.10);
@@ -206,67 +196,52 @@ double nonnegative_or_default(double value, double fallback) {
     return (std::isfinite(value) && value >= 0.0) ? value : fallback;
 }
 
-bool has_explicit_global_missile_tuning(const MissileTuning& tuning) {
-    return std::isfinite(tuning.max_speed) ||
-        std::isfinite(tuning.turn_rate) ||
-        std::isfinite(tuning.fuse_distance) ||
-        std::isfinite(tuning.damage) ||
-        std::isfinite(tuning.seeker_fov_deg) ||
-        std::isfinite(tuning.seeker_lock_range) ||
-        std::isfinite(tuning.guidance_delay_s) ||
-        std::isfinite(tuning.guidance_update_period_s) ||
-        std::isfinite(tuning.max_flight_time_s) ||
-        std::isfinite(tuning.nav_gain) ||
-        std::isfinite(tuning.sensor_max_range) ||
-        std::isfinite(tuning.sensor_fov_deg) ||
-        std::isfinite(tuning.sensor_scan_period) ||
-        std::isfinite(tuning.sensor_detection_prob) ||
-        std::isfinite(tuning.sensor_bearing_noise_std) ||
-        std::isfinite(tuning.sensor_range_noise_std) ||
-        std::isfinite(tuning.sensor_track_memory_s) ||
-        tuning.seeker_type >= 0 ||
-        std::isfinite(tuning.seeker_activation_range_m) ||
-        std::isfinite(tuning.seeker_gimbal_limit_deg) ||
-        std::isfinite(tuning.seeker_ifov_deg) ||
-        std::isfinite(tuning.bearing_filter_tau_s) ||
-        std::isfinite(tuning.elevation_filter_tau_s) ||
-        std::isfinite(tuning.range_filter_tau_s) ||
-        std::isfinite(tuning.track_break_time_s) ||
-        std::isfinite(tuning.boost_time_s) ||
-        std::isfinite(tuning.sustain_time_s) ||
-        std::isfinite(tuning.boost_thrust_n) ||
-        std::isfinite(tuning.sustain_thrust_n) ||
-        std::isfinite(tuning.reference_area_m2) ||
-        std::isfinite(tuning.cd0_subsonic) ||
-        std::isfinite(tuning.cd0_supersonic) ||
-        std::isfinite(tuning.induced_drag_k) ||
-        std::isfinite(tuning.propellant_mass_kg) ||
-        std::isfinite(tuning.max_lateral_g) ||
-        std::isfinite(tuning.autopilot_tau_s) ||
-        std::isfinite(tuning.max_accel_response_g_per_s) ||
-        std::isfinite(tuning.min_launch_range_m) ||
-        std::isfinite(tuning.max_launch_off_boresight_deg) ||
-        tuning.lobl_required ||
-        tuning.midcourse_datalink_supported ||
-        tuning.has_warhead_profile ||
-        tuning.has_fuze_profile;
+bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
+    return std::isfinite(tuning.max_speed) || std::isfinite(tuning.turn_rate) ||
+           std::isfinite(tuning.fuse_distance) || std::isfinite(tuning.damage) ||
+           std::isfinite(tuning.seeker_fov_deg) || std::isfinite(tuning.seeker_lock_range) ||
+           std::isfinite(tuning.guidance_delay_s) ||
+           std::isfinite(tuning.guidance_update_period_s) ||
+           std::isfinite(tuning.max_flight_time_s) || std::isfinite(tuning.nav_gain) ||
+           std::isfinite(tuning.sensor_max_range) || std::isfinite(tuning.sensor_fov_deg) ||
+           std::isfinite(tuning.sensor_scan_period) ||
+           std::isfinite(tuning.sensor_detection_prob) ||
+           std::isfinite(tuning.sensor_bearing_noise_std) ||
+           std::isfinite(tuning.sensor_range_noise_std) ||
+           std::isfinite(tuning.sensor_track_memory_s) || tuning.seeker_type >= 0 ||
+           std::isfinite(tuning.seeker_activation_range_m) ||
+           std::isfinite(tuning.seeker_gimbal_limit_deg) || std::isfinite(tuning.seeker_ifov_deg) ||
+           std::isfinite(tuning.bearing_filter_tau_s) ||
+           std::isfinite(tuning.elevation_filter_tau_s) ||
+           std::isfinite(tuning.range_filter_tau_s) || std::isfinite(tuning.track_break_time_s) ||
+           std::isfinite(tuning.boost_time_s) || std::isfinite(tuning.sustain_time_s) ||
+           std::isfinite(tuning.boost_thrust_n) || std::isfinite(tuning.sustain_thrust_n) ||
+           std::isfinite(tuning.reference_area_m2) || std::isfinite(tuning.cd0_subsonic) ||
+           std::isfinite(tuning.cd0_supersonic) || std::isfinite(tuning.induced_drag_k) ||
+           std::isfinite(tuning.propellant_mass_kg) || std::isfinite(tuning.max_lateral_g) ||
+           std::isfinite(tuning.autopilot_tau_s) ||
+           std::isfinite(tuning.max_accel_response_g_per_s) ||
+           std::isfinite(tuning.min_launch_range_m) ||
+           std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
+           tuning.midcourse_datalink_supported || tuning.has_warhead_profile ||
+           tuning.has_fuze_profile;
 }
 
 std::string naval_weapon_type_name(NavalWeaponType weapon_type) {
     switch (weapon_type) {
-        case NavalWeaponType::VlsSam:
-            return "naval:vls_sam";
-        case NavalWeaponType::DeckGun:
-            return "naval:deck_gun";
-        case NavalWeaponType::Ciws:
-            return "naval:ciws";
-        case NavalWeaponType::Unknown:
-            break;
+    case NavalWeaponType::VlsSam:
+        return "naval:vls_sam";
+    case NavalWeaponType::DeckGun:
+        return "naval:deck_gun";
+    case NavalWeaponType::Ciws:
+        return "naval:ciws";
+    case NavalWeaponType::Unknown:
+        break;
     }
     return "naval:unknown";
 }
 
-MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition& src) {
+MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     MissileTuning out{};
     out.max_speed = src.max_speed;
     out.turn_rate = src.turn_rate;
@@ -316,7 +291,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition& src) {
     return out;
 }
 
-void overlay_missile_tuning(MissileTuning* base, const MissileTuning& overlay) {
+void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (!base) {
         return;
     }
@@ -325,40 +300,59 @@ void overlay_missile_tuning(MissileTuning* base, const MissileTuning& overlay) {
     if (std::isfinite(overlay.fuse_distance)) base->fuse_distance = overlay.fuse_distance;
     if (std::isfinite(overlay.damage)) base->damage = overlay.damage;
     if (std::isfinite(overlay.seeker_fov_deg)) base->seeker_fov_deg = overlay.seeker_fov_deg;
-    if (std::isfinite(overlay.seeker_lock_range)) base->seeker_lock_range = overlay.seeker_lock_range;
+    if (std::isfinite(overlay.seeker_lock_range))
+        base->seeker_lock_range = overlay.seeker_lock_range;
     if (std::isfinite(overlay.guidance_delay_s)) base->guidance_delay_s = overlay.guidance_delay_s;
-    if (std::isfinite(overlay.guidance_update_period_s)) base->guidance_update_period_s = overlay.guidance_update_period_s;
-    if (std::isfinite(overlay.max_flight_time_s)) base->max_flight_time_s = overlay.max_flight_time_s;
+    if (std::isfinite(overlay.guidance_update_period_s))
+        base->guidance_update_period_s = overlay.guidance_update_period_s;
+    if (std::isfinite(overlay.max_flight_time_s))
+        base->max_flight_time_s = overlay.max_flight_time_s;
     if (std::isfinite(overlay.nav_gain)) base->nav_gain = overlay.nav_gain;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
     if (std::isfinite(overlay.sensor_fov_deg)) base->sensor_fov_deg = overlay.sensor_fov_deg;
-    if (std::isfinite(overlay.sensor_scan_period)) base->sensor_scan_period = overlay.sensor_scan_period;
-    if (std::isfinite(overlay.sensor_detection_prob)) base->sensor_detection_prob = overlay.sensor_detection_prob;
-    if (std::isfinite(overlay.sensor_bearing_noise_std)) base->sensor_bearing_noise_std = overlay.sensor_bearing_noise_std;
-    if (std::isfinite(overlay.sensor_range_noise_std)) base->sensor_range_noise_std = overlay.sensor_range_noise_std;
-    if (std::isfinite(overlay.sensor_track_memory_s)) base->sensor_track_memory_s = overlay.sensor_track_memory_s;
+    if (std::isfinite(overlay.sensor_scan_period))
+        base->sensor_scan_period = overlay.sensor_scan_period;
+    if (std::isfinite(overlay.sensor_detection_prob))
+        base->sensor_detection_prob = overlay.sensor_detection_prob;
+    if (std::isfinite(overlay.sensor_bearing_noise_std))
+        base->sensor_bearing_noise_std = overlay.sensor_bearing_noise_std;
+    if (std::isfinite(overlay.sensor_range_noise_std))
+        base->sensor_range_noise_std = overlay.sensor_range_noise_std;
+    if (std::isfinite(overlay.sensor_track_memory_s))
+        base->sensor_track_memory_s = overlay.sensor_track_memory_s;
     if (overlay.seeker_type >= 0) base->seeker_type = overlay.seeker_type;
-    if (std::isfinite(overlay.seeker_activation_range_m)) base->seeker_activation_range_m = overlay.seeker_activation_range_m;
-    if (std::isfinite(overlay.seeker_gimbal_limit_deg)) base->seeker_gimbal_limit_deg = overlay.seeker_gimbal_limit_deg;
+    if (std::isfinite(overlay.seeker_activation_range_m))
+        base->seeker_activation_range_m = overlay.seeker_activation_range_m;
+    if (std::isfinite(overlay.seeker_gimbal_limit_deg))
+        base->seeker_gimbal_limit_deg = overlay.seeker_gimbal_limit_deg;
     if (std::isfinite(overlay.seeker_ifov_deg)) base->seeker_ifov_deg = overlay.seeker_ifov_deg;
-    if (std::isfinite(overlay.bearing_filter_tau_s)) base->bearing_filter_tau_s = overlay.bearing_filter_tau_s;
-    if (std::isfinite(overlay.elevation_filter_tau_s)) base->elevation_filter_tau_s = overlay.elevation_filter_tau_s;
-    if (std::isfinite(overlay.range_filter_tau_s)) base->range_filter_tau_s = overlay.range_filter_tau_s;
-    if (std::isfinite(overlay.track_break_time_s)) base->track_break_time_s = overlay.track_break_time_s;
+    if (std::isfinite(overlay.bearing_filter_tau_s))
+        base->bearing_filter_tau_s = overlay.bearing_filter_tau_s;
+    if (std::isfinite(overlay.elevation_filter_tau_s))
+        base->elevation_filter_tau_s = overlay.elevation_filter_tau_s;
+    if (std::isfinite(overlay.range_filter_tau_s))
+        base->range_filter_tau_s = overlay.range_filter_tau_s;
+    if (std::isfinite(overlay.track_break_time_s))
+        base->track_break_time_s = overlay.track_break_time_s;
     if (std::isfinite(overlay.boost_time_s)) base->boost_time_s = overlay.boost_time_s;
     if (std::isfinite(overlay.sustain_time_s)) base->sustain_time_s = overlay.sustain_time_s;
     if (std::isfinite(overlay.boost_thrust_n)) base->boost_thrust_n = overlay.boost_thrust_n;
     if (std::isfinite(overlay.sustain_thrust_n)) base->sustain_thrust_n = overlay.sustain_thrust_n;
-    if (std::isfinite(overlay.reference_area_m2)) base->reference_area_m2 = overlay.reference_area_m2;
+    if (std::isfinite(overlay.reference_area_m2))
+        base->reference_area_m2 = overlay.reference_area_m2;
     if (std::isfinite(overlay.cd0_subsonic)) base->cd0_subsonic = overlay.cd0_subsonic;
     if (std::isfinite(overlay.cd0_supersonic)) base->cd0_supersonic = overlay.cd0_supersonic;
     if (std::isfinite(overlay.induced_drag_k)) base->induced_drag_k = overlay.induced_drag_k;
-    if (std::isfinite(overlay.propellant_mass_kg)) base->propellant_mass_kg = overlay.propellant_mass_kg;
+    if (std::isfinite(overlay.propellant_mass_kg))
+        base->propellant_mass_kg = overlay.propellant_mass_kg;
     if (std::isfinite(overlay.max_lateral_g)) base->max_lateral_g = overlay.max_lateral_g;
     if (std::isfinite(overlay.autopilot_tau_s)) base->autopilot_tau_s = overlay.autopilot_tau_s;
-    if (std::isfinite(overlay.max_accel_response_g_per_s)) base->max_accel_response_g_per_s = overlay.max_accel_response_g_per_s;
-    if (std::isfinite(overlay.min_launch_range_m)) base->min_launch_range_m = overlay.min_launch_range_m;
-    if (std::isfinite(overlay.max_launch_off_boresight_deg)) base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
+    if (std::isfinite(overlay.max_accel_response_g_per_s))
+        base->max_accel_response_g_per_s = overlay.max_accel_response_g_per_s;
+    if (std::isfinite(overlay.min_launch_range_m))
+        base->min_launch_range_m = overlay.min_launch_range_m;
+    if (std::isfinite(overlay.max_launch_off_boresight_deg))
+        base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
     if (overlay.lobl_required) base->lobl_required = true;
     if (overlay.midcourse_datalink_supported) base->midcourse_datalink_supported = true;
     if (overlay.has_fuze_profile) {
@@ -380,7 +374,8 @@ void overlay_missile_tuning(MissileTuning* base, const MissileTuning& overlay) {
     }
 }
 
-std::optional<std::string> platform_definition_name_from_munition_name(const char* munition_name, int station_id) {
+std::optional<std::string> platform_definition_name_from_munition_name(const char *munition_name,
+                                                                       int station_id) {
     if (!munition_name || station_id <= 0) {
         return std::nullopt;
     }
@@ -395,9 +390,8 @@ std::optional<std::string> platform_definition_name_from_munition_name(const cha
     return full_name.substr(0, full_name.size() - suffix.size());
 }
 
-bool missile_launch_envelope_allows(const MissileTuning& tuning, const Detection& det) {
-    if (std::isfinite(tuning.min_launch_range_m) &&
-        tuning.min_launch_range_m > 0.0 &&
+bool missile_launch_envelope_allows(const MissileTuning &tuning, const Detection &det) {
+    if (std::isfinite(tuning.min_launch_range_m) && tuning.min_launch_range_m > 0.0 &&
         det.range < tuning.min_launch_range_m) {
         return false;
     }
@@ -415,27 +409,22 @@ bool missile_launch_envelope_allows(const MissileTuning& tuning, const Detection
 } // namespace
 
 SimulationKernelWeaponReleaseService::SimulationKernelWeaponReleaseService(
-    flecs::world& ecs,
-    const std::unique_ptr<IUnitFactory>& unit_factory,
-    MissileTuning& missile_tuning,
-    IEngagementLaunchRecorder& launch_recorder,
-    IEngagementEventRecorder& damage_recorder,
-    IWeaponReleaseDamageBridge& damage_bridge
-)
-    : ecs_(ecs),
-      unit_factory_(unit_factory),
-      missile_tuning_(missile_tuning),
-      launch_recorder_(launch_recorder),
-      damage_recorder_(damage_recorder),
+    flecs::world &ecs, const std::unique_ptr<IUnitFactory> &unit_factory,
+    MissileTuning &missile_tuning, IEngagementLaunchRecorder &launch_recorder,
+    IEngagementEventRecorder &damage_recorder, IWeaponReleaseDamageBridge &damage_bridge)
+    : ecs_(ecs), unit_factory_(unit_factory), missile_tuning_(missile_tuning),
+      launch_recorder_(launch_recorder), damage_recorder_(damage_recorder),
       damage_bridge_(damage_bridge) {}
 
 std::optional<SimulationKernelWeaponReleaseService::ResolvedMissileLaunchDefinition>
-SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(flecs::entity attacker, const PilotAction* pilot) const {
+SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(
+    flecs::entity attacker, const PilotAction *pilot) const {
     if (!attacker.is_valid() || !unit_factory_) {
         return std::nullopt;
     }
 
-    const int selected_station_id = (pilot && pilot->weapon_select_id > 0) ? pilot->weapon_select_id : 0;
+    const int selected_station_id =
+        (pilot && pilot->weapon_select_id > 0) ? pilot->weapon_select_id : 0;
     if (selected_station_id <= 0) {
         return std::nullopt;
     }
@@ -445,24 +434,24 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(flecs::e
         for (int i = 0; i < it.count; ++i) {
             const ecs_entity_t child_id = it.entities[i];
             auto child = ecs_.entity(child_id);
-            const Munition* munition = child.get<Munition>();
+            const Munition *munition = child.get<Munition>();
             if (!munition || munition->is_fired) {
                 continue;
             }
 
-            const KeyEntity* child_key = child.get<KeyEntity>();
+            const KeyEntity *child_key = child.get<KeyEntity>();
             if (!child_key || child_key->type != UnitType::Missile) {
                 continue;
             }
 
             const auto platform_name = platform_definition_name_from_munition_name(
-                ecs_get_name(ecs_.c_ptr(), child_id),
-                munition->station_id);
+                ecs_get_name(ecs_.c_ptr(), child_id), munition->station_id);
             if (!platform_name.has_value()) {
                 continue;
             }
 
-            const UnitDefinition* platform_definition = unit_factory_->get_definition(*platform_name);
+            const UnitDefinition *platform_definition =
+                unit_factory_->get_definition(*platform_name);
             if (!platform_definition) {
                 continue;
             }
@@ -472,7 +461,8 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(flecs::e
                 continue;
             }
 
-            const UnitDefinition* weapon_definition = unit_factory_->get_definition(weapon_it->second);
+            const UnitDefinition *weapon_definition =
+                unit_factory_->get_definition(weapon_it->second);
             if (!weapon_definition || weapon_definition->type != UnitType::Missile) {
                 continue;
             }
@@ -494,42 +484,44 @@ SimulationKernelWeaponReleaseService::resolve_missile_launch_definition(flecs::e
     return std::nullopt;
 }
 
-flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attacker_id, uint64_t target_id) {
+flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attacker_id,
+                                                                 uint64_t target_id) {
     auto attacker = ecs_.entity(attacker_id);
     if (!attacker.is_valid()) {
         spdlog::warn("Invalid attacker ID: {}", attacker_id);
         return flecs::entity::null();
     }
 
-    const Transform* p = attacker.get<Transform>();
-    const Velocity* v = attacker.get<Velocity>();
-    const Alliance* side = attacker.get<Alliance>();
-    Ammo* ammo = attacker.get_mut<Ammo>();
-    WeaponCooldown* cooldown = attacker.get_mut<WeaponCooldown>();
-    NavalWeaponSystem* naval_weapons = attacker.get_mut<NavalWeaponSystem>();
-    Score* score = attacker.get_mut<Score>();
-    const PilotAction* pilot = attacker.get<PilotAction>();
+    const Transform *p = attacker.get<Transform>();
+    const Velocity *v = attacker.get<Velocity>();
+    const Alliance *side = attacker.get<Alliance>();
+    Ammo *ammo = attacker.get_mut<Ammo>();
+    WeaponCooldown *cooldown = attacker.get_mut<WeaponCooldown>();
+    NavalWeaponSystem *naval_weapons = attacker.get_mut<NavalWeaponSystem>();
+    Score *score = attacker.get_mut<Score>();
+    const PilotAction *pilot = attacker.get<PilotAction>();
 
     if (!p || !v || !side) return flecs::entity::null();
 
-    const ecs_world_info_t* info = ecs_get_world_info(ecs_.c_ptr());
+    const ecs_world_info_t *info = ecs_get_world_info(ecs_.c_ptr());
     double current_time = info ? (double)info->world_time_total : 0.0;
 
     const bool has_naval_weapon_system = naval_weapons != nullptr;
-    if (!has_naval_weapon_system && cooldown && cooldown->cooldown_s > 0.0 && cooldown->last_fire_time >= 0.0) {
+    if (!has_naval_weapon_system && cooldown && cooldown->cooldown_s > 0.0 &&
+        cooldown->last_fire_time >= 0.0) {
         if (current_time - cooldown->last_fire_time < cooldown->cooldown_s) {
             return flecs::entity::null();
         }
     }
 
     // Require an active track on the target to fire (prevents blind spam).
-    const ContactList* contacts = attacker.get<ContactList>();
+    const ContactList *contacts = attacker.get<ContactList>();
     if (!contacts) {
         return flecs::entity::null();
     }
     bool has_track = false;
     Detection det{};
-    for (const auto& c : contacts->contacts) {
+    for (const auto &c : contacts->contacts) {
         if (c.target_id != target_id) continue;
         det = c;
         has_track = true;
@@ -543,8 +535,9 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     MissileTuning resolved_tuning{};
     double missile_total_mass_kg = 80.0;
     if (resolved_launch_definition.has_value() && resolved_launch_definition->weapon_definition) {
-        const UnitDefinition& weapon_definition = *resolved_launch_definition->weapon_definition;
-        missile_total_mass_kg = std::max(1.0, weapon_definition.mass_kg > 0.0 ? weapon_definition.mass_kg : 80.0);
+        const UnitDefinition &weapon_definition = *resolved_launch_definition->weapon_definition;
+        missile_total_mass_kg =
+            std::max(1.0, weapon_definition.mass_kg > 0.0 ? weapon_definition.mass_kg : 80.0);
         if (weapon_definition.has_missile_tuning) {
             resolved_tuning = to_runtime_missile_tuning(weapon_definition.missile_tuning);
         }
@@ -556,7 +549,8 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         return flecs::entity::null();
     }
 
-    NavalWeaponMountDefinition* vls_mount = naval_weapon_mounts::select_ready_vls_mount(naval_weapons, current_time);
+    NavalWeaponMountDefinition *vls_mount =
+        naval_weapon_mounts::select_ready_vls_mount(naval_weapons, current_time);
     const bool use_naval_vls = vls_mount != nullptr;
     if (use_naval_vls) {
         if (!naval_weapon_mounts::consume_mount_shot(vls_mount, current_time)) {
@@ -578,10 +572,11 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     if (cooldown && !use_naval_vls) {
         cooldown->last_fire_time = current_time;
     }
-    if (resolved_launch_definition.has_value() && resolved_launch_definition->munition_entity_id != 0) {
+    if (resolved_launch_definition.has_value() &&
+        resolved_launch_definition->munition_entity_id != 0) {
         auto munition = ecs_.entity(resolved_launch_definition->munition_entity_id);
         if (munition.is_valid()) {
-            if (Munition* mun = munition.get_mut<Munition>()) {
+            if (Munition *mun = munition.get_mut<Munition>()) {
                 mun->is_fired = true;
                 munition.modified<Munition>();
             }
@@ -609,9 +604,10 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const double missile_turn_rate = positive_or_default(resolved_tuning.turn_rate, 35.0);
     const double missile_fuse_distance = positive_or_default(resolved_tuning.fuse_distance, 300.0);
     const double missile_damage = positive_or_default(resolved_tuning.damage, 120.0);
-    WarheadProfile missile_warhead_profile = resolved_tuning.has_warhead_profile
-        ? resolved_tuning.warhead_profile
-        : make_synthetic_warhead_profile(missile_damage, missile_fuse_distance);
+    WarheadProfile missile_warhead_profile =
+        resolved_tuning.has_warhead_profile
+            ? resolved_tuning.warhead_profile
+            : make_synthetic_warhead_profile(missile_damage, missile_fuse_distance);
     if (!std::isfinite(missile_warhead_profile.lethal_radius_m)) {
         missile_warhead_profile.lethal_radius_m = missile_fuse_distance;
     }
@@ -620,18 +616,22 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
         missile_warhead_profile.damage_scalar_synthetic = true;
     }
     FuzeProfile missile_fuze_profile = resolved_tuning.has_fuze_profile
-        ? resolved_tuning.fuze_profile
-        : make_synthetic_fuze_profile(missile_fuse_distance);
+                                           ? resolved_tuning.fuze_profile
+                                           : make_synthetic_fuze_profile(missile_fuse_distance);
     if (!std::isfinite(missile_fuze_profile.trigger_radius_m)) {
         missile_fuze_profile.trigger_radius_m = missile_fuse_distance;
     }
     missile_fuze_profile.delay_s = std::max(0.0, missile_fuze_profile.delay_s);
     missile_fuze_profile.reliability = std::clamp(missile_fuze_profile.reliability, 0.0, 1.0);
     const double missile_seeker_fov = positive_or_default(resolved_tuning.seeker_fov_deg, 180.0);
-    const double missile_seeker_range = positive_or_default(resolved_tuning.seeker_lock_range, 30000.0);
-    const double missile_guidance_delay = nonnegative_or_default(resolved_tuning.guidance_delay_s, 0.0);
-    const double missile_guidance_period = nonnegative_or_default(resolved_tuning.guidance_update_period_s, 0.0);
-    const double missile_max_flight_time = positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
+    const double missile_seeker_range =
+        positive_or_default(resolved_tuning.seeker_lock_range, 30000.0);
+    const double missile_guidance_delay =
+        nonnegative_or_default(resolved_tuning.guidance_delay_s, 0.0);
+    const double missile_guidance_period =
+        nonnegative_or_default(resolved_tuning.guidance_update_period_s, 0.0);
+    const double missile_max_flight_time =
+        positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
     const double missile_nav_gain = positive_or_default(resolved_tuning.nav_gain, 3.0);
 
     double sensor_max_range = missile_seeker_range;
@@ -642,94 +642,84 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     double sensor_range_noise = 10.0;
     double sensor_track_memory = 2.0;
 
-    if (std::isfinite(resolved_tuning.sensor_max_range)) sensor_max_range = resolved_tuning.sensor_max_range;
-    if (std::isfinite(resolved_tuning.sensor_fov_deg)) sensor_fov_deg = resolved_tuning.sensor_fov_deg;
-    if (std::isfinite(resolved_tuning.sensor_scan_period)) sensor_scan_period = resolved_tuning.sensor_scan_period;
-    if (std::isfinite(resolved_tuning.sensor_detection_prob)) sensor_detection_prob = resolved_tuning.sensor_detection_prob;
-    if (std::isfinite(resolved_tuning.sensor_bearing_noise_std)) sensor_bearing_noise = resolved_tuning.sensor_bearing_noise_std;
-    if (std::isfinite(resolved_tuning.sensor_range_noise_std)) sensor_range_noise = resolved_tuning.sensor_range_noise_std;
-    if (std::isfinite(resolved_tuning.sensor_track_memory_s)) sensor_track_memory = resolved_tuning.sensor_track_memory_s;
+    if (std::isfinite(resolved_tuning.sensor_max_range))
+        sensor_max_range = resolved_tuning.sensor_max_range;
+    if (std::isfinite(resolved_tuning.sensor_fov_deg))
+        sensor_fov_deg = resolved_tuning.sensor_fov_deg;
+    if (std::isfinite(resolved_tuning.sensor_scan_period))
+        sensor_scan_period = resolved_tuning.sensor_scan_period;
+    if (std::isfinite(resolved_tuning.sensor_detection_prob))
+        sensor_detection_prob = resolved_tuning.sensor_detection_prob;
+    if (std::isfinite(resolved_tuning.sensor_bearing_noise_std))
+        sensor_bearing_noise = resolved_tuning.sensor_bearing_noise_std;
+    if (std::isfinite(resolved_tuning.sensor_range_noise_std))
+        sensor_range_noise = resolved_tuning.sensor_range_noise_std;
+    if (std::isfinite(resolved_tuning.sensor_track_memory_s))
+        sensor_track_memory = resolved_tuning.sensor_track_memory_s;
 
     const double propellant_mass_kg = clamp_missile_propellant_mass_kg(
         missile_total_mass_kg,
-        finite_or_default(
-            resolved_tuning.propellant_mass_kg,
-            default_propellant_mass_kg(missile_total_mass_kg)));
+        finite_or_default(resolved_tuning.propellant_mass_kg,
+                          default_propellant_mass_kg(missile_total_mass_kg)));
     const double reference_area_m2 = clamp_missile_reference_area_m2(
-        resolved_tuning.reference_area_m2,
-        default_reference_area_m2());
+        resolved_tuning.reference_area_m2, default_reference_area_m2());
     const double boost_time_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.boost_time_s, MissileGuidanceDefaults::kBoostTimeS));
-    const double sustain_time_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.sustain_time_s, MissileGuidanceDefaults::kSustainTimeS));
-    const double track_memory_timeout_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.track_break_time_s, MissileGuidanceDefaults::kTrackMemoryTimeoutS));
-    const double bearing_filter_tau_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.bearing_filter_tau_s, MissileGuidanceDefaults::kTrackFilterTauS));
-    const double elevation_filter_tau_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.elevation_filter_tau_s, MissileGuidanceDefaults::kTrackFilterTauS));
-    const double range_filter_tau_s = std::max(
-        0.0,
-        finite_or_default(resolved_tuning.range_filter_tau_s, MissileGuidanceDefaults::kTrackFilterTauS));
+        0.0, finite_or_default(resolved_tuning.boost_time_s, MissileGuidanceDefaults::kBoostTimeS));
+    const double sustain_time_s =
+        std::max(0.0, finite_or_default(resolved_tuning.sustain_time_s,
+                                        MissileGuidanceDefaults::kSustainTimeS));
+    const double track_memory_timeout_s =
+        std::max(0.0, finite_or_default(resolved_tuning.track_break_time_s,
+                                        MissileGuidanceDefaults::kTrackMemoryTimeoutS));
+    const double bearing_filter_tau_s =
+        std::max(0.0, finite_or_default(resolved_tuning.bearing_filter_tau_s,
+                                        MissileGuidanceDefaults::kTrackFilterTauS));
+    const double elevation_filter_tau_s =
+        std::max(0.0, finite_or_default(resolved_tuning.elevation_filter_tau_s,
+                                        MissileGuidanceDefaults::kTrackFilterTauS));
+    const double range_filter_tau_s =
+        std::max(0.0, finite_or_default(resolved_tuning.range_filter_tau_s,
+                                        MissileGuidanceDefaults::kTrackFilterTauS));
     const double seeker_activation_range_m = finite_or_default(
-        resolved_tuning.seeker_activation_range_m,
-        std::numeric_limits<double>::quiet_NaN());
+        resolved_tuning.seeker_activation_range_m, std::numeric_limits<double>::quiet_NaN());
     const bool midcourse_datalink_supported = resolved_tuning.midcourse_datalink_supported;
     const bool terminal_seeker_active = !std::isfinite(seeker_activation_range_m) ||
-        seeker_activation_range_m <= 0.0 ||
-        det.range <= seeker_activation_range_m;
-    const double max_lateral_g = std::max(
-        0.1,
-        finite_or_default(
-            resolved_tuning.max_lateral_g,
-            fallback_max_lateral_g(missile_turn_rate)));
-    const double autopilot_tau_s = std::max(
-        1.0e-3,
-        finite_or_default(resolved_tuning.autopilot_tau_s, MissileGuidanceDefaults::kAutopilotTauS));
-    const double max_accel_response_g_per_s = std::max(
-        0.1,
-        finite_or_default(
-            resolved_tuning.max_accel_response_g_per_s,
-            MissileGuidanceDefaults::kAccelResponseGps));
-    const double cd0_subsonic = std::max(
-        1.0e-4,
-        finite_or_default(
-            resolved_tuning.cd0_subsonic,
-            MissileGuidanceDefaults::kCd0Subsonic));
-    const double cd0_supersonic = std::max(
-        1.0e-4,
-        finite_or_default(
-            resolved_tuning.cd0_supersonic,
-            MissileGuidanceDefaults::kCd0Supersonic));
-    const double induced_drag_k = std::max(
-        0.0,
-        finite_or_default(
-            resolved_tuning.induced_drag_k,
-            MissileGuidanceDefaults::kInducedDragScale));
+                                        seeker_activation_range_m <= 0.0 ||
+                                        det.range <= seeker_activation_range_m;
+    const double max_lateral_g =
+        std::max(0.1, finite_or_default(resolved_tuning.max_lateral_g,
+                                        fallback_max_lateral_g(missile_turn_rate)));
+    const double autopilot_tau_s =
+        std::max(1.0e-3, finite_or_default(resolved_tuning.autopilot_tau_s,
+                                           MissileGuidanceDefaults::kAutopilotTauS));
+    const double max_accel_response_g_per_s =
+        std::max(0.1, finite_or_default(resolved_tuning.max_accel_response_g_per_s,
+                                        MissileGuidanceDefaults::kAccelResponseGps));
+    const double cd0_subsonic =
+        std::max(1.0e-4, finite_or_default(resolved_tuning.cd0_subsonic,
+                                           MissileGuidanceDefaults::kCd0Subsonic));
+    const double cd0_supersonic =
+        std::max(1.0e-4, finite_or_default(resolved_tuning.cd0_supersonic,
+                                           MissileGuidanceDefaults::kCd0Supersonic));
+    const double induced_drag_k =
+        std::max(0.0, finite_or_default(resolved_tuning.induced_drag_k,
+                                        MissileGuidanceDefaults::kInducedDragScale));
     // Spawn Missile slightly in front
     double heading = std::atan2(v->vy, v->vx);
     double launch_x = p->x + 20.0 * std::cos(heading);
     double launch_y = p->y + 20.0 * std::sin(heading);
     const double launch_speed_mps = std::sqrt(v->vx * v->vx + v->vy * v->vy + v->vz * v->vz);
     const double boost_thrust_n = std::max(
-        0.0,
-        finite_or_default(
-            resolved_tuning.boost_thrust_n,
-            default_boost_thrust_n(missile_total_mass_kg, missile_max_speed, launch_speed_mps)));
-    const double sustain_thrust_n = std::max(
-        0.0,
-        finite_or_default(
-            resolved_tuning.sustain_thrust_n,
-            default_sustain_thrust_n(boost_thrust_n)));
+        0.0, finite_or_default(resolved_tuning.boost_thrust_n,
+                               default_boost_thrust_n(missile_total_mass_kg, missile_max_speed,
+                                                      launch_speed_mps)));
+    const double sustain_thrust_n =
+        std::max(0.0, finite_or_default(resolved_tuning.sustain_thrust_n,
+                                        default_sustain_thrust_n(boost_thrust_n)));
 
-    uint64_t missile_seed = splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^
-                                       (attacker_id * 0x9e3779b97f4a7c15ULL) ^
-                                       (target_id * 0xbf58476d1ce4e5b9ULL));
+    uint64_t missile_seed =
+        splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^
+                   (attacker_id * 0x9e3779b97f4a7c15ULL) ^ (target_id * 0xbf58476d1ce4e5b9ULL));
 
     const Mass mass = make_missile_mass_state(missile_total_mass_kg, propellant_mass_kg);
     const MassProperties mass_properties = make_missile_mass_properties(mass, reference_area_m2);
@@ -766,38 +756,36 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.fuze_detonation_heading_deg = std::numeric_limits<double>::quiet_NaN();
     missile.fuze_detonation_pitch_deg = std::numeric_limits<double>::quiet_NaN();
     missile.fuze_detonation_roll_deg = std::numeric_limits<double>::quiet_NaN();
-    initialize_missile_launch_runtime(
-        missile,
-        MissileSharedLaunchRuntimeState{
-            current_time,
-            launch_speed_mps,
-            true,
-            det.range > 1.0e-3,
-            static_cast<int>(MissileSeekerMode::Track),
-            det.bearing,
-            det.elevation,
-            det.range,
-            det.closing_speed,
-            current_time,
-            track_memory_timeout_s,
-            current_time + boost_time_s + sustain_time_s,
-            boost_time_s,
-            sustain_time_s,
-            bearing_filter_tau_s,
-            elevation_filter_tau_s,
-            range_filter_tau_s,
-            boost_thrust_n,
-            sustain_thrust_n,
-            cd0_subsonic,
-            cd0_supersonic,
-            induced_drag_k,
-            max_lateral_g,
-            autopilot_tau_s,
-            max_accel_response_g_per_s,
-            seeker_activation_range_m,
-            midcourse_datalink_supported,
-            terminal_seeker_active,
-        });
+    initialize_missile_launch_runtime(missile, MissileSharedLaunchRuntimeState{
+                                                   current_time,
+                                                   launch_speed_mps,
+                                                   true,
+                                                   det.range > 1.0e-3,
+                                                   static_cast<int>(MissileSeekerMode::Track),
+                                                   det.bearing,
+                                                   det.elevation,
+                                                   det.range,
+                                                   det.closing_speed,
+                                                   current_time,
+                                                   track_memory_timeout_s,
+                                                   current_time + boost_time_s + sustain_time_s,
+                                                   boost_time_s,
+                                                   sustain_time_s,
+                                                   bearing_filter_tau_s,
+                                                   elevation_filter_tau_s,
+                                                   range_filter_tau_s,
+                                                   boost_thrust_n,
+                                                   sustain_thrust_n,
+                                                   cd0_subsonic,
+                                                   cd0_supersonic,
+                                                   induced_drag_k,
+                                                   max_lateral_g,
+                                                   autopilot_tau_s,
+                                                   max_accel_response_g_per_s,
+                                                   seeker_activation_range_m,
+                                                   midcourse_datalink_supported,
+                                                   terminal_seeker_active,
+                                               });
 
     Sensor sensor{};
     sensor.max_range = sensor_max_range;
@@ -833,66 +821,62 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     sensor.sea_clutter_enabled = false;
     sensor.bearing_only = false;
     sensor.type = resolved_tuning.seeker_type >= 0
-        ? resolved_tuning.seeker_type
-        : static_cast<int>(sensor_max_range > 8000.0 ? SensorType::Radar : SensorType::Infrared);
+                      ? resolved_tuning.seeker_type
+                      : static_cast<int>(sensor_max_range > 8000.0 ? SensorType::Radar
+                                                                   : SensorType::Infrared);
 
     auto m = ecs_.entity()
-        .set<Transform>({launch_x, launch_y, p->z, p->heading, 0, 0})
-        .set<Velocity>({v->vx, v->vy, v->vz}) // Inherit platform velocity
-        .set<Alliance>({side->side})
-        .set<KeyEntity>({UnitType::Missile})
-        .set<Mass>(mass)
-        .set<MassProperties>(mass_properties)
-        .set<ForceAccumulator>({})
-        .set<Missile>(missile)
-        .set<Sensor>(sensor)
-        .set<ContactList>({})
-        .add<SimObject>(); // Tag for cleanup
+                 .set<Transform>({launch_x, launch_y, p->z, p->heading, 0, 0})
+                 .set<Velocity>({v->vx, v->vy, v->vz}) // Inherit platform velocity
+                 .set<Alliance>({side->side})
+                 .set<KeyEntity>({UnitType::Missile})
+                 .set<Mass>(mass)
+                 .set<MassProperties>(mass_properties)
+                 .set<ForceAccumulator>({})
+                 .set<Missile>(missile)
+                 .set<Sensor>(sensor)
+                 .set<ContactList>({})
+                 .add<SimObject>(); // Tag for cleanup
 
-    const int ammo_delta = use_naval_vls && vls_mount
-        ? -std::max(1, vls_mount->ammo_per_shot)
-        : (ammo ? -1 : 0);
+    const int ammo_delta =
+        use_naval_vls && vls_mount ? -std::max(1, vls_mount->ammo_per_shot) : (ammo ? -1 : 0);
     const double cooldown_delta_s = use_naval_vls && vls_mount
-        ? vls_mount->cooldown_s
-        : (cooldown ? cooldown->cooldown_s : 0.0);
-    const std::string selected_launcher = use_naval_vls && vls_mount
-        ? vls_mount->mount_id
-        : "legacy:air_missile";
-    const std::string selected_munition = resolved_launch_definition.has_value() &&
-            !resolved_launch_definition->weapon_definition_name.empty()
-        ? resolved_launch_definition->weapon_definition_name
-        : (use_naval_vls ? "naval:vls_sam" : "legacy:missile");
+                                        ? vls_mount->cooldown_s
+                                        : (cooldown ? cooldown->cooldown_s : 0.0);
+    const std::string selected_launcher =
+        use_naval_vls && vls_mount ? vls_mount->mount_id : "legacy:air_missile";
+    const std::string selected_munition =
+        resolved_launch_definition.has_value() &&
+                !resolved_launch_definition->weapon_definition_name.empty()
+            ? resolved_launch_definition->weapon_definition_name
+            : (use_naval_vls ? "naval:vls_sam" : "legacy:missile");
     (void)launch_recorder_.record_legacy_launch_event(
-        attacker_id,
-        target_id,
-        static_cast<uint64_t>(m.id()),
-        selected_launcher,
-        selected_munition,
-        ammo_delta,
-        cooldown_delta_s,
-        current_time);
+        attacker_id, target_id, static_cast<uint64_t>(m.id()), selected_launcher, selected_munition,
+        ammo_delta, cooldown_delta_s, current_time);
 
     spdlog::info("FOX 2! Missile {} fired by {} at {}", m.id(), attacker_id, target_id);
     return m;
 }
 
-bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_id, uint64_t target_id, int weapon_type_code) {
+bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_id,
+                                                             uint64_t target_id,
+                                                             int weapon_type_code) {
     auto attacker = ecs_.entity(attacker_id);
     if (!attacker.is_valid() || target_id == 0) {
         return false;
     }
 
-    const Transform* attacker_pos = attacker.get<Transform>();
-    const ContactList* contacts = attacker.get<ContactList>();
-    NavalWeaponSystem* naval_weapons = attacker.get_mut<NavalWeaponSystem>();
-    Score* score = attacker.get_mut<Score>();
+    const Transform *attacker_pos = attacker.get<Transform>();
+    const ContactList *contacts = attacker.get<ContactList>();
+    NavalWeaponSystem *naval_weapons = attacker.get_mut<NavalWeaponSystem>();
+    Score *score = attacker.get_mut<Score>();
     if (!attacker_pos || !contacts || !naval_weapons) {
         return false;
     }
 
     Detection det{};
     bool has_track = false;
-    for (const auto& c : contacts->contacts) {
+    for (const auto &c : contacts->contacts) {
         if (c.target_id != target_id) continue;
         det = c;
         has_track = true;
@@ -902,13 +886,11 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
         return false;
     }
 
-    const ecs_world_info_t* info = ecs_get_world_info(ecs_.c_ptr());
+    const ecs_world_info_t *info = ecs_get_world_info(ecs_.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
     const NavalWeaponType weapon_type = static_cast<NavalWeaponType>(weapon_type_code);
-    NavalWeaponMountDefinition* mount = naval_weapon_mounts::select_ready_mount(
-        naval_weapons,
-        weapon_type,
-        current_time);
+    NavalWeaponMountDefinition *mount =
+        naval_weapon_mounts::select_ready_mount(naval_weapons, weapon_type, current_time);
     if (!mount) {
         return false;
     }
@@ -921,33 +903,30 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
     }
 
     const std::uint64_t launch_event_id = launch_recorder_.record_legacy_launch_event(
-        attacker_id,
-        target_id,
-        0,
+        attacker_id, target_id, 0,
         mount->mount_id.empty() ? naval_weapon_type_name(weapon_type) : mount->mount_id,
-        naval_weapon_type_name(weapon_type),
-        -std::max(1, mount->ammo_per_shot),
-        mount->cooldown_s,
+        naval_weapon_type_name(weapon_type), -std::max(1, mount->ammo_per_shot), mount->cooldown_s,
         current_time);
 
     double hit_probability = std::clamp(mount->hit_probability, 0.05, 0.99);
     auto target = ecs_.entity(target_id);
     const bool target_valid = target.is_valid();
     const bool target_is_missile = entity_is_missile(ecs_, target_id);
-    if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles && target_is_missile) {
+    if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles &&
+        target_is_missile) {
         const double close_range_threshold_m = std::max(300.0, mount->engagement_range_m * 0.75);
         if (det.range <= close_range_threshold_m) {
             hit_probability = 1.0;
         }
     }
-    uint64_t rng_state = splitmix64(static_cast<uint64_t>(current_time * 1000.0) ^
-                                    (attacker_id * 0x9e3779b97f4a7c15ULL) ^
-                                    (target_id * 0xbf58476d1ce4e5b9ULL) ^
-                                    (static_cast<uint64_t>(weapon_type_code) << 32));
+    uint64_t rng_state = splitmix64(
+        static_cast<uint64_t>(current_time * 1000.0) ^ (attacker_id * 0x9e3779b97f4a7c15ULL) ^
+        (target_id * 0xbf58476d1ce4e5b9ULL) ^ (static_cast<uint64_t>(weapon_type_code) << 32));
     const double u = (splitmix64(rng_state) >> 11) * (1.0 / 9007199254740992.0);
     const bool hit = u <= hit_probability;
 
-    if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles && target_is_missile) {
+    if (weapon_type == NavalWeaponType::Ciws && mount->can_intercept_missiles &&
+        target_is_missile) {
         if (hit && target_valid) {
             const EngagementDamageStateSnapshot before =
                 damage_recorder_.capture_engagement_damage_state(target_id);
@@ -992,35 +971,38 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon(uint64_t attacker_i
     return true;
 }
 
-bool SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(uint64_t attacker_id) {
+bool SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_command(
+    uint64_t attacker_id) {
     auto attacker = ecs_.entity(attacker_id);
     if (!attacker.is_valid()) {
         return false;
     }
 
-    const MissionCommand* mission = attacker.get<MissionCommand>();
-    const ContactList* contacts = attacker.get<ContactList>();
-    const NavalWeaponSystem* naval_weapons = attacker.get<NavalWeaponSystem>();
-    if (!mission || !mission->active || !contacts || !naval_weapons || naval_weapons->mounts.empty()) {
+    const MissionCommand *mission = attacker.get<MissionCommand>();
+    const ContactList *contacts = attacker.get<ContactList>();
+    const NavalWeaponSystem *naval_weapons = attacker.get<NavalWeaponSystem>();
+    if (!mission || !mission->active || !contacts || !naval_weapons ||
+        naval_weapons->mounts.empty()) {
         return false;
     }
-    if (!mission->authorization_to_fire || !mission_authority_matches_shooter(mission, attacker_id)) {
+    if (!mission->authorization_to_fire ||
+        !mission_authority_matches_shooter(mission, attacker_id)) {
         return false;
     }
 
     uint64_t target_id = 0;
     int weapon_type_code = 0;
     switch (mission->command_code) {
-        case kMissionCommandCodeNavalAutoCloseInDefense:
-            target_id = select_ciws_mission_target_id(ecs_, contacts, mission);
-            weapon_type_code = static_cast<int>(NavalWeaponType::Ciws);
-            break;
-        case kMissionCommandCodeNavalSurfaceEngage:
-            target_id = select_surface_gun_mission_target_id(ecs_, contacts, mission);
-            weapon_type_code = static_cast<int>(NavalWeaponType::DeckGun);
-            break;
-        default:
-            return false;
+    case kMissionCommandCodeNavalAutoCloseInDefense:
+        target_id = select_ciws_mission_target_id(ecs_, contacts, mission);
+        weapon_type_code = static_cast<int>(NavalWeaponType::Ciws);
+        break;
+    case kMissionCommandCodeNavalSurfaceEngage:
+        target_id = select_surface_gun_mission_target_id(ecs_, contacts, mission);
+        weapon_type_code = static_cast<int>(NavalWeaponType::DeckGun);
+        break;
+    default:
+        return false;
     }
 
     if (target_id == 0) {
@@ -1029,22 +1011,23 @@ bool SimulationKernelWeaponReleaseService::fire_naval_weapon_from_mission_comman
     return fire_naval_weapon(attacker_id, target_id, weapon_type_code);
 }
 
-flecs::entity SimulationKernelWeaponReleaseService::fire_weapon_from_pilot_action(uint64_t attacker_id) {
+flecs::entity
+SimulationKernelWeaponReleaseService::fire_weapon_from_pilot_action(uint64_t attacker_id) {
     auto attacker = ecs_.entity(attacker_id);
     if (!attacker.is_valid()) {
         return flecs::entity::null();
     }
 
-    const PilotAction* pilot = attacker.get<PilotAction>();
+    const PilotAction *pilot = attacker.get<PilotAction>();
     if (!pilot || !pilot->active || !pilot->master_arm || !pilot->fire_weapon) {
         return flecs::entity::null();
     }
 
-    const MissionCommand* mission = attacker.get<MissionCommand>();
+    const MissionCommand *mission = attacker.get<MissionCommand>();
     if (mission && !mission->active) {
         mission = nullptr;
     }
-    const ContactList* contacts = attacker.get<ContactList>();
+    const ContactList *contacts = attacker.get<ContactList>();
 
     const int roe_state = mission ? mission->roe_state : 0;
     uint64_t target_id = 0;

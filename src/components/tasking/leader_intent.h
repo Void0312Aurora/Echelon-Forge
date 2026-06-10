@@ -16,97 +16,73 @@ struct LeaderIntent : LeaderIntentCore, LeaderIntentAir, LeaderIntentNaval, Lead
 using LeaderIntentCompatibilityTransportShell = LeaderIntent;
 inline constexpr bool kLeaderIntentCompatibilityTransportShell = true;
 
-static_assert(
-    kLeaderIntentAirOwnedDomainSlice && kLeaderIntentNavalOwnedDomainSlice &&
-        kLeaderIntentGroundOwnedDomainSlice,
-    "LeaderIntent compatibility shells must project to explicit owner slices."
-);
+static_assert(kLeaderIntentAirOwnedDomainSlice && kLeaderIntentNavalOwnedDomainSlice &&
+                  kLeaderIntentGroundOwnedDomainSlice,
+              "LeaderIntent compatibility shells must project to explicit owner slices.");
 
-[[nodiscard]] inline const LeaderIntentCore&
-leader_intent_shared_core(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline const LeaderIntentCore &
+leader_intent_shared_core(const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline LeaderIntentCore&
-leader_intent_shared_core(LeaderIntentCompatibilityTransportShell& intent) noexcept {
+[[nodiscard]] inline LeaderIntentCore &
+leader_intent_shared_core(LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline const LeaderIntentAir&
-leader_intent_air_owner_slice(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline const LeaderIntentAir &
+leader_intent_air_owner_slice(const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline LeaderIntentAir&
-leader_intent_air_owner_slice(LeaderIntentCompatibilityTransportShell& intent) noexcept {
+[[nodiscard]] inline LeaderIntentAir &
+leader_intent_air_owner_slice(LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline const LeaderIntentNaval&
-leader_intent_naval_owner_slice(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline const LeaderIntentNaval &
+leader_intent_naval_owner_slice(const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline LeaderIntentNaval&
-leader_intent_naval_owner_slice(
-    LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentNaval &
+leader_intent_naval_owner_slice(LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline const LeaderIntentGround&
-leader_intent_ground_owner_slice(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline const LeaderIntentGround &
+leader_intent_ground_owner_slice(const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline LeaderIntentGround&
-leader_intent_ground_owner_slice(
-    LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentGround &
+leader_intent_ground_owner_slice(LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return intent;
 }
 
-[[nodiscard]] inline LeaderIntentAir::RecoveryDirective
-leader_intent_air_recovery_directive(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentAir::RecoveryDirective leader_intent_air_recovery_directive(
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return leader_intent_air_recovery_directive(leader_intent_air_owner_slice(intent));
 }
 
-[[nodiscard]] inline LeaderIntentAir::TakeoffDirective
-leader_intent_air_takeoff_directive(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentAir::TakeoffDirective leader_intent_air_takeoff_directive(
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return leader_intent_air_takeoff_directive(leader_intent_air_owner_slice(intent));
 }
 
-[[nodiscard]] inline LeaderIntentAir::FormationDirective
-leader_intent_air_formation_directive(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+[[nodiscard]] inline LeaderIntentAir::FormationDirective leader_intent_air_formation_directive(
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return leader_intent_air_formation_directive(leader_intent_air_owner_slice(intent));
 }
 
 [[nodiscard]] inline LeaderIntentNaval::CommandAuthorityDirective
 leader_intent_naval_command_authority(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
     return leader_intent_naval_command_authority(leader_intent_naval_owner_slice(intent));
 }
 
 [[nodiscard]] inline LeaderIntentGround::StaticStatusDirective
 leader_intent_ground_static_status_directive(
-    const LeaderIntentCompatibilityTransportShell& intent
-) noexcept {
-    return leader_intent_ground_static_status_directive(
-        leader_intent_ground_owner_slice(intent)
-    );
+    const LeaderIntentCompatibilityTransportShell &intent) noexcept {
+    return leader_intent_ground_static_status_directive(leader_intent_ground_owner_slice(intent));
 }

@@ -17,14 +17,18 @@ namespace {
 #endif
 
 double wrap_angle_360(double angle) {
-    while (angle < 0.0) angle += 360.0;
-    while (angle >= 360.0) angle -= 360.0;
+    while (angle < 0.0)
+        angle += 360.0;
+    while (angle >= 360.0)
+        angle -= 360.0;
     return angle;
 }
 
 double normalize_angle_deg(double angle) {
-    while (angle > 180.0) angle -= 360.0;
-    while (angle < -180.0) angle += 360.0;
+    while (angle > 180.0)
+        angle -= 360.0;
+    while (angle < -180.0)
+        angle += 360.0;
     return angle;
 }
 
@@ -54,9 +58,10 @@ double clamp_sensor_probability(double value) {
     return std::clamp(value, 0.0, 1.0);
 }
 
-double rcs_for_detection(const flecs::entity& target_e, const Transform& owner_t, const Transform& target_t) {
+double rcs_for_detection(const flecs::entity &target_e, const Transform &owner_t,
+                         const Transform &target_t) {
     double rcs = 5.0;
-    const RCSProfile* rcs_prof = target_e.get<RCSProfile>();
+    const RCSProfile *rcs_prof = target_e.get<RCSProfile>();
     if (!rcs_prof) {
         return rcs;
     }
@@ -77,15 +82,11 @@ double rcs_for_detection(const flecs::entity& target_e, const Transform& owner_t
     return std::max(1.0e-6, rcs);
 }
 
-double compute_snr_db(
-    const Sensor& sensor,
-    double dist_m,
-    double rcs_m2,
-    double attenuation_factor,
-    double doppler_factor
-) {
+double compute_snr_db(const Sensor &sensor, double dist_m, double rcs_m2, double attenuation_factor,
+                      double doppler_factor) {
     if (sensor.type == static_cast<int>(SensorType::ESM)) {
-        const double ref_range = sensor.reference_range_m > 1.0 ? sensor.reference_range_m : std::max(sensor.max_range, 1.0);
+        const double ref_range = sensor.reference_range_m > 1.0 ? sensor.reference_range_m
+                                                                : std::max(sensor.max_range, 1.0);
         const double range_ratio = ref_range / std::max(1.0, dist_m);
         double snr_linear = std::pow(10.0, sensor.reference_snr_db / 10.0);
         snr_linear *= std::max(1.0, rcs_m2 / std::max(1.0, sensor.reference_rcs_m2));
@@ -95,7 +96,8 @@ double compute_snr_db(
         return 10.0 * std::log10(snr_linear);
     }
 
-    const double ref_range = sensor.reference_range_m > 1.0 ? sensor.reference_range_m : std::max(sensor.max_range, 1.0);
+    const double ref_range =
+        sensor.reference_range_m > 1.0 ? sensor.reference_range_m : std::max(sensor.max_range, 1.0);
     const double ref_rcs = sensor.reference_rcs_m2 > 1.0e-6 ? sensor.reference_rcs_m2 : 5.0;
     const double ref_snr_db = sensor.reference_snr_db;
 
@@ -103,9 +105,10 @@ double compute_snr_db(
     snr_linear *= std::max(1.0e-6, rcs_m2 / ref_rcs);
 
     const double range_ratio = ref_range / std::max(1.0, dist_m);
-    const double range_power = (sensor.type == static_cast<int>(SensorType::Radar))
-        ? 4.0
-        : std::max(1.0, sensor.range_power > 0.0 ? sensor.range_power : 2.0);
+    const double range_power =
+        (sensor.type == static_cast<int>(SensorType::Radar))
+            ? 4.0
+            : std::max(1.0, sensor.range_power > 0.0 ? sensor.range_power : 2.0);
     snr_linear *= std::pow(range_ratio, range_power);
     snr_linear *= std::max(0.0, attenuation_factor);
     snr_linear *= std::max(0.0, doppler_factor);
@@ -113,7 +116,7 @@ double compute_snr_db(
     return 10.0 * std::log10(snr_linear);
 }
 
-double pd_from_snr_db(const Sensor& sensor, double snr_db) {
+double pd_from_snr_db(const Sensor &sensor, double snr_db) {
     const double pfa = sensor.pfa > 0.0 ? sensor.pfa : 1.0e-6;
     const double pfa_scale = std::clamp(std::log10(1.0 / pfa) / 6.0, 0.5, 2.0);
     const double snr_50_db = 0.0;
@@ -128,8 +131,8 @@ double horizon_distance_m(double h1_m, double h2_m) {
     return 3570.0 * (std::sqrt(h1) + std::sqrt(h2));
 }
 
-bool entity_has_radar_emitter(const flecs::entity& entity, Sensor* out_emitter) {
-    if (const Sensor* inline_sensor = entity.get<Sensor>()) {
+bool entity_has_radar_emitter(const flecs::entity &entity, Sensor *out_emitter) {
+    if (const Sensor *inline_sensor = entity.get<Sensor>()) {
         if (inline_sensor->type == static_cast<int>(SensorType::Radar)) {
             if (out_emitter) {
                 *out_emitter = *inline_sensor;
@@ -137,8 +140,8 @@ bool entity_has_radar_emitter(const flecs::entity& entity, Sensor* out_emitter) 
             return true;
         }
     }
-    if (const MountedSensors* mounted = entity.get<MountedSensors>()) {
-        for (const auto& mount : mounted->mounts) {
+    if (const MountedSensors *mounted = entity.get<MountedSensors>()) {
+        for (const auto &mount : mounted->mounts) {
             if (mount.sensor.type == static_cast<int>(SensorType::Radar)) {
                 if (out_emitter) {
                     *out_emitter = mount.sensor;
@@ -150,34 +153,23 @@ bool entity_has_radar_emitter(const flecs::entity& entity, Sensor* out_emitter) 
     return false;
 }
 
-void append_rwr_detection_from_radar(
-    const Sensor& sensor,
-    flecs::entity emitter,
-    flecs::entity target,
-    double dist_m,
-    bool is_lock
-) {
+void append_rwr_detection_from_radar(const Sensor &sensor, flecs::entity emitter,
+                                     flecs::entity target, double dist_m, bool is_lock) {
     if (sensor.type != static_cast<int>(SensorType::Radar)) {
         return;
     }
 
-    RWR* target_rwr = target.get_mut<RWR>();
+    RWR *target_rwr = target.get_mut<RWR>();
     if (target_rwr) {
         if (dist_m < sensor.max_range * 1.5) {
-            const auto found = std::find(
-                target_rwr->detected_radar_ids.begin(),
-                target_rwr->detected_radar_ids.end(),
-                emitter.id()
-            );
+            const auto found = std::find(target_rwr->detected_radar_ids.begin(),
+                                         target_rwr->detected_radar_ids.end(), emitter.id());
             if (found == target_rwr->detected_radar_ids.end()) {
                 target_rwr->detected_radar_ids.push_back(emitter.id());
             }
             if (is_lock || emitter.has<Missile>()) {
-                const auto locked = std::find(
-                    target_rwr->locking_radar_ids.begin(),
-                    target_rwr->locking_radar_ids.end(),
-                    emitter.id()
-                );
+                const auto locked = std::find(target_rwr->locking_radar_ids.begin(),
+                                              target_rwr->locking_radar_ids.end(), emitter.id());
                 if (locked == target_rwr->locking_radar_ids.end()) {
                     target_rwr->locking_radar_ids.push_back(emitter.id());
                 }
@@ -186,14 +178,10 @@ void append_rwr_detection_from_radar(
     }
 }
 
-void append_esm_detection_from_emitter(
-    flecs::entity owner,
-    flecs::entity emitter,
-    const Sensor& esm_sensor,
-    double dist_m,
-    double rel_bearing_deg
-) {
-    ESMReceiver* owner_esm = owner.get_mut<ESMReceiver>();
+void append_esm_detection_from_emitter(flecs::entity owner, flecs::entity emitter,
+                                       const Sensor &esm_sensor, double dist_m,
+                                       double rel_bearing_deg) {
+    ESMReceiver *owner_esm = owner.get_mut<ESMReceiver>();
     if (!owner_esm) {
         return;
     }
@@ -204,21 +192,17 @@ void append_esm_detection_from_emitter(
     }
 
     const double max_range = owner_esm->max_detection_range_m > 0.0
-        ? owner_esm->max_detection_range_m
-        : std::max(esm_sensor.max_range, emitter_radar.max_range * 2.0);
+                                 ? owner_esm->max_detection_range_m
+                                 : std::max(esm_sensor.max_range, emitter_radar.max_range * 2.0);
     if (dist_m > max_range) {
         return;
     }
 
-    const double emitter_strength = std::max(1.0, emitter_radar.reference_range_m) /
-        std::max(1.0, dist_m * dist_m);
-    auto existing = std::find_if(
-        owner_esm->detections.begin(),
-        owner_esm->detections.end(),
-        [&](const EmitterDetection& det) {
-            return det.source_id == emitter.id();
-        }
-    );
+    const double emitter_strength =
+        std::max(1.0, emitter_radar.reference_range_m) / std::max(1.0, dist_m * dist_m);
+    auto existing =
+        std::find_if(owner_esm->detections.begin(), owner_esm->detections.end(),
+                     [&](const EmitterDetection &det) { return det.source_id == emitter.id(); });
     EmitterDetection det{};
     det.source_id = emitter.id();
     det.bearing_deg = rel_bearing_deg;
@@ -233,27 +217,22 @@ void append_esm_detection_from_emitter(
 }
 
 class DefaultSensorModel : public ISensorModel {
-public:
-    void scan(flecs::world world,
-              flecs::entity owner,
-              const Transform& owner_transform,
-              const Sensor& sensor,
-              ContactList& out_contacts,
-              double current_time) override {
-        
-        auto target_query = world.query<const KeyEntity, const Transform>();
-        const Alliance* owner_alliance = owner.get<Alliance>();
-        // Environment Singleton Access
-        const EnvironmentModelRef* env_ref = world.get<EnvironmentModelRef>();
+  public:
+    void scan(flecs::world world, flecs::entity owner, const Transform &owner_transform,
+              const Sensor &sensor, ContactList &out_contacts, double current_time) override {
 
-        target_query.each([&](flecs::entity target_e,
-                              const KeyEntity& /*key*/,
-                              const Transform& target_t) {
+        auto target_query = world.query<const KeyEntity, const Transform>();
+        const Alliance *owner_alliance = owner.get<Alliance>();
+        // Environment Singleton Access
+        const EnvironmentModelRef *env_ref = world.get<EnvironmentModelRef>();
+
+        target_query.each([&](flecs::entity target_e, const KeyEntity & /*key*/,
+                              const Transform &target_t) {
             if (target_e == owner) return;
             if (sensor.max_range <= 0.0 || sensor.detection_prob <= 0.0) return;
 
             if (owner_alliance) {
-                const Alliance* target_alliance = target_e.get<Alliance>();
+                const Alliance *target_alliance = target_e.get<Alliance>();
                 if (target_alliance && owner_alliance->side == target_alliance->side) {
                     return;
                 }
@@ -265,8 +244,10 @@ public:
             double dist_sq = dx * dx + dy * dy + dz * dz;
             double maritime_bonus_m = 0.0;
             if (sensor.type == static_cast<int>(SensorType::Radar) &&
-                sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
-                maritime_bonus_m = naval::sensor::maritime_radar_ducting_bonus_m(sensor, env_ref, owner);
+                sensor.environment_domain ==
+                    static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
+                maritime_bonus_m =
+                    naval::sensor::maritime_radar_ducting_bonus_m(sensor, env_ref, owner);
             }
             double effective_max_range = sensor.max_range + maritime_bonus_m;
             double max_sq = effective_max_range * effective_max_range;
@@ -276,18 +257,17 @@ public:
 
             if (sensor.type == static_cast<int>(SensorType::Radar) &&
                 sensor.enforce_radar_horizon &&
-                sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
+                sensor.environment_domain ==
+                    static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
                 const double owner_height = std::max(1.0, sensor.antenna_height_m);
-                const double target_height = naval::sensor::maritime_radar_target_height_m(
-                    sensor,
-                    target_e,
-                    target_t
-                );
+                const double target_height =
+                    naval::sensor::maritime_radar_target_height_m(sensor, target_e, target_t);
                 // Treat the configured max_range for maritime radars as the baseline
                 // public-runtime horizon proxy. This avoids double-penalizing modules
                 // such as SPS-67 whose public runtime range is already calibrated from
                 // owner/target mast heights.
-                const double configured_baseline = std::max(sensor.max_range, horizon_distance_m(owner_height, target_height));
+                const double configured_baseline =
+                    std::max(sensor.max_range, horizon_distance_m(owner_height, target_height));
                 const double horizon_limit = configured_baseline + maritime_bonus_m;
                 if (dist > horizon_limit) {
                     return;
@@ -300,16 +280,16 @@ public:
 
             if (env_ref && env_ref->model) {
                 // 1. Line of Sight
-                if (!env_ref->model->check_line_of_sight(
-                        owner_transform.x, owner_transform.y, owner_transform.z,
-                        target_t.x, target_t.y, target_t.z)) {
+                if (!env_ref->model->check_line_of_sight(owner_transform.x, owner_transform.y,
+                                                         owner_transform.z, target_t.x, target_t.y,
+                                                         target_t.z)) {
                     return; // Obscured
                 }
 
                 // 2. Weather Attenuation
                 double att = env_ref->model->get_weather_attenuation(
-                        owner_transform.x, owner_transform.y, owner_transform.z,
-                        target_t.x, target_t.y, target_t.z, sensor.type);
+                    owner_transform.x, owner_transform.y, owner_transform.z, target_t.x, target_t.y,
+                    target_t.z, sensor.type);
                 weath_factor = 1.0 - att;
 
                 // 3. Sun Glare (Visual/IR)
@@ -318,11 +298,11 @@ public:
                     // Dot product of (ToTarget) and (Sun)
                     if (dist > 1.0) {
                         double udx = dx / dist;
-                        double udy = dy / dist; 
+                        double udy = dy / dist;
                         double udz = dz / dist;
                         double dot = udx * sun.x + udy * sun.y + udz * sun.z;
                         if (dot > 0.98) { // < 11.5 degrees separation
-                            sun_factor = 0.1; 
+                            sun_factor = 0.1;
                         }
                     }
                 }
@@ -332,9 +312,10 @@ public:
             double bearing_math_deg = bearing_rad * 180.0 / M_PI;
             double bearing_nav_deg = math_deg_to_nav_deg(bearing_math_deg);
             double rel_bearing = normalize_angle_deg(bearing_nav_deg - owner_transform.heading);
-            
+
             if (std::abs(rel_bearing) <= sensor.fov_deg / 2.0) {
-                double range_ratio = std::clamp(dist / std::max(1.0, effective_max_range), 0.0, 1.0);
+                double range_ratio =
+                    std::clamp(dist / std::max(1.0, effective_max_range), 0.0, 1.0);
                 double range_power = (sensor.range_power > 0.0) ? sensor.range_power : 1.0;
                 double range_factor = 1.0 - std::pow(range_ratio, range_power);
                 range_factor = std::clamp(range_factor, 0.0, 1.0);
@@ -342,8 +323,9 @@ public:
                 double aspect_factor = 1.0;
                 double aspect_weight = std::clamp(sensor.aspect_influence, 0.0, 1.0);
                 if (aspect_weight > 0.0) {
-                    double los_math_deg = std::atan2(owner_transform.y - target_t.y,
-                                                     owner_transform.x - target_t.x) * 180.0 / M_PI;
+                    double los_math_deg =
+                        std::atan2(owner_transform.y - target_t.y, owner_transform.x - target_t.x) *
+                        180.0 / M_PI;
                     double los_nav_deg = math_deg_to_nav_deg(los_math_deg);
                     double aspect_deg = normalize_angle_deg(los_nav_deg - target_t.heading);
                     double aspect_cos = std::cos(aspect_deg * M_PI / 180.0);
@@ -352,39 +334,35 @@ public:
                 }
 
                 // Doppler Logic
-                const Velocity* owner_v = world.entity(owner).get<Velocity>();
-                const Velocity* target_v = target_e.get<Velocity>();
+                const Velocity *owner_v = world.entity(owner).get<Velocity>();
+                const Velocity *target_v = target_e.get<Velocity>();
                 double doppler_factor = 1.0;
-                
+
                 double v_closing = 0.0;
                 if (owner_v && target_v && dist > 1.0) {
                     double rx = dx / dist;
                     double ry = dy / dist;
                     double rz = dz / dist;
-                    
+
                     double v_rel_x = target_v->vx - owner_v->vx;
                     double v_rel_y = target_v->vy - owner_v->vy;
                     double v_rel_z = target_v->vz - owner_v->vz;
-                    
+
                     v_closing = -(v_rel_x * rx + v_rel_y * ry + v_rel_z * rz);
-                    
-                    double notch_width = sensor.doppler_notch_width > 0.0 ? sensor.doppler_notch_width : 25.0; 
+
+                    double notch_width =
+                        sensor.doppler_notch_width > 0.0 ? sensor.doppler_notch_width : 25.0;
                     if (std::abs(v_closing) < notch_width) {
-                         doppler_factor = 0.1;
+                        doppler_factor = 0.1;
                     }
                 }
 
                 double attenuation_factor = aspect_factor * weath_factor * sun_factor;
                 if (sensor.type == static_cast<int>(SensorType::Radar) &&
-                    sensor.environment_domain == static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
+                    sensor.environment_domain ==
+                        static_cast<int>(SensorEnvironmentDomain::SurfaceMaritime)) {
                     attenuation_factor *= naval::sensor::maritime_radar_sea_clutter_loss(
-                        sensor,
-                        env_ref,
-                        owner,
-                        target_e,
-                        dist,
-                        dz
-                    );
+                        sensor, env_ref, owner, target_e, dist, dz);
                 }
                 double rcs = rcs_for_detection(target_e, owner_transform, target_t);
                 if (sensor.type == static_cast<int>(SensorType::ESM)) {
@@ -394,7 +372,8 @@ public:
                     }
                     rcs = std::max(5.0, emitter_radar.reference_rcs_m2);
                 }
-                double snr_db = compute_snr_db(sensor, dist, rcs, attenuation_factor, doppler_factor);
+                double snr_db =
+                    compute_snr_db(sensor, dist, rcs, attenuation_factor, doppler_factor);
                 double detection_prob = pd_from_snr_db(sensor, snr_db);
                 detection_prob *= std::clamp(sensor.detection_prob, 0.0, 1.0);
                 detection_prob *= range_factor;
@@ -406,7 +385,7 @@ public:
                 if (rand_uniform01(seed_det) > detection_prob) {
                     return;
                 }
-                
+
                 double horizontal_dist = std::sqrt(std::max(0.0, dx * dx + dy * dy));
                 double elevation_deg = 0.0;
                 if (horizontal_dist > 1e-6) {
@@ -415,14 +394,13 @@ public:
 
                 double noisy_bearing = rel_bearing;
                 if (sensor.bearing_noise_std > 0.0) {
-                    noisy_bearing += rand_normal(seed_det ^ 0x12345678ULL,
-                                                 seed_det ^ 0x9abcdef0ULL) *
-                                     sensor.bearing_noise_std;
+                    noisy_bearing +=
+                        rand_normal(seed_det ^ 0x12345678ULL, seed_det ^ 0x9abcdef0ULL) *
+                        sensor.bearing_noise_std;
                 }
                 double noisy_range = dist;
                 if (sensor.range_noise_std > 0.0) {
-                    noisy_range += rand_normal(seed_det ^ 0x87654321ULL,
-                                               seed_det ^ 0x0fedcba9ULL) *
+                    noisy_range += rand_normal(seed_det ^ 0x87654321ULL, seed_det ^ 0x0fedcba9ULL) *
                                    sensor.range_noise_std;
                 }
                 noisy_range = std::max(0.0, noisy_range);
@@ -430,78 +408,65 @@ public:
                 double signal_strength = 0.0;
 
                 if (sensor.type == static_cast<int>(SensorType::Radar)) {
-                     // Radar Equation: Prop to RCS / R^4
-                     if (dist > 1.0) {
-                        signal_strength = rcs / (dist_sq * dist_sq); 
-                     } else {
+                    // Radar Equation: Prop to RCS / R^4
+                    if (dist > 1.0) {
+                        signal_strength = rcs / (dist_sq * dist_sq);
+                    } else {
                         signal_strength = rcs;
-                     }
+                    }
 
-                     // Phase 3: Suppression Jamming (Burn-Through)
-                     const Jammer* jammer = target_e.get<Jammer>();
-                     if (jammer && jammer->is_active && 
-                         (jammer->type == JammingType::NoiseBarrage || jammer->type == JammingType::NoiseSpot)) {
-                         
-                         // Burn-Through Range: R_bt = K * sqrt(sigma / P_j)
-                         // K derived from R_bt=20km, sigma=5, P_j=1000 => K ~ 283000
-                         const double K_BT = 283000.0; 
-                         double p_j = jammer->power_watts > 1.0 ? jammer->power_watts : 1.0;
-                         double r_bt = K_BT * std::sqrt(rcs / p_j);
+                    // Phase 3: Suppression Jamming (Burn-Through)
+                    const Jammer *jammer = target_e.get<Jammer>();
+                    if (jammer && jammer->is_active &&
+                        (jammer->type == JammingType::NoiseBarrage ||
+                         jammer->type == JammingType::NoiseSpot)) {
 
-                         if (dist > r_bt) {
-                             // Jamming Effective: Target hidden (Noise suppressed)
-                             return; 
-                         }
-                     }
+                        // Burn-Through Range: R_bt = K * sqrt(sigma / P_j)
+                        // K derived from R_bt=20km, sigma=5, P_j=1000 => K ~ 283000
+                        const double K_BT = 283000.0;
+                        double p_j = jammer->power_watts > 1.0 ? jammer->power_watts : 1.0;
+                        double r_bt = K_BT * std::sqrt(rcs / p_j);
+
+                        if (dist > r_bt) {
+                            // Jamming Effective: Target hidden (Noise suppressed)
+                            return;
+                        }
+                    }
                 } else if (sensor.type == static_cast<int>(SensorType::Infrared)) {
-                     // IR: Prop to Heat / R^2
-                     // Hack: If target has Lifetime (Decoy) assume Flare
-                     if (target_e.has<Lifetime>()) {
-                         signal_strength = 500.0 / dist_sq;
-                     } else {
-                         signal_strength = 50.0 / dist_sq;
-                     }
+                    // IR: Prop to Heat / R^2
+                    // Hack: If target has Lifetime (Decoy) assume Flare
+                    if (target_e.has<Lifetime>()) {
+                        signal_strength = 500.0 / dist_sq;
+                    } else {
+                        signal_strength = 50.0 / dist_sq;
+                    }
                 } else if (sensor.type == static_cast<int>(SensorType::ESM)) {
-                     signal_strength = 1.0 / std::max(1.0, dist_sq);
+                    signal_strength = 1.0 / std::max(1.0, dist_sq);
                 } else {
-                     // Visual
-                     signal_strength = 1.0 / dist_sq;
+                    // Visual
+                    signal_strength = 1.0 / dist_sq;
                 }
 
                 double measured_vr = v_closing;
                 if (sensor.velocity_noise_std > 0.0) {
-                    measured_vr += rand_normal(seed_det ^ 0x24681357ULL,
-                                               seed_det ^ 0x13572468ULL) *
+                    measured_vr += rand_normal(seed_det ^ 0x24681357ULL, seed_det ^ 0x13572468ULL) *
                                    sensor.velocity_noise_std;
                 }
 
-                const bool bearing_only = sensor.bearing_only || sensor.type == static_cast<int>(SensorType::ESM);
+                const bool bearing_only =
+                    sensor.bearing_only || sensor.type == static_cast<int>(SensorType::ESM);
                 if (sensor.type == static_cast<int>(SensorType::Radar)) {
                     append_rwr_detection_from_radar(sensor, owner, target_e, dist, false);
                 } else if (sensor.type == static_cast<int>(SensorType::ESM)) {
-                    append_esm_detection_from_emitter(
-                        owner,
-                        target_e,
-                        sensor,
-                        dist,
-                        normalize_angle_deg(noisy_bearing)
-                    );
+                    append_esm_detection_from_emitter(owner, target_e, sensor, dist,
+                                                      normalize_angle_deg(noisy_bearing));
                 }
 
-                out_contacts.contacts.push_back({
-                    target_e.id(),
-                    bearing_only ? 0.0 : noisy_range,
-                    normalize_angle_deg(noisy_bearing),
-                    std::clamp(elevation_deg, -90.0, 90.0),
-                    measured_vr,
-                    signal_strength,
-                    snr_db,
-                    detection_prob,
-                    measured_vr,
-                    sensor.type,
-                    true,
-                    current_time
-                });
+                out_contacts.contacts.push_back(
+                    {target_e.id(), bearing_only ? 0.0 : noisy_range,
+                     normalize_angle_deg(noisy_bearing), std::clamp(elevation_deg, -90.0, 90.0),
+                     measured_vr, signal_strength, snr_db, detection_prob, measured_vr, sensor.type,
+                     true, current_time});
             }
         });
     }

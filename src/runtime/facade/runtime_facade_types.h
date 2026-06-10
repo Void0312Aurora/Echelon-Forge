@@ -161,8 +161,7 @@ struct RuntimeCounterfactualBranchRequest {
     std::string branch_worldline_id;
     std::string parent_worldline_id;
     std::string restore_barrier_id = "counterfactual_selected_slice";
-    std::string cadence_reason =
-        "selected_slice_cadence_trace_runtime_window_wp17c";
+    std::string cadence_reason = "selected_slice_cadence_trace_runtime_window_wp17c";
     double mutation_dx = 0.0;
     double mutation_dy = 0.0;
     double mutation_dz = 0.0;
@@ -212,9 +211,7 @@ struct RuntimeExperimentStepRequest {
     std::string observation_ref;
     std::string profile_ref;
     std::string claim_scope =
-        std::string(
-            runtime::counterfactual::kExperimentProfileClaimScopeDescriptive
-        );
+        std::string(runtime::counterfactual::kExperimentProfileClaimScopeDescriptive);
     std::vector<std::string> evidence_refs;
 };
 
@@ -229,13 +226,9 @@ struct RuntimeExperimentRequest {
     std::string generation_ref;
     std::string generated_input_ref;
     std::string generated_input_kind =
-        std::string(
-            runtime::counterfactual::kScenarioGenerationKindScenarioVariation
-        );
+        std::string(runtime::counterfactual::kScenarioGenerationKindScenarioVariation);
     std::string generated_input_source =
-        std::string(
-            runtime::counterfactual::kScenarioGenerationSourceCounterfactualBranch
-        );
+        std::string(runtime::counterfactual::kScenarioGenerationSourceCounterfactualBranch);
     std::string generated_input_generator_version =
         "RuntimeFacade.run_counterfactual_experiment.wp21";
     std::string generated_input_baseline_scenario_ref;
@@ -297,10 +290,8 @@ struct ObservationBatchPacket {
     std::string barrier_id = "export";
     double source_time_s = 0.0;
     InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateAgentObservation,
-        kPolicySourceLabelFacadeObservationPacket,
-        kPolicyMaintainedStatusMaintained
-    );
+        kPolicyInformationStateAgentObservation, kPolicySourceLabelFacadeObservationPacket,
+        kPolicyMaintainedStatusMaintained);
     std::vector<WorldEntityRef> refs;
     std::vector<AgentObservation> agent_observations;
     std::vector<InstrumentState> instrument_states;
@@ -314,15 +305,11 @@ struct EngagementEventPacket {
     double source_time_s = 0.0;
     std::string producer_node_id;
     InformationStateSource packet_provenance = make_information_state_source(
-        kPolicyInformationStateTrackState,
-        kPolicySourceLabelTrackStatePacket,
-        kPolicyMaintainedStatusMaintained
-    );
+        kPolicyInformationStateTrackState, kPolicySourceLabelTrackStatePacket,
+        kPolicyMaintainedStatusMaintained);
     InformationStateSource diagnostics_provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief,
-        kPolicySourceLabelWorldTruthDiagnostics,
-        kPolicyMaintainedStatusDiagnosticsOnly
-    );
+        kPolicyInformationStateDecisionBelief, kPolicySourceLabelWorldTruthDiagnostics,
+        kPolicyMaintainedStatusDiagnosticsOnly);
     std::vector<EngagementEntityRef> refs;
     std::vector<std::uint64_t> trace_ids;
     std::vector<TrackPacket> track_packets;
@@ -349,10 +336,8 @@ struct TaskingBatchPacket {
     std::string barrier_id = "tasking_export";
     double source_time_s = 0.0;
     InformationStateSource provenance = make_information_state_source(
-        kPolicyInformationStateDecisionBelief,
-        "facade_tasking_packet",
-        kPolicyMaintainedStatusCompatibilityAdapter
-    );
+        kPolicyInformationStateDecisionBelief, "facade_tasking_packet",
+        kPolicyMaintainedStatusCompatibilityAdapter);
     std::vector<WorldEntityRef> refs;
     std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;
     std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;

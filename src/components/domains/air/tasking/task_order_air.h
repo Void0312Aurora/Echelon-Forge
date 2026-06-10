@@ -10,7 +10,7 @@ struct TaskOrderAir {
         std::uint64_t recovery_runway_id = 0;
         RecoveryApproachType recovery_approach_type = RecoveryApproachType::None;
 
-        bool operator==(const RecoveryDirective&) const = default;
+        bool operator==(const RecoveryDirective &) const = default;
     };
 
     struct TakeoffDirective {
@@ -19,7 +19,7 @@ struct TaskOrderAir {
         double takeoff_interval_s = 0.0;
         RunwaySlotPosition runway_slot_id = RunwaySlotPosition::Unspecified;
 
-        bool operator==(const TakeoffDirective&) const = default;
+        bool operator==(const TakeoffDirective &) const = default;
     };
 
     TaskType task_type = TaskType::Idle;
@@ -68,7 +68,7 @@ using TaskOrderAirOwnerSlice = TaskOrderAir;
 inline constexpr bool kTaskOrderAirOwnedDomainSlice = true;
 
 [[nodiscard]] inline TaskOrderAir::RecoveryDirective
-task_order_air_recovery_directive(const TaskOrderAirOwnerSlice& air) noexcept {
+task_order_air_recovery_directive(const TaskOrderAirOwnerSlice &air) noexcept {
     return {
         .recovery_base_id = air.recovery_base_id,
         .recovery_runway_id = air.recovery_runway_id,
@@ -77,7 +77,7 @@ task_order_air_recovery_directive(const TaskOrderAirOwnerSlice& air) noexcept {
 }
 
 [[nodiscard]] inline TaskOrderAir::TakeoffDirective
-task_order_air_takeoff_directive(const TaskOrderAirOwnerSlice& air) noexcept {
+task_order_air_takeoff_directive(const TaskOrderAirOwnerSlice &air) noexcept {
     return {
         .takeoff_procedure_id = air.takeoff_procedure_id,
         .takeoff_clearance_id = air.takeoff_clearance_id,

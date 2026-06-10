@@ -14,24 +14,24 @@
 #endif
 
 namespace {
-    constexpr double kAeroScalarCanonicalQuantum = 1.0e-10;
-    constexpr double kAeroAngleCanonicalQuantumDeg = 0x1p-40;
+constexpr double kAeroScalarCanonicalQuantum = 1.0e-10;
+constexpr double kAeroAngleCanonicalQuantumDeg = 0x1p-40;
 
-    inline double canonicalize_aero_scalar(double value, double quantum) {
-        if (!std::isfinite(value) || quantum <= 0.0) {
-            return value;
-        }
-        if (std::abs(value) <= (quantum * 0.5)) {
-            return 0.0;
-        }
-        const double rounded = std::nearbyint(value / quantum) * quantum;
-        return std::abs(rounded) <= (quantum * 0.5) ? 0.0 : rounded;
+inline double canonicalize_aero_scalar(double value, double quantum) {
+    if (!std::isfinite(value) || quantum <= 0.0) {
+        return value;
     }
-
-    inline double canonicalize_aero_angle_deg(double value) {
-        return canonicalize_aero_scalar(value, kAeroAngleCanonicalQuantumDeg);
+    if (std::abs(value) <= (quantum * 0.5)) {
+        return 0.0;
     }
+    const double rounded = std::nearbyint(value / quantum) * quantum;
+    return std::abs(rounded) <= (quantum * 0.5) ? 0.0 : rounded;
 }
+
+inline double canonicalize_aero_angle_deg(double value) {
+    return canonicalize_aero_scalar(value, kAeroAngleCanonicalQuantumDeg);
+}
+} // namespace
 
 /**
  * AeroStateSystem
@@ -42,11 +42,11 @@ namespace {
  * - Dynamic Pressure (q)
  * - Mach Number
  */
-inline void register_aero_state_system(flecs::world& ecs) {
+inline void register_aero_state_system(flecs::world &ecs) {
     ecs.system<AeroState, const Transform, const Velocity>("ComputeAeroState")
         .kind(flecs::OnUpdate)
-        .run([](flecs::iter& it) {
-            const EnvironmentModelRef* env_ref = it.world().get<EnvironmentModelRef>();
+        .run([](flecs::iter &it) {
+            const EnvironmentModelRef *env_ref = it.world().get<EnvironmentModelRef>();
             double dt = it.delta_time();
             if (dt <= 0.0) {
                 dt = 0.05;
@@ -103,7 +103,7 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     double vy = vy_gnd - wind.y;
                     double vz = vz_gnd - wind.z;
 
-                    double v_sq = vx*vx + vy*vy + vz*vz;
+                    double v_sq = vx * vx + vy * vy + vz * vz;
 
                     double v_total = std::sqrt(v_sq);
 
@@ -111,9 +111,7 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     aero[i].dynamic_pressure = 0.5 * rho * v_sq;
                     aero[i].mach_number = (speed_of_sound > 1.0) ? (v_total / speed_of_sound) : 0.0;
                     aero[i].dynamic_pressure = canonicalize_aero_scalar(
-                        aero[i].dynamic_pressure,
-                        kAeroScalarCanonicalQuantum
-                    );
+                        aero[i].dynamic_pressure, kAeroScalarCanonicalQuantum);
                     aero[i].mach_number = canonicalize_aero_angle_deg(aero[i].mach_number);
 
                     // 3. Body Frame Velocity for Alpha/Beta
@@ -132,8 +130,9 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     beta_arg = std::clamp(beta_arg, -1.0, 1.0);
                     const double beta_raw = Math::to_degrees(std::asin(beta_arg));
 
-                    // Smooth low-speed transition to avoid abrupt angle jumps during taxi/takeoff roll.
-                    // Keep previous angles at very low speed and blend toward measured values as speed rises.
+                    // Smooth low-speed transition to avoid abrupt angle jumps during taxi/takeoff
+                    // roll. Keep previous angles at very low speed and blend toward measured values
+                    // as speed rises.
                     constexpr double kBlendStartMps = 2.0;
                     constexpr double kBlendEndMps = 8.0;
                     double w = 1.0;
@@ -149,8 +148,10 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     aero[i].sideslip_angle = (1.0 - w) * aero[i].sideslip_angle + w * beta_raw;
 
                     // Clamp for safety
-                    aero[i].angle_of_attack = std::max(-90.0, std::min(90.0, aero[i].angle_of_attack));
-                    aero[i].sideslip_angle = std::max(-90.0, std::min(90.0, aero[i].sideslip_angle));
+                    aero[i].angle_of_attack =
+                        std::max(-90.0, std::min(90.0, aero[i].angle_of_attack));
+                    aero[i].sideslip_angle =
+                        std::max(-90.0, std::min(90.0, aero[i].sideslip_angle));
                     aero[i].angle_of_attack = canonicalize_aero_angle_deg(aero[i].angle_of_attack);
                     aero[i].sideslip_angle = canonicalize_aero_angle_deg(aero[i].sideslip_angle);
 
@@ -158,8 +159,7 @@ inline void register_aero_state_system(flecs::world& ecs) {
                     if (w > 0.0 && dt > 1.0e-6) {
                         aero[i].angle_of_attack_rate_dps = canonicalize_aero_scalar(
                             (aero[i].angle_of_attack - previous_alpha) / dt,
-                            kAeroAngleCanonicalQuantumDeg
-                        );
+                            kAeroAngleCanonicalQuantumDeg);
                     } else {
                         aero[i].angle_of_attack_rate_dps = 0.0;
                     }

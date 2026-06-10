@@ -19,15 +19,11 @@
 
 namespace {
 
-Transform local_body_point_to_world_transform(
-    const Transform& target_transform,
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m
-) {
-    const Math::Vector3 world_delta = Math::body_to_world(
-        {local_forward_m, -local_right_m, local_up_m},
-        target_transform);
+Transform local_body_point_to_world_transform(const Transform &target_transform,
+                                              double local_forward_m, double local_right_m,
+                                              double local_up_m) {
+    const Math::Vector3 world_delta =
+        Math::body_to_world({local_forward_m, -local_right_m, local_up_m}, target_transform);
     return {
         target_transform.x + world_delta.x,
         target_transform.y + world_delta.y,
@@ -38,12 +34,8 @@ Transform local_body_point_to_world_transform(
     };
 }
 
-std::array<double, 3> world_point_to_local_body(
-    const Transform& target_transform,
-    double world_x,
-    double world_y,
-    double world_z
-) {
+std::array<double, 3> world_point_to_local_body(const Transform &target_transform, double world_x,
+                                                double world_y, double world_z) {
     const Math::Vector3 local = Math::world_to_body(
         {
             world_x - target_transform.x,
@@ -58,21 +50,15 @@ std::array<double, 3> world_point_to_local_body(
     };
 }
 
-std::array<double, 3> velocity_axis_in_target_body(
-    const Transform& target_transform,
-    double vx,
-    double vy,
-    double vz
-) {
+std::array<double, 3> velocity_axis_in_target_body(const Transform &target_transform, double vx,
+                                                   double vy, double vz) {
     const double norm = std::sqrt(vx * vx + vy * vy + vz * vz);
     if (norm <= 1.0e-9) {
         return {0.0, 0.0, 0.0};
     }
-    const auto local_velocity = world_point_to_local_body(
-        target_transform,
-        target_transform.x + vx,
-        target_transform.y + vy,
-        target_transform.z + vz);
+    const auto local_velocity =
+        world_point_to_local_body(target_transform, target_transform.x + vx,
+                                  target_transform.y + vy, target_transform.z + vz);
     return {
         local_velocity[0] / norm,
         local_velocity[1] / norm,
@@ -80,14 +66,10 @@ std::array<double, 3> velocity_axis_in_target_body(
     };
 }
 
-double resolve_closure_from_impact(
-    const Transform& target_transform,
-    const Transform& impact_transform,
-    const Velocity* target_velocity,
-    double missile_vx,
-    double missile_vy,
-    double missile_vz
-) {
+double resolve_closure_from_impact(const Transform &target_transform,
+                                   const Transform &impact_transform,
+                                   const Velocity *target_velocity, double missile_vx,
+                                   double missile_vy, double missile_vz) {
     const double target_vx = target_velocity ? target_velocity->vx : 0.0;
     const double target_vy = target_velocity ? target_velocity->vy : 0.0;
     const double target_vz = target_velocity ? target_velocity->vz : 0.0;
@@ -107,52 +89,43 @@ double resolve_closure_from_impact(
     return std::max(0.0, -(rel_vx * ux + rel_vy * uy + rel_vz * uz));
 }
 
-double local_miss_distance_m(
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m
-) {
-    return std::sqrt(
-        local_forward_m * local_forward_m +
-        local_right_m * local_right_m +
-        local_up_m * local_up_m);
+double local_miss_distance_m(double local_forward_m, double local_right_m, double local_up_m) {
+    return std::sqrt(local_forward_m * local_forward_m + local_right_m * local_right_m +
+                     local_up_m * local_up_m);
 }
 
 struct DebugEffectsDamageEventRecordInput {
     uint64_t munition_entity_id;
     uint64_t target_id;
-    const EngagementDamageStateSnapshot& before;
-    const EngagementDamageStateSnapshot& after;
-    const Missile& synthetic_missile;
-    const EffectsResult& effects_result;
-    const Transform& detonation_transform;
+    const EngagementDamageStateSnapshot &before;
+    const EngagementDamageStateSnapshot &after;
+    const Missile &synthetic_missile;
+    const EffectsResult &effects_result;
+    const Transform &detonation_transform;
     std::array<double, 3> detonation_local;
     std::array<double, 3> missile_axis;
-    const char* trigger_type;
+    const char *trigger_type;
     double event_time_s;
     double fuse_distance_m;
     double closure_mps;
     bool use_profiled_warhead_fields;
 };
 
-EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record(
-    const DebugEffectsDamageEventRecordInput& input
-) {
+EngagementEffectsDamageEventRecord
+build_debug_effects_damage_event_record(const DebugEffectsDamageEventRecordInput &input) {
     EngagementEffectsDamageEventRecord event_record{};
     event_record.munition_entity_id = input.munition_entity_id;
     event_record.target_id = input.target_id;
     event_record.before = input.before;
     event_record.after = input.after;
 
-    EffectsEvent& effects = event_record.effects;
+    EffectsEvent &effects = event_record.effects;
     effects.trigger_type = input.trigger_type;
     effects.outcome_state = "hit";
     effects.detonation_time_s = input.event_time_s;
     effects.nearest_approach_time_s = input.event_time_s;
     effects.miss_distance_m = local_miss_distance_m(
-        input.detonation_local[0],
-        input.detonation_local[1],
-        input.detonation_local[2]);
+        input.detonation_local[0], input.detonation_local[1], input.detonation_local[2]);
     effects.detonation_local_forward_m = input.detonation_local[0];
     effects.detonation_local_right_m = input.detonation_local[1];
     effects.detonation_local_up_m = input.detonation_local[2];
@@ -168,8 +141,8 @@ EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record(
     effects.effect_family = warhead_effect_family(input.synthetic_missile.warhead_profile);
     if (input.use_profiled_warhead_fields) {
         effects.warhead_mass_kg = std::isfinite(input.synthetic_missile.warhead_profile.mass_kg)
-            ? input.synthetic_missile.warhead_profile.mass_kg
-            : 0.0;
+                                      ? input.synthetic_missile.warhead_profile.mass_kg
+                                      : 0.0;
         effects.warhead_lethal_radius_m =
             std::isfinite(input.synthetic_missile.warhead_profile.lethal_radius_m)
                 ? input.synthetic_missile.warhead_profile.lethal_radius_m
@@ -194,32 +167,28 @@ EngagementEffectsDamageEventRecord build_debug_effects_damage_event_record(
     return event_record;
 }
 
-}  // namespace
+} // namespace
 
-
-bool SimulationKernel::debug_apply_proximity_hit(
-    uint64_t attacker_id,
-    uint64_t target_id,
-    double damage,
-    double fuse_distance
-) {
+bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id,
+                                                 double damage, double fuse_distance) {
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_valid() || !target.is_valid()) {
         return false;
     }
 
-    const Transform* target_transform = target.get<Transform>();
+    const Transform *target_transform = target.get<Transform>();
     if (!target_transform) {
         return false;
     }
 
-    const EffectsModelRef* effects_ref = ecs.get<EffectsModelRef>();
+    const EffectsModelRef *effects_ref = ecs.get<EffectsModelRef>();
     if (!effects_ref || !effects_ref->model) {
         return false;
     }
 
-    const EngagementDamageStateSnapshot before = engagement_event_store_->capture_engagement_damage_state(target_id);
+    const EngagementDamageStateSnapshot before =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -237,41 +206,36 @@ bool SimulationKernel::debug_apply_proximity_hit(
     synthetic.max_flight_time_s = 30.0;
     synthetic.nav_gain = 3.0;
     synthetic.active = true;
-    synthetic.warhead_profile = make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
-    synthetic.fuze_profile = make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
+    synthetic.warhead_profile =
+        make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
+    synthetic.fuze_profile =
+        make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
     synthetic.rng_state = 123456789ULL;
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
 
-    const KeyEntity* target_key = target.get<KeyEntity>();
-    const bool structured_air_target = target_key &&
+    const KeyEntity *target_key = target.get<KeyEntity>();
+    const bool structured_air_target =
+        target_key &&
         (target_key->type == UnitType::Aircraft || target_key->type == UnitType::C2Node) &&
-        target.get<HitboxConfig>() != nullptr &&
-        target.get<SystemHealth>() != nullptr &&
+        target.get<HitboxConfig>() != nullptr && target.get<SystemHealth>() != nullptr &&
         target.get<PlatformDamageState>() != nullptr;
 
     const Transform impact_transform = local_body_point_to_world_transform(
-        *target_transform,
-        0.0,
-        0.0,
-        structured_air_target ? 0.0 : 2.0);
+        *target_transform, 0.0, 0.0, structured_air_target ? 0.0 : 2.0);
 
-    auto impact = ecs.entity()
-        .set<Transform>(impact_transform)
-        .set<Missile>(synthetic)
-        .add<SimObject>();
+    auto impact =
+        ecs.entity().set<Transform>(impact_transform).set<Missile>(synthetic).add<SimObject>();
 
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
-    const EngagementDamageStateSnapshot after = engagement_event_store_->capture_engagement_damage_state(target_id);
-    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    const EngagementDamageStateSnapshot after =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
+    const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
-    const auto detonation_local = world_point_to_local_body(
-        *target_transform,
-        impact_transform.x,
-        impact_transform.y,
-        impact_transform.z);
+    const auto detonation_local = world_point_to_local_body(*target_transform, impact_transform.x,
+                                                            impact_transform.y, impact_transform.z);
     EngagementEffectsDamageEventRecord event_record = build_debug_effects_damage_event_record({
         static_cast<uint64_t>(impact.id()),
         target_id,
@@ -293,32 +257,28 @@ bool SimulationKernel::debug_apply_proximity_hit(
     return true;
 }
 
-bool SimulationKernel::debug_apply_local_proximity_hit(
-    uint64_t attacker_id,
-    uint64_t target_id,
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m,
-    double damage,
-    double fuse_distance
-) {
+bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uint64_t target_id,
+                                                       double local_forward_m, double local_right_m,
+                                                       double local_up_m, double damage,
+                                                       double fuse_distance) {
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_valid() || !target.is_valid()) {
         return false;
     }
 
-    const Transform* target_transform = target.get<Transform>();
+    const Transform *target_transform = target.get<Transform>();
     if (!target_transform) {
         return false;
     }
 
-    const EffectsModelRef* effects_ref = ecs.get<EffectsModelRef>();
+    const EffectsModelRef *effects_ref = ecs.get<EffectsModelRef>();
     if (!effects_ref || !effects_ref->model) {
         return false;
     }
 
-    const EngagementDamageStateSnapshot before = engagement_event_store_->capture_engagement_damage_state(target_id);
+    const EngagementDamageStateSnapshot before =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -336,33 +296,28 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
     synthetic.max_flight_time_s = 30.0;
     synthetic.nav_gain = 3.0;
     synthetic.active = true;
-    synthetic.warhead_profile = make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
-    synthetic.fuze_profile = make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
+    synthetic.warhead_profile =
+        make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
+    synthetic.fuze_profile =
+        make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
     synthetic.rng_state = 123456789ULL;
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
 
     const Transform impact_transform = local_body_point_to_world_transform(
-        *target_transform,
-        local_forward_m,
-        local_right_m,
-        local_up_m);
-    auto impact = ecs.entity()
-        .set<Transform>(impact_transform)
-        .set<Missile>(synthetic)
-        .add<SimObject>();
+        *target_transform, local_forward_m, local_right_m, local_up_m);
+    auto impact =
+        ecs.entity().set<Transform>(impact_transform).set<Missile>(synthetic).add<SimObject>();
 
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
-    const EngagementDamageStateSnapshot after = engagement_event_store_->capture_engagement_damage_state(target_id);
-    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    const EngagementDamageStateSnapshot after =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
+    const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
-    const auto detonation_local = world_point_to_local_body(
-        *target_transform,
-        impact_transform.x,
-        impact_transform.y,
-        impact_transform.z);
+    const auto detonation_local = world_point_to_local_body(*target_transform, impact_transform.x,
+                                                            impact_transform.y, impact_transform.z);
     EngagementEffectsDamageEventRecord event_record = build_debug_effects_damage_event_record({
         static_cast<uint64_t>(impact.id()),
         target_id,
@@ -385,97 +340,58 @@ bool SimulationKernel::debug_apply_local_proximity_hit(
 }
 
 bool SimulationKernel::debug_apply_profiled_local_proximity_hit(
-    uint64_t attacker_id,
-    uint64_t target_id,
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m,
-    const WarheadProfile& warhead_profile
-) {
+    uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
+    double local_up_m, const WarheadProfile &warhead_profile) {
     return debug_apply_profiled_local_proximity_hit_with_velocity(
-        attacker_id,
-        target_id,
-        local_forward_m,
-        local_right_m,
-        local_up_m,
-        warhead_profile,
-        0.0,
-        0.0,
-        0.0);
+        attacker_id, target_id, local_forward_m, local_right_m, local_up_m, warhead_profile, 0.0,
+        0.0, 0.0);
 }
 
 bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
-    uint64_t attacker_id,
-    uint64_t target_id,
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m,
-    const WarheadProfile& warhead_profile,
-    double missile_vx_mps,
-    double missile_vy_mps,
-    double missile_vz_mps
-) {
+    uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
+    double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
+    double missile_vy_mps, double missile_vz_mps) {
     const auto target = ecs.entity(target_id);
-    const Transform* target_transform = target.is_alive() ? target.get<Transform>() : nullptr;
+    const Transform *target_transform = target.is_alive() ? target.get<Transform>() : nullptr;
     return debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
-        attacker_id,
-        target_id,
-        local_forward_m,
-        local_right_m,
-        local_up_m,
-        warhead_profile,
-        missile_vx_mps,
-        missile_vy_mps,
-        missile_vz_mps,
+        attacker_id, target_id, local_forward_m, local_right_m, local_up_m, warhead_profile,
+        missile_vx_mps, missile_vy_mps, missile_vz_mps,
         target_transform ? target_transform->heading : 0.0,
         target_transform ? target_transform->pitch : 0.0,
         target_transform ? target_transform->roll : 0.0);
 }
 
 bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
-    uint64_t attacker_id,
-    uint64_t target_id,
-    double local_forward_m,
-    double local_right_m,
-    double local_up_m,
-    const WarheadProfile& warhead_profile,
-    double missile_vx_mps,
-    double missile_vy_mps,
-    double missile_vz_mps,
-    double detonation_heading_deg,
-    double detonation_pitch_deg,
-    double detonation_roll_deg
-) {
+    uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
+    double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
+    double missile_vy_mps, double missile_vz_mps, double detonation_heading_deg,
+    double detonation_pitch_deg, double detonation_roll_deg) {
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_alive() || !target.is_alive()) {
         return false;
     }
 
-    const Transform* target_transform_component = target.get<Transform>();
+    const Transform *target_transform_component = target.get<Transform>();
     if (!target_transform_component) {
         return false;
     }
     const Transform target_transform = *target_transform_component;
-    const Velocity* target_velocity_component = target.get<Velocity>();
-    const Velocity target_velocity_snapshot = target_velocity_component
-        ? *target_velocity_component
-        : Velocity{};
-    const Velocity* target_velocity = target_velocity_component
-        ? &target_velocity_snapshot
-        : nullptr;
+    const Velocity *target_velocity_component = target.get<Velocity>();
+    const Velocity target_velocity_snapshot =
+        target_velocity_component ? *target_velocity_component : Velocity{};
+    const Velocity *target_velocity =
+        target_velocity_component ? &target_velocity_snapshot : nullptr;
 
-    const EffectsModelRef* effects_ref = ecs.get<EffectsModelRef>();
+    const EffectsModelRef *effects_ref = ecs.get<EffectsModelRef>();
     if (!effects_ref || !effects_ref->model) {
         return false;
     }
 
-    const double damage = std::isfinite(warhead_profile.damage_scalar)
-        ? warhead_profile.damage_scalar
-        : 180.0;
-    const double fuse_distance = std::isfinite(warhead_profile.lethal_radius_m)
-        ? warhead_profile.lethal_radius_m
-        : 80.0;
+    const double damage =
+        std::isfinite(warhead_profile.damage_scalar) ? warhead_profile.damage_scalar : 180.0;
+    const double fuse_distance =
+        std::isfinite(warhead_profile.lethal_radius_m) ? warhead_profile.lethal_radius_m : 80.0;
     WarheadProfile resolved_profile = warhead_profile;
     if (!std::isfinite(resolved_profile.damage_scalar)) {
         resolved_profile.damage_scalar = damage;
@@ -485,7 +401,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
         resolved_profile.lethal_radius_m = fuse_distance;
     }
 
-    const EngagementDamageStateSnapshot before = engagement_event_store_->capture_engagement_damage_state(target_id);
+    const EngagementDamageStateSnapshot before =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
 
     Missile synthetic{};
     synthetic.attacker_id = attacker_id;
@@ -504,49 +421,38 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     synthetic.nav_gain = 3.0;
     synthetic.active = true;
     synthetic.warhead_profile = resolved_profile;
-    synthetic.fuze_profile = make_synthetic_fuze_profile(fuse_distance, "debug_profiled_fuze_distance");
+    synthetic.fuze_profile =
+        make_synthetic_fuze_profile(fuse_distance, "debug_profiled_fuze_distance");
     synthetic.rng_state = 123456789ULL;
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
 
     const Transform impact_transform = local_body_point_to_world_transform(
-        target_transform,
-        local_forward_m,
-        local_right_m,
-        local_up_m);
+        target_transform, local_forward_m, local_right_m, local_up_m);
     Transform detonation_transform = impact_transform;
     detonation_transform.heading = detonation_heading_deg;
     detonation_transform.pitch = detonation_pitch_deg;
     detonation_transform.roll = detonation_roll_deg;
     auto impact = ecs.entity()
-        .set<Transform>(detonation_transform)
-        .set<Velocity>({missile_vx_mps, missile_vy_mps, missile_vz_mps})
-        .set<Missile>(synthetic)
-        .add<SimObject>();
+                      .set<Transform>(detonation_transform)
+                      .set<Velocity>({missile_vx_mps, missile_vy_mps, missile_vz_mps})
+                      .set<Missile>(synthetic)
+                      .add<SimObject>();
 
     const EffectsResult effects_result =
         effects_ref->model->on_proximity_hit(ecs, impact, synthetic, target);
-    const EngagementDamageStateSnapshot after = engagement_event_store_->capture_engagement_damage_state(target_id);
-    const ecs_world_info_t* info = ecs_get_world_info(ecs.c_ptr());
+    const EngagementDamageStateSnapshot after =
+        engagement_event_store_->capture_engagement_damage_state(target_id);
+    const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
     const double current_time = info ? static_cast<double>(info->world_time_total) : 0.0;
-    const auto detonation_local = world_point_to_local_body(
-        target_transform,
-        impact_transform.x,
-        impact_transform.y,
-        impact_transform.z);
-    const auto missile_axis = velocity_axis_in_target_body(
-        target_transform,
-        missile_vx_mps,
-        missile_vy_mps,
-        missile_vz_mps);
-    const double closure_mps = resolve_closure_from_impact(
-        target_transform,
-        impact_transform,
-        target_velocity,
-        missile_vx_mps,
-        missile_vy_mps,
-        missile_vz_mps);
+    const auto detonation_local = world_point_to_local_body(target_transform, impact_transform.x,
+                                                            impact_transform.y, impact_transform.z);
+    const auto missile_axis = velocity_axis_in_target_body(target_transform, missile_vx_mps,
+                                                           missile_vy_mps, missile_vz_mps);
+    const double closure_mps =
+        resolve_closure_from_impact(target_transform, impact_transform, target_velocity,
+                                    missile_vx_mps, missile_vy_mps, missile_vz_mps);
     EngagementEffectsDamageEventRecord event_record = build_debug_effects_damage_event_record({
         static_cast<uint64_t>(impact.id()),
         target_id,

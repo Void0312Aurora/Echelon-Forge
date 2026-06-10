@@ -10,10 +10,10 @@
 // New maintained systems should resolve legacy fallback through this header
 // instead of re-implementing MovementCommand/ActionCommand probing inline.
 struct ResolvedAirCommandInputSources {
-    const PilotAction* pilot = nullptr;
-    const MissionCommandControlState* control_state = nullptr;
-    const MovementCommand* legacy_movement = nullptr;
-    const ActionCommand* legacy_action = nullptr;
+    const PilotAction *pilot = nullptr;
+    const MissionCommandControlState *control_state = nullptr;
+    const MovementCommand *legacy_movement = nullptr;
+    const ActionCommand *legacy_action = nullptr;
 };
 
 struct ResolvedGroundControlInput {
@@ -43,48 +43,40 @@ struct ResolvedAirControlInput {
     ResolvedAirNoseWheelSteeringInput nose_wheel_steering{};
 };
 
-inline const PilotAction* active_pilot_action(const PilotAction* pilot) {
+inline const PilotAction *active_pilot_action(const PilotAction *pilot) {
     return (pilot && pilot->active) ? pilot : nullptr;
 }
 
-inline const MovementCommand* active_legacy_movement_command(const MovementCommand* legacy) {
+inline const MovementCommand *active_legacy_movement_command(const MovementCommand *legacy) {
     return (legacy && legacy->active) ? legacy : nullptr;
 }
 
-inline const ActionCommand* active_legacy_action_command(const ActionCommand* legacy_action) {
+inline const ActionCommand *active_legacy_action_command(const ActionCommand *legacy_action) {
     return (legacy_action && legacy_action->active) ? legacy_action : nullptr;
 }
 
-inline const MissionCommandControlState* active_mission_command_control_state(
-    const MissionCommandControlState* control_state
-) {
-    return (control_state && (
-        control_state->active ||
-        control_state->lagged_active ||
-        mission_command_typed_air_control_active(control_state->typed_air_control)
-    ))
-        ? control_state
-        : nullptr;
+inline const MissionCommandControlState *
+active_mission_command_control_state(const MissionCommandControlState *control_state) {
+    return (control_state &&
+            (control_state->active || control_state->lagged_active ||
+             mission_command_typed_air_control_active(control_state->typed_air_control)))
+               ? control_state
+               : nullptr;
 }
 
-inline const MovementCommand* active_compatibility_legacy_movement_command(
-    const MovementCommand* legacy_movement
-) {
+inline const MovementCommand *
+active_compatibility_legacy_movement_command(const MovementCommand *legacy_movement) {
     return active_legacy_movement_command(legacy_movement);
 }
 
-inline const ActionCommand* active_compatibility_legacy_action_command(
-    const ActionCommand* legacy_action
-) {
+inline const ActionCommand *
+active_compatibility_legacy_action_command(const ActionCommand *legacy_action) {
     return active_legacy_action_command(legacy_action);
 }
 
 inline ResolvedAirCommandInputSources resolve_air_command_input_sources(
-    const PilotAction* pilot,
-    const MissionCommandControlState* control_state,
-    const MovementCommand* legacy_movement,
-    const ActionCommand* legacy_action = nullptr
-) {
+    const PilotAction *pilot, const MissionCommandControlState *control_state,
+    const MovementCommand *legacy_movement, const ActionCommand *legacy_action = nullptr) {
     return {
         active_pilot_action(pilot),
         active_mission_command_control_state(control_state),
@@ -93,44 +85,34 @@ inline ResolvedAirCommandInputSources resolve_air_command_input_sources(
     };
 }
 
-inline ResolvedAirCommandInputSources resolve_air_command_input_sources(
-    const PilotAction* pilot,
-    const MovementCommand* legacy_movement,
-    const ActionCommand* legacy_action = nullptr
-) {
-    return resolve_air_command_input_sources(
-        pilot,
-        nullptr,
-        legacy_movement,
-        legacy_action
-    );
+inline ResolvedAirCommandInputSources
+resolve_air_command_input_sources(const PilotAction *pilot, const MovementCommand *legacy_movement,
+                                  const ActionCommand *legacy_action = nullptr) {
+    return resolve_air_command_input_sources(pilot, nullptr, legacy_movement, legacy_action);
 }
 
-inline bool has_resolved_primary_flight_control_input(const ResolvedAirCommandInputSources& inputs) {
-    return inputs.pilot != nullptr ||
-        inputs.control_state != nullptr ||
-        inputs.legacy_movement != nullptr;
+inline bool
+has_resolved_primary_flight_control_input(const ResolvedAirCommandInputSources &inputs) {
+    return inputs.pilot != nullptr || inputs.control_state != nullptr ||
+           inputs.legacy_movement != nullptr;
 }
 
-inline const MissionCommandTypedAirControlState* active_typed_air_control_state(
-    const MissionCommandControlState* control_state
-) {
+inline const MissionCommandTypedAirControlState *
+active_typed_air_control_state(const MissionCommandControlState *control_state) {
     if (!control_state) {
         return nullptr;
     }
     return mission_command_typed_air_control_active(control_state->typed_air_control)
-        ? &control_state->typed_air_control
-        : nullptr;
+               ? &control_state->typed_air_control
+               : nullptr;
 }
 
-inline double resolved_air_command_throttle(
-    const ResolvedAirCommandInputSources& inputs,
-    double fallback_throttle = 0.0
-) {
+inline double resolved_air_command_throttle(const ResolvedAirCommandInputSources &inputs,
+                                            double fallback_throttle = 0.0) {
     if (inputs.pilot) {
         return std::clamp(inputs.pilot->throttle, 0.0, 1.0);
     }
-    if (const MissionCommandTypedAirControlState* typed_air_control =
+    if (const MissionCommandTypedAirControlState *typed_air_control =
             active_typed_air_control_state(inputs.control_state);
         typed_air_control && typed_air_control->throttle_active) {
         return std::clamp(typed_air_control->throttle_command, 0.0, 1.0);
@@ -144,34 +126,22 @@ inline double resolved_air_command_throttle(
     return std::clamp(fallback_throttle, 0.0, 1.0);
 }
 
-inline double resolved_pilot_or_legacy_throttle(
-    const PilotAction* pilot,
-    const MissionCommandControlState* control_state,
-    const MovementCommand* legacy,
-    double fallback_throttle = 0.0
-) {
+inline double resolved_pilot_or_legacy_throttle(const PilotAction *pilot,
+                                                const MissionCommandControlState *control_state,
+                                                const MovementCommand *legacy,
+                                                double fallback_throttle = 0.0) {
     return resolved_air_command_throttle(
-        resolve_air_command_input_sources(pilot, control_state, legacy),
-        fallback_throttle
-    );
+        resolve_air_command_input_sources(pilot, control_state, legacy), fallback_throttle);
 }
 
-inline double resolved_pilot_or_legacy_throttle(
-    const PilotAction* pilot,
-    const MovementCommand* legacy,
-    double fallback_throttle = 0.0
-) {
-    return resolved_pilot_or_legacy_throttle(
-        pilot,
-        nullptr,
-        legacy,
-        fallback_throttle
-    );
+inline double resolved_pilot_or_legacy_throttle(const PilotAction *pilot,
+                                                const MovementCommand *legacy,
+                                                double fallback_throttle = 0.0) {
+    return resolved_pilot_or_legacy_throttle(pilot, nullptr, legacy, fallback_throttle);
 }
 
-inline ResolvedGroundControlInput resolved_pilot_or_legacy_ground_control(
-    const ResolvedAirCommandInputSources& inputs
-) {
+inline ResolvedGroundControlInput
+resolved_pilot_or_legacy_ground_control(const ResolvedAirCommandInputSources &inputs) {
     ResolvedGroundControlInput out;
     if (inputs.pilot) {
         out.throttle_idle = (inputs.pilot->throttle < 0.01);
@@ -181,7 +151,7 @@ inline ResolvedGroundControlInput resolved_pilot_or_legacy_ground_control(
         }
         return out;
     }
-    if (const MissionCommandTypedAirControlState* typed_air_control =
+    if (const MissionCommandTypedAirControlState *typed_air_control =
             active_typed_air_control_state(inputs.control_state);
         typed_air_control && typed_air_control->ground_active) {
         out.throttle_idle = typed_air_control->throttle_idle;
@@ -197,9 +167,8 @@ inline ResolvedGroundControlInput resolved_pilot_or_legacy_ground_control(
     return out;
 }
 
-inline ResolvedAirInstrumentControlInput resolved_air_instrument_control(
-    const ResolvedAirCommandInputSources& inputs
-) {
+inline ResolvedAirInstrumentControlInput
+resolved_air_instrument_control(const ResolvedAirCommandInputSources &inputs) {
     if (inputs.pilot) {
         return {
             std::clamp(inputs.pilot->flaps, 0.0f, 1.0f),
@@ -208,7 +177,7 @@ inline ResolvedAirInstrumentControlInput resolved_air_instrument_control(
             inputs.pilot->weapon_select_id,
         };
     }
-    if (const MissionCommandTypedAirControlState* typed_air_control =
+    if (const MissionCommandTypedAirControlState *typed_air_control =
             active_typed_air_control_state(inputs.control_state);
         typed_air_control && typed_air_control->instrument_active) {
         return {
@@ -221,16 +190,15 @@ inline ResolvedAirInstrumentControlInput resolved_air_instrument_control(
     return {};
 }
 
-inline ResolvedAirNoseWheelSteeringInput resolved_air_nose_wheel_steering_input(
-    const ResolvedAirCommandInputSources& inputs
-) {
+inline ResolvedAirNoseWheelSteeringInput
+resolved_air_nose_wheel_steering_input(const ResolvedAirCommandInputSources &inputs) {
     if (inputs.pilot) {
         return {
             true,
             std::clamp(inputs.pilot->rudder, -1.0, 1.0),
         };
     }
-    if (const MissionCommandTypedAirControlState* typed_air_control =
+    if (const MissionCommandTypedAirControlState *typed_air_control =
             active_typed_air_control_state(inputs.control_state);
         typed_air_control && typed_air_control->nose_wheel_steering_active) {
         return {
@@ -241,10 +209,9 @@ inline ResolvedAirNoseWheelSteeringInput resolved_air_nose_wheel_steering_input(
     return {};
 }
 
-inline ResolvedAirControlInput resolve_air_control_input(
-    const ResolvedAirCommandInputSources& inputs,
-    double fallback_throttle = 0.0
-) {
+inline ResolvedAirControlInput
+resolve_air_control_input(const ResolvedAirCommandInputSources &inputs,
+                          double fallback_throttle = 0.0) {
     return {
         has_resolved_primary_flight_control_input(inputs),
         inputs.pilot != nullptr,
@@ -256,56 +223,33 @@ inline ResolvedAirControlInput resolve_air_control_input(
     };
 }
 
-inline ResolvedAirControlInput resolve_air_control_input(
-    const PilotAction* pilot,
-    const MissionCommandControlState* control_state,
-    const MovementCommand* legacy_movement,
-    const ActionCommand* legacy_action = nullptr,
-    double fallback_throttle = 0.0
-) {
+inline ResolvedAirControlInput
+resolve_air_control_input(const PilotAction *pilot, const MissionCommandControlState *control_state,
+                          const MovementCommand *legacy_movement,
+                          const ActionCommand *legacy_action = nullptr,
+                          double fallback_throttle = 0.0) {
     return resolve_air_control_input(
-        resolve_air_command_input_sources(
-            pilot,
-            control_state,
-            legacy_movement,
-            legacy_action
-        ),
-        fallback_throttle
-    );
+        resolve_air_command_input_sources(pilot, control_state, legacy_movement, legacy_action),
+        fallback_throttle);
 }
 
-inline ResolvedAirControlInput resolve_air_control_input(
-    const PilotAction* pilot,
-    const MovementCommand* legacy_movement,
-    const ActionCommand* legacy_action = nullptr,
-    double fallback_throttle = 0.0
-) {
-    return resolve_air_control_input(
-        pilot,
-        nullptr,
-        legacy_movement,
-        legacy_action,
-        fallback_throttle
-    );
+inline ResolvedAirControlInput
+resolve_air_control_input(const PilotAction *pilot, const MovementCommand *legacy_movement,
+                          const ActionCommand *legacy_action = nullptr,
+                          double fallback_throttle = 0.0) {
+    return resolve_air_control_input(pilot, nullptr, legacy_movement, legacy_action,
+                                     fallback_throttle);
 }
 
-inline ResolvedGroundControlInput resolve_pilot_or_legacy_ground_control(
-    const PilotAction* pilot,
-    const MissionCommandControlState* control_state,
-    const MovementCommand* legacy
-) {
+inline ResolvedGroundControlInput
+resolve_pilot_or_legacy_ground_control(const PilotAction *pilot,
+                                       const MissionCommandControlState *control_state,
+                                       const MovementCommand *legacy) {
     return resolved_pilot_or_legacy_ground_control(
-        resolve_air_command_input_sources(pilot, control_state, legacy)
-    );
+        resolve_air_command_input_sources(pilot, control_state, legacy));
 }
 
-inline ResolvedGroundControlInput resolve_pilot_or_legacy_ground_control(
-    const PilotAction* pilot,
-    const MovementCommand* legacy
-) {
-    return resolve_pilot_or_legacy_ground_control(
-        pilot,
-        nullptr,
-        legacy
-    );
+inline ResolvedGroundControlInput
+resolve_pilot_or_legacy_ground_control(const PilotAction *pilot, const MovementCommand *legacy) {
+    return resolve_pilot_or_legacy_ground_control(pilot, nullptr, legacy);
 }

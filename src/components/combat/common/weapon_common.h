@@ -28,11 +28,9 @@ struct FuzeProfile {
     std::string provenance = "synthetic_legacy_fuse_distance";
 };
 
-inline WarheadProfile make_synthetic_warhead_profile(
-    double damage_scalar,
-    double lethal_radius_m,
-    const std::string& provenance = "synthetic_legacy_damage"
-) {
+inline WarheadProfile
+make_synthetic_warhead_profile(double damage_scalar, double lethal_radius_m,
+                               const std::string &provenance = "synthetic_legacy_damage") {
     WarheadProfile profile{};
     profile.family = "blast_fragmentation";
     profile.mass_kg = std::numeric_limits<double>::quiet_NaN();
@@ -44,14 +42,13 @@ inline WarheadProfile make_synthetic_warhead_profile(
     return profile;
 }
 
-inline std::string warhead_effect_family(const WarheadProfile& profile) {
+inline std::string warhead_effect_family(const WarheadProfile &profile) {
     return profile.family.empty() ? "blast_fragmentation" : profile.family;
 }
 
-inline FuzeProfile make_synthetic_fuze_profile(
-    double trigger_radius_m,
-    const std::string& provenance = "synthetic_legacy_fuse_distance"
-) {
+inline FuzeProfile
+make_synthetic_fuze_profile(double trigger_radius_m,
+                            const std::string &provenance = "synthetic_legacy_fuse_distance") {
     FuzeProfile profile{};
     profile.type = "proximity";
     profile.trigger_radius_m = trigger_radius_m;
@@ -62,7 +59,7 @@ inline FuzeProfile make_synthetic_fuze_profile(
     return profile;
 }
 
-inline std::string fuze_profile_type(const FuzeProfile& profile) {
+inline std::string fuze_profile_type(const FuzeProfile &profile) {
     return profile.type.empty() ? "proximity" : profile.type;
 }
 
@@ -70,21 +67,21 @@ inline std::string fuze_profile_type(const FuzeProfile& profile) {
 // seeker/guidance runtime remains air-shaped and should not be read as a
 // complete cross-domain weapon model.
 struct Missile {
-    uint64_t attacker_id;  // Entity ID of the shooter
-    uint64_t target_id;    // Entity ID of the target
-    double max_speed;      // Maximum speed (m/s)
-    double turn_rate;      // Maximum turn rate (deg/s)
-    double fuse_distance;  // Lethal radius (m)
-    double damage;         // Damage applied on impact
-    double seeker_fov_deg;        // Seeker FOV (deg, total)
-    double seeker_lock_range;     // Lock range (m)
-    double guidance_delay_s;      // Delay before guidance starts (s)
+    uint64_t attacker_id;            // Entity ID of the shooter
+    uint64_t target_id;              // Entity ID of the target
+    double max_speed;                // Maximum speed (m/s)
+    double turn_rate;                // Maximum turn rate (deg/s)
+    double fuse_distance;            // Lethal radius (m)
+    double damage;                   // Damage applied on impact
+    double seeker_fov_deg;           // Seeker FOV (deg, total)
+    double seeker_lock_range;        // Lock range (m)
+    double guidance_delay_s;         // Delay before guidance starts (s)
     double guidance_update_period_s; // Guidance update period (s)
-    double last_guidance_time;    // Last guidance update time (s)
-    double launch_time;           // Launch time (s)
-    double max_flight_time_s;     // Hard self-destruct time (s)
-    double nav_gain;              // PN gain (dimensionless)
-    bool active;           // If false, missile is dead/inert
+    double last_guidance_time;       // Last guidance update time (s)
+    double launch_time;              // Launch time (s)
+    double max_flight_time_s;        // Hard self-destruct time (s)
+    double nav_gain;                 // PN gain (dimensionless)
+    bool active;                     // If false, missile is dead/inert
 
     // Deterministic RNG state for probabilistic hit/kill logic (seeded at launch).
     uint64_t rng_state = 0;
@@ -126,7 +123,7 @@ struct Missile {
     bool p0_runtime_initialized = false;
     bool seeker_has_valid_track = false;
     bool seeker_has_range = true;
-    int seeker_mode = 0;  // 0=Track, 1=Memory, 2=Terminal/ballistic
+    int seeker_mode = 0; // 0=Track, 1=Memory, 2=Terminal/ballistic
 
     double filtered_bearing_deg = 0.0;
     double filtered_elevation_deg = 0.0;
@@ -196,13 +193,9 @@ struct MissileSharedLaunchRuntimeState {
 inline double clamp_missile_propellant_mass_kg(double total_mass_kg, double propellant_mass_kg) {
     const double resolved_total_mass_kg = std::max(1.0, total_mass_kg);
     const double resolved_propellant_mass_kg =
-        (std::isfinite(propellant_mass_kg) && propellant_mass_kg >= 0.0)
-            ? propellant_mass_kg
-            : 0.0;
-    return std::clamp(
-        resolved_propellant_mass_kg,
-        0.0,
-        std::max(0.0, resolved_total_mass_kg - 1.0));
+        (std::isfinite(propellant_mass_kg) && propellant_mass_kg >= 0.0) ? propellant_mass_kg : 0.0;
+    return std::clamp(resolved_propellant_mass_kg, 0.0,
+                      std::max(0.0, resolved_total_mass_kg - 1.0));
 }
 
 inline double clamp_missile_reference_area_m2(double reference_area_m2, double fallback_m2) {
@@ -223,21 +216,14 @@ inline Mass make_missile_mass_state(double total_mass_kg, double propellant_mass
     return mass;
 }
 
-inline MassProperties make_missile_mass_properties(const Mass& mass, double reference_area_m2) {
+inline MassProperties make_missile_mass_properties(const Mass &mass, double reference_area_m2) {
     return {
-        mass.empty_mass_kg,
-        mass.get_total_kg(),
-        0.0,
-        0.0,
-        reference_area_m2,
+        mass.empty_mass_kg, mass.get_total_kg(), 0.0, 0.0, reference_area_m2,
     };
 }
 
-inline void sync_missile_mass_properties(
-    const Mass& mass,
-    MassProperties& properties,
-    double reference_area_m2
-) {
+inline void sync_missile_mass_properties(const Mass &mass, MassProperties &properties,
+                                         double reference_area_m2) {
     properties.empty_mass_kg = mass.empty_mass_kg;
     properties.current_total_mass_kg = mass.get_total_kg();
     properties.base_drag_index = 0.0;
@@ -245,10 +231,8 @@ inline void sync_missile_mass_properties(
     properties.reference_area_m2 = reference_area_m2;
 }
 
-inline void initialize_missile_launch_runtime(
-    Missile& missile,
-    const MissileSharedLaunchRuntimeState& state
-) {
+inline void initialize_missile_launch_runtime(Missile &missile,
+                                              const MissileSharedLaunchRuntimeState &state) {
     missile.shared_launch_initialized = true;
     missile.p0_runtime_initialized = true;
     missile.seeker_has_valid_track = state.seeker_has_valid_track;

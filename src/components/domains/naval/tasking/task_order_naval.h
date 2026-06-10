@@ -9,7 +9,7 @@ struct TaskOrderNaval {
         int warfare_role_code = 0;
         std::uint64_t officer_in_tactical_command = 0;
 
-        bool operator==(const CommandAuthorityDirective&) const = default;
+        bool operator==(const CommandAuthorityDirective &) const = default;
     };
 
     int warfare_role_code = 0;
@@ -22,9 +22,7 @@ using TaskOrderNavalOwnerSlice = TaskOrderNaval;
 inline constexpr bool kTaskOrderNavalOwnedDomainSlice = true;
 
 [[nodiscard]] inline TaskOrderNaval::CommandAuthorityDirective
-task_order_naval_command_authority(
-    const TaskOrderNavalOwnerSlice& naval
-) noexcept {
+task_order_naval_command_authority(const TaskOrderNavalOwnerSlice &naval) noexcept {
     return {
         .warfare_role_code = naval.warfare_role_code,
         .officer_in_tactical_command = naval.officer_in_tactical_command,

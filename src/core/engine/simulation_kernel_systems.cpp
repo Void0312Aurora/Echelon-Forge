@@ -65,20 +65,16 @@
 void SimulationKernel::register_components_and_systems() {
 
     // EW System: Reset RWR state each frame before sensors run
-    ecs.system<RWR>("RWR_Reset")
-       .kind(flecs::PreUpdate)
-       .each([](flecs::entity e, RWR& rwr) {
-           rwr.detected_radar_ids.clear();
-           rwr.locking_radar_ids.clear();
-           // rwr.is_locked = false; // Removed
-           rwr.is_missile_launch = false;
-       });
+    ecs.system<RWR>("RWR_Reset").kind(flecs::PreUpdate).each([](flecs::entity e, RWR &rwr) {
+        rwr.detected_radar_ids.clear();
+        rwr.locking_radar_ids.clear();
+        // rwr.is_locked = false; // Removed
+        rwr.is_missile_launch = false;
+    });
 
     ecs.system<ESMReceiver>("ESM_Reset")
-       .kind(flecs::PreUpdate)
-       .each([](flecs::entity e, ESMReceiver& esm) {
-           esm.detections.clear();
-       });
+        .kind(flecs::PreUpdate)
+        .each([](flecs::entity e, ESMReceiver &esm) { esm.detections.clear(); });
 
     // Initialize common components
     ecs.component<Transform>();
@@ -87,7 +83,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<KeyEntity>();
     ecs.component<MovementCommand>();
     ecs.component<MissionCommandControlState>();
-    ecs.component<PilotAction>(); // New
+    ecs.component<PilotAction>();    // New
     ecs.component<MissionCommand>(); // New
     ecs.component<TaskOrder>();
     ecs.component<LeaderIntent>();
@@ -100,7 +96,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<CommandLink>();
     ecs.component<PendingMovementCommand>();
     ecs.component<PendingActionCommand>();
-    
+
     // Physics
     ecs.component<LandingGear>();
     ecs.component<Health>();
@@ -125,7 +121,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<WeaponCooldown>();
     ecs.component<PilotWeaponReleaseState>();
     ecs.component<NavalWeaponSystem>();
-    
+
     // EW Components
     ecs.component<Jammer>();
     ecs.component<Countermeasures>();
@@ -144,13 +140,13 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<Sonar>();
     ecs.component<MountedSonars>();
     ecs.component<ContactList>();
-    ecs.component<FlightModel>(); 
+    ecs.component<FlightModel>();
     ecs.component<Score>();
     ecs.component<DataLink>(); // New Component
     ecs.component<CommQueue>();
     ecs.component<PilotReport>();
     ecs.component<InstrumentState>(); // New Component for Digital Pilot
-    ecs.component<EGI>(); // GPS/INS
+    ecs.component<EGI>();             // GPS/INS
     ecs.component<TrackDatabase>();
     ecs.component<EmbarkedAirOps>();
     ecs.component<HitboxConfig>();
@@ -177,11 +173,11 @@ void SimulationKernel::register_components_and_systems() {
     // Phase 3: Movement - integrates Velocity → Transform
     // Phase 4: Sensor - scans for contacts
     // Phase 5: Damage - proximity fuse, hit effects
-    
+
     // Note: With flecs, systems registered on OnUpdate run in registration order.
     // For guaranteed ordering, we use .kind() with custom phases or depends_on.
     // For MVP, registration order is sufficient as long as it's explicit.
-    
+
     // Register Systems IN ORDER (dependency chain)
     register_command_link_system(ecs);   // Phase 0: Command Link
     register_action_mapping_system(ecs); // Phase 1: Action Mapping
@@ -189,30 +185,37 @@ void SimulationKernel::register_components_and_systems() {
     register_control_system(ecs);        // Phase 3: Control (adds control torques)
     register_force_clear_system(ecs);    // Phase 3.1: Clear Forces (per-frame)
     register_aero_state_system(ecs);     // Phase 3.2: Aero State (AoA/beta/q)
-    flight_dynamics::register_propulsion_system(ecs); // Phase 3.3: Propulsion runtime state (throttle/spool/thrust/fuel basis)
-    register_force_system(ecs);          // Phase 3.4: Forces (gravity + propulsion thrust projection)
-    register_aerodynamics_system(ecs);   // Phase 3.5: Aerodynamics (lift/drag + aero torques)
-    register_ground_contact_system(ecs, environment_model_.get()); // Phase 3.6: Ground contact/friction/pitch damping
-    register_rotational_integration_system(ecs); // Phase 3.7: Rotational Dynamics (ALL torques -> attitude)
-    register_guidance_system(ecs);       // Phase 4: Guidance
+    flight_dynamics::register_propulsion_system(
+        ecs); // Phase 3.3: Propulsion runtime state (throttle/spool/thrust/fuel basis)
+    register_force_system(ecs);        // Phase 3.4: Forces (gravity + propulsion thrust projection)
+    register_aerodynamics_system(ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques)
+    register_ground_contact_system(
+        ecs, environment_model_.get()); // Phase 3.6: Ground contact/friction/pitch damping
+    register_rotational_integration_system(
+        ecs);                      // Phase 3.7: Rotational Dynamics (ALL torques -> attitude)
+    register_guidance_system(ecs); // Phase 4: Guidance
     register_leapfrog_integration_system(ecs); // Phase 5: Leapfrog Integration (translation)
-    register_ship_motion_system(ecs);      // Phase 5.2: simple surface-ship kinematics
-    register_submarine_motion_system(ecs); // Phase 5.25: simple submarine kinematics
+    register_ship_motion_system(ecs);          // Phase 5.2: simple surface-ship kinematics
+    register_submarine_motion_system(ecs);     // Phase 5.25: simple submarine kinematics
     // register_movement_system(ecs);       // Phase 5.5: Movement (disabled - replaced by Leapfrog)
-    register_navigation_system(ecs);     // Phase 5.8: Navigation/EGI (after integration, before instruments)
-    register_sensor_system(ecs);         // Phase 6: Sensor
-    register_sonar_system(ecs);          // Phase 6.1: Sonar / acoustic contacts
-    register_track_manager_system(ecs);  // Phase 6.5: Build local/fused track picture from sensor + prior inbox
-    register_data_link_system(ecs);      // Phase 6.55: Share current track picture to peers
+    register_navigation_system(
+        ecs); // Phase 5.8: Navigation/EGI (after integration, before instruments)
+    register_sensor_system(ecs); // Phase 6: Sensor
+    register_sonar_system(ecs);  // Phase 6.1: Sonar / acoustic contacts
+    register_track_manager_system(
+        ecs); // Phase 6.5: Build local/fused track picture from sensor + prior inbox
+    register_data_link_system(ecs);        // Phase 6.55: Share current track picture to peers
     register_embarked_air_ops_system(ecs); // Phase 6.57: Embarked helo token launch/recover/relay
-    register_pilot_weapon_release_system(ecs, *weapon_release_service_); // Phase 6.58: Pilot weapon release bridge
-    register_naval_mission_weapon_release_system(ecs, *weapon_release_service_); // Phase 6.59: Naval mission weapon release bridge
-    register_instrument_system(ecs);     // Phase 6.6: Instruments (Read Physics & Sensor State)
-    register_damage_system_common(ecs);  // Phase 7: Damage/Effects
+    register_pilot_weapon_release_system(
+        ecs, *weapon_release_service_); // Phase 6.58: Pilot weapon release bridge
+    register_naval_mission_weapon_release_system(
+        ecs, *weapon_release_service_); // Phase 6.59: Naval mission weapon release bridge
+    register_instrument_system(ecs);    // Phase 6.6: Instruments (Read Physics & Sensor State)
+    register_damage_system_common(ecs); // Phase 7: Damage/Effects
     register_aircraft_damage_system(ecs);
     register_naval_damage_system(ecs);
     register_ground_damage_system(ecs);
-    register_ew_system(ecs);             // Phase 8: EW Actions
+    register_ew_system(ecs);              // Phase 8: EW Actions
     register_logistics_system(ecs);       // Phase 9: Common/base logistics
     register_naval_logistics_system(ecs); // Phase 9.1: Naval underway replenishment
 

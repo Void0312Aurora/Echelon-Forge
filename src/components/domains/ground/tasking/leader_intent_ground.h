@@ -13,7 +13,7 @@ struct LeaderIntentGround {
         std::uint64_t ground_commander_id = 0;
         double tactical_cadence_hz = 1.0;
 
-        bool operator==(const StaticStatusDirective&) const = default;
+        bool operator==(const StaticStatusDirective &) const = default;
     };
 
     GroundStatusPhase ground_status_phase = GroundStatusPhase::Unspecified;
@@ -29,9 +29,7 @@ using LeaderIntentGroundOwnerSlice = LeaderIntentGround;
 inline constexpr bool kLeaderIntentGroundOwnedDomainSlice = true;
 
 [[nodiscard]] inline LeaderIntentGround::StaticStatusDirective
-leader_intent_ground_static_status_directive(
-    const LeaderIntentGroundOwnerSlice& ground
-) noexcept {
+leader_intent_ground_static_status_directive(const LeaderIntentGroundOwnerSlice &ground) noexcept {
     return {
         .ground_status_phase = ground.ground_status_phase,
         .ground_task_mode = ground.ground_task_mode,

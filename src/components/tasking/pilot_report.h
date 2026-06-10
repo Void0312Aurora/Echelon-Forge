@@ -12,76 +12,58 @@ struct PilotReport : PilotReportCore, PilotReportAir, PilotReportNaval, PilotRep
 using PilotReportCompatibilityTransportShell = PilotReport;
 inline constexpr bool kPilotReportCompatibilityTransportShell = true;
 
-static_assert(
-    kPilotReportAirOwnedDomainSlice && kPilotReportNavalOwnedDomainSlice &&
-        kPilotReportGroundOwnedDomainSlice,
-    "PilotReport compatibility shells must project to explicit owner slices."
-);
+static_assert(kPilotReportAirOwnedDomainSlice && kPilotReportNavalOwnedDomainSlice &&
+                  kPilotReportGroundOwnedDomainSlice,
+              "PilotReport compatibility shells must project to explicit owner slices.");
 
-[[nodiscard]] inline const PilotReportCore&
-pilot_report_shared_core(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline const PilotReportCore &
+pilot_report_shared_core(const PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline PilotReportCore&
-pilot_report_shared_core(PilotReportCompatibilityTransportShell& report) noexcept {
+[[nodiscard]] inline PilotReportCore &
+pilot_report_shared_core(PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline const PilotReportAir&
-pilot_report_air_owner_slice(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline const PilotReportAir &
+pilot_report_air_owner_slice(const PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline PilotReportAir&
-pilot_report_air_owner_slice(PilotReportCompatibilityTransportShell& report) noexcept {
+[[nodiscard]] inline PilotReportAir &
+pilot_report_air_owner_slice(PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline const PilotReportNaval&
-pilot_report_naval_owner_slice(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline const PilotReportNaval &
+pilot_report_naval_owner_slice(const PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline PilotReportNaval&
-pilot_report_naval_owner_slice(
-    PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline PilotReportNaval &
+pilot_report_naval_owner_slice(PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline const PilotReportGround&
-pilot_report_ground_owner_slice(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline const PilotReportGround &
+pilot_report_ground_owner_slice(const PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
-[[nodiscard]] inline PilotReportGround&
-pilot_report_ground_owner_slice(
-    PilotReportCompatibilityTransportShell& report
-) noexcept {
+[[nodiscard]] inline PilotReportGround &
+pilot_report_ground_owner_slice(PilotReportCompatibilityTransportShell &report) noexcept {
     return report;
 }
 
 [[nodiscard]] inline PilotReportNaval::CommandAuthorityDirective
 pilot_report_naval_command_authority(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
+    const PilotReportCompatibilityTransportShell &report) noexcept {
     return pilot_report_naval_command_authority(pilot_report_naval_owner_slice(report));
 }
 
 [[nodiscard]] inline PilotReportGround::StaticStatusDirective
 pilot_report_ground_static_status_directive(
-    const PilotReportCompatibilityTransportShell& report
-) noexcept {
-    return pilot_report_ground_static_status_directive(
-        pilot_report_ground_owner_slice(report)
-    );
+    const PilotReportCompatibilityTransportShell &report) noexcept {
+    return pilot_report_ground_static_status_directive(pilot_report_ground_owner_slice(report));
 }
