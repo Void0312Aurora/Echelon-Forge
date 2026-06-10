@@ -40,7 +40,7 @@ gates.
 | Weapon components | pass | `src/components/combat/{common,air,naval,ground}/weapon_*.h`; retired `src/components/combat/weapon.h` | Consumers include owner headers directly; Ground weapon remains an ownership shell. |
 | Platform systems | pass | `src/systems/domains/naval/naval_logistics_system.h`, `src/systems/systems/logistics_system.h`, `src/components/physics/propulsion_readouts.h` | Naval underway resupply is extracted; Air propulsion readouts are no longer exposed through Air system helpers. |
 | Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`, `src/models/domains/air/default_effects_air_domain.h`, `src/models/domains/naval/naval_sensor_maritime_adapter.h` | Effects and sensor ship-specific ownership now route through domain helpers; Naval/Ground effects remain placeholders. |
-| Architecture guards | pass | `tests/architecture/structural_boundaries/test_structural_guardrails.py`, `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | Focused retired-path guard, full structural-boundary guard, and compatibility quarantine pass. |
+| Architecture guards | pass | `tests/architecture/structural_boundaries`, `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | Focused retired-path guard, full structural-boundary guard, and compatibility quarantine pass. |
 
 ## Scope
 

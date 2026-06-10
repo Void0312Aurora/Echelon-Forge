@@ -35,7 +35,7 @@ trace/replay-facing engagement gate，同时保持 metadata-dependent checks def
 主线程验证：
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade tests/runtime/facade
 ```
 
 结果：`26 passed`。

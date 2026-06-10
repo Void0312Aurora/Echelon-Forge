@@ -165,7 +165,7 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
 ```bash
 source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_structured_air_damage_does_not_write_rl_score_from_physical_effects \
-  tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority \
+  tests/architecture/structural_boundaries/test_domain_separation_boundaries.py::test_a2_structured_air_effects_do_not_write_rl_score_authority \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release
@@ -181,7 +181,7 @@ source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_structured_air_target_uses_damage_state_instead_of_hp_first_kill \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_live_missile_hit_records_structured_air_damage_without_hp_first_kill \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_structured_air_damage_does_not_write_rl_score_from_physical_effects \
-  tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority \
+  tests/architecture/structural_boundaries/test_domain_separation_boundaries.py::test_a2_structured_air_effects_do_not_write_rl_score_authority \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_synthetic_vulnerability_profile_is_not_pk_or_fuze_authority \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_validated_physics_surrogate_requires_auditable_manifest \
   tests/runtime/air_combat/test_weapon_guidance_realism_guards.py::WeaponGuidanceRealismGuardTests::test_phase5_component_failure_rows_can_use_surface_incidence_gate \

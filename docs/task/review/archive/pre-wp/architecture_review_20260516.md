@@ -36,7 +36,7 @@ interfaces/python → runtime/facade → core/engine + core/mission
 
 - [src/README.md](../../../../src/README.md) and per-layer READMEs clearly define what is allowed and prohibited in each layer  
 - [docs/plan/archive/src_layered_refactor_freeze.zh.md](../../../plan/archive/src_layered_refactor_freeze.zh.md) freezes execution records of WP1-WP7  
-- [tests/architecture/runtime_facade/test_layering.py](../../../../tests/architecture/runtime_facade/test_layering.py) and [test_cmake_target_readiness.py](../../../../tests/architecture/build/test_cmake_target_readiness.py) turn architectural constraints into automated checks
+- [tests/architecture/runtime_facade](../../../../tests/architecture/runtime_facade) and [test_cmake_target_readiness.py](../../../../tests/architecture/build/test_cmake_target_readiness.py) turn architectural constraints into automated checks
 
 Assessment: Making architectural constraints testable in a codebase is extremely rare, and this is the standout strength.  
 

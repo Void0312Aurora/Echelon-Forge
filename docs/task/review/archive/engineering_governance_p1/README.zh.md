@@ -34,7 +34,7 @@ event-window aggregation 均已进入 `python/training/diagnostics.py` 中的聚
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| 失效架构守卫 | local-pass | `tests/architecture/structural_boundaries/test_structural_guardrails.py`；聚焦测试通过 | 将 guard 改为当前 split-file 结构锚点；不改 weapon effects runtime 行为。 |
+| 失效架构守卫 | local-pass | `tests/architecture/structural_boundaries`；聚焦测试通过 | 将 guard 改为当前 split-file 结构锚点；不改 weapon effects runtime 行为。 |
 | Scenario compiler shape validation | local-pass | `python/scenario/compiler/validation.py`、`service.py`、`merge.py`、`tests/scenario/test_scenario_compiler.py`；聚焦 suite 通过 | 只验证 compiler 直接消费的 shape；不引入完整 JSON Schema 或领域语义 validator。 |
 | Runtime facade/world-batch capability probing | local-pass | `python/rl/runtime/world_batch/adapter.py`、`tests/world_batch/test_world_batch_vec_env.py`；聚焦 world-batch tests 通过 | 为 adapter-owned probing 增加集中 capability snapshot；不拆 world-batch env classes 或完整 adapter。 |
 | Diagnostics callback helper extraction | local-pass | `python/training/diagnostics.py`、`python/training_callbacks.py`；training diagnostics tests 通过 | 将 diagnostics calculation 与 event-window state 移出 `CMODiagnosticsCallback`；不改变 RL algorithm 或 logged key 语义。 |
@@ -80,7 +80,7 @@ Out of scope:
 
 ## Outputs And Evidence
 
-- `tests/architecture/structural_boundaries/test_structural_guardrails.py`
+- `tests/architecture/structural_boundaries`
 - `python/scenario/compiler/validation.py`
 - `python/scenario/compiler/service.py`
 - `python/scenario/compiler/merge.py`
@@ -96,8 +96,8 @@ Out of scope:
 
 Validation evidence:
 
-- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` passed。
-- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_structural_guardrails.py -q` passed，17 tests。
+- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_domain_separation_boundaries.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` passed。
+- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries -q` passed，17 tests。
 - `./.venv/bin/python -m pytest tests/scenario/test_scenario_compiler.py -q` passed。
 - Scenario/prefab shape scan 针对 `scenarios/`、`examples/scenarios/` 和
   `examples/config/prefabs/` 下 50 个 JSON 文件 passed。

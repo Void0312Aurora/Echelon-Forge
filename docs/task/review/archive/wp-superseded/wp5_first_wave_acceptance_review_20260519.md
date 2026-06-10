@@ -37,7 +37,7 @@ engagement gates while keeping metadata-dependent checks deferred.
 Main-thread verification:
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade tests/runtime/facade
 ```
 
 Result: `26 passed`.

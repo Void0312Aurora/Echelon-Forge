@@ -91,7 +91,7 @@
 
 | manifest 项 | 作用 |
 | --- | --- |
-| `tests/architecture/runtime_facade/test_layering.py` | facade layering guard |
+| `tests/architecture/runtime_facade` | facade layering guard |
 | `tests/architecture/runtime_facade/test_design_boundary_gates.py` | design boundary gate |
 | `tests/architecture/build/test_cmake_target_readiness.py` | CMake target readiness |
 | `tests/runtime/core/test_env_config.py` | runtime env config |

@@ -32,7 +32,7 @@ DS-P0-B 已产出当前热点的只读 ownership inventory。该清单只是诊�
 | Naval logistics | Naval underway resupply 由 `systems/domains/naval` 拥有；generic readout 使用 physics helper | `src/systems/domains/naval/naval_logistics_system.h`；`src/systems/systems/logistics_system.h`；`src/components/physics/propulsion_readouts.h`；`src/core/engine/simulation_kernel_systems.cpp` | pass | 聚焦 build 证据已刷新 |
 | Effects model | generic router 加 Air/Naval/Ground owner path | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`；`src/models/domains/air/default_effects_air_domain.h`；`src/models/domains/naval/default_effects_naval_domain.h`；`src/models/domains/ground/default_effects_ground_domain.h` | pass | Naval/Ground 路径仅为 placeholder |
 | Sensor model | generic sensor 通过 Naval adapter 路由 ship-specific 读取 | `src/models/systems/default_sensor_model.cpp`；`src/models/domains/naval/naval_sensor_maritime_adapter.h` | pass | Acoustic model 的 `ShipPlatform` 访问不属于 DS-M1-B |
-| Architecture guards | 聚焦 domain split guard 已更新退役路径断言；宽 architecture guard 通过 | `tests/architecture/structural_boundaries/test_structural_guardrails.py`；`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | pass | 完整 structural-boundary 与 compatibility quarantine selector 均通过 |
+| Architecture guards | 聚焦 domain split guard 已更新退役路径断言；宽 architecture guard 通过 | `tests/architecture/structural_boundaries`；`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | pass | 完整 structural-boundary 与 compatibility quarantine selector 均通过 |
 
 ## DS-P0-B 清单
 

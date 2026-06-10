@@ -38,7 +38,7 @@ acceptance and does not change any cluster status by itself.
 | Naval logistics | Naval underway resupply owned in `systems/domains/naval`; generic readouts use physics helper | `src/systems/domains/naval/naval_logistics_system.h`; `src/systems/systems/logistics_system.h`; `src/components/physics/propulsion_readouts.h`; `src/core/engine/simulation_kernel_systems.cpp` | pass | Focused build evidence refreshed |
 | Effects model | Generic router with Air/Naval/Ground owner paths | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`; `src/models/domains/air/default_effects_air_domain.h`; `src/models/domains/naval/default_effects_naval_domain.h`; `src/models/domains/ground/default_effects_ground_domain.h` | pass | Naval/Ground paths are placeholders only |
 | Sensor model | Generic sensor routes ship-specific reads through Naval adapter | `src/models/systems/default_sensor_model.cpp`; `src/models/domains/naval/naval_sensor_maritime_adapter.h` | pass | Acoustic model `ShipPlatform` access is outside DS-M1-B |
-| Architecture guards | Focused domain split guard updated for retired paths; broad architecture guards pass | `tests/architecture/structural_boundaries/test_structural_guardrails.py`; `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | pass | Full structural-boundary and compatibility quarantine selectors pass |
+| Architecture guards | Focused domain split guard updated for retired paths; broad architecture guards pass | `tests/architecture/structural_boundaries`; `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | pass | Full structural-boundary and compatibility quarantine selectors pass |
 
 ## DS-P0-B Inventory
 

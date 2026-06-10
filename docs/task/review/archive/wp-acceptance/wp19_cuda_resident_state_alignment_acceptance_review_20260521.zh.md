@@ -54,12 +54,12 @@ closure handoff 中记录的主线程验证如下：
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_runtime_dto_contracts.py -k "device_resident or packet"
 cmake --build build-workshop --target ef_py -j4
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_runtime_dto_contracts.py -k "device_resident or packet"
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "candidate or gpu or broadphase or visual or comm or sensor"
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary

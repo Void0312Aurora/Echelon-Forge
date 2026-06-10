@@ -39,7 +39,7 @@ live behind focused helpers in `python/training/diagnostics.py`.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Stale architecture guard | local-pass | `tests/architecture/structural_boundaries/test_structural_guardrails.py`; focused test passed | Updates the guard to current split-file structure; does not change weapon effects runtime behavior. |
+| Stale architecture guard | local-pass | `tests/architecture/structural_boundaries`; focused test passed | Updates the guard to current split-file structure; does not change weapon effects runtime behavior. |
 | Scenario compiler shape validation | local-pass | `python/scenario/compiler/validation.py`; `service.py`; `merge.py`; `tests/scenario/test_scenario_compiler.py`; focused suite passed | Validates consumed shape only; does not introduce a full JSON Schema or domain semantic validator. |
 | Runtime facade/world-batch capability probing | local-pass | `python/rl/runtime/world_batch/adapter.py`; `tests/world_batch/test_world_batch_vec_env.py`; focused world-batch tests passed | Adds a centralized capability snapshot for adapter-owned probing; does not split world-batch env classes or the full adapter. |
 | Diagnostics callback helper extraction | local-pass | `python/training/diagnostics.py`; `python/training_callbacks.py`; training diagnostics tests passed | Moves diagnostics calculation and event-window state out of `CMODiagnosticsCallback`; does not change RL algorithm behavior or logged key semantics. |
@@ -88,7 +88,7 @@ Out of scope:
 
 ## Outputs And Evidence
 
-- `tests/architecture/structural_boundaries/test_structural_guardrails.py`
+- `tests/architecture/structural_boundaries`
 - `python/scenario/compiler/validation.py`
 - `python/scenario/compiler/service.py`
 - `python/scenario/compiler/merge.py`
@@ -104,8 +104,8 @@ Out of scope:
 
 Validation evidence:
 
-- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` passed.
-- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_structural_guardrails.py -q` passed, 17 tests.
+- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries/test_domain_separation_boundaries.py::test_a2_structured_air_effects_do_not_write_rl_score_authority -q` passed.
+- `./.venv/bin/python -m pytest tests/architecture/structural_boundaries -q` passed, 17 tests.
 - `./.venv/bin/python -m pytest tests/scenario/test_scenario_compiler.py -q` passed.
 - Scenario/prefab shape scan passed for 50 JSON files under `scenarios/`,
   `examples/scenarios/`, and `examples/config/prefabs/`.

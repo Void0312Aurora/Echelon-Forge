@@ -58,7 +58,7 @@ Result: passed.
 Focused WP6 command:
 
 ```bash
-python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_layering.py -q
+python -m pytest tests/runtime/facade/test_runtime_facade.py tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade -q
 ```
 
 Result: `31 passed`.

@@ -35,7 +35,7 @@
 | Weapon component | pass | `src/components/combat/{common,air,naval,ground}/weapon_*.h`；`src/components/combat/weapon.h` 已退役 | consumer 直接 include owner header；Ground weapon 仍是 ownership shell。 |
 | Platform system | pass | `src/systems/domains/naval/naval_logistics_system.h`、`src/systems/systems/logistics_system.h`、`src/components/physics/propulsion_readouts.h` | Naval underway resupply 已抽出；Air propulsion readout 不再通过 Air system helper 暴露。 |
 | Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`、`src/models/domains/air/default_effects_air_domain.h`、`src/models/domains/naval/naval_sensor_maritime_adapter.h` | effects 与 sensor ship-specific ownership 已通过 domain helper 路由；Naval/Ground effects 仍是 placeholder。 |
-| Architecture guards | pass | `tests/architecture/structural_boundaries/test_structural_guardrails.py`、`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | 聚焦退役路径 guard、完整 structural-boundary guard 与 compatibility quarantine 均通过。 |
+| Architecture guards | pass | `tests/architecture/structural_boundaries`、`tests/architecture/compatibility_quarantine/test_guard_enforcement.py` | 聚焦退役路径 guard、完整 structural-boundary guard 与 compatibility quarantine 均通过。 |
 
 ## 范围
 

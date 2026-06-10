@@ -54,7 +54,7 @@ CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contrac
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/runtime/mission/test_policy_contract_shape.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/facade/test_runtime_facade_window_loop_injection.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/runtime/test_agent_shim.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/policy_execution/test_action_hold_policy_contract.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade tests/architecture/policy_execution/test_action_hold_policy_contract.py
 git diff --check
 ```
 

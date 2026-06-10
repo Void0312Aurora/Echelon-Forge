@@ -65,9 +65,9 @@ record which selectors were run and why any broader selector was held.
 | `2026-06-10` | DS-S1-C | `NavalUnderwayResupply` moved from generic logistics to `src/systems/domains/naval/naval_logistics_system.h`; kernel registration updated after common logistics; focused naval underway tests and scoped diff check passed. | pass | Generic logistics now uses `components/physics/propulsion_readouts.h` for propulsion readouts. |
 | `2026-06-10` | DS-M1-A | `default_effects_model.cpp` now routes through `default_effects_domain_routing_detail.inc`; Air consequence logic is in `src/models/domains/air/default_effects_air_domain.h`; Naval/Ground placeholder owner paths exist; focused structural/effects tests passed. | pass | Naval/Ground effects paths are placeholders only. |
 | `2026-06-10` | DS-M1-B | `default_sensor_model.cpp` no longer directly includes or reads `ShipPlatform`; ship-specific maritime reads are in `src/models/domains/naval/naval_sensor_maritime_adapter.h`; focused naval sensor tests passed. | pass | `default_acoustic_model.cpp` ship access is outside this sensor-routing packet. |
-| `2026-06-10` | DS-T1-A | Added `test_domain_separation_split_generic_files_route_domain_owned_runtime`; selector `python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"` passed. | pass | Retired path guard is focused on this split. |
+| `2026-06-10` | DS-T1-A | Added `test_domain_separation_split_generic_files_route_domain_owned_runtime`; selector `python -m pytest -q tests/architecture/structural_boundaries -k "domain_separation_split or structured_air_effects"` passed. | pass | Retired path guard is focused on this split. |
 | `2026-06-10` | DS-T1-A | Structural guard updated to fail if retired domain-split public paths are recreated or old include strings return in maintained source files; refreshed focused selector passed. | pass | Retired include search over `src src/tests` returned no matches. |
-| `2026-06-10` | DS-T1-B | `tests/architecture/structural_boundaries/test_structural_guardrails.py` binding parser now handles multi-line `.def(...)` bindings, de-duplicates overload names, and explicitly allowlists `debug_get_ground_contact_state`. | pass | Full `tests/architecture/structural_boundaries` passes. |
+| `2026-06-10` | DS-T1-B | `tests/architecture/structural_boundaries` binding parser now handles multi-line `.def(...)` bindings, de-duplicates overload names, and explicitly allowlists `debug_get_ground_contact_state`. | pass | Full `tests/architecture/structural_boundaries` passes. |
 | `2026-06-10` | DS-D1-A | Source README indexes and this task surface were updated to match the no-compatibility-entry implementation. | pass | `git diff --check` on scoped paths passed. |
 
 ## Actual Validation Run
@@ -77,7 +77,7 @@ cmake --build build-workshop --target ef_py -j2
 python -m pytest -q tests/runtime/naval/test_naval_ship_database.py -k "underway_replenishment"
 python -m pytest -q tests/runtime/naval/test_naval_sensor_realism_runtime.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k "dfm_p4 or component_damage"
-python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"
+python -m pytest -q tests/architecture/structural_boundaries -k "domain_separation_split or structured_air_effects"
 python -m pytest -q tests/architecture/compatibility_quarantine/test_guard_enforcement.py
 python -m pytest -q tests/architecture/structural_boundaries
 git diff --check -- src tests docs/task/review/domain_separation_split docs/task/review/README.md docs/task/review/README.zh.md docs/manual
@@ -89,7 +89,7 @@ Outcomes in this checkout:
 - `test_naval_ship_database.py -k "underway_replenishment"`: 2 passed, 20 deselected.
 - `test_naval_sensor_realism_runtime.py`: 5 passed.
 - `test_weapon_guidance_realism_guards.py -k "dfm_p4 or component_damage"`: 8 passed, 170 deselected.
-- `test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"`: 2 passed, 16 deselected.
+- `test_domain_separation_boundaries.py -k "domain_separation_split or structured_air_effects"`: 2 passed, 16 deselected.
 - `test_guard_enforcement.py`: 15 passed.
 - `tests/architecture/structural_boundaries`: 18 passed.
 - Retired include search over `src src/tests`: no matches.

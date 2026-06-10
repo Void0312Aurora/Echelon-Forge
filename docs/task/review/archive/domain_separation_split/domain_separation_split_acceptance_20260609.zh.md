@@ -60,9 +60,9 @@ git diff --check -- src tests docs/task/review/domain_separation_split docs/task
 | `2026-06-10` | DS-S1-C | `NavalUnderwayResupply` 已从 generic logistics 移到 `src/systems/domains/naval/naval_logistics_system.h`；kernel registration 在 common logistics 后注册；聚焦 naval underway tests 和 scoped diff check 通过。 | pass | generic logistics 通过 `components/physics/propulsion_readouts.h` 读取 propulsion readout。 |
 | `2026-06-10` | DS-M1-A | `default_effects_model.cpp` 通过 `default_effects_domain_routing_detail.inc` 路由；Air consequence logic 位于 `src/models/domains/air/default_effects_air_domain.h`；Naval/Ground placeholder owner path 已存在；聚焦 structural/effects tests 通过。 | pass | Naval/Ground effects 路径仅为 placeholder。 |
 | `2026-06-10` | DS-M1-B | `default_sensor_model.cpp` 不再直接 include 或读取 `ShipPlatform`；ship-specific maritime 读取位于 `src/models/domains/naval/naval_sensor_maritime_adapter.h`；聚焦 naval sensor tests 通过。 | pass | `default_acoustic_model.cpp` 的 ship 访问不属于本 sensor-routing packet。 |
-| `2026-06-10` | DS-T1-A | 已新增 `test_domain_separation_split_generic_files_route_domain_owned_runtime`；selector `python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"` 通过。 | pass | 退役路径 guard 聚焦本拆分。 |
+| `2026-06-10` | DS-T1-A | 已新增 `test_domain_separation_split_generic_files_route_domain_owned_runtime`；selector `python -m pytest -q tests/architecture/structural_boundaries -k "domain_separation_split or structured_air_effects"` 通过。 | pass | 退役路径 guard 聚焦本拆分。 |
 | `2026-06-10` | DS-T1-A | structural guard 已更新：退役 domain-split 公开路径若被重建、旧 include 若回流 maintained source，会直接失败；刷新后的聚焦 selector 通过。 | pass | 对 `src src/tests` 的退役 include search 无匹配。 |
-| `2026-06-10` | DS-T1-B | `tests/architecture/structural_boundaries/test_structural_guardrails.py` 的 binding parser 现在支持多行 `.def(...)` binding、对重载名称去重，并显式 allowlist `debug_get_ground_contact_state`。 | pass | 完整 `tests/architecture/structural_boundaries` 通过。 |
+| `2026-06-10` | DS-T1-B | `tests/architecture/structural_boundaries` 的 binding parser 现在支持多行 `.def(...)` binding、对重载名称去重，并显式 allowlist `debug_get_ground_contact_state`。 | pass | 完整 `tests/architecture/structural_boundaries` 通过。 |
 | `2026-06-10` | DS-D1-A | source README index 与本 task surface 已同步到无兼容入口实现。 | pass | scoped `git diff --check` 通过。 |
 
 ## 实际验证命令
@@ -72,7 +72,7 @@ cmake --build build-workshop --target ef_py -j2
 python -m pytest -q tests/runtime/naval/test_naval_ship_database.py -k "underway_replenishment"
 python -m pytest -q tests/runtime/naval/test_naval_sensor_realism_runtime.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -k "dfm_p4 or component_damage"
-python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"
+python -m pytest -q tests/architecture/structural_boundaries -k "domain_separation_split or structured_air_effects"
 python -m pytest -q tests/architecture/compatibility_quarantine/test_guard_enforcement.py
 python -m pytest -q tests/architecture/structural_boundaries
 git diff --check -- src tests docs/task/review/domain_separation_split docs/task/review/README.md docs/task/review/README.zh.md docs/manual
@@ -84,7 +84,7 @@ git diff --check -- src tests docs/task/review/domain_separation_split docs/task
 - `test_naval_ship_database.py -k "underway_replenishment"`：2 passed, 20 deselected。
 - `test_naval_sensor_realism_runtime.py`：5 passed。
 - `test_weapon_guidance_realism_guards.py -k "dfm_p4 or component_damage"`：8 passed, 170 deselected。
-- `test_structural_guardrails.py -k "domain_separation_split or structured_air_effects"`：2 passed, 16 deselected。
+- `test_domain_separation_boundaries.py -k "domain_separation_split or structured_air_effects"`：2 passed, 16 deselected。
 - `test_guard_enforcement.py`：15 passed。
 - `tests/architecture/structural_boundaries`：18 passed。
 - 对 `src src/tests` 的退役 include search：无匹配。
