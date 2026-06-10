@@ -1,6 +1,6 @@
 # A2 MLF-4 Continuous-Rod Cutting Mechanism
 
-Status: `2026-06-10` active planning / `MLF-4A-X1` read-only inventory accepted. This subproject plans the continuous-rod and cutting-mechanism fact chain; it must not claim component failure, structural breakup, debris, Pk, or weapon-specific lethality.
+Status: `2026-06-11` active planning / `MLF-4A-X1` inventory, `MLF-4B-W1-R2` standard rod event surface, `MLF-4C-W1` generic rod geometry, and `MLF-4D-W1` component cut projection accepted. This subproject plans the continuous-rod and cutting-mechanism fact chain; it must not claim component failure, structural breakup, debris, Pk, or weapon-specific lethality.
 
 Language:
 
@@ -32,8 +32,9 @@ This phase does not decide that a wing, control line, engine, or airframe failed
 | MLF-2 detonation input | accepted / archived | MLF-2 pointer | Only proves nearest approach, fuze evaluation, and detonation handoff |
 | MLF-3 load facts | accepted / archived | MLF-3 pointer and accepted package | Provides generic warhead/spatial/component load facts, not failure |
 | MLF-4A inventory | accepted slice | [missile_lethality_continuous_rod_inventory_20260610.md](missile_lethality_continuous_rod_inventory_20260610.md) | Accepts read-only inventory only, not runtime behavior |
-| Rod fields | reusable scaffold | `WarheadMechanismEvent::rod_cut_margin`, `ComponentLoadEvent::rod_cut_margin`, `EffectsEvent::mechanism_rod_cut_margin`, component primary rod fields | Fields exist, but later work still needs to accept semantics and coverage |
-| Continuous-rod runtime branch | candidate scaffold | `continuous_rod` branches in the default effects model and historical Phase 3 tests | Not accepted as current MLF-4 runtime evidence |
+| Rod fields | accepted event surface | `WarheadMechanismEvent::rod_cut_margin`, `ComponentLoadEvent::rod_cut_margin`, `EffectsEvent::mechanism_rod_cut_margin`, component primary rod fields; [test_mlf4_standard_rod_event_surface.py](../../../../../tests/runtime/air_combat/test_mlf4_standard_rod_event_surface.py) | Accepts standard cutting facts only, not failure |
+| Generic continuous-rod geometry | accepted slice | [test_mlf4_generic_rod_geometry.py](../../../../../tests/runtime/air_combat/test_mlf4_generic_rod_geometry.py) | Generic trend evidence only; no real rod count/velocity |
+| Component cut projection | accepted slice | [test_mlf4_component_cut_projection.py](../../../../../tests/runtime/air_combat/test_mlf4_component_cut_projection.py) | Component-load cut facts only; no component damage, integrity mutation, or failure |
 | Data authority | held | Public/proxy sources may identify broad mechanism families only | No real AIM-120C or other weapon-specific rod parameters |
 
 ## Scope
@@ -60,10 +61,10 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `MLF-4A Boundary And Inventory` | Freeze scope and inventory existing rod fields/branches/tests | MLF-3 archived | Current status records reusable fields and gaps | accepted |
-| `MLF-4B Standard Rod Event Surface` | Decide and stabilize standard rod/cut fields | 4A accepted | Detonation with `continuous_rod` emits same-chain positive rod facts; non-rod has zero rod facts | planned |
-| `MLF-4C Generic Rod Geometry` | Add or verify generic cut corridor/orientation projection | 4B | Range, side/aspect, and orientation change rod cut margin predictably | planned |
-| `MLF-4D Component Cut Projection` | Project rod cut exposure onto components | 4C | Component load rows identify affected components and rod cut margin without failure | planned |
-| `MLF-4E Diagnostics And Gates` | Make diagnostics prefer standard rod facts and guard no-detonation/non-rod paths | 4D | Probe rows explain rod/cut facts and no false rod rows appear | planned |
+| `MLF-4B Standard Rod Event Surface` | Decide and stabilize standard rod/cut fields | 4A accepted | Detonation with `continuous_rod` emits same-chain positive rod facts; non-rod and no-detonation have no positive rod facts | accepted |
+| `MLF-4C Generic Rod Geometry` | Add or verify generic cut corridor/orientation projection | 4B accepted | Range, side/aspect, and orientation change rod cut margin predictably | accepted |
+| `MLF-4D Component Cut Projection` | Project rod cut exposure onto components | 4C accepted | Component load rows identify affected components and rod cut margin without failure | accepted |
+| `MLF-4E Diagnostics And Gates` | Make diagnostics prefer standard rod facts and guard no-detonation/non-rod paths | 4D accepted | Probe rows explain rod/cut facts and no false rod rows appear | ready |
 | `MLF-4F Acceptance And Archive Prep` | Summarize accepted/held state and sync indexes | 4B-E pass | README/status/task cluster/dispatch/archive agree | planned |
 
 ## Task Clusters
@@ -78,9 +79,9 @@ Out of scope:
 Expected outputs:
 
 - A read-only inventory of existing rod fields, branch behavior, and historical tests.
-- Standard rod/cutting facts for `continuous_rod` detonations.
-- Focused tests showing range, side/aspect, orientation, and family change rod/cut facts.
-- Component-load rows that expose rod cut margin per affected component.
+- Standard rod/cutting facts for `continuous_rod` detonations, accepted by [test_mlf4_standard_rod_event_surface.py](../../../../../tests/runtime/air_combat/test_mlf4_standard_rod_event_surface.py).
+- Focused tests showing range, side/aspect, orientation, and family change rod/cut facts, including [test_mlf4_generic_rod_geometry.py](../../../../../tests/runtime/air_combat/test_mlf4_generic_rod_geometry.py).
+- Component-load rows that expose rod cut margin per affected component, accepted by [test_mlf4_component_cut_projection.py](../../../../../tests/runtime/air_combat/test_mlf4_component_cut_projection.py).
 - Diagnostics rows that explain rod/cut facts without declaring failure.
 
 ## Acceptance Gate

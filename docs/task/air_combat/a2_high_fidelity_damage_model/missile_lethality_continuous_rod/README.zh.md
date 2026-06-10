@@ -1,6 +1,6 @@
 # A2 MLF-4 连续杆切割机制
 
-状态：`2026-06-10` active planning / `MLF-4A-X1` 只读盘点已验收。本子项目规划连续杆和切割机制事实链，不声明部件失效、结构解体、残骸、Pk 或具体弹种杀伤结论。
+状态：`2026-06-11` active planning / `MLF-4A-X1` 盘点、`MLF-4B-W1-R2` 标准 rod 事件面、`MLF-4C-W1` 通用 rod 几何与 `MLF-4D-W1` 部件切割投影已验收。本子项目规划连续杆和切割机制事实链，不声明部件失效、结构解体、残骸、Pk 或具体弹种杀伤结论。
 
 语言：
 
@@ -32,8 +32,9 @@ MLF-4 回答“如果已起爆战斗部属于连续杆或切割机制，它产�
 | MLF-2 起爆输入 | accepted / archived | MLF-2 指针 | 只证明最近点、引信评估和起爆 handoff |
 | MLF-3 载荷事实 | accepted / archived | MLF-3 指针与已验收包 | 提供通用 warhead/spatial/component 载荷事实，不提供失效判断 |
 | MLF-4A 盘点 | accepted slice | [missile_lethality_continuous_rod_inventory_20260610.zh.md](missile_lethality_continuous_rod_inventory_20260610.zh.md) | 只验收只读盘点，不验收 runtime 行为 |
-| rod 字段 | reusable scaffold | `WarheadMechanismEvent::rod_cut_margin`、`ComponentLoadEvent::rod_cut_margin`、`EffectsEvent::mechanism_rod_cut_margin`、component primary rod 字段 | 字段已存在，但后续还要验收语义和覆盖面 |
-| 连续杆 runtime 分支 | candidate scaffold | default effects model 中的 `continuous_rod` 分支与历史 Phase 3 测试 | 不是当前 MLF-4 accepted runtime 证据 |
+| rod 字段 | accepted event surface | `WarheadMechanismEvent::rod_cut_margin`、`ComponentLoadEvent::rod_cut_margin`、`EffectsEvent::mechanism_rod_cut_margin`、component primary rod 字段；[test_mlf4_standard_rod_event_surface.py](../../../../../tests/runtime/air_combat/test_mlf4_standard_rod_event_surface.py) | 只验收标准切割事实，不验收失效 |
+| 通用 continuous-rod 几何 | accepted slice | [test_mlf4_generic_rod_geometry.py](../../../../../tests/runtime/air_combat/test_mlf4_generic_rod_geometry.py) | 只作为通用趋势证据，不提供真实 rod count/velocity |
+| 部件切割投影 | accepted slice | [test_mlf4_component_cut_projection.py](../../../../../tests/runtime/air_combat/test_mlf4_component_cut_projection.py) | 只验收 component-load 切割事实，不做部件损伤、integrity 修改或失效 |
 | 数据权威 | held | 公开/代理来源最多识别宽泛机制类别 | 不提供 AIM-120C 或其他具体弹种 rod 参数 |
 
 ## 范围
@@ -60,10 +61,10 @@ MLF-4 回答“如果已起爆战斗部属于连续杆或切割机制，它产�
 | 阶段 | 目标 | 入口条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `MLF-4A Boundary And Inventory` | 固定范围，盘点现有 rod 字段/分支/测试 | MLF-3 archived | 当前状态记录可复用字段和缺口 | accepted |
-| `MLF-4B Standard Rod Event Surface` | 决定并稳定标准 rod/cut 字段 | 4A accepted | `continuous_rod` 起爆输出同链路正 rod 事实；非 rod 为零 | planned |
-| `MLF-4C Generic Rod Geometry` | 新增或确认通用切割带/方向投影 | 4B | 距离、侧向/方位、方向轴可预测地改变 rod cut margin | planned |
-| `MLF-4D Component Cut Projection` | 把 rod 切割曝光投影到部件 | 4C | 部件行能标出受影响部件与 rod cut margin，但不输出失效 | planned |
-| `MLF-4E Diagnostics And Gates` | 诊断优先读取标准 rod 事实，并保护未起爆/非 rod 路径 | 4D | probe 能解释 rod/cut 事实，且不会出现虚假 rod 行 | planned |
+| `MLF-4B Standard Rod Event Surface` | 决定并稳定标准 rod/cut 字段 | 4A accepted | `continuous_rod` 起爆输出同链路正 rod 事实；非 rod 和未起爆无正 rod 事实 | accepted |
+| `MLF-4C Generic Rod Geometry` | 新增或确认通用切割带/方向投影 | 4B accepted | 距离、侧向/方位、方向轴可预测地改变 rod cut margin | accepted |
+| `MLF-4D Component Cut Projection` | 把 rod 切割曝光投影到部件 | 4C accepted | 部件行能标出受影响部件与 rod cut margin，但不输出失效 | accepted |
+| `MLF-4E Diagnostics And Gates` | 诊断优先读取标准 rod 事实，并保护未起爆/非 rod 路径 | 4D accepted | probe 能解释 rod/cut 事实，且不会出现虚假 rod 行 | ready |
 | `MLF-4F Acceptance And Archive Prep` | 汇总 accepted/held 状态并同步索引 | 4B-E pass | README/status/task cluster/dispatch/archive 一致 | planned |
 
 ## 任务簇
@@ -78,9 +79,9 @@ MLF-4 回答“如果已起爆战斗部属于连续杆或切割机制，它产�
 预期输出：
 
 - 现有 rod 字段、分支行为和历史测试的只读盘点。
-- `continuous_rod` 起爆后的标准 rod/cutting 事实。
-- 聚焦测试证明距离、侧向/方位、方向轴和 family 会改变 rod/cut 事实。
-- 部件受载行能暴露每个受影响部件的 rod cut margin。
+- `continuous_rod` 起爆后的标准 rod/cutting 事实，已由 [test_mlf4_standard_rod_event_surface.py](../../../../../tests/runtime/air_combat/test_mlf4_standard_rod_event_surface.py) 验收。
+- 聚焦测试证明距离、侧向/方位、方向轴和 family 会改变 rod/cut 事实，包括 [test_mlf4_generic_rod_geometry.py](../../../../../tests/runtime/air_combat/test_mlf4_generic_rod_geometry.py)。
+- 部件受载行能暴露每个受影响部件的 rod cut margin，已由 [test_mlf4_component_cut_projection.py](../../../../../tests/runtime/air_combat/test_mlf4_component_cut_projection.py) 验收。
 - 诊断行能解释 rod/cut 事实，但不声明失效。
 
 ## 验收门

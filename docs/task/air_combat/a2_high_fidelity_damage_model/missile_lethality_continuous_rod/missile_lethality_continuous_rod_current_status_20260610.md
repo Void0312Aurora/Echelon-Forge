@@ -1,6 +1,6 @@
 # A2 MLF-4 Current Status
 
-Status: `2026-06-10` active planning. MLF-4 exists as a separate continuous-rod/cutting subproject; `MLF-4A-X1` read-only inventory is accepted, and no implementation slice is accepted yet.
+Status: `2026-06-11` active planning. MLF-4 exists as a separate continuous-rod/cutting subproject; `MLF-4A-X1`, `MLF-4B-W1-R2`, `MLF-4C-W1`, and `MLF-4D-W1` are accepted. `MLF-4E-W1` is ready to dispatch.
 
 Chinese main text: [missile_lethality_continuous_rod_current_status_20260610.zh.md](missile_lethality_continuous_rod_current_status_20260610.zh.md)
 
@@ -9,6 +9,9 @@ Chinese main text: [missile_lethality_continuous_rod_current_status_20260610.zh.
 - Created an MLF-4 planning surface separate from archived MLF-2 and MLF-3.
 - Recorded that the current code already has reusable rod/cut fields and candidate `continuous_rod` branches.
 - Accepted `MLF-4A-X1` read-only inventory through main-thread recovery review.
+- Accepted `MLF-4B-W1-R2` test-first standard event surface after local verification.
+- Accepted `MLF-4C-W1` generic rod geometry after local verification.
+- Accepted `MLF-4D-W1` component cut projection after local verification.
 - Kept component failure, structural breakup, debris/wreck, Pk, and real weapon calibration outside this phase.
 
 ## Maturity Matrix
@@ -17,26 +20,22 @@ Chinese main text: [missile_lethality_continuous_rod_current_status_20260610.zh.
 | --- | --- | --- | --- |
 | Subproject docs | active planning | README, task clusters, current status, dispatch queue, archive index | Not runtime acceptance |
 | 4A read-only inventory | accepted slice | [missile_lethality_continuous_rod_inventory_20260610.md](missile_lethality_continuous_rod_inventory_20260610.md) | Proves inventory completion only, not runtime behavior |
-| Existing rod fields | reusable scaffold | `rod_cut_margin` fields in standard events and effects records | Semantics not accepted by MLF-4B yet |
-| Existing continuous_rod behavior | candidate scaffold | default effects `continuous_rod` branches and historical tests | Historical tests are retained scaffold only |
-| Standard rod event surface | ready for dispatch | 4B cluster | Not implemented/accepted |
-| Generic rod geometry | planned | 4C cluster | No true weapon parameters |
-| Component cut projection | planned | 4D cluster | No component failure probability |
-| Diagnostics and gates | planned | 4E cluster | No kill/crash/structural conclusion |
+| Existing rod fields | accepted standard event surface | `rod_cut_margin` fields in standard events/effects records plus [test_mlf4_standard_rod_event_surface.py](../../../../../tests/runtime/air_combat/test_mlf4_standard_rod_event_surface.py) | Cutting facts only, not failure |
+| Existing continuous_rod behavior | accepted for event-surface, generic-geometry, and component-projection slices | focused MLF-4B/4C/4D tests plus retained historical tests | Diagnostics and final closeout remain open |
+| Standard rod event surface | accepted slice | `MLF-4B-W1-R2` local verification | No new event fields or default constants |
+| Generic rod geometry | accepted slice | [test_mlf4_generic_rod_geometry.py](../../../../../tests/runtime/air_combat/test_mlf4_generic_rod_geometry.py) | No true weapon parameters |
+| Component cut projection | accepted slice | [test_mlf4_component_cut_projection.py](../../../../../tests/runtime/air_combat/test_mlf4_component_cut_projection.py) | No component failure probability or integrity mutation |
+| Diagnostics and gates | ready for dispatch | 4E cluster | No kill/crash/structural conclusion |
 
 ## Residual Register
 
-- Need 4B to lock the standard-event semantics of existing `rod_cut_margin` fields; 4A recommends reusing existing fields before adding a dedicated event.
-- Need focused MLF-4 tests that are separate from retained historical Phase 3 tests.
-- Need no-detonation and non-rod guards for positive rod/cut facts.
+- Need 4E diagnostics to explain rod/cut facts from standard events.
 
 ## Recommended Action Order
 
-1. Dispatch `MLF-4B-W1 Standard Rod Event Surface`.
-2. Decide the event-surface shape before changing runtime logic.
-3. Validate generic rod geometry before component projection.
-4. Add diagnostics and guard tests after the standard event surface is stable.
-5. Close MLF-4 only as a cutting-fact chain, not as failure or breakup.
+1. Dispatch `MLF-4E-W1 Diagnostics And Gates`.
+2. Make diagnostics explain standard rod/cut facts without false rod rows.
+3. Close MLF-4 only as a cutting-fact chain, not as failure or breakup.
 
 ## Overclaim Refusals
 
