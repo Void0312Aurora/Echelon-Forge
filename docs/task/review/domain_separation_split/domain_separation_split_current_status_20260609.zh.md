@@ -47,7 +47,7 @@ DS-P0-B 已产出当前热点的只读 ownership inventory。该清单只是诊�
 
 ## 已知工作树风险
 
-当前仓库存在大量无关 dirty file。域分离工作必须按路径 staging 和验证。不要从无关 review/test archive 变动或宽泛 `git status` 噪声推断本子项目已经验收。本快照中 current-status 文件本身仍是 untracked，且多个被检查的源文件已有其他工作造成的 dirty state；DS-P0-B 只记录当前观测状态。
+上方 DS-P0-B inventory 是实现簇落地前的 `2026-06-09` 历史快照。它不应被重新理解为 DS-S1-C / DS-M1 之后的当前代码状态。后续追踪应按 pathspec 验证 domain-split 路径，并继续把无关 review/test archive 变动排除在验收判断之外。
 
 ## 立即下一步
 

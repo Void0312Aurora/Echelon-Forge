@@ -1,6 +1,6 @@
 # 域分离大拆分任务簇
 
-状态：`2026-06-09`，面向 [域分离大拆分](README.zh.md) 的有限任务簇计划。
+状态：`2026-06-10`，面向 [域分离大拆分](README.zh.md) 的有限任务簇计划与进展台账。
 
 ## 边界决策
 
@@ -69,11 +69,13 @@ git diff --check -- src tests docs/task/review/domain_separation_split docs/task
 
 Immediate:
 
-- `damage.h`、`damage_system.h`、`weapon.h` 仍是主要 ownership hotspot，直到 DS-C1/DS-S1 落地。
-- effects 与 sensor model 需要 router/adapter 后，generic model 文件才能称为 domain-clean。
+- generic physics/logistics 对 Air propulsion helper 的依赖需要 named adapter 或明确 retained-dependency 决定。
+- 更宽 architecture gate 仍因无关 direct-sim allowlist、binding-count assertion 和 Windows snippet link surface 失败。
+- Naval/Ground effects path 仅为 ownership placeholder，不应被理解为完整 damage-fidelity implementation。
 
 Follow-on:
 
+- direct include cleanup 与 compatibility wrapper 的弃用/保留决定。
 - Ground movement/sensing/fires/damage runtime 实现包。
 - ownership split 稳定后的校准与真实性升级。
 - compatibility wrapper deprecation cleanup。

@@ -29,11 +29,11 @@
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | 审计基线 | active input | [domain_separation_audit_20260609.zh.md](../domain_separation_audit_20260609.zh.md) | 审计事实是输入，不是实现证明。 |
-| Air system ownership | partial candidate | 当前工作树中的 `src/systems/air/`、`src/components/air/` | 目录所有权不等于 combat/model 拆分完成。 |
-| Combat damage component | held | `src/components/combat/damage.h` | Air/Naval/Common 仍混合；Ground damage 缺失。 |
-| Combat damage system | held | `src/systems/combat/damage_system.h` | Air/Naval/Common ECS 逻辑仍混合。 |
-| Weapon component | held | `src/components/combat/weapon.h` | Naval weapon 类型仍在 generic 文件；Ground 缺失。 |
-| Platform system | partial | `src/systems/naval/naval_logistics_system.h`、`src/systems/systems/logistics_system.h` | Naval underway resupply 已抽出；Air propulsion helper residual 仍需 adapter 或保留决定。 |
+| Air system ownership | pass | `src/systems/air/`、`src/components/air/`、旧 physics/tuning wrapper | runtime/tuning owner 已拆分；generic physics/logistics 对 Air propulsion helper 的消费仍需 adapter 或保留决定后才能最终验收。 |
+| Combat damage component | pass | `src/components/combat/{common,air,naval,ground}/damage_*.h`、`src/components/combat/damage.h` | generic 公开头是 compatibility umbrella；Ground damage 仍是 ownership shell，不是完整 runtime 声明。 |
+| Combat damage system | pass | `src/systems/combat/damage_system_{common,air,naval,ground}.h`、`src/systems/combat/damage_system.h` | generic 入口是 compatibility registrar；Ground damage system 仍是 no-op placeholder。 |
+| Weapon component | pass | `src/components/combat/{common,air,naval,ground}/weapon_*.h`、`src/components/combat/weapon.h` | direct include cleanup 属后续工作；Ground weapon 仍是 ownership shell。 |
+| Platform system | partial | `src/systems/naval/naval_logistics_system.h`、`src/systems/systems/logistics_system.h` | Naval underway resupply 已抽出；Air propulsion helper residual 不属于该 naval slice。 |
 | Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`、`src/models/air/default_effects_air_domain.h`、`src/models/naval/naval_sensor_maritime_adapter.h` | effects 与 sensor ship-specific ownership 已通过 domain helper 路由；Naval/Ground effects 仍是 placeholder。 |
 | Architecture guards | partial | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | 聚焦 domain split guard 通过；更宽既有 architecture gate 仍在无关 baseline 上失败。 |
 
@@ -63,7 +63,7 @@
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 固化权威、非目标与任务簇。 | 审计已存在。 | README、状态、队列和任务簇计划存在。 | pass |
 | `P1 Components` | 拆分 damage 与 weapon component ownership。 | P0 文件存在。 | common/air/naval/ground 头文件和兼容 wrapper 可编译。 | pass |
-| `P2 Systems` | 拆分 ECS system ownership。 | P1 component surface 可编译。 | damage、air、naval logistics 与 generic system registration 已分离。 | partial |
+| `P2 Systems` | 拆分 ECS system ownership。 | P1 component surface 可编译。 | damage、air、naval logistics ownership 已分离；Air helper 保留策略仍是显式 residual。 | partial |
 | `P3 Models` | 按域路由 default effects 和 sensor 行为。 | P1/P2 surface 存在。 | generic model 文件不再直接拥有 domain-only struct 依赖，除非通过 router/adapter。 | pass |
 | `P4 Validation` | 增加并运行 build、runtime、architecture guard。 | 实现簇落地。 | 聚焦检查通过，残余风险记录。 | partial |
 | `P5 Closure` | 同步文档、索引和兼容弃用说明。 | P4 evidence 存在。 | acceptance 文件更新，且不夸大整体域成熟度。 | partial |
@@ -98,6 +98,10 @@
 
 - 校准和真实性升级不属于本所有权拆分。
 - 验收后仍保留的 compatibility wrapper 必须有保留或弃用理由。
+- generic physics/logistics 对 Air propulsion helper 的依赖需要 named adapter
+  或明确 retained-dependency 决定。
+- 更宽 architecture gate 仍含无关 baseline failure；应把聚焦 domain-split guard
+  与这些 residual 区分记录。
 - 完整 Ground runtime 成熟度需要后续 movement/sensing/fires/damage 实现包。
 - 若 model routing 暴露行为漂移，先记录 first failing stage，再讨论新增机制。
 

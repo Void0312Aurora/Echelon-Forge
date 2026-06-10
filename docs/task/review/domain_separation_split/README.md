@@ -34,11 +34,11 @@ acceptance gates.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Audit baseline | active input | [domain_separation_audit_20260609.md](../domain_separation_audit_20260609.md) | Audit facts are an input, not implementation proof. |
-| Air system ownership | partial candidate | `src/systems/air/`, `src/components/air/` in current worktree | Directory ownership does not finish combat/model split. |
-| Combat damage components | held | `src/components/combat/damage.h` | Air/Naval/Common remain mixed; Ground damage is absent. |
-| Combat damage systems | held | `src/systems/combat/damage_system.h` | Air/Naval/Common ECS logic remains mixed. |
-| Weapon components | held | `src/components/combat/weapon.h` | Naval weapon types remain in the generic file; Ground is absent. |
-| Platform systems | partial | `src/systems/naval/naval_logistics_system.h`, `src/systems/systems/logistics_system.h` | Naval underway resupply is extracted; Air propulsion helper residual still needs adapter or retention decision. |
+| Air system ownership | pass | `src/systems/air/`, `src/components/air/`, old physics/tuning wrappers | Runtime/tuning owners are split; Air propulsion helper consumption from generic physics/logistics still needs adapter or retention decision before final acceptance. |
+| Combat damage components | pass | `src/components/combat/{common,air,naval,ground}/damage_*.h`, `src/components/combat/damage.h` | The public generic header is a compatibility umbrella; Ground damage remains an ownership shell, not a full runtime claim. |
+| Combat damage systems | pass | `src/systems/combat/damage_system_{common,air,naval,ground}.h`, `src/systems/combat/damage_system.h` | The generic entry point is a compatibility registrar; Ground damage system remains a no-op placeholder. |
+| Weapon components | pass | `src/components/combat/{common,air,naval,ground}/weapon_*.h`, `src/components/combat/weapon.h` | Direct include cleanup is later work; Ground weapon remains an ownership shell. |
+| Platform systems | partial | `src/systems/naval/naval_logistics_system.h`, `src/systems/systems/logistics_system.h` | Naval underway resupply is extracted; the Air propulsion helper residual remains outside that naval slice. |
 | Model layer | pass | `src/models/weapons/detail/default_effects_domain_routing_detail.inc`, `src/models/air/default_effects_air_domain.h`, `src/models/naval/naval_sensor_maritime_adapter.h` | Effects and sensor ship-specific ownership now route through domain helpers; Naval/Ground effects remain placeholders. |
 | Architecture guards | partial | `tests/architecture/structural_boundaries/test_structural_guardrails.py` | Focused domain split guard passes; broader existing architecture gates still fail on unrelated baselines. |
 
@@ -78,7 +78,7 @@ Out of scope:
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze authority, non-goals, and task clusters. | Audit exists. | README, status, queue, and cluster plan exist. | pass |
 | `P1 Components` | Split damage and weapon component ownership. | P0 files exist. | Common/air/naval/ground headers compile with compatibility wrappers. | pass |
-| `P2 Systems` | Split ECS system ownership. | P1 component surfaces compile. | Damage, air, naval logistics, and generic system registration are separated. | partial |
+| `P2 Systems` | Split ECS system ownership. | P1 component surfaces compile. | Damage, air, and naval logistics ownership are separated; Air helper retention remains explicit residual work. | partial |
 | `P3 Models` | Route default effects and sensor behavior by domain ownership. | P1/P2 surfaces exist. | Generic model files stop depending directly on domain-only structs except through routers/adapters. | pass |
 | `P4 Validation` | Add and run build, runtime, and architecture guards. | Implementation clusters land. | Focused checks pass; residual risks are recorded. | partial |
 | `P5 Closure` | Sync docs, indexes, and compatibility-deprecation notes. | P4 evidence exists. | Acceptance file is updated without overclaiming whole-domain maturity. | partial |
@@ -125,6 +125,10 @@ This subproject can be marked accepted only when:
 - Calibration and realism upgrades remain separate from ownership splitting.
 - Any compatibility wrapper left after acceptance must have a documented
   deprecation or retention reason.
+- The Air propulsion helper dependency used from generic physics/logistics needs
+  either a named adapter or an explicit retained-dependency decision.
+- Broader architecture gates still include unrelated baseline failures; keep the
+  focused domain-split guard distinct from those residuals.
 - Full Ground runtime maturity requires later movement/sensing/fires/damage
   implementation packages.
 - If model routing reveals behavior drift, pause and record the first failing

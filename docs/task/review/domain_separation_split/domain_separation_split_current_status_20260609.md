@@ -55,11 +55,11 @@ clusters, but it is not proof that any split has been implemented or accepted.
 
 ## Known Worktree Risk
 
-The repository currently contains many unrelated dirty files. Domain-separation
-work must stage and validate by path. Do not infer acceptance from unrelated
-review/test archive movement or from broad `git status` noise. In this snapshot
-the current-status files are untracked, and several inspected source files are
-already dirty from other work; DS-P0-B only records the current observed state.
+The DS-P0-B inventory above is a historical `2026-06-09` snapshot taken before
+the implementation clusters landed. It should not be re-read as the current code
+state after DS-S1-C / DS-M1. Future tracking should validate the domain-split
+paths by pathspec and keep unrelated review/test archive movement out of the
+acceptance decision.
 
 ## Immediate Next Actions
 

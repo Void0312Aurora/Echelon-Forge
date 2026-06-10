@@ -1,6 +1,6 @@
 # Domain Separation Split Task Clusters
 
-Status: `2026-06-09` finite task-cluster plan for [Domain Separation Split](README.md).
+Status: `2026-06-10` finite task-cluster plan and progress ledger for [Domain Separation Split](README.md).
 
 ## Boundary Decision
 
@@ -81,13 +81,17 @@ git diff --check -- src tests docs/task/review/domain_separation_split docs/task
 
 Immediate:
 
-- `damage.h`, `damage_system.h`, and `weapon.h` remain the primary ownership
-  hotspots until DS-C1/DS-S1 clusters land.
-- Effects and sensor models need router/adapters before generic model files can
-  be called domain-clean.
+- The Air propulsion helper dependency used from generic physics/logistics needs
+  a named adapter or explicit retained-dependency decision.
+- Broader architecture gates still fail on unrelated direct-sim allowlists,
+  binding-count assertions, and Windows snippet link surfaces.
+- Naval/Ground effects paths are ownership placeholders only; do not read them
+  as full damage-fidelity implementations.
 
 Follow-on:
 
+- Direct include cleanup and compatibility wrapper deprecation/retention
+  decisions.
 - Ground movement/sensing/fires/damage runtime implementation packages.
 - Calibration and realism upgrades after ownership split is stable.
 - Compatibility wrapper deprecation cleanup.

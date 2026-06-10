@@ -1,6 +1,6 @@
 # Domain Separation Split Dispatch Queue
 
-Status: `2026-06-09` initial dispatch queue for [Domain Separation Split](README.md).
+Status: `2026-06-10` dispatch queue and progress log for [Domain Separation Split](README.md).
 
 ## Queue Policy
 
