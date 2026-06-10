@@ -16,6 +16,156 @@ from .common import (
     _write_inline_scenario,
 )
 
+
+def _vector_from_source(obs: dict[str, Any], source: str, np: Any) -> Any:
+    if source == "obs.mission":
+        return np.asarray(obs["mission"], dtype=np.float32).reshape(-1)
+    if source == "obs.instruments":
+        return np.asarray(obs["instruments"], dtype=np.float32).reshape(-1)
+    raise ValueError(f"Unknown observation vector source: {source}")
+
+
+def _check_numeric_rule(actual: float, rule: dict[str, Any], vector: Any, label: str) -> str | None:
+    rel_tol = float(rule.get("rel_tol", 1.0e-5))
+    abs_tol = float(rule.get("abs_tol", 1.0e-5))
+    if "equals" in rule and not math.isclose(actual, float(rule["equals"]), rel_tol=rel_tol, abs_tol=abs_tol):
+        return f"expected {label}={float(rule['equals']):.6g}, got {actual:.6g}"
+    if "int_equals" in rule and int(actual) != int(rule["int_equals"]):
+        return f"expected {label}={int(rule['int_equals'])}, got {actual:.6g}"
+    if "abs_max" in rule and abs(actual) > float(rule["abs_max"]):
+        return f"expected abs({label}) <= {float(rule['abs_max']):.6g}, got {actual:.6g}"
+    if "abs_min_exclusive" in rule and abs(actual) <= float(rule["abs_min_exclusive"]):
+        return f"expected abs({label}) > {float(rule['abs_min_exclusive']):.6g}, got {actual:.6g}"
+    if "gt" in rule and not (actual > float(rule["gt"])):
+        return f"expected {label} > {float(rule['gt']):.6g}, got {actual:.6g}"
+    if "lt" in rule and not (actual < float(rule["lt"])):
+        return f"expected {label} < {float(rule['lt']):.6g}, got {actual:.6g}"
+    if "lt_index" in rule:
+        other = float(vector[int(rule["lt_index"])])
+        if not actual < other:
+            return f"expected {label} < vector[{int(rule['lt_index'])}] ({other:.6g}), got {actual:.6g}"
+    return None
+
+
+def _run_observation_vector_assertions(spec: dict[str, Any], obs: dict[str, Any], np: Any) -> tuple[bool, str]:
+    source = str(spec.get("vector_source", "")).strip()
+    vector = _vector_from_source(obs, source, np)
+    expected_shape = spec.get("expected_shape")
+    if expected_shape is not None:
+        shape = tuple(int(x) for x in list(expected_shape))
+        if tuple(vector.shape) != shape:
+            return False, f"{source} expected shape {shape}, got {tuple(vector.shape)}"
+
+    assertions = list(spec.get("assertions", []) or [])
+    if not assertions:
+        raise ValueError("observation_vector_assertions requires non-empty 'assertions'")
+    for idx, raw_rule in enumerate(assertions):
+        if not isinstance(raw_rule, dict):
+            raise ValueError("observation vector assertions must be JSON objects")
+        vector_index = int(raw_rule["index"])
+        label = str(raw_rule.get("label", f"{source}[{vector_index}]"))
+        actual = float(vector[vector_index])
+        mismatch = _check_numeric_rule(actual, raw_rule, vector, label)
+        if mismatch is not None:
+            return False, mismatch
+    return True, str(spec.get("success_message", "observation vector assertions passed"))
+
+
+def _run_step_info_assertions(spec: dict[str, Any], info: dict[str, Any]) -> tuple[bool, str]:
+    reward_terms = dict((info or {}).get("reward_terms", {}) or {})
+    for term in [str(item) for item in list(spec.get("required_reward_terms", []) or [])]:
+        if term not in reward_terms:
+            return False, f"{term} reward term missing"
+    return True, str(spec.get("success_message", "step info assertions passed"))
+
+
+def _clear_loader_runtime_cache(loader: Any) -> None:
+    cache = getattr(loader, "_runtime_eval_cache", None)
+    if isinstance(cache, dict):
+        cache.clear()
+
+
+def _run_rudder_sign_contract(
+    spec: dict[str, Any],
+    env: Any,
+    *,
+    scenario_path: str,
+    seed: int,
+    np: Any,
+    universal_env_cls: Any,
+) -> tuple[bool, str]:
+    def _shortest_angle_deg(target: float, current: float) -> float:
+        d = float(target) - float(current)
+        while d > 180.0:
+            d -= 360.0
+        while d < -180.0:
+            d += 360.0
+        return d
+
+    def _run_episode(case_env: Any, *, rudder_pulse: float) -> float:
+        current_obs, _ = case_env.reset(seed=seed)
+        pulse_started = False
+        pulse_steps_left = 0
+        hdg_before = None
+        hdg_after = None
+        for _step in range(int(case_env.max_steps)):
+            inst = np.asarray(current_obs["instruments"], dtype=np.float32).reshape(-1)
+            ias = float(inst[int(spec.get("ias_index", 0))])
+            alt = float(inst[int(spec.get("alt_index", 2))])
+            pitch_deg = float(inst[int(spec.get("pitch_index", 7))])
+            hdg = float(inst[int(spec.get("heading_index", 9))])
+            if ias < float(spec.get("rotation_speed_mps", 100.0)):
+                pitch_cmd = 0.0
+            else:
+                pitch_cmd = float(
+                    np.clip(
+                        (float(spec.get("target_pitch_deg", 15.0)) - pitch_deg)
+                        * float(spec.get("pitch_gain", 0.05)),
+                        -1.0,
+                        1.0,
+                    )
+                )
+            rud = 0.0
+            if alt > float(spec.get("airborne_alt_m", 80.0)):
+                if not pulse_started:
+                    pulse_started = True
+                    hdg_before = hdg
+                    pulse_steps_left = int(spec.get("pulse_steps", 40))
+                if pulse_steps_left > 0:
+                    rud = float(rudder_pulse)
+                    pulse_steps_left -= 1
+                elif hdg_after is None:
+                    hdg_after = hdg
+            act = np.array([pitch_cmd, 0.0, rud, 1.0], dtype=np.float32)
+            current_obs, _r, terminated_case, truncated_case, _i = case_env.step(act)
+            if terminated_case or truncated_case:
+                break
+            if pulse_started and hdg_after is not None:
+                break
+        if hdg_before is None or hdg_after is None:
+            raise RuntimeError("rudder pulse window was not reached (did not get airborne fast enough)")
+        return _shortest_angle_deg(hdg_after, hdg_before)
+
+    d_pos = _run_episode(env, rudder_pulse=float(spec.get("positive_pulse", 0.25)))
+    env_neg = universal_env_cls(
+        scenario_path,
+        include_visual=bool(spec.get("include_visual", False)),
+        include_proprio=bool(spec.get("include_proprio", False)),
+        action_mode=str(spec.get("action_mode", "takeoff4")),
+        mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+        visual_downsample=int(spec.get("visual_downsample", 1)),
+        visual_update_interval=int(spec.get("visual_update_interval", 1)),
+        runtime_compatibility_enabled=True,
+    )
+    env_neg.set_randomization_overrides(dict(spec.get("randomization_overrides", {}) or {}))
+    d_neg = _run_episode(env_neg, rudder_pulse=float(spec.get("negative_pulse", -0.25)))
+    if not (d_pos > float(spec.get("positive_delta_min_deg", 0.5))):
+        return False, "positive rudder pulse did not increase heading"
+    if not (d_neg < float(spec.get("negative_delta_max_deg", -0.5))):
+        return False, "negative rudder pulse did not decrease heading"
+    return True, "rudder sign contract passed"
+
+
 def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
     ensure_repo_imports()
 
@@ -42,6 +192,8 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
         include_proprio=bool(spec.get("include_proprio", False)),
         action_mode=str(spec.get("action_mode", "full")),
         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+        visual_downsample=int(spec.get("visual_downsample", 1)),
+        visual_update_interval=int(spec.get("visual_update_interval", 1)),
         runtime_compatibility_enabled=True,
     )
 
@@ -55,6 +207,11 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
         loader_updates = dict(spec.get("loader_updates", {}) or {})
         for attr_name, value in loader_updates.items():
             setattr(env.loader, str(attr_name), value)
+        if loader_updates:
+            _clear_loader_runtime_cache(env.loader)
+
+        if check_kind == "observation_vector_assertions":
+            return _run_observation_vector_assertions(spec, obs, np)
 
         if check_kind == "departure_soft_shaping":
             reward_center, terminated_center, truncated_center, _status_center = env.loader.compute_full_step(obs, env.sim, 0, env.max_steps)
@@ -73,6 +230,8 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 include_proprio=bool(spec.get("include_proprio", False)),
                 action_mode=str(spec.get("action_mode", "full")),
                 mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                visual_downsample=int(spec.get("visual_downsample", 1)),
+                visual_update_interval=int(spec.get("visual_update_interval", 1)),
                 runtime_compatibility_enabled=True,
             )
             obs_drift, _ = env_drift.reset(seed=seed)
@@ -92,47 +251,6 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 return False, "drifted case should receive departure track penalty"
             return True, "departure soft shaping contract passed"
 
-        if check_kind == "mission_obs_nav_v1":
-            mission = np.asarray(obs["mission"], dtype=np.float32).reshape(-1)
-            if mission.shape != (11,):
-                return False, f"expected mission shape (11,), got {mission.shape}"
-            checks = [
-                (int(mission[0]) == 3, f"expected command_code=3, got {mission[0]}"),
-                (math.isclose(float(mission[4]), 0.0, abs_tol=1e-6), f"expected active waypoint index 0, got {mission[4]}"),
-                (math.isclose(float(mission[5]), 2.0, abs_tol=1e-6), f"expected total waypoints 2, got {mission[5]}"),
-                (math.isclose(float(mission[6]), 10000.0, rel_tol=1e-5, abs_tol=1e-5), f"expected distance-to-go 10000m, got {mission[6]}"),
-                (abs(float(mission[7])) <= 1e-5, f"expected cross-track near 0, got {mission[7]}"),
-                (math.isclose(float(mission[8]), 10000.0, rel_tol=1e-5, abs_tol=1e-5), f"expected along-track remaining 10000m, got {mission[8]}"),
-                (math.isclose(float(mission[9]), 90.0, rel_tol=1e-5, abs_tol=1e-5), f"expected direct bearing 90 deg, got {mission[9]}"),
-                (math.isclose(float(mission[10]), 90.0, rel_tol=1e-5, abs_tol=1e-5), f"expected desired leg track 90 deg, got {mission[10]}"),
-            ]
-            for ok, msg in checks:
-                if not ok:
-                    return False, msg
-            return True, "nav_v1 mission observation contract passed"
-
-        if check_kind == "mission_obs_nav_v2":
-            mission = np.asarray(obs["mission"], dtype=np.float32).reshape(-1)
-            if mission.shape != (14,):
-                return False, f"expected mission shape (14,), got {mission.shape}"
-            checks = [
-                (int(mission[0]) == 3, f"expected command_code=3, got {mission[0]}"),
-                (math.isclose(float(mission[4]), 1.0, abs_tol=1e-6), f"expected selected steerpoint 1, got {mission[4]}"),
-                (math.isclose(float(mission[5]), 1.0, abs_tol=1e-6), f"expected steerpoint mode code 1.0 for flyover, got {mission[5]}"),
-                (math.isclose(float(mission[6]), 10000.0, rel_tol=1e-5, abs_tol=1e-5), f"expected steerpoint range 10000m, got {mission[6]}"),
-                (abs(float(mission[7])) <= 1e-5, f"expected steerpoint bearing rel near 0 deg, got {mission[7]}"),
-                (abs(float(mission[8])) <= 1e-5, f"expected steerpoint altitude delta near 0, got {mission[8]}"),
-                (abs(float(mission[9])) <= 1e-5, f"expected CDI near 0, got {mission[9]}"),
-                (abs(float(mission[10])) <= 1e-5, f"expected track angle error near 0, got {mission[10]}"),
-                (math.isclose(float(mission[11]), 10000.0, rel_tol=1e-5, abs_tol=1e-5), f"expected leg distance remaining 10000m, got {mission[11]}"),
-                (math.isclose(float(mission[12]), -45.0, rel_tol=1e-4, abs_tol=1e-4), f"expected next turn -45 deg, got {mission[12]}"),
-                (0.0 < float(mission[13]) < float(mission[11]), f"expected distance_to_turn between 0 and DTG, got {mission[13]}"),
-            ]
-            for ok, msg in checks:
-                if not ok:
-                    return False, msg
-            return True, "nav_v2 mission observation contract passed"
-
         if check_kind == "post_waypoint_transition":
             reward, terminated, truncated, _info = env.loader.compute_full_step(obs, env.sim, 0, env.max_steps)
             phase = dict(env.loader.mission_cmd)
@@ -146,7 +264,47 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 return False, "waypoint state should be cleared after phase transition"
             return True, f"post-waypoint transition contract passed with reward {reward:.3f}"
 
+        if check_kind == "visual_update_interval":
+            if "visual" not in obs:
+                return False, "initial observation missing visual channel"
+            if getattr(env, "_visual_cache", None) is None or int(getattr(env, "_visual_cache_step", -1)) != 0:
+                return False, "initial visual cache state invalid"
+            action_vec = np.zeros((int(env.action_space.shape[0]),), dtype=np.float32)
+            hold_steps = list(spec.get("cache_hold_steps", [1, 2]))
+            refresh_step = int(spec.get("refresh_step", 3))
+            for expected_step in hold_steps:
+                _next_obs, _reward, terminated, truncated, _info = env.step(action_vec)
+                if "visual" not in _next_obs:
+                    return False, f"step {expected_step}: missing visual channel"
+                if int(getattr(env, "_visual_cache_step", -1)) != 0:
+                    return False, f"step {expected_step}: visual cache refreshed too early"
+                if terminated or truncated:
+                    return False, f"step {expected_step}: environment terminated unexpectedly"
+                if int(getattr(env, "steps", -1)) != expected_step:
+                    return False, f"step {expected_step}: env.steps mismatch"
+            _next_obs, _reward, _terminated, _truncated, _info = env.step(action_vec)
+            if "visual" not in _next_obs:
+                return False, "refresh step missing visual channel"
+            if int(getattr(env, "steps", -1)) != refresh_step:
+                return False, "refresh step env.steps mismatch"
+            if int(getattr(env, "_visual_cache_step", -1)) != refresh_step:
+                return False, "visual cache did not refresh at configured interval"
+            return True, "visual update interval contract passed"
+
+        if check_kind == "rudder_sign":
+            return _run_rudder_sign_contract(
+                spec,
+                env,
+                scenario_path=scenario_path,
+                seed=seed,
+                np=np,
+                universal_env_cls=UniversalEnv,
+            )
+
         _obs, _reward, terminated, truncated, info = env.step(action)
+
+        if check_kind == "step_info_assertions":
+            return _run_step_info_assertions(spec, info)
 
         if check_kind == "waypoint_mode_reward_overrides":
             if terminated or truncated:
@@ -162,7 +320,16 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
             actual_dist = float(reward_terms["waypoint_distance"])
             actual_prox = float(reward_terms["waypoint_proximity"])
             expected_dist = dist_to_wp_m * float(rewards_cfg["waypoint_distance_weight_flyover"])
-            prox_ref = float(rewards_cfg["waypoint_proximity_ref_m_flyover"])
+            wp_idx = int(getattr(env.loader, "waypoint_idx", 0))
+            wp = env.loader.waypoints[wp_idx] if 0 <= wp_idx < len(env.loader.waypoints) else {}
+            waypoint_radius_m = max(
+                1.0,
+                float(wp.get("radius_m", env.loader.mission_cmd.get("waypoint_radius_m", 500.0))),
+            )
+            prox_ref = max(
+                float(rewards_cfg["waypoint_proximity_ref_m_flyover"]),
+                max(2.5 * waypoint_radius_m, waypoint_radius_m + 1500.0),
+            )
             prox_weight = float(rewards_cfg["waypoint_proximity_weight_flyover"])
             expected_prox = prox_weight * (1.0 - min(dist_to_wp_m, prox_ref) / prox_ref)
             if not math.isclose(actual_dist, expected_dist, rel_tol=1e-5, abs_tol=1e-5):
@@ -296,10 +463,13 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                         include_proprio=bool(spec.get("include_proprio", False)),
                         action_mode=str(spec.get("action_mode", "full")),
                         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                        visual_downsample=int(spec.get("visual_downsample", 1)),
+                        visual_update_interval=int(spec.get("visual_update_interval", 1)),
                         runtime_compatibility_enabled=True,
                     )
                     case_env.reset(seed=seed)
                     case_env.loader.waypoint_idx = 1
+                    _clear_loader_runtime_cache(case_env.loader)
                     case_env.loader._waypoint_prev_dist_m = None
                     _next_obs, _case_reward, case_terminated, case_truncated, case_info = case_env.step(action)
                     if case_terminated or case_truncated:
@@ -324,6 +494,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
 
         if check_kind == "flyby_sequence_past_fix_guard":
             env.loader.waypoint_idx = int(spec.get("waypoint_idx", 1))
+            _clear_loader_runtime_cache(env.loader)
             gstate = env.loader._compute_waypoint_guidance_state()
             if not isinstance(gstate, dict):
                 return False, "guidance state missing"
@@ -366,6 +537,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
 
         if check_kind == "flyover_guidance_capture":
             env.loader.waypoint_idx = int(spec.get("waypoint_idx", 1))
+            _clear_loader_runtime_cache(env.loader)
             env.loader.update_behaviors(0.0)
             cmd_track = float(env.loader.mission_cmd["target_heading"])
             own_x = float(spec.get("own_x_m", 20800.0))
@@ -379,6 +551,7 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
 
         if check_kind == "flyover_nav_reward_geometry":
             env.loader.waypoint_idx = int(spec.get("waypoint_idx", 1))
+            _clear_loader_runtime_cache(env.loader)
             env.loader.update_behaviors(0.0)
             nav = env.loader._get_waypoint_nav_products()
             if nav is None:
@@ -414,22 +587,6 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                 return False, "short-final landing approach was misclassified as off-runway ground phase"
             return True, "landing short-final off-runway guard contract passed"
 
-        if check_kind == "ils_threshold_crossing_height":
-            ils = np.asarray(obs["instruments"], dtype=np.float32).reshape(-1)[-4:]
-            if float(ils[0]) <= 0.5:
-                return False, "ILS should be valid on inbound final"
-            if abs(float(ils[2])) > 0.08:
-                return False, "ideal threshold-crossing-height glidepath should be near zero glideslope deviation"
-            return True, "ILS threshold crossing height contract passed"
-
-        if check_kind == "ils_glideslope_inbound_final":
-            ils = np.asarray(obs["instruments"], dtype=np.float32).reshape(-1)[-4:]
-            if float(ils[0]) <= 0.5:
-                return False, "ILS should be valid on inbound final"
-            if abs(float(ils[2])) <= 1.0e-6:
-                return False, "inbound-final glideslope deviation unexpectedly collapsed to zero"
-            return True, "ILS inbound-final glideslope contract passed"
-
         if check_kind == "landing_dme_progress_quality_gate":
             ils_dme = float(np.asarray(obs["instruments"], dtype=np.float32).reshape(-1)[-1])
             env.loader._approach_prev_dme_m = ils_dme + 100.0
@@ -442,15 +599,6 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                     f"(reward={reward:.3f}, terminated={terminated}, truncated={truncated}, dme_reward={dme_reward:.6f})"
                 )
             return True, "landing DME progress quality gate contract passed"
-
-        if check_kind == "landing_approach_reward_terms":
-            _next_obs, _step_reward, _terminated, _truncated, info = env.step(action)
-            reward_terms = dict((info or {}).get("reward_terms", {}) or {})
-            if "approach_localizer" not in reward_terms:
-                return False, "approach_localizer reward term missing"
-            if "approach_glideslope" not in reward_terms:
-                return False, "approach_glideslope reward term missing"
-            return True, "landing approach reward terms contract passed"
 
         if check_kind == "landing_approach_improvement_reward":
             inst = np.asarray(obs["instruments"], dtype=np.float32).reshape(-1)
@@ -501,6 +649,8 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                         include_proprio=bool(spec.get("include_proprio", False)),
                         action_mode=str(spec.get("action_mode", "full")),
                         mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
+                        visual_downsample=int(spec.get("visual_downsample", 1)),
+                        visual_update_interval=int(spec.get("visual_update_interval", 1)),
                         runtime_compatibility_enabled=True,
                     )
                     case_obs, _ = case_env.reset(seed=seed)
@@ -520,75 +670,6 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
                     except OSError:
                         pass
             return True, "takeoff departure constraints contract passed"
-
-        if check_kind == "rudder_sign":
-            def _shortest_angle_deg(target: float, current: float) -> float:
-                d = float(target) - float(current)
-                while d > 180.0:
-                    d -= 360.0
-                while d < -180.0:
-                    d += 360.0
-                return d
-
-            def _run_episode(case_env: Any, *, rudder_pulse: float) -> float:
-                current_obs, _ = case_env.reset(seed=seed)
-                pulse_started = False
-                pulse_steps_left = 0
-                hdg_before = None
-                hdg_after = None
-                for _step in range(int(case_env.max_steps)):
-                    inst = np.asarray(current_obs["instruments"], dtype=np.float32).reshape(-1)
-                    ias = float(inst[int(spec.get("ias_index", 0))])
-                    alt = float(inst[int(spec.get("alt_index", 2))])
-                    pitch_deg = float(inst[int(spec.get("pitch_index", 7))])
-                    hdg = float(inst[int(spec.get("heading_index", 9))])
-                    if ias < float(spec.get("rotation_speed_mps", 100.0)):
-                        pitch_cmd = 0.0
-                    else:
-                        pitch_cmd = float(
-                            np.clip(
-                                (float(spec.get("target_pitch_deg", 15.0)) - pitch_deg) * float(spec.get("pitch_gain", 0.05)),
-                                -1.0,
-                                1.0,
-                            )
-                        )
-                    rud = 0.0
-                    if alt > float(spec.get("airborne_alt_m", 80.0)):
-                        if not pulse_started:
-                            pulse_started = True
-                            hdg_before = hdg
-                            pulse_steps_left = int(spec.get("pulse_steps", 40))
-                        if pulse_steps_left > 0:
-                            rud = float(rudder_pulse)
-                            pulse_steps_left -= 1
-                        elif hdg_after is None:
-                            hdg_after = hdg
-                    act = np.array([pitch_cmd, 0.0, rud, 1.0], dtype=np.float32)
-                    current_obs, _r, terminated_case, truncated_case, _i = case_env.step(act)
-                    if terminated_case or truncated_case:
-                        break
-                    if pulse_started and hdg_after is not None:
-                        break
-                if hdg_before is None or hdg_after is None:
-                    raise RuntimeError("rudder pulse window was not reached (did not get airborne fast enough)")
-                return _shortest_angle_deg(hdg_after, hdg_before)
-
-            d_pos = _run_episode(env, rudder_pulse=float(spec.get("positive_pulse", 0.25)))
-            env_neg = UniversalEnv(
-                scenario_path,
-                include_visual=bool(spec.get("include_visual", False)),
-                include_proprio=bool(spec.get("include_proprio", False)),
-                action_mode=str(spec.get("action_mode", "takeoff4")),
-                mission_obs_mode=str(spec.get("mission_obs_mode", "basic")),
-                runtime_compatibility_enabled=True,
-            )
-            env_neg.set_randomization_overrides(dict(spec.get("randomization_overrides", {}) or {}))
-            d_neg = _run_episode(env_neg, rudder_pulse=float(spec.get("negative_pulse", -0.25)))
-            if not (d_pos > float(spec.get("positive_delta_min_deg", 0.5))):
-                return False, "positive rudder pulse did not increase heading"
-            if not (d_neg < float(spec.get("negative_delta_max_deg", -0.5))):
-                return False, "negative rudder pulse did not decrease heading"
-            return True, "rudder sign contract passed"
 
         if check_kind == "scripted_waypoint_coordination":
             from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
@@ -613,33 +694,6 @@ def run_env_regression_contract(spec_path: str) -> tuple[bool, str]:
             if float(np.percentile(np.asarray(abs_yaw_rate, dtype=np.float64), 95.0)) >= float(spec.get("yaw_rate_p95_max", 20.0)):
                 return False, "scripted waypoint controller yaw-rate coordination exceeded limit"
             return True, "scripted waypoint coordination contract passed"
-
-        if check_kind == "visual_update_interval":
-            if "visual" not in obs:
-                return False, "initial observation missing visual channel"
-            if getattr(env, "_visual_cache", None) is None or int(getattr(env, "_visual_cache_step", -1)) != 0:
-                return False, "initial visual cache state invalid"
-            action_vec = np.zeros((int(env.action_space.shape[0]),), dtype=np.float32)
-            hold_steps = list(spec.get("cache_hold_steps", [1, 2]))
-            refresh_step = int(spec.get("refresh_step", 3))
-            for expected_step in hold_steps:
-                _next_obs, _reward, terminated, truncated, _info = env.step(action_vec)
-                if "visual" not in _next_obs:
-                    return False, f"step {expected_step}: missing visual channel"
-                if int(getattr(env, "_visual_cache_step", -1)) != 0:
-                    return False, f"step {expected_step}: visual cache refreshed too early"
-                if terminated or truncated:
-                    return False, f"step {expected_step}: environment terminated unexpectedly"
-                if int(getattr(env, "steps", -1)) != expected_step:
-                    return False, f"step {expected_step}: env.steps mismatch"
-            _next_obs, _reward, _terminated, _truncated, _info = env.step(action_vec)
-            if "visual" not in _next_obs:
-                return False, "refresh step missing visual channel"
-            if int(getattr(env, "steps", -1)) != refresh_step:
-                return False, "refresh step env.steps mismatch"
-            if int(getattr(env, "_visual_cache_step", -1)) != refresh_step:
-                return False, "visual cache did not refresh at configured interval"
-            return True, "visual update interval contract passed"
 
         raise ValueError(f"Unknown env_regression check_kind: {check_kind}")
     finally:

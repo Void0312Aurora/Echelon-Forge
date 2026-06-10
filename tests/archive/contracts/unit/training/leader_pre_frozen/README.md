@@ -7,4 +7,4 @@ This directory archives the leader acceptance/generalization specs that were aut
 - Status:
   - archived for traceability
 - Active entry point:
-  - [tests/contracts/unit/training/frozen](/home/void0312/CMO/tests/contracts/unit/training/frozen/README.md)
+  - [tests/contracts/unit/training/frozen](../../../../../contracts/unit/training/frozen/README.md)

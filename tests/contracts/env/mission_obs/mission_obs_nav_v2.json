@@ -1,9 +1,25 @@
 {
   "type": "env_regression",
-  "check_kind": "mission_obs_nav_v2",
+  "check_kind": "observation_vector_assertions",
   "seed": 0,
   "include_visual": false,
   "mission_obs_mode": "nav_v2",
+  "vector_source": "obs.mission",
+  "expected_shape": [14],
+  "assertions": [
+    {"index": 0, "label": "command_code", "int_equals": 3},
+    {"index": 4, "label": "selected_steerpoint", "equals": 1.0, "abs_tol": 0.000001},
+    {"index": 5, "label": "steerpoint_mode_code", "equals": 1.0, "abs_tol": 0.000001},
+    {"index": 6, "label": "steerpoint_range_m", "equals": 10000.0},
+    {"index": 7, "label": "steerpoint_bearing_rel_deg", "abs_max": 0.00001},
+    {"index": 8, "label": "steerpoint_altitude_delta_m", "abs_max": 0.00001},
+    {"index": 9, "label": "course_deviation_indicator", "abs_max": 0.00001},
+    {"index": 10, "label": "track_angle_error_deg", "abs_max": 0.00001},
+    {"index": 11, "label": "leg_distance_remaining_m", "equals": 10000.0},
+    {"index": 12, "label": "next_turn_deg", "equals": -45.0, "rel_tol": 0.0001, "abs_tol": 0.0001},
+    {"index": 13, "label": "distance_to_turn_m", "gt": 0.0, "lt_index": 11}
+  ],
+  "success_message": "nav_v2 mission observation contract passed",
   "scenario_inline": {
     "scenario_name": "mission_obs_nav_v2_regression",
     "environment": {

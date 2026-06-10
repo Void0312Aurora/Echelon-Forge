@@ -11,7 +11,7 @@ Full-project architecture quality assessment. Evaluating whether implementations
 - Assessed abstraction quality: interfaces, class hierarchies, separation of concerns
 - Identified architectural patterns and anti-patterns with specific file references, then rechecked high-risk claims against current working-tree evidence
 - Cross-referenced findings with the 2026-06-03 verification record and three read-only subagent checks
-- Coverage note: tracked `*.cpp + *.h` C++ line count is 57,299; tracked Python line count is approximately 180K; active JSON contract count depends on whether `tests/contracts/Archive/` is excluded
+- Coverage note: tracked `*.cpp + *.h` C++ line count is 57,299; tracked Python line count is approximately 180K; active JSON contracts now live under `tests/contracts/`, while historical specs live under `tests/archive/contracts/`
 
 ---
 
@@ -26,7 +26,7 @@ Full-project architecture quality assessment. Evaluating whether implementations
 | Total Python lines | Approximately 180K tracked lines; filesystem count is higher when untracked files are included |
 | Total C++ lines | 57,299 for tracked `*.cpp + *.h`; 60,120 when tracked `*.cu` is included |
 | Python test files | 227 tracked `tests/**/*.py`; filesystem count may be higher in this working tree |
-| Active JSON contract files | 86 under `tests/contracts/**/*.json` when `tests/contracts/Archive/` is excluded; 103 including archived contracts |
+| Active JSON contract files | 86 under `tests/contracts/**/*.json`; 17 historical archived contract files under `tests/archive/contracts/**/*.json` |
 | TODO/FIXME/HACK markers | 4 in the `src + python + tools` code/tooling scope; tracked whole-repo count is higher |
 | Circular imports | 0 module-level AST cycles in the read-only verification; top-level grouping direction still needs a documented counting convention |
 | Files exceeding 3000 lines | 2 tracked source/test files: `src/runtime/facade/runtime_facade.cpp` and `tests/world_batch/test_world_batch_vec_env.py` |
@@ -85,7 +85,7 @@ Full-project architecture quality assessment. Evaluating whether implementations
 
 | Directory | Evidence |
 |-----------|----------|
-| `tests/` | 227 tracked Python test files and 86 active JSON contract files when `tests/contracts/Archive/` is excluded. CI/test suites are organized into smoke, focused, local/manual, and contract paths. |
+| `tests/` | 227 tracked Python test files and 86 active JSON contract files under `tests/contracts/`. Historical contract specs live under `tests/archive/contracts/`. CI/test suites are organized into smoke, focused, local/manual, and contract paths. |
 | `python/testing/contracts/` | Shared runners dispatch on JSON `"type"` field. Handlers: `loader_command_chain`, `route_generator`, `env_regression`, `unit_regression`, `scripted_bridge`. |
 | `tests/architecture/` | 87 architecture test files and 444 collected pytest tests in the current tree, grouped by semantic guard owner; many enforce layering rules, import constraints, documentation contracts, and compatibility quarantine boundaries. |
 

@@ -1,9 +1,22 @@
 {
   "type": "env_regression",
-  "check_kind": "mission_obs_nav_v1",
+  "check_kind": "observation_vector_assertions",
   "seed": 0,
   "include_visual": false,
   "mission_obs_mode": "nav_v1",
+  "vector_source": "obs.mission",
+  "expected_shape": [11],
+  "assertions": [
+    {"index": 0, "label": "command_code", "int_equals": 3},
+    {"index": 4, "label": "active_waypoint_index", "equals": 0.0, "abs_tol": 0.000001},
+    {"index": 5, "label": "total_waypoints", "equals": 2.0, "abs_tol": 0.000001},
+    {"index": 6, "label": "distance_to_go_m", "equals": 10000.0},
+    {"index": 7, "label": "cross_track_m", "abs_max": 0.00001},
+    {"index": 8, "label": "along_track_remaining_m", "equals": 10000.0},
+    {"index": 9, "label": "direct_bearing_deg", "equals": 90.0},
+    {"index": 10, "label": "desired_leg_track_deg", "equals": 90.0}
+  ],
+  "success_message": "nav_v1 mission observation contract passed",
   "scenario_inline": {
     "scenario_name": "mission_obs_nav_v1_regression",
     "environment": {

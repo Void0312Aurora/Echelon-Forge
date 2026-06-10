@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import glob
 import json
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ PYTEST_SUITE_MANIFESTS = (
     REPO_ROOT / "tests" / "suites" / "focused_runtime_suite.json",
 )
 TEST_SYSTEM_MATRIX = REPO_ROOT / "tests" / "suites" / "test_system_matrix.json"
+CONTRACT_SYSTEM_MATRIX = REPO_ROOT / "tests" / "suites" / "contract_system_matrix.json"
 MATRIX_PATH_KEYS = (
     "primary_paths",
     "smoke_paths",
@@ -38,6 +40,16 @@ def _is_same_or_nested(path: str, root: str) -> bool:
     return normalized_path == normalized_root or normalized_path.startswith(
         normalized_root + "/"
     )
+
+
+def _contract_glob_matches(pattern: str) -> set[str]:
+    assert pattern.startswith("tests/"), f"contract glob must be repo-relative: {pattern!r}"
+    matches = {
+        str(Path(path).relative_to(REPO_ROOT)).replace("\\", "/")
+        for path in glob.glob(str(REPO_ROOT / pattern), recursive=True)
+        if Path(path).is_file() and Path(path).suffix == ".json"
+    }
+    return matches
 
 
 def test_pytest_suite_manifest_entries_resolve_to_existing_base_paths() -> None:
@@ -69,6 +81,59 @@ def test_test_system_matrix_paths_resolve_to_existing_base_paths() -> None:
                 assert Path(check_path).exists(), (
                     f"{system_id}.{key} contains a stale path entry: {entry}"
                 )
+
+
+def test_contract_system_matrix_globs_resolve_to_contract_specs() -> None:
+    matrix = _load_json(CONTRACT_SYSTEM_MATRIX)
+    for surface in matrix.get("surfaces", []):
+        assert isinstance(surface, dict)
+        surface_id = surface.get("id", "<missing-id>")
+        globs = surface.get("path_globs")
+        assert isinstance(globs, list) and globs, f"{surface_id} has no path_globs"
+        for pattern in globs:
+            assert isinstance(pattern, str) and pattern.strip(), (
+                f"{surface_id}.path_globs contains invalid entry: {pattern!r}"
+            )
+            matches = _contract_glob_matches(pattern)
+            assert matches, f"{surface_id}.path_globs matched no specs: {pattern}"
+            assert all(path.startswith("tests/contracts/") for path in matches), (
+                f"{surface_id}.path_globs must stay within tests/contracts/: {pattern}"
+            )
+
+
+def test_contract_system_matrix_covers_all_maintained_contract_specs() -> None:
+    matrix = _load_json(CONTRACT_SYSTEM_MATRIX)
+    covered: set[str] = set()
+    for surface in matrix.get("surfaces", []):
+        if not isinstance(surface, dict):
+            continue
+        for pattern in surface.get("path_globs", []):
+            covered.update(_contract_glob_matches(pattern))
+
+    maintained = {
+        str(path.relative_to(REPO_ROOT)).replace("\\", "/")
+        for path in (REPO_ROOT / "tests" / "contracts").rglob("*.json")
+    }
+    missing = sorted(maintained - covered)
+    extra = sorted(covered - maintained)
+    assert not missing, f"maintained contract specs missing from contract matrix: {missing}"
+    assert not extra, f"contract matrix covers non-maintained specs: {extra}"
+
+
+def test_archived_contract_specs_stay_out_of_maintained_contract_root() -> None:
+    matrix = _load_json(CONTRACT_SYSTEM_MATRIX)
+    archived_patterns: list[str] = []
+    for surface in matrix.get("archived_surfaces", []):
+        if isinstance(surface, dict):
+            archived_patterns.extend(surface.get("path_globs", []))
+
+    archived_matches: set[str] = set()
+    for pattern in archived_patterns:
+        archived_matches.update(_contract_glob_matches(pattern))
+
+    assert archived_matches, "contract matrix should track archived contract provenance"
+    assert all(path.startswith("tests/archive/contracts/") for path in archived_matches)
+    assert not (REPO_ROOT / "tests" / "contracts" / "Archive").exists()
 
 
 def test_matrix_smoke_paths_are_declared_in_ci_smoke_manifest() -> None:
@@ -104,11 +169,18 @@ def test_ci_smoke_suite_membership_requires_explicit_smoke_paths() -> None:
 
 def test_ci_smoke_uses_nodeids_for_broad_runtime_facade_layering_guard() -> None:
     entries = _load_json(PYTEST_SUITE_MANIFESTS[0])["paths"]
-    broad_layering_file = "tests/architecture/runtime_facade/test_layering.py"
-    assert broad_layering_file not in entries
+    broad_runtime_facade_files = (
+        "tests/architecture/runtime_facade/test_scenario_setup_facade_boundary.py",
+        "tests/architecture/runtime_facade/test_runtime_escape_hatches.py",
+        "tests/architecture/runtime_facade/test_runtime_facade_contract_boundaries.py",
+    )
+    for broad_runtime_facade_file in broad_runtime_facade_files:
+        assert broad_runtime_facade_file not in entries
 
     selected_nodes = [
-        entry for entry in entries if entry.startswith(broad_layering_file + "::")
+        entry
+        for entry in entries
+        if any(entry.startswith(path + "::") for path in broad_runtime_facade_files)
     ]
     assert selected_nodes, "ci smoke should keep representative runtime facade nodeids"
     assert all("::" in entry for entry in selected_nodes)

@@ -8,6 +8,10 @@
   - Machine-readable draft matrix for mapping test surfaces to governance tiers.
   - Tracks pytest paths and JSON contract paths together so ownership and promotion discussions have one index.
   - Records architecture guard tiering before paths are promoted into concrete suite manifests.
+- `contract_system_matrix.json`
+  - Machine-readable draft matrix for maintained JSON contract surfaces.
+  - Tracks contract roots by capability-oriented surface, runner group, semantic tier, and cleanup priority.
+  - Separates active contract coverage under `tests/contracts/` from provenance-only archives under `tests/archive/contracts/`.
 - `focused_runtime_suite.json`
   - Draft focused/local pytest manifest for representative runtime coverage.
   - Compatible with `tools/runners/run_pytest_suite.py`, but not referenced by CI.

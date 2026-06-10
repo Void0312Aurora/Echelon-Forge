@@ -21,9 +21,9 @@
 source tools/maintenance/cmo_env.sh
 cmo_python -m pytest -q \
   tests/architecture/build/test_cmake_target_readiness.py \
-  tests/architecture/runtime_facade/test_layering.py \
-  tests/architecture/command_tasking/test_tasking_bridge_retirement.py \
-  tests/architecture/structural_boundaries/test_structural_guardrails.py \
+  tests/architecture/runtime_facade \
+  tests/architecture/command_tasking/test_tasking_bridge_guardrails.py \
+  tests/architecture/structural_boundaries \
   tests/runtime/facade/test_runtime_facade.py \
   tests/runtime/core/test_world_setup_compat.py \
   tests/runtime/mission/test_mission_command_split_semantics.py \
@@ -41,13 +41,13 @@ cmo_python -m pytest -q \
 唯一失败仍为：
 
 ```text
-tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
+tests/architecture/structural_boundaries/test_domain_separation_boundaries.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
 ValueError: substring not found
 ```
 
 失败原因是测试仍在 `src/models/weapons/default_effects_model.cpp` 查找旧文本锚点 `if (hp && !structured_air_target) {`。当前实现已把 legacy health damage 写入迁移到 `src/models/weapons/detail/default_effects_legacy_detail.inc`，因此这是 stale static guard，而不是本轮样本中的 runtime 行为失败。
 
-**P1 更新（2026-06-04 追踪）：** `engineering_governance_p1` 已修复该 guard，使其检查当前 split-file owner 关系；最新聚焦复跑 `tests/architecture/structural_boundaries/test_structural_guardrails.py` 通过。P1-D 也已将 `CMODiagnosticsCallback` 的 diagnostics calculation/state owner 拆出：basic step scalars、policy-distribution、HMoE、action、leader、step reward、A6 event-window info、A5 event info、runway/gear、terminal/preterm windows 与 cooperative aggregation 均进入 `python/training/diagnostics.py` helper，callback 现在保留 SB3 lifecycle 适配与 wrapper。
+**P1 更新（2026-06-04 追踪）：** `engineering_governance_p1` 已修复该 guard，使其检查当前 split-file owner 关系；最新聚焦复跑 `tests/architecture/structural_boundaries` 通过。P1-D 也已将 `CMODiagnosticsCallback` 的 diagnostics calculation/state owner 拆出：basic step scalars、policy-distribution、HMoE、action、leader、step reward、A6 event-window info、A5 event info、runway/gear、terminal/preterm windows 与 cooperative aggregation 均进入 `python/training/diagnostics.py` helper，callback 现在保留 SB3 lifecycle 适配与 wrapper。
 
 C++ smoke：
 

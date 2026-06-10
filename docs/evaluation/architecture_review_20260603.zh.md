@@ -11,7 +11,7 @@
 - 评估抽象质量：接口、类层次、关注点分离
 - 通过特定 file 引用识别架构模式和反模式，并对高风险断言按当前工作树证据复核
 - 与 2026-06-03 断言核验记录和三组只读 subagent 结果交叉验证
-- 覆盖口径说明：tracked `*.cpp + *.h` C++ 行数为 57,299；tracked Python 行数约 180K；活跃 JSON contract 数量取决于是否排除 `tests/contracts/Archive/`
+- 覆盖口径说明：tracked `*.cpp + *.h` C++ 行数为 57,299；tracked Python 行数约 180K；活跃 JSON contract 现在位于 `tests/contracts/`，历史规范位于 `tests/archive/contracts/`
 
 ---
 
@@ -26,7 +26,7 @@
 | Python 总行数 | tracked 口径约 180K；若计入当前未跟踪文件，filesystem 口径更高 |
 | C++ 总行数 | tracked `*.cpp + *.h` 为 57,299；若计入 tracked `.cu` 为 60,120 |
 | Python 测试文件 | tracked `tests/**/*.py` 为 227；当前工作树 filesystem 口径可能更高 |
-| 活跃 JSON 合同文件 | 排除 `tests/contracts/Archive/` 后为 86；包含 archived contracts 为 103 |
+| 活跃 JSON 合同文件 | `tests/contracts/**/*.json` 下为 86；`tests/archive/contracts/**/*.json` 下另有 17 个历史归档 contract 文件 |
 | TODO/FIXME/HACK 标记 | `src + python + tools` 代码/工具口径为 4；tracked 全仓口径更高 |
 | 循环导入 | 只读 AST 模块级扫描为 0；顶层分组方向需要单独定义统计口径 |
 | 超过 3000 行的文件 | 至少 2 个 tracked source/test 文件：`src/runtime/facade/runtime_facade.cpp` 与 `tests/world_batch/test_world_batch_vec_env.py` |
@@ -85,7 +85,7 @@
 
 | 目录 | 证据 |
 |------|------|
-| `tests/` | tracked Python 测试文件 227 个；排除 `tests/contracts/Archive/` 后活跃 JSON contract 文件 86 个。测试套件按 smoke、focused、local/manual、contract 等路径组织。 |
+| `tests/` | tracked Python 测试文件 227 个；`tests/contracts/` 下活跃 JSON contract 文件 86 个。历史 contract 规范位于 `tests/archive/contracts/`。测试套件按 smoke、focused、local/manual、contract 等路径组织。 |
 | `python/testing/contracts/` | 共享运行器根据 JSON `"type"` 字段分发。处理程序：`loader_command_chain`、`route_generator`、`env_regression`、`unit_regression`、`scripted_bridge`。 |
 | `tests/architecture/` | 当前有 87 个 architecture test 文件、444 个 pytest 收集项，并按语义 guard owner 分组；其中大量检查分层规则、导入约束、文档合同和 compatibility quarantine boundary。 |
 

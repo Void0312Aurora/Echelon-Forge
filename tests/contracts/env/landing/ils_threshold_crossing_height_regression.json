@@ -1,8 +1,14 @@
 {
   "type": "env_regression",
-  "check_kind": "ils_threshold_crossing_height",
+  "check_kind": "observation_vector_assertions",
   "seed": 0,
   "include_visual": false,
+  "vector_source": "obs.instruments",
+  "assertions": [
+    {"index": -4, "label": "ils_valid", "gt": 0.5},
+    {"index": -2, "label": "glideslope_deviation", "abs_max": 0.08}
+  ],
+  "success_message": "ILS threshold crossing height contract passed",
   "scenario_inline": {
     "scenario_name": "ils_threshold_crossing_height_regression",
     "imports": [{"file": "examples/config/prefabs/airbase_large_runway45.json"}],

@@ -8,4 +8,4 @@ This directory archives historical leader-layer acceptance/generalization contra
 - Reason:
   - they encode historical thresholds, historical model assumptions, or alternate branches that are no longer the frozen primary line
 - Maintained acceptance set:
-  - [tests/contracts/unit/training/frozen](/home/void0312/CMO/tests/contracts/unit/training/frozen/README.md)
+  - [tests/contracts/unit/training/frozen](../../../../../contracts/unit/training/frozen/README.md)

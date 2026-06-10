@@ -3,6 +3,7 @@
   "check_kind": "visual_update_interval",
   "seed": 0,
   "include_visual": true,
+  "visual_update_interval": 3,
   "action_mode": "full",
   "cache_hold_steps": [1, 2],
   "refresh_step": 3,
