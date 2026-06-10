@@ -1,6 +1,6 @@
 # A2 MLF-3 战斗部作用任务簇
 
-状态：`2026-06-10` MLF-3B live gate / MLF-3C generic load-shape / MLF-3E diagnostics / MLF-3F no-detonation gate focused pass for [README.zh.md](README.zh.md)。`MLF-3A` 已验收，`MLF-3B` writer、`MLF-3C` 通用载荷变化门、`MLF-3E` 诊断标准事件优先和 `MLF-3F` 未起爆无载荷门已有聚焦验证。
+状态：`2026-06-10` MLF-3 standard load-chain focused accepted for [README.zh.md](README.zh.md)。`MLF-3A-G` 已完成本阶段标准载荷事实链收口；真实弹种校准、结构解体、残骸和 Pk 仍为后续阶段。
 
 英文辅文：[missile_lethality_warhead_effects_task_clusters_20260609.md](missile_lethality_warhead_effects_task_clusters_20260609.md)
 
@@ -27,10 +27,10 @@ MLF-3 不输出“击毁”。它输出的是：战斗部机制、机制载荷�
 | `MLF-3A Boundary And Inventory` | Sartre / current session subagent | n/a | 盘点现有 warhead/spatial/component 字段、测试和 live writer 缺口 | 本子项目文档；只读源码/测试审计记录 | runtime 修改、参数调优、真实弹种校准 | docs diff check；只读审计 packet | 缺口和可复用入口可由未来 worker 独立恢复 | first, serial | 1 | accepted |
 | `MLF-3B Standard Event Writers` | main thread | n/a | 增加 warhead/spatial/component recorder 与 event-store writer | `src/core/interfaces/engagement_event_recorder.h`；`src/core/engine/simulation_kernel_engagement_event_store.*`；相关 bindings/tests | 修改效果物理、改变 damage/reward | `ef_py` build；engagement event capture tests | 起爆后标准事件可导出，parent/chain 与 MLF-2 对齐 | after 3A | 2 | live gate focused pass |
 | `MLF-3C Generic Blast-Fragmentation Loads` | Planck + Heisenberg read-only audit / accepted by main thread | inherited | 实现通用未校准破片/爆风机制载荷 | focused standard-event tests；只读审计 `default_effects_warhead_detail.inc` | 真实 AIM-120C 参数、连续杆、Pk | family/range/aspect focused tests | 载荷随距离、方向和 family 改变 | after 3B | 2 | focused pass |
-| `MLF-3D Spatial Coverage And Component Load` | future worker | n/a | 将机制载荷投影到 hitbox/component 并写标准受载事件 | `default_effects_spatial_projection_detail.inc`；component-load tests | 部件失效概率校准、结构断裂 | focused projection tests | 空间覆盖和部件受载可从标准事件读出 | after 3C | 2 | planned |
+| `MLF-3D Spatial Coverage And Component Load` | Euclid read-only audit + Fermat worker / accepted by main thread | n/a | 将机制载荷投影到 hitbox/component 并写标准受载事件 | `default_effects_spatial_projection_detail.inc`；`tests/runtime/air_combat/test_mlf3_spatial_component_projection.py` | 部件失效概率校准、结构断裂 | focused projection tests | 空间覆盖和部件受载可从标准事件读出 | after 3C | 2 | focused pass |
 | `MLF-3E Diagnostics Projection` | main thread | n/a | 诊断优先消费标准 warhead/spatial/component 事件 | `tools/diagnostics/air_combat_stage0_process_probe.py`；diagnostics tests | reward 语义、效果物理 | process probe tests | 旧 `EffectsEvent` 只作同链路缺省回退 | after 3B-D | 2 | focused pass |
 | `MLF-3F Runtime Handoff Gate` | main thread / future worker | n/a | 钉住未起爆无载荷、起爆一次载荷链 | focused fuze/warhead tests | 直接 kill、直接 crash、实体删除 | gate tests | 未起爆路径没有 warhead/spatial/component 标准事件 | after 3E | 1 | focused pass |
-| `MLF-3G Acceptance And Archive Prep` | main thread | n/a | 汇总 accepted/held 状态并归档 | 本子项目 README/status/task cluster/dispatch/archive；A2 README | 过度声明结构解体、Pk、真实弹种结论 | docs diff check + referenced tests | accepted/held 状态与证据一致 | last, serial | 1 | planned |
+| `MLF-3G Acceptance And Archive Prep` | main thread | n/a | 汇总 accepted/held 状态并归档 | 本子项目 README/status/task cluster/dispatch/archive；A2 README | 过度声明结构解体、Pk、真实弹种结论 | docs diff check + referenced tests | accepted/held 状态与证据一致 | after 3D | 1 | focused pass |
 
 ## 派发规则
 
@@ -76,7 +76,7 @@ git diff --check -- \
 cmake --build build-workshop --target ef_py -j2
 PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/engagement/test_live_engagement_event_capture.py -q
 PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -q -k "warhead or fuze"
-PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q
+PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 ## 验收标准

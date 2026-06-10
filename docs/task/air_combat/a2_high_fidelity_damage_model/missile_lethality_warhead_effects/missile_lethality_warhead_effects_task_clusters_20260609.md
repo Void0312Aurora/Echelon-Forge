@@ -1,6 +1,6 @@
 # A2 MLF-3 Warhead Effects Task Clusters
 
-Status: `2026-06-10` MLF-3B live gate / MLF-3C generic load-shape / MLF-3E diagnostics / MLF-3F no-detonation gate focused pass for [README.md](README.md). `MLF-3A` is accepted, and `MLF-3B` writers, the `MLF-3C` generic load variation gate, `MLF-3E` diagnostics standard-event priority, and the `MLF-3F` no-detonation no-load gate have focused validation.
+Status: `2026-06-10` MLF-3 standard load-chain focused accepted for [README.md](README.md). `MLF-3A-G` have closed the standard load-fact chain for this phase; real-weapon calibration, structural breakup, debris/wreck, and Pk remain future phases.
 
 Chinese main text: [missile_lethality_warhead_effects_task_clusters_20260609.zh.md](missile_lethality_warhead_effects_task_clusters_20260609.zh.md)
 
@@ -27,10 +27,10 @@ Data enters under the research rule only: generic, uncalibrated, and replaceable
 | `MLF-3A Boundary And Inventory` | Sartre / current session subagent | n/a | Inventory current warhead/spatial/component fields, tests, and live-writer gaps | this subproject docs; read-only source/test audit record | runtime edits, parameter tuning, real weapon calibration | docs diff check; read-only audit packet | gaps and reusable entries can be resumed by a future worker | first, serial | 1 | accepted |
 | `MLF-3B Standard Event Writers` | main thread | n/a | Add warhead/spatial/component recorder and event-store writers | `src/core/interfaces/engagement_event_recorder.h`; `src/core/engine/simulation_kernel_engagement_event_store.*`; related bindings/tests | effects physics, damage/reward semantics | `ef_py` build; engagement event capture tests | detonation exports standard events with MLF-2-aligned parent/chain ids | after 3A | 2 | live gate focused pass |
 | `MLF-3C Generic Blast-Fragmentation Loads` | Planck + Heisenberg read-only audit / accepted by main thread | inherited | Implement generic uncalibrated fragment/blast mechanism loads | focused standard-event tests; read-only audit of `default_effects_warhead_detail.inc` | real AIM-120C parameters, continuous rod, Pk | family/range/aspect focused tests | loads change with distance, direction, and family | after 3B | 2 | focused pass |
-| `MLF-3D Spatial Coverage And Component Load` | future worker | n/a | Project mechanism loads onto hitboxes/components and write standard load events | `default_effects_spatial_projection_detail.inc`; component-load tests | calibrated component failure probability, structural breakup | focused projection tests | spatial coverage and component load are readable from standard events | after 3C | 2 | planned |
+| `MLF-3D Spatial Coverage And Component Load` | Euclid read-only audit + Fermat worker / accepted by main thread | n/a | Project mechanism loads onto hitboxes/components and write standard load events | `default_effects_spatial_projection_detail.inc`; `tests/runtime/air_combat/test_mlf3_spatial_component_projection.py` | calibrated component failure probability, structural breakup | focused projection tests | spatial coverage and component load are readable from standard events | after 3C | 2 | focused pass |
 | `MLF-3E Diagnostics Projection` | main thread | n/a | Make diagnostics prioritize standard warhead/spatial/component events | `tools/diagnostics/air_combat_stage0_process_probe.py`; diagnostics tests | reward semantics, effects physics | process probe tests | old `EffectsEvent` is same-chain fallback only | after 3B-D | 2 | focused pass |
 | `MLF-3F Runtime Handoff Gate` | main thread / future worker | n/a | Pin no-detonation/no-load and detonation/one-load-chain behavior | focused fuze/warhead tests | direct kill, direct crash, entity deletion | gate tests | no-detonation path has no warhead/spatial/component standard events | after 3E | 1 | focused pass |
-| `MLF-3G Acceptance And Archive Prep` | main thread | n/a | Summarize accepted/held state and archive | this README/status/task cluster/dispatch/archive; A2 README | overclaiming breakup, Pk, or real weapon conclusions | docs diff check + referenced tests | accepted/held state matches evidence | last, serial | 1 | planned |
+| `MLF-3G Acceptance And Archive Prep` | main thread | n/a | Summarize accepted/held state and archive | this README/status/task cluster/dispatch/archive; A2 README | overclaiming breakup, Pk, or real weapon conclusions | docs diff check + referenced tests | accepted/held state matches evidence | after 3D | 1 | focused pass |
 
 ## Dispatch Rules
 
@@ -76,7 +76,7 @@ After code changes, add validation by write set:
 cmake --build build-workshop --target ef_py -j2
 PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/engagement/test_live_engagement_event_capture.py -q
 PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_weapon_guidance_realism_guards.py -q -k "warhead or fuze"
-PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/diagnostics/test_air_combat_process_probe.py -q
+PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```
 
 ## Acceptance Criteria

@@ -1,6 +1,6 @@
 # A2 MLF-3 Warhead Effects And Generic Blast-Fragment Loads
 
-Status: `2026-06-10` MLF-3B live gate / MLF-3C generic load-shape / MLF-3E diagnostics / MLF-3F no-detonation gate focused pass; MLF-3A accepted. MLF-2 is archived; this subproject opens the third phase separately and must not continue inside archived MLF-1 or MLF-2 folders.
+Status: `2026-06-10` MLF-3 standard load chain focused accepted; the high-fidelity missile lethality model remains incomplete. MLF-2 is archived; this subproject opens the third phase separately and must not continue inside archived MLF-1 or MLF-2 folders.
 
 Language:
 
@@ -37,8 +37,8 @@ Every default parameter must keep a replacement path: source category, evidence 
 | --- | --- | --- | --- |
 | MLF-2 detonation input | accepted / archived | [MLF-2 archive](../missile_lethality_geometry_fuze/README.md) | Only proves nearest approach, fuze evaluation, and detonation handoff |
 | Warhead profile data | active scaffold | `WarheadProfile`, `WarheadEffectProfile`, `WarheadSpatialProjectionProfile` | Not real warhead-parameter authority |
-| Standard event DTOs | live writer / diagnostics / no-detonation gate focused pass | `WarheadMechanismEvent`, `SpatialCoverageEvent`, and `ComponentLoadEvent` exist in contracts, bindings, event-store writers, real detonation-path tests, and diagnostics projection | Parameters are not calibrated; MLF-3D spatial/component projection parameter surfaces are not complete |
-| Current effects model | generic load-shape focused pass | `default_effects_model` has mechanism / spatial / component fields; `test_mlf3_generic_blast_fragmentation_loads.py` pins range / direction / family changes in standard load facts | Still folded mainly into `EffectsEvent`; default constants do not carry full source category / scope / unit / uncertainty / replacement-rule runtime metadata |
+| Standard event DTOs | live writer / diagnostics / no-detonation gate focused pass | `WarheadMechanismEvent`, `SpatialCoverageEvent`, and `ComponentLoadEvent` exist in contracts, bindings, event-store writers, real detonation-path tests, and diagnostics projection | Parameters are not calibrated; no kill conclusion is emitted |
+| Current effects model | generic load-shape + spatial-component projection focused pass | `default_effects_model` has mechanism / spatial / component fields; `test_mlf3_generic_blast_fragmentation_loads.py` pins range / direction / family changes in standard load facts; `test_mlf3_spatial_component_projection.py` pins spatial coverage changing standard component-load facts | Still folded mainly into `EffectsEvent`; default constants do not carry full source category / scope / unit / uncertainty / replacement-rule runtime metadata |
 | Historical Phase 3 tests | retained scaffold evidence | `tests/runtime/air_combat/weapon_guidance_realism/warhead_effects.py` | Not accepted MLF-3 evidence |
 
 ## Scope
@@ -68,10 +68,10 @@ Out of scope:
 | `MLF-3A Boundary And Inventory` | Freeze MLF-3 scope and inventory legacy fields/live gaps | MLF-2 archived | README, status, task clusters, dispatch queue, and readable field/gap inventory exist | accepted |
 | `MLF-3B Event Writers` | Write standard warhead/spatial/component events | MLF-3A | Detonation emits standard events and parents them to same-chain fuze/effects facts | live gate focused pass |
 | `MLF-3C Generic Blast-Fragmentation` | Build generic uncalibrated blast/fragment mechanism loads | MLF-3B | Range, aspect, and family change mechanism loads | focused pass |
-| `MLF-3D Spatial Coverage` | Project mechanism load onto hitboxes/components | MLF-3C | Spatial coverage and component load are diagnosable from standard events | planned |
+| `MLF-3D Spatial Coverage` | Project mechanism load onto hitboxes/components | MLF-3C | Spatial coverage and component load are diagnosable from standard events | focused pass |
 | `MLF-3E Diagnostics Projection` | Emit warhead/spatial/component rows from the probe | MLF-3B-D | Mechanism reasons can be read without old `EffectsEvent` projection | focused pass |
 | `MLF-3F Runtime Handoff Gate` | Ensure only detonation enters warhead effects | MLF-3B-E | No-detonation has no warhead load; detonation has one standard load chain | focused pass |
-| `MLF-3G Acceptance And Archive Prep` | Summarize evidence, residuals, and follow-on phases | MLF-3B-F pass | accepted/held state matches evidence | planned |
+| `MLF-3G Acceptance And Archive Prep` | Summarize evidence, residuals, and follow-on phases | MLF-3B-F pass | accepted/held state matches evidence | focused pass |
 
 ## Task Clusters
 
@@ -79,6 +79,7 @@ Out of scope:
 - Current status: [missile_lethality_warhead_effects_current_status_20260609.md](missile_lethality_warhead_effects_current_status_20260609.md)
 - Dispatch queue: [missile_lethality_warhead_effects_dispatch_queue_20260609.md](missile_lethality_warhead_effects_dispatch_queue_20260609.md)
 - Inventory acceptance: [missile_lethality_warhead_effects_inventory_20260609.md](missile_lethality_warhead_effects_inventory_20260609.md)
+- Closeout acceptance: [missile_lethality_warhead_effects_acceptance_20260610.md](missile_lethality_warhead_effects_acceptance_20260610.md)
 
 ## Outputs And Evidence
 
@@ -90,6 +91,7 @@ Expected outputs:
 - Generic blast-fragmentation defaults with evidence levels.
 - Diagnostics rows for warhead / spatial_coverage / component_load.
 - Focused tests showing that distance, aspect, or family changes alter mechanism load and coverage.
+- Focused tests showing that spatial coverage / local projection changes standard component-load facts.
 
 ## Acceptance Gate
 
