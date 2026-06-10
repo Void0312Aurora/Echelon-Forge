@@ -21,8 +21,7 @@
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.zh.md) ([English](ground_domain_bootstrap_plan_review_20260521.md))
 - [陆军域缺陷清单与迁移差距分析 2026-05-22](ground_domain_defect_inventory_20260522.zh.md) ([English](ground_domain_defect_inventory_20260522.md))
-- [域分离现状审计 2026-06-09](domain_separation_audit_20260609.zh.md) ([English](domain_separation_audit_20260609.md))
-- [域分离大拆分](domain_separation_split/README.zh.md)：active subproject，用于直接推进 components、systems、models 三层的 Air / Naval / Ground ownership split。
+- [域分离现状审计 2026-06-09](archive/domain_separation_audit_20260609.zh.md) — `archived`：6 个热点全部闭合，三域三层 `domains/` 结构已落地。
 
 ## 测试系统评估
 
@@ -41,5 +40,7 @@
 已完成的架构审查（temp-01 响应、temp-02 SCAL 愿景）、WP9 整合路线图、已闭合的 P1 治理修复、
 已完成的 WP 验收审查、存在争议的 WP21 closure 记录、被取代的波次审查
 和原始文档见 [archive/](./archive/README.zh.md)。
+
+- [域分离大拆分](archive/domain_separation_split/README.zh.md)：已归档 accepted subproject，用于直接推进 components、systems、models 三层的 Air / Naval / Ground ownership split。
 
 已归档子项目的完整清单见 [归档注册表](archive_registry.zh.md)。

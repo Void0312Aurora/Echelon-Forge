@@ -17,8 +17,8 @@ Assessment of Air / Naval / Ground domain separation across the three C++ layers
 | components/command | `air/` `common/` `ground/` `naval/` | Per-domain subdirectories with README |
 | components/tasking | `air/` `common/` `ground/` `naval/` | Per-domain subdirectories |
 | components/naval | `ship_platform.h` `submarine_platform.h` `embarked_air_ops.h` | Dedicated naval directory |
-| systems/naval | 5 files + README | Dedicated naval system directory |
-| models/air | `default_control_model.cpp` + README | Dedicated air model directory |
+| systems/domains/naval | 5 files + README | Dedicated naval system directory |
+| models/domains/air | `default_control_model.cpp` + README | Dedicated air model directory |
 
 ## 2. Domain Coupling Hotspots
 
@@ -70,7 +70,7 @@ Assessment of Air / Naval / Ground domain separation across the three C++ layers
 **File**: `src/models/systems/default_sensor_model.cpp`
 
 ```cpp
-#include "components/naval/ship_platform.h"   // Generic sensor depends on naval component
+#include "components/domains/naval/platform/ship_platform.h"   // Generic sensor depends on naval component
 
 // Radar sea clutter (hardcoded in generic sensor)
 state.sea_state = std::max(0.0, ship->sea_state);
@@ -95,7 +95,7 @@ The only branching path in the main `.cpp` is air vs legacy (HP subtraction). Th
 | `aero_state_system.h` | Air-only | Aero state computation |
 | `flight_dynamics_tuning.h` | Air-only | `AeroTuning` struct (CL/CD/CM curves) |
 
-These files exist at the same abstraction level as `systems/naval/ship_motion_system.h` but lack a `systems/air/` directory.
+These files exist at the same abstraction level as `systems/domains/naval/ship_motion_system.h` but lack a `systems/domains/air/` directory.
 
 ---
 
@@ -129,12 +129,12 @@ Ground  dedicated       ❌ no ground/ comp   ❌ no ground/ sys    ❌ no groun
 |----------|--------|-----------|
 | **P0** | Split `damage.h` → `damage_air.h` + common `damage.h` | 843-line monolith, 60% air-specific |
 | **P0** | Split `damage_system.h` → `damage_system_air.h` + `damage_system_naval.h` | 1,877-line monolith |
-| **P1** | Create `systems/air/`, move aerodynamics/control/propulsion/aero_state | 4 air-only systems disguised as generic physics |
+| **P1** | Create `systems/domains/air/`, move aerodynamics/control/propulsion/aero_state | 4 air-only systems disguised as generic physics |
 | **P1** | Split `weapon.h` → extract `weapon_naval.h` | Air/Naval types mixed |
-| **P1** | Create `components/combat/ground/` + `systems/ground/` | Completely missing |
-| **P2** | Split `NavalUnderwayResupply` from `logistics_system.h` → `systems/naval/` | Localized mixing |
+| **P1** | Create `components/domains/ground/combat/` + `systems/domains/ground/` | Completely missing |
+| **P2** | Split `NavalUnderwayResupply` from `logistics_system.h` → `systems/domains/naval/` | Localized mixing |
 | **P2** | Remove `ShipPlatform` dependency from `default_sensor_model.cpp` | Generic sensor should not know about ShipPlatform |
-| **P2** | Create `models/naval/` + `models/ground/`, add domain detail files | Complete model layer coverage |
+| **P2** | Create `models/domains/naval/` + `models/domains/ground/`, add domain detail files | Complete model layer coverage |
 
 ---
 

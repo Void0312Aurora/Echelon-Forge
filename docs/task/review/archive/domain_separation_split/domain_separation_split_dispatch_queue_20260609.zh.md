@@ -20,15 +20,15 @@
 
 | Queue Item | Cluster | Owner | Write set | Dispatch condition | Required return |
 | --- | --- | --- | --- | --- | --- |
-| `Q1-A` | DS-C1-A | implementation worker | damage component headers and direct include users | Q0-B complete | 拆分结果、include migration、build/test evidence、residual wrapper list |
-| `Q1-B` | DS-C1-B | implementation worker | weapon component headers and direct include users | Q0-B complete；避免与 Q1-A 文件重叠 | 拆分结果、include migration、build/test evidence、residual wrapper list |
+| `Q1-A` | DS-C1-A | implementation worker | damage component headers and direct include users | Q0-B complete | 拆分结果、include migration、build/test evidence、retired path list |
+| `Q1-B` | DS-C1-B | implementation worker | weapon component headers and direct include users | Q0-B complete；避免与 Q1-A 文件重叠 | 拆分结果、include migration、build/test evidence、retired path list |
 
 ## Round 2：System Ownership
 
 | Queue Item | Cluster | Owner | Write set | Dispatch condition | Required return |
 | --- | --- | --- | --- | --- | --- |
 | `Q2-A` | DS-S1-A | implementation worker | combat damage systems and registration | Q1-A pass | common/air/naval/ground system split 与聚焦 runtime evidence |
-| `Q2-B` | DS-S1-B | implementation worker | air systems/tuning wrappers and indexes | Q0-A complete | Air ownership candidate validation、wrapper policy、focused guards |
+| `Q2-B` | DS-S1-B | implementation worker | air systems/tuning paths and indexes | Q0-A complete | Air ownership candidate validation、retired path policy、focused guards |
 | `Q2-C` | DS-S1-C | implementation worker | naval logistics systems and registration | Q0-B complete；不与 Q2-A registration 重叠 | Naval logistics extraction 与 focused naval evidence |
 
 ## Round 3：Model Ownership
@@ -62,12 +62,12 @@ integration notes:
 | --- | --- | --- | --- | --- | --- |
 | `2026-06-09` | `Q0-A` | DS-P0-A | main thread | pass | 子项目文件和父级 review link 已创建；docs diff check 通过。 |
 | `2026-06-09` | `Q0-B` | DS-P0-B | worker `Meitner` | pass | Inventory 已写入 current-status 文件；docs diff check 通过。 |
-| `2026-06-09` | `Q1-A` | DS-C1-A | worker `Dirac` | pass | damage component split 已落地，采用 umbrella-header compatibility；combined `ef_py` build 与 diff checks 通过。 |
-| `2026-06-09` | `Q1-B` | DS-C1-B | worker `Cicero` | pass | weapon component split 已落地，采用 umbrella-header compatibility；combined `ef_py` build 与 diff checks 通过。 |
+| `2026-06-09` | `Q1-A` | DS-C1-A | worker `Dirac` | pass | damage component owner header 已落地；public umbrella path 之后已退役。 |
+| `2026-06-09` | `Q1-B` | DS-C1-B | worker `Cicero` | pass | weapon component owner header 已落地；public umbrella path 之后已退役。 |
 | `2026-06-09` | `Q2-A` | DS-S1-A | worker `Popper` | pass | combat damage system split 已落地；combined `ef_py`、include search 与 diff checks 通过。 |
-| `2026-06-09` | `Q2-B` | DS-S1-B | worker `Galileo` | pass | Air runtime ownership validation 已落地；旧 physics/tuning wrapper 保持 include-only。 |
-| `2026-06-10` | `Q2-C` | DS-S1-C | main thread | pass | Naval underway resupply 已抽到 `systems/naval`；`build-local-win` `ef_py`、聚焦 naval underway tests 与 diff checks 通过。 |
+| `2026-06-09` | `Q2-B` | DS-S1-B | worker `Galileo` | pass | Air runtime ownership validation 已落地；旧 physics/tuning path 之后已退役。 |
+| `2026-06-10` | `Q2-C` | DS-S1-C | main thread | pass | Naval underway resupply 已抽到 `systems/domains/naval`；聚焦 naval underway tests 与 diff checks 通过。 |
 | `2026-06-10` | `Q3-A` | DS-M1-A | worker `Nash` (`gpt-5.4`/high) | pass | effects model 已通过 common domain router 路由到 Air owner helper 与 Naval/Ground placeholder path；聚焦 effects tests 通过。 |
-| `2026-06-10` | `Q3-B` | DS-M1-B | worker `Kierkegaard` (`gpt-5.4`/high) | pass | generic sensor model 已通过 `models/naval` adapter 路由 ship-specific maritime 读取；聚焦 naval sensor tests 通过。 |
-| `2026-06-10` | `Q4-A` | DS-T1-A | main thread | partial | 已新增并通过聚焦 domain split guard；更宽 architecture 文件仍在无关/direct-sim 与 Windows linker baseline 上失败。 |
-| `2026-06-10` | `Q4-B` | DS-D1-A | main thread | partial | source/task docs 已同步实现表面；最终子项目 acceptance 因 Air helper residual 与更宽 architecture failure 保持 held。 |
+| `2026-06-10` | `Q3-B` | DS-M1-B | worker `Kierkegaard` (`gpt-5.4`/high) | pass | generic sensor model 已通过 `models/domains/naval` adapter 路由 ship-specific maritime 读取；聚焦 naval sensor tests 通过。 |
+| `2026-06-10` | `Q4-A` | DS-T1-A | main thread | pass | 聚焦 domain split guard 现在阻止退役路径复活和旧 include 回流；刷新 selector 已通过。 |
+| `2026-06-10` | `Q4-B` | DS-D1-A | main thread | pass | source/task docs 已同步到无兼容入口 ownership；宽 architecture guard 通过后 overall acceptance 已 accepted。 |

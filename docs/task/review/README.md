@@ -21,8 +21,7 @@ Status: active review record.
 
 - [Ground Domain Bootstrap Plan Review 2026-05-21](ground_domain_bootstrap_plan_review_20260521.md) ([中文](ground_domain_bootstrap_plan_review_20260521.zh.md))
 - [Ground Domain Defect Inventory And Migration Gap Analysis 2026-05-22](ground_domain_defect_inventory_20260522.md) ([中文](ground_domain_defect_inventory_20260522.zh.md))
-- [Domain Separation Audit 2026-06-09](domain_separation_audit_20260609.md) ([中文](domain_separation_audit_20260609.zh.md))
-- [Domain Separation Split](domain_separation_split/README.md): active subproject for the direct Air / Naval / Ground ownership split across components, systems, and models.
+- [Domain Separation Audit 2026-06-09](archive/domain_separation_audit_20260609.md) — `archived`: all 6 hotspots closed; three-layer `domains/` structure landed. ([中文](archive/domain_separation_audit_20260609.zh.md))
 
 ## Test System Reviews
 
@@ -42,3 +41,5 @@ Completed architecture reviews (temp-01 response, temp-02 SCAL vision), WP9 cons
 completed WP acceptance reviews, disputed WP21 closure record, superseded wave
 reviews, source documents, and historical snapshots are in
 [archive/](./archive/README.md).
+
+- [Domain Separation Split](archive/domain_separation_split/README.md): archived accepted subproject for the direct Air / Naval / Ground ownership split across components, systems, and models.

@@ -1,5 +1,7 @@
 # 域分离现状审计 — 2026-06-09
 
+状态：`2026-06-09` 审计完成；`2026-06-10` 确认全部热点闭合，归档。
+
 ## 审计范围
 
 全仓 C++ 源码中 Air / Naval / Ground 三域在 `components/`、`systems/`、`models/` 三层的分离程度。判断当前实现是否符合 `docs/standards/` 中定义的 `foundation → bridge → joint → services → air/naval/ground` 层级方针。
@@ -17,8 +19,8 @@
 | components/command | `air/` `common/` `ground/` `naval/` | 按域拆子目录，含 README |
 | components/tasking | `air/` `common/` `ground/` `naval/` | 按域拆子目录 |
 | components/naval | `ship_platform.h` `submarine_platform.h` `embarked_air_ops.h` | 独立 naval 目录 |
-| systems/naval | 5 个文件 + README | 独立 naval 系统目录 |
-| models/air | `default_control_model.cpp` + README | 独立 air 模型目录 |
+| systems/domains/naval | 5 个文件 + README | 独立 naval 系统目录 |
+| models/domains/air | `default_control_model.cpp` + README | 独立 air 模型目录 |
 
 ## 2. 域耦合热点
 
@@ -116,7 +118,7 @@ crew_kill
 **文件**：`src/models/systems/default_sensor_model.cpp`
 
 ```
-#include "components/naval/ship_platform.h"   ← 通用 sensor model 直接依赖 naval 组件
+#include "components/domains/naval/platform/ship_platform.h"   ← 通用 sensor model 直接依赖 naval 组件
 
 // 雷达海杂波计算（硬编码在通用传感器中）
 state.sea_state = std::max(0.0, ship->sea_state);
@@ -159,7 +161,7 @@ detail/
 | `aero_state_system.h` | Air-only | 气动状态计算 |
 | `flight_dynamics_tuning.h` | Air-only | `AeroTuning` 结构体（CL/CD/CM 曲线） |
 
-这些文件与 `systems/naval/ship_motion_system.h` 处于同一抽象层级，但没有 `systems/air/` 目录来承载它们。
+这些文件与 `systems/domains/naval/ship_motion_system.h` 处于同一抽象层级，但没有 `systems/domains/air/` 目录来承载它们。
 
 ---
 
@@ -234,7 +236,7 @@ src/
 │   │   └── ground_contact_system.h ← 迁入（GroundState 专属）
 │   └── systems/
 │       ├── sensor_system.h       ← 保留但需移除 ShipPlatform 直接依赖
-│       └── logistics_system.h    ← 拆分：NavalUnderwayResupply → systems/naval/
+│       └── logistics_system.h    ← 拆分：NavalUnderwayResupply → systems/domains/naval/
 │
 ├── models/
 │   ├── air/                      ← 已存在
@@ -256,12 +258,12 @@ src/
 |--------|------|------|
 | **P0** | 拆分 `damage.h` → `damage_air.h` + 通用 `damage.h` | 843 行最大单体混合，Air 占 60% |
 | **P0** | 拆分 `damage_system.h` → `damage_system_air.h` + `damage_system_naval.h` | 1877 行最大系统混合 |
-| **P1** | 创建 `systems/air/`，迁入 aerodynamics/control/propulsion/aero_state | 4 个 air-only 系统伪装成通用 physics |
+| **P1** | 创建 `systems/domains/air/`，迁入 aerodynamics/control/propulsion/aero_state | 4 个 air-only 系统伪装成通用 physics |
 | **P1** | 拆分 `weapon.h` → `weapon_naval.h`（迁出 naval 类型） | Air/Naval 类型混合 |
-| **P1** | 创建 `components/combat/ground/` + `systems/ground/` | 当前完全缺失 |
-| **P2** | `logistics_system.h` 拆分 NavalUnderwayResupply → `systems/naval/` | 局部混合 |
+| **P1** | 创建 `components/domains/ground/combat/` + `systems/domains/ground/` | 当前完全缺失 |
+| **P2** | `logistics_system.h` 拆分 NavalUnderwayResupply → `systems/domains/naval/` | 局部混合 |
 | **P2** | `default_sensor_model.cpp` 移除 ShipPlatform 直接依赖 | 通用 sensor 不应知道 ShipPlatform |
-| **P2** | 创建 `models/naval/` + `models/ground/`，补齐 detail 文件 | 补齐模型层目录 |
+| **P2** | 创建 `models/domains/naval/` + `models/domains/ground/`，补齐 detail 文件 | 补齐模型层目录 |
 
 ---
 
@@ -269,7 +271,7 @@ src/
 
 当前 command/tasking 层已经证明 `air/common/naval/ground` 子目录拆分是可行的。Naval 域在 systems 层拥有最完整的结构分离（5 个独立系统文件 + README），唯一缺失的是 models 层和 combat 层。补齐 Naval 三层结构后，它可以作为"域完整分离"的参考模板，指导后续 Air 和 Ground 的重构。
 
-具体建议：将 Naval 从 70% 完整提升到 100% 完整（创建 `models/naval/`、`components/combat/naval/`），然后将它的文件清单和 README 模式文档化为域分离的示范模板。
+具体建议：将 Naval 从 70% 完整提升到 100% 完整（创建 `models/domains/naval/`、`components/domains/naval/combat/`），然后将它的文件清单和 README 模式文档化为域分离的示范模板。
 
 ---
 
