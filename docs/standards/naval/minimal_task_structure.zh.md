@@ -1,5 +1,11 @@
 # 海军最小任务结构
 
+Language:
+- English canonical: [minimal_task_structure.md](minimal_task_structure.md)
+- Chinese companion: `minimal_task_structure.zh.md`
+
+状态：`2026-06-10`，当前维护中的最小 naval tasking structure 特化基线。
+
 本说明冻结当前运行时与任务计划必须支持的最小有用海军任务结构。
 
 它仍然足够狭窄，但不再只是泛泛的占位说明。它要表达的是：共享合同、Navy service profile 与专门的 `naval` 层之间最小需要接上的语义。

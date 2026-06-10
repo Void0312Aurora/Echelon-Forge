@@ -4,7 +4,7 @@ Language:
 - English canonical: `README.md`
 - Chinese companion: [README.zh.md](README.zh.md)
 
-Status: `2026-06-07` authoritative for the maintained standards tree.
+Status: `2026-06-10` authoritative for the maintained standards tree.
 
 This directory defines the standardized modeling baseline the project intends to
 use going forward. Its job is not to restate every active implementation task.
@@ -221,6 +221,8 @@ Additional maintained supplements:
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - reference-baseline supplement for first-batch naval units and public-source
     traceability
+- [naval/obs.md](naval/obs.md)
+  - mission-observation contract for the maintained naval screen/station mode
 - [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
   - G0 baseline for the first ground tasking vocabulary and architecture
     constraints
@@ -228,8 +230,8 @@ Additional maintained supplements:
   - cross-domain policy execution, auxiliary-head, loss, reward, adapter, and
     probe ownership baseline
 - [modularization_plan.md](planning/modularization_plan.md)
-  - active planning supplement for future codebase structure, not a current
-    runtime contract
+  - active planning supplement for future codebase structure, with current
+    `src/*/domains` layout notes; not a current runtime contract
 
 ## Maintained Rules
 
@@ -240,6 +242,9 @@ Additional maintained supplements:
   they are repeated in task plans.
 - Service-specific or platform-specific terms must not be promoted into the
   common core just because the current implementation started in one domain.
+- Standards changes that register, refresh, hold, or retire implementation
+  contracts must follow
+  [Standards Maintenance Policy](governance/standards_maintenance_policy.md).
 - When work is split across subagents or workers, follow
   [Subagent Usage Policy](governance/subagent_usage_policy.md).
 - When a simulation-architecture WP is implementation-complete but still needs
@@ -250,6 +255,7 @@ Additional maintained supplements:
 
 - [Bilingual Documentation Policy](governance/bilingual_documentation_policy.md)
 - [Bilingual Document Clusters](governance/bilingual_document_clusters.md)
+- [Standards Maintenance Policy](governance/standards_maintenance_policy.md)
 - [Release And Dependency Policy](governance/release_and_dependency_policy.md)
 - [Subagent Usage Policy](governance/subagent_usage_policy.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.md)

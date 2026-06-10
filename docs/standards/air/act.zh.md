@@ -4,7 +4,8 @@ Language:
 - English canonical: `act.md`
 - Chinese companion: [act.zh.md](act.zh.md)
 
-状态：`2026-06-02`，当前维护中的 air action input 特化基线。
+状态：`2026-06-10`，当前维护中的 air action input 特化基线，包含 A5 runtime
+event-action overlay；本文档本身不接受 learned-policy behavior。
 
 本文档定义仓库当前维护中的 air action surface。它是一份接口合同，不是座舱控件百科。
 
@@ -83,8 +84,8 @@ transport action，而不是 raw policy intent。因此对于 pulse 维度，pol
 
 ## A5 受约束事件动作 Overlay
 
-状态：`2026-06-03`，A5 S1 C2/ROE event-action 工作的 planning / implementation
-contract。本节冻结实现字段名；它还不表示 runtime 或 learned-policy 行为已经 accepted。
+状态：`2026-06-10`，A5 S1 C2/ROE event-action runtime surface 的 implementation
+contract。本节冻结 runtime surface 所需的字段名；它本身不接受 learned-policy behavior。
 
 对于 accepted A5 S1 C2/ROE training/eval entries，`fire_weapon` 不得继续被视为
 policy-facing 的逐帧 raw threshold。武器释放建模为事件动作：

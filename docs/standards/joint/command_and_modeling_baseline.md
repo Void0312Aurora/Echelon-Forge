@@ -1,5 +1,12 @@
 # Joint Command and Modeling Baseline
 
+Language:
+- English canonical: `command_and_modeling_baseline.md`
+- Chinese companion: [command_and_modeling_baseline.zh.md](command_and_modeling_baseline.zh.md)
+
+Status: `2026-06-10` authoritative for maintained joint command and modeling
+boundaries.
+
 This document defines the joint/common core boundary for command relationship, authority scope, intent/order/report, and the minimum data model that can be shared across air, naval, and the early ground profile.
 
 ## 1. What the Joint Layer Means Here

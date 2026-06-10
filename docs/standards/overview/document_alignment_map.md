@@ -100,6 +100,7 @@ The maintained naval specialization entrypoints are:
 - [Naval Standards Overview](../naval/README.md)
 - [Naval Minimal Task Structure](../naval/minimal_task_structure.md)
 - [Ship Unit References](../naval/ship_unit_references.md)
+- [Naval Observation Contract](../naval/obs.md)
 
 They own:
 
@@ -108,6 +109,7 @@ They own:
 - first-batch naval data/reference boundaries, with
   [Ship Unit References](../naval/ship_unit_references.md) acting as the current
   reference-baseline supplement
+- `naval_screen_station_v1` mission-observation ownership and field order
 
 They do not own cross-service authority or generic tasking DTO boundaries.
 
@@ -142,8 +144,11 @@ current runtime contract:
 - [Modularization Plan](../planning/modularization_plan.md)
 
 It exists to describe target codebase structure and future split direction after
-the standards-tree rebuild. It should not be cited as proof that a planned
-module boundary is already implemented.
+the standards-tree rebuild. It now also records the current
+`src/components/domains`, `src/systems/domains`, and `src/models/domains` roots
+so readers can distinguish realized owner roots from still-planned interfaces.
+It should not be cited as proof that every planned module boundary or every
+domain runtime owner is already implemented.
 
 ## Archived Documents
 

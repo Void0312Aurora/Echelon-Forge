@@ -4,7 +4,9 @@ Language:
 - English canonical: `bridge/runtime_workflow_and_contract_baseline.md`
 - Chinese companion: [runtime_workflow_and_contract_baseline.zh.md](runtime_workflow_and_contract_baseline.zh.md)
 
-Status: `2026-05-18` authoritative for maintained runtime workflow ownership.
+Status: `2026-06-10` authoritative for maintained runtime workflow ownership,
+including current mission-observation mode ownership and episode roundtrip
+seams.
 
 This document fixes the maintained workflow boundary between:
 
@@ -179,6 +181,9 @@ Current maintained mission-observation contracts distinguish modes such as:
 - `nav_v2_formation_v1`
 - `nav_v2_formation_role_v1`
 - `nav_v2_cooperative_takeoff_v1`
+- `air_combat_c2_roe_v1`
+- `air_combat_c2_roe_v2`
+- `naval_screen_station_v1`
 
 Standards implication:
 
@@ -186,6 +191,9 @@ Standards implication:
 - formation fields are not automatically common fields
 - takeoff/runway semantics remain air specialization even when they appear in a
   common runtime object
+- air-combat C2/ROE fields belong to air specialization even when they mirror
+  shared command-context identifiers
+- naval screen/station fields belong to naval specialization
 
 ## Non-Goals
 

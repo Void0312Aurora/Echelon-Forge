@@ -4,7 +4,8 @@ Language:
 - English canonical: `bridge/runtime_workflow_and_contract_baseline.md`
 - Chinese companion: [runtime_workflow_and_contract_baseline.zh.md](runtime_workflow_and_contract_baseline.zh.md)
 
-状态：`2026-05-18`，当前维护中的 runtime workflow ownership 权威说明。
+状态：`2026-06-10`，当前维护中的 runtime workflow ownership 权威说明，包含当前
+mission-observation mode 归属与 episode roundtrip seam。
 
 本文档固定下面几层之间的边界：
 
@@ -173,12 +174,17 @@ mission-command 等数据，但这不代表这些词全部都是 common-core ont
 - `nav_v2_formation_v1`
 - `nav_v2_formation_role_v1`
 - `nav_v2_cooperative_takeoff_v1`
+- `air_combat_c2_roe_v1`
+- `air_combat_c2_roe_v2`
+- `naval_screen_station_v1`
 
 标准含义：
 
 - 字段可见性是 mode-dependent 的
 - formation fields 不是自动变成 common fields
 - takeoff/runway 语义即使出现在通用 runtime 对象里，归属仍是 air specialization
+- air-combat C2/ROE 字段即使复用 shared command-context identifier，也属于 air specialization
+- naval screen/station 字段属于 naval specialization
 
 ## 非目标
 

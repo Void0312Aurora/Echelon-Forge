@@ -1,5 +1,12 @@
 # Naval Minimal Task Structure
 
+Language:
+- English canonical: `minimal_task_structure.md`
+- Chinese companion: [minimal_task_structure.zh.md](minimal_task_structure.zh.md)
+
+Status: `2026-06-10` specialization baseline for the maintained minimal naval
+tasking structure.
+
 This note freezes the smallest useful naval tasking structure that the current runtime and task plan must support.
 
 It is intentionally narrow, but it is no longer a generic placeholder. It captures the minimum semantics needed to connect the shared contract, the Navy service profile, and the dedicated `naval` layer.

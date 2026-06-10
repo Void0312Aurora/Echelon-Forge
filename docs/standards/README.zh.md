@@ -5,7 +5,7 @@
 - 英文主文：[README.md](README.md)
 - 中文辅文：`README.zh.md`
 
-状态：`2026-06-07`，当前维护中的标准树权威入口。
+状态：`2026-06-10`，当前维护中的标准树权威入口。
 
 本目录用于定义项目后续采用的标准化建模基线。它的职责不是重复每一份活跃任务文档，而是回答：
 
@@ -194,13 +194,16 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - [naval/ship_unit_references.md](naval/ship_unit_references.md)
   - 第一批海军单位与公开来源可追溯性的参考基准补充页
+- [naval/obs.md](naval/obs.md)
+  - 当前维护中的 naval screen/station mode 的 mission-observation 合同
 - [ground/minimal_task_structure.md](ground/minimal_task_structure.md)
   - 第一批 ground tasking 语汇与架构约束的 G0 基线
 - [model/policy_execution_architecture.md](model/policy_execution_architecture.md)
   - 跨域 policy execution、auxiliary-head、loss、reward、adapter 与 probe ownership
     基线
 - [modularization_plan.md](planning/modularization_plan.md)
-  - 面向未来代码结构的活跃规划补充页，不是当前 runtime 合同
+  - 面向未来代码结构的活跃规划补充页，带当前 `src/*/domains` 布局说明；不是当前
+    runtime 合同
 
 ## 维护规则
 
@@ -208,6 +211,8 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 - 维护中的英文主文不应继续保留机器翻译草稿标记。
 - 新的共享合同应先落在 `joint/` 或 `bridge/` 下的 workflow bridge 文档，再扩散到任务计划。
 - 某一军种或平台当前恰好先实现了，不代表它的术语可以直接提升为全项目 common core。
+- 标准变更若登记、刷新、保持 held 或退役实现合同，必须遵循
+  [标准维护政策](governance/standards_maintenance_policy.zh.md)。
 - 当工作被拆分给多个 subagent 或 worker 时，应遵循
   [Subagent 使用规范](governance/subagent_usage_policy.zh.md)。
 - 当 simulation-architecture WP 已完成实现但仍需要发布收口时，使用
@@ -217,6 +222,7 @@ model work，以及跨域 issue tracking 等活跃或近期活跃的执行线。
 
 - [双语文档政策](governance/bilingual_documentation_policy.zh.md)
 - [双语文档簇](governance/bilingual_document_clusters.zh.md)
+- [标准维护政策](governance/standards_maintenance_policy.zh.md)
 - [发布与依赖政策](governance/release_and_dependency_policy.zh.md)
 - [Subagent 使用规范](governance/subagent_usage_policy.zh.md)
 - [WP Closure Lane Policy](governance/wp_closure_lane_policy.zh.md)

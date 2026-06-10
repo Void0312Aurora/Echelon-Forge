@@ -4,7 +4,7 @@ Language:
 - English canonical: `obs.md`
 - Chinese companion: [obs.zh.md](obs.zh.md)
 
-Status: `2026-05-18` specialization baseline for maintained air mission observation.
+Status: `2026-06-10` specialization baseline for maintained air mission observation.
 
 This document defines the maintained air observation contract exposed through
 the mission-observation surface. It does not attempt to describe every raw
@@ -40,6 +40,8 @@ The maintained mission-observation modes are:
 | `nav_v2_formation_v1` | 17 | `nav_v2` plus formation offsets |
 | `nav_v2_formation_role_v1` | 21 | formation offsets plus role/slot fields |
 | `nav_v2_cooperative_takeoff_v1` | 25 | route, takeoff, formation, and role fields |
+| `air_combat_c2_roe_v1` | 20 | air-combat command, ROE/WCS, assignment, and release-discipline state |
+| `air_combat_c2_roe_v2` | 29 | `air_combat_c2_roe_v1` plus state-completion and window fields |
 
 Field order is part of the contract.
 
@@ -115,6 +117,49 @@ plus the same formation/role fields listed above.
 This mode is the maintained air contract for cooperative takeoff guidance, not a
 generic cross-domain takeoff schema.
 
+## Air Combat C2/ROE Fields
+
+`air_combat_c2_roe_v1` is the maintained air-combat observation mode for the
+current command-and-release-discipline surface. It has these fields:
+
+- `command_code`
+- `target_heading_deg`
+- `target_altitude_m`
+- `target_speed_mps`
+- `roe_state`
+- `wcs_state`
+- `authorization_to_fire`
+- `engagement_authority_holder_id`
+- `engagement_authority_grantor_id`
+- `assigned_target_id`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
+- `target_identity_state`
+- `engage_order_state`
+- `shot_policy_state`
+- `shot_budget_remaining`
+- `pending_assessment`
+- `own_missiles_in_flight_count`
+- `target_contact_present`
+
+`air_combat_c2_roe_v2` appends the active state-completion fields:
+
+- `fire_mask_open`
+- `launch_window_open`
+- `quality_window_ready`
+- `legal_open_age_steps`
+- `legal_open_age_norm`
+- `launch_window_age_steps`
+- `launch_window_age_norm`
+- `target_range_m`
+- `target_track_age_s`
+
+These fields belong to the air-combat specialization surface. The assignment
+and target-provenance fields mirror command context exposed by the joint command
+link, but this observation mode does not make common core responsible for air
+track fusion, missile-release policy, or target-assessment timing.
+
 ## Runtime Rules
 
 - Mode length stays fixed even when route guidance is unavailable.
@@ -122,6 +167,9 @@ generic cross-domain takeoff schema.
 - Field visibility is mode-dependent.
 - Formation and takeoff fields are not assumed to exist outside the modes that
   declare them.
+- Air-combat C2/ROE modes keep the field order defined by
+  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py);
+  policy, reward, and probe code must treat that order as contract data.
 
 ## Ownership Boundary
 
@@ -135,6 +183,8 @@ Keep in air specialization:
 - runway- and takeoff-specific fields
 - route/LNAV/ILS semantics
 - formation offsets and air role details
+- ROE/WCS, shot policy, launch-window, and target-assessment fields that are
+  specific to air-combat release discipline
 
 ## Non-Goals
 

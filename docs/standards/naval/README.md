@@ -1,8 +1,22 @@
 # Naval Standards
 
+Language:
+- English canonical: `README.md`
+- Chinese companion: [README.zh.md](README.zh.md)
+
+Status: `2026-06-10` specialization entrypoint for maintained naval semantics.
+
 This directory contains the authoritative standards for the dedicated `naval` specialization.
 
 It is the standard landing point for the current naval task plan, not a placeholder. The goal is to separate `common`, `services/navy`, and `naval` cleanly enough that the current runtime and planning work can continue without air-first assumptions leaking into maritime semantics.
+
+## Maintained Documents
+
+Read these files together:
+
+1. [Naval Minimal Task Structure](minimal_task_structure.md)
+2. [Ship Unit References](ship_unit_references.md)
+3. [Naval Observation Contract](obs.md)
 
 ## 1. Layer Model
 

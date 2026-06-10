@@ -4,7 +4,7 @@ Language:
 - English canonical: `planning/modularization_plan.md`
 - Chinese companion: [modularization_plan.zh.md](modularization_plan.zh.md)
 
-状态：`2026-05-18`，仍在生效的规划文档，不是当前 runtime 合同。
+状态：`2026-06-10`，带当前布局说明的活跃规划文档，不是当前 runtime 合同。
 
 本文档仍然有效，但现在必须放在新的 standards tree 下阅读：
 
@@ -24,6 +24,45 @@ Language:
 `如果项目继续把稳定核心、可替换模型和领域特化分开，代码库应如何拆分？`
 
 因此，下文中的目录映射与接口设计都应被理解为目标结构，而不是证明“这些模块今天已经完整存在”。
+
+## 当前已实现的域根目录
+
+仓库现在已经有真实的 domain owner roots。这让本规划页继续有效，但也改变了阅读方式：
+当前 roots 是 ownership direction 的证据，不证明每个域都具备同等 runtime 成熟度。
+
+当前已实现 roots：
+
+- `src/components/domains/`
+  - 当前 owner：`air/`、`naval/`、`ground/`
+  - 职责：域自有 ECS component、command/tasking 扩展、平台 DTO，以及窄 combat/status 切片
+  - 边界：共享 shell 仍在 `src/components/{combat,command,tasking}`；新增域专属
+    component slice 应进入 `src/components/domains/<domain>/`
+- `src/systems/domains/`
+  - 当前 owner：`air/`、`naval/`
+  - 职责：域自有 runtime system registration 与 per-tick behavior
+  - 边界：这里尚未释放 `ground/` runtime system owner；ground movement、sensing、
+    fires、damage 与 terrain-control runtime 在对应接口和验收门槛存在前保持 held
+- `src/models/domains/`
+  - 当前 owner：`air/`、`naval/`、`ground/`
+  - 职责：域自有可替换模型实现、adapter，以及供共享模型消费的显式 placeholder route
+  - 边界：ground model ownership 只限于 unit-factory capability evidence 与显式
+    effects placeholder routing，不代表完整 land-domain runtime maturity
+
+新增域只有在具备真实 component、system 或 model owner 时，才应扩展这些
+`domains/<domain>/` roots。不要把空 production owner root、demo domain 或教学壳当作
+standards evidence。
+
+旧的共享或过渡 roots 仍然有效：
+
+- `src/components/combat`、`src/components/command` 与 `src/components/tasking`
+  仍是共享 component shell。
+- `src/systems/combat`、`src/systems/physics` 与 `src/systems/systems` 仍是共享或过渡
+  runtime 区域。
+- `src/models/weapons` 与 `src/models/systems` 仍是共享 model 区域；当域 adapter
+  存在时，它们会路由到相应域 adapter。
+
+这意味着：下方 target map 对未来 cleanup 仍有用，但当前代码库已经把
+`src/*/domains/<domain>/` 作为域自有 specialization 的优先位置。
 
 ## 目标
 
@@ -54,12 +93,17 @@ Language:
 - 目标所有权：`Transform`、`Velocity`、`Sensor`、`Health`、`Score`、
   `Weapon` 等数据载体
 - 目标依赖方向：不依赖更高层
+- 当前 domain 约定：域专属 slice 放在 `src/components/domains/<domain>/`；
+  共享 component shell 保留在 domain roots 之外
 
 ### `systems/`
 
 - 用途：控制、移动、传感器扫描、制导、伤害等执行系统
 - 目标所有权：系统注册与更新逻辑
 - 目标依赖方向：依赖 `core/` 与 `components/`
+- 当前 domain 约定：已释放的 domain runtime owner 放在
+  `src/systems/domains/<domain>/`；缺少某个域 root 表示 runtime ownership 仍 held，
+  不表示该 runtime 归其他域所有
 
 ### `interfaces/`
 
@@ -86,6 +130,8 @@ Language:
 - 用途：可替换的行为模型实现
 - 目标所有权：接口背后的 effects、sensor、guidance 等具体模型
 - 目标依赖方向：通常依赖 `components/`，在必须访问世界状态时可有限依赖 `core/`
+- 当前 domain 约定：域自有 model adapter 与实现放在 `src/models/domains/<domain>/`；
+  共享 model route 可继续留在 `src/models/{weapons,systems}`，并在需要时分发到域 adapter
 
 ## 目标可替换接口
 

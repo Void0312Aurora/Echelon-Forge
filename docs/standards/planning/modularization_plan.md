@@ -4,7 +4,8 @@ Language:
 - English canonical: `planning/modularization_plan.md`
 - Chinese companion: [modularization_plan.zh.md](modularization_plan.zh.md)
 
-Status: `2026-05-18` active planning document, not a current runtime contract.
+Status: `2026-06-10` active planning document with current-layout notes; not a
+current runtime contract.
 
 This document remains active, but it must now be read under the maintained
 standards tree:
@@ -30,6 +31,53 @@ replaceable models, and domain-specific specialization?`
 
 That means the directory map and interfaces below should be read as target
 structure, not as proof that every module already exists in final form.
+
+## Current Implemented Domain Roots
+
+The repository now has real domain owner roots in the source tree. This keeps
+the plan active, but it changes how the target map should be read: the current
+roots are evidence of ownership direction, not proof that every domain has the
+same runtime maturity.
+
+Current implemented roots:
+
+- `src/components/domains/`
+  - current owners: `air/`, `naval/`, `ground/`
+  - role: domain-owned ECS components, command/tasking extensions, platform
+    DTOs, and narrow combat/status slices
+  - boundary: shared shells still live under `src/components/{combat,command,tasking}`;
+    new domain-specific component slices should go under
+    `src/components/domains/<domain>/`
+- `src/systems/domains/`
+  - current owners: `air/`, `naval/`
+  - role: domain-owned runtime system registration and per-tick behavior
+  - boundary: there is no released `ground/` runtime system owner here yet;
+    ground movement, sensing, fires, damage, and terrain-control runtime remain
+    held until their interfaces and acceptance gates exist
+- `src/models/domains/`
+  - current owners: `air/`, `naval/`, `ground/`
+  - role: domain-owned replaceable model implementations, adapters, and explicit
+    placeholder routes consumed by shared models
+  - boundary: ground model ownership is limited to unit-factory capability
+    evidence and explicit effects placeholder routing, not full land-domain
+    runtime maturity
+
+New domains should extend these `domains/<domain>/` roots only when they have a
+real component, system, or model owner. Do not add empty production owner roots,
+demo domains, or teaching shells as standards evidence.
+
+The older shared or transitional roots still matter:
+
+- `src/components/combat`, `src/components/command`, and `src/components/tasking`
+  remain the shared component shells.
+- `src/systems/combat`, `src/systems/physics`, and `src/systems/systems` remain
+  shared or transitional runtime areas.
+- `src/models/weapons` and `src/models/systems` remain shared model areas that
+  route into domain adapters where those adapters exist.
+
+This means the target map below is still useful for future cleanup, but the
+current codebase already uses `src/*/domains/<domain>/` as the preferred place
+for domain-owned specialization.
 
 ## Goals
 
@@ -66,6 +114,9 @@ them everywhere.
 - target ownership: `Transform`, `Velocity`, `Sensor`, `Health`, `Score`,
   `Weapon`, and similar data carriers
 - target dependency direction: no higher-level dependency
+- current domain convention: domain-specific slices belong under
+  `src/components/domains/<domain>/`; shared component shells stay outside the
+  domain roots
 
 ### `systems/`
 
@@ -73,6 +124,9 @@ them everywhere.
   and damage
 - target ownership: system registration and update logic
 - target dependency direction: depends on `core/` and `components/`
+- current domain convention: released domain runtime owners belong under
+  `src/systems/domains/<domain>/`; absence of a domain root means runtime
+  ownership is still held, not that another domain owns it
 
 ### `interfaces/`
 
@@ -101,6 +155,9 @@ them everywhere.
   behind interfaces
 - target dependency direction: usually `components/`, and possibly `core/` when
   world access is necessary
+- current domain convention: domain-owned model adapters and implementations
+  belong under `src/models/domains/<domain>/`; shared model routes may remain in
+  `src/models/{weapons,systems}` while they dispatch to domain adapters
 
 ## Target Replaceable Interfaces
 

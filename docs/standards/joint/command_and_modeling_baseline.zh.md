@@ -1,5 +1,11 @@
 # Joint 指挥与建模基线
 
+Language:
+- English canonical: [command_and_modeling_baseline.md](command_and_modeling_baseline.md)
+- Chinese companion: `command_and_modeling_baseline.zh.md`
+
+状态：`2026-06-10`，当前维护中的 joint command 与 modeling boundary 权威说明。
+
 本文档定义项目中 joint/common core 的边界，用来统一指挥关系、authority scope、intent / order / report，以及可跨空海陆复用的最小数据模型。
 
 ## 1. Joint 层在这里意味着什么

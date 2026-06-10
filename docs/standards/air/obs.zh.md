@@ -4,7 +4,7 @@ Language:
 - English canonical: `obs.md`
 - Chinese companion: [obs.zh.md](obs.zh.md)
 
-状态：`2026-05-18`，当前维护中的 air mission observation 特化基线。
+状态：`2026-06-10`，当前维护中的 air mission observation 特化基线。
 
 本文档定义的是当前 runtime 和测试实际使用的 air mission-observation 合同，而不是试图覆盖
 “真实飞行员可能看到的全部仪表、雷达页面或感知信息”。
@@ -38,6 +38,8 @@ Language:
 | `nav_v2_formation_v1` | 17 | `nav_v2` 加编队偏移 |
 | `nav_v2_formation_role_v1` | 21 | 编队偏移加 role/slot 字段 |
 | `nav_v2_cooperative_takeoff_v1` | 25 | route、takeoff、formation、role 合同 |
+| `air_combat_c2_roe_v1` | 20 | 空战 command、ROE/WCS、assignment 与 release-discipline 状态 |
+| `air_combat_c2_roe_v2` | 29 | 在 `air_combat_c2_roe_v1` 上追加 state-completion 与 window 字段 |
 
 字段顺序本身就是合同的一部分。
 
@@ -112,12 +114,58 @@ Language:
 
 这个 mode 是当前 cooperative takeoff guidance 的 air 合同，不是跨域通用起飞 schema。
 
+## Air Combat C2/ROE 字段
+
+`air_combat_c2_roe_v1` 是当前 command-and-release-discipline surface 的
+air-combat observation mode。它包含这些字段：
+
+- `command_code`
+- `target_heading_deg`
+- `target_altitude_m`
+- `target_speed_mps`
+- `roe_state`
+- `wcs_state`
+- `authorization_to_fire`
+- `engagement_authority_holder_id`
+- `engagement_authority_grantor_id`
+- `assigned_target_id`
+- `assigned_target_track_id`
+- `assigned_target_source_id`
+- `assigned_target_snapshot_time_s`
+- `target_identity_state`
+- `engage_order_state`
+- `shot_policy_state`
+- `shot_budget_remaining`
+- `pending_assessment`
+- `own_missiles_in_flight_count`
+- `target_contact_present`
+
+`air_combat_c2_roe_v2` 追加当前启用的 state-completion 字段：
+
+- `fire_mask_open`
+- `launch_window_open`
+- `quality_window_ready`
+- `legal_open_age_steps`
+- `legal_open_age_norm`
+- `launch_window_age_steps`
+- `launch_window_age_norm`
+- `target_range_m`
+- `target_track_age_s`
+
+这些字段属于 air-combat specialization surface。assignment 与 target-provenance
+字段复用了 joint command link 暴露的 command context，但这个 observation mode
+不会让 common core 负责 air track fusion、missile-release policy 或
+target-assessment timing。
+
 ## Runtime 规则
 
 - 即使 route guidance 不可用，mode 长度仍保持固定。
 - 当 route guidance 不可用时，导航段按零填充。
 - 字段可见性取决于 mode。
 - formation 与 takeoff 字段只在声明它们的 mode 中出现。
+- Air-combat C2/ROE mode 的字段顺序以
+  [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) 为准；
+  policy、reward 与 probe 代码必须把这个顺序视为合同数据。
 
 ## 归属边界
 
@@ -131,6 +179,8 @@ Language:
 - runway / takeoff 专用字段
 - route / LNAV / ILS 语义
 - formation offset 与空中 role 细节
+- air-combat release discipline 专用的 ROE/WCS、shot policy、launch-window
+  与 target-assessment 字段
 
 ## 非目标
 

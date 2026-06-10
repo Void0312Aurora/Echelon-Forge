@@ -100,6 +100,7 @@ Language:
 - [海军标准总览](../naval/README.md)
 - [海军最小任务结构](../naval/minimal_task_structure.md)
 - [舰艇单位参考](../naval/ship_unit_references.md)
+- [海军观测合同](../naval/obs.md)
 
 它们负责：
 
@@ -107,6 +108,7 @@ Language:
 - ship 与 task-group 层的 naval role 解释
 - 第一批海军建模数据/来源边界，其中
   [舰艇单位参考](../naval/ship_unit_references.md) 当前承担参考基准补充页角色
+- `naval_screen_station_v1` mission-observation 的归属与字段顺序
 
 它们不负责跨军种授权关系或 generic tasking DTO 边界。
 
@@ -138,8 +140,10 @@ ground 特化。已接受的 `army` 与 `land` 别名会规范化为 `ground`，
 
 - [模块化规划](../planning/modularization_plan.md)
 
-它的职责是描述 standards tree 重建之后，代码库未来可能采用的目标拆分方向，
-而不是证明某个规划中的模块边界今天已经完成实现。
+它的职责是描述 standards tree 重建之后，代码库未来可能采用的目标拆分方向。
+它现在也记录当前 `src/components/domains`、`src/systems/domains` 与
+`src/models/domains` roots，让读者区分已经实现的 owner root 和仍处于规划中的接口。
+它不能被当作“每个规划模块边界或每个域 runtime owner 都已完成实现”的证据。
 
 ## 已归档文档
 

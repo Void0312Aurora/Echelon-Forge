@@ -1,8 +1,22 @@
 # Naval 标准
 
+Language:
+- English canonical: [README.md](README.md)
+- Chinese companion: `README.zh.md`
+
+状态：`2026-06-10`，当前维护中的 naval 语义标准入口。
+
 本目录收纳专门的 `naval` specialization 标准文档。
 
 这里已经不是占位目录，而是当前海军任务计划的标准入口。目标是把 `common`、`services/navy` 与 `naval` 清楚分层，避免空军优先的语义继续泄漏到海上运行时。
+
+## 维护中文档
+
+建议将这些文件一起阅读：
+
+1. [海军最小任务结构](minimal_task_structure.zh.md)
+2. [舰艇单位参考](ship_unit_references.zh.md)
+3. [海军观测合同](obs.zh.md)
 
 ## 1. 分层模型
 

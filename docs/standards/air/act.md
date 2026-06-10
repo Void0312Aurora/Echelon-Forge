@@ -4,7 +4,9 @@ Language:
 - English canonical: `act.md`
 - Chinese companion: [act.zh.md](act.zh.md)
 
-Status: `2026-06-02` specialization baseline for maintained air action input.
+Status: `2026-06-10` specialization baseline for maintained air action input,
+including the A5 runtime event-action overlay; this page does not by itself
+accept learned-policy behavior.
 
 This document defines the maintained air action surface for the current
 repository. It is an interface contract, not a cockpit encyclopedia.
@@ -88,9 +90,9 @@ rising-edge step and `0` on subsequent held steps.
 
 ## A5 Constrained Event-Action Overlay
 
-Status: `2026-06-03` planning/implementation contract for the A5 S1 C2/ROE
-event-action work. This section freezes field names for implementation; it does
-not yet mark runtime or learned-policy behavior as accepted.
+Status: `2026-06-10` implementation contract for the A5 S1 C2/ROE
+event-action runtime surface. This section freezes field names for the runtime
+surface; it does not mark learned-policy behavior as accepted.
 
 For accepted A5 S1 C2/ROE training/eval entries, `fire_weapon` must no longer
 be treated as a raw policy-facing per-step threshold. Weapon release is modeled
