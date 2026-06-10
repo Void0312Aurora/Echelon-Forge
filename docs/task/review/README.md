@@ -31,6 +31,7 @@ Status: active review record.
 ## Test System Reviews
 
 - [Test System Evaluation And Intent Matrix 2026-06-01](test_system_evaluation_20260601.zh.md) (中文)
+- [Architecture Damage-Model Test Capability Matrix 2026-06-10](architecture_damage_model_test_script_survival_table_20260610.zh.md) (中文)
 
 ## Disputed Closure Records
 

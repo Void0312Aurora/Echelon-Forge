@@ -217,6 +217,47 @@ Prefer a standalone Python test only when you truly need:
 - nontrivial mocking that cannot be captured by a small dummy contract harness
 - richer diagnostics than a contract can reasonably encode
 
+## Capability-Oriented Test File Standard
+
+Test files are capability or contract containers, not receipts for subprojects,
+work packages, stages, or one-time review processes. A new test file should
+exist only when it owns a stable functional surface or a materially different
+execution model.
+
+Prefer one semantic file that covers a capability with multiple scenarios,
+using test functions, parameterization, fixtures, and shared helpers inside the
+file. Do not create a new file merely because a task, residual item, stage,
+candidate, or archived work package needed an extra checkpoint.
+
+A proposed standalone file should pass at least one of these tests:
+
+- It guards a new capability boundary that does not naturally fit an existing
+  file.
+- It needs a different runner, environment tier, generated artifact lifecycle,
+  or fixture shape from the existing capability files.
+- Splitting it prevents an existing file from becoming a broad mixed-surface
+  guard with unrelated setup or failure semantics.
+
+Otherwise, add the scenario to the existing capability file. Small files with
+fewer than three to five tests should be treated as merge candidates unless
+they have a distinct execution tier, expensive setup, or intentionally isolated
+failure policy.
+
+Consolidate files when they share most of their imports, tool entry points,
+artifact roots, retained-manifest logic, fail-closed semantics, or CI/local
+suite tier. If a capability file grows too large, split it by capability
+sub-surface, not by project code name or task number.
+
+Historical identifiers such as `A2`, `WP`, `RES`, `TP21`, `BEC-O`, and
+`Stage B/C` belong in test names, parameter IDs, comments, fixtures, or task
+docs only when traceability requires them. Filenames should stay semantic:
+prefer forms such as
+`test_<capability>_<contract|governance|admission|guardrails|validation|artifacts>.py`.
+
+Promotion into CI or focused suites should happen through suite manifests or
+node IDs. Do not create a new physical file just to make promotion or exclusion
+easier.
+
 ## Naming Conventions
 
 - `tests/contracts/route_generator/*.json`

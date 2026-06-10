@@ -190,6 +190,38 @@ Suite tier 含义：
 - 无法通过小型虚拟契约装置捕获的非平凡模拟
 - 比契约能合理编码的更丰富的诊断信息
 
+## 面向功能能力的测试文件规范
+
+测试文件是能力/契约容器，不是子项目、工作包、阶段或一次性评审流程的收据。
+只有当一个文件拥有稳定的功能 surface，或确实需要不同的执行模型时，才应新增
+测试文件。
+
+优先使用一个语义文件覆盖同一能力下的多个场景，并在文件内部通过测试函数、
+参数化、fixture 和共享 helper 扩展覆盖面。不要因为某个任务、残差项、阶段、
+候选包或归档工作包需要额外 checkpoint，就顺手创建一个新文件。
+
+拟新增的独立文件至少应满足以下条件之一：
+
+- 它守护一个无法自然并入现有文件的新能力边界。
+- 它需要不同的 runner、环境层级、生成物生命周期或 fixture shape。
+- 拆分后能避免既有文件变成 setup、失败语义互不相关的宽混合 guard。
+
+否则，应把新场景加入既有能力文件。少于三到五个测试的小文件默认应视为合并
+候选，除非它们有独立执行层级、昂贵 setup，或有意隔离的 failure policy。
+
+当多个文件共享大部分 imports、工具入口、artifact root、retained manifest
+逻辑、fail-closed 语义或 CI/local suite 层级时，应优先合并。如果能力文件
+变得过大，也应按能力子面拆分，而不是按工程代号或任务编号拆分。
+
+`A2`、`WP`、`RES`、`TP21`、`BEC-O`、`Stage B/C` 等历史标识只应在追溯
+必要时放入测试名、参数 ID、注释、fixture 或任务文档。文件名应保持语义化，
+优先使用
+`test_<capability>_<contract|governance|admission|guardrails|validation|artifacts>.py`
+这类形式。
+
+进入 CI 或 focused suite 应通过 suite manifest 或 pytest node ID 完成。不要
+为了方便 promotion/exclusion 而新建一个物理测试文件。
+
 ## 命名约定
 
 - `tests/contracts/route_generator/*.json`

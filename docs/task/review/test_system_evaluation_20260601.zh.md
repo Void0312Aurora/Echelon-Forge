@@ -4,6 +4,8 @@
 
 落地注记：contract type、batch failure policy 与 `sim_kernel` gate/diagnostic 边界已开始在 `tests/README*` 和相关 contract README 中同步；首批测试治理矩阵与 focused suite 草案已落在 `tests/suites/`。
 
+2026-06-10 补充治理原则：测试系统按功能能力组织，不按子项目、工作包、阶段或一次性过程组织。新增测试文件必须证明存在新的能力边界、独立执行模型或独立 failure policy；否则新场景应并入既有能力文件，通过函数、参数化、fixture、shared helper 或 suite manifest 扩展覆盖面。该原则已同步到 `tests/README.md` 与 `tests/README.zh.md`，`docs/task/review/architecture_damage_model_test_script_survival_table_20260610.zh.md` 是 damage-model 架构测试层的应用样例。
+
 范围：`tests/`、`tests/contracts/`、`.github/workflows/`、`tools/runners/`、`python/testing/`、`docs/standards/`、`docs/task/`、`examples/config/training/`。
 
 ## 1. 总体结论

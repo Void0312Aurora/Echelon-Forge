@@ -31,6 +31,7 @@
 ## 测试系统评估
 
 - [测试系统评估与意图矩阵 2026-06-01](test_system_evaluation_20260601.zh.md)
+- [Architecture Damage-Model 测试功能矩阵 2026-06-10](architecture_damage_model_test_script_survival_table_20260610.zh.md)
 
 ## 存在争议的 Closure 记录
 
