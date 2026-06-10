@@ -41,9 +41,9 @@ authority、transformation 与 intent-injection guards。
 | Gate | 结论 | 证据 |
 |------|------|------|
 | `WP12-A Law 14 Read-Side Enforcement` | pass | `python/rl/runtime/agent_shim.py`、`tests/runtime/test_agent_shim.py` 与 `tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py` 对 provenance-labeled `ObservationPacket` / `DecisionBelief` inputs 建立 focused maintained read-side allowlist，同时保持 diagnostics-only truth/raw paths 显式。 |
-| `WP12-B Agency Role Authority Boundary` | pass | `src/runtime/contracts/policy_contracts.h`、`src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/mission/test_policy_contract_shape.py`、`tests/runtime/bindings/test_bindings_runtime_dto_surface.py` 与 `tests/architecture/test_wp12_agent_role_authority.py` 增加 fail-closed `AgentRole` authority/source/interface validation 与 Python-visible authorization helpers。 |
-| `WP12-C Information Transformation Surface` | pass | `src/runtime/contracts/information_transform_contracts.h` 与 `tests/architecture/test_wp12_information_transformation_surface.py` 增加 canonical transformation vocabulary、evidence structs、validators、diagnostics-only shortcut rules，以及 invalid belief-to-intent provenance 负例。 |
-| `WP12-D Intent Injection Authority Guard` | pass | `src/runtime/contracts/information_transform_contracts.h` 与 `tests/architecture/test_wp12_intent_injection_authority_guard.py` 把 A/B/C 组合为 `authorize_maintained_decision_belief_action_intent_injection()`，覆盖 authority、transformation、ancestry、timing、merge-policy 与 no-raw-facade-bypass checks。 |
+| `WP12-B Agency Role Authority Boundary` | pass | `src/runtime/contracts/policy_contracts.h`、`src/interfaces/python/bindings_runtime.cpp`、`tests/runtime/mission/test_policy_contract_shape.py`、`tests/runtime/bindings/test_bindings_runtime_dto_surface.py` 与 `tests/architecture/policy_execution/test_agent_role_authority.py` 增加 fail-closed `AgentRole` authority/source/interface validation 与 Python-visible authorization helpers。 |
+| `WP12-C Information Transformation Surface` | pass | `src/runtime/contracts/information_transform_contracts.h` 与 `tests/architecture/policy_execution/test_information_transformation_surface.py` 增加 canonical transformation vocabulary、evidence structs、validators、diagnostics-only shortcut rules，以及 invalid belief-to-intent provenance 负例。 |
+| `WP12-D Intent Injection Authority Guard` | pass | `src/runtime/contracts/information_transform_contracts.h` 与 `tests/architecture/policy_execution/test_intent_injection_authority_guard.py` 把 A/B/C 组合为 `authorize_maintained_decision_belief_action_intent_injection()`，覆盖 authority、transformation、ancestry、timing、merge-policy 与 no-raw-facade-bypass checks。 |
 | `WP12-E Integration And Acceptance Handoff` | pass | 本审查记录 A-D 状态、validation commands、residuals、route/index updates 与 closure-lane scope boundary。 |
 
 ## 3. 验证命令
@@ -51,7 +51,7 @@ authority、transformation 与 intent-injection guards。
 已通过：
 
 ```bash
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_wp12_intent_injection_authority_guard.py tests/architecture/test_wp12_agent_role_authority.py tests/architecture/test_wp12_information_transformation_surface.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/policy_execution/test_intent_injection_authority_guard.py tests/architecture/policy_execution/test_agent_role_authority.py tests/architecture/policy_execution/test_information_transformation_surface.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py tests/runtime/test_agent_shim.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contract_shape.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
 git diff --check

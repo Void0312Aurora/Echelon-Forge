@@ -71,7 +71,7 @@ Consumer and test clues for later streams:
 - Spine evidence tests already naming this slice:
   `tests/runtime/facade/test_runtime_facade_window_loop_injection.py`,
   `tests/runtime/bindings/test_bindings_engagement_surface.py`,
-  `tests/architecture/test_wp10_stage_node_manifest_registry.py`
+  `tests/architecture/causal_runtime/test_stage_node_manifest_registry.py`
 
 ## 3. Inventory Map
 

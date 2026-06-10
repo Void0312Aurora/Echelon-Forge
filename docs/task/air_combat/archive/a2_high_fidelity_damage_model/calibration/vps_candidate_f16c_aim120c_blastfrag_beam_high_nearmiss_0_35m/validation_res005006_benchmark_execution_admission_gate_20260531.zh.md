@@ -93,5 +93,5 @@ TP-21 仍只保留 controlled criteria vocabulary/hash 和 selected-output requi
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_res005006_benchmark_execution_admission_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res005006_benchmark_execution_admission_gate.py
+pytest -q tests/architecture/damage_model/test_benchmark_evidence_admission.py
 ```

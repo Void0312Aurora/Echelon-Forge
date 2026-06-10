@@ -69,7 +69,7 @@ index sync 均已完成，并有测试证据支撑。
 
 | ID | 结论 | 证据 |
 |----|------|------|
-| GUA-1 `sim.*` AST guard | pass | `tests/architecture/test_wp9_guard_enforcement.py` 执行带标签 direct-sim access allowlist。 |
+| GUA-1 `sim.*` AST guard | pass | `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` 执行带标签 direct-sim access allowlist。 |
 | GUA-2 binding surface smoke promotion | pass | `tests/runtime/bindings/test_bindings_engagement_surface.py` 覆盖默认 `world_index=0` 的 empty engagement packet shell。 |
 
 ## 6. 验证命令
@@ -79,7 +79,7 @@ index sync 均已完成，并有测试证据支撑。
 ```bash
 git diff --check
 cmake --build build --target ef_py -j2
-CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/test_wp9_guard_enforcement.py tests/architecture/test_wp9_infrastructure_closure_docs.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/test_agent_shim.py tests/runtime/mission/test_policy_contract_shape.py
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/compatibility_quarantine/test_guard_enforcement.py tests/architecture/governance/test_infrastructure_closure_docs.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/test_agent_shim.py tests/runtime/mission/test_policy_contract_shape.py
 ```
 
 聚焦 integration test 命令通过，结果为 `89 passed`。

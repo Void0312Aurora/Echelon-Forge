@@ -25,7 +25,7 @@ trace/replay-facing engagement gate，同时保持 metadata-dependent checks def
 | 领域 | 产物 | 验收备注 |
 |------|------|----------|
 | Harness inventory | `wp5_harness_inventory_notes_20260519.md` | 作为当前 tier map、smoke membership review 与 immediate-vs-metadata-dependent gap register 验收。 |
-| Design/boundary guards | `tests/architecture/test_wp5_design_boundary_gates.py` | 作为 maintained facade header isolation、escape-hatch containment、facade README language 与避免过早 broad `sim.*` ban 的聚焦 guard 验收。 |
+| Design/boundary guards | `tests/architecture/runtime_facade/test_design_boundary_gates.py` | 作为 maintained facade header isolation、escape-hatch containment、facade README language 与避免过早 broad `sim.*` ban 的聚焦 guard 验收。 |
 | Design/boundary notes | `wp5_design_boundary_notes_20260519.md` | 作为 smoke candidate 与 deferred-boundary handoff 验收。 |
 | Trace/replay gates | `tests/runtime/engagement/test_trace_replay_gates.py` | 作为当前 launch/effects/damage/diagnostics ancestry 与 replay-sortable id 的聚焦覆盖验收。 |
 | Trace/replay notes | `wp5_trace_replay_gates_notes_20260519.md` | 作为当前 metadata boundary 与 diagnostics-piggyback handoff 验收。 |
@@ -35,7 +35,7 @@ trace/replay-facing engagement gate，同时保持 metadata-dependent checks def
 主线程验证：
 
 ```bash
-python -m pytest -q tests/architecture/test_wp5_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
 ```
 
 结果：`26 passed`。

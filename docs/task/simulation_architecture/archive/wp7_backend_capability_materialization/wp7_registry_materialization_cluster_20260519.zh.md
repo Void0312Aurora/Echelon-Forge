@@ -166,9 +166,9 @@ Phase 2，hand-maintained seed 落地后：
    row、maintained budget、已接受 `validation_gate`、已接受 `acceptance_gate`
    和更新后的 source provenance 时变为 true，promotion validation 必须失败。
 
-如果后续新增测试，应保持在窄范围 architecture-doc target，例如：
-`tests/architecture/test_wp7_registry_materialization_docs.py`。它只应检查
-schema 与文档约束；不得依赖 runtime capability promotion。
+如果后续新增测试，应保持在 WP7 registry materialization 的窄范围
+architecture-doc target。它只应检查 schema 与文档约束；不得依赖 runtime
+capability promotion。
 
 ## 8. 非目标
 

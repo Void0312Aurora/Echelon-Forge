@@ -364,8 +364,8 @@ integration notes:
 git diff --check
 cmake --build build-workshop --target ef_py -j4
 python -m pytest -q tests/architecture/runtime_facade/test_layering.py
-python -m pytest -q tests/architecture/test_wp22_dto_domain_shell_guard.py
-python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py
+python -m pytest -q tests/architecture/command_tasking/test_dto_domain_shell_guard.py
+python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py
 python -m pytest -q tests/runtime/bindings/test_bindings_command_surface.py
 python -m pytest -q tests/world_batch/test_world_batch_runtime.py
 python -m pytest -q tests/world_batch/test_world_batch_vec_env.py

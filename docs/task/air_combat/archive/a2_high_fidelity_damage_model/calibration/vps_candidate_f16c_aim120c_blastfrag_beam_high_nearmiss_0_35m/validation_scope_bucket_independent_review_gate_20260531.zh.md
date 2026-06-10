@@ -87,7 +87,7 @@ authority、Pk authority 或 deterministic fuze authority。
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_scope_bucket_independent_review_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_scope_bucket_independent_review_gate.py
+pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 
 ## 7. 当前判定

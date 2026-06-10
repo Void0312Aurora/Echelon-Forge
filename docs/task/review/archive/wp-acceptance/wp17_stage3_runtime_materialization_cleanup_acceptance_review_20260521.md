@@ -56,7 +56,7 @@ created from an explicit setup for one selected entity.
 | `WP17-B Facade Business Migration And Compatibility Cleanup` | pass | `python/rl/runtime/world_batch/adapter.py`, `python/rl/runtime/world_batch_vec_env.py`, and `tests/architecture/runtime_facade/test_layering.py` expose and guard facade-shaped execution-episode ready/state reads while retaining `batch_runtime` as a compatibility view. |
 | `WP17-C Multi-Rate Runtime Example` | pass | `src/runtime/facade/runtime_window_coordinator.h`, `src/runtime/contracts/stage_node_manifest_registry.h`, `tests/runtime/facade/test_runtime_facade_window_loop_injection.py`, and `tests/world_batch/test_single_world_batch_runtime.py` prove the selected cadence slice with hold/expiry/barrier evidence and the stable `selected_slice_cadence_trace_runtime_window_wp17c` reason. |
 | `WP17-D Fidelity Provider Runtime` | pass | `src/runtime/facade/runtime_facade.h`, `src/runtime/facade/runtime_facade.cpp`, `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/facade/test_runtime_facade.py`, and `tests/test_gpu_runtime_bindings.py` expose `admit_fidelity_request()`, accept reference CPU exact evaluation, and reject resident/exact-GPU/shadow requests. |
-| `WP17-E Capability Spawn Runtime Promotion` | pass | `src/models/core/default_unit_factory.h`, `tests/architecture/test_wp14_resolved_spawn_plan_evidence.py`, `tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py`, `tests/runtime/engagement/test_air_launch_adapter.py`, and `tests/runtime/naval/test_naval_ship_database.py` preserve type-name compatibility while routing maintained materialization through resolved platform spawn-plan evidence. |
+| `WP17-E Capability Spawn Runtime Promotion` | pass | `src/models/core/default_unit_factory.h`, `tests/architecture/platform_spawn/test_resolved_spawn_plan_evidence.py`, `tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py`, `tests/runtime/engagement/test_air_launch_adapter.py`, and `tests/runtime/naval/test_naval_ship_database.py` preserve type-name compatibility while routing maintained materialization through resolved platform spawn-plan evidence. |
 | `WP17-F Counterfactual Runtime Slice And Closure` | pass | `src/runtime/facade/runtime_facade_types.h`, `src/runtime/facade/runtime_facade.h`, `src/runtime/facade/runtime_facade.cpp`, `src/interfaces/python/bindings_runtime.cpp`, and `tests/runtime/facade/test_runtime_facade.py` add snapshot/branch/compare DTOs and prove explicit setup, selected-entity causal deltas, raw-mutation rejection, and narrow replay/fidelity evidence. |
 
 ## 3. Validation Commands
@@ -67,7 +67,7 @@ Focused implementation validation reported for the WP17 merge set:
 git diff --check
 cmake --build build-workshop --target ef_py -j4
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or replay or fidelity or provider"
-python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py tests/architecture/test_wp15_worldline_branch_metadata.py tests/architecture/test_wp15_counterfactual_admission.py
+python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py tests/architecture/causal_runtime/test_worldline_branch_metadata.py tests/architecture/causal_runtime/test_counterfactual_admission.py
 python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_spine/test_runtime_spine_inventory_gates.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py -k "cadence or hold or barrier or clock or window"
 python -m pytest -q tests/world_batch/test_single_world_batch_runtime.py -k "runtime_window_evidence or cadence_reason or single"
@@ -94,7 +94,7 @@ added:
 git diff --check
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP17
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or replay or fidelity or provider"
-python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py tests/architecture/test_wp15_worldline_branch_metadata.py tests/architecture/test_wp15_counterfactual_admission.py
+python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py tests/architecture/causal_runtime/test_worldline_branch_metadata.py tests/architecture/causal_runtime/test_counterfactual_admission.py
 ```
 
 Observed outcome:

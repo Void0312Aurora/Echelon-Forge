@@ -94,7 +94,7 @@ retained `manifest.json` 现在对每个 artifact 都固定了 `origin_class`、
 python3 tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py
 python3 tools/maintenance/a2_candidate_vps_bundle.py
 python3 tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py
-python3 -m pytest -q tests/architecture/test_a2_blastfrag_stage_b_retained_artifact_pack.py
+python3 -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py
 ```
 
 ## 8. 当前判定

@@ -17,7 +17,7 @@ Inputs:
 
 ## Added Gates
 
-`tests/architecture/test_wp5_design_boundary_gates.py` adds focused checks that:
+`tests/architecture/runtime_facade/test_design_boundary_gates.py` adds focused checks that:
 
 1. maintained facade request/result headers do not include `core/engine/*` or
    `world_batch_runtime` owner headers;
@@ -35,7 +35,7 @@ Inputs:
 Recommended WP5-E smoke candidates:
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp5_design_boundary_gates.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_facade/test_design_boundary_gates.py
 ```
 
 These are cheap static/design gates and should run before heavier runtime

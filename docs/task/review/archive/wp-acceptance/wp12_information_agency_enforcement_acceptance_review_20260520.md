@@ -43,9 +43,9 @@ Scope caveats are intentional:
 | Gate | Verdict | Evidence |
 |------|---------|----------|
 | `WP12-A Law 14 Read-Side Enforcement` | pass | `python/rl/runtime/agent_shim.py`, `tests/runtime/test_agent_shim.py`, and `tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py` enforce a focused maintained read-side allowlist for provenance-labeled `ObservationPacket` / `DecisionBelief` inputs while keeping diagnostics-only truth/raw paths explicit. |
-| `WP12-B Agency Role Authority Boundary` | pass | `src/runtime/contracts/policy_contracts.h`, `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/mission/test_policy_contract_shape.py`, `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`, and `tests/architecture/test_wp12_agent_role_authority.py` add fail-closed `AgentRole` authority/source/interface validation and Python-visible authorization helpers. |
-| `WP12-C Information Transformation Surface` | pass | `src/runtime/contracts/information_transform_contracts.h` and `tests/architecture/test_wp12_information_transformation_surface.py` add canonical transformation vocabulary, evidence structs, validators, diagnostics-only shortcut rules, and negative tests for invalid belief-to-intent provenance. |
-| `WP12-D Intent Injection Authority Guard` | pass | `src/runtime/contracts/information_transform_contracts.h` and `tests/architecture/test_wp12_intent_injection_authority_guard.py` compose A/B/C into `authorize_maintained_decision_belief_action_intent_injection()` with authority, transformation, ancestry, timing, merge-policy, and no-raw-facade-bypass checks. |
+| `WP12-B Agency Role Authority Boundary` | pass | `src/runtime/contracts/policy_contracts.h`, `src/interfaces/python/bindings_runtime.cpp`, `tests/runtime/mission/test_policy_contract_shape.py`, `tests/runtime/bindings/test_bindings_runtime_dto_surface.py`, and `tests/architecture/policy_execution/test_agent_role_authority.py` add fail-closed `AgentRole` authority/source/interface validation and Python-visible authorization helpers. |
+| `WP12-C Information Transformation Surface` | pass | `src/runtime/contracts/information_transform_contracts.h` and `tests/architecture/policy_execution/test_information_transformation_surface.py` add canonical transformation vocabulary, evidence structs, validators, diagnostics-only shortcut rules, and negative tests for invalid belief-to-intent provenance. |
+| `WP12-D Intent Injection Authority Guard` | pass | `src/runtime/contracts/information_transform_contracts.h` and `tests/architecture/policy_execution/test_intent_injection_authority_guard.py` compose A/B/C into `authorize_maintained_decision_belief_action_intent_injection()` with authority, transformation, ancestry, timing, merge-policy, and no-raw-facade-bypass checks. |
 | `WP12-E Integration And Acceptance Handoff` | pass | This review records A-D status, validation commands, residuals, route/index updates, and the closure-lane scope boundary. |
 
 ## 3. Validation Commands
@@ -53,7 +53,7 @@ Scope caveats are intentional:
 Passed:
 
 ```bash
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_wp12_intent_injection_authority_guard.py tests/architecture/test_wp12_agent_role_authority.py tests/architecture/test_wp12_information_transformation_surface.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/policy_execution/test_intent_injection_authority_guard.py tests/architecture/policy_execution/test_agent_role_authority.py tests/architecture/policy_execution/test_information_transformation_surface.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/facade/test_runtime_facade_window_loop_injection.py tests/runtime/test_agent_shim.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contract_shape.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py
 git diff --check

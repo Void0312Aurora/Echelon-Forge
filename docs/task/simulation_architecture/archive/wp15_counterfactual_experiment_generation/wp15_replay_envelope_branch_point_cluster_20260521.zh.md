@@ -83,7 +83,7 @@ snapshot/barrier/event-order evidence、facade provenance 与 branch point ident
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py
+python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py
 ```
 
 ## 6. Handoff Contract

@@ -27,7 +27,7 @@ engagement gates while keeping metadata-dependent checks deferred.
 | Area | Artifact | Acceptance note |
 |------|----------|-----------------|
 | Harness inventory | `wp5_harness_inventory_notes_20260519.md` | Accepted as the current tier map, smoke membership review, and immediate-vs-metadata-dependent gap register. |
-| Design/boundary guards | `tests/architecture/test_wp5_design_boundary_gates.py` | Accepted as focused guards for maintained facade header isolation, escape-hatch containment, facade README language, and avoiding premature broad `sim.*` bans. |
+| Design/boundary guards | `tests/architecture/runtime_facade/test_design_boundary_gates.py` | Accepted as focused guards for maintained facade header isolation, escape-hatch containment, facade README language, and avoiding premature broad `sim.*` bans. |
 | Design/boundary notes | `wp5_design_boundary_notes_20260519.md` | Accepted as the smoke-candidate and deferred-boundary handoff. |
 | Trace/replay gates | `tests/runtime/engagement/test_trace_replay_gates.py` | Accepted as focused coverage for current launch/effects/damage/diagnostics ancestry and replay-sortable ids. |
 | Trace/replay notes | `wp5_trace_replay_gates_notes_20260519.md` | Accepted as the current metadata boundary and diagnostics-piggyback handoff. |
@@ -37,7 +37,7 @@ engagement gates while keeping metadata-dependent checks deferred.
 Main-thread verification:
 
 ```bash
-python -m pytest -q tests/architecture/test_wp5_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
+python -m pytest -q tests/architecture/runtime_facade/test_design_boundary_gates.py tests/architecture/runtime_facade/test_layering.py tests/runtime/facade
 ```
 
 Result: `26 passed`.

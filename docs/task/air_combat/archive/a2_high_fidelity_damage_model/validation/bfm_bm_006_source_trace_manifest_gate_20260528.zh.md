@@ -19,7 +19,7 @@
 | 项 | 当前实现 |
 |---|---|
 | 维护工具 | `tools/maintenance/a2_source_admission_audit.py` |
-| 架构测试 | `tests/architecture/test_a2_source_admission_audit.py` |
+| 架构测试 | `tests/architecture/damage_model/test_source_admission_audit.py` |
 | 扫描对象 | A2 `data_collection/*/source_ledger*.zh.md`、A2 `**/*update*.zh.md` / `**/*source_pin_integration*.zh.md`、A2 `calibration/*/*.zh.md` |
 | 默认失败条件 | error-level authority、candidate update 或 manifest 违规 |
 | strict 失败条件 | 默认失败条件 + source pin warning |
@@ -29,7 +29,7 @@
 ```bash
 python3 tools/maintenance/a2_source_admission_audit.py
 python3 tools/maintenance/a2_source_admission_audit.py --strict
-python3 -m pytest -q tests/architecture/test_a2_source_admission_audit.py
+python3 -m pytest -q tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
 ## 当前覆盖

@@ -79,7 +79,7 @@ counterfactual rollout execution 已经处于维护态。
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp15_worldline_branch_metadata.py
+python -m pytest -q tests/architecture/causal_runtime/test_worldline_branch_metadata.py
 python -m pytest -q tests/scenario/test_scenario_compiler.py -k "branch or runtime"
 ```
 

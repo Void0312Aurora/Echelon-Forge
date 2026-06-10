@@ -15,7 +15,7 @@ launch/fire-control, or claim full `SimulationKernel` decomposition.
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `TM06-A` | worker | inherited / xhigh | Extract repeated debug proximity-hit DTO construction into local helper logic while preserving behavior. | `src/core/engine/simulation_kernel_damage_debug_api.cpp` | No public header/API changes; no tests/docs edits; no damage-model redesign. | `cmake --build build-local-win --target ef_py -j2`; focused engagement runtime test if feasible. | Debug damage paths record equivalent DTOs through one helper-owned construction path and still destruct impact entities. | Parallel-safe with `TM06-B`; disjoint write set. | 1 | pass |
-| `TM06-B` | worker | inherited / xhigh | Add focused guards for debug DTO helper structure and preserved event capture. | `tests/architecture/test_wp22_structural_guardrails.py`, `tests/runtime/engagement/test_live_engagement_event_capture.py` | No production code edits; no docs edits. | Focused pytest targets for touched tests. | Guards fail if debug damage paths return to duplicated ad hoc DTO construction or stop recording effects DTOs. | Parallel-safe with `TM06-A`; may be red until `TM06-A` lands. | 1 | pass |
+| `TM06-B` | worker | inherited / xhigh | Add focused guards for debug DTO helper structure and preserved event capture. | `tests/architecture/structural_boundaries/test_structural_guardrails.py`, `tests/runtime/engagement/test_live_engagement_event_capture.py` | No production code edits; no docs edits. | Focused pytest targets for touched tests. | Guards fail if debug damage paths return to duplicated ad hoc DTO construction or stop recording effects DTOs. | Parallel-safe with `TM06-A`; may be red until `TM06-A` lands. | 1 | pass |
 | `TM06-C` | integration owner | inherited / xhigh | Integrate worker packets, run validation, and update TM06/parent docs without overclaiming. | TM06 docs, parent indexes, minimal status text only | No new implementation after validation starts. | `git diff --check`; `cmake --build build-local-win --target ef_py -j2`; focused structural/runtime pytest suite. | Validation and docs agree on accepted or blocked state. | Serial after `TM06-A` and `TM06-B`. | 1 | pass |
 
 ## Dispatch Rules
@@ -46,7 +46,7 @@ Run from the repository root:
 ```powershell
 git diff --check
 cmake --build build-local-win --target ef_py -j2
-python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free
+python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free
 $env:PYTHONPATH='build-local-win'; python -m pytest -q tests/runtime/engagement/test_live_engagement_event_capture.py
 ```
 

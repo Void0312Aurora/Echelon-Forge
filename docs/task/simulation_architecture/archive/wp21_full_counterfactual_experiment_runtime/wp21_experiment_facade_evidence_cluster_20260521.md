@@ -50,7 +50,7 @@ Out of scope:
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp15_experiment_evidence_bridge.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/causal_runtime/test_experiment_evidence_bridge.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "experiment or counterfactual or worldline"
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py -k "experiment or counterfactual"
 ```

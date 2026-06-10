@@ -39,10 +39,10 @@ final acceptance.
 Main-thread validation after first wave:
 
 - `git diff --check` passed.
-- `python -m py_compile tests/architecture/runtime_facade/test_layering.py tests/test_gpu_runtime_bindings.py tests/architecture/test_runtime_dto_contracts_batch1.py` passed.
+- `python -m py_compile tests/architecture/runtime_facade/test_layering.py tests/test_gpu_runtime_bindings.py tests/architecture/runtime_facade/test_dto_contracts_batch1.py` passed.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_layering.py` passed: `22 passed`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py` passed: `12 passed`.
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"` passed: `2 passed, 4 deselected`.
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"` passed: `2 passed, 4 deselected`.
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary` passed.
 
 ## Second Wave
@@ -64,7 +64,7 @@ Main-thread validation after second wave:
 - `git diff --check` passed.
 - `cmake --build build-workshop --target ef_py -j4` passed.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py` passed: `20 passed`.
-- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"` passed: `3 passed, 4 deselected`.
+- `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"` passed: `3 passed, 4 deselected`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/world_batch/test_world_batch_runtime.py -k "candidate or gpu or broadphase or visual or comm or sensor"` passed: `4 passed, 17 deselected`.
 - `bash tools/maintenance/cmo_env.sh python -m pytest -q tests/test_gpu_runtime_bindings.py` passed: `12 passed`.
 - `python3 tools/maintenance/wp_doc_closure_audit.py --wp WP19 --summary` passed.

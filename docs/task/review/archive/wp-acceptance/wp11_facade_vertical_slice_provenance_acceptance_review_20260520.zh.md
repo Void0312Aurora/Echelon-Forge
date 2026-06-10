@@ -36,7 +36,7 @@ WP11 验收通过，可作为 Phase 2 facade vertical slice and provenance incre
 
 | Gate | 结论 | 证据 |
 |------|------|------|
-| `WP11-A ActionHoldPolicy Contract` | pass | `src/runtime/contracts/policy_contracts.h` 定义 `ActionHoldPolicy`；`src/interfaces/python/bindings_runtime.cpp` 暴露 `ef_py.ActionHoldPolicy`；`tests/runtime/mission/test_policy_contract_shape.py`、`tests/runtime/bindings/test_bindings_policy_surface.py`、`tests/architecture/test_wp11_action_hold_policy_contract.py` 验证字段、保守默认值和 fail-closed normalization。 |
+| `WP11-A ActionHoldPolicy Contract` | pass | `src/runtime/contracts/policy_contracts.h` 定义 `ActionHoldPolicy`；`src/interfaces/python/bindings_runtime.cpp` 暴露 `ef_py.ActionHoldPolicy`；`tests/runtime/mission/test_policy_contract_shape.py`、`tests/runtime/bindings/test_bindings_policy_surface.py`、`tests/architecture/policy_execution/test_action_hold_policy_contract.py` 验证字段、保守默认值和 fail-closed normalization。 |
 | `WP11-B Information Provenance Labels` | pass | `InformationStateSource`、canonical information-state/status vocabulary、packet provenance fields 与 `DecisionBelief` validators 已在 contracts、facade packet types、runtime exports、bindings 与 focused tests 中可见。 |
 | `WP11-C Facade Vertical Slice Proof` | pass | Engagement/facade/binding tests 证明 `p7.fire_control_launch.v1`、`p9.effects_damage.v1`、`p10.observation_export.v1` node evidence，以及 export barrier、snapshot/source-time metadata、diagnostics ancestry 和 maintained/diagnostics provenance labels。 |
 | `WP11-D Consumer Boundary Pre-Gates` | pass | `python/rl/runtime/agent_shim.py`、`tests/runtime/test_agent_shim.py`、`tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py` 拒绝 unlabeled maintained consumer fixtures，同时保留显式 diagnostics-only truth/raw-ECS fixtures。 |
@@ -48,11 +48,11 @@ WP11 验收通过，可作为 Phase 2 facade vertical slice and provenance incre
 
 ```bash
 cmake --build build-workshop -j4
-CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contract_shape.py tests/runtime/bindings/test_bindings_policy_surface.py tests/architecture/test_wp11_action_hold_policy_contract.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/mission/test_policy_contract_shape.py tests/runtime/bindings/test_bindings_policy_surface.py tests/architecture/policy_execution/test_action_hold_policy_contract.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/runtime/mission/test_policy_contract_shape.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/facade/test_runtime_facade_window_loop_injection.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/runtime/test_agent_shim.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp11_action_hold_policy_contract.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/policy_execution/test_action_hold_policy_contract.py
 git diff --check
 ```
 

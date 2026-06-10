@@ -17,7 +17,7 @@
 
 ## 新增 Gate
 
-`tests/architecture/test_wp5_design_boundary_gates.py` 新增聚焦检查：
+`tests/architecture/runtime_facade/test_design_boundary_gates.py` 新增聚焦检查：
 
 1. maintained facade request/result header 不 include `core/engine/*` 或
    `world_batch_runtime` owner header；
@@ -33,7 +33,7 @@
 推荐交给 WP5-E 评估的 smoke 候选：
 
 ```bash
-python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp5_design_boundary_gates.py
+python -m pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/runtime_facade/test_design_boundary_gates.py
 ```
 
 这些是低成本 static/design gate，应在更重的 runtime facade 或 engagement evidence

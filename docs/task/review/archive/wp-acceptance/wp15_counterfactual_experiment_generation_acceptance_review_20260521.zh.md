@@ -35,11 +35,11 @@ WP15 作为 Phase 6 的 counterfactual / experiment-generation 增量已验收�
 
 | Gate | 结论 | 证据 |
 |------|------|------|
-| `WP15-A Replay Envelope And Branch Point Contract` | pass | `tests/architecture/test_wp15_replay_envelope_contracts.py` 已通过；该切片定义 deterministic replay envelope、branch point、seed、snapshot、barrier、event-order 与 facade provenance vocabulary。 |
-| `WP15-B Worldline Branch Metadata Gate` | pass | `tests/architecture/test_wp15_worldline_branch_metadata.py` 已通过；该切片命名 parent/child worldline、branch reason、mutation intent、provenance refs 与 unsupported-restore boundaries。 |
-| `WP15-C Counterfactual Request Admission` | pass | `tests/architecture/test_wp15_counterfactual_admission.py` 已通过；该切片用 fail-closed ancestry、authority、backend/fidelity 与 capability checks 接受或拒绝 metadata-only counterfactual request。 |
+| `WP15-A Replay Envelope And Branch Point Contract` | pass | `tests/architecture/causal_runtime/test_replay_envelope_contracts.py` 已通过；该切片定义 deterministic replay envelope、branch point、seed、snapshot、barrier、event-order 与 facade provenance vocabulary。 |
+| `WP15-B Worldline Branch Metadata Gate` | pass | `tests/architecture/causal_runtime/test_worldline_branch_metadata.py` 已通过；该切片命名 parent/child worldline、branch reason、mutation intent、provenance refs 与 unsupported-restore boundaries。 |
+| `WP15-C Counterfactual Request Admission` | pass | `tests/architecture/causal_runtime/test_counterfactual_admission.py` 已通过；该切片用 fail-closed ancestry、authority、backend/fidelity 与 capability checks 接受或拒绝 metadata-only counterfactual request。 |
 | `WP15-D Scenario And Adversary Generation Request Surface` | pass | `tests/scenario/test_wp15_generation_request_surface.py` 已通过，且 `tests/scenario/test_scenario_compiler.py -k "wp15 or branch or runtime"` 已通过；request surface 保持 additive 且 non-mutating。 |
-| `WP15-E Experiment Evidence And Capability Profiling Bridge` | pass | `tests/architecture/test_wp15_experiment_evidence_bridge.py` 已通过；experiment ancestry 保持可查询，但不会把 scores 晋级为 support claims。 |
+| `WP15-E Experiment Evidence And Capability Profiling Bridge` | pass | `tests/architecture/causal_runtime/test_experiment_evidence_bridge.py` 已通过；experiment ancestry 保持可查询，但不会把 scores 晋级为 support claims。 |
 | `WP15-F Integration And Acceptance Handoff` | pass | 本审查记录 A-E 状态、精确验证结果、residuals、README/route sync 与双语收口。 |
 
 ## 3. 验证命令
@@ -47,13 +47,13 @@ WP15 作为 Phase 6 的 counterfactual / experiment-generation 增量已验收�
 主线程在本次收口前已通过：
 
 ```bash
-python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py
-python -m pytest -q tests/architecture/test_wp15_worldline_branch_metadata.py
-python -m pytest -q tests/architecture/test_wp15_counterfactual_admission.py
-python -m pytest -q tests/architecture/test_wp15_experiment_evidence_bridge.py
+python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py
+python -m pytest -q tests/architecture/causal_runtime/test_worldline_branch_metadata.py
+python -m pytest -q tests/architecture/causal_runtime/test_counterfactual_admission.py
+python -m pytest -q tests/architecture/causal_runtime/test_experiment_evidence_bridge.py
 python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
 python -m pytest -q tests/scenario/test_scenario_compiler.py -k "wp15 or branch or runtime"
-python -m pytest -q tests/architecture/test_wp14_platform_capability_contracts.py
+python -m pytest -q tests/architecture/platform_spawn/test_platform_capability_contracts.py
 ```
 
 观察结果：

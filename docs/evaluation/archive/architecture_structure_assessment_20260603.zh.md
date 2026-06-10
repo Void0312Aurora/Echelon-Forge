@@ -117,7 +117,7 @@ gpu
 
 ### 2.7 weapon release / engagement event 已有从 kernel 拆出的结构
 
-`tests/architecture/test_wp22_structural_guardrails.py` 对 weapon release 和 engagement event 的拆分做了大量源码级断言，例如：
+`tests/architecture/structural_boundaries/test_structural_guardrails.py` 对 weapon release 和 engagement event 的拆分做了大量源码级断言，例如：
 
 - `simulation_kernel_systems.cpp` 不应继续堆 inline OnUpdate weapon release 系统。
 - `PilotWeaponRelease` 和 `NavalMissionWeaponRelease` 应通过 named helper 注册。
@@ -192,8 +192,8 @@ source tools/maintenance/cmo_env.sh
 cmo_python -m pytest -q \
   tests/architecture/build/test_cmake_target_readiness.py \
   tests/architecture/runtime_facade/test_layering.py \
-  tests/architecture/test_wp22_tasking_bridge_retirement.py \
-  tests/architecture/test_wp22_structural_guardrails.py
+  tests/architecture/command_tasking/test_tasking_bridge_retirement.py \
+  tests/architecture/structural_boundaries/test_structural_guardrails.py
 ```
 
 结果：
@@ -205,7 +205,7 @@ cmo_python -m pytest -q \
 失败项：
 
 ```text
-tests/architecture/test_wp22_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
+tests/architecture/structural_boundaries/test_structural_guardrails.py::test_a2_structured_air_effects_do_not_write_rl_score_authority
 
 后续 `engineering_governance_p1` 已将该 guard 改为检查当前 split-file
 ownership：legacy score authority 位于

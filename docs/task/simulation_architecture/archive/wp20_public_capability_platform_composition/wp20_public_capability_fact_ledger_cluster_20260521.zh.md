@@ -219,10 +219,10 @@ source-backed 事实。
   [test_wp14_boundary_guards.py](../../../../tests/architecture/platform_spawn/test_boundary_guards.py:176)
 - contract header tests 确认 `RuntimeCapabilities` 没有进入
   `platform_capability_contracts.h`：
-  [test_wp14_platform_capability_contracts.py](../../../../tests/architecture/test_wp14_platform_capability_contracts.py:51)
+  [test_wp14_platform_capability_contracts.py](../../../../tests/architecture/platform_spawn/test_platform_capability_contracts.py:51)
 - content-lowering tests 确认 type-name plan resolution 在 materialization 之前：
-  [test_wp14_content_definition_lowering.py](../../../../tests/architecture/test_wp14_content_definition_lowering.py:48)
-  和 [test_wp14_resolved_spawn_plan_evidence.py](../../../../tests/architecture/test_wp14_resolved_spawn_plan_evidence.py:60)
+  [test_wp14_content_definition_lowering.py](../../../../tests/architecture/platform_spawn/test_content_definition_lowering.py:48)
+  和 [test_wp14_resolved_spawn_plan_evidence.py](../../../../tests/architecture/platform_spawn/test_resolved_spawn_plan_evidence.py:60)
 - Python DTO tests 确认 typed DTO 可构造，同时保留 legacy `WorldSpawnRequest`
   surface：
   [test_wp14_additive_platform_spawn_bindings.py](../../../../tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py:75)
@@ -308,22 +308,22 @@ sed -n '1,360p' src/runtime/facade/runtime_facade.cpp
 sed -n '1,260p' src/core/engine/world_batch_runtime.h
 sed -n '1,260p' src/core/engine/world_batch_runtime.cpp
 sed -n '1,260p' src/models/core/default_unit_factory.h
-sed -n '1,240p' tests/architecture/test_wp14_platform_capability_contracts.py
+sed -n '1,240p' tests/architecture/platform_spawn/test_platform_capability_contracts.py
 sed -n '1,240p' tests/architecture/platform_spawn/test_boundary_guards.py
-sed -n '1,260p' tests/architecture/test_wp14_additive_platform_spawn_dto.py
+sed -n '1,260p' tests/architecture/platform_spawn/test_additive_platform_spawn_dto.py
 sed -n '1,260p' tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
 sed -n '1,260p' tests/world_batch/test_world_batch_runtime.py
-sed -n '1,260p' tests/architecture/test_wp14_resolved_spawn_plan_evidence.py
+sed -n '1,260p' tests/architecture/platform_spawn/test_resolved_spawn_plan_evidence.py
 sed -n '1,260p' tests/architecture/runtime_facade/test_layering.py
-sed -n '1,220p' tests/architecture/test_wp14_content_definition_lowering.py
+sed -n '1,220p' tests/architecture/platform_spawn/test_content_definition_lowering.py
 nl -ba src/runtime/facade/runtime_facade.cpp | sed -n '1310,1365p'
 nl -ba src/core/engine/world_batch_runtime.cpp | sed -n '510,560p'
 nl -ba src/models/core/default_unit_factory.h | sed -n '320,700p'
 nl -ba src/interfaces/python/bindings_runtime.cpp | sed -n '280,440p'
 nl -ba tests/architecture/platform_spawn/test_boundary_guards.py | sed -n '1,260p'
-nl -ba tests/architecture/test_wp14_platform_capability_contracts.py | sed -n '1,260p'
-nl -ba tests/architecture/test_wp14_content_definition_lowering.py | sed -n '1,220p'
-nl -ba tests/architecture/test_wp14_resolved_spawn_plan_evidence.py | sed -n '1,220p'
+nl -ba tests/architecture/platform_spawn/test_platform_capability_contracts.py | sed -n '1,260p'
+nl -ba tests/architecture/platform_spawn/test_content_definition_lowering.py | sed -n '1,220p'
+nl -ba tests/architecture/platform_spawn/test_resolved_spawn_plan_evidence.py | sed -n '1,220p'
 nl -ba tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py | sed -n '1,220p'
 nl -ba tests/world_batch/test_world_batch_runtime.py | sed -n '1,120p'
 nl -ba src/runtime/contracts/platform_capability_contracts.h | sed -n '1,220p'

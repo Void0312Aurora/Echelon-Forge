@@ -12,7 +12,7 @@ Stage B 与 Stage C 的 uncertainty 证据分层，不创建 stock descriptor，
 | 字段 | 值 |
 |---|---|
 | `tool_ref` | [a2_blastfrag_uncertainty_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_uncertainty_review_gate.py) |
-| `test_ref` | [test_a2_blastfrag_uncertainty_review_gate.py](../../../../../../tests/architecture/test_a2_blastfrag_uncertainty_review_gate.py) |
+| `test_ref` | [test_independent_review_closeout_gates.py](../../../../../../tests/architecture/damage_model/test_independent_review_closeout_gates.py) |
 | `retained_gate` | [uncertainty_review_gate.json](retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json) |
 | `retained_manifest` | [manifest.json](retained_artifacts/uncertainty_review_20260531/manifest.json) |
 | `review_target` | `RES-011_uncertainty_review_only` |
@@ -72,7 +72,7 @@ Stage C 仍保持 `blocked_probability_uncertainty_coverage_missing`，因为它
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_uncertainty_review_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_uncertainty_review_gate.py
+pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 
 测试结果：`4 passed`。

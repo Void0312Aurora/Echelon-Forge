@@ -183,10 +183,11 @@ seed 与 tests 落地后，doc/schema test 应在以下条件失败：
 7. promotion claim 缺少更新后的 `validation_gate`、`acceptance_gate`、
    maintained budget status 与 source provenance。
 
-如果新增第一版测试，目标应为：
+如果新增第一版测试，应保持为窄范围 architecture-doc governance check，
+覆盖 WP7 registry materialization。
 
 ```text
-tests/architecture/test_wp7_registry_materialization_docs.py
+legacy proposed target name: wp7_registry_materialization_docs
 ```
 
 它应只检查 documentation 或 seed。不得依赖 runtime GPU helper behavior、

@@ -154,7 +154,7 @@ WP19-B distinguishes three consumer modes:
 
 Safe focused guard added in this preflight:
 
-- `tests/architecture/test_runtime_dto_contracts_batch1.py` now asserts that
+- `tests/architecture/runtime_facade/test_dto_contracts_batch1.py` now asserts that
   `ObservationBatchPacket` and `EngagementEventPacket` keep their host-visible
   metadata surfaces while not silently growing device-resident descriptor
   fields. This protects the additive seam decision without changing runtime
@@ -196,7 +196,7 @@ Tests intentionally still not added in WP19-B:
 git diff --check
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "capab or backend or profile"
 python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py
-python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"
+python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"
 ```
 
 ## Residuals

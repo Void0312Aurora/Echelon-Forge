@@ -215,7 +215,7 @@ that assert:
 Suggested future target:
 
 ```text
-tests/architecture/test_wp7_promotion_evidence_gates_docs.py
+legacy proposed target name: wp7_promotion_evidence_gates_docs
 ```
 
 The test should inspect documentation or future registry seed artifacts only.

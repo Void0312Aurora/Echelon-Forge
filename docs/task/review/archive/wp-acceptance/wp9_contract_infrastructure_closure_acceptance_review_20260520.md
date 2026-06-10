@@ -70,7 +70,7 @@ One residual remains tracked rather than hidden:
 
 | ID | Verdict | Evidence |
 |----|---------|----------|
-| GUA-1 `sim.*` AST guard | pass | `tests/architecture/test_wp9_guard_enforcement.py` enforces labeled direct-sim access allowlists. |
+| GUA-1 `sim.*` AST guard | pass | `tests/architecture/compatibility_quarantine/test_guard_enforcement.py` enforces labeled direct-sim access allowlists. |
 | GUA-2 binding surface smoke promotion | pass | `tests/runtime/bindings/test_bindings_engagement_surface.py` covers the empty engagement packet shell with default `world_index=0`. |
 
 ## 6. Validation Commands
@@ -80,7 +80,7 @@ Passed:
 ```bash
 git diff --check
 cmake --build build --target ef_py -j2
-CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/test_wp9_guard_enforcement.py tests/architecture/test_wp9_infrastructure_closure_docs.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/test_agent_shim.py tests/runtime/mission/test_policy_contract_shape.py
+CMO_BUILD_DIR=/home/void0312/Workshop/CMO/build pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py tests/architecture/policy_execution/test_belief_and_read_side_boundaries.py tests/architecture/compatibility_quarantine/test_guard_enforcement.py tests/architecture/governance/test_infrastructure_closure_docs.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_policy_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_dto_promotion_batch1.py tests/runtime/facade/test_runtime_facade.py tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/test_agent_shim.py tests/runtime/mission/test_policy_contract_shape.py
 ```
 
 The focused integration test command passed with `89 passed`.

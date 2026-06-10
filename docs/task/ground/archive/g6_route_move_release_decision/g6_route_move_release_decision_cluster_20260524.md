@@ -236,7 +236,7 @@ git diff --check -- docs/task/ground
 Current guardrail check:
 
 ```bash
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/test_ground_realism_gradient_guardrails.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/architecture/ground/test_realism_gradient_guardrails.py
 ```
 
 ## Residual Map

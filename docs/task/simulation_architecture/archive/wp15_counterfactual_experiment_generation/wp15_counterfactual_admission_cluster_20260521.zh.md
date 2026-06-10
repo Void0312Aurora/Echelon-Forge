@@ -82,7 +82,7 @@ restore/runtime capability 被阻断，但绝不能静默修改 authoritative si
 
 ```bash
 git diff --check
-python -m pytest -q tests/architecture/test_wp15_counterfactual_admission.py
+python -m pytest -q tests/architecture/causal_runtime/test_counterfactual_admission.py
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or replay or experiment"
 ```
 

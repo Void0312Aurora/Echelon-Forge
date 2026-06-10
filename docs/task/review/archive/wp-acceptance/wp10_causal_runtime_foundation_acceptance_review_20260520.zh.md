@@ -37,9 +37,9 @@ event/snapshot/barrier/source-time evidence。
 
 | Gate | 结论 | 证据 |
 |------|------|------|
-| `WP10-A Manifest Registry Seed` | pass | `src/runtime/contracts/stage_node_manifest_registry.h` 定义维护中的 registry 与 `p7.fire_control_launch.v1`、`p9.effects_damage.v1`、`p10.observation_export.v1`；`tests/architecture/test_wp10_stage_node_manifest_registry.py` 验证 required fields 与 registry shape。 |
+| `WP10-A Manifest Registry Seed` | pass | `src/runtime/contracts/stage_node_manifest_registry.h` 定义维护中的 registry 与 `p7.fire_control_launch.v1`、`p9.effects_damage.v1`、`p10.observation_export.v1`；`tests/architecture/causal_runtime/test_stage_node_manifest_registry.py` 验证 required fields 与 registry shape。 |
 | `WP10-B Window Loop And Injection` | pass | `src/runtime/facade/runtime_window_coordinator.h`、`runtime_facade_types.h`、`runtime_facade.h`、`runtime_facade.cpp` 暴露 minimal window loop、barrier trace 与 accepted/deferred/rejected/expired request states；`tests/runtime/facade/test_runtime_facade_window_loop_injection.py` 验证聚焦行为。 |
-| `WP10-C Same-Window Edge Validation` | pass | `src/core/engine/same_window_edge_validation.h` 使用 producer publish intent、consumer declaration、shared read/write contracts 与 acyclic construction 验证 declared same-window edges；`tests/architecture/test_wp10_same_window_edge_validation.py` 覆盖 passing/failing fixtures。 |
+| `WP10-C Same-Window Edge Validation` | pass | `src/core/engine/same_window_edge_validation.h` 使用 producer publish intent、consumer declaration、shared read/write contracts 与 acyclic construction 验证 declared same-window edges；`tests/architecture/causal_runtime/test_same_window_edge_validation.py` 覆盖 passing/failing fixtures。 |
 | `WP10-D Event And Snapshot Evidence` | pass | `src/runtime/contracts/engagement_contracts.h`、`src/runtime/facade/runtime_facade_types.h`、`src/runtime/facade/runtime_facade.cpp`、`src/interfaces/python/bindings_runtime.cpp` 暴露 snapshot、barrier、source-time、producer-node 与 diagnostics ancestry metadata；engagement、facade 与 binding tests 验证可见性。 |
 | `WP10-E Integration And Acceptance Handoff` | pass | 在 `tests/architecture/runtime_facade/test_layering.py` 显式更新 diagnostics-only escape-hatch allowlist 后最终验证通过；本审查记录 commands、residuals 与下一阶段 handoff。 |
 
@@ -50,8 +50,8 @@ event/snapshot/barrier/source-time evidence。
 ```bash
 cmake --build build-workshop -j4
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement/test_facade_engagement_export.py tests/runtime/engagement/test_facade_engagement_evidence_gates.py tests/runtime/engagement/test_diagnostics_trace_contract.py tests/runtime/engagement/test_trace_replay_gates.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/facade/test_runtime_facade.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/test_wp10_stage_node_manifest_registry.py tests/runtime/facade/test_runtime_facade_window_loop_injection.py tests/architecture/test_wp10_same_window_edge_validation.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/engagement/test_live_engagement_event_capture.py
-CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp9_infrastructure_closure_docs.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/causal_runtime/test_stage_node_manifest_registry.py tests/runtime/facade/test_runtime_facade_window_loop_injection.py tests/architecture/causal_runtime/test_same_window_edge_validation.py tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_bindings_engagement_surface.py tests/runtime/engagement/test_live_engagement_event_capture.py
+CMO_BUILD_DIR=build-workshop pytest -q tests/architecture/runtime_facade/test_layering.py tests/architecture/governance/test_infrastructure_closure_docs.py
 CMO_BUILD_DIR=build-workshop pytest -q tests/runtime/engagement tests/runtime/facade tests/runtime/bindings
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP10
 git diff --check

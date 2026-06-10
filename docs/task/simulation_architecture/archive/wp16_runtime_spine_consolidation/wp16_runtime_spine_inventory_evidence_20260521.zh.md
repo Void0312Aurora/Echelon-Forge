@@ -70,7 +70,7 @@ RuntimeWindowRequest admission
 - 已经命名该 slice 的 spine evidence tests：
   `tests/runtime/facade/test_runtime_facade_window_loop_injection.py`、
   `tests/runtime/bindings/test_bindings_engagement_surface.py`、
-  `tests/architecture/test_wp10_stage_node_manifest_registry.py`
+  `tests/architecture/causal_runtime/test_stage_node_manifest_registry.py`
 
 ## 3. 盘点表
 

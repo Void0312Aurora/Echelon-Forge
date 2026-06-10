@@ -9,7 +9,7 @@
 | 字段 | 值 |
 |---|---|
 | `tool_ref` | [a2_blastfrag_res011012_independent_review_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res011012_independent_review_closeout_gate.py) |
-| `test_ref` | [test_a2_blastfrag_res011012_independent_review_closeout_gate.py](../../../../../../tests/architecture/test_a2_blastfrag_res011012_independent_review_closeout_gate.py) |
+| `test_ref` | [test_independent_review_closeout_gates.py](../../../../../../tests/architecture/damage_model/test_independent_review_closeout_gates.py) |
 | `retained_gate` | [res011012_independent_review_closeout_gate.json](retained_artifacts/res011012_independent_review_closeout_20260531/res011012_independent_review_closeout_gate.json) |
 | `retained_manifest` | [manifest.json](retained_artifacts/res011012_independent_review_closeout_20260531/manifest.json) |
 | `review_target` | `RES-011_RES-012_independent_review_closeout_gate` |
@@ -95,7 +95,7 @@ Package / release：
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_res011012_independent_review_closeout_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res011012_independent_review_closeout_gate.py
+pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 
 结果：

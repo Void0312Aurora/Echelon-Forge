@@ -45,7 +45,7 @@ composition semantics 分离。
 
 ```bash
 git diff --check
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade/test_layering.py tests/architecture/test_wp20_public_typed_platform_spawn_contract.py tests/architecture/test_wp20_runtime_setup_consume_bridge.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade/test_layering.py tests/architecture/platform_spawn/test_public_typed_platform_spawn_contract.py tests/architecture/platform_spawn/test_runtime_setup_consume_bridge.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "typed_platform_setup or world_setup or capability or spawn"
 cmake --build build-workshop --target ef_py -j2

@@ -205,7 +205,7 @@ architecture-doc 或 registry-seed check，断言：
 建议未来 target：
 
 ```text
-tests/architecture/test_wp7_promotion_evidence_gates_docs.py
+legacy proposed target name: wp7_promotion_evidence_gates_docs
 ```
 
 该测试应只检查文档或未来 registry seed artifact。它不能依赖 runtime GPU helper

@@ -143,7 +143,7 @@ WP19-B 区分三类 consumer：
 
 本轮 preflight 添加的安全 guard：
 
-- `tests/architecture/test_runtime_dto_contracts_batch1.py` 现在断言
+- `tests/architecture/runtime_facade/test_dto_contracts_batch1.py` 现在断言
   `ObservationBatchPacket` 与 `EngagementEventPacket` 保持其 host-visible
   metadata surface，且不会静默长出 device-resident descriptor 字段。这样可以保护
   additive seam 决策，而不改变 runtime 行为。
@@ -183,7 +183,7 @@ WP19-B2 的实现更新：
 git diff --check
 python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "capab or backend or profile"
 python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py
-python -m pytest -q tests/architecture/test_runtime_dto_contracts_batch1.py -k "device_resident or packet"
+python -m pytest -q tests/architecture/runtime_facade/test_dto_contracts_batch1.py -k "device_resident or packet"
 ```
 
 ## Residuals

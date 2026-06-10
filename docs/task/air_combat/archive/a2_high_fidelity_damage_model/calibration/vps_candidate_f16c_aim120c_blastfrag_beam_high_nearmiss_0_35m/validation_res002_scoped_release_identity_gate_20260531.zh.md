@@ -78,5 +78,5 @@
 
 ```bash
 python3 tools/maintenance/a2_blastfrag_res002_scoped_release_identity_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res002_scoped_release_identity_gate.py
+pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```

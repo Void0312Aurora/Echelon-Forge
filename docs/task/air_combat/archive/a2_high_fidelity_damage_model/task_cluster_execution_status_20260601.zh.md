@@ -141,11 +141,11 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 vali
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\runtime\air_combat\test_weapon_guidance_realism_guards.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\runtime\bindings\test_bindings_engagement_surface.py tests\runtime\engagement
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_wp22_structural_guardrails.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_blastfrag_geometry_warhead_row_provenance_gate.py tests/architecture/damage_model/test_scope_closeout_gates.py tests/architecture/damage_model/test_blastfrag_res011012_independent_review_closeout_gate.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_scope_provenance_closeout_gates.py tests/architecture/damage_model/test_scope_provenance_closeout_gates.py tests/architecture/damage_model/test_independent_review_closeout_gates.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_source_admission_audit.py --strict
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_retained_manifest_integrity.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_retained_manifest_integrity.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_candidate_vps_bundle.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_candidate_artifact_contracts.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_candidate_vps_bundle.py --output $env:TEMP\a2_candidate_vps_bundle_task_cluster_exec.json
 git diff --check
 ```
@@ -181,10 +181,10 @@ git diff --check
 本轮当前工作区复核：
 
 ```bash
-python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integrity.py tests/architecture/damage_model/test_candidate_vps_bundle.py tests/architecture/damage_model/test_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
+python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integrity.py tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
-python -m pytest -q tests/architecture/damage_model/test_blastfrag_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission_chain.py tests/architecture/damage_model/test_external_benchmark_output_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_blastfrag_source_rights_signoff_request_packet.py
+python -m pytest -q tests/architecture/damage_model/test_external_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission.py tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_source_evidence_governance.py
 python tools/maintenance/a2_retained_manifest_integrity.py
 python tools/maintenance/a2_source_admission_audit.py --strict
 python tools/maintenance/a2_candidate_vps_bundle.py

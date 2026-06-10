@@ -173,10 +173,9 @@ Phase 2, when the hand-maintained seed lands:
    accepted `validation_gate`, accepted `acceptance_gate`, and updated source
    provenance.
 
-If a test is added later, keep it in a narrow architecture-doc target such as
-`tests/architecture/test_wp7_registry_materialization_docs.py`. It should check
-schema and document constraints only; it must not depend on runtime capability
-promotion.
+If a test is added later, keep it in a narrow architecture-doc target for WP7
+registry materialization. It should check schema and document constraints only;
+it must not depend on runtime capability promotion.
 
 ## 8. Non-Goals
 

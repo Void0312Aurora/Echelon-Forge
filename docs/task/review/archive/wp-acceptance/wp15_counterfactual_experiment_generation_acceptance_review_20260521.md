@@ -36,11 +36,11 @@ The accepted boundary is intentionally narrow:
 
 | Gate | Verdict | Evidence |
 |------|---------|----------|
-| `WP15-A Replay Envelope And Branch Point Contract` | pass | `tests/architecture/test_wp15_replay_envelope_contracts.py` passed; the slice defines deterministic replay envelope, branch point, seed, snapshot, barrier, event-order, and facade provenance vocabulary. |
-| `WP15-B Worldline Branch Metadata Gate` | pass | `tests/architecture/test_wp15_worldline_branch_metadata.py` passed; the slice names parent/child worldlines, branch reason, mutation intent, provenance refs, and unsupported-restore boundaries. |
-| `WP15-C Counterfactual Request Admission` | pass | `tests/architecture/test_wp15_counterfactual_admission.py` passed; the slice admits or rejects metadata-only counterfactual requests with fail-closed ancestry, authority, backend/fidelity, and capability checks. |
+| `WP15-A Replay Envelope And Branch Point Contract` | pass | `tests/architecture/causal_runtime/test_replay_envelope_contracts.py` passed; the slice defines deterministic replay envelope, branch point, seed, snapshot, barrier, event-order, and facade provenance vocabulary. |
+| `WP15-B Worldline Branch Metadata Gate` | pass | `tests/architecture/causal_runtime/test_worldline_branch_metadata.py` passed; the slice names parent/child worldlines, branch reason, mutation intent, provenance refs, and unsupported-restore boundaries. |
+| `WP15-C Counterfactual Request Admission` | pass | `tests/architecture/causal_runtime/test_counterfactual_admission.py` passed; the slice admits or rejects metadata-only counterfactual requests with fail-closed ancestry, authority, backend/fidelity, and capability checks. |
 | `WP15-D Scenario And Adversary Generation Request Surface` | pass | `tests/scenario/test_wp15_generation_request_surface.py` passed, and `tests/scenario/test_scenario_compiler.py -k "wp15 or branch or runtime"` passed; the request surface stays additive and non-mutating. |
-| `WP15-E Experiment Evidence And Capability Profiling Bridge` | pass | `tests/architecture/test_wp15_experiment_evidence_bridge.py` passed; experiment ancestry stays queryable without turning scores into support claims. |
+| `WP15-E Experiment Evidence And Capability Profiling Bridge` | pass | `tests/architecture/causal_runtime/test_experiment_evidence_bridge.py` passed; experiment ancestry stays queryable without turning scores into support claims. |
 | `WP15-F Integration And Acceptance Handoff` | pass | This review records A-E status, exact validation outcomes, residuals, README/route sync, and bilingual closure. |
 
 ## 3. Validation Commands
@@ -48,13 +48,13 @@ The accepted boundary is intentionally narrow:
 Passed in the main thread before this closure:
 
 ```bash
-python -m pytest -q tests/architecture/test_wp15_replay_envelope_contracts.py
-python -m pytest -q tests/architecture/test_wp15_worldline_branch_metadata.py
-python -m pytest -q tests/architecture/test_wp15_counterfactual_admission.py
-python -m pytest -q tests/architecture/test_wp15_experiment_evidence_bridge.py
+python -m pytest -q tests/architecture/causal_runtime/test_replay_envelope_contracts.py
+python -m pytest -q tests/architecture/causal_runtime/test_worldline_branch_metadata.py
+python -m pytest -q tests/architecture/causal_runtime/test_counterfactual_admission.py
+python -m pytest -q tests/architecture/causal_runtime/test_experiment_evidence_bridge.py
 python -m pytest -q tests/scenario/test_wp15_generation_request_surface.py
 python -m pytest -q tests/scenario/test_scenario_compiler.py -k "wp15 or branch or runtime"
-python -m pytest -q tests/architecture/test_wp14_platform_capability_contracts.py
+python -m pytest -q tests/architecture/platform_spawn/test_platform_capability_contracts.py
 ```
 
 Observed outcome:

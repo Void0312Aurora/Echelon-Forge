@@ -49,7 +49,7 @@ The current accepted state is therefore:
   `python/rl/tasking/bridge.py`
 - Focused tests:
   - `tests/leader/test_ground_profile_semantics.py`
-  - `tests/architecture/test_ground_realism_gradient_guardrails.py`
+  - `tests/architecture/ground/test_realism_gradient_guardrails.py`
 
 ## Gate
 

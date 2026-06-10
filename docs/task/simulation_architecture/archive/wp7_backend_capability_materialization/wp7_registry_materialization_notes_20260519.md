@@ -191,10 +191,11 @@ conditions:
 7. A promotion claim without updated `validation_gate`, `acceptance_gate`,
    maintained budget status, and source provenance.
 
-The first test target, if added, should be:
+The first test target, if added, should be a narrow architecture-doc governance
+check for WP7 registry materialization.
 
 ```text
-tests/architecture/test_wp7_registry_materialization_docs.py
+legacy proposed target name: wp7_registry_materialization_docs
 ```
 
 It should inspect documentation or the seed only. It must not depend on runtime

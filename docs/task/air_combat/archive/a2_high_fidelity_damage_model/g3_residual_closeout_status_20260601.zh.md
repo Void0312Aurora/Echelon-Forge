@@ -75,8 +75,8 @@ research component fragility surface 和 uncertainty ledger。
 python tools/maintenance/a2_retained_manifest_integrity.py
 python tools/maintenance/a2_source_admission_audit.py --strict
 python tools/maintenance/a2_candidate_vps_bundle.py
-python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integrity.py tests/architecture/damage_model/test_candidate_vps_bundle.py tests/architecture/damage_model/test_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
-python -m pytest -q tests/architecture/damage_model/test_blastfrag_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission_chain.py tests/architecture/damage_model/test_external_benchmark_output_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_blastfrag_source_rights_signoff_request_packet.py
+python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integrity.py tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/runtime/air_combat/test_vulnerability_evidence_dataset_descriptor.py
+python -m pytest -q tests/architecture/damage_model/test_external_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission.py tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_source_evidence_governance.py
 ```
 
 验收输出只支持 G3 台账清点，不支持 authority promotion。

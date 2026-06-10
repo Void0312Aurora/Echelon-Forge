@@ -44,7 +44,7 @@ The integration owner should prefer focused validation before broad build work:
 ```bash
 git diff --check
 cmake --build build --target ef_py -j2
-python -m pytest -q tests/architecture/test_wp22_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free tests/architecture/test_wp22_structural_guardrails.py::test_tm04_weapon_release_service_is_not_a_kernel_forwarding_adapter
+python -m pytest -q tests/architecture/structural_boundaries/test_structural_guardrails.py::test_wp22_pilot_weapon_release_moves_to_named_helper_and_simulation_kernel_systems_stays_inline_free tests/architecture/structural_boundaries/test_structural_guardrails.py::test_tm04_weapon_release_service_is_not_a_kernel_forwarding_adapter
 PYTHONPATH=build python -m pytest -q tests/runtime/engagement/test_live_engagement_event_capture.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_munition_damage_adapter.py tests/runtime/engagement/test_air_launch_adapter.py tests/runtime/engagement/test_naval_launch_adapter.py tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py
 ```
 

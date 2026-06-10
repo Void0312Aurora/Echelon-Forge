@@ -53,7 +53,7 @@ Out of scope:
 ```bash
 git diff --check
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "counterfactual or causal or worldline"
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/test_wp15_counterfactual_admission.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/causal_runtime/test_counterfactual_admission.py
 ```
 
 ## Handoff
