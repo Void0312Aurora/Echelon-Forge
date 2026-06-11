@@ -20,12 +20,14 @@
         ]
       },
       "visual": {
-        "asset_path": "/static/assets/f16.glb",
-        "scale": 1.0,
-        "yaw_correction_deg": -90.0,
+        "asset_path": "/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+        "scale": 1.65,
+        "yaw_correction_deg": 0.0,
         "waterline_offset_m": 0.0,
         "chase_offset": [0.0, 30.0, 80.0]
       },
+      "show_in_2d_as": "aircraft",
+      "realism_note": "CC-BY-4.0 visualization asset by Carlos.Maciel from Sketchfab; used as the default F-16 visual candidate after archiving the older FlightGear GPLv2 candidate.",
       "render_priority": 100
     },
     {
@@ -152,7 +154,7 @@
         ]
       },
       "visual": {
-        "asset_path": "/static/assets/ddg51.glb",
+        "asset_path": "/static/assets/naval/ddg51.glb",
         "scale": 1.0,
         "yaw_correction_deg": 180.0,
         "waterline_offset_m": 0.5,

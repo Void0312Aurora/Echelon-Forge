@@ -1,0 +1,11 @@
+Model Information:
+* title:	AIM-120 AMRAAM missile
+* source:	https://sketchfab.com/3d-models/aim-120-amraam-missile-e52d37a110004e1480465bc6b0943ebc
+* author:	RickSlash (https://sketchfab.com/RickSlash)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "AIM-120 AMRAAM missile" (https://sketchfab.com/3d-models/aim-120-amraam-missile-e52d37a110004e1480465bc6b0943ebc) by RickSlash (https://sketchfab.com/RickSlash) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

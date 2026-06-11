@@ -1,0 +1,93 @@
+{
+  "uid": "4bc2ff75dc584af2afd0aa6bd8b79015",
+  "name": "F16-C Falcon",
+  "viewerUrl": "https://sketchfab.com/3d-models/f16-c-falcon-4bc2ff75dc584af2afd0aa6bd8b79015",
+  "createdAt": "2022-02-28T12:38:47.839845",
+  "publishedAt": "2022-02-28T12:46:12.308593",
+  "isDownloadable": true,
+  "license": {
+    "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+    "label": "CC Attribution",
+    "fullName": "Creative Commons Attribution",
+    "requirements": "Author must be credited. Commercial use is allowed.",
+    "url": "http://creativecommons.org/licenses/by/4.0/",
+    "slug": "by"
+  },
+  "user": {
+    "displayName": "Carlos.Maciel",
+    "username": "Carlos.Maciel",
+    "profileUrl": "https://sketchfab.com/Carlos.Maciel"
+  },
+  "faceCount": 4504,
+  "vertexCount": 2563,
+  "download_kind": "dual_glb_runtime_gltf_audit",
+  "downloadedAt": "2026-06-11 Asia/Shanghai",
+  "visualAsset": {
+    "kind": "glb",
+    "path": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "sha256": "243f164005c49bce0bb25202e449911fed99cbfa94e9bef25321dcbd7476d44f",
+    "size_bytes": 1997144,
+    "role": "runtime_visualization"
+  },
+  "auditAsset": {
+    "kind": "gltf",
+    "archive_path": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip",
+    "archive_sha256": "47388fb8646e704609712d55e0b53eb014571644b7344c7859276597fc63e248",
+    "archive_size_bytes": 4282583,
+    "extract_dir": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf",
+    "role": "audit_and_geometry_review"
+  },
+  "archive_path": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/4bc2ff75dc584af2afd0aa6bd8b79015_gltf.zip",
+  "archive_sha256": "47388fb8646e704609712d55e0b53eb014571644b7344c7859276597fc63e248",
+  "archive_size_bytes": 4282583,
+  "extract_dir": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf",
+  "files": [
+    {
+      "path": "license.txt",
+      "size_bytes": 688
+    },
+    {
+      "path": "scene.bin",
+      "size_bytes": 483328
+    },
+    {
+      "path": "scene.gltf",
+      "size_bytes": 39810
+    },
+    {
+      "path": "textures/F-16C_FightingFalcon_pilot_baseColor.png",
+      "size_bytes": 26817
+    },
+    {
+      "path": "textures/F-16C_FightingFalcon_plane_baseColor.png",
+      "size_bytes": 3151535
+    },
+    {
+      "path": "textures/F-16C_FightingFalcon_plane_metallicRoughness.png",
+      "size_bytes": 891055
+    }
+  ],
+  "localGeometrySummary": {
+    "scene": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "nodeCount": 41,
+    "meshCount": 19,
+    "materialCount": 4,
+    "triangleCount": 4504,
+    "positionAccessorVertexCount": 13415,
+    "boundsMin": [-4.7809, -6.16912, -1.24618],
+    "boundsMax": [4.7809, 8.80607, 3.38369],
+    "boundsSpan": [9.5618, 14.9752, 4.62987],
+    "notableNodeNames": [
+      "Canopy01_1",
+      "Eject_Seat_3",
+      "Pilot_4",
+      "ElevatorR01_7",
+      "AileronR01_8",
+      "AileronL01_9",
+      "VoletR01_14",
+      "VoletL01_15",
+      "EngineL01_17",
+      "RudderL01_18"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "uid": "a02057e7401a4f4ea130cb75cc73d8cb",
+  "name": "MQ-9 Reaper Drone – Game Ready Military Asset",
+  "viewerUrl": "https://sketchfab.com/3d-models/mq-9-reaper-drone-game-ready-military-asset-a02057e7401a4f4ea130cb75cc73d8cb",
+  "author": "The Aesthetic Modeler",
+  "authorProfile": "https://sketchfab.com/racingrevved",
+  "license": {
+    "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+    "label": "CC Attribution",
+    "fullName": "Creative Commons Attribution",
+    "requirements": "Author must be credited. Commercial use is allowed.",
+    "url": "http://creativecommons.org/licenses/by/4.0/",
+    "slug": "by"
+  },
+  "downloadedAt": "2026-06-11 Asia/Shanghai",
+  "role": "audit_and_geometry_review",
+  "archive_path": "examples/viz/web_viz/static/assets/uav/audit/mq9_reaper_game_ready_aesthetic_modeler/a02057e7401a4f4ea130cb75cc73d8cb_gltf.zip",
+  "archive_sha256": "bbb08b4b1c78812cd26f082d748f3e425303af9074ed3f8edc2006cb1c9cda32",
+  "archive_size_bytes": 312432,
+  "extract_dir": "examples/viz/web_viz/static/assets/uav/audit/mq9_reaper_game_ready_aesthetic_modeler/gltf",
+  "files": [
+    {
+      "path": "license.txt",
+      "size_bytes": 834
+    },
+    {
+      "path": "scene.bin",
+      "size_bytes": 631444
+    },
+    {
+      "path": "scene.gltf",
+      "size_bytes": 43992
+    }
+  ]
+}
