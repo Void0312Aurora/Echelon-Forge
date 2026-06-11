@@ -164,6 +164,6 @@
   "validation_report": {
     "exists": true,
     "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_res001_release_signoff_gate_20260531.zh.md",
-    "sha256": "df2c0ebf1287f11a6eaf992f0085fa10d5c20297024841184339770864a97f9b"
+    "sha256": "9e6b5b6ec7d16048212a2853e2f82da67aa5e5e0089f3317ab914831e421d316"
   }
 }
