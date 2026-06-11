@@ -1,13 +1,13 @@
 # A2 MLF-4 Continuous-Rod Task Clusters
 
-Status: `2026-06-11` finite task-cluster plan for [README.md](README.md). MLF-4 has accepted 4A inventory, 4B standard event-surface, 4C generic-geometry, 4D component-projection, and 4E diagnostics/gates slices; full MLF-4 acceptance is not claimed until 4F closeout/archive is complete.
+Status: `2026-06-11` archived finite task-cluster plan for [README.md](README.md). MLF-4 has accepted 4A inventory, 4B standard event-surface, 4C generic-geometry, 4D component-projection, 4E diagnostics/gates, and 4F closeout/archive; complete acceptance is limited to the continuous-rod/cutting fact chain.
 
 Chinese main text: [missile_lethality_continuous_rod_task_clusters_20260610.zh.md](missile_lethality_continuous_rod_task_clusters_20260610.zh.md)
 
 Parent links:
 
-- A2 pointer: [../README.md](../README.md)
-- MLF-3 pointer: [../missile_lethality_warhead_effects/README.md](../missile_lethality_warhead_effects/README.md)
+- A2 pointer: [../README.md](../../../README.md)
+- MLF-3 pointer: [../missile_lethality_warhead_effects/README.md](../../../missile_lethality_warhead_effects/README.md)
 - Current README: [README.md](README.md)
 - Current status: [missile_lethality_continuous_rod_current_status_20260610.md](missile_lethality_continuous_rod_current_status_20260610.md)
 - Dispatch queue: [missile_lethality_continuous_rod_dispatch_queue_20260610.md](missile_lethality_continuous_rod_dispatch_queue_20260610.md)
@@ -26,8 +26,8 @@ MLF-4 must not output component failure, structural breakup, debris/wreck, crash
 | `MLF-4B-W1 Standard Rod Event Surface` | current-session worker | inherited / `high` | Stabilize standard rod/cut fields in warhead and component-load events | focused test only after failed broad worker attempt | new failure states, structural breakup, kill | `ef_py` focused test; engagement contract shape tests | continuous_rod detonation emits same-chain positive rod facts; non-rod and no-detonation emit no positive rod facts | after 4A | 2 | accepted |
 | `MLF-4C-W1 Generic Rod Geometry` | current-session worker | inherited / `high` | Build or verify generic cut corridor/orientation projection | focused tests only; no source changes | true rod count/velocity for a real missile; Pk | focused range/aspect/orientation tests | rod cut margin changes with range, side/aspect, and orientation | after 4B | 2 | accepted |
 | `MLF-4D-W1 Component Cut Projection` | current-session worker | inherited / `high` | Project rod cut exposure onto hitboxes/components | focused component projection test only; no source changes | component failure probability or integrity changes | focused left/right/component projection tests | component rows expose rod cut margin and cut source without failure | after 4C | 2 | accepted |
-| `MLF-4E-W1 Diagnostics And Gates` | main thread | n/a | Make diagnostics prefer standard rod facts and guard no-detonation/non-rod paths | `tools/diagnostics/air_combat_stage0_process_probe.py`; [test_continuous_rod_diagnostic_projection.py](../../../../../tests/runtime/air_combat/test_continuous_rod_diagnostic_projection.py) | reward semantics, training win/loss, entity deletion | diagnostics tests plus no-detonation/non-rod gates | probe rows explain rod/cut facts without false rod rows | after 4D | 2 | accepted |
-| `MLF-4F-C1 Acceptance And Archive Prep` | main thread | n/a | Summarize accepted/held state and sync indexes | this README/status/task cluster/dispatch/archive; A2 README; MLF-3 pointer if needed | overclaiming failure, breakup, Pk, or real weapon conclusions | docs diff check + referenced tests | accepted/held state matches evidence | after 4B-E | 1 | ready |
+| `MLF-4E-W1 Diagnostics And Gates` | main thread | n/a | Make diagnostics prefer standard rod facts and guard no-detonation/non-rod paths | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`; [test_continuous_rod_diagnostic_projection.py](../../../../../../../tests/runtime/air_combat/test_continuous_rod_diagnostic_projection.py) | reward semantics, training win/loss, entity deletion | diagnostics tests plus no-detonation/non-rod gates | probe rows explain rod/cut facts without false rod rows | after 4D | 2 | accepted |
+| `MLF-4F-C1 Acceptance And Archive Prep` | main thread | n/a | Summarize accepted/held state and sync indexes | this README/status/task cluster/dispatch/archive; A2 README; MLF-3 pointer if needed | overclaiming failure, breakup, Pk, or real weapon conclusions | docs diff check + referenced tests | accepted/held state matches evidence | after 4B-E | 1 | accepted |
 
 ## Dispatch Rules
 
@@ -92,7 +92,7 @@ PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat 
 
 Immediate:
 
-- Execute 4F: summarize accepted/held state, update index/archive entry points, and close MLF-4 only as a cutting-fact chain.
+- Do not continue dispatch inside MLF-4; enter follow-on work through separate MLF-5/MLF-6 subprojects.
 - Separate accepted MLF-4 tests from historical Phase 3 retained scaffold tests.
 
 Follow-on:

@@ -1,13 +1,13 @@
 # A2 MLF-4 连续杆任务簇
 
-状态：`2026-06-11` finite task-cluster plan for [README.zh.md](README.zh.md)。MLF-4 已验收 4A 盘点、4B 标准事件面、4C 通用几何、4D 部件投影和 4E 诊断/gate 切片；不声明完整 MLF-4 accepted，直到 4F 收口/归档完成。
+状态：`2026-06-11` archived finite task-cluster plan for [README.zh.md](README.zh.md)。MLF-4 已验收 4A 盘点、4B 标准事件面、4C 通用几何、4D 部件投影、4E 诊断/gate 与 4F 收口/归档；完整 accepted 仅限连续杆/切割事实链。
 
 英文辅文：[missile_lethality_continuous_rod_task_clusters_20260610.md](missile_lethality_continuous_rod_task_clusters_20260610.md)
 
 父子项目链接：
 
-- A2 指针：[../README.zh.md](../README.zh.md)
-- MLF-3 指针：[../missile_lethality_warhead_effects/README.zh.md](../missile_lethality_warhead_effects/README.zh.md)
+- A2 指针：[../README.zh.md](../../../README.zh.md)
+- MLF-3 指针：[../missile_lethality_warhead_effects/README.zh.md](../../../missile_lethality_warhead_effects/README.zh.md)
 - 当前 README：[README.zh.md](README.zh.md)
 - 当前状态：[missile_lethality_continuous_rod_current_status_20260610.zh.md](missile_lethality_continuous_rod_current_status_20260610.zh.md)
 - 派发队列：[missile_lethality_continuous_rod_dispatch_queue_20260610.zh.md](missile_lethality_continuous_rod_dispatch_queue_20260610.zh.md)
@@ -26,8 +26,8 @@ MLF-4 不得输出部件失效、结构解体、残骸、坠毁、训练胜负�
 | `MLF-4B-W1 Standard Rod Event Surface` | current-session worker | inherited / `high` | 稳定 warhead/component-load 事件中的标准 rod/cut 字段 | 一次越界 worker 失败后，仅新增聚焦测试 | 新失效状态、结构解体、击毁 | `ef_py` 聚焦测试；engagement contract shape tests | continuous_rod 起爆输出同链路正 rod 事实；非 rod 和未起爆无正 rod 事实 | after 4A | 2 | accepted |
 | `MLF-4C-W1 Generic Rod Geometry` | current-session worker | inherited / `high` | 建立或确认通用切割带/方向投影 | 仅新增聚焦测试；无源码修改 | 真实导弹 rod count/velocity；Pk | 距离/方位/方向轴聚焦测试 | rod cut margin 随距离、侧向/方位和方向轴改变 | after 4B | 2 | accepted |
 | `MLF-4D-W1 Component Cut Projection` | current-session worker | inherited / `high` | 将 rod 切割曝光投影到 hitbox/component | 仅新增聚焦部件投影测试；无源码修改 | 部件失效概率或 integrity 修改 | 左/右/部件投影聚焦测试 | 部件行暴露 rod cut margin 和 cut source，但不输出失效 | after 4C | 2 | accepted |
-| `MLF-4E-W1 Diagnostics And Gates` | main thread | n/a | 诊断优先读取标准 rod 事实，并保护未起爆/非 rod 路径 | `tools/diagnostics/air_combat_stage0_process_probe.py`；[test_continuous_rod_diagnostic_projection.py](../../../../../tests/runtime/air_combat/test_continuous_rod_diagnostic_projection.py) | reward 语义、训练胜负、实体删除 | diagnostics tests + 未起爆/非 rod gates | probe 行能解释 rod/cut 事实，且无虚假 rod 行 | after 4D | 2 | accepted |
-| `MLF-4F-C1 Acceptance And Archive Prep` | main thread | n/a | 汇总 accepted/held 状态并同步索引 | 本 README/status/task cluster/dispatch/archive；A2 README；必要时 MLF-3 指针 | 过度声明失效、解体、Pk 或真实弹种结论 | docs diff check + referenced tests | accepted/held 状态与证据一致 | after 4B-E | 1 | ready |
+| `MLF-4E-W1 Diagnostics And Gates` | main thread | n/a | 诊断优先读取标准 rod 事实，并保护未起爆/非 rod 路径 | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`；[test_continuous_rod_diagnostic_projection.py](../../../../../../../tests/runtime/air_combat/test_continuous_rod_diagnostic_projection.py) | reward 语义、训练胜负、实体删除 | diagnostics tests + 未起爆/非 rod gates | probe 行能解释 rod/cut 事实，且无虚假 rod 行 | after 4D | 2 | accepted |
+| `MLF-4F-C1 Acceptance And Archive Prep` | main thread | n/a | 汇总 accepted/held 状态并同步索引 | 本 README/status/task cluster/dispatch/archive；A2 README；必要时 MLF-3 指针 | 过度声明失效、解体、Pk 或真实弹种结论 | docs diff check + referenced tests | accepted/held 状态与证据一致 | after 4B-E | 1 | accepted |
 
 ## 派发规则
 
@@ -92,7 +92,7 @@ PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat 
 
 Immediate:
 
-- 执行 4F：汇总 accepted/held 状态，更新索引/归档入口，并只按切割事实链关闭 MLF-4。
+- MLF-4 不再继续派发；后续从 MLF-5/MLF-6 等独立子项目进入。
 - 将 accepted MLF-4 测试与历史 Phase 3 retained scaffold 测试分开。
 
 Follow-on:

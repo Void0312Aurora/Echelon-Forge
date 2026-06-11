@@ -44,22 +44,22 @@ integration notes:
 
 ### 事件和导出字段
 
-- 标准战斗部事件已经有 `rod_cut_margin`：[../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)。
-- 标准部件受载事件已经有 `rod_cut_margin`：[../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)。
+- 标准战斗部事件已经有 `rod_cut_margin`：[../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)。
+- 标准部件受载事件已经有 `rod_cut_margin`：[../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)。
 - 旧的效果事件和部件行也保留 rod 字段：`mechanism_rod_cut_margin`、`component_primary_mechanism_rod_cut_margin`、`ComponentMechanismLoadRow::mechanism_rod_cut_margin`。
-- Python 绑定已暴露上述字段：[../../../../../src/interfaces/python/bindings_runtime.cpp](../../../../../src/interfaces/python/bindings_runtime.cpp)。
-- 事件存储会把 `EffectsEvent` 的 rod 值抽到标准 `WarheadMechanismEvent` 和 `ComponentLoadEvent`：[../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)。
+- Python 绑定已暴露上述字段：[../../../../../src/interfaces/python/bindings_runtime.cpp](../../../../../../../src/interfaces/python/bindings_runtime.cpp)。
+- 事件存储会把 `EffectsEvent` 的 rod 值抽到标准 `WarheadMechanismEvent` 和 `ComponentLoadEvent`：[../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)。
 
 ### 连续杆模型切入点
 
-- `continuous_rod` 已在默认效果模型里有家族权重、空间投影、穿透/切割估计、方向权重和脆弱性筛选入口：[../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc](../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc)。
+- `continuous_rod` 已在默认效果模型里有家族权重、空间投影、穿透/切割估计、方向权重和脆弱性筛选入口：[../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc)。
 - `rod_cut_margin` 的当前计算来自通用杆数量、杆段质量、闭合速度、距离质量、方向权重、空间命中估计和目标装甲厚度；这些值应标为通用假设。
-- 空间投影已经能把 `mechanism_load` 记录到部件行：[../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc](../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)。
-- scratch/result/builder 链路已经把 sampled rod 值传到 `EffectsEvent`：[../../../../../src/models/weapons/detail/default_effects_state_detail.inc](../../../../../src/models/weapons/detail/default_effects_state_detail.inc)、[../../../../../src/models/weapons/detail/default_effects_result_detail.inc](../../../../../src/models/weapons/detail/default_effects_result_detail.inc)、[../../../../../src/core/interfaces/engagement_effects_event_builder.h](../../../../../src/core/interfaces/engagement_effects_event_builder.h)。
+- 空间投影已经能把 `mechanism_load` 记录到部件行：[../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)。
+- scratch/result/builder 链路已经把 sampled rod 值传到 `EffectsEvent`：[../../../../../src/models/weapons/detail/default_effects_state_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_state_detail.inc)、[../../../../../src/models/weapons/detail/default_effects_result_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_result_detail.inc)、[../../../../../src/core/interfaces/engagement_effects_event_builder.h](../../../../../../../src/core/interfaces/engagement_effects_event_builder.h)。
 
 ### 诊断路径
 
-- 诊断行字段已包含 `rod_cut_margin`：[../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)。
+- 诊断行字段已包含 `rod_cut_margin`：[../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)。
 - 诊断优先读取标准 `warhead_mechanism_events` 和 `component_load_events`，没有标准事件时才从 `EffectsEvent` fallback。
 - 现有诊断 contract 测试主要固定字段形状和标准事件优先级，但还没有 MLF-4 专用连续杆正/负例。
 

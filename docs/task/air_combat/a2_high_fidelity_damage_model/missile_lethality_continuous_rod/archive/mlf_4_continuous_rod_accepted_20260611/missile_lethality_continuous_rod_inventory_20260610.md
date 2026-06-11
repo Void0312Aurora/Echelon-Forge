@@ -44,22 +44,22 @@ integration notes:
 
 ### Event And Export Fields
 
-- Standard warhead events already expose `rod_cut_margin`: [engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h).
-- Standard component-load events already expose `rod_cut_margin`: [engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h).
+- Standard warhead events already expose `rod_cut_margin`: [engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h).
+- Standard component-load events already expose `rod_cut_margin`: [engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h).
 - Legacy effects and component rows also keep rod fields: `mechanism_rod_cut_margin`, `component_primary_mechanism_rod_cut_margin`, and `ComponentMechanismLoadRow::mechanism_rod_cut_margin`.
-- Python bindings expose those fields: [bindings_runtime.cpp](../../../../../src/interfaces/python/bindings_runtime.cpp).
-- The event store extracts rod values from `EffectsEvent` into standard `WarheadMechanismEvent` and `ComponentLoadEvent`: [simulation_kernel_engagement_event_store.cpp](../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp).
+- Python bindings expose those fields: [bindings_runtime.cpp](../../../../../../../src/interfaces/python/bindings_runtime.cpp).
+- The event store extracts rod values from `EffectsEvent` into standard `WarheadMechanismEvent` and `ComponentLoadEvent`: [simulation_kernel_engagement_event_store.cpp](../../../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp).
 
 ### Continuous-Rod Cut-In Points
 
-- `continuous_rod` already has family weights, spatial projection, penetration/cut estimation, orientation weighting, and vulnerability filter entry points in the default effects model: [default_effects_warhead_detail.inc](../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc).
+- `continuous_rod` already has family weights, spatial projection, penetration/cut estimation, orientation weighting, and vulnerability filter entry points in the default effects model: [default_effects_warhead_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc).
 - The current `rod_cut_margin` calculation uses generic rod count, rod segment mass, closure speed, range quality, orientation weights, spatial hit estimate, and target armor thickness. These values should remain labeled as generic assumptions.
-- Spatial projection already records `mechanism_load` into component rows: [default_effects_spatial_projection_detail.inc](../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc).
-- The scratch/result/builder chain already moves sampled rod values into `EffectsEvent`: [default_effects_state_detail.inc](../../../../../src/models/weapons/detail/default_effects_state_detail.inc), [default_effects_result_detail.inc](../../../../../src/models/weapons/detail/default_effects_result_detail.inc), [engagement_effects_event_builder.h](../../../../../src/core/interfaces/engagement_effects_event_builder.h).
+- Spatial projection already records `mechanism_load` into component rows: [default_effects_spatial_projection_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc).
+- The scratch/result/builder chain already moves sampled rod values into `EffectsEvent`: [default_effects_state_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_state_detail.inc), [default_effects_result_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_result_detail.inc), [engagement_effects_event_builder.h](../../../../../../../src/core/interfaces/engagement_effects_event_builder.h).
 
 ### Diagnostics Path
 
-- Diagnostics rows already include `rod_cut_margin`: [air_combat_stage0_process_probe.py](../../../../../tools/diagnostics/air_combat_stage0_process_probe.py).
+- Diagnostics rows already include `rod_cut_margin`: [air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py).
 - Diagnostics prefer standard `warhead_mechanism_events` and `component_load_events`, with `EffectsEvent` as fallback.
 - Existing diagnostics contract tests mainly lock field shape and standard-event precedence; they do not yet provide MLF-4-specific continuous-rod positive/negative cases.
 
