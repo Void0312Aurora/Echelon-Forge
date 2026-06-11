@@ -13,6 +13,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    component_fragility_benchmark,
+    component_fragility_review_gate,
+    component_fragility_validation_prep,
     component_probability_result_pack,
     component_probability_retained_pack,
     component_probability_review_readiness,
@@ -78,6 +81,18 @@ COMMANDS: dict[str, tuple[str, CommandMain]] = {
     "component-probability-review-readiness": (
         "Evaluate Stage C component-probability review readiness.",
         component_probability_review_readiness.main,
+    ),
+    "component-fragility-validation-prep": (
+        "Generate Stage C component-fragility validation review inputs.",
+        component_fragility_validation_prep.main,
+    ),
+    "component-fragility-review-gate": (
+        "Evaluate the Stage C component-fragility review gate.",
+        component_fragility_review_gate.main,
+    ),
+    "component-fragility-benchmark": (
+        "Generate blocked Stage C component-fragility benchmark evidence.",
+        component_fragility_benchmark.main,
     ),
 }
 

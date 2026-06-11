@@ -11,14 +11,10 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 ensure_repo_root_on_sys_path()
 
 from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate  # noqa: E402
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_fragility_benchmark as benchmark,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_fragility_review_gate as review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_fragility_validation_prep as prep,
+from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    component_fragility_benchmark as benchmark,
+    component_fragility_review_gate as review_gate,
+    component_fragility_validation_prep as prep,
 )
 
 
@@ -368,7 +364,8 @@ def test_fragility_validation_prep_interlocks_authority() -> None:
 def test_fragility_validation_prep_cli_writes_json(tmp_path: Path) -> None:
     output_path = tmp_path / "a2_stage_c_fragility_validation_prep.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_fragility_validation_prep.py",
+        "damage_model_candidate_artifacts.py",
+        "component-fragility-validation-prep",
         "--output",
         output_path,
         capture_output=False,
@@ -625,7 +622,8 @@ def test_fragility_review_gate_cli_writes_json_and_retained(
     output_path = tmp_path / "a2_stage_c_fragility_review_gate.json"
     retained_dir = tmp_path / "retained"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_fragility_review_gate.py",
+        "damage_model_candidate_artifacts.py",
+        "component-fragility-review-gate",
         "--output",
         output_path,
         "--retained-dir",
@@ -897,7 +895,8 @@ def test_fragility_benchmark_cli_writes_retained_artifacts(
     output_path = tmp_path / "a2_stage_c_fragility_benchmark.json"
     retained_dir = tmp_path / "retained"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_fragility_benchmark.py",
+        "damage_model_candidate_artifacts.py",
+        "component-fragility-benchmark",
         "--output",
         output_path,
         "--retained-dir",

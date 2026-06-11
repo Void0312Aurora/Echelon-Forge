@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -558,7 +558,10 @@ def _review_entry_artifact_inventory(
         {
             "artifact_id": "REVIEW-CP-004",
             "artifact_kind": "stage_c_fragility_validation_prep",
-            "tool_ref": "tools/maintenance/a2_blastfrag_stage_c_fragility_validation_prep.py",
+            "tool_ref": (
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-fragility-validation-prep"
+            ),
             "current_status": "prep_packet_generated_by_this_tool",
             "review_role": "independent fragility review entry matrix",
         },
@@ -686,7 +689,7 @@ def generate_stage_c_fragility_validation_prep(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage C component-probability fragility validation prep "
@@ -698,7 +701,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_c_fragility_validation_prep()
     payload = _canonical_json(artifact)

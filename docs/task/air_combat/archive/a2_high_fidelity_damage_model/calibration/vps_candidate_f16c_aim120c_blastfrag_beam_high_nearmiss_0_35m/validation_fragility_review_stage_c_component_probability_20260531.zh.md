@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / stage_c_component_probability_only / 2026-05-31`。
 
 本文档记录 Stage C `right_aileron_actuator` fragility review gate。对应工具为
-[a2_blastfrag_stage_c_fragility_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_fragility_review_gate.py)。
+[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-fragility-review-gate`。
 
 本 review gate 只审查当前 retained prep/result surface 是否足够清楚地 fail-closed。它不创建
 stock descriptor，不授予 `component_failure_probability_authority`、`pk_authority` 或
@@ -103,6 +103,6 @@ component probability 就不能被提升为 authority。
 ## 8. Reproduction
 
 ```bash
-python tools/maintenance/a2_blastfrag_stage_c_fragility_review_gate.py --output /tmp/a2_stage_c_fragility_review_gate.json
+python tools/maintenance/damage_model_candidate_artifacts.py component-fragility-review-gate --output /tmp/a2_stage_c_fragility_review_gate.json
 pytest -q tests/architecture/damage_model/test_component_fragility_validation.py
 ```

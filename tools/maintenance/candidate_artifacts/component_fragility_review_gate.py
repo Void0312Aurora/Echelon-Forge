@@ -18,13 +18,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate  # noqa: E402
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_fragility_validation_prep as prep,
+from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    component_fragility_validation_prep as prep,
 )
 
 
@@ -812,7 +812,7 @@ def write_retained_artifacts(
     return manifest
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate the Stage C fragility review gate for the current A2 "
@@ -832,7 +832,7 @@ def main() -> int:
             "stage_c_fragility_review_gate.json and manifest.json."
         ),
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_c_fragility_review_gate()
     payload = _canonical_json(artifact)

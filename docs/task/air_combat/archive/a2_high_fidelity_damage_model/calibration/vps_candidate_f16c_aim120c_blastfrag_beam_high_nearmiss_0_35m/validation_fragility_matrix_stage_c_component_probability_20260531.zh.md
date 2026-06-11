@@ -4,7 +4,7 @@
 
 本文档记录 Stage C `right_aileron_actuator` component-specific probability 的 fragility validation
 prep matrix。它来自
-[a2_blastfrag_stage_c_fragility_validation_prep.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_fragility_validation_prep.py)，
+[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-fragility-validation-prep`，
 用途是把当前 candidate gate 推进到“可请求独立 fragility review 的输入包”状态。
 
 本文档不创建 runtime descriptor，不授予 stock component probability authority，不授予
