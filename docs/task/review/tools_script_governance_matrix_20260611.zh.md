@@ -23,6 +23,7 @@
 - README、示例配置文档、shell 调用脚本和任务归档中的活路径已迁移到新入口。
 - `tools/diagnostics/ablate_visual_training_effect.py` 改为调用 `policy_execution_eval.py`。
 - 旧活入口精确文件名扫描已清空；治理矩阵只保留语义描述，不保留已删除路径字符串。
+- 新增 `tests/architecture/governance/test_tools_script_governance.py`，把 diagnostics 顶层入口白名单、benchmark registry 约束和旧 wrapper 路径禁复活规则固化为 architecture guard。
 
 ## 2. 通用化规则
 
@@ -73,6 +74,7 @@
 | 已完成 | fire-timing fault localization 合并 | `fire_timing_fault_localization_probe.py --mode structural_toy/real_update/chain_breakpoint` 成为统一能力入口。 | tests/training helper import 已迁移到语义子包。 |
 | 已完成 | fire-timing learnability audit 合并 | `fire_timing_fault_localization_probe.py --mode learnability_audit` 成为统一能力入口。 | 顶层 air-combat learnability audit 文件删除；活测试 import 与归档可复跑命令迁移。 |
 | 已完成 | flight trajectory diagnostics 合并 | `flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` 成为统一能力入口。 | 顶层 trajectory 任务包装文件删除；README 与历史引用迁移。 |
+| 已完成 | tools governance guard 固化 | `tests/architecture/governance/test_tools_script_governance.py` 固化顶层入口白名单、benchmark registry 约束和旧 wrapper 禁复活扫描。 | 后续新增入口需显式更新测试与治理矩阵。 |
 | 已完成 | air-combat process probe 改名 | `air_combat_weapon_employment_process_probe.py` 成为语义入口；旧过程代号入口删除。 | 已同步 runtime tests、diagnostics docs、model/archive docs。 |
 | 已完成 | post-launch assessment benchmark family 化 | `benchmark.py --family air_combat_post_launch_assessment` 成为统一入口；顶层 benchmark 文件删除。 | 保留 benchmark 参数与 JSON payload，不保留兼容包装壳。 |
 | 已完成 | external signoff evidence 合并 | `damage_model.py external-evidence signoff-request/intake-contract/packet-template/admission-preflight` 成为统一维护入口。 | 旧 source-rights signoff request、signoff intake/template/preflight 顶层脚本删除；architecture tests 改用语义模块。 |
@@ -108,6 +110,7 @@
 
 - 新入口名表达功能能力，不表达 A2、A7、M3S2、N4、Stage、P0/P1 等任务/过程代号。
 - 删除旧入口前，所有活调用路径、测试 import、README 和 suite 文档已迁移。
+- 新增 diagnostics 顶层入口、benchmark family 或恢复旧 wrapper 路径时，必须同步更新 `test_tools_script_governance.py` 并说明功能入口理由。
 - 如果旧入口被归档任务文档作为历史证据引用，迁移为新路径或明确标注历史名，不保留失效活命令。
 - 合并脚本时优先保留共享 helper，再以 `--mode` 或 subcommand 区分场景。
 - 不把 `tools/archive/` 的历史脚本重新纳入活入口，除非同时补 README、测试和维护责任。
