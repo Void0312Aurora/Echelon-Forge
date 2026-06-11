@@ -69,6 +69,9 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   mapping = airframe_geometry_review.build_geometry_mapping_candidate(manifest)
   report = airframe_geometry_review.build_component_binding_report(aircraft, mapping)
   diagnostics = airframe_geometry_review.build_review_point_diagnostics(mapping, report)
+  fine_proxy = airframe_geometry_review.build_fine_geometry_proxy_candidate(
+    mapping, diagnostics, manifest=manifest
+  )
   assert report["schema_version"] == "a2.target_geometry_component_binding_report.v1"
   assert report["status"] == "component_binding_report_generated_review_only"
   assert report["summary"]["component_count"] == 22
@@ -99,6 +102,32 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "engine_core",
     "rudder_actuator",
   }
+
+  assert fine_proxy["schema_version"] == "a2.target_geometry_fine_proxy_candidate.v1"
+  assert fine_proxy["status"] == "fine_geometry_proxy_candidate_generated_review_only"
+  assert fine_proxy["summary"]["source_outer_region_count"] == 14
+  assert fine_proxy["summary"]["proxy_count"] == 14
+  assert fine_proxy["summary"]["held_region_count"] == 0
+  assert fine_proxy["summary"]["mesh_source_vertex_count"] == 13415
+  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] >= 10
+  assert fine_proxy["summary"]["proxy_kind_counts"]["thin_prism"] >= 5
+  assert fine_proxy["summary"]["proxy_kind_counts"]["convex_hull"] >= 4
+  assert fine_proxy["summary"]["total_proxy_support_volume_ratio"] < 0.75
+  proxies = {proxy["source_region_id"]: proxy for proxy in fine_proxy["proxies"]}
+  assert proxies["left_wing"]["proxy_kind"] == "thin_prism"
+  assert proxies["vertical_tail"]["thin_prism"]["thin_axis"] == "y"
+  assert proxies["nose_radome"]["proxy_kind"] == "convex_hull"
+  assert "runtime_collision_mesh" in proxies["nose_radome"]["runtime_prohibited_use"]
+  assert proxies["nose_radome"]["mesh_derived_review_geometry"]["region_vertex_count"] > 0
+  assert (
+    proxies["nose_radome"]["mesh_derived_review_geometry"]["hulls"]["top"][
+      "point_count"
+    ]
+    >= 3
+  )
+  fine_rows = {row["point_id"]: row for row in fine_proxy["review_point_distance_deltas"]}
+  assert fine_rows["nose_axis_4m"]["nearest_fine_proxy_region_id"]
+  assert "fine_minus_source_distance_delta_m" in fine_rows["above_4m"]
 
 
 def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
@@ -181,8 +210,42 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert point_rows["nose_axis_4m"]["nearest_outer_distance_m"] == 0.0
   assert "nose_axis_4m" in diagnostics_csv_path.read_text(encoding="utf-8")
 
+  fine_proxy_path = tmp_path / "fine_geometry_proxy_candidate_20260611.json"
+  assert fine_proxy_path.is_file()
+  fine_proxy = json.loads(fine_proxy_path.read_text(encoding="utf-8"))
+  assert fine_proxy["schema_version"] == "a2.target_geometry_fine_proxy_candidate.v1"
+  assert fine_proxy["summary"]["proxy_count"] == len(mapping["outer_regions"])
+  assert fine_proxy["summary"]["total_proxy_support_volume_ratio"] < 0.75
+  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] >= 10
+  assert result.stdout.find("fine_proxy_count") >= 0
+  assert result.stdout.find("mesh_derived_silhouette_count") >= 0
+  assert result.stdout.find("fine_proxy_support_volume_ratio") >= 0
+  assert result.stdout.find("fine_proxy_review_dashboard") >= 0
+
+  for svg_name in ("fine_proxy_top.svg", "fine_proxy_side.svg", "fine_proxy_front.svg"):
+    svg_path = tmp_path / svg_name
+    assert svg_path.is_file()
+    text = svg_path.read_text(encoding="utf-8")
+    assert "mesh-derived fine geometry proxy candidate" in text
+    assert "mesh-derived silhouette" in text
+    assert "source AABB" in text
+    assert "runtime collision mesh" in text
+
+  dashboard_path = tmp_path / "fine_proxy_review_dashboard.html"
+  assert dashboard_path.is_file()
+  dashboard = dashboard_path.read_text(encoding="utf-8")
+  assert "F-16 Fine Proxy Human Review Dashboard" in dashboard
+  assert "hold_for_human_review" in dashboard
+  assert "needs_human_review" in dashboard
+  assert "candidate_accept_after_visual_check" in dashboard
+  assert "inflated_selection_bounds" in dashboard
+  assert "mesh_silhouette" in dashboard
+
   scene_path = tmp_path / "scene.html"
   assert scene_path.is_file()
   scene = scene_path.read_text(encoding="utf-8")
   assert "F-16 Target Geometry Review Packet" in scene
   assert "nose_axis_4m" in scene
+  assert "Fine Geometry Proxy Overlay" in scene
+  assert "mesh-derived silhouettes" in scene
+  assert "fine_proxy_review_dashboard.html" in scene

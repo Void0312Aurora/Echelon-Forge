@@ -90,3 +90,10 @@ TG-P6 的目标是把“审阅用盒子”升级成“更贴近外形的代理�
 - `nose_axis_4m`、`nose_axis_6m`、侧向和上下方位测试点能输出新旧距离对比。
 - 左右翼命名和坐标符号问题不得被自动“修正”或静默忽略。
 - 输出仍然标记为审阅候选，不进入运行时主路径。
+
+## TG-P6-R3 实现备注
+
+`2026-06-12`：第一版 mesh-derived 审阅层现在会按每个源区域筛选审计 glTF 顶点，生成
+top/side/front 2D convex hull silhouettes，并在 `fine_proxy_*.svg` 中叠加这些多边形。若原始源区域内
+顶点不足，会使用明确记录的 `selection_inflation_factor` fallback。这些 silhouette 仍然只是 review-only，
+在 `TG-P7` 前不得进入 runtime 主路径。

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+<rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>
+<text x="24" y="34" font-size="18" font-family="monospace" fill="#202020">F-16 mesh-derived fine geometry proxy candidate front view</text>
+<text x="24" y="58" font-size="12" font-family="monospace" fill="#555555">y lateral (m); z up (m); dashed source AABB, dotted support bounds, solid mesh-derived silhouette</text>
+<rect x="82.76" y="67.13" width="1034.48" height="625.73" fill="#111111" fill-opacity="0.02" stroke="#111111" stroke-width="1.50"><title>outer_envelope</title></rect>
+<text x="86.76" y="80.13" font-size="10" font-family="monospace" fill="#111111">outer_envelope</text>
+<rect x="548.41" y="304.91" width="103.18" height="131.40" fill="#2f6f9f" fill-opacity="0.02" stroke="#2f6f9f" stroke-width="0.90" stroke-dasharray="6 4"><title>nose_radome source_aabb</title></rect>
+<rect x="570.08" y="323.31" width="59.85" height="94.61" fill="#2f6f9f" fill-opacity="0.02" stroke="#2f6f9f" stroke-width="0.90" stroke-dasharray="2 3"><title>nose_radome support_bounds</title></rect>
+<polygon points="566.98,466.37 567.45,467.57 575.00,468.97 576.24,469.02 623.76,469.02 625.00,468.97 632.55,467.57 633.02,466.37 628.50,458.78 611.76,448.89 605.88,448.44 600.00,447.99 594.12,448.44 588.24,448.89 571.50,458.78" fill="#2f6f9f" fill-opacity="0.22" stroke="#2f6f9f" stroke-width="1.50"><title>nose_radome convex_hull mesh_silhouette</title></polygon>
+<text x="604.00" y="464.27" font-size="10" font-family="monospace" fill="#2f6f9f">nose_radome convex_hull mesh_silhouette</text>
+<rect x="508.64" y="267.37" width="182.72" height="219.01" fill="#b24d3e" fill-opacity="0.02" stroke="#b24d3e" stroke-width="0.90" stroke-dasharray="6 4"><title>forward_fuselage source_aabb</title></rect>
+<rect x="519.60" y="280.51" width="160.79" height="192.73" fill="#b24d3e" fill-opacity="0.02" stroke="#b24d3e" stroke-width="0.90" stroke-dasharray="2 3"><title>forward_fuselage support_bounds</title></rect>
+<polygon points="527.38,486.04 610.29,484.62 637.02,483.60 656.10,477.86 661.25,472.08 632.68,391.34 632.35,390.51 626.89,381.48 620.40,374.85 613.92,370.19 606.96,367.15 600.00,366.09 593.04,367.15 586.08,370.19 579.60,374.85 573.11,381.48 567.67,390.51" fill="#b24d3e" fill-opacity="0.22" stroke="#b24d3e" stroke-width="1.50"><title>forward_fuselage obb mesh_silhouette</title></polygon>
+<text x="611.34" y="411.65" font-size="10" font-family="monospace" fill="#b24d3e">forward_fuselage obb mesh_silhouette</text>
+<rect x="540.88" y="154.74" width="118.23" height="162.69" fill="#4f8a4b" fill-opacity="0.02" stroke="#4f8a4b" stroke-width="0.90" stroke-dasharray="6 4"><title>canopy source_aabb</title></rect>
+<rect x="555.07" y="169.38" width="89.86" height="133.41" fill="#4f8a4b" fill-opacity="0.02" stroke="#4f8a4b" stroke-width="0.90" stroke-dasharray="2 3"><title>canopy support_bounds</title></rect>
+<polygon points="567.01,393.75 567.02,397.11 594.16,398.71 605.84,398.71 633.00,397.11 633.01,393.75 632.68,391.34 632.35,390.51 626.89,381.48 620.40,374.85 613.92,370.19 606.96,367.15 600.00,366.09 593.04,367.15 586.08,370.19 579.60,374.85 573.11,381.48 567.67,390.51 567.34,391.34" fill="#4f8a4b" fill-opacity="0.22" stroke="#4f8a4b" stroke-width="1.50"><title>canopy convex_hull mesh_silhouette</title></polygon>
+<text x="604.00" y="388.01" font-size="10" font-family="monospace" fill="#4f8a4b">canopy convex_hull mesh_silhouette</text>
+<rect x="508.64" y="273.63" width="182.72" height="212.75" fill="#8a5a9f" fill-opacity="0.02" stroke="#8a5a9f" stroke-width="0.90" stroke-dasharray="6 4"><title>center_fuselage source_aabb</title></rect>
+<rect x="519.60" y="286.39" width="160.79" height="187.22" fill="#8a5a9f" fill-opacity="0.02" stroke="#8a5a9f" stroke-width="0.90" stroke-dasharray="2 3"><title>center_fuselage support_bounds</title></rect>
+<polygon points="514.19,473.31 515.48,478.91 522.43,485.97 527.38,486.04 677.57,485.97 684.52,478.91 685.81,473.31 625.70,384.06 619.41,378.23 613.11,374.38 606.56,371.77 600.00,371.13 593.44,371.77 586.89,374.38 580.59,378.23 574.30,384.06" fill="#8a5a9f" fill-opacity="0.22" stroke="#8a5a9f" stroke-width="1.50"><title>center_fuselage obb mesh_silhouette</title></polygon>
+<text x="599.46" y="425.90" font-size="10" font-family="monospace" fill="#8a5a9f">center_fuselage obb mesh_silhouette</text>
+<rect x="533.36" y="411.29" width="133.28" height="193.98" fill="#b27a2f" fill-opacity="0.02" stroke="#b27a2f" stroke-width="0.90" stroke-dasharray="6 4"><title>intake source_aabb</title></rect>
+<rect x="553.35" y="434.56" width="93.29" height="147.42" fill="#b27a2f" fill-opacity="0.02" stroke="#b27a2f" stroke-width="0.90" stroke-dasharray="2 3"><title>intake support_bounds</title></rect>
+<polygon points="534.23,467.52 535.12,579.72 535.76,593.12 550.96,601.25 649.04,601.25 664.24,593.12 664.73,579.72 665.77,467.52 640.44,420.82 636.68,415.94 628.40,411.87 599.66,411.29 571.60,411.87 563.32,415.94 559.56,420.82" fill="#b27a2f" fill-opacity="0.22" stroke="#b27a2f" stroke-width="1.50"><title>intake convex_hull mesh_silhouette</title></polygon>
+<text x="603.97" y="496.78" font-size="10" font-family="monospace" fill="#b27a2f">intake convex_hull mesh_silhouette</text>
+<rect x="508.64" y="273.63" width="182.72" height="206.49" fill="#2f827d" fill-opacity="0.02" stroke="#2f827d" stroke-width="0.90" stroke-dasharray="6 4"><title>aft_fuselage_engine source_aabb</title></rect>
+<rect x="519.60" y="286.01" width="160.79" height="181.71" fill="#2f827d" fill-opacity="0.02" stroke="#2f827d" stroke-width="0.90" stroke-dasharray="2 3"><title>aft_fuselage_engine support_bounds</title></rect>
+<polygon points="514.19,473.32 519.98,476.56 533.83,479.36 666.17,479.36 680.02,476.56 685.81,473.32 615.25,358.91 613.35,355.95 607.26,354.54 592.74,354.54 586.65,355.95 584.75,358.91" fill="#2f827d" fill-opacity="0.22" stroke="#2f827d" stroke-width="1.50"><title>aft_fuselage_engine obb mesh_silhouette</title></polygon>
+<text x="604.00" y="420.44" font-size="10" font-family="monospace" fill="#2f827d">aft_fuselage_engine obb mesh_silhouette</text>
+<rect x="537.66" y="304.91" width="124.68" height="143.92" fill="#6f6f6f" fill-opacity="0.02" stroke="#6f6f6f" stroke-width="0.90" stroke-dasharray="6 4"><title>engine_nozzle source_aabb</title></rect>
+<rect x="551.38" y="316.43" width="97.25" height="120.89" fill="#6f6f6f" fill-opacity="0.02" stroke="#6f6f6f" stroke-width="0.90" stroke-dasharray="2 3"><title>engine_nozzle support_bounds</title></rect>
+<polygon points="576.49,444.79 623.51,444.79 608.79,359.82 606.86,357.09 603.07,356.13 596.77,356.13 592.97,357.09 591.05,359.82" fill="#6f6f6f" fill-opacity="0.22" stroke="#6f6f6f" stroke-width="1.50"><title>engine_nozzle obb mesh_silhouette</title></polygon>
+<text x="603.94" y="383.45" font-size="10" font-family="monospace" fill="#6f6f6f">engine_nozzle obb mesh_silhouette</text>
+<rect x="673.09" y="342.46" width="444.15" height="68.83" fill="#2f6f9f" fill-opacity="0.02" stroke="#2f6f9f" stroke-width="0.90" stroke-dasharray="6 4"><title>left_wing source_aabb</title></rect>
+<rect x="699.74" y="364.48" width="390.86" height="24.78" fill="#2f6f9f" fill-opacity="0.02" stroke="#2f6f9f" stroke-width="0.90" stroke-dasharray="2 3"><title>left_wing support_bounds</title></rect>
+<polygon points="617.86,405.02 620.47,415.42 623.13,408.44 620.19,399.35" fill="#2f6f9f" fill-opacity="0.22" stroke="#2f6f9f" stroke-width="1.50"><title>left_wing thin_prism mesh_silhouette</title></polygon>
+<text x="624.41" y="411.06" font-size="10" font-family="monospace" fill="#2f6f9f">left_wing thin_prism mesh_silhouette</text>
+<rect x="82.76" y="342.46" width="444.15" height="68.83" fill="#b24d3e" fill-opacity="0.02" stroke="#b24d3e" stroke-width="0.90" stroke-dasharray="6 4"><title>right_wing source_aabb</title></rect>
+<rect x="109.41" y="364.48" width="390.86" height="24.78" fill="#b24d3e" fill-opacity="0.02" stroke="#b24d3e" stroke-width="0.90" stroke-dasharray="2 3"><title>right_wing support_bounds</title></rect>
+<polygon points="576.87,408.44 579.53,415.42 582.14,405.02 579.81,399.35" fill="#b24d3e" fill-opacity="0.22" stroke="#b24d3e" stroke-width="1.50"><title>right_wing thin_prism mesh_silhouette</title></polygon>
+<text x="583.59" y="411.06" font-size="10" font-family="monospace" fill="#b24d3e">right_wing thin_prism mesh_silhouette</text>
+<rect x="632.24" y="317.43" width="112.86" height="125.15" fill="#4f8a4b" fill-opacity="0.02" stroke="#4f8a4b" stroke-width="0.90" stroke-dasharray="6 4"><title>left_wing_root source_aabb</title></rect>
+<rect x="648.04" y="334.95" width="81.26" height="90.11" fill="#4f8a4b" fill-opacity="0.02" stroke="#4f8a4b" stroke-width="0.90" stroke-dasharray="2 3"><title>left_wing_root support_bounds</title></rect>
+<polygon points="636.89,426.80 638.04,432.67 637.90,431.81" fill="#4f8a4b" fill-opacity="0.22" stroke="#4f8a4b" stroke-width="1.50"><title>left_wing_root convex_hull mesh_silhouette</title></polygon>
+<text x="641.61" y="434.43" font-size="10" font-family="monospace" fill="#4f8a4b">left_wing_root convex_hull mesh_silhouette</text>
+<rect x="454.90" y="317.43" width="112.86" height="125.15" fill="#8a5a9f" fill-opacity="0.02" stroke="#8a5a9f" stroke-width="0.90" stroke-dasharray="6 4"><title>right_wing_root source_aabb</title></rect>
+<rect x="470.70" y="334.95" width="81.26" height="90.11" fill="#8a5a9f" fill-opacity="0.02" stroke="#8a5a9f" stroke-width="0.90" stroke-dasharray="2 3"><title>right_wing_root support_bounds</title></rect>
+<polygon points="561.96,432.67 563.11,426.80 562.10,431.81" fill="#8a5a9f" fill-opacity="0.22" stroke="#8a5a9f" stroke-width="1.50"><title>right_wing_root convex_hull mesh_silhouette</title></polygon>
+<text x="566.39" y="434.43" font-size="10" font-family="monospace" fill="#8a5a9f">right_wing_root convex_hull mesh_silhouette</text>
+<rect x="659.12" y="292.40" width="241.83" height="93.86" fill="#b27a2f" fill-opacity="0.02" stroke="#b27a2f" stroke-width="0.90" stroke-dasharray="6 4"><title>left_horizontal_tail source_aabb</title></rect>
+<rect x="673.63" y="322.43" width="212.81" height="33.79" fill="#b27a2f" fill-opacity="0.02" stroke="#b27a2f" stroke-width="0.90" stroke-dasharray="2 3"><title>left_horizontal_tail support_bounds</title></rect>
+<polygon points="598.76,384.56 600.07,387.68 615.19,384.83 615.25,383.32 615.25,362.44 615.25,358.91 613.35,355.95 607.26,354.54 600.00,354.54 598.86,361.98" fill="#b27a2f" fill-opacity="0.22" stroke="#b27a2f" stroke-width="1.50"><title>left_horizontal_tail thin_prism mesh_silhouette</title></polygon>
+<text x="611.92" y="372.88" font-size="10" font-family="monospace" fill="#b27a2f">left_horizontal_tail thin_prism mesh_silhouette</text>
+<rect x="299.05" y="292.40" width="241.83" height="93.86" fill="#2f827d" fill-opacity="0.02" stroke="#2f827d" stroke-width="0.90" stroke-dasharray="6 4"><title>right_horizontal_tail source_aabb</title></rect>
+<rect x="313.56" y="322.43" width="212.81" height="33.79" fill="#2f827d" fill-opacity="0.02" stroke="#2f827d" stroke-width="0.90" stroke-dasharray="2 3"><title>right_horizontal_tail support_bounds</title></rect>
+<polygon points="584.75,383.32 584.81,384.83 600.07,387.68 600.08,384.83 600.08,361.56 600.00,354.54 592.74,354.54 586.65,355.95 584.75,358.91" fill="#2f827d" fill-opacity="0.22" stroke="#2f827d" stroke-width="1.50"><title>right_horizontal_tail thin_prism mesh_silhouette</title></polygon>
+<text x="596.66" y="373.57" font-size="10" font-family="monospace" fill="#2f827d">right_horizontal_tail thin_prism mesh_silhouette</text>
+<rect x="559.16" y="67.13" width="81.69" height="244.04" fill="#6f6f6f" fill-opacity="0.02" stroke="#6f6f6f" stroke-width="0.90" stroke-dasharray="6 4"><title>vertical_tail source_aabb</title></rect>
+<rect x="590.20" y="72.01" width="19.60" height="234.27" fill="#6f6f6f" fill-opacity="0.02" stroke="#6f6f6f" stroke-width="0.90" stroke-dasharray="2 3"><title>vertical_tail support_bounds</title></rect>
+<polygon points="597.48,69.20 597.50,141.17 600.00,144.19 602.50,141.17 602.52,69.20 600.00,67.13" fill="#6f6f6f" fill-opacity="0.22" stroke="#6f6f6f" stroke-width="1.50"><title>vertical_tail thin_prism mesh_silhouette</title></polygon>
+<text x="604.00" y="109.34" font-size="10" font-family="monospace" fill="#6f6f6f">vertical_tail thin_prism mesh_silhouette</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>1: nose_axis_4m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">1</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>2: nose_axis_6m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">2</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>3: tail_axis_4m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">3</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>4: tail_axis_6m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">4</text>
+<circle cx="1029.93" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>5: right_beam_4m</title></circle>
+<text x="1035.93" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">5</text>
+<circle cx="1244.89" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>6: right_beam_6m</title></circle>
+<text x="1250.89" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">6</text>
+<circle cx="170.07" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>7: left_beam_4m</title></circle>
+<text x="176.07" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">7</text>
+<circle cx="-44.89" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>8: left_beam_6m</title></circle>
+<text x="-38.89" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">8</text>
+<circle cx="600.00" cy="-157.07" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>9: above_4m</title></circle>
+<text x="606.00" y="-163.07" font-size="10" font-family="monospace" fill="#0f172a">9</text>
+<circle cx="600.00" cy="917.07" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>10: below_4m</title></circle>
+<text x="606.00" y="911.07" font-size="10" font-family="monospace" fill="#0f172a">10</text>
+<text x="24" y="716" font-size="11" font-family="monospace" fill="#555555">Legend: dashed boxes are TG-P2 source AABBs; dotted boxes are support bounds; solid polygons are mesh-derived silhouettes</text>
+<text x="24" y="736" font-size="11" font-family="monospace" fill="#555555">Review-only fine proxy candidates; not a runtime collision mesh or real F-16 engineering model</text>
+</svg>

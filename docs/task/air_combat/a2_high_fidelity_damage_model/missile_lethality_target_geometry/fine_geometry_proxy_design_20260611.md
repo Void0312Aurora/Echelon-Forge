@@ -72,3 +72,12 @@ thin prisms, convex hulls, and eventually simplified shell meshes.
 - Nose, beam, above, and below review points report old-vs-new distance deltas.
 - Left/right sign issues remain visible and are not silently corrected.
 - Outputs remain review candidates and do not enter the runtime main path.
+
+## TG-P6-R3 Implementation Note
+
+`2026-06-12`: the first mesh-derived review layer now filters the audit glTF
+vertices by each source region, generates top/side/front 2D convex hull
+silhouettes, and overlays those polygons in `fine_proxy_*.svg`. Regions with
+too few vertices inside the original source bounds use a recorded
+`selection_inflation_factor` fallback. These silhouettes are still review-only
+and remain held from runtime use until `TG-P7`.

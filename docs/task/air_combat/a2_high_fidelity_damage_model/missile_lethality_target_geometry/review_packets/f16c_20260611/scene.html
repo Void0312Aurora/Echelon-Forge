@@ -86,6 +86,36 @@
       <img src="front.svg" alt="Front view geometry overlay">
     </div>
   </section>
+
+  <section>
+    <h2>Fine Geometry Proxy Overlay</h2>
+    <p class="note">TG-P6 review-only proxy candidates. Dashed rectangles show source AABB regions, dotted rectangles show support bounds, and solid polygons show mesh-derived silhouettes from filtered audit-glTF vertices.</p>
+    <p class="note"><a href="fine_proxy_review_dashboard.html">Open the per-region human review dashboard</a>.</p>
+    <div class="views">
+      <img src="fine_proxy_top.svg" alt="Top view fine proxy overlay">
+      <img src="fine_proxy_side.svg" alt="Side view fine proxy overlay">
+      <img src="fine_proxy_front.svg" alt="Front view fine proxy overlay">
+    </div>
+  </section>
+  <section>
+    <h2>Fine Proxy Distance Deltas</h2>
+    <table>
+<thead><tr><th>point</th><th>source_region</th><th>source_dist_m</th><th>fine_region</th><th>fine_kind</th><th>fine_dist_m</th><th>delta_m</th></tr></thead>
+<tbody>
+<tr><td>nose_axis_4m</td><td>forward_fuselage</td><td>0.0</td><td>forward_fuselage</td><td>obb</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>nose_axis_6m</td><td>nose_radome</td><td>0.0</td><td>nose_radome</td><td>convex_hull</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>tail_axis_4m</td><td>aft_fuselage_engine</td><td>0.0</td><td>aft_fuselage_engine</td><td>obb</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>tail_axis_6m</td><td>engine_nozzle</td><td>0.0</td><td>engine_nozzle</td><td>obb</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>right_beam_4m</td><td>left_wing</td><td>0.0</td><td>left_wing</td><td>thin_prism</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>right_beam_6m</td><td>left_wing</td><td>1.187654</td><td>left_wing</td><td>thin_prism</td><td>1.435595</td><td>0.247941</td></tr>
+<tr><td>left_beam_4m</td><td>right_wing</td><td>0.0</td><td>right_wing</td><td>thin_prism</td><td>0.0</td><td>0.0</td></tr>
+<tr><td>left_beam_6m</td><td>right_wing</td><td>1.187654</td><td>right_wing</td><td>thin_prism</td><td>1.435595</td><td>0.247941</td></tr>
+<tr><td>above_4m</td><td>canopy</td><td>3.137903</td><td>center_fuselage</td><td>obb</td><td>3.302816</td><td>0.164913</td></tr>
+<tr><td>below_4m</td><td>intake</td><td>2.352661</td><td>intake</td><td>convex_hull</td><td>2.566745</td><td>0.214084</td></tr>
+</tbody>
+</table>
+  </section>
+
   <section>
     <h2>Review Point Diagnostics</h2>
     <table>

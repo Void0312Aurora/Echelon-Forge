@@ -1,6 +1,6 @@
 # A2 目标外形与部件几何建模
 
-状态：`2026-06-11` active follow-on / TG-P5 review packet and diagnostics complete。该子项目从
+状态：`2026-06-12` active follow-on / TG-P6 human review dashboard complete and manual review required。该子项目从
 [杀伤链命中盒几何保真度缺口](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 提升而来，用于把 F-16 从少量大长方体推进到可审阅的外壳、部件区和距离诊断。
 
@@ -68,7 +68,7 @@
 | `P3 Component Binding` | 把现有部件盒绑定到外壳区域 | P2 区域存在 | 部件绑定报告列出过大、过小、错位和越界项 | pass |
 | `P4 Review Packet` | 生成 HTML/SVG/CSV 审阅包 | P2/P3 数据存在 | 人能在图面上同时看见外形、旧盒、部件和测试点 | pass |
 | `P5 Lethality Diagnostics` | 将测试点解释成外壳/部件距离和候选部件数 | P4 审阅包存在 | 4 m 鼻向等样例不再只有“非直接命中”这一种解释 | pass |
-| `P6 Fine Geometry Proxy` | 把低精度盒子推进到更贴近外形的代理 | P4/P5 审阅和诊断通过 | 倾斜盒、凸包或简化外壳网格候选及误差说明存在 | planned |
+| `P6 Fine Geometry Proxy` | 把低精度盒子推进到更贴近外形的代理 | P4/P5 审阅和诊断通过 | review-only OBB、薄棱柱、凸包候选、mesh-derived silhouette、距离差和叠加图存在 | pass as review candidate |
 | `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | planned |
 
 ## 任务簇
@@ -120,6 +120,18 @@
 - [fine_geometry_proxy_design_20260611.zh.md](fine_geometry_proxy_design_20260611.zh.md)：
   TG-P6 第一版精细几何代理设计，定义 `obb`、`thin_prism`、`convex_hull` 和
   `simplified_shell` 的用途、边界和运行时前置条件。
+- 精细几何代理候选：
+  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json)、
+  [fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg)、
+  [fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg)、
+  [fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg)。
+  TG-P6-R3 已从 `13,415` 个审计 glTF 顶点为全部 `14` 个 review-only 代理生成 top/side/front convex hull
+  silhouettes；`8` 个区域直接使用源边界筛选，`6` 个区域使用记录过的 inflated-bound fallback，进入
+  `TG-P7` 前仍是高优先级人工复核项。
+- 人工审阅 dashboard：
+  [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html)。
+  TG-P6-R4 增加逐区域卡片，包含局部 top/side/front 放大图、部件叠加、inflation 指标、hull 点数、
+  review flags 和 candidate/review/hold 状态。
 - `pytest -q tests/tools/test_airframe_geometry_review.py`：`2 passed`。
 
 ## 验收门
@@ -135,7 +147,8 @@
 ## 残余和下一步
 
 - MQ-9 几何可作为后续机型复用目标，但第一轮只做 F-16。
-- 运行时近炸投影是否消费外壳代理，需要在审阅包、距离诊断和精细几何代理审阅后再决定。
+- 运行时近炸投影是否消费外壳代理，需要在审阅包、距离诊断和精细几何代理审阅通过或在 `TG-P7`
+  明确 held 后再决定。
 - 结构解体、碎裂/残骸和 Pk 仍是后续独立子项目，不能并入本几何子项目。
 
 ## Archive

@@ -29,8 +29,31 @@ COMPONENT_BINDING_SCHEMA_VERSION = "a2.target_geometry_component_binding_report.
 REVIEW_POINT_DIAGNOSTICS_SCHEMA_VERSION = (
   "a2.target_geometry_review_point_diagnostics.v1"
 )
+FINE_PROXY_SCHEMA_VERSION = "a2.target_geometry_fine_proxy_candidate.v1"
 DEFAULT_GENERATED_ON = "2026-06-11"
 REVIEW_POINT_COMPONENT_RADIUS_M = 2.0
+
+FINE_PROXY_KIND_BY_REGION = {
+  "nose_radome": "convex_hull",
+  "forward_fuselage": "obb",
+  "canopy": "convex_hull",
+  "center_fuselage": "obb",
+  "intake": "convex_hull",
+  "aft_fuselage_engine": "obb",
+  "engine_nozzle": "obb",
+  "left_wing": "thin_prism",
+  "right_wing": "thin_prism",
+  "left_wing_root": "convex_hull",
+  "right_wing_root": "convex_hull",
+  "left_horizontal_tail": "thin_prism",
+  "right_horizontal_tail": "thin_prism",
+  "vertical_tail": "thin_prism",
+}
+SILHOUETTE_VIEW_AXES = {
+  "top": (0, 1),
+  "side": (0, 2),
+  "front": (1, 2),
+}
 
 DEFAULT_AIRCRAFT = (
   REPO_ROOT / "examples" / "config" / "database" / "aircraft" / "units" / "f16c_block50.json"
@@ -381,6 +404,44 @@ def summarize_gltf_scene(gltf_path: Path) -> dict[str, Any]:
     "notable_node_names": notable_names,
     "mesh_node_bounds": node_bounds,
   }
+
+
+def extract_gltf_sim_vertices(gltf_path: Path, manifest: dict[str, Any]) -> list[list[float]]:
+  gltf = _load_json(gltf_path)
+  buffers = [_load_buffer(gltf_path, buffer_def) for buffer_def in gltf.get("buffers", [])]
+  asset_center = manifest["gltf_summary"]["transformed_bounds"]["center"]
+  scale = float(manifest["public_dimension_check"]["registry_scale"])
+  vertices: list[list[float]] = []
+
+  for _node_index, node, world_matrix in _walk_nodes(gltf, _scene_root_nodes(gltf), _identity()):
+    mesh_index = node.get("mesh")
+    if mesh_index is None:
+      continue
+    mesh = gltf["meshes"][mesh_index]
+    for primitive in mesh.get("primitives", []):
+      attributes = primitive.get("attributes", {})
+      if "POSITION" not in attributes:
+        continue
+      positions = _accessor_values(
+        gltf=gltf,
+        buffers=buffers,
+        accessor_index=int(attributes["POSITION"]),
+      )
+      for position in positions:
+        transformed = _transform_point(
+          world_matrix,
+          (position[0], position[1], position[2]),
+        )
+        vertices.append(
+          _round_vec(
+            _sim_point_from_asset(
+              [transformed[0], transformed[1], transformed[2]],
+              asset_center=asset_center,
+              scale=scale,
+            )
+          )
+        )
+  return vertices
 
 
 def _find_registry_entry(registry: dict[str, Any], visual_glb: Path, repo_root: Path) -> dict[str, Any]:
@@ -1154,6 +1215,371 @@ def build_review_point_diagnostics(
   }
 
 
+def _resize_bounds_about_center(
+  bounds: dict[str, list[float]],
+  factors: list[float],
+) -> dict[str, list[float]]:
+  center = bounds["center"]
+  span = bounds["span"]
+  minimum = [
+    center[index] - span[index] * factors[index] / 2.0 for index in range(3)
+  ]
+  maximum = [
+    center[index] + span[index] * factors[index] / 2.0 for index in range(3)
+  ]
+  return _bounds_from_min_max(minimum, maximum)
+
+
+def _bounds_corners(bounds: dict[str, list[float]]) -> list[list[float]]:
+  return [
+    _round_vec([x, y, z])
+    for x in (bounds["min"][0], bounds["max"][0])
+    for y in (bounds["min"][1], bounds["max"][1])
+    for z in (bounds["min"][2], bounds["max"][2])
+  ]
+
+
+def _cross_2d(
+  origin: tuple[float, float],
+  first: tuple[float, float],
+  second: tuple[float, float],
+) -> float:
+  return (
+    (first[0] - origin[0]) * (second[1] - origin[1])
+    - (first[1] - origin[1]) * (second[0] - origin[0])
+  )
+
+
+def _convex_hull_2d(points: Iterable[tuple[float, float]]) -> list[list[float]]:
+  unique = sorted({(_round(point[0]), _round(point[1])) for point in points})
+  if len(unique) <= 2:
+    return [[point[0], point[1]] for point in unique]
+
+  lower: list[tuple[float, float]] = []
+  for point in unique:
+    while len(lower) >= 2 and _cross_2d(lower[-2], lower[-1], point) <= 0.0:
+      lower.pop()
+    lower.append(point)
+
+  upper: list[tuple[float, float]] = []
+  for point in reversed(unique):
+    while len(upper) >= 2 and _cross_2d(upper[-2], upper[-1], point) <= 0.0:
+      upper.pop()
+    upper.append(point)
+
+  hull = lower[:-1] + upper[:-1]
+  return [[point[0], point[1]] for point in hull]
+
+
+def _mesh_silhouette_for_region(
+  region: dict[str, Any],
+  sim_vertices: list[list[float]],
+) -> dict[str, Any]:
+  selected: list[list[float]] = []
+  hulls: dict[str, Any] = {}
+  selection_bounds = region["bounds"]
+  selection_inflation_factor = 1.0
+  for factor in (1.0, 1.25, 1.5, 2.0, 3.0, 4.0):
+    selection_bounds = (
+      region["bounds"]
+      if factor == 1.0
+      else _resize_bounds_about_center(region["bounds"], [factor, factor, factor])
+    )
+    selected = [
+      vertex for vertex in sim_vertices if _contains_point(selection_bounds, vertex)
+    ]
+    hulls = {}
+    for view, axes in SILHOUETTE_VIEW_AXES.items():
+      projected = [(vertex[axes[0]], vertex[axes[1]]) for vertex in selected]
+      hull = _convex_hull_2d(projected)
+      hulls[view] = {
+        "axes": ["xyz"[axes[0]], "xyz"[axes[1]]],
+        "point_count": len(hull),
+        "points_m": hull,
+      }
+    if len(selected) >= 3 and all(hull["point_count"] >= 3 for hull in hulls.values()):
+      selection_inflation_factor = factor
+      break
+
+  status = (
+    "mesh_silhouette_extracted"
+    if selection_inflation_factor == 1.0
+    else "mesh_silhouette_extracted_from_inflated_region_bounds"
+  )
+  if len(selected) < 3 or any(hull["point_count"] < 3 for hull in hulls.values()):
+    status = "insufficient_region_vertices_for_closed_silhouette"
+  return {
+    "status": status,
+    "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+    "source_vertex_count": len(sim_vertices),
+    "region_vertex_count": len(selected),
+    "selection_inflation_factor": selection_inflation_factor,
+    "selection_bounds": selection_bounds,
+    "hulls": hulls,
+  }
+
+
+def _fine_proxy_support_bounds(region: dict[str, Any], proxy_kind: str) -> dict[str, list[float]]:
+  region_id = region["id"]
+  bounds = region["bounds"]
+  if proxy_kind == "thin_prism":
+    if region_id == "vertical_tail":
+      return _resize_bounds_about_center(bounds, [0.90, 0.24, 0.96])
+    return _resize_bounds_about_center(bounds, [0.94, 0.88, 0.36])
+  if proxy_kind == "convex_hull":
+    factors_by_region = {
+      "nose_radome": [0.92, 0.58, 0.72],
+      "canopy": [0.82, 0.76, 0.82],
+      "intake": [0.84, 0.70, 0.76],
+      "left_wing_root": [0.84, 0.72, 0.72],
+      "right_wing_root": [0.84, 0.72, 0.72],
+    }
+    return _resize_bounds_about_center(
+      bounds,
+      factors_by_region.get(region_id, [0.86, 0.70, 0.74]),
+    )
+  if region_id == "engine_nozzle":
+    return _resize_bounds_about_center(bounds, [0.90, 0.78, 0.84])
+  return _resize_bounds_about_center(bounds, [0.96, 0.88, 0.88])
+
+
+def _convex_proxy_vertices(
+  region_id: str,
+  support_bounds: dict[str, list[float]],
+) -> list[list[float]]:
+  bounds = support_bounds
+  min_x, min_y, min_z = bounds["min"]
+  max_x, max_y, max_z = bounds["max"]
+  center = bounds["center"]
+  if region_id == "nose_radome":
+    return [
+      _round_vec([max_x, center[1], center[2]]),
+      _round_vec([min_x, min_y, min_z]),
+      _round_vec([min_x, min_y, max_z]),
+      _round_vec([min_x, max_y, min_z]),
+      _round_vec([min_x, max_y, max_z]),
+      _round_vec([(min_x + max_x) / 2.0, center[1], min_z]),
+      _round_vec([(min_x + max_x) / 2.0, center[1], max_z]),
+    ]
+  if region_id == "canopy":
+    return [
+      _round_vec([min_x, min_y, min_z]),
+      _round_vec([min_x, max_y, min_z]),
+      _round_vec([max_x, min_y, min_z]),
+      _round_vec([max_x, max_y, min_z]),
+      _round_vec([min_x + (max_x - min_x) * 0.35, center[1], max_z]),
+      _round_vec([min_x + (max_x - min_x) * 0.75, center[1], max_z * 0.98]),
+    ]
+  return _bounds_corners(bounds)
+
+
+def _fine_proxy_record(
+  region: dict[str, Any],
+  *,
+  sim_vertices: list[list[float]],
+) -> dict[str, Any]:
+  region_id = region["id"]
+  proxy_kind = FINE_PROXY_KIND_BY_REGION.get(region_id, "obb")
+  source_bounds = region["bounds"]
+  support_bounds = _fine_proxy_support_bounds(region, proxy_kind)
+  support_span = support_bounds["span"]
+  source_volume = _volume(source_bounds)
+  support_volume = _volume(support_bounds)
+  record: dict[str, Any] = {
+    "source_region_id": region_id,
+    "source_region_role": region["role"],
+    "proxy_kind": proxy_kind,
+    "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+    "source_region_bounds": source_bounds,
+    "support_bounds": support_bounds,
+    "mesh_derived_review_geometry": _mesh_silhouette_for_region(region, sim_vertices),
+    "vertices_m": (
+      _convex_proxy_vertices(region_id, support_bounds)
+      if proxy_kind == "convex_hull"
+      else _bounds_corners(support_bounds)
+    ),
+    "fit_metrics": {
+      "source_aabb_volume_m3": _round(source_volume),
+      "proxy_support_volume_m3": _round(support_volume),
+      "aabb_volume_ratio": _round(support_volume / max(source_volume, 1e-9), 5),
+      "max_support_surface_inset_m": _round(
+        max(
+          (source_bounds["span"][axis] - support_span[axis]) / 2.0
+          for axis in range(3)
+        )
+      ),
+    },
+    "runtime_allowed_use": [
+      "distance_diagnostic_candidate",
+      "review_visualization_input",
+    ],
+    "runtime_prohibited_use": [
+      "runtime_collision_mesh",
+      "real_f16_engineering_geometry",
+      "true_internal_component_boundary",
+      "real_weapon_pk",
+      "structural_breakup_or_debris_claim",
+    ],
+    "review_status": "manual_review_required",
+    "manual_review_notes": [
+      "First-pass fine proxy for TG-P6 review only.",
+      "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+    ],
+  }
+  if proxy_kind in {"obb", "thin_prism"}:
+    record["obb"] = {
+      "center_m": support_bounds["center"],
+      "axes": [
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+      ],
+      "half_extents_m": _round_vec([value / 2.0 for value in support_span]),
+    }
+  if proxy_kind == "thin_prism":
+    thin_axis = 1 if region_id == "vertical_tail" else 2
+    record["thin_prism"] = {
+      "thin_axis": ["x", "y", "z"][thin_axis],
+      "nominal_thickness_m": _round(support_span[thin_axis]),
+      "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+    }
+  if proxy_kind == "convex_hull":
+    record["convex_hull"] = {
+      "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices",
+      "vertex_count": len(record["vertices_m"]),
+      "simplification_error_m": None,
+    }
+  if "wing" in region_id or "tail" in region_id:
+    record["manual_review_notes"].append(
+      "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+    )
+  return record
+
+
+def _rank_point_to_fine_proxies(
+  point: list[float],
+  fine_proxy: dict[str, Any],
+) -> list[dict[str, Any]]:
+  ranked: list[dict[str, Any]] = []
+  for proxy in fine_proxy["proxies"]:
+    distance = _point_box_distance(point, proxy["support_bounds"])
+    ranked.append(
+      {
+        "source_region_id": proxy["source_region_id"],
+        "proxy_kind": proxy["proxy_kind"],
+        "distance_m": _round(distance),
+        "contains_point": _contains_point(proxy["support_bounds"], point),
+        "source_aabb_distance_m": _round(
+          _point_box_distance(point, proxy["source_region_bounds"])
+        ),
+      }
+    )
+  ranked.sort(
+    key=lambda row: (
+      row["distance_m"],
+      row["source_aabb_distance_m"],
+      row["source_region_id"],
+    )
+  )
+  return ranked
+
+
+def build_fine_geometry_proxy_candidate(
+  mapping: dict[str, Any],
+  diagnostics: dict[str, Any],
+  *,
+  manifest: dict[str, Any] | None = None,
+  audit_scene_path: Path | None = None,
+) -> dict[str, Any]:
+  sim_vertices: list[list[float]] = []
+  if manifest is not None:
+    if audit_scene_path is None:
+      audit_scene_path = REPO_ROOT / manifest["paths"]["audit_scene_gltf"]
+    sim_vertices = extract_gltf_sim_vertices(audit_scene_path, manifest)
+  proxies = [
+    _fine_proxy_record(region, sim_vertices=sim_vertices)
+    for region in mapping["outer_regions"]
+  ]
+  fine_proxy: dict[str, Any] = {
+    "schema_version": FINE_PROXY_SCHEMA_VERSION,
+    "status": "fine_geometry_proxy_candidate_generated_review_only",
+    "generated_on": mapping["generated_on"],
+    "asset_ref": mapping["asset_ref"],
+    "coordinate_frame": mapping["coordinate_frame"],
+    "outer_envelope": mapping["outer_envelope"],
+    "source_mapping_schema_version": mapping["schema_version"],
+    "proxies": proxies,
+    "review_point_distance_deltas": [],
+  }
+  distance_rows: list[dict[str, Any]] = []
+  for row in diagnostics["rows"]:
+    point = [float(value) for value in row["point_m"]]
+    rankings = _rank_point_to_fine_proxies(point, fine_proxy)
+    nearest = rankings[0]
+    distance_rows.append(
+      {
+        "point_id": row["point_id"],
+        "aspect": row["aspect"],
+        "point_m": row["point_m"],
+        "nearest_source_aabb_region_id": row["nearest_outer_region_id"],
+        "nearest_source_aabb_distance_m": row["nearest_outer_distance_m"],
+        "nearest_fine_proxy_region_id": nearest["source_region_id"],
+        "nearest_fine_proxy_kind": nearest["proxy_kind"],
+        "nearest_fine_proxy_distance_m": nearest["distance_m"],
+        "fine_minus_source_distance_delta_m": _round(
+          nearest["distance_m"] - row["nearest_outer_distance_m"]
+        ),
+        "inside_fine_proxy_count": sum(1 for item in rankings if item["contains_point"]),
+        "fine_proxy_rankings": rankings[:5],
+        "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      }
+    )
+  kind_counts: dict[str, int] = {}
+  for proxy in proxies:
+    kind_counts[proxy["proxy_kind"]] = kind_counts.get(proxy["proxy_kind"], 0) + 1
+  source_volume = sum(_volume(proxy["source_region_bounds"]) for proxy in proxies)
+  support_volume = sum(_volume(proxy["support_bounds"]) for proxy in proxies)
+  fine_proxy["summary"] = {
+    "source_outer_region_count": len(mapping["outer_regions"]),
+    "proxy_count": len(proxies),
+    "held_region_count": 0,
+    "mesh_derived_silhouette_count": sum(
+      1
+      for proxy in proxies
+      if proxy["mesh_derived_review_geometry"]["status"].startswith(
+        "mesh_silhouette_extracted"
+      )
+    ),
+    "mesh_source_vertex_count": len(sim_vertices),
+    "proxy_kind_counts": kind_counts,
+    "total_source_aabb_volume_m3": _round(source_volume),
+    "total_proxy_support_volume_m3": _round(support_volume),
+    "total_proxy_support_volume_ratio": _round(
+      support_volume / max(source_volume, 1e-9),
+      5,
+    ),
+    "review_point_count": len(distance_rows),
+    "review_status": "manual_review_required",
+  }
+  fine_proxy["review_point_distance_deltas"] = distance_rows
+  fine_proxy["manual_review_queue"] = [
+    {
+      "priority": "high",
+      "question": "Confirm thin wing and tail proxies do not hide left/right coordinate sign issues.",
+    },
+    {
+      "priority": "high",
+      "question": "Review nose, canopy, and intake convex-hull candidates before any path intersection use.",
+    },
+    {
+      "priority": "medium",
+      "question": "Compare fine-minus-source distance deltas for nose, beam, above, and below points.",
+    },
+  ]
+  fine_proxy["authority_boundary"] = mapping["authority_boundary"]
+  return fine_proxy
+
+
 def _source_metadata(intake_metadata: dict[str, Any]) -> dict[str, Any]:
   user = intake_metadata.get("user", {})
   license_record = intake_metadata.get("license", {})
@@ -1412,6 +1838,19 @@ def write_review_point_diagnostics(
   return json_path, csv_path
 
 
+def write_fine_geometry_proxy_candidate(
+  fine_proxy: dict[str, Any],
+  output_dir: Path,
+) -> Path:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  output_path = output_dir / "fine_geometry_proxy_candidate_20260611.json"
+  output_path.write_text(
+    json.dumps(fine_proxy, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+    encoding="utf-8",
+  )
+  return output_path
+
+
 def _project_bounds(bounds: dict[str, list[float]], axes: tuple[int, int]) -> tuple[float, float, float, float]:
   x_axis, y_axis = axes
   return (
@@ -1521,6 +1960,64 @@ def _svg_point(
     f'stroke="#ffffff" stroke-width="1.2"><title>{escaped_label}</title></circle>\n'
     f'<text x="{screen_x + 6.0:.2f}" y="{screen_y - 6.0:.2f}" font-size="10" '
     f'font-family="monospace" fill="{color}">{index}</text>'
+  )
+
+
+def _svg_polygon(
+  *,
+  points: list[list[float]],
+  view_bounds: tuple[float, float, float, float],
+  width: int,
+  height: int,
+  color: str,
+  label: str,
+  fill_opacity: float = 0.22,
+  stroke_width: float = 1.5,
+) -> str:
+  if len(points) < 3:
+    return ""
+  screen_points = [
+    _svg_project_point(
+      point=(point[0], point[1]),
+      view_bounds=view_bounds,
+      width=width,
+      height=height,
+    )
+    for point in points
+  ]
+  point_text = " ".join(f"{point[0]:.2f},{point[1]:.2f}" for point in screen_points)
+  centroid_x = sum(point[0] for point in screen_points) / len(screen_points)
+  centroid_y = sum(point[1] for point in screen_points) / len(screen_points)
+  escaped_label = html.escape(label)
+  return (
+    f'<polygon points="{point_text}" fill="{color}" fill-opacity="{fill_opacity:.2f}" '
+    f'stroke="{color}" stroke-width="{stroke_width:.2f}">'
+    f'<title>{escaped_label}</title></polygon>\n'
+    f'<text x="{centroid_x + 4.0:.2f}" y="{centroid_y + 4.0:.2f}" '
+    f'font-size="10" font-family="monospace" fill="{color}">{escaped_label}</text>'
+  )
+
+
+def _svg_polygon_projected(
+  *,
+  points: list[list[float]],
+  view_bounds: tuple[float, float, float, float],
+  width: int,
+  height: int,
+  color: str,
+  label: str,
+  fill_opacity: float = 0.24,
+  stroke_width: float = 1.5,
+) -> str:
+  return _svg_polygon(
+    points=points,
+    view_bounds=view_bounds,
+    width=width,
+    height=height,
+    color=color,
+    label=label,
+    fill_opacity=fill_opacity,
+    stroke_width=stroke_width,
   )
 
 
@@ -1677,6 +2174,463 @@ def write_svg_views(
   return paths
 
 
+def _svg_for_fine_proxy_view(fine_proxy: dict[str, Any], view: str) -> str:
+  axes_by_view = {
+    "top": (0, 1, "x forward (m)", "y lateral (m)"),
+    "side": (0, 2, "x forward (m)", "z up (m)"),
+    "front": (1, 2, "y lateral (m)", "z up (m)"),
+  }
+  axis_x, axis_y, label_x, label_y = axes_by_view[view]
+  width, height = 1200, 760
+  envelope = fine_proxy["outer_envelope"]["bounds"]
+  view_bounds_raw = _project_bounds(envelope, (axis_x, axis_y))
+  margin_x = max((view_bounds_raw[2] - view_bounds_raw[0]) * 0.08, 0.5)
+  margin_y = max((view_bounds_raw[3] - view_bounds_raw[1]) * 0.08, 0.5)
+  view_bounds = (
+    view_bounds_raw[0] - margin_x,
+    view_bounds_raw[1] - margin_y,
+    view_bounds_raw[2] + margin_x,
+    view_bounds_raw[3] + margin_y,
+  )
+  elements = [
+    '<rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>',
+    f'<text x="24" y="34" font-size="18" font-family="monospace" fill="#202020">'
+    f'F-16 mesh-derived fine geometry proxy candidate {view} view</text>',
+    f'<text x="24" y="58" font-size="12" font-family="monospace" fill="#555555">'
+    f'{label_x}; {label_y}; dashed source AABB, dotted support bounds, solid mesh-derived silhouette</text>',
+    _svg_rect(
+      bounds=view_bounds_raw,
+      view_bounds=view_bounds,
+      width=width,
+      height=height,
+      color="#111111",
+      label="outer_envelope",
+      fill_opacity=0.02,
+      stroke_width=1.5,
+    ),
+  ]
+  for index, proxy in enumerate(fine_proxy["proxies"]):
+    color = _svg_color(index)
+    elements.append(
+      _svg_rect(
+        bounds=_project_bounds(proxy["source_region_bounds"], (axis_x, axis_y)),
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color=color,
+        label=f'{proxy["source_region_id"]} source_aabb',
+        fill_opacity=0.02,
+        stroke_width=0.9,
+        stroke_dasharray="6 4",
+        label_visible=False,
+      )
+    )
+    elements.append(
+      _svg_rect(
+        bounds=_project_bounds(proxy["support_bounds"], (axis_x, axis_y)),
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color=color,
+        label=f'{proxy["source_region_id"]} support_bounds',
+        fill_opacity=0.02,
+        stroke_width=0.9,
+        stroke_dasharray="2 3",
+        label_visible=False,
+      )
+    )
+    hull = proxy.get("mesh_derived_review_geometry", {}).get("hulls", {}).get(view, {})
+    hull_points = hull.get("points_m", [])
+    if len(hull_points) >= 3:
+      elements.append(
+        _svg_polygon(
+          points=hull_points,
+          view_bounds=view_bounds,
+          width=width,
+          height=height,
+          color=color,
+          label=f'{proxy["source_region_id"]} {proxy["proxy_kind"]} mesh_silhouette',
+        )
+      )
+    else:
+      elements.append(
+        _svg_rect(
+          bounds=_project_bounds(proxy["support_bounds"], (axis_x, axis_y)),
+          view_bounds=view_bounds,
+          width=width,
+          height=height,
+          color=color,
+          label=f'{proxy["source_region_id"]} {proxy["proxy_kind"]} fallback_support',
+          fill_opacity=0.15,
+          stroke_width=1.4,
+        )
+      )
+  for index, row in enumerate(fine_proxy["review_point_distance_deltas"], start=1):
+    elements.append(
+      _svg_point(
+        point=row["point_m"],
+        axes=(axis_x, axis_y),
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color="#0f172a",
+        label=f'{index}: {row["point_id"]}',
+        index=index,
+      )
+    )
+  elements.extend(
+    [
+      '<text x="24" y="716" font-size="11" font-family="monospace" fill="#555555">'
+      'Legend: dashed boxes are TG-P2 source AABBs; dotted boxes are support bounds; solid polygons are mesh-derived silhouettes</text>',
+      '<text x="24" y="736" font-size="11" font-family="monospace" fill="#555555">'
+      'Review-only fine proxy candidates; not a runtime collision mesh or real F-16 engineering model</text>',
+    ]
+  )
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" '
+    'viewBox="0 0 1200 760">\n'
+    + "\n".join(elements)
+    + "\n</svg>\n"
+  )
+
+
+def write_fine_proxy_svg_views(
+  fine_proxy: dict[str, Any],
+  output_dir: Path,
+) -> list[Path]:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  paths: list[Path] = []
+  for view in ("top", "side", "front"):
+    path = output_dir / f"fine_proxy_{view}.svg"
+    path.write_text(_svg_for_fine_proxy_view(fine_proxy, view), encoding="utf-8")
+    paths.append(path)
+  return paths
+
+
+def _component_rows_for_region(
+  component_report: dict[str, Any],
+  region_id: str,
+) -> list[dict[str, Any]]:
+  return [
+    row for row in component_report["rows"] if row["bound_region_id"] == region_id
+  ]
+
+
+def _fine_proxy_review_flags(
+  proxy: dict[str, Any],
+  component_rows: list[dict[str, Any]],
+) -> list[str]:
+  geometry = proxy["mesh_derived_review_geometry"]
+  hull_counts = [
+    view["point_count"] for view in geometry.get("hulls", {}).values()
+  ]
+  flags: list[str] = []
+  if geometry.get("selection_inflation_factor", 1.0) > 1.0:
+    flags.append(f'inflated_bounds_x{geometry["selection_inflation_factor"]}')
+  if hull_counts and min(hull_counts) <= 4:
+    flags.append("low_hull_point_count")
+  if any(row["review_status"] == "needs_review" for row in component_rows):
+    flags.append("component_binding_needs_review")
+  if "wing" in proxy["source_region_id"] or "tail" in proxy["source_region_id"]:
+    flags.append("surface_sign_or_thickness_review")
+  if not flags:
+    flags.append("candidate_accept_visual_check")
+  return flags
+
+
+def _fine_proxy_review_status(flags: list[str]) -> str:
+  if any(flag.startswith("inflated_bounds") for flag in flags):
+    return "hold_for_human_review"
+  if "component_binding_needs_review" in flags or "low_hull_point_count" in flags:
+    return "needs_human_review"
+  return "candidate_accept_after_visual_check"
+
+
+def _projected_view_bounds_for_proxy(
+  proxy: dict[str, Any],
+  component_rows: list[dict[str, Any]],
+  axes: tuple[int, int],
+) -> tuple[float, float, float, float]:
+  projected: list[tuple[float, float, float, float]] = [
+    _project_bounds(proxy["source_region_bounds"], axes),
+    _project_bounds(proxy["support_bounds"], axes),
+  ]
+  geometry = proxy["mesh_derived_review_geometry"]
+  if "selection_bounds" in geometry:
+    projected.append(_project_bounds(geometry["selection_bounds"], axes))
+  for row in component_rows:
+    projected.append(_project_bounds(row["component_bounds"], axes))
+  for view_record in geometry.get("hulls", {}).values():
+    points = view_record.get("points_m", [])
+    if points:
+      projected.append(
+        (
+          min(point[0] for point in points),
+          min(point[1] for point in points),
+          max(point[0] for point in points),
+          max(point[1] for point in points),
+        )
+      )
+  min_x = min(bounds[0] for bounds in projected)
+  min_y = min(bounds[1] for bounds in projected)
+  max_x = max(bounds[2] for bounds in projected)
+  max_y = max(bounds[3] for bounds in projected)
+  span_x = max(max_x - min_x, 0.5)
+  span_y = max(max_y - min_y, 0.5)
+  return (
+    min_x - span_x * 0.12,
+    min_y - span_y * 0.12,
+    max_x + span_x * 0.12,
+    max_y + span_y * 0.12,
+  )
+
+
+def _fine_proxy_review_mini_svg(
+  proxy: dict[str, Any],
+  component_rows: list[dict[str, Any]],
+  view: str,
+) -> str:
+  axes_by_view = {
+    "top": (0, 1, "x/y"),
+    "side": (0, 2, "x/z"),
+    "front": (1, 2, "y/z"),
+  }
+  axis_x, axis_y, view_label = axes_by_view[view]
+  axes = (axis_x, axis_y)
+  width, height = 420, 260
+  view_bounds = _projected_view_bounds_for_proxy(proxy, component_rows, axes)
+  geometry = proxy["mesh_derived_review_geometry"]
+  color = "#2563eb"
+  elements = [
+    '<rect x="0" y="0" width="420" height="260" fill="#ffffff"/>',
+    f'<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">{view} ({view_label})</text>',
+    _svg_rect(
+      bounds=_project_bounds(proxy["source_region_bounds"], axes),
+      view_bounds=view_bounds,
+      width=width,
+      height=height,
+      color="#f59e0b",
+      label="source_region_bounds",
+      fill_opacity=0.02,
+      stroke_width=1.1,
+      stroke_dasharray="6 4",
+      label_visible=False,
+    ),
+    _svg_rect(
+      bounds=_project_bounds(proxy["support_bounds"], axes),
+      view_bounds=view_bounds,
+      width=width,
+      height=height,
+      color="#64748b",
+      label="support_bounds",
+      fill_opacity=0.02,
+      stroke_width=1.1,
+      stroke_dasharray="2 3",
+      label_visible=False,
+    ),
+  ]
+  if geometry.get("selection_inflation_factor", 1.0) > 1.0:
+    elements.append(
+      _svg_rect(
+        bounds=_project_bounds(geometry["selection_bounds"], axes),
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color="#dc2626",
+        label="inflated_selection_bounds",
+        fill_opacity=0.01,
+        stroke_width=1.1,
+        stroke_dasharray="8 4",
+        label_visible=False,
+      )
+    )
+  for row in component_rows:
+    component_color = "#be123c" if row["review_status"] == "needs_review" else "#7c3aed"
+    elements.append(
+      _svg_rect(
+        bounds=_project_bounds(row["component_bounds"], axes),
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color=component_color,
+        label=f'{row["component_name"]} {row["review_status"]}',
+        fill_opacity=0.08,
+        stroke_width=0.9,
+        label_visible=False,
+      )
+    )
+  hull_points = geometry.get("hulls", {}).get(view, {}).get("points_m", [])
+  if len(hull_points) >= 3:
+    elements.append(
+      _svg_polygon_projected(
+        points=hull_points,
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color=color,
+        label="mesh_silhouette",
+        fill_opacity=0.28,
+        stroke_width=1.6,
+      )
+    )
+  elements.append(
+    '<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">'
+    'orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text>'
+  )
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260">'
+    + "\n".join(elements)
+    + "</svg>"
+  )
+
+
+def write_fine_proxy_review_dashboard(
+  fine_proxy: dict[str, Any],
+  component_report: dict[str, Any],
+  output_dir: Path,
+) -> Path:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  path = output_dir / "fine_proxy_review_dashboard.html"
+  cards: list[str] = []
+  for proxy in fine_proxy["proxies"]:
+    region_id = proxy["source_region_id"]
+    components = _component_rows_for_region(component_report, region_id)
+    flags = _fine_proxy_review_flags(proxy, components)
+    status = _fine_proxy_review_status(flags)
+    geometry = proxy["mesh_derived_review_geometry"]
+    hull_counts = {
+      view: record["point_count"] for view, record in geometry["hulls"].items()
+    }
+    component_list = ", ".join(
+      f'{row["component_name"]}:{row["review_status"]}' for row in components
+    ) or "none"
+    card_class = "hold" if status == "hold_for_human_review" else (
+      "review" if status == "needs_human_review" else "candidate"
+    )
+    cards.append(
+      f"""
+      <section class="region-card {card_class}">
+        <div class="region-head">
+          <h2>{html.escape(region_id)} <span>{html.escape(proxy["proxy_kind"])}</span></h2>
+          <strong>{html.escape(status)}</strong>
+        </div>
+        <div class="metrics">
+          <div>inflation: {geometry.get("selection_inflation_factor", 1.0)}</div>
+          <div>vertices: {geometry.get("region_vertex_count", 0)}</div>
+          <div>hull points: top {hull_counts.get("top", 0)} / side {hull_counts.get("side", 0)} / front {hull_counts.get("front", 0)}</div>
+          <div>flags: {html.escape(", ".join(flags))}</div>
+          <div>components: {html.escape(component_list)}</div>
+        </div>
+        <div class="mini-views">
+          {_fine_proxy_review_mini_svg(proxy, components, "top")}
+          {_fine_proxy_review_mini_svg(proxy, components, "side")}
+          {_fine_proxy_review_mini_svg(proxy, components, "front")}
+        </div>
+      </section>
+      """
+    )
+  body = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>F-16 Fine Proxy Human Review Dashboard</title>
+  <style>
+    body {{
+      margin: 0;
+      background: #f8fafc;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }}
+    main {{
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+    h1 {{
+      margin: 0 0 8px;
+    }}
+    .summary {{
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-family: monospace;
+      font-size: 13px;
+    }}
+    .region-card {{
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      margin: 0 0 18px;
+      padding: 14px;
+    }}
+    .region-card.hold {{
+      border-color: #dc2626;
+    }}
+    .region-card.review {{
+      border-color: #d97706;
+    }}
+    .region-card.candidate {{
+      border-color: #16a34a;
+    }}
+    .region-head {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }}
+    h2 {{
+      margin: 0;
+      font-size: 18px;
+    }}
+    h2 span {{
+      color: #475569;
+      font-size: 13px;
+      font-family: monospace;
+      font-weight: 400;
+    }}
+    .metrics {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 6px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+      margin-bottom: 12px;
+    }}
+    .mini-views {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 12px;
+    }}
+    svg {{
+      width: 100%;
+      height: auto;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+    }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>F-16 Fine Proxy Human Review Dashboard</h1>
+  <div class="summary">
+    schema: {html.escape(fine_proxy["schema_version"])}<br>
+    proxy_count: {fine_proxy["summary"]["proxy_count"]};
+    mesh_silhouettes: {fine_proxy["summary"]["mesh_derived_silhouette_count"]};
+    source_vertices: {fine_proxy["summary"]["mesh_source_vertex_count"]};
+    review_status: {html.escape(fine_proxy["summary"]["review_status"])}<br>
+    Review-only visual diagnostics. This is not a runtime collision mesh, not true F-16 engineering geometry, and not weapon lethality evidence.
+  </div>
+  {"".join(cards)}
+</main>
+</body>
+</html>
+"""
+  path.write_text(body, encoding="utf-8")
+  return path
+
+
 def _html_table(headers: list[str], rows: list[list[Any]]) -> str:
   header_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
   row_html = []
@@ -1701,6 +2655,7 @@ def write_review_packet(
   mapping: dict[str, Any],
   component_report: dict[str, Any],
   diagnostics: dict[str, Any],
+  fine_proxy: dict[str, Any] | None = None,
   output_dir: Path,
 ) -> Path:
   output_dir.mkdir(parents=True, exist_ok=True)
@@ -1729,6 +2684,47 @@ def write_review_packet(
     ]
     for row in diagnostics["rows"]
   ]
+  fine_proxy_section = ""
+  if fine_proxy is not None:
+    fine_proxy_rows = [
+      [
+        row["point_id"],
+        row["nearest_source_aabb_region_id"],
+        row["nearest_source_aabb_distance_m"],
+        row["nearest_fine_proxy_region_id"],
+        row["nearest_fine_proxy_kind"],
+        row["nearest_fine_proxy_distance_m"],
+        row["fine_minus_source_distance_delta_m"],
+      ]
+      for row in fine_proxy["review_point_distance_deltas"]
+    ]
+    fine_proxy_section = f"""
+  <section>
+    <h2>Fine Geometry Proxy Overlay</h2>
+    <p class="note">TG-P6 review-only proxy candidates. Dashed rectangles show source AABB regions, dotted rectangles show support bounds, and solid polygons show mesh-derived silhouettes from filtered audit-glTF vertices.</p>
+    <p class="note"><a href="fine_proxy_review_dashboard.html">Open the per-region human review dashboard</a>.</p>
+    <div class="views">
+      <img src="fine_proxy_top.svg" alt="Top view fine proxy overlay">
+      <img src="fine_proxy_side.svg" alt="Side view fine proxy overlay">
+      <img src="fine_proxy_front.svg" alt="Front view fine proxy overlay">
+    </div>
+  </section>
+  <section>
+    <h2>Fine Proxy Distance Deltas</h2>
+    {_html_table(
+      [
+        "point",
+        "source_region",
+        "source_dist_m",
+        "fine_region",
+        "fine_kind",
+        "fine_dist_m",
+        "delta_m",
+      ],
+      fine_proxy_rows,
+    )}
+  </section>
+"""
   body = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -1817,6 +2813,7 @@ def write_review_packet(
       <img src="front.svg" alt="Front view geometry overlay">
     </div>
   </section>
+{fine_proxy_section}
   <section>
     <h2>Review Point Diagnostics</h2>
     {_html_table(
@@ -1894,17 +2891,31 @@ def main(argv: list[str] | None = None) -> int:
   diagnostics_json_path, diagnostics_csv_path = write_review_point_diagnostics(
     diagnostics, args.out
   )
+  fine_proxy = build_fine_geometry_proxy_candidate(
+    mapping,
+    diagnostics,
+    manifest=manifest,
+    audit_scene_path=args.asset,
+  )
+  fine_proxy_path = write_fine_geometry_proxy_candidate(fine_proxy, args.out)
   svg_paths = write_svg_views(
     mapping,
     args.out,
     component_report=component_report,
     diagnostics=diagnostics,
   )
+  fine_proxy_svg_paths = write_fine_proxy_svg_views(fine_proxy, args.out)
+  fine_proxy_dashboard_path = write_fine_proxy_review_dashboard(
+    fine_proxy,
+    component_report,
+    args.out,
+  )
   scene_path = write_review_packet(
     manifest=manifest,
     mapping=mapping,
     component_report=component_report,
     diagnostics=diagnostics,
+    fine_proxy=fine_proxy,
     output_dir=args.out,
   )
   print(
@@ -1922,11 +2933,25 @@ def main(argv: list[str] | None = None) -> int:
         "review_point_diagnostics_csv": _display_path(
           diagnostics_csv_path, REPO_ROOT
         ),
+        "fine_proxy_json": _display_path(fine_proxy_path, REPO_ROOT),
         "scene_html": _display_path(scene_path, REPO_ROOT),
         "svg_outputs": [_display_path(path, REPO_ROOT) for path in svg_paths],
+        "fine_proxy_svg_outputs": [
+          _display_path(path, REPO_ROOT) for path in fine_proxy_svg_paths
+        ],
+        "fine_proxy_review_dashboard": _display_path(
+          fine_proxy_dashboard_path, REPO_ROOT
+        ),
         "component_count": component_report["summary"]["component_count"],
         "component_needs_review_count": component_report["summary"][
           "needs_review_count"
+        ],
+        "fine_proxy_count": fine_proxy["summary"]["proxy_count"],
+        "mesh_derived_silhouette_count": fine_proxy["summary"][
+          "mesh_derived_silhouette_count"
+        ],
+        "fine_proxy_support_volume_ratio": fine_proxy["summary"][
+          "total_proxy_support_volume_ratio"
         ],
         "review_point_count": diagnostics["summary"]["review_point_count"],
         "inside_outer_region_point_count": diagnostics["summary"][

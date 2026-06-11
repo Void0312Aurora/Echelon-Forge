@@ -1,10 +1,12 @@
 # A2 Target Geometry Current Status
 
-Status: `2026-06-11` TG-P5 review packet and diagnostics complete. The parent entry and issue have
-moved F-16 geometry refinement from issue tracking into an executable
-subproject; the first source/axis/scale manifest, outer-region candidate,
-component-binding report, offline review page, and test-point distance
-diagnostics are generated.
+Status: `2026-06-12` TG-P6-R4 human review dashboard complete / manual review
+required. The parent entry and issue have moved F-16 geometry
+refinement from issue tracking into an executable subproject; the first
+source/axis/scale manifest, outer-region candidate, component-binding report,
+offline review page, test-point distance diagnostics, and fine-proxy candidate
+packet with mesh-derived silhouettes and a per-region review dashboard are
+generated.
 
 Chinese canonical:
 [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md).
@@ -26,13 +28,16 @@ Chinese canonical:
 | TG-P3 component binding | [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json), [component_binding_report_20260611.csv](review_packets/f16c_20260611/component_binding_report_20260611.csv) | All `22` components have candidate regions; `7` need human review |
 | TG-P5 distance diagnostics | [review_point_diagnostics_20260611.json](review_packets/f16c_20260611/review_point_diagnostics_20260611.json), [review_point_diagnostics_20260611.csv](review_packets/f16c_20260611/review_point_diagnostics_20260611.csv) | Covers `10` review points; `6` are inside outer regions; `nose_axis_4m` is `0.2 m` from the nearest component with `6` candidate components |
 | TG-P6 design draft | [fine_geometry_proxy_design_20260611.md](fine_geometry_proxy_design_20260611.md) | Defines the order for moving from boxes to oriented boxes, thin prisms, convex hulls, and simplified shell meshes |
+| TG-P6 mesh-derived fine-proxy silhouettes | [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json), [fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg), [fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg), [fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg) | Generated `14` review-only proxies with top/side/front convex hull silhouettes from `13,415` audit glTF vertices; `8` regions use source bounds directly and `6` require recorded inflated-bound fallback; support volume ratio remains `0.50965` |
+| TG-P6 human review dashboard | [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html) | Per-region cards show local top/side/front views with source bounds, support bounds, inflated selection bounds, mesh silhouette, component boxes, flags, and candidate/review/hold status |
 
 ## Current Boundary
 
 - This status proves only that the TG-P1 source/scale manifest, TG-P2
   outer-region candidate, TG-P3 component-binding report, TG-P4 review packet,
-  and TG-P5 test-point distance diagnostics are complete; it does not prove
-  runtime integration is complete.
+  TG-P5 test-point distance diagnostics, and TG-P6 review-only mesh-derived
+  fine proxy silhouettes are complete; it does not prove runtime integration is
+  complete.
 - The Sketchfab model is an outer-review candidate, not a source of true
   internal component boundaries.
 - The old FlightGear F-16 is archived as a strong GPLv2 source candidate and
@@ -45,9 +50,13 @@ Chinese canonical:
 1. Human-review the `7` `needs_review` rows in
    `component_binding_report_20260611.csv`, especially left/right coordinate
    signs and `wing_spar_center`.
-2. Continue `TG-P6` implementation: emit `fine_geometry_proxy_candidate_20260611.json` and advance coarse boxes into
-   oriented-box, convex-hull, or simplified-shell candidates before any runtime
-   integration review.
+2. Human-review `fine_geometry_proxy_candidate_20260611.json` and the
+   `fine_proxy_*.svg` overlays, especially the `6` inflated-bound fallback
+   silhouettes: `nose_radome`, `canopy`, `left_wing`, `right_wing`,
+   `left_horizontal_tail`, and `right_horizontal_tail`.
+3. After TG-P6 review is accepted or explicitly held, open `TG-P7` runtime
+   interface decision; do not connect these proxies to the maintained
+   near-fuze path before that decision.
 
 ## Validation Reminder
 

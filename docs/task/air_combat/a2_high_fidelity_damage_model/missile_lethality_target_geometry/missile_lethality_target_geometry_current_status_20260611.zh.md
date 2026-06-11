@@ -1,7 +1,9 @@
 # A2 目标几何建模当前状态
 
-状态：`2026-06-11` TG-P5 review packet and diagnostics complete。父级入口和 issue 已把 F-16 几何细化从
-问题记录推进到可执行子项目；第一版来源/轴向/尺度 manifest、外壳区域候选、部件绑定报告、离线审阅页和测试点距离诊断已生成。
+状态：`2026-06-12` TG-P6-R4 human review dashboard complete / manual review required。
+父级入口和 issue 已把 F-16 几何细化从问题记录推进到可执行子项目；第一版来源/轴向/尺度
+manifest、外壳区域候选、部件绑定报告、离线审阅页、测试点距离诊断和带 mesh-derived silhouette
+的精细代理候选包，以及逐区域人工审阅 dashboard 已生成。
 
 英文辅文：[missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)。
 
@@ -22,11 +24,13 @@
 | TG-P3 部件绑定 | [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json)、[component_binding_report_20260611.csv](review_packets/f16c_20260611/component_binding_report_20260611.csv) | `22` 个部件均有候选区域；`7` 个需要人工复核 |
 | TG-P5 距离诊断 | [review_point_diagnostics_20260611.json](review_packets/f16c_20260611/review_point_diagnostics_20260611.json)、[review_point_diagnostics_20260611.csv](review_packets/f16c_20260611/review_point_diagnostics_20260611.csv) | 覆盖 `10` 个测试点；`6` 个点位于外壳区域内；`nose_axis_4m` 距最近部件 `0.2 m`，候选部件 `6` 个 |
 | TG-P6 设计草案 | [fine_geometry_proxy_design_20260611.zh.md](fine_geometry_proxy_design_20260611.zh.md) | 定义从长方体升级到倾斜盒、薄棱柱、凸包和简化外壳网格的顺序 |
+| TG-P6 mesh-derived 精细代理轮廓 | [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json)、[fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg)、[fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg)、[fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg) | 已从 `13,415` 个审计 glTF 顶点为 `14` 个 review-only 代理生成 top/side/front convex hull silhouettes；`8` 个区域直接使用源边界筛选，`6` 个区域需要记录过的 inflated-bound fallback；support volume ratio 仍为 `0.50965` |
+| TG-P6 人工审阅 dashboard | [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html) | 逐区域卡片显示局部 top/side/front 视图，叠加 source bounds、support bounds、inflated selection bounds、mesh silhouette、部件盒、flags 和 candidate/review/hold 状态 |
 
 ## 当前边界
 
-- 本状态只证明 TG-P1 来源/尺度 manifest、TG-P2 外壳区域候选、TG-P3 部件绑定、TG-P4 审阅包和
-  TG-P5 测试点距离诊断已完成，不证明运行时接入已完成。
+- 本状态只证明 TG-P1 来源/尺度 manifest、TG-P2 外壳区域候选、TG-P3 部件绑定、TG-P4 审阅包、
+  TG-P5 测试点距离诊断和 TG-P6 review-only mesh-derived 精细代理轮廓已完成，不证明运行时接入已完成。
 - 当前 Sketchfab 模型只作为外形审阅候选，不提供真实内部部件边界。
 - 旧 FlightGear F-16 已归档为 GPL v2 强候选来源，不进入主线派生几何。
 - 运行时近炸投影仍按现有逻辑运行，直到审阅包和诊断通过后再决定是否接入。
@@ -34,8 +38,10 @@
 ## 下一步
 
 1. 人工复核 `component_binding_report_20260611.csv` 中 `7` 个 `needs_review` 项，特别是左右翼坐标符号和 `wing_spar_center`。
-2. 执行 `TG-P6` 后续实现：生成 `fine_geometry_proxy_candidate_20260611.json`，把粗盒子推进为倾斜盒、凸包或简化外壳网格候选，
-   再决定是否进入运行时接入评审。
+2. 人工复核 `fine_geometry_proxy_candidate_20260611.json` 和 `fine_proxy_*.svg` 叠加图，重点看 `6`
+   个 inflated-bound fallback 轮廓：`nose_radome`、`canopy`、`left_wing`、`right_wing`、
+   `left_horizontal_tail` 和 `right_horizontal_tail`。
+3. TG-P6 审阅 accepted 或明确 held 后，再进入 `TG-P7` runtime interface decision；在该决议前不得把这些代理接入维护中的近炸主路径。
 
 ## 验证提醒
 

@@ -1,0 +1,4846 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "real_weapon_pk_authority": false,
+    "runtime_collision_mesh": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Confirm thin wing and tail proxies do not hide left/right coordinate sign issues."
+    },
+    {
+      "priority": "high",
+      "question": "Review nose, canopy, and intake convex-hull candidates before any path intersection use."
+    },
+    {
+      "priority": "medium",
+      "question": "Compare fine-minus-source distance deltas for nose, beam, above, and below points."
+    }
+  ],
+  "outer_envelope": {
+    "bounds": {
+      "center": [
+        -1e-06,
+        -1e-06,
+        0.0
+      ],
+      "max": [
+        7.536842,
+        4.812344,
+        2.330161
+      ],
+      "min": [
+        -7.536844,
+        -4.812345,
+        -2.330161
+      ],
+      "span": [
+        15.073686,
+        9.624689,
+        4.660323
+      ]
+    },
+    "bounds_kind": "review_aabb_sim_m",
+    "scaled_review_dimensions": {
+      "height_m": 4.660323,
+      "length_m": 15.073686,
+      "wingspan_m": 9.624691
+    }
+  },
+  "proxies": [
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 7,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.38419,
+        "max_support_surface_inset_m": 0.2016,
+        "proxy_support_volume_m3": 0.870552,
+        "source_aabb_volume_m3": 2.265928
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 15,
+            "points_m": [
+              [
+                -0.307198,
+                -0.64324
+              ],
+              [
+                -0.302809,
+                -0.652168
+              ],
+              [
+                -0.232641,
+                -0.662606
+              ],
+              [
+                -0.221095,
+                -0.663019
+              ],
+              [
+                0.221094,
+                -0.663019
+              ],
+              [
+                0.23264,
+                -0.662606
+              ],
+              [
+                0.302808,
+                -0.652168
+              ],
+              [
+                0.307197,
+                -0.64324
+              ],
+              [
+                0.265122,
+                -0.586761
+              ],
+              [
+                0.109394,
+                -0.513069
+              ],
+              [
+                0.054697,
+                -0.509737
+              ],
+              [
+                -1e-06,
+                -0.506406
+              ],
+              [
+                -0.054698,
+                -0.509737
+              ],
+              [
+                -0.109395,
+                -0.513069
+              ],
+              [
+                -0.265123,
+                -0.586761
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 9,
+            "points_m": [
+              [
+                4.523844,
+                -0.590646
+              ],
+              [
+                4.610077,
+                -0.652168
+              ],
+              [
+                4.816718,
+                -0.662606
+              ],
+              [
+                4.851525,
+                -0.663019
+              ],
+              [
+                4.851525,
+                -0.629007
+              ],
+              [
+                4.830085,
+                -0.54988
+              ],
+              [
+                4.795278,
+                -0.543951
+              ],
+              [
+                4.545999,
+                -0.506406
+              ],
+              [
+                4.527709,
+                -0.513069
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                4.523844,
+                -0.20504
+              ],
+              [
+                4.527025,
+                -0.210073
+              ],
+              [
+                4.611648,
+                -0.307198
+              ],
+              [
+                4.830085,
+                -0.262053
+              ],
+              [
+                4.851525,
+                -0.221095
+              ],
+              [
+                4.851525,
+                0.221094
+              ],
+              [
+                4.830085,
+                0.262052
+              ],
+              [
+                4.611648,
+                0.307197
+              ],
+              [
+                4.527025,
+                0.210072
+              ],
+              [
+                4.523844,
+                0.205039
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 349,
+        "selection_bounds": {
+          "center": [
+            6.330948,
+            0.0,
+            0.069905
+          ],
+          "max": [
+            8.139791,
+            0.72,
+            0.803906
+          ],
+          "min": [
+            4.522106,
+            -0.72,
+            -0.664096
+          ],
+          "span": [
+            3.617685,
+            1.44,
+            1.468002
+          ]
+        },
+        "selection_inflation_factor": 1.5,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          6.330948,
+          0.0,
+          0.069905
+        ],
+        "max": [
+          7.536843,
+          0.48,
+          0.559239
+        ],
+        "min": [
+          5.125053,
+          -0.48,
+          -0.419429
+        ],
+        "span": [
+          2.41179,
+          0.96,
+          0.978668
+        ]
+      },
+      "source_region_id": "nose_radome",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          6.330948,
+          0.0,
+          0.069905
+        ],
+        "max": [
+          7.440371,
+          0.2784,
+          0.422225
+        ],
+        "min": [
+          5.221525,
+          -0.2784,
+          -0.282415
+        ],
+        "span": [
+          2.218847,
+          0.5568,
+          0.704641
+        ]
+      },
+      "vertices_m": [
+        [
+          7.440371,
+          0.0,
+          0.069905
+        ],
+        [
+          5.221525,
+          -0.2784,
+          -0.282415
+        ],
+        [
+          5.221525,
+          -0.2784,
+          0.422225
+        ],
+        [
+          5.221525,
+          0.2784,
+          -0.282415
+        ],
+        [
+          5.221525,
+          0.2784,
+          0.422225
+        ],
+        [
+          6.330948,
+          0.0,
+          -0.282415
+        ],
+        [
+          6.330948,
+          0.0,
+          0.422225
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.74342,
+        "max_support_surface_inset_m": 0.102,
+        "proxy_support_volume_m3": 6.525415,
+        "source_aabb_volume_m3": 8.777518
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 17,
+            "points_m": [
+              [
+                -0.675635,
+                -0.789797
+              ],
+              [
+                0.095735,
+                -0.779198
+              ],
+              [
+                0.34442,
+                -0.771619
+              ],
+              [
+                0.52199,
+                -0.728829
+              ],
+              [
+                0.569823,
+                -0.685828
+              ],
+              [
+                0.304006,
+                -0.084468
+              ],
+              [
+                0.300946,
+                -0.078308
+              ],
+              [
+                0.250164,
+                -0.011008
+              ],
+              [
+                0.18984,
+                0.038384
+              ],
+              [
+                0.129516,
+                0.073071
+              ],
+              [
+                0.064763,
+                0.095679
+              ],
+              [
+                -1e-06,
+                0.10357
+              ],
+              [
+                -0.064764,
+                0.095679
+              ],
+              [
+                -0.129517,
+                0.073071
+              ],
+              [
+                -0.189841,
+                0.038384
+              ],
+              [
+                -0.250165,
+                -0.011008
+              ],
+              [
+                -0.300776,
+                -0.078308
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 12,
+            "points_m": [
+              [
+                2.266907,
+                0.059029
+              ],
+              [
+                2.284069,
+                -0.789797
+              ],
+              [
+                5.208196,
+                -0.771619
+              ],
+              [
+                5.208196,
+                -0.683674
+              ],
+              [
+                3.765217,
+                -0.043793
+              ],
+              [
+                3.599253,
+                0.021242
+              ],
+              [
+                3.423313,
+                0.060449
+              ],
+              [
+                3.247384,
+                0.087888
+              ],
+              [
+                3.070307,
+                0.101607
+              ],
+              [
+                2.89324,
+                0.10357
+              ],
+              [
+                2.611056,
+                0.089045
+              ],
+              [
+                2.328872,
+                0.066065
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                2.266907,
+                -1e-06
+              ],
+              [
+                2.271638,
+                -0.235691
+              ],
+              [
+                2.284069,
+                -0.675635
+              ],
+              [
+                4.050823,
+                -0.521991
+              ],
+              [
+                5.208196,
+                -0.344421
+              ],
+              [
+                5.208196,
+                0.34442
+              ],
+              [
+                4.050823,
+                0.52199
+              ],
+              [
+                3.070669,
+                0.569823
+              ],
+              [
+                2.405039,
+                0.489015
+              ],
+              [
+                2.271638,
+                0.23569
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 5146,
+        "selection_bounds": {
+          "center": [
+            3.84379,
+            0.0,
+            0.023302
+          ],
+          "max": [
+            5.426527,
+            0.85,
+            0.838858
+          ],
+          "min": [
+            2.261053,
+            -0.85,
+            -0.792255
+          ],
+          "span": [
+            3.165474,
+            1.7,
+            1.631113
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "half_extents_m": [
+          1.519427,
+          0.748,
+          0.717689
+        ]
+      },
+      "proxy_kind": "obb",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.426527,
+          0.85,
+          0.838858
+        ],
+        "min": [
+          2.261053,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          3.165474,
+          1.7,
+          1.631113
+        ]
+      },
+      "source_region_id": "forward_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.363218,
+          0.748,
+          0.740992
+        ],
+        "min": [
+          2.324362,
+          -0.748,
+          -0.694388
+        ],
+        "span": [
+          3.038855,
+          1.496,
+          1.435379
+        ]
+      },
+      "vertices_m": [
+        [
+          2.324362,
+          -0.748,
+          -0.694388
+        ],
+        [
+          2.324362,
+          -0.748,
+          0.740992
+        ],
+        [
+          2.324362,
+          0.748,
+          -0.694388
+        ],
+        [
+          2.324362,
+          0.748,
+          0.740992
+        ],
+        [
+          5.363218,
+          -0.748,
+          -0.694388
+        ],
+        [
+          5.363218,
+          -0.748,
+          0.740992
+        ],
+        [
+          5.363218,
+          0.748,
+          -0.694388
+        ],
+        [
+          5.363218,
+          0.748,
+          0.740992
+        ]
+      ]
+    },
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 6,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.51102,
+        "max_support_surface_inset_m": 0.203495,
+        "proxy_support_volume_m3": 1.540047,
+        "source_aabb_volume_m3": 3.01365
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 19,
+            "points_m": [
+              [
+                -0.306896,
+                -0.102406
+              ],
+              [
+                -0.306876,
+                -0.127399
+              ],
+              [
+                -0.054336,
+                -0.139327
+              ],
+              [
+                0.054335,
+                -0.139327
+              ],
+              [
+                0.307046,
+                -0.127399
+              ],
+              [
+                0.307076,
+                -0.102406
+              ],
+              [
+                0.304006,
+                -0.084468
+              ],
+              [
+                0.300946,
+                -0.078308
+              ],
+              [
+                0.250164,
+                -0.011008
+              ],
+              [
+                0.18984,
+                0.038384
+              ],
+              [
+                0.129516,
+                0.073071
+              ],
+              [
+                0.064763,
+                0.095679
+              ],
+              [
+                -1e-06,
+                0.10357
+              ],
+              [
+                -0.064764,
+                0.095679
+              ],
+              [
+                -0.129517,
+                0.073071
+              ],
+              [
+                -0.189841,
+                0.038384
+              ],
+              [
+                -0.250165,
+                -0.011008
+              ],
+              [
+                -0.300776,
+                -0.078308
+              ],
+              [
+                -0.303836,
+                -0.084468
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 16,
+            "points_m": [
+              [
+                1.378623,
+                -0.139327
+              ],
+              [
+                3.262744,
+                -0.137757
+              ],
+              [
+                3.930427,
+                -0.126463
+              ],
+              [
+                3.931182,
+                -0.120585
+              ],
+              [
+                3.765217,
+                -0.043793
+              ],
+              [
+                3.599253,
+                0.021242
+              ],
+              [
+                3.423313,
+                0.060449
+              ],
+              [
+                3.247384,
+                0.087888
+              ],
+              [
+                3.070307,
+                0.101607
+              ],
+              [
+                2.89324,
+                0.10357
+              ],
+              [
+                2.611056,
+                0.089045
+              ],
+              [
+                2.328872,
+                0.066065
+              ],
+              [
+                2.266907,
+                0.059029
+              ],
+              [
+                1.917665,
+                -0.000469
+              ],
+              [
+                1.642426,
+                -0.059596
+              ],
+              [
+                1.3798,
+                -0.128133
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 23,
+            "points_m": [
+              [
+                1.378623,
+                -0.054336
+              ],
+              [
+                1.663514,
+                -0.152497
+              ],
+              [
+                1.951073,
+                -0.213053
+              ],
+              [
+                2.297074,
+                -0.279084
+              ],
+              [
+                2.333351,
+                -0.282043
+              ],
+              [
+                2.893068,
+                -0.300776
+              ],
+              [
+                3.248823,
+                -0.306896
+              ],
+              [
+                3.424038,
+                -0.306876
+              ],
+              [
+                3.599253,
+                -0.25391
+              ],
+              [
+                3.763264,
+                -0.192931
+              ],
+              [
+                3.930427,
+                -0.065972
+              ],
+              [
+                3.931182,
+                -1e-06
+              ],
+              [
+                3.930427,
+                0.065971
+              ],
+              [
+                3.763264,
+                0.19293
+              ],
+              [
+                3.599253,
+                0.253909
+              ],
+              [
+                3.424038,
+                0.307046
+              ],
+              [
+                3.248823,
+                0.307076
+              ],
+              [
+                2.893068,
+                0.300946
+              ],
+              [
+                2.333351,
+                0.282214
+              ],
+              [
+                2.297074,
+                0.279083
+              ],
+              [
+                1.951073,
+                0.213052
+              ],
+              [
+                1.663514,
+                0.152496
+              ],
+              [
+                1.378623,
+                0.054335
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 1679,
+        "selection_bounds": {
+          "center": [
+            3.240842,
+            0.0,
+            1.071874
+          ],
+          "max": [
+            5.501895,
+            1.1,
+            2.283558
+          ],
+          "min": [
+            0.979789,
+            -1.1,
+            -0.13981
+          ],
+          "span": [
+            4.522106,
+            2.2,
+            2.423368
+          ]
+        },
+        "selection_inflation_factor": 2.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          3.240842,
+          0.0,
+          1.071874
+        ],
+        "max": [
+          4.371369,
+          0.55,
+          1.677716
+        ],
+        "min": [
+          2.110316,
+          -0.55,
+          0.466032
+        ],
+        "span": [
+          2.261053,
+          1.1,
+          1.211684
+        ]
+      },
+      "source_region_id": "canopy",
+      "source_region_role": "raised_outer_skin",
+      "support_bounds": {
+        "center": [
+          3.240842,
+          0.0,
+          1.071874
+        ],
+        "max": [
+          4.167874,
+          0.418,
+          1.568664
+        ],
+        "min": [
+          2.31381,
+          -0.418,
+          0.575084
+        ],
+        "span": [
+          1.854063,
+          0.836,
+          0.993581
+        ]
+      },
+      "vertices_m": [
+        [
+          2.31381,
+          -0.418,
+          0.575084
+        ],
+        [
+          2.31381,
+          0.418,
+          0.575084
+        ],
+        [
+          4.167874,
+          -0.418,
+          0.575084
+        ],
+        [
+          4.167874,
+          0.418,
+          0.575084
+        ],
+        [
+          2.962732,
+          0.0,
+          1.568664
+        ],
+        [
+          3.704358,
+          0.0,
+          1.537291
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.74342,
+        "max_support_surface_inset_m": 0.102,
+        "proxy_support_volume_m3": 8.602901,
+        "source_aabb_volume_m3": 11.571996
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 16,
+            "points_m": [
+              [
+                -0.798357,
+                -0.694987
+              ],
+              [
+                -0.786389,
+                -0.736649
+              ],
+              [
+                -0.721656,
+                -0.789253
+              ],
+              [
+                -0.675635,
+                -0.789797
+              ],
+              [
+                0.721655,
+                -0.789253
+              ],
+              [
+                0.786388,
+                -0.736649
+              ],
+              [
+                0.798356,
+                -0.694987
+              ],
+              [
+                0.239142,
+                -0.030204
+              ],
+              [
+                0.180559,
+                0.01319
+              ],
+              [
+                0.121987,
+                0.041877
+              ],
+              [
+                0.060998,
+                0.061324
+              ],
+              [
+                -1e-06,
+                0.066065
+              ],
+              [
+                -0.060999,
+                0.061324
+              ],
+              [
+                -0.121988,
+                0.041877
+              ],
+              [
+                -0.18056,
+                0.01319
+              ],
+              [
+                -0.239143,
+                -0.030204
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 12,
+            "points_m": [
+              [
+                -1.578842,
+                -0.391665
+              ],
+              [
+                -0.736367,
+                -0.694987
+              ],
+              [
+                1.820339,
+                -0.789253
+              ],
+              [
+                2.284069,
+                -0.789797
+              ],
+              [
+                2.404496,
+                -0.523296
+              ],
+              [
+                2.405039,
+                -0.515887
+              ],
+              [
+                2.39294,
+                -0.089944
+              ],
+              [
+                2.392528,
+                -0.084891
+              ],
+              [
+                2.328872,
+                0.066065
+              ],
+              [
+                -1.518961,
+                -0.327949
+              ],
+              [
+                -1.557453,
+                -0.3526
+              ],
+              [
+                -1.568142,
+                -0.371795
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 11,
+            "points_m": [
+              [
+                -1.578842,
+                -0.093793
+              ],
+              [
+                -0.736367,
+                -0.798357
+              ],
+              [
+                0.513318,
+                -0.786389
+              ],
+              [
+                1.820339,
+                -0.721656
+              ],
+              [
+                2.284069,
+                -0.675635
+              ],
+              [
+                2.405039,
+                -0.489016
+              ],
+              [
+                2.405039,
+                0.489015
+              ],
+              [
+                1.820339,
+                0.721655
+              ],
+              [
+                0.513318,
+                0.786388
+              ],
+              [
+                -0.736367,
+                0.798356
+              ],
+              [
+                -1.578842,
+                0.093792
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 1503,
+        "selection_bounds": {
+          "center": [
+            0.26379,
+            0.0,
+            0.0
+          ],
+          "max": [
+            2.41179,
+            0.85,
+            0.792255
+          ],
+          "min": [
+            -1.884211,
+            -0.85,
+            -0.792255
+          ],
+          "span": [
+            4.296001,
+            1.7,
+            1.58451
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "half_extents_m": [
+          2.06208,
+          0.748,
+          0.697184
+        ]
+      },
+      "proxy_kind": "obb",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.41179,
+          0.85,
+          0.792255
+        ],
+        "min": [
+          -1.884211,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          4.296001,
+          1.7,
+          1.58451
+        ]
+      },
+      "source_region_id": "center_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.32587,
+          0.748,
+          0.697184
+        ],
+        "min": [
+          -1.79829,
+          -0.748,
+          -0.697184
+        ],
+        "span": [
+          4.124161,
+          1.496,
+          1.394369
+        ]
+      },
+      "vertices_m": [
+        [
+          -1.79829,
+          -0.748,
+          -0.697184
+        ],
+        [
+          -1.79829,
+          -0.748,
+          0.697184
+        ],
+        [
+          -1.79829,
+          0.748,
+          -0.697184
+        ],
+        [
+          -1.79829,
+          0.748,
+          0.697184
+        ],
+        [
+          2.32587,
+          -0.748,
+          -0.697184
+        ],
+        [
+          2.32587,
+          -0.748,
+          0.697184
+        ],
+        [
+          2.32587,
+          0.748,
+          -0.697184
+        ],
+        [
+          2.32587,
+          0.748,
+          0.697184
+        ]
+      ]
+    },
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 8,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.44688,
+        "max_support_surface_inset_m": 0.223091,
+        "proxy_support_volume_m3": 2.232449,
+        "source_aabb_volume_m3": 4.995633
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 15,
+            "points_m": [
+              [
+                -0.611929,
+                -0.651795
+              ],
+              [
+                -0.603595,
+                -1.487486
+              ],
+              [
+                -0.597696,
+                -1.587298
+              ],
+              [
+                -0.456262,
+                -1.647844
+              ],
+              [
+                0.456261,
+                -1.647844
+              ],
+              [
+                0.597695,
+                -1.587298
+              ],
+              [
+                0.602235,
+                -1.487486
+              ],
+              [
+                0.611928,
+                -0.651795
+              ],
+              [
+                0.376258,
+                -0.304023
+              ],
+              [
+                0.341229,
+                -0.267645
+              ],
+              [
+                0.264186,
+                -0.237347
+              ],
+              [
+                -0.003181,
+                -0.233039
+              ],
+              [
+                -0.264187,
+                -0.237347
+              ],
+              [
+                -0.34123,
+                -0.267645
+              ],
+              [
+                -0.376259,
+                -0.304023
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 14,
+            "points_m": [
+              [
+                0.525961,
+                -0.479086
+              ],
+              [
+                0.681115,
+                -1.610228
+              ],
+              [
+                1.792497,
+                -1.647844
+              ],
+              [
+                2.804218,
+                -1.587298
+              ],
+              [
+                3.071484,
+                -1.410896
+              ],
+              [
+                3.153419,
+                -1.131349
+              ],
+              [
+                3.164764,
+                -0.302473
+              ],
+              [
+                3.163687,
+                -0.298145
+              ],
+              [
+                3.151145,
+                -0.255788
+              ],
+              [
+                3.149202,
+                -0.24995
+              ],
+              [
+                3.147833,
+                -0.24852
+              ],
+              [
+                3.114837,
+                -0.233039
+              ],
+              [
+                1.910669,
+                -0.237347
+              ],
+              [
+                0.525961,
+                -0.2638
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                0.525961,
+                -0.487103
+              ],
+              [
+                1.826237,
+                -0.611929
+              ],
+              [
+                2.816769,
+                -0.603595
+              ],
+              [
+                3.070669,
+                -0.586332
+              ],
+              [
+                3.163687,
+                -0.220149
+              ],
+              [
+                3.164764,
+                0.221769
+              ],
+              [
+                3.070669,
+                0.586331
+              ],
+              [
+                2.816769,
+                0.602235
+              ],
+              [
+                1.826237,
+                0.611928
+              ],
+              [
+                0.525961,
+                0.487102
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 1363,
+        "selection_bounds": {
+          "center": [
+            1.771158,
+            0.0,
+            -0.955366
+          ],
+          "max": [
+            3.165474,
+            0.62,
+            -0.233016
+          ],
+          "min": [
+            0.376842,
+            -0.62,
+            -1.677716
+          ],
+          "span": [
+            2.788632,
+            1.24,
+            1.4447
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          1.771158,
+          0.0,
+          -0.955366
+        ],
+        "max": [
+          3.165474,
+          0.62,
+          -0.233016
+        ],
+        "min": [
+          0.376842,
+          -0.62,
+          -1.677716
+        ],
+        "span": [
+          2.788632,
+          1.24,
+          1.4447
+        ]
+      },
+      "source_region_id": "intake",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          1.771158,
+          0.0,
+          -0.955366
+        ],
+        "max": [
+          2.942383,
+          0.434,
+          -0.40638
+        ],
+        "min": [
+          0.599933,
+          -0.434,
+          -1.504352
+        ],
+        "span": [
+          2.342451,
+          0.868,
+          1.097972
+        ]
+      },
+      "vertices_m": [
+        [
+          0.599933,
+          -0.434,
+          -1.504352
+        ],
+        [
+          0.599933,
+          -0.434,
+          -0.40638
+        ],
+        [
+          0.599933,
+          0.434,
+          -1.504352
+        ],
+        [
+          0.599933,
+          0.434,
+          -0.40638
+        ],
+        [
+          2.942383,
+          -0.434,
+          -1.504352
+        ],
+        [
+          2.942383,
+          -0.434,
+          -0.40638
+        ],
+        [
+          2.942383,
+          0.434,
+          -1.504352
+        ],
+        [
+          2.942383,
+          0.434,
+          -0.40638
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.74342,
+        "max_support_surface_inset_m": 0.102,
+        "proxy_support_volume_m3": 8.496361,
+        "source_aabb_volume_m3": 11.42869
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 12,
+            "points_m": [
+              [
+                -0.798387,
+                -0.694997
+              ],
+              [
+                -0.744525,
+                -0.719144
+              ],
+              [
+                -0.615623,
+                -0.73998
+              ],
+              [
+                0.615622,
+                -0.73998
+              ],
+              [
+                0.744524,
+                -0.719144
+              ],
+              [
+                0.798386,
+                -0.694997
+              ],
+              [
+                0.141907,
+                0.157051
+              ],
+              [
+                0.124251,
+                0.179095
+              ],
+              [
+                0.067501,
+                0.189614
+              ],
+              [
+                -0.067512,
+                0.189614
+              ],
+              [
+                -0.124252,
+                0.179095
+              ],
+              [
+                -0.141908,
+                0.157051
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                -5.795555,
+                -0.43088
+              ],
+              [
+                -5.575648,
+                -0.73998
+              ],
+              [
+                -2.0101,
+                -0.694987
+              ],
+              [
+                -1.578842,
+                -0.391665
+              ],
+              [
+                -1.518961,
+                -0.327949
+              ],
+              [
+                -2.322179,
+                0.024897
+              ],
+              [
+                -3.899526,
+                0.168576
+              ],
+              [
+                -4.253932,
+                0.189614
+              ],
+              [
+                -5.663704,
+                0.189614
+              ],
+              [
+                -5.795555,
+                -0.342604
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 12,
+            "points_m": [
+              [
+                -5.795555,
+                -1e-06
+              ],
+              [
+                -5.575648,
+                -0.615623
+              ],
+              [
+                -4.480623,
+                -0.744525
+              ],
+              [
+                -3.484343,
+                -0.798387
+              ],
+              [
+                -2.0101,
+                -0.798347
+              ],
+              [
+                -1.536063,
+                -0.037858
+              ],
+              [
+                -1.518961,
+                -1e-06
+              ],
+              [
+                -1.536063,
+                0.037857
+              ],
+              [
+                -2.0101,
+                0.798346
+              ],
+              [
+                -3.484343,
+                0.798386
+              ],
+              [
+                -4.480623,
+                0.744524
+              ],
+              [
+                -5.575648,
+                0.615622
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 606,
+        "selection_bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            0.023302
+          ],
+          "max": [
+            -1.507369,
+            0.85,
+            0.792255
+          ],
+          "min": [
+            -5.878738,
+            -0.85,
+            -0.745652
+          ],
+          "span": [
+            4.371369,
+            1.7,
+            1.537907
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -3.693053,
+          0.0,
+          0.023302
+        ],
+        "half_extents_m": [
+          2.098257,
+          0.748,
+          0.676679
+        ]
+      },
+      "proxy_kind": "obb",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          -1.507369,
+          0.85,
+          0.792255
+        ],
+        "min": [
+          -5.878738,
+          -0.85,
+          -0.745652
+        ],
+        "span": [
+          4.371369,
+          1.7,
+          1.537907
+        ]
+      },
+      "source_region_id": "aft_fuselage_engine",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          -1.594796,
+          0.748,
+          0.699981
+        ],
+        "min": [
+          -5.79131,
+          -0.748,
+          -0.653377
+        ],
+        "span": [
+          4.196514,
+          1.496,
+          1.353358
+        ]
+      },
+      "vertices_m": [
+        [
+          -5.79131,
+          -0.748,
+          -0.653377
+        ],
+        [
+          -5.79131,
+          -0.748,
+          0.699981
+        ],
+        [
+          -5.79131,
+          0.748,
+          -0.653377
+        ],
+        [
+          -5.79131,
+          0.748,
+          0.699981
+        ],
+        [
+          -1.594796,
+          -0.748,
+          -0.653377
+        ],
+        [
+          -1.594796,
+          -0.748,
+          0.699981
+        ],
+        [
+          -1.594796,
+          0.748,
+          -0.653377
+        ],
+        [
+          -1.594796,
+          0.748,
+          0.699981
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.58968,
+        "max_support_surface_inset_m": 0.1276,
+        "proxy_support_volume_m3": 1.32623,
+        "source_aabb_volume_m3": 2.249067
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 8,
+            "points_m": [
+              [
+                -0.21878,
+                -0.482518
+              ],
+              [
+                0.218779,
+                -0.482518
+              ],
+              [
+                0.081734,
+                0.150327
+              ],
+              [
+                0.063847,
+                0.17064
+              ],
+              [
+                0.028566,
+                0.177797
+              ],
+              [
+                -0.030087,
+                0.177797
+              ],
+              [
+                -0.065378,
+                0.17064
+              ],
+              [
+                -0.083265,
+                0.150327
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 9,
+            "points_m": [
+              [
+                -6.516013,
+                -0.03598
+              ],
+              [
+                -6.430504,
+                -0.339674
+              ],
+              [
+                -6.425642,
+                -0.349569
+              ],
+              [
+                -6.176535,
+                -0.482518
+              ],
+              [
+                -5.795555,
+                -0.43088
+              ],
+              [
+                -5.795555,
+                -0.342604
+              ],
+              [
+                -6.069696,
+                0.177797
+              ],
+              [
+                -6.386597,
+                0.168577
+              ],
+              [
+                -6.516013,
+                0.137353
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 6,
+            "points_m": [
+              [
+                -6.516013,
+                0.000785
+              ],
+              [
+                -6.509128,
+                -0.011546
+              ],
+              [
+                -6.176535,
+                -0.21878
+              ],
+              [
+                -5.795555,
+                -1e-06
+              ],
+              [
+                -6.176535,
+                0.218779
+              ],
+              [
+                -6.509128,
+                0.014051
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 371,
+        "selection_bounds": {
+          "center": [
+            -6.632422,
+            0.0,
+            0.023302
+          ],
+          "max": [
+            -5.728001,
+            0.58,
+            0.559239
+          ],
+          "min": [
+            -7.536843,
+            -0.58,
+            -0.512636
+          ],
+          "span": [
+            1.808842,
+            1.16,
+            1.071874
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -6.632422,
+          0.0,
+          0.023302
+        ],
+        "half_extents_m": [
+          0.813979,
+          0.4524,
+          0.450187
+        ]
+      },
+      "proxy_kind": "obb",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.632422,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          -5.728001,
+          0.58,
+          0.559239
+        ],
+        "min": [
+          -7.536843,
+          -0.58,
+          -0.512636
+        ],
+        "span": [
+          1.808842,
+          1.16,
+          1.071874
+        ]
+      },
+      "source_region_id": "engine_nozzle",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -6.632422,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          -5.818443,
+          0.4524,
+          0.473489
+        ],
+        "min": [
+          -7.446401,
+          -0.4524,
+          -0.426885
+        ],
+        "span": [
+          1.627958,
+          0.9048,
+          0.900374
+        ]
+      },
+      "vertices_m": [
+        [
+          -7.446401,
+          -0.4524,
+          -0.426885
+        ],
+        [
+          -7.446401,
+          -0.4524,
+          0.473489
+        ],
+        [
+          -7.446401,
+          0.4524,
+          -0.426885
+        ],
+        [
+          -7.446401,
+          0.4524,
+          0.473489
+        ],
+        [
+          -5.818443,
+          -0.4524,
+          -0.426885
+        ],
+        [
+          -5.818443,
+          -0.4524,
+          0.473489
+        ],
+        [
+          -5.818443,
+          0.4524,
+          -0.426885
+        ],
+        [
+          -5.818443,
+          0.4524,
+          0.473489
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.29779,
+        "max_support_surface_inset_m": 0.247941,
+        "proxy_support_volume_m3": 2.282178,
+        "source_aabb_volume_m3": 7.663665
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 4,
+            "points_m": [
+              [
+                0.166206,
+                -0.186334
+              ],
+              [
+                0.190424,
+                -0.2638
+              ],
+              [
+                0.215196,
+                -0.21184
+              ],
+              [
+                0.187827,
+                -0.144148
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                0.525961,
+                -0.2638
+              ],
+              [
+                1.716098,
+                -0.21184
+              ],
+              [
+                1.673449,
+                -0.144148
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 4,
+            "points_m": [
+              [
+                0.525961,
+                0.190424
+              ],
+              [
+                1.521526,
+                0.166206
+              ],
+              [
+                1.673449,
+                0.187827
+              ],
+              [
+                1.716098,
+                0.215196
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 23,
+        "selection_bounds": {
+          "center": [
+            -0.452211,
+            2.746173,
+            0.023302
+          ],
+          "max": [
+            1.808842,
+            5.328889,
+            0.343699
+          ],
+          "min": [
+            -2.713264,
+            0.163457,
+            -0.297096
+          ],
+          "span": [
+            4.522106,
+            5.165432,
+            0.640795
+          ]
+        },
+        "selection_inflation_factor": 1.25,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -0.452211,
+          2.746173,
+          0.023302
+        ],
+        "half_extents_m": [
+          1.700312,
+          1.818232,
+          0.092274
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -0.452211,
+          2.746173,
+          0.023302
+        ],
+        "max": [
+          1.356632,
+          4.812346,
+          0.279619
+        ],
+        "min": [
+          -2.261053,
+          0.68,
+          -0.233016
+        ],
+        "span": [
+          3.617685,
+          4.132346,
+          0.512636
+        ]
+      },
+      "source_region_id": "left_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -0.452211,
+          2.746173,
+          0.023302
+        ],
+        "max": [
+          1.248101,
+          4.564405,
+          0.115576
+        ],
+        "min": [
+          -2.152523,
+          0.927941,
+          -0.068972
+        ],
+        "span": [
+          3.400624,
+          3.636464,
+          0.184549
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.184549,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "z"
+      },
+      "vertices_m": [
+        [
+          -2.152523,
+          0.927941,
+          -0.068972
+        ],
+        [
+          -2.152523,
+          0.927941,
+          0.115576
+        ],
+        [
+          -2.152523,
+          4.564405,
+          -0.068972
+        ],
+        [
+          -2.152523,
+          4.564405,
+          0.115576
+        ],
+        [
+          1.248101,
+          0.927941,
+          -0.068972
+        ],
+        [
+          1.248101,
+          0.927941,
+          0.115576
+        ],
+        [
+          1.248101,
+          4.564405,
+          -0.068972
+        ],
+        [
+          1.248101,
+          4.564405,
+          0.115576
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.29779,
+        "max_support_surface_inset_m": 0.247941,
+        "proxy_support_volume_m3": 2.282178,
+        "source_aabb_volume_m3": 7.663665
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 4,
+            "points_m": [
+              [
+                -0.215197,
+                -0.21184
+              ],
+              [
+                -0.190425,
+                -0.2638
+              ],
+              [
+                -0.166207,
+                -0.186334
+              ],
+              [
+                -0.187828,
+                -0.144148
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                0.525961,
+                -0.2638
+              ],
+              [
+                1.716098,
+                -0.21184
+              ],
+              [
+                1.673449,
+                -0.144148
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 4,
+            "points_m": [
+              [
+                0.525961,
+                -0.190425
+              ],
+              [
+                1.716098,
+                -0.215197
+              ],
+              [
+                1.673449,
+                -0.187828
+              ],
+              [
+                1.521526,
+                -0.166207
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 23,
+        "selection_bounds": {
+          "center": [
+            -0.452211,
+            -2.746173,
+            0.023302
+          ],
+          "max": [
+            1.808842,
+            -0.163457,
+            0.343699
+          ],
+          "min": [
+            -2.713264,
+            -5.328889,
+            -0.297096
+          ],
+          "span": [
+            4.522106,
+            5.165432,
+            0.640795
+          ]
+        },
+        "selection_inflation_factor": 1.25,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -0.452211,
+          -2.746173,
+          0.023302
+        ],
+        "half_extents_m": [
+          1.700312,
+          1.818232,
+          0.092274
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -0.452211,
+          -2.746173,
+          0.023302
+        ],
+        "max": [
+          1.356632,
+          -0.68,
+          0.279619
+        ],
+        "min": [
+          -2.261053,
+          -4.812346,
+          -0.233016
+        ],
+        "span": [
+          3.617685,
+          4.132346,
+          0.512636
+        ]
+      },
+      "source_region_id": "right_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -0.452211,
+          -2.746173,
+          0.023302
+        ],
+        "max": [
+          1.248101,
+          -0.927941,
+          0.115576
+        ],
+        "min": [
+          -2.152523,
+          -4.564405,
+          -0.068972
+        ],
+        "span": [
+          3.400624,
+          3.636464,
+          0.184549
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.184549,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "z"
+      },
+      "vertices_m": [
+        [
+          -2.152523,
+          -4.564405,
+          -0.068972
+        ],
+        [
+          -2.152523,
+          -4.564405,
+          0.115576
+        ],
+        [
+          -2.152523,
+          -0.927941,
+          -0.068972
+        ],
+        [
+          -2.152523,
+          -0.927941,
+          0.115576
+        ],
+        [
+          1.248101,
+          -4.564405,
+          -0.068972
+        ],
+        [
+          1.248101,
+          -4.564405,
+          0.115576
+        ],
+        [
+          1.248101,
+          -0.927941,
+          -0.068972
+        ],
+        [
+          1.248101,
+          -0.927941,
+          0.115576
+        ]
+      ]
+    },
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 8,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.43546,
+        "max_support_surface_inset_m": 0.361768,
+        "proxy_support_volume_m3": 1.927173,
+        "source_aabb_volume_m3": 4.425642
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                0.343232,
+                -0.348554
+              ],
+              [
+                0.353912,
+                -0.392309
+              ],
+              [
+                0.352603,
+                -0.385857
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                -2.011429,
+                -0.385857
+              ],
+              [
+                -0.737696,
+                -0.392309
+              ],
+              [
+                0.525961,
+                -0.348554
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                -2.011429,
+                0.352603
+              ],
+              [
+                0.525961,
+                0.343232
+              ],
+              [
+                -0.737696,
+                0.353912
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 18,
+        "selection_bounds": {
+          "center": [
+            -0.376842,
+            0.825,
+            0.0
+          ],
+          "max": [
+            1.884211,
+            1.35,
+            0.466032
+          ],
+          "min": [
+            -2.637895,
+            0.3,
+            -0.466032
+          ],
+          "span": [
+            4.522106,
+            1.05,
+            0.932065
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -0.376842,
+          0.825,
+          0.0
+        ],
+        "max": [
+          1.884211,
+          1.35,
+          0.466032
+        ],
+        "min": [
+          -2.637895,
+          0.3,
+          -0.466032
+        ],
+        "span": [
+          4.522106,
+          1.05,
+          0.932065
+        ]
+      },
+      "source_region_id": "left_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -0.376842,
+          0.825,
+          0.0
+        ],
+        "max": [
+          1.522443,
+          1.203,
+          0.335543
+        ],
+        "min": [
+          -2.276127,
+          0.447,
+          -0.335543
+        ],
+        "span": [
+          3.798569,
+          0.756,
+          0.671087
+        ]
+      },
+      "vertices_m": [
+        [
+          -2.276127,
+          0.447,
+          -0.335543
+        ],
+        [
+          -2.276127,
+          0.447,
+          0.335543
+        ],
+        [
+          -2.276127,
+          1.203,
+          -0.335543
+        ],
+        [
+          -2.276127,
+          1.203,
+          0.335543
+        ],
+        [
+          1.522443,
+          0.447,
+          -0.335543
+        ],
+        [
+          1.522443,
+          0.447,
+          0.335543
+        ],
+        [
+          1.522443,
+          1.203,
+          -0.335543
+        ],
+        [
+          1.522443,
+          1.203,
+          0.335543
+        ]
+      ]
+    },
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 8,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.43546,
+        "max_support_surface_inset_m": 0.361768,
+        "proxy_support_volume_m3": 1.927173,
+        "source_aabb_volume_m3": 4.425642
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                -0.353913,
+                -0.392309
+              ],
+              [
+                -0.343233,
+                -0.348554
+              ],
+              [
+                -0.352605,
+                -0.385857
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                -2.011429,
+                -0.385857
+              ],
+              [
+                -0.737696,
+                -0.392309
+              ],
+              [
+                0.525961,
+                -0.348554
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 3,
+            "points_m": [
+              [
+                -2.011429,
+                -0.352605
+              ],
+              [
+                -0.737696,
+                -0.353913
+              ],
+              [
+                0.525961,
+                -0.343233
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 18,
+        "selection_bounds": {
+          "center": [
+            -0.376842,
+            -0.825,
+            0.0
+          ],
+          "max": [
+            1.884211,
+            -0.3,
+            0.466032
+          ],
+          "min": [
+            -2.637895,
+            -1.35,
+            -0.466032
+          ],
+          "span": [
+            4.522106,
+            1.05,
+            0.932065
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -0.376842,
+          -0.825,
+          0.0
+        ],
+        "max": [
+          1.884211,
+          -0.3,
+          0.466032
+        ],
+        "min": [
+          -2.637895,
+          -1.35,
+          -0.466032
+        ],
+        "span": [
+          4.522106,
+          1.05,
+          0.932065
+        ]
+      },
+      "source_region_id": "right_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -0.376842,
+          -0.825,
+          0.0
+        ],
+        "max": [
+          1.522443,
+          -0.447,
+          0.335543
+        ],
+        "min": [
+          -2.276127,
+          -1.203,
+          -0.335543
+        ],
+        "span": [
+          3.798569,
+          0.756,
+          0.671087
+        ]
+      },
+      "vertices_m": [
+        [
+          -2.276127,
+          -1.203,
+          -0.335543
+        ],
+        [
+          -2.276127,
+          -1.203,
+          0.335543
+        ],
+        [
+          -2.276127,
+          -0.447,
+          -0.335543
+        ],
+        [
+          -2.276127,
+          -0.447,
+          0.335543
+        ],
+        [
+          1.522443,
+          -1.203,
+          -0.335543
+        ],
+        [
+          1.522443,
+          -1.203,
+          0.335543
+        ],
+        [
+          1.522443,
+          -0.447,
+          -0.335543
+        ],
+        [
+          1.522443,
+          -0.447,
+          0.335543
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.29779,
+        "max_support_surface_inset_m": 0.223695,
+        "proxy_support_volume_m3": 1.235548,
+        "source_aabb_volume_m3": 4.149034
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                -0.011546,
+                -0.033967
+              ],
+              [
+                0.000664,
+                -0.057229
+              ],
+              [
+                0.141313,
+                -0.03597
+              ],
+              [
+                0.141897,
+                -0.024706
+              ],
+              [
+                0.141907,
+                0.13078
+              ],
+              [
+                0.141907,
+                0.157051
+              ],
+              [
+                0.124251,
+                0.179095
+              ],
+              [
+                0.067501,
+                0.189614
+              ],
+              [
+                -1e-06,
+                0.189614
+              ],
+              [
+                -0.01061,
+                0.134202
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 8,
+            "points_m": [
+              [
+                -6.516013,
+                -0.03598
+              ],
+              [
+                -6.430504,
+                -0.057229
+              ],
+              [
+                -4.244068,
+                -0.03597
+              ],
+              [
+                -3.899526,
+                0.168576
+              ],
+              [
+                -4.253932,
+                0.189614
+              ],
+              [
+                -5.663704,
+                0.189614
+              ],
+              [
+                -6.386597,
+                0.168577
+              ],
+              [
+                -6.516013,
+                0.137353
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 7,
+            "points_m": [
+              [
+                -6.516013,
+                0.000785
+              ],
+              [
+                -6.509128,
+                -0.011546
+              ],
+              [
+                -3.899526,
+                -1e-06
+              ],
+              [
+                -4.244068,
+                0.141313
+              ],
+              [
+                -5.658802,
+                0.141907
+              ],
+              [
+                -6.485,
+                0.027318
+              ],
+              [
+                -6.509128,
+                0.014051
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 204,
+        "selection_bounds": {
+          "center": [
+            -5.464211,
+            1.675,
+            0.302921
+          ],
+          "max": [
+            -3.48579,
+            3.3625,
+            0.827207
+          ],
+          "min": [
+            -7.442632,
+            -0.0125,
+            -0.221365
+          ],
+          "span": [
+            3.956842,
+            3.375,
+            1.048572
+          ]
+        },
+        "selection_inflation_factor": 1.5,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -5.464211,
+          1.675,
+          0.302921
+        ],
+        "half_extents_m": [
+          1.23981,
+          0.99,
+          0.125829
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -5.464211,
+          1.675,
+          0.302921
+        ],
+        "max": [
+          -4.145264,
+          2.8,
+          0.652445
+        ],
+        "min": [
+          -6.783159,
+          0.55,
+          -0.046603
+        ],
+        "span": [
+          2.637895,
+          2.25,
+          0.699048
+        ]
+      },
+      "source_region_id": "left_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -5.464211,
+          1.675,
+          0.302921
+        ],
+        "max": [
+          -4.2244,
+          2.665,
+          0.42875
+        ],
+        "min": [
+          -6.704022,
+          0.685,
+          0.177092
+        ],
+        "span": [
+          2.479621,
+          1.98,
+          0.251657
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.251657,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "z"
+      },
+      "vertices_m": [
+        [
+          -6.704022,
+          0.685,
+          0.177092
+        ],
+        [
+          -6.704022,
+          0.685,
+          0.42875
+        ],
+        [
+          -6.704022,
+          2.665,
+          0.177092
+        ],
+        [
+          -6.704022,
+          2.665,
+          0.42875
+        ],
+        [
+          -4.2244,
+          0.685,
+          0.177092
+        ],
+        [
+          -4.2244,
+          0.685,
+          0.42875
+        ],
+        [
+          -4.2244,
+          2.665,
+          0.177092
+        ],
+        [
+          -4.2244,
+          2.665,
+          0.42875
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.29779,
+        "max_support_surface_inset_m": 0.223695,
+        "proxy_support_volume_m3": 1.235548,
+        "source_aabb_volume_m3": 4.149034
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 9,
+            "points_m": [
+              [
+                -0.141908,
+                -0.024706
+              ],
+              [
+                -0.141314,
+                -0.03597
+              ],
+              [
+                0.000664,
+                -0.057229
+              ],
+              [
+                0.000785,
+                -0.03598
+              ],
+              [
+                0.000785,
+                0.137353
+              ],
+              [
+                -1e-06,
+                0.189614
+              ],
+              [
+                -0.067512,
+                0.189614
+              ],
+              [
+                -0.124252,
+                0.179095
+              ],
+              [
+                -0.141908,
+                0.157051
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 8,
+            "points_m": [
+              [
+                -6.516013,
+                -0.03598
+              ],
+              [
+                -6.430504,
+                -0.057229
+              ],
+              [
+                -4.244068,
+                -0.03597
+              ],
+              [
+                -3.899526,
+                0.168576
+              ],
+              [
+                -4.253932,
+                0.189614
+              ],
+              [
+                -5.663704,
+                0.189614
+              ],
+              [
+                -6.386597,
+                0.168577
+              ],
+              [
+                -6.516013,
+                0.137353
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 7,
+            "points_m": [
+              [
+                -6.516013,
+                0.000785
+              ],
+              [
+                -6.509128,
+                -0.011546
+              ],
+              [
+                -6.485,
+                -0.023887
+              ],
+              [
+                -6.386597,
+                -0.038039
+              ],
+              [
+                -5.658802,
+                -0.141908
+              ],
+              [
+                -4.244068,
+                -0.141314
+              ],
+              [
+                -3.899526,
+                -1e-06
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 192,
+        "selection_bounds": {
+          "center": [
+            -5.464211,
+            -1.675,
+            0.302921
+          ],
+          "max": [
+            -3.48579,
+            0.0125,
+            0.827207
+          ],
+          "min": [
+            -7.442632,
+            -3.3625,
+            -0.221365
+          ],
+          "span": [
+            3.956842,
+            3.375,
+            1.048572
+          ]
+        },
+        "selection_inflation_factor": 1.5,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -5.464211,
+          -1.675,
+          0.302921
+        ],
+        "half_extents_m": [
+          1.23981,
+          0.99,
+          0.125829
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -5.464211,
+          -1.675,
+          0.302921
+        ],
+        "max": [
+          -4.145264,
+          -0.55,
+          0.652445
+        ],
+        "min": [
+          -6.783159,
+          -2.8,
+          -0.046603
+        ],
+        "span": [
+          2.637895,
+          2.25,
+          0.699048
+        ]
+      },
+      "source_region_id": "right_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -5.464211,
+          -1.675,
+          0.302921
+        ],
+        "max": [
+          -4.2244,
+          -0.685,
+          0.42875
+        ],
+        "min": [
+          -6.704022,
+          -2.665,
+          0.177092
+        ],
+        "span": [
+          2.479621,
+          1.98,
+          0.251657
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.251657,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "z"
+      },
+      "vertices_m": [
+        [
+          -6.704022,
+          -2.665,
+          0.177092
+        ],
+        [
+          -6.704022,
+          -2.665,
+          0.42875
+        ],
+        [
+          -6.704022,
+          -0.685,
+          0.177092
+        ],
+        [
+          -6.704022,
+          -0.685,
+          0.42875
+        ],
+        [
+          -4.2244,
+          -2.665,
+          0.177092
+        ],
+        [
+          -4.2244,
+          -2.665,
+          0.42875
+        ],
+        [
+          -4.2244,
+          -0.685,
+          0.177092
+        ],
+        [
+          -4.2244,
+          -0.685,
+          0.42875
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.20736,
+        "max_support_surface_inset_m": 0.2888,
+        "proxy_support_volume_m3": 0.928276,
+        "source_aabb_volume_m3": 4.476639
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+      ],
+      "mesh_derived_review_geometry": {
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 6,
+            "points_m": [
+              [
+                -0.023464,
+                2.31476
+              ],
+              [
+                -0.023263,
+                1.778788
+              ],
+              [
+                -1e-06,
+                1.756291
+              ],
+              [
+                0.023261,
+                1.778788
+              ],
+              [
+                0.023463,
+                2.31476
+              ],
+              [
+                -1e-06,
+                2.330161
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 6,
+            "points_m": [
+              [
+                -6.333127,
+                2.31476
+              ],
+              [
+                -5.865884,
+                1.790404
+              ],
+              [
+                -5.601799,
+                1.756291
+              ],
+              [
+                -5.290293,
+                1.780389
+              ],
+              [
+                -6.174008,
+                2.31476
+              ],
+              [
+                -6.333127,
+                2.330161
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 5,
+            "points_m": [
+              [
+                -6.333127,
+                -0.023464
+              ],
+              [
+                -5.601799,
+                -0.023263
+              ],
+              [
+                -5.290293,
+                -1e-06
+              ],
+              [
+                -5.601799,
+                0.023261
+              ],
+              [
+                -6.333127,
+                0.023463
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 84,
+        "selection_bounds": {
+          "center": [
+            -5.012001,
+            0.0,
+            1.421399
+          ],
+          "max": [
+            -3.391579,
+            0.38,
+            2.330161
+          ],
+          "min": [
+            -6.632422,
+            -0.38,
+            0.512636
+          ],
+          "span": [
+            3.240842,
+            0.76,
+            1.817526
+          ]
+        },
+        "selection_inflation_factor": 1.0,
+        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -5.012001,
+          0.0,
+          1.421399
+        ],
+        "half_extents_m": [
+          1.458379,
+          0.0912,
+          0.872413
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -5.012001,
+          0.0,
+          1.421399
+        ],
+        "max": [
+          -3.391579,
+          0.38,
+          2.330161
+        ],
+        "min": [
+          -6.632422,
+          -0.38,
+          0.512636
+        ],
+        "span": [
+          3.240842,
+          0.76,
+          1.817526
+        ]
+      },
+      "source_region_id": "vertical_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -5.012001,
+          0.0,
+          1.421399
+        ],
+        "max": [
+          -3.553622,
+          0.0912,
+          2.293811
+        ],
+        "min": [
+          -6.47038,
+          -0.0912,
+          0.548987
+        ],
+        "span": [
+          2.916758,
+          0.1824,
+          1.744825
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.1824,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "y"
+      },
+      "vertices_m": [
+        [
+          -6.47038,
+          -0.0912,
+          0.548987
+        ],
+        [
+          -6.47038,
+          -0.0912,
+          2.293811
+        ],
+        [
+          -6.47038,
+          0.0912,
+          0.548987
+        ],
+        [
+          -6.47038,
+          0.0912,
+          2.293811
+        ],
+        [
+          -3.553622,
+          -0.0912,
+          0.548987
+        ],
+        [
+          -3.553622,
+          -0.0912,
+          2.293811
+        ],
+        [
+          -3.553622,
+          0.0912,
+          0.548987
+        ],
+        [
+          -3.553622,
+          0.0912,
+          2.293811
+        ]
+      ]
+    }
+  ],
+  "review_point_distance_deltas": [
+    {
+      "aspect": "nose",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "forward_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.575084,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 0.466032,
+          "source_region_id": "canopy"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.133004,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 0.866447,
+          "source_region_id": "intake"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.221525,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 1.125053,
+          "source_region_id": "nose_radome"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.67413,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 1.58821,
+          "source_region_id": "center_fuselage"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "obb",
+      "nearest_fine_proxy_region_id": "forward_fuselage",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "forward_fuselage",
+      "point_id": "nose_axis_4m",
+      "point_m": [
+        4.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "nose",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "nose_radome"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.636782,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.573473,
+          "source_region_id": "forward_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.920262,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 1.693997,
+          "source_region_id": "canopy"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.084504,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 2.844088,
+          "source_region_id": "intake"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.67413,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.58821,
+          "source_region_id": "center_fuselage"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "convex_hull",
+      "nearest_fine_proxy_region_id": "nose_radome",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "nose_radome",
+      "point_id": "nose_axis_6m",
+      "point_m": [
+        6.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "tail",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "aft_fuselage_engine"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.548987,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.512636,
+          "source_region_id": "vertical_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.742255,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.56886,
+          "source_region_id": "left_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.742255,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.56886,
+          "source_region_id": "right_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.780884,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 1.394751,
+          "source_region_id": "left_wing_root"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "obb",
+      "nearest_fine_proxy_region_id": "aft_fuselage_engine",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "aft_fuselage_engine",
+      "point_id": "tail_axis_4m",
+      "point_m": [
+        -4.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "tail",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "engine_nozzle"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.20869,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.121262,
+          "source_region_id": "aft_fuselage_engine"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.548987,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.512636,
+          "source_region_id": "vertical_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.707521,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.55,
+          "source_region_id": "left_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 0.707521,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.55,
+          "source_region_id": "right_horizontal_tail"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "obb",
+      "nearest_fine_proxy_region_id": "engine_nozzle",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "engine_nozzle",
+      "point_id": "tail_axis_6m",
+      "point_m": [
+        -6.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "beam",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "left_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 2.797,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 2.65,
+          "source_region_id": "left_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.252,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.15,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.621999,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.492086,
+          "source_region_id": "aft_fuselage_engine"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.638876,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.408916,
+          "source_region_id": "intake"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "thin_prism",
+      "nearest_fine_proxy_region_id": "left_wing",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "left_wing",
+      "point_id": "right_beam_4m",
+      "point_m": [
+        0.0,
+        4.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "beam",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.247941,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": false,
+          "distance_m": 1.435595,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 1.187654,
+          "source_region_id": "left_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 4.797,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 4.65,
+          "source_region_id": "left_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.252,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.15,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.385085,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 5.236718,
+          "source_region_id": "left_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.488796,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.366066,
+          "source_region_id": "aft_fuselage_engine"
+        }
+      ],
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 1.435595,
+      "nearest_fine_proxy_kind": "thin_prism",
+      "nearest_fine_proxy_region_id": "left_wing",
+      "nearest_source_aabb_distance_m": 1.187654,
+      "nearest_source_aabb_region_id": "left_wing",
+      "point_id": "right_beam_6m",
+      "point_m": [
+        0.0,
+        6.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "beam",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "right_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 2.797,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 2.65,
+          "source_region_id": "right_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.252,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.15,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.621999,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.492086,
+          "source_region_id": "aft_fuselage_engine"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.638876,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.408916,
+          "source_region_id": "intake"
+        }
+      ],
+      "inside_fine_proxy_count": 1,
+      "nearest_fine_proxy_distance_m": 0.0,
+      "nearest_fine_proxy_kind": "thin_prism",
+      "nearest_fine_proxy_region_id": "right_wing",
+      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_region_id": "right_wing",
+      "point_id": "left_beam_4m",
+      "point_m": [
+        0.0,
+        -4.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "beam",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.247941,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": false,
+          "distance_m": 1.435595,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 1.187654,
+          "source_region_id": "right_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 4.797,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 4.65,
+          "source_region_id": "right_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.252,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.15,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.385085,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 5.236718,
+          "source_region_id": "right_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 5.488796,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.366066,
+          "source_region_id": "aft_fuselage_engine"
+        }
+      ],
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 1.435595,
+      "nearest_fine_proxy_kind": "thin_prism",
+      "nearest_fine_proxy_region_id": "right_wing",
+      "nearest_source_aabb_distance_m": 1.187654,
+      "nearest_source_aabb_region_id": "right_wing",
+      "point_id": "left_beam_6m",
+      "point_m": [
+        0.0,
+        -6.0,
+        0.0
+      ]
+    },
+    {
+      "aspect": "above",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.164913,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": false,
+          "distance_m": 3.302816,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.207745,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.356354,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.137903,
+          "source_region_id": "canopy"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.665174,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.544261,
+          "source_region_id": "aft_fuselage_engine"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.691619,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.546679,
+          "source_region_id": "left_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.691619,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.546679,
+          "source_region_id": "right_wing_root"
+        }
+      ],
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 3.302816,
+      "nearest_fine_proxy_kind": "obb",
+      "nearest_fine_proxy_region_id": "center_fuselage",
+      "nearest_source_aabb_distance_m": 3.137903,
+      "nearest_source_aabb_region_id": "canopy",
+      "point_id": "above_4m",
+      "point_m": [
+        0.0,
+        0.0,
+        4.0
+      ]
+    },
+    {
+      "aspect": "below",
+      "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
+      "fine_minus_source_distance_delta_m": 0.214084,
+      "fine_proxy_rankings": [
+        {
+          "contains_point": false,
+          "distance_m": 2.566745,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 2.352661,
+          "source_region_id": "intake"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.302816,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.207745,
+          "source_region_id": "center_fuselage"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.691619,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.546679,
+          "source_region_id": "left_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.691619,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 3.546679,
+          "source_region_id": "right_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.70719,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.586494,
+          "source_region_id": "aft_fuselage_engine"
+        }
+      ],
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 2.566745,
+      "nearest_fine_proxy_kind": "convex_hull",
+      "nearest_fine_proxy_region_id": "intake",
+      "nearest_source_aabb_distance_m": 2.352661,
+      "nearest_source_aabb_region_id": "intake",
+      "point_id": "below_4m",
+      "point_m": [
+        0.0,
+        0.0,
+        -4.0
+      ]
+    }
+  ],
+  "schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
+  "source_mapping_schema_version": "a2.target_geometry_mapping_candidate.v1",
+  "status": "fine_geometry_proxy_candidate_generated_review_only",
+  "summary": {
+    "held_region_count": 0,
+    "mesh_derived_silhouette_count": 14,
+    "mesh_source_vertex_count": 13415,
+    "proxy_count": 14,
+    "proxy_kind_counts": {
+      "convex_hull": 5,
+      "obb": 4,
+      "thin_prism": 5
+    },
+    "review_point_count": 10,
+    "review_status": "manual_review_required",
+    "source_outer_region_count": 14,
+    "total_proxy_support_volume_m3": 41.412028,
+    "total_proxy_support_volume_ratio": 0.50965,
+    "total_source_aabb_volume_m3": 81.255804
+  }
+}

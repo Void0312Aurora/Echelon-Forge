@@ -1,6 +1,6 @@
 # A2 目标几何建模任务簇
 
-状态：`2026-06-11` finite task-cluster plan，用于
+状态：`2026-06-12` finite task-cluster plan with TG-P6 mesh-derived review candidate generated，用于
 [README.zh.md](README.zh.md)。
 
 英文辅文：[missile_lethality_target_geometry_task_clusters_20260611.md](missile_lethality_target_geometry_task_clusters_20260611.md)。
@@ -20,7 +20,7 @@
 | `TG-P3` | main thread | high | 绑定现有部件盒到外壳区域并标出异常 | `component_binding_report_20260611.json`; `component_binding_report_20260611.csv`; focused tests | 不重写部件脆弱性概率 | schema check, out-of-envelope report check, focused pytest | 每个现有部件有区域或明确 `needs_review` | 依赖 `TG-P2` | 2 | pass |
 | `TG-P4` | main thread | medium | 生成静态 HTML/SVG 审阅包 | `review_packets/f16c_20260611/scene.html`; SVG; README summary | 不接入 web app runtime | file existence, no network dependency, basic HTML asset checks | 可离线查看外形、旧盒、部件和测试点 | 依赖 `TG-P2`/`TG-P3`，与 `TG-P5` 同轮完成 | 2 | pass |
 | `TG-P5` | main thread | high | 对 MLF-5 测试点输出外壳/部件距离诊断 | review point JSON/CSV; focused tests | 不重跑真实弹种 Pk | CSV rows include nearest outer distance, nearest component distance, candidate count | 4 m 鼻向样例有具体几何解释 | 依赖 `TG-P2`，与 `TG-P4` 同轮完成 | 2 | pass |
-| `TG-P6` | main thread | high | 设计精细几何代理：倾斜盒、凸包或简化外壳网格 | mapping refinement JSON; proxy review notes; optional SVG overlay | 不把高模 GLB 直接当每帧碰撞网格 | proxy schema check, distance sanity, visual overlay smoke | 说明粗盒子到精细代理的误差、适用边界和人工复核项 | 依赖 `TG-P4`/`TG-P5` | 2 | planned |
+| `TG-P6` | main thread | high | 设计精细几何代理：倾斜盒、凸包或简化外壳网格 | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; `fine_proxy_review_dashboard.html`; proxy review notes | 不把高模 GLB 直接当每帧碰撞网格；不改 runtime 主路径 | proxy schema check, mesh silhouette extraction, inflated fallback visibility, dashboard smoke, distance sanity, visual overlay smoke, focused pytest | 说明粗盒子到精细代理的误差、mesh-derived silhouette、适用边界和人工复核项 | 依赖 `TG-P4`/`TG-P5` | 2 | pass as mesh-derived review candidate |
 | `TG-P7` | main thread | high | 做运行时接入决策和验收/held 边界 | README/status/acceptance docs; optional design note | 不直接把未审阅代理写入主路径 | doc audit, targeted tests if runtime design is accepted | accepted 或 held 决议写清后续工作 | 依赖 `TG-P6` | 1 | planned |
 
 ## 派发规则
@@ -29,7 +29,7 @@
 - `TG-P1` 到 `TG-P6` 不得修改父级 README 的状态行；父级同步由 main thread 完成。
 - 不允许两个 worker 同时修改同一个 mapping JSON、manifest 或状态文档。
 - 任何下载、授权或来源补充都必须写明 source、license、hash 和 retrieval date；不得保存 token、signed URL 或 Authorization header。
-- 任何 runtime 接入必须等 `TG-P4`、`TG-P5` 和 `TG-P6` 验收后再讨论。
+- 任何 runtime 接入必须等 `TG-P4`、`TG-P5` 和 `TG-P6` 验收或明确 held 决议后再讨论。
 
 ## Worker Packet 要求
 
@@ -64,4 +64,5 @@
 - 结构解体和残骸：后续独立子项目。
 - Pk 与真实弹种校准：后续独立子项目。
 - 运行时主路径替换：依赖人工审阅包和诊断验收。
-- 精细几何代理：第一轮只规划 F-16，不直接承诺 MQ-9 或其他机型。
+- 精细几何代理：第一版 F-16 mesh-derived 审阅候选已存在；inflated fallback 区域的人工审阅仍 gate
+  `TG-P7`、MQ-9 和其他机型。

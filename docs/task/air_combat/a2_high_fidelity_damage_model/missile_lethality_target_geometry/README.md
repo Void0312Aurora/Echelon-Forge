@@ -1,6 +1,7 @@
 # A2 Target Outer-Shape And Component Geometry
 
-Status: `2026-06-11` active follow-on / TG-P5 review packet and diagnostics complete. This subproject promotes the
+Status: `2026-06-12` active follow-on / TG-P6 human review dashboard complete
+and manual review required. This subproject promotes the
 [Lethality Hitbox Geometry Fidelity Gap](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 into the maintained A2 follow-on surface for F-16 outer-shape, component-region,
 and distance-diagnostic work.
@@ -90,7 +91,7 @@ Out of scope:
 | `P3 Component Binding` | Bind existing component boxes to outer regions. | P2 regions exist. | Binding report lists oversized, undersized, misplaced, and out-of-envelope items. | pass |
 | `P4 Review Packet` | Generate HTML/SVG/CSV review packet. | P2/P3 data exist. | A reviewer can see outer shape, legacy boxes, components, and test points together. | pass |
 | `P5 Lethality Diagnostics` | Explain test points as outer/component distances and candidate counts. | P4 packet exists. | The 4 m nose case has geometry/direction/candidate evidence beyond "not a direct hit". | pass |
-| `P6 Fine Geometry Proxy` | Advance coarse boxes into shape-closer proxies. | P4/P5 review and diagnostics pass. | Oriented-box, convex-hull, or simplified-shell candidates and error notes exist. | planned |
+| `P6 Fine Geometry Proxy` | Advance coarse boxes into shape-closer proxies. | P4/P5 review and diagnostics pass. | Review-only OBB, thin-prism, convex-hull candidates, mesh-derived silhouettes, distance deltas, and overlays exist. | pass as review candidate |
 | `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | planned |
 
 ## Task Clusters
@@ -151,6 +152,20 @@ Generated:
   TG-P6 first fine-geometry proxy design, defining the use, boundary, and
   runtime preconditions for `obb`, `thin_prism`, `convex_hull`, and
   `simplified_shell`.
+- Fine-geometry proxy candidate:
+  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json),
+  [fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg),
+  [fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg),
+  [fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg).
+  TG-P6-R3 generated top/side/front convex hull silhouettes from `13,415`
+  audit glTF vertices for all `14` review-only proxies. `8` regions use source
+  bounds directly; `6` regions use recorded inflated-bound fallback and remain
+  high-priority manual review items before `TG-P7`.
+- Human review dashboard:
+  [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html).
+  TG-P6-R4 adds per-region cards with local top/side/front zooms, component
+  overlays, inflation metrics, hull point counts, review flags, and
+  candidate/review/hold status.
 - `pytest -q tests/tools/test_airframe_geometry_review.py`: `2 passed`.
 
 ## Acceptance Gate
@@ -173,7 +188,8 @@ This subproject can be marked accepted only when:
 
 - MQ-9 geometry is a later reuse target; the first round is F-16 only.
 - Runtime near-fuze projection should consume outer-shape proxies only after the
-  review packet, distance diagnostics, and finer-geometry proxy review pass.
+  review packet, distance diagnostics, and fine-proxy candidate review pass or
+  are explicitly held in `TG-P7`.
 - Structural breakup, wreck/debris, and Pk remain separate future subprojects.
 
 ## Archive
