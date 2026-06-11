@@ -20,6 +20,7 @@ from python.scenario.runtime.world_setup import extract_batch_world_setup_entity
 from python.rl.runtime.agent_shim import MAINTAINED
 from python.rl.runtime.agent_shim import OBS_DECISION_BELIEF_PACKET
 from python.rl.runtime.agent_shim import OBS_FACADE_OBSERVATION_PACKET
+from python.runtime_compat import normalize_runtime_compatibility_enabled
 from .command_chain_cache import project_world_leader_intent_maintained_assignment
 from .command_chain_cache import project_world_mission_command_maintained_assignment
 from .command_chain_cache import project_world_pilot_report_maintained_assignment
@@ -90,7 +91,9 @@ def _resolve_runtime_facade_adapter_capabilities(
     runtime_compatibility_enabled: bool,
 ) -> RuntimeFacadeAdapterCapabilities:
     return RuntimeFacadeAdapterCapabilities(
-        runtime_compatibility_enabled=bool(runtime_compatibility_enabled),
+        runtime_compatibility_enabled=normalize_runtime_compatibility_enabled(
+            runtime_compatibility_enabled
+        ),
         has_runtime_window_api=bool(
             hasattr(facade, "run_wp10_window")
             and hasattr(ef_py, "RuntimeWindowRequest")
@@ -288,7 +291,9 @@ class RuntimeFacadeAdapter:
     """Centralized compatibility adapter for facade-shaped runtime access."""
 
     def __init__(self, world_count: int, *, runtime_compatibility_enabled: bool = False):
-        self.runtime_compatibility_enabled = bool(runtime_compatibility_enabled)
+        self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(
+            runtime_compatibility_enabled
+        )
         self._world_count = int(world_count)
         if not hasattr(ef_py, "RuntimeFacade"):
             raise RuntimeError("RuntimeFacadeAdapter requires ef_py.RuntimeFacade bindings")

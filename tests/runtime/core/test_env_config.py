@@ -9,6 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import infer_include_visual_from_train_config, resolve_env_settings # noqa: E402
+from python.runtime_compat import normalize_runtime_compatibility_enabled # noqa: E402
 
 
 def _make_args(**overrides):
@@ -55,7 +56,7 @@ class EnvConfigTests(unittest.TestCase):
         "visual_update_interval": 3,
         "temporal_history_len": 16,
         "action_mode": "full",
-        "execution_step_runtime_mode": " Legacy ",
+        "execution_step_runtime_mode": " Compiled ",
         "step_info_mode": "TERMINAL",
         "flight_shaping_backend": " GPU_HOST ",
         "runtime_compatibility_enabled": "yes",
@@ -64,7 +65,7 @@ class EnvConfigTests(unittest.TestCase):
 
     resolved = resolve_env_settings(train_config, _make_args())
     self.assertEqual(resolved["mission_obs_mode"], "nav_v2")
-    self.assertEqual(resolved["execution_step_runtime_mode"], "legacy")
+    self.assertEqual(resolved["execution_step_runtime_mode"], "compiled")
     self.assertEqual(resolved["step_info_mode"], "terminal")
     self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
     self.assertEqual(resolved["temporal_history_len"], 16)
@@ -121,12 +122,23 @@ class EnvConfigTests(unittest.TestCase):
     )
     self.assertEqual(resolved["temporal_history_len"], 8)
 
-  def test_resolve_env_settings_rejects_legacy_runtime_mode_without_explicit_compatibility_opt_in(self) -> None:
-    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=True"):
+  def test_resolve_env_settings_rejects_legacy_runtime_mode(self) -> None:
+    with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
       resolve_env_settings(
         {
           "env": {
             "execution_step_runtime_mode": "legacy",
+          }
+        },
+        _make_args(),
+      )
+
+  def test_resolve_env_settings_rejects_legacy_flight_shaping_backend(self) -> None:
+    with self.assertRaisesRegex(ValueError, "flight_shaping_backend='legacy' has been removed"):
+      resolve_env_settings(
+        {
+          "env": {
+            "flight_shaping_backend": "legacy",
           }
         },
         _make_args(),
@@ -156,6 +168,16 @@ class EnvConfigTests(unittest.TestCase):
     resolved = resolve_env_settings({}, _make_args())
     self.assertIsNone(resolved["execution_step_runtime_mode"])
     self.assertFalse(resolved["runtime_compatibility_enabled"])
+
+  def test_runtime_compatibility_enabled_rejects_ambiguous_strings(self) -> None:
+    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
+      normalize_runtime_compatibility_enabled("maybe")
+
+    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
+      resolve_env_settings(
+        {"env": {"runtime_compatibility_enabled": "legacy-ish"}},
+        _make_args(),
+      )
 
   def test_resolve_env_settings_accepts_dedicated_naval_action_mode(self) -> None:
     resolved = resolve_env_settings(

@@ -163,11 +163,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
         self.collect_step_timing = bool(collect_step_timing)
         self._action_wrapper_kwargs = dict(action_wrapper_kwargs or {})
-        if self.execution_step_runtime_mode == "legacy" and not self.runtime_compatibility_enabled:
-            raise RuntimeError(
-                "execution_step_runtime_mode='legacy' is quarantined; pass "
-                "runtime_compatibility_enabled=True to opt in explicitly."
-            )
+        if self.execution_step_runtime_mode == "legacy":
+            raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained VecEnv paths")
         if self.step_info_mode not in ("full", "terminal", "off"):
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
 
@@ -262,8 +259,13 @@ class CooperativeWorldBatchVecEnv(VecEnv):
 
     def _batch_observation_backend_mode(self) -> str:
         if self.batch_observation_backend == "auto":
-            return "legacy"
+            if self._batch_observation_runtime_available():
+                return "compiled"
+            raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
         return self.batch_observation_backend
+
+    def _batch_observation_runtime_available(self) -> bool:
+        return hasattr(ef_py, "compute_execution_observation_batch_numpy")
 
     def _batch_visual_backend_mode(self) -> str:
         if self.batch_visual_backend == "auto":
@@ -490,34 +492,8 @@ class CooperativeWorldBatchVecEnv(VecEnv):
             self._refresh_visual_batch(target_indices)
 
         backend = self._batch_observation_backend_mode()
-        if backend == "legacy" or not hasattr(ef_py, "compute_execution_observation_batch_numpy"):
-            self.last_observation_build_timing = {
-                "mission_input_build_ms": 0.0,
-                "execution_observation_batch_ms": 0.0,
-                "step_eval_prepare_ms": 0.0,
-            }
-            obs_batch: list[dict[str, np.ndarray]] = []
-            for slot_index in target_indices:
-                slot_state = self._slots[int(slot_index)]
-                if slot_state is None or slot_state.last_inst is None or slot_state.last_truth is None:
-                    raise RuntimeError(f"cooperative slot {slot_index} has no cached state for observation build")
-                obs = build_universal_observation(
-                    slot_state.loader,
-                    slot_state.last_inst,
-                    slot_state.last_truth,
-                    mission_obs_mode=self.mission_obs_mode,
-                    max_contacts=self.max_contacts,
-                    max_rwr=self.max_rwr,
-                    include_proprio=self.include_proprio,
-                    last_action=slot_state.last_action,
-                    action_space=self.action_space,
-                    steps=int(slot_state.steps),
-                    max_steps=int(slot_state.max_steps),
-                )
-                if self.include_visual:
-                    obs["visual"] = np.asarray(slot_state.visual_cache, dtype=np.float32, copy=False)
-                obs_batch.append(self._attach_temporal_history(slot_state, obs))
-            return obs_batch
+        if not self._batch_observation_runtime_available():
+            raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
 
         obs_batch_data = compute_execution_observation_batch(
             states=[
@@ -1403,6 +1379,6 @@ class CooperativeWorldBatchVecEnv(VecEnv):
 
 def _normalize_flight_shaping_backend(value: str | None) -> str:
     backend = "auto" if value is None else normalize_flight_shaping_backend(value)
-    if backend in ("auto", "legacy", "compiled", "gpu_host"):
+    if backend in ("auto", "compiled", "gpu_host"):
         return backend
     raise ValueError(f"Unknown flight_shaping_backend: {value!r}")

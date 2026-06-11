@@ -3,28 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
+from python.runtime_compat import normalize_runtime_compatibility_enabled as _normalize_runtime_compatibility_enabled
 
 
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"}
-VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled", "legacy"}
+VALID_EXECUTION_STEP_RUNTIME_MODES = {"compiled"}
 VALID_STEP_INFO_MODES = {"full", "terminal", "off"}
-VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "legacy", "compiled", "gpu_host"}
-
-_RUNTIME_COMPAT_TRUE = {"1", "true", "on", "yes", "compat", "compatibility", "diagnostics", "debug"}
-_RUNTIME_COMPAT_FALSE = {"", "0", "false", "off", "no", "none", "mainline", "compiled"}
-
-
-def _normalize_runtime_compatibility_enabled(value: Any) -> bool:
-    if isinstance(value, bool):
-        return bool(value)
-    if value is None:
-        return False
-    normalized = str(value).strip().lower()
-    if normalized in _RUNTIME_COMPAT_TRUE:
-        return True
-    if normalized in _RUNTIME_COMPAT_FALSE:
-        return False
-    return bool(value)
+VALID_FLIGHT_SHAPING_BACKENDS = {"auto", "compiled", "gpu_host"}
 
 
 def _merge_config_value(
@@ -143,20 +128,18 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError(f"Unknown action_mode in merged env config: {action_mode!r}")
     if mission_obs_mode not in VALID_MISSION_OBS_MODES:
         raise ValueError(f"Unknown mission_obs_mode in merged env config: {mission_obs_mode!r}")
+    if execution_step_runtime_mode == "legacy":
+        raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained env config paths")
     if execution_step_runtime_mode is not None and execution_step_runtime_mode not in VALID_EXECUTION_STEP_RUNTIME_MODES:
         raise ValueError(
             f"Unknown execution_step_runtime_mode in merged env config: {execution_step_runtime_mode!r}"
         )
     if step_info_mode not in VALID_STEP_INFO_MODES:
         raise ValueError(f"Unknown step_info_mode in merged env config: {step_info_mode!r}")
+    if flight_shaping_backend == "legacy":
+        raise ValueError("flight_shaping_backend='legacy' has been removed from maintained env config paths")
     if flight_shaping_backend is not None and flight_shaping_backend not in VALID_FLIGHT_SHAPING_BACKENDS:
         raise ValueError(f"Unknown flight_shaping_backend in merged env config: {flight_shaping_backend!r}")
-    if execution_step_runtime_mode == "legacy" and not bool(runtime_compatibility_enabled):
-        raise ValueError(
-            "execution_step_runtime_mode='legacy' is quarantined; "
-            "set runtime_compatibility_enabled=True to opt in explicitly."
-        )
-
     return {
         "include_visual": bool(include_visual),
         "include_proprio": bool(include_proprio),
@@ -168,5 +151,5 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "execution_step_runtime_mode": execution_step_runtime_mode,
         "step_info_mode": step_info_mode,
         "flight_shaping_backend": flight_shaping_backend,
-        "runtime_compatibility_enabled": bool(runtime_compatibility_enabled),
+        "runtime_compatibility_enabled": runtime_compatibility_enabled,
     }

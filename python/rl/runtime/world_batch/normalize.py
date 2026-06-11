@@ -7,8 +7,10 @@ def normalize_batch_observation_backend(value: str | None) -> str:
     backend = "auto" if value is None else str(value).strip().lower()
     if backend in ("", "auto"):
         return "auto"
-    if backend in ("legacy", "compiled", "gpu_host"):
+    if backend in ("compiled", "gpu_host"):
         return backend
+    if backend == "legacy":
+        raise ValueError("batch_observation_backend='legacy' has been removed from maintained VecEnv paths")
     raise ValueError(f"Unknown batch_observation_backend: {value!r}")
 
 
@@ -25,8 +27,10 @@ def normalize_batch_visual_backend(value: str | None) -> str:
 
 def normalize_flight_shaping_backend(value: str | None) -> str:
     backend = "auto" if value is None else normalize_flight_shaping_backend_input(value)
-    if backend in ("auto", "legacy", "compiled", "gpu_host"):
+    if backend in ("auto", "compiled", "gpu_host"):
         return backend
+    if backend == "legacy":
+        raise ValueError("flight_shaping_backend='legacy' has been removed from maintained VecEnv paths")
     raise ValueError(f"Unknown flight_shaping_backend: {value!r}")
 
 

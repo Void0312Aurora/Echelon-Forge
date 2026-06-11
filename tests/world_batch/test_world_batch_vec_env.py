@@ -1000,6 +1000,18 @@ class WorldBatchVecEnvTests(unittest.TestCase):
     self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch"))
     self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch_compatibility"))
 
+  def test_world_batch_adapter_runtime_compatibility_flag_is_strict(self) -> None:
+    adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="false")
+    compat_adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="yes")
+
+    self.assertFalse(adapter.runtime_compatibility_enabled)
+    self.assertFalse(adapter.capabilities.runtime_compatibility_enabled)
+    self.assertTrue(compat_adapter.runtime_compatibility_enabled)
+    self.assertTrue(compat_adapter.capabilities.runtime_compatibility_enabled)
+
+    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
+      vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="legacy-ish")
+
   def test_world_batch_adapter_capability_snapshot_tracks_facade_swaps(self) -> None:
     adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
 
@@ -1541,7 +1553,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_compiled_batch_observation_matches_legacy(self) -> None:
+  def test_world_batch_vec_env_legacy_batch_observation_backend_is_removed(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_data = _inline_vec_env_scenario()
       scenario_data["meta"]["max_steps"] = 2
@@ -1549,44 +1561,14 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(scenario_data, f, ensure_ascii=True)
 
-      legacy_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=2,
-        include_visual=False,
-        include_proprio=True,
-        batch_observation_backend="legacy",
-      )
-      compiled_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=2,
-        include_visual=False,
-        include_proprio=True,
-        batch_observation_backend="compiled",
-      )
-      try:
-        legacy_env.seed(123)
-        compiled_env.seed(123)
-        legacy_obs = legacy_env.reset()
-        compiled_obs = compiled_env.reset()
-        for key in ("instruments", "contacts", "rwr", "mission", "proprio"):
-          self.assertTrue(
-            np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
-            msg=f"reset mismatch for key={key}",
-          )
-
-        actions = np.zeros((2, 17), dtype=np.float32)
-        legacy_obs, legacy_rewards, legacy_dones, _legacy_infos = legacy_env.step(actions)
-        compiled_obs, compiled_rewards, compiled_dones, _compiled_infos = compiled_env.step(actions)
-        for key in ("instruments", "contacts", "rwr", "mission", "proprio"):
-          self.assertTrue(
-            np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
-            msg=f"step mismatch for key={key}",
-          )
-        self.assertTrue(np.allclose(legacy_rewards, compiled_rewards, atol=1.0e-6))
-        self.assertTrue(np.array_equal(legacy_dones, compiled_dones))
-      finally:
-        legacy_env.close()
-        compiled_env.close()
+      with self.assertRaisesRegex(ValueError, "batch_observation_backend='legacy' has been removed"):
+        WorldBatchVecEnv(
+          scenario_path=scenario_path,
+          n_envs=2,
+          include_visual=False,
+          include_proprio=True,
+          batch_observation_backend="legacy",
+        )
 
   def test_world_batch_vec_env_compiled_observation_arrays_are_float32(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1652,7 +1634,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_temporal_history_matches_legacy_and_compiled_shapes(self) -> None:
+  def test_world_batch_vec_env_auto_batch_observation_backend_uses_compiled(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_data = _inline_vec_env_scenario()
       scenario_data["meta"]["max_steps"] = 2
@@ -1660,27 +1642,18 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(scenario_data, f, ensure_ascii=True)
 
-      legacy_env = WorldBatchVecEnv(
+      vec_env = WorldBatchVecEnv(
         scenario_path=scenario_path,
         n_envs=2,
         include_visual=False,
         include_proprio=True,
         temporal_history_len=3,
-        batch_observation_backend="legacy",
-      )
-      compiled_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=2,
-        include_visual=False,
-        include_proprio=True,
-        temporal_history_len=3,
-        batch_observation_backend="compiled",
+        batch_observation_backend="auto",
       )
       try:
-        legacy_env.seed(123)
-        compiled_env.seed(123)
-        legacy_obs = legacy_env.reset()
-        compiled_obs = compiled_env.reset()
+        vec_env.seed(123)
+        obs = vec_env.reset()
+        self.assertEqual(vec_env._batch_observation_backend_mode(), "compiled")
         for key in (
           "instruments_history",
           "contacts_history",
@@ -1688,15 +1661,11 @@ class WorldBatchVecEnvTests(unittest.TestCase):
           "mission_history",
           "proprio_history",
         ):
-          self.assertEqual(legacy_obs[key].shape, compiled_obs[key].shape)
-          self.assertTrue(
-            np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
-            msg=f"reset mismatch for key={key}",
-          )
+          self.assertEqual(obs[key].shape[0], 2)
+          self.assertEqual(obs[key].shape[1], 3)
 
         actions = np.full((2, 17), 0.1, dtype=np.float32)
-        legacy_obs, _legacy_rewards, _legacy_dones, _legacy_infos = legacy_env.step(actions)
-        compiled_obs, _compiled_rewards, _compiled_dones, _compiled_infos = compiled_env.step(actions)
+        obs, _rewards, _dones, _infos = vec_env.step(actions)
         for key in (
           "instruments_history",
           "contacts_history",
@@ -1704,14 +1673,11 @@ class WorldBatchVecEnvTests(unittest.TestCase):
           "mission_history",
           "proprio_history",
         ):
-          self.assertEqual(legacy_obs[key].shape, compiled_obs[key].shape)
-          self.assertTrue(
-            np.allclose(legacy_obs[key], compiled_obs[key], atol=1.0e-6),
-            msg=f"step mismatch for key={key}",
-          )
+          self.assertEqual(obs[key].shape[0], 2)
+          self.assertEqual(obs[key].shape[1], 3)
+        self.assertTrue(np.allclose(obs["proprio"], actions))
       finally:
-        legacy_env.close()
-        compiled_env.close()
+        vec_env.close()
 
   def test_world_batch_vec_env_compiled_batch_visual_is_deterministic(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1810,30 +1776,59 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         n_envs=2,
         include_visual=False,
         include_proprio=False,
-        execution_step_runtime_mode="legacy",
-        runtime_compatibility_enabled=True,
+        execution_step_runtime_mode="compiled",
       )
       try:
         for handle in vec_env.envs:
-          self.assertEqual(handle.loader.execution_step_runtime_mode, "legacy")
-          self.assertFalse(bool(handle.loader.use_compiled_execution_step_runtime))
+          self.assertEqual(handle.loader.execution_step_runtime_mode, "compiled")
+          self.assertTrue(bool(handle.loader.use_compiled_execution_step_runtime))
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_rejects_legacy_runtime_mode_without_explicit_compatibility_opt_in(self) -> None:
+  def test_world_batch_vec_env_rejects_legacy_runtime_mode(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/inline_scenario.json"
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
 
-      with self.assertRaisesRegex(RuntimeError, "runtime_compatibility_enabled=True"):
+      with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
         WorldBatchVecEnv(
           scenario_path=scenario_path,
           n_envs=1,
           include_visual=False,
           include_proprio=False,
           execution_step_runtime_mode="legacy",
+          runtime_compatibility_enabled=True,
         )
+
+  def test_world_batch_vec_env_rejects_boolean_style_runtime_mode_aliases(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/inline_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+      for mode_alias in ("python", "off", "0", "false", "on", "1", "true"):
+        with self.subTest(runtime_mode=mode_alias):
+          with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):
+            WorldBatchVecEnv(
+              scenario_path=scenario_path,
+              n_envs=1,
+              include_visual=False,
+              include_proprio=False,
+              execution_step_runtime_mode=mode_alias,
+              runtime_compatibility_enabled=True,
+            )
+
+        with self.subTest(flight_shaping_backend=mode_alias):
+          with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
+            WorldBatchVecEnv(
+              scenario_path=scenario_path,
+              n_envs=1,
+              include_visual=False,
+              include_proprio=False,
+              flight_shaping_backend=mode_alias,
+              runtime_compatibility_enabled=True,
+            )
 
   def test_world_batch_vec_env_reports_effective_flight_shaping_backend_mode(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1841,15 +1836,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
 
-      legacy_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=2,
-        include_visual=False,
-        include_proprio=False,
-        execution_step_runtime_mode="legacy",
-        flight_shaping_backend="auto",
-        runtime_compatibility_enabled=True,
-      )
       compiled_env = WorldBatchVecEnv(
         scenario_path=scenario_path,
         n_envs=2,
@@ -1867,13 +1853,27 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         flight_shaping_backend="gpu_host",
       )
       try:
-        self.assertEqual(legacy_env._flight_shaping_backend_mode(), "legacy")
         self.assertEqual(compiled_env._flight_shaping_backend_mode(), "compiled")
         self.assertEqual(gpu_env._flight_shaping_backend_mode(), "gpu_host")
       finally:
-        legacy_env.close()
         compiled_env.close()
         gpu_env.close()
+
+  def test_world_batch_vec_env_rejects_legacy_flight_shaping_backend(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/inline_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_inline_vec_env_scenario(), f, ensure_ascii=True)
+
+      with self.assertRaisesRegex(ValueError, "flight_shaping_backend='legacy' has been removed"):
+        WorldBatchVecEnv(
+          scenario_path=scenario_path,
+          n_envs=1,
+          include_visual=False,
+          include_proprio=False,
+          flight_shaping_backend="legacy",
+          runtime_compatibility_enabled=True,
+        )
 
   def test_world_batch_vec_env_execution_episode_controller_shadow_compare_flag_off_is_noop(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import math
+import os
 import unittest
 from unittest import mock
 
@@ -15,6 +16,8 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
+from gym_envs.scenario_loader import normalize_execution_step_runtime_mode # noqa: E402
+from gym_envs.scenario_loader import normalize_flight_shaping_backend # noqa: E402
 from gym_envs.universal_env import build_step_info, build_universal_observation # noqa: E402
 
 
@@ -191,6 +194,25 @@ def _takeoff_shaping_scenario() -> dict:
 
 
 class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
+  def test_runtime_mode_normalizers_keep_legacy_explicit(self) -> None:
+    self.assertEqual(normalize_execution_step_runtime_mode(" legacy "), "legacy")
+    self.assertEqual(normalize_flight_shaping_backend(" legacy "), "legacy")
+
+    for mode_alias in ("python", "off", "0", "false", "on", "1", "true"):
+      with self.subTest(alias=mode_alias):
+        with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):
+          normalize_execution_step_runtime_mode(mode_alias)
+        with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
+          normalize_flight_shaping_backend(mode_alias)
+
+  def test_flight_shaping_backend_ignores_environment_compatibility_override(self) -> None:
+    with mock.patch.dict(os.environ, {"CMO_FLIGHT_SHAPING_BACKEND": "legacy"}):
+      self.assertEqual(normalize_flight_shaping_backend(None), "auto")
+
+      loader = ScenarioLoader(ef_py.SimulationKernel())
+      self.assertEqual(loader.flight_shaping_backend, "auto")
+      self.assertEqual(loader._flight_shaping_backend_mode(), "compiled")
+
   def _run_loader_once(
     self,
     scenario_data: dict,

@@ -33,7 +33,6 @@ from gym_envs.universal_env import (
     bind_naval_station_eval_reference,
     build_pilot_action,
     build_step_info_minimal,
-    build_universal_observation,
     make_action_space,
     make_observation_space,
     make_temporal_history_buffer,
@@ -245,13 +244,10 @@ class WorldBatchVecEnv(VecEnv):
             else None
         )
         self.flight_shaping_backend = _normalize_flight_shaping_backend(flight_shaping_backend)
-        if self.execution_step_runtime_mode not in (None, "compiled", "legacy"):
+        if self.execution_step_runtime_mode == "legacy":
+            raise ValueError("execution_step_runtime_mode='legacy' has been removed from maintained VecEnv paths")
+        if self.execution_step_runtime_mode not in (None, "compiled"):
             raise ValueError(f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}")
-        if self.execution_step_runtime_mode == "legacy" and not self.runtime_compatibility_enabled:
-            raise RuntimeError(
-                "execution_step_runtime_mode='legacy' is quarantined; pass "
-                "runtime_compatibility_enabled=True to opt in explicitly."
-            )
         if self.step_info_mode not in ("full", "terminal", "off"):
             raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")
         self.collect_step_timing = bool(collect_step_timing)
@@ -326,8 +322,6 @@ class WorldBatchVecEnv(VecEnv):
                 "execution_episode_controller_mainline is not compatible with "
                 "execution_episode_controller_shadow_compare"
             )
-        if self.execution_episode_controller_mainline and self.execution_step_runtime_mode == "legacy":
-            raise RuntimeError("execution_episode_controller_mainline requires compiled execution_step_runtime_mode")
         self._db_path = (
             os.path.abspath(database_path)
             if database_path
@@ -512,13 +506,13 @@ class WorldBatchVecEnv(VecEnv):
 
     def _batch_observation_backend_mode(self) -> str:
         if self.batch_observation_backend == "auto":
-            return "compiled" if self._batch_observation_runtime_available() else "legacy"
+            if self._batch_observation_runtime_available():
+                return "compiled"
+            raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
         return self.batch_observation_backend
 
     def _batch_observation_runtime_available(self) -> bool:
         if not hasattr(ef_py, "compute_execution_observation_batch_numpy"):
-            return False
-        if self.execution_step_runtime_mode == "legacy":
             return False
         for handle in self._handles:
             if not bool(getattr(handle.loader, "use_compiled_execution_step_runtime", True)):
@@ -672,33 +666,8 @@ class WorldBatchVecEnv(VecEnv):
         if self.include_visual:
             self._refresh_visual_batch(target_indices)
         backend = self._batch_observation_backend_mode()
-        if backend == "legacy" or not self._batch_observation_runtime_available():
-            self.last_observation_build_timing = {
-                "mission_input_build_ms": 0.0,
-                "execution_observation_batch_ms": 0.0,
-                "step_eval_prepare_ms": 0.0,
-            }
-            self._policy_execution_device_view = None
-            obs_batch: list[dict[str, np.ndarray]] = []
-            for env_idx in target_indices:
-                handle = self._handles[env_idx]
-                if handle.last_inst is None or handle.last_truth is None:
-                    raise RuntimeError(f"world {env_idx} has no cached state for observation build")
-                obs = build_universal_observation(
-                    handle.loader,
-                    handle.last_inst,
-                    handle.last_truth,
-                    mission_obs_mode=self.mission_obs_mode,
-                    max_contacts=self.max_contacts,
-                    max_rwr=self.max_rwr,
-                    include_proprio=self.include_proprio,
-                    last_action=handle.last_action,
-                    action_space=self.action_space,
-                    steps=int(handle.steps),
-                    max_steps=int(handle.max_steps),
-                )
-                obs_batch.append(self._attach_temporal_history(env_idx, self._attach_visual_observation(env_idx, obs)))
-            return obs_batch
+        if not self._batch_observation_runtime_available():
+            raise RuntimeError("maintained observation batching requires compute_execution_observation_batch_numpy")
 
         allow_execution_device_export = self._execution_observation_device_export_allowed(target_indices)
         obs_batch_data: ExecutionObservationBatch = compute_execution_observation_batch(

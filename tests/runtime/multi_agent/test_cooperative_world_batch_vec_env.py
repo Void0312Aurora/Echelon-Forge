@@ -422,6 +422,46 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
       finally:
         vec_env.close()
 
+  def test_cooperative_world_batch_vec_env_legacy_runtime_and_backends_are_removed(self) -> None:
+    if CooperativeWorldBatchVecEnv is None:
+      self.skipTest("gymnasium is not available in the active interpreter")
+    with tempfile.TemporaryDirectory() as tmpdir:
+      scenario_path = f"{tmpdir}/cooperative_scenario.json"
+      with open(scenario_path, "w", encoding="utf-8") as f:
+        json.dump(_cooperative_cruise_scenario(), f, ensure_ascii=True)
+
+      base_kwargs = {
+        "scenario_path": scenario_path,
+        "n_envs": 1,
+        "include_visual": False,
+        "include_proprio": True,
+        "action_mode": "full",
+        "mission_obs_mode": "nav_v2_formation_v1",
+      }
+
+      with self.subTest(option="execution_step_runtime_mode"):
+        with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
+          CooperativeWorldBatchVecEnv(
+            **base_kwargs,
+            execution_step_runtime_mode="legacy",
+            runtime_compatibility_enabled=True,
+          )
+
+      with self.subTest(option="batch_observation_backend"):
+        with self.assertRaisesRegex(ValueError, "batch_observation_backend='legacy' has been removed"):
+          CooperativeWorldBatchVecEnv(
+            **base_kwargs,
+            batch_observation_backend="legacy",
+          )
+
+      with self.subTest(option="flight_shaping_backend"):
+        with self.assertRaisesRegex(ValueError, "flight_shaping_backend='legacy' has been removed"):
+          CooperativeWorldBatchVecEnv(
+            **base_kwargs,
+            flight_shaping_backend="legacy",
+            runtime_compatibility_enabled=True,
+          )
+
   def test_cooperative_world_batch_vec_env_smoke(self) -> None:
     if CooperativeWorldBatchVecEnv is None:
       self.skipTest("gymnasium is not available in the active interpreter")

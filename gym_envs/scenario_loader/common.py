@@ -1,12 +1,7 @@
 import json
-import os
 from collections.abc import Iterator, Mapping
 
 import ef_py
-
-
-LEGACY_EXECUTION_STEP_RUNTIME_MODES = {"legacy", "python", "off", "0", "false"}
-LEGACY_FLIGHT_SHAPING_BACKENDS = {"legacy", "python", "off", "0", "false"}
 
 class _LazyEfEnumMap(Mapping[str, object]):
     def __init__(self, enum_owner_name: str, entries: dict[str, object]):
@@ -125,11 +120,11 @@ def normalize_execution_step_runtime_mode(mode: str | None) -> str:
     if mode is None:
         return "compiled"
     normalized = str(mode).strip().lower()
-    if normalized in LEGACY_EXECUTION_STEP_RUNTIME_MODES:
+    if normalized == "legacy":
         return "legacy"
-    if normalized in {"", "compiled", "on", "1", "true"}:
+    if normalized in {"", "compiled"}:
         return "compiled"
-    return normalized
+    raise ValueError(f"Unknown execution_step_runtime_mode: {mode!r}")
 
 
 def execution_step_runtime_mode_enabled(mode: str | None) -> bool:
@@ -137,13 +132,15 @@ def execution_step_runtime_mode_enabled(mode: str | None) -> bool:
 
 
 def normalize_flight_shaping_backend(backend: str | None) -> str:
-    raw_backend = os.environ.get("CMO_FLIGHT_SHAPING_BACKEND", "auto") if backend is None else backend
+    raw_backend = "auto" if backend is None else backend
     normalized = str(raw_backend).strip().lower()
-    if normalized in LEGACY_FLIGHT_SHAPING_BACKENDS:
+    if normalized == "legacy":
         return "legacy"
     if normalized in {"", "auto"}:
         return "auto"
-    return normalized
+    if normalized in {"compiled", "gpu_host"}:
+        return normalized
+    raise ValueError(f"Unknown flight_shaping_backend: {raw_backend!r}")
 
 
 def stable_json_dumps(value) -> str:

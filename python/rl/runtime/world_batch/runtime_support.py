@@ -3,23 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from gym_envs.universal_env import build_step_info
-
-
-_RUNTIME_COMPAT_TRUE = {"1", "true", "on", "yes", "compat", "compatibility", "diagnostics", "debug"}
-_RUNTIME_COMPAT_FALSE = {"", "0", "false", "off", "no", "none", "mainline", "compiled"}
+from python.runtime_compat import normalize_runtime_compatibility_enabled as _normalize_runtime_compatibility_enabled
 
 
 def normalize_runtime_compatibility_enabled(value: Any) -> bool:
-    if isinstance(value, bool):
-        return bool(value)
-    if value is None:
-        return False
-    normalized = str(value).strip().lower()
-    if normalized in _RUNTIME_COMPAT_TRUE:
-        return True
-    if normalized in _RUNTIME_COMPAT_FALSE:
-        return False
-    return bool(value)
+    return _normalize_runtime_compatibility_enabled(value)
 
 
 def runtime_compatibility_required_message(surface: str) -> str:
