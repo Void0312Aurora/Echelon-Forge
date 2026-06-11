@@ -30,7 +30,7 @@ descriptor，不改变 stock、Pk 或 fuze guards。
 Current workspace validation:
 
 ```bash
-python tools/maintenance/a2_retained_manifest_integrity.py
+python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
 python tools/maintenance/damage_model_source_governance.py admission-audit --strict
 python tools/maintenance/damage_model_candidate_artifacts.py package-bundle --output /tmp/a2_candidate_vps_bundle_g5_research_acceptance.json
 python -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_retained_manifest_integrity.py

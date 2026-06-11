@@ -19,7 +19,7 @@ from tools.maintenance.external_signoff_evidence import (  # noqa: E402
     intake_contract as contract,
     packet_template as template_gen,
 )
-from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
+from tools.maintenance.retained_artifacts import manifest_integrity as integrity  # noqa: E402
 
 
 FIXTURE_DIR = (

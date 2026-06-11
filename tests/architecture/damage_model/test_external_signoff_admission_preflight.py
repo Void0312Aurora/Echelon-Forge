@@ -19,7 +19,7 @@ from tools.maintenance.external_signoff_evidence import (  # noqa: E402
     admission_preflight as preflight,
     intake_contract as contract,
 )
-from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
+from tools.maintenance.retained_artifacts import manifest_integrity as integrity  # noqa: E402
 
 
 def _valid_external_packet(request_sha256: str) -> dict[str, Any]:

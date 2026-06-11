@@ -27,7 +27,7 @@ from tools.maintenance.source_governance import (  # noqa: E402
 from tools.maintenance.external_signoff_evidence import (  # noqa: E402
     signoff_request as signoff_request_packet,
 )
-from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
+from tools.maintenance.retained_artifacts import manifest_integrity as integrity  # noqa: E402
 
 
 def test_source_payload_pack_current_repo_is_partial(tmp_path: Path) -> None:

@@ -19,7 +19,7 @@ from tools.maintenance.benchmark_evidence import (  # noqa: E402
     spreadsheet_recalculation_admission as recalculation_gate,
     spreadsheet_replacement_tolerance as replacement_gate,
 )
-from tools.maintenance import a2_retained_manifest_integrity as manifest_integrity  # noqa: E402
+from tools.maintenance.retained_artifacts import manifest_integrity  # noqa: E402
 
 
 def _assert_recalculation_hash_only(payload: dict[str, Any]) -> None:

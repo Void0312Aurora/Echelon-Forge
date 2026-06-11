@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.maintenance import a2_retained_manifest_integrity as integrity
+from tools.maintenance.retained_artifacts import manifest_integrity as integrity
 
 
 def _sha256(path: Path) -> str:

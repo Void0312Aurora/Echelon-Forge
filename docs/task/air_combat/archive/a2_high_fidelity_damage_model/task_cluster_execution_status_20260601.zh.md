@@ -143,8 +143,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 pyth
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_wp22_structural_guardrails.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_scope_provenance_closeout_gates.py tests/architecture/damage_model/test_scope_provenance_closeout_gates.py tests/architecture/damage_model/test_independent_review_closeout_gates.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_source_governance.py admission-audit --strict
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_retained_manifest_integrity.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_retained_manifest_integrity.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_retained_manifest_integrity.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_retained_artifacts.py manifest-integrity
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_candidate_artifact_contracts.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_candidate_artifacts.py package-bundle --output $env:TEMP\a2_candidate_vps_bundle_task_cluster_exec.json
 git diff --check
@@ -185,7 +185,7 @@ python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integ
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 python -m pytest -q tests/architecture/damage_model/test_external_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission.py tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_source_evidence_governance.py
-python tools/maintenance/a2_retained_manifest_integrity.py
+python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
 python tools/maintenance/damage_model_source_governance.py admission-audit --strict
 python tools/maintenance/damage_model_candidate_artifacts.py package-bundle
 ```

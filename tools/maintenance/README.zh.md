@@ -55,10 +55,11 @@
 - [damage_model_candidate_artifacts.py](damage_model_candidate_artifacts.py)
   是统一的 candidate artifact 命令族，分发 validation scaffold、scope
   boundary probe、Stage B effect-scale artifact pack、Stage C
-  component-probability artifact/review gate、runtime authority exercise 和
-  candidate package bundle 命令。
-- 剩余 `a2_blastfrag_*.py` 和 `a2_retained_manifest_integrity.py` 脚本是
-  retained artifact、Stage C、provenance 与 review-gate 辅助工具。
+  component-probability 与 component-fragility artifact/review gate、runtime
+  authority exercise 和 candidate package bundle 命令。
+- [damage_model_retained_artifacts.py](damage_model_retained_artifacts.py)
+  是统一的 retained artifact 命令族，分发 retained manifest hash 与 authority
+  guard 完整性检查。
 - 这些工具只属于 maintenance/governance utility。它们不授予 runtime
   authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
   A2 damage-model workflow 内。

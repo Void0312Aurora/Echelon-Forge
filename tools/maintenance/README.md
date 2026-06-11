@@ -62,10 +62,11 @@ Task-specific A2 helpers:
 - [damage_model_candidate_artifacts.py](damage_model_candidate_artifacts.py)
   is the unified candidate artifact command family. It dispatches validation
   scaffold, scope boundary probe, Stage B effect-scale artifact packs, Stage C
-  component-probability artifact/review gates, runtime authority exercise, and
-  candidate package bundle commands.
-- Remaining `a2_blastfrag_*.py` and `a2_retained_manifest_integrity.py` scripts
-  are retained-artifact, Stage C, provenance, and review-gate helpers.
+  component-probability and component-fragility artifact/review gates, runtime
+  authority exercise, and candidate package bundle commands.
+- [damage_model_retained_artifacts.py](damage_model_retained_artifacts.py)
+  is the unified retained artifact command family. It dispatches retained
+  manifest integrity checks over artifact hashes and authority guards.
 - These tools are maintenance/governance utilities only. They do not grant
   runtime authority, do not make A2 retained artifacts product surface, and
   should stay scoped to the A2 damage-model workflow.

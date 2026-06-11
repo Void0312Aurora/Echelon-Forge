@@ -24,7 +24,7 @@ from tools.maintenance.benchmark_evidence import (  # noqa: E402
     selected_debris_case_admission as selected_case_gate,
     selected_debris_case_packet as candidate_packet,
 )
-from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
+from tools.maintenance.retained_artifacts import manifest_integrity as integrity  # noqa: E402
 
 
 HEX64 = re.compile(r"^[a-f0-9]{64}$")

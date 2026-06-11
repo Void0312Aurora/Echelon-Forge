@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 CANDIDATE_PACKAGE_DIR = (
     REPO_ROOT
     / "docs"
@@ -343,7 +343,7 @@ def _summary_failed(summary: dict[str, Any]) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Check retained A2 candidate manifest artifact integrity."
+        description="Check retained damage-model candidate manifest artifact integrity."
     )
     parser.add_argument(
         "--fix",

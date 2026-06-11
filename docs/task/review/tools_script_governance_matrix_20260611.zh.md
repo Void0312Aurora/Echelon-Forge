@@ -55,8 +55,9 @@
 | damage-model scope/provenance | `tools/maintenance/damage_model_scope_provenance.py` | 本轮已合并 geometry/warhead row provenance、target geometry closeout、warhead scope closeout、mechanism source closeout。 | 保留统一入口；内部实现位于 `tools/maintenance/scope_provenance/`。 |
 | damage-model independent review | `tools/maintenance/damage_model_independent_review.py` | 本轮已合并 Stage B effect-scale review、RES-011/012 review closeout、scope-bucket review、uncertainty review。 | 保留统一入口；内部实现位于 `tools/maintenance/independent_review/`。 |
 | damage-model release governance | `tools/maintenance/damage_model_release_governance.py` | 本轮已合并 package provenance/identity、provenance review/closeout、source release signoff、scoped release identity、Stage B release readiness/closeout。 | 保留统一入口；内部实现位于 `tools/maintenance/release_governance/`。 |
-| damage-model candidate artifacts | `tools/maintenance/damage_model_candidate_artifacts.py` | 本轮已合并 validation scaffold、scope boundary probe、Stage B effect-scale snapshot/result/retained pack、runtime authority exercise、candidate package bundle、Stage C component-probability artifact/review gates。 | 保留统一入口；内部实现位于 `tools/maintenance/candidate_artifacts/`。 |
-| A2 retained-artifact governance | `tools/maintenance/a2_*.py` 剩余 4 个 | 功能面重要，但文件边界仍按任务/阶段膨胀。 | 继续按 command family 合并后删除旧入口。 |
+| damage-model candidate artifacts | `tools/maintenance/damage_model_candidate_artifacts.py` | 本轮已合并 validation scaffold、scope boundary probe、Stage B effect-scale snapshot/result/retained pack、runtime authority exercise、candidate package bundle、Stage C component-probability 与 component-fragility artifact/review gates。 | 保留统一入口；内部实现位于 `tools/maintenance/candidate_artifacts/`。 |
+| damage-model retained artifacts | `tools/maintenance/damage_model_retained_artifacts.py` | 本轮已合并 retained manifest hash 与 authority-guard 完整性检查。 | 保留统一入口；内部实现位于 `tools/maintenance/retained_artifacts/`。 |
+| A2 top-level legacy entries | `tools/maintenance/a2_*.py` 剩余 0 个 | 顶层历史入口已清零。 | 后续不再新增 A2/阶段命名入口；新增能力必须进入语义命令族。 |
 | archived probes | `tools/archive/*` | 已不属于活入口。 | 保留在 archive；若活文档引用则迁移引用或恢复为 maintained 工具。 |
 
 ## 4. 下一轮激进清理顺序
@@ -73,8 +74,8 @@
 | 已完成 | scope/provenance closeout 合并 | `damage_model_scope_provenance.py row-provenance/target-geometry-closeout/warhead-scope-closeout/mechanism-source-closeout` 成为统一维护入口。 | 旧 scope/provenance closeout 顶层脚本删除；architecture tests 改用语义模块。 |
 | 已完成 | independent review 合并 | `damage_model_independent_review.py effect-scale-review/review-closeout/scope-bucket-review/uncertainty-review` 成为统一维护入口。 | 旧 independent review 顶层脚本删除；architecture tests 改用语义模块。 |
 | 已完成 | release governance 合并 | `damage_model_release_governance.py package-provenance-identity/provenance-identity-review/provenance-closeout/source-release-signoff/scoped-release-identity/effect-scale-readiness/effect-scale-closeout` 成为统一维护入口。 | 旧 release gate 顶层脚本删除；architecture tests 与活文档引用改用语义入口。 |
-| 已完成 | candidate artifacts 合并 | `damage_model_candidate_artifacts.py validation-scaffold/scope-boundary-probe/effect-scale-snapshot/effect-scale-result-pack/effect-scale-retained-pack/runtime-authority-exercise/package-bundle/component-probability-*` 成为统一维护入口。 | 旧 candidate artifact 与 Stage C component-probability 顶层脚本删除；release、fragility、benchmark/scope 引用改用语义模块。 |
-| P2 | A2 maintenance 命令族合并 | 剩余 4 个 `a2_*` 入口继续压缩成少数 artifact governance 命令族。 | 这是 retained-artifact 历史接口，不应只做表面重命名。 |
+| 已完成 | candidate artifacts 合并 | `damage_model_candidate_artifacts.py validation-scaffold/scope-boundary-probe/effect-scale-snapshot/effect-scale-result-pack/effect-scale-retained-pack/runtime-authority-exercise/package-bundle/component-probability-*/component-fragility-*` 成为统一维护入口。 | 旧 candidate artifact、Stage C component-probability、Stage C component-fragility 顶层脚本删除；release、fragility、benchmark/scope 引用改用语义模块。 |
+| 已完成 | retained artifacts 合并 | `damage_model_retained_artifacts.py manifest-integrity` 成为 retained manifest hash 与 authority-guard 完整性检查入口。 | 旧 retained manifest 顶层入口删除；architecture tests 与文档命令改用语义入口。 |
 | P3 | archive 引用清理 | 活文档不再引用 archived scratch 脚本。 | 只改引用，不改历史证据内容。 |
 
 ## 5. A2 maintenance 的处理边界
@@ -88,8 +89,9 @@
 | `damage_model_benchmark_evidence.py` | TP-21 selected case、BEC-O recalculation/tolerance、benchmark evidence/admission。 |
 | `damage_model_scope_provenance.py` | target geometry、warhead scope、row provenance、mechanism source closeout。 |
 | `damage_model_independent_review.py` | Stage B independent review、scope-bucket review、uncertainty review、RES-011/012 review closeout。 |
-| `damage_model_candidate_artifacts.py` | validation scaffold、scope boundary probe、effect-scale snapshot/result/retained pack、runtime authority exercise、candidate bundle、component-probability artifact/review gates。 |
+| `damage_model_candidate_artifacts.py` | validation scaffold、scope boundary probe、effect-scale snapshot/result/retained pack、runtime authority exercise、candidate bundle、component-probability 与 component-fragility artifact/review gates。 |
 | `damage_model_release_governance.py` | package provenance/identity、release readiness、release closeout、source release signoff、scoped release identity、provenance review/closeout。 |
+| `damage_model_retained_artifacts.py` | retained manifest hash、missing artifact、authority guard 完整性检查。 |
 
 旧入口删除前必须满足：对应命令族能覆盖旧 CLI 的输出文件、hash-only/fail-closed 行为、文档中保留物路径、以及 architecture 测试里已经固化的 contract。
 

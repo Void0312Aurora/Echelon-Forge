@@ -60,7 +60,7 @@
 
 `TC-A2-BF-001-HASH` 已作为当前 candidate 包的 retained manifest 强验收项通过：
 
-- [a2_retained_manifest_integrity.py](../../../../tools/maintenance/a2_retained_manifest_integrity.py)
+- [damage_model_retained_artifacts.py](../../../../tools/maintenance/damage_model_retained_artifacts.py) `manifest-integrity`
   默认扫描 candidate package 的 `retained_artifacts/**/manifest.json`；
 - 当前验收输出为 `manifest_count=29`、`missing_total=0`、`sha_mismatch_total=0`、
   `guard_true_total=0`；
@@ -86,7 +86,7 @@ python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integ
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 python -m pytest -q tests/architecture/damage_model/test_external_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission.py tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_source_evidence_governance.py
-python tools/maintenance/a2_retained_manifest_integrity.py
+python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
 python tools/maintenance/damage_model_source_governance.py admission-audit --strict
 python tools/maintenance/damage_model_candidate_artifacts.py package-bundle
 ```
@@ -158,8 +158,8 @@ reviewer 输入的填写形状与入 gate 前预检机器化；仍不消费 revi
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_source_admission_audit.py
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_source_governance.py admission-audit --strict
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_retained_manifest_integrity.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_retained_manifest_integrity.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_retained_manifest_integrity.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_retained_artifacts.py manifest-integrity
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_candidate_artifact_contracts.py
 ```
 

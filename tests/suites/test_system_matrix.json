@@ -101,7 +101,7 @@
       ],
       "tool_paths": [
         "tools/maintenance/damage_model_candidate_artifacts.py",
-        "tools/maintenance/a2_retained_manifest_integrity.py",
+        "tools/maintenance/damage_model_retained_artifacts.py",
         "tools/maintenance/damage_model_source_governance.py"
       ],
       "suite_membership": [],
