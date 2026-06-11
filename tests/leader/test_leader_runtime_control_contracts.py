@@ -6,9 +6,9 @@ from tests.leader._leader_env_runtime_controls_cases import LeaderEnvRuntimeCont
 
 
 __all__ = [
-    "LeaderEnvRuntimeControlTests",
+  "LeaderEnvRuntimeControlTests",
 ]
 
 
 if __name__ == "__main__":
-    unittest.main()
+  unittest.main()
