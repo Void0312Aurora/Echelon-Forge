@@ -13,7 +13,7 @@
 | `model_version` | `v0_candidate_runtime_aligned` |
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `model_owner` | `CMO A2 workspace` |
-| `code_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `validation-scaffold` / `runtime-authority-exercise`, [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) |
+| `code_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts validation-scaffold` / `runtime-authority-exercise`, [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) |
 | `run_manifest_ref` | [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md) |
 | `code_version_ref` | [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md) |
 | `input_snapshot_ref` | [surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md](surrogate_identity_manifest_stage_b_effect_scale_20260530.zh.md) |

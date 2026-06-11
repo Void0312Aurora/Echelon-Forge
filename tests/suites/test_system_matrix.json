@@ -100,9 +100,9 @@
         "tests/architecture/damage_model"
       ],
       "tool_paths": [
-        "tools/maintenance/damage_model_candidate_artifacts.py",
-        "tools/maintenance/damage_model_retained_artifacts.py",
-        "tools/maintenance/damage_model_source_governance.py"
+        "tools/maintenance/damage_model.py",
+        "tools/maintenance/damage_model.py",
+        "tools/maintenance/damage_model.py"
       ],
       "suite_membership": [],
       "governance_notes": "Release, retained-artifact, source-admission, and package-generation checks are review workflow gates; keep them out of CI smoke unless split into a cheap manifest-only subset."

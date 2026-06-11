@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage B `effect_scale_authority_only` 候选包的第一版 release readiness gate。
 它来自
-[damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `effect-scale-readiness`，
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `release-governance effect-scale-readiness`，
 目标不是宣称 ready，而是把“当前为什么还不能 release”机器化固定下来。
 
 本文档不创建 runtime descriptor，不授予 authority，也不替代 independent review。

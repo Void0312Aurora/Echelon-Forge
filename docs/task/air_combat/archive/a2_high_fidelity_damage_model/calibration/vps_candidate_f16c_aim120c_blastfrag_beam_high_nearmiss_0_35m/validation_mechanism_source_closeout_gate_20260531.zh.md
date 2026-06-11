@@ -3,7 +3,7 @@
 状态：`generated_from_mechanism_source_closeout_gate / non-authoritative / blocked_author_side_review_ready`。
 
 本文记录 `RES-003 target geometry`、`RES-004 warhead scope`、`RES-005 fragment mechanism`、`RES-006 blast mechanism` 的当前 mechanism/source closeout gate。它来自
-[damage_model_scope_provenance.py](../../../../../../tools/maintenance/damage_model_scope_provenance.py) `mechanism-source-closeout`，汇总 source ledger、artifact pin、target geometry assumption、warhead scope/sensitivity、Stage B/C author-side mechanism-load evidence。
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `scope-provenance mechanism-source-closeout`，汇总 source ledger、artifact pin、target geometry assumption、warhead scope/sensitivity、Stage B/C author-side mechanism-load evidence。
 
 本文不修改 [residual_register.zh.md](residual_register.zh.md)，不创建 runtime descriptor，不授予 target geometry、warhead、fragment、blast、effect-scale、component probability、Pk 或 deterministic-fuze authority。
 
@@ -13,7 +13,7 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.mechanism_source_closeout_gate.v1` |
-| `tool_ref` | [damage_model_scope_provenance.py](../../../../../../tools/maintenance/damage_model_scope_provenance.py) `mechanism-source-closeout` |
+| `tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `scope-provenance mechanism-source-closeout` |
 | `retained_artifact` | [mechanism_source_closeout_gate.json](retained_artifacts/mechanism_source_closeout_20260531/mechanism_source_closeout_gate.json) |
 | `retained_artifact_sha256` | `069d304edd711aae2c612f94c7ca0a7632496642302f1c054b64bd9cfe5881f0` |
 | `review_target` | `res_003_004_005_006_mechanism_source_closeout_lane` |

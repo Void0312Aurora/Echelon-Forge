@@ -86,21 +86,21 @@
   - Moves selected experiment/dataset directories aside to create a smaller repro workspace.
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - Audits bilingual coverage and batch-translates Markdown doc peers with an OpenAI-compatible API.
-- [damage_model_external_evidence.py](maintenance/damage_model_external_evidence.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified external signoff evidence CLI for source-rights signoff requests, intake contracts, packet templates, and admission preflight checks.
-- [damage_model_source_governance.py](maintenance/damage_model_source_governance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified source-governance CLI for admission audit, retained payload pack, and source-rights allowed-output policy checks.
-- [damage_model_benchmark_evidence.py](maintenance/damage_model_benchmark_evidence.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified benchmark-evidence CLI for comparison hashes, mechanism evidence, benchmark execution admission, debris-case admission, and spreadsheet recalculation/replacement review gates.
-- [damage_model_scope_provenance.py](maintenance/damage_model_scope_provenance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified scope/provenance CLI for row provenance, target-geometry closeout, warhead-scope closeout, and mechanism-source closeout.
-- [damage_model_independent_review.py](maintenance/damage_model_independent_review.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified independent-review CLI for effect-scale review, review closeout, scope-bucket review, and uncertainty review gates.
-- [damage_model_release_governance.py](maintenance/damage_model_release_governance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified release-governance CLI for package provenance/identity, provenance review/closeout, source release signoff, scoped release identity, and Stage B release readiness/closeout gates.
-- [damage_model_candidate_artifacts.py](maintenance/damage_model_candidate_artifacts.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified candidate-artifact CLI for validation scaffolds, scope probes, Stage B effect-scale artifact packs, Stage C component-probability and component-fragility artifact/review gates, runtime authority exercises, and candidate package bundles.
-- [damage_model_retained_artifacts.py](maintenance/damage_model_retained_artifacts.py)
+- [damage_model.py](maintenance/damage_model.py)
   - Unified retained-artifact CLI for manifest hash and authority-guard integrity checks.
 
 ## Archive

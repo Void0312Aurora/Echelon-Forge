@@ -22,7 +22,7 @@
 | Database content scaffold | `test_aircraft_database_units_have_authored_structured_damage_models`、`test_phase3_current_aircraft_unit_database_has_20_plus_component_models`、`test_phase3_current_aircraft_unit_component_centers_stay_inside_parent_hitboxes`、`test_phase3_representative_aircraft_database_components_cover_uav_helo_c2` | F-16 / Su-35 / MQ-9 / MH-60R / E-3 代表内容具备 authored structured hitbox 与组件样例 | 不证明全库覆盖或组件参数真实校准 |
 | Engagement contract / binding surface | `test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface`、`test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_contract_fields`、`test_effects_event_public_fields_match_expected_binding_surface`、`test_damage_report_public_fields_match_expected_binding_surface`、`test_trace_chain_links_track_launch_munition_effects_damage_and_observation_version` | `EffectsEvent`、`DamageReport`、component load row 和 trace 字段不会静默漂移 | 不证明字段含义已物理校准 |
 | RL / scenario consumer | `test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win`、`test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once`、`test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release` | 训练和场景层可消费 `DamageReport` 做 terminal / shaping；fixed-fire smoke 只验证链路与稳定性 | 不定义物理权威，不证明单发必杀，不放行 deterministic fuze |
-| Source trace / rights manifest | `tests/architecture/damage_model/test_source_admission_audit.py`、`tools/maintenance/damage_model_source_governance.py admission-audit` | source ledger、source pin / gap update、candidate validation manifest 会被准入审计；意外 validation pass、calibration pass 或 runtime authority 授权会失败关闭 | 不运行 benchmark，不证明任何物理模型或校准数据有效 |
+| Source trace / rights manifest | `tests/architecture/damage_model/test_source_admission_audit.py`、`tools/maintenance/damage_model.py source-governance admission-audit` | source ledger、source pin / gap update、candidate validation manifest 会被准入审计；意外 validation pass、calibration pass 或 runtime authority 授权会失败关闭 | 不运行 benchmark，不证明任何物理模型或校准数据有效 |
 
 ## 2. 高保真剩余测试矩阵
 
@@ -208,14 +208,14 @@ source tools/maintenance/cmo_env.sh && cmo_python tools/runners/run_pytest_suite
 A2 source trace / rights 门禁：
 
 ```bash
-source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/damage_model_source_governance.py admission-audit
+source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/damage_model.py source-governance admission-audit
 source tools/maintenance/cmo_env.sh && cmo_python -m pytest -q tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
 在候选来源包升级为 validation run 前，应额外运行：
 
 ```bash
-source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/damage_model_source_governance.py admission-audit --strict
+source tools/maintenance/cmo_env.sh && cmo_python tools/maintenance/damage_model.py source-governance admission-audit --strict
 ```
 
 ## 6. 验收结论边界

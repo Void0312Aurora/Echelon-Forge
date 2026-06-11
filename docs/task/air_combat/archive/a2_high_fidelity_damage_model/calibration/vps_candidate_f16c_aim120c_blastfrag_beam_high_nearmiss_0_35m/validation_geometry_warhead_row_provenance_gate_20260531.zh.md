@@ -12,7 +12,7 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.geometry_warhead_row_provenance_gate.v1` |
-| `tool_ref` | [damage_model_scope_provenance.py](../../../../../../tools/maintenance/damage_model_scope_provenance.py) `row-provenance` |
+| `tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `scope-provenance row-provenance` |
 | `retained_artifact` | [geometry_warhead_row_provenance_gate.json](retained_artifacts/geometry_warhead_row_provenance_20260531/geometry_warhead_row_provenance_gate.json) |
 | `retained_artifact_sha256` | `70af8bd0743bd10046eb7a9a0fcb5dc2645881e512ca999fd09106d58cedaf70` |
 | `manifest` | [manifest.json](retained_artifacts/geometry_warhead_row_provenance_20260531/manifest.json) |

@@ -38,9 +38,9 @@
 当前工作区复验：
 
 ```bash
-python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
-python tools/maintenance/damage_model_source_governance.py admission-audit --strict
-python tools/maintenance/damage_model_candidate_artifacts.py package-bundle --output /tmp/a2_candidate_vps_bundle_g4_research_continue.json
+python tools/maintenance/damage_model.py retained-artifacts manifest-integrity
+python tools/maintenance/damage_model.py source-governance admission-audit --strict
+python tools/maintenance/damage_model.py candidate-artifacts package-bundle --output /tmp/a2_candidate_vps_bundle_g4_research_continue.json
 python -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_retained_manifest_integrity.py
 python -m pytest -q tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_source_evidence_governance.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_external_signoff_admission_preflight.py
 rg -n 'authorit[y]=true|component_failure_probability_authorit[y].*true|stock_descriptor_create[d].*true|calibration_statu[s].*calibrated|authority_admissio[n].*true|industrial_admissio[n].*true|replacement_allowe[d].*false' docs/task/air_combat/archive/a2_high_fidelity_damage_model/g4_research_dispatch_20260601.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/g4_research_component_fragility_dispatch_20260601.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/g4_research_integration_acceptance_20260601.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/g4_g5_research_continuation_20260601.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/README.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/task_cluster_dispatch_20260601.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/task_cluster_execution_status_20260601.zh.md

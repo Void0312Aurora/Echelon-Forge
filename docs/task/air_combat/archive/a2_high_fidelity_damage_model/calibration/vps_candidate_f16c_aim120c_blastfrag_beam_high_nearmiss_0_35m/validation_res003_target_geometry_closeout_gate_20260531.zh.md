@@ -10,7 +10,7 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.res003_target_geometry_closeout_gate.v1` |
-| `tool_ref` | [damage_model_scope_provenance.py](../../../../../../tools/maintenance/damage_model_scope_provenance.py) `target-geometry-closeout` |
+| `tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `scope-provenance target-geometry-closeout` |
 | `retained_artifact` | [res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json](retained_artifacts/res003_target_geometry_closeout_20260531/res003_target_geometry_closeout_gate.json) |
 | `retained_artifact_sha256` | `4953dbf17be433bb558fd67049096927097ac794ed13cdecc0ed37bbb3613ac1` |
 | `manifest` | [res003_target_geometry_closeout_20260531/manifest.json](retained_artifacts/res003_target_geometry_closeout_20260531/manifest.json) |

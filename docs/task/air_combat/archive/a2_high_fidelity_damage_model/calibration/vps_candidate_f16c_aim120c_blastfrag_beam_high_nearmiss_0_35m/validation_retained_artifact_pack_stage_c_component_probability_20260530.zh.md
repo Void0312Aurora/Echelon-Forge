@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage C `component_failure_probability_authority_only` 候选包的第一版 retained
 artifact pack。它来自
-[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-retained-pack`，
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts component-probability-retained-pack`，
 把 Stage C 当前的 machine-readable candidate surfaces 固化到 repo 内 canonical JSON 目录。
 
 本文档不创建 runtime descriptor，不授予 authority，也不把 retained pack 冒充成独立 fragility release artifact。

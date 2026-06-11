@@ -21,15 +21,15 @@ benchmark/result execution record。它只减少 author-side 未完成项，不�
 | `closure_mps` | `900.0` |
 | `scope_probe_standoffs_m` | `0.25 / 0.35 / 0.45` |
 | `scope_probe_closures_mps` | `700 / 900 / 1100` |
-| `closeout_tool_ref` | [damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `effect-scale-closeout` |
+| `closeout_tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `release-governance effect-scale-closeout` |
 | `retained_closeout_artifact_ref` | [stage_b_release_closeout.json](retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json) |
 
 ## 2. 复现命令
 
 ```bash
-python tools/maintenance/damage_model_release_governance.py effect-scale-closeout --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json
-python tools/maintenance/damage_model_candidate_artifacts.py effect-scale-result-pack
-python tools/maintenance/damage_model_release_governance.py effect-scale-readiness
+python tools/maintenance/damage_model.py release-governance effect-scale-closeout --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_effect_scale_20260531/stage_b_release_closeout.json
+python tools/maintenance/damage_model.py candidate-artifacts effect-scale-result-pack
+python tools/maintenance/damage_model.py release-governance effect-scale-readiness
 ```
 
 这些命令只生成 candidate / author-side artifact。即使 hard gates 全部通过，

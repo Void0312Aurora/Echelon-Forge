@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage B `effect_scale_authority_only` 候选包已经保留的 canonical
 author-side retained artifact pack。它来自
-`tools/maintenance/damage_model_candidate_artifacts.py effect-scale-retained-pack` 写入的 repo 内
+`tools/maintenance/damage_model.py candidate-artifacts effect-scale-retained-pack` 写入的 repo 内
 JSON 产物，用来固定当前 candidate evidence chain；它不是 stock authority，
 不是 independent validation，也不关闭 `RES-002 surrogate identity`。
 
@@ -91,9 +91,9 @@ retained `manifest.json` 现在对每个 artifact 都固定了 `origin_class`、
 推荐命令：
 
 ```bash
-python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-retained-pack
-python3 tools/maintenance/damage_model_candidate_artifacts.py package-bundle
-python3 tools/maintenance/damage_model_release_governance.py effect-scale-readiness
+python3 tools/maintenance/damage_model.py candidate-artifacts effect-scale-retained-pack
+python3 tools/maintenance/damage_model.py candidate-artifacts package-bundle
+python3 tools/maintenance/damage_model.py release-governance effect-scale-readiness
 python3 -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py
 ```
 

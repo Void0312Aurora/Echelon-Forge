@@ -64,9 +64,9 @@ research boundary confirmation:
 ## Validation Plan
 
 ```bash
-python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
-python tools/maintenance/damage_model_source_governance.py admission-audit --strict
-python tools/maintenance/damage_model_candidate_artifacts.py package-bundle
+python tools/maintenance/damage_model.py retained-artifacts manifest-integrity
+python tools/maintenance/damage_model.py source-governance admission-audit --strict
+python tools/maintenance/damage_model.py candidate-artifacts package-bundle
 rg -n "pk_authorit[y].*true|deterministic_fuze_authorit[y].*true|stock_descriptor_create[d].*true|replacement_allowe[d].*false" docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_*.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods
 git diff --check
 ```

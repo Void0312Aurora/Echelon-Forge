@@ -3,7 +3,7 @@
 状态：`scoped_res002_identity_pass_non_authoritative / candidate / no-authority`。
 
 本文档记录 `RES-002 surrogate identity` 的窄域 scoped package identity freeze gate。对应工具为
-[damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `scoped-release-identity`。
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `release-governance scoped-release-identity`。
 
 本 gate 只冻结 A2 candidate package 的 repo-contained identity surface，不提升 validation status，不授予
 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority`
@@ -77,6 +77,6 @@
 ## 6. 复核命令
 
 ```bash
-python3 tools/maintenance/damage_model_release_governance.py scoped-release-identity
+python3 tools/maintenance/damage_model.py release-governance scoped-release-identity
 pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```

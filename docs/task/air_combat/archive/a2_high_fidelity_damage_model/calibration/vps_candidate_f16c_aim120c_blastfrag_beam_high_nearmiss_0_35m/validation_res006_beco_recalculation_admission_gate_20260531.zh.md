@@ -3,7 +3,7 @@
 状态：`partial_fail_closed_res006_beco_recalculation_admission / non-authoritative / hash-only`。
 
 本文记录 `A2-RES006-BECO-ADMISSION` 对 BEC-O blast mechanism recalculation/hash/tolerance blocker 的窄域收口结果。对应工具为
-[damage_model_benchmark_evidence.py](../../../../../../tools/maintenance/damage_model_benchmark_evidence.py) `spreadsheet-recalculation-admission`。
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `benchmark-evidence spreadsheet-recalculation-admission`。
 
 本 gate 只处理 `RES-006`：不修改 `mechanism_comparison_hashes` cached anchors，不编辑 `residual_register`，不处理 `RES-003/004/005`，不复制 spreadsheet formulas/raw selected values/raw output values，不释放 stock/runtime/effect-scale/component/Pk/fuze authority。
 
@@ -87,7 +87,7 @@ Recalculated anchors 的来源是本机 headless LibreOffice reopen/recalculate 
 ## 6. Verification
 
 ```bash
-python3 tools/maintenance/damage_model_benchmark_evidence.py spreadsheet-recalculation-admission
+python3 tools/maintenance/damage_model.py benchmark-evidence spreadsheet-recalculation-admission
 pytest -q tests/architecture/damage_model/test_benchmark_recalculation_admission.py
 ```
 

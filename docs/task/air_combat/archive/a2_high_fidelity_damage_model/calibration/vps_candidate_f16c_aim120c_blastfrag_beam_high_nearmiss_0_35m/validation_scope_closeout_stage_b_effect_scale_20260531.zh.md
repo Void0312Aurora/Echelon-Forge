@@ -15,7 +15,7 @@
 | `primary_release_scope` | `effect_scale_authority_only` |
 | `scope_probe_ref` | [validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md](validation_scope_boundary_probe_report_stage_b_effect_scale_20260530.zh.md) |
 | `run_manifest_ref` | [validation_run_manifest_stage_b_effect_scale_20260531.zh.md](validation_run_manifest_stage_b_effect_scale_20260531.zh.md) |
-| `closeout_tool_ref` | [damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `effect-scale-closeout` |
+| `closeout_tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `release-governance effect-scale-closeout` |
 
 ## 2. Near-Miss Bucket Closeout
 

@@ -4,7 +4,7 @@
 
 本文档记录当前候选包按 frozen Stage B `effect_scale_authority` hard gates
 生成的第一版 benchmark snapshot。它来自
-[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-snapshot`
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts effect-scale-snapshot`
 对当前 non-authoritative validation scaffold 的固定种子执行结果。
 
 本文档不是独立 validation result，不创建 runtime descriptor，不授予
@@ -21,8 +21,8 @@
 | `seed` | `20260529` |
 | `sample_count` | `4096` |
 | `criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) |
-| `scaffold_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `validation-scaffold` |
-| `snapshot_artifact_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-snapshot` |
+| `scaffold_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts validation-scaffold` |
+| `snapshot_artifact_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts effect-scale-snapshot` |
 | `stock_runtime_action` | `forbidden_pending_independent_review_and_residual_closeout` |
 
 ## 2. Hard-Gate Snapshot

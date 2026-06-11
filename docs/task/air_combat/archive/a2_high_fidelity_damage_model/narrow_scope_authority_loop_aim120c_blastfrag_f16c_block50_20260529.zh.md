@@ -155,7 +155,7 @@
 
 1. `residual_register.zh.md` 明确区分已收的子范围、仍 open 的 residual、以及不在本包关闭的边界项。
 2. 每个被验收 residual 或子范围都有 retained JSON / manifest / validation note，而不是口头结论。
-3. `tools/maintenance/damage_model_candidate_artifacts.py package-bundle` 的机器可读 bundle 能反映这些状态。
+3. `tools/maintenance/damage_model.py candidate-artifacts package-bundle` 的机器可读 bundle 能反映这些状态。
 4. authority boundary 全程保持 false：不创建 stock descriptor，不授予 runtime、effect-scale、component probability、Pk 或 deterministic fuze authority。
 5. A2 blastfrag architecture regression 通过。
 
@@ -228,8 +228,8 @@
 4. **阶段 D**：只在同一 weapon-target 主 scope 内，逐步扩到更多 aspect / closure / miss-distance buckets。
 5. **阶段 E**：待独立 fuze 证据链、replay/admission matrix、target signature 和 kill-chain 校准闭合后，再单独评估 `deterministic_fuze_authority` 与 `pk_authority`；二者不得借本轮结果自动继承。
 
-当前建议把 Stage B / C 的 test-local authority 演练统一收口到 `tools/maintenance/damage_model_candidate_artifacts.py runtime-authority-exercise`。该工具固定导出 baseline near-miss event summary、projected component rows，以及仅限 `test_local_authority_exercise_only` 的 descriptor candidate，避免把测试私有 helper、stock 数据库 authority 和正式候选包产物混在一起。
-当前 Stage A 也已有 package-level 收口工具 `tools/maintenance/damage_model_candidate_artifacts.py package-bundle`：它会把 source ledger、surrogate model card、validation report draft、validation scaffold 和 test-local authority exercise 汇成一个 candidate bundle，确保正式候选包不再只是模板集合，而是一个可审计、可测试、但仍保持 non-authoritative 的评审单元。
+当前建议把 Stage B / C 的 test-local authority 演练统一收口到 `tools/maintenance/damage_model.py candidate-artifacts runtime-authority-exercise`。该工具固定导出 baseline near-miss event summary、projected component rows，以及仅限 `test_local_authority_exercise_only` 的 descriptor candidate，避免把测试私有 helper、stock 数据库 authority 和正式候选包产物混在一起。
+当前 Stage A 也已有 package-level 收口工具 `tools/maintenance/damage_model.py candidate-artifacts package-bundle`：它会把 source ledger、surrogate model card、validation report draft、validation scaffold 和 test-local authority exercise 汇成一个 candidate bundle，确保正式候选包不再只是模板集合，而是一个可审计、可测试、但仍保持 non-authoritative 的评审单元。
 
 ## 11. 当前判定
 

@@ -4,7 +4,7 @@
 
 本文档记录当前候选包按 Stage C `component_failure_probability_authority` 候选路径
 生成的第一版 component-specific snapshot。它来自
-[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-snapshot`
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts component-probability-snapshot`
 对当前 runtime-aligned authority exercise 的 author-side 固定结果。
 
 本文档不是独立 validation result，不创建 runtime descriptor，不授予
@@ -19,8 +19,8 @@
 | `snapshot_status` | `author_snapshot_complete_pending_independent_review` |
 | `primary_release_scope` | `component_failure_probability_authority_only` |
 | `scope_ref` | [narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md](../../narrow_scope_authority_loop_aim120c_blastfrag_f16c_block50_20260529.zh.md) |
-| `runtime_aligned_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `runtime-authority-exercise` |
-| `snapshot_artifact_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-snapshot` |
+| `runtime_aligned_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts runtime-authority-exercise` |
+| `snapshot_artifact_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts component-probability-snapshot` |
 | `stock_runtime_action` | `forbidden_pending_fragility_validation_and_residual_closeout` |
 
 ## 2. Current Candidate Snapshot

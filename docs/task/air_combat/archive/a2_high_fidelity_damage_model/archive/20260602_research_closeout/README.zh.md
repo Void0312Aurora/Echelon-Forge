@@ -32,9 +32,9 @@ A2 子项目可以视为当前 research / candidate 目标下已完成并归档�
 归档前最后一次复核结果：
 
 ```bash
-python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
-python tools/maintenance/damage_model_source_governance.py admission-audit --strict
-python tools/maintenance/damage_model_candidate_artifacts.py package-bundle --output /tmp/a2_candidate_vps_bundle_archive_closeout.json
+python tools/maintenance/damage_model.py retained-artifacts manifest-integrity
+python tools/maintenance/damage_model.py source-governance admission-audit --strict
+python tools/maintenance/damage_model.py candidate-artifacts package-bundle --output /tmp/a2_candidate_vps_bundle_archive_closeout.json
 rg -n "pk_authorit[y].*true|deterministic_fuze_authorit[y].*true|stock_descriptor_create[d].*true|replacement_allowe[d].*false" docs/task/air_combat/archive/a2_high_fidelity_damage_model/g5_research_*.zh.md docs/task/air_combat/archive/a2_high_fidelity_damage_model/data_collection/kill_chain_proxy_methods
 python -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_retained_manifest_integrity.py
 python -m pytest -q tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_source_evidence_governance.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_external_signoff_admission_preflight.py

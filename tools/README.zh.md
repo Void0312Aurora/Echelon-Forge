@@ -86,21 +86,21 @@
   - 将选定的实验/数据集目录移开，以创建一个更小的复现工作区。
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - 审计双语覆盖率，并使用与 OpenAI 兼容的 API 批量翻译 Markdown 文档对等文件。
-- [damage_model_external_evidence.py](maintenance/damage_model_external_evidence.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 external signoff evidence CLI，覆盖 source-rights signoff request、intake contract、packet template 和 admission preflight。
-- [damage_model_source_governance.py](maintenance/damage_model_source_governance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 source-governance CLI，覆盖 admission audit、retained payload pack 和 source-rights allowed-output policy 检查。
-- [damage_model_benchmark_evidence.py](maintenance/damage_model_benchmark_evidence.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 benchmark-evidence CLI，覆盖 comparison hashes、mechanism evidence、benchmark execution admission、debris-case admission 和 spreadsheet recalculation/replacement review gate。
-- [damage_model_scope_provenance.py](maintenance/damage_model_scope_provenance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 scope/provenance CLI，覆盖 row provenance、target-geometry closeout、warhead-scope closeout 和 mechanism-source closeout。
-- [damage_model_independent_review.py](maintenance/damage_model_independent_review.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 independent-review CLI，覆盖 effect-scale review、review closeout、scope-bucket review 和 uncertainty review gate。
-- [damage_model_release_governance.py](maintenance/damage_model_release_governance.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 release-governance CLI，覆盖 package provenance/identity、provenance review/closeout、source release signoff、scoped release identity 和 Stage B release readiness/closeout gate。
-- [damage_model_candidate_artifacts.py](maintenance/damage_model_candidate_artifacts.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 candidate-artifact CLI，覆盖 validation scaffold、scope probe、Stage B effect-scale artifact pack、Stage C component-probability 与 component-fragility artifact/review gate、runtime authority exercise 和 candidate package bundle。
-- [damage_model_retained_artifacts.py](maintenance/damage_model_retained_artifacts.py)
+- [damage_model.py](maintenance/damage_model.py)
   - 统一的 retained-artifact CLI，覆盖 manifest hash 与 authority-guard 完整性检查。
 
 ## 归档

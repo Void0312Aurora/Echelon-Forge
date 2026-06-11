@@ -54,13 +54,13 @@
 | `TC-A2-BF-001` source / identity / retained evidence | `G2 candidate acceptance` | source payload、rights/output policy、scoped surrogate identity 可读取；bundle 可机器读取；retained manifest integrity checker 通过；authority guards 全 false | 法律意见、外部发布权、global clean release identity、stock runtime authority |
 | `TC-A2-BF-002` scope / geometry / warhead evidence | `G2 candidate acceptance`；只读 `G3 residual` 状态 | 固定 `F-16C_Block50 x AIM-120C-class/blast_fragmentation x beam/high/near_miss_0_35m`；Stage B witness geometry、family-scope、bucket/axis gate retained；truth gaps 明确留在 residual | 真实 F-16 内部几何/材料/遮挡真值、具体 AIM-120C 战斗部真值、多目标/多武器扩面 |
 | `TC-A2-BF-003` mechanism admission evidence | `G2 candidate acceptance`；只读 `G3 residual` 状态 | TP-21 / BEC-O 执行、hash、admit 或 fail-closed 原因由 retained gate 固化；accepted as retained/fail-closed package evidence, not admitted as release-consumed evidence | 把 TP-21/BEC-O 输出消费为 release evidence；授予 fragment/blast row authority |
-| `TC-A2-BF-004` candidate bundle / regression | `G2 candidate acceptance` | [damage_model_candidate_artifacts.py](../../../../tools/maintenance/damage_model_candidate_artifacts.py) `package-bundle` 和 A2 regression 只作为机器入口与回归入口；它们能汇总 source、validation scaffold、runtime-aligned exercise 和 residual 状态；stock/effect/component/Pk/fuze authority 全 false | release-grade authority promotion、stock DB release、Pk/fuze/kill-chain 验收 |
+| `TC-A2-BF-004` candidate bundle / regression | `G2 candidate acceptance` | [damage_model.py](../../../../tools/maintenance/damage_model.py) `candidate-artifacts package-bundle` 和 A2 regression 只作为机器入口与回归入口；它们能汇总 source、validation scaffold、runtime-aligned exercise 和 residual 状态；stock/effect/component/Pk/fuze authority 全 false | release-grade authority promotion、stock DB release、Pk/fuze/kill-chain 验收 |
 
 ## Retained manifest integrity
 
 `TC-A2-BF-001-HASH` 已作为当前 candidate 包的 retained manifest 强验收项通过：
 
-- [damage_model_retained_artifacts.py](../../../../tools/maintenance/damage_model_retained_artifacts.py) `manifest-integrity`
+- [damage_model.py](../../../../tools/maintenance/damage_model.py) `retained-artifacts manifest-integrity`
   默认扫描 candidate package 的 `retained_artifacts/**/manifest.json`；
 - 当前验收输出为 `manifest_count=29`、`missing_total=0`、`sha_mismatch_total=0`、
   `guard_true_total=0`；
@@ -86,9 +86,9 @@ python -m pytest -q tests/architecture/damage_model/test_retained_manifest_integ
 python -m pytest -q tests/runtime/engagement/test_engagement_contract_shape.py tests/runtime/engagement/test_launch_adapter_static_shape.py tests/runtime/engagement/test_live_engagement_event_capture.py
 python -m pytest -q tests/runtime/air_combat/test_weapon_guidance_realism_guards.py
 python -m pytest -q tests/architecture/damage_model/test_external_signoff_admission_preflight.py tests/architecture/damage_model/test_benchmark_recalculation_admission.py tests/architecture/damage_model/test_benchmark_evidence_admission.py tests/architecture/damage_model/test_external_signoff_intake_contracts.py tests/architecture/damage_model/test_source_evidence_governance.py
-python tools/maintenance/damage_model_retained_artifacts.py manifest-integrity
-python tools/maintenance/damage_model_source_governance.py admission-audit --strict
-python tools/maintenance/damage_model_candidate_artifacts.py package-bundle
+python tools/maintenance/damage_model.py retained-artifacts manifest-integrity
+python tools/maintenance/damage_model.py source-governance admission-audit --strict
+python tools/maintenance/damage_model.py candidate-artifacts package-bundle
 ```
 
 结果：
@@ -141,8 +141,8 @@ reviewer 输入的填写形状与入 gate 前预检机器化；仍不消费 revi
 - [candidate package README](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/README.zh.md)
 - [residual register](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md)
 - `calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/**/manifest.json`
-- [damage_model_candidate_artifacts.py](../../../../tools/maintenance/damage_model_candidate_artifacts.py) `package-bundle`
-- [damage_model_candidate_artifacts.py](../../../../tools/maintenance/damage_model_candidate_artifacts.py) `runtime-authority-exercise`
+- [damage_model.py](../../../../tools/maintenance/damage_model.py) `candidate-artifacts package-bundle`
+- [damage_model.py](../../../../tools/maintenance/damage_model.py) `candidate-artifacts runtime-authority-exercise`
 - [mechanism admission fail-closed backlog](mechanism_admission_failclosed_backlog_20260601.zh.md)
 - `retained_artifacts/res005_tp21_selected_case_admission_20260601/res005_tp21_selected_case_admission_review_gate.json`
 - `retained_artifacts/res006_beco_replacement_tolerance_admission_20260601/res006_beco_replacement_tolerance_admission_gate.json`
@@ -157,9 +157,9 @@ reviewer 输入的填写形状与入 gate 前预检机器化；仍不消费 revi
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_source_admission_audit.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_source_governance.py admission-audit --strict
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model.py source-governance admission-audit --strict
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_retained_manifest_integrity.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_retained_artifacts.py manifest-integrity
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model.py retained-artifacts manifest-integrity
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_candidate_artifact_contracts.py
 ```
 

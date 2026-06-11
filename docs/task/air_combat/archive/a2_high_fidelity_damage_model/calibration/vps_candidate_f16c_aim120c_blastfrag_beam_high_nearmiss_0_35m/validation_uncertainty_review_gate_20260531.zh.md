@@ -11,7 +11,7 @@ Stage B 与 Stage C 的 uncertainty 证据分层，不创建 stock descriptor，
 
 | 字段 | 值 |
 |---|---|
-| `tool_ref` | [damage_model_independent_review.py](../../../../../../tools/maintenance/damage_model_independent_review.py) `uncertainty-review` |
+| `tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `independent-review uncertainty-review` |
 | `test_ref` | [test_independent_review_closeout_gates.py](../../../../../../tests/architecture/damage_model/test_independent_review_closeout_gates.py) |
 | `retained_gate` | [uncertainty_review_gate.json](retained_artifacts/uncertainty_review_20260531/uncertainty_review_gate.json) |
 | `retained_manifest` | [manifest.json](retained_artifacts/uncertainty_review_20260531/manifest.json) |
@@ -71,7 +71,7 @@ Stage C 仍保持 `blocked_probability_uncertainty_coverage_missing`，因为它
 已运行：
 
 ```bash
-python3 tools/maintenance/damage_model_independent_review.py uncertainty-review
+python3 tools/maintenance/damage_model.py independent-review uncertainty-review
 pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 

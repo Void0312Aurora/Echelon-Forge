@@ -16,7 +16,7 @@ review dependency trace。它只说明当前 author-side seed-window CV gate 已
 | `seed_window` | `20260529 / 20260630 / 20260731 / 20260832` |
 | `criteria_ref` | [validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md](validation_metrics_and_acceptance_criteria_stage_b_effect_scale_20260530.zh.md) |
 | `run_manifest_ref` | [validation_run_manifest_stage_b_effect_scale_20260531.zh.md](validation_run_manifest_stage_b_effect_scale_20260531.zh.md) |
-| `closeout_tool_ref` | [damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `effect-scale-closeout` |
+| `closeout_tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `release-governance effect-scale-closeout` |
 
 ## 2. CV Closeout Table
 

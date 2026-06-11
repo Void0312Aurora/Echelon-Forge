@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage B `effect_scale_authority_only` 候选包的第一版统一结果包。
 它来自
-[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-result-pack`，
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts effect-scale-result-pack`，
 将 validation scaffold、scope probe 和 Stage B hard-gate snapshot 汇总为一个带稳定内容 hash
 和 independence audit 语义的 machine-readable artifact。
 
@@ -23,7 +23,7 @@
 | `release_ready` | `false` |
 | `stage_c_component_probability_release_included` | `false` |
 | `schema_version` | `a2.stage_b_validation_result_pack.v1` |
-| `tool_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-result-pack` |
+| `tool_ref` | [damage_model.py](../../../../../../tools/maintenance/damage_model.py) `candidate-artifacts effect-scale-result-pack` |
 | `stock_runtime_action` | `forbidden_pending_independent_review_and_residual_closeout` |
 
 ## 2. 当前 artifact hash

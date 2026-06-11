@@ -20,6 +20,6 @@
 ## 验证命令
 
 ```bash
-python3 tools/maintenance/damage_model_benchmark_evidence.py debris-admission
+python3 tools/maintenance/damage_model.py benchmark-evidence debris-admission
 pytest -q tests/architecture/damage_model/test_benchmark_evidence_admission.py
 ```

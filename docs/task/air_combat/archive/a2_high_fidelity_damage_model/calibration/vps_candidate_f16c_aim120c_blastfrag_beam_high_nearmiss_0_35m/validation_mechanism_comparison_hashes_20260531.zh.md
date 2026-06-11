@@ -3,7 +3,7 @@
 状态：`partial_fail_closed_mechanism_comparison_hash_manifest / non-authoritative / hash-only`。
 
 本文记录 `A2-EV-MECH-COMPARISON-HASHES` 对 retained `TP-20.pdf`、`BEC-O-V1.xlsx`、`TP-21.pdf` 的 mechanism comparison-output hash pass。对应工具为
-[damage_model_benchmark_evidence.py](../../../../../../tools/maintenance/damage_model_benchmark_evidence.py) `comparison-hashes`。
+[damage_model.py](../../../../../../tools/maintenance/damage_model.py) `benchmark-evidence comparison-hashes`。
 
 本文不修改 runtime、stock descriptor、source rights/policy、provenance gate 或 Stage C benchmark 文件；不把 BEC-O/TP-21 source presence 当 calibration；不释放 `effect_scale_authority`、`component_failure_probability_authority`、`Pk` 或 deterministic fuze authority。
 
@@ -85,6 +85,6 @@ Fail-closed requirement：reviewer 必须选择具体 TP-21 debris comparison ca
 ## 6. Verification
 
 ```bash
-python tools/maintenance/damage_model_benchmark_evidence.py comparison-hashes --write-retained-artifacts
+python tools/maintenance/damage_model.py benchmark-evidence comparison-hashes --write-retained-artifacts
 python -m pytest -q tests/architecture/damage_model/test_mechanism_source_evidence_closeout.py
 ```

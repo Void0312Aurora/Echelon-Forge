@@ -69,5 +69,5 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 pyth
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_source_admission_audit.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_source_governance.py admission-audit --strict
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model.py source-governance admission-audit --strict
 ```
