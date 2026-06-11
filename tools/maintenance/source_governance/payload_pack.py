@@ -23,11 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_provenance_identity_review_gate as review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_release_provenance_closeout_gate as closeout_gate,
+from tools.maintenance.release_governance import (  # noqa: E402
+    provenance_closeout as closeout_gate,
+    provenance_identity_review as review_gate,
 )
 
 

@@ -21,8 +21,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_stage_b_release_closeout as closeout
-from tools.maintenance import a2_blastfrag_stage_b_release_readiness_gate as readiness
+from tools.maintenance.release_governance import effect_scale_release_closeout as closeout
+from tools.maintenance.release_governance import effect_scale_release_readiness as readiness
 
 
 PACKAGE_ID = (

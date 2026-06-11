@@ -96,6 +96,8 @@
   - Unified scope/provenance CLI for row provenance, target-geometry closeout, warhead-scope closeout, and mechanism-source closeout.
 - [damage_model_independent_review.py](maintenance/damage_model_independent_review.py)
   - Unified independent-review CLI for effect-scale review, review closeout, scope-bucket review, and uncertainty review gates.
+- [damage_model_release_governance.py](maintenance/damage_model_release_governance.py)
+  - Unified release-governance CLI for package provenance/identity, provenance review/closeout, source release signoff, scoped release identity, and Stage B release readiness/closeout gates.
 - Remaining A2 `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and `a2_retained_manifest_integrity.py`
   - Task-specific candidate/retained-artifact governance helpers awaiting command-family consolidation. They are non-authoritative maintenance gates and are not part of the runtime product surface.
 

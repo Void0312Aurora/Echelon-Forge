@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / provenance_identity_review_gate`。
 
 本文档记录 `RES-001 source provenance` 与 `RES-002 surrogate identity` 的 release-grade review gate。对应工具为
-[a2_blastfrag_provenance_identity_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py)。
+[damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `provenance-identity-review`。
 
 本 gate 只保留 review blocker surface，不创建 stock descriptor，不授予
 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority`
@@ -79,6 +79,6 @@
 ## 7. 复核命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_provenance_identity_review_gate.py --write-retained-artifact --retained-output-dir docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531 --output /tmp/a2_provenance_identity_review_retained_manifest.json
+python tools/maintenance/damage_model_release_governance.py provenance-identity-review --write-retained-artifact --retained-output-dir docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531 --output /tmp/a2_provenance_identity_review_retained_manifest.json
 python -m pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```

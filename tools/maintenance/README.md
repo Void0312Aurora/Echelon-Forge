@@ -55,6 +55,10 @@ Task-specific A2 helpers:
   is the unified independent review command family. It dispatches effect-scale
   review, RES-011/012 review closeout, scope-bucket review, and uncertainty
   review commands.
+- [damage_model_release_governance.py](damage_model_release_governance.py)
+  is the unified release governance command family. It dispatches package
+  provenance/identity, provenance review/closeout, source release signoff,
+  scoped release identity, and Stage B release readiness/closeout commands.
 - Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
   `a2_retained_manifest_integrity.py` scripts are candidate-package,
   retained-artifact, provenance, and review-gate helpers.

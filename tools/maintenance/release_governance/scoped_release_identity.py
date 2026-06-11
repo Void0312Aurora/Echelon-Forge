@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
     "beam_high_near_miss_0_35m_v0"
@@ -108,7 +108,7 @@ DOC_REFS = {
         REPO_ROOT
         / "tools"
         / "maintenance"
-        / "a2_blastfrag_provenance_identity_review_gate.py"
+        / "damage_model_release_governance.py"
     ),
 }
 
@@ -697,7 +697,7 @@ def write_retained_scoped_identity_artifact(
     return manifest
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Create the bounded RES-002 scoped release identity gate and retained "
@@ -720,7 +720,7 @@ def main() -> int:
         default=DEFAULT_RETAINED_OUTPUT_DIR,
         help="Directory used for retained scoped identity artifacts.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.no_write_retained_artifact:
         payload = generate_res002_scoped_release_identity_gate()

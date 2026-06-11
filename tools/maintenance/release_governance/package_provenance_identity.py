@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -514,7 +514,7 @@ def generate_package_provenance_identity_gate(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate the shared package-level provenance and surrogate-identity "
@@ -526,7 +526,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_package_provenance_identity_gate()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

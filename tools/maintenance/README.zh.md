@@ -48,6 +48,10 @@
   是统一的 independent review 命令族，分发 effect-scale review、
   RES-011/012 review closeout、scope-bucket review 和 uncertainty review
   命令。
+- [damage_model_release_governance.py](damage_model_release_governance.py)
+  是统一的 release governance 命令族，分发 package provenance/identity、
+  provenance review/closeout、source release signoff、scoped release
+  identity 和 Stage B release readiness/closeout 命令。
 - 剩余 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
   `a2_retained_manifest_integrity.py` 脚本是 candidate package、retained
   artifact、provenance 与 review-gate 辅助工具。

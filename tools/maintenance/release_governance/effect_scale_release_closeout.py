@@ -16,13 +16,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
 from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as snapshot
-from tools.maintenance import a2_blastfrag_stage_b_release_readiness_gate as readiness
+from tools.maintenance.release_governance import effect_scale_release_readiness as readiness
 from tools.maintenance import a2_blastfrag_stage_b_validation_result_pack as result_pack
 
 
@@ -353,7 +353,7 @@ def generate_stage_b_release_closeout(*, repo_root: Path = REPO_ROOT) -> dict[st
             ),
             "result_pack_tool_ref": "tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py",
             "release_readiness_gate_tool_ref": (
-                "tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py"
+                "tools/maintenance/damage_model_release_governance.py effect-scale-readiness"
             ),
         },
         "benchmark_result_execution_record": {
@@ -400,7 +400,7 @@ def generate_stage_b_release_closeout(*, repo_root: Path = REPO_ROOT) -> dict[st
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage B effect-scale release closeout artifact for "
@@ -412,7 +412,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_b_release_closeout()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

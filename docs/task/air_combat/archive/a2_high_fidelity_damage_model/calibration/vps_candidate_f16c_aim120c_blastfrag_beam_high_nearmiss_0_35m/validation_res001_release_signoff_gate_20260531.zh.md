@@ -45,6 +45,6 @@
 ## 4. Verification
 
 ```bash
-python3 tools/maintenance/a2_blastfrag_res001_release_signoff_gate.py
+python3 tools/maintenance/damage_model_release_governance.py source-release-signoff
 pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```

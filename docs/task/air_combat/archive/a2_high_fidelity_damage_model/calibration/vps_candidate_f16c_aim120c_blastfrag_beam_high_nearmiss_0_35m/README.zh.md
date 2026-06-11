@@ -83,7 +83,7 @@ confidence 和 residual。详见
 - `tests/architecture/damage_model/test_component_probability_artifacts.py`：固定上述 Stage C retained pack 的 manifest 形状、artifact inventory 和 non-authoritative 边界。
 - `tools/maintenance/a2_blastfrag_stage_c_component_probability_review_readiness_gate.py`：把 Stage C component-specific probability 当前为什么仍 blocked 机器化固定下来，并同时记录 upstream Stage B 依赖仍未收口；它不会把 author-side review gate 提升成 authority。
 - `tests/architecture/damage_model/test_component_fragility_validation.py`：固定上述 Stage C review gate 的 artifact 形状、阻塞 residual 集和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_package_provenance_identity_gate.py`：把 package-level provenance / surrogate identity 阻塞面收口成共享 gate，并显式承接 `RES-001/002` 的 author-side closeout surface；它不会把 retained chain 或 pin manifest 提升成 release-grade authority。
+- `tools/maintenance/damage_model_release_governance.py package-provenance-identity`：把 package-level provenance / surrogate identity 阻塞面收口成共享 gate，并显式承接 `RES-001/002` 的 author-side closeout surface；它不会把 retained chain 或 pin manifest 提升成 release-grade authority。
 - `tests/architecture/damage_model/test_release_authority_guardrails.py`：固定上述 shared provenance / identity gate 的 artifact 形状、阻塞 residual 和 non-authoritative 边界。
 - `tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py`：把当前 runtime-aligned Stage C component-specific probability candidate surface 固化成 machine-readable snapshot，用于把 test-local 演练推进到 package-level author-side artifact；它不会授予 stock authority，也不会关闭 fragility residual。
 - `tests/architecture/damage_model/test_component_probability_artifacts.py`：固定上述 Stage C snapshot 的 artifact 形状、component provenance 检查和 non-authoritative 边界。
@@ -91,7 +91,7 @@ confidence 和 residual。详见
 - `tests/architecture/damage_model/test_candidate_artifact_contracts.py`：固定上述 result pack 的 artifact 形状、hash surface、scope audit 和 non-authoritative 边界。
 - `tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py`：把当前 scaffold、scope probe、Stage B snapshot 和 result pack 固化到 repo 内 canonical retained JSON 目录，并提供 retained manifest 读取入口；它只保留 author-side candidate evidence，不授予 authority。
 - `tests/architecture/damage_model/test_candidate_artifact_contracts.py`：固定上述 retained pack 的 manifest 形状、artifact inventory 和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py`：把当前 Stage B 候选包的 satisfied conditions 和 blocking conditions 固化成 release-readiness gate；它的职责是报告 blocked，而不是放行 authority。
+- `tools/maintenance/damage_model_release_governance.py effect-scale-readiness`：把当前 Stage B 候选包的 satisfied conditions 和 blocking conditions 固化成 release-readiness gate；它的职责是报告 blocked，而不是放行 authority。
 - `tests/architecture/damage_model/test_release_authority_guardrails.py`：固定上述 readiness gate 的 blocked 决策、blocker surface 和 non-authoritative 边界。
 - `tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py`：把 Stage B / Stage C 的 runtime-aligned authority exercise 抽成独立 maintenance 工具。它先采样 stock `blast_fragmentation` 近失事件，再导出 baseline event summary、baseline component rows，以及仅限 `test_local_authority_exercise_only` 的 effect-scale / component-probability descriptor candidate；它不是 stock 数据库写入工具，不授予默认 authority。
 - `tests/architecture/damage_model/test_candidate_artifact_contracts.py`：固定上述 authority exercise pack 的 package 边界、可复现性与 CLI 输出形状，防止 test-local 演练被误叙述成正式 candidate authority。
@@ -131,8 +131,8 @@ python3 tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack
 python3 tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py
 python3 tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py --output /tmp/a2_stage_b_validation_result_pack.json
 python3 tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py
-python3 tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py
-python3 tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py --output /tmp/a2_stage_b_release_readiness_gate.json
+python3 tools/maintenance/damage_model_release_governance.py effect-scale-readiness
+python3 tools/maintenance/damage_model_release_governance.py effect-scale-readiness --output /tmp/a2_stage_b_release_readiness_gate.json
 python3 tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py
 python3 tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py --output /tmp/a2_blastfrag_runtime_aligned_authority_pack.json
 python3 tools/maintenance/a2_candidate_vps_bundle.py

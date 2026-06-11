@@ -22,9 +22,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_stage_b_release_readiness_gate as stage_b_gate
-from tools.maintenance import (
-    a2_blastfrag_package_provenance_identity_gate as provenance_identity_gate,
+from tools.maintenance.release_governance import (
+    effect_scale_release_readiness as stage_b_gate,
+    package_provenance_identity as provenance_identity_gate,
 )
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_retained_artifact_pack as stage_c_retained_pack,

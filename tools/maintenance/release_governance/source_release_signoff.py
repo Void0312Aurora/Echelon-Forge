@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
     "beam_high_near_miss_0_35m_v0"
@@ -691,8 +691,8 @@ def _report_text(artifact: dict[str, Any], manifest: dict[str, Any]) -> str:
 ## 4. Verification
 
 ```bash
-python3 tools/maintenance/a2_blastfrag_res001_release_signoff_gate.py
-pytest -q tests/architecture/test_a2_blastfrag_res001_release_signoff_gate.py
+python3 tools/maintenance/damage_model_release_governance.py source-release-signoff
+pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```
 """
 
@@ -767,7 +767,7 @@ def write_retained_artifacts(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Write the bounded A2 RES-001 release signoff closeout gate."
     )
@@ -788,7 +788,7 @@ def main() -> int:
         type=Path,
         help="Optional path for a copy of the generated gate JSON.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = write_retained_artifacts(output_dir=args.output_dir, report_path=args.report)
     if args.output:

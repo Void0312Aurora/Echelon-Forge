@@ -23,7 +23,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
-from tools.maintenance import a2_blastfrag_stage_b_release_readiness_gate as stage_b_gate
+from tools.maintenance.release_governance import effect_scale_release_readiness as stage_b_gate
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_snapshot as stage_c_snapshot,
 )

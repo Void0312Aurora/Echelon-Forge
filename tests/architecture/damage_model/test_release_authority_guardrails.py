@@ -11,26 +11,14 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_package_provenance_identity_gate as package_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_provenance_identity_review_gate as review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_release_provenance_closeout_gate as closeout_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res001_release_signoff_gate as release_signoff_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res002_scoped_release_identity_gate as scoped_identity_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_b_release_closeout as effect_scale_release_closeout,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_b_release_readiness_gate as effect_scale_release_readiness,
+from tools.maintenance.release_governance import (  # noqa: E402
+    effect_scale_release_closeout,
+    effect_scale_release_readiness,
+    package_provenance_identity as package_gate,
+    provenance_closeout as closeout_gate,
+    provenance_identity_review as review_gate,
+    scoped_release_identity as scoped_identity_gate,
+    source_release_signoff as release_signoff_gate,
 )
 
 
@@ -216,7 +204,11 @@ def test_release_signoff_gate_fails_closed_for_authority_guard(
 
 def test_release_signoff_gate_cli_writes_default_artifacts() -> None:
     result = subprocess.run(
-        [sys.executable, "tools/maintenance/a2_blastfrag_res001_release_signoff_gate.py"],
+        [
+            sys.executable,
+            "tools/maintenance/damage_model_release_governance.py",
+            "source-release-signoff",
+        ],
         cwd=REPO_ROOT,
         check=True,
         text=True,
@@ -355,7 +347,8 @@ def test_scoped_release_identity_gate_cli_default_writes_manifest(
     result = subprocess.run(
         [
             sys.executable,
-            str(REPO_ROOT / "tools/maintenance/a2_blastfrag_res002_scoped_release_identity_gate.py"),
+            str(REPO_ROOT / "tools/maintenance/damage_model_release_governance.py"),
+            "scoped-release-identity",
             "--retained-output-dir",
             str(tmp_path),
         ],
@@ -506,7 +499,8 @@ def test_effect_scale_release_readiness_gate_cli_writes_json(
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_stage_b_release_readiness_gate.py",
+            "tools/maintenance/damage_model_release_governance.py",
+            "effect-scale-readiness",
             "--output",
             str(output_path),
         ],
@@ -662,7 +656,8 @@ def test_effect_scale_release_closeout_cli_writes_json(
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_stage_b_release_closeout.py",
+            "tools/maintenance/damage_model_release_governance.py",
+            "effect-scale-closeout",
             "--output",
             str(output_path),
         ],
@@ -910,7 +905,8 @@ def test_package_provenance_identity_gate_cli_writes_json(
     output_path = tmp_path / "a2_package_provenance_identity_gate.json"
 
     run_maintenance_cli(
-        "a2_blastfrag_package_provenance_identity_gate.py",
+        "damage_model_release_governance.py",
+        "package-provenance-identity",
         "--output",
         output_path,
         capture_output=False,
@@ -1355,7 +1351,8 @@ def test_provenance_identity_review_gate_cli_writes_retained_artifact(
 ) -> None:
     output_path = tmp_path / "cli_output_manifest.json"
     run_maintenance_cli(
-        "a2_blastfrag_provenance_identity_review_gate.py",
+        "damage_model_release_governance.py",
+        "provenance-identity-review",
         "--write-retained-artifact",
         "--retained-output-dir",
         tmp_path,
@@ -1685,7 +1682,8 @@ def test_release_provenance_closeout_gate_cli_writes_json(
 ) -> None:
     output_path = tmp_path / "a2_release_provenance_closeout_gate.json"
     run_maintenance_cli(
-        "a2_blastfrag_release_provenance_closeout_gate.py",
+        "damage_model_release_governance.py",
+        "provenance-closeout",
         "--output",
         output_path,
         capture_output=False,

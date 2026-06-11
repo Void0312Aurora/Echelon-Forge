@@ -3,7 +3,7 @@
 状态：`blocked / candidate / non-authoritative / release_provenance_closeout_lane`。
 
 本文档记录 `RES-001 source provenance` 与 `RES-002 surrogate identity` 在 shared provenance / identity gate 之后的细分 closeout gate。对应工具为
-[a2_blastfrag_release_provenance_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_release_provenance_closeout_gate.py)。
+[damage_model_release_governance.py](../../../../../../tools/maintenance/damage_model_release_governance.py) `provenance-closeout`。
 
 本文档不创建 runtime descriptor，不授予 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`，也不关闭 Stage B release gate 或 Stage C fragility gate。
 
@@ -59,6 +59,6 @@
 ## 7. 复核命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_release_provenance_closeout_gate.py --output /tmp/a2_release_provenance_closeout_gate.json
+python tools/maintenance/damage_model_release_governance.py provenance-closeout --output /tmp/a2_release_provenance_closeout_gate.json
 pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
 ```

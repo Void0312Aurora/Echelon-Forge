@@ -19,13 +19,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_release_provenance_closeout_gate as release_closeout_gate,
-)
+from tools.maintenance.release_governance import provenance_closeout as release_closeout_gate  # noqa: E402
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_stage_b_retained_artifact_pack as stage_b_retained,
 )
@@ -1374,7 +1372,7 @@ def write_retained_review_artifact(
     return manifest
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate the release-grade provenance/identity review gate for the "
@@ -1400,7 +1398,7 @@ def main() -> int:
         default=DEFAULT_RETAINED_REVIEW_DIR,
         help="Directory used for retained review artifacts and optional manifests.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.write_retained_artifact:
         payload = write_retained_review_artifact(
