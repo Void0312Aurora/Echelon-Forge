@@ -103,7 +103,7 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 - Audit tooling：
   `tools/diagnostics/air_combat_weapon_employment_process_probe.py`
 - Aggregate runner：
-  `tools/diagnostics/air_combat_fire_timing_learnability_audit.py`
+  `tools/diagnostics/fire_timing_fault_localization_probe.py --mode learnability_audit`
 - Focused tests：
   `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
   `tests/training/test_fire_timing_fault_localization_contracts.py`

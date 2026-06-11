@@ -17,7 +17,7 @@ learned-policy success.
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `M3S2-P0 Boundary` | main thread | n/a | Define the masked edge-triggered stopping object and breakpoints. | `docs/task/model/archive/m3_s2_fire_timing_learnability_audit/**` | New algorithm claims; training changes. | Markdown inspection. | README names formal object, scope, and acceptance gate. | First; serial. | 1 | pass |
-| `M3S2-P1 Diagnostic Tooling` | main thread | n/a | Add hold and legal-mask oracle pulse modes plus aggregate verdict runner. | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`; `tools/diagnostics/air_combat_fire_timing_learnability_audit.py`; focused tests | Reward tuning; policy changes; C2/ROE weakening. | `py_compile`; focused pytest. | Tooling can distinguish hold, early high, legal pulse, delayed legal pulse. | After P0; serial. | 2 | pass |
+| `M3S2-P1 Diagnostic Tooling` | main thread | n/a | Add hold and legal-mask oracle pulse modes plus aggregate verdict runner. | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`; `tools/diagnostics/fire_timing_fault_localization_probe.py --mode learnability_audit`; focused tests | Reward tuning; policy changes; C2/ROE weakening. | `py_compile`; focused pytest. | Tooling can distinguish hold, early high, legal pulse, delayed legal pulse. | After P0; serial. | 2 | pass |
 | `M3S2-P2 Oracle Evidence` | read-only diagnostics worker | n/a | Run bounded Stage-1 oracle audit and retain artifact. | `experiments_tmp/air_combat_fire_timing_learnability_audit_20260605.json`; evidence note | Long training; model acceptance. | Audit command exits 0; JSON verdict present. | Verdict names release reachability, reward delta, timing spread, effects visibility, and edge hazard. | After P1; serial. | 1 | pass |
 | `M3S2-P3 Root-Cause Synthesis` | main thread | n/a | Decide whether current blocker is action adapter, reward/effects observability, or optimizer. | Current status and oracle evidence docs | Opening P4 remediation in the same packet. | Markdown inspection; evidence links. | Status names primary and secondary breakpoint without overclaim. | After P2; serial. | 1 | accepted |
 | `M3S2-P4 Remediation Selection` | future worker | n/a | Draft the next implementation slice from the accepted diagnosis. | New task or follow-up plan only | Implementing before selected; M2 release by assumption. | Review against P3 evidence. | One bounded next slice is selected or explicitly held. | After P3; serial. | 1 | held / follow-on only |
@@ -46,7 +46,7 @@ historical constraints for the sealed packet.
 ```bash
 python -m py_compile \
   tools/diagnostics/air_combat_weapon_employment_process_probe.py \
-  tools/diagnostics/air_combat_fire_timing_learnability_audit.py \
+  tools/diagnostics/fire_timing_fault_localization/learnability_audit.py \
   tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
   tests/training/test_fire_timing_fault_localization_contracts.py
 
@@ -55,7 +55,8 @@ python -m pytest \
   tests/training/test_fire_timing_fault_localization_contracts.py -q
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python \
-  tools/diagnostics/air_combat_fire_timing_learnability_audit.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py \
+  --mode learnability_audit \
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
   --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s1_grouped_stopping_state_completed_world_batch_probe_v1.json \
   --episodes 2 \

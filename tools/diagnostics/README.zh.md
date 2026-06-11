@@ -41,7 +41,8 @@
 - [fire_timing_fault_localization_probe.py](fire_timing_fault_localization_probe.py)
   - 统一的 fire-timing fault-localization 入口。使用 `--mode structural_toy`
     运行抽象 grouped-stopping toy，使用 `--mode real_update` 检查真实 update path，
-    或使用 `--mode chain_breakpoint` 做 fixed-batch breakpoint attribution。
+    使用 `--mode chain_breakpoint` 做 fixed-batch breakpoint attribution，
+    或使用 `--mode learnability_audit` 做 oracle fire-timing learnability 检查。
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
@@ -64,6 +65,8 @@
   - 视觉降采样扫描基准。
 - `coarse_route_segments`
   - 粗略航路段错误基准。
+- `air_combat_post_launch_assessment`
+  - air-combat post-launch assessment rollout 基准。
 
 部分 benchmark family 同时包含 legacy/raw `UniversalEnv` 对照分支和 maintained runtime-facade 测量。需要这些分支时，应有意接通 compatibility flag，不要把 raw-env 失败解读成 world-batch runtime 回归。
 
@@ -131,6 +134,14 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 ./.venv/bin/python tools/diagnostics/benchmark.py \
   --family world_batch_runtime \
   --world-count 8 --setup-iters 64 --iters 512
+```
+
+通过同一入口运行 air-combat post-launch assessment 基准：
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py \
+  --family air_combat_post_launch_assessment \
+  --episodes 3 --post-steps 240
 ```
 
 运行本地 Arma proxy backend stub：
@@ -201,4 +212,5 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 - 新的维护基准逻辑应扩展 `tools/diagnostics/benchmarks/` 和 `benchmark_registry.py`。
 - 不要添加新的以阶段命名的顶级基准脚本。
 - 协同轨迹诊断应扩展 `tools/diagnostics/diagnose_cooperative_trajectory.py` 和 `cooperative_trajectory_base.py`，而不是重新引入每任务包装脚本。
+- fire-timing 诊断应扩展 `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`，不要新增 air-combat fire-timing 顶层 probe。
 - 更长的特定任务轨迹或扫描诊断应仅在此处保留，如果它们仍然是维护的操作工具；否则将其存档，而不是留在 `tests/` 下。

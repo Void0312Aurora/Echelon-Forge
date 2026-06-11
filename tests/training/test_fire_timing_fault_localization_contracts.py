@@ -9,7 +9,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from tools.diagnostics import air_combat_fire_timing_learnability_audit as audit  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization import learnability_audit as audit  # noqa: E402
 from tools.diagnostics.fire_timing_fault_localization.chain_breakpoint import (  # noqa: E402
     _classification_metrics,
     _edge_trigger_summary,

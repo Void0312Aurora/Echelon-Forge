@@ -10,7 +10,7 @@ from collections import Counter
 from types import SimpleNamespace
 from typing import Any
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
@@ -277,7 +277,7 @@ def write_json(path: str, payload: dict[str, Any]) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Audit learnability of one-shot air-combat fire timing.")
+    parser = argparse.ArgumentParser(description="Audit one-shot fire-timing learnability.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
     parser.add_argument("--episodes", type=int, default=2)

@@ -58,7 +58,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - Unified first-event credit-head diagnostic entry for fixed-batch fitting and online update-path isolation.
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - Unified fire-timing fault-localization entry for structural toy, real update-path, and chain-breakpoint probes.
+  - Unified fire-timing fault-localization entry for structural toy, real update-path, chain-breakpoint, and learnability-audit probes.
 - [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene, not a training runner.
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
@@ -180,6 +180,15 @@ cmo_python tools/diagnostics/benchmark.py \
   --world-count 8 --setup-iters 64 --iters 512
 ```
 
+Run the air-combat post-launch assessment benchmark through the same maintained entrypoint:
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/benchmark.py \
+  --family air_combat_post_launch_assessment \
+  --episodes 3 --post-steps 240
+```
+
 Replay one cooperative trajectory diagnostic:
 
 ```bash
@@ -199,6 +208,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - Shared eval bootstrap should come from `tools.eval.eval_utils`, not copied setup blocks.
 - JSON-contract entrypoints should prefer `tools/runners/run_scenario_contract.py` over one-off wrappers.
 - Maintained diagnostics should prefer `tools/diagnostics/benchmark.py` for single benchmark families and `tools/diagnostics/run_benchmark_suite.py` for multi-job suites.
+- Fire-timing diagnostics should extend `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`, not add new air-combat fire-timing top-level probes.
 - Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` and `tools/diagnostics/cooperative_trajectory_base.py`, not add task-specific wrapper CLIs.
 - Ad hoc probes and matrix sweeps belong under `tools/diagnostics/`.
 - Cleanup/audit helpers belong under `tools/maintenance/`.

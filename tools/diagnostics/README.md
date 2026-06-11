@@ -54,8 +54,9 @@ Current diagnostics and probes:
 - [fire_timing_fault_localization_probe.py](fire_timing_fault_localization_probe.py)
   - Unified fire-timing fault-localization entry. Use `--mode structural_toy`
     for the abstract grouped-stopping toy, `--mode real_update` for real
-    update-path checks, or `--mode chain_breakpoint` for fixed-batch breakpoint
-    attribution.
+    update-path checks, `--mode chain_breakpoint` for fixed-batch breakpoint
+    attribution, or `--mode learnability_audit` for oracle fire-timing
+    learnability checks.
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
@@ -78,6 +79,8 @@ Current diagnostics and probes:
   - Visual downsample sweep benchmark.
 - `coarse_route_segments`
   - Coarse route-segment error benchmark.
+- `air_combat_post_launch_assessment`
+  - Air-combat post-launch assessment rollout benchmark.
 
 Some benchmark families include legacy/raw-`UniversalEnv` comparison branches
 alongside maintained runtime-facade measurements. If those branches are needed,
@@ -150,6 +153,14 @@ Run one benchmark family through the unified CLI:
   --world-count 8 --setup-iters 64 --iters 512
 ```
 
+Run the air-combat post-launch assessment benchmark through the same entrypoint:
+
+```bash
+./.venv/bin/python tools/diagnostics/benchmark.py \
+  --family air_combat_post_launch_assessment \
+  --episodes 3 --post-steps 240
+```
+
 Run the local Arma proxy backend stub:
 
 ```bash
@@ -219,4 +230,5 @@ Maintenance note:
 - New maintained benchmark logic should extend `tools/diagnostics/benchmarks/` plus `benchmark_registry.py`.
 - Do not add new phase-named top-level benchmark scripts.
 - Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` plus `cooperative_trajectory_base.py`, not reintroduce per-task wrapper scripts.
+- Fire-timing diagnostics should extend `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`, not add new air-combat fire-timing top-level probes.
 - Longer task-specific trajectory or sweep diagnostics should live here only if they remain maintained operational tools; otherwise archive them instead of leaving them under `tests/`.

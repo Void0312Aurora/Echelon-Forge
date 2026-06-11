@@ -58,7 +58,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口，用于 fixed-batch fitting 和 online update-path isolation。
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path 和 chain-breakpoint probes。
+  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint 和 learnability-audit probes。
 - [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler；用于数值卫生检查，不是训练 runner。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
@@ -180,6 +180,15 @@ cmo_python tools/diagnostics/benchmark.py \
   --world-count 8 --setup-iters 64 --iters 512
 ```
 
+通过同一维护入口运行 air-combat post-launch assessment 基准：
+
+```bash
+source tools/maintenance/cmo_env.sh
+cmo_python tools/diagnostics/benchmark.py \
+  --family air_combat_post_launch_assessment \
+  --episodes 3 --post-steps 240
+```
+
 回放一个协同轨迹诊断：
 
 ```bash
@@ -199,6 +208,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - 共享的评估引导应来自 `tools.eval.eval_utils`，而不是复制的设置块。
 - JSON 契约入口点应优先使用 `tools/runners/run_scenario_contract.py`，而不是一次性包装器。
 - 维护的诊断应优先使用 `tools/diagnostics/benchmark.py` 用于单个基准测试系列，以及 `tools/diagnostics/run_benchmark_suite.py` 用于多作业套件。
+- fire-timing 诊断应扩展 `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`，不要新增 air-combat fire-timing 顶层 probe。
 - 协同轨迹诊断应扩展 `tools/diagnostics/diagnose_cooperative_trajectory.py` 和 `tools/diagnostics/cooperative_trajectory_base.py`，而不是添加任务特定的包装 CLI。
 - 临时探测和矩阵扫描应归入 `tools/diagnostics/`。
 - 清理/审计辅助函数应归入 `tools/maintenance/`。

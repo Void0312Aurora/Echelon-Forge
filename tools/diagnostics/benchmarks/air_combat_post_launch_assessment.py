@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
@@ -144,7 +144,7 @@ def _summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Benchmark Stage-1/2 post-launch assessment rollout.")
+    parser = argparse.ArgumentParser(description="Benchmark air-combat post-launch assessment rollout.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--episodes", type=int, default=3)
     parser.add_argument("--seed", type=int, default=20260609)

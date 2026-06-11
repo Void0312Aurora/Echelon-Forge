@@ -22,6 +22,11 @@ def load_benchmark_entrypoint(family_name: str) -> Callable[[], int]:
 
 
 BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
+    "air_combat_post_launch_assessment": BenchmarkFamily(
+        name="air_combat_post_launch_assessment",
+        description="Air-combat post-launch assessment rollout benchmark.",
+        module_path="tools.diagnostics.benchmarks.air_combat_post_launch_assessment",
+    ),
     "spatial_query": BenchmarkFamily(
         name="spatial_query",
         description="Compiled spatial-query vs legacy geometry benchmark.",

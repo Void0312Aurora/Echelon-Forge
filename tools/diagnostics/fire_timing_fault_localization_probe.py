@@ -5,10 +5,15 @@ import argparse
 import sys
 from types import ModuleType
 
-from tools.diagnostics.fire_timing_fault_localization import chain_breakpoint, real_update, structural_toy
+from tools.diagnostics.fire_timing_fault_localization import (
+    chain_breakpoint,
+    learnability_audit,
+    real_update,
+    structural_toy,
+)
 
 
-VALID_MODES = {"chain_breakpoint", "real_update", "structural_toy"}
+VALID_MODES = {"chain_breakpoint", "learnability_audit", "real_update", "structural_toy"}
 
 
 def _extract_mode(argv: list[str]) -> str:
@@ -53,7 +58,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.epilog = (
         "Use --mode structural_toy for the abstract grouped-stopping toy, "
         "--mode real_update for the real update-path probe, or "
-        "--mode chain_breakpoint for fixed-batch breakpoint attribution."
+        "--mode chain_breakpoint for fixed-batch breakpoint attribution, or "
+        "--mode learnability_audit for oracle fire-timing learnability checks."
     )
     return parser
 
@@ -66,6 +72,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_module(structural_toy, mode_argv)
     if mode == "real_update":
         return _run_module(real_update, mode_argv)
+    if mode == "learnability_audit":
+        return _run_module(learnability_audit, mode_argv)
     return _run_module(chain_breakpoint, mode_argv)
 
 
