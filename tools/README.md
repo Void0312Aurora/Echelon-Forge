@@ -51,6 +51,8 @@
   - Echelon `UniversalEnv`-backed TCP backend that keeps Arma as a presentation shell while backend state steps in-repo.
 - [diagnose_cooperative_trajectory.py](diagnostics/diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI for `takeoff` and `takeoff_to_cruise`.
+- [flight_trajectory_diagnostics.py](diagnostics/flight_trajectory_diagnostics.py)
+  - Unified flight trajectory diagnostic entry for takeoff-to-landing trajectory export and runway drift sweeps.
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - Maintained leader-layer throughput probe for `auto/subproc/shared/dummy`.
 - [air_combat_weapon_employment_process_probe.py](diagnostics/air_combat_weapon_employment_process_probe.py)
@@ -209,6 +211,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - JSON-contract entrypoints should prefer `tools/runners/run_scenario_contract.py` over one-off wrappers.
 - Maintained diagnostics should prefer `tools/diagnostics/benchmark.py` for single benchmark families and `tools/diagnostics/run_benchmark_suite.py` for multi-job suites.
 - Fire-timing diagnostics should extend `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`, not add new air-combat fire-timing top-level probes.
+- Flight trajectory diagnostics should extend `tools/diagnostics/flight_trajectory_diagnostics.py --mode ...`, not add task-specific trajectory wrapper CLIs.
 - Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` and `tools/diagnostics/cooperative_trajectory_base.py`, not add task-specific wrapper CLIs.
 - Ad hoc probes and matrix sweeps belong under `tools/diagnostics/`.
 - Cleanup/audit helpers belong under `tools/maintenance/`.

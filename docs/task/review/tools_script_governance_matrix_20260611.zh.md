@@ -15,6 +15,7 @@
 | 旧 N4 baseline 命名 eval 入口 | `tools/eval/naval_station_policy_eval.py` | naval station policy gate | 已重命名并删除旧入口，不保留包装壳。 |
 | 顶层 post-launch benchmark 入口 | `tools/diagnostics/benchmark.py --family air_combat_post_launch_assessment` | air-combat post-launch assessment benchmark family | 已迁入 `tools/diagnostics/benchmarks/` 并注册 family，删除顶层 benchmark 文件。 |
 | 顶层 fire-timing learnability audit | `tools/diagnostics/fire_timing_fault_localization_probe.py --mode learnability_audit` | fire-timing learnability diagnostic mode | 已迁入 fire-timing fault-localization 命令族，删除顶层 probe 文件。 |
+| 顶层 flight trajectory 任务包装入口 | `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` | flight trajectory diagnostic modes | 已迁入 flight trajectory 命令族，删除两个任务特定 wrapper 文件。 |
 
 同步完成：
 
@@ -45,6 +46,7 @@
 | naval station policy gate | `tools/eval/naval_station_policy_eval.py` | 本轮已语义化。 | 保留；不再使用 N4 作为入口文件名。 |
 | benchmark diagnostics | `tools/diagnostics/benchmark.py`、`tools/diagnostics/run_benchmark_suite.py`、`tools/diagnostics/benchmarks/*` | 已是功能族；post-launch assessment benchmark 已迁入 family。 | 保留；新增 benchmark 进 `benchmarks/` 和 registry。 |
 | cooperative trajectory diagnostics | `tools/diagnostics/diagnose_cooperative_trajectory.py`、`cooperative_trajectory_base.py` | 已是功能族。 | 保留；不要恢复 takeoff/takeoff-to-cruise wrapper。 |
+| flight trajectory diagnostics | `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` | 已合并任务特定轨迹诊断入口。 | 保留统一入口；内部实现位于 `tools/diagnostics/flight_trajectory/`。 |
 | runtime bridge diagnostics | `arma_proxy_backend_stub.py`、`arma_proxy_backend_echelon_env.py` | 域名清楚，非项目代号。 | 保留。 |
 | air-combat process tracing | `air_combat_weapon_employment_process_probe.py` | 本轮已语义化；入口表达武器使用/杀伤链诊断能力。 | 保留统一入口；历史 stage 配置名只留在场景/训练配置路径中。 |
 | event-credit diagnostics | `event_credit_head_probe.py --mode offline_fit`、`event_credit_head_probe.py --mode online_update` | 已完成入口合并，默认路径仍可保留历史 A7 实验名。 | 保留统一入口；内部实现位于 `tools/diagnostics/event_credit_head/`。 |
@@ -70,6 +72,7 @@
 | 已完成 | event-credit diagnostics 合并 | `event_credit_head_probe.py --mode offline_fit/online_update` 成为统一能力入口。 | 默认模型/配置路径仍包含 A7，这是历史实验定位，不是活入口命名。 |
 | 已完成 | fire-timing fault localization 合并 | `fire_timing_fault_localization_probe.py --mode structural_toy/real_update/chain_breakpoint` 成为统一能力入口。 | tests/training helper import 已迁移到语义子包。 |
 | 已完成 | fire-timing learnability audit 合并 | `fire_timing_fault_localization_probe.py --mode learnability_audit` 成为统一能力入口。 | 顶层 air-combat learnability audit 文件删除；活测试 import 与归档可复跑命令迁移。 |
+| 已完成 | flight trajectory diagnostics 合并 | `flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` 成为统一能力入口。 | 顶层 trajectory 任务包装文件删除；README 与历史引用迁移。 |
 | 已完成 | air-combat process probe 改名 | `air_combat_weapon_employment_process_probe.py` 成为语义入口；旧过程代号入口删除。 | 已同步 runtime tests、diagnostics docs、model/archive docs。 |
 | 已完成 | post-launch assessment benchmark family 化 | `benchmark.py --family air_combat_post_launch_assessment` 成为统一入口；顶层 benchmark 文件删除。 | 保留 benchmark 参数与 JSON payload，不保留兼容包装壳。 |
 | 已完成 | external signoff evidence 合并 | `damage_model.py external-evidence signoff-request/intake-contract/packet-template/admission-preflight` 成为统一维护入口。 | 旧 source-rights signoff request、signoff intake/template/preflight 顶层脚本删除；architecture tests 改用语义模块。 |

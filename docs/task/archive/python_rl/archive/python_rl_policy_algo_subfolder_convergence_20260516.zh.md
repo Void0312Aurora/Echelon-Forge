@@ -49,7 +49,7 @@
 - `python/testing/scenario_contract_runner.py`
 - `tools/diagnostics/trace_training_nonfinite_source.py`
 - `tools/diagnostics/cooperative_trajectory_base.py`
-- `tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py`
+- `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing`
 
 ## 5. 验证
 

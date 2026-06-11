@@ -51,6 +51,8 @@
   - 基于 Echelon `UniversalEnv` 的 TCP 后端，让 Arma 继续做表现壳，而后端状态在仓库内真实 step。
 - [diagnose_cooperative_trajectory.py](diagnostics/diagnose_cooperative_trajectory.py)
   - 统一的协同轨迹回放/导出 CLI，支持 `takeoff` 和 `takeoff_to_cruise`。
+- [flight_trajectory_diagnostics.py](diagnostics/flight_trajectory_diagnostics.py)
+  - 统一的 flight trajectory 诊断入口，覆盖 takeoff-to-landing 轨迹导出和 runway drift sweep。
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - 维护的 Leader 层吞吐量探测，支持 `auto/subproc/shared/dummy`。
 - [air_combat_weapon_employment_process_probe.py](diagnostics/air_combat_weapon_employment_process_probe.py)
@@ -209,6 +211,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 - JSON 契约入口点应优先使用 `tools/runners/run_scenario_contract.py`，而不是一次性包装器。
 - 维护的诊断应优先使用 `tools/diagnostics/benchmark.py` 用于单个基准测试系列，以及 `tools/diagnostics/run_benchmark_suite.py` 用于多作业套件。
 - fire-timing 诊断应扩展 `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`，不要新增 air-combat fire-timing 顶层 probe。
+- flight trajectory 诊断应扩展 `tools/diagnostics/flight_trajectory_diagnostics.py --mode ...`，不要新增任务特定 trajectory wrapper CLI。
 - 协同轨迹诊断应扩展 `tools/diagnostics/diagnose_cooperative_trajectory.py` 和 `tools/diagnostics/cooperative_trajectory_base.py`，而不是添加任务特定的包装 CLI。
 - 临时探测和矩阵扫描应归入 `tools/diagnostics/`。
 - 清理/审计辅助函数应归入 `tools/maintenance/`。

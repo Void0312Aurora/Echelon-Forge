@@ -46,9 +46,9 @@
 
 - `tools/eval/task_eval_driver.py`
 - `tools/eval/policy_execution_eval.py`
-- `tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py`
+- `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing`
 - `tools/diagnostics/analyze_cooperative_observation_scales.py`
-- `tools/diagnostics/diagnose_runway_drift_sweep.py`
+- `tools/diagnostics/flight_trajectory_diagnostics.py --mode runway_drift_sweep`
 - `tools/diagnostics/trace_training_nonfinite_source.py`
 - `tools/diagnostics/cooperative_trajectory_base.py`
 - `tools/diagnostics/benchmarks/coarse_route_segments.py`

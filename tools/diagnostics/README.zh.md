@@ -72,10 +72,8 @@
 
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - 统一的协同轨迹重放/导出 CLI。使用 `--task takeoff` 或 `--task takeoff_to_cruise` 从一个维护的入口点输出特定任务的 PNG + JSON 诊断。
-- [diagnose_runway_drift_sweep.py](diagnose_runway_drift_sweep.py)
-  - 参数化的起飞地面滑行漂移扫描，用于量化不同种子、风向和政策选择下的偏离跑道行为。
-- [diagnose_takeoff_to_landing_trajectory.py](diagnose_takeoff_to_landing_trajectory.py)
-  - 用于连续起飞到着陆任务的单集轨迹导出器，输出 PNG + JSON，以便进行脚本/模型比较。
+- [flight_trajectory_diagnostics.py](flight_trajectory_diagnostics.py)
+  - 统一的 flight trajectory 诊断入口。使用 `--mode takeoff_to_landing` 输出单集航路/着陆 PNG + JSON，或使用 `--mode runway_drift_sweep` 执行参数化地面滑跑漂移扫描。
 - [trace_training_nonfinite_source.py](trace_training_nonfinite_source.py)
   - 聚焦 cooperative training NaN/Inf 的 tracer。它会按 `train.py` 重建维护中的 cooperative flow，把 finite-value probe 接入已加载的 policy/algo，并以 JSON 报告停止。
 
@@ -212,5 +210,6 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 - 新的维护基准逻辑应扩展 `tools/diagnostics/benchmarks/` 和 `benchmark_registry.py`。
 - 不要添加新的以阶段命名的顶级基准脚本。
 - 协同轨迹诊断应扩展 `tools/diagnostics/diagnose_cooperative_trajectory.py` 和 `cooperative_trajectory_base.py`，而不是重新引入每任务包装脚本。
+- flight trajectory 诊断应扩展 `tools/diagnostics/flight_trajectory_diagnostics.py --mode ...`，不要新增任务特定 trajectory wrapper CLI。
 - fire-timing 诊断应扩展 `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`，不要新增 air-combat fire-timing 顶层 probe。
 - 更长的特定任务轨迹或扫描诊断应仅在此处保留，如果它们仍然是维护的操作工具；否则将其存档，而不是留在 `tests/` 下。

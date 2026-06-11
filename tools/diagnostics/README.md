@@ -89,10 +89,8 @@ as a world-batch runtime regression.
 
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI. Use `--task takeoff` or `--task takeoff_to_cruise` to emit task-specific PNG + JSON diagnostics from one maintained entrypoint.
-- [diagnose_runway_drift_sweep.py](diagnose_runway_drift_sweep.py)
-  - Parameterized takeoff ground-roll drift sweep used to quantify off-runway behavior across seeds, winds, and policy choices.
-- [diagnose_takeoff_to_landing_trajectory.py](diagnose_takeoff_to_landing_trajectory.py)
-  - Single-episode trajectory exporter for the continuous takeoff-to-landing task, with PNG + JSON outputs for scripted/model comparisons.
+- [flight_trajectory_diagnostics.py](flight_trajectory_diagnostics.py)
+  - Unified flight trajectory diagnostic entry. Use `--mode takeoff_to_landing` for single-episode route/landing PNG + JSON export, or `--mode runway_drift_sweep` for parameterized ground-roll drift sweeps.
 - [trace_training_nonfinite_source.py](trace_training_nonfinite_source.py)
   - Focused cooperative training NaN/Inf tracer. It reconstructs the maintained cooperative flow from `train.py`, patches finite-value probes into the loaded policy/algo, and stops with a JSON report.
 
@@ -230,5 +228,6 @@ Maintenance note:
 - New maintained benchmark logic should extend `tools/diagnostics/benchmarks/` plus `benchmark_registry.py`.
 - Do not add new phase-named top-level benchmark scripts.
 - Cooperative trajectory diagnostics should extend `tools/diagnostics/diagnose_cooperative_trajectory.py` plus `cooperative_trajectory_base.py`, not reintroduce per-task wrapper scripts.
+- Flight trajectory diagnostics should extend `tools/diagnostics/flight_trajectory_diagnostics.py --mode ...`, not add task-specific trajectory wrapper CLIs.
 - Fire-timing diagnostics should extend `tools/diagnostics/fire_timing_fault_localization_probe.py --mode ...`, not add new air-combat fire-timing top-level probes.
 - Longer task-specific trajectory or sweep diagnostics should live here only if they remain maintained operational tools; otherwise archive them instead of leaving them under `tests/`.
