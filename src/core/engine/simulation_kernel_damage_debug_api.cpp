@@ -66,6 +66,23 @@ std::array<double, 3> velocity_axis_in_target_body(const Transform &target_trans
     };
 }
 
+uint64_t mix_debug_seed_word(uint64_t state, uint64_t word) {
+    state ^= word + 0x9e3779b97f4a7c15ULL + (state << 6) + (state >> 2);
+    return state;
+}
+
+uint64_t make_debug_synthetic_missile_seed(std::mt19937 &rng, uint64_t attacker_id,
+                                           uint64_t target_id, double local_forward_m,
+                                           double local_right_m, double local_up_m) {
+    uint64_t state = (static_cast<uint64_t>(rng()) << 32) ^ static_cast<uint64_t>(rng());
+    state = mix_debug_seed_word(state, attacker_id);
+    state = mix_debug_seed_word(state, target_id);
+    state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_forward_m * 1000.0)));
+    state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_right_m * 1000.0)));
+    state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_up_m * 1000.0)));
+    return state == 0 ? 0x6a09e667f3bcc909ULL : state;
+}
+
 double resolve_closure_from_impact(const Transform &target_transform,
                                    const Transform &impact_transform,
                                    const Velocity *target_velocity, double missile_vx,
@@ -210,7 +227,8 @@ bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t 
         make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
-    synthetic.rng_state = 123456789ULL;
+    synthetic.rng_state =
+        make_debug_synthetic_missile_seed(rng, attacker_id, target_id, 0.0, 0.0, 0.0);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
@@ -300,7 +318,8 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
         make_synthetic_warhead_profile(damage, fuse_distance, "debug_synthetic_warhead");
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_synthetic_fuze_distance");
-    synthetic.rng_state = 123456789ULL;
+    synthetic.rng_state = make_debug_synthetic_missile_seed(
+        rng, attacker_id, target_id, local_forward_m, local_right_m, local_up_m);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;
@@ -423,7 +442,8 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     synthetic.warhead_profile = resolved_profile;
     synthetic.fuze_profile =
         make_synthetic_fuze_profile(fuse_distance, "debug_profiled_fuze_distance");
-    synthetic.rng_state = 123456789ULL;
+    synthetic.rng_state = make_debug_synthetic_missile_seed(
+        rng, attacker_id, target_id, local_forward_m, local_right_m, local_up_m);
     synthetic.proximity_min_dist_m = 0.0;
     synthetic.proximity_last_dist_m = 0.0;
     synthetic.proximity_engaged = true;

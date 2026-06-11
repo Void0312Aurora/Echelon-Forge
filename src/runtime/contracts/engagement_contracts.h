@@ -214,6 +214,10 @@ struct ComponentMechanismLoadRow {
     std::vector<double> component_failure_mode_severities;
     std::string component_failure_mode_source = "none";
     bool component_failure_mode_authority = false;
+    double component_integrity_before = 1.0;
+    double component_integrity_after = 1.0;
+    double component_redundancy_group_availability_before = 1.0;
+    double component_redundancy_group_availability_after = 1.0;
     double mechanism_fragment_energy_j = 0.0;
     double mechanism_fragment_areal_density_per_m2 = 0.0;
     double mechanism_penetration_margin = 0.0;

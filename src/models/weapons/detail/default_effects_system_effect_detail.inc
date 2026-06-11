@@ -235,6 +235,16 @@ void sample_default_effects_component_failure(
                 mechanism_scale * resolved_component_scale,
                 context.component_damage,
                 &context.sys_health);
+        if (component_row) {
+            component_row->component_integrity_before =
+                component_sample.integrity_before;
+            component_row->component_integrity_after =
+                component_sample.integrity_after;
+            component_row->component_redundancy_group_availability_before =
+                component_sample.group_availability_before;
+            component_row->component_redundancy_group_availability_after =
+                component_sample.group_availability_after;
+        }
         const std::string component_key = damage_component_key(*component);
         const double primary_priority = component_primary_priority_score(
             failure_probability,

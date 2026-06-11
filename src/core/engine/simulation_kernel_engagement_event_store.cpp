@@ -82,6 +82,36 @@ void complete_lethality_header(LethalityChainHeader &header, const std::string &
     }
 }
 
+double clamp_unit_interval(double value) {
+    return std::clamp(value, 0.0, 1.0);
+}
+
+bool positive_finite(double value) { return std::isfinite(value) && value > 0.0; }
+
+bool finite_unit_interval(double value) {
+    return std::isfinite(value) && value >= 0.0 && value <= 1.0;
+}
+
+bool has_component_identity(const ComponentMechanismLoadRow &row) {
+    return !row.component_name.empty() && !row.component_system.empty();
+}
+
+bool has_positive_component_load(const ComponentMechanismLoadRow &row) {
+    return positive_finite(row.effect_scale) || positive_finite(row.mechanism_fragment_energy_j) ||
+           positive_finite(row.mechanism_fragment_areal_density_per_m2) ||
+           positive_finite(row.mechanism_penetration_margin) ||
+           positive_finite(row.mechanism_blast_overpressure_kpa) ||
+           positive_finite(row.mechanism_blast_impulse_kpa_ms) ||
+           positive_finite(row.mechanism_rod_cut_margin);
+}
+
+bool is_component_damage_candidate(const ComponentMechanismLoadRow &row) {
+    return has_component_identity(row) && has_positive_component_load(row) &&
+           positive_finite(row.component_failure_probability) &&
+           finite_unit_interval(row.component_failure_sample) &&
+           row.component_failure_sample <= clamp_unit_interval(row.component_failure_probability);
+}
+
 std::string loss_state_to_string(PlatformLossState state) {
     switch (state) {
     case PlatformLossState::CombatCapable:
@@ -369,6 +399,29 @@ std::uint64_t SimulationKernelEngagementEventStore::record_component_load_event(
     return event_id;
 }
 
+std::uint64_t SimulationKernelEngagementEventStore::record_component_damage_event(
+    EngagementComponentDamageEventRecord record) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    const std::uint64_t launch_event_id =
+        record.chain_id != 0 ? record.chain_id
+                             : find_launch_event_id_for_munition(recent_engagement_events_,
+                                                                 record.munition_entity_id);
+
+    ComponentDamageEvent event = std::move(record.event);
+    complete_lethality_header(event.header, "component_damage", "sampled", event_time_s,
+                              event_id, launch_event_id, record.parent_event_id,
+                              record.munition_entity_id, record.shooter_id, record.target_id,
+                              current_source_frame(ecs_));
+
+    recent_engagement_events_.component_damage_events.push_back(std::move(event));
+    cap_recent_events(recent_engagement_events_.component_damage_events,
+                      kMaxRecentEngagementEvents);
+    return event_id;
+}
+
 std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     EngagementEffectsDamageEventRecord record) {
     const std::uint64_t munition_entity_id = record.munition_entity_id;
@@ -474,12 +527,43 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             component_event.surface_incidence_cos = row.mechanism_surface_incidence_cos;
             component_event.load_source =
                 row.direct_hit ? "direct_component_hit" : "spatial_component_projection";
-            (void)record_component_load_event({
+            const std::uint64_t component_load_event_id = record_component_load_event({
                 .munition_entity_id = munition_entity_id,
                 .target_id = target_id,
                 .chain_id = chain_id,
                 .parent_event_id = effects_event_id,
                 .event = std::move(component_event),
+            });
+            if (!is_component_damage_candidate(row)) {
+                continue;
+            }
+
+            ComponentDamageEvent damage_event{};
+            damage_event.header.source_time_s = event_time_s;
+            damage_event.header.confidence = effects.confidence;
+            damage_event.header.reason = "generic_research_component_damage_candidate";
+            damage_event.component_name = row.component_name;
+            damage_event.component_system = row.component_system;
+            damage_event.component_redundancy_group_id = row.component_redundancy_group_id;
+            damage_event.failure_mode = row.component_failure_primary_mode.empty()
+                                            ? "none"
+                                            : row.component_failure_primary_mode;
+            damage_event.failure_severity =
+                clamp_unit_interval(row.component_failure_primary_mode_severity);
+            damage_event.failure_probability =
+                clamp_unit_interval(row.component_failure_probability);
+            damage_event.failure_sample = row.component_failure_sample;
+            damage_event.integrity_before =
+                clamp_unit_interval(row.component_integrity_before);
+            damage_event.integrity_after =
+                clamp_unit_interval(row.component_integrity_after);
+            (void)record_component_damage_event({
+                .munition_entity_id = munition_entity_id,
+                .target_id = target_id,
+                .chain_id = chain_id,
+                .parent_event_id =
+                    component_load_event_id != 0 ? component_load_event_id : effects_event_id,
+                .event = std::move(damage_event),
             });
         }
     }
@@ -577,6 +661,10 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
               });
     std::sort(out.component_load_events.begin(), out.component_load_events.end(),
               [](const ComponentLoadEvent &lhs, const ComponentLoadEvent &rhs) {
+                  return lhs.header.event_id < rhs.header.event_id;
+              });
+    std::sort(out.component_damage_events.begin(), out.component_damage_events.end(),
+              [](const ComponentDamageEvent &lhs, const ComponentDamageEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
     std::sort(out.damage_reports.begin(), out.damage_reports.end(),

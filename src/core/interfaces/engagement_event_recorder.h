@@ -75,6 +75,15 @@ struct EngagementComponentLoadEventRecord {
     ComponentLoadEvent event{};
 };
 
+struct EngagementComponentDamageEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    ComponentDamageEvent event{};
+};
+
 class IEngagementEventRecorder {
   public:
     virtual ~IEngagementEventRecorder() = default;
@@ -99,6 +108,9 @@ class IEngagementEventRecorder {
 
     virtual std::uint64_t
     record_component_load_event(EngagementComponentLoadEventRecord record) = 0;
+
+    virtual std::uint64_t
+    record_component_damage_event(EngagementComponentDamageEventRecord record) = 0;
 };
 
 struct EngagementEventRecorderRef {

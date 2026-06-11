@@ -504,6 +504,16 @@ double component_failure_probability(
     const double probability_ceiling = direct_hit ? 0.92 : 0.68;
     double probability =
         probability_floor + (probability_ceiling - probability_floor) * band;
+    if (direct_hit) {
+        const double direct_load_response = smoothstep01(dominant_channel / 0.62);
+        const double direct_component_response = std::clamp(
+            0.90 + 0.10 * component_system_fragility_scale(system, component),
+            0.82,
+            1.08);
+        const double direct_load_floor =
+            (0.22 + 0.46 * direct_load_response) * direct_component_response;
+        probability = std::max(probability, direct_load_floor);
+    }
     if (!direct_hit) {
         const double normalized_impulse =
             std::clamp(impulse / std::max(0.15, threshold), 0.0, 1.0);
@@ -516,6 +526,27 @@ double component_failure_probability(
                 0.80,
                 1.08);
         probability = std::max(probability, subthreshold_tail);
+        const double fragment_breach_response =
+            smoothstep01(density_load / 0.04) *
+            smoothstep01((fragment_load + penetration_load) / 0.85);
+        const double blast_response = smoothstep01(blast_load / 0.55);
+        const double rod_cut_response =
+            smoothstep01(rod_load / 0.45) *
+            smoothstep01((penetration_load + incidence_load) / 0.90);
+        const double proximity_load_response =
+            std::max({fragment_breach_response, blast_response, rod_cut_response});
+        const double proximity_exposure_response =
+            smoothstep01(std::clamp(mechanism_scale, 0.0, 1.25) / 0.30);
+        const double proximity_component_response = std::clamp(
+            0.92 + 0.08 * component_system_fragility_scale(system, component),
+            0.86,
+            1.06);
+        const double proximity_tail =
+            0.35 *
+            proximity_load_response *
+            proximity_exposure_response *
+            proximity_component_response;
+        probability = std::max(probability, proximity_tail);
     }
     if (impulse > threshold) {
         probability +=
@@ -880,7 +911,11 @@ void apply_control_axis_component_damage(
 }
 
 struct ComponentDamageSample {
+    double integrity_before = 1.0;
+    double integrity_after = 1.0;
     double integrity = 1.0;
+    double group_availability_before = 1.0;
+    double group_availability_after = 1.0;
     double group_availability = 1.0;
     std::uint32_t group_member_count = 0;
     std::uint32_t group_failed_count = 0;
@@ -922,6 +957,13 @@ ComponentDamageSample apply_component_damage_state(
     }
     component_damage->component_system[component_key] = component.system;
     double& integrity = component_damage->component_integrity[component_key];
+    sample.integrity_before = std::clamp(integrity, 0.0, 1.0);
+    if (const auto availability_it =
+            component_damage->redundancy_group_availability.find(group_key);
+        availability_it != component_damage->redundancy_group_availability.end()) {
+        sample.group_availability_before =
+            std::clamp(availability_it->second, 0.0, 1.0);
+    }
 
     const double weight = std::clamp(component.redundancy_weight, 0.15, 2.50);
     const double directness = component.critical ? 1.0 : 0.68;
@@ -967,11 +1009,13 @@ ComponentDamageSample apply_component_damage_state(
         observed_count < member_count ? static_cast<double>(member_count - observed_count) : 0.0;
     total_weight += unknown_weight;
     live_weight += unknown_weight;
-    sample.group_availability =
+    sample.group_availability_after =
         std::clamp(live_weight / std::max(total_weight, 1.0e-6), 0.0, 1.0);
+    sample.group_availability = sample.group_availability_after;
     sample.group_member_count = member_count;
     sample.group_failed_count = failed_count;
-    sample.integrity = integrity;
+    sample.integrity_after = std::clamp(integrity, 0.0, 1.0);
+    sample.integrity = sample.integrity_after;
 
     component_damage->redundancy_group_availability[group_key] = sample.group_availability;
     component_damage->redundancy_group_failed_count[group_key] = sample.group_failed_count;
