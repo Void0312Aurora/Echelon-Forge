@@ -33,7 +33,7 @@ def _run_live_structured_air_detonation() -> tuple[object, int, int, int]:
     return sim.export_recent_engagement_events(), missile_id, red_id, blue_id
 
 
-def test_mlf3_live_detonation_exports_standard_warhead_spatial_and_component_events() -> None:
+def test_live_detonation_exports_standard_warhead_spatial_and_component_events() -> None:
     events, missile_id, red_id, _blue_id = _run_live_structured_air_detonation()
 
     assert len(events.launch_events) == 1

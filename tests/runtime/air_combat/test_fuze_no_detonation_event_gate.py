@@ -8,7 +8,7 @@ from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
 )
 
 
-def test_mlf3_no_detonation_does_not_emit_standard_load_events() -> None:
+def test_no_detonation_does_not_emit_standard_load_events() -> None:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
 
@@ -18,7 +18,7 @@ def test_mlf3_no_detonation_does_not_emit_standard_load_events() -> None:
     profile.delay_s = 0.0
     profile.reliability = 0.0
     profile.synthetic = False
-    profile.provenance = "test_mlf3_no_detonation_handoff_gate"
+    profile.provenance = "test_fuze_no_detonation_event_gate"
 
     tuning = sim.get_missile_tuning()
     tuning.fuze_profile = profile

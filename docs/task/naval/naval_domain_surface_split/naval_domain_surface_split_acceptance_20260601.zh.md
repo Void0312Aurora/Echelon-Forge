@@ -36,17 +36,17 @@ compatibility carrier。
 git diff --check -- docs/task/naval examples/config/training/active/naval \
   gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py \
   python/rl/runtime tests/eval/test_evaluation_cli_contracts.py \
-  tests/runtime/core/test_env_config.py tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/runtime/core/test_env_config.py tests/runtime/naval/test_naval_station_policy_surface.py \
   tests/training/test_naval_training_entry_contracts.py tests/world_batch/test_world_batch_vec_env.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
   tests/runtime/core/test_env_config.py \
   tests/training/test_naval_training_entry_contracts.py \
   tests/eval/test_evaluation_cli_contracts.py \
-  tests/runtime/naval/test_naval_n4_reward_surface.py
+  tests/runtime/naval/test_naval_station_policy_surface.py
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q \
-  tests/runtime/naval/test_naval_n4_reward_surface.py \
+  tests/runtime/naval/test_naval_station_policy_surface.py \
   tests/world_batch/test_world_batch_vec_env.py \
   -k "transport_adapter or naval_action_family or naval_station3 or maintained_window"
 ```
@@ -90,7 +90,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
   tests/training/test_naval_training_entry_contracts.py \
   tests/training/test_naval_training_entry_contracts.py \
   tests/eval/test_evaluation_cli_contracts.py \
-  tests/runtime/naval/test_naval_n4_reward_surface.py
+  tests/runtime/naval/test_naval_station_policy_surface.py
 ```
 
 如果实现触及 C++ contract、nanobind binding、active config、eval tool 或 scenario contract，

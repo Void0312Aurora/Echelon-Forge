@@ -72,7 +72,7 @@ def _valid_typed_platform_spawn_request() -> object:
     return request
 
 
-def test_wp14_additive_platform_spawn_dtos_are_python_constructible_and_round_trip() -> None:
+def test_typed_platform_spawn_dtos_are_python_constructible_and_round_trip() -> None:
     assert hasattr(ef_py, "PlatformCapability")
     assert hasattr(ef_py, "CapabilityBundle")
     assert hasattr(ef_py, "ResolvedPlatformSpawnPlan")
@@ -102,7 +102,7 @@ def test_wp14_additive_platform_spawn_dtos_are_python_constructible_and_round_tr
     assert list(setup.typed_platform_spawn_requests)[0].request_id == "typed-spawn:lead"
 
 
-def test_wp14_valid_typed_platform_spawn_request_validates_in_python() -> None:
+def test_valid_typed_platform_spawn_request_validates_in_python() -> None:
     result = ef_py.validate_typed_platform_spawn_request(
         _valid_typed_platform_spawn_request()
     )
@@ -113,7 +113,7 @@ def test_wp14_valid_typed_platform_spawn_request_validates_in_python() -> None:
     assert list(result.errors) == []
 
 
-def test_wp14_typed_platform_spawn_request_fails_closed_for_missing_fields() -> None:
+def test_typed_platform_spawn_request_fails_closed_for_missing_fields() -> None:
     missing_request_id = _valid_typed_platform_spawn_request()
     missing_request_id.request_id = ""
 
@@ -134,7 +134,7 @@ def test_wp14_typed_platform_spawn_request_fails_closed_for_missing_fields() -> 
     assert result.rejection_reason == "typed_platform_spawn_evidence_required"
 
 
-def test_wp14_legacy_world_spawn_request_type_name_path_remains_python_mainline_surface() -> None:
+def test_legacy_world_spawn_request_type_name_path_remains_python_mainline_surface() -> None:
     legacy_spawn = ef_py.WorldSpawnRequest()
     legacy_spawn.world_index = 0
     legacy_spawn.side = ef_py.Side.Blue

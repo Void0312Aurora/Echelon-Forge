@@ -44,7 +44,7 @@ evidence、保持兼容的 spawn resolution，以及 additive typed setup DTOs�
 | `WP14-A Capability Bundle Contract` | pass | `src/runtime/contracts/platform_capability_contracts.h` 与 `tests/architecture/platform_spawn/test_platform_capability_contracts.py` 定义 platform-semantic `Capability`、`CapabilityBundle`、resolved-plan evidence、validation helpers，并与 backend `RuntimeCapabilities` 保持命名分域。 |
 | `WP14-B Content Definition Lowering` | pass | `src/models/core/default_unit_factory.h` 与 `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 定义确定性的 `type_name -> CapabilityBundle template -> ResolvedPlatformSpawnPlan` lowering，覆盖既有 platform/factory evidence，且不要求 caller 迁移。 |
 | `WP14-C Spawn Resolution Bridge` | pass | `DefaultUnitFactory::spawn()` 在 materialization 前 resolution，`src/core/engine/world_batch_runtime.cpp` 共享 `spawn_from_request(...)` setup path，`tests/world_batch/test_world_batch_runtime.py` 与 focused architecture tests 保持 type-name setup 行为。 |
-| `WP14-D Additive Facade Setup DTO` | pass | `src/runtime/contracts/world_batch_contracts.h`、`src/runtime/facade/runtime_facade_types.h`、`src/interfaces/python/bindings_runtime.cpp`、`tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py` 与 `tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py` 以 additive 方式暴露 typed platform spawn DTO vocabulary，同时保持 legacy setup 有效。 |
+| `WP14-D Additive Facade Setup DTO` | pass | `src/runtime/contracts/world_batch_contracts.h`、`src/runtime/facade/runtime_facade_types.h`、`src/interfaces/python/bindings_runtime.cpp`、`tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py` 与 `tests/runtime/bindings/test_typed_platform_spawn_bindings.py` 以 additive 方式暴露 typed platform spawn DTO vocabulary，同时保持 legacy setup 有效。 |
 | `WP14-E Capability Effects Materialization` | pass | `src/models/core/default_unit_factory.h`、`tests/architecture/platform_spawn/test_platform_capability_contracts.py` 与 `tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py` 把 capability families 绑定到现有 component/materialization evidence 与 unsupported-effect reasons，不添加新战术行为。 |
 | `WP14-F Compatibility Validation And Acceptance Handoff` | pass | 本审查记录 A-E 状态、精确 validation outcomes、兼容边界、residuals、route/README/review index sync 与中英文收口。 |
 
@@ -57,7 +57,7 @@ cmake --build build-local-win -j4
 python -m pytest -q tests\architecture\test_wp14_platform_capability_contracts.py tests\architecture\test_wp14_additive_platform_spawn_dto.py tests\architecture\test_wp14_capability_effects_materialization.py
 python -m pytest -q tests\architecture\test_wp14_boundary_guards.py tests\architecture\test_wp14_content_definition_lowering.py tests\architecture\test_wp14_resolved_spawn_plan_evidence.py
 python -m pytest -q tests\architecture\test_runtime_facade_layering.py
-.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py tests\runtime\bindings\test_typed_platform_spawn_bindings.py
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\world_batch\test_world_batch_runtime.py -k "spawn or world_setup"
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup or capabilities or observation_packet"
 .\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\engagement\test_facade_engagement_export.py

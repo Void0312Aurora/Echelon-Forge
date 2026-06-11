@@ -118,7 +118,7 @@ def _probe_prelude() -> str:
     )
 
 
-class FlightDynamicsP0RuntimeGuardTests(unittest.TestCase):
+class FlightDynamicsRuntimeGuardTests(unittest.TestCase):
     def test_spawn_succeeds_with_and_without_flight_dynamics_tuning_config(self) -> None:
         default_spawn = _run_probe(
             _probe_prelude()

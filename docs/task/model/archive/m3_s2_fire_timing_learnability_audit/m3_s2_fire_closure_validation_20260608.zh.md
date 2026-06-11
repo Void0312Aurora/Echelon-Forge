@@ -91,7 +91,7 @@ Patch：
 - `gym_envs/universal_env_parts/air_combat_event_action.py` 现在在 A5/C2-ROE
   有效动作帧中，只要出现 `fire_once` pulse，就先派生武器保险开关打开
   （`master_arm = 1`），再评估 support。
-- `tests/runtime/air_combat/test_air_combat_a5_event_action_runtime.py` 增加回归：
+- `tests/runtime/air_combat/test_fire_action_release_gate.py` 增加回归：
   在 authorized support 下，`fire=True, master_arm=False` 会作为复合
   `fire_once` event 被接受。
 

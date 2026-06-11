@@ -47,7 +47,7 @@ Out of scope:
 ```bash
 git diff --check
 python -m pytest -q tests/architecture/test_wp14_*.py
-python -m pytest -q tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
+python -m pytest -q tests/runtime/bindings/test_typed_platform_spawn_bindings.py
 python -m pytest -q tests/runtime/naval/test_naval_ship_database.py -k "ddg or spawn"
 ```
 

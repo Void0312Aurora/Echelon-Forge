@@ -175,13 +175,24 @@
       "primary_paths": [
         "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
         "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
+        "tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py",
+        "tests/runtime/air_combat/test_sensor_track_runtime_contracts.py",
         "tests/runtime/air_combat/test_weapon_roe_runtime.py",
+        "tests/runtime/air_combat/test_fire_action_release_gate.py",
+        "tests/runtime/air_combat/test_live_detonation_event_surface.py",
+        "tests/runtime/air_combat/test_fuze_no_detonation_event_gate.py",
+        "tests/runtime/air_combat/test_warhead_blast_fragmentation_loads.py",
+        "tests/runtime/air_combat/test_warhead_spatial_component_projection.py",
+        "tests/runtime/air_combat/test_continuous_rod_event_surface.py",
+        "tests/runtime/air_combat/test_continuous_rod_geometry_response.py",
+        "tests/runtime/air_combat/test_continuous_rod_component_cut_projection.py",
+        "tests/runtime/air_combat/test_continuous_rod_diagnostic_projection.py",
         "tests/runtime/air_combat/test_diagnostics_probe_contracts.py"
       ],
       "suite_membership": [
         "tests/suites/focused_runtime_suite.json"
       ],
-      "governance_notes": "Keep representative fixture, ROE, and stable diagnostics-projection coverage local/focused until runtime cost and flake profile are reviewed."
+      "governance_notes": "Keep representative fixture, ROE, release-gate, fuze/detonation, warhead-load, continuous-rod, and stable diagnostics-projection coverage local/focused until runtime cost and flake profile are reviewed."
     },
     {
       "id": "runtime_link_and_external_proxy",

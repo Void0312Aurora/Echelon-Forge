@@ -24,7 +24,7 @@ def _warhead_profile() -> object:
     profile.damage_scalar = 90.0
     profile.synthetic = True
     profile.damage_scalar_synthetic = True
-    profile.provenance = "test_mlf4_generic_rod_geometry"
+    profile.provenance = "test_continuous_rod_geometry_response"
     return profile
 
 
@@ -87,7 +87,7 @@ def _run_profiled_rod_geometry_case(
     )
 
 
-def test_mlf4c_continuous_rod_cut_margin_falls_with_range() -> None:
+def test_continuous_rod_cut_margin_falls_with_range() -> None:
     velocity = (0.0, -900.0, 0.0)
     near = _run_profiled_rod_geometry_case((-0.753, 7.1, 0.0), velocity)
     far = _run_profiled_rod_geometry_case((-0.753, 14.0, 0.0), velocity)
@@ -104,7 +104,7 @@ def test_mlf4c_continuous_rod_cut_margin_falls_with_range() -> None:
     )
 
 
-def test_mlf4c_continuous_rod_cut_margin_tracks_side_sweep_axis() -> None:
+def test_continuous_rod_cut_margin_tracks_side_sweep_axis() -> None:
     local_wing = (-0.753, 7.1, 0.0)
     broadside = _run_profiled_rod_geometry_case(local_wing, (0.0, -900.0, 0.0))
     axial = _run_profiled_rod_geometry_case(local_wing, (-900.0, 0.0, 0.0))
@@ -121,7 +121,7 @@ def test_mlf4c_continuous_rod_cut_margin_tracks_side_sweep_axis() -> None:
     )
 
 
-def test_mlf4c_continuous_rod_cut_margin_tracks_local_aspect() -> None:
+def test_continuous_rod_cut_margin_tracks_local_aspect() -> None:
     velocity = (0.0, -900.0, 0.0)
     beam = _run_profiled_rod_geometry_case((-0.753, 7.1, 0.0), velocity)
     tail = _run_profiled_rod_geometry_case((-7.1, 0.753, 0.0), velocity)
@@ -137,7 +137,7 @@ def test_mlf4c_continuous_rod_cut_margin_tracks_local_aspect() -> None:
     )
 
 
-def test_mlf4c_continuous_rod_cut_margin_tracks_orientation_axis() -> None:
+def test_continuous_rod_cut_margin_tracks_orientation_axis() -> None:
     local_wing = (-0.753, 7.1, 0.0)
     velocity = (0.0, -900.0, 0.0)
     forward_oriented = _run_profiled_rod_geometry_case(

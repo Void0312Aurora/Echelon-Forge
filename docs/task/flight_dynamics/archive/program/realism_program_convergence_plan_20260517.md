@@ -91,7 +91,7 @@ This line only does:
 
 Acceptance lines:
 
-1. `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+1. `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 2. `tests/runtime/link/test_data_link_qos_runtime.py`
 3. New or strengthened directed guard tests for `track lifecycle / IFF / fused track`
 

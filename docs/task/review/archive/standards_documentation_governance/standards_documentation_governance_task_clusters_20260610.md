@@ -87,7 +87,7 @@ python -m pytest -q tests/architecture/governance: fail, unrelated existing miss
 python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py after P1 expansion: pass, 5 passed
 cmake --build build-workshop --target ef_py -j2 after Batch A: pass
 python -m pytest -q tests/architecture/ground/test_tasking_component_boundary.py tests/runtime/mission/test_mission_command_ground_fields_roundtrip.py tests/leader/test_tasking_profile_contracts.py tests/runtime/mission/test_mission_command_roe_fields.py: pass, 24 passed
-python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_n4_reward_surface.py after Batch B: pass, 31 passed
+python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_station_policy_surface.py after Batch B: pass, 31 passed
 python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py after Batch B expansion: pass, 7 passed
 python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry docs/standards/bilingual_document_clusters.json after Batch B: pass, 67 registry pairs synced, no registry drift; pre-existing missing English peer remains for docs/standards/foundation/realism_authority_boundary.zh.md
 git diff --check for touched Batch B standards/governance paths: pass

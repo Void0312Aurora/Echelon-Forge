@@ -74,7 +74,7 @@
 | taxonomy fields | `python/mission_obs_taxonomy.py` 的 `naval_screen_station_v1` 包含 `roe_state`、`authorization_to_fire`、`assigned_target_id`、`assigned_target_source_id`。 | 空战 C2/ROE 可仿照 Python-owned mission obs 模式。 |
 | vector builder | `gym_envs/scenario_loader/mission_observation.py` 的 `_naval_screen_station_vector()` 写入 ROE/授权字段。 | 新增 `_air_combat_c2_roe_vector()`。 |
 | reward precedent | `gym_envs/scenario_loader/reward_runtime/naval.py` 有 `naval_pre_fire_roe_hold_bonus` 和授权状态相关项。 | 空战 reward 可增加 hold bonus、unauthorized fire penalty、premature second-shot penalty。 |
-| tests | `tests/runtime/naval/test_naval_n4_reward_surface.py` 覆盖 obs/reward。 | A3 应增加空战对应 focused tests。 |
+| tests | `tests/runtime/naval/test_naval_station_policy_surface.py` 覆盖 obs/reward。 | A3 应增加空战对应 focused tests。 |
 
 ## Weapon Release Gating 现状
 

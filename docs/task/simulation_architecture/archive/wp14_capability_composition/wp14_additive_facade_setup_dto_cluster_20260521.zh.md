@@ -93,7 +93,7 @@ python -m pytest -q tests\architecture\test_runtime_facade_layering.py
 
 - `git diff --check` 通过；
 - `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_bindings_runtime_dto_surface.py` 通过；
-- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_wp14_additive_platform_spawn_bindings.py` 通过；
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\bindings\test_typed_platform_spawn_bindings.py` 通过；
 - `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests\runtime\facade\test_runtime_facade.py -k "world_setup"` 通过；
 - `python -m pytest -q tests\architecture\test_runtime_facade_layering.py` 通过；
 - `WorldSpawnRequest.type_name` 仍保留，且没有强制 public `spawn_platform`。

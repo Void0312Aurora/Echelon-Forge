@@ -66,7 +66,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
   tests/training/test_naval_training_entry_contracts.py \
   tests/training/test_naval_training_entry_contracts.py \
   tests/eval/test_evaluation_cli_contracts.py \
-  tests/runtime/naval/test_naval_n4_reward_surface.py
+  tests/runtime/naval/test_naval_station_policy_surface.py
 ```
 
 触及 `src/`、`python/rl/runtime`、`gym_envs`、active config 或 scenario contract 时，

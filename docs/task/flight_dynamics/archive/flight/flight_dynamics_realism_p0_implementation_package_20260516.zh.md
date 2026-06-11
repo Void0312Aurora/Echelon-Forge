@@ -73,7 +73,7 @@ P0 的成功标准不是“飞得像 F-16”，而是“后续 P1/P2 可以在�
    - 放 `StallState`
 2. [src/systems/physics/propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
    - 负责 throttle -> thrust state 的推进瞬态
-3. [tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+3. [tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
    - 新增 P0 骨架测试
 
 ### 3.2 需要修改的文件
@@ -451,7 +451,7 @@ P0 不新开数据目录，直接复用现有数据库结构：
 
 建议新增：
 
-- [tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+- [tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 
 覆盖以下项目：
 
@@ -561,7 +561,7 @@ P0 不新开数据目录，直接复用现有数据库结构：
 
 目标：
 
-- 补 `test_flight_dynamics_p0_runtime_guards.py`
+- 补 `test_flight_dynamics_runtime_guards.py`
 - 跑现有 `test_flight_dynamics_realism_guards.py`
 
 完成标准：

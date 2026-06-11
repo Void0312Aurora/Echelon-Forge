@@ -12,7 +12,7 @@
 | MLF-3A 盘点 | accepted | [盘点验收记录](missile_lethality_warhead_effects_inventory_20260609.zh.md) | 不证明 writer 或诊断已全部完成 |
 | 标准事件结构 | live gate focused pass | `WarheadMechanismEvent`、`SpatialCoverageEvent`、`ComponentLoadEvent` 已在合同/绑定表面、event-store writer 和真实起爆路径测试中存在 | 不证明参数已校准 |
 | 现有效果模型 | generic load-shape focused pass | `default_effects_model`、`default_effects_warhead_detail.inc`、`default_effects_spatial_projection_detail.inc`；3C 聚焦测试证明 range / direction / family 会改变标准载荷事实 | 不证明阶段边界已标准化，也不证明参数已校准 |
-| 空间/部件投影 | focused pass | Euclid 只读审计确认最小入口；`test_mlf3_spatial_component_projection.py` 证明空间覆盖/局部投影会改变标准 `ComponentLoadEvent` 的部件、距离、effect scale、破片面密度和爆风超压 | 不证明部件失效概率、结构断裂、残骸、Pk 或具体型号校准 |
+| 空间/部件投影 | focused pass | Euclid 只读审计确认最小入口；`test_warhead_spatial_component_projection.py` 证明空间覆盖/局部投影会改变标准 `ComponentLoadEvent` 的部件、距离、effect scale、破片面密度和爆风超压 | 不证明部件失效概率、结构断裂、残骸、Pk 或具体型号校准 |
 | 诊断投影 | standard-event priority / focused pass | process probe 已优先读取 warhead / spatial / component load 标准事件，旧 `EffectsEvent` 只作同链路回退；不同链路仍可回退 | 不证明后续脆弱性或结构失效完成 |
 | Runtime handoff gate | no-detonation focused pass | `fuze_no_detonation` 与 `fuze_no_terminal_track` 不提升为标准 warhead/spatial/component-load 事件 | 不证明后续脆弱性或结构失效完成 |
 | Research 数据口径 | boundary fixed | 只允许通用、未校准、可替换的数据和方法进入本阶段 | 不证明具体型号参数真实 |

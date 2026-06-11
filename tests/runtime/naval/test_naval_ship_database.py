@@ -17,7 +17,7 @@ class NavalShipDatabaseTests(unittest.TestCase):
     _OPEN_WATER_X = 1_000_000.0
     _OPEN_WATER_Y = 1_000_000.0
 
-    def test_wp17_naval_spawn_uses_type_name_resolution_chain_materialization(self) -> None:
+    def test_naval_spawn_uses_type_name_resolution_chain_materialization(self) -> None:
         kernel = ef_py.SimulationKernel()
         kernel.reset(499)
         self.assertTrue(kernel.load_database(resolve_repo_path("examples", "config", "database")))

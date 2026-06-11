@@ -20,7 +20,7 @@ Language:
 - [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py)
 - [gym_envs/scenario_loader/mission_observation.py](../../../gym_envs/scenario_loader/mission_observation.py)
 - [tests/runtime/mission/test_mission_obs_taxonomy.py](../../../tests/runtime/mission/test_mission_obs_taxonomy.py)
-- [tests/runtime/naval/test_naval_n4_reward_surface.py](../../../tests/runtime/naval/test_naval_n4_reward_surface.py)
+- [tests/runtime/naval/test_naval_station_policy_surface.py](../../../tests/runtime/naval/test_naval_station_policy_surface.py)
 
 本文档不定义：
 

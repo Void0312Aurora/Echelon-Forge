@@ -98,7 +98,7 @@ Batch A remediation 验证证据：
 
 Batch B remediation 验证证据：
 
-- `python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_n4_reward_surface.py` 通过，31 项测试。
+- `python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_station_policy_surface.py` 通过，31 项测试。
 - `python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py` 通过，7 项测试。
 - `python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write` 已将维护 registry 刷新到 67 对。
 - `python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry docs/standards/bilingual_document_clusters.json` 报告 registry 内 67 对文档 synced，无 registry drift。它仍报告既有问题：`docs/standards/foundation/realism_authority_boundary.zh.md` 缺少英文 peer。

@@ -75,7 +75,7 @@ Recommended additions:
    - Contains `StallState`
 2. [src/systems/physics/propulsion_system.h](../../../../src/systems/physics/propulsion_system.h)
    - Responsible for the propulsion transient from throttle -> thrust state
-3. [tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+3. [tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
    - New P0 skeleton tests
 
 ### 3.2 Files to Modify
@@ -453,7 +453,7 @@ Airframe should support:
 
 Recommended new file:
 
-- [tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+- [tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 
 Cover the following items:
 
@@ -561,7 +561,7 @@ Completion criteria:
 
 Objective:
 
-- Supplement `test_flight_dynamics_p0_runtime_guards.py`
+- Supplement `test_flight_dynamics_runtime_guards.py`
 - Run existing `test_flight_dynamics_realism_guards.py`
 
 Completion criteria:

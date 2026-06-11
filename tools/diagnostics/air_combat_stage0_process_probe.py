@@ -184,6 +184,31 @@ def _finite_float(value: Any, default: float = float("nan")) -> float:
     return out if math.isfinite(out) else float(default)
 
 
+def _effects_event_has_warhead_load(effect: Any) -> bool:
+    outcome = str(getattr(effect, "outcome_state", "") or "")
+    if outcome in {"fuze_no_detonation", "no_detonation"}:
+        return False
+    if int(getattr(effect, "component_hit_count", 0) or 0) > 0:
+        return True
+    if list(getattr(effect, "component_mechanism_load_rows", []) or []):
+        return True
+    load_fields = (
+        "mechanism_fragment_energy_j",
+        "mechanism_fragment_areal_density_per_m2",
+        "mechanism_penetration_margin",
+        "mechanism_blast_overpressure_kpa",
+        "mechanism_blast_impulse_kpa_ms",
+        "mechanism_blast_scaled_distance_m_kg13",
+        "mechanism_rod_cut_margin",
+        "mechanism_surface_incidence_cos",
+        "warhead_spatial_hit_estimate",
+    )
+    return any(
+        _finite_float(getattr(effect, field, 0.0), 0.0) > 0.0
+        for field in load_fields
+    )
+
+
 def _bool_int(value: Any) -> int:
     if isinstance(value, str):
         return int(value.strip().lower() in {"1", "true", "yes", "on"})
@@ -599,7 +624,8 @@ def _lethality_chain_rows(
             )
             rows.append(fuze)
 
-        if fallback_key not in standard_warhead_keys:
+        has_warhead_load = _effects_event_has_warhead_load(effect)
+        if has_warhead_load and fallback_key not in standard_warhead_keys:
             warhead = _lethality_base_row(stage="warhead_mechanism", **base_kwargs)
             warhead.update(
                 {
@@ -636,7 +662,7 @@ def _lethality_chain_rows(
             )
             rows.append(warhead)
 
-        if fallback_key not in standard_spatial_keys:
+        if has_warhead_load and fallback_key not in standard_spatial_keys:
             spatial = _lethality_base_row(stage="spatial_coverage", **base_kwargs)
             spatial.update(
                 {
@@ -658,7 +684,7 @@ def _lethality_chain_rows(
             )
             rows.append(spatial)
 
-        if fallback_key not in standard_component_keys:
+        if has_warhead_load and fallback_key not in standard_component_keys:
             component = _lethality_base_row(stage="component_load", **base_kwargs)
             component_hit_count = int(getattr(effect, "component_hit_count", 0) or 0)
             component_rows = list(getattr(effect, "component_mechanism_load_rows", []) or [])
@@ -798,11 +824,15 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         "lethality_chain_blast_overpressure_kpa": _finite_float(
             warhead.get("blast_overpressure_kpa", float("nan"))
         ),
+        "lethality_chain_rod_cut_margin": _finite_float(warhead.get("rod_cut_margin", float("nan"))),
         "lethality_chain_projected_hitbox_count": int(spatial.get("projected_hitbox_count", 0) or 0),
         "lethality_chain_component_hit_count": int(component.get("component_hit_count", 0) or 0),
         "lethality_chain_component_name": str(component.get("component_name", "") or ""),
         "lethality_chain_component_system": str(component.get("component_system", "") or ""),
         "lethality_chain_component_load_source": str(component.get("component_load_source", "") or ""),
+        "lethality_chain_component_rod_cut_margin": _finite_float(
+            component.get("rod_cut_margin", float("nan"))
+        ),
         "lethality_chain_damage_report_id": int(platform.get("damage_report_id", lifecycle.get("damage_report_id", 0)) or 0),
         "lethality_chain_system_health_delta": _finite_float(platform.get("system_health_delta", float("nan"))),
         "lethality_chain_mission_kill": int(platform.get("mission_kill", 0) or 0),
@@ -2204,6 +2234,12 @@ def _summarize_episode(
             chain_snapshot.get("lethality_chain_projected_hitbox_count", 0) or 0
         ),
         "lethality_chain_component_hit_count": int(chain_snapshot.get("lethality_chain_component_hit_count", 0) or 0),
+        "lethality_chain_rod_cut_margin": float(
+            chain_snapshot.get("lethality_chain_rod_cut_margin", float("nan"))
+        ),
+        "lethality_chain_component_rod_cut_margin": float(
+            chain_snapshot.get("lethality_chain_component_rod_cut_margin", float("nan"))
+        ),
         "lethality_chain_damage_report_id": int(chain_snapshot.get("lethality_chain_damage_report_id", 0) or 0),
         "lethality_chain_system_health_delta": float(
             chain_snapshot.get("lethality_chain_system_health_delta", float("nan"))

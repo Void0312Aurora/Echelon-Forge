@@ -77,7 +77,7 @@
    - `sensor` 默认值来源去重
    - missile `Vec3 -> Math::Vector3` 去重
 6. 本轮主线程针对结构收口补充回归：
-   - `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+   - `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
    - `tests/runtime/core/test_kernel_observation_sanity.py`
    - `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`
    - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
@@ -291,7 +291,7 @@
 
 验收测试：
 
-1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py)
+1. [test_sensor_track_runtime_contracts.py](../../../../tests/runtime/air_combat/test_sensor_track_runtime_contracts.py)
 2. [test_kernel_observation_sanity.py](../../../../tests/runtime/core/test_kernel_observation_sanity.py)
 3. [test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py)
 4. [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/air_combat/test_weapon_guidance_realism_guards.py)
@@ -327,7 +327,7 @@
 
 验收测试：
 
-1. [test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+1. [test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 2. [test_flight_dynamics_realism_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 3. [test_flight_dynamics_tuning_runtime.py](../../../../tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py)
 
@@ -367,7 +367,7 @@
 
 验收测试：
 
-1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py)
+1. [test_sensor_track_runtime_contracts.py](../../../../tests/runtime/air_combat/test_sensor_track_runtime_contracts.py)
 2. [test_naval_sensor_realism_runtime.py](../../../../tests/runtime/naval/test_naval_sensor_realism_runtime.py)
 
 #### C3 Weapon Shared Integration 后续

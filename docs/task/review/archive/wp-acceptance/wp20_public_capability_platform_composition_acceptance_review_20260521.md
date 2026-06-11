@@ -50,7 +50,7 @@ Recorded closure-pass validation:
 ```bash
 git diff --check
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/architecture/platform_spawn/test_boundary_guards.py tests/architecture/runtime_facade tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py tests/architecture/platform_spawn/test_runtime_setup_consume_bridge.py
-bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
+bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/bindings/test_bindings_runtime_dto_surface.py tests/runtime/bindings/test_typed_platform_spawn_bindings.py
 bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_runtime_facade.py -k "typed_platform_setup or world_setup or capability or spawn"
 cmake --build build-workshop --target ef_py -j2
 python3 tools/maintenance/wp_doc_closure_audit.py --wp WP20 --summary

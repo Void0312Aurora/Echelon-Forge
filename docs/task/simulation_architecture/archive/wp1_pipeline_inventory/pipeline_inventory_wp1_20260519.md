@@ -138,7 +138,7 @@ Existing tests already cover several important boundaries:
 | Build layering | [test_cmake_target_readiness.py](../../../tests/architecture/build/test_cmake_target_readiness.py:25) | Protects grouped source readiness for future target splits. |
 | Facade behavior | [test_runtime_facade.py](../../../tests/runtime/facade/test_runtime_facade.py:213) | Covers setup, observation export, execution batch stepping, and state advancement. |
 | Mission/runtime bridge | [test_mission_runtime.py](../../../tests/runtime/mission/test_mission_runtime.py:86) | Strong `P2/P6/P10` coverage around mission observation, route guidance, live tracks, and datalink. |
-| Sensor/track realism | [test_sensor_situation_realism_p0.py](../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py:62) | Strong `P6` coverage. |
+| Sensor/track realism | [test_sensor_track_runtime_contracts.py](../../../tests/runtime/air_combat/test_sensor_track_runtime_contracts.py:62) | Strong `P6` coverage. |
 | Air weapon realism | [test_weapon_guidance_realism_guards.py](../../../tests/runtime/air_combat/test_weapon_guidance_realism_guards.py:167) | Strong air-side `P7-P9` behavior coverage. |
 | ROE gating | [test_weapon_roe_runtime.py](../../../tests/runtime/air_combat/test_weapon_roe_runtime.py:53) | Relevant to `P2/P3/P7` authority boundaries. |
 | Naval engagement | [test_naval_ship_database.py](../../../tests/runtime/naval/test_naval_ship_database.py:30) | Rich naval-side sensor, mount, launch, CIWS, and damage coverage. |

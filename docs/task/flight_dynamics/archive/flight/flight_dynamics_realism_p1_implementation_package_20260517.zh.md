@@ -7,7 +7,7 @@
 - [飞行动力学现实性分析与空战前置门槛](flight_dynamics_realism_analysis_20260516.zh.md)
 - [飞行动力学真实化 P0 实施包](flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
 - [真实化任务总表](../program/realism_program_taskboard_20260516.zh.md)
-- [P0 守门测试](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+- [P0 守门测试](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 
 文档目的：
 
@@ -139,7 +139,7 @@
 - `/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp`
 - `/home/void0312/Workshop/CMO/src/core/mission/runtime/execution_observation_runtime.cpp`
 - `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_realism_guards.py`
-- `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py`
+- `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py`
 
 需要完成的事：
 

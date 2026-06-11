@@ -42,7 +42,7 @@ def _generic_synthetic_warhead_profile(family: str) -> object:
     profile.damage_scalar = 90.0
     profile.synthetic = True
     profile.damage_scalar_synthetic = True
-    profile.provenance = "test_mlf3c_generic_synthetic_profile"
+    profile.provenance = "test_warhead_blast_fragmentation_loads"
     return profile
 
 
@@ -149,7 +149,7 @@ def _run_profiled_standard_case(
     )
 
 
-def test_mlf3c_standard_mechanism_loads_track_range_and_miss_distance() -> None:
+def test_standard_mechanism_loads_track_range_and_miss_distance() -> None:
     velocity = (900.0, -250.0, 0.0)
     near = _run_profiled_standard_case(
         "blast_fragmentation",
@@ -179,7 +179,7 @@ def test_mlf3c_standard_mechanism_loads_track_range_and_miss_distance() -> None:
     assert far.max_component_overpressure < near.max_component_overpressure
 
 
-def test_mlf3c_standard_mechanism_loads_track_directional_aspect() -> None:
+def test_standard_mechanism_loads_track_directional_aspect() -> None:
     local = (-0.753, 7.1, 0.0)
     broadside = _run_profiled_standard_case(
         "blast_fragmentation",
@@ -211,7 +211,7 @@ def test_mlf3c_standard_mechanism_loads_track_directional_aspect() -> None:
     )
 
 
-def test_mlf3c_standard_mechanism_loads_track_warhead_family() -> None:
+def test_standard_mechanism_loads_track_warhead_family() -> None:
     local = (-0.753, 7.1, 0.0)
     velocity = (900.0, -250.0, 0.0)
     blast = _run_profiled_standard_case("blast", local, velocity)

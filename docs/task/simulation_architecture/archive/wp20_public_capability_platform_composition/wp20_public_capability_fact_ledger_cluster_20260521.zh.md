@@ -225,7 +225,7 @@ source-backed 事实。
   和 [test_wp14_resolved_spawn_plan_evidence.py](../../../../tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py:60)
 - Python DTO tests 确认 typed DTO 可构造，同时保留 legacy `WorldSpawnRequest`
   surface：
-  [test_wp14_additive_platform_spawn_bindings.py](../../../../tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py:75)
+  [test_typed_platform_spawn_bindings.py](../../../../tests/runtime/bindings/test_typed_platform_spawn_bindings.py:75)
 
 当前事实：
 
@@ -311,7 +311,7 @@ sed -n '1,260p' src/models/core/default_unit_factory.h
 sed -n '1,240p' tests/architecture/platform_spawn/test_platform_capability_contracts.py
 sed -n '1,240p' tests/architecture/platform_spawn/test_boundary_guards.py
 sed -n '1,260p' tests/architecture/platform_spawn/test_typed_platform_spawn_contracts.py
-sed -n '1,260p' tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py
+sed -n '1,260p' tests/runtime/bindings/test_typed_platform_spawn_bindings.py
 sed -n '1,260p' tests/world_batch/test_world_batch_runtime.py
 sed -n '1,260p' tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py
 sed -n '1,260p' tests/architecture/runtime_facade
@@ -324,7 +324,7 @@ nl -ba tests/architecture/platform_spawn/test_boundary_guards.py | sed -n '1,260
 nl -ba tests/architecture/platform_spawn/test_platform_capability_contracts.py | sed -n '1,260p'
 nl -ba tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py | sed -n '1,220p'
 nl -ba tests/architecture/platform_spawn/test_default_factory_spawn_plan_resolution.py | sed -n '1,220p'
-nl -ba tests/runtime/bindings/test_wp14_additive_platform_spawn_bindings.py | sed -n '1,220p'
+nl -ba tests/runtime/bindings/test_typed_platform_spawn_bindings.py | sed -n '1,220p'
 nl -ba tests/world_batch/test_world_batch_runtime.py | sed -n '1,120p'
 nl -ba src/runtime/contracts/platform_capability_contracts.h | sed -n '1,220p'
 nl -ba src/runtime/contracts/platform_capability_contracts.h | sed -n '220,520p'

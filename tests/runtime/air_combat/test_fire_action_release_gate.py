@@ -47,7 +47,7 @@ def _step_until_fire_mask(env: UniversalEnv, *, expected_mask: int, max_steps: i
     raise AssertionError(f"expected fire_mask={expected_mask}, last info={info!r}")
 
 
-class AirCombatA5EventActionRuntimeTests(unittest.TestCase):
+class AirCombatFireActionReleaseGateTests(unittest.TestCase):
     def _make_env(self) -> UniversalEnv:
         return UniversalEnv(
             _SCENARIO_PATH,

@@ -124,7 +124,7 @@ After P0 is completed, at least the following must hold:
 
 ### 4.3 New Test Files
 
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 
 If finer granularity is desired, it can be split into:
 
@@ -539,7 +539,7 @@ Completion criteria:
 
 Modify:
 
-- Add `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- Add `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 - Update `test_naval_screen_scenario.py`
 - Update `test_mission_runtime.py` and `test_air_combat_1v1_fire_missile.py` if necessary
 

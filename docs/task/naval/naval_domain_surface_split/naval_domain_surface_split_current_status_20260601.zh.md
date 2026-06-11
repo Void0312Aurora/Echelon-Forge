@@ -14,7 +14,7 @@
 | `MissionCommand` 仍是 flat compatibility shell。 | `src/components/command/mission_command.h:11-18`；`src/runtime/contracts/world_batch_contracts.h:549-599`。 | compatibility adapter |
 | World-batch 仍暴露 `WorldPilotActionAssignment`。 | `src/runtime/contracts/world_batch_contracts.h:543-547`。 | blocker |
 | N4 contracts 仍禁止 weapon / damage proof。 | `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json:1-64` 与 `tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json:1-64`。 | 必须保留的边界 |
-| `naval_station3` 已有 `naval_station_command` action family 和 compatibility-only `PilotAction` transport adapter。 | `gym_envs/universal_env_parts/naval_actions.py:23-65`；`python/rl/runtime/world_batch/adapter.py:341-408`；`tests/runtime/naval/test_naval_n4_reward_surface.py:36-56`。 | 第二切片已接受 |
+| `naval_station3` 已有 `naval_station_command` action family 和 compatibility-only `PilotAction` transport adapter。 | `gym_envs/universal_env_parts/naval_actions.py:23-65`；`python/rl/runtime/world_batch/adapter.py:341-408`；`tests/runtime/naval/test_naval_station_policy_surface.py:36-56`。 | 第二切片已接受 |
 | Active naval config 已使用 domain-neutral `shaping_backend` alias，并在 env settings 中归一到 canonical `flight_shaping_backend`。 | `python/env_config.py:60-76, 120-125`；`examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json:43`；`tests/runtime/core/test_env_config.py:73-102`。 | 第二切片已接受 |
 
 ## 剩余依赖清单

@@ -31,7 +31,7 @@ def _generic_synthetic_warhead_profile() -> object:
     profile.damage_scalar = 90.0
     profile.synthetic = True
     profile.damage_scalar_synthetic = True
-    profile.provenance = "test_mlf3d_spatial_component_projection_generic_research"
+    profile.provenance = "test_warhead_spatial_component_projection_generic_research"
     return profile
 
 
@@ -228,7 +228,7 @@ def _run_profiled_component_projection_case(
     )
 
 
-def test_mlf3d_component_loads_track_spatial_coverage_and_local_projection() -> None:
+def test_component_loads_track_spatial_coverage_and_local_projection() -> None:
     velocity = (900.0, -250.0, 0.0)
     right_near = _run_profiled_component_projection_case(
         (-0.753, 6.0, 0.0),

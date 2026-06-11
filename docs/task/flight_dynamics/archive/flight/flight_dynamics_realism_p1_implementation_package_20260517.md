@@ -9,7 +9,7 @@ Related Inputs:
 - [Flight Dynamics Reality Analysis and Air Combat Prerequisite](flight_dynamics_realism_analysis_20260516.zh.md)
 - [Flight Dynamics Realism P0 Implementation Package](flight_dynamics_realism_p0_implementation_package_20260516.zh.md)
 - [Realism Task Master List](../program/realism_program_taskboard_20260516.zh.md)
-- [P0 Gate Tests](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+- [P0 Gate Tests](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 
 Document Purpose:
 
@@ -141,7 +141,7 @@ Recommended file scope:
 - `/home/void0312/Workshop/CMO/src/interfaces/python/bindings_core.cpp`
 - `/home/void0312/Workshop/CMO/src/core/mission/runtime/execution_observation_runtime.cpp`
 - `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_realism_guards.py`
-- `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py`
+- `/home/void0312/Workshop/CMO/tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py`
 
 What needs to be done:
 

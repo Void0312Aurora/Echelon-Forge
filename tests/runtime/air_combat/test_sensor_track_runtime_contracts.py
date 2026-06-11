@@ -34,7 +34,7 @@ def _set_detection_timestamp(det: ef_py.Detection, timestamp_s: float) -> ef_py.
     return det
 
 
-class SensorSituationRealismP0Tests(unittest.TestCase):
+class SensorTrackRuntimeContractTests(unittest.TestCase):
     def _kernel_with_overrides(self, overrides: dict[str, dict]) -> ef_py.SimulationKernel:
         kernel = ef_py.SimulationKernel()
         kernel.reset(8800 + len(overrides))
@@ -59,7 +59,7 @@ class SensorSituationRealismP0Tests(unittest.TestCase):
             unit["sensor"] = sensor
         return unit
 
-    def test_sensor_runtime_defaults_expose_p0_fields(self) -> None:
+    def test_sensor_runtime_defaults_expose_calibrated_fields(self) -> None:
         sim = ef_py.SimulationKernel()
         sim.reset(314)
         self.assertTrue(sim.load_database(_DB_PATH))

@@ -14,7 +14,7 @@ inventory snapshot for [Naval Domain Surface Split](README.md).
 | `MissionCommand` remains a flat compatibility shell. | `src/components/command/mission_command.h:11-18`; `src/runtime/contracts/world_batch_contracts.h:549-599`. | compatibility adapter |
 | World-batch still exposes `WorldPilotActionAssignment`. | `src/runtime/contracts/world_batch_contracts.h:543-547`. | blocker |
 | N4 contracts still forbid weapon/damage proof. | `tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json:1-64` and `tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json:1-64`. | required boundary |
-| `naval_station3` now has a `naval_station_command` action family and compatibility-only `PilotAction` transport adapter. | `gym_envs/universal_env_parts/naval_actions.py:23-65`; `python/rl/runtime/world_batch/adapter.py:341-408`; `tests/runtime/naval/test_naval_n4_reward_surface.py:36-56`. | accepted second slice |
+| `naval_station3` now has a `naval_station_command` action family and compatibility-only `PilotAction` transport adapter. | `gym_envs/universal_env_parts/naval_actions.py:23-65`; `python/rl/runtime/world_batch/adapter.py:341-408`; `tests/runtime/naval/test_naval_station_policy_surface.py:36-56`. | accepted second slice |
 | Active naval config now uses the domain-neutral `shaping_backend` alias and resolves it to canonical `flight_shaping_backend` env settings. | `python/env_config.py:60-76, 120-125`; `examples/config/training/active/naval/naval_contact_report_threat_roe_smoke_v1.json:43`; `tests/runtime/core/test_env_config.py:73-102`. | accepted second slice |
 
 ## Residual Dependency Inventory

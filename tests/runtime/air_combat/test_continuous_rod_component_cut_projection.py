@@ -25,7 +25,7 @@ def _warhead_profile(family: str) -> object:
     profile.damage_scalar = 90.0
     profile.synthetic = True
     profile.damage_scalar_synthetic = True
-    profile.provenance = "test_mlf4_component_cut_projection"
+    profile.provenance = "test_continuous_rod_component_cut_projection"
     return profile
 
 
@@ -117,7 +117,7 @@ def _primary_source_row(case: _ComponentCutCase) -> object:
     raise AssertionError("primary component row not found")
 
 
-def test_mlf4d_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
+def test_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
     case = _run_component_cut_case("continuous_rod", (-0.753, 7.1, 0.0))
 
     assert str(case.effects.effect_family) == "continuous_rod"
@@ -140,7 +140,7 @@ def test_mlf4d_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
     )
 
 
-def test_mlf4d_direct_component_hit_uses_direct_load_source() -> None:
+def test_direct_component_hit_uses_direct_load_source() -> None:
     case = _run_component_cut_case("continuous_rod", (-0.8, 4.1, 0.0))
 
     assert str(case.effects.effect_family) == "continuous_rod"
@@ -161,7 +161,7 @@ def test_mlf4d_direct_component_hit_uses_direct_load_source() -> None:
     _assert_no_downstream_failure_or_consequence_events(case)
 
 
-def test_mlf4d_local_side_changes_emphasized_component_rows() -> None:
+def test_local_side_changes_emphasized_component_rows() -> None:
     right = _run_component_cut_case("continuous_rod", (-0.753, 7.1, 0.0))
     left = _run_component_cut_case("continuous_rod", (-0.753, -7.1, 0.0))
 
@@ -186,7 +186,7 @@ def test_mlf4d_local_side_changes_emphasized_component_rows() -> None:
     _assert_no_downstream_failure_or_consequence_events(left)
 
 
-def test_mlf4d_non_rod_component_projection_carries_no_rod_cut_facts() -> None:
+def test_non_rod_component_projection_carries_no_rod_cut_facts() -> None:
     case = _run_component_cut_case("blast_fragmentation", (-0.8, 4.1, 0.0))
 
     assert str(case.effects.effect_family) == "blast_fragmentation"

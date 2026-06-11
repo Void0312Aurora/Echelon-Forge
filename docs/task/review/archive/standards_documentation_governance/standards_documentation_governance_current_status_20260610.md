@@ -94,7 +94,7 @@ python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry d
 Batch B:
 
 ```text
-python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_n4_reward_surface.py: pass, 31 passed
+python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_station_policy_surface.py: pass, 31 passed
 python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py: pass, 7 passed
 python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write: pass, registry pair_count 67
 python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry docs/standards/bilingual_document_clusters.json: pass, 67 registry pairs synced, no registry drift; pre-existing missing English peer remains for docs/standards/foundation/realism_authority_boundary.zh.md

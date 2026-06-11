@@ -172,7 +172,7 @@ P1 需要补齐：
 - `tests/runtime/naval/test_naval_screen_scenario.py`
 - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
 - `tests/runtime/bindings/test_bindings_command_surface.py`
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 
 P1 需要清理的旧语义：
 
@@ -379,7 +379,7 @@ P1 不建议做：
 - `src/interfaces/python/bindings_command.cpp`
 - `python/testing/runtime.py`
 - `tests/runtime/bindings/test_bindings_command_surface.py`
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 - 其他受影响的 runtime/contract 测试
 
 ### 5.2 P1 深化真实化

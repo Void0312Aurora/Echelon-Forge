@@ -16,8 +16,8 @@ Held: real weapon calibration, continuous rod, component failure probability, st
 | --- | --- | --- | --- |
 | `MLF-3A` | accepted | Inventory record confirms current warhead / spatial / component fields and writer gaps | Does not prove runtime completion |
 | `MLF-3B` | focused pass | Event-store writers, live detonation-path test, and engagement capture tests | Does not calibrate parameters |
-| `MLF-3C` | focused pass | `test_mlf3_generic_blast_fragmentation_loads.py` proves range / direction / family change standard load facts | Does not introduce real AIM-120C parameters |
-| `MLF-3D` | focused pass | Euclid read-only audit and `test_mlf3_spatial_component_projection.py` prove spatial coverage / local projection changes standard component-load facts | Does not claim component failure or crash |
+| `MLF-3C` | focused pass | `test_warhead_blast_fragmentation_loads.py` proves range / direction / family change standard load facts | Does not introduce real AIM-120C parameters |
+| `MLF-3D` | focused pass | Euclid read-only audit and `test_warhead_spatial_component_projection.py` prove spatial coverage / local projection changes standard component-load facts | Does not claim component failure or crash |
 | `MLF-3E` | focused pass | Process probe prefers standard warhead / spatial / component events, with same-chain old events as fallback only | Does not change reward or win/loss semantics |
 | `MLF-3F` | focused pass | No-detonation gate test proves no-detonation paths have no standard load events | Future no-detonation outcomes must keep the gate |
 | `MLF-3G` | focused pass | Closeout record, README, status, task clusters, dispatch queue, and archive index state the accepted/held boundary consistently | Does not close later high-fidelity phases |
@@ -27,10 +27,10 @@ Held: real weapon calibration, continuous rod, component failure probability, st
 ```bash
 cmake --build build-workshop --target ef_py -j2
 PYTHONPATH=build-workshop ./.venv/bin/python -m pytest \
-  tests/runtime/air_combat/test_mlf3_spatial_component_projection.py \
-  tests/runtime/air_combat/test_mlf3_generic_blast_fragmentation_loads.py \
-  tests/runtime/air_combat/test_mlf3_live_detonation_standard_events.py \
-  tests/runtime/air_combat/test_mlf3_no_detonation_handoff_gate.py \
+  tests/runtime/air_combat/test_warhead_spatial_component_projection.py \
+  tests/runtime/air_combat/test_warhead_blast_fragmentation_loads.py \
+  tests/runtime/air_combat/test_live_detonation_event_surface.py \
+  tests/runtime/air_combat/test_fuze_no_detonation_event_gate.py \
   tests/runtime/engagement/test_live_engagement_event_capture.py \
   tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 ```

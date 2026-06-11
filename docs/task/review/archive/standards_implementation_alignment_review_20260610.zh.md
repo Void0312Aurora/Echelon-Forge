@@ -153,10 +153,10 @@ Language:
 | 字段 | 值 |
 | --- | --- |
 | 严重度 | **低**（属任务文档层问题，非标准缺陷） |
-| 观察 | `tests/runtime/air_combat/test_mlf3_spatial_component_projection.py` 为新增（未跟踪）。warhead effects 空间投影合同未在 `docs/standards/` 下任何 weapons/damage specialization 标准中捕获。 |
+| 观察 | `tests/runtime/air_combat/test_warhead_spatial_component_projection.py` 为新增（未跟踪）。warhead effects 空间投影合同未在 `docs/standards/` 下任何 weapons/damage specialization 标准中捕获。 |
 | 影响 | 若空间投影合同稳定化，需要标准层所有权槽位。当前 foundation 层 `realism_authority_boundary.zh.md` 提供 authority 门控，但不提供字段级合同文档。 |
 | 建议 | 当 MLF-3 warhead effects 工作达到验收时，在 `docs/standards/air/` 下新增 weapon-effects specialization 条目，或在 `docs/standards/weapons/` 新目录。不要让合同仅存在于任务文档和测试文件中。 |
-| 引用 | `tests/runtime/air_combat/test_mlf3_spatial_component_projection.py`、`docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_warhead_effects/` |
+| 引用 | `tests/runtime/air_combat/test_warhead_spatial_component_projection.py`、`docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_warhead_effects/` |
 
 ## 5. 非缺口（已验证对齐）
 

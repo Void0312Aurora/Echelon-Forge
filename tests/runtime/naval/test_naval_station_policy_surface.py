@@ -32,10 +32,10 @@ from python.mission_obs_taxonomy import (  # noqa: E402
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-N4_SCENARIO = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_threat_roe_v1.json"
+NAVAL_STATION_SCENARIO = REPO_ROOT / "scenarios" / "naval" / "ddg51_take1_screen_threat_roe_v1.json"
 
 
-class NavalN4RewardSurfaceTests(unittest.TestCase):
+class NavalStationPolicySurfaceTests(unittest.TestCase):
     def _assert_transport_adapter(self, loader, expected_action: np.ndarray) -> None:
         adapter = getattr(loader, "_naval_station3_transport_adapter", None)
         self.assertIsInstance(adapter, dict)
@@ -73,7 +73,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         settings = self._naval_world_batch_settings()
         settings["action_mode"] = action_mode
         return WorldBatchVecEnv(
-            scenario_path=str(scenario_path or N4_SCENARIO),
+            scenario_path=str(scenario_path or NAVAL_STATION_SCENARIO),
             n_envs=1,
             worker_threads=1,
             policy_observation_torch_bridge=True,
@@ -81,8 +81,8 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             **settings,
         )
 
-    def _single_slot_n4_scenario_path(self, tmpdir: str) -> str:
-        scenario = json.loads(N4_SCENARIO.read_text(encoding="utf-8"))
+    def _single_slot_naval_station_scenario_path(self, tmpdir: str) -> str:
+        scenario = json.loads(NAVAL_STATION_SCENARIO.read_text(encoding="utf-8"))
         roster = dict(scenario.get("cooperative_roster", {}) or {})
         members = list(roster.get("members", []) or [])
         roster["members"] = [dict(members[0])] if members else [
@@ -90,17 +90,17 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         ]
         roster["members"][0]["is_agent"] = True
         scenario["cooperative_roster"] = roster
-        scenario_path = Path(tmpdir) / "single_slot_n4.json"
+        scenario_path = Path(tmpdir) / "single_slot_naval_station.json"
         scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
         return str(scenario_path)
 
-    def _full_roster_n4_scenario_path(self) -> str:
-        return str(N4_SCENARIO)
+    def _full_roster_naval_station_scenario_path(self) -> str:
+        return str(NAVAL_STATION_SCENARIO)
 
-    def _derived_n4_scenario_path(self, tmpdir: str, mutator) -> str:
-        scenario = json.loads(N4_SCENARIO.read_text(encoding="utf-8"))
+    def _derived_naval_station_scenario_path(self, tmpdir: str, mutator) -> str:
+        scenario = json.loads(NAVAL_STATION_SCENARIO.read_text(encoding="utf-8"))
         mutator(scenario)
-        scenario_path = Path(tmpdir) / "derived_n4.json"
+        scenario_path = Path(tmpdir) / "derived_naval_station.json"
         scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
         return str(scenario_path)
 
@@ -128,7 +128,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             **settings,
         )
 
-    def test_n4_reward_surface_does_not_emit_airfield_penalty(self) -> None:
+    def test_reward_surface_does_not_emit_airfield_penalty(self) -> None:
         env = self._make_env()
         try:
             env.reset()
@@ -163,14 +163,14 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_naval_reward_surface_rejects_off_runway_suppression_regression(self) -> None:
+    def test_naval_reward_surface_rejects_off_runway_suppression_regression(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             def _enable_suppression(scenario: dict) -> None:
                 rewards = dict(scenario.get("rewards", {}) or {})
                 rewards["naval_suppress_off_runway_penalty"] = True
                 scenario["rewards"] = rewards
 
-            scenario_path = self._derived_n4_scenario_path(tmpdir, _enable_suppression)
+            scenario_path = self._derived_naval_station_scenario_path(tmpdir, _enable_suppression)
             env = WorldBatchVecEnv(
                 scenario_path=scenario_path,
                 n_envs=1,
@@ -192,7 +192,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             finally:
                 env.close()
 
-    def test_n4_naval_observation_uses_station_contact_and_roe_fields(self) -> None:
+    def test_naval_observation_uses_station_contact_and_roe_fields(self) -> None:
         mode = "naval_screen_station_v1"
         env = self._make_env()
         try:
@@ -239,7 +239,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_naval_policy_instruments_filter_aircraft_specific_fields(self) -> None:
+    def test_naval_policy_instruments_filter_aircraft_specific_fields(self) -> None:
         env = self._make_env()
         try:
             obs = env.reset()
@@ -271,7 +271,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_naval_observation_reports_support_chain_when_seen(self) -> None:
+    def test_naval_observation_reports_support_chain_when_seen(self) -> None:
         mode = "naval_screen_station_v1"
         env = self._make_env()
         try:
@@ -291,7 +291,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_contact_and_report_terms_appear_after_contact_chain(self) -> None:
+    def test_contact_and_report_terms_appear_after_contact_chain(self) -> None:
         env = self._make_env()
         try:
             env.reset()
@@ -413,7 +413,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
 
     def test_naval_station3_action_cannot_move_reward_reference_to_ownship(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            scenario_path = self._derived_n4_scenario_path(
+            scenario_path = self._derived_naval_station_scenario_path(
                 tmpdir,
                 lambda scenario: self._offset_ddg_station_radius(scenario, -1800.0),
             )
@@ -441,7 +441,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
                 zero_env.close()
                 action_env.close()
 
-    def test_n4_world_batch_rejects_air_action_mode_for_naval_profile(self) -> None:
+    def test_world_batch_rejects_air_action_mode_for_naval_profile(self) -> None:
         env = self._make_env(action_mode="takeoff4")
         try:
             with self.assertRaisesRegex(RuntimeError, "Naval tasking profiles require action_mode='naval_station3'"):
@@ -449,9 +449,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_cooperative_batch_rejects_air_action_mode_for_naval_profile(self) -> None:
+    def test_cooperative_batch_rejects_air_action_mode_for_naval_profile(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            scenario_path = self._single_slot_n4_scenario_path(tmpdir)
+            scenario_path = self._single_slot_naval_station_scenario_path(tmpdir)
             env = self._make_coop_env(scenario_path, action_mode="takeoff4")
             try:
                 with self.assertRaisesRegex(RuntimeError, "Naval tasking profiles require action_mode='naval_station3'"):
@@ -459,9 +459,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             finally:
                 env.close()
 
-    def test_n4_cooperative_batch_naval_station3_updates_station_order(self) -> None:
+    def test_cooperative_batch_naval_station3_updates_station_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            scenario_path = self._single_slot_n4_scenario_path(tmpdir)
+            scenario_path = self._single_slot_naval_station_scenario_path(tmpdir)
             env = self._make_coop_env(scenario_path)
             try:
                 env.reset()
@@ -481,9 +481,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             finally:
                 env.close()
 
-    def test_n4_cooperative_batch_action_cannot_move_reward_reference_to_ownship(self) -> None:
+    def test_cooperative_batch_action_cannot_move_reward_reference_to_ownship(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            scenario_path = self._derived_n4_scenario_path(
+            scenario_path = self._derived_naval_station_scenario_path(
                 tmpdir,
                 lambda scenario: self._offset_ddg_station_radius(scenario, -1800.0),
             )
@@ -508,9 +508,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
                 zero_env.close()
                 action_env.close()
 
-    def test_n4_cooperative_batch_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
+    def test_cooperative_batch_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            scenario_path = self._single_slot_n4_scenario_path(tmpdir)
+            scenario_path = self._single_slot_naval_station_scenario_path(tmpdir)
             env = self._make_coop_env(scenario_path)
             try:
                 env.reset()
@@ -526,8 +526,8 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
             finally:
                 env.close()
 
-    def test_n4_cooperative_batch_keeps_non_agent_support_roster_without_policy_slot(self) -> None:
-        env = self._make_coop_env(self._full_roster_n4_scenario_path())
+    def test_cooperative_batch_keeps_non_agent_support_roster_without_policy_slot(self) -> None:
+        env = self._make_coop_env(self._full_roster_naval_station_scenario_path())
         try:
             obs = env.reset()
             self.assertEqual(int(env.slots_per_world), 1)
@@ -557,9 +557,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_raw_universal_env_compat_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
+    def test_raw_universal_env_compat_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
         env = UniversalEnv(
-            str(N4_SCENARIO),
+            str(NAVAL_STATION_SCENARIO),
             include_visual=False,
             include_proprio=True,
             action_mode="naval_station3",
@@ -589,9 +589,9 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             env.close()
 
-    def test_n4_single_world_runtime_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
+    def test_single_world_runtime_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
         runtime = build_single_world_batch_execution_runtime(
-            scenario_path=str(N4_SCENARIO),
+            scenario_path=str(NAVAL_STATION_SCENARIO),
             env_settings=self._naval_world_batch_settings(),
             worker_threads=1,
         )
@@ -616,7 +616,7 @@ class NavalN4RewardSurfaceTests(unittest.TestCase):
         finally:
             runtime.close()
 
-    def test_n4_leader_runtime_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
+    def test_leader_runtime_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
         env = self._make_env()
         try:
             env.seed(13)

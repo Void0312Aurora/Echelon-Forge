@@ -280,7 +280,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
                 )
                 self.assertGreaterEqual(float(payload.get("max_flight_time_s", 0.0)), 30.0)
 
-    def test_a8_mq9_aim120_validation_fixture_anchors_launcher_weapon_and_non_authority(
+    def test_mq9_aim120_validation_fixture_anchors_launcher_weapon_and_non_authority(
         self,
     ) -> None:
         f16 = json.loads(

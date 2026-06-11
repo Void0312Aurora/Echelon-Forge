@@ -122,7 +122,7 @@ P0 完成后，至少应满足：
 
 ### 4.3 新增测试文件
 
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 
 如需拆得更细，可分成：
 
@@ -537,7 +537,7 @@ P0 推荐拆成 `6` 个步骤，按顺序推进：
 
 修改：
 
-- 新增 `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- 新增 `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 - 更新 `test_naval_screen_scenario.py`
 - 必要时更新 `test_mission_runtime.py` 和 `test_air_combat_1v1_fire_missile.py`
 

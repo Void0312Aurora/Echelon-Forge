@@ -89,7 +89,7 @@
 
 验收线：
 
-1. `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+1. `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 2. `tests/runtime/link/test_data_link_qos_runtime.py`
 3. 新增或补强 `track lifecycle / IFF / fused track` 定向守门测试
 

@@ -106,7 +106,7 @@ Validation evidence for Batch A remediation:
 
 Validation evidence for Batch B remediation:
 
-- `python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_n4_reward_surface.py` passed, 31 tests.
+- `python -m pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py tests/runtime/naval/test_naval_station_policy_surface.py` passed, 31 tests.
 - `python -m pytest -q tests/architecture/governance/test_standards_documentation_governance.py` passed, 7 tests.
 - `python3 tools/maintenance/translate_docs_batch.py clusters --root docs --write` refreshed the maintained registry to 67 pairs.
 - `python3 tools/maintenance/translate_docs_batch.py audit --root docs --registry docs/standards/bilingual_document_clusters.json` reported 67 synced registry pairs and no registry drift. It still reports the pre-existing missing English peer for `docs/standards/foundation/realism_authority_boundary.zh.md`.

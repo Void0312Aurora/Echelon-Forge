@@ -76,7 +76,7 @@ As of `2026-05-17`, the main thread has, through two batches of delegation, recl
    - Deduplication of `sensor` default value source
    - Deduplication of missile `Vec3 -> Math::Vector3`
 7. This round's main thread added regression tests for structural closure:
-   - `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+   - `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
    - `tests/runtime/core/test_kernel_observation_sanity.py`
    - `tests/runtime/air_combat/test_weapon_guidance_realism_guards.py`
    - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
@@ -285,7 +285,7 @@ Suggested `Lane A` subtasks for next round delegation:
 
 Acceptance tests:
 
-1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py)
+1. [test_sensor_track_runtime_contracts.py](../../../../tests/runtime/air_combat/test_sensor_track_runtime_contracts.py)
 2. [test_kernel_observation_sanity.py](../../../../tests/runtime/core/test_kernel_observation_sanity.py)
 3. [test_bindings_command_surface.py](../../../../tests/runtime/bindings/test_bindings_command_surface.py)
 4. [test_weapon_guidance_realism_guards.py](../../../../tests/runtime/air_combat/test_weapon_guidance_realism_guards.py)
@@ -321,7 +321,7 @@ Recommended file boundaries:
 
 Acceptance tests:
 
-1. [test_flight_dynamics_p0_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_p0_runtime_guards.py)
+1. [test_flight_dynamics_runtime_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_runtime_guards.py)
 2. [test_flight_dynamics_realism_guards.py](../../../../tests/runtime/air_combat/test_flight_dynamics_realism_guards.py)
 3. [test_flight_dynamics_tuning_runtime.py](../../../../tests/runtime/air_combat/test_flight_dynamics_tuning_runtime.py)
 
@@ -361,7 +361,7 @@ Scope:
 
 Acceptance tests:
 
-1. [test_sensor_situation_realism_p0.py](../../../../tests/runtime/air_combat/test_sensor_situation_realism_p0.py)
+1. [test_sensor_track_runtime_contracts.py](../../../../tests/runtime/air_combat/test_sensor_track_runtime_contracts.py)
 2. [test_naval_sensor_realism_runtime.py](../../../../tests/runtime/naval/test_naval_sensor_realism_runtime.py)
 
 #### C3 Weapon Shared Integration Follow-up

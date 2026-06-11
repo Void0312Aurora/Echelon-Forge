@@ -29,7 +29,7 @@ def _warhead_profile(family: str) -> object:
     profile.damage_scalar = 90.0
     profile.synthetic = True
     profile.damage_scalar_synthetic = True
-    profile.provenance = "test_mlf4_standard_rod_event_surface"
+    profile.provenance = "test_continuous_rod_event_surface"
     return profile
 
 
@@ -110,7 +110,7 @@ def _assert_no_positive_rod_facts(case: _RodSurfaceCase) -> None:
     assert all(float(row.mechanism_rod_cut_margin) == 0.0 for row in case.source_rows)
 
 
-def test_mlf4_continuous_rod_detonation_reuses_standard_rod_fields() -> None:
+def test_continuous_rod_detonation_reuses_standard_rod_fields() -> None:
     case = _run_profiled_cut_surface_case("continuous_rod")
 
     _assert_same_effects_chain(case)
@@ -126,7 +126,7 @@ def test_mlf4_continuous_rod_detonation_reuses_standard_rod_fields() -> None:
     )
 
 
-def test_mlf4_non_rod_detonation_has_no_positive_standard_rod_facts() -> None:
+def test_non_rod_detonation_has_no_positive_standard_rod_facts() -> None:
     case = _run_profiled_cut_surface_case("blast_fragmentation")
 
     _assert_same_effects_chain(case)
@@ -136,7 +136,7 @@ def test_mlf4_non_rod_detonation_has_no_positive_standard_rod_facts() -> None:
     _assert_no_positive_rod_facts(case)
 
 
-def test_mlf4_no_detonation_has_no_positive_rod_or_cut_facts() -> None:
+def test_no_detonation_has_no_positive_rod_or_cut_facts() -> None:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
 
@@ -146,7 +146,7 @@ def test_mlf4_no_detonation_has_no_positive_rod_or_cut_facts() -> None:
     fuze.delay_s = 0.0
     fuze.reliability = 0.0
     fuze.synthetic = False
-    fuze.provenance = "test_mlf4_standard_rod_event_surface_no_detonation"
+    fuze.provenance = "test_continuous_rod_event_surface_no_detonation"
 
     tuning = sim.get_missile_tuning()
     tuning.fuze_profile = fuze

@@ -174,7 +174,7 @@ Suggested file scope:
 - `tests/runtime/naval/test_naval_screen_scenario.py`
 - `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py`
 - `tests/runtime/bindings/test_bindings_command_surface.py`
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 
 Old semantics that P1 needs to clean up:
 
@@ -381,7 +381,7 @@ The following items should remain in `P2` to prevent P1 from expanding out of co
 - `src/interfaces/python/bindings_command.cpp`
 - `python/testing/runtime.py`
 - `tests/runtime/bindings/test_bindings_command_surface.py`
-- `tests/runtime/air_combat/test_sensor_situation_realism_p0.py`
+- `tests/runtime/air_combat/test_sensor_track_runtime_contracts.py`
 - Other affected runtime/contract tests
 
 ### 5.2 P1 Deepening Realism

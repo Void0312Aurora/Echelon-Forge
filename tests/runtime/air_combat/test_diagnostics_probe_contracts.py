@@ -272,7 +272,7 @@ class AirCombatProcessProbeTests(unittest.TestCase):
             diagnostics["policy_weapon_select_station0_prob"],
         )
 
-    def test_a5_event_info_columns_copy_runtime_event_contract_fields(self) -> None:
+    def test_event_info_columns_copy_runtime_event_contract_fields(self) -> None:
         columns = probe._a5_event_info_columns(
             {
                 "engagement_state": "FiredAssess",

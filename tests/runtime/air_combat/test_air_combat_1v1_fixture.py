@@ -358,7 +358,7 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
         self.assertLess(int(getattr(red_obs1, "missiles_remaining", -1)), initial_missiles)
 
     @unittest.skipIf(_gym is None, "UniversalEnv requires optional dependency 'gymnasium'")
-    def test_stage0_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
+    def test_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
         env = UniversalEnv(
             _STAGE0_SCENARIO_PATH,
             include_visual=False,

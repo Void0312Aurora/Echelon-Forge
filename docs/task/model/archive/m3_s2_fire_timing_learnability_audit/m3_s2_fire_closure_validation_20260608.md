@@ -92,7 +92,7 @@ Patch:
 - `gym_envs/universal_env_parts/air_combat_event_action.py` now derives
   `master_arm = 1` on the A5/C2-ROE effective transport frame whenever a
   `fire_once` pulse is present before support evaluation.
-- `tests/runtime/air_combat/test_air_combat_a5_event_action_runtime.py` adds a
+- `tests/runtime/air_combat/test_fire_action_release_gate.py` adds a
   regression where `fire=True, master_arm=False` under authorized support is
   accepted as a composite `fire_once` event.
 

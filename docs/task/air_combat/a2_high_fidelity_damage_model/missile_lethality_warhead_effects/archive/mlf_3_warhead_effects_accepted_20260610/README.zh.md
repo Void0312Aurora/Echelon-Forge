@@ -39,7 +39,7 @@ MLF-3 只接纳通用、未校准、可替换的 research 数据。默认模型�
 | MLF-2 起爆输入 | accepted / archived | [MLF-2 归档](../../../missile_lethality_geometry_fuze/README.zh.md) | 只说明最近点、引信评估和起爆 handoff |
 | 战斗部 profile 数据 | active scaffold | `WarheadProfile`、`WarheadEffectProfile`、`WarheadSpatialProjectionProfile` | 不是真实战斗部参数权威 |
 | 标准事件 DTO | live writer / diagnostics / no-detonation gate focused pass | `WarheadMechanismEvent`、`SpatialCoverageEvent`、`ComponentLoadEvent` 已在合同、绑定、event-store writer、真实起爆路径测试和诊断投影中存在 | 参数未校准；不输出击毁结论 |
-| 现有效果模型 | generic load-shape + spatial-component projection focused pass | `default_effects_model` 已有 mechanism / spatial / component 字段；`test_mlf3_generic_blast_fragmentation_loads.py` 钉住 range / direction / family 会改变标准载荷事实；`test_mlf3_spatial_component_projection.py` 钉住空间覆盖会改变标准部件受载事实 | 仍主要折叠进 `EffectsEvent`；默认常量缺少完整 source category / scope / unit / uncertainty / replacement-rule runtime metadata |
+| 现有效果模型 | generic load-shape + spatial-component projection focused pass | `default_effects_model` 已有 mechanism / spatial / component 字段；`test_warhead_blast_fragmentation_loads.py` 钉住 range / direction / family 会改变标准载荷事实；`test_warhead_spatial_component_projection.py` 钉住空间覆盖会改变标准部件受载事实 | 仍主要折叠进 `EffectsEvent`；默认常量缺少完整 source category / scope / unit / uncertainty / replacement-rule runtime metadata |
 | 历史 Phase 3 测试 | retained scaffold evidence | `tests/runtime/air_combat/weapon_guidance_realism/warhead_effects.py` | 不等于新的 MLF-3 accepted |
 
 ## 范围
