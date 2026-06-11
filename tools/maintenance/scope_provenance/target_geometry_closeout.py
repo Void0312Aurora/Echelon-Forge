@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
     "beam_high_near_miss_0_35m_v0"
@@ -740,7 +740,7 @@ def _render_doc(
 |---|---|
 | `package_id` | `{artifact['package_id']}` |
 | `schema_version` | `{artifact['schema_version']}` |
-| `tool_ref` | [a2_blastfrag_res003_target_geometry_closeout_gate.py]({_doc_link(repo_root / "tools" / "maintenance" / "a2_blastfrag_res003_target_geometry_closeout_gate.py", doc_output, repo_root)}) |
+| `tool_ref` | [damage_model_scope_provenance.py]({_doc_link(repo_root / "tools" / "maintenance" / "damage_model_scope_provenance.py", doc_output, repo_root)}) `target-geometry-closeout` |
 | `retained_artifact` | [{output_dir.name}/res003_target_geometry_closeout_gate.json]({_doc_link(output_dir / 'res003_target_geometry_closeout_gate.json', doc_output, repo_root)}) |
 | `retained_artifact_sha256` | `{gate_sha256}` |
 | `manifest` | [{output_dir.name}/manifest.json]({_doc_link(output_dir / 'manifest.json', doc_output, repo_root)}) |

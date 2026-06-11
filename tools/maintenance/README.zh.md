@@ -40,6 +40,10 @@
   是统一的 benchmark evidence 与 admission 命令族，分发 comparison hash、
   mechanism evidence、benchmark execution、debris-case 和 spreadsheet
   recalculation/replacement/lineage review 命令。
+- [damage_model_scope_provenance.py](damage_model_scope_provenance.py)
+  是统一的 scope/provenance closeout 命令族，分发 row provenance、
+  target-geometry closeout、warhead-scope closeout 和 mechanism-source
+  closeout 命令。
 - 剩余 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
   `a2_retained_manifest_integrity.py` 脚本是 candidate package、retained
   artifact、provenance 与 review-gate 辅助工具。

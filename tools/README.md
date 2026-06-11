@@ -92,6 +92,8 @@
   - Unified source-governance CLI for admission audit, retained payload pack, and source-rights allowed-output policy checks.
 - [damage_model_benchmark_evidence.py](maintenance/damage_model_benchmark_evidence.py)
   - Unified benchmark-evidence CLI for comparison hashes, mechanism evidence, benchmark execution admission, debris-case admission, and spreadsheet recalculation/replacement review gates.
+- [damage_model_scope_provenance.py](maintenance/damage_model_scope_provenance.py)
+  - Unified scope/provenance CLI for row provenance, target-geometry closeout, warhead-scope closeout, and mechanism-source closeout.
 - Remaining A2 `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and `a2_retained_manifest_integrity.py`
   - Task-specific candidate/retained-artifact governance helpers awaiting command-family consolidation. They are non-authoritative maintenance gates and are not part of the runtime product surface.
 

@@ -10,10 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_geometry_warhead_row_provenance_gate as row_provenance_gate,
-    a2_blastfrag_res003_target_geometry_closeout_gate as target_geometry_gate,
-    a2_blastfrag_res004_warhead_scope_closeout_gate as warhead_scope_gate,
+from tools.maintenance.scope_provenance import (  # noqa: E402
+    geometry_warhead_row_provenance as row_provenance_gate,
+    target_geometry_closeout as target_geometry_gate,
+    warhead_scope_closeout as warhead_scope_gate,
 )
 
 
@@ -182,7 +182,8 @@ def test_target_geometry_scope_closeout_cli_writes_retained_json_and_doc(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_res003_target_geometry_closeout_gate.py",
+            "tools/maintenance/damage_model_scope_provenance.py",
+            "target-geometry-closeout",
             "--output-dir",
             str(output_dir),
             "--doc-output",
@@ -418,7 +419,8 @@ def test_warhead_family_scope_closeout_cli_writes_retained_json_and_doc(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_res004_warhead_scope_closeout_gate.py",
+            "tools/maintenance/damage_model_scope_provenance.py",
+            "warhead-scope-closeout",
             "--output-dir",
             str(output_dir),
             "--doc-output",
@@ -601,7 +603,8 @@ def test_geometry_warhead_row_provenance_cli_writes_retained_artifacts(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_geometry_warhead_row_provenance_gate.py",
+            "tools/maintenance/damage_model_scope_provenance.py",
+            "row-provenance",
             "--retained-dir",
             str(retained_dir),
             "--doc-output",

@@ -10,7 +10,7 @@
 |---|---|
 | `package_id` | `a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_beam_high_near_miss_0_35m_v0` |
 | `schema_version` | `a2.res004_warhead_scope_closeout_gate.v1` |
-| `tool_ref` | [a2_blastfrag_res004_warhead_scope_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res004_warhead_scope_closeout_gate.py) |
+| `tool_ref` | [damage_model_scope_provenance.py](../../../../../../tools/maintenance/damage_model_scope_provenance.py) `warhead-scope-closeout` |
 | `retained_artifact` | [res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json](retained_artifacts/res004_warhead_scope_closeout_20260531/res004_warhead_scope_closeout_gate.json) |
 | `retained_artifact_sha256` | `2165ab3e4802a678db41643da2c7622b38a47cecd41c82c5c214b723925b0d78` |
 | `manifest` | [res004_warhead_scope_closeout_20260531/manifest.json](retained_artifacts/res004_warhead_scope_closeout_20260531/manifest.json) |

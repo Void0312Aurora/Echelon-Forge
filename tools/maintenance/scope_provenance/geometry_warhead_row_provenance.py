@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -754,7 +754,7 @@ def _validation_doc(
 |---|---|
 | `package_id` | `{gate["package_id"]}` |
 | `schema_version` | `{gate["schema_version"]}` |
-| `tool_ref` | [a2_blastfrag_geometry_warhead_row_provenance_gate.py]({_doc_link(repo_root / "tools" / "maintenance" / "a2_blastfrag_geometry_warhead_row_provenance_gate.py", doc_path, repo_root)}) |
+| `tool_ref` | [damage_model_scope_provenance.py]({_doc_link(repo_root / "tools" / "maintenance" / "damage_model_scope_provenance.py", doc_path, repo_root)}) `row-provenance` |
 | `retained_artifact` | [{gate_path.name}]({_doc_link(gate_path, doc_path, repo_root)}) |
 | `retained_artifact_sha256` | `{gate_sha256}` |
 | `manifest` | [{manifest_path.name}]({_doc_link(manifest_path, doc_path, repo_root)}) |
@@ -842,7 +842,7 @@ def write_retained_artifacts(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate the RES-003/RES-004 geometry/warhead row provenance gate."
     )
@@ -861,7 +861,7 @@ def main() -> int:
         action="store_true",
         help="Print the gate JSON instead of writing retained artifacts.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.print_json:
         print(_json_dump(generate_geometry_warhead_row_provenance_gate()), end="")

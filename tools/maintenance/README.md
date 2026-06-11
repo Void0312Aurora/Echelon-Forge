@@ -47,6 +47,10 @@ Task-specific A2 helpers:
   is the unified benchmark evidence and admission command family. It dispatches
   comparison hash, mechanism evidence, benchmark execution, debris-case, and
   spreadsheet recalculation/replacement/lineage review commands.
+- [damage_model_scope_provenance.py](damage_model_scope_provenance.py)
+  is the unified scope/provenance closeout command family. It dispatches row
+  provenance, target-geometry closeout, warhead-scope closeout, and
+  mechanism-source closeout commands.
 - Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
   `a2_retained_manifest_integrity.py` scripts are candidate-package,
   retained-artifact, provenance, and review-gate helpers.

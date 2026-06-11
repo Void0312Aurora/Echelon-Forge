@@ -17,9 +17,7 @@ from tools.maintenance.benchmark_evidence import (  # noqa: E402
     comparison_hashes as hashes,
     mechanism_evidence as evidence,
 )
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_source_closeout_gate as gate,
-)
+from tools.maintenance.scope_provenance import mechanism_source_closeout as gate  # noqa: E402
 
 
 def _by_residual(artifact: dict[str, object]) -> dict[str, dict[str, object]]:
@@ -542,7 +540,8 @@ def test_mechanism_source_closeout_gate_cli_writes_json(
     output_path = tmp_path / "mechanism_source_closeout_gate.json"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_mechanism_source_closeout_gate.py",
+        "damage_model_scope_provenance.py",
+        "mechanism-source-closeout",
         "--output",
         output_path,
     )
