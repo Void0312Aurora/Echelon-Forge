@@ -453,7 +453,7 @@ gym_envs/leader_semantics_adapter.py
 
 验收标准：
 
--   `eval_task.py` / `eval_sb3.py` 仍运行空中主线
+-   `eval_task.py` / `policy_execution_eval.py` 仍运行空中主线
 -   `diagnostics` 共享基础保持非回归
 -   运行时测试适配到 common/air 拆分后的字段路径
 

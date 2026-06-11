@@ -314,7 +314,7 @@ def run_baseline_eval(
         )
 
         return {
-            "mode": "naval_n4_cooperative_zero_action_baseline",
+            "mode": "naval_station_cooperative_zero_action_baseline",
             "scenario": os.path.abspath(scenario_path),
             "train_config": os.path.abspath(train_config_path),
             "seed": int(seed),
@@ -437,7 +437,7 @@ def run_offstation_command_probe(
         )
     else:
         with TemporaryDirectory() as tmpdir:
-            derived_path = os.path.join(tmpdir, "naval_n4_offstation_probe.json")
+            derived_path = os.path.join(tmpdir, "naval_station_offstation_probe.json")
             derived = _derive_station_radius_offset_scenario(
                 scenario_path=scenario_path,
                 offset_m=float(station_radius_offset_m),
@@ -496,7 +496,7 @@ def run_offstation_command_probe(
         and reward_delta < 0.0
     )
     return {
-        "mode": "naval_n4_offstation_station_order_probe",
+        "mode": "naval_station_offstation_station_order_probe",
         "scenario": os.path.abspath(scenario_path),
         "train_config": os.path.abspath(train_config_path),
         "seed": int(seed),
@@ -512,7 +512,7 @@ def run_offstation_command_probe(
         "final_station_error_delta_matched_minus_zero": float(action_vs_zero_final_error_delta),
         "forbidden_reward_terms_present": forbidden_present,
         "claim_boundary": (
-            "This probe verifies that the scripted N4 station hold recovers from an "
+            "This probe verifies that the scripted naval station hold recovers from an "
             "off-station start while station-order actions cannot move the reward "
             "reference to the ship. It is not a learned-policy acceptance."
         ),
@@ -520,7 +520,7 @@ def run_offstation_command_probe(
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Evaluate maintained N4 naval cooperative gates.")
+    parser = argparse.ArgumentParser(description="Evaluate maintained naval station cooperative policy gates.")
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--train_config", required=True)
     parser.add_argument("--steps", type=int, default=1200)
@@ -531,7 +531,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--mode",
         choices=["baseline", "offstation_probe"],
         default="baseline",
-        help="baseline runs the zero-action N4 hold gate; offstation_probe checks station-order reward-reference closure.",
+        help="baseline runs the zero-action station hold gate; offstation_probe checks station-order reward-reference closure.",
     )
     parser.add_argument("--station_radius_offset_m", type=float, default=-1800.0)
     return parser

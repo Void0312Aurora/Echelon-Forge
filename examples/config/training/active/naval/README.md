@@ -12,8 +12,8 @@ DDG/T-AKE `N4` threat/ROE bridge.
   - [naval_screen_threat_roe_geometry.json](../../../../../tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json)
   - [naval_screen_threat_roe_offstation_recovery.json](../../../../../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)
 - Current baseline is an entry/runtime gate, not a trained naval policy.
-- Maintained baseline evaluation is the cooperative zero-action N4 gate in
-  [eval_naval_n4_baseline.py](../../../../../tools/eval/eval_naval_n4_baseline.py).
+- Maintained baseline evaluation is the cooperative zero-action station gate in
+  [naval_station_policy_eval.py](../../../../../tools/eval/naval_station_policy_eval.py).
 
 These entries deliberately stay at the pre-fire `N4` boundary. They validate
 that the scenario, config, and current execution runtimes can be paired for RL
@@ -62,24 +62,24 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
   --output_base experiments/naval \
   --run_name naval_screen_station_recovery_threat_aware_smoke_v1
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py \
   --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json \
   --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
   --steps 1200 \
-  --json_out experiments/naval/naval_n4_zero_action_baseline.json
+  --json_out experiments/naval/naval_station_zero_action_baseline.json
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py \
   --mode offstation_probe \
   --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json \
   --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json \
   --steps 300 \
-  --json_out experiments/naval/naval_n4_offstation_recovery_probe.json
+  --json_out experiments/naval/naval_station_offstation_recovery_probe.json
 ```
 
 ## Design Notes
 
 - `naval_entry.scenario_path` is an execution contract, not only documentation:
-  `train.py` and the maintained N4 eval tool reject an active entry if
+  `train.py` and the maintained station policy eval tool reject an active entry if
   `--scenario` does not resolve to the declared scenario. This prevents the
   recovery entry from being accidentally run on the nominal station-hold
   scenario or vice versa.
@@ -117,8 +117,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
 ```

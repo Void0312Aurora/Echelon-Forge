@@ -202,7 +202,7 @@ quality-window 状态偏好 `fire_once`，且早期 stochastic samples 不能删
   [a7_event_value_advantage_credit_head_config_diagnostics_20260604.md](a7_event_value_advantage_credit_head_config_diagnostics_20260604.md)、
   `examples/config/training/active/air_combat/` 下的 A7 active config、
   `python/training/diagnostics.py` 中的 callback event-credit diagnostics，
-  以及 `tools/diagnostics/air_combat_stage0_process_probe.py` 中的 A7
+  以及 `tools/diagnostics/air_combat_weapon_employment_process_probe.py` 中的 A7
   process-probe summary metrics。
 - Focused validation：
   [a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md)。

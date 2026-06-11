@@ -17,7 +17,7 @@ HMoE hybrid policy transport、runtime/proprio wiring 和 Stage-1 诊断可达�
 ## 验证命令与结果
 
 ```bash
-python -m py_compile gym_envs/universal_env_parts/spaces.py gym_envs/universal_env_parts/actions.py gym_envs/universal_env.py python/env_config.py python/rl/policy_algo/policies.py python/rl/runtime/world_batch_vec_env.py train.py python/training/cli.py tools/diagnostics/air_combat_stage0_process_probe.py tools/eval/eval_utils.py tools/eval/sb3_eval_base.py
+python -m py_compile gym_envs/universal_env_parts/spaces.py gym_envs/universal_env_parts/actions.py gym_envs/universal_env.py python/env_config.py python/rl/policy_algo/policies.py python/rl/runtime/world_batch_vec_env.py train.py python/training/cli.py tools/diagnostics/air_combat_weapon_employment_process_probe.py tools/eval/eval_utils.py tools/eval/sb3_eval_base.py
 # pass
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop pytest -q tests/training/test_training_bootstrap_contracts.py tests/runtime/core/test_air_combat_hybrid_action.py tests/runtime/core/test_env_config.py tests/policy/test_execution_policy_surface.py tests/policy/test_auxiliary_training_updates.py tests/training/test_air_combat_training_entry_contracts.py

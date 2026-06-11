@@ -20,7 +20,7 @@ delta alignment 与 event policy 的后续耦合链路里。
 
 新增：
 
-- `tools/diagnostics/a7_credit_head_offline_fit_probe.py`
+- `tools/diagnostics/event_credit_head_probe.py --mode offline_fit`
 
 探针流程：
 
@@ -35,7 +35,7 @@ delta alignment 与 event policy 的后续耦合链路里。
 主实验：
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 1200 \
@@ -48,7 +48,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 训练预算对照：
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 256 \
@@ -60,7 +60,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 ```
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 256 \
@@ -138,7 +138,7 @@ batch 已经有显式状态和可分 credit 信号；此时直接释放 M2 会�
 ## 验证
 
 ```bash
-python -m compileall -q tools/diagnostics/a7_credit_head_offline_fit_probe.py
+python -m compileall -q tools/diagnostics/event_credit_head_probe.py tools/diagnostics/event_credit_head/offline_fit.py
 ```
 
 结果：通过。

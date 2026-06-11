@@ -18,7 +18,7 @@
 - 武器和引信参数入口：[../../../../../../../src/components/combat/weapon.h](../../../../../../../src/components/combat/weapon.h)
 - 事件合同入口：[../../../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)
 - 事件记录入口：[../../../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)
-- 诊断 probe 入口：[../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- 诊断 probe 入口：[../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 
 ## 目的
 

@@ -15,11 +15,9 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_signoff_admission_preflight as preflight,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_signoff_intake_contract as contract,
+from tools.maintenance.external_signoff_evidence import (  # noqa: E402
+    admission_preflight as preflight,
+    intake_contract as contract,
 )
 from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
 
@@ -211,7 +209,8 @@ def test_signoff_admission_preflight_cli_writes_manifest_integrity_clean(
     output_path = tmp_path / "preflight_cli.json"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_signoff_admission_preflight.py",
+        "damage_model_external_evidence.py",
+        "admission-preflight",
         "--retained-dir",
         retained_dir,
         "--output",

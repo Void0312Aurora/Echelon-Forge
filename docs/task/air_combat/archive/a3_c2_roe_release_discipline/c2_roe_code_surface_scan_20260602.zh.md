@@ -88,7 +88,7 @@
 
 ## 诊断指标切入点
 
-当前 `tools/diagnostics/air_combat_stage0_process_probe.py` 已记录：
+当前 `tools/diagnostics/air_combat_weapon_employment_process_probe.py` 已记录：
 
 - `can_fire`
 - `missiles_remaining`
@@ -124,7 +124,7 @@ A3 建议新增：
 | `gym_envs/scenario_loader/mission_observation.py` | 增加 `_air_combat_c2_roe_vector()` 并返回 mission command / shot policy 字段。 | air-combat mission obs runtime test。 |
 | `python/env_config.py` / `python/training/cli.py` | 如 CLI choices 不从 taxonomy 自动派生，则同步新 mode。 | env-config tests。 |
 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | 增加 C2/ROE violation、hold、first-shot、premature-second-shot、salvo/reattack terms。 | `test_air_combat_reward_surface.py` 或新 focused test。 |
-| `tools/diagnostics/air_combat_stage0_process_probe.py` | 增加 C2/ROE 发射纪律指标。 | process-probe JSON/CSV schema test。 |
+| `tools/diagnostics/air_combat_weapon_employment_process_probe.py` | 增加 C2/ROE 发射纪律指标。 | process-probe JSON/CSV schema test。 |
 | `scenarios/air_combat/1v1/*c2_roe*.json` | 新增 S1 C2/ROE 场景，显式 ROE、授权窗口、shot policy。 | runtime fixture + bootstrap tests。 |
 | `examples/config/training/active/air_combat/*c2_roe*.json` | 新增 A3 probe configs，保留既有 M1 对照入口。 | `tests/training/test_air_combat_training_entry_contracts.py`。 |
 | `src/core/engine/simulation_kernel_weapon_release_service.cpp` | 后续可选：只有在 observation/reward 证据不足后，再考虑 kernel-level shot-budget gate。 | 扩展 `test_weapon_roe_runtime.py`。 |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a template-only A2 external signoff packet.
+"""Generate a template-only damage-model external signoff packet.
 
 This generator emits a reviewer-fillable packet template for the existing
 signoff intake contract. It is deliberately not approval, not signoff, and not
@@ -17,11 +17,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_signoff_intake_contract as contract  # noqa: E402
+from tools.maintenance.external_signoff_evidence import intake_contract as contract  # noqa: E402
 
 
 TEMPLATE_SCHEMA_VERSION = "a2.external_signoff_packet_template.v1"
@@ -310,8 +310,8 @@ def write_retained_artifacts(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate a template-only external signoff packet for the A2 "
-            "blast-fragmentation signoff intake contract."
+            "Generate a template-only external signoff packet for the "
+            "damage-model signoff intake contract."
         )
     )
     parser.add_argument(

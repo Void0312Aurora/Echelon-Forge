@@ -32,17 +32,16 @@
   - 针对维护的 `auto`、`subproc`、`shared` 和 `dummy` 基线的快速领导者层吞吐量探针。
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
-- [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
-  - 受限 air-combat stage-0/stage-1 process probe，用于 raw `UniversalEnv` compatibility path 上的武器使用/debug trace 与 hybrid action metrics。
-- [m3s2_structural_toy_probe.py](m3s2_structural_toy_probe.py)
-  - M3-S2 grouped stopping 的抽象 one-shot window probe。它移除空战环境，检查 free logits
-    与小 MLP 是否能学会 prewindow survival 和 quality-window boundary crossing。
-- [m3s2_real_update_path_probe.py](m3s2_real_update_path_probe.py)
-  - 真实 Stage-1 M3-S2 update-path probe。它采集 forced-hold rows、重建 M3-S2 groups，
-    并检查 auxiliary updates 是否会抬高 quality window 中的 executable `fire_once` logit，
-    或只是全局压低 hazard。
-  - 支持 loss-component overrides 与 `--reset-optimizer-state`，用于区分 objective-contract
-    失败和共享 optimizer state 失败。
+- [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
+  - 受限 air-combat 武器使用过程 probe，用于 raw `UniversalEnv` compatibility path 上的 debug trace、lethality-chain 行与 hybrid action metrics。
+- [event_credit_head_probe.py](event_credit_head_probe.py)
+  - 统一的 first-event credit-head 诊断入口。使用 `--mode offline_fit`
+    运行 fixed-batch supervised fit，或使用 `--mode online_update`
+    隔离 PPO、shared actor/features 与 credit-head loss 的 update path。
+- [fire_timing_fault_localization_probe.py](fire_timing_fault_localization_probe.py)
+  - 统一的 fire-timing fault-localization 入口。使用 `--mode structural_toy`
+    运行抽象 grouped-stopping toy，使用 `--mode real_update` 检查真实 update path，
+    或使用 `--mode chain_breakpoint` 做 fixed-batch breakpoint attribution。
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)

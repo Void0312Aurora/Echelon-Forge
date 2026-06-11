@@ -27,7 +27,7 @@ prewindow 与 quality-window logits。本探针区分三个可能断点：
   - `m3s2/q_boundary_loss`。
 - M3-S2 可启用 `m3s2_event_window_dedicated_optimizer_enabled`，为 event-policy
   参数子集构建隔离 auxiliary optimizer，而不是复用 PPO Adam 状态。
-- `tools/diagnostics/m3s2_real_update_path_probe.py` 支持 loss overrides 和
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update` 支持 loss overrides 和
   `--reset-optimizer-state`，用于真实行更新对照。
 
 active M3-S2 config 现在把 deterministic boundary 形成作为主合同：
@@ -85,7 +85,7 @@ python -m compileall -q \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/m3s2_real_update_path_probe.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update \
   tests/policy/test_grouped_stopping_loss_contracts.py \
   tests/policy/test_auxiliary_training_updates.py \
   tests/training/test_air_combat_training_entry_contracts.py

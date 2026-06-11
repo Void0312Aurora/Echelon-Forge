@@ -30,7 +30,7 @@ again forever for the same consequence.
 | `DCR-B Runtime Reward Surface` | main thread | n/a | Add optional reward terms for aircraft damage deltas and severe ground-contact transitions. | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | Weapon physics changes, direct crash substitute, always-on training behavior shift without config | Focused reward unit tests | Runtime reads consequence state once per step and emits named terms only when configured/enabled. | after A | 2 | pass |
 | `DCR-C Focused Tests` | main thread | n/a | Cover target reward, self penalty, once/delta semantics, and safe ground-contact boundary. | `tests/runtime/air_combat/test_air_combat_reward_surface.py`, optional focused 1v1 fixture tests | Slow training run, broad scenario rewrite | `python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py` | Tests prove the reward layer consumes facts without changing physical authority. | after or with B | 2 | pass |
 | `DCR-D Scenario Opt-In` | current-session worker | n/a | Make Stage-2 able to consume low-weight consequence terms later. | `scenarios/air_combat/1v1/**`, `examples/config/training/active/air_combat/**`, active-entry README | Making Stage-2 training a kill-chain prerequisite, changing launch/firing closure, speed optimization, Stage-3/self-play | Scenario/config smoke or JSON check | Opt-in is explicit and term weights are documented as training synthetic. | after B/C | 1 | pass |
-| `DCR-E Probe Evidence` | read-only diagnostics explorer, then diagnostics worker | n/a | Prepare and run a controlled hit/fixed-release/replay probe that reports launch terms and consequence terms separately. | `tools/diagnostics/air_combat_stage0_process_probe.py`, focused diagnostics tests, later diagnostics output docs under this subproject | Acceptance from one lucky seed, hiding no-effect shots behind release rewards, waiting on learned Stage-2 model as a prerequisite | Controlled probe or replay summary | Evidence shows whether consequence rewards appear after effects/damage, not just after release. | after D | 1 | partial: export/bridge/re-scope ready; `DCR-E-P3` fixture evidence next |
+| `DCR-E Probe Evidence` | read-only diagnostics explorer, then diagnostics worker | n/a | Prepare and run a controlled hit/fixed-release/replay probe that reports launch terms and consequence terms separately. | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, focused diagnostics tests, later diagnostics output docs under this subproject | Acceptance from one lucky seed, hiding no-effect shots behind release rewards, waiting on learned Stage-2 model as a prerequisite | Controlled probe or replay summary | Evidence shows whether consequence rewards appear after effects/damage, not just after release. | after D | 1 | partial: export/bridge/re-scope ready; `DCR-E-P3` fixture evidence next |
 | `DCR-F Closure And Index Sync` | main thread | n/a | Mark the accepted slice or residuals and sync parent pointers. | This README/task cluster, `docs/task/air_combat/README*`, A2 pointer README | Overclaiming real lethality or final Stage-2 acceptance | docs diff check and focused tests | Status lines and residual map match evidence. | last, serial | 1 | planned |
 
 ## Dispatch Rules
@@ -76,14 +76,14 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py
 python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win
-python -m py_compile tools/diagnostics/air_combat_stage0_process_probe.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py
+python -m py_compile tools/diagnostics/air_combat_weapon_employment_process_probe.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 python -m json.tool scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json >/dev/null
 git diff --check -- \
   docs/task/air_combat/a2_high_fidelity_damage_model \
   gym_envs/scenario_loader/reward_runtime/air_combat.py \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
   scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json \
   examples/config/training/active/air_combat/README.md \

@@ -305,7 +305,7 @@ Example policy evaluation:
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_env_validate
-cmo_python tools/eval/eval_sb3.py \
+cmo_python tools/eval/policy_execution_eval.py \
   --mode single \
   --scenario scenarios/combined/takeoff_to_landing_continuous_eval_v1.json \
   --train_config examples/config/training/frozen/execution/p5_continuous_retrain_v1.json \

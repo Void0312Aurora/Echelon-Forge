@@ -18,7 +18,7 @@ Inputs:
 - Weapon/fuze parameters: [weapon.h](../../../../../../../src/components/combat/weapon.h)
 - Event contracts: [engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)
 - Event store: [simulation_kernel_engagement_event_store.cpp](../../../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)
-- Diagnostics probe: [air_combat_stage0_process_probe.py](../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- Diagnostics probe: [air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 
 ## Purpose
 

@@ -161,7 +161,7 @@ Objectives:
 
 Freeze scope:
 
-- [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) or evaluation entries in the same domain.
+- [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) or evaluation entries in the same domain.
 - Necessary JSON output schema.
 - Necessary evaluation documentation and regression tests.
 

@@ -79,7 +79,7 @@ flowchart LR
 | M3 window-prior classifier | `policies.py` 中的 `m3_window_classifier_head` 与 standardization buffers | 高质量窗口证据分支；storage mode、balanced replay/calibration population、detach setting、best-restore 行为和 adapter coupling 都是 model contract 的一部分。 |
 | M3-S2 support-preserving collect | `ppo_adaptive_kl.py` 中的 collection path | Rollout-collection intervention，可以强制 event index 9 为 hold 并重算 log-prob 以保留监督 support；它不只是 probe。 |
 | PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` | 采集 rollout metadata、构造并附加 first-event labels，拥有 A6/A7 weighting、cross-rollout context、shadow-quality/projection use、minibatch attachment、update scheduling 与 diagnostics。 |
-| Process/chain probes | `tools/diagnostics/air_combat_stage0_process_probe.py`, `tools/diagnostics/m3s2_chain_breakpoint_probe.py` | 仅用于评估与定位；除非任务明确声明某条会改变 action 的 collection intervention，否则不是模型组件。 |
+| Process/chain probes | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` | 仅用于评估与定位；除非任务明确声明某条会改变 action 的 collection intervention，否则不是模型组件。 |
 
 ## Executable 与 Auxiliary Branches
 

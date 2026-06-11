@@ -101,7 +101,7 @@ policy 输出连续 transport 信号 `u_t`；只有当 legal mask 打开且 `u_t
 ## 输出与证据
 
 - Audit tooling：
-  `tools/diagnostics/air_combat_stage0_process_probe.py`
+  `tools/diagnostics/air_combat_weapon_employment_process_probe.py`
 - Aggregate runner：
   `tools/diagnostics/air_combat_fire_timing_learnability_audit.py`
 - Focused tests：

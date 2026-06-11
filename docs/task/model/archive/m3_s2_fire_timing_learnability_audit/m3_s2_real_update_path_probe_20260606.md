@@ -21,7 +21,7 @@ Stage-1 observations and real policy parameters, moves the executable
 New diagnostic:
 
 ```text
-tools/diagnostics/m3s2_real_update_path_probe.py
+tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update
 ```
 
 The probe:

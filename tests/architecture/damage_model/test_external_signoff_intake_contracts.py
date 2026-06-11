@@ -15,11 +15,9 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_external_signoff_packet_template as template_gen,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_signoff_intake_contract as contract,
+from tools.maintenance.external_signoff_evidence import (  # noqa: E402
+    intake_contract as contract,
+    packet_template as template_gen,
 )
 from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
 
@@ -256,7 +254,8 @@ def test_signoff_intake_contract_cli_writes_manifest_integrity_clean(
     output_path = tmp_path / "contract_cli.json"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_signoff_intake_contract.py",
+        "damage_model_external_evidence.py",
+        "intake-contract",
         "--retained-dir",
         retained_dir,
         "--output",
@@ -506,7 +505,8 @@ def test_external_signoff_template_cli_writes_clean_retained_manifest(
     output_path = tmp_path / "template_copy.json"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_external_signoff_packet_template.py",
+        "damage_model_external_evidence.py",
+        "packet-template",
         "--retained-dir",
         retained_dir,
         "--output",

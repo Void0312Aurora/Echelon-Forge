@@ -139,7 +139,7 @@
 
 - 新增 [tools/eval/sb3_eval_base.py](../../../../tools/eval/sb3_eval_base.py)
 - 阶段 2 完成时，旧双入口已切换到共享底座
-- 阶段 4 已在此基础上进一步统一为 [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py)
+- 阶段 4 已在此基础上进一步统一为 [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py)
 
 已完成烟测：
 
@@ -205,17 +205,17 @@
 
 实施结果：
 
-- 新增 [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py)
+- 新增 [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py)
 - 删除旧的 `tools/eval/eval_sb3_policy.py`
 - 删除旧的 `tools/eval/eval_sb3_cooperative_policy.py`
 - 相关脚本、README、专项文档与 runtime test 已迁移到统一入口
 
 已完成烟测：
 
-- `python -m py_compile tools/eval/eval_sb3.py tools/eval/sb3_eval_base.py`
-- `./.venv/bin/python tools/eval/eval_sb3.py --help`
-- `./.venv/bin/python tools/eval/eval_sb3.py --mode single --help`
-- `./.venv/bin/python tools/eval/eval_sb3.py --mode cooperative --help`
+- `python -m py_compile tools/eval/policy_execution_eval.py tools/eval/sb3_eval_base.py`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --help`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --mode single --help`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --mode cooperative --help`
 - `./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py`
 
 ## 4. 文档约束

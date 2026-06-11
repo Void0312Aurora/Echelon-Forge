@@ -37,8 +37,12 @@ General maintained helpers:
 
 Task-specific A2 helpers:
 
-- Tracked `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
-  `a2_retained_manifest_integrity.py` scripts are A2 candidate-package,
+- [damage_model_external_evidence.py](damage_model_external_evidence.py)
+  is the unified external signoff evidence command family. It dispatches
+  `signoff-request`, `intake-contract`, `packet-template`, and
+  `admission-preflight` without retaining the old per-step entrypoint files.
+- Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
+  `a2_retained_manifest_integrity.py` scripts are candidate-package,
   retained-artifact, provenance, source-rights, and review-gate helpers.
 - These tools are maintenance/governance utilities only. They do not grant
   runtime authority, do not make A2 retained artifacts product surface, and

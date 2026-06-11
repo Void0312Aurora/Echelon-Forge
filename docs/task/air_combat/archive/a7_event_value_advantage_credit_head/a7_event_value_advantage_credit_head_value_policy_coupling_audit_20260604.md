@@ -20,7 +20,7 @@ later in the online PPO/shared-representation/delta-alignment coupling path.
 
 Added:
 
-- `tools/diagnostics/a7_credit_head_offline_fit_probe.py`
+- `tools/diagnostics/event_credit_head_probe.py --mode offline_fit`
 
 The probe:
 
@@ -35,7 +35,7 @@ The probe:
 Main fixed batch:
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 1200 \
@@ -48,7 +48,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 Budget controls:
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 256 \
@@ -60,7 +60,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 ```
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 256 \
@@ -142,7 +142,7 @@ the online update path directly:
 ## Validation
 
 ```bash
-python -m compileall -q tools/diagnostics/a7_credit_head_offline_fit_probe.py
+python -m compileall -q tools/diagnostics/event_credit_head_probe.py tools/diagnostics/event_credit_head/offline_fit.py
 ```
 
 Observed: pass.

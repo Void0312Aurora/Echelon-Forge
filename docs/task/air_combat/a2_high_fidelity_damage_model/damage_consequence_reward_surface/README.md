@@ -95,9 +95,9 @@ Out of scope:
 - `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
   explicitly opts in low-weight consequence shaping for synthetic training
   feedback only.
-- `tools/diagnostics/air_combat_stage0_process_probe.py` can now export
+- `tools/diagnostics/air_combat_weapon_employment_process_probe.py` can now export
   per-step and per-episode DCR reward totals by target/self prefix.
-- `tools/diagnostics/air_combat_stage0_process_probe.py --diagnostic_dcr_bridge`
+- `tools/diagnostics/air_combat_weapon_employment_process_probe.py --diagnostic_dcr_bridge`
   overlays DCR reward terms inside the diagnostics probe only and emits compact
   `controlled_consequence_bridge_records`; the current fixed-fire record still
   has `damage_consequence_reward_total=0.0`.

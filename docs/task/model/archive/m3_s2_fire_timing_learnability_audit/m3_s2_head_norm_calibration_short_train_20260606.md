@@ -35,9 +35,9 @@ Code changes:
   - records ceiling/floor diagnostics.
 - `python/rl/policy_algo/ppo_adaptive_kl.py`,
   `python/rl/support/nonfinite_probe.py`, and
-  `tools/diagnostics/m3s2_real_update_path_probe.py`
+  `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update`
   propagate and log the new contract fields.
-- `tools/diagnostics/m3s2_chain_breakpoint_probe.py`
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint`
   evaluates fitted heads on the actual normalized M3 head input when enabled.
 
 Active config:
@@ -70,8 +70,8 @@ python -m compileall -q \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/m3s2_real_update_path_probe.py \
-  tools/diagnostics/m3s2_chain_breakpoint_probe.py
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint
 
 python -m pytest \
   tests/policy/test_grouped_stopping_loss_contracts.py \

@@ -159,7 +159,7 @@ cmake --build build-workshop --target ef_core ef_py -j4
 
 冻结范围：
 
-- [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) 或同域评估入口
+- [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) 或同域评估入口
 - 必要的 JSON 输出 schema
 - 必要的评估文档与回归测试
 

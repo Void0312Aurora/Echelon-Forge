@@ -10,12 +10,12 @@ or a deeper classifier/head contract issue.
 
 ## Diagnostic Change
 
-- `tools/diagnostics/m3s2_real_update_path_probe.py` now supports
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update` now supports
   `--collector-action model_event_hold`.
 - `model_event_hold` preserves the model action and only forces hybrid action
   index `9` (`fire_once`) to `0.0`, matching the support-preserving collection
   contract more closely than the older hard-coded `hold` action.
-- `tools/diagnostics/m3s2_chain_breakpoint_probe.py` now accepts
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` now accepts
   `--collector-action` and records
   `window_classifier_fixed_batch_recalibration`.
 - The recalibration probe saves and restores the model buffers. It does not

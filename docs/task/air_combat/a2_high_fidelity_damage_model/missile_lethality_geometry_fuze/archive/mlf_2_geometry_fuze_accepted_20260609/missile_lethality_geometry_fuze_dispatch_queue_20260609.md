@@ -21,7 +21,7 @@ This queue is only for MLF-2 approach geometry and fuze evaluation. Dispatches m
 | `MLF-2D-X1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only writer-path audit; no runtime/contract/test edits | Find the minimum producer path for writing `FuzeEvaluationEvent` in the live missile lifecycle. | accepted |
 | `MLF-2D-W1` | `MLF-2D FuzeEvaluationEvent Writer` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | `src/core/interfaces/engagement_event_recorder.h`; `src/core/engine/simulation_kernel_engagement_event_store.h`; `src/core/engine/simulation_kernel_engagement_event_store.cpp`; `src/systems/combat/damage_system.h`; related geometry/fuze tests | Write armed, trigger, no-trigger, delay, and failure reasons. | accepted |
 | `MLF-2E-X1` | `MLF-2E Diagnostics Projection` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only diagnostics/probe path audit; no runtime edits | Find the minimum path for process probe / diagnostic export consumption of nearest-approach and fuze-evaluation events. | accepted |
-| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_stage0_process_probe.py`; `tests/runtime/air_combat/test_diagnostics_probe_contracts.py` | Export geometry/fuze stage rows per munition without relying on old `last_effect_*`. | accepted |
+| `MLF-2E-W1` | `MLF-2E Diagnostics Projection` | main thread | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`; `tests/runtime/air_combat/test_diagnostics_probe_contracts.py` | Export geometry/fuze stage rows per munition without relying on old `last_effect_*`. | accepted |
 | `MLF-2F-I1` | `MLF-2F Runtime Handoff Gate` | Sartre `019eac6a-0546-7cc0-ab6b-9c914dcb4c24` | read-only weapon lifecycle/effects invocation audit; no runtime edits | Audit the minimum gate where only detonation enters the effects model and no-trigger paths have event, reason, and no effects. | accepted |
 | `MLF-2F-W1` | `MLF-2F Runtime Handoff Gate` | main thread | `tests/runtime/air_combat/weapon_guidance_realism/fuze.py` | Pin runtime handoff gate behavior: triggered path has one effects/damage record, contact near-miss has no effects/damage record, reliability failure remains a zero-damage transitional record. | accepted |
 | `MLF-2G-C1` | `MLF-2G Acceptance And Archive Prep` | main thread | this subproject README/status/task cluster/dispatch queue/archive index; A2 README | Summarize evidence and update accepted/held state plus residual map. | accepted |
@@ -97,7 +97,7 @@ Worker returned `pass`; main thread revalidation passed.
 
 Worker returned `pass` and touched no files.
 
-- Current state: `tools/diagnostics/air_combat_stage0_process_probe.py` already has `nearest_approach` and `fuze` diagnostic rows, but they were primarily projected from `EffectsEvent`; no-effect no-trigger / near-miss paths could not be read completely.
+- Current state: `tools/diagnostics/air_combat_weapon_employment_process_probe.py` already has `nearest_approach` and `fuze` diagnostic rows, but they were primarily projected from `EffectsEvent`; no-effect no-trigger / near-miss paths could not be read completely.
 - Gap: the probe did not consume `nearest_approach_events` or `fuze_evaluation_events`.
 - Recommended implementation: standard events first; old `EffectsEvent` projection only as fallback when the same chain/munition lacks standard nearest/fuze rows.
 - Limits: do not change runtime physics, effects model, reward, or infer kill/crash/Pk.
@@ -106,7 +106,7 @@ Worker returned `pass` and touched no files.
 
 Main thread implemented and accepted.
 
-- Touched files: `tools/diagnostics/air_combat_stage0_process_probe.py`, `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`.
+- Touched files: `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`.
 - Implementation: `_lethality_chain_rows()` now prioritizes `NearestApproachEvent` / `FuzeEvaluationEvent`; old `EffectsEvent` nearest/fuze projection is fallback only for the same chain/munition; new diagnostic fields include `closure_mps`, `aspect_bucket`, `fuze_armed`, `fuze_triggered`, `fuze_failure_reason`, `fuze_reliability`, `fuze_sample`, and contact evidence.
 - Test coverage: standard-event-only no-detonation path; standard events suppress duplicate effects fallback rows; existing fallback and CSV output remain.
 - Main-thread revalidation: `py_compile` passed; `PYTHONPATH=build-workshop ./.venv/bin/python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q` passed with 17 tests.

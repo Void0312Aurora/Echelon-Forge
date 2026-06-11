@@ -34,7 +34,7 @@ reward runtime 和 policy surface。
 | HMoE routing | `python/rl/policy_algo/hmoe_routing.py` | 将 20D C2/ROE obs route 到 `combat_weapons` subexperts；routing 不是 action support。 |
 | Reward/runtime release classification | `gym_envs/scenario_loader/reward_runtime/air_combat.py`：`air_combat_c2_roe_state_from_mapping()`、`classify_air_combat_c2_roe_event()`、`_c2_roe_authorized_action_window()`、`_apply_c2_roe_release_discipline()` | buckets 适合诊断，但 A5 合法性必须转为 mask/state-machine support，而不是 penalty learning。 |
 | Policy distribution | `python/rl/policy_algo/policies.py`：`_HybridActionLayout`、`_HybridActionDistribution`、`HierarchicalMoEExecutionPolicy` | Hybrid params 当前是 continuous + Bernoulli + categorical；deterministic binary action 使用 `logit >= 0`。A5 event mask 应接入这里，而不只在 runtime。 |
-| Diagnostics | `tools/diagnostics/air_combat_stage0_process_probe.py`、`python/training_callbacks.py` | 后续扩展为报告 event state、mask、request/accept/reject、suppression 和 policy event probabilities。 |
+| Diagnostics | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`、`python/training_callbacks.py` | 后续扩展为报告 event state、mask、request/accept/reject、suppression 和 policy event probabilities。 |
 | Active configs/tests | `examples/config/training/active/air_combat/*c2_roe*_probe_v1.json`；`tests/runtime`、`tests/policy`、`tests/training`、`tests/diagnostics` | 首版实现应只瞄准 active S1 C2/ROE shaped configs。 |
 
 ## Implementation Risks

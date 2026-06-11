@@ -270,7 +270,7 @@ coefficient sweep is not the right default.
 - `pytest tests/policy/test_auxiliary_training_updates.py -q`: pass, `8 passed`.
 - `git diff --check -- python/rl/policy_algo/policies.py tests/policy/test_execution_policy_surface.py`: pass.
 - `python -m json.tool <A7 active config>`: pass.
-- `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py`: pass.
+- `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py`: pass.
 - `pytest tests/training/test_event_timing_training_config_contracts.py -q`: pass,
   `6 passed`.
 - `pytest tests/training/test_diagnostics_callback_contracts.py -q`:
@@ -400,14 +400,14 @@ coefficient sweep is not the right default.
   unauthorized/repeat/budget violations. Releases remain early and do not
   demonstrate quality-window timing acceptance.
 - A7-EVC-T offline fixed-batch fit probe:
-  `tools/diagnostics/a7_credit_head_offline_fit_probe.py` collected `2516`
+  `tools/diagnostics/event_credit_head_probe.py --mode offline_fit` collected `2516`
   active labels with `1356` `LEGAL_OPEN_QUALITY` positives from the S final
   model. Initial legal-open advantage was `-0.8536`; credit-head-only fitting
   flipped legal-open advantage to `+0.6417` with positive sign fraction `1.0`,
   and the value-coef-adjusted budget control still flipped it to `+0.0083`
   with positive sign fraction `1.0`.
 - A7-EVC-U online update-path probe:
-  `tools/diagnostics/a7_online_update_path_probe.py` completed with
+  `tools/diagnostics/event_credit_head_probe.py --mode online_update` completed with
   `experiments_tmp/a7_online_update_path_probe_20260604.json`. Fixed-batch
   A7 value and delta-align gradients conflict in actor/features
   (`cosine=-0.8954` for actor MLP, `-0.9097` for features). Online PPO-alone

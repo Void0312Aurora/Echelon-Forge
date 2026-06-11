@@ -139,7 +139,7 @@
 `eval` / `diagnostics` 层已经在入口和公共底座上做过收敛，但任务语义仍然主要围绕空战/飞行任务：
 
 - `eval_task.py` 当前任务族是 `stable_flight / takeoff_roll / centerline / waypoint_nav`
-- `eval_sb3.py` 内含 cooperative formation role / final command code 等空战产物
+- `policy_execution_eval.py` 内含 cooperative formation role / final command code 等空战产物
 - cooperative trajectory diagnostic 明显围绕起飞、航路、回收与编队
 
 因此：

@@ -21,11 +21,11 @@ fixed-fire bridge 的 DCR totals 为 0。`DCR-E-P3` 是下一步推荐实现包�
 | --- | --- | --- | --- | --- | --- |
 | `DCR-D-W1` | `DCR-D Scenario Opt-In` | current-session worker `019eaa3f-40b8-7f72-b078-717e91722ad2` / Schrodinger | `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`；`examples/config/training/active/air_combat/README.md`；`examples/config/training/active/air_combat/README.zh.md` | 判断并在合理时实现 Stage-2 显式低权重后果 reward opt-in，同时更新 active-entry 文档。 | integrated pass |
 | `DCR-E-X1` | `DCR-E Probe Evidence` | read-only explorer `019eaa3f-41c0-7083-a7a7-ef40c0286981` / Hegel | none | 找出最短 probe/replay 路径，用来分开报告 release、effects、damage 和 consequence reward evidence。 | returned pass |
-| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` 或窄 diagnostics 测试 | 给 process-probe row/summary 增加 DCR reward 前缀聚合，不改变 release/effects/damage 语义。 | integrated pass |
+| `DCR-E-P1` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eaa45-751b-7d43-a18e-4042b9c92686` / Aquinas | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` 或窄 diagnostics 测试 | 给 process-probe row/summary 增加 DCR reward 前缀聚合，不改变 release/effects/damage 语义。 | integrated pass |
 | `DCR-E-X2` | `DCR-E Probe Evidence` | read-only explorer `019eb24e-8a69-7a50-a4eb-1ecbc8294693` / Mill | none | 找出最短受控命中、固定发射或 replay 路径，证明 effects/damage 早于非零 DCR reward terms。 | returned partial |
 | `DCR-E-P2` | `DCR-E Probe Evidence` | current-session diagnostics worker `019eb268-fafc-7950-9058-901e318b659c` / Ohm | diagnostics/probe surface only | 复用 Stage-0 fixed-fire 证据路径，在 diagnostics-only 桥接中启用 DCR terms 并捕获 timing fields。 | returned partial |
 | `DCR-E-R1` | `DCR-E Probe Evidence` re-scope | read-only explorer `019eb24e-8a69-7a50-a4eb-1ecbc8294693` / Mill | none | 选择下一条可验收 DCR-E 路径：带 DCR-readable consequence fields 的受控 replay/fixture，或另行定界的 damage-report projections 到 DCR terms 的 reward mapping。 | returned pass |
-| `DCR-E-P3` | `DCR-E Probe Evidence` | future diagnostics worker | `tools/diagnostics/air_combat_stage0_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` | 增加 controlled fixture/probe 路径，产生 DCR-readable consequence fields，并证明首个非零 DCR 晚于 effects/damage。 | ready |
+| `DCR-E-P3` | `DCR-E Probe Evidence` | future diagnostics worker | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`；`tests/runtime/air_combat/test_diagnostics_probe_contracts.py` | 增加 controlled fixture/probe 路径，产生 DCR-readable consequence fields，并证明首个非零 DCR 晚于 effects/damage。 | ready |
 
 ## 已返回派发包记录
 
@@ -47,7 +47,7 @@ Worker 返回 `pass`。
 Explorer 返回 `pass`。
 
 - 最佳后续 learned-policy probe 入口：
-  `tools/diagnostics/air_combat_stage0_process_probe.py --mode model`。
+  `tools/diagnostics/air_combat_weapon_employment_process_probe.py --mode model`。
 - `train.py --test_only` 不足以作为 DCR-E，因为它不暴露逐步 reward terms 或 engagement events。
 - 证明条件：首个非零 DCR reward-term step 必须晚于首个 effects/damage step，也晚于 release；
   只看到 release reward 不能算后果证据。

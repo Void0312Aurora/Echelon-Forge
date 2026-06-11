@@ -217,7 +217,7 @@ Current outputs:
   the A7 active config under `examples/config/training/active/air_combat/`,
   callback event-credit diagnostics in `python/training/diagnostics.py`, and
   process-probe A7 summary metrics in
-  `tools/diagnostics/air_combat_stage0_process_probe.py`.
+  `tools/diagnostics/air_combat_weapon_employment_process_probe.py`.
 - Focused validation:
   [a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md](a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md).
 - Short learned evidence:

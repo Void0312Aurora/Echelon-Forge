@@ -17,7 +17,7 @@ MLF-3A passed. The code already has standard event structures and bindings for w
 - Runtime gaps: `src/core/interfaces/engagement_event_recorder.h`, `src/core/engine/simulation_kernel_engagement_event_store.*`
 - Legacy field source: `src/core/interfaces/effects_model.h`, `src/core/interfaces/engagement_effects_event_builder.h`
 - Effects model entry: `src/models/weapons/default_effects_model.cpp`, `src/models/weapons/detail/default_effects_warhead_detail.inc`
-- Diagnostics entry: `tools/diagnostics/air_combat_stage0_process_probe.py`
+- Diagnostics entry: `tools/diagnostics/air_combat_weapon_employment_process_probe.py`
 
 ## Retained Boundaries
 

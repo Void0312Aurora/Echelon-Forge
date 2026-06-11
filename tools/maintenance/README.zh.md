@@ -30,8 +30,12 @@
 
 任务专用 A2 辅助工具：
 
-- 已跟踪的 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
-  `a2_retained_manifest_integrity.py` 脚本是 A2 candidate package、retained
+- [damage_model_external_evidence.py](damage_model_external_evidence.py)
+  是统一的 external signoff evidence 命令族，通过 `signoff-request`、
+  `intake-contract`、`packet-template` 和 `admission-preflight` 分发，
+  不再保留旧的逐步骤入口文件。
+- 剩余 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
+  `a2_retained_manifest_integrity.py` 脚本是 candidate package、retained
   artifact、provenance、source-rights 与 review-gate 辅助工具。
 - 这些工具只属于 maintenance/governance utility。它们不授予 runtime
   authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在

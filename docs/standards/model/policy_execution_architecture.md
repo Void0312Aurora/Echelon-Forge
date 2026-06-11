@@ -82,7 +82,7 @@ flowchart LR
 | M3 window-prior classifier | `m3_window_classifier_head` and standardization buffers in `policies.py` | Quality-window evidence branch. Storage mode, balanced replay/calibration population, detach setting, best-restore behavior, and adapter coupling are part of the model contract. |
 | M3-S2 support-preserving collect | Collection path in `ppo_adaptive_kl.py` | Rollout-collection intervention that can force event index 9 to hold and recompute log-prob to preserve supervised support; not merely a probe. |
 | PPO/update integration | `python/rl/policy_algo/ppo_adaptive_kl.py` | Collects rollout metadata, constructs and attaches first-event labels, owns A6/A7 weighting, cross-rollout context, shadow-quality/projection use, minibatch attachment, update scheduling, and diagnostics. |
-| Process/chain probes | `tools/diagnostics/air_combat_stage0_process_probe.py`, `tools/diagnostics/m3s2_chain_breakpoint_probe.py` | Evaluation and localization only unless a task explicitly documents an action-changing collect intervention. |
+| Process/chain probes | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` | Evaluation and localization only unless a task explicitly documents an action-changing collect intervention. |
 
 ## Executable Vs Auxiliary Branches
 

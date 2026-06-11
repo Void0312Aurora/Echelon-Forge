@@ -29,7 +29,7 @@ is the M3-S2 grouped survival/event-mass loss over ordered logits.
 New diagnostic:
 
 ```text
-tools/diagnostics/m3s2_structural_toy_probe.py
+tools/diagnostics/fire_timing_fault_localization_probe.py --mode structural_toy
 ```
 
 The probe runs two toy models:
@@ -55,7 +55,7 @@ window_deadline_steps = 64
 
 ```bash
 python -m compileall -q \
-  tools/diagnostics/m3s2_structural_toy_probe.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode structural_toy \
   tests/training/test_fire_timing_fault_localization_contracts.py
 ```
 
@@ -72,7 +72,7 @@ Outcome: `2 passed`.
 Command:
 
 ```bash
-./.venv/bin/python tools/diagnostics/m3s2_structural_toy_probe.py \
+./.venv/bin/python tools/diagnostics/fire_timing_fault_localization_probe.py --mode structural_toy \
   --model both \
   --prewindow-steps 800 \
   --quality-steps 1080 \

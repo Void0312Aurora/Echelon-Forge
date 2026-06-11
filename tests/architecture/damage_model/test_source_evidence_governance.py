@@ -23,7 +23,9 @@ ensure_repo_root_on_sys_path()
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_source_payload_pack as payload_pack,
     a2_blastfrag_source_rights_output_policy as output_policy,
-    a2_blastfrag_source_rights_signoff_request_packet as signoff_request_packet,
+)
+from tools.maintenance.external_signoff_evidence import (  # noqa: E402
+    signoff_request as signoff_request_packet,
 )
 from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
 
@@ -714,7 +716,8 @@ def test_source_rights_signoff_request_cli_writes_manifest_integrity_clean(
     result = subprocess.run(
         [
             PYTHON_EXECUTABLE,
-            "tools/maintenance/a2_blastfrag_source_rights_signoff_request_packet.py",
+            "tools/maintenance/damage_model_external_evidence.py",
+            "signoff-request",
             "--retained-dir",
             str(retained_dir),
             "--output",

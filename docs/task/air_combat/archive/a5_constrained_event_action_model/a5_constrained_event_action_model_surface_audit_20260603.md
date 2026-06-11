@@ -36,7 +36,7 @@ packet.
 | HMoE routing | `python/rl/policy_algo/hmoe_routing.py` | Routes 20D C2/ROE observations to `combat_weapons` subexperts; routing is not action support. |
 | Reward/runtime release classification | `gym_envs/scenario_loader/reward_runtime/air_combat.py`: `air_combat_c2_roe_state_from_mapping()`, `classify_air_combat_c2_roe_event()`, `_c2_roe_authorized_action_window()`, `_apply_c2_roe_release_discipline()` | Buckets are useful diagnostics, but A5 legality must move to mask/state-machine support rather than penalty learning. |
 | Policy distribution | `python/rl/policy_algo/policies.py`: `_HybridActionLayout`, `_HybridActionDistribution`, `HierarchicalMoEExecutionPolicy` | Hybrid params are currently continuous + Bernoulli + categorical; deterministic binary actions use `logit >= 0`. A5 event mask belongs here, not only in runtime. |
-| Diagnostics | `tools/diagnostics/air_combat_stage0_process_probe.py`, `python/training_callbacks.py` | Extend to report event state, mask, request/accept/reject, suppression, and policy event probabilities. |
+| Diagnostics | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`, `python/training_callbacks.py` | Extend to report event state, mask, request/accept/reject, suppression, and policy event probabilities. |
 | Active configs/tests | `examples/config/training/active/air_combat/*c2_roe*_probe_v1.json`; tests under `tests/runtime`, `tests/policy`, `tests/training`, `tests/diagnostics` | First implementation should target active S1 C2/ROE shaped configs only. |
 
 ## Implementation Risks

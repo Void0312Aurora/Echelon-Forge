@@ -22,7 +22,7 @@ advantage。本 slice 隔离为什么这个本地可拟合信号没有在在线 
 
 新增：
 
-- `tools/diagnostics/a7_online_update_path_probe.py`
+- `tools/diagnostics/event_credit_head_probe.py --mode online_update`
 
 该 probe 分开记录两个上下文：
 
@@ -33,7 +33,7 @@ advantage。本 slice 隔离为什么这个本地可拟合信号没有在在线 
 主命令：
 
 ```bash
-python tools/diagnostics/a7_online_update_path_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode online_update \
   --episodes 4 \
   --max_steps 640 \
   --online_episodes 4 \
@@ -48,7 +48,7 @@ python tools/diagnostics/a7_online_update_path_probe.py \
 Credit-head-only 8-step 对照：
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 8 \
@@ -62,7 +62,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 验证：
 
 ```bash
-python -m compileall -q tools/diagnostics/a7_online_update_path_probe.py
+python -m compileall -q tools/diagnostics/event_credit_head_probe.py tools/diagnostics/event_credit_head/online_update.py
 ```
 
 观测：pass。

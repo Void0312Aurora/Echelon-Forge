@@ -15,7 +15,7 @@
 - 最近交战事件包：[../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
 - 事件记录：[../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)
 - 受控调试入口：[../../../../../src/core/engine/simulation_kernel_damage_debug_api.cpp](../../../../../src/core/engine/simulation_kernel_damage_debug_api.cpp)
-- 诊断导出：[../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- 诊断导出：[../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 - 训练消费：[../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 
 ## 结论

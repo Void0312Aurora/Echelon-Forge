@@ -20,7 +20,7 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 ensure_repo_imports()
 
 from python.rl.policy_algo.model_contracts import FaultLocalizationResult, FaultStage  # noqa: E402
-from tools.diagnostics.m3s2_real_update_path_probe import (  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.real_update import (  # noqa: E402
     DEFAULT_SCENARIO,
     DEFAULT_TRAIN_CONFIG,
     RealM3S2Group,

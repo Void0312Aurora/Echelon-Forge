@@ -18,7 +18,7 @@ parameters 时，是否会把 executable `fire_once` logit 往正确方向移动
 新增诊断：
 
 ```text
-tools/diagnostics/m3s2_real_update_path_probe.py
+tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update
 ```
 
 该 probe：

@@ -18,7 +18,7 @@ Inputs:
 - Event contracts: [engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)
 - Current effects model: [default_effects_model.cpp](../../../../../../../src/models/weapons/default_effects_model.cpp)
 - Warhead/spatial fragments: [default_effects_warhead_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc), [default_effects_spatial_projection_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)
-- Diagnostics probe: [air_combat_stage0_process_probe.py](../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- Diagnostics probe: [air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 
 ## Purpose
 

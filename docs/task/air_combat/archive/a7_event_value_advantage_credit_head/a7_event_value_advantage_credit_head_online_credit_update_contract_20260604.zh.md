@@ -93,7 +93,7 @@ python train.py \
 最终固定批 credit probe：
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --model experiments_tmp/a7_separate_update_8k_v2_20260604/final_model.zip \
   --episodes 4 \
   --max_steps 640 \
@@ -109,7 +109,7 @@ fraction 仍为 `0.0`。
 最终 process probe：
 
 ```bash
-python tools/diagnostics/air_combat_stage0_process_probe.py \
+python tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
   --train_config experiments_tmp/a7_separate_update_8k_v2_config_20260604.json \
   --mode model \

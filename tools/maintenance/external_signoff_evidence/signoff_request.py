@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the A2 source-rights signoff request packet.
+"""Generate the damage-model source-rights signoff request packet.
 
 This packet is a retained, machine-readable checklist for rights-safe,
 allowed-output review. It is deliberately not an approval: it reads only
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -794,7 +794,7 @@ def write_retained_artifacts(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate the fail-closed A2 source-rights allowed-output signoff "
+            "Generate the fail-closed damage-model source-rights allowed-output signoff "
             "request packet."
         )
     )

@@ -86,7 +86,7 @@ run_eval() {
   local json_out="$5"
 
   local cmd=(
-    "${PY}" -u tools/eval/eval_sb3.py
+    "${PY}" -u tools/eval/policy_execution_eval.py
     --mode cooperative
     --scenario "${scenario}"
     --train_config "${config}"

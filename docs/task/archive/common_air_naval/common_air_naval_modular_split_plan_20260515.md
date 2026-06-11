@@ -451,7 +451,7 @@ Explicitly not done:
 
 Acceptance criteria:
 
-- `eval_task.py` / `eval_sb3.py` still run the air mainline
+- `eval_task.py` / `policy_execution_eval.py` still run the air mainline
 - `diagnostics` shared base remains non-regressive
 - Runtime tests adapted to the field paths after common/air split
 

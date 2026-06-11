@@ -30,7 +30,7 @@ contact-report、station-hold 和离站位恢复入口均已进入专门的海�
   包括稳定的离站位恢复 gate；
 - 这些入口使用 `naval_station3`、`naval_screen_station_v1` 和已接受的单策略槽位
   cooperative roster 路径；
-- `tools/eval/eval_naval_n4_baseline.py` 为 N4 active 入口提供维护中的 cooperative
+- `tools/eval/naval_station_policy_eval.py` 为 N4 active 入口提供维护中的 cooperative
   零动作基线 gate；
 - N5 武器交战与 N6 毁伤结果的边界仍然明确且可测试。
 
@@ -64,7 +64,7 @@ N4 建立在现有 N1-N3 naval screen/contact 基础之上。
 | Integration | `naval_n4_integration_acceptance_20260525.md` | command-chain/runtime 证据已接受 |
 | RL preflight | `naval_n4_rl_task_surface_preflight_20260525.md` | observation/action/reward/termination/eval surface 已冻结 |
 | Active entries | `examples/config/training/active/naval/*.json` | contact-report、station-hold 和离站位恢复 smoke/probe 条目已存在，并使用 cooperative 单策略槽位 execution |
-| Baseline eval | `tools/eval/eval_naval_n4_baseline.py` | 零动作 N4 cooperative 基线检查 roster、必要海军奖励项，以及禁止出现的空军 / 武器 / 毁伤项 |
+| Baseline eval | `tools/eval/naval_station_policy_eval.py` | 零动作 N4 cooperative 基线检查 roster、必要海军奖励项，以及禁止出现的空军 / 武器 / 毁伤项 |
 | Regression gate | `tests/training/test_naval_training_entry_contracts.py` 与 `tests/training/test_naval_training_entry_contracts.py` | N4 metadata、scenario、docs 和 non-claims 被测试守住 |
 
 ## Active Entry 范围
@@ -119,9 +119,9 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 
 git diff --check -- docs/task/naval examples/config/training/active/naval tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```

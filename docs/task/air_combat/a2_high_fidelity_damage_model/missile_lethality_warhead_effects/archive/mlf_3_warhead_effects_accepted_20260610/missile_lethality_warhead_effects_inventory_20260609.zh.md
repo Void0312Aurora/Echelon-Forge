@@ -17,7 +17,7 @@ MLF-3A 通过。当前代码里已经有战斗部、空间覆盖和部件受载�
 - 运行时缺口：`src/core/interfaces/engagement_event_recorder.h`、`src/core/engine/simulation_kernel_engagement_event_store.*`
 - 旧字段来源：`src/core/interfaces/effects_model.h`、`src/core/interfaces/engagement_effects_event_builder.h`
 - 效果模型入口：`src/models/weapons/default_effects_model.cpp`、`src/models/weapons/detail/default_effects_warhead_detail.inc`
-- 诊断入口：`tools/diagnostics/air_combat_stage0_process_probe.py`
+- 诊断入口：`tools/diagnostics/air_combat_weapon_employment_process_probe.py`
 
 ## 保持的边界
 

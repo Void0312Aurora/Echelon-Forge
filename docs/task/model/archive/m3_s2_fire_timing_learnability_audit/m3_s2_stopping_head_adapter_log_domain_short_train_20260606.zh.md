@@ -43,7 +43,7 @@ python -m compileall -q \
   python/rl/policy_algo/policies.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/m3s2_real_update_path_probe.py
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update
 
 python -m pytest \
   tests/policy/test_grouped_stopping_loss_contracts.py \

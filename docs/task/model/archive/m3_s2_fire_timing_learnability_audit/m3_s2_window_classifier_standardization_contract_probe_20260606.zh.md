@@ -8,12 +8,12 @@
 
 ## 诊断改动
 
-- `tools/diagnostics/m3s2_real_update_path_probe.py` 新增
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update` 新增
   `--collector-action model_event_hold`。
 - `model_event_hold` 保留模型动作，只把 hybrid action 第 `9` 维
   （`fire_once`）强制为 `0.0`；它比旧的硬编码 `hold` 动作更接近
   support-preserving collection 合同。
-- `tools/diagnostics/m3s2_chain_breakpoint_probe.py` 现在接受
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint` 现在接受
   `--collector-action`，并记录
   `window_classifier_fixed_batch_recalibration`。
 - recalibration probe 会保存并恢复模型 buffer，不修改模型 artifact。

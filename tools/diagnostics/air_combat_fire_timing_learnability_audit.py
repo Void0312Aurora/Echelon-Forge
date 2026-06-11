@@ -18,7 +18,7 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from tools.diagnostics import air_combat_stage0_process_probe as process_probe  # noqa: E402
+from tools.diagnostics import air_combat_weapon_employment_process_probe as process_probe  # noqa: E402
 
 
 DEFAULT_SCENARIO = resolve_repo_path(

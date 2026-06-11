@@ -33,9 +33,9 @@ prewindow/quality 信号，但在线 M3 stopping head 没有学到经过校准�
   - 记录 ceiling/floor diagnostics。
 - `python/rl/policy_algo/ppo_adaptive_kl.py`、
   `python/rl/support/nonfinite_probe.py` 与
-  `tools/diagnostics/m3s2_real_update_path_probe.py`
+  `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update`
   传递并记录新合同字段。
-- `tools/diagnostics/m3s2_chain_breakpoint_probe.py`
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint`
   在 flag 启用时基于实际 normalized M3 head input 评估 fitted heads。
 
 active config：
@@ -68,8 +68,8 @@ python -m compileall -q \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/m3s2_real_update_path_probe.py \
-  tools/diagnostics/m3s2_chain_breakpoint_probe.py
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint
 
 python -m pytest \
   tests/policy/test_grouped_stopping_loss_contracts.py \

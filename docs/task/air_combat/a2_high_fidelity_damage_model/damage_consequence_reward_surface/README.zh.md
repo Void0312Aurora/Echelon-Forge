@@ -76,8 +76,8 @@ diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/e
 - `tests/runtime/air_combat/test_air_combat_reward_surface.py` 覆盖目标后果正奖励、自身受损惩罚、静态损伤不重复给分和安全触地拒绝。
 - `scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json`
   已显式 opt-in 低权重 consequence shaping，仅作为 synthetic training feedback。
-- `tools/diagnostics/air_combat_stage0_process_probe.py` 现在可以按 target/self 前缀导出逐步和逐 episode 的 DCR reward totals。
-- `tools/diagnostics/air_combat_stage0_process_probe.py --diagnostic_dcr_bridge`
+- `tools/diagnostics/air_combat_weapon_employment_process_probe.py` 现在可以按 target/self 前缀导出逐步和逐 episode 的 DCR reward totals。
+- `tools/diagnostics/air_combat_weapon_employment_process_probe.py --diagnostic_dcr_bridge`
   现在只在 diagnostics probe 内叠加 DCR reward terms，并输出简洁的
   `controlled_consequence_bridge_records`；当前 fixed-fire record 仍为
   `damage_consequence_reward_total=0.0`。

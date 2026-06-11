@@ -13,8 +13,8 @@ smoke/probe 条目。
   - [naval_screen_threat_roe_offstation_recovery.json](../../../../../tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json)
 - 当前基线是入口/runtime gate，而不是已训练海军策略。
 - 维护中的基线评估是
-  [eval_naval_n4_baseline.py](../../../../../tools/eval/eval_naval_n4_baseline.py)
-  提供的 cooperative 零动作 N4 gate。
+  [naval_station_policy_eval.py](../../../../../tools/eval/naval_station_policy_eval.py)
+  提供的 cooperative 零动作 station gate。
 
 这些条目有意停留在开火前 `N4` 边界。它们验证 scenario、config 和当前
 execution runtime 可以被配对用于 RL 实验。它们不暴露武器释放动作，不使用毁伤或
@@ -60,24 +60,24 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python trai
   --output_base experiments/naval \
   --run_name naval_screen_station_recovery_threat_aware_smoke_v1
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py \
   --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json \
   --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
   --steps 1200 \
-  --json_out experiments/naval/naval_n4_zero_action_baseline.json
+  --json_out experiments/naval/naval_station_zero_action_baseline.json
 
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py \
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py \
   --mode offstation_probe \
   --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json \
   --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json \
   --steps 300 \
-  --json_out experiments/naval/naval_n4_offstation_recovery_probe.json
+  --json_out experiments/naval/naval_station_offstation_recovery_probe.json
 ```
 
 ## 设计说明
 
 - `naval_entry.scenario_path` 是执行契约，不只是文档字段：如果 `--scenario`
-  没有解析到条目声明的场景，`train.py` 和维护态 N4 eval 工具都会拒绝启动。
+  没有解析到条目声明的场景，`train.py` 和维护态 station policy eval 工具都会拒绝启动。
   这可以防止恢复入口误跑普通站位保持场景，或普通入口误跑恢复场景。
 - `naval_entry.contract_path` 也必须绑定同一个声明场景。若 contract 内部的
   `scenario` 字段指向另一个场景，bootstrap 会拒绝启动，从而保持
@@ -106,8 +106,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_active_training_entries.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_train_bootstrap.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_eval_naval_n4_baseline.py
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_offstation_recovery_v1.json --train_config examples/config/training/active/naval/naval_screen_station_recovery_threat_aware_smoke_v1.json --steps 300
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_offstation_recovery.json
 ```

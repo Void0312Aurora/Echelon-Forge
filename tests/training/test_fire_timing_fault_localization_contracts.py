@@ -10,7 +10,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from tools.diagnostics import air_combat_fire_timing_learnability_audit as audit  # noqa: E402
-from tools.diagnostics.m3s2_chain_breakpoint_probe import (  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.chain_breakpoint import (  # noqa: E402
     _classification_metrics,
     _edge_trigger_summary,
     _fault_localization_summary,
@@ -20,10 +20,10 @@ from tools.diagnostics.m3s2_chain_breakpoint_probe import (  # noqa: E402
     _passes_window_classifier,
     _resolve_adapter_head_kind,
 )
-from tools.diagnostics.m3s2_real_update_path_probe import RealM3S2Group  # noqa: E402
-from tools.diagnostics.m3s2_real_update_path_probe import _build_groups_from_rows  # noqa: E402
-from tools.diagnostics.m3s2_real_update_path_probe import _collector_action_for_m3s2  # noqa: E402
-from tools.diagnostics.m3s2_structural_toy_probe import ToyProbeConfig, run_probe  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.real_update import RealM3S2Group  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.real_update import _build_groups_from_rows  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.real_update import _collector_action_for_m3s2  # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization.structural_toy import ToyProbeConfig, run_probe  # noqa: E402
 
 
 class AirCombatFireTimingLearnabilityAuditTests(unittest.TestCase):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the A2 blast-fragmentation signoff admission preflight packet.
+"""Generate the damage-model signoff admission preflight packet.
 
 This packet is deliberately not an admission gate. It reads the retained
 signoff intake contract, optionally shape-checks an external signoff packet
@@ -18,12 +18,12 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_signoff_intake_contract as intake_contract,
+from tools.maintenance.external_signoff_evidence import (  # noqa: E402
+    intake_contract,
 )
 
 
@@ -374,7 +374,10 @@ def generate_signoff_admission_preflight(
         "input_refs": input_refs,
         "signoff_intake_contract_state": contract_state,
         "candidate_signoff_packet_ref": candidate_ref,
-        "shape_check_source": "a2_blastfrag_signoff_intake_contract.generate_signoff_intake_contract",
+        "shape_check_source": (
+            "external_signoff_evidence.intake_contract."
+            "generate_signoff_intake_contract"
+        ),
         "shape_check_result": {
             "candidate_packet_supplied": shape_result["candidate_packet_supplied"],
             "intake_shape_valid": shape_result["intake_shape_valid"],
@@ -496,7 +499,7 @@ def write_retained_artifacts(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate the fail-closed A2 signoff admission preflight packet. "
+            "Generate the fail-closed damage-model signoff admission preflight packet. "
             "This is not an admission gate."
         )
     )

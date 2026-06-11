@@ -379,7 +379,7 @@ from stopping output to executable pulse.
 
 ```bash
 python -m py_compile \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   tools/diagnostics/air_combat_fire_timing_learnability_audit.py \
   tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
   tests/training/test_fire_timing_fault_localization_contracts.py

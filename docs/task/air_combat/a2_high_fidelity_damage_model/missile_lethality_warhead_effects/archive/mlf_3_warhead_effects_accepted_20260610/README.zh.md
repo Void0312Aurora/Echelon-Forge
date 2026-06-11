@@ -18,7 +18,7 @@
 - 事件合同入口：[../../../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../../src/runtime/contracts/engagement_contracts.h)
 - 现有效果模型入口：[../../../../../../../src/models/weapons/default_effects_model.cpp](../../../../../../../src/models/weapons/default_effects_model.cpp)
 - 战斗部/空间投影实现片段：[../../../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_warhead_detail.inc)、[../../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc](../../../../../../../src/models/weapons/detail/default_effects_spatial_projection_detail.inc)
-- 诊断投影入口：[../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- 诊断投影入口：[../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 
 ## 目的
 

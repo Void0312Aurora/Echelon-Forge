@@ -55,7 +55,7 @@ Callback diagnostics:
 
 Process-probe diagnostics:
 
-- `tools/diagnostics/air_combat_stage0_process_probe.py` records
+- `tools/diagnostics/air_combat_weapon_employment_process_probe.py` records
   `policy_event_q_hold`, `policy_event_q_fire_once`, and
   `policy_event_advantage` per row.
 - Episode summaries reconstruct the configured launch window and report
@@ -78,7 +78,7 @@ Observed: pass.
 ```bash
 python -m compileall -q \
   python/training/diagnostics.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py
 ```
 
 Observed: pass.
@@ -142,14 +142,14 @@ touched files:
 - examples/config/training/active/air_combat/README.md
 - examples/config/training/active/air_combat/README.zh.md
 - python/training/diagnostics.py
-- tools/diagnostics/air_combat_stage0_process_probe.py
+- tools/diagnostics/air_combat_weapon_employment_process_probe.py
 - tests/training/test_event_timing_training_config_contracts.py
 - tests/training/test_air_combat_training_entry_contracts.py
 - tests/training/test_diagnostics_callback_contracts.py
 - tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 commands/outcomes:
 - python -m json.tool <A7 active config> -> pass
-- python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py -> pass
+- python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py -> pass
 - pytest tests/training/test_event_timing_training_config_contracts.py -q -> 6 passed
 - pytest tests/training/test_diagnostics_callback_contracts.py -q -> 5 passed
 - pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q -> 3 passed

@@ -26,7 +26,7 @@ stock AIM-120C / MQ-9 杀伤，也不能用“直接坠毁规则”替代损伤�
 | `DCR-B Runtime Reward Surface` | main thread | n/a | 为飞机损伤变化量和严重触地转移增加可选奖励项。 | `gym_envs/scenario_loader/reward_runtime/air_combat.py` | 武器物理修改、直接坠毁替代规则、无配置的默认训练行为大改 | 聚焦 reward 单测 | runtime 每步读取后果 state，并只在配置/启用时输出命名项。 | after A | 2 | pass |
 | `DCR-C Focused Tests` | main thread | n/a | 覆盖目标奖励、自身受损惩罚、变化量语义和安全触地边界。 | `tests/runtime/air_combat/test_air_combat_reward_surface.py`，可选 1v1 fixture 聚焦测试 | 慢训练、大范围场景重写 | `python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py` | 测试证明奖励层只消费事实，不改变物理权威。 | after or with B | 2 | pass |
 | `DCR-D Scenario Opt-In` | current-session worker | n/a | 让 Stage-2 后续能够消费低权重后果项。 | `scenarios/air_combat/1v1/**`、`examples/config/training/active/air_combat/**`、active-entry README | 把 Stage-2 训练当作杀伤链前置、改发射闭合、提速优化、Stage-3/self-play | 场景/config smoke 或 JSON 检查 | opt-in 是显式的，且权重写明只是训练 synthetic。 | after B/C | 1 | pass |
-| `DCR-E Probe Evidence` | read-only diagnostics explorer，然后 diagnostics worker | n/a | 做受控命中/固定发射/replay probe，把发射项和后果项分开报告。 | `tools/diagnostics/air_combat_stage0_process_probe.py`、聚焦 diagnostics tests、后续本子项目 diagnostics output 文档 | 单 seed 幸运验收、用 release reward 掩盖无效果射击、把 learned Stage-2 model 当作前置 | 受控 probe 或 replay summary | 证据显示后果奖励发生在 effects/damage 之后，而不是只发生在 release 之后。 | after D | 1 | partial：export/bridge/re-scope ready；下一步为 `DCR-E-P3` fixture evidence |
+| `DCR-E Probe Evidence` | read-only diagnostics explorer，然后 diagnostics worker | n/a | 做受控命中/固定发射/replay probe，把发射项和后果项分开报告。 | `tools/diagnostics/air_combat_weapon_employment_process_probe.py`、聚焦 diagnostics tests、后续本子项目 diagnostics output 文档 | 单 seed 幸运验收、用 release reward 掩盖无效果射击、把 learned Stage-2 model 当作前置 | 受控 probe 或 replay summary | 证据显示后果奖励发生在 effects/damage 之后，而不是只发生在 release 之后。 | after D | 1 | partial：export/bridge/re-scope ready；下一步为 `DCR-E-P3` fixture evidence |
 | `DCR-F Closure And Index Sync` | main thread | n/a | 按证据标记 accepted slice 或 residual，并同步父级指针。 | 本 README/task cluster、`docs/task/air_combat/README*`、A2 pointer README | 过度声明真实杀伤或 Stage-2 最终验收 | docs diff check 和聚焦测试 | status line 与 residual map 和证据一致。 | last, serial | 1 | planned |
 
 ## 派发规则
@@ -70,14 +70,14 @@ python -m pytest -q tests/runtime/air_combat/test_air_combat_reward_surface.py
 python -m pytest -q \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_damage_report_shaping_consumes_nonterminal_structured_damage_once \
   tests/runtime/air_combat/test_air_combat_1v1_fixture.py::AirCombat1v1FixtureTests::test_loader_compute_full_step_consumes_structured_damage_report_for_combat_win
-python -m py_compile tools/diagnostics/air_combat_stage0_process_probe.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py
+python -m py_compile tools/diagnostics/air_combat_weapon_employment_process_probe.py tests/runtime/air_combat/test_diagnostics_probe_contracts.py
 python -m pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 python -m json.tool scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json >/dev/null
 git diff --check -- \
   docs/task/air_combat/a2_high_fidelity_damage_model \
   gym_envs/scenario_loader/reward_runtime/air_combat.py \
   tests/runtime/air_combat/test_air_combat_reward_surface.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   tests/runtime/air_combat/test_diagnostics_probe_contracts.py \
   scenarios/air_combat/1v1/air_combat_1v1_stage2_evasive_fighter_c2_roe_training_shaped_v1.json \
   examples/config/training/active/air_combat/README.md \

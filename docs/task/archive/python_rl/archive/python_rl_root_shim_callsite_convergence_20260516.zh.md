@@ -45,7 +45,7 @@
 已切换到 `python.rl.control.*` 的文件包括：
 
 - `tools/eval/task_eval_driver.py`
-- `tools/eval/eval_sb3.py`
+- `tools/eval/policy_execution_eval.py`
 - `tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py`
 - `tools/diagnostics/analyze_cooperative_observation_scales.py`
 - `tools/diagnostics/diagnose_runway_drift_sweep.py`

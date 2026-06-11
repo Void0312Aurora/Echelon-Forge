@@ -166,7 +166,7 @@ def _run_single_eval(args: argparse.Namespace) -> int:
         }
 
         print("=" * 60)
-        print("SB3 EVAL [single]")
+        print("POLICY EXECUTION EVAL [single]")
         print(f"scenario:   {payload['scenario']}")
         print(f"train_cfg:  {payload['train_config']}")
         print(f"model:      {payload['model']}")
@@ -451,7 +451,7 @@ def _run_cooperative_eval(args: argparse.Namespace) -> int:
         }
 
         print("=" * 60)
-        print("SB3 EVAL [cooperative]")
+        print("POLICY EXECUTION EVAL [cooperative]")
         print(f"scenario:   {payload['scenario']}")
         print(f"train_cfg:  {payload['train_config']}")
         print(f"model:      {payload['model']}")
@@ -492,7 +492,7 @@ def _extract_mode(argv: list[str]) -> str | None:
 
 
 def _build_mode_parser(mode: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Unified SB3 evaluator for single-agent and cooperative policies.")
+    parser = argparse.ArgumentParser(description="Evaluate single-agent and cooperative learned execution policies.")
     parser.add_argument("--mode", default=mode, choices=sorted(VALID_MODES), help="Evaluation mode.")
 
     if mode == "single":
@@ -530,7 +530,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     argv = list(sys.argv[1:] if argv is None else argv)
     mode = _extract_mode(argv)
     if mode is None:
-        parser = argparse.ArgumentParser(description="Unified SB3 evaluator for single-agent and cooperative policies.")
+        parser = argparse.ArgumentParser(description="Evaluate single-agent and cooperative learned execution policies.")
         parser.add_argument("--mode", required=True, choices=sorted(VALID_MODES), help="Evaluation mode.")
         parser.epilog = "Use `--mode single --help` or `--mode cooperative --help` for mode-specific options."
         return parser.parse_args(argv)

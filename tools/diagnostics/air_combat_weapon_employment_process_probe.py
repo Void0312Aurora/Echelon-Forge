@@ -2501,7 +2501,7 @@ def plot_rows(rows: list[dict[str, Any]], path: str) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Trace stage-0/stage-1 air-combat weapon-employment process.")
+    parser = argparse.ArgumentParser(description="Trace air-combat weapon-employment and lethality process signals.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
     parser.add_argument(

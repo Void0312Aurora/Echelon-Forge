@@ -34,7 +34,7 @@ from python.rl.policy_algo.first_event_projection import (  # noqa: E402
     project_air_combat_c2_roe_legal_open_observations,
 )
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO  # noqa: E402
-from tools.diagnostics.a7_credit_head_offline_fit_probe import (  # noqa: E402
+from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_SCENARIO,
     DEFAULT_TRAIN_CONFIG,
@@ -52,7 +52,7 @@ from tools.diagnostics.a7_credit_head_offline_fit_probe import (  # noqa: E402
     evaluate_credit_head,
     evaluate_label_summary,
 )
-from tools.diagnostics.air_combat_stage0_process_probe import _base_env, _build_env  # noqa: E402
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_env, _build_env  # noqa: E402
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
@@ -632,7 +632,7 @@ def _apply_repeated_updates(
 def _policy_step(policy, obs: Any, *, deterministic: bool) -> tuple[np.ndarray, float, float]:
     obs_tensor, _vectorized = policy.obs_to_tensor(obs)
     if not isinstance(obs_tensor, dict):
-        raise TypeError("A7 online rollout probe expects dict observations")
+        raise TypeError("event-credit online rollout probe expects dict observations")
     with th.no_grad():
         actions, values, log_prob = policy(obs_tensor, deterministic=bool(deterministic))
     action_np = actions.detach().to(device="cpu").numpy().reshape(-1).astype(np.float32)
@@ -644,7 +644,7 @@ def _policy_step(policy, obs: Any, *, deterministic: bool) -> tuple[np.ndarray, 
 def _policy_value(policy, obs: Any) -> float:
     obs_tensor, _vectorized = policy.obs_to_tensor(obs)
     if not isinstance(obs_tensor, dict):
-        raise TypeError("A7 online rollout probe expects dict observations")
+        raise TypeError("event-credit online rollout probe expects dict observations")
     with th.no_grad():
         features = policy.extract_features(obs_tensor)
         if policy.share_features_extractor:
@@ -1002,7 +1002,7 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="A7 online update-path isolation probe.")
+    parser = argparse.ArgumentParser(description="Event-credit online update-path isolation probe.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
     parser.add_argument("--model", default=DEFAULT_MODEL)

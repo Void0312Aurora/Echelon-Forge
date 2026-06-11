@@ -141,7 +141,7 @@ Implementation Results:
 
 - Added [tools/eval/sb3_eval_base.py](../../../../tools/eval/sb3_eval_base.py)
 - At phase 2 completion, the old dual entries have switched to the shared base
-- Phase 4 further unified this into [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py)
+- Phase 4 further unified this into [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py)
 
 Smoke Tests Completed:
 
@@ -207,17 +207,17 @@ Acceptance Criteria:
 
 Implementation Results:
 
-- Added [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py)
+- Added [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py)
 - Deleted old `tools/eval/eval_sb3_policy.py`
 - Deleted old `tools/eval/eval_sb3_cooperative_policy.py`
 - Related scripts, README, specialized documentation, and runtime tests have been migrated to the unified entry
 
 Smoke Tests Completed:
 
-- `python -m py_compile tools/eval/eval_sb3.py tools/eval/sb3_eval_base.py`
-- `./.venv/bin/python tools/eval/eval_sb3.py --help`
-- `./.venv/bin/python tools/eval/eval_sb3.py --mode single --help`
-- `./.venv/bin/python tools/eval/eval_sb3.py --mode cooperative --help`
+- `python -m py_compile tools/eval/policy_execution_eval.py tools/eval/sb3_eval_base.py`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --help`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --mode single --help`
+- `./.venv/bin/python tools/eval/policy_execution_eval.py --mode cooperative --help`
 - `./.venv/bin/python -m pytest -q tests/eval/test_evaluation_cli_contracts.py`
 
 ## 4. Documentation Constraints

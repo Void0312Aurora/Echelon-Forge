@@ -29,7 +29,7 @@ Code changes:
 - M3-S2 can use `m3s2_event_window_dedicated_optimizer_enabled`, which builds an
   isolated auxiliary optimizer over the event-policy parameter subset instead of
   reusing PPO Adam state.
-- `tools/diagnostics/m3s2_real_update_path_probe.py` now supports loss overrides
+- `tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update` now supports loss overrides
   and `--reset-optimizer-state` for controlled real-row update comparisons.
 
 Active M3-S2 config now treats deterministic boundary formation as the main
@@ -92,7 +92,7 @@ python -m compileall -q \
   python/rl/policy_algo/m3s1_grouped_stopping.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/m3s2_real_update_path_probe.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode real_update \
   tests/policy/test_grouped_stopping_loss_contracts.py \
   tests/policy/test_auxiliary_training_updates.py \
   tests/training/test_air_combat_training_entry_contracts.py

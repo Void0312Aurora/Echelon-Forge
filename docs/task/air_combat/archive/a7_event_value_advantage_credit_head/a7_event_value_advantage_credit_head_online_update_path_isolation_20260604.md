@@ -23,7 +23,7 @@ The suspected mechanisms were:
 
 Added:
 
-- `tools/diagnostics/a7_online_update_path_probe.py`
+- `tools/diagnostics/event_credit_head_probe.py --mode online_update`
 
 The probe records two separate contexts:
 
@@ -35,7 +35,7 @@ The probe records two separate contexts:
 Main command:
 
 ```bash
-python tools/diagnostics/a7_online_update_path_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode online_update \
   --episodes 4 \
   --max_steps 640 \
   --online_episodes 4 \
@@ -50,7 +50,7 @@ python tools/diagnostics/a7_online_update_path_probe.py \
 Credit-head-only 8-step control:
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 8 \
@@ -64,7 +64,7 @@ python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
 Validation:
 
 ```bash
-python -m compileall -q tools/diagnostics/a7_online_update_path_probe.py
+python -m compileall -q tools/diagnostics/event_credit_head_probe.py tools/diagnostics/event_credit_head/online_update.py
 ```
 
 Observed: pass.

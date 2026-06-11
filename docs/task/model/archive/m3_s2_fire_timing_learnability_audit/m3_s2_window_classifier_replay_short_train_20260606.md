@@ -40,7 +40,7 @@ deterministic/stochastic learned-policy probes.
   - capacity `8192`, balanced batch size `1024`;
   - classifier update steps `64`, max grad norm `5.0`;
   - `m3_window_classifier_head_lr_scale = 100.0`.
-- `air_combat_stage0_process_probe.py` now logs
+- `air_combat_weapon_employment_process_probe.py` now logs
   `policy_m3_window_classifier_*` per-step and per-episode summary fields.
 
 ## Verification
@@ -50,7 +50,7 @@ python -m compileall \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/policy_algo/policies.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py
 ```
 
 ```bash

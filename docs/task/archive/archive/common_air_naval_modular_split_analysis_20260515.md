@@ -141,7 +141,7 @@ Therefore runtime tests are better suited as a later migration surface.
 The `eval` / `diagnostics` layer has been consolidated at the entry and common base level, but task semantics still mainly revolve around air combat/flight missions:
 
 - `eval_task.py` currently has task families like `stable_flight / takeoff_roll / centerline / waypoint_nav`
-- `eval_sb3.py` contains air combat artifacts such as cooperative formation role / final command code
+- `policy_execution_eval.py` contains air combat artifacts such as cooperative formation role / final command code
 - Cooperative trajectory diagnostic clearly revolves around takeoff, route, recovery, and formation
 
 Therefore:

@@ -65,7 +65,7 @@ cap 后正负权重平衡，符合预期 prewindow/quality 切分。
 ## 离线 Credit Fit
 
 使用同一模型/配置运行
-`tools/diagnostics/a7_credit_head_offline_fit_probe.py`，hold collector，`1 x 2400`
+`tools/diagnostics/event_credit_head_probe.py --mode offline_fit`，hold collector，`1 x 2400`
 steps，只拟合 credit head `300` 步。
 
 初始 credit advantage：

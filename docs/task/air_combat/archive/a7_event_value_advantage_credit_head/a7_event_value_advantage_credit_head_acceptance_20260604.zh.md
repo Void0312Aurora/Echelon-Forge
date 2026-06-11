@@ -135,7 +135,7 @@ HMoE PPO warmup tests 为 `8 passed`；HMoE policy tests 为 `31 passed`。
 
 ```bash
 python -m json.tool examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json
-python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py
+python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py
 pytest tests/training/test_event_timing_training_config_contracts.py -q
 pytest tests/training/test_diagnostics_callback_contracts.py -q
 pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
@@ -152,7 +152,7 @@ pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q
 
 ```bash
 python -m json.tool <A7 active config>
-python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py
+python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py
 pytest tests/policy/test_execution_policy_surface.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q
 pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q
 pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_diagnostics_callback_contracts.py -q
@@ -321,7 +321,7 @@ S 改善 observability 并保持 one-shot legality，但不满足 behavior accep
 `A7-EVC-T` value/policy coupling audit：
 
 ```bash
-python tools/diagnostics/a7_credit_head_offline_fit_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode offline_fit \
   --episodes 4 \
   --max_steps 640 \
   --fit_steps 1200 \
@@ -340,9 +340,9 @@ credit-head-only offline fitting 将 legal-open advantage 翻到 `+0.6417`，正
 `A7-EVC-U` online update-path isolation：
 
 ```bash
-python -m compileall -q tools/diagnostics/a7_online_update_path_probe.py
+python -m compileall -q tools/diagnostics/event_credit_head_probe.py tools/diagnostics/event_credit_head/online_update.py
 
-python tools/diagnostics/a7_online_update_path_probe.py \
+python tools/diagnostics/event_credit_head_probe.py --mode online_update \
   --episodes 4 \
   --max_steps 640 \
   --online_episodes 4 \

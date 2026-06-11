@@ -15,7 +15,7 @@ Inputs:
 - Recent event packet: [../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
 - Event store: [../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)
 - Debug entry: [../../../../../src/core/engine/simulation_kernel_damage_debug_api.cpp](../../../../../src/core/engine/simulation_kernel_damage_debug_api.cpp)
-- Diagnostics export: [../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- Diagnostics export: [../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 - Training consumer: [../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 
 ## Decision

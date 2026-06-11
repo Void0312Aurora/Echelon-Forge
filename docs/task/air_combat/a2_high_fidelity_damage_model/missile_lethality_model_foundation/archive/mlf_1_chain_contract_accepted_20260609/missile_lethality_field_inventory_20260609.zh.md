@@ -16,7 +16,7 @@
 - 最近事件包：[../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
 - 事件记录：[../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp](../../../../../src/core/engine/simulation_kernel_engagement_event_store.cpp)
 - Python binding：[../../../../../src/interfaces/python/bindings_runtime.cpp](../../../../../src/interfaces/python/bindings_runtime.cpp)
-- 诊断 probe：[../../../../../tools/diagnostics/air_combat_stage0_process_probe.py](../../../../../tools/diagnostics/air_combat_stage0_process_probe.py)
+- 诊断 probe：[../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py](../../../../../tools/diagnostics/air_combat_weapon_employment_process_probe.py)
 - 奖励消费：[../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 
 ## 结论

@@ -35,7 +35,7 @@ from python.rl.policy_algo.first_event_hazard import (
     compute_first_event_credit_loss,
 )
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
-from tools.diagnostics.air_combat_stage0_process_probe import _base_action, _base_env, _build_env
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_action, _base_env, _build_env
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 
 
@@ -104,7 +104,7 @@ def _to_serializable(value: Any) -> Any:
 def _obs_to_cpu(policy, obs: Any) -> dict[str, th.Tensor]:
     obs_tensor, _vectorized = policy.obs_to_tensor(obs)
     if not isinstance(obs_tensor, dict):
-        raise TypeError("A7 offline fit probe expects dict observations")
+        raise TypeError("event-credit offline fit probe expects dict observations")
     return {
         str(key): th.as_tensor(value).detach().to(device="cpu")
         for key, value in obs_tensor.items()
@@ -546,7 +546,7 @@ def evaluate_label_summary(labels: FirstEventHazardLabels) -> dict[str, Any]:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Offline supervised fit probe for the A7 first-event credit head.")
+    parser = argparse.ArgumentParser(description="Offline supervised fit probe for the first-event credit head.")
     parser.add_argument("--scenario", default=DEFAULT_SCENARIO)
     parser.add_argument("--train_config", default=DEFAULT_TRAIN_CONFIG)
     parser.add_argument("--model", default=DEFAULT_MODEL)

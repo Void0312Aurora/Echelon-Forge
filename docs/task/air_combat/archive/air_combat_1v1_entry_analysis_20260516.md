@@ -23,7 +23,7 @@ As of `2026-05-16`, the trusted premises that can serve as a `1v1` starting poin
 
 1. `execution` single aircraft execution training mainline remains the most mature, stable, and comprehensive execution entry.
 2. `cooperative_execution` has proven in the recent HMoE and strict terminal eval that the training chain of “multiple controllable entities sharing world-step / reset in the same world” is usable, but it currently serves same-team cooperation, not adversarial confrontation.
-3. The existing evaluation entry [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) only maintains `single` and `cooperative` modes, without a `versus` / `combat_1v1` mode.
+3. The existing evaluation entry [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) only maintains `single` and `cooperative` modes, without a `versus` / `combat_1v1` mode.
 4. The old [Reinforcement Learning and Self-Play Outlook](../../../forward/rl_selfplay.md) remains at the outlook level; the files `examples/training/train_self_play.py` and `examples/training/selfplay_config.json` mentioned in the text do not exist in the current repository and cannot be regarded as ready mainline entries.
 5. The current `ScenarioCompiler` / `ScenarioLoader` maintained mainline only compiles `objectives` where `type = "conditional"` into the runtime; do not directly treat the `capture_zone` explanation from old documents as available mainline capability for `1v1`.
 
@@ -136,7 +136,7 @@ Therefore, for `1v1` to follow the maintained mainline, at least one new adversa
 
 ### 2.6 Evaluation Status
 
-[tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) currently only supports:
+[tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) currently only supports:
 
 - `single`
 - `cooperative`

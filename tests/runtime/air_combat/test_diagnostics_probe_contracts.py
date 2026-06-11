@@ -15,7 +15,7 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from tools.diagnostics import air_combat_stage0_process_probe as probe  # noqa: E402
+from tools.diagnostics import air_combat_weapon_employment_process_probe as probe  # noqa: E402
 
 
 class _DummyHybridDistribution:

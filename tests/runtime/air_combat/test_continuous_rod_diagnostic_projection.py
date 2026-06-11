@@ -10,7 +10,7 @@ from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
     _spawn_structured_f16_pair,
     ef_py,
 )
-from tools.diagnostics import air_combat_stage0_process_probe as probe
+from tools.diagnostics import air_combat_weapon_employment_process_probe as probe
 
 
 def _warhead_profile(family: str) -> object:

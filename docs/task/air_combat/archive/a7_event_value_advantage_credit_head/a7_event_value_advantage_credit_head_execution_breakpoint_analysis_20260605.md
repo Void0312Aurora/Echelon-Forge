@@ -68,7 +68,7 @@ actual event-logit delta stayed below zero everywhere.
 
 ## Offline Credit Fit
 
-`tools/diagnostics/a7_credit_head_offline_fit_probe.py` was run with the same
+`tools/diagnostics/event_credit_head_probe.py --mode offline_fit` was run with the same
 model/config, hold collector, `1 x 2400` steps, and `300` credit-head-only fit
 steps.
 

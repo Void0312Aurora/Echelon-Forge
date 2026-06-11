@@ -19,7 +19,7 @@ structural breakup, debris/wreck objects, Pk, or real AIM-120C/MQ-9 calibration
 inside this completed MLF-3 subproject. The next phase must be created as a
 separate `docs/agent` subproject.
 
-Current MLF-4 planning subproject:
+Archived MLF-4 continuous-rod/cutting fact chain:
 [../missile_lethality_continuous_rod/README.md](../missile_lethality_continuous_rod/README.md).
 
 Reusable conclusion: after a fuze detonation, the system can now explain what
@@ -27,5 +27,9 @@ generic warhead load was applied, where it was projected, and which components
 received standard load facts. No-detonation paths do not create those standard
 warhead-load facts. This still does not directly say the target fragments,
 crashes, or is killed.
+
+MLF-4 is now complete and archived for continuous-rod/cutting exposure facts;
+follow-on component failure probability, structural breakup, debris/wreck, or
+Pk still need separate subprojects.
 
 Archive index: [archive/README.md](archive/README.md)

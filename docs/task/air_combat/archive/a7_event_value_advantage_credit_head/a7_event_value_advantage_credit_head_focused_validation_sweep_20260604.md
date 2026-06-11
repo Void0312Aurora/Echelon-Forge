@@ -34,7 +34,7 @@ python -m compileall -q \
   python/rl/policy_algo/first_event_hazard.py \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/training/diagnostics.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py
 ```
 
 Observed: pass.
@@ -73,7 +73,7 @@ git diff --check -- \
   docs/task/air_combat/a7_event_value_advantage_credit_head \
   examples/config/training/active/air_combat \
   python/training/diagnostics.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   tests/training/test_event_timing_training_config_contracts.py \
   tests/training/test_diagnostics_callback_contracts.py \
   tests/training/test_air_combat_training_entry_contracts.py \
@@ -120,7 +120,7 @@ touched files:
 - docs/task/air_combat/a7_event_value_advantage_credit_head/a7_event_value_advantage_credit_head_focused_validation_sweep_20260604.md
 commands/outcomes:
 - python -m json.tool <A7 active config> -> pass
-- python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py -> pass
+- python -m compileall -q python/rl/policy_algo/policies.py python/rl/policy_algo/first_event_hazard.py python/rl/policy_algo/ppo_adaptive_kl.py python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py -> pass
 - pytest tests/policy/test_execution_policy_surface.py tests/policy/test_event_head_update_contracts.py tests/policy/test_auxiliary_training_updates.py -q -> 44 passed
 - pytest tests/training/test_event_timing_training_config_contracts.py tests/training/test_diagnostics_callback_contracts.py tests/training/test_air_combat_training_entry_contracts.py -q -> 24 passed
 - pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py tests/training/test_diagnostics_callback_contracts.py -q -> 25 passed

@@ -21,7 +21,7 @@
 
 1. `execution` 单机执行训练主线仍然是最成熟、最稳定、覆盖面最完整的执行入口。
 2. `cooperative_execution` 已在最近一轮 HMoE 与严格 terminal eval 中证明“同一 world 多可控实体共享 world-step / reset”的训练链可用，但它当前服务的是同队协同，不是敌对对抗。
-3. 现有评估入口 [tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) 只维护了 `single` 与 `cooperative` 两种口径，还没有 `versus` / `combat_1v1` 模式。
+3. 现有评估入口 [tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) 只维护了 `single` 与 `cooperative` 两种口径，还没有 `versus` / `combat_1v1` 模式。
 4. 旧的 [强化学习与自博弈前瞻](../../../forward/rl_selfplay.md) 仍停留在前瞻口径；文中提到的 `examples/training/train_self_play.py` 与 `examples/training/selfplay_config.json` 在当前仓库中并不存在，不能当作现成主线入口。
 5. 当前 `ScenarioCompiler` / `ScenarioLoader` 维护主线只会把 `objectives` 中的 `type = "conditional"` 编译进运行时；不要把旧文档中的 `capture_zone` 说明直接当成 `1v1` 可用主线能力。
 
@@ -138,7 +138,7 @@
 
 ### 2.6 评估现状
 
-[tools/eval/eval_sb3.py](../../../../tools/eval/eval_sb3.py) 当前只支持：
+[tools/eval/policy_execution_eval.py](../../../../tools/eval/policy_execution_eval.py) 当前只支持：
 
 - `single`
 - `cooperative`

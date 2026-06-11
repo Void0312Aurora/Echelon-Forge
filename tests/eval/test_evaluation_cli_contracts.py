@@ -14,8 +14,8 @@ from python.testing.runtime import ensure_repo_imports
 
 ensure_repo_imports()
 
-from tools.eval.eval_sb3 import _build_single_env  # noqa: E402
-from tools.eval.eval_naval_n4_baseline import run_baseline_eval, run_offstation_command_probe  # noqa: E402
+from tools.eval.policy_execution_eval import _build_single_env  # noqa: E402
+from tools.eval.naval_station_policy_eval import run_baseline_eval, run_offstation_command_probe  # noqa: E402
 from tools.eval.sb3_eval_base import load_sb3_policy  # noqa: E402
 
 
@@ -59,8 +59,8 @@ def _assert_reward_surface_clean(testcase: unittest.TestCase, payload: dict[str,
     )
 
 
-class NavalN4BaselineEvalTests(unittest.TestCase):
-    def test_n4_baseline_eval_reports_cooperative_support_roster_and_reward_terms(self) -> None:
+class NavalStationPolicyEvalTests(unittest.TestCase):
+    def test_station_baseline_eval_reports_cooperative_support_roster_and_reward_terms(self) -> None:
         payload = run_baseline_eval(
             scenario_path=str(SCENARIO),
             train_config_path=str(HOLD_CONFIG),
@@ -70,7 +70,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         )
 
         self.assertTrue(bool(payload.get("passed")), payload)
-        self.assertEqual(payload.get("mode"), "naval_n4_cooperative_zero_action_baseline")
+        self.assertEqual(payload.get("mode"), "naval_station_cooperative_zero_action_baseline")
         self.assertEqual(int(payload.get("slots_per_world")), 1)
         self.assertEqual(int(payload.get("policy_slot_count")), 1)
         self.assertGreaterEqual(int(payload.get("active_roster_count")), 2)
@@ -94,7 +94,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
             ("Blue_HVU_TAKE1", False),
         ])
 
-    def test_n4_baseline_eval_cli_writes_json_for_each_active_entry(self) -> None:
+    def test_station_baseline_eval_cli_writes_json_for_each_active_entry(self) -> None:
         pairings = (
             (CONTACT_CONFIG, SCENARIO),
             (HOLD_CONFIG, SCENARIO),
@@ -107,7 +107,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                     proc = subprocess.run(
                         [
                             sys.executable,
-                            str(REPO_ROOT / "tools" / "eval" / "eval_naval_n4_baseline.py"),
+                            str(REPO_ROOT / "tools" / "eval" / "naval_station_policy_eval.py"),
                             "--scenario",
                             str(scenario_path),
                             "--train_config",
@@ -134,7 +134,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                     self.assertEqual(payload.get("forbidden_reward_terms_present"), [])
                     _assert_reward_surface_clean(self, payload)
 
-    def test_n4_baseline_eval_rejects_mismatched_declared_scenario(self) -> None:
+    def test_station_baseline_eval_rejects_mismatched_declared_scenario(self) -> None:
         with self.assertRaisesRegex(ValueError, "naval_entry\\.scenario_path"):
             run_baseline_eval(
                 scenario_path=str(SCENARIO),
@@ -144,13 +144,13 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                 worker_threads=1,
             )
 
-    def test_n4_baseline_eval_cli_writes_json_for_declared_scenario_mismatch(self) -> None:
+    def test_station_baseline_eval_cli_writes_json_for_declared_scenario_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             json_out = Path(tmpdir) / "mismatch.json"
             proc = subprocess.run(
                 [
                     sys.executable,
-                    str(REPO_ROOT / "tools" / "eval" / "eval_naval_n4_baseline.py"),
+                    str(REPO_ROOT / "tools" / "eval" / "naval_station_policy_eval.py"),
                     "--scenario",
                     str(SCENARIO),
                     "--train_config",
@@ -175,7 +175,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
             self.assertIn("naval_entry.scenario_path", str(payload.get("error", "")))
             self.assertIn("does not match --scenario", str(payload.get("error", "")))
 
-    def test_n4_baseline_eval_rejects_naval_entry_without_naval_env_surface(self) -> None:
+    def test_station_baseline_eval_rejects_naval_entry_without_naval_env_surface(self) -> None:
         for bad_value in FORBIDDEN_ACTION_MODES:
             with self.subTest(env_key="action_mode", bad_value=bad_value):
                 with tempfile.TemporaryDirectory() as tmpdir:
@@ -209,7 +209,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
                             worker_threads=1,
                         )
 
-    def test_n4_offstation_probe_reports_reward_reference_closure(self) -> None:
+    def test_station_offstation_probe_reports_reward_reference_closure(self) -> None:
         payload = run_offstation_command_probe(
             scenario_path=str(SCENARIO),
             train_config_path=str(HOLD_CONFIG),
@@ -219,7 +219,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         )
 
         self.assertTrue(bool(payload.get("passed")), payload)
-        self.assertEqual(payload.get("mode"), "naval_n4_offstation_station_order_probe")
+        self.assertEqual(payload.get("mode"), "naval_station_offstation_station_order_probe")
         min_delta = float(payload.get("minimum_recovery_delta_m"))
         self.assertLess(float(payload.get("reward_delta_matched_minus_zero")), 0.0)
         self.assertLess(float(payload.get("zero_station_error_delta_final_minus_first")), -min_delta)
@@ -237,7 +237,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         final_status = list(matched.get("final_mission_status", []) or [])
         self.assertGreater(float(final_status[0]), 1000.0)
 
-    def test_n4_offstation_probe_uses_maintained_recovery_scenario_directly(self) -> None:
+    def test_station_offstation_probe_uses_maintained_recovery_scenario_directly(self) -> None:
         payload = run_offstation_command_probe(
             scenario_path=str(RECOVERY_SCENARIO),
             train_config_path=str(RECOVERY_CONFIG),
@@ -256,13 +256,13 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
         _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
         _assert_reward_surface_clean(self, dict(payload.get("matched_radius_action", {}) or {}))
 
-    def test_n4_offstation_probe_cli_writes_json(self) -> None:
+    def test_station_offstation_probe_cli_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             json_out = Path(tmpdir) / "offstation.json"
             proc = subprocess.run(
                 [
                     sys.executable,
-                    str(REPO_ROOT / "tools" / "eval" / "eval_naval_n4_baseline.py"),
+                    str(REPO_ROOT / "tools" / "eval" / "naval_station_policy_eval.py"),
                     "--mode",
                     "offstation_probe",
                     "--scenario",
@@ -286,7 +286,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=proc.stdout)
             payload = json.loads(json_out.read_text(encoding="utf-8"))
             self.assertTrue(bool(payload.get("passed")), payload)
-            self.assertEqual(payload.get("mode"), "naval_n4_offstation_station_order_probe")
+            self.assertEqual(payload.get("mode"), "naval_station_offstation_station_order_probe")
             self.assertLess(float(payload.get("reward_delta_matched_minus_zero")), 0.0)
             self.assertLess(
                 float(payload.get("zero_station_error_delta_final_minus_first")),
@@ -296,7 +296,7 @@ class NavalN4BaselineEvalTests(unittest.TestCase):
             _assert_reward_surface_clean(self, dict(payload.get("matched_radius_action", {}) or {}))
 
 
-class EvalSB3Tests(unittest.TestCase):
+class PolicyExecutionEvalTests(unittest.TestCase):
     def test_single_eval_builds_world_batch_runtime_for_maintained_execution_entry(self) -> None:
         train_config_path = (
             REPO_ROOT
@@ -310,7 +310,7 @@ class EvalSB3Tests(unittest.TestCase):
         train_config = json.loads(train_config_path.read_text(encoding="utf-8"))
 
         scenario = {
-            "scenario_name": "eval_sb3_single_world_batch_smoke",
+            "scenario_name": "policy_execution_single_world_batch_smoke",
             "meta": {"max_steps": 2},
             "environment": {
                 "time_step": 0.05,
@@ -398,7 +398,7 @@ class EvalSB3Tests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    str(REPO_ROOT / "tools" / "eval" / "eval_sb3.py"),
+                    str(REPO_ROOT / "tools" / "eval" / "policy_execution_eval.py"),
                     "--mode",
                     "cooperative",
                     "--scenario",

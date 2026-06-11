@@ -30,7 +30,7 @@
   - capacity `8192`，balanced batch size `1024`；
   - classifier update steps `64`，max grad norm `5.0`；
   - `m3_window_classifier_head_lr_scale = 100.0`。
-- `air_combat_stage0_process_probe.py` 现在记录 `policy_m3_window_classifier_*` per-step 与 episode summary 字段。
+- `air_combat_weapon_employment_process_probe.py` 现在记录 `policy_m3_window_classifier_*` per-step 与 episode summary 字段。
 
 ## 验证
 
@@ -39,7 +39,7 @@ python -m compileall \
   python/rl/policy_algo/ppo_adaptive_kl.py \
   python/rl/policy_algo/policies.py \
   python/rl/support/nonfinite_probe.py \
-  tools/diagnostics/air_combat_stage0_process_probe.py
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py
 ```
 
 ```bash

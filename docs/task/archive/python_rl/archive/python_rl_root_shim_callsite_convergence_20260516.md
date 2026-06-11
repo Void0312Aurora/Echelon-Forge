@@ -47,7 +47,7 @@ To:
 Files that have been switched to `python.rl.control.*` include:
 
 - `tools/eval/task_eval_driver.py`
-- `tools/eval/eval_sb3.py`
+- `tools/eval/policy_execution_eval.py`
 - `tools/diagnostics/diagnose_takeoff_to_landing_trajectory.py`
 - `tools/diagnostics/analyze_cooperative_observation_scales.py`
 - `tools/diagnostics/diagnose_runway_drift_sweep.py`

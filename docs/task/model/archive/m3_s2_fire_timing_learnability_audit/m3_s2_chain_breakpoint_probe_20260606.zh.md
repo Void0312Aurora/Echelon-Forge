@@ -25,7 +25,7 @@ fixed forced-hold trajectory
 新增 diagnostic：
 
 ```text
-tools/diagnostics/m3s2_chain_breakpoint_probe.py
+tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint
 ```
 
 聚焦测试：
@@ -38,7 +38,7 @@ tests/training/test_fire_timing_fault_localization_contracts.py
 
 ```bash
 python -m compileall -q \
-  tools/diagnostics/m3s2_chain_breakpoint_probe.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint \
   tests/training/test_fire_timing_fault_localization_contracts.py
 
 python -m pytest tests/training/test_fire_timing_fault_localization_contracts.py -q
@@ -52,7 +52,7 @@ python -m pytest tests/training/test_fire_timing_fault_localization_contracts.py
 
 ```bash
 env PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python \
-  tools/diagnostics/m3s2_chain_breakpoint_probe.py \
+  tools/diagnostics/fire_timing_fault_localization_probe.py --mode chain_breakpoint \
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
   --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json \
   --model experiments_tmp/m3s2_scale_separated_contract_8k_20260606_r1/final_model.zip \

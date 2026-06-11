@@ -239,7 +239,7 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
 - `pytest tests/policy/test_auxiliary_training_updates.py -q`：pass，`8 passed`。
 - `git diff --check -- python/rl/policy_algo/policies.py tests/policy/test_execution_policy_surface.py`：pass。
 - `python -m json.tool <A7 active config>`：pass。
-- `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_stage0_process_probe.py`：pass。
+- `python -m compileall -q python/training/diagnostics.py tools/diagnostics/air_combat_weapon_employment_process_probe.py`：pass。
 - `pytest tests/training/test_event_timing_training_config_contracts.py -q`：pass，`6 passed`。
 - `pytest tests/training/test_diagnostics_callback_contracts.py -q`：pass，`5 passed`。
 - `pytest tests/runtime/air_combat/test_diagnostics_probe_contracts.py -q`：pass，`3 passed`。
@@ -353,13 +353,13 @@ threshold，stochastic samples 仍过早。默认不应再做 coefficient sweep�
   `[6, 42, 4, 2, 5, 46, 3, 46]`，且 `0` unauthorized/repeat/budget violations；
   releases 仍然过早，不能证明 quality-window timing accepted。
 - A7-EVC-T offline fixed-batch fit probe：
-  `tools/diagnostics/a7_credit_head_offline_fit_probe.py` 从 S final model 采集
+  `tools/diagnostics/event_credit_head_probe.py --mode offline_fit` 从 S final model 采集
   `2516` 个 active labels，其中 `1356` 个 `LEGAL_OPEN_QUALITY` positives。
   初始 legal-open advantage 为 `-0.8536`；credit-head-only fitting 将 legal-open
   advantage 翻到 `+0.6417`，正号比例 `1.0`；折算 value-coef 的预算对照仍翻到
   `+0.0083`，正号比例 `1.0`。
 - A7-EVC-U online update-path probe：
-  `tools/diagnostics/a7_online_update_path_probe.py` 已完成，并写出
+  `tools/diagnostics/event_credit_head_probe.py --mode online_update` 已完成，并写出
   `experiments_tmp/a7_online_update_path_probe_20260604.json`。Fixed-batch A7
   value 与 delta-align gradients 在 actor/features 中冲突（actor MLP
   `cosine=-0.8954`，features `-0.9097`）。Online PPO-alone credit-head

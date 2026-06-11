@@ -31,7 +31,7 @@ bootstrap 确认：
 
 ## 固定模型诊断
 
-使用 `tools/diagnostics/air_combat_stage0_process_probe.py --mode model`，
+使用 `tools/diagnostics/air_combat_weapon_employment_process_probe.py --mode model`，
 每个模型跑 `3` 个 deterministic episode：
 
 | 模型 | termination | 平均步数 | 平均奖励 | release_total | fire_switch_total | damage_reports |

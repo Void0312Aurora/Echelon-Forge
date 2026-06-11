@@ -4,9 +4,9 @@
 
 ## 域状态口径
 
-- 这里的大多数通用 eval 示例仍面向 air/execution 任务；cooperative/common 由 maintained SB3 与 leader diagnostics 路径覆盖。
+- 这里的大多数通用 eval 示例仍面向 air/execution 任务；cooperative/common 由 maintained learned-policy 与 leader diagnostics 路径覆盖。
 - 对于 active training/eval parity，应优先使用 runtime-facade / world-batch 路径的配置。直接构造 `UniversalEnv` 的工具属于 compatibility diagnostics，除非它们显式 opt in `runtime_compatibility_enabled`。
-- naval N4 有一个受限 maintained gate：`tools/eval/eval_naval_n4_baseline.py`。
+- naval station pre-fire 入口有一个受限 maintained gate：`tools/eval/naval_station_policy_eval.py`。
 - ground tasking/schema bootstrap 目前还没有 `tools/` 下的 maintained eval 或 diagnostics runner；不要从本目录清单推断完整 ground runtime 已支持。
 
 ## 布局
@@ -26,10 +26,10 @@
 
 - [eval_task.py](eval/eval_task.py)
   - air/execution 任务评估器，支持 `stable_flight`、`takeoff_roll`、`centerline` 和 `waypoint_nav`，可选用 `world_model` 或 `scripted` 后端。它走 raw `UniversalEnv` compatibility path，不是多域 acceptance gate。
-- [eval_sb3.py](eval/eval_sb3.py)
-  - 统一的 SB3 评估器，支持 `single` 和 `cooperative` 执行策略，并带有特定模式的指标。`single` 在 `runtime.world_batch_vec_env=true` 时使用 WorldBatchRuntime，否则回落到 raw `UniversalEnv` compatibility path；`cooperative` 使用 `CooperativeWorldBatchVecEnv`。
-- [eval_naval_n4_baseline.py](eval/eval_naval_n4_baseline.py)
-  - 受限 N4 naval cooperative gate，覆盖 stationing、pre-fire ROE hold reward terms 与 contact-evidence plumbing；这不是 learned-policy acceptance。
+- [policy_execution_eval.py](eval/policy_execution_eval.py)
+  - learned execution-policy 评估器，支持 `single` 和 `cooperative` 策略，并带有特定模式的指标。`single` 在 `runtime.world_batch_vec_env=true` 时使用 WorldBatchRuntime，否则回落到 raw `UniversalEnv` compatibility path；`cooperative` 使用 `CooperativeWorldBatchVecEnv`。
+- [naval_station_policy_eval.py](eval/naval_station_policy_eval.py)
+  - 受限 naval station cooperative gate，覆盖 stationing、pre-fire ROE hold reward terms 与 contact-evidence plumbing；这不是 learned-policy acceptance。
 - [task_eval_driver.py](eval/task_eval_driver.py)
   - 单智能体任务指标和后端适配器的共享实现。
 - [eval_utils.py](eval/eval_utils.py)
@@ -53,8 +53,12 @@
   - 统一的协同轨迹回放/导出 CLI，支持 `takeoff` 和 `takeoff_to_cruise`。
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - 维护的 Leader 层吞吐量探测，支持 `auto/subproc/shared/dummy`。
-- [air_combat_stage0_process_probe.py](diagnostics/air_combat_stage0_process_probe.py)
-  - 受限 air-combat stage-0/stage-1 process probe，用于 compatibility env path 上的武器使用/debug trace 与 hybrid action metrics。
+- [air_combat_weapon_employment_process_probe.py](diagnostics/air_combat_weapon_employment_process_probe.py)
+  - 受限 air-combat 武器使用过程 probe，用于 compatibility env path 上的 debug trace、lethality-chain 行与 hybrid action metrics。
+- [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
+  - 统一的 first-event credit-head 诊断入口，用于 fixed-batch fitting 和 online update-path isolation。
+- [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
+  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path 和 chain-breakpoint probes。
 - [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
   - cooperative execution 配置的 observation scale sampler；用于数值卫生检查，不是训练 runner。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
@@ -82,8 +86,10 @@
   - 将选定的实验/数据集目录移开，以创建一个更小的复现工作区。
 - [translate_docs_batch.py](maintenance/translate_docs_batch.py)
   - 审计双语覆盖率，并使用与 OpenAI 兼容的 API 批量翻译 Markdown 文档对等文件。
-- A2 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和 `a2_retained_manifest_integrity.py`
-  - A2 候选/retained-artifact governance 的任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
+- [damage_model_external_evidence.py](maintenance/damage_model_external_evidence.py)
+  - 统一的 external signoff evidence CLI，覆盖 source-rights signoff request、intake contract、packet template 和 admission preflight。
+- 剩余 A2 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和 `a2_retained_manifest_integrity.py`
+  - 待继续合并为 command family 的候选/retained-artifact governance 任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
 
 ## 归档
 
@@ -115,11 +121,11 @@ cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/env/mission_obs/mission_obs_nav_v1.json
 ```
 
-运行受限 naval N4 gate：
+运行受限 naval station policy gate：
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tools/eval/eval_naval_n4_baseline.py \
+cmo_python tools/eval/naval_station_policy_eval.py \
   --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json \
   --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json \
   --steps 1200
@@ -177,7 +183,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 ## 维护指南
 
 - 新的 raw-env/task-metric eval 行为应扩展 `tools/eval/eval_task.py` 和 `tools/eval/task_eval_driver.py`，并在需要时显式处理 compatibility，而不是添加每个任务独立的包装脚本。
-- 新的维护 SB3 评估行为应扩展 `tools/eval/eval_sb3.py` 和 `tools/eval/sb3_eval_base.py`，而不是重新引入拆分单/协同包装器。
+- 新的维护 learned-policy 评估行为应扩展 `tools/eval/policy_execution_eval.py` 和 `tools/eval/sb3_eval_base.py` 中的共享 policy-loading helper，而不是重新引入拆分单/协同包装器。
 - 共享的评估引导应来自 `tools.eval.eval_utils`，而不是复制的设置块。
 - JSON 契约入口点应优先使用 `tools/runners/run_scenario_contract.py`，而不是一次性包装器。
 - 维护的诊断应优先使用 `tools/diagnostics/benchmark.py` 用于单个基准测试系列，以及 `tools/diagnostics/run_benchmark_suite.py` 用于多作业套件。

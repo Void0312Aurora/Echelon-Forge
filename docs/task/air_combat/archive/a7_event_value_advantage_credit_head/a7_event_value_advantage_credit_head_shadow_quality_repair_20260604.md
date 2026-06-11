@@ -109,7 +109,7 @@ Deterministic probe:
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
   --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json \
   --mode model \
@@ -133,7 +133,7 @@ Stochastic probe:
 
 ```bash
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python \
-  tools/diagnostics/air_combat_stage0_process_probe.py \
+  tools/diagnostics/air_combat_weapon_employment_process_probe.py \
   --scenario scenarios/air_combat/1v1/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_training_shaped_v1.json \
   --train_config examples/config/training/active/air_combat/air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_a7_event_credit_launch_window_shaped_world_batch_probe_v1.json \
   --mode model \

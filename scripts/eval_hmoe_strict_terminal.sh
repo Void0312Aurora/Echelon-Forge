@@ -27,7 +27,7 @@ run_eval() {
   local model_path="$2"
   local json_out="$3"
   local cmd=(
-    "${PY}" -u tools/eval/eval_sb3.py
+    "${PY}" -u tools/eval/policy_execution_eval.py
     --mode cooperative
     --scenario "${SCENARIO}"
     --train_config "${TRAIN_CONFIG}"

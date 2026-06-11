@@ -34,7 +34,7 @@ active 入口单策略槽位 cooperative roster gate，并已通过聚焦验收�
 | `N5-D Focused acceptance` | main-thread integration | current main thread | 证明第一段拆分没有重新打开 N4 交战/毁伤语义。 | tests and validation notes in this doc | broad regression suite, formal training claim | focused pytest plus naval contract runner | 聚焦测试通过；残留项保持显式 | N5-B/C 后 | 1 + 1 repair | passed |
 | `N5-E Naval observation mode` | main-thread integration | current main thread | 新增 `naval_screen_station_v1`，让 active naval RL 接收站位/接触/ROE/报告字段，而不是空军 formation-role 字段。 | `python/mission_obs_taxonomy.py`, `gym_envs/scenario_loader/mission_observation.py`, `python/rl/runtime/world_batch/**`, active naval configs/docs, mission/naval/training tests | weapon release, damage/kill observation, cooperative packet schema | taxonomy pytest, runtime naval pytest, training-entry pytest | active 入口使用海军模式；world-batch 让 C++ mission batching 留在安全 fallback，并将策略可见 mission vector 替换为海军字段 | N5-D 后、新正式训练前 | 1 + 1 repair | implemented |
 | `N5-F Cooperative single-policy roster gate` | main-thread integration | current main thread | 让 active N4 入口使用 `cooperative_execution`，同时保留非 agent 的 T-AKE 支援舰 roster，但不为它分配策略槽位。 | `python/rl/runtime/cooperative_world_batch_vec_env.py`, active naval configs/docs, runtime/training tests | 通用 multi-agent naval promotion、cooperative 武器释放、新 policy route | runtime naval pytest, cooperative world-batch pytest, training-entry bootstrap | 真实 N4 DDG/T-AKE 场景以一个 DDG 策略槽位和两个 roster 成员启动；支援/报告奖励项仍可见 | N5-E 后 | 1 repair | implemented |
-| `N5-G Baseline/off-station eval gates` | main-thread integration | current main thread | 为 active 入口增加维护中的 N4 cooperative 零动作基线和离站位站位改令评估器。 | `tools/eval/eval_naval_n4_baseline.py`, eval tests, active/naval docs | learned-policy acceptance、离站位 curriculum 成功声明、武器释放、毁伤奖励 | eval pytest, short CLI smoke | baseline eval 验证一个 DDG 策略槽位、非 agent 支援 roster 保留、必要海军奖励项，以及无机场/武器/毁伤奖励项；离站位 probe 验证站位改令不能把奖励参考点移动到本舰身上 | N5-F 后 | 1 repair | implemented |
+| `N5-G Baseline/off-station eval gates` | main-thread integration | current main thread | 为 active 入口增加维护中的 N4 cooperative 零动作基线和离站位站位改令评估器。 | `tools/eval/naval_station_policy_eval.py`, eval tests, active/naval docs | learned-policy acceptance、离站位 curriculum 成功声明、武器释放、毁伤奖励 | eval pytest, short CLI smoke | baseline eval 验证一个 DDG 策略槽位、非 agent 支援 roster 保留、必要海军奖励项，以及无机场/武器/毁伤奖励项；离站位 probe 验证站位改令不能把奖励参考点移动到本舰身上 | N5-F 后 | 1 repair | implemented |
 
 本实现轮没有分发 subagent。任务簇仍然是有限且符合治理规则的；未来若分发，应先映射到下方某个残留簇。
 
@@ -83,7 +83,7 @@ Cooperative runtime 行为：
 
 Baseline eval 行为：
 
-- `tools/eval/eval_naval_n4_baseline.py` 在 active N4 cooperative runtime 上用零
+- `tools/eval/naval_station_policy_eval.py` 在 active N4 cooperative runtime 上用零
   `naval_station3` 动作运行固定步数窗口；
 - 输出 JSON 包含奖励总量、slot/roster 形状、必要海军奖励项和禁止出现的机场 / 武器 / 毁伤奖励检查；
 - `--mode offstation_probe` 可以直接使用维护态离站位恢复场景，证明脚本站位保持会在
@@ -106,8 +106,8 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m pytest -q tests/training/test_training_bootstrap_contracts.py
 PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/runners/run_scenario_contract.py --spec tests/contracts/unit/naval/naval_screen_threat_roe_geometry.json
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
-PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/eval_naval_n4_baseline.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 300
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 1200
+PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tools/eval/naval_station_policy_eval.py --mode offstation_probe --scenario scenarios/naval/ddg51_take1_screen_threat_roe_v1.json --train_config examples/config/training/active/naval/naval_screen_station_hold_threat_aware_smoke_v1.json --steps 300
 git diff --check -- docs/task/naval examples/config/training/active/naval gym_envs/scenario_loader gym_envs/universal_env.py gym_envs/universal_env_parts python/env_config.py python/mission_obs_taxonomy.py python/training/cli.py python/rl/runtime/world_batch python/rl/runtime/world_batch_vec_env.py python/rl/runtime/cooperative_world_batch_vec_env.py train.py tools/eval tools/diagnostics/benchmarks/world_batch_vec_env.py tests/runtime/core/test_env_config.py tests/runtime/mission/test_mission_obs_taxonomy.py tests/runtime/naval/test_naval_station_policy_surface.py tests/training/test_naval_training_entry_contracts.py tests/training/test_naval_training_entry_contracts.py
 ```
 

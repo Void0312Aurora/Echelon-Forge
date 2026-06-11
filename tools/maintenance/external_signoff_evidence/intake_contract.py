@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the A2 blast-fragmentation signoff intake contract.
+"""Generate the damage-model external signoff intake contract.
 
 This is deliberately a contract/checker layer, not a signoff. It defines the
 hash-only shape that a future reviewer packet must satisfy before a separate
@@ -17,13 +17,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_source_rights_signoff_request_packet as signoff_request,
-)
+from tools.maintenance.external_signoff_evidence import signoff_request  # noqa: E402
 
 
 PACKAGE_ID = signoff_request.PACKAGE_ID
@@ -637,8 +635,8 @@ def write_retained_artifacts(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate the fail-closed A2 blast-fragmentation signoff intake "
-            "contract and optional external signoff packet shape check."
+            "Generate the fail-closed damage-model external signoff intake "
+            "contract and optional packet shape check."
         )
     )
     parser.add_argument(

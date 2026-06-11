@@ -44,19 +44,18 @@ Current diagnostics and probes:
   - Quick leader-layer throughput probe for the maintained `auto`, `subproc`, `shared`, and `dummy` baselines.
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
-- [air_combat_stage0_process_probe.py](air_combat_stage0_process_probe.py)
-  - Scoped air-combat stage-0/stage-1 process probe for weapon-employment/debug traces and hybrid action metrics on the raw-`UniversalEnv` compatibility path.
-- [m3s2_structural_toy_probe.py](m3s2_structural_toy_probe.py)
-  - Abstract one-shot window probe for M3-S2 grouped stopping. It removes the
-    air-combat environment and checks whether free logits and a small MLP can
-    learn prewindow survival plus quality-window boundary crossing.
-- [m3s2_real_update_path_probe.py](m3s2_real_update_path_probe.py)
-  - Real Stage-1 M3-S2 update-path probe. It collects forced-hold rows,
-    reconstructs M3-S2 groups, and checks whether auxiliary updates raise the
-    executable `fire_once` logit in the quality window or merely suppress hazard
-    globally.
-  - Supports loss-component overrides and `--reset-optimizer-state` to separate
-    objective-contract failures from shared-optimizer-state failures.
+- [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
+  - Scoped air-combat weapon-employment process probe for debug traces, lethality-chain rows, and hybrid action metrics on the raw-`UniversalEnv` compatibility path.
+- [event_credit_head_probe.py](event_credit_head_probe.py)
+  - Unified first-event credit-head diagnostic entry. Use `--mode offline_fit`
+    for fixed-batch supervised fitting, or `--mode online_update` for
+    update-path isolation across PPO, shared actor/features, and credit-head
+    losses.
+- [fire_timing_fault_localization_probe.py](fire_timing_fault_localization_probe.py)
+  - Unified fire-timing fault-localization entry. Use `--mode structural_toy`
+    for the abstract grouped-stopping toy, `--mode real_update` for real
+    update-path checks, or `--mode chain_breakpoint` for fixed-batch breakpoint
+    attribution.
 - [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)

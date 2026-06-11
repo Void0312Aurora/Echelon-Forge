@@ -27,7 +27,7 @@ from python.rl.policy_algo.m3s1_grouped_stopping import (  # noqa: E402
     M3S1GroupedStoppingEvidence,
     compute_m3s1_grouped_stopping_loss,
 )
-from tools.diagnostics.a7_credit_head_offline_fit_probe import (  # noqa: E402
+from tools.diagnostics.event_credit_head.offline_fit import (  # noqa: E402
     _concat_obs,
     _finite_float,
     _hold_action,
@@ -38,7 +38,7 @@ from tools.diagnostics.a7_credit_head_offline_fit_probe import (  # noqa: E402
     _slice_obs,
     _to_serializable,
 )
-from tools.diagnostics.air_combat_stage0_process_probe import _base_env, _build_env  # noqa: E402
+from tools.diagnostics.air_combat_weapon_employment_process_probe import _base_env, _build_env  # noqa: E402
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy  # noqa: E402
 
 
