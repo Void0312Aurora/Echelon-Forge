@@ -24,9 +24,11 @@
     acceptance review 链接和 WP 作用域内 Markdown 链接健康度。
   - 输出只读清单或生成 closure 摘要供 closure subagent 使用，而不是让主
     实现路径手工重写 README 或 review index。
-- [a2_source_admission_audit.py](a2_source_admission_audit.py)
-  - 审计 A2 高保真毁伤模型 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
-  - 在 descriptor review 前，对意外的 validation pass 或 runtime authority 授权执行失败关闭，保持候选数据非权威。
+- [damage_model_source_governance.py](damage_model_source_governance.py)
+  是统一的 damage-model source governance 命令族。
+  - `admission-audit` 审计 source ledger、source pin / gap update 和候选 validation manifest 的公开来源准入卫生。
+  - `payload-pack` 构建或检查 retained source payload pack，不授予 authority。
+  - `rights-output-policy` 评估 source-rights 与 allowed-output policy gate，并保持失败关闭。
 
 任务专用 A2 辅助工具：
 
@@ -36,7 +38,7 @@
   不再保留旧的逐步骤入口文件。
 - 剩余 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
   `a2_retained_manifest_integrity.py` 脚本是 candidate package、retained
-  artifact、provenance、source-rights 与 review-gate 辅助工具。
+  artifact、provenance 与 review-gate 辅助工具。
 - 这些工具只属于 maintenance/governance utility。它们不授予 runtime
   authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
   A2 damage-model workflow 内。
@@ -172,8 +174,8 @@ closure subagent 的工作项，而不是主实现流 blocker。
 审计 A2 毁伤模型公开来源准入文档：
 
 ```bash
-python3 tools/maintenance/a2_source_admission_audit.py
-python3 tools/maintenance/a2_source_admission_audit.py --strict
+python3 tools/maintenance/damage_model_source_governance.py admission-audit
+python3 tools/maintenance/damage_model_source_governance.py admission-audit --strict
 ```
 
 默认模式只因 error-level authority、候选来源更新或 manifest 违规失败。`--strict` 还会因 source pin

@@ -63,7 +63,7 @@ worker 只需确认没有把 research estimate 写成 stock/runtime 真值。
 
 ```bash
 python tools/maintenance/a2_retained_manifest_integrity.py
-python tools/maintenance/a2_source_admission_audit.py --strict
+python tools/maintenance/damage_model_source_governance.py admission-audit --strict
 python tools/maintenance/a2_candidate_vps_bundle.py
 python -m pytest -q tests/architecture/damage_model/test_candidate_artifact_contracts.py tests/architecture/damage_model/test_source_admission_audit.py tests/architecture/damage_model/test_retained_manifest_integrity.py
 git diff --check

@@ -20,9 +20,9 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_source_payload_pack as payload_pack,
-    a2_blastfrag_source_rights_output_policy as output_policy,
+from tools.maintenance.source_governance import (  # noqa: E402
+    payload_pack,
+    rights_output_policy as output_policy,
 )
 from tools.maintenance.external_signoff_evidence import (  # noqa: E402
     signoff_request as signoff_request_packet,
@@ -212,7 +212,8 @@ def test_source_payload_pack_cli_writes_retained_json(
     subprocess.run(
         [
             PYTHON_EXECUTABLE,
-            "tools/maintenance/a2_blastfrag_source_payload_pack.py",
+            "tools/maintenance/damage_model_source_governance.py",
+            "payload-pack",
             "--write-retained-artifacts",
             "--output-dir",
             str(retained_dir),
@@ -460,7 +461,8 @@ def test_source_rights_output_policy_cli_writes_json(
     subprocess.run(
         [
             PYTHON_EXECUTABLE,
-            "tools/maintenance/a2_blastfrag_source_rights_output_policy.py",
+            "tools/maintenance/damage_model_source_governance.py",
+            "rights-output-policy",
             "--write-retained-artifacts",
             "--output-dir",
             str(retained_dir),

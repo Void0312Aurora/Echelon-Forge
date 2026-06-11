@@ -28,12 +28,14 @@ General maintained helpers:
   - Emits a read-only checklist or a generated closure summary for a closure
     subagent instead of rewriting README or review indexes on the main
     implementation path.
-- [a2_source_admission_audit.py](a2_source_admission_audit.py)
-  - Audits A2 high-fidelity damage-model source ledgers, source pin / gap
-    updates, and candidate validation manifests for public-source admission
-    hygiene.
-  - Keeps candidate data non-authoritative by failing on accidental validation
-    pass or runtime authority grants before descriptor review.
+- [damage_model_source_governance.py](damage_model_source_governance.py)
+  is the unified damage-model source governance command family.
+  - `admission-audit` audits source ledgers, source pin / gap updates, and
+    candidate validation manifests for public-source admission hygiene.
+  - `payload-pack` builds or inspects retained source payload packs without
+    granting authority.
+  - `rights-output-policy` evaluates the source-rights and allowed-output
+    policy gate while staying fail-closed.
 
 Task-specific A2 helpers:
 
@@ -43,7 +45,7 @@ Task-specific A2 helpers:
   `admission-preflight` without retaining the old per-step entrypoint files.
 - Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
   `a2_retained_manifest_integrity.py` scripts are candidate-package,
-  retained-artifact, provenance, source-rights, and review-gate helpers.
+  retained-artifact, provenance, and review-gate helpers.
 - These tools are maintenance/governance utilities only. They do not grant
   runtime authority, do not make A2 retained artifacts product surface, and
   should stay scoped to the A2 damage-model workflow.
@@ -208,8 +210,8 @@ are intended to be closure-subagent work items rather than main-lane blockers.
 Audit A2 damage-model public-source admission docs:
 
 ```bash
-python3 tools/maintenance/a2_source_admission_audit.py
-python3 tools/maintenance/a2_source_admission_audit.py --strict
+python3 tools/maintenance/damage_model_source_governance.py admission-audit
+python3 tools/maintenance/damage_model_source_governance.py admission-audit --strict
 ```
 
 Default mode fails only error-level authority, candidate source update, or

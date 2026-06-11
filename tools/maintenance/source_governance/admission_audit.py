@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 ARCHIVED_A2_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
 LEGACY_A2_ROOT = Path("docs/task/air_combat/a2_high_fidelity_damage_model")
 

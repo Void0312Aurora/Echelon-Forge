@@ -24,7 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_source_admission_audit as source_audit
+from tools.maintenance.source_governance import admission_audit as source_audit
 
 
 F16_PATH = REPO_ROOT / "examples/config/database/aircraft/units/f16c_block50.json"

@@ -68,6 +68,6 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 pyth
 如涉及 source admission、candidate package 或 authority 边界，同时运行：
 
 ```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\test_a2_source_admission_audit.py
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\a2_source_admission_audit.py --strict
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python -m pytest tests\architecture\damage_model\test_source_admission_audit.py
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\maintenance\cmo_env.ps1 python tools\maintenance\damage_model_source_governance.py admission-audit --strict
 ```

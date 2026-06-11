@@ -50,7 +50,8 @@
 | workspace cleanup/audit | `redundancy_audit.py`、`cleanup_redundancy.py`、`isolate_repro_workspace.sh` | 功能名稳定。 | 保留。 |
 | docs maintenance | `translate_docs_batch.py`、`wp_doc_closure_audit.py` | 功能名稳定。 | 保留。 |
 | damage-model external evidence | `tools/maintenance/damage_model_external_evidence.py` | 本轮已合并 source-rights signoff request、external signoff intake/template/preflight。 | 保留统一入口；内部实现位于 `tools/maintenance/external_signoff_evidence/`。 |
-| A2 retained-artifact governance | `tools/maintenance/a2_*.py` 剩余 43 个 | 功能面重要，但文件边界仍按任务/阶段膨胀。 | 继续按 command family 合并后删除旧入口。 |
+| damage-model source governance | `tools/maintenance/damage_model_source_governance.py` | 本轮已合并 source admission audit、source payload pack、source rights output policy。 | 保留统一入口；内部实现位于 `tools/maintenance/source_governance/`。 |
+| A2 retained-artifact governance | `tools/maintenance/a2_*.py` 剩余 40 个 | 功能面重要，但文件边界仍按任务/阶段膨胀。 | 继续按 command family 合并后删除旧入口。 |
 | archived probes | `tools/archive/*` | 已不属于活入口。 | 保留在 archive；若活文档引用则迁移引用或恢复为 maintained 工具。 |
 
 ## 4. 下一轮激进清理顺序
@@ -62,7 +63,8 @@
 | 已完成 | fire-timing fault localization 合并 | `fire_timing_fault_localization_probe.py --mode structural_toy/real_update/chain_breakpoint` 成为统一能力入口。 | tests/training helper import 已迁移到语义子包。 |
 | 已完成 | air-combat process probe 改名 | `air_combat_weapon_employment_process_probe.py` 成为语义入口；旧过程代号入口删除。 | 已同步 runtime tests、diagnostics docs、model/archive docs。 |
 | 已完成 | external signoff evidence 合并 | `damage_model_external_evidence.py signoff-request/intake-contract/packet-template/admission-preflight` 成为统一维护入口。 | 旧 source-rights signoff request、signoff intake/template/preflight 顶层脚本删除；architecture tests 改用语义模块。 |
-| P2 | A2 maintenance 命令族合并 | 剩余 43 个 `a2_*` 入口继续压缩成少数 artifact governance 命令族。 | 这是 retained-artifact 历史接口，不应只做表面重命名。 |
+| 已完成 | source governance 合并 | `damage_model_source_governance.py admission-audit/payload-pack/rights-output-policy` 成为统一维护入口。 | 旧 source admission audit、source payload pack、source rights output policy 顶层脚本删除；architecture tests 改用语义模块。 |
+| P2 | A2 maintenance 命令族合并 | 剩余 40 个 `a2_*` 入口继续压缩成少数 artifact governance 命令族。 | 这是 retained-artifact 历史接口，不应只做表面重命名。 |
 | P3 | archive 引用清理 | 活文档不再引用 archived scratch 脚本。 | 只改引用，不改历史证据内容。 |
 
 ## 5. A2 maintenance 的处理边界

@@ -21,7 +21,7 @@ from typing import Any
 from xml.etree import ElementTree
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
     "beam_high_near_miss_0_35m_v0"
@@ -694,7 +694,7 @@ def write_retained_source_rights_output_policy_gate(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate the A2 RES-001 source rights and allowed-output policy gate."
@@ -722,7 +722,7 @@ def main() -> int:
         action="store_true",
         help="Write source_rights_output_policy_gate.json and manifest.json.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.write_retained_artifacts:
         payload = write_retained_source_rights_output_policy_gate(

@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -1067,7 +1067,7 @@ def write_source_payload_pack(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Build the A2 RES-001 source payload pack without granting authority."
@@ -1097,7 +1097,7 @@ def main() -> int:
         action="store_true",
         help="When writing, do not copy matching workspace payloads into the pack.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.write_retained_artifacts:
         artifact = write_source_payload_pack(

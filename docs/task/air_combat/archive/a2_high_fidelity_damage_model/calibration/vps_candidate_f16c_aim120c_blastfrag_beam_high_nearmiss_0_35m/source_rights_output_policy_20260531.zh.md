@@ -2,7 +2,7 @@
 
 状态：`blocked_release_candidate_rights_supported_policy_fail_closed / release-candidate / non-authoritative / RES-001`。
 
-本文档记录 `A2-EV-SOURCE-RIGHTS-OUTPUT-POLICY` 对已 retained 且 hash 匹配的 `TP-20.pdf`、`BEC-O-V1.xlsx`、`TP-21.pdf` 三个 payload 的 rights review / allowed-output policy gate。对应工具为 [a2_blastfrag_source_rights_output_policy.py](../../../../../../tools/maintenance/a2_blastfrag_source_rights_output_policy.py)。
+本文档记录 `A2-EV-SOURCE-RIGHTS-OUTPUT-POLICY` 对已 retained 且 hash 匹配的 `TP-20.pdf`、`BEC-O-V1.xlsx`、`TP-21.pdf` 三个 payload 的 rights review / allowed-output policy gate。对应工具为 [damage_model_source_governance.py](../../../../../../tools/maintenance/damage_model_source_governance.py) `rights-output-policy`。
 
 本 gate 不创建 stock descriptor，不消费 benchmark output，不复制 payload 正文或 spreadsheet 输出，不授予 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`。
 
@@ -101,6 +101,6 @@
 ## 7. 复核命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_source_rights_output_policy.py --write-retained-artifacts
+python tools/maintenance/damage_model_source_governance.py rights-output-policy --write-retained-artifacts
 python -m pytest -q tests/architecture/damage_model/test_source_evidence_governance.py
 ```

@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_source_admission_audit as audit
+from tools.maintenance.source_governance import admission_audit as audit
 
 
 def _write(path: Path, text: str) -> None:
@@ -27,7 +27,7 @@ def _minimal_ledger() -> str:
 """
 
 
-def test_a2_source_admission_audit_current_docs_have_no_error_level_gaps() -> None:
+def test_source_admission_audit_current_docs_have_no_error_level_gaps() -> None:
     result = audit.audit_a2_source_admission(audit.REPO_ROOT)
 
     assert result.checked_ledgers >= 9
@@ -37,7 +37,7 @@ def test_a2_source_admission_audit_current_docs_have_no_error_level_gaps() -> No
     assert not [issue for issue in result.issues if issue.severity == "warning"]
 
 
-def test_a2_source_admission_audit_rejects_candidate_manifest_authority_grants(
+def test_source_admission_audit_rejects_candidate_manifest_authority_grants(
     tmp_path: Path,
 ) -> None:
     _write(
@@ -70,7 +70,7 @@ def test_a2_source_admission_audit_rejects_candidate_manifest_authority_grants(
     assert "calibration-doc-authority-true" in codes
 
 
-def test_a2_source_admission_audit_warns_on_unpinned_source_rows(tmp_path: Path) -> None:
+def test_source_admission_audit_warns_on_unpinned_source_rows(tmp_path: Path) -> None:
     _write(
         tmp_path
         / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
@@ -88,7 +88,7 @@ def test_a2_source_admission_audit_warns_on_unpinned_source_rows(tmp_path: Path)
     assert any(issue.code == "ledger-row-unstable-source-ref" for issue in result.issues)
 
 
-def test_a2_source_admission_audit_checks_candidate_update_docs(tmp_path: Path) -> None:
+def test_source_admission_audit_checks_candidate_update_docs(tmp_path: Path) -> None:
     _write(
         tmp_path
         / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
@@ -119,7 +119,7 @@ def test_a2_source_admission_audit_checks_candidate_update_docs(tmp_path: Path) 
     assert "candidate-doc-authority-true" in codes
 
 
-def test_a2_source_admission_audit_requires_reasonableness_for_community_updates(
+def test_source_admission_audit_requires_reasonableness_for_community_updates(
     tmp_path: Path,
 ) -> None:
     _write(
