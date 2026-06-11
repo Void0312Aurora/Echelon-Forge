@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_candidate_vps_bundle as candidate_bundle  # noqa: E402
+from tools.maintenance.candidate_artifacts import package_bundle as candidate_bundle  # noqa: E402
 
 
 PACKAGE_ID = (

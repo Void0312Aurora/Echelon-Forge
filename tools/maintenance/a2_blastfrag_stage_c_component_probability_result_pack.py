@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance.release_governance import effect_scale_release_readiness as stage_b_gate
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_snapshot as stage_c_snapshot,
@@ -58,7 +58,10 @@ def _artifact_hash_rows(
         {
             "artifact_id": "ART-RUNTIME-AUTH-001",
             "artifact_kind": "runtime_aligned_authority_exercise",
-            "tool_ref": "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
+            "tool_ref": (
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "runtime-authority-exercise"
+            ),
             "status": authority_artifact["status"],
             "sha256": _payload_sha256(authority_artifact),
         },

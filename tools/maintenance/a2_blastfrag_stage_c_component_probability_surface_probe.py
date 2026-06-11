@@ -26,7 +26,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from python.testing.runtime import resolve_repo_path
 
-from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 
 
 PACKAGE_ID = (
@@ -556,7 +556,8 @@ def generate_stage_c_component_probability_surface_probe(
         "artifact_provenance": {
             "source_kind": "candidate_stage_c_component_probability_surface_probe",
             "runtime_aligned_authority_pack_ref": (
-                "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "runtime-authority-exercise"
             ),
             "narrow_scope_ref": (
                 "docs/task/air_combat/archive/a2_high_fidelity_damage_model/"

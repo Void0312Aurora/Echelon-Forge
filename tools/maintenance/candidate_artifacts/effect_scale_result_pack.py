@@ -18,13 +18,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
-from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as stage_b_snapshot
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
+from tools.maintenance.candidate_artifacts import effect_scale_snapshot as stage_b_snapshot
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 PACKAGE_ID = (
@@ -53,21 +53,21 @@ def _artifact_hash_rows(
         {
             "artifact_id": "ART-SCAFFOLD-001",
             "artifact_kind": "validation_scaffold_snapshot",
-            "tool_ref": "tools/maintenance/a2_blastfrag_validation_scaffold.py",
+            "tool_ref": "tools/maintenance/damage_model_candidate_artifacts.py validation-scaffold",
             "status": scaffold_artifact["validation_status"],
             "sha256": _payload_sha256(scaffold_artifact),
         },
         {
             "artifact_id": "ART-SCOPE-PROBE-001",
             "artifact_kind": "scope_boundary_probe_snapshot",
-            "tool_ref": "tools/maintenance/a2_blastfrag_scope_boundary_probe.py",
+            "tool_ref": "tools/maintenance/damage_model_candidate_artifacts.py scope-boundary-probe",
             "status": scope_probe_artifact["status"],
             "sha256": _payload_sha256(scope_probe_artifact),
         },
         {
             "artifact_id": "ART-STAGE-B-SNAPSHOT-001",
             "artifact_kind": "stage_b_hard_gate_snapshot",
-            "tool_ref": "tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py",
+            "tool_ref": "tools/maintenance/damage_model_candidate_artifacts.py effect-scale-snapshot",
             "status": stage_b_snapshot_artifact["status"],
             "sha256": _payload_sha256(stage_b_snapshot_artifact),
         },
@@ -245,7 +245,7 @@ def generate_stage_b_validation_result_pack(*, repo_root: Path = REPO_ROOT) -> d
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage B effect-scale candidate validation result pack "
@@ -257,7 +257,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_b_validation_result_pack()
     payload = _canonical_json(artifact)

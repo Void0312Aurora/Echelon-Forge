@@ -16,11 +16,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 PACKAGE_ID = (
@@ -208,7 +208,7 @@ def generate_scope_boundary_probe(*, repo_root: Path = REPO_ROOT) -> dict[str, A
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage B scope boundary probe artifact for the current "
@@ -220,7 +220,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_scope_boundary_probe()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

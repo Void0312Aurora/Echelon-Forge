@@ -98,8 +98,10 @@
   - 统一的 independent-review CLI，覆盖 effect-scale review、review closeout、scope-bucket review 和 uncertainty review gate。
 - [damage_model_release_governance.py](maintenance/damage_model_release_governance.py)
   - 统一的 release-governance CLI，覆盖 package provenance/identity、provenance review/closeout、source release signoff、scoped release identity 和 Stage B release readiness/closeout gate。
-- 剩余 A2 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和 `a2_retained_manifest_integrity.py`
-  - 待继续合并为 command family 的候选/retained-artifact governance 任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
+- [damage_model_candidate_artifacts.py](maintenance/damage_model_candidate_artifacts.py)
+  - 统一的 candidate-artifact CLI，覆盖 validation scaffold、scope probe、Stage B effect-scale artifact pack、runtime authority exercise 和 candidate package bundle。
+- 剩余 A2 `a2_blastfrag_*.py` 和 `a2_retained_manifest_integrity.py`
+  - 待继续合并为 command family 的 retained-artifact 与 Stage C governance 任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
 
 ## 归档
 

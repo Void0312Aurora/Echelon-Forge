@@ -20,7 +20,7 @@ from typing import Any
 import statistics
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -657,7 +657,7 @@ def _descriptor_row_draft(
         "miss_distance_bucket": RUNTIME_MISS_DISTANCE_BUCKET,
         "source_kind": "engineering_surrogate",
         "source_ref": (
-            "tools/maintenance/a2_blastfrag_validation_scaffold.py"
+            "tools/maintenance/damage_model_candidate_artifacts.py validation-scaffold"
             f"#{PACKAGE_ID}"
         ),
         "validation_artifact_ref": "",
@@ -680,7 +680,7 @@ def _descriptor_row_draft(
             {
                 "row_id": "draft-blastfrag-beam-high-near-miss-mechanism-gate",
                 "source_ref": (
-                    "tools/maintenance/a2_blastfrag_validation_scaffold.py"
+                    "tools/maintenance/damage_model_candidate_artifacts.py validation-scaffold"
                     "#draft-blastfrag-beam-high-near-miss-mechanism-gate"
                 ),
                 "provenance": (
@@ -827,7 +827,7 @@ def generate_validation_scaffold(
     }
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the non-authoritative A2 blast-fragmentation validation "
@@ -863,11 +863,11 @@ def _parse_args() -> argparse.Namespace:
         default=4096,
         help="Fixed sphere-sampling count for BFM-BM-003/005 toy benchmarks.",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = _parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
     artifact = generate_validation_scaffold(
         seed=args.seed,
         standoff_m=args.standoff_m,

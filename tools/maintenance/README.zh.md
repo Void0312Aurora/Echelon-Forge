@@ -52,9 +52,12 @@
   是统一的 release governance 命令族，分发 package provenance/identity、
   provenance review/closeout、source release signoff、scoped release
   identity 和 Stage B release readiness/closeout 命令。
-- 剩余 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和
-  `a2_retained_manifest_integrity.py` 脚本是 candidate package、retained
-  artifact、provenance 与 review-gate 辅助工具。
+- [damage_model_candidate_artifacts.py](damage_model_candidate_artifacts.py)
+  是统一的 candidate artifact 命令族，分发 validation scaffold、scope
+  boundary probe、Stage B effect-scale artifact pack、runtime authority
+  exercise 和 candidate package bundle 命令。
+- 剩余 `a2_blastfrag_*.py` 和 `a2_retained_manifest_integrity.py` 脚本是
+  retained artifact、Stage C、provenance 与 review-gate 辅助工具。
 - 这些工具只属于 maintenance/governance utility。它们不授予 runtime
   authority，不把 A2 retained artifacts 变成 product surface，并应继续限定在
   A2 damage-model workflow 内。

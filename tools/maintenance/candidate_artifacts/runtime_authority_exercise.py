@@ -22,13 +22,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from python.testing.runtime import configure_sim_log_level, resolve_repo_path
 
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 configure_sim_log_level("warn")
@@ -516,7 +516,7 @@ def generate_runtime_aligned_authority_pack(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate a runtime-aligned A2 blast-fragmentation authority "
@@ -540,7 +540,7 @@ def main() -> int:
         default=DEFAULT_COMPONENT_FAILURE_PROBABILITY,
         help="Component-specific probability value for the Stage C descriptor candidate.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_runtime_aligned_authority_pack(
         effect_scale=float(args.effect_scale),

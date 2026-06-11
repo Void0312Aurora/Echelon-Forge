@@ -17,14 +17,14 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
-from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as stage_b_snapshot
-from tools.maintenance import a2_blastfrag_stage_b_validation_result_pack as result_pack
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
+from tools.maintenance.candidate_artifacts import effect_scale_snapshot as stage_b_snapshot
+from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 PACKAGE_ID = (
@@ -230,7 +230,7 @@ def generate_retained_artifact_pack(
     return manifest
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Write retained Stage B effect-scale candidate artifacts for the "
@@ -243,7 +243,7 @@ def main() -> int:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory where retained JSON artifacts will be written.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_retained_artifact_pack(output_dir=args.output_dir)
     print(_canonical_json(artifact))

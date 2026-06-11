@@ -84,16 +84,25 @@ DOC_REFS = {
         / "aim_120c.json"
     ),
     "validation_scaffold_tool": (
-        REPO_ROOT / "tools" / "maintenance" / "a2_blastfrag_validation_scaffold.py"
+        REPO_ROOT
+        / "tools"
+        / "maintenance"
+        / "candidate_artifacts"
+        / "validation_scaffold.py"
     ),
     "scope_boundary_probe_tool": (
-        REPO_ROOT / "tools" / "maintenance" / "a2_blastfrag_scope_boundary_probe.py"
+        REPO_ROOT
+        / "tools"
+        / "maintenance"
+        / "candidate_artifacts"
+        / "scope_boundary_probe.py"
     ),
     "stage_b_snapshot_tool": (
         REPO_ROOT
         / "tools"
         / "maintenance"
-        / "a2_blastfrag_stage_b_effect_scale_snapshot.py"
+        / "candidate_artifacts"
+        / "effect_scale_snapshot.py"
     ),
     "stage_c_snapshot_tool": (
         REPO_ROOT

@@ -3,7 +3,7 @@
 状态：`generated_from_candidate_probe / non-authoritative / stage_b_effect_scale_only`。
 
 本文档记录当前候选包第一版 scope boundary probe 结果表。它来自
-[a2_blastfrag_scope_boundary_probe.py](../../../../../../tools/maintenance/a2_blastfrag_scope_boundary_probe.py)
+[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `scope-boundary-probe`
 对当前 non-authoritative validation scaffold 的执行结果。
 
 本文档不创建 runtime descriptor，不授予 `effect_scale_authority`、`component_failure_probability_authority`、`pk_authority` 或 `deterministic_fuze_authority`。

@@ -20,10 +20,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
-from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as snapshot
+from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
+from tools.maintenance.candidate_artifacts import effect_scale_snapshot as snapshot
 from tools.maintenance.release_governance import effect_scale_release_readiness as readiness
-from tools.maintenance import a2_blastfrag_stage_b_validation_result_pack as result_pack
+from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
 
 
 PACKAGE_ID = (
@@ -351,7 +351,10 @@ def generate_stage_b_release_closeout(*, repo_root: Path = REPO_ROOT) -> dict[st
                 / "validation_scope_and_independence_manifest_stage_b_effect_scale_20260530.zh.md",
                 repo_root,
             ),
-            "result_pack_tool_ref": "tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py",
+            "result_pack_tool_ref": (
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "effect-scale-result-pack"
+            ),
             "release_readiness_gate_tool_ref": (
                 "tools/maintenance/damage_model_release_governance.py effect-scale-readiness"
             ),

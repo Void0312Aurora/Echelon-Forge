@@ -25,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_scope_boundary_probe as boundary_probe
+from tools.maintenance.candidate_artifacts import scope_boundary_probe as boundary_probe
 
 
 PACKAGE_ID = (

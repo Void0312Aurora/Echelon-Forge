@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_stage_b_retained_artifact_pack as stage_b_retained
+from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as stage_b_retained
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_retained_artifact_pack as stage_c_retained,
 )

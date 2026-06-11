@@ -16,14 +16,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_runtime_aligned_authority_pack as authority_pack,
-    a2_blastfrag_scope_boundary_probe as boundary_probe,
-    a2_blastfrag_stage_b_effect_scale_snapshot as snapshot,
-    a2_blastfrag_stage_b_retained_artifact_pack as retained_pack,
-    a2_blastfrag_stage_b_validation_result_pack as result_pack,
-    a2_blastfrag_validation_scaffold as scaffold,
-    a2_candidate_vps_bundle as bundle,
+from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    effect_scale_result_pack as result_pack,
+    effect_scale_retained_pack as retained_pack,
+    effect_scale_snapshot as snapshot,
+    package_bundle as bundle,
+    runtime_authority_exercise as authority_pack,
+    scope_boundary_probe as boundary_probe,
+    validation_scaffold as scaffold,
 )
 
 
@@ -197,7 +197,8 @@ def test_validation_scaffold_cli_writes_json(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_validation_scaffold.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "validation-scaffold",
             "--output",
             str(output_path),
             "--seed",
@@ -314,7 +315,8 @@ def test_scope_boundary_probe_cli_writes_json(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_scope_boundary_probe.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "scope-boundary-probe",
             "--output",
             str(output_path),
         ],
@@ -388,7 +390,8 @@ def test_stage_b_effect_scale_snapshot_current_repo_is_non_authoritative() -> No
 def test_stage_b_effect_scale_snapshot_cli_writes_json(tmp_path: Path) -> None:
     output_path = tmp_path / "a2_stage_b_effect_scale_snapshot.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_b_effect_scale_snapshot.py",
+        "damage_model_candidate_artifacts.py",
+        "effect-scale-snapshot",
         "--output",
         output_path,
     )
@@ -509,7 +512,8 @@ def test_stage_b_validation_result_pack_cli_writes_json(
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_stage_b_validation_result_pack.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "effect-scale-result-pack",
             "--output",
             str(output_path),
         ],
@@ -601,7 +605,8 @@ def test_candidate_retained_artifact_pack_cli_writes_manifest(
     completed = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "effect-scale-retained-pack",
             "--output-dir",
             str(output_dir),
         ],
@@ -737,7 +742,8 @@ def test_runtime_aligned_authority_exercise_cli_writes_json(tmp_path: Path) -> N
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "runtime-authority-exercise",
             "--output",
             str(output_path),
             "--effect-scale",
@@ -1365,7 +1371,8 @@ def test_candidate_bundle_cli_writes_json(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_candidate_vps_bundle.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "package-bundle",
             "--output",
             str(output_path),
         ],

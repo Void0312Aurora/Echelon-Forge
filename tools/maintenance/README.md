@@ -59,9 +59,12 @@ Task-specific A2 helpers:
   is the unified release governance command family. It dispatches package
   provenance/identity, provenance review/closeout, source release signoff,
   scoped release identity, and Stage B release readiness/closeout commands.
-- Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
-  `a2_retained_manifest_integrity.py` scripts are candidate-package,
-  retained-artifact, provenance, and review-gate helpers.
+- [damage_model_candidate_artifacts.py](damage_model_candidate_artifacts.py)
+  is the unified candidate artifact command family. It dispatches validation
+  scaffold, scope boundary probe, Stage B effect-scale artifact packs, runtime
+  authority exercise, and candidate package bundle commands.
+- Remaining `a2_blastfrag_*.py` and `a2_retained_manifest_integrity.py` scripts
+  are retained-artifact, Stage C, provenance, and review-gate helpers.
 - These tools are maintenance/governance utilities only. They do not grant
   runtime authority, do not make A2 retained artifacts product surface, and
   should stay scoped to the A2 damage-model workflow.

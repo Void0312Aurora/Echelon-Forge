@@ -17,11 +17,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 PACKAGE_ID = (
@@ -234,7 +234,7 @@ def generate_stage_b_effect_scale_snapshot(*, repo_root: Path = REPO_ROOT) -> di
         "artifact_provenance": {
             "source_kind": "candidate_stage_b_effect_scale_snapshot",
             "validation_scaffold_ref": (
-                "tools/maintenance/a2_blastfrag_validation_scaffold.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py validation-scaffold"
             ),
             "criteria_ref": (
                 "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/"
@@ -310,7 +310,7 @@ def generate_stage_b_effect_scale_snapshot(*, repo_root: Path = REPO_ROOT) -> di
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage B effect-scale candidate benchmark snapshot for "
@@ -322,7 +322,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_b_effect_scale_snapshot()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

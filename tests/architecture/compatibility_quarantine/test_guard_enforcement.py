@@ -57,7 +57,8 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
             "tools/eval/",
         },
         "files": {
-            "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py",
+            "tools/maintenance/damage_model_candidate_artifacts.py",
+            "tools/maintenance/candidate_artifacts/runtime_authority_exercise.py",
             "world_model_train.py",
         },
     },

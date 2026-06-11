@@ -24,9 +24,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.release_governance import provenance_closeout as release_closeout_gate  # noqa: E402
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_b_retained_artifact_pack as stage_b_retained,
-)
+from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as stage_b_retained  # noqa: E402
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_stage_c_component_probability_retained_artifact_pack as stage_c_retained,
 )

@@ -45,8 +45,8 @@
 
 - package source ledger、surrogate model card、validation report draft 已真实落文；
 - `BFM-BM-001..006` 已全部进入可执行 scaffold 层；
-- `a2_candidate_vps_bundle.py` 可以汇总文档、validation scaffold 和 runtime-aligned authority exercise；
-- `a2_blastfrag_runtime_aligned_authority_pack.py` 可以导出 baseline event summary、projected component rows，以及 test-local descriptor candidate；
+- `damage_model_candidate_artifacts.py package-bundle` 可以汇总文档、validation scaffold 和 runtime-aligned authority exercise；
+- `damage_model_candidate_artifacts.py runtime-authority-exercise` 可以导出 baseline event summary、projected component rows，以及 test-local descriptor candidate；
 - 对应 architecture/runtime tests 已固定这些边界，防止 candidate、test-local、stock 三层混淆。
 
 相关入口：
@@ -54,8 +54,8 @@
 - [候选包 README](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/README.zh.md)
 - [validation manifest 草案](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_manifest_draft_blastfrag_20260528.zh.md)
 - [residual register](../../calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md)
-- [a2_candidate_vps_bundle.py](../../../../../../tools/maintenance/a2_candidate_vps_bundle.py)
-- [a2_blastfrag_runtime_aligned_authority_pack.py](../../../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py)
+- [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `package-bundle`
+- [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `runtime-authority-exercise`
 
 ### 2.3 Stock authority 层：仍未放开
 

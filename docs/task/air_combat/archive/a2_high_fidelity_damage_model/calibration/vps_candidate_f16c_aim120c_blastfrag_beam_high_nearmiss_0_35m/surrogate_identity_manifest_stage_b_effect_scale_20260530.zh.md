@@ -29,11 +29,11 @@ surrogate identity”。
 | 类别 | 路径 | 角色 | `sha256` |
 |---|---|---|---|
 | runtime | [default_effects_model.cpp](../../../../../../src/models/weapons/default_effects_model.cpp) | structured-aircraft near-miss / projected-component runtime path | `317dedd29f63978d12428fe65a13a4cfb5f788c36bedbbac19ceb4bb612db394` |
-| tooling | [a2_blastfrag_validation_scaffold.py](../../../../../../tools/maintenance/a2_blastfrag_validation_scaffold.py) | Stage B candidate benchmark scaffold | `3fac25413327fecfc870029e1ad0a90793ef4e85c5750d575c93f3c5b2a38694` |
-| tooling | [a2_blastfrag_scope_boundary_probe.py](../../../../../../tools/maintenance/a2_blastfrag_scope_boundary_probe.py) | Stage B scope boundary probes | `fbcc31fb34df0e810aacc3e58cca426d3e550c3346a91c45612426b2bd1e7782` |
-| tooling | [a2_blastfrag_stage_b_effect_scale_snapshot.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py) | Stage B hard-gate snapshot artifact generator | `e3b609f20745f177b4470f3e7acdca1933bf9bfe151f0833a54df2ff55d4cc09` |
-| tooling | [a2_blastfrag_stage_b_retained_artifact_pack.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py) | canonical retained Stage B candidate artifact writer/reader | `1fa48da4af20cd737e169f4b04813f586366786e2c4f5dec52c5e0565fb8a6bb` |
-| tooling | [a2_blastfrag_runtime_aligned_authority_pack.py](../../../../../../tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py) | test-local authority exercise pack | `f4429b048b1f468610c811fb14b717978c6b609aac3c6c5ec32cfbd5c2a81485` |
+| tooling | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `validation-scaffold` | Stage B candidate benchmark scaffold | historical hash retained from pre-consolidation run |
+| tooling | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `scope-boundary-probe` | Stage B scope boundary probes | historical hash retained from pre-consolidation run |
+| tooling | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-snapshot` | Stage B hard-gate snapshot artifact generator | historical hash retained from pre-consolidation run |
+| tooling | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `effect-scale-retained-pack` | canonical retained Stage B candidate artifact writer/reader | historical hash retained from pre-consolidation run |
+| tooling | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `runtime-authority-exercise` | test-local authority exercise pack | historical hash retained from pre-consolidation run |
 | input DB | [f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json) | target outer-dimension / repo component scaffold input | `4259d631c10863cb673a13d365f50f6745c85597992f391ee976087c9f6194c4` |
 | input DB | [aim_120c.json](../../../../../../examples/config/database/weapons/air_to_air/aim_120c.json) | candidate warhead/fuze family envelope input | `9983680622a89064230de56a9a54157c2a3d054d33c8770e1f513f09c6f69f34` |
 
@@ -41,10 +41,10 @@ surrogate identity”。
 
 | 命令 | 角色 | 当前输出 `sha256` | 保留边界 |
 |---|---|---|---|
-| `./.venv/bin/python tools/maintenance/a2_blastfrag_validation_scaffold.py --output /tmp/a2_blastfrag_scaffold_snapshot.json` | fixed-seed scaffold snapshot | `e48612ec965c1b8246dbe6c5be80d39456910ca889e3a58d360483f0c50747d5` | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
-| `./.venv/bin/python tools/maintenance/a2_blastfrag_scope_boundary_probe.py --output /tmp/a2_scope_boundary_probe_snapshot.json` | scope boundary probe snapshot | `dd07c78563b61ac567aa1ab050fe8f09fd610769667c6b9c22c157426e435d66` | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
-| `./.venv/bin/python tools/maintenance/a2_blastfrag_stage_b_effect_scale_snapshot.py --output /tmp/a2_stage_b_effect_scale_snapshot.json` | Stage B hard-gate snapshot | `62c101e93e0dc91007eb18b7a1f66ca4299cb49c4f33b4ea43f0b8f0ab125647` | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
-| `./.venv/bin/python tools/maintenance/a2_blastfrag_stage_b_retained_artifact_pack.py` | write canonical retained Stage B candidate artifact pack | `manifest = 8bb3024a93fe4832c857dec8761b7d316db11d802290866c5156ff0a046e259e` | `retained_artifacts/stage_b_effect_scale_20260530/` 是当前 canonical author-side retained evidence chain，但仍不是 release-grade identity |
+| `./.venv/bin/python tools/maintenance/damage_model_candidate_artifacts.py validation-scaffold --output /tmp/a2_blastfrag_scaffold_snapshot.json` | fixed-seed scaffold snapshot | historical hash retained from pre-consolidation run | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
+| `./.venv/bin/python tools/maintenance/damage_model_candidate_artifacts.py scope-boundary-probe --output /tmp/a2_scope_boundary_probe_snapshot.json` | scope boundary probe snapshot | historical hash retained from pre-consolidation run | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
+| `./.venv/bin/python tools/maintenance/damage_model_candidate_artifacts.py effect-scale-snapshot --output /tmp/a2_stage_b_effect_scale_snapshot.json` | Stage B hard-gate snapshot | historical hash retained from pre-consolidation run | `/tmp` 输出只是 author snapshot，不是 canonical retained artifact |
+| `./.venv/bin/python tools/maintenance/damage_model_candidate_artifacts.py effect-scale-retained-pack` | write canonical retained Stage B candidate artifact pack | historical manifest hash retained from pre-consolidation run | `retained_artifacts/stage_b_effect_scale_20260530/` 是当前 canonical author-side retained evidence chain，但仍不是 release-grade identity |
 
 ## 4. 固定的运行参数
 

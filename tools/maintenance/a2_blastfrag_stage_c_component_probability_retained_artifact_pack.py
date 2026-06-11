@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_result_pack as result_pack,
 )

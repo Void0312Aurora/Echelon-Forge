@@ -100,7 +100,7 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 | `TC-A2-BF-001` source / identity / retained evidence | `G2` | accepted non-authoritative；不授予外部发布权或 stock authority | [candidate status](candidate_acceptance_status.zh.md)、candidate package README、source payload pack、source rights policy、identity gates |
 | `TC-A2-BF-002` scope / geometry / warhead evidence | `G2` + `G3` 状态读取 | Stage B scope/witness/family bookkeeping 可接受；真实 geometry/warhead truth 继续 residual | [candidate status](candidate_acceptance_status.zh.md)、[RES-003/004/007/008](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
 | `TC-A2-BF-003` mechanism admission evidence | `G2` + `G3` 状态读取 | accepted as retained/fail-closed package evidence；TP-21/BEC-O 不作为 release-consumed evidence | [candidate status](candidate_acceptance_status.zh.md)、[RES-005/006](calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md) |
-| `TC-A2-BF-004` candidate bundle / regression | `G2` | candidate bundle 可审计，authority guard false | [candidate status](candidate_acceptance_status.zh.md)、[a2_candidate_vps_bundle.py](../../../../tools/maintenance/a2_candidate_vps_bundle.py)、runtime-aligned authority pack |
+| `TC-A2-BF-004` candidate bundle / regression | `G2` | candidate bundle 可审计，authority guard false | [candidate status](candidate_acceptance_status.zh.md)、[damage_model_candidate_artifacts.py](../../../../tools/maintenance/damage_model_candidate_artifacts.py) `package-bundle`、runtime-aligned authority pack |
 | `G4-R-B` mechanism-load envelope | `G4 research` | 已完成 research packet；只形成 non-authoritative fragment / blast envelope | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[mechanism-load envelope dispatch](g4_research_mechanism_load_envelope_dispatch_20260601.zh.md) |
 | `G4-R-C` component fragility surface | `G4 research` | 已完成 research packet；只形成 non-authoritative component fragility surface / uncertainty ledger | [G4 research dispatch](g4_research_dispatch_20260601.zh.md)、[component fragility dispatch](g4_research_component_fragility_dispatch_20260601.zh.md) |
 | `TC-A2-AUTH-B` effect-scale promotion | `G4 authority` | 尚未启动为 release-grade promotion；不得和当前批次混验收 | [authority backlog](authority_promotion_backlog.zh.md) |
@@ -162,7 +162,7 @@ residual closeout、validation scaffold、独立 review gate 和 stock authority
 - `authority_promotion_backlog.zh.md` 承接未来 `G4/G5 authority`；
 - 旧长叙事、Phase 0 审计和历史状态审计已归档到 `archive/20260601_doc_governance/`。
 
-下一轮治理不应先移动 calibration narrative。`a2_candidate_vps_bundle.py`、release-readiness
+下一轮治理不应先移动 calibration narrative。`damage_model_candidate_artifacts.py package-bundle`、release-readiness
 gate 和 source-admission audit 仍硬引用多份 calibration / update 文档；若要归档这些文件，
 必须先改工具和测试引用，或保留 redirect stub。
 

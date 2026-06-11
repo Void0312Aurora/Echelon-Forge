@@ -18,16 +18,16 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance.release_governance import (
     effect_scale_release_readiness as readiness_gate,
     package_provenance_identity as provenance_identity_gate,
 )
-from tools.maintenance import a2_blastfrag_stage_b_retained_artifact_pack as retained_pack
+from tools.maintenance.candidate_artifacts import effect_scale_retained_pack as retained_pack
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_review_readiness_gate as stage_c_review_gate,
 )
@@ -40,10 +40,10 @@ from tools.maintenance import (
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_snapshot as stage_c_snapshot,
 )
-from tools.maintenance import a2_blastfrag_scope_boundary_probe as scope_probe
-from tools.maintenance import a2_blastfrag_stage_b_effect_scale_snapshot as stage_b_snapshot
-from tools.maintenance import a2_blastfrag_stage_b_validation_result_pack as result_pack
-from tools.maintenance import a2_blastfrag_validation_scaffold as scaffold
+from tools.maintenance.candidate_artifacts import scope_boundary_probe as scope_probe
+from tools.maintenance.candidate_artifacts import effect_scale_snapshot as stage_b_snapshot
+from tools.maintenance.candidate_artifacts import effect_scale_result_pack as result_pack
+from tools.maintenance.candidate_artifacts import validation_scaffold as scaffold
 
 
 PACKAGE_ID = (
@@ -1201,7 +1201,7 @@ def generate_candidate_bundle(*, repo_root: Path = REPO_ROOT) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Assemble the current A2 blast-fragmentation candidate package bundle "
@@ -1213,7 +1213,7 @@ def main() -> int:
         type=Path,
         help="Optional output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_candidate_bundle()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

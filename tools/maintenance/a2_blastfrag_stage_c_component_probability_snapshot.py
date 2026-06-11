@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import a2_blastfrag_runtime_aligned_authority_pack as authority_pack
+from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
 from tools.maintenance import (
     a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
 )
@@ -340,7 +340,8 @@ def generate_stage_c_component_probability_snapshot(
         "artifact_provenance": {
             "source_kind": "candidate_stage_c_component_probability_snapshot",
             "runtime_aligned_authority_pack_ref": (
-                "tools/maintenance/a2_blastfrag_runtime_aligned_authority_pack.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "runtime-authority-exercise"
             ),
             "surface_probe_ref": (
                 "tools/maintenance/"
