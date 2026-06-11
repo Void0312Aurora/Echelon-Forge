@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-02` archived pointer. The full project package was moved to
+Status: `2026-06-11` archived pointer / active follow-on navigation. The full project package was moved to
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
 
 This path is retained only as a lightweight work statement for navigation.
@@ -32,15 +32,35 @@ Current A2 follow-ons:
   failure probability, structural breakup, debris/wreck, Pk, or weapon-specific
   kill conclusions.
 - [missile_lethality_continuous_rod/README.md](missile_lethality_continuous_rod/README.md):
-  MLF-4 planning subproject for continuous-rod and cutting-mechanism facts; it
-  standardizes rod/cut exposure before any component failure, structural
-  breakup, debris/wreck, Pk, or weapon-specific kill conclusion.
+  archived MLF-4 evidence package for continuous-rod and cutting-mechanism
+  facts; it proves the rod/cut exposure fact chain is observable, diagnosable,
+  and projected into component-load rows, but it does not claim component
+  failure, structural breakup, debris/wreck, Pk, or weapon-specific lethality.
+- [missile_lethality_component_failure/README.md](missile_lethality_component_failure/README.md):
+  archived MLF-5 evidence package for target component vulnerability and failure
+  facts; it turns MLF-3/MLF-4 component-load/cut-exposure facts into component
+  failure probability, failure mode, and state changes, then hands consequences
+  to maintained damage/flight systems, but does not claim crash, structural
+  breakup, debris/wreck, Pk, or weapon-specific lethality.
+- [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md):
+  active follow-on promoted from the hitbox-geometry gap issue; it first builds
+  reviewable F-16 outer regions, component bindings, and distance diagnostics,
+  then decides whether an outer-shape proxy should enter near-fuze projection.
+  It does not claim true F-16 engineering geometry, structural breakup,
+  debris/wreck, Pk, or weapon-specific lethality.
 
-Follow-on component failure probability, breakup/debris, Pk, or weapon-specific
+The current geometry-fidelity gap is tracked on the issue board:
+[Lethality Hitbox Geometry Fidelity Gap](../../issues/lethality_hitbox_geometry_fidelity_gap/README.md).
+The first mainline execution entry for that issue is now
+[missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
+
+Follow-on structural breakup, wreck/debris, Pk, or weapon-specific
 calibration need separate `docs/agent` subprojects and must not continue inside
-the archived MLF-2 or MLF-3 packages. Continuous rod now starts at the MLF-4
-planning pointer above.
-MLF-3 is archived; it does not reopen the sealed A2 package.
+the archived MLF-2, MLF-3, or MLF-4 packages. The continuous-rod fact chain is
+archived; component-failure evidence is now traceable through the MLF-5 archive
+pointer above. Structural breakup, wreck/debris, Pk, or weapon-specific
+calibration still need follow-on subprojects. MLF-3/MLF-4 are archived; they do
+not reopen the sealed A2 package.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 

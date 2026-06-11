@@ -1,6 +1,6 @@
 # A2 高真实度空战毁伤模型
 
-状态：`2026-06-02` 归档指针。完整项目包已移入
+状态：`2026-06-11` 归档指针 / active follow-on 导航。完整项目包已移入
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.zh.md)。
 
 本路径仅保留为轻量工作说明和导航入口。
@@ -23,12 +23,26 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
   诊断，以及“未起爆不产生载荷”的运行门；它不实现连续杆、部件失效概率、结构解体、残骸、Pk
   或具体弹种击毁结论。
 - [missile_lethality_continuous_rod/README.zh.md](missile_lethality_continuous_rod/README.zh.md)：
-  MLF-4 planning 子项目，聚焦连续杆和切割机制事实；它先标准化 rod/cut 曝光，再交给后续
-  部件失效、结构解体、残骸、Pk 或具体弹种击毁结论阶段。
+  已归档的 MLF-4 证据包，聚焦连续杆和切割机制事实；它证明 rod/cut 曝光事实链可观察、
+  可诊断并能投影到部件受载行，但不声明部件失效、结构解体、残骸、Pk 或具体弹种击毁结论。
+- [missile_lethality_component_failure/README.zh.md](missile_lethality_component_failure/README.zh.md)：
+  已归档的 MLF-5 证据包，聚焦目标部件脆弱性和失效事实；它将 MLF-3/MLF-4 的部件受载/切割曝光
+  转成部件失效概率、失效模式和状态变化，再交给已有损伤/飞行系统传播后果，但不声明坠毁、
+  结构解体、残骸、Pk 或具体弹种杀伤结论。
+- [missile_lethality_target_geometry/README.zh.md](missile_lethality_target_geometry/README.zh.md)：
+  active follow-on，从命中盒几何缺口 issue 提升而来，先为 F-16 构建可审阅的外壳区域、部件绑定和
+  距离诊断，再决定是否把外壳代理接入近炸投影；它不声明真实 F-16 工程几何、结构解体、残骸、
+  Pk 或具体弹种杀伤结论。
 
-后续部件失效概率、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，
-不能继续写入已归档的 MLF-2 或 MLF-3 包。连续杆现在从上面的 MLF-4 planning 指针进入。
-MLF-3 已归档，不重开已封存 A2 包。
+当前几何保真度缺口已记录到 issue 板：
+[杀伤链命中盒几何保真度缺口](../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
+该 issue 的第一轮主线执行入口已提升为
+[missile_lethality_target_geometry/README.zh.md](missile_lethality_target_geometry/README.zh.md)。
+
+后续结构解体、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，
+不能继续写入已归档的 MLF-2、MLF-3 或 MLF-4 包。连续杆事实链已经归档，后续部件失效从
+上面的 MLF-5 归档指针追溯；结构解体、残骸、Pk 或具体弹种校准仍需另建后续子项目。MLF-3/MLF-4
+已归档，不重开已封存 A2 包。
 
 这些 follow-on 不重开已封存 A2 包，也不创建 A9。
 
