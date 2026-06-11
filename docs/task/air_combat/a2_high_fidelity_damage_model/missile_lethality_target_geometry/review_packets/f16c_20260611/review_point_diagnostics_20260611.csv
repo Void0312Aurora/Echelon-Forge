@@ -1,0 +1,11 @@
+point_index,point_id,aspect,point_m,nearest_outer_region_id,nearest_outer_distance_m,inside_outer_region_count,nearest_component_name,nearest_component_distance_m,inside_component_count,candidate_component_count,interpretation
+1,nose_axis_4m,nose,4.0;0.0;0.0,forward_fuselage,0.0,1,cockpit_crew_station,0.2,0,6,inside_outer_shape_with_nearby_component_candidates_review_only
+2,nose_axis_6m,nose,6.0;0.0;0.0,nose_radome,0.0,1,apg68_radar_array,0.0,2,4,point_inside_component_box_review_only
+3,tail_axis_4m,tail,-4.0;0.0;0.0,aft_fuselage_engine,0.0,1,engine_fuel_control_unit,0.505594,0,7,inside_outer_shape_with_nearby_component_candidates_review_only
+4,tail_axis_6m,tail,-6.0;0.0;0.0,engine_nozzle,0.0,1,engine_core,0.0,1,5,point_inside_component_box_review_only
+5,right_beam_4m,beam,0.0;4.0;0.0,left_wing,0.0,1,right_aileron_actuator,0.35,0,3,inside_outer_shape_with_nearby_component_candidates_review_only
+6,right_beam_6m,beam,0.0;6.0;0.0,left_wing,1.187654,0,right_aileron_actuator,1.540292,0,1,outside_outer_shape_but_near_component_candidate_review_only
+7,left_beam_4m,beam,0.0;-4.0;0.0,right_wing,0.0,1,left_aileron_actuator,0.35,0,3,inside_outer_shape_with_nearby_component_candidates_review_only
+8,left_beam_6m,beam,0.0;-6.0;0.0,right_wing,1.187654,0,left_aileron_actuator,1.540292,0,1,outside_outer_shape_but_near_component_candidate_review_only
+9,above_4m,above,0.0;0.0;4.0,canopy,3.137903,0,flight_control_computer,3.411103,0,0,outside_outer_shape_no_near_component_candidate_review_only
+10,below_4m,below,0.0;0.0;-4.0,intake,2.352661,0,center_fuselage_fuel_cell,3.4,0,0,outside_outer_shape_no_near_component_candidate_review_only

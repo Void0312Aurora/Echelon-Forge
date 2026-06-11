@@ -15,6 +15,9 @@
   - Model/scripted evaluation entrypoints plus shared eval helpers.
 - `tools/diagnostics/`
   - Operator-facing probes, benchmarks, and matrix-style diagnostics.
+- `tools/geometry/`
+  - Review-only geometry extraction helpers for visualization-derived target
+    proxies and human-auditable geometry packets.
 - `tools/runners/`
   - Stable runners for JSON contract suites and similar maintained entrypoints.
 - `tools/maintenance/`
@@ -67,6 +70,18 @@
   - Focused cooperative training NaN/Inf tracer that reconstructs the maintained cooperative flow and stops with a JSON report.
 - [README.md](diagnostics/README.md)
   - Diagnostics catalog and scope notes.
+
+## Geometry
+
+- [airframe_geometry_review.py](geometry/airframe_geometry_review.py)
+  - Generates review-only airframe geometry manifests from retained glTF audit
+    assets. The current F-16 slice records source, hashes, axes, public-size
+    scaling, and the gap between the visual outer-shape candidate and the
+    existing axis-aligned damage boxes. It also emits first-pass low-fidelity
+    outer-region candidates, component-binding reports, review-point distance
+    diagnostics, an offline HTML packet, and top/side/front SVG overlays. It
+    does not create runtime collision meshes or real aircraft-structure
+    authority.
 
 ## Runners
 

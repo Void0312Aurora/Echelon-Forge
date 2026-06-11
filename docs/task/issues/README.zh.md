@@ -17,6 +17,10 @@
 
 ## 活跃问题
 
+- [杀伤链命中盒几何保真度缺口](./lethality_hitbox_geometry_fidelity_gap/README.zh.md)：
+  A2/MLF-5 热力图显示，0.2 m 级贴近机体边界的鼻向连续杆近炸可能没有任何部件损伤；
+  当前目标几何仍是少量轴对齐长方体加部件盒，不能支撑更高保真的真实战机外形、
+  近炸投影、结构解体或真实弹种杀伤结论。
 - [A6 发射窗口标签密度失衡](./a6_launch_window_label_imbalance/README.zh.md)：
   L contract 下 deterministic `fire_once` argmax 不 crossing，尽管 open-window
   event probability 达到 `34.6%`。它仍是 live symptom 与 balancing requirement，但

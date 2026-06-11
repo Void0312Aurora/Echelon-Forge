@@ -1,0 +1,2323 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "real_weapon_pk_authority": false,
+    "runtime_collision_mesh": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Check every needs_review component before using outer regions in runtime projection."
+    },
+    {
+      "priority": "high",
+      "question": "Resolve left/right sign convention before treating wing bindings as authoritative."
+    },
+    {
+      "priority": "medium",
+      "question": "Review large components such as wing_spar_center for intentional multi-region coverage."
+    }
+  ],
+  "rows": [
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "nose_radome",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.277985,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "nose_radome",
+          "region_overlap_fraction": 0.2542,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.756309,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "forward_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 3.526026,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.0,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 4.922442,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 6.33621,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.277985,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          6.6,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.2,
+          0.4,
+          0.3
+        ],
+        "min": [
+          6.0,
+          -0.4,
+          -0.3
+        ],
+        "span": [
+          1.2,
+          0.8,
+          0.6
+        ]
+      },
+      "component_name": "apg68_radar_array",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 0,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.8,
+          0.5,
+          0.5
+        ],
+        "min": [
+          4.2,
+          -0.5,
+          -0.5
+        ],
+        "span": [
+          3.6,
+          1.0,
+          1.0
+        ]
+      },
+      "region_overlap_fraction": 0.2542,
+      "review_status": "candidate_binding",
+      "system": "radar"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "forward_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.30846,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.64554,
+          "region_id": "forward_fuselage",
+          "region_overlap_fraction": 0.11319,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.181331,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.51313,
+          "region_id": "nose_radome",
+          "region_overlap_fraction": 0.34851,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.142294,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.00841,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.0043,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 3.539826,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.887233,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 1.30846,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          5.15,
+          0.0,
+          0.1
+        ],
+        "max": [
+          6.1,
+          0.45,
+          0.55
+        ],
+        "min": [
+          4.2,
+          -0.45,
+          -0.35
+        ],
+        "span": [
+          1.9,
+          0.9,
+          0.9
+        ]
+      },
+      "component_name": "cockpit_crew_station",
+      "component_overlap_fraction": 0.64554,
+      "critical": true,
+      "hitbox_index": 0,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.8,
+          0.5,
+          0.5
+        ],
+        "min": [
+          4.2,
+          -0.5,
+          -0.5
+        ],
+        "span": [
+          3.6,
+          1.0,
+          1.0
+        ]
+      },
+      "region_overlap_fraction": 0.11319,
+      "review_status": "candidate_binding",
+      "system": "cockpit"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "forward_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.994501,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "forward_fuselage",
+          "region_overlap_fraction": 0.05469,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.564014,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.1922,
+          "region_id": "nose_radome",
+          "region_overlap_fraction": 0.04071,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.044095,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.0,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 3.109891,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.543094,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.994501,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          4.8,
+          0.0,
+          -0.25
+        ],
+        "max": [
+          5.4,
+          0.4,
+          0.0
+        ],
+        "min": [
+          4.2,
+          -0.4,
+          -0.5
+        ],
+        "span": [
+          1.2,
+          0.8,
+          0.5
+        ]
+      },
+      "component_name": "nose_avionics_bay",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 0,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.8,
+          0.5,
+          0.5
+        ],
+        "min": [
+          4.2,
+          -0.5,
+          -0.5
+        ],
+        "span": [
+          3.6,
+          1.0,
+          1.0
+        ]
+      },
+      "region_overlap_fraction": 0.05469,
+      "review_status": "candidate_binding",
+      "system": "avionics"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "nose_radome",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.542843,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "nose_radome",
+          "region_overlap_fraction": 0.05406,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.090431,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "forward_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.742724,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.0,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 4.345613,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 5.650386,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.542843,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          5.9,
+          0.0,
+          0.4
+        ],
+        "max": [
+          6.25,
+          0.35,
+          0.525
+        ],
+        "min": [
+          5.55,
+          -0.35,
+          0.275
+        ],
+        "span": [
+          0.7,
+          0.7,
+          0.25
+        ]
+      },
+      "component_name": "iff_interrogator",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 0,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.8,
+          0.5,
+          0.5
+        ],
+        "min": [
+          4.2,
+          -0.5,
+          -0.5
+        ],
+        "span": [
+          3.6,
+          1.0,
+          1.0
+        ]
+      },
+      "region_overlap_fraction": 0.05406,
+      "review_status": "candidate_binding",
+      "system": "avionics"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "center_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.092771,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.95175,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.13817,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.905934,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.20526,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.03017,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 0.960306,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.16172,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.06139,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 0.960306,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.16172,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.06139,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.666157,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.00506,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0017,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 1.092771,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          -0.25
+        ],
+        "max": [
+          0.4,
+          0.5,
+          0.1
+        ],
+        "min": [
+          -2.0,
+          -0.5,
+          -0.6
+        ],
+        "span": [
+          2.4,
+          1.0,
+          0.7
+        ]
+      },
+      "component_name": "center_fuselage_fuel_cell",
+      "component_overlap_fraction": 0.95175,
+      "critical": true,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.13817,
+      "review_status": "candidate_binding",
+      "system": "fuel"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "center_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.261236,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.07777,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.065348,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.13006,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.02645,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.065348,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.13006,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.02645,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 1.925099,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.01303,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.00389,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 1.235489,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 1.261236,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          1.5,
+          0.0,
+          0.25
+        ],
+        "max": [
+          2.25,
+          0.5,
+          0.55
+        ],
+        "min": [
+          0.75,
+          -0.5,
+          -0.05
+        ],
+        "span": [
+          1.5,
+          1.0,
+          0.6
+        ]
+      },
+      "component_name": "mission_computer",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.07777,
+      "review_status": "candidate_binding",
+      "system": "avionics"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.906579,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.79263,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.02774,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.078877,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.58421,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.02019,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.663882,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.11651,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.01053,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 1.663882,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.11651,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.01053,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 3.067473,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.0,
+          "region_role": "lifting_surface"
+        }
+      ],
+      "center_distance_m": 1.906579,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -1.8,
+          0.0,
+          0.25
+        ],
+        "max": [
+          -1.3,
+          0.4,
+          0.5
+        ],
+        "min": [
+          -2.3,
+          -0.4,
+          0.0
+        ],
+        "span": [
+          1.0,
+          0.8,
+          0.5
+        ]
+      },
+      "component_name": "data_link_terminal",
+      "component_overlap_fraction": 0.79263,
+      "critical": false,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.02774,
+      "review_status": "candidate_binding",
+      "system": "data_link"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "center_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.62816,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.01512,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 0.636502,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.67977,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.02688,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 1.374822,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.24577,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.362972,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.0,
+          "region_role": "lifting_surface"
+        }
+      ],
+      "center_distance_m": 0.62816,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          0.0,
+          0.45,
+          0.35
+        ],
+        "max": [
+          0.5,
+          0.625,
+          0.6
+        ],
+        "min": [
+          -0.5,
+          0.275,
+          0.1
+        ],
+        "span": [
+          1.0,
+          0.35,
+          0.5
+        ]
+      },
+      "component_name": "flight_control_computer",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.01512,
+      "review_status": "candidate_binding",
+      "system": "flight_control"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "forward_fuselage",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.244077,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.92368,
+          "region_id": "forward_fuselage",
+          "region_overlap_fraction": 0.02063,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.336745,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.26474,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.00448,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.206194,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "canopy",
+          "region_overlap_fraction": 0.0,
+          "region_role": "raised_outer_skin"
+        },
+        {
+          "center_distance_m": 1.302973,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 3.089452,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        }
+      ],
+      "center_distance_m": 1.244077,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          2.6,
+          0.0,
+          0.05
+        ],
+        "max": [
+          3.0,
+          0.35,
+          0.225
+        ],
+        "min": [
+          2.2,
+          -0.35,
+          -0.125
+        ],
+        "span": [
+          0.8,
+          0.7,
+          0.35
+        ]
+      },
+      "component_name": "inertial_navigation_unit",
+      "component_overlap_fraction": 0.92368,
+      "critical": true,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.02063,
+      "review_status": "candidate_binding",
+      "system": "navigation"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.000378,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.0124,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.452513,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.29703,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.00951,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.641247,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.73858,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.943232,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        }
+      ],
+      "center_distance_m": 1.000378,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -2.8,
+          0.45,
+          0.05
+        ],
+        "max": [
+          -2.35,
+          0.625,
+          0.275
+        ],
+        "min": [
+          -3.25,
+          0.275,
+          -0.175
+        ],
+        "span": [
+          0.9,
+          0.35,
+          0.45
+        ]
+      },
+      "component_name": "electrical_power_bus",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 1,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          3.8,
+          0.7,
+          0.6
+        ],
+        "min": [
+          -3.8,
+          -0.7,
+          -0.6
+        ],
+        "span": [
+          7.6,
+          1.4,
+          1.2
+        ]
+      },
+      "region_overlap_fraction": 0.0124,
+      "review_status": "candidate_binding",
+      "system": "avionics"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 2.107076,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.55249,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.05874,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 0.832748,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.548,
+          "region_id": "engine_nozzle",
+          "region_overlap_fraction": 0.29604,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.625213,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.734976,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.734976,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        }
+      ],
+      "center_distance_m": 2.107076,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -5.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -5.05,
+          0.45,
+          0.45
+        ],
+        "min": [
+          -6.55,
+          -0.45,
+          -0.45
+        ],
+        "span": [
+          1.5,
+          0.9,
+          0.9
+        ]
+      },
+      "component_name": "engine_core",
+      "component_overlap_fraction": 0.55249,
+      "critical": true,
+      "hitbox_index": 2,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -4.5,
+          0.55,
+          0.55
+        ],
+        "min": [
+          -7.5,
+          -0.55,
+          -0.55
+        ],
+        "span": [
+          3.0,
+          1.1,
+          1.1
+        ]
+      },
+      "region_overlap_fraction": 0.05874,
+      "review_status": "candidate_binding",
+      "system": "engine"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "engine_nozzle",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.368316,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "engine_nozzle",
+          "region_overlap_fraction": 0.36015,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.292604,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.292604,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.443873,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 3.307029,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.368316,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -7.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -6.5,
+          0.45,
+          0.45
+        ],
+        "min": [
+          -7.5,
+          -0.45,
+          -0.45
+        ],
+        "span": [
+          1.0,
+          0.9,
+          0.9
+        ]
+      },
+      "component_name": "afterburner_nozzle",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 2,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -4.5,
+          0.55,
+          0.55
+        ],
+        "min": [
+          -7.5,
+          -0.55,
+          -0.55
+        ],
+        "span": [
+          3.0,
+          1.1,
+          1.1
+        ]
+      },
+      "region_overlap_fraction": 0.36015,
+      "review_status": "candidate_binding",
+      "system": "engine"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.532139,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.0168,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.137049,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.458902,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "engine_nozzle",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.695713,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.695713,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        }
+      ],
+      "center_distance_m": 1.532139,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -5.2,
+          0.0,
+          0.3
+        ],
+        "max": [
+          -4.8,
+          0.3,
+          0.5
+        ],
+        "min": [
+          -5.6,
+          -0.3,
+          0.1
+        ],
+        "span": [
+          0.8,
+          0.6,
+          0.4
+        ]
+      },
+      "component_name": "tail_hydraulic_pump",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 2,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -4.5,
+          0.55,
+          0.55
+        ],
+        "min": [
+          -7.5,
+          -0.55,
+          -0.55
+        ],
+        "span": [
+          3.0,
+          1.1,
+          1.1
+        ]
+      },
+      "region_overlap_fraction": 0.0168,
+      "review_status": "candidate_binding",
+      "system": "hydraulic"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.237504,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.0147,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.675147,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.753847,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "engine_nozzle",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.85194,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 1.85194,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        }
+      ],
+      "center_distance_m": 1.237504,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -4.9,
+          0.0,
+          -0.25
+        ],
+        "max": [
+          -4.5,
+          0.3,
+          -0.075
+        ],
+        "min": [
+          -5.3,
+          -0.3,
+          -0.425
+        ],
+        "span": [
+          0.8,
+          0.6,
+          0.35
+        ]
+      },
+      "component_name": "engine_fuel_control_unit",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 2,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -4.5,
+          0.55,
+          0.55
+        ],
+        "min": [
+          -7.5,
+          -0.55,
+          -0.55
+        ],
+        "span": [
+          3.0,
+          1.1,
+          1.1
+        ]
+      },
+      "region_overlap_fraction": 0.0147,
+      "review_status": "candidate_binding",
+      "system": "engine"
+    },
+    {
+      "anomalies": [],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "engine_nozzle",
+      "bound_region_role": "outer_skin",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.432016,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.81211,
+          "region_id": "engine_nozzle",
+          "region_overlap_fraction": 0.05055,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 1.947551,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.1334,
+          "region_id": "vertical_tail",
+          "region_overlap_fraction": 0.00417,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.086728,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.086728,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_horizontal_tail",
+          "region_overlap_fraction": 0.0,
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 3.037071,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "aft_fuselage_engine",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.432016,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -6.7,
+          0.0,
+          0.45
+        ],
+        "max": [
+          -6.3,
+          0.25,
+          0.625
+        ],
+        "min": [
+          -7.1,
+          -0.25,
+          0.275
+        ],
+        "span": [
+          0.8,
+          0.5,
+          0.35
+        ]
+      },
+      "component_name": "rudder_actuator",
+      "component_overlap_fraction": 0.81211,
+      "critical": false,
+      "hitbox_index": 2,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "max": [
+          -4.5,
+          0.55,
+          0.55
+        ],
+        "min": [
+          -7.5,
+          -0.55,
+          -0.55
+        ],
+        "span": [
+          3.0,
+          1.1,
+          1.1
+        ]
+      },
+      "region_overlap_fraction": 0.05055,
+      "review_status": "candidate_binding",
+      "system": "flight_control"
+    },
+    {
+      "anomalies": [
+        "left_name_bound_to_negative_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "right_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.3527,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "right_wing",
+          "region_overlap_fraction": 0.04697,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 2.019824,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.995271,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 3.649615,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 3.91964,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.3527,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          -2.8,
+          0.0
+        ],
+        "max": [
+          -0.2,
+          -2.2,
+          0.125
+        ],
+        "min": [
+          -1.4,
+          -3.4,
+          -0.125
+        ],
+        "span": [
+          1.2,
+          1.2,
+          0.25
+        ]
+      },
+      "component_name": "left_wing_fuel_cell",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.04697,
+      "review_status": "needs_review",
+      "system": "fuel"
+    },
+    {
+      "anomalies": [
+        "right_name_bound_to_positive_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "left_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 0.3527,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.04697,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 2.019824,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.995271,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 3.649615,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 3.91964,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 0.3527,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          2.8,
+          0.0
+        ],
+        "max": [
+          -0.2,
+          3.4,
+          0.125
+        ],
+        "min": [
+          -1.4,
+          2.2,
+          -0.125
+        ],
+        "span": [
+          1.2,
+          1.2,
+          0.25
+        ]
+      },
+      "component_name": "right_wing_fuel_cell",
+      "component_overlap_fraction": 1.0,
+      "critical": true,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.04697,
+      "review_status": "needs_review",
+      "system": "fuel"
+    },
+    {
+      "anomalies": [
+        "left_name_bound_to_negative_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "right_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.39798,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "right_wing",
+          "region_overlap_fraction": 0.02067,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 3.302225,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 4.235758,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.932908,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.943146,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        }
+      ],
+      "center_distance_m": 1.39798,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          -4.1,
+          0.0
+        ],
+        "max": [
+          -0.35,
+          -3.7,
+          0.11
+        ],
+        "min": [
+          -1.25,
+          -4.5,
+          -0.11
+        ],
+        "span": [
+          0.9,
+          0.8,
+          0.22
+        ]
+      },
+      "component_name": "left_aileron_actuator",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.02067,
+      "review_status": "needs_review",
+      "system": "flight_control"
+    },
+    {
+      "anomalies": [
+        "right_name_bound_to_positive_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "left_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.39798,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.02067,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 3.302225,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 4.235758,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.932908,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 4.943146,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        }
+      ],
+      "center_distance_m": 1.39798,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          4.1,
+          0.0
+        ],
+        "max": [
+          -0.35,
+          4.5,
+          0.11
+        ],
+        "min": [
+          -1.25,
+          3.7,
+          -0.11
+        ],
+        "span": [
+          0.9,
+          0.8,
+          0.22
+        ]
+      },
+      "component_name": "right_aileron_actuator",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.02067,
+      "review_status": "needs_review",
+      "system": "flight_control"
+    },
+    {
+      "anomalies": [
+        "low_outer_region_overlap",
+        "component_center_outside_bound_region"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "left_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 2.768206,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.39697,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.14769,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 2.768206,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.39697,
+          "region_id": "right_wing",
+          "region_overlap_fraction": 0.14769,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 1.06379,
+          "center_inside_region": true,
+          "component_overlap_fraction": 0.24515,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0604,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 0.927193,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.15909,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.10249,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 0.927193,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.15909,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.10249,
+          "region_role": "structural_transition"
+        }
+      ],
+      "center_distance_m": 2.768206,
+      "center_inside_bound_region": false,
+      "component_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.4,
+          3.3,
+          0.09
+        ],
+        "min": [
+          -2.0,
+          -3.3,
+          -0.09
+        ],
+        "span": [
+          2.4,
+          6.6,
+          0.18
+        ]
+      },
+      "component_name": "wing_spar_center",
+      "component_overlap_fraction": 0.39697,
+      "critical": true,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.14769,
+      "review_status": "needs_review",
+      "system": "wings"
+    },
+    {
+      "anomalies": [
+        "left_name_bound_to_negative_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "right_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.173825,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "right_wing",
+          "region_overlap_fraction": 0.01315,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 0.79492,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.14286,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.00325,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 1.665863,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.43144,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.712598,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 1.173825,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.2,
+          -1.6,
+          0.0
+        ],
+        "max": [
+          0.2,
+          -1.25,
+          0.09
+        ],
+        "min": [
+          -0.6,
+          -1.95,
+          -0.09
+        ],
+        "span": [
+          0.8,
+          0.7,
+          0.18
+        ]
+      },
+      "component_name": "left_leading_edge_flap_actuator",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.01315,
+      "review_status": "needs_review",
+      "system": "flight_control"
+    },
+    {
+      "anomalies": [
+        "right_name_bound_to_positive_y_region_sign_review"
+      ],
+      "authority_boundary": "review_only_not_true_internal_component_geometry",
+      "bound_region_id": "left_wing",
+      "bound_region_role": "lifting_surface",
+      "candidate_regions": [
+        {
+          "center_distance_m": 1.173825,
+          "center_inside_region": true,
+          "component_overlap_fraction": 1.0,
+          "region_id": "left_wing",
+          "region_overlap_fraction": 0.01315,
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 0.79492,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.14286,
+          "region_id": "left_wing_root",
+          "region_overlap_fraction": 0.00325,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 1.665863,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "center_fuselage",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 2.43144,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "right_wing_root",
+          "region_overlap_fraction": 0.0,
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 2.712598,
+          "center_inside_region": false,
+          "component_overlap_fraction": 0.0,
+          "region_id": "intake",
+          "region_overlap_fraction": 0.0,
+          "region_role": "outer_skin"
+        }
+      ],
+      "center_distance_m": 1.173825,
+      "center_inside_bound_region": true,
+      "component_bounds": {
+        "center": [
+          -0.2,
+          1.6,
+          0.0
+        ],
+        "max": [
+          0.2,
+          1.95,
+          0.09
+        ],
+        "min": [
+          -0.6,
+          1.25,
+          -0.09
+        ],
+        "span": [
+          0.8,
+          0.7,
+          0.18
+        ]
+      },
+      "component_name": "right_leading_edge_flap_actuator",
+      "component_overlap_fraction": 1.0,
+      "critical": false,
+      "hitbox_index": 3,
+      "outer_envelope_containment_fraction": 1.0,
+      "parent_hitbox_bounds": {
+        "center": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "max": [
+          0.7,
+          4.9,
+          0.175
+        ],
+        "min": [
+          -2.3,
+          -4.9,
+          -0.175
+        ],
+        "span": [
+          3.0,
+          9.8,
+          0.35
+        ]
+      },
+      "region_overlap_fraction": 0.01315,
+      "review_status": "needs_review",
+      "system": "flight_control"
+    }
+  ],
+  "schema_version": "a2.target_geometry_component_binding_report.v1",
+  "status": "component_binding_report_generated_review_only",
+  "summary": {
+    "bound_component_count": 22,
+    "component_count": 22,
+    "needs_review_count": 7,
+    "review_status": "manual_review_required",
+    "side_sign_review_count": 6
+  }
+}

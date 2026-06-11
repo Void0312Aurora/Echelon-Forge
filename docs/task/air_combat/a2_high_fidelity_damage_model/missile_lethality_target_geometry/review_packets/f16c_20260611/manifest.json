@@ -1,0 +1,789 @@
+{
+  "asset_source_status": "verified_redistributable_visual_reference",
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "real_weapon_pk_authority": false,
+    "runtime_collision_mesh": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false
+  },
+  "axis_alignment": {
+    "asset_x": "sim_right",
+    "asset_y": "sim_up",
+    "asset_z_negative": "sim_forward",
+    "convention": "project_review_axis_map_v1",
+    "nose_direction": "negative_asset_z",
+    "runtime_registry_scale": 1.65,
+    "tail_engine_direction": "positive_asset_z",
+    "yaw_correction_deg": 0.0
+  },
+  "current_damage_geometry": {
+    "known_gap": "current_axis_aligned_hitboxes_cover_core_damage_scaffold_but_understate_full_aircraft_height",
+    "public_dimension_error_percent": {
+      "height_m": -75.409836,
+      "length_m": 1.593625,
+      "wingspan_m": -1.606426
+    },
+    "source": "damage_model.hitboxes",
+    "summary": {
+      "combined_envelope": {
+        "center": [
+          0.15,
+          0.0,
+          0.0
+        ],
+        "max": [
+          7.8,
+          4.9,
+          0.6
+        ],
+        "min": [
+          -7.5,
+          -4.9,
+          -0.6
+        ],
+        "span": [
+          15.3,
+          9.8,
+          1.2
+        ]
+      },
+      "component_count": 22,
+      "hitbox_count": 4,
+      "systems": [
+        "avionics",
+        "cockpit",
+        "data_link",
+        "engine",
+        "flight_control",
+        "fuel",
+        "hydraulic",
+        "navigation",
+        "radar",
+        "wings"
+      ]
+    }
+  },
+  "file_hashes": {
+    "aircraft_database_sha256": "4259d631c10863cb673a13d365f50f6745c85597992f391ee976087c9f6194c4",
+    "audit_scene_gltf_sha256": "808002e5e4d78afad2fda80b5ec5bd36801f53927d66c2f08056c25280217c0d",
+    "intake_metadata_sha256": "d714a7f46a0deb906b3737f7be39ea3ec086f59046977dcf6850b33fdaf2731e",
+    "runtime_visual_glb_sha256": "243f164005c49bce0bb25202e449911fed99cbfa94e9bef25321dcbd7476d44f"
+  },
+  "generated_on": "2026-06-11",
+  "gltf_summary": {
+    "asset": {
+      "copyright": "",
+      "generator": "Sketchfab-12.59.0",
+      "version": "2.0"
+    },
+    "material_count": 4,
+    "mesh_count": 19,
+    "mesh_node_bounds": [
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.828066,
+            -0.847581
+          ],
+          "max": [
+            2.91282,
+            12.240285,
+            3.676953
+          ],
+          "min": [
+            -2.920325,
+            9.415847,
+            -5.372115
+          ],
+          "span": [
+            5.833146,
+            2.824438,
+            9.049068
+          ]
+        },
+        "mesh_index": 0,
+        "mesh_name": "Object_0",
+        "node_index": 4,
+        "node_name": "Object_4",
+        "position_accessor_vertex_count": 7008,
+        "triangle_count": 2359
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.637035,
+            -2.871216
+          ],
+          "max": [
+            0.292621,
+            10.868106,
+            -2.09872
+          ],
+          "min": [
+            -0.300125,
+            10.405964,
+            -3.643712
+          ],
+          "span": [
+            0.592746,
+            0.462141,
+            1.544992
+          ]
+        },
+        "mesh_index": 1,
+        "mesh_name": "Object_1",
+        "node_index": 6,
+        "node_name": "Object_6",
+        "position_accessor_vertex_count": 1140,
+        "triangle_count": 380
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.693623,
+            -2.887626
+          ],
+          "max": [
+            0.236923,
+            10.890836,
+            -2.215769
+          ],
+          "min": [
+            -0.244428,
+            10.49641,
+            -3.559483
+          ],
+          "span": [
+            0.481351,
+            0.394426,
+            1.343714
+          ]
+        },
+        "mesh_index": 2,
+        "mesh_name": "Object_2",
+        "node_index": 8,
+        "node_name": "Object_8",
+        "position_accessor_vertex_count": 924,
+        "triangle_count": 308
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003749,
+            10.473463,
+            -2.75534
+          ],
+          "max": [
+            0.124364,
+            10.804526,
+            -2.505316
+          ],
+          "min": [
+            -0.131862,
+            10.1424,
+            -3.005365
+          ],
+          "span": [
+            0.256226,
+            0.662127,
+            0.500049
+          ]
+        },
+        "mesh_index": 3,
+        "mesh_name": "Object_3",
+        "node_index": 10,
+        "node_name": "Object_10",
+        "position_accessor_vertex_count": 219,
+        "triangle_count": 76
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.010249,
+            10.439169,
+            -2.937205
+          ],
+          "max": [
+            0.156306,
+            10.821772,
+            -2.660786
+          ],
+          "min": [
+            -0.176804,
+            10.056566,
+            -3.213623
+          ],
+          "span": [
+            0.33311,
+            0.765206,
+            0.552836
+          ]
+        },
+        "mesh_index": 4,
+        "mesh_name": "Object_4",
+        "node_index": 12,
+        "node_name": "Object_12",
+        "position_accessor_vertex_count": 2295,
+        "triangle_count": 765
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.744123,
+            -1.942578
+          ],
+          "max": [
+            0.199845,
+            10.86034,
+            -1.639147
+          ],
+          "min": [
+            -0.207349,
+            10.627906,
+            -2.246009
+          ],
+          "span": [
+            0.407194,
+            0.232434,
+            0.606862
+          ]
+        },
+        "mesh_index": 5,
+        "mesh_name": "Object_5",
+        "node_index": 14,
+        "node_name": "Object_14",
+        "position_accessor_vertex_count": 204,
+        "triangle_count": 68
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.668474,
+            -3.170224
+          ],
+          "max": [
+            0.07775,
+            10.730601,
+            -3.135677
+          ],
+          "min": [
+            -0.085255,
+            10.606347,
+            -3.204771
+          ],
+          "span": [
+            0.163005,
+            0.124254,
+            0.069094
+          ]
+        },
+        "mesh_index": 6,
+        "mesh_name": "Object_6",
+        "node_index": 16,
+        "node_name": "Object_16",
+        "position_accessor_vertex_count": 12,
+        "triangle_count": 4
+      },
+      {
+        "bounds": {
+          "center": [
+            1.197927,
+            10.165079,
+            2.833414
+          ],
+          "max": [
+            1.739206,
+            10.296486,
+            3.641363
+          ],
+          "min": [
+            0.656648,
+            10.033672,
+            2.025465
+          ],
+          "span": [
+            1.082559,
+            0.262814,
+            1.615898
+          ]
+        },
+        "mesh_index": 7,
+        "mesh_name": "Object_7",
+        "node_index": 18,
+        "node_name": "Object_18",
+        "position_accessor_vertex_count": 168,
+        "triangle_count": 58
+      },
+      {
+        "bounds": {
+          "center": [
+            1.44021,
+            10.23309,
+            1.083721
+          ],
+          "max": [
+            2.221955,
+            10.259035,
+            1.310082
+          ],
+          "min": [
+            0.658466,
+            10.207145,
+            0.85736
+          ],
+          "span": [
+            1.563489,
+            0.051891,
+            0.452722
+          ]
+        },
+        "mesh_index": 8,
+        "mesh_name": "Object_8",
+        "node_index": 20,
+        "node_name": "Object_20",
+        "position_accessor_vertex_count": 36,
+        "triangle_count": 12
+      },
+      {
+        "bounds": {
+          "center": [
+            -1.447773,
+            10.23309,
+            1.08373
+          ],
+          "max": [
+            -0.666025,
+            10.259035,
+            1.310088
+          ],
+          "min": [
+            -2.22952,
+            10.207145,
+            0.857372
+          ],
+          "span": [
+            1.563495,
+            0.051891,
+            0.452716
+          ]
+        },
+        "mesh_index": 9,
+        "mesh_name": "Object_9",
+        "node_index": 22,
+        "node_name": "Object_22",
+        "position_accessor_vertex_count": 36,
+        "triangle_count": 12
+      },
+      {
+        "bounds": {
+          "center": [
+            0.539421,
+            10.263401,
+            3.041641
+          ],
+          "max": [
+            0.651481,
+            10.304265,
+            3.29845
+          ],
+          "min": [
+            0.427362,
+            10.222537,
+            2.784833
+          ],
+          "span": [
+            0.224119,
+            0.081728,
+            0.513617
+          ]
+        },
+        "mesh_index": 10,
+        "mesh_name": "Object_10",
+        "node_index": 24,
+        "node_name": "Object_24",
+        "position_accessor_vertex_count": 24,
+        "triangle_count": 8
+      },
+      {
+        "bounds": {
+          "center": [
+            0.541861,
+            10.30026,
+            3.041568
+          ],
+          "max": [
+            0.656391,
+            10.346047,
+            3.29845
+          ],
+          "min": [
+            0.427331,
+            10.254473,
+            2.784687
+          ],
+          "span": [
+            0.22906,
+            0.091574,
+            0.513763
+          ]
+        },
+        "mesh_index": 11,
+        "mesh_name": "Object_11",
+        "node_index": 26,
+        "node_name": "Object_26",
+        "position_accessor_vertex_count": 24,
+        "triangle_count": 8
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.549366,
+            10.30026,
+            3.041568
+          ],
+          "max": [
+            -0.434836,
+            10.346047,
+            3.29845
+          ],
+          "min": [
+            -0.663896,
+            10.254473,
+            2.784687
+          ],
+          "span": [
+            0.22906,
+            0.091574,
+            0.513763
+          ]
+        },
+        "mesh_index": 12,
+        "mesh_name": "Object_12",
+        "node_index": 28,
+        "node_name": "Object_28",
+        "position_accessor_vertex_count": 24,
+        "triangle_count": 8
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.546926,
+            10.263401,
+            3.041641
+          ],
+          "max": [
+            -0.434866,
+            10.304265,
+            3.29845
+          ],
+          "min": [
+            -0.658985,
+            10.222537,
+            2.784833
+          ],
+          "span": [
+            0.224119,
+            0.081728,
+            0.513617
+          ]
+        },
+        "mesh_index": 13,
+        "mesh_name": "Object_13",
+        "node_index": 30,
+        "node_name": "Object_30",
+        "position_accessor_vertex_count": 24,
+        "triangle_count": 8
+      },
+      {
+        "bounds": {
+          "center": [
+            1.818372,
+            10.231071,
+            -0.096455
+          ],
+          "max": [
+            2.811858,
+            10.277324,
+            0.793463
+          ],
+          "min": [
+            0.824886,
+            10.184817,
+            -0.986373
+          ],
+          "span": [
+            1.986971,
+            0.092507,
+            1.779836
+          ]
+        },
+        "mesh_index": 14,
+        "mesh_name": "Object_14",
+        "node_index": 32,
+        "node_name": "Object_32",
+        "position_accessor_vertex_count": 82,
+        "triangle_count": 28
+      },
+      {
+        "bounds": {
+          "center": [
+            -1.82588,
+            10.231071,
+            -0.096455
+          ],
+          "max": [
+            -0.832391,
+            10.277324,
+            0.793463
+          ],
+          "min": [
+            -2.819368,
+            10.184817,
+            -0.986373
+          ],
+          "span": [
+            1.986977,
+            0.092507,
+            1.779836
+          ]
+        },
+        "mesh_index": 15,
+        "mesh_name": "Object_15",
+        "node_index": 34,
+        "node_name": "Object_34",
+        "position_accessor_vertex_count": 84,
+        "triangle_count": 28
+      },
+      {
+        "bounds": {
+          "center": [
+            -1.205432,
+            10.165079,
+            2.833414
+          ],
+          "max": [
+            -0.664152,
+            10.296486,
+            3.641363
+          ],
+          "min": [
+            -1.746711,
+            10.033672,
+            2.025465
+          ],
+          "span": [
+            1.082559,
+            0.262814,
+            1.615898
+          ]
+        },
+        "mesh_index": 16,
+        "mesh_name": "Object_16",
+        "node_index": 36,
+        "node_name": "Object_36",
+        "position_accessor_vertex_count": 168,
+        "triangle_count": 58
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            10.217687,
+            2.987338
+          ],
+          "max": [
+            0.342736,
+            10.561826,
+            3.394904
+          ],
+          "min": [
+            -0.350241,
+            9.873547,
+            2.579772
+          ],
+          "span": [
+            0.692977,
+            0.688279,
+            0.815133
+          ]
+        },
+        "mesh_index": 17,
+        "mesh_name": "Object_17",
+        "node_index": 38,
+        "node_name": "Object_38",
+        "position_accessor_vertex_count": 768,
+        "triangle_count": 256
+      },
+      {
+        "bounds": {
+          "center": [
+            -0.003752,
+            11.536388,
+            3.195834
+          ],
+          "max": [
+            0.036797,
+            12.142543,
+            3.763452
+          ],
+          "min": [
+            -0.044302,
+            10.930234,
+            2.628216
+          ],
+          "span": [
+            0.0811,
+            1.212309,
+            1.135236
+          ]
+        },
+        "mesh_index": 18,
+        "mesh_name": "Object_18",
+        "node_index": 40,
+        "node_name": "Object_40",
+        "position_accessor_vertex_count": 175,
+        "triangle_count": 60
+      }
+    ],
+    "node_count": 41,
+    "notable_node_names": [],
+    "position_accessor_vertex_count": 13415,
+    "primitive_count": 19,
+    "raw_accessor_bounds": {
+      "center": [
+        0.0,
+        1.318475,
+        1.068755
+      ],
+      "max": [
+        4.7809,
+        8.80607,
+        3.38369
+      ],
+      "min": [
+        -4.7809,
+        -6.16912,
+        -1.24618
+      ],
+      "span": [
+        9.5618,
+        14.97519,
+        4.62987
+      ]
+    },
+    "transformed_bounds": {
+      "center": [
+        -0.003752,
+        10.828066,
+        -0.804332
+      ],
+      "max": [
+        2.91282,
+        12.240285,
+        3.763452
+      ],
+      "min": [
+        -2.920325,
+        9.415847,
+        -5.372115
+      ],
+      "span": [
+        5.833146,
+        2.824438,
+        9.135567
+      ]
+    },
+    "triangle_count": 4504
+  },
+  "paths": {
+    "aircraft_database": "examples/config/database/aircraft/units/f16c_block50.json",
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "intake_metadata": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/intake_metadata.json",
+    "registry": "examples/viz/assets/registry/default.json",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb"
+  },
+  "public_dimension_check": {
+    "asset_transformed_span": {
+      "asset_x_right_span": 5.833146,
+      "asset_y_up_span": 2.824438,
+      "asset_z_forward_length_span": 9.135567
+    },
+    "length_fit_scale": 1.648502,
+    "public_dimensions": {
+      "height_m": 4.88,
+      "length_m": 15.06,
+      "reference_area_m2": 27.87,
+      "wingspan_m": 9.96
+    },
+    "registry_scale": 1.65,
+    "scale_basis": "registry_scale_matches_public_length_order_and_preserves_frontend_visual_size",
+    "scale_delta_percent": 0.090874,
+    "scaled_dimension_error_percent": {
+      "height_m": -4.501584,
+      "length_m": 0.090874,
+      "wingspan_m": -3.366557
+    },
+    "scaled_review_dimensions": {
+      "height_m": 4.660323,
+      "length_m": 15.073686,
+      "wingspan_m": 9.624691
+    }
+  },
+  "registry_entry": {
+    "asset_path": "/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "id": "air_f16_default",
+    "label": "F-16 Generic",
+    "realism_note": "CC-BY-4.0 visualization asset by Carlos.Maciel from Sketchfab; used as the default F-16 visual candidate after archiving the older FlightGear GPLv2 candidate.",
+    "scale": 1.65,
+    "yaw_correction_deg": 0.0
+  },
+  "review_scope": "f16c_outer_shape_scale_axis_manifest_only",
+  "schema_version": "a2.target_geometry_manifest.v1",
+  "source": {
+    "author": "Carlos.Maciel",
+    "author_profile": "https://sketchfab.com/Carlos.Maciel",
+    "created_at": "2022-02-28T12:38:47.839845",
+    "downloaded_at": "2026-06-11 Asia/Shanghai",
+    "license": {
+      "full_name": "Creative Commons Attribution",
+      "label": "CC Attribution",
+      "requirements": "Author must be credited. Commercial use is allowed.",
+      "url": "http://creativecommons.org/licenses/by/4.0/"
+    },
+    "published_at": "2022-02-28T12:46:12.308593",
+    "title": "F16-C Falcon",
+    "uid": "4bc2ff75dc584af2afd0aa6bd8b79015",
+    "viewer_url": "https://sketchfab.com/3d-models/f16-c-falcon-4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "source_geometry_hints": {
+    "face_count": 4504,
+    "metadata_notable_node_names": [
+      "Canopy01_1",
+      "Eject_Seat_3",
+      "Pilot_4",
+      "ElevatorR01_7",
+      "AileronR01_8",
+      "AileronL01_9",
+      "VoletR01_14",
+      "VoletL01_15",
+      "EngineL01_17",
+      "RudderL01_18"
+    ],
+    "metadata_scene": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "note": "The retained glTF scene may use generic Object_* node names; source metadata hints are review aids and must not be treated as true component boundaries.",
+    "vertex_count": 2563
+  },
+  "status": "target_geometry_manifest_generated_review_only"
+}

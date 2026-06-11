@@ -20,6 +20,12 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Active Issues
 
+- [Lethality Hitbox Geometry Fidelity Gap](./lethality_hitbox_geometry_fidelity_gap/README.md):
+  A2/MLF-5 heatmaps show that a continuous-rod nose proximity event about
+  0.2 m from the target boundary can produce no component damage; current
+  target geometry is still a small set of axis-aligned boxes plus component
+  boxes, and cannot support higher-fidelity real-aircraft shape, proximity
+  projection, structural-breakup, or weapon-specific lethality claims.
 - [A6 Launch-Window Label Density Imbalance](./a6_launch_window_label_imbalance/README.md):
   deterministic `fire_once` argmax does not cross under the L contract despite
   `34.6%` open-window event probability. It remains a live symptom and

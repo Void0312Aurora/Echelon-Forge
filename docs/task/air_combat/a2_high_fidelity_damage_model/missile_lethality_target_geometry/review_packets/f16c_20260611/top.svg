@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+<rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>
+<text x="24" y="34" font-size="18" font-family="monospace" fill="#202020">F-16 outer-region candidate top view</text>
+<text x="24" y="58" font-size="12" font-family="monospace" fill="#555555">x forward (m); y lateral (m); review-only boxes, component overlays, and review points</text>
+<rect x="82.76" y="52.41" width="1034.48" height="655.17" fill="#111111" fill-opacity="0.03" stroke="#111111" stroke-width="1.50"><title>outer_envelope</title></rect>
+<text x="86.76" y="65.41" font-size="10" font-family="monospace" fill="#111111">outer_envelope</text>
+<rect x="888.24" y="345.96" width="247.06" height="68.07" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_0</title></rect>
+<rect x="339.21" y="332.35" width="521.58" height="95.30" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_1</title></rect>
+<rect x="85.29" y="342.56" width="205.89" height="74.88" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_2</title></rect>
+<rect x="442.15" y="46.45" width="205.89" height="667.11" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_3</title></rect>
+<rect x="951.72" y="347.33" width="165.52" height="65.35" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>nose_radome</title></rect>
+<text x="955.72" y="360.33" font-size="10" font-family="monospace" fill="#2f6f9f">nose_radome</text>
+<rect x="755.17" y="322.14" width="217.24" height="115.72" fill="#b24d3e" fill-opacity="0.18" stroke="#b24d3e" stroke-width="1.20"><title>forward_fuselage</title></rect>
+<text x="759.17" y="335.14" font-size="10" font-family="monospace" fill="#b24d3e">forward_fuselage</text>
+<rect x="744.83" y="342.56" width="155.17" height="74.88" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>canopy</title></rect>
+<text x="748.83" y="355.56" font-size="10" font-family="monospace" fill="#4f8a4b">canopy</text>
+<rect x="470.69" y="322.14" width="294.83" height="115.72" fill="#8a5a9f" fill-opacity="0.18" stroke="#8a5a9f" stroke-width="1.20"><title>center_fuselage</title></rect>
+<text x="474.69" y="335.14" font-size="10" font-family="monospace" fill="#8a5a9f">center_fuselage</text>
+<rect x="625.86" y="337.80" width="191.38" height="84.41" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>intake</title></rect>
+<text x="629.86" y="350.80" font-size="10" font-family="monospace" fill="#b27a2f">intake</text>
+<rect x="196.55" y="322.14" width="300.00" height="115.72" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>aft_fuselage_engine</title></rect>
+<text x="200.55" y="335.14" font-size="10" font-family="monospace" fill="#2f827d">aft_fuselage_engine</text>
+<rect x="82.76" y="340.52" width="124.14" height="78.96" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>engine_nozzle</title></rect>
+<text x="86.76" y="353.52" font-size="10" font-family="monospace" fill="#6f6f6f">engine_nozzle</text>
+<rect x="444.83" y="52.41" width="248.28" height="281.30" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>left_wing</title></rect>
+<text x="448.83" y="65.41" font-size="10" font-family="monospace" fill="#2f6f9f">left_wing</text>
+<rect x="444.83" y="426.29" width="248.28" height="281.30" fill="#b24d3e" fill-opacity="0.18" stroke="#b24d3e" stroke-width="1.20"><title>right_wing</title></rect>
+<text x="448.83" y="439.29" font-size="10" font-family="monospace" fill="#b24d3e">right_wing</text>
+<rect x="418.97" y="288.10" width="310.34" height="71.48" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>left_wing_root</title></rect>
+<text x="422.97" y="301.10" font-size="10" font-family="monospace" fill="#4f8a4b">left_wing_root</text>
+<rect x="418.97" y="400.42" width="310.34" height="71.48" fill="#8a5a9f" fill-opacity="0.18" stroke="#8a5a9f" stroke-width="1.20"><title>right_wing_root</title></rect>
+<text x="422.97" y="413.42" font-size="10" font-family="monospace" fill="#8a5a9f">right_wing_root</text>
+<rect x="134.48" y="189.40" width="181.03" height="153.16" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>left_horizontal_tail</title></rect>
+<text x="138.48" y="202.40" font-size="10" font-family="monospace" fill="#b27a2f">left_horizontal_tail</text>
+<rect x="134.48" y="417.44" width="181.03" height="153.16" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>right_horizontal_tail</title></rect>
+<text x="138.48" y="430.44" font-size="10" font-family="monospace" fill="#2f827d">right_horizontal_tail</text>
+<rect x="144.83" y="354.13" width="222.41" height="51.73" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>vertical_tail</title></rect>
+<text x="148.83" y="367.13" font-size="10" font-family="monospace" fill="#6f6f6f">vertical_tail</text>
+<rect x="1011.77" y="352.77" width="82.35" height="54.46" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>apg68_radar_array -&gt; nose_radome</title></rect>
+<rect x="888.24" y="349.37" width="130.39" height="61.26" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>cockpit_crew_station -&gt; forward_fuselage</title></rect>
+<rect x="888.24" y="352.77" width="82.35" height="54.46" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>nose_avionics_bay -&gt; forward_fuselage</title></rect>
+<rect x="980.89" y="356.17" width="48.04" height="47.65" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>iff_interrogator -&gt; nose_radome</title></rect>
+<rect x="462.74" y="345.96" width="164.71" height="68.07" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>center_fuselage_fuel_cell -&gt; center_fuselage</title></rect>
+<rect x="651.47" y="345.96" width="102.94" height="68.07" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>mission_computer -&gt; center_fuselage</title></rect>
+<rect x="442.15" y="352.77" width="68.63" height="54.46" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>data_link_terminal -&gt; aft_fuselage_engine</title></rect>
+<rect x="565.69" y="337.45" width="68.63" height="23.83" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>flight_control_computer -&gt; center_fuselage</title></rect>
+<rect x="750.98" y="356.17" width="54.90" height="47.65" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>inertial_navigation_unit -&gt; forward_fuselage</title></rect>
+<rect x="376.96" y="337.45" width="61.77" height="23.83" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>electrical_power_bus -&gt; aft_fuselage_engine</title></rect>
+<rect x="150.48" y="349.37" width="102.94" height="61.26" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>engine_core -&gt; aft_fuselage_engine</title></rect>
+<rect x="85.29" y="349.37" width="68.63" height="61.26" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>afterburner_nozzle -&gt; engine_nozzle</title></rect>
+<rect x="215.68" y="359.58" width="54.90" height="40.84" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>tail_hydraulic_pump -&gt; aft_fuselage_engine</title></rect>
+<rect x="236.27" y="359.58" width="54.90" height="40.84" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>engine_fuel_control_unit -&gt; aft_fuselage_engine</title></rect>
+<rect x="112.74" y="362.98" width="54.90" height="34.04" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>rudder_actuator -&gt; engine_nozzle</title></rect>
+<rect x="503.92" y="529.76" width="82.35" height="81.69" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_wing_fuel_cell -&gt; right_wing</title></rect>
+<rect x="503.92" y="148.55" width="82.35" height="81.69" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_wing_fuel_cell -&gt; left_wing</title></rect>
+<rect x="514.21" y="631.87" width="61.77" height="54.46" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_aileron_actuator -&gt; right_wing</title></rect>
+<rect x="514.21" y="73.68" width="61.77" height="54.46" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_aileron_actuator -&gt; left_wing</title></rect>
+<rect x="462.74" y="155.36" width="164.71" height="449.28" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>wing_spar_center -&gt; left_wing</title></rect>
+<rect x="558.82" y="465.09" width="54.90" height="47.65" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_leading_edge_flap_actuator -&gt; right_wing</title></rect>
+<rect x="558.82" y="247.26" width="54.90" height="47.65" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_leading_edge_flap_actuator -&gt; left_wing</title></rect>
+<circle cx="874.51" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>1: nose_axis_4m</title></circle>
+<text x="880.51" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">1</text>
+<circle cx="1011.77" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>2: nose_axis_6m</title></circle>
+<text x="1017.77" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">2</text>
+<circle cx="325.49" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>3: tail_axis_4m</title></circle>
+<text x="331.49" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">3</text>
+<circle cx="188.23" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>4: tail_axis_6m</title></circle>
+<text x="194.23" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">4</text>
+<circle cx="600.00" cy="107.71" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>5: right_beam_4m</title></circle>
+<text x="606.00" y="101.71" font-size="10" font-family="monospace" fill="#0f172a">5</text>
+<circle cx="600.00" cy="-28.43" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>6: right_beam_6m</title></circle>
+<text x="606.00" y="-34.43" font-size="10" font-family="monospace" fill="#0f172a">6</text>
+<circle cx="600.00" cy="652.29" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>7: left_beam_4m</title></circle>
+<text x="606.00" y="646.29" font-size="10" font-family="monospace" fill="#0f172a">7</text>
+<circle cx="600.00" cy="788.43" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>8: left_beam_6m</title></circle>
+<text x="606.00" y="782.43" font-size="10" font-family="monospace" fill="#0f172a">8</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>9: above_4m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">9</text>
+<circle cx="600.00" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>10: below_4m</title></circle>
+<text x="606.00" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">10</text>
+<text x="24" y="716" font-size="11" font-family="monospace" fill="#555555">Legend: black envelope, colored outer regions, orange dashed legacy boxes, purple/red component boxes, numbered review points</text>
+<text x="24" y="736" font-size="11" font-family="monospace" fill="#555555">Review-only geometry; not a runtime collision mesh or real F-16 engineering model</text>
+</svg>

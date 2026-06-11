@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>F-16 Target Geometry Review Packet</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #202124;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2 {
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+    section {
+      margin: 0 0 24px;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px 16px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .views {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    img {
+      width: 100%;
+      height: auto;
+      border: 1px solid #cdd3dd;
+      background: #ffffff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #d8dde6;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef2f7;
+    }
+    .note {
+      color: #4b5563;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>F-16 Target Geometry Review Packet</h1>
+    <p class="note">Review-only geometry. This packet is not a runtime collision mesh, not a real F-16 engineering model, and not a real-weapon lethality claim.</p>
+    <div class="meta">
+      <div>generated_on: 2026-06-11</div>
+      <div>source_uid: 4bc2ff75dc584af2afd0aa6bd8b79015</div>
+      <div>outer_regions: 14</div>
+      <div>components: 22</div>
+      <div>review_points: 10</div>
+      <div>needs_review_components: 7</div>
+    </div>
+  </section>
+  <section>
+    <h2>Three-View Overlay</h2>
+    <div class="views">
+      <img src="top.svg" alt="Top view geometry overlay">
+      <img src="side.svg" alt="Side view geometry overlay">
+      <img src="front.svg" alt="Front view geometry overlay">
+    </div>
+  </section>
+  <section>
+    <h2>Review Point Diagnostics</h2>
+    <table>
+<thead><tr><th>index</th><th>point</th><th>local_m</th><th>outer_region</th><th>outer_dist_m</th><th>nearest_component</th><th>component_dist_m</th><th>candidate_count</th><th>interpretation</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>nose_axis_4m</td><td>[4.0, 0.0, 0.0]</td><td>forward_fuselage</td><td>0.0</td><td>cockpit_crew_station</td><td>0.2</td><td>6</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
+<tr><td>2</td><td>nose_axis_6m</td><td>[6.0, 0.0, 0.0]</td><td>nose_radome</td><td>0.0</td><td>apg68_radar_array</td><td>0.0</td><td>4</td><td>point_inside_component_box_review_only</td></tr>
+<tr><td>3</td><td>tail_axis_4m</td><td>[-4.0, 0.0, 0.0]</td><td>aft_fuselage_engine</td><td>0.0</td><td>engine_fuel_control_unit</td><td>0.505594</td><td>7</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
+<tr><td>4</td><td>tail_axis_6m</td><td>[-6.0, 0.0, 0.0]</td><td>engine_nozzle</td><td>0.0</td><td>engine_core</td><td>0.0</td><td>5</td><td>point_inside_component_box_review_only</td></tr>
+<tr><td>5</td><td>right_beam_4m</td><td>[0.0, 4.0, 0.0]</td><td>left_wing</td><td>0.0</td><td>right_aileron_actuator</td><td>0.35</td><td>3</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
+<tr><td>6</td><td>right_beam_6m</td><td>[0.0, 6.0, 0.0]</td><td>left_wing</td><td>1.187654</td><td>right_aileron_actuator</td><td>1.540292</td><td>1</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
+<tr><td>7</td><td>left_beam_4m</td><td>[0.0, -4.0, 0.0]</td><td>right_wing</td><td>0.0</td><td>left_aileron_actuator</td><td>0.35</td><td>3</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
+<tr><td>8</td><td>left_beam_6m</td><td>[0.0, -6.0, 0.0]</td><td>right_wing</td><td>1.187654</td><td>left_aileron_actuator</td><td>1.540292</td><td>1</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
+<tr><td>9</td><td>above_4m</td><td>[0.0, 0.0, 4.0]</td><td>canopy</td><td>3.137903</td><td>flight_control_computer</td><td>3.411103</td><td>0</td><td>outside_outer_shape_no_near_component_candidate_review_only</td></tr>
+<tr><td>10</td><td>below_4m</td><td>[0.0, 0.0, -4.0]</td><td>intake</td><td>2.352661</td><td>center_fuselage_fuel_cell</td><td>3.4</td><td>0</td><td>outside_outer_shape_no_near_component_candidate_review_only</td></tr>
+</tbody>
+</table>
+  </section>
+  <section>
+    <h2>Component Binding Summary</h2>
+    <table>
+<thead><tr><th>component</th><th>system</th><th>bound_region</th><th>status</th><th>anomalies</th></tr></thead>
+<tbody>
+<tr><td>apg68_radar_array</td><td>radar</td><td>nose_radome</td><td>candidate_binding</td><td></td></tr>
+<tr><td>cockpit_crew_station</td><td>cockpit</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>nose_avionics_bay</td><td>avionics</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>iff_interrogator</td><td>avionics</td><td>nose_radome</td><td>candidate_binding</td><td></td></tr>
+<tr><td>center_fuselage_fuel_cell</td><td>fuel</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>mission_computer</td><td>avionics</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>data_link_terminal</td><td>data_link</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
+<tr><td>flight_control_computer</td><td>flight_control</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>inertial_navigation_unit</td><td>navigation</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
+<tr><td>electrical_power_bus</td><td>avionics</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
+<tr><td>engine_core</td><td>engine</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
+<tr><td>afterburner_nozzle</td><td>engine</td><td>engine_nozzle</td><td>candidate_binding</td><td></td></tr>
+<tr><td>tail_hydraulic_pump</td><td>hydraulic</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
+<tr><td>engine_fuel_control_unit</td><td>engine</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
+<tr><td>rudder_actuator</td><td>flight_control</td><td>engine_nozzle</td><td>candidate_binding</td><td></td></tr>
+<tr><td>left_wing_fuel_cell</td><td>fuel</td><td>right_wing</td><td>needs_review</td><td>left_name_bound_to_negative_y_region_sign_review</td></tr>
+<tr><td>right_wing_fuel_cell</td><td>fuel</td><td>left_wing</td><td>needs_review</td><td>right_name_bound_to_positive_y_region_sign_review</td></tr>
+<tr><td>left_aileron_actuator</td><td>flight_control</td><td>right_wing</td><td>needs_review</td><td>left_name_bound_to_negative_y_region_sign_review</td></tr>
+<tr><td>right_aileron_actuator</td><td>flight_control</td><td>left_wing</td><td>needs_review</td><td>right_name_bound_to_positive_y_region_sign_review</td></tr>
+<tr><td>wing_spar_center</td><td>wings</td><td>left_wing</td><td>needs_review</td><td>low_outer_region_overlap;component_center_outside_bound_region</td></tr>
+<tr><td>left_leading_edge_flap_actuator</td><td>flight_control</td><td>right_wing</td><td>needs_review</td><td>left_name_bound_to_negative_y_region_sign_review</td></tr>
+<tr><td>right_leading_edge_flap_actuator</td><td>flight_control</td><td>left_wing</td><td>needs_review</td><td>right_name_bound_to_positive_y_region_sign_review</td></tr>
+</tbody>
+</table>
+  </section>
+</main>
+</body>
+</html>
