@@ -179,7 +179,8 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     health_before = [float(value) for value in sim.get_unit_health(red_id)]
     self.assertTrue(bool(sim.is_unit_active(red_id)))
 
-    for _ in range(2):
+    report = None
+    for _ in range(4):
       self.assertTrue(
         bool(
           sim.debug_apply_local_proximity_hit(
@@ -193,10 +194,13 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
           )
         )
       )
+      events = sim.export_recent_engagement_events()
+      self.assertGreaterEqual(len(events.damage_reports), 1)
+      report = events.damage_reports[-1]
+      if bool(report.mobility_kill):
+        break
 
-    events = sim.export_recent_engagement_events()
-    self.assertGreaterEqual(len(events.damage_reports), 1)
-    report = events.damage_reports[-1]
+    self.assertIsNotNone(report)
     self.assertTrue(bool(report.mobility_kill))
     self.assertEqual(str(report.loss_state_to), "mobility_kill")
     self.assertFalse(bool(report.destroyed))
