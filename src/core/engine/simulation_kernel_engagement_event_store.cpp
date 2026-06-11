@@ -86,7 +86,9 @@ double clamp_unit_interval(double value) {
     return std::clamp(value, 0.0, 1.0);
 }
 
-bool positive_finite(double value) { return std::isfinite(value) && value > 0.0; }
+bool positive_finite(double value) {
+    return std::isfinite(value) && value > 0.0;
+}
 
 bool finite_unit_interval(double value) {
     return std::isfinite(value) && value >= 0.0 && value <= 1.0;
@@ -411,10 +413,9 @@ std::uint64_t SimulationKernelEngagementEventStore::record_component_damage_even
                                                                  record.munition_entity_id);
 
     ComponentDamageEvent event = std::move(record.event);
-    complete_lethality_header(event.header, "component_damage", "sampled", event_time_s,
-                              event_id, launch_event_id, record.parent_event_id,
-                              record.munition_entity_id, record.shooter_id, record.target_id,
-                              current_source_frame(ecs_));
+    complete_lethality_header(event.header, "component_damage", "sampled", event_time_s, event_id,
+                              launch_event_id, record.parent_event_id, record.munition_entity_id,
+                              record.shooter_id, record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.component_damage_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.component_damage_events,
@@ -553,10 +554,8 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
             damage_event.failure_probability =
                 clamp_unit_interval(row.component_failure_probability);
             damage_event.failure_sample = row.component_failure_sample;
-            damage_event.integrity_before =
-                clamp_unit_interval(row.component_integrity_before);
-            damage_event.integrity_after =
-                clamp_unit_interval(row.component_integrity_after);
+            damage_event.integrity_before = clamp_unit_interval(row.component_integrity_before);
+            damage_event.integrity_after = clamp_unit_interval(row.component_integrity_after);
             (void)record_component_damage_event({
                 .munition_entity_id = munition_entity_id,
                 .target_id = target_id,

@@ -77,7 +77,8 @@ uint64_t make_debug_synthetic_missile_seed(std::mt19937 &rng, uint64_t attacker_
     uint64_t state = (static_cast<uint64_t>(rng()) << 32) ^ static_cast<uint64_t>(rng());
     state = mix_debug_seed_word(state, attacker_id);
     state = mix_debug_seed_word(state, target_id);
-    state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_forward_m * 1000.0)));
+    state =
+        mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_forward_m * 1000.0)));
     state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_right_m * 1000.0)));
     state = mix_debug_seed_word(state, static_cast<uint64_t>(std::llround(local_up_m * 1000.0)));
     return state == 0 ? 0x6a09e667f3bcc909ULL : state;

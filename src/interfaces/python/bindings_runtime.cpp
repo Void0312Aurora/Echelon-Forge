@@ -599,8 +599,7 @@ void bind_runtime(nb::module_ &m) {
                 &ComponentMechanismLoadRow::component_failure_mode_authority)
         .def_rw("component_integrity_before",
                 &ComponentMechanismLoadRow::component_integrity_before)
-        .def_rw("component_integrity_after",
-                &ComponentMechanismLoadRow::component_integrity_after)
+        .def_rw("component_integrity_after", &ComponentMechanismLoadRow::component_integrity_after)
         .def_rw("component_redundancy_group_availability_before",
                 &ComponentMechanismLoadRow::component_redundancy_group_availability_before)
         .def_rw("component_redundancy_group_availability_after",
@@ -1843,11 +1842,7 @@ void bind_runtime(nb::module_ &m) {
                 return ok;
             },
             nb::arg("path"))
-        .def(
-            "reset_batch",
-            [](RuntimeFacade &self) {
-                self.reset_batch(BatchResetRequest{});
-            })
+        .def("reset_batch", [](RuntimeFacade &self) { self.reset_batch(BatchResetRequest{}); })
         .def("reset_batch", &RuntimeFacade::reset_batch, nb::arg("request"))
         .def("step_batch", &RuntimeFacade::step_batch)
         .def("apply_world_setup_batch", &RuntimeFacade::apply_world_setup_batch, nb::arg("seeds"),
