@@ -9,17 +9,11 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res011012_independent_review_closeout_gate as review_closeout_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_scope_bucket_independent_review_gate as scope_bucket_review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_b_independent_review_gate as stage_b_review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_uncertainty_review_gate as uncertainty_review_gate,
+from tools.maintenance.independent_review import (  # noqa: E402
+    effect_scale_review as stage_b_review_gate,
+    review_closeout as review_closeout_gate,
+    scope_bucket_review as scope_bucket_review_gate,
+    uncertainty_review as uncertainty_review_gate,
 )
 
 
@@ -221,7 +215,8 @@ def test_independent_review_gate_cli_writes_json(
     subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py",
+            "tools/maintenance/damage_model_independent_review.py",
+            "effect-scale-review",
             "--output",
             str(output_path),
         ],
@@ -406,7 +401,8 @@ def test_review_closeout_gate_cli_writes_retained_json(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_res011012_independent_review_closeout_gate.py",
+            "tools/maintenance/damage_model_independent_review.py",
+            "review-closeout",
             "--output-dir",
             str(output_dir),
         ],
@@ -606,7 +602,8 @@ def test_scope_bucket_review_gate_cli_writes_retained_json(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_scope_bucket_independent_review_gate.py",
+            "tools/maintenance/damage_model_independent_review.py",
+            "scope-bucket-review",
             "--output-dir",
             str(output_dir),
         ],
@@ -769,7 +766,8 @@ def test_uncertainty_review_gate_cli_writes_retained_json(
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_uncertainty_review_gate.py",
+            "tools/maintenance/damage_model_independent_review.py",
+            "uncertainty-review",
             "--output-dir",
             str(output_dir),
         ],

@@ -4,7 +4,7 @@
 
 本文档记录 `A2-RC-STAGE-B-INDEPENDENT-REVIEW` 对 Stage B author-side closeout 的独立 review gate。
 它来自
-[a2_blastfrag_stage_b_independent_review_gate.py](../../../../../../tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py)，
+[damage_model_independent_review.py](../../../../../../tools/maintenance/damage_model_independent_review.py) `effect-scale-review`，
 只审查 `RES-007/008/010/011/012` 的 author-side closeout evidence 是否可通过 independent review。
 
 本文档不创建 runtime descriptor，不授予 stock authority，不提升 formal validation manifest，也不释放
@@ -79,7 +79,7 @@ Stage C component probability、Pk 或 deterministic fuze authority。
 ## 6. 复现命令
 
 ```bash
-python tools/maintenance/a2_blastfrag_stage_b_independent_review_gate.py --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json
+python tools/maintenance/damage_model_independent_review.py effect-scale-review --output docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/stage_b_independent_review_20260531/stage_b_independent_review_gate.json
 pytest tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 

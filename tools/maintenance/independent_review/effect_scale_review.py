@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -585,7 +585,7 @@ def generate_stage_b_independent_review_gate(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the Stage B effect-scale independent-review gate for the "
@@ -597,7 +597,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_b_independent_review_gate()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

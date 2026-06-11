@@ -8,7 +8,7 @@
 
 | 字段 | 值 |
 |---|---|
-| `tool_ref` | [a2_blastfrag_res011012_independent_review_closeout_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res011012_independent_review_closeout_gate.py) |
+| `tool_ref` | [damage_model_independent_review.py](../../../../../../tools/maintenance/damage_model_independent_review.py) `review-closeout` |
 | `test_ref` | [test_independent_review_closeout_gates.py](../../../../../../tests/architecture/damage_model/test_independent_review_closeout_gates.py) |
 | `retained_gate` | [res011012_independent_review_closeout_gate.json](retained_artifacts/res011012_independent_review_closeout_20260531/res011012_independent_review_closeout_gate.json) |
 | `retained_manifest` | [manifest.json](retained_artifacts/res011012_independent_review_closeout_20260531/manifest.json) |
@@ -94,7 +94,7 @@ Package / release：
 已运行：
 
 ```bash
-python3 tools/maintenance/a2_blastfrag_res011012_independent_review_closeout_gate.py
+python3 tools/maintenance/damage_model_independent_review.py review-closeout
 pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 

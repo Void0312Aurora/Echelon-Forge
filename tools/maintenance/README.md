@@ -51,6 +51,10 @@ Task-specific A2 helpers:
   is the unified scope/provenance closeout command family. It dispatches row
   provenance, target-geometry closeout, warhead-scope closeout, and
   mechanism-source closeout commands.
+- [damage_model_independent_review.py](damage_model_independent_review.py)
+  is the unified independent review command family. It dispatches effect-scale
+  review, RES-011/012 review closeout, scope-bucket review, and uncertainty
+  review commands.
 - Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
   `a2_retained_manifest_integrity.py` scripts are candidate-package,
   retained-artifact, provenance, and review-gate helpers.

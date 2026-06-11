@@ -94,6 +94,8 @@
   - 统一的 benchmark-evidence CLI，覆盖 comparison hashes、mechanism evidence、benchmark execution admission、debris-case admission 和 spreadsheet recalculation/replacement review gate。
 - [damage_model_scope_provenance.py](maintenance/damage_model_scope_provenance.py)
   - 统一的 scope/provenance CLI，覆盖 row provenance、target-geometry closeout、warhead-scope closeout 和 mechanism-source closeout。
+- [damage_model_independent_review.py](maintenance/damage_model_independent_review.py)
+  - 统一的 independent-review CLI，覆盖 effect-scale review、review closeout、scope-bucket review 和 uncertainty review gate。
 - 剩余 A2 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和 `a2_retained_manifest_integrity.py`
   - 待继续合并为 command family 的候选/retained-artifact governance 任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
 

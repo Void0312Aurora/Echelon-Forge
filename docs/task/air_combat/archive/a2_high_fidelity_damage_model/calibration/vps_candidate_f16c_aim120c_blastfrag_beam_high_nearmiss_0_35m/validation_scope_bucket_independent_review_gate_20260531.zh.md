@@ -86,7 +86,7 @@ authority、Pk authority 或 deterministic fuze authority。
 ## 6. 复现命令
 
 ```bash
-python3 tools/maintenance/a2_blastfrag_scope_bucket_independent_review_gate.py
+python3 tools/maintenance/damage_model_independent_review.py scope-bucket-review
 pytest -q tests/architecture/damage_model/test_independent_review_closeout_gates.py
 ```
 
