@@ -17,15 +17,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_comparison_hashes as comparison_hashes,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res005006_benchmark_execution_admission_gate as res005006_gate,
+from tools.maintenance.benchmark_evidence import (  # noqa: E402
+    benchmark_execution_admission as res005006_gate,
+    comparison_hashes,
 )
 
 
@@ -600,7 +598,7 @@ def write_retained_artifacts(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate the fail-closed RES-006 BEC-O recalculation admission gate."
     )
@@ -632,7 +630,7 @@ def main() -> int:
         action="store_true",
         help="Detect tooling but do not attempt BEC-O headless recalculation.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = write_retained_artifacts(
         retained_dir=args.retained_dir,

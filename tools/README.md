@@ -90,6 +90,8 @@
   - Unified external signoff evidence CLI for source-rights signoff requests, intake contracts, packet templates, and admission preflight checks.
 - [damage_model_source_governance.py](maintenance/damage_model_source_governance.py)
   - Unified source-governance CLI for admission audit, retained payload pack, and source-rights allowed-output policy checks.
+- [damage_model_benchmark_evidence.py](maintenance/damage_model_benchmark_evidence.py)
+  - Unified benchmark-evidence CLI for comparison hashes, mechanism evidence, benchmark execution admission, debris-case admission, and spreadsheet recalculation/replacement review gates.
 - Remaining A2 `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and `a2_retained_manifest_integrity.py`
   - Task-specific candidate/retained-artifact governance helpers awaiting command-family consolidation. They are non-authoritative maintenance gates and are not part of the runtime product surface.
 

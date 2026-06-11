@@ -43,6 +43,10 @@ Task-specific A2 helpers:
   is the unified external signoff evidence command family. It dispatches
   `signoff-request`, `intake-contract`, `packet-template`, and
   `admission-preflight` without retaining the old per-step entrypoint files.
+- [damage_model_benchmark_evidence.py](damage_model_benchmark_evidence.py)
+  is the unified benchmark evidence and admission command family. It dispatches
+  comparison hash, mechanism evidence, benchmark execution, debris-case, and
+  spreadsheet recalculation/replacement/lineage review commands.
 - Remaining `a2_blastfrag_*.py`, `a2_candidate_vps_bundle.py`, and
   `a2_retained_manifest_integrity.py` scripts are candidate-package,
   retained-artifact, provenance, and review-gate helpers.

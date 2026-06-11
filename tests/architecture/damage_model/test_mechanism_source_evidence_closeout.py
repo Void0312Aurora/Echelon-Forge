@@ -13,11 +13,9 @@ from tests.architecture.damage_model.helpers import (
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_benchmark_evidence as evidence,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_comparison_hashes as hashes,
+from tools.maintenance.benchmark_evidence import (  # noqa: E402
+    comparison_hashes as hashes,
+    mechanism_evidence as evidence,
 )
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_mechanism_source_closeout_gate as gate,
@@ -167,7 +165,8 @@ def test_mechanism_benchmark_evidence_cli_keeps_authority_guards_false(
     output_path = tmp_path / "mechanism_benchmark_evidence.json"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_mechanism_benchmark_evidence.py",
+        "damage_model_benchmark_evidence.py",
+        "mechanism-evidence",
         "--output",
         output_path,
     )
@@ -333,7 +332,8 @@ def test_mechanism_comparison_hashes_cli_writes_retained_manifest(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_mechanism_comparison_hashes.py",
+        "damage_model_benchmark_evidence.py",
+        "comparison-hashes",
         "--write-retained-artifacts",
         "--retained-dir",
         retained_dir,

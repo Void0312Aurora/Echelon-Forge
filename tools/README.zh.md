@@ -90,6 +90,8 @@
   - 统一的 external signoff evidence CLI，覆盖 source-rights signoff request、intake contract、packet template 和 admission preflight。
 - [damage_model_source_governance.py](maintenance/damage_model_source_governance.py)
   - 统一的 source-governance CLI，覆盖 admission audit、retained payload pack 和 source-rights allowed-output policy 检查。
+- [damage_model_benchmark_evidence.py](maintenance/damage_model_benchmark_evidence.py)
+  - 统一的 benchmark-evidence CLI，覆盖 comparison hashes、mechanism evidence、benchmark execution admission、debris-case admission 和 spreadsheet recalculation/replacement review gate。
 - 剩余 A2 `a2_blastfrag_*.py`、`a2_candidate_vps_bundle.py` 和 `a2_retained_manifest_integrity.py`
   - 待继续合并为 command family 的候选/retained-artifact governance 任务专用辅助工具。它们是非权威 maintenance gate，不属于 runtime product surface。
 

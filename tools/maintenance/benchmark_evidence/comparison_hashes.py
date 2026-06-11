@@ -20,7 +20,7 @@ from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 PACKAGE_ID = (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -793,7 +793,7 @@ def write_retained_artifacts(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate fail-closed A2 RES-005/006 mechanism comparison-output "
@@ -822,7 +822,7 @@ def main() -> int:
         action="store_true",
         help="Write mechanism_comparison_hashes.json and manifest.json.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.write_retained_artifacts:
         artifact = write_retained_artifacts(

@@ -18,11 +18,11 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, 
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res005006_benchmark_execution_admission_gate as benchmark_execution_gate,
-    a2_blastfrag_res005_tp21_debris_admission_gate as debris_gate,
-    a2_blastfrag_res005_tp21_selected_case_admission_gate as selected_case_gate,
-    a2_blastfrag_res005_tp21_selected_case_candidate_packet as candidate_packet,
+from tools.maintenance.benchmark_evidence import (  # noqa: E402
+    benchmark_execution_admission as benchmark_execution_gate,
+    debris_admission as debris_gate,
+    selected_debris_case_admission as selected_case_gate,
+    selected_debris_case_packet as candidate_packet,
 )
 from tools.maintenance import a2_retained_manifest_integrity as integrity  # noqa: E402
 
@@ -145,7 +145,8 @@ def test_selected_output_admission_cli_writes_retained_artifacts(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res005_tp21_debris_admission_gate.py",
+        "damage_model_benchmark_evidence.py",
+        "debris-admission",
         "--retained-dir",
         retained_dir,
         "--output",
@@ -332,7 +333,8 @@ def test_selected_case_admission_cli_writes_manifest_integrity_clean(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res005_tp21_selected_case_admission_gate.py",
+        "damage_model_benchmark_evidence.py",
+        "selected-debris-case-admission",
         "--retained-dir",
         retained_dir,
         "--output",
@@ -533,7 +535,8 @@ def test_selected_case_candidate_cli_writes_manifest_integrity_clean(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res005_tp21_selected_case_candidate_packet.py",
+        "damage_model_benchmark_evidence.py",
+        "selected-debris-case-packet",
         "--retained-dir",
         retained_dir,
         "--output",
@@ -710,7 +713,8 @@ def test_benchmark_execution_cli_writes_retained_gate_and_manifest(tmp_path: Pat
     result = subprocess.run(
         [
             sys.executable,
-            "tools/maintenance/a2_blastfrag_res005006_benchmark_execution_admission_gate.py",
+            "tools/maintenance/damage_model_benchmark_evidence.py",
+            "benchmark-execution-admission",
             "--skip-spreadsheet-execution",
             "--retained-dir",
             str(retained_dir),

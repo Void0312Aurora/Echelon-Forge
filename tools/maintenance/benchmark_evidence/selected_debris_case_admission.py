@@ -17,13 +17,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_comparison_hashes as comparison_hashes,
-)
+from tools.maintenance.benchmark_evidence import comparison_hashes  # noqa: E402
 
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
@@ -631,7 +629,7 @@ def write_retained_artifacts(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the fail-closed A2 RES-005 TP-21 selected-case admission "
@@ -667,7 +665,7 @@ def main() -> int:
         default=SOURCE_RIGHTS_POLICY_PATH,
         help="Existing source-rights allowed-output policy gate JSON.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = write_retained_artifacts(
         retained_dir=args.retained_dir,

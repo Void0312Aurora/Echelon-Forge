@@ -3,7 +3,7 @@
 状态：`partial_fail_closed_benchmark_execution_admission_gate / non-authoritative / hash-only`。
 
 本文记录 `A2-RES005006-BENCH-EXECUTION-ADMISSION` 对既有 mechanism comparison hash evidence 的执行/准入加固结果。对应工具为
-[a2_blastfrag_res005006_benchmark_execution_admission_gate.py](../../../../../../tools/maintenance/a2_blastfrag_res005006_benchmark_execution_admission_gate.py)。
+[damage_model_benchmark_evidence.py](../../../../../../tools/maintenance/damage_model_benchmark_evidence.py) `benchmark-execution-admission`。
 
 本文不修改 runtime、stock descriptor、source rights/provenance/stage-c 工具、`residual_register`、`game/**` 或既有 mechanism comparison 工具/测试；不把 BEC-O/TP-21 source presence、cached hash、headless reopen/recalculate 或 vocabulary hash 当 calibration；不释放 `effect_scale_authority`、`component_failure_probability_authority`、`Pk` 或 deterministic fuze authority。
 
@@ -92,6 +92,6 @@ TP-21 仍只保留 controlled criteria vocabulary/hash 和 selected-output requi
 ## 7. Verification
 
 ```bash
-python3 tools/maintenance/a2_blastfrag_res005006_benchmark_execution_admission_gate.py
+python3 tools/maintenance/damage_model_benchmark_evidence.py benchmark-execution-admission
 pytest -q tests/architecture/damage_model/test_benchmark_evidence_admission.py
 ```

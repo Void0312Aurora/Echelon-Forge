@@ -23,13 +23,11 @@ from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_comparison_hashes as comparison_hashes,
-)
+from tools.maintenance.benchmark_evidence import comparison_hashes  # noqa: E402
 
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID
@@ -679,7 +677,7 @@ def write_retained_artifacts(
     return artifact
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the fail-closed A2 RES-005/006 benchmark execution/"
@@ -708,7 +706,7 @@ def main() -> int:
         action="store_true",
         help="Detect tooling but do not attempt BEC-O headless recalculation.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = write_retained_artifacts(
         retained_dir=args.retained_dir,

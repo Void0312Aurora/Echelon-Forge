@@ -17,13 +17,11 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_mechanism_comparison_hashes as comparison_hashes,
-)
+from tools.maintenance.benchmark_evidence import comparison_hashes  # noqa: E402
 
 
 PACKAGE_ID = comparison_hashes.PACKAGE_ID

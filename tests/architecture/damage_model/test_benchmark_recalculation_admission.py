@@ -14,14 +14,10 @@ from tests.architecture.helpers import ensure_repo_root_on_sys_path, read_json
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res006_beco_lineage_tolerance_review_packet as lineage_packet,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res006_beco_recalculation_admission_gate as recalculation_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_res006_beco_replacement_tolerance_admission_gate as replacement_gate,
+from tools.maintenance.benchmark_evidence import (  # noqa: E402
+    spreadsheet_lineage_tolerance_packet as lineage_packet,
+    spreadsheet_recalculation_admission as recalculation_gate,
+    spreadsheet_replacement_tolerance as replacement_gate,
 )
 from tools.maintenance import a2_retained_manifest_integrity as manifest_integrity  # noqa: E402
 
@@ -249,7 +245,8 @@ def test_benchmark_recalculation_cli_writes_gate_anchor_set_and_manifest(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res006_beco_recalculation_admission_gate.py",
+        "damage_model_benchmark_evidence.py",
+        "spreadsheet-recalculation-admission",
         "--skip-spreadsheet-execution",
         "--retained-dir",
         retained_dir,
@@ -482,7 +479,8 @@ def test_benchmark_lineage_tolerance_cli_writes_packet_and_manifest(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res006_beco_lineage_tolerance_review_packet.py",
+        "damage_model_benchmark_evidence.py",
+        "spreadsheet-lineage-tolerance-packet",
         "--retained-dir",
         retained_dir,
         "--output",
@@ -679,7 +677,8 @@ def test_benchmark_replacement_tolerance_cli_writes_gate_and_manifest(
     retained_dir = tmp_path / "retained"
 
     result = run_maintenance_cli(
-        "a2_blastfrag_res006_beco_replacement_tolerance_admission_gate.py",
+        "damage_model_benchmark_evidence.py",
+        "spreadsheet-replacement-tolerance",
         "--retained-dir",
         retained_dir,
         "--output",
