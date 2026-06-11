@@ -99,7 +99,7 @@
 - [damage_model_release_governance.py](maintenance/damage_model_release_governance.py)
   - Unified release-governance CLI for package provenance/identity, provenance review/closeout, source release signoff, scoped release identity, and Stage B release readiness/closeout gates.
 - [damage_model_candidate_artifacts.py](maintenance/damage_model_candidate_artifacts.py)
-  - Unified candidate-artifact CLI for validation scaffolds, scope probes, Stage B effect-scale artifact packs, runtime authority exercises, and candidate package bundles.
+  - Unified candidate-artifact CLI for validation scaffolds, scope probes, Stage B effect-scale artifact packs, Stage C component-probability artifact/review gates, runtime authority exercises, and candidate package bundles.
 - Remaining A2 `a2_blastfrag_*.py` and `a2_retained_manifest_integrity.py`
   - Task-specific retained-artifact and Stage C governance helpers awaiting command-family consolidation. They are non-authoritative maintenance gates and are not part of the runtime product surface.
 

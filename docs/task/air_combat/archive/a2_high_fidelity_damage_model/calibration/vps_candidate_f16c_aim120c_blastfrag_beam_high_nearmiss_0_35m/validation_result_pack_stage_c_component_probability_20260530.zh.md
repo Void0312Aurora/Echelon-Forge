@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage C `component_failure_probability_authority_only` 候选包的第一版统一结果包。
 它来自
-[a2_blastfrag_stage_c_component_probability_result_pack.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py)，
+[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-result-pack`，
 将 runtime-aligned authority exercise、Stage C component-specific snapshot 与
 surface probe 汇总为带稳定内容 hash 和 independence audit 语义的 machine-readable artifact。
 
@@ -20,7 +20,7 @@ surface probe 汇总为带稳定内容 hash 和 independence audit 语义的 mac
 | `result_pack_status` | `author_result_pack_complete_pending_independent_review` |
 | `primary_release_scope` | `component_failure_probability_authority_only` |
 | `schema_version` | `a2.stage_c_component_probability_result_pack.v1` |
-| `tool_ref` | [a2_blastfrag_stage_c_component_probability_result_pack.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py) |
+| `tool_ref` | [damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-result-pack` |
 | `stock_runtime_action` | `forbidden_pending_fragility_review_and_residual_closeout` |
 
 ## 2. 当前 artifact hash

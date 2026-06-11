@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -26,14 +26,14 @@ from tools.maintenance.release_governance import (
     effect_scale_release_readiness as stage_b_gate,
     package_provenance_identity as provenance_identity_gate,
 )
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_retained_artifact_pack as stage_c_retained_pack,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_retained_pack as stage_c_retained_pack,
 )
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_result_pack as stage_c_result_pack,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_result_pack as stage_c_result_pack,
 )
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_snapshot as stage_c_snapshot,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_snapshot as stage_c_snapshot,
 )
 
 
@@ -574,7 +574,7 @@ def generate_stage_c_component_probability_review_readiness_gate(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Evaluate the current Stage C component-probability review-readiness "
@@ -586,7 +586,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_c_component_probability_review_readiness_gate()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

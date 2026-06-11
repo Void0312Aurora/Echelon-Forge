@@ -18,13 +18,13 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_surface_probe as surface_probe,
 )
 
 
@@ -344,8 +344,8 @@ def generate_stage_c_component_probability_snapshot(
                 "runtime-authority-exercise"
             ),
             "surface_probe_ref": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "scope_definition_ref": (
                 "docs/task/air_combat/archive/a2_high_fidelity_damage_model/"
@@ -502,7 +502,7 @@ def generate_stage_c_component_probability_snapshot(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the current author-side Stage C component-probability "
@@ -514,7 +514,7 @@ def main() -> int:
         type=Path,
         help="Optional JSON output path. Defaults to stdout.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_stage_c_component_probability_snapshot()
     payload = json.dumps(artifact, indent=2, sort_keys=True)

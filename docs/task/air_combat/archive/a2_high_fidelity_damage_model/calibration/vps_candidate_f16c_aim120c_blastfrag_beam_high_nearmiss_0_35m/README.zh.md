@@ -77,15 +77,15 @@ confidence 和 residual。详见
 - 上述 scaffold 当前已覆盖 `BFM-BM-001..006` 的可执行脚手架层：其中 `BFM-BM-002` 提供非型号化的 Mott/Gurney fragment mass/velocity/energy toy benchmark，`BFM-BM-004` 提供 penetration-margin / domain-rejection toy benchmark，二者都只服务于 candidate validation planning，不构成运行时 authority。
 - `tools/maintenance/damage_model_candidate_artifacts.py effect-scale-snapshot`：把 Stage B `effect_scale` frozen hard gates 对应的当前 fixed-seed scaffold 结果固化成 machine-readable snapshot，用于 review 和 residual 审计；它不会创建 runtime descriptor，也不会绕过独立 review。
 - `tests/architecture/damage_model/test_candidate_artifact_contracts.py`：固定上述 Stage B snapshot 的 artifact 形状、hard-gate pass 记录和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py`：把 runtime-aligned authority exercise 与 Stage C snapshot 汇总成统一的 candidate result pack，并固定 content hash 与 independence audit 语义；它不会把 author-side component probability 结果包提升成 authority。
+- `tools/maintenance/damage_model_candidate_artifacts.py component-probability-result-pack`：把 runtime-aligned authority exercise 与 Stage C snapshot 汇总成统一的 candidate result pack，并固定 content hash 与 independence audit 语义；它不会把 author-side component probability 结果包提升成 authority。
 - `tests/architecture/damage_model/test_component_probability_artifacts.py`：固定 Stage C snapshot 与 result pack 的 artifact 形状、component provenance / gate-band 检查和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_stage_c_component_probability_retained_artifact_pack.py`：把 runtime-aligned authority exercise、Stage C snapshot 与 Stage C result pack 固化到 repo 内 canonical retained JSON 目录，并明确 test-local / candidate / non-authoritative 起源边界；它不会把 retained chain 提升成 authority。
+- `tools/maintenance/damage_model_candidate_artifacts.py component-probability-retained-pack`：把 runtime-aligned authority exercise、Stage C snapshot 与 Stage C result pack 固化到 repo 内 canonical retained JSON 目录，并明确 test-local / candidate / non-authoritative 起源边界；它不会把 retained chain 提升成 authority。
 - `tests/architecture/damage_model/test_component_probability_artifacts.py`：固定上述 Stage C retained pack 的 manifest 形状、artifact inventory 和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_stage_c_component_probability_review_readiness_gate.py`：把 Stage C component-specific probability 当前为什么仍 blocked 机器化固定下来，并同时记录 upstream Stage B 依赖仍未收口；它不会把 author-side review gate 提升成 authority。
+- `tools/maintenance/damage_model_candidate_artifacts.py component-probability-review-readiness`：把 Stage C component-specific probability 当前为什么仍 blocked 机器化固定下来，并同时记录 upstream Stage B 依赖仍未收口；它不会把 author-side review gate 提升成 authority。
 - `tests/architecture/damage_model/test_component_fragility_validation.py`：固定上述 Stage C review gate 的 artifact 形状、阻塞 residual 集和 non-authoritative 边界。
 - `tools/maintenance/damage_model_release_governance.py package-provenance-identity`：把 package-level provenance / surrogate identity 阻塞面收口成共享 gate，并显式承接 `RES-001/002` 的 author-side closeout surface；它不会把 retained chain 或 pin manifest 提升成 release-grade authority。
 - `tests/architecture/damage_model/test_release_authority_guardrails.py`：固定上述 shared provenance / identity gate 的 artifact 形状、阻塞 residual 和 non-authoritative 边界。
-- `tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py`：把当前 runtime-aligned Stage C component-specific probability candidate surface 固化成 machine-readable snapshot，用于把 test-local 演练推进到 package-level author-side artifact；它不会授予 stock authority，也不会关闭 fragility residual。
+- `tools/maintenance/damage_model_candidate_artifacts.py component-probability-snapshot`：把当前 runtime-aligned Stage C component-specific probability candidate surface 固化成 machine-readable snapshot，用于把 test-local 演练推进到 package-level author-side artifact；它不会授予 stock authority，也不会关闭 fragility residual。
 - `tests/architecture/damage_model/test_component_probability_artifacts.py`：固定上述 Stage C snapshot 的 artifact 形状、component provenance 检查和 non-authoritative 边界。
 - `tools/maintenance/damage_model_candidate_artifacts.py effect-scale-result-pack`：把 scaffold、scope probe 和 Stage B snapshot 汇总为统一的 candidate result pack，并固定 content hash 与 independence audit 语义；它不会把 author-side 结果包提升成 authority。
 - `tests/architecture/damage_model/test_candidate_artifact_contracts.py`：固定上述 result pack 的 artifact 形状、hash surface、scope audit 和 non-authoritative 边界。
@@ -126,8 +126,8 @@ python3 tools/maintenance/damage_model_candidate_artifacts.py scope-boundary-pro
 python3 tools/maintenance/damage_model_candidate_artifacts.py scope-boundary-probe --output /tmp/a2_scope_boundary_probe.json
 python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-snapshot
 python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-snapshot --output /tmp/a2_stage_b_effect_scale_snapshot.json
-python3 tools/maintenance/a2_blastfrag_stage_c_component_probability_snapshot.py
-python3 tools/maintenance/a2_blastfrag_stage_c_component_probability_result_pack.py
+python3 tools/maintenance/damage_model_candidate_artifacts.py component-probability-snapshot
+python3 tools/maintenance/damage_model_candidate_artifacts.py component-probability-result-pack
 python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-result-pack
 python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-result-pack --output /tmp/a2_stage_b_validation_result_pack.json
 python3 tools/maintenance/damage_model_candidate_artifacts.py effect-scale-retained-pack

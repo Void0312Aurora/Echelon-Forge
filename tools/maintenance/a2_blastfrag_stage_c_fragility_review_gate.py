@@ -22,9 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_review_readiness_gate as readiness_gate,
-)
+from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate  # noqa: E402
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_stage_c_fragility_validation_prep as prep,
 )

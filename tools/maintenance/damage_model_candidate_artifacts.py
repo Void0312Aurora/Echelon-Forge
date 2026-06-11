@@ -13,6 +13,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    component_probability_result_pack,
+    component_probability_retained_pack,
+    component_probability_review_readiness,
+    component_probability_snapshot,
+    component_probability_surface_probe,
     effect_scale_result_pack,
     effect_scale_retained_pack,
     effect_scale_snapshot,
@@ -53,6 +58,26 @@ COMMANDS: dict[str, tuple[str, CommandMain]] = {
     "package-bundle": (
         "Assemble the current candidate package bundle.",
         package_bundle.main,
+    ),
+    "component-probability-surface-probe": (
+        "Generate the Stage C component-probability surface probe.",
+        component_probability_surface_probe.main,
+    ),
+    "component-probability-snapshot": (
+        "Generate the Stage C component-probability candidate snapshot.",
+        component_probability_snapshot.main,
+    ),
+    "component-probability-result-pack": (
+        "Generate the Stage C component-probability result pack.",
+        component_probability_result_pack.main,
+    ),
+    "component-probability-retained-pack": (
+        "Write retained Stage C component-probability artifacts.",
+        component_probability_retained_pack.main,
+    ),
+    "component-probability-review-readiness": (
+        "Evaluate Stage C component-probability review readiness.",
+        component_probability_review_readiness.main,
     ),
 }
 

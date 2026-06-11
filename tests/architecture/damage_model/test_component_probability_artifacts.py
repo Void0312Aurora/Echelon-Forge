@@ -12,11 +12,11 @@ from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, 
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_result_pack as result_pack,
-    a2_blastfrag_stage_c_component_probability_retained_artifact_pack as retained_pack,
-    a2_blastfrag_stage_c_component_probability_snapshot as snapshot,
-    a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
+from tools.maintenance.candidate_artifacts import (  # noqa: E402
+    component_probability_result_pack as result_pack,
+    component_probability_retained_pack as retained_pack,
+    component_probability_snapshot as snapshot,
+    component_probability_surface_probe as surface_probe,
 )
 
 # Component probability surface probe
@@ -166,7 +166,8 @@ def test_component_probability_surface_probe_cli_writes_json(
 ) -> None:
     output_path = tmp_path / "a2_stage_c_component_probability_surface_probe.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_component_probability_surface_probe.py",
+        "damage_model_candidate_artifacts.py",
+        "component-probability-surface-probe",
         "--output",
         output_path,
     )
@@ -293,7 +294,8 @@ def test_component_probability_snapshot_cli_writes_json(
 ) -> None:
     output_path = tmp_path / "a2_stage_c_component_probability_snapshot.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_component_probability_snapshot.py",
+        "damage_model_candidate_artifacts.py",
+        "component-probability-snapshot",
         "--output",
         output_path,
     )
@@ -446,7 +448,8 @@ def test_component_probability_result_pack_cli_writes_json(
 ) -> None:
     output_path = tmp_path / "a2_stage_c_component_probability_result_pack.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_component_probability_result_pack.py",
+        "damage_model_candidate_artifacts.py",
+        "component-probability-result-pack",
         "--output",
         output_path,
     )
@@ -545,7 +548,8 @@ def test_component_probability_retained_artifact_pack_cli_writes_manifest(
 ) -> None:
     output_dir = tmp_path / "retained_pack_cli"
     artifact = run_maintenance_json_cli(
-        "a2_blastfrag_stage_c_component_probability_retained_artifact_pack.py",
+        "damage_model_candidate_artifacts.py",
+        "component-probability-retained-pack",
         "--output-dir",
         output_dir,
     )

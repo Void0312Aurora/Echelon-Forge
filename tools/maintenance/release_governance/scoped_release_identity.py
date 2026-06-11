@@ -108,7 +108,8 @@ DOC_REFS = {
         REPO_ROOT
         / "tools"
         / "maintenance"
-        / "a2_blastfrag_stage_c_component_probability_snapshot.py"
+        / "candidate_artifacts"
+        / "component_probability_snapshot.py"
     ),
     "source_payload_pack_tool": (
         REPO_ROOT / "tools" / "maintenance" / "damage_model_source_governance.py"

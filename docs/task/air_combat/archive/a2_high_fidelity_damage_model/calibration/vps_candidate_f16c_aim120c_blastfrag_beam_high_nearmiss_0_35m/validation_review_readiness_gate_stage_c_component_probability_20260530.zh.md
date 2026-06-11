@@ -4,7 +4,7 @@
 
 本文档记录当前 Stage C `component_failure_probability_authority_only` 候选包的第一版
 review-readiness gate。它来自
-[a2_blastfrag_stage_c_component_probability_review_readiness_gate.py](../../../../../../tools/maintenance/a2_blastfrag_stage_c_component_probability_review_readiness_gate.py)，
+[damage_model_candidate_artifacts.py](../../../../../../tools/maintenance/damage_model_candidate_artifacts.py) `component-probability-review-readiness`，
 目标不是宣称 ready，而是把“当前为什么仍停留在 author-side candidate review”机器化固定下来。
 
 本文档不创建 runtime descriptor，不授予 authority，也不替代 independent fragility review。

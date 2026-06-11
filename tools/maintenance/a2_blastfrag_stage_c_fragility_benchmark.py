@@ -25,9 +25,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from python.testing.runtime import resolve_repo_path  # noqa: E402
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
-)
+from tools.maintenance.candidate_artifacts import component_probability_surface_probe as surface_probe  # noqa: E402
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_stage_c_fragility_review_gate as fragility_review_gate,
 )
@@ -159,8 +157,8 @@ def _candidate_curve(surface_artifact: dict[str, Any]) -> dict[str, Any]:
         "curve_kind": "author_side_three_point_piecewise_linear_candidate",
         "component_name": "right_aileron_actuator",
         "source_tool": (
-            "tools/maintenance/"
-            "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+            "tools/maintenance/damage_model_candidate_artifacts.py "
+            "component-probability-surface-probe"
         ),
         "point_count": len(points),
         "points": points,

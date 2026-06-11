@@ -19,19 +19,19 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tools.maintenance.candidate_artifacts import runtime_authority_exercise as authority_pack
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_result_pack as result_pack,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_result_pack as result_pack,
 )
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_snapshot as snapshot,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_snapshot as snapshot,
 )
-from tools.maintenance import (
-    a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
+from tools.maintenance.candidate_artifacts import (
+    component_probability_surface_probe as surface_probe,
 )
 
 
@@ -243,7 +243,7 @@ def generate_retained_artifact_pack(
     return manifest
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Write retained Stage C component-probability candidate artifacts for "
@@ -256,7 +256,7 @@ def main() -> int:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory where retained JSON artifacts will be written.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     artifact = generate_retained_artifact_pack(output_dir=args.output_dir)
     print(_canonical_json(artifact))

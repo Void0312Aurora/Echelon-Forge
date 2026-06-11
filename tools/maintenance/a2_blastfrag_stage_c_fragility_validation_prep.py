@@ -21,15 +21,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_result_pack as result_pack,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_review_readiness_gate as review_gate,
-)
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_surface_probe as surface_probe,
-)
+from tools.maintenance.candidate_artifacts import component_probability_result_pack as result_pack  # noqa: E402
+from tools.maintenance.candidate_artifacts import component_probability_review_readiness as review_gate  # noqa: E402
+from tools.maintenance.candidate_artifacts import component_probability_surface_probe as surface_probe  # noqa: E402
 
 
 PACKAGE_ID = (
@@ -146,8 +140,8 @@ def _fragility_validation_matrix(
                 "right_aileron_actuator and its flight-control redundancy group?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "current_author_side_result": (
                 "pass_candidate_only"
@@ -171,8 +165,8 @@ def _fragility_validation_matrix(
                 "for the projected component?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "current_author_side_result": (
                 "pass_candidate_only"
@@ -201,8 +195,8 @@ def _fragility_validation_matrix(
                 "release-grade component fragility curve?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_result_pack.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-result-pack"
             ),
             "current_author_side_result": (
                 "blocked_expected_non_authoritative"
@@ -233,8 +227,8 @@ def _fragility_validation_matrix(
                 "the narrow near-miss bucket?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "current_author_side_result": (
                 "pass_candidate_only"
@@ -259,8 +253,8 @@ def _fragility_validation_matrix(
                 "uncertainty reviewer?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "current_author_side_result": (
                 "pass_candidate_only"
@@ -286,8 +280,8 @@ def _fragility_validation_matrix(
                 "the review packet?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_result_pack.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-result-pack"
             ),
             "current_author_side_result": (
                 "prepared_pending_independent_audit"
@@ -313,8 +307,8 @@ def _fragility_validation_matrix(
                 "instead of promoting component probability independently?"
             ),
             "executable_artifact": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_review_readiness_gate.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-review-readiness"
             ),
             "current_author_side_result": (
                 "dependency_preserved_as_blocked"
@@ -535,8 +529,8 @@ def _review_entry_artifact_inventory(
             "artifact_id": "REVIEW-CP-001",
             "artifact_kind": "stage_c_result_pack",
             "tool_ref": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_result_pack.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-result-pack"
             ),
             "current_status": result_artifact["status"],
             "review_role": "author-side current result summary",
@@ -545,8 +539,8 @@ def _review_entry_artifact_inventory(
             "artifact_id": "REVIEW-CP-002",
             "artifact_kind": "stage_c_surface_probe",
             "tool_ref": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_surface_probe.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-surface-probe"
             ),
             "current_status": surface_artifact["status"],
             "review_role": "fragility-surface and repeatability input",
@@ -555,8 +549,8 @@ def _review_entry_artifact_inventory(
             "artifact_id": "REVIEW-CP-003",
             "artifact_kind": "stage_c_review_readiness_gate",
             "tool_ref": (
-                "tools/maintenance/"
-                "a2_blastfrag_stage_c_component_probability_review_readiness_gate.py"
+                "tools/maintenance/damage_model_candidate_artifacts.py "
+                "component-probability-review-readiness"
             ),
             "current_status": gate_artifact["status"],
             "review_role": "blocked authority boundary and residual gate",

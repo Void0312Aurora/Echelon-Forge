@@ -10,9 +10,7 @@ from tests.architecture.damage_model.helpers import run_maintenance_cli
 
 ensure_repo_root_on_sys_path()
 
-from tools.maintenance import (  # noqa: E402
-    a2_blastfrag_stage_c_component_probability_review_readiness_gate as readiness_gate,
-)
+from tools.maintenance.candidate_artifacts import component_probability_review_readiness as readiness_gate  # noqa: E402
 from tools.maintenance import (  # noqa: E402
     a2_blastfrag_stage_c_fragility_benchmark as benchmark,
 )
@@ -174,7 +172,8 @@ def test_component_probability_review_readiness_gate_cli_writes_json(
 ) -> None:
     output_path = tmp_path / "a2_stage_c_component_probability_review_gate.json"
     run_maintenance_cli(
-        "a2_blastfrag_stage_c_component_probability_review_readiness_gate.py",
+        "damage_model_candidate_artifacts.py",
+        "component-probability-review-readiness",
         "--output",
         output_path,
         capture_output=False,
