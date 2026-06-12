@@ -13,9 +13,9 @@ from python.rl.runtime.agent_shim import (
   OBS_DIAGNOSTICS_ORACLE,
   OBS_FACADE_OBSERVATION_PACKET,
   OBS_RAW_WORLD_TRUTH,
-  ActionIntentCompat,
-  CoordinationIntentCompat,
-  DecisionBeliefCompat,
+  ActionIntent,
+  CoordinationIntent,
+  DecisionBelief,
   ObservationProvenance,
   observation_provenance,
   roster_slot_role,
@@ -113,7 +113,7 @@ def test_maintained_agent_role_uses_facade_observation_packet_metadata():
 
 
 def test_maintained_agent_role_accepts_labeled_decision_belief_input():
-  belief = DecisionBeliefCompat(
+  belief = DecisionBelief(
     belief_id="belief:track-kf:7",
     source_observation_versions=("global:11", "track:7"),
     memory_or_estimator_ref="estimator:kalman-track",
@@ -227,11 +227,11 @@ def test_maintained_intent_entry_points_reject_explicit_compatibility_role_prove
   with pytest.raises(
     ValueError,
     match=(
-      "ActionIntentCompat maintained business entry points require roles with explicit maintained "
+      "ActionIntent maintained business entry points require roles with explicit maintained "
       "ObservationPacket/DecisionBelief provenance"
     ),
   ):
-    ActionIntentCompat(
+    ActionIntent(
       role=compat_single_role,
       payload=SimpleNamespace(throttle=0.8),
       maintained_status=MAINTAINED,
@@ -240,11 +240,11 @@ def test_maintained_intent_entry_points_reject_explicit_compatibility_role_prove
   with pytest.raises(
     ValueError,
     match=(
-      "CoordinationIntentCompat maintained business entry points require roles with explicit maintained "
+      "CoordinationIntent maintained business entry points require roles with explicit maintained "
       "ObservationPacket/DecisionBelief provenance"
     ),
   ):
-    CoordinationIntentCompat(
+    CoordinationIntent(
       role=compat_roster_role,
       task_order=SimpleNamespace(task_id="hold-station"),
       maintained_status=MAINTAINED,
@@ -263,14 +263,14 @@ def test_maintained_intent_entry_points_accept_explicit_maintained_role_provenan
     maintained_status=MAINTAINED,
   )
 
-  action = ActionIntentCompat(
+  action = ActionIntent(
     role=role,
     payload=SimpleNamespace(throttle=0.8),
     target_entity_id=31,
     target_world_index=0,
     maintained_status=MAINTAINED,
   )
-  coordination = CoordinationIntentCompat(
+  coordination = CoordinationIntent(
     role=role,
     task_order=SimpleNamespace(task_id="hold-station"),
     roster_scope={"world_index": 0},
@@ -311,7 +311,7 @@ def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_pro
     ValueError,
     match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
   ):
-    ActionIntentCompat(
+    ActionIntent(
       role=compat_relabelled,
       payload=SimpleNamespace(throttle=0.8),
       maintained_status=MAINTAINED,
@@ -321,7 +321,7 @@ def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_pro
     ValueError,
     match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
   ):
-    CoordinationIntentCompat(
+    CoordinationIntent(
       role=raw_relabelled,
       task_order=SimpleNamespace(task_id="hold-station"),
       maintained_status=MAINTAINED,
@@ -370,7 +370,7 @@ def test_diagnostics_agent_role_does_not_promote_oracle_belief_to_policy_input()
 
 
 def test_diagnostics_or_compat_sources_are_not_promoted_to_maintained_belief_provenance():
-  diagnostics_belief = DecisionBeliefCompat(
+  diagnostics_belief = DecisionBelief(
     belief_id="belief:oracle:1",
     source_observation_versions=("truth:raw",),
     memory_or_estimator_ref="oracle:teacher",
@@ -441,7 +441,7 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
   payload = SimpleNamespace(stick_pitch=0.25)
   assignment = SimpleNamespace(world_index=0, entity_id=11, action=payload)
 
-  intent = ActionIntentCompat.from_pilot_assignment(
+  intent = ActionIntent.from_pilot_assignment(
     assignment,
     role=role,
     input_snapshot_version="global:9",
@@ -476,7 +476,7 @@ def test_coordination_intent_records_payload_fields():
   mission_command = SimpleNamespace(command_code=3)
   leader_intent = SimpleNamespace(active=True)
 
-  intent = CoordinationIntentCompat(
+  intent = CoordinationIntent(
     role=role,
     mission_command=mission_command,
     leader_intent=leader_intent,
@@ -506,7 +506,7 @@ def test_action_and_coordination_intents_preserve_policy_boundary_metadata():
     ),
     maintained_status=MAINTAINED,
   )
-  action = ActionIntentCompat(
+  action = ActionIntent(
     role=role,
     payload=SimpleNamespace(throttle=0.8),
     source_layer="policy",
@@ -518,7 +518,7 @@ def test_action_and_coordination_intents_preserve_policy_boundary_metadata():
     target_world_index=0,
     maintained_status=MAINTAINED,
   )
-  coordination = CoordinationIntentCompat(
+  coordination = CoordinationIntent(
     role=role,
     task_order=SimpleNamespace(task_id="hold-station"),
     source_layer="orchestration",
@@ -549,7 +549,7 @@ def test_invalid_status_and_merge_policy_are_rejected():
     single_agent_role(agent_id=1, maintained_status="mainline")
 
   with pytest.raises(ValueError):
-    ActionIntentCompat(
+    ActionIntent(
       role=single_agent_role(
         agent_id=1,
         information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
@@ -561,7 +561,7 @@ def test_invalid_status_and_merge_policy_are_rejected():
 
 
 def test_decision_belief_contract_allows_maintained_observation_derived_belief():
-  belief = DecisionBeliefCompat(
+  belief = DecisionBelief(
     belief_id="belief:track-kf:7",
     source_observation_versions=("global:11", "track:7"),
     memory_or_estimator_ref="estimator:kalman-track",
@@ -583,7 +583,7 @@ def test_decision_belief_contract_allows_maintained_observation_derived_belief()
 
 
 def test_decision_belief_truth_and_raw_ecs_inputs_are_diagnostics_only():
-  belief = DecisionBeliefCompat(
+  belief = DecisionBelief(
     belief_id="belief:oracle:1",
     source_observation_versions=("truth:raw",),
     memory_or_estimator_ref="oracle:teacher",
@@ -601,7 +601,7 @@ def test_decision_belief_truth_and_raw_ecs_inputs_are_diagnostics_only():
   assert schema["uses_raw_ecs"] is True
 
   with pytest.raises(ValueError):
-    DecisionBeliefCompat(
+    DecisionBelief(
       belief_id="belief:bad",
       source_observation_versions=("truth:raw",),
       memory_or_estimator_ref="oracle:teacher",

@@ -341,7 +341,7 @@ def roster_slot_role(
 
 
 @dataclass(frozen=True)
-class ActionIntentCompat:
+class ActionIntent:
     """Metadata wrapper for existing PilotAction / WorldPilotActionAssignment paths."""
 
     role: AgentRole
@@ -370,7 +370,7 @@ class ActionIntentCompat:
         if self.maintained_status == MAINTAINED:
             _validate_maintained_entry_point_role(
                 self.role,
-                entry_point="ActionIntentCompat",
+                entry_point="ActionIntent",
             )
 
     @classmethod
@@ -386,7 +386,7 @@ class ActionIntentCompat:
         valid_until: float | None = None,
         merge_policy: str = MERGE_LAST_WRITE_WINS,
         maintained_status: str = MAINTAINED,
-    ) -> "ActionIntentCompat":
+    ) -> "ActionIntent":
         return cls(
             role=role,
             payload=getattr(assignment, "action", assignment),
@@ -440,7 +440,7 @@ class ActionIntentCompat:
 
 
 @dataclass(frozen=True)
-class CoordinationIntentCompat:
+class CoordinationIntent:
     """Metadata wrapper for current command-chain assignment paths."""
 
     role: AgentRole
@@ -472,7 +472,7 @@ class CoordinationIntentCompat:
         if self.maintained_status == MAINTAINED:
             _validate_maintained_entry_point_role(
                 self.role,
-                entry_point="CoordinationIntentCompat",
+                entry_point="CoordinationIntent",
             )
 
     def payload_fields(self) -> tuple[str, ...]:
@@ -549,7 +549,7 @@ class CoordinationIntentCompat:
 
 
 @dataclass(frozen=True)
-class DecisionBeliefCompat:
+class DecisionBelief:
     """Passive Python-side sketch of the DecisionBelief contract boundary."""
 
     belief_id: str
@@ -635,10 +635,10 @@ __all__ = [
     "OBS_RAW_WORLD_TRUTH",
     "LAW14_MAINTAINED_READ_LABEL_ALLOWLIST",
     "OBSERVATION_PROVENANCE_LABELS",
-    "ActionIntentCompat",
+    "ActionIntent",
     "AgentRole",
-    "CoordinationIntentCompat",
-    "DecisionBeliefCompat",
+    "CoordinationIntent",
+    "DecisionBelief",
     "ObservationProvenance",
     "observation_provenance",
     "roster_slot_role",

@@ -174,7 +174,7 @@ def test_wp24l_maintained_intents_do_not_inline_default_role_helpers() -> None:
       if not isinstance(node, ast.Call):
         continue
       name = _call_name(node)
-      if name not in {"ActionIntentCompat", "CoordinationIntentCompat"}:
+      if name not in {"ActionIntent", "CoordinationIntent"}:
         continue
       if not _is_maintained_call(node):
         continue
@@ -233,8 +233,8 @@ def test_maintained_intent_entry_points_validate_role_provenance() -> None:
   assert "maintained business entry points require roles with explicit maintained " in shim_source
   assert "ObservationPacket/DecisionBelief provenance" in shim_source
   assert "if self.maintained_status == MAINTAINED:" in shim_source
-  assert "entry_point=\"ActionIntentCompat\"" in shim_source
-  assert "entry_point=\"CoordinationIntentCompat\"" in shim_source
+  assert "entry_point=\"ActionIntent\"" in shim_source
+  assert "entry_point=\"CoordinationIntent\"" in shim_source
 
 
 def test_law14_boundary_does_not_add_new_raw_runtime_escape_hatch() -> None:
@@ -242,4 +242,4 @@ def test_law14_boundary_does_not_add_new_raw_runtime_escape_hatch() -> None:
 
   assert "SCOPED_ESCAPE_HATCH_ALLOWLIST" in layering_source
   assert "classification=\"diagnostics_only\"" in layering_source
-  assert "classification=\"compatibility_only\"" in layering_source
+  assert "classification=\"compatibility_only\"" not in layering_source
