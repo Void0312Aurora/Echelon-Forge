@@ -214,6 +214,8 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       loader = ScenarioLoader(ef_py.SimulationKernel())
       self.assertEqual(loader.flight_shaping_backend, "auto")
       self.assertEqual(loader._flight_shaping_backend_mode(), "compiled")
+      loader.use_compiled_execution_step_runtime = False
+      self.assertEqual(loader._flight_shaping_backend_mode(), "compiled")
 
   def _run_loader_once(
     self,
@@ -639,7 +641,7 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     self.assertIsNone(transitioned)
     self.assertAlmostEqual(float(loader.mission_cmd["target_heading"]), float(expected_heading), places=6)
 
-  def test_selected_paths_match_legacy_runtime(self) -> None:
+  def test_selected_paths_match_compiled_runtime_modes(self) -> None:
     cases = (
       {
         "name": "objective",
@@ -666,13 +668,41 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
     )
     for case in cases:
       with self.subTest(case=case["name"]):
-        legacy = self._run_loader_once(case["scenario"], seed=case["seed"], compiled=False)
+        python_step = self._run_loader_once(case["scenario"], seed=case["seed"], compiled=False)
         compiled = self._run_loader_once(case["scenario"], seed=case["seed"], compiled=True)
-        self._assert_loader_results_match(legacy, compiled)
+        self._assert_loader_results_match(python_step, compiled)
         if "terminated" in case:
           self.assertEqual(bool(compiled["terminated"]), bool(case["terminated"]))
         if "termination_reason" in case:
           self.assertEqual(str(compiled["termination_reason"]), str(case["termination_reason"]))
+
+  def test_compute_full_step_rejects_missing_compiled_flight_shaping_products(self) -> None:
+    sim = ef_py.SimulationKernel()
+    self.assertTrue(sim.load_database(resolve_repo_path("examples", "config", "database")))
+    loader = ScenarioLoader(sim)
+    loader.use_compiled_execution_step_runtime = False
+    agent_id = loader.load_scenario_data(copy.deepcopy(_takeoff_shaping_scenario()), seed=37)
+    self.assertIsNotNone(agent_id)
+
+    truth = sim.get_agent_observation(int(agent_id))
+    inst = sim.get_instrument_state(int(agent_id))
+    obs = build_universal_observation(
+      loader,
+      inst,
+      truth,
+      mission_obs_mode="nav_v2",
+      max_contacts=10,
+      max_rwr=4,
+      include_proprio=False,
+      last_action=None,
+      action_space=None,
+      steps=1,
+      max_steps=loader.get_max_steps(),
+    )
+
+    with mock.patch.object(loader, "_compute_flight_shaping_products", return_value=None):
+      with self.assertRaisesRegex(RuntimeError, "legacy flight shaping fallback has been removed"):
+        loader.compute_full_step(obs, sim, 1, loader.get_max_steps())
 
   def test_flight_shaping_backends_match_compiled_reference(self) -> None:
     scenario = _takeoff_shaping_scenario()

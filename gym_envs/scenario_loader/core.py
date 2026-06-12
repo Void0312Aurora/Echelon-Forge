@@ -76,7 +76,6 @@ from .step_evaluation import (
     prepare_step_evaluation as _prepare_step_evaluation_impl,
 )
 from .execution_runtime import (
-    apply_legacy_flight_shaping_terms as _apply_legacy_flight_shaping_terms_impl,
     build_execution_episode_controller_shadow_config as _build_execution_episode_controller_shadow_config_impl,
     compare_execution_episode_controller_shadow as _compare_execution_episode_controller_shadow_impl,
     compare_execution_episode_runtime_products as _compare_execution_episode_runtime_products_impl,
@@ -280,7 +279,7 @@ class ScenarioLoader:
     def _flight_shaping_backend_mode(self) -> str:
         backend = str(getattr(self, "flight_shaping_backend", "auto") or "auto").strip().lower()
         if backend == "auto":
-            return "compiled" if bool(getattr(self, "use_compiled_execution_step_runtime", True)) else "legacy"
+            return "compiled"
         return backend
 
     def reset_runtime_eval_cache(self) -> None:
@@ -658,52 +657,6 @@ class ScenarioLoader:
             truncated=truncated,
             status=status,
             reward_breakdown=reward_breakdown,
-        )
-
-    def _apply_legacy_flight_shaping_terms(
-        self,
-        cfg: dict,
-        *,
-        truth,
-        inst,
-        curr_ias: float,
-        curr_alt_agl: float,
-        curr_gear: float,
-        curr_roll: float,
-        heading_error_deg: float,
-        ground_track_error_deg: float,
-        waypoint_turn_relief_activation: float,
-        airborne: bool,
-        preliftoff: bool,
-        on_runway_task: bool,
-        runway_cross_m,
-        runway_wid_m,
-        ils_valid: float,
-        ils_loc: float,
-        steps: int,
-        add_reward_term,
-    ) -> None:
-        _apply_legacy_flight_shaping_terms_impl(
-            self,
-            cfg,
-            truth=truth,
-            inst=inst,
-            curr_ias=curr_ias,
-            curr_alt_agl=curr_alt_agl,
-            curr_gear=curr_gear,
-            curr_roll=curr_roll,
-            heading_error_deg=heading_error_deg,
-            ground_track_error_deg=ground_track_error_deg,
-            waypoint_turn_relief_activation=waypoint_turn_relief_activation,
-            airborne=airborne,
-            preliftoff=preliftoff,
-            on_runway_task=on_runway_task,
-            runway_cross_m=runway_cross_m,
-            runway_wid_m=runway_wid_m,
-            ils_valid=ils_valid,
-            ils_loc=ils_loc,
-            steps=steps,
-            add_reward_term=add_reward_term,
         )
 
     def _consume_compiled_episode_runtime(

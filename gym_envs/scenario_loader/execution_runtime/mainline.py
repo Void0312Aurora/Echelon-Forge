@@ -7,9 +7,6 @@ from python.rl.control.mission_defs import is_landing_command_code
 from gym_envs.scenario_loader.common import safe_json_dict_loads
 from gym_envs.scenario_loader.reward_runtime.air_combat import combat_entity_terminal_state
 
-from .shaping import apply_legacy_flight_shaping_terms
-
-
 _COMBAT_TERMINAL_EXCLUSIVE_TERMS = {
     "crash_penalty",
     "objective_bonus",
@@ -547,35 +544,16 @@ def compute_full_step(loader, obs, sim, steps, max_steps, *, truth=None, inst_st
                 if compiled_flight_shaping is not None and isinstance(step_eval, dict):
                     step_eval["flight_shaping_products_override"] = compiled_flight_shaping
 
-            if compiled_flight_shaping is not None:
-                loader._apply_compiled_flight_shaping_terms(
-                    compiled_flight_shaping,
-                    _add_reward_term,
-                    include_roll_stability=bool(truth.z < 100.0),
+            if compiled_flight_shaping is None:
+                raise RuntimeError(
+                    "compiled flight shaping products are required; "
+                    "legacy flight shaping fallback has been removed"
                 )
-            else:
-                apply_legacy_flight_shaping_terms(
-                    loader,
-                    cfg,
-                    truth=truth,
-                    inst=inst,
-                    curr_ias=float(curr_ias),
-                    curr_alt_agl=float(curr_alt_agl),
-                    curr_gear=float(step_eval.get("curr_gear", inst[18])),
-                    curr_roll=float(curr_roll),
-                    heading_error_deg=float(heading_error_deg),
-                    ground_track_error_deg=float(ground_track_error_deg),
-                    waypoint_turn_relief_activation=float(waypoint_turn_relief_activation),
-                    airborne=bool(airborne),
-                    preliftoff=bool(preliftoff),
-                    on_runway_task=bool(on_runway_task),
-                    runway_cross_m=runway_cross_m,
-                    runway_wid_m=runway_wid_m,
-                    ils_valid=float(ils_valid),
-                    ils_loc=float(ils_loc),
-                    steps=int(steps),
-                    add_reward_term=_add_reward_term,
-                )
+            loader._apply_compiled_flight_shaping_terms(
+                compiled_flight_shaping,
+                _add_reward_term,
+                include_roll_stability=bool(truth.z < 100.0),
+            )
 
         if float(safety_terms.stall_penalty) != 0.0:
             _add_reward_term("stall_penalty", float(safety_terms.stall_penalty))
