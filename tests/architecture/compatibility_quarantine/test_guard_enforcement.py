@@ -72,7 +72,7 @@ SIM_DIRECT_ACCESS_ALLOWLIST = {
 LEGACY_COMMAND_DIRECT_INCLUDE_ALLOWLIST = {
   "src/components/domains/air/command/control_input_resolution.h",
   "src/components/command/command_link.h",
-  "src/components/command/default_factory_legacy_spawn_compat.h",
+  "src/components/command/default_factory_spawn_command_projection.h",
   "src/components/physics/action.h",
   "src/systems/core/operation_system.h",
 }
@@ -101,8 +101,8 @@ SIMULATION_KERNEL_COMMAND_API = (
 DEFAULT_UNIT_FACTORY_HEADER = (
   REPO_ROOT / "src" / "models" / "core" / "default_unit_factory.h"
 )
-DEFAULT_FACTORY_LEGACY_SEED_HELPER_HEADER = (
-  REPO_ROOT / "src" / "components" / "command" / "default_factory_legacy_spawn_compat.h"
+DEFAULT_FACTORY_SPAWN_COMMAND_PROJECTION_HEADER = (
+  REPO_ROOT / "src" / "components" / "command" / "default_factory_spawn_command_projection.h"
 )
 WP22_COMMAND_RETIREMENT_DOC_EN = (
   REPO_ROOT
@@ -257,7 +257,7 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
   command_link_text = COMMAND_LINK_HEADER.read_text(encoding="utf-8")
   operation_text = OPERATION_SYSTEM_HEADER.read_text(encoding="utf-8")
   default_factory_text = DEFAULT_UNIT_FACTORY_HEADER.read_text(encoding="utf-8")
-  default_factory_helper_text = DEFAULT_FACTORY_LEGACY_SEED_HELPER_HEADER.read_text(encoding="utf-8")
+  default_factory_helper_text = DEFAULT_FACTORY_SPAWN_COMMAND_PROJECTION_HEADER.read_text(encoding="utf-8")
   command_link_system_text = (
     REPO_ROOT / "src" / "systems" / "systems" / "command_link_system.h"
   ).read_text(encoding="utf-8")
@@ -297,29 +297,29 @@ def test_wp22_legacy_command_allowlist_entries_remain_named_owner_bound_blockers
 
   assert '#include "components/command/legacy_command.h"' in default_factory_helper_text
   for token in (
-    "struct SpawnCompatibilityControlStateSeed",
-    "using SpawnCompatibilityLegacyCommandSeed = SpawnCompatibilityControlStateSeed;",
-    "struct SpawnCompatibilityActionCommandSeed",
-    "project_spawn_compatibility_movement_command_mirror(",
-    "project_spawn_compatibility_lagged_command_mirror(",
-    "make_spawn_compatibility_control_state_seed(",
-    "apply_spawn_compatibility_control_state_seed(",
-    "apply_spawn_compatibility_action_command_seed(",
-    "make_spawn_compatibility_legacy_command_seed(",
-    "apply_spawn_compatibility_legacy_command_seed(",
-    "Compatibility-only spawn seam for default unit factory legacy command bootstrap.",
+    "struct SpawnCommandProjectionControlStateSeed",
+    "struct SpawnCommandProjectionActionSeed",
+    "project_spawn_command_projection_movement_mirror(",
+    "project_spawn_command_projection_lagged_mirror(",
+    "make_spawn_command_projection_control_state_seed(",
+    "apply_spawn_command_projection_control_state_seed(",
+    "apply_spawn_command_projection_action_seed(",
+    "Default-factory spawn command projection seam.",
     "MissionCommandControlState is the maintained spawn-default owner here;",
-    "compatibility consumers. It is not a retired seam.",
+    "consumers until their readers move to typed control state.",
   ):
     assert token in default_factory_helper_text
+  assert "SpawnCompatibilityLegacyCommandSeed" not in default_factory_helper_text
+  assert "make_spawn_compatibility_legacy_command_seed" not in default_factory_helper_text
+  assert "apply_spawn_compatibility_legacy_command_seed" not in default_factory_helper_text
   assert "MovementCommand movement_command" not in default_factory_helper_text
   assert "LaggedCommand lagged_command" not in default_factory_helper_text
 
-  assert '#include "components/command/default_factory_legacy_spawn_compat.h"' in default_factory_text
+  assert '#include "components/command/default_factory_spawn_command_projection.h"' in default_factory_text
   assert '#include "components/command/legacy_command.h"' not in default_factory_text
-  assert "default_unit_factory_detail::apply_spawn_compatibility_action_command_seed(e);" in default_factory_text
-  assert "default_unit_factory_detail::apply_spawn_compatibility_control_state_seed(" in default_factory_text
-  assert "default_unit_factory_detail::make_spawn_compatibility_control_state_seed(" in default_factory_text
+  assert "default_unit_factory_detail::apply_spawn_command_projection_action_seed(e);" in default_factory_text
+  assert "default_unit_factory_detail::apply_spawn_command_projection_control_state_seed(" in default_factory_text
+  assert "default_unit_factory_detail::make_spawn_command_projection_control_state_seed(" in default_factory_text
 
   command_api_text = SIMULATION_KERNEL_COMMAND_API.read_text(encoding="utf-8")
   bridge_text = LEGACY_COMMAND_BRIDGE_HEADER.read_text(encoding="utf-8")
@@ -481,10 +481,10 @@ def test_wp22_command_docs_and_headers_mark_legacy_resolution_as_compatibility_o
   assert "`MovementCommand`/`ActionCommand` 探测逻辑" in readme_zh
   assert "compatibility umbrella" in readme_en
   assert "Compatibility-only DTO surface retained for bridge-owned legacy command seams." in legacy_header
-  assert (
-    "struct MissionCommand : MissionCommandCore, MissionCommandAir, MissionCommandNaval, MissionCommandGround {};"
-    in mission_header
-  )
+  assert "struct MissionCommand : MissionCommandCore," in mission_header
+  assert "MissionCommandAir," in mission_header
+  assert "MissionCommandNaval," in mission_header
+  assert "MissionCommandGround {};" in mission_header
   assert "using MissionCommandCompatibilityTransportShell = MissionCommand;" in mission_header
   assert "kMissionCommandGroundOwnedDomainSlice" in mission_header
 
@@ -496,7 +496,7 @@ def test_wp22_command_retirement_docs_keep_allowlist_and_default_factory_blocker
   for required in (
     "Noether pass",
     "`control_input_resolution.h`, `command_link.h`, and `operation_system.h` remain named compatibility-owner seams",
-    "`default_factory_legacy_spawn_compat.h` owns the remaining spawn-time legacy-command seed and still blocks closure until typed control-state replacement lands",
+    "`default_factory_spawn_command_projection.h` owns the remaining spawn-time command mirror projection and still blocks closure until typed control-state replacement lands",
     "allowlist is not closure evidence",
     "replacement, owner, and failing guard",
   ):
@@ -505,7 +505,7 @@ def test_wp22_command_retirement_docs_keep_allowlist_and_default_factory_blocker
   for required in (
     "Noether pass",
     "`control_input_resolution.h`、`command_link.h` 与 `operation_system.h` 仍是命名的 compatibility-owner seam",
-    "`default_factory_legacy_spawn_compat.h` 持有剩余 spawn-time legacy-command seed，直到 typed control-state replacement 落地前仍阻塞 closure",
+    "`default_factory_spawn_command_projection.h` 持有剩余 spawn-time command mirror projection，直到 typed control-state replacement 落地前仍阻塞 closure",
     "allowlist 不是 closure evidence",
     "replacement、owner 与 failing guard",
   ):

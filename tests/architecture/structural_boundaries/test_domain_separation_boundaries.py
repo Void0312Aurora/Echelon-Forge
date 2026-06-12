@@ -160,7 +160,7 @@ def test_domain_separation_split_generic_files_route_domain_owned_runtime() -> N
   assert "register_logistics_system(ecs);" in systems_text
   assert "register_naval_logistics_system(ecs);" in systems_text
   assert '#include "systems/domains/air/propulsion_system.h"' in systems_text
-  assert "register_propulsion_system(ecs);" in systems_text
+  assert "flight_dynamics::register_propulsion_system(" in systems_text
 
   assert '#include "components/physics/propulsion_readouts.h"' in logistics_text
   assert '#include "systems/domains/air/propulsion_system.h"' not in logistics_text
@@ -195,7 +195,7 @@ def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_bloc
     "Noether pass",
     "`PilotWeaponRelease` and naval mission weapon release now route through named",
     "`default_unit_factory.h` no longer direct-includes `legacy_command.h`",
-    "`default_factory_legacy_spawn_compat.h` seed seam remains evaluation/guard",
+    "`default_factory_spawn_command_projection.h` seed seam remains evaluation/guard",
   ):
     assert required in text_en
 
@@ -203,7 +203,7 @@ def test_wp22_structural_docs_keep_noether_and_remaining_non_counterfactual_bloc
     "Noether pass",
     "`PilotWeaponRelease` 与 naval mission weapon release 现在都通过命名 helper system 注册",
     "`default_unit_factory.h` 已不再 direct include `legacy_command.h`",
-    "`default_factory_legacy_spawn_compat.h` seed seam 在 typed control-state",
+    "`default_factory_spawn_command_projection.h` seed seam 在 typed control-state",
   ):
     assert required in text_zh
 

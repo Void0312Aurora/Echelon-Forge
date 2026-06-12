@@ -29,7 +29,7 @@ R3 已经被收束成有限 replacement cluster；这里只允许下面三个子
 |------|----------|------|
 | `Command-link pending transport packet` | `scoped pass`；delayed movement delivery 现在由 typed state 拥有，pending action delivery 有显式 typed air-control overlay projection。 | 这只稳定 R0/R1-1；不删除 pending shells、`ActionCommand`、default-factory projections 或 public compatibility escape hatches。 |
 | `MissionCommandControlState` | 只拥有 heading/speed/altitude target 与 lagged mirror，不拥有 throttle/brake/nose-wheel 或完整 action 语义。 | `MovementCommand`、`LaggedCommand`、`ActionCommand` 与 pending action transport 还不能删除。 |
-| `default_factory_legacy_spawn_compat.h` | 仍投影行为相关的 `MovementCommand` / `LaggedCommand` mirror。 | `R1-B` 默认工厂 projection deletion 在 `R1-A` 之后仍然被阻塞；重复删除尝试只是 planning smell，不是新的派发目标。 |
+| `default_factory_spawn_command_projection.h` | 仍投影行为相关的 `MovementCommand` / `LaggedCommand` mirror。 | `R1-B` 默认工厂 projection deletion 在 `R1-A` 之后仍然被阻塞；重复删除尝试只是 planning smell，不是新的派发目标。 |
 | Aggregate DTO shells | `MissionCommand`、`TaskOrder`、`LeaderIntent`、`PilotReport` 只是被标记为 compatibility transport shell，尚未退场。 | `S-001/S-002/S-003` 需要迁移 maintained consumer 或强化 owner-slice 边界。 |
 | `Exact-stage inventory` | `src/core/engine/exact_stage_inventory.cpp` 现在是受 guard 保护的 contract ledger，不再是 maintained-truth register。 | R1-3 是 scoped pass，但 ledger demotion 不授权 default-factory projection deletion。 |
 | `Diagnostics/debug movement mirror bindings` | `src/interfaces/python/bindings_core.cpp` 仍暴露 quarantined 的 debug movement mirror helpers，包括 `debug_get_pending_movement_command`、`debug_get_pending_action_command`、`debug_get_legacy_movement_command` 与 `debug_set_legacy_movement_command`。 | R1-2 只接受为 hard quarantine/narrowing；diagnostics helpers 仍存在并保持 non-maintained surface。 |

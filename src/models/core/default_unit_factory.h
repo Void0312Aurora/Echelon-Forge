@@ -11,7 +11,7 @@
 
 #include "components/command/command_link.h"
 #include "components/command/command_link_qos.h"
-#include "components/command/default_factory_legacy_spawn_compat.h"
+#include "components/command/default_factory_spawn_command_projection.h"
 #include "components/basic/common.h"
 #include "components/combat/health.h"
 #include "components/physics/performance.h"
@@ -1212,7 +1212,7 @@ class DefaultUnitFactory : public IUnitFactory {
             e.set<MissionCommandPendingQueue>(make_mission_command_pending_queue());
         }
         if (!def.has_flight_model) {
-            default_unit_factory_detail::apply_spawn_compatibility_action_command_seed(e);
+            default_unit_factory_detail::apply_spawn_command_projection_action_seed(e);
         }
         if (def.has_landing_gear) {
             e.set<LandingGear>(def.landing_gear);
@@ -1246,8 +1246,8 @@ class DefaultUnitFactory : public IUnitFactory {
                 default_unit_factory_detail::make_spawn_default_mission_command_core_seed(
                     heading_init, speed, params.z);
             e.set<MissionCommand>(mission_seed);
-            default_unit_factory_detail::apply_spawn_compatibility_control_state_seed(
-                e, default_unit_factory_detail::make_spawn_compatibility_control_state_seed(
+            default_unit_factory_detail::apply_spawn_command_projection_control_state_seed(
+                e, default_unit_factory_detail::make_spawn_command_projection_control_state_seed(
                        static_cast<const MissionCommandCore &>(mission_seed)));
             e.set<ActionSpaceConfig>({def.flight_model.max_turn_rate, def.flight_model.max_accel,
                                       def.flight_model.max_climb_rate, def.flight_model.min_speed,
