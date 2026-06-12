@@ -4,7 +4,7 @@ Language:
 - English canonical: [obs.md](obs.md)
 - Chinese companion: `obs.zh.md`
 
-状态：`2026-06-10`，当前维护中的 naval mission observation 特化基线。
+状态：`2026-06-12`，当前维护中的 naval mission observation 特化基线。
 
 本文档定义当前 mode-based observation surface 暴露的 naval mission-observation
 合同。它登记的是 `python/mission_obs_taxonomy.py` 中已经存在的 runtime 合同；
@@ -110,8 +110,11 @@ Relative role 与 slot 字段：
 - 字段顺序以
   [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py) 为准。
 - 缺失 contact 或 support-track 状态通过已声明字段表达；本 mode 不临时扩张 contact array。
-- 在当前 runtime taxonomy 中，本 mode 是 Python-owned，由 scenario-loader 的
+- 在当前 runtime taxonomy 中，本 mode 由 maintained Python adapter
+  `naval_screen_station_v1_maintained_adapter` 拥有，并由 scenario-loader 的
   mission-observation 路径装配。
+- 在 batch execution 中，compiled mission input 可以用 `basic` 作为有界 fallback，
+  但 policy-visible mission vector 必须是 maintained naval adapter 输出。
 
 ## 归属边界
 

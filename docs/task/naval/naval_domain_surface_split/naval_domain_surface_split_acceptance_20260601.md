@@ -1,7 +1,7 @@
 # Naval Domain Surface Split Acceptance Gate
 
-Status: `2026-06-01` gate defined; `P1-A/P1-B/P2-A/P3-B` accepted as
-slices, but the full subproject is not accepted.
+Status: `2026-06-12` gate refresh; `P1-A/P1-B/P2-A/P3-A/P3-B/P4-A`
+accepted as slices, but the full subproject is not accepted.
 
 Parent project: [Naval Domain Surface Split](README.md)
 
@@ -9,20 +9,19 @@ Parent project: [Naval Domain Surface Split](README.md)
 
 Current decision: `not accepted`.
 
-Reason: the first two waves completed inventory, guard tests, action transport
-adapter work, and the domain-neutral config alias. The active codebase still
-contains known compatibility adapters and blockers on the maintained naval path:
-the flat `MissionCommand` compatibility shell, Python-owned naval mission
-observation fallback, and the not-yet-retired global `PilotAction` compatibility
-carrier.
+Reason: the accepted slices now cover inventory, guard tests, action command
+surface, a bounded maintained naval observation adapter, the domain-neutral
+config alias, and active/eval surface gates. The active codebase still contains
+the flat `MissionCommand` compatibility shell and the not-yet-retired global
+`PilotAction` carrier / `WorldPilotActionAssignment` transport path.
 
 ## Interim Evidence Accepted
 
-`P1-A/P1-B/P2-A/P3-B` are accepted, but only for the dispatched slices:
+`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` are accepted, but only for the dispatched slices:
 
 - `P1-A` classified active naval path dependencies on `PilotAction`,
   `MissionCommand`, `flight_shaping`, runway/takeoff/formation, gear/ILS,
-  Python-owned observation fallback, and `WorldPilotActionAssignment` as
+  the former Python-owned observation fallback, and `WorldPilotActionAssignment` as
   accepted shared infrastructure, compatibility adapters, or blockers.
 - `P1-B` added active naval config/eval guards covering `takeoff*` action modes,
   air mission-observation modes, and weapon/fire/damage/kill reward or action
@@ -33,6 +32,11 @@ carrier.
 - `P3-B` added the domain-neutral `shaping_backend` alias while preserving
   canonical `flight_shaping_backend` compatibility and CLI/canonical override
   precedence.
+- `P3-A` bounded `naval_screen_station_v1` as a maintained Python observation
+  adapter with `basic` used only as the compiled batch fallback, not the
+  policy-visible vector.
+- `P4-A` added active/eval `surface_gate` evidence for the action command
+  surface, legacy transport adapter, and maintained naval observation adapter.
 - Main-thread acceptance commands:
 
 ```bash
@@ -57,7 +61,24 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 Result: `git diff --check` was clean; pytest reported
 `45 passed, 45 subtests passed in 34.50s` and
 `13 passed, 74 deselected in 3.44s`. Overall acceptance remains `not accepted`
-until command projection and observation packet evidence is complete.
+until `P2-B` command projection evidence is complete.
+
+P3/P4 refresh commands:
+
+```bash
+pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
+# 5 passed
+
+pytest -q tests/runtime/naval/test_naval_station_policy_surface.py
+# 19 passed
+
+pytest -q tests/eval/test_evaluation_cli_contracts.py -k "NavalStationPolicyEvalTests"
+# 8 passed, 5 deselected
+```
+
+After this refresh, the observation evidence is complete through the bounded
+adapter path. Overall acceptance remains `not accepted` until `P2-B` command
+projection is implemented or explicitly held with replacement criteria.
 
 ## Required Evidence
 

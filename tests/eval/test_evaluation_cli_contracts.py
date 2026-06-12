@@ -59,6 +59,28 @@ def _assert_reward_surface_clean(testcase: unittest.TestCase, payload: dict[str,
   )
 
 
+def _assert_naval_split_surface_gate(testcase: unittest.TestCase, payload: dict[str, object]) -> None:
+  surface_gate = dict(payload.get("surface_gate", {}) or {})
+  testcase.assertTrue(bool(surface_gate.get("passed")), payload)
+  testcase.assertEqual(surface_gate.get("action_mode"), "naval_station3")
+  testcase.assertEqual(surface_gate.get("mission_obs_mode"), "naval_screen_station_v1")
+
+  observation_adapter = dict(surface_gate.get("observation_adapter", {}) or {})
+  testcase.assertEqual(observation_adapter.get("adapter_kind"), "naval_screen_station_v1_maintained_adapter")
+  testcase.assertEqual(observation_adapter.get("owner"), "maintained_python_adapter")
+  testcase.assertEqual(observation_adapter.get("compiled_fallback_mode"), "basic")
+  testcase.assertFalse(bool(observation_adapter.get("air_takeoff_formation_fallback")))
+
+  command_surface = dict(surface_gate.get("command_surface", {}) or {})
+  testcase.assertEqual(command_surface.get("command_surface_kind"), "naval_station3_command_surface")
+  testcase.assertEqual(command_surface.get("action_family"), "naval_station_command")
+  testcase.assertFalse(bool(command_surface.get("compatibility_only")))
+
+  transport_adapter = dict(surface_gate.get("transport_adapter", {}) or {})
+  testcase.assertEqual(transport_adapter.get("policy_truth_surface"), "naval_station3_command_surface")
+  testcase.assertTrue(bool(transport_adapter.get("compatibility_only")))
+
+
 class NavalStationPolicyEvalTests(unittest.TestCase):
   def test_station_baseline_eval_reports_cooperative_support_roster_and_reward_terms(self) -> None:
     payload = run_baseline_eval(
@@ -87,6 +109,7 @@ class NavalStationPolicyEvalTests(unittest.TestCase):
     self.assertNotIn("speed_reward", reward_terms)
     self.assertNotIn("damage_reward", reward_terms)
     _assert_reward_surface_clean(self, payload)
+    _assert_naval_split_surface_gate(self, payload)
 
     roster = list(payload.get("active_roster", []) or [])
     self.assertEqual([(member["entity_name"], member["is_agent"]) for member in roster[:2]], [
@@ -133,6 +156,7 @@ class NavalStationPolicyEvalTests(unittest.TestCase):
           self.assertEqual(int(payload.get("policy_slot_count")), 1)
           self.assertEqual(payload.get("forbidden_reward_terms_present"), [])
           _assert_reward_surface_clean(self, payload)
+          _assert_naval_split_surface_gate(self, payload)
 
   def test_station_baseline_eval_rejects_mismatched_declared_scenario(self) -> None:
     with self.assertRaisesRegex(ValueError, "naval_entry\\.scenario_path"):
@@ -234,6 +258,8 @@ class NavalStationPolicyEvalTests(unittest.TestCase):
     self.assertNotIn("naval_station_band_bonus", last_terms)
     _assert_reward_surface_clean(self, matched)
     _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
+    _assert_naval_split_surface_gate(self, matched)
+    _assert_naval_split_surface_gate(self, dict(payload.get("zero_action", {}) or {}))
     final_status = list(matched.get("final_mission_status", []) or [])
     self.assertGreater(float(final_status[0]), 1000.0)
 
@@ -255,6 +281,8 @@ class NavalStationPolicyEvalTests(unittest.TestCase):
     self.assertGreater(float(zero_terms.get("naval_station_recovery_progress_bonus", 0.0)), 0.0)
     _assert_reward_surface_clean(self, dict(payload.get("zero_action", {}) or {}))
     _assert_reward_surface_clean(self, dict(payload.get("matched_radius_action", {}) or {}))
+    _assert_naval_split_surface_gate(self, dict(payload.get("zero_action", {}) or {}))
+    _assert_naval_split_surface_gate(self, dict(payload.get("matched_radius_action", {}) or {}))
 
   def test_station_offstation_probe_cli_writes_json(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

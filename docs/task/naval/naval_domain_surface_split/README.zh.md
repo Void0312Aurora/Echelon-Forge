@@ -1,6 +1,7 @@
 # 海军领域执行面拆分
 
-状态：`2026-06-01`，活跃规划面，用于继续把海军实现从空军优先兼容载体中拆出。
+状态：`2026-06-12`，活跃规划面；P3/P4 observation 与 integration gate 已接受，
+`P2-B` command projection 仍开放。
 
 语言：
 
@@ -31,8 +32,8 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
-| Active N4 动作面 | 第一切片已接受 | `gym_envs/universal_env_parts/naval_actions.py` 中的 `naval_station3` | 仍伴随中性 `PilotAction` carrier 运输 |
-| Active N4 任务观测 | 第一切片已接受 | `python/mission_obs_taxonomy.py` 中的 `naval_screen_station_v1` | 仍是 Python-owned 替换，不是 maintained C++ naval packet |
+| Active N4 动作面 | 第一切片已接受；`2026-06-12` 收紧 command surface | `gym_envs/universal_env_parts/naval_actions.py` 中的 `naval_station3` | `_naval_station3_command_surface` 是站位指令真值；中性 `PilotAction` 仅保留为 legacy transport |
+| Active N4 任务观测 | maintained adapter 已接受 | `python/mission_obs_taxonomy.py` 与 `gym_envs/scenario_loader/mission_observation.py` 中的 `naval_screen_station_v1` | policy vector 由 `naval_screen_station_v1_maintained_adapter` 生成；compiled batch 输入仍退回 `basic` |
 | Command shell | 兼容层仍活跃 | `src/components/command/mission_command.h` 中的 `MissionCommand = core + air + naval` | flat shell 仍携带 air owner slice 和 target-altitude 命名 |
 | World-batch policy action | 兼容层仍活跃 | `src/runtime/contracts/world_batch_contracts.h` 中的 `WorldPilotActionAssignment` | 尚无 naval-owned action assignment packet |
 | N5/N6 声明 | held | N4 合同禁止 weapon inventory、health 和 damage delta | 本项目不释放武器或毁伤 authority |
@@ -65,10 +66,10 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 | 阶段 | 目标 | 进入条件 | 退出条件 | 状态 |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 固定范围、输入、写集和禁止声明。 | 用户请求加当前 N4/N5 证据 | 子项目文件和父 README 链接存在 | active |
-| `P1 Inventory` | 映射 active naval 的所有 air-first 依赖。 | P0 scaffold | current-status inventory 命名代码 owner 和风险等级 | planned |
-| `P2 Command/Action Split` | 引入 naval-owned command 和 action transport seam。 | P1 inventory accepted | active naval policy 路径不再依赖 `PilotAction` 语义 | planned |
-| `P3 Observation/Config Split` | 提升 naval observation 并中和阻塞性 env 命名。 | P2 packet boundary accepted | `naval_screen_station_v1` 有 maintained packet gate 和配置别名 | planned |
-| `P4 Integration Gates` | 将训练、评估、合同接到新 surface。 | P2/P3 implementation slices | 聚焦测试和场景合同通过且不声明 N5/N6 | planned |
+| `P1 Inventory` | 映射 active naval 的所有 air-first 依赖。 | P0 scaffold | current-status inventory 命名代码 owner 和风险等级 | accepted |
+| `P2 Command/Action Split` | 引入 naval-owned command 和 action transport seam。 | P1 inventory accepted | active naval policy 路径不再依赖 `PilotAction` 语义 | partial：action command surface 已收束；`P2-B` command projection 仍开放 |
+| `P3 Observation/Config Split` | 提升 naval observation 并中和阻塞性 env 命名。 | P2 packet boundary accepted | `naval_screen_station_v1` 有 maintained packet gate 和配置别名 | accepted |
+| `P4 Integration Gates` | 将训练、评估、合同接到新 surface。 | P2/P3 implementation slices | 聚焦测试和场景合同通过且不声明 N5/N6 | accepted |
 | `P5 Closure` | 同步验收、当前进展和 archive 边界。 | P4 validation | acceptance record 标记 split accepted 或 held | planned |
 
 ## Task Clusters
@@ -90,6 +91,8 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 - command-chain 测试，证明 naval 字段存活不依赖 air owner slice 语义；
 - observation 测试，证明 naval policy 输入不是改名后的 air formation/takeoff vector；
 - active naval training-entry 检查，拒绝 air action 和 air observation fallback；
+- eval JSON surface gate，证明 active 入口运行在 maintained action command surface 与
+  naval observation adapter 上；
 - 更新文档，保持 `naval_limited_engagement_v1` 在独立 N5 launch/reject package 之前继续阻塞。
 
 ## Acceptance Gate
@@ -97,7 +100,8 @@ adapter surface，并建立海军拥有的 command、action、observation 与配
 只有满足以下条件，本子项目才能标记为 accepted：
 
 - active maintained naval 入口拥有 naval-owned action/intent transport，或剩余
-  `PilotAction` 使用被明确限定为 diagnostics-only；
+  `PilotAction` 使用被明确限定为 compatibility-only，且已有 maintained command surface
+  承担 policy truth；
 - `MissionCommand` compatibility shell 使用被 shared core 与 naval owner slice 的
   maintained projection 测试约束；
 - naval policy observation 不把 air takeoff、air formation、runway、gear 或 ILS 字段作为

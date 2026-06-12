@@ -1,7 +1,8 @@
 # 海军领域执行面拆分分发队列
 
-状态：`2026-06-01`，`P1-A/P1-B/P2-A/P3-B` 已验收；`P2-B/P3-A`
-ready 但需要继续按写集串行选择，`P4-A/P5-A` 继续 held。
+状态：`2026-06-12`，`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` 已验收；
+`P2-B` 仍 ready，若触及 runtime contracts 必须串行；`P5-A` 在 command projection
+解决或显式 held 前继续 held。
 
 父项目：[海军领域执行面拆分](README.zh.md)
 
@@ -23,10 +24,10 @@ ready 但需要继续按写集串行选择，`P4-A/P5-A` 继续 held。
 | `DS-P1-B-guards` | `P1-B` | returned/pass, accepted from `Locke` | training/eval guard tests | focused naval pytest |
 | `DS-P2-A-action-transport` | `P2-A` | returned/pass, accepted from `Locke` | action/runtime contracts and adapters | 若触及则 C++/binding，加 world-batch naval tests |
 | `DS-P2-B-command-projection` | `P2-B` | ready, choose serially | command contracts, naval profile, command-chain tests | command roundtrip and world-batch tests |
-| `DS-P3-A-observation-packet` | `P3-A` | ready after P2-A acceptance | observation taxonomy/runtime/tests | mission observation and naval runtime tests |
+| `DS-P3-A-observation-packet` | `P3-A` | returned/pass, accepted from main thread | observation taxonomy/runtime/tests | mission observation and naval runtime tests |
 | `DS-P3-B-config-alias` | `P3-B` | returned/pass, accepted from `Linnaeus` | env config, train CLI, docs/tests | env-config and bootstrap tests |
-| `DS-P4-A-integration` | `P4-A` | held until split slices pass | active configs, eval, runtime naval tests | active entry, eval, scenario contract gates |
-| `DS-P5-A-closeout` | `P5-A` | held until validation | docs only | acceptance gate 加 `git diff --check` |
+| `DS-P4-A-integration` | `P4-A` | returned/pass, accepted from main thread | active configs, eval, runtime naval tests | active entry, eval, scenario contract gates |
+| `DS-P5-A-closeout` | `P5-A` | held until `P2-B` disposition | docs only | acceptance gate 加 `git diff --check` |
 
 ## Worker Packet Template
 

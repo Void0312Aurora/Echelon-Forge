@@ -16,6 +16,7 @@ ensure_repo_imports()
 from gym_envs.universal_env_parts import ( # noqa: E402
   NAVAL_STATION3_ACTION_FAMILY,
   NAVAL_STATION3_CARRIER_INTERFACE_KIND,
+  NAVAL_STATION3_COMMAND_SURFACE_KIND,
   NAVAL_STATION3_TRANSPORT_ADAPTER_KIND,
   NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE,
   NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE,
@@ -41,10 +42,12 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
     assert isinstance(adapter, dict)
     self.assertEqual(adapter.get("policy_surface"), "naval_station3")
     self.assertEqual(adapter.get("action_family"), NAVAL_STATION3_ACTION_FAMILY)
+    self.assertEqual(adapter.get("policy_truth_surface"), NAVAL_STATION3_COMMAND_SURFACE_KIND)
     self.assertEqual(adapter.get("transport_adapter_kind"), NAVAL_STATION3_TRANSPORT_ADAPTER_KIND)
     self.assertEqual(adapter.get("carrier_interface_kind"), NAVAL_STATION3_CARRIER_INTERFACE_KIND)
     self.assertEqual(adapter.get("payload_type"), NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE)
     self.assertTrue(bool(adapter.get("compatibility_only")))
+    self.assertTrue(bool(adapter.get("carrier_required")))
     self.assertIn("not policy-visible action truth", str(adapter.get("diagnostics_note", "")))
     self.assertEqual(str(adapter.get("diagnostics_note")), NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE)
     self.assertTrue(np.allclose(np.asarray(adapter.get("policy_action", []), dtype=np.float32), expected_action))
@@ -54,6 +57,56 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
     self.assertFalse(bool(carrier_action.get("master_arm")))
     self.assertFalse(bool(carrier_action.get("fire_weapon")))
     self.assertFalse(bool(carrier_action.get("fire_gun")))
+
+  def _assert_command_surface(self, loader, expected_action: np.ndarray) -> None:
+    surface = getattr(loader, "_naval_station3_command_surface", None)
+    self.assertIsInstance(surface, dict)
+    assert isinstance(surface, dict)
+    action = np.asarray(expected_action, dtype=np.float32).reshape(-1)
+    self.assertEqual(surface.get("policy_surface"), "naval_station3")
+    self.assertEqual(surface.get("action_family"), NAVAL_STATION3_ACTION_FAMILY)
+    self.assertEqual(surface.get("command_surface_kind"), NAVAL_STATION3_COMMAND_SURFACE_KIND)
+    self.assertFalse(bool(surface.get("compatibility_only")))
+    self.assertTrue(bool(surface.get("carrier_required")))
+    self.assertEqual(surface.get("legacy_transport_adapter_kind"), NAVAL_STATION3_TRANSPORT_ADAPTER_KIND)
+    self.assertTrue(np.allclose(np.asarray(surface.get("policy_action", []), dtype=np.float32), action))
+    self.assertAlmostEqual(float(surface.get("heading_delta_deg", 0.0)), float(action[0]) * 25.0)
+    self.assertAlmostEqual(float(surface.get("radius_delta_m", 0.0)), float(action[1]) * 1800.0)
+    self.assertAlmostEqual(float(surface.get("speed_delta_mps", 0.0)), float(action[2]) * 1.25)
+
+    task = loader.task_order
+    self.assertAlmostEqual(
+      float(surface.get("station_heading_deg", 0.0)),
+      float(getattr(task, "station_heading_deg", 0.0)),
+    )
+    self.assertAlmostEqual(
+      float(surface.get("station_radius_m", 0.0)),
+      float(getattr(task, "station_radius_m", 0.0)),
+    )
+    self.assertAlmostEqual(
+      float(surface.get("target_speed_mps", 0.0)),
+      float(getattr(task, "target_speed_mps", 0.0)),
+    )
+
+  def _assert_observation_adapter(self, loader) -> None:
+    adapter = getattr(loader, "_naval_screen_station_v1_observation_adapter", None)
+    self.assertIsInstance(adapter, dict)
+    assert isinstance(adapter, dict)
+    self.assertEqual(adapter.get("mission_obs_mode"), "naval_screen_station_v1")
+    self.assertEqual(adapter.get("adapter_kind"), "naval_screen_station_v1_maintained_adapter")
+    self.assertEqual(adapter.get("owner"), "maintained_python_adapter")
+    self.assertEqual(adapter.get("compiled_fallback_mode"), "basic")
+    self.assertEqual(adapter.get("policy_vector_source"), "scenario_loader_mission_observation")
+    self.assertEqual(int(adapter.get("policy_vector_dim", 0)), 23)
+    self.assertEqual(int(adapter.get("expected_vector_dim", 0)), 23)
+    self.assertFalse(bool(adapter.get("compatibility_only")))
+    self.assertTrue(bool(adapter.get("maintained_adapter")))
+    self.assertFalse(bool(adapter.get("air_takeoff_formation_fallback")))
+    field_names = list(adapter.get("field_names", []) or [])
+    self.assertIn("station_radius_m", field_names)
+    self.assertIn("target_contact_present", field_names)
+    self.assertNotIn("takeoff_procedure_code", field_names)
+    self.assertNotIn("form_offset_x_m", field_names)
 
   def _naval_world_batch_settings(self) -> dict:
     return {
@@ -197,6 +250,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
     try:
       obs = env.reset()
       mission = np.asarray(obs["mission"][0], dtype=np.float32)
+      self._assert_observation_adapter(env._handles[0].loader)
 
       self.assertEqual(tuple(mission.shape), (mission_observation_dim(mode),))
       self.assertAlmostEqual(
@@ -222,6 +276,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertEqual(float(mission[mission_observation_field_index(mode, "relative_slot_code")]), 11.0)
 
       obs_after, _rewards, _dones, _infos = env.step(np.array([[0.5, -0.5, 0.25]], dtype=np.float32))
+      self._assert_observation_adapter(env._handles[0].loader)
       mission_after = np.asarray(obs_after["mission"][0], dtype=np.float32)
       self.assertAlmostEqual(
         float(mission_after[mission_observation_field_index(mode, "station_bearing_deg")]),
@@ -323,6 +378,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertAlmostEqual(float(getattr(task_after, "station_heading_deg", 0.0)), base_heading + 12.5)
       self.assertAlmostEqual(float(getattr(task_after, "station_radius_m", 0.0)), base_radius - 900.0)
       self.assertEqual(tuple(np.asarray(handle.last_action, dtype=np.float32).shape), (3,))
+      self._assert_command_surface(handle.loader, np.array([0.5, -0.5, 0.25], dtype=np.float32))
       self._assert_transport_adapter(handle.loader, np.array([0.5, -0.5, 0.25], dtype=np.float32))
       terms = dict(infos[0].get("reward_terms", {}) or {})
       self.assertIn("naval_station_error_penalty", terms)
@@ -355,6 +411,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertAlmostEqual(float(getattr(task_after, "station_heading_deg", 0.0)), base_heading)
       self.assertAlmostEqual(float(getattr(task_after, "station_radius_m", 0.0)), base_radius)
       self.assertAlmostEqual(float(getattr(task_after, "target_speed_mps", 0.0)), base_speed, delta=1.0e-5)
+      self._assert_command_surface(handle.loader, np.zeros((3,), dtype=np.float32))
     finally:
       env.close()
 
@@ -385,6 +442,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertAlmostEqual(float(getattr(task_after, "target_speed_mps", 0.0)), base_speed, delta=1.0e-5)
       self.assertTrue(np.allclose(np.asarray(handle.loader._naval_station3_last_action), 0.0))
       self.assertTrue(np.allclose(np.asarray(handle.last_action, dtype=np.float32), 0.0))
+      self._assert_command_surface(handle.loader, np.zeros((3,), dtype=np.float32))
       self._assert_transport_adapter(handle.loader, np.zeros((3,), dtype=np.float32))
     finally:
       env.close()
@@ -476,6 +534,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
         self.assertAlmostEqual(float(getattr(task_after, "station_heading_deg", 0.0)), base_heading + 12.5)
         self.assertAlmostEqual(float(getattr(task_after, "station_radius_m", 0.0)), base_radius - 900.0)
         self.assertEqual(tuple(np.asarray(slot_state.last_action, dtype=np.float32).shape), (3,))
+        self._assert_command_surface(slot_state.loader, np.array([0.5, -0.5, 0.25], dtype=np.float32))
         self._assert_transport_adapter(slot_state.loader, np.array([0.5, -0.5, 0.25], dtype=np.float32))
       finally:
         env.close()
@@ -519,8 +578,10 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
         obs, _rewards, _dones, _infos = env.step(np.array([[0.004, -0.004, 0.004]], dtype=np.float32))
 
         self.assertTrue(np.allclose(np.asarray(obs["proprio"][0], dtype=np.float32), 0.0))
+        self._assert_observation_adapter(slot_state.loader)
         self.assertTrue(np.allclose(np.asarray(slot_state.last_action, dtype=np.float32), 0.0))
         self.assertTrue(np.allclose(np.asarray(slot_state.loader._naval_station3_last_action), 0.0))
+        self._assert_command_surface(slot_state.loader, np.zeros((3,), dtype=np.float32))
         self._assert_transport_adapter(slot_state.loader, np.zeros((3,), dtype=np.float32))
       finally:
         env.close()
@@ -573,6 +634,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertTrue(np.allclose(np.asarray(obs["proprio"], dtype=np.float32), 0.0))
       self.assertTrue(np.allclose(np.asarray(handle.last_action, dtype=np.float32), 0.0))
       self.assertTrue(np.allclose(np.asarray(handle.loader._naval_station3_last_action), 0.0))
+      self._assert_command_surface(handle.loader, np.zeros((3,), dtype=np.float32))
       self._assert_transport_adapter(handle.loader, np.zeros((3,), dtype=np.float32))
       action_terms = {
         key: value
@@ -597,6 +659,7 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
       self.assertTrue(np.allclose(np.asarray(obs["proprio"], dtype=np.float32), 0.0))
       self.assertTrue(np.allclose(np.asarray(handle.last_action, dtype=np.float32), 0.0))
       self.assertTrue(np.allclose(np.asarray(handle.loader._naval_station3_last_action), 0.0))
+      self._assert_command_surface(handle.loader, np.zeros((3,), dtype=np.float32))
       self._assert_transport_adapter(handle.loader, np.zeros((3,), dtype=np.float32))
       action_terms = {
         key: value

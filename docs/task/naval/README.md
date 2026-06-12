@@ -72,9 +72,8 @@ subproject entrypoints.
 - keep their policy mission input on `naval_screen_station_v1` rather than the
   air formation-role observation surface
 - continue splitting the remaining air-first compatibility carriers:
-  neutral `PilotAction` transport, flat `MissionCommand` aggregation,
-  Python-owned naval mission observation fallback, and air-labeled backend
-  config names
+  neutral `PilotAction` transport and flat `MissionCommand` aggregation; the
+  `naval_screen_station_v1` policy vector is now bounded as a maintained adapter
 - keep limited weapon engagement behind a separate N5 package and opening gate
 - continue moving business-bearing loader-owned raw simulation compatibility
   seams to facade-owned maintained surfaces

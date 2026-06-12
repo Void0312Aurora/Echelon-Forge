@@ -1,7 +1,17 @@
-import numpy as np
 import ef_py
+import numpy as np
 
-from python.mission_obs_taxonomy import mission_obs_mode_code, mission_observation_python_owned
+from python.mission_obs_taxonomy import (
+    MISSION_OBS_NAVAL_SCREEN_STATION_V1,
+    mission_obs_mode_code,
+    mission_observation_adapter_kind,
+    mission_observation_compiled_fallback_mode,
+    mission_observation_dim,
+    mission_observation_field_names,
+    mission_observation_owner,
+    mission_observation_python_owned,
+    mission_observation_uses_maintained_adapter,
+)
 from python.scenario.runtime import find_active_roster_member
 from python.rl.tasking.bridge import loader_owned_runtime_view, mission_command_view
 
@@ -600,10 +610,43 @@ def _naval_screen_station_vector(loader, *, truth=None, inst=None) -> np.ndarray
     )
 
 
+def _mission_observation_adapter_diagnostic(
+    *,
+    mode: str,
+    vector: np.ndarray,
+) -> dict[str, object]:
+    mode_norm = str(mode).strip().lower()
+    return {
+        "mission_obs_mode": mode_norm,
+        "adapter_kind": mission_observation_adapter_kind(mode_norm),
+        "owner": mission_observation_owner(mode_norm),
+        "compiled_fallback_mode": mission_observation_compiled_fallback_mode(mode_norm),
+        "policy_vector_source": "scenario_loader_mission_observation",
+        "policy_vector_dim": int(np.asarray(vector, dtype=np.float32).reshape(-1).size),
+        "expected_vector_dim": int(mission_observation_dim(mode_norm)),
+        "field_names": mission_observation_field_names(mode_norm),
+        "compatibility_only": False,
+        "maintained_adapter": bool(mission_observation_uses_maintained_adapter(mode_norm)),
+        "air_takeoff_formation_fallback": False,
+    }
+
+
+def _record_mission_observation_adapter(loader, *, mode: str, vector: np.ndarray) -> None:
+    diagnostic = _mission_observation_adapter_diagnostic(mode=mode, vector=vector)
+    try:
+        setattr(loader, "_mission_observation_adapter", dict(diagnostic))
+        if str(mode).strip().lower() == MISSION_OBS_NAVAL_SCREEN_STATION_V1:
+            setattr(loader, "_naval_screen_station_v1_observation_adapter", dict(diagnostic))
+    except Exception:
+        pass
+
+
 def get_python_owned_mission_observation(loader, mode: str, *, truth=None, inst=None):
     mode_norm = str(mode).strip().lower()
     if mode_norm == "naval_screen_station_v1":
-        return _naval_screen_station_vector(loader, truth=truth, inst=inst)
+        vector = _naval_screen_station_vector(loader, truth=truth, inst=inst)
+        _record_mission_observation_adapter(loader, mode=mode_norm, vector=vector)
+        return vector
     if mode_norm == "air_combat_c2_roe_v1":
         return _air_combat_c2_roe_vector(loader, truth=truth, inst=inst)
     if mode_norm == "air_combat_c2_roe_v2":

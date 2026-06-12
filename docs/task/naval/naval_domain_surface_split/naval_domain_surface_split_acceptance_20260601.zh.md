@@ -1,7 +1,7 @@
 # 海军领域执行面拆分验收门
 
-状态：`2026-06-01`，gate 已定义；`P1-A/P1-B/P2-A/P3-B` 已作为切片验收，
-但子项目整体尚未接受。
+状态：`2026-06-12`，gate 刷新；`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A`
+已作为切片验收，但子项目整体尚未接受。
 
 父项目：[海军领域执行面拆分](README.zh.md)
 
@@ -9,18 +9,18 @@
 
 当前决定：`not accepted`。
 
-原因：前两波切片已经完成 inventory、guard tests、action transport adapter 与
-domain-neutral config alias；但当前代码库在 maintained naval path 上仍有已知
-compatibility adapter / blocker：flat `MissionCommand` compatibility shell、
-Python-owned naval mission observation fallback，以及仍未全局退休的 `PilotAction`
-compatibility carrier。
+原因：已接受切片现在覆盖 inventory、guard tests、action command surface、
+bounded maintained naval observation adapter、domain-neutral config alias，以及
+active/eval surface gates。但当前代码库仍保留 flat `MissionCommand`
+compatibility shell，以及尚未全局退休的 `PilotAction` carrier /
+`WorldPilotActionAssignment` transport path。
 
 ## Interim Evidence Accepted
 
-`P1-A/P1-B/P2-A/P3-B` 验收为 `accepted`，但只关闭已分发切片：
+`P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` 验收为 `accepted`，但只关闭已分发切片：
 
 - `P1-A` 已把 active naval path 上的 `PilotAction`、`MissionCommand`、
-  `flight_shaping`、runway/takeoff/formation、gear/ILS、Python-owned observation
+  `flight_shaping`、runway/takeoff/formation、gear/ILS、原 Python-owned observation
   fallback 与 `WorldPilotActionAssignment` 分类为 accepted shared infrastructure、
   compatibility adapter 或 blocker。
 - `P1-B` 已增加 active naval config / eval guard，覆盖 `takeoff*` action mode、
@@ -30,6 +30,10 @@ compatibility carrier。
   因此不需要 binding rebuild。
 - `P3-B` 已增加 domain-neutral `shaping_backend` alias，并保持 canonical
   `flight_shaping_backend` 与 CLI / canonical override 优先级兼容。
+- `P3-A` 已把 `naval_screen_station_v1` 收束为 maintained Python observation
+  adapter，`basic` 只作为 compiled batch fallback，不作为 policy-visible vector。
+- `P4-A` 已增加 active/eval `surface_gate` 证据，覆盖 action command surface、
+  legacy transport adapter 与 maintained naval observation adapter。
 - 本地主线程验收命令：
 
 ```bash
@@ -54,7 +58,23 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python -m p
 结果：`git diff --check` 无输出；pytest 分别为
 `45 passed, 45 subtests passed in 34.50s` 与
 `13 passed, 74 deselected in 3.44s`。整体 acceptance 仍保持 `not accepted`，
-直到 command projection 与 observation packet 证据到位。
+直到 `P2-B` command projection 证据到位。
+
+P3/P4 刷新命令：
+
+```bash
+pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
+# 5 passed
+
+pytest -q tests/runtime/naval/test_naval_station_policy_surface.py
+# 19 passed
+
+pytest -q tests/eval/test_evaluation_cli_contracts.py -k "NavalStationPolicyEvalTests"
+# 8 passed, 5 deselected
+```
+
+本次刷新后，observation 证据已通过 bounded adapter 路径到位。整体 acceptance
+仍保持 `not accepted`，直到 `P2-B` command projection 实现，或以替代条件显式 held。
 
 ## Required Evidence
 

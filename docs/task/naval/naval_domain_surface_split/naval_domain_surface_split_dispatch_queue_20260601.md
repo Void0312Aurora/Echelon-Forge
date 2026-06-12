@@ -1,8 +1,8 @@
 # Naval Domain Surface Split Dispatch Queue
 
-Status: `2026-06-01`; `P1-A/P1-B/P2-A/P3-B` accepted. `P2-B/P3-A`
-are ready but must still be chosen serially by write set; `P4-A/P5-A` remain
-held.
+Status: `2026-06-12`; `P1-A/P1-B/P2-A/P3-A/P3-B/P4-A` accepted.
+`P2-B` remains ready and must be serial if it touches runtime contracts; `P5-A`
+remains held until command projection is resolved or explicitly held.
 
 Parent project: [Naval Domain Surface Split](README.md)
 
@@ -25,10 +25,10 @@ Parent project: [Naval Domain Surface Split](README.md)
 | `DS-P1-B-guards` | `P1-B` | returned/pass, accepted from `Locke` | training/eval guard tests | focused naval pytest |
 | `DS-P2-A-action-transport` | `P2-A` | returned/pass, accepted from `Locke` | action/runtime contracts and adapters | C++/binding if touched plus world-batch naval tests |
 | `DS-P2-B-command-projection` | `P2-B` | ready, choose serially | command contracts, naval profile, command-chain tests | command roundtrip and world-batch tests |
-| `DS-P3-A-observation-packet` | `P3-A` | ready after P2-A acceptance | observation taxonomy/runtime/tests | mission observation and naval runtime tests |
+| `DS-P3-A-observation-packet` | `P3-A` | returned/pass, accepted from main thread | observation taxonomy/runtime/tests | mission observation and naval runtime tests |
 | `DS-P3-B-config-alias` | `P3-B` | returned/pass, accepted from `Linnaeus` | env config, train CLI, docs/tests | env-config and bootstrap tests |
-| `DS-P4-A-integration` | `P4-A` | held until split slices pass | active configs, eval, runtime naval tests | active entry, eval, scenario contract gates |
-| `DS-P5-A-closeout` | `P5-A` | held until validation | docs only | acceptance gate plus `git diff --check` |
+| `DS-P4-A-integration` | `P4-A` | returned/pass, accepted from main thread | active configs, eval, runtime naval tests | active entry, eval, scenario contract gates |
+| `DS-P5-A-closeout` | `P5-A` | held until `P2-B` disposition | docs only | acceptance gate plus `git diff --check` |
 
 ## Worker Packet Template
 

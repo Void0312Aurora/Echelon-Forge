@@ -21,12 +21,14 @@ NAVAL_STATION3_RADIUS_DELTA_M = 1800.0
 NAVAL_STATION3_SPEED_BIAS_MPS = 1.25
 NAVAL_STATION3_ACTION_DEADBAND = 0.005
 NAVAL_STATION3_ACTION_FAMILY = "naval_station_command"
+NAVAL_STATION3_COMMAND_SURFACE_KIND = "naval_station3_command_surface"
 NAVAL_STATION3_TRANSPORT_ADAPTER_KIND = "naval_station3_pilot_action_transport_compat"
 NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignment"
 NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE = "pilot_action"
 NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE = (
-    "PilotAction carrier is compatibility-only transport for naval_station3 and not "
-    "policy-visible action truth."
+    "PilotAction carrier is legacy compatibility-only transport for naval_station3 "
+    "and not policy-visible action truth; use _naval_station3_command_surface for "
+    "command diagnostics."
 )
 
 
@@ -48,10 +50,12 @@ class NavalStationActionTransport:
             "policy_surface": self.policy_surface,
             "policy_action": [float(value) for value in self.policy_action],
             "action_family": self.action_family,
+            "policy_truth_surface": NAVAL_STATION3_COMMAND_SURFACE_KIND,
             "transport_adapter_kind": self.transport_adapter_kind,
             "carrier_interface_kind": self.carrier_interface_kind,
             "payload_type": self.payload_type,
             "compatibility_only": bool(self.compatibility_only),
+            "carrier_required": True,
             "diagnostics_note": self.diagnostics_note,
             "carrier_action": {
                 "throttle": float(getattr(pilot, "throttle", 0.0)),
@@ -137,6 +141,7 @@ def reset_naval_station_action_state(loader: Any) -> None:
         "_naval_station3_eval_radius_m",
         "_naval_station3_eval_speed_mps",
         "_naval_station3_last_action",
+        "_naval_station3_command_surface",
         "_naval_station3_transport_adapter",
         "_naval_reward_last_station_error_m",
     ):
@@ -185,6 +190,40 @@ def naval_station_action_command(action: np.ndarray) -> np.ndarray:
     action_arr = np.clip(action_arr, -1.0, 1.0)
     action_arr = np.where(np.abs(action_arr) <= NAVAL_STATION3_ACTION_DEADBAND, 0.0, action_arr)
     return action_arr.astype(np.float32, copy=True)
+
+
+def build_naval_station_command_surface(
+    *,
+    policy_action: np.ndarray,
+    base_heading_deg: float,
+    base_radius_m: float,
+    base_speed_mps: float,
+    heading_delta_deg: float,
+    radius_delta_m: float,
+    speed_delta_mps: float,
+    station_heading_deg: float,
+    station_radius_m: float,
+    target_speed_mps: float,
+) -> dict[str, Any]:
+    action_arr = np.asarray(policy_action, dtype=np.float32).reshape(-1)
+    return {
+        "policy_surface": NAVAL_STATION3_ACTION_MODE,
+        "action_family": NAVAL_STATION3_ACTION_FAMILY,
+        "command_surface_kind": NAVAL_STATION3_COMMAND_SURFACE_KIND,
+        "policy_action": [float(value) for value in action_arr[:3]],
+        "compatibility_only": False,
+        "carrier_required": True,
+        "legacy_transport_adapter_kind": NAVAL_STATION3_TRANSPORT_ADAPTER_KIND,
+        "base_heading_deg": float(base_heading_deg),
+        "base_radius_m": float(base_radius_m),
+        "base_speed_mps": float(base_speed_mps),
+        "heading_delta_deg": float(heading_delta_deg),
+        "radius_delta_m": float(radius_delta_m),
+        "speed_delta_mps": float(speed_delta_mps),
+        "station_heading_deg": float(station_heading_deg),
+        "station_radius_m": float(station_radius_m),
+        "target_speed_mps": float(target_speed_mps),
+    }
 
 
 def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
@@ -236,6 +275,22 @@ def apply_naval_station_action(loader: Any, action: np.ndarray) -> bool:
     mission_cmd["station_bearing_deg"] = float(station_heading_deg)
     mission_cmd["target_speed"] = float(target_speed_mps)
     mission_cmd["target_altitude"] = 0.0
+    setattr(
+        loader,
+        "_naval_station3_command_surface",
+        build_naval_station_command_surface(
+            policy_action=action_arr,
+            base_heading_deg=base_heading,
+            base_radius_m=base_radius,
+            base_speed_mps=base_speed,
+            heading_delta_deg=heading_delta,
+            radius_delta_m=radius_delta,
+            speed_delta_mps=speed_delta,
+            station_heading_deg=station_heading_deg,
+            station_radius_m=station_radius_m,
+            target_speed_mps=target_speed_mps,
+        ),
+    )
     return True
 
 
@@ -244,12 +299,14 @@ __all__ = [
     "NAVAL_STATION3_ACTION_DEADBAND",
     "NAVAL_STATION3_ACTION_FAMILY",
     "NAVAL_STATION3_CARRIER_INTERFACE_KIND",
+    "NAVAL_STATION3_COMMAND_SURFACE_KIND",
     "NAVAL_STATION3_TRANSPORT_ADAPTER_KIND",
     "NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE",
     "NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE",
     "NavalStationActionTransport",
     "apply_naval_station_action",
     "bind_naval_station_eval_reference",
+    "build_naval_station_command_surface",
     "build_naval_station_action_transport",
     "build_neutral_ship_pilot_action",
     "is_naval_station_action_mode",

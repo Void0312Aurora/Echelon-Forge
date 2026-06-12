@@ -14,11 +14,15 @@ from python.mission_obs_taxonomy import ( # noqa: E402
   BASE_MISSION_OBS_MODES,
   COOPERATIVE_MISSION_OBS_MODES,
   NAVAL_MISSION_OBS_MODES,
-  mission_observation_field_index,
-  mission_observation_python_owned,
-  mission_obs_mode_code,
+  mission_observation_adapter_kind,
+  mission_observation_compiled_fallback_mode,
   mission_observation_dim,
+  mission_observation_field_index,
   mission_observation_field_names,
+  mission_observation_owner,
+  mission_observation_python_owned,
+  mission_observation_uses_maintained_adapter,
+  mission_obs_mode_code,
 )
 
 
@@ -129,6 +133,10 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
     self.assertEqual(env_mission_observation_dim(mode), 23)
     self.assertEqual(ScenarioLoader._mission_observation_mode_code(mode), 6)
     self.assertEqual(ScenarioLoader._python_owned_mission_observation_mode(mode), True)
+    self.assertEqual(mission_observation_owner(mode), "maintained_python_adapter")
+    self.assertEqual(mission_observation_adapter_kind(mode), "naval_screen_station_v1_maintained_adapter")
+    self.assertEqual(mission_observation_compiled_fallback_mode(mode), "basic")
+    self.assertTrue(mission_observation_uses_maintained_adapter(mode))
     self.assertEqual(
       mission_observation_field_names(mode),
       [
@@ -170,6 +178,9 @@ class MissionObservationTaxonomyTests(unittest.TestCase):
     self.assertEqual(env_mission_observation_dim(mode), 20)
     self.assertEqual(ScenarioLoader._mission_observation_mode_code(mode), 7)
     self.assertEqual(ScenarioLoader._python_owned_mission_observation_mode(mode), True)
+    self.assertEqual(mission_observation_owner(mode), "python_policy_adapter")
+    self.assertEqual(mission_observation_compiled_fallback_mode(mode), "basic")
+    self.assertFalse(mission_observation_uses_maintained_adapter(mode))
     self.assertEqual(
       mission_observation_field_names(mode),
       [

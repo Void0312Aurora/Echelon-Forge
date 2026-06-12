@@ -1,7 +1,7 @@
 # Naval Domain Surface Split
 
-Status: `2026-06-01` active planning surface for continuing the naval split out of
-air-first compatibility carriers.
+Status: `2026-06-12` active planning surface; P3/P4 observation and integration
+gates accepted, with `P2-B` command projection still open.
 
 Language:
 
@@ -34,8 +34,8 @@ surfaces before any N5 weapon-engagement or N6 damage claim is opened.
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
-| Active N4 action mode | accepted first slice | `naval_station3` in `gym_envs/universal_env_parts/naval_actions.py` | still transported beside a neutral `PilotAction` carrier |
-| Active N4 mission observation | accepted first slice | `naval_screen_station_v1` in `python/mission_obs_taxonomy.py` | Python-owned replacement, not a maintained C++ naval packet |
+| Active N4 action mode | accepted first slice; `2026-06-12` command-surface tightened | `naval_station3` in `gym_envs/universal_env_parts/naval_actions.py` | `_naval_station3_command_surface` is the station-order truth; neutral `PilotAction` remains legacy transport |
+| Active N4 mission observation | accepted maintained adapter | `naval_screen_station_v1` in `python/mission_obs_taxonomy.py` and `gym_envs/scenario_loader/mission_observation.py` | policy vector is produced by `naval_screen_station_v1_maintained_adapter`; compiled batch input still falls back to `basic` |
 | Command shell | compatibility-active | `MissionCommand = core + air + naval` in `src/components/command/mission_command.h` | flat shell still carries air owner slices and target-altitude naming |
 | World-batch policy action | compatibility-active | `WorldPilotActionAssignment` in `src/runtime/contracts/world_batch_contracts.h` | no naval-owned action assignment packet yet |
 | N5/N6 claims | held | N4 contracts forbid weapon inventory, health, and damage deltas | this subproject does not release weapon or damage authority |
@@ -70,10 +70,10 @@ Out of scope:
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
 | `P0 Boundary` | Freeze scope, inputs, write sets, and forbidden claims. | user request plus current N4/N5 evidence | subproject files and parent README links exist | active |
-| `P1 Inventory` | Map all active naval air-first dependencies. | P0 scaffold | current-status inventory names code owners and risk level | planned |
-| `P2 Command/Action Split` | Introduce naval-owned command and action transport seams. | P1 inventory accepted | active naval policy path no longer depends on `PilotAction` semantics | planned |
-| `P3 Observation/Config Split` | Promote naval observation and neutralize blocking env names. | P2 packet boundary accepted | `naval_screen_station_v1` has maintained packet gate and config aliases | planned |
-| `P4 Integration Gates` | Wire training/eval/contracts to the new surfaces. | P2/P3 implementation slices | focused tests and scenario contracts pass without N5/N6 claims | planned |
+| `P1 Inventory` | Map all active naval air-first dependencies. | P0 scaffold | current-status inventory names code owners and risk level | accepted |
+| `P2 Command/Action Split` | Introduce naval-owned command and action transport seams. | P1 inventory accepted | active naval policy path no longer depends on `PilotAction` semantics | partial: action command surface bounded; `P2-B` command projection still open |
+| `P3 Observation/Config Split` | Promote naval observation and neutralize blocking env names. | P2 packet boundary accepted | `naval_screen_station_v1` has maintained packet gate and config aliases | accepted |
+| `P4 Integration Gates` | Wire training/eval/contracts to the new surfaces. | P2/P3 implementation slices | focused tests and scenario contracts pass without N5/N6 claims | accepted |
 | `P5 Closure` | Sync acceptance, current progress, and archive boundaries. | P4 validation | acceptance record marks the split accepted or held | planned |
 
 ## Task Clusters
@@ -98,6 +98,8 @@ Expected outputs:
   vectors with renamed fields;
 - active naval training-entry checks that reject air action and air observation
   fallback;
+- eval JSON surface gates proving active entries run on the maintained action
+  command surface and naval observation adapter;
 - updated docs that keep `naval_limited_engagement_v1` blocked until a separate
   N5 launch/reject package exists.
 
@@ -106,7 +108,8 @@ Expected outputs:
 This subproject can be marked accepted only when:
 
 - active maintained naval entries have a naval-owned action/intent transport, or
-  the remaining `PilotAction` use is explicitly diagnostics-only;
+  the remaining `PilotAction` use is explicitly compatibility-only with a
+  maintained command surface as policy truth;
 - `MissionCommand` compatibility shell use is bounded behind maintained
   projection tests for shared core and naval owner slices;
 - naval policy observation does not rely on air takeoff, air formation, runway,

@@ -8,6 +8,8 @@ import time
 import ef_py
 import numpy as np
 
+from python.mission_obs_taxonomy import mission_observation_compiled_fallback_mode
+
 
 @dataclass
 class ExecutionObservationBatch:
@@ -46,7 +48,7 @@ def compute_execution_observation_batch(
         if callable(mode_check):
             python_owned_mission = bool(mode_check(mission_obs_mode))
     if python_owned_mission:
-        mission_mode_for_compiled = "basic"
+        mission_mode_for_compiled = str(mission_observation_compiled_fallback_mode(mission_obs_mode) or "basic")
         allow_device_export = False
 
     mission_input_t0 = time.perf_counter()

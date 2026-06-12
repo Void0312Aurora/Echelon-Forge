@@ -59,9 +59,9 @@
   `takeoff4` 训练面
 - 让这些入口的策略任务输入保持在 `naval_screen_station_v1`，而不是空军
   formation-role 观测面
-- 继续拆分剩余 air-first compatibility carrier：中性 `PilotAction` transport、flat
-  `MissionCommand` 聚合、Python-owned naval mission observation fallback，以及
-  air-labeled backend 配置名
+- 继续拆分剩余 air-first compatibility carrier：中性 `PilotAction` transport 与 flat
+  `MissionCommand` 聚合；`naval_screen_station_v1` policy vector 现在已收束为
+  maintained adapter
 - 将有限武器交战继续放在独立 N5 package 与 opening gate 之后
 - 将仍有业务含义的 loader-owned raw simulation compatibility seam 继续迁到 facade-owned maintained surface
 - 补强 `MissionCommand -> naval weapon`、`screen-hold`、`tasking_profile: naval` 的 facade/world-batch 级守门

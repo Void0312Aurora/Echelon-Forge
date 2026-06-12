@@ -184,6 +184,13 @@ the accepted N4 scenarios with the cooperative single-policy-slot runtime, use
 the dedicated no-release `naval_station3` station-order action surface and
 `naval_screen_station_v1` policy observation surface, and keep weapon release,
 damage rewards, kill rewards, and learned-policy claims out of scope.
+As of the `2026-06-12` compatibility cleanup, `naval_station3` also records
+`_naval_station3_command_surface` as the tested station-command truth while the
+neutral `PilotAction` remains only a legacy assignment carrier.
+The same refresh bounds `naval_screen_station_v1` as
+`naval_screen_station_v1_maintained_adapter`; active/eval JSON now reports a
+`surface_gate` covering the action command surface, legacy transport adapter,
+and naval observation adapter.
 `naval_limited_engagement_v1` remains blocked behind N5 launch/reject and
 non-damage gates.
 
@@ -248,6 +255,19 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 # PASS
 ```
 
+Action-side compatibility cleanup validation (`2026-06-12`):
+
+```bash
+pytest -q tests/runtime/naval/test_naval_station_policy_surface.py
+# 19 passed
+
+pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
+# 5 passed
+
+pytest -q tests/eval/test_evaluation_cli_contracts.py -k "NavalStationPolicyEvalTests"
+# 8 passed, 5 deselected
+```
+
 ## Next Focus
 
 Recommended next steps:
@@ -258,7 +278,10 @@ Recommended next steps:
    `naval_screen_station_recovery_threat_aware_v1` now have active smoke/probe
    entries.
 2. Continue moving loader-owned raw simulation compatibility seams toward
-   facade-owned maintained command-chain surfaces.
+   facade-owned maintained command-chain surfaces. The action-side command
+   surface and observation adapter are now explicit; `P2-B` still needs command
+   projection guards before `MissionCommand` can stop being treated as a
+   compatibility shell.
 3. Add facade or world-batch acceptance around naval mission-command weapons,
    screen-hold, and `tasking_profile: naval`.
 4. Keep `naval_limited_engagement_v1` blocked until a separate N5 package

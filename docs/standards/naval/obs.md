@@ -4,7 +4,7 @@ Language:
 - English canonical: `obs.md`
 - Chinese companion: [obs.zh.md](obs.zh.md)
 
-Status: `2026-06-10` specialization baseline for maintained naval mission observation.
+Status: `2026-06-12` specialization baseline for maintained naval mission observation.
 
 This document defines the maintained naval mission-observation contract exposed
 through the current mode-based observation surface. It describes the runtime
@@ -112,8 +112,12 @@ Relative role and slot fields:
   [python/mission_obs_taxonomy.py](../../../python/mission_obs_taxonomy.py).
 - Missing contact or support-track state is represented in the declared fields;
   the mode does not grow ad hoc contact arrays.
-- This mode is Python-owned in the current runtime taxonomy and is assembled
-  by the scenario-loader mission-observation path.
+- This mode is owned by the maintained Python adapter
+  `naval_screen_station_v1_maintained_adapter` in the current runtime taxonomy
+  and is assembled by the scenario-loader mission-observation path.
+- In batch execution, compiled mission input may use `basic` as a bounded
+  fallback, but the policy-visible mission vector must be the maintained naval
+  adapter output.
 
 ## Ownership Boundary
 

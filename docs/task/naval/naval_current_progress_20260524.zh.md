@@ -277,7 +277,12 @@ N4 RL preflight 已记录在
 这些条目是实现 gate，而不是已训练 policy 证据：它们把已接受 N4 场景与 cooperative
 单策略槽位 runtime 配对，使用专门的 no-release `naval_station3` 站位指令动作面和
 `naval_screen_station_v1` 策略观测面，并把武器释放、毁伤奖励、击杀奖励和 learned-policy
-声明排除在范围外。`naval_limited_engagement_v1` 继续被 N5 launch/reject 和非毁伤 gate
+声明排除在范围外。`2026-06-12` compatibility cleanup 之后，`naval_station3` 还会记录
+`_naval_station3_command_surface` 作为测试化站位指令真值，中性 `PilotAction` 仅保留为
+legacy assignment carrier。同一轮刷新也把 `naval_screen_station_v1` 收束为
+`naval_screen_station_v1_maintained_adapter`；active/eval JSON 现在会报告
+`surface_gate`，覆盖 action command surface、legacy transport adapter 与 naval
+observation adapter。`naval_limited_engagement_v1` 继续被 N5 launch/reject 和非毁伤 gate
 阻塞。
 
 ## 六、验证记录
@@ -338,6 +343,19 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 # PASS
 ```
 
+Action 侧 compatibility cleanup 验证（`2026-06-12`）：
+
+```bash
+pytest -q tests/runtime/naval/test_naval_station_policy_surface.py
+# 19 passed
+
+pytest -q tests/runtime/mission/test_mission_obs_taxonomy.py
+# 5 passed
+
+pytest -q tests/eval/test_evaluation_cli_contracts.py -k "NavalStationPolicyEvalTests"
+# 8 passed, 5 deselected
+```
+
 ## 七、下一步建议
 
 建议下一轮按下面顺序推进：
@@ -345,7 +363,7 @@ PYTHONPATH=build-workshop:. CMO_BUILD_DIR=build-workshop ./.venv/bin/python tool
 1. 将 N4 视为已闭合，避免为了 engagement 工作重新打开 N4。
    `naval_contact_report_threat_roe_v1`、`naval_screen_station_hold_threat_aware_v1`
    与 `naval_screen_station_recovery_threat_aware_v1` 现在已有 active smoke/probe 条目。
-2. Facade 化收口：把 loader-owned raw simulation compatibility seam 中仍承担业务含义的 naval command-chain 同步继续迁到 facade-owned maintained surface。
+2. Facade 化收口：把 loader-owned raw simulation compatibility seam 中仍承担业务含义的 naval command-chain 同步继续迁到 facade-owned maintained surface。Action 侧 command surface 与 observation adapter 已显式化；`P2-B` 仍需要 command projection guards，之后才能把 `MissionCommand` 从 compatibility shell 进一步收窄。
 3. 任务面守门：为 `MissionCommand -> naval weapon`、`screen-hold` 和 `tasking_profile: naval` 增加更少依赖调试 API 的 facade 或 world-batch 级验收。
 4. N5 门控：`naval_limited_engagement_v1` 继续阻塞，直到独立 N5 包定义
    launch/reject、range/arc/cooldown/inventory、action masking 和非毁伤验收 gate。

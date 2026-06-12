@@ -190,6 +190,32 @@ AIR_COMBAT_MISSION_OBS_MODES = (
 )
 PYTHON_OWNED_MISSION_OBS_MODES = frozenset(NAVAL_MISSION_OBS_MODES + AIR_COMBAT_MISSION_OBS_MODES)
 
+MISSION_OBS_OWNER_COMPILED_CORE = "compiled_core"
+MISSION_OBS_OWNER_MAINTAINED_PYTHON_ADAPTER = "maintained_python_adapter"
+MISSION_OBS_OWNER_PYTHON_POLICY_ADAPTER = "python_policy_adapter"
+
+MISSION_OBS_ADAPTER_KIND_BY_NAME = {
+    MISSION_OBS_NAVAL_SCREEN_STATION_V1: "naval_screen_station_v1_maintained_adapter",
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V1: "air_combat_c2_roe_v1_python_policy_adapter",
+    MISSION_OBS_AIR_COMBAT_C2_ROE_V2: "air_combat_c2_roe_v2_python_policy_adapter",
+}
+
+MISSION_OBS_OWNER_BY_NAME = {
+    mode: (
+        MISSION_OBS_OWNER_MAINTAINED_PYTHON_ADAPTER
+        if mode == MISSION_OBS_NAVAL_SCREEN_STATION_V1
+        else MISSION_OBS_OWNER_PYTHON_POLICY_ADAPTER
+        if mode in AIR_COMBAT_MISSION_OBS_MODES
+        else MISSION_OBS_OWNER_COMPILED_CORE
+    )
+    for mode in VALID_MISSION_OBS_MODES
+}
+
+MISSION_OBS_COMPILED_FALLBACK_BY_NAME = {
+    mode: MISSION_OBS_BASIC
+    for mode in PYTHON_OWNED_MISSION_OBS_MODES
+}
+
 
 def normalize_mission_obs_mode(mode: str | None) -> str:
     normalized = str(mode or MISSION_OBS_BASIC).strip().lower()
@@ -206,6 +232,22 @@ def mission_obs_mode_code(mode: str | None) -> int:
 
 def mission_observation_python_owned(mode: str | None) -> bool:
     return normalize_mission_obs_mode(mode) in PYTHON_OWNED_MISSION_OBS_MODES
+
+
+def mission_observation_owner(mode: str | None) -> str:
+    return str(MISSION_OBS_OWNER_BY_NAME[normalize_mission_obs_mode(mode)])
+
+
+def mission_observation_adapter_kind(mode: str | None) -> str | None:
+    return MISSION_OBS_ADAPTER_KIND_BY_NAME.get(normalize_mission_obs_mode(mode))
+
+
+def mission_observation_compiled_fallback_mode(mode: str | None) -> str | None:
+    return MISSION_OBS_COMPILED_FALLBACK_BY_NAME.get(normalize_mission_obs_mode(mode))
+
+
+def mission_observation_uses_maintained_adapter(mode: str | None) -> bool:
+    return mission_observation_owner(mode) == MISSION_OBS_OWNER_MAINTAINED_PYTHON_ADAPTER
 
 
 def mission_observation_dim(mode: str | None) -> int:

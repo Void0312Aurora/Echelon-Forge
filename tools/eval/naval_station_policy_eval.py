@@ -123,6 +123,60 @@ def _active_roster_summary(env: CooperativeWorldBatchVecEnv) -> list[dict[str, A
     return []
 
 
+def _surface_gate_summary(env: CooperativeWorldBatchVecEnv) -> dict[str, Any]:
+    loader = None
+    for slot_state in getattr(env, "_slots", []) or []:
+        if slot_state is not None:
+            loader = getattr(slot_state, "loader", None)
+            break
+
+    observation_adapter = (
+        dict(getattr(loader, "_naval_screen_station_v1_observation_adapter", {}) or {})
+        if loader is not None
+        else {}
+    )
+    command_surface = (
+        dict(getattr(loader, "_naval_station3_command_surface", {}) or {})
+        if loader is not None
+        else {}
+    )
+    transport_adapter = (
+        dict(getattr(loader, "_naval_station3_transport_adapter", {}) or {})
+        if loader is not None
+        else {}
+    )
+    mission_obs_mode = str(getattr(env, "mission_obs_mode", "") or "")
+    action_mode = str(getattr(env, "action_mode", "") or "")
+    observation_ok = bool(
+        mission_obs_mode == "naval_screen_station_v1"
+        and observation_adapter.get("adapter_kind") == "naval_screen_station_v1_maintained_adapter"
+        and observation_adapter.get("owner") == "maintained_python_adapter"
+        and observation_adapter.get("compiled_fallback_mode") == "basic"
+        and int(observation_adapter.get("policy_vector_dim", 0) or 0) == 23
+        and not bool(observation_adapter.get("air_takeoff_formation_fallback"))
+    )
+    command_ok = bool(
+        action_mode == "naval_station3"
+        and command_surface.get("command_surface_kind") == "naval_station3_command_surface"
+        and command_surface.get("action_family") == "naval_station_command"
+        and not bool(command_surface.get("compatibility_only"))
+        and transport_adapter.get("policy_truth_surface") == "naval_station3_command_surface"
+        and bool(transport_adapter.get("compatibility_only"))
+    )
+    return {
+        "passed": bool(observation_ok and command_ok),
+        "action_mode": action_mode,
+        "mission_obs_mode": mission_obs_mode,
+        "observation_adapter": observation_adapter,
+        "command_surface": command_surface,
+        "transport_adapter": transport_adapter,
+        "checks": {
+            "observation_adapter": bool(observation_ok),
+            "command_surface": bool(command_ok),
+        },
+    }
+
+
 def _mission_status_list(info: dict[str, Any]) -> list[float]:
     try:
         return [float(x) for x in np.asarray(info.get("mission_status", []), dtype=np.float32).reshape(-1)]
@@ -228,6 +282,7 @@ def _run_fixed_action_eval(
                 break
 
         present_terms = set(reward_terms_sum)
+        surface_gate = _surface_gate_summary(env)
         return {
             "requested_steps": int(steps),
             "executed_steps": int(executed_steps),
@@ -239,6 +294,7 @@ def _run_fixed_action_eval(
             "reward_terms_sum": dict(sorted(reward_terms_sum.items())),
             "reward_terms_last": dict(sorted(reward_terms_last.items())),
             "forbidden_reward_terms_present": sorted(present_terms & FORBIDDEN_REWARD_TERMS),
+            "surface_gate": surface_gate,
             "termination_counts": dict(termination_counts),
             "first_mission_status": first_status,
             "final_mission_status": _mission_status_list(final_info),
@@ -303,6 +359,7 @@ def run_baseline_eval(
         policy_slot_count = int(env.num_envs)
         active_roster_count = int(len(active_roster))
         non_agent_roster_count = int(sum(1 for member in active_roster if not bool(member.get("is_agent", True))))
+        surface_gate = _surface_gate_summary(env)
         passed = bool(
             finite_reward
             and policy_slot_count == 1
@@ -310,6 +367,7 @@ def run_baseline_eval(
             and non_agent_roster_count >= 1
             and not forbidden_present
             and not required_missing
+            and bool(surface_gate.get("passed"))
         )
 
         return {
@@ -336,6 +394,7 @@ def run_baseline_eval(
             "required_reward_terms_missing": required_missing,
             "forbidden_reward_terms": sorted(FORBIDDEN_REWARD_TERMS),
             "forbidden_reward_terms_present": forbidden_present,
+            "surface_gate": surface_gate,
             "finite_reward": bool(finite_reward),
             "termination_counts": dict(termination_counts),
             "final_mission_status": _mission_status_list(final_info),
