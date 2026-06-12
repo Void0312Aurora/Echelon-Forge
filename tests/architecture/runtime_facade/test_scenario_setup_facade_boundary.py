@@ -155,7 +155,6 @@ def test_wp24_legacy_runtime_and_backend_inputs_stay_retired() -> None:
     REPO_ROOT / "gym_envs" / "scenario_loader" / "common.py",
     REPO_ROOT / "gym_envs" / "universal_env.py",
     REPO_ROOT / "tools" / "eval" / "sb3_eval_base.py",
-    REPO_ROOT / "tools" / "diagnostics" / "arma_proxy_backend_echelon_env.py",
     REPO_ROOT / "tools" / "diagnostics" / "leader_perf_probe.py",
     REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "policy_observation_bridge.py",
     REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "world_batch_vec_env.py",

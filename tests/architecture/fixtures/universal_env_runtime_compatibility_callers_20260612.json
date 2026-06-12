@@ -36,20 +36,6 @@
       ]
     },
     {
-      "path": "tools/diagnostics/arma_proxy_backend_echelon_env.py",
-      "call_count": 1,
-      "surface": "Arma proxy backend Echelon env diagnostic",
-      "classification": "manual_diagnostics_raw_env",
-      "disposition": "retain_manual_diagnostics_until_tool_migrated_or_archived",
-      "migration_target": "external proxy diagnostic using a maintained runtime adapter, or archive if no longer used",
-      "next_action": "Keep explicitly manual until Arma proxy ownership is decided.",
-      "evidence_markers": [
-        "def _build_env_settings",
-        "def _build_session_env",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
       "path": "tests/leader/_leader_env_runtime_controls_cases.py",
       "call_count": 1,
       "surface": "leader env rejection guard for legacy execution config",

@@ -37,14 +37,14 @@ aligned with the active Arma project.
 Tracked, reviewable documentation for the broader workline still belongs under
 `docs/task/game/`.
 
-The current maintained repo-side companions for this line are:
+The current maintained repo-side companion for this line is:
 
 - [arma_proxy_backend_stub.py](../../../tools/diagnostics/arma_proxy_backend_stub.py)
   - a minimal TCP stub for the first-pass DLL bridge protocol, useful for
     bring-up before a real backend adapter is promoted.
-- [arma_proxy_backend_echelon_env.py](../../../tools/diagnostics/arma_proxy_backend_echelon_env.py)
-  - an env-backed TCP backend that steps authoritative flight state inside
-    Echelon Forge and only uses Arma host frames as a rigid world anchor.
+
+The former raw env-backed Arma proxy backend is archived in `tools/archive/`
+and is no longer a maintained repo-side companion for this workline.
 
 ## Authority Model
 

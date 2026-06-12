@@ -47,8 +47,6 @@
   - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - 面向本地 `game/` Arma bridge 的最小行协议 TCP stub。它确认 `begin_session`，消费 `host_frame`，并为 `echelon_bridge.dll` 产出合成 `proxy_state` 载荷。
-- [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
-  - 面向同一 Arma bridge 的 `UniversalEnv` 真值 TCP 后端。它把后端真值刚体锚定到 Arma host-frame 的位置和朝向上，同时在 Echelon Forge 内真实 step air/execution 状态。
 - `spatial_query`
   - 编译的空间查询与传统几何基准。
 - `scenario_compiler`
@@ -153,30 +151,6 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
   --log-requests
 ```
 
-运行 env-backed Arma proxy backend：
-
-```bash
-./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
-  --host 127.0.0.1 \
-  --port 8765 \
-  --scenario scenarios/stable_flight/stable_flight.json \
-  --action-mode full \
-  --mission-obs-mode basic
-```
-
-运行挂接训练后 SB3 策略的 env-backed Arma proxy backend：
-
-```bash
-./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
-  --host 127.0.0.1 \
-  --port 8765 \
-  --scenario experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
-  --train-config experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
-  --model experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
-  --algo AdaptiveKLPPO \
-  --device cpu
-```
-
 Arma bridge 走 HEI 推理后端时的典型操作流：
 
 ```bash
@@ -185,6 +159,9 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 
 随后本地 Arma 侧可继续复用现有 PowerShell helper，以 `ArmaOnly` 模式配合
 `-ReuseExistingBackend` 连接该转发端口。
+
+此前仓库内基于 `UniversalEnv` 的 Arma proxy backend 已归档到 `tools/archive/`，
+不再作为维护的 diagnostics 入口。
 
 显示族特定帮助：
 

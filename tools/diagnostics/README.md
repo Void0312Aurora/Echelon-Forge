@@ -61,8 +61,6 @@ Current diagnostics and probes:
   - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - Minimal line-protocol TCP stub for the local `game/` Arma bridge. It acknowledges `begin_session`, consumes `host_frame`, and emits synthetic `proxy_state` payloads for `echelon_bridge.dll`.
-- [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
-  - `UniversalEnv`-backed line-protocol TCP backend for the same Arma bridge. It anchors backend truth to the Arma host-frame position/orientation while stepping authoritative air/execution state inside Echelon Forge.
 - `spatial_query`
   - Compiled spatial-query vs legacy geometry benchmark.
 - `scenario_compiler`
@@ -170,30 +168,6 @@ Run the local Arma proxy backend stub:
   --log-requests
 ```
 
-Run the env-backed Arma proxy backend:
-
-```bash
-./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
-  --host 127.0.0.1 \
-  --port 8765 \
-  --scenario scenarios/stable_flight/stable_flight.json \
-  --action-mode full \
-  --mission-obs-mode basic
-```
-
-Run the env-backed Arma proxy backend with a trained SB3 policy:
-
-```bash
-./.venv/bin/python tools/diagnostics/arma_proxy_backend_echelon_env.py \
-  --host 127.0.0.1 \
-  --port 8765 \
-  --scenario experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/scenario_backup.json \
-  --train-config experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/train_config_backup.json \
-  --model experiments_tmp/20260530_p3_takeoff_to_cruise_arch_formal_resume128k_v1/final_model.zip \
-  --algo AdaptiveKLPPO \
-  --device cpu
-```
-
 Typical HEI-backed operator flow for the Arma bridge:
 
 ```bash
@@ -203,6 +177,9 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 Then launch the local Arma side against the forwarded endpoint, for example
 with the existing PowerShell helper in `ArmaOnly` mode plus
 `-ReuseExistingBackend`.
+
+The former repo-side `UniversalEnv`-backed Arma proxy backend is archived under
+`tools/archive/`; it is no longer a maintained diagnostics entrypoint.
 
 Show family-specific help:
 

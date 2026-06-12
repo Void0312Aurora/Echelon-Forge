@@ -30,14 +30,12 @@ Useful launcher modes:
   - start only the local backend stub and wait for Arma-side manual bring-up
 - `-Mode ArmaOnly -ReuseExistingBackend`
   - launch Arma against an already-running stub
-- `-BackendKind EchelonEnv`
-  - swap the synthetic stub for a real Echelon `UniversalEnv`-backed state source
 
 Notes:
 
 - The local mod is still unpacked, so the launcher enables `-filePatching`.
 - The backend metadata is written to `game/runtime/last_backend.json`.
 - Stub logs are written under `game/logs/`.
-- `-BackendKind EchelonEnv` currently defaults to
-  `scenarios/stable_flight/stable_flight.json` and keeps the Arma world position
-  as a rigid anchor while the backend owns the stepped flight truth.
+- The launcher no longer starts a repo-side `UniversalEnv` backend. Use
+  `ArmaOnly` plus `-ReuseExistingBackend` when connecting Arma to an external
+  authoritative backend.

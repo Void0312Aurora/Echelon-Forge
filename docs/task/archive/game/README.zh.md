@@ -39,9 +39,9 @@ git 忽略；只有 runtime log、session cache、bridge build output 等生成�
 - [arma_proxy_backend_stub.py](../../../tools/diagnostics/arma_proxy_backend_stub.py)
   - 面向第一版 DLL bridge 协议的最小 TCP stub，可用于真实后端适配器晋级前的
     bring-up。
-- [arma_proxy_backend_echelon_env.py](../../../tools/diagnostics/arma_proxy_backend_echelon_env.py)
-  - 基于 env 的 TCP 后端，在 Echelon Forge 内真实 step 权威飞行状态，只把
-    Arma host frame 当作刚体世界锚点。
+
+此前 raw env-backed Arma proxy backend 已归档到 `tools/archive/`，不再是本工作线的
+维护态仓库侧配套物。
 
 ## 权威模型
 

@@ -48,7 +48,7 @@
 | benchmark diagnostics | `tools/diagnostics/benchmark.py`、`tools/diagnostics/run_benchmark_suite.py`、`tools/diagnostics/benchmarks/*` | 已是功能族；post-launch assessment benchmark 已迁入 family。 | 保留；新增 benchmark 进 `benchmarks/` 和 registry。 |
 | cooperative trajectory diagnostics | `tools/diagnostics/diagnose_cooperative_trajectory.py`、`cooperative_trajectory_base.py` | 已是功能族。 | 保留；不要恢复 takeoff/takeoff-to-cruise wrapper。 |
 | flight trajectory diagnostics | `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` | 已合并任务特定轨迹诊断入口。 | 保留统一入口；内部实现位于 `tools/diagnostics/flight_trajectory/`。 |
-| runtime bridge diagnostics | `arma_proxy_backend_stub.py`、`arma_proxy_backend_echelon_env.py` | 域名清楚，非项目代号。 | 保留。 |
+| runtime bridge diagnostics | `arma_proxy_backend_stub.py` | 域名清楚，非项目代号。 | 保留 stub；raw `UniversalEnv` env backend 已归档到 `tools/archive/`，不再是活入口。 |
 | air-combat process tracing | `air_combat_weapon_employment_process_probe.py` | 本轮已语义化；入口表达武器使用/杀伤链诊断能力。 | 保留统一入口；历史 stage 配置名只留在场景/训练配置路径中。 |
 | event-credit diagnostics | `event_credit_head_probe.py --mode offline_fit`、`event_credit_head_probe.py --mode online_update` | 已完成入口合并，默认路径仍可保留历史 A7 实验名。 | 保留统一入口；内部实现位于 `tools/diagnostics/event_credit_head/`。 |
 | fire-timing fault localization | `fire_timing_fault_localization_probe.py --mode structural_toy/real_update/chain_breakpoint/learnability_audit` | 已完成入口合并，默认路径仍可保留历史 M3S2 实验名。 | 保留统一入口；内部实现位于 `tools/diagnostics/fire_timing_fault_localization/`。 |

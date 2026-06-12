@@ -33,8 +33,8 @@
 
 - **归档日期**：2026-06-09
 - **描述**：游戏前端集成探索工作线。探索在保持 Echelon Forge 后端为权威仿真真值的前提下，接入可玩的外部游戏前端（Arma 3）。核心原则：后端权威留在 Echelon，外部游戏实体只是代理体/表现壳，AI 行为来自仓库内训练策略。
-- **归档理由**：探索性工作线，非活跃执行项目。实际 Arma proxy 集成代码位于 `tools/diagnostics/arma_proxy_backend_stub.py` 和 `arma_proxy_backend_echelon_env.py`，Godot/WebSocket 实验已本地归档。
-- **主要产出**：Arma proxy backend stub、Arma proxy Echelon env backend。
+- **归档理由**：探索性工作线，非活跃执行项目。当前活跃跟踪的 Arma proxy helper 是 `tools/diagnostics/` 下的 stub；此前 raw env-backed 后端已归档到 `tools/archive/`。Godot/WebSocket 实验仍保持本地归档。
+- **主要产出**：Arma proxy backend stub、已归档 Arma proxy raw-env backend。
 
 ### `performance_runtime/`
 

@@ -154,7 +154,7 @@ def test_inventory_counts_remaining_registered_surfaces() -> None:
 
   assert disposition_counts == {
     "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists": 9,
-    "retain_manual_diagnostics_until_tool_migrated_or_archived": 2,
+    "retain_manual_diagnostics_until_tool_migrated_or_archived": 1,
     "retain_negative_guard": 3,
   }
 

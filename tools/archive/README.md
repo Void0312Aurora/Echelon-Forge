@@ -16,6 +16,8 @@ Archived helpers currently include:
   - Older vec-env throughput benchmark predating the maintained diagnostics layout.
 - [diagnose_training_matrix.py](diagnose_training_matrix.py)
   - Legacy evaluation-matrix helper that parses the old `evaluate.py` text summary format.
+- [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
+  - Archived raw `UniversalEnv` Arma proxy backend. The maintained Arma bridge diagnostics surface keeps only the local stub entrypoint.
 - `legacy_test_diagnostics/`
   - Historical one-off diagnostics migrated out of `tests/diagnostics/` because they are no longer maintained test entrypoints.
 - `legacy_scripts/`

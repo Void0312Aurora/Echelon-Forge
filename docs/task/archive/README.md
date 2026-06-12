@@ -33,8 +33,8 @@ Each entry records: subproject name, archive date, brief work description, and a
 
 - **Archived**: 2026-06-09
 - **Description**: Game frontend integration exploratory workline. Explored connecting a playable external game frontend (Arma 3) while keeping Echelon Forge backend as the authoritative simulation truth source. Core principle: backend authority stays with Echelon; external game entities are proxy/representation shells only; AI behavior comes from repository-trained policies.
-- **Rationale**: Exploratory workline, not an active execution project. Actual Arma proxy integration code lives in `tools/diagnostics/arma_proxy_backend_stub.py` and `arma_proxy_backend_echelon_env.py`; Godot/WebSocket experiments archived locally.
-- **Key artifacts**: Arma proxy backend stub, Arma proxy Echelon env backend.
+- **Rationale**: Exploratory workline, not an active execution project. The active tracked Arma proxy helper is the stub in `tools/diagnostics/`; the former raw env-backed backend has been archived under `tools/archive/`. Godot/WebSocket experiments remain archived locally.
+- **Key artifacts**: Arma proxy backend stub, archived Arma proxy raw-env backend.
 
 ### `performance_runtime/`
 

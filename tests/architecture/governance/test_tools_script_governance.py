@@ -12,7 +12,6 @@ APPROVED_DIAGNOSTICS_TOP_LEVEL = {
   "ablate_visual_training_effect.py",
   "air_combat_weapon_employment_process_probe.py",
   "analyze_cooperative_observation_scales.py",
-  "arma_proxy_backend_echelon_env.py",
   "arma_proxy_backend_stub.py",
   "benchmark.py",
   "benchmark_registry.py",
@@ -37,6 +36,7 @@ RETIRED_TOOL_ENTRYPOINTS = {
   for parts in (
     ("tools", "diagnostics", "air_combat_fire_timing_learnability_audit.py"),
     ("tools", "diagnostics", "air_combat_post_launch_assessment_benchmark.py"),
+    ("tools", "diagnostics", "arma_proxy_backend_echelon_env.py"),
     ("tools", "diagnostics", "diagnose_runway_drift_sweep.py"),
     ("tools", "diagnostics", "diagnose_takeoff_to_landing_trajectory.py"),
     ("tools", "eval", "eval_naval_n4_baseline.py"),

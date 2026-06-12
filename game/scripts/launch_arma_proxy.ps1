@@ -2,9 +2,6 @@ param(
     [ValidateSet("StubAndArma", "StubOnly", "ArmaOnly")]
     [string]$Mode = "StubAndArma",
 
-    [ValidateSet("Stub", "EchelonEnv")]
-    [string]$BackendKind = "Stub",
-
     [string]$ArmaRoot = "F:\SteamLibrary\steamapps\common\Arma 3",
     [string]$ExtraMods = "",
     [string]$MissionFile = "",
@@ -18,10 +15,6 @@ param(
     [double]$SpeedMps = 220.0,
     [double]$TurnRateDegS = 0.0,
     [double]$ClimbRateMps = 0.0,
-
-    [string]$Scenario = "scenarios/stable_flight/stable_flight.json",
-    [string]$ActionMode = "full",
-    [string]$MissionObsMode = "basic",
 
     [switch]$ReuseExistingBackend,
     [switch]$ShowScriptErrors,
@@ -101,9 +94,6 @@ function Start-EpxBackendProcess {
         [string]$RepoRoot,
 
         [Parameter(Mandatory = $true)]
-        [string]$BackendKind,
-
-        [Parameter(Mandatory = $true)]
         [string]$ListenHost,
 
         [Parameter(Mandatory = $true)]
@@ -127,15 +117,6 @@ function Start-EpxBackendProcess {
         [Parameter(Mandatory = $true)]
         [double]$ClimbRateMps,
 
-        [Parameter(Mandatory = $true)]
-        [string]$Scenario,
-
-        [Parameter(Mandatory = $true)]
-        [string]$ActionMode,
-
-        [Parameter(Mandatory = $true)]
-        [string]$MissionObsMode,
-
         [switch]$ReuseExistingBackend
     )
 
@@ -152,17 +133,7 @@ function Start-EpxBackendProcess {
         throw "Repository virtualenv Python not found: $PythonExe"
     }
 
-    $BackendScript = switch ($BackendKind) {
-        "Stub" {
-            Join-Path $RepoRoot "tools\diagnostics\arma_proxy_backend_stub.py"
-        }
-        "EchelonEnv" {
-            Join-Path $RepoRoot "tools\diagnostics\arma_proxy_backend_echelon_env.py"
-        }
-        default {
-            throw "Unsupported backend kind: $BackendKind"
-        }
-    }
+    $BackendScript = Join-Path $RepoRoot "tools\diagnostics\arma_proxy_backend_stub.py"
     if (-not (Test-Path -LiteralPath $BackendScript)) {
         throw "Backend script not found: $BackendScript"
     }
@@ -173,7 +144,7 @@ function Start-EpxBackendProcess {
     New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
     $Stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $BackendSlug = if ($BackendKind -eq "EchelonEnv") { "arma_proxy_echelon_env" } else { "arma_proxy_stub" }
+    $BackendSlug = "arma_proxy_stub"
     $StdoutLog = Join-Path $LogDir "$BackendSlug-$Stamp.out.log"
     $StderrLog = Join-Path $LogDir "$BackendSlug-$Stamp.err.log"
     $MetaPath = Join-Path $RuntimeDir "last_backend.json"
@@ -184,20 +155,12 @@ function Start-EpxBackendProcess {
         "--host", $ListenHost,
         "--port", "$Port"
     )
-    if ($BackendKind -eq "Stub") {
-        $ArgList += @(
-            "--start-position", "$StartX", "$StartY", "$StartZ",
-            "--speed-mps", "$SpeedMps",
-            "--turn-rate-deg-s", "$TurnRateDegS",
-            "--climb-rate-mps", "$ClimbRateMps"
-        )
-    } elseif ($BackendKind -eq "EchelonEnv") {
-        $ArgList += @(
-            "--scenario", $Scenario,
-            "--action-mode", $ActionMode,
-            "--mission-obs-mode", $MissionObsMode
-        )
-    }
+    $ArgList += @(
+        "--start-position", "$StartX", "$StartY", "$StartZ",
+        "--speed-mps", "$SpeedMps",
+        "--turn-rate-deg-s", "$TurnRateDegS",
+        "--climb-rate-mps", "$ClimbRateMps"
+    )
 
     $process = Start-Process `
         -FilePath $PythonExe `
@@ -210,13 +173,12 @@ function Start-EpxBackendProcess {
 
     $metadata = @{
         pid = $process.Id
-        backend_kind = $BackendKind
+        backend_kind = "Stub"
         host = $ListenHost
         port = $Port
         stdout_log = $StdoutLog
         stderr_log = $StderrLog
         started_at = (Get-Date).ToString("s")
-        scenario = $Scenario
     } | ConvertTo-Json
     Set-Content -LiteralPath $MetaPath -Value $metadata -Encoding ASCII
 
@@ -227,7 +189,7 @@ function Start-EpxBackendProcess {
         throw "Backend stub failed to become ready on ${ListenHost}:${Port}. See logs: $StdoutLog and $StderrLog"
     }
 
-    Write-Host "[EPX] Started backend $BackendKind PID $($process.Id) on ${ListenHost}:${Port}"
+    Write-Host "[EPX] Started backend Stub PID $($process.Id) on ${ListenHost}:${Port}"
     Write-Host "[EPX] Backend logs:"
     Write-Host "  $StdoutLog"
     if (Test-Path -LiteralPath $StderrLog) {
@@ -250,7 +212,6 @@ if (-not (Test-Path -LiteralPath $ProxyMod)) {
 if ($NeedsStub) {
     Start-EpxBackendProcess `
         -RepoRoot $RepoRoot `
-        -BackendKind $BackendKind `
         -ListenHost $BackendHost `
         -Port $BackendPort `
         -StartX $StartX `
@@ -259,9 +220,6 @@ if ($NeedsStub) {
         -SpeedMps $SpeedMps `
         -TurnRateDegS $TurnRateDegS `
         -ClimbRateMps $ClimbRateMps `
-        -Scenario $Scenario `
-        -ActionMode $ActionMode `
-        -MissionObsMode $MissionObsMode `
         -ReuseExistingBackend:$ReuseExistingBackend | Out-Null
 }
 
