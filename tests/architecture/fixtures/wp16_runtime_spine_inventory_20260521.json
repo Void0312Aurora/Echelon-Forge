@@ -169,9 +169,8 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-D",
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
-      "reason": "Runtime support module keeps only named loader/runtime helper seams after the public RuntimeCompatibilityView and compat.py module were removed.",
+      "reason": "Runtime support module keeps only named loader/runtime helper seams after the public RuntimeCompatibilityView, compat.py module, and runtime_compatibility_enabled opt-in were removed.",
       "evidence_markers": [
-        "normalize_runtime_compatibility_enabled",
         "compute_loader_step_outcome",
         "build_loader_step_info"
       ]

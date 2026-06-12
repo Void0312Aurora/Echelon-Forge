@@ -202,14 +202,12 @@ runner checks the base file path before handing the full node ID to pytest.
 Rows that list `tests/smoke/ci_smoke_suite.json` in `suite_membership` must also
 list the concrete `smoke_paths` that are allowed into CI.
 
-The active `UniversalEnv` raw-compatibility opt-in surface is tracked by
+The removed `UniversalEnv` raw-constructor surface is tracked by
 `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
 and guarded by
 `tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`.
-The expected active count is zero. New boolean
-`runtime_compatibility_enabled=True` call sites should be migrated to a
-maintained runtime/facade path or moved to archive/quarantine; the guard exists
-to stop new active survivors, not to normalize them.
+The expected active count is zero. New `runtime_compatibility_enabled=True` call
+sites must not be introduced; use a maintained runtime/facade path instead.
 
 ## Dependency Notes
 

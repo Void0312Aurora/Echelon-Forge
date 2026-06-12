@@ -324,6 +324,8 @@ def test_world_batch_runtime_support_names_loader_owned_reward_and_info_runtime_
   assert "def resolve_loader_runtime_sim(loader: Any) -> Any:" in text
   assert "def compute_loader_step_outcome(" in text
   assert "def build_loader_step_info(" in text
+  assert "runtime_compatibility_enabled" not in text
+  assert "runtime_compatibility_required_message" not in text
 
 def test_leader_world_batch_runtime_does_not_call_runtime_facade_compatibility_quarantine() -> None:
   tree = ast.parse(_leader_source())

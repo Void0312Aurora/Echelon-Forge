@@ -63,7 +63,6 @@ class _EnvArgs:
     execution_step_runtime_mode = None
     step_info_mode = "full"
     flight_shaping_backend = None
-    runtime_compatibility_enabled = None
 
 
 def _finite_float(value: Any, default: float = 0.0) -> float:

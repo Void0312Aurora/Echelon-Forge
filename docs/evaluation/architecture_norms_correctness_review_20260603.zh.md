@@ -49,8 +49,8 @@ interfaces/python
 
 - `RuntimeFacade` 对 `WorldBatchRuntime` 使用前向声明和 private `unique_ptr`，public header 不 include engine owner header。
 - `python/scenario/runtime/world_setup.py` 的 maintained setup target 会拒绝 raw runtime shaped target。
-- `gym_envs/universal_env.py` raw `SimulationKernel` path 默认 fail closed。
-- `train.py` 要求非 world-batch 路径显式启用 `runtime_compatibility_enabled`。
+- `gym_envs/universal_env.py` raw `UniversalEnv` 构造入口已移除并 fail closed。
+- `train.py` 不再提供非 world-batch raw `UniversalEnv` opt-in 路径。
 - `tests/architecture/runtime_facade` 用 AST/文本扫描守住这些边界。
 
 评价：符合一般行业方向，而且不是只靠文档，已有守卫测试。弱点是底层仍存在很宽的 `SimulationKernel` public API，高层收口并不等于底层已经完全拆干净。

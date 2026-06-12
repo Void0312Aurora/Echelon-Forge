@@ -117,7 +117,7 @@
 | 配置验证 | 每个键有已知有效值白名单，无效值引发 `ValueError` | ✅ |
 | **环境变量分散** | 有限但分散——`CMO_BUILD_DIR`、`CMO_SIM_LOG_LEVEL`、`CMO_DEBUG_ZONES`、`CMO_FLIGHT_SHAPING_BACKEND`、线程控制与 `CMO_FBW_PROTECTION_MODE` 等 | ⚠️ 受控但需登记 |
 | API 密钥 | 根目录存在 `.env`，已被 `.gitignore` 排除且未被 git 跟踪；本轮未发现 `DEEPSEEK_API_KEY` 条目 | ✅ 未见已跟踪 secret，但仍需保持 ignore/扫描 |
-| 配置演化 | `runtime_compatibility_enabled` 门控用于遗留路径 | ✅ 迁移感知 |
+| 配置演化 | `runtime_compatibility_enabled` 门控已从维护路径移除 | ✅ 迁移感知 |
 
 ### 8. 类型注解和代码约定：中等偏上（B）
 

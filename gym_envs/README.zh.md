@@ -136,13 +136,13 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 - “为什么 leader 环境会走 frozen/scripted execution backend”
   - 先看 `leader_env_parts/execution_runtime/` 与 [leader_env.py](leader_env.py)
 - “为什么直接构造 `UniversalEnv(...)` 会失败”
-  - active 调用方应使用 world-batch runtime adapter。raw single-env 构造属于 quarantine/archive 路径，不应重新进入维护中的 tools 或 tests。
+  - active 调用方应使用 world-batch runtime adapter。raw single-env 构造已从维护中的 tools 与 tests 移除。
 
 ## 迁移备注
 
 - `scenario_loader/` 已经按运行时子域拆开，后续新增 loader 逻辑应进入相应子包，不要把 `core.py` 再次扩成总包。
 - `gym_envs/` 应使用 `python/scenario/compiler/` 与 `python/scenario/runtime/` 下的打包场景入口。
 - 旧 `python/scenario/diagnostics/` setup wrapper 已移除；环境 setup 应直接使用 `python/scenario/runtime/` 的 maintained helper。
-- `universal_env.py` 只保留为隔离的 compatibility 入口；maintained training、eval、diagnostics 与 regression tests 应保持在 runtime-facade / world-batch adapter 上。
+- `universal_env.py` 不再提供 raw 构造入口；maintained training、eval、diagnostics 与 regression tests 应保持在 runtime-facade / world-batch adapter 上。
 - `leader_env.py` 仍保留为稳定入口，但实现应继续向 `leader_env_parts/` 下沉。
 - 如果未来只保留包入口而不再保留根级单文件 env，需要先保证 `tools/`、`tests/`、训练入口的导入路径同步切换。

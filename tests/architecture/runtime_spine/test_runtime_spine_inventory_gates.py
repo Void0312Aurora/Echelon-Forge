@@ -228,6 +228,7 @@ def test_legacy_gate_prevents_public_facade_and_vec_env_compatibility_surfaces()
   assert "runtime_compatibility_quarantine" not in facade_header
   assert "def batch_runtime(self):" not in vec_env_source
   assert "RuntimeCompatibilityView" not in runtime_support_source
+  assert "normalize_runtime_compatibility_enabled" not in runtime_support_source
 
 
 def test_legacy_runtime_world_escape_hatch_is_retired_from_facade_paths() -> None:

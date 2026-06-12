@@ -3,18 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from gym_envs.universal_env import build_step_info
-from python.runtime_compat import normalize_runtime_compatibility_enabled as _normalize_runtime_compatibility_enabled
-
-
-def normalize_runtime_compatibility_enabled(value: Any) -> bool:
-    return _normalize_runtime_compatibility_enabled(value)
-
-
-def runtime_compatibility_required_message(surface: str) -> str:
-    return (
-        f"{surface} is a quarantined compatibility/diagnostics escape hatch; "
-        "pass runtime_compatibility_enabled=True to opt in explicitly."
-    )
 
 
 def resolve_loader_runtime_sim(loader: Any) -> Any:
@@ -68,7 +56,5 @@ def build_loader_step_info(
 __all__ = [
     "build_loader_step_info",
     "compute_loader_step_outcome",
-    "normalize_runtime_compatibility_enabled",
     "resolve_loader_runtime_sim",
-    "runtime_compatibility_required_message",
 ]

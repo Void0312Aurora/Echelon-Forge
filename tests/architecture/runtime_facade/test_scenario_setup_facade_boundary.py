@@ -115,15 +115,15 @@ def test_wp24_scenario_runtime_does_not_construct_raw_runtime_on_production_path
     f"constructing raw runtime objects: {violations}"
   )
 
-def test_wp24_universal_env_raw_kernel_path_is_explicit_compatibility_quarantine() -> None:
+def test_wp24_universal_env_raw_kernel_constructor_path_is_removed() -> None:
   universal_env = UNIVERSAL_ENV.read_text(encoding="utf-8")
   train_source = (REPO_ROOT / "train.py").read_text(encoding="utf-8")
 
-  assert "runtime_compatibility_enabled: bool = False" in universal_env
-  assert "self.runtime_compatibility_enabled = _normalize_runtime_compatibility_enabled(" in universal_env
-  assert "if not self.runtime_compatibility_enabled:" in universal_env
-  assert "_raw_universal_env_compatibility_required_message()" in universal_env
-  assert universal_env.index("if not self.runtime_compatibility_enabled:") < universal_env.index(
+  assert "runtime_compatibility_enabled" not in universal_env
+  assert "python.runtime_compat" not in universal_env
+  assert "def _raw_universal_env_removed_message():" in universal_env
+  assert "raise RuntimeError(_raw_universal_env_removed_message())" in universal_env
+  assert universal_env.index("raise RuntimeError(_raw_universal_env_removed_message())") < universal_env.index(
     "self.sim = ef_py.SimulationKernel()"
   )
   assert "ef_py.WorldBatchRuntime(" not in universal_env

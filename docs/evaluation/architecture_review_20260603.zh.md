@@ -126,7 +126,7 @@ python/training/（消费所有内容；不被更低层导入）
 | 证据 | 位置 | 说明 |
 |------|------|------|
 | CMake source group 按未来 target 边界分组 | `CMakeLists.txt` | `EF_CORE_ENGINE_SOURCES`、`EF_RUNTIME_FACADE_SOURCES`、`EF_GPU_MAINTAINED_HELPER_SOURCES` 等 11 个显式分组，由 `tests/architecture/build/test_cmake_target_readiness.py` 守卫 |
-| Python/Gym 生产路径隔离 raw kernel | `gym_envs/universal_env.py`、`train.py` | raw `SimulationKernel` 路径默认 fail closed；训练入口要求显式 `runtime_compatibility_enabled` opt-in |
+| Python/Gym 生产路径移除 raw kernel 构造入口 | `gym_envs/universal_env.py`、`train.py` | raw `UniversalEnv` 构造现在无 `runtime_compatibility_enabled` opt-in，直接 fail closed；maintained 调用方使用 world-batch/runtime-facade adapter |
 | command/tasking 已拆 owner slice | `src/components/command/` | `MissionCommand` 通过继承 `MissionCommandCore`/`Air`/`Naval` 投影到 owner slices，`static_assert` 约束 shell 映射 |
 | weapon release / engagement event 从 kernel 拆出 | `simulation_kernel_systems.cpp` | 架构测试禁止 kernel 直接继承 `IWeaponReleaseService` 或 `IEngagementEventRecorder`；weapon release 通过 named helper 注册 |
 | 架构守卫测试可执行 | `tests/architecture/` | 87 个 test 文件、444 个 pytest 收集项，直接扫描源码/文档守住分层、include 约束、compatibility quarantine boundary |
@@ -184,7 +184,7 @@ helper-module maintainability 或 typed diagnostics contracts，而不是继续�
 | 文件:行 | 问题 | 严重性 |
 |---------|------|--------|
 | `python/rl/runtime/world_batch/adapter.py:230-840` | 单个类仍同时了解 runtime window、layout apply、batch observation、tasking、launch、execution 等路径。P1-C 已把 adapter-owned capability probing 集中到 `RuntimeFacadeAdapterCapabilities`，但类本身仍偏宽。 | 中 |
-| `python/rl/runtime/world_batch/adapter.py:233-270` | 原 dead-parameter 发现已部分关闭：`runtime_compatibility_enabled` 现在进入 capability snapshot。更宽的 adapter split 仍开放。 | 低 |
+| `python/rl/runtime/world_batch/adapter.py:233-270` | 原 dead-parameter 发现已关闭：`runtime_compatibility_enabled` 已从 maintained adapter/config 表面移除。更宽的 adapter split 仍开放。 | 低 |
 
 ### 6. Duck-Typed Loader 能力（无合同）
 
@@ -233,7 +233,7 @@ helper-module maintainability 或 typed diagnostics contracts，而不是继续�
 
 | 指标 | 评级 | 证据 |
 |------|------|------|
-| 技术债务意识 | **强** | Quarantine 标记（"WP22-R1-2"）、`runtime_compatibility_enabled` 门控、明确的遗留路径标记、GPU 实验性 README 边界 |
+| 技术债务意识 | **强** | Quarantine 标记（"WP22-R1-2"）、已移除的 `runtime_compatibility_enabled` 门控、明确的遗留路径标记、GPU 实验性 README 边界 |
 | 接口设计纪律 | **强** | 7 个纯虚 C++ 接口，一致的 `I*`/`*ModelRef`/`make_default_*()` 模式，4 层 Python 绑定 API 表面 |
 | 不可变性使用 | **良好** | Frozen dataclass：`CompiledScenario`、`CompiledWorldLayoutTemplate`、`HMoERouteBatch`、`MultiAgentControlSlot` |
 | 错误处理 | **研究级别** | C++ 使用 typed exceptions/checks。Python 有大量 broad `except Exception`，尤其在 runtime/support path；精确数字必须附 scope-qualified commands。 |

@@ -126,7 +126,7 @@ Beyond the seven architectural strengths above, the following structural evidenc
 | Evidence | Location | Detail |
 |----------|----------|--------|
 | CMake source groups aligned with future target boundaries | `CMakeLists.txt` | 11 explicit source groups (`EF_CORE_ENGINE_SOURCES`, `EF_RUNTIME_FACADE_SOURCES`, `EF_GPU_MAINTAINED_HELPER_SOURCES`, etc.), guarded by `tests/architecture/build/test_cmake_target_readiness.py` |
-| Python/Gym production path isolates raw kernel | `gym_envs/universal_env.py`, `train.py` | raw `SimulationKernel` path defaults to fail-closed; training entry requires explicit `runtime_compatibility_enabled` opt-in |
+| Python/Gym production path removes raw kernel constructor | `gym_envs/universal_env.py`, `train.py` | raw `UniversalEnv` construction now fails closed with no `runtime_compatibility_enabled` opt-in; maintained callers use world-batch/runtime-facade adapters |
 | command/tasking split into owner slices | `src/components/command/` | `MissionCommand` projects via inheritance from `MissionCommandCore`/`Air`/`Naval` into owner slices with `static_assert` constraints |
 | weapon release / engagement event extracted from kernel | `simulation_kernel_systems.cpp` | Architecture tests forbid kernel from directly inheriting `IWeaponReleaseService` or `IEngagementEventRecorder`; weapon release registered via named helpers |
 | Architecture guard tests are executable | `tests/architecture/` | 87 test files, 444 collected pytest tests directly scanning source/docs to enforce layering, include constraints, and compatibility quarantine boundaries |
@@ -184,7 +184,7 @@ another "held P1-D callback split".
 | File:Line | Issue | Severity |
 |-----------|-------|----------|
 | `python/rl/runtime/world_batch/adapter.py:230-840` | Single class knows runtime window, layout apply, batch observation, tasking, launch, and execution paths. P1-C centralizes adapter-owned capability probing in `RuntimeFacadeAdapterCapabilities`, but the class still remains broad. | MEDIUM |
-| `python/rl/runtime/world_batch/adapter.py:233-270` | Original dead-parameter finding is partially closed: `runtime_compatibility_enabled` is now recorded in the capability snapshot. A broader adapter split remains open. | LOW |
+| `python/rl/runtime/world_batch/adapter.py:233-270` | Original dead-parameter finding is closed: `runtime_compatibility_enabled` was removed from maintained adapter/config surfaces. A broader adapter split remains open. | LOW |
 
 ### 6. Duck-Typed Loader Capabilities (No Contract)
 
@@ -234,7 +234,7 @@ step/reset exceptions occur.
 
 | Indicator | Rating | Evidence |
 |-----------|--------|----------|
-| Awareness of technical debt | **Strong** | Quarantine markers ("WP22-R1-2"), `runtime_compatibility_enabled` gates, explicit legacy path labeling, GPU experimental README boundaries |
+| Awareness of technical debt | **Strong** | Quarantine markers ("WP22-R1-2"), removed `runtime_compatibility_enabled` gates, explicit legacy path labeling, GPU experimental README boundaries |
 | Interface design discipline | **Strong** | 7 pure virtual C++ interfaces, consistent `I*`/`*ModelRef`/`make_default_*()` pattern, 4-tier Python binding API surface |
 | Immutability usage | **Good** | Frozen dataclasses: `CompiledScenario`, `CompiledWorldLayoutTemplate`, `HMoERouteBatch`, `MultiAgentControlSlot` |
 | Error handling | **Research-grade** | C++ uses typed exceptions/checks. Python has many broad `except Exception` sites, especially in runtime/support paths; exact counts require scope-qualified commands. |

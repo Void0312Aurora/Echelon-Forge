@@ -136,13 +136,13 @@ If you are looking into:
 - "Why does the leader environment use the frozen/scripted execution backend?"
   - Start with `leader_env_parts/execution_runtime/` and [leader_env.py](leader_env.py)
 - "Why does direct `UniversalEnv(...)` construction fail?"
-  - Active callers should use world-batch runtime adapters. Raw single-env construction is a quarantine/archive path and must not be reintroduced into maintained tools or tests.
+  - Active callers should use world-batch runtime adapters. Raw single-env construction has been removed from maintained tools and tests.
 
 ## Migration Notes
 
 - `scenario_loader/` has already been split by runtime subdomain. New loader logic should go into the corresponding package instead of expanding `core.py` into a grab bag again.
 - `gym_envs/` should use the packaged scenario entry points under `python/scenario/compiler/` and `python/scenario/runtime/`.
 - The former `python/scenario/diagnostics/` setup wrapper has been removed; environment setup should use `python/scenario/runtime/` maintained helpers directly.
-- `universal_env.py` remains only as a quarantined compatibility entry point; maintained training, eval, diagnostics, and regression tests should stay on runtime-facade/world-batch adapters.
+- `universal_env.py` no longer offers a raw constructor entry point; maintained training, eval, diagnostics, and regression tests should stay on runtime-facade/world-batch adapters.
 - `leader_env.py` remains the stable entry point, but its implementation should continue to move down into `leader_env_parts/`.
 - If the future design keeps only package entry points instead of root-level single-file env modules, make sure the import paths in `tools/`, `tests/`, and training entry points are migrated together first.
