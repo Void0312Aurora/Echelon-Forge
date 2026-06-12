@@ -72,21 +72,91 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   fine_proxy = airframe_geometry_review.build_fine_geometry_proxy_candidate(
     mapping, diagnostics, manifest=manifest
   )
+  surface_report = airframe_geometry_review.build_surface_component_candidate_report(
+    mapping, fine_proxy, report
+  )
+  semantic_report = airframe_geometry_review.build_semantic_damage_geometry_candidate(
+    mapping, fine_proxy, surface_report
+  )
+  internal_prior_report = (
+    airframe_geometry_review.build_internal_component_prior_candidate(
+      mapping, fine_proxy, report, surface_report
+    )
+  )
+  held_segment_report = (
+    airframe_geometry_review.build_cross_region_held_component_segments_report(
+      mapping, fine_proxy, internal_prior_report
+    )
+  )
+  airframe_constraint_report = (
+    airframe_geometry_review.build_airframe_constraint_correction_candidate_report(
+      mapping, fine_proxy, internal_prior_report, held_segment_report
+    )
+  )
+  shape_placement_report = (
+    airframe_geometry_review.build_subcomponent_shape_placement_candidate_report(
+      mapping, fine_proxy, airframe_constraint_report
+    )
+  )
+  parent_child_layout_report = (
+    airframe_geometry_review.build_semantic_parent_child_layout_candidate(
+      mapping, semantic_report, internal_prior_report, held_segment_report
+    )
+  )
   assert report["schema_version"] == "a2.target_geometry_component_binding_report.v1"
   assert report["status"] == "component_binding_report_generated_review_only"
-  assert report["summary"]["component_count"] == 22
-  assert report["summary"]["bound_component_count"] == 22
-  assert report["summary"]["side_sign_review_count"] >= 4
+  assert report["summary"]["component_count"] == 26
+  assert report["summary"]["bound_component_count"] == 26
+  assert report["summary"]["needs_review_count"] == 0
+  assert report["summary"]["side_sign_review_count"] == 0
+  assert report["summary"]["hard_blocker_count"] == 0
+  assert report["summary"]["cross_region_semantic_candidate_count"] == 2
+  assert report["summary"]["geometry_review_required_count"] == 0
   rows = {row["component_name"]: row for row in report["rows"]}
   assert rows["apg68_radar_array"]["bound_region_id"] == "nose_radome"
+  assert rows["apg68_radar_array"]["review_status"] == "candidate_binding"
   assert rows["cockpit_crew_station"]["bound_region_id"] in {
     "nose_radome",
     "forward_fuselage",
   }
   assert rows["engine_core"]["bound_region_id"] == "aft_fuselage_engine"
+  assert rows["engine_core"]["review_status"] == (
+    "review_only_cross_region_boundary_candidate"
+  )
+  assert rows["engine_core"]["review_semantics"] == (
+    "cross_region_boundary_candidate_review_only"
+  )
+  assert "low_outer_region_overlap" in rows["engine_core"]["geometry_observations"]
+  assert "low_outer_region_overlap" in rows["engine_core"]["suppressed_anomalies"]
+  assert rows["wing_spar_center"]["review_status"] == (
+    "review_only_cross_region_semantic_hold"
+  )
+  assert rows["wing_spar_center"]["review_semantics"] == (
+    "cross_region_structural_semantic_hold"
+  )
+  assert "low_outer_region_overlap" in rows["wing_spar_center"][
+    "geometry_observations"
+  ]
+  assert "low_outer_region_overlap" in rows["wing_spar_center"][
+    "suppressed_anomalies"
+  ]
   assert rows["afterburner_nozzle"]["bound_region_id"] == "engine_nozzle"
-  assert "sign_review" in ";".join(rows["left_wing_fuel_cell"]["anomalies"])
-  assert "sign_review" in ";".join(rows["right_wing_fuel_cell"]["anomalies"])
+  assert rows["afterburner_nozzle"]["blocked_region_binding"]["blocked"] is False
+  assert rows["dedicated_canopy_surface_component"]["bound_region_id"] == "canopy"
+  assert rows["dedicated_intake_lip_or_duct_component"]["bound_region_id"] == "intake"
+  assert rows["left_horizontal_tail_actuator_or_surface_component"][
+    "bound_region_id"
+  ] == "left_horizontal_tail"
+  assert rows["right_horizontal_tail_actuator_or_surface_component"][
+    "bound_region_id"
+  ] == "right_horizontal_tail"
+  assert rows["left_wing_fuel_cell"]["bound_region_id"] == "left_wing"
+  assert rows["right_wing_fuel_cell"]["bound_region_id"] == "right_wing"
+  assert rows["left_wing_fuel_cell"]["review_status"] == "candidate_binding"
+  assert rows["right_wing_fuel_cell"]["review_status"] == "candidate_binding"
+  assert rows["left_wing_fuel_cell"]["side_sign_relation"][
+    "side_sign_mismatch"
+  ] is False
 
   assert diagnostics["schema_version"] == (
     "a2.target_geometry_review_point_diagnostics.v1"
@@ -109,7 +179,8 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert fine_proxy["summary"]["proxy_count"] == 14
   assert fine_proxy["summary"]["held_region_count"] == 0
   assert fine_proxy["summary"]["mesh_source_vertex_count"] == 13415
-  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] >= 10
+  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] == 14
+  assert fine_proxy["summary"]["inflated_fallback_count"] == 0
   assert fine_proxy["summary"]["proxy_kind_counts"]["thin_prism"] >= 5
   assert fine_proxy["summary"]["proxy_kind_counts"]["convex_hull"] >= 4
   assert fine_proxy["summary"]["total_proxy_support_volume_ratio"] < 0.75
@@ -118,7 +189,20 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert proxies["vertical_tail"]["thin_prism"]["thin_axis"] == "y"
   assert proxies["nose_radome"]["proxy_kind"] == "convex_hull"
   assert "runtime_collision_mesh" in proxies["nose_radome"]["runtime_prohibited_use"]
-  assert proxies["nose_radome"]["mesh_derived_review_geometry"]["region_vertex_count"] > 0
+  for proxy in proxies.values():
+    geometry = proxy["mesh_derived_review_geometry"]
+    assert geometry["fallback_policy"] == "disabled_no_bounds_expansion"
+    assert "selection_inflation_factor" not in geometry
+    assert geometry["status"] == "mesh_silhouette_extracted_from_curated_mesh_nodes"
+    assert geometry["region_vertex_count"] > 0
+  assert proxies["nose_radome"]["mesh_derived_review_geometry"]["region_vertex_count"] >= 90
+  assert proxies["left_wing"]["mesh_derived_review_geometry"]["region_vertex_count"] >= 100
+  assert proxies["right_wing"]["mesh_derived_review_geometry"]["region_vertex_count"] >= 100
+  assert proxies["canopy"]["mesh_derived_review_geometry"]["source_node_names"] == [
+    "Object_16",
+    "Object_6",
+    "Object_8",
+  ]
   assert (
     proxies["nose_radome"]["mesh_derived_review_geometry"]["hulls"]["top"][
       "point_count"
@@ -129,8 +213,562 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert fine_rows["nose_axis_4m"]["nearest_fine_proxy_region_id"]
   assert "fine_minus_source_distance_delta_m" in fine_rows["above_4m"]
 
+  assert surface_report["schema_version"] == (
+    "a2.target_geometry_surface_component_candidate.v1"
+  )
+  assert surface_report["status"] == (
+    "surface_component_candidate_generated_review_only"
+  )
+  assert surface_report["summary"]["surface_component_count"] == 14
+  assert surface_report["summary"]["missing_existing_runtime_component_relation_count"] == 0
+  assert surface_report["summary"]["missing_runtime_link_held_count"] == 0
+  assert surface_report["summary"]["side_sign_hard_blocker_count"] == 0
+  assert surface_report["summary"]["cross_region_semantic_hold_count"] == 8
+  assert surface_report["summary"]["needs_review_count"] == 0
+  surface_rows = {
+    row["surface_component_id"]: row for row in surface_report["rows"]
+  }
+  nose_surface = surface_rows["surface_nose_radome"]
+  assert nose_surface["source_region_id"] == "nose_radome"
+  assert nose_surface["review_status"] == "candidate_surface_component"
+  assert nose_surface["review_flags"] == ["candidate_surface_component"]
+  assert nose_surface["clean_direct_component_names"] == [
+    "apg68_radar_array",
+    "iff_interrogator",
+  ]
+  assert {
+    link["component_name"] for link in nose_surface["linked_internal_components"]
+  } >= {"apg68_radar_array", "iff_interrogator"}
+  left_wing_surface = surface_rows["surface_left_wing_skin"]
+  assert "surface_area_loss" in left_wing_surface["expected_damage_modes"]
+  assert "side_sign_review" not in left_wing_surface["review_flags"]
+  assert left_wing_surface["review_status"] == "review_only_cross_region_semantic_hold"
+  assert left_wing_surface["review_semantics"] == "cross_region_semantic_hold"
+  assert {
+    link["component_name"] for link in left_wing_surface["linked_internal_components"]
+  } >= {"left_wing_fuel_cell", "left_aileron_actuator", "wing_spar_center"}
+  assert set(left_wing_surface["clean_direct_component_names"]) >= {
+    "left_wing_fuel_cell",
+    "left_aileron_actuator",
+  }
+  center_surface = surface_rows["surface_center_fuselage_skin"]
+  assert center_surface["review_status"] == "review_only_cross_region_semantic_hold"
+  assert center_surface["review_semantics"] == "cross_region_semantic_hold"
+  assert "wing_spar_center" in center_surface[
+    "cross_region_semantic_component_names"
+  ]
+  assert set(center_surface["clean_direct_component_names"]) >= {
+    "center_fuselage_fuel_cell",
+    "data_link_terminal",
+    "flight_control_computer",
+    "mission_computer",
+  }
+  aft_engine_surface = surface_rows["surface_aft_engine_bay_skin"]
+  assert aft_engine_surface["review_status"] == (
+    "review_only_cross_region_boundary_candidate"
+  )
+  assert aft_engine_surface["review_semantics"] == (
+    "cross_region_boundary_candidate_review_only"
+  )
+  assert "engine_core" in aft_engine_surface[
+    "cross_region_semantic_component_names"
+  ]
+  forward_surface = surface_rows["surface_forward_fuselage_skin"]
+  assert forward_surface["review_status"] == "candidate_surface_component"
+  assert forward_surface["clean_direct_link_count"] == 3
+  intake_surface = surface_rows["surface_intake_lip_and_duct"]
+  assert intake_surface["review_semantics"] == (
+    "cross_region_boundary_candidate_review_only"
+  )
+  assert intake_surface["runtime_relation_status"] == (
+    "runtime_relation_review_only_candidate"
+  )
+  assert intake_surface["missing_existing_runtime_component_relations"] == []
+  assert intake_surface["clean_direct_component_names"] == [
+    "dedicated_intake_lip_or_duct_component",
+  ]
+  canopy_surface = surface_rows["surface_canopy"]
+  assert canopy_surface["review_status"] == "candidate_surface_component"
+  assert canopy_surface["review_semantics"] == "candidate_surface_component"
+  assert canopy_surface["missing_existing_runtime_component_relations"] == []
+  assert canopy_surface["clean_direct_component_names"] == [
+    "dedicated_canopy_surface_component",
+  ]
+  horizontal_tail_surface = surface_rows["surface_left_horizontal_tail_skin"]
+  assert horizontal_tail_surface["linked_internal_component_count"] == 1
+  assert horizontal_tail_surface["review_status"] == "candidate_surface_component"
+  assert horizontal_tail_surface["review_semantics"] == "candidate_surface_component"
+  assert horizontal_tail_surface["clean_direct_component_names"] == [
+    "left_horizontal_tail_actuator_or_surface_component",
+  ]
+  right_tail_surface = surface_rows["surface_right_horizontal_tail_skin"]
+  assert right_tail_surface["review_status"] == "candidate_surface_component"
+  assert right_tail_surface["review_semantics"] == "candidate_surface_component"
+  assert right_tail_surface["clean_direct_component_names"] == [
+    "right_horizontal_tail_actuator_or_surface_component",
+  ]
+  assert surface_report["authority_boundary"]["runtime_damage_model"] is False
+  assert surface_report["authority_boundary"]["true_surface_component_boundaries"] is False
+
+  assert semantic_report["schema_version"] == (
+    "a2.target_geometry_semantic_damage_geometry_candidate.v1"
+  )
+  assert semantic_report["status"] == (
+    "semantic_damage_geometry_candidate_generated_review_only"
+  )
+  assert semantic_report["summary"]["semantic_volume_component_count"] == 14
+  assert semantic_report["summary"]["runtime_parse_ready_component_count"] == 14
+  assert semantic_report["summary"]["runtime_active_component_count"] == 0
+  assert semantic_report["summary"]["cross_region_handoff_held_count"] == 8
+  assert semantic_report["summary"]["blocked_receiver_count"] == 0
+  assert semantic_report["summary"]["bad_geometry_receiver_count"] == 0
+  assert semantic_report["summary"]["geometry_primitive_counts"]["thin_prism"] >= 5
+  assert semantic_report["summary"]["geometry_primitive_counts"]["convex_hull"] >= 4
+  semantic_rows = {
+    row["semantic_component_id"]: row for row in semantic_report["rows"]
+  }
+  nose_volume = semantic_rows["semantic_nose_radome_volume"]
+  assert nose_volume["source_region_id"] == "nose_radome"
+  assert nose_volume["geometry_primitive"] == "convex_hull"
+  assert nose_volume["direct_receiver_components"] == [
+    "apg68_radar_array",
+    "iff_interrogator",
+  ]
+  assert nose_volume["cross_region_receiver_components"] == []
+  assert nose_volume["runtime_component_json_candidate"]["geometry_primitive"] == (
+    "convex_hull"
+  )
+  assert nose_volume["runtime_component_json_candidate"]["geometry"][
+    "surface_component_id"
+  ] == "surface_nose_radome"
+  assert len(nose_volume["runtime_geometry"]["vertices_m"]) >= 7
+  left_wing_volume = semantic_rows["semantic_left_wing_skin_volume"]
+  assert left_wing_volume["geometry_primitive"] == "thin_prism"
+  assert left_wing_volume["direct_receiver_components"] == [
+    "left_aileron_actuator",
+    "left_wing_fuel_cell",
+  ]
+  assert left_wing_volume["cross_region_receiver_components"] == [
+    "wing_spar_center"
+  ]
+  assert left_wing_volume["receiver_handoff_status"] == (
+    "direct_receivers_parse_ready_cross_region_receivers_held"
+  )
+  assert semantic_report["authority_boundary"][
+    "runtime_schema_parse_ready_candidate"
+  ] is True
+  assert semantic_report["authority_boundary"]["runtime_active_component"] is False
+
+  assert internal_prior_report["schema_version"] == (
+    "a2.target_geometry_internal_component_prior_candidate.v1"
+  )
+  assert internal_prior_report["status"] == (
+    "internal_component_prior_candidate_generated_review_only"
+  )
+  assert internal_prior_report["summary"]["internal_component_prior_count"] == 26
+  assert internal_prior_report["summary"]["runtime_active_component_count"] == 0
+  assert internal_prior_report["summary"]["post_constraint_outside_count"] == 0
+  assert internal_prior_report["summary"]["constrained_inside_count"] == 26
+  assert internal_prior_report["summary"]["nominal_size_fit_issue_count"] == 0
+  assert internal_prior_report["summary"]["parent_shell_exceed_review_count"] == 5
+  assert internal_prior_report["summary"]["cross_region_held_prior_count"] == 2
+  assert internal_prior_report["whole_airframe_bounds"]["span"][0] > 14.0
+  assert internal_prior_report["summary"]["shape_counts"] == {
+    "capsule": 10,
+    "ellipsoid": 10,
+    "obb": 6,
+  }
+  assert internal_prior_report["summary"]["shape_promotion_count"] == 9
+  assert internal_prior_report["summary"]["shape_promotion_status_counts"] == {
+    "not_promoted_from_subcomponent_shape_candidate": 17,
+    "r18_promoted_from_subcomponent_shape_candidate": 2,
+    "r21_promoted_from_latest_subcomponent_candidate": 7,
+  }
+  assert internal_prior_report["summary"]["size_evidence_level_counts"][
+    "public_lru_dimension"
+  ] >= 2
+  prior_rows = {
+    row["component_name"]: row for row in internal_prior_report["rows"]
+  }
+  radar_prior = prior_rows["apg68_radar_array"]
+  assert radar_prior["prior_shape"] == "ellipsoid"
+  assert radar_prior["shape_promotion_status"] == (
+    "r21_promoted_from_latest_subcomponent_candidate"
+  )
+  assert radar_prior["size_evidence_level"] == (
+    "public_related_family_dimension_not_apg68_exact"
+  )
+  assert radar_prior["nominal_dimensions_m"] == [0.1016, 0.7366, 0.4826]
+  assert radar_prior["constraint_adjustment"]["size_preserved"] is True
+  assert radar_prior["constraint_region_ids"] == [
+    "nose_radome",
+    "forward_fuselage",
+  ]
+  assert radar_prior["constraint_adjustment"]["post_constraint_outside_fraction"] == 0.0
+  assert radar_prior["aabb_runtime_fallback_candidate"]["geometry"][
+    "prior_shape"
+  ] == "ellipsoid"
+  iff_prior = prior_rows["iff_interrogator"]
+  assert iff_prior["prior_shape"] == "ellipsoid"
+  assert iff_prior["shape_promotion_status"] == (
+    "r18_promoted_from_subcomponent_shape_candidate"
+  )
+  inertial_prior = prior_rows["inertial_navigation_unit"]
+  assert inertial_prior["prior_shape"] == "ellipsoid"
+  assert inertial_prior["shape_promotion_status"] == (
+    "r18_promoted_from_subcomponent_shape_candidate"
+  )
+  engine_prior = prior_rows["engine_core"]
+  assert engine_prior["prior_shape"] == "capsule"
+  assert engine_prior["shape_promotion_status"] == (
+    "r21_promoted_from_latest_subcomponent_candidate"
+  )
+  assert engine_prior["size_evidence_level"] == "public_engine_dimension"
+  assert engine_prior["nominal_dimensions_m"] == [4.62026, 1.1811, 1.1811]
+  assert engine_prior["constraint_adjustment"]["size_preserved"] is True
+  assert engine_prior["constrained_geometry"]["center_m"] == [
+    -3.693053,
+    0.0,
+    -0.554381,
+  ]
+  assert engine_prior["constraint_adjustment"][
+    "airframe_projection_center_shift_m"
+  ] == 0.0
+  assert set(engine_prior["constraint_region_ids"]) == {
+    "aft_fuselage_engine",
+    "engine_nozzle",
+    "intake",
+  }
+  assert engine_prior["constraint_status"] == (
+    "cross_region_prior_constrained_inside_airframe_held"
+  )
+  wing_spar_prior = prior_rows["wing_spar_center"]
+  assert wing_spar_prior["prior_shape"] == "capsule"
+  assert set(wing_spar_prior["constraint_region_ids"]) >= {
+    "center_fuselage",
+    "left_wing",
+    "right_wing",
+  }
+  assert wing_spar_prior["constraint_status"] == (
+    "cross_region_prior_constrained_inside_airframe_held"
+  )
+  assert wing_spar_prior["nominal_dimensions_m"] == [0.18, 6.6, 0.18]
+  assert wing_spar_prior["constrained_geometry"]["center_m"] == [
+    -1.092842,
+    0.0,
+    -0.985043,
+  ]
+  assert wing_spar_prior["constraint_adjustment"][
+    "airframe_projection_center_shift_m"
+  ] == 0.0
+  left_wing_fuel_prior = prior_rows["left_wing_fuel_cell"]
+  assert left_wing_fuel_prior["prior_shape"] == "ellipsoid"
+  assert left_wing_fuel_prior["shape_promotion_status"] == (
+    "r21_promoted_from_latest_subcomponent_candidate"
+  )
+  assert left_wing_fuel_prior["constraint_region_ids"] == ["left_wing"]
+  assert left_wing_fuel_prior["size_evidence_level"] == (
+    "public_total_capacity_partition_estimate"
+  )
+  assert left_wing_fuel_prior["nominal_dimensions_m"] == [2.0, 2.2, 0.15]
+  assert left_wing_fuel_prior["constraint_adjustment"]["size_preserved"] is True
+  assert left_wing_fuel_prior["constraint_adjustment"][
+    "post_constraint_outside_fraction"
+  ] == 0.0
+  assert internal_prior_report["authority_boundary"][
+    "true_internal_component_geometry"
+  ] is False
+
+  assert held_segment_report["schema_version"] == (
+    "a2.target_geometry_cross_region_held_component_segments.v1"
+  )
+  assert held_segment_report["status"] == (
+    "cross_region_held_component_segments_generated_review_only"
+  )
+  assert held_segment_report["summary"]["held_parent_component_count"] == 2
+  assert held_segment_report["summary"]["held_segment_count"] == 8
+  assert held_segment_report["summary"]["engine_core_segment_count"] == 3
+  assert held_segment_report["summary"]["wing_spar_center_segment_count"] == 5
+  assert held_segment_report["summary"][
+    "outside_whole_airframe_segment_count"
+  ] == 0
+  assert held_segment_report["summary"]["shape_promotion_segment_count"] == 5
+  assert held_segment_report["summary"]["shape_promotion_status_counts"] == {
+    "inherited_parent_prior_shape": 3,
+    "r18_promoted_from_subcomponent_shape_candidate": 2,
+    "r21_promoted_from_latest_subcomponent_candidate": 3,
+  }
+  assert held_segment_report["summary"]["runtime_active_segment_count"] == 0
+  segment_rows = {
+    row["segment_id"]: row for row in held_segment_report["rows"]
+  }
+  afterburner_segment = segment_rows["engine_core_afterburner_segment"]
+  assert afterburner_segment["parent_component_name"] == "engine_core"
+  assert afterburner_segment["segment_shape"] == "capsule"
+  assert afterburner_segment["segment_axis"] == "x"
+  assert afterburner_segment["source_parent_segment_shape"] == "capsule"
+  assert afterburner_segment["shape_promotion_status"] == (
+    "r18_promoted_from_subcomponent_shape_candidate"
+  )
+  assert afterburner_segment["center_offset_m"] == [0.207628, 0.0, 0.0]
+  assert afterburner_segment["owner_region_ids"] == [
+    "aft_fuselage_engine",
+    "engine_nozzle",
+  ]
+  assert afterburner_segment["inside_whole_airframe_bounds"] is True
+  assert afterburner_segment["geometry"]["bounds"]["span"][0] == 1.540087
+  assert afterburner_segment["geometry"]["center_m"] == [
+    -5.025512,
+    0.0,
+    -0.554381,
+  ]
+  hot_segment = segment_rows["engine_core_hot_section_segment"]
+  assert hot_segment["segment_shape"] == "ellipsoid"
+  assert hot_segment["source_parent_segment_shape"] == "capsule"
+  assert hot_segment["shape_promotion_status"] == (
+    "r18_promoted_from_subcomponent_shape_candidate"
+  )
+  compressor_segment = segment_rows["engine_core_forward_compressor_segment"]
+  assert compressor_segment["segment_shape"] == "ellipsoid"
+  assert compressor_segment["center_offset_m"] == [-0.2, 0.0, 0.0]
+  assert compressor_segment["shape_promotion_status"] == (
+    "r21_promoted_from_latest_subcomponent_candidate"
+  )
+  carrythrough_segment = segment_rows["wing_spar_center_carrythrough_segment"]
+  assert carrythrough_segment["parent_component_name"] == "wing_spar_center"
+  assert carrythrough_segment["segment_shape"] == "capsule"
+  assert carrythrough_segment["segment_axis"] == "y"
+  assert carrythrough_segment["owner_region_ids"] == ["center_fuselage"]
+  assert carrythrough_segment["nominal_dimensions_m"] == [0.18, 1.7, 0.18]
+  assert carrythrough_segment["geometry"]["center_m"] == [
+    -1.092842,
+    0.0,
+    -0.985043,
+  ]
+  assert carrythrough_segment["inside_whole_airframe_bounds"] is True
+  assert segment_rows["wing_spar_center_left_inner_wing_segment"][
+    "owner_region_ids"
+  ] == ["left_wing"]
+  assert segment_rows["wing_spar_center_right_inner_wing_segment"][
+    "owner_region_ids"
+  ] == ["right_wing"]
+
+  assert airframe_constraint_report["schema_version"] == (
+    "a2.target_geometry_airframe_constraint_correction_candidate.v1"
+  )
+  assert airframe_constraint_report["status"] == (
+    "airframe_constraint_correction_candidate_generated_review_only"
+  )
+  assert airframe_constraint_report["summary"]["item_count"] == 34
+  assert airframe_constraint_report["summary"]["receiver_prior_count"] == 26
+  assert airframe_constraint_report["summary"]["held_split_segment_count"] == 8
+  assert airframe_constraint_report["summary"][
+    "silhouette_exposure_item_count"
+  ] == 0
+  assert airframe_constraint_report["summary"][
+    "center_shift_reduces_item_count"
+  ] == 0
+  assert airframe_constraint_report["summary"][
+    "size_or_shape_review_item_count"
+  ] == 0
+  assert airframe_constraint_report["summary"][
+    "low_confidence_inside_item_count"
+  ] == 9
+  correction_rows = {
+    row["item_id"]: row for row in airframe_constraint_report["rows"]
+  }
+  radar_constraint = correction_rows["apg68_radar_array"]
+  assert radar_constraint["current_silhouette"]["outside_views"] == []
+  assert radar_constraint["current_silhouette"]["outside_sample_count"] == 0
+  assert radar_constraint["triage_status"] == "inside_airframe_candidate"
+  wing_spar_constraint = correction_rows["wing_spar_center"]
+  assert wing_spar_constraint["triage_status"] == (
+    "inside_airframe_cross_region_ownership_held"
+  )
+  afterburner_segment_constraint = correction_rows[
+    "engine_core_afterburner_segment"
+  ]
+  assert afterburner_segment_constraint["triage_status"] == (
+    "inside_airframe_cross_region_ownership_held"
+  )
+  assert afterburner_segment_constraint["current_silhouette"][
+    "outside_sample_count"
+  ] == 0
+  assert all(
+    row["current_silhouette"]["outside_sample_count"] == 0
+    for row in airframe_constraint_report["rows"]
+  )
+  assert airframe_constraint_report["authority_boundary"][
+    "center_shift_candidate_not_applied"
+  ] is True
+
+  assert shape_placement_report["schema_version"] == (
+    "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
+  )
+  assert shape_placement_report["status"] == (
+    "subcomponent_shape_placement_candidate_generated_review_only"
+  )
+  assert shape_placement_report["summary"]["source_constraint_item_count"] == 34
+  assert shape_placement_report["summary"][
+    "source_silhouette_exposure_item_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "shape_placement_candidate_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "nominal_dimension_preserved_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_reduces_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_unresolved_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_no_improvement_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "current_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_total_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_reduces_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_unresolved_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_total_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_incremental_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_unresolved_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_total_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_incremental_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["rows"] == []
+  assert shape_placement_report["authority_boundary"][
+    "shape_candidate_not_applied_to_internal_prior_rules"
+  ] is False
+  assert shape_placement_report["authority_boundary"][
+    "centerline_candidate_not_applied_to_internal_prior_rules"
+  ] is False
+  assert shape_placement_report["authority_boundary"][
+    "latest_candidate_not_applied_to_internal_prior_rules"
+  ] is False
+  assert shape_placement_report["authority_boundary"][
+    "latest_candidate_promoted_to_internal_prior_or_segment_rules"
+  ] is True
+
+  assert parent_child_layout_report["schema_version"] == (
+    "a2.target_geometry_semantic_parent_child_layout_candidate.v1"
+  )
+  assert parent_child_layout_report["status"] == (
+    "semantic_parent_child_layout_candidate_generated_review_only"
+  )
+  assert parent_child_layout_report["summary"][
+    "parent_semantic_component_count"
+  ] == 14
+  assert parent_child_layout_report["summary"][
+    "bound_receiver_component_count"
+  ] == 26
+  assert parent_child_layout_report["summary"]["extra_receiver_slot_count"] == 12
+  assert parent_child_layout_report["summary"][
+    "cross_region_held_receiver_count"
+  ] == 2
+  assert parent_child_layout_report["summary"][
+    "cross_region_held_segment_count"
+  ] == 8
+  assert parent_child_layout_report["summary"][
+    "cross_region_held_segment_overlay_count"
+  ] == 5
+  assert parent_child_layout_report["summary"]["runtime_active_component_count"] == 0
+  layout_rows = {
+    row["parent_semantic_component_id"]: row
+    for row in parent_child_layout_report["rows"]
+  }
+  nose_layout = layout_rows["semantic_nose_radome_volume"]
+  assert nose_layout["source_region_id"] == "nose_radome"
+  assert nose_layout["bound_receiver_count"] == 2
+  assert nose_layout["extra_receiver_slot_count"] == 1
+  assert {
+    child["component_name"] for child in nose_layout["child_receiver_priors"]
+  } == {"apg68_radar_array", "iff_interrogator"}
+  center_layout = layout_rows["semantic_center_fuselage_skin_volume"]
+  assert center_layout["bound_receiver_count"] == 5
+  assert center_layout["extra_receiver_slot_count"] == 4
+  assert "wing_spar_center" in center_layout["cross_region_held_receiver_names"]
+  center_wing_spar_child = [
+    child
+    for child in center_layout["child_receiver_priors"]
+    if child["component_name"] == "wing_spar_center"
+  ][0]
+  assert center_wing_spar_child["held_segment_count"] == 5
+  assert {
+    segment["segment_id"]
+    for segment in center_wing_spar_child["held_segments"]
+  } >= {
+    "wing_spar_center_carrythrough_segment",
+    "wing_spar_center_left_root_segment",
+    "wing_spar_center_right_root_segment",
+  }
+  left_wing_layout = layout_rows["semantic_left_wing_skin_volume"]
+  assert left_wing_layout["bound_receiver_count"] == 2
+  assert left_wing_layout["extra_receiver_slot_count"] == 1
+  assert {
+    child["component_name"] for child in left_wing_layout["child_receiver_priors"]
+  } == {"left_aileron_actuator", "left_wing_fuel_cell"}
+  assert [
+    segment["segment_id"]
+    for segment in left_wing_layout["cross_region_held_segment_overlays"]
+  ] == ["wing_spar_center_left_inner_wing_segment"]
+  assert parent_child_layout_report["authority_boundary"][
+    "parent_child_damage_ownership"
+  ] is False
+
 
 def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
+  stale_isolated_page = (
+    tmp_path
+    / "component_review_views"
+    / "surface_links"
+    / "surface-vertical-tail-skin-afterburner-nozzle.html"
+  )
+  stale_isolated_page.parent.mkdir(parents=True)
+  stale_isolated_page.write_text("stale view from prior generation", encoding="utf-8")
+
   result = subprocess.run(
     [
       sys.executable,
@@ -147,9 +785,33 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   summary = json.loads(result.stdout)
   assert summary["status"] == "target_geometry_manifest_generated_review_only"
   assert summary["triangle_count"] == 4504
-  assert summary["component_count"] == 22
+  assert summary["component_count"] == 26
   assert summary["review_point_count"] >= 10
   assert summary["inside_outer_region_point_count"] > 0
+  assert summary["inflated_fallback_count"] == 0
+  assert summary["cross_region_held_segment_count"] == 8
+  assert summary["cross_region_held_segment_outside_airframe_count"] == 0
+  assert summary["cross_region_held_segment_shape_promotion_count"] == 5
+  assert summary["internal_component_prior_shape_promotion_count"] == 9
+  assert (
+    summary["semantic_parent_child_layout_cross_region_held_segment_count"] == 8
+  )
+  assert summary["airframe_constraint_item_count"] == 34
+  assert summary["airframe_constraint_silhouette_exposure_item_count"] == 0
+  assert summary["airframe_constraint_center_shift_resolves_item_count"] == 0
+  assert summary["airframe_constraint_size_or_shape_review_item_count"] == 0
+  assert summary["subcomponent_shape_placement_candidate_count"] == 0
+  assert summary["subcomponent_shape_placement_resolves_count"] == 0
+  assert summary["subcomponent_shape_placement_unresolved_count"] == 0
+  assert summary["subcomponent_shape_placement_outside_sample_reduction"] == 0
+  assert summary["subcomponent_centerline_resolves_count"] == 0
+  assert summary["subcomponent_centerline_unresolved_count"] == 0
+  assert summary["subcomponent_centerline_outside_sample_count"] == 0
+  assert summary["subcomponent_centerline_incremental_reduction"] == 0
+  assert summary["subcomponent_latest_resolves_count"] == 0
+  assert summary["subcomponent_latest_unresolved_count"] == 0
+  assert summary["subcomponent_latest_outside_sample_count"] == 0
+  assert summary["subcomponent_latest_incremental_reduction"] == 0
 
   manifest_path = tmp_path / "manifest.json"
   assert manifest_path.is_file()
@@ -195,7 +857,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert component_json_path.is_file()
   assert component_csv_path.is_file()
   report = json.loads(component_json_path.read_text(encoding="utf-8"))
-  assert report["summary"]["component_count"] == 22
+  assert report["summary"]["component_count"] == 26
   assert "component_name,bound_region_id" not in component_csv_path.read_text(
     encoding="utf-8"
   )
@@ -216,11 +878,23 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert fine_proxy["schema_version"] == "a2.target_geometry_fine_proxy_candidate.v1"
   assert fine_proxy["summary"]["proxy_count"] == len(mapping["outer_regions"])
   assert fine_proxy["summary"]["total_proxy_support_volume_ratio"] < 0.75
-  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] >= 10
+  assert fine_proxy["summary"]["mesh_derived_silhouette_count"] == 14
+  assert fine_proxy["summary"]["inflated_fallback_count"] == 0
   assert result.stdout.find("fine_proxy_count") >= 0
   assert result.stdout.find("mesh_derived_silhouette_count") >= 0
+  assert result.stdout.find("inflated_fallback_count") >= 0
   assert result.stdout.find("fine_proxy_support_volume_ratio") >= 0
   assert result.stdout.find("fine_proxy_review_dashboard") >= 0
+  assert result.stdout.find("human_review_triage") >= 0
+  assert result.stdout.find("isolated_component_review_index") >= 0
+  assert result.stdout.find("isolated_component_review_manifest") >= 0
+  assert result.stdout.find("surface_component_count") >= 0
+  assert result.stdout.find("semantic_damage_volume_count") >= 0
+  assert result.stdout.find("semantic_damage_geometry_review_index") >= 0
+  assert result.stdout.find("internal_component_prior_count") >= 0
+  assert result.stdout.find("internal_component_prior_review_index") >= 0
+  assert result.stdout.find("semantic_parent_child_layout_parent_count") >= 0
+  assert result.stdout.find("semantic_parent_child_layout_review_index") >= 0
 
   for svg_name in ("fine_proxy_top.svg", "fine_proxy_side.svg", "fine_proxy_front.svg"):
     svg_path = tmp_path / svg_name
@@ -235,11 +909,458 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert dashboard_path.is_file()
   dashboard = dashboard_path.read_text(encoding="utf-8")
   assert "F-16 Fine Proxy Human Review Dashboard" in dashboard
-  assert "hold_for_human_review" in dashboard
-  assert "needs_human_review" in dashboard
+  assert "hold_for_human_review" not in dashboard
+  assert "needs_human_review" not in dashboard
   assert "candidate_accept_after_visual_check" in dashboard
-  assert "inflated_selection_bounds" in dashboard
+  assert "disabled_no_bounds_expansion" in dashboard
+  assert "inflated_selection_bounds" not in dashboard
   assert "mesh_silhouette" in dashboard
+  assert "surface component: surface_nose_radome" in dashboard
+  assert "missing links: none" in dashboard
+  assert "dedicated_intake_lip_or_duct_component" in dashboard
+
+  triage_path = tmp_path / "human_review_triage.html"
+  assert triage_path.is_file()
+  triage = triage_path.read_text(encoding="utf-8")
+  assert "F-16 Human Review Triage" in triage
+  assert "Coordinate Sign Review" in triage
+  assert "Component Box Placement Review" in triage
+  assert "Surface Handoff Review" in triage
+  assert "Review Point Geometry Sanity" in triage
+  assert "Review question" in triage
+  assert "Look at" in triage
+  assert "Decision needed" in triage
+  assert "Resolve side naming before accepting this surface handoff" not in triage
+  assert "left_wing_fuel_cell" in triage
+  assert "wing_spar_center" in triage
+  assert "nose_axis_4m" in triage
+  assert "component_review_views/index.html" in triage
+
+  isolated_index_path = tmp_path / "component_review_views" / "index.html"
+  isolated_manifest_path = tmp_path / "component_review_views" / "manifest.json"
+  assert isolated_index_path.is_file()
+  assert isolated_manifest_path.is_file()
+  assert not stale_isolated_page.exists()
+  isolated_index = isolated_index_path.read_text(encoding="utf-8")
+  assert "F-16 Isolated Component Review Views" in isolated_index
+  assert "Component Binding Views" in isolated_index
+  assert "Surface Handoff Component Views" in isolated_index
+  assert "Review Point Candidate Views" in isolated_index
+  isolated_manifest = json.loads(isolated_manifest_path.read_text(encoding="utf-8"))
+  assert isolated_manifest["schema_version"] == (
+    "a2.target_geometry_isolated_component_review_views.v1"
+  )
+  assert isolated_manifest["status"] == (
+    "isolated_component_review_views_generated_review_only"
+  )
+  assert isolated_manifest["summary"]["component_entry_count"] == report["summary"][
+    "component_count"
+  ]
+  assert isolated_manifest["summary"]["surface_link_entry_count"] >= 29
+  assert isolated_manifest["summary"]["review_point_candidate_entry_count"] >= 20
+  entry_paths = {entry["title"]: entry["html"] for entry in isolated_manifest["entries"]}
+  assert "left_wing_fuel_cell" in entry_paths
+  assert "cockpit_crew_station" in entry_paths
+  assert "dedicated_canopy_surface_component" in entry_paths
+  left_wing_entry = tmp_path / "component_review_views" / entry_paths[
+    "left_wing_fuel_cell"
+  ]
+  assert left_wing_entry.is_file()
+  assert "left_wing_fuel_cell isolated geometry view" in left_wing_entry.read_text(
+    encoding="utf-8"
+  )
+
+  surface_json_path = tmp_path / "surface_component_candidate_20260611.json"
+  surface_csv_path = tmp_path / "surface_component_candidate_20260611.csv"
+  assert surface_json_path.is_file()
+  assert surface_csv_path.is_file()
+  surface_report = json.loads(surface_json_path.read_text(encoding="utf-8"))
+  assert surface_report["schema_version"] == (
+    "a2.target_geometry_surface_component_candidate.v1"
+  )
+  assert surface_report["summary"]["surface_component_count"] == 14
+  assert "surface_left_wing_skin" in surface_csv_path.read_text(encoding="utf-8")
+  assert "dedicated_intake_lip_or_duct_component" in surface_csv_path.read_text(
+    encoding="utf-8"
+  )
+
+  semantic_json_path = tmp_path / "semantic_damage_geometry_candidate_20260611.json"
+  semantic_csv_path = tmp_path / "semantic_damage_geometry_candidate_20260611.csv"
+  assert semantic_json_path.is_file()
+  assert semantic_csv_path.is_file()
+  semantic_report = json.loads(semantic_json_path.read_text(encoding="utf-8"))
+  assert semantic_report["schema_version"] == (
+    "a2.target_geometry_semantic_damage_geometry_candidate.v1"
+  )
+  assert semantic_report["summary"]["semantic_volume_component_count"] == 14
+  assert semantic_report["summary"]["runtime_parse_ready_component_count"] == 14
+  assert semantic_report["summary"]["runtime_active_component_count"] == 0
+  assert "semantic_left_wing_skin_volume" in semantic_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "direct_receivers_parse_ready_cross_region_receivers_held" in (
+    semantic_csv_path.read_text(encoding="utf-8")
+  )
+
+  internal_prior_json_path = (
+    tmp_path / "internal_component_prior_candidate_20260611.json"
+  )
+  internal_prior_csv_path = (
+    tmp_path / "internal_component_prior_candidate_20260611.csv"
+  )
+  assert internal_prior_json_path.is_file()
+  assert internal_prior_csv_path.is_file()
+  internal_prior_report = json.loads(
+    internal_prior_json_path.read_text(encoding="utf-8")
+  )
+  assert internal_prior_report["schema_version"] == (
+    "a2.target_geometry_internal_component_prior_candidate.v1"
+  )
+  assert internal_prior_report["summary"]["internal_component_prior_count"] == 26
+  assert internal_prior_report["summary"]["post_constraint_outside_count"] == 0
+  assert internal_prior_report["summary"]["cross_region_held_prior_count"] == 2
+  assert internal_prior_report["summary"]["shape_promotion_count"] == 9
+  assert "left_wing_fuel_cell" in internal_prior_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "r18_promoted_from_subcomponent_shape_candidate" in (
+    internal_prior_csv_path.read_text(encoding="utf-8")
+  )
+  assert "placed_inside_airframe_exceeds_parent_shell_review" in internal_prior_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "whole_airframe_source_region_union_bounds" in (
+    internal_prior_csv_path.read_text(encoding="utf-8")
+  )
+
+  held_segment_json_path = (
+    tmp_path / "cross_region_held_component_segments_20260611.json"
+  )
+  held_segment_csv_path = (
+    tmp_path / "cross_region_held_component_segments_20260611.csv"
+  )
+  assert held_segment_json_path.is_file()
+  assert held_segment_csv_path.is_file()
+  held_segment_report = json.loads(
+    held_segment_json_path.read_text(encoding="utf-8")
+  )
+  assert held_segment_report["schema_version"] == (
+    "a2.target_geometry_cross_region_held_component_segments.v1"
+  )
+  assert held_segment_report["summary"]["held_segment_count"] == 8
+  assert held_segment_report["summary"][
+    "outside_whole_airframe_segment_count"
+  ] == 0
+  assert held_segment_report["summary"]["shape_promotion_segment_count"] == 5
+  assert "wing_spar_center_carrythrough_segment" in (
+    held_segment_csv_path.read_text(encoding="utf-8")
+  )
+  assert "engine_core_afterburner_segment" in held_segment_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "R18_promoted_R17_segmented_engine_afterburner_capsule" in (
+    held_segment_csv_path.read_text(encoding="utf-8")
+  )
+
+  airframe_constraint_json_path = (
+    tmp_path / "airframe_constraint_correction_candidate_20260611.json"
+  )
+  airframe_constraint_csv_path = (
+    tmp_path / "airframe_constraint_correction_candidate_20260611.csv"
+  )
+  assert airframe_constraint_json_path.is_file()
+  assert airframe_constraint_csv_path.is_file()
+  airframe_constraint_report = json.loads(
+    airframe_constraint_json_path.read_text(encoding="utf-8")
+  )
+  assert airframe_constraint_report["schema_version"] == (
+    "a2.target_geometry_airframe_constraint_correction_candidate.v1"
+  )
+  assert airframe_constraint_report["summary"]["item_count"] == 34
+  assert airframe_constraint_report["summary"][
+    "silhouette_exposure_item_count"
+  ] == 0
+  assert "apg68_radar_array" in airframe_constraint_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "inside_airframe_cross_region_ownership_held" in (
+    airframe_constraint_csv_path.read_text(encoding="utf-8")
+  )
+
+  shape_placement_json_path = (
+    tmp_path / "subcomponent_shape_placement_candidate_20260611.json"
+  )
+  shape_placement_csv_path = (
+    tmp_path / "subcomponent_shape_placement_candidate_20260611.csv"
+  )
+  assert shape_placement_json_path.is_file()
+  assert shape_placement_csv_path.is_file()
+  shape_placement_report = json.loads(
+    shape_placement_json_path.read_text(encoding="utf-8")
+  )
+  assert shape_placement_report["schema_version"] == (
+    "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
+  )
+  assert shape_placement_report["summary"][
+    "shape_placement_candidate_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "candidate_total_outside_sample_reduction"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_unresolved_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "centerline_candidate_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_resolves_exposure_count"
+  ] == 0
+  assert shape_placement_report["summary"][
+    "latest_candidate_total_outside_sample_count"
+  ] == 0
+  assert shape_placement_report["rows"] == []
+  shape_placement_csv_text = shape_placement_csv_path.read_text(encoding="utf-8")
+  assert "segmented_engine_compressor_ellipsoid" not in shape_placement_csv_text
+  assert "centerline_candidate_resolves_silhouette_exposure" not in (
+    shape_placement_csv_text
+  )
+  assert "latest_candidate_resolves_silhouette_exposure" not in (
+    shape_placement_csv_text
+  )
+  assert "iff_interrogator" not in shape_placement_csv_path.read_text(
+    encoding="utf-8"
+  )
+
+  parent_child_json_path = (
+    tmp_path / "semantic_parent_child_layout_candidate_20260611.json"
+  )
+  parent_child_csv_path = (
+    tmp_path / "semantic_parent_child_layout_candidate_20260611.csv"
+  )
+  assert parent_child_json_path.is_file()
+  assert parent_child_csv_path.is_file()
+  parent_child_report = json.loads(
+    parent_child_json_path.read_text(encoding="utf-8")
+  )
+  assert parent_child_report["schema_version"] == (
+    "a2.target_geometry_semantic_parent_child_layout_candidate.v1"
+  )
+  assert parent_child_report["summary"]["parent_semantic_component_count"] == 14
+  assert parent_child_report["summary"]["bound_receiver_component_count"] == 26
+  assert parent_child_report["summary"]["extra_receiver_slot_count"] == 12
+  assert parent_child_report["summary"]["cross_region_held_segment_count"] == 8
+  assert parent_child_report["summary"][
+    "cross_region_held_segment_overlay_count"
+  ] == 5
+  assert "semantic_left_wing_skin_volume" in parent_child_csv_path.read_text(
+    encoding="utf-8"
+  )
+  assert "segments=5" in parent_child_csv_path.read_text(encoding="utf-8")
+
+  semantic_index_path = tmp_path / "semantic_damage_geometry_views" / "index.html"
+  semantic_manifest_path = (
+    tmp_path / "semantic_damage_geometry_views" / "manifest.json"
+  )
+  assert semantic_index_path.is_file()
+  assert semantic_manifest_path.is_file()
+  semantic_index = semantic_index_path.read_text(encoding="utf-8")
+  assert "F-16 Semantic Damage Geometry Views" in semantic_index
+  assert "semantic_nose_radome_volume" in semantic_index
+  semantic_view_manifest = json.loads(
+    semantic_manifest_path.read_text(encoding="utf-8")
+  )
+  assert semantic_view_manifest["schema_version"] == (
+    "a2.target_geometry_semantic_damage_geometry_views.v1"
+  )
+  assert semantic_view_manifest["summary"]["semantic_volume_entry_count"] == 14
+  semantic_nose_page = (
+    tmp_path
+    / "semantic_damage_geometry_views"
+    / "volumes"
+    / "semantic-nose-radome-volume.html"
+  )
+  assert semantic_nose_page.is_file()
+  assert "semantic_nose_radome_volume isolated geometry view" in (
+    semantic_nose_page.read_text(encoding="utf-8")
+  )
+
+  internal_prior_index_path = tmp_path / "internal_component_prior_views" / "index.html"
+  internal_prior_manifest_path = (
+    tmp_path / "internal_component_prior_views" / "manifest.json"
+  )
+  assert internal_prior_index_path.is_file()
+  assert internal_prior_manifest_path.is_file()
+  internal_prior_index = internal_prior_index_path.read_text(encoding="utf-8")
+  assert "F-16 Internal Component Prior Views" in internal_prior_index
+  assert "apg68_radar_array" in internal_prior_index
+  internal_prior_view_manifest = json.loads(
+    internal_prior_manifest_path.read_text(encoding="utf-8")
+  )
+  assert internal_prior_view_manifest["schema_version"] == (
+    "a2.target_geometry_internal_component_prior_views.v1"
+  )
+  assert internal_prior_view_manifest["summary"][
+    "component_prior_entry_count"
+  ] == 26
+  internal_prior_page = (
+    tmp_path
+    / "internal_component_prior_views"
+    / "components"
+    / "left-wing-fuel-cell.html"
+  )
+  assert internal_prior_page.is_file()
+  assert "left_wing_fuel_cell internal prior view" in (
+    internal_prior_page.read_text(encoding="utf-8")
+  )
+
+  parent_child_index_path = (
+    tmp_path / "semantic_parent_child_layout_views" / "index.html"
+  )
+  parent_child_manifest_path = (
+    tmp_path / "semantic_parent_child_layout_views" / "manifest.json"
+  )
+  assert parent_child_index_path.is_file()
+  assert parent_child_manifest_path.is_file()
+  parent_child_index = parent_child_index_path.read_text(encoding="utf-8")
+  assert "F-16 Semantic Parent-Child Component Layout Views" in parent_child_index
+  assert "extra receiver slots: 12" in parent_child_index
+  parent_child_view_manifest = json.loads(
+    parent_child_manifest_path.read_text(encoding="utf-8")
+  )
+  assert parent_child_view_manifest["schema_version"] == (
+    "a2.target_geometry_semantic_parent_child_layout_views.v1"
+  )
+  assert parent_child_view_manifest["summary"]["parent_entry_count"] == 14
+  assert parent_child_view_manifest["summary"][
+    "bound_receiver_component_count"
+  ] == 26
+  assert parent_child_view_manifest["summary"][
+    "cross_region_held_segment_count"
+  ] == 8
+  assert parent_child_view_manifest["summary"][
+    "cross_region_held_segment_overlay_count"
+  ] == 5
+  parent_child_page = (
+    tmp_path
+    / "semantic_parent_child_layout_views"
+    / "parents"
+    / "semantic-left-wing-skin-volume.html"
+  )
+  assert parent_child_page.is_file()
+  assert "semantic_left_wing_skin_volume parent-child layout view" in (
+    parent_child_page.read_text(encoding="utf-8")
+  )
+  parent_child_svg = (
+    tmp_path
+    / "semantic_parent_child_layout_views"
+    / "parents"
+    / "semantic-left-wing-skin-volume_top.svg"
+  ).read_text(encoding="utf-8")
+  assert "parent_mesh_region" in parent_child_svg
+  assert "whole-airframe wireframe" in parent_child_svg
+  assert "parent semantic region" in parent_child_svg
+  assert "actual-size receiver prior" in parent_child_svg
+  assert "held split segment" in parent_child_svg
+  assert "wing_spar_center_left_inner_wing_segment" in parent_child_svg
+  assert 'fill="none"' in parent_child_svg
+  assert 'fill-opacity="0.22"' not in parent_child_svg
+  assert "parent_source_region_bounds" not in parent_child_svg
+  assert "parent_support_constraint_bounds" not in parent_child_svg
+  assert "orange=source" not in parent_child_svg
+  assert "gray=parent support" not in parent_child_svg
+
+  shape_placement_index_path = (
+    tmp_path / "subcomponent_shape_placement_views" / "index.html"
+  )
+  shape_placement_manifest_path = (
+    tmp_path / "subcomponent_shape_placement_views" / "manifest.json"
+  )
+  assert shape_placement_index_path.is_file()
+  assert shape_placement_manifest_path.is_file()
+  shape_placement_index = shape_placement_index_path.read_text(
+    encoding="utf-8"
+  )
+  assert "F-16 Subcomponent Shape Placement Candidates" in shape_placement_index
+  assert "Latest Candidate Atlas" in shape_placement_index
+  assert "R21 promotion leaves no remaining subcomponent shape-placement rows" in (
+    shape_placement_index
+  )
+  assert "No remaining subcomponent shape-placement candidates" in (
+    shape_placement_index
+  )
+  assert "Each row is one R20 latest subcomponent candidate" not in (
+    shape_placement_index
+  )
+  assert "Combined Overlay" not in shape_placement_index
+  assert "shape candidates: 0" in shape_placement_index
+  assert "latest resolved candidates: 0" in shape_placement_index
+  assert "latest unresolved candidates: 0" in shape_placement_index
+  shape_placement_view_manifest = json.loads(
+    shape_placement_manifest_path.read_text(encoding="utf-8")
+  )
+  assert shape_placement_view_manifest["schema_version"] == (
+    "a2.target_geometry_subcomponent_shape_placement_views.v1"
+  )
+  assert shape_placement_view_manifest["summary"]["entry_count"] == 0
+  assert shape_placement_view_manifest["summary"]["overview_view_count"] == 3
+  assert shape_placement_view_manifest["summary"][
+    "latest_component_atlas_entry_count"
+  ] == 0
+  assert shape_placement_view_manifest["summary"][
+    "latest_component_atlas_part_count"
+  ] == 0
+  assert shape_placement_view_manifest["summary"]["resolved_entry_count"] == 0
+  assert shape_placement_view_manifest["summary"]["unresolved_entry_count"] == 0
+  assert shape_placement_view_manifest["summary"][
+    "shape_candidate_resolved_entry_count"
+  ] == 0
+  assert shape_placement_view_manifest["summary"][
+    "centerline_candidate_resolved_entry_count"
+  ] == 0
+  assert shape_placement_view_manifest["overview_svg"] == {
+    "front": "overview_latest_front.svg",
+    "side": "overview_latest_side.svg",
+    "top": "overview_latest_top.svg",
+  }
+  assert (
+    shape_placement_view_manifest["overview_triptych_svg"]
+    == "overview_latest_triptych.svg"
+  )
+  assert shape_placement_view_manifest["latest_component_atlas_svg"] == []
+  assert not (
+    tmp_path
+    / "subcomponent_shape_placement_views"
+    / "overview_latest_by_component_part1.svg"
+  ).exists()
+  shape_placement_overview = (
+    tmp_path
+    / "subcomponent_shape_placement_views"
+    / "overview_latest_triptych.svg"
+  ).read_text(encoding="utf-8")
+  assert "R20 latest subcomponent candidates / top" in shape_placement_overview
+  assert "R20 latest subcomponent candidates / side" in shape_placement_overview
+  assert "R20 latest subcomponent candidates / front" in shape_placement_overview
+  assert 'transform="translate(0,0)"' in shape_placement_overview
+  assert 'transform="translate(1500,0)"' in shape_placement_overview
+  assert 'transform="translate(3000,0)"' in shape_placement_overview
+  assert "blue=latest subcomponent candidate" in shape_placement_overview
+  assert "red=current" not in shape_placement_overview
+  assert "amber/green=shape candidate" not in shape_placement_overview
+  assert "cyan/purple=R19 centerline candidate" not in shape_placement_overview
+  shape_placement_page = (
+    tmp_path
+    / "subcomponent_shape_placement_views"
+    / "components"
+    / "apg68-radar-array.html"
+  )
+  assert not shape_placement_page.exists()
 
   scene_path = tmp_path / "scene.html"
   assert scene_path.is_file()
@@ -247,5 +1368,22 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "F-16 Target Geometry Review Packet" in scene
   assert "nose_axis_4m" in scene
   assert "Fine Geometry Proxy Overlay" in scene
+  assert "Surface Component Candidates" in scene
+  assert "surface_nose_radome" in scene
   assert "mesh-derived silhouettes" in scene
   assert "fine_proxy_review_dashboard.html" in scene
+  assert "human_review_triage.html" in scene
+  assert "component_review_views/index.html" in scene
+  assert "Semantic Damage Geometry Volumes" in scene
+  assert "semantic_damage_geometry_views/index.html" in scene
+  assert "Internal Component Prior Geometry" in scene
+  assert "internal_component_prior_views/index.html" in scene
+  assert "Cross-Region Held Split Segments" in scene
+  assert "wing_spar_center_carrythrough_segment" in scene
+  assert "Airframe Constraint Correction Candidates" in scene
+  assert "apg68_radar_array" in scene
+  assert "Subcomponent Shape Placement Candidates" in scene
+  assert "subcomponent_shape_placement_views/index.html" in scene
+  assert "latest resolved candidates: 0" in scene
+  assert "Semantic Parent-Child Component Layout" in scene
+  assert "semantic_parent_child_layout_views/index.html" in scene
