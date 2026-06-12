@@ -1335,7 +1335,7 @@ void apply_tasking_packet_provenance(TaskingBatchPacket* packet) {
         std::string(kPolicyInformationStateDecisionBelief);
     packet->provenance.source_label = "facade_tasking_packet";
     packet->provenance.maintained_status =
-        std::string(kPolicyMaintainedStatusCompatibilityAdapter);
+        std::string(kPolicyMaintainedStatusAdapterProjection);
     packet->provenance.observation_packet_ids = {
         "tasking:" + std::to_string(packet->snapshot_version)
     };

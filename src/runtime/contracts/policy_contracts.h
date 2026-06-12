@@ -65,21 +65,21 @@ inline constexpr std::string_view kPolicyInformationStateAgentObservation = "Age
 inline constexpr std::string_view kPolicyInformationStateDecisionBelief = "DecisionBelief";
 
 inline constexpr std::string_view kPolicyMaintainedStatusMaintained = "maintained";
-inline constexpr std::string_view kPolicyMaintainedStatusCompatibilityAdapter =
-    "compatibility_adapter";
+inline constexpr std::string_view kPolicyMaintainedStatusAdapterProjection =
+    "adapter_projection";
 inline constexpr std::string_view kPolicyMaintainedStatusDiagnosticsOnly =
     "diagnostics_only";
 
 inline constexpr std::string_view kPolicySourceLabelFacadeObservationPacket =
     "facade_observation_packet";
-inline constexpr std::string_view kPolicySourceLabelAgentObservationCompat =
-    "agent_observation_compat";
+inline constexpr std::string_view kPolicySourceLabelAgentObservationAdapterProjection =
+    "agent_observation_adapter_projection";
 inline constexpr std::string_view kPolicySourceLabelSensedStatePacket =
     "sensed_state_packet";
 inline constexpr std::string_view kPolicySourceLabelTrackStatePacket =
     "track_state_packet";
-inline constexpr std::string_view kPolicySourceLabelSharedTacticalPictureCompat =
-    "shared_tactical_picture_compat";
+inline constexpr std::string_view kPolicySourceLabelSharedTacticalPictureAdapterProjection =
+    "shared_tactical_picture_adapter_projection";
 inline constexpr std::string_view kPolicySourceLabelWorldTruthDiagnostics =
     "world_truth_diagnostics";
 inline constexpr std::string_view kPolicySourceLabelObservationDerivedBelief =
@@ -167,7 +167,7 @@ struct ActionHoldPolicy {
 
 [[nodiscard]] inline bool is_known_policy_maintained_status(std::string_view status) {
     return status == kPolicyMaintainedStatusMaintained ||
-        status == kPolicyMaintainedStatusCompatibilityAdapter ||
+        status == kPolicyMaintainedStatusAdapterProjection ||
         status == kPolicyMaintainedStatusDiagnosticsOnly;
 }
 
@@ -192,9 +192,9 @@ struct ActionHoldPolicy {
 
 struct InformationStateSource {
     std::string information_state_layer = std::string(kPolicyInformationStateAgentObservation);
-    std::string source_label = std::string(kPolicySourceLabelAgentObservationCompat);
+    std::string source_label = std::string(kPolicySourceLabelAgentObservationAdapterProjection);
     std::string maintained_status =
-        std::string(kPolicyMaintainedStatusCompatibilityAdapter);
+        std::string(kPolicyMaintainedStatusAdapterProjection);
     std::vector<std::string> observation_packet_ids;
     std::vector<std::string> source_observation_versions;
     std::string diagnostics_reason;
@@ -220,9 +220,9 @@ struct InformationStateSource {
             source.maintained_status == kPolicyMaintainedStatusMaintained;
     }
 
-    if (source.source_label == kPolicySourceLabelAgentObservationCompat) {
+    if (source.source_label == kPolicySourceLabelAgentObservationAdapterProjection) {
         return source.information_state_layer == kPolicyInformationStateAgentObservation &&
-            source.maintained_status == kPolicyMaintainedStatusCompatibilityAdapter;
+            source.maintained_status == kPolicyMaintainedStatusAdapterProjection;
     }
 
     if (source.source_label == kPolicySourceLabelSensedStatePacket) {
@@ -235,10 +235,10 @@ struct InformationStateSource {
             source.maintained_status == kPolicyMaintainedStatusMaintained;
     }
 
-    if (source.source_label == kPolicySourceLabelSharedTacticalPictureCompat) {
+    if (source.source_label == kPolicySourceLabelSharedTacticalPictureAdapterProjection) {
         return source.information_state_layer ==
                 kPolicyInformationStateSharedTacticalPicture &&
-            source.maintained_status == kPolicyMaintainedStatusCompatibilityAdapter;
+            source.maintained_status == kPolicyMaintainedStatusAdapterProjection;
     }
 
     if (source.source_label == kPolicySourceLabelWorldTruthDiagnostics) {
@@ -507,14 +507,14 @@ struct DecisionBelief {
     std::string information_state_layer = std::string(kPolicyInformationStateDecisionBelief);
     InformationStateSource source_information_state = make_information_state_source(
         kPolicyInformationStateAgentObservation,
-        kPolicySourceLabelAgentObservationCompat,
-        kPolicyMaintainedStatusCompatibilityAdapter
+        kPolicySourceLabelAgentObservationAdapterProjection,
+        kPolicyMaintainedStatusAdapterProjection
     );
     std::vector<std::string> source_observation_versions;
     std::string memory_or_estimator_ref;
     ConfidenceShape confidence_shape{};
     std::string maintained_status =
-        std::string(kPolicyMaintainedStatusCompatibilityAdapter);
+        std::string(kPolicyMaintainedStatusAdapterProjection);
     std::string diagnostics_reason;
     bool uses_truth_state = false;
     bool uses_raw_ecs = false;

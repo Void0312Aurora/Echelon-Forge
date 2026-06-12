@@ -124,12 +124,12 @@ class BindingsPolicySurfaceTests(unittest.TestCase):
 
     role = ef_py.AgentRole()
     self.assertEqual(role.role.role_type, "unspecified")
-    self.assertEqual(role.information_state_source.maintained_status, "compatibility_adapter")
+    self.assertEqual(role.information_state_source.maintained_status, "adapter_projection")
     self.assertEqual(role.action_interface.kind, "PilotActionAssignment")
 
     belief = ef_py.DecisionBelief()
     self.assertEqual(belief.information_state_layer, "DecisionBelief")
-    self.assertEqual(belief.maintained_status, "compatibility_adapter")
+    self.assertEqual(belief.maintained_status, "adapter_projection")
     self.assertEqual(
       belief.source_information_state.information_state_layer,
       "AgentObservation",

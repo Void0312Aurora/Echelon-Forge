@@ -1147,7 +1147,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         world_index=0,
         entity_id=42,
         pilot_action=ef_py.PilotAction(),
-        information_state_label="agent_observation_compat",
+        information_state_label="agent_observation_adapter_projection",
       )
 
   def test_world_batch_adapter_loader_runtime_task_order_write_requires_maintained_binding(self) -> None:

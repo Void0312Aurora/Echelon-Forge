@@ -337,7 +337,7 @@ struct TaskingBatchPacket {
     double source_time_s = 0.0;
     InformationStateSource provenance = make_information_state_source(
         kPolicyInformationStateDecisionBelief, "facade_tasking_packet",
-        kPolicyMaintainedStatusCompatibilityAdapter);
+        kPolicyMaintainedStatusAdapterProjection);
     std::vector<WorldEntityRef> refs;
     std::vector<MissionCommandMaintainedBatchContract> mission_command_contracts;
     std::vector<TaskOrderMaintainedBatchContract> task_order_contracts;

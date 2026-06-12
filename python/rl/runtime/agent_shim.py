@@ -6,12 +6,12 @@ from typing import Any, Mapping
 
 
 MAINTAINED = "maintained"
-COMPATIBILITY_ADAPTER = "compatibility_adapter"
+ADAPTER_PROJECTION = "adapter_projection"
 DIAGNOSTICS_ONLY = "diagnostics_only"
 
 ALLOWED_MAINTAINED_STATUSES = (
     MAINTAINED,
-    COMPATIBILITY_ADAPTER,
+    ADAPTER_PROJECTION,
     DIAGNOSTICS_ONLY,
 )
 
@@ -30,7 +30,7 @@ ALLOWED_MERGE_POLICIES = (
 )
 
 OBS_FACADE_OBSERVATION_PACKET = "facade_observation_packet"
-OBS_AGENT_OBSERVATION_COMPAT = "agent_observation_compat"
+OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION = "agent_observation_adapter_projection"
 OBS_RAW_WORLD_TRUTH = "raw_world_truth"
 OBS_DIAGNOSTICS_ORACLE = "diagnostics_oracle"
 OBS_DECISION_BELIEF_PACKET = "decision_belief_packet"
@@ -47,10 +47,10 @@ OBSERVATION_PROVENANCE_LABELS = MappingProxyType(
             "source_surface": "ObservationBatchPacket",
             "maintained_status": MAINTAINED,
         },
-        OBS_AGENT_OBSERVATION_COMPAT: {
+        OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION: {
             "information_state_layer": "AgentObservation",
             "source_surface": "get_agent_observation or get_agent_observations_batch",
-            "maintained_status": COMPATIBILITY_ADAPTER,
+            "maintained_status": ADAPTER_PROJECTION,
         },
         OBS_RAW_WORLD_TRUTH: {
             "information_state_layer": "WorldTruth",
@@ -155,7 +155,7 @@ def observation_provenance(
     diagnostics_note: str = "",
     source_layer: str = "adapter",
 ) -> ObservationProvenance:
-    """Build a provenance label from the WP4-H maintained/compat/oracle vocabulary."""
+    """Build a provenance label from the WP4-H maintained/adapter-projection/oracle vocabulary."""
 
     spec = OBSERVATION_PROVENANCE_LABELS.get(str(label))
     if spec is None:
@@ -620,7 +620,7 @@ class DecisionBelief:
 __all__ = [
     "ALLOWED_MAINTAINED_STATUSES",
     "ALLOWED_MERGE_POLICIES",
-    "COMPATIBILITY_ADAPTER",
+    "ADAPTER_PROJECTION",
     "DIAGNOSTICS_ONLY",
     "MAINTAINED",
     "MERGE_APPEND_ONLY",
@@ -628,7 +628,7 @@ __all__ = [
     "MERGE_LAST_WRITE_WINS",
     "MERGE_PRIORITY_OVERRIDE",
     "MERGE_REJECT_ON_CONFLICT",
-    "OBS_AGENT_OBSERVATION_COMPAT",
+    "OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION",
     "OBS_DECISION_BELIEF_PACKET",
     "OBS_DIAGNOSTICS_ORACLE",
     "OBS_FACADE_OBSERVATION_PACKET",

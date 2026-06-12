@@ -3,12 +3,12 @@ from types import SimpleNamespace
 import pytest
 
 from python.rl.runtime.agent_shim import (
-  COMPATIBILITY_ADAPTER,
+  ADAPTER_PROJECTION,
   DIAGNOSTICS_ONLY,
   LAW14_MAINTAINED_READ_LABEL_ALLOWLIST,
   MAINTAINED,
   MERGE_REJECT_ON_CONFLICT,
-  OBS_AGENT_OBSERVATION_COMPAT,
+  OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION,
   OBS_DECISION_BELIEF_PACKET,
   OBS_DIAGNOSTICS_ORACLE,
   OBS_FACADE_OBSERVATION_PACKET,
@@ -34,7 +34,7 @@ def test_observation_provenance_labels_classify_boundaries():
     consumed_snapshot_version="belief:7",
     observation_packet_id="db:7",
   )
-  compat = observation_provenance(OBS_AGENT_OBSERVATION_COMPAT)
+  adapter_projection = observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION)
   raw_truth = observation_provenance(OBS_RAW_WORLD_TRUTH)
 
   assert maintained.maintained_status == MAINTAINED
@@ -43,7 +43,7 @@ def test_observation_provenance_labels_classify_boundaries():
   assert maintained_belief.maintained_status == MAINTAINED
   assert maintained_belief.information_state_layer == "DecisionBelief"
   assert maintained_belief.source_surface == "DecisionBelief"
-  assert compat.maintained_status == COMPATIBILITY_ADAPTER
+  assert adapter_projection.maintained_status == ADAPTER_PROJECTION
   assert raw_truth.maintained_status == DIAGNOSTICS_ONLY
   assert raw_truth.is_diagnostics_only
   assert LAW14_MAINTAINED_READ_LABEL_ALLOWLIST == (
@@ -141,14 +141,14 @@ def test_maintained_agent_role_accepts_labeled_decision_belief_input():
   assert schema["information_state_source"]["consumed_snapshot_version"] == "track:7"
 
 
-def test_maintained_agent_role_rejects_compatibility_adapter_and_truth_inputs():
+def test_maintained_agent_role_rejects_adapter_projection_and_truth_inputs():
   with pytest.raises(
     ValueError,
     match="maintained consumer fixtures must use provenance-labeled ObservationPacket/DecisionBelief inputs",
   ):
     single_agent_role(
       agent_id=10,
-      information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
+      information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
       maintained_status=MAINTAINED,
     )
 
@@ -210,18 +210,18 @@ def test_default_agent_roles_use_maintained_facade_observation_provenance():
   assert default_roster_role.information_state_source.maintained_status == MAINTAINED
 
 
-def test_maintained_intent_entry_points_reject_explicit_compatibility_role_provenance():
-  compat_single_role = single_agent_role(
+def test_maintained_intent_entry_points_reject_explicit_adapter_projection_role_provenance():
+  adapter_single_role = single_agent_role(
     agent_id=10,
-    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+    maintained_status=ADAPTER_PROJECTION,
   )
-  compat_roster_role = roster_slot_role(
+  adapter_roster_role = roster_slot_role(
     world_index=0,
     entity_id=10,
     roster_index=2,
-    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+    maintained_status=ADAPTER_PROJECTION,
   )
 
   with pytest.raises(
@@ -232,7 +232,7 @@ def test_maintained_intent_entry_points_reject_explicit_compatibility_role_prove
     ),
   ):
     ActionIntent(
-      role=compat_single_role,
+      role=adapter_single_role,
       payload=SimpleNamespace(throttle=0.8),
       maintained_status=MAINTAINED,
     )
@@ -245,7 +245,7 @@ def test_maintained_intent_entry_points_reject_explicit_compatibility_role_prove
     ),
   ):
     CoordinationIntent(
-      role=compat_roster_role,
+      role=adapter_roster_role,
       task_order=SimpleNamespace(task_id="hold-station"),
       maintained_status=MAINTAINED,
     )
@@ -281,8 +281,8 @@ def test_maintained_intent_entry_points_accept_explicit_maintained_role_provenan
   assert coordination.as_dict()["maintained_status"] == MAINTAINED
 
 
-def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_provenance():
-  compat_relabelled = single_agent_role(
+def test_maintained_intent_entry_points_reject_relabelled_raw_or_adapter_projection_role_provenance():
+  adapter_relabelled = single_agent_role(
     agent_id=10,
     information_state_source=ObservationProvenance(
       label=OBS_FACADE_OBSERVATION_PACKET,
@@ -290,7 +290,7 @@ def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_pro
       source_surface="get_agent_observation or get_agent_observations_batch",
       maintained_status=MAINTAINED,
     ),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    maintained_status=ADAPTER_PROJECTION,
   )
   raw_relabelled = roster_slot_role(
     world_index=0,
@@ -302,9 +302,9 @@ def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_pro
       source_surface="raw runtime or SimulationKernel",
       maintained_status=MAINTAINED,
     ),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    maintained_status=ADAPTER_PROJECTION,
   )
-  object.__setattr__(compat_relabelled, "maintained_status", MAINTAINED)
+  object.__setattr__(adapter_relabelled, "maintained_status", MAINTAINED)
   object.__setattr__(raw_relabelled, "maintained_status", MAINTAINED)
 
   with pytest.raises(
@@ -312,7 +312,7 @@ def test_maintained_intent_entry_points_reject_relabelled_raw_or_compat_role_pro
     match="maintained consumer fixtures must not relabel privileged or raw surfaces as maintained",
   ):
     ActionIntent(
-      role=compat_relabelled,
+      role=adapter_relabelled,
       payload=SimpleNamespace(throttle=0.8),
       maintained_status=MAINTAINED,
     )
@@ -369,7 +369,7 @@ def test_diagnostics_agent_role_does_not_promote_oracle_belief_to_policy_input()
   assert schema["decision_model_ref"]["kind"] == "oracle_audit"
 
 
-def test_diagnostics_or_compat_sources_are_not_promoted_to_maintained_belief_provenance():
+def test_diagnostics_or_adapter_projection_sources_are_not_promoted_to_maintained_belief_provenance():
   diagnostics_belief = DecisionBelief(
     belief_id="belief:oracle:1",
     source_observation_versions=("truth:raw",),
@@ -390,8 +390,8 @@ def test_agent_role_exposes_five_elements_without_runtime_dependency():
   role = single_agent_role(
     world_index=2,
     agent_id=42,
-    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+    maintained_status=ADAPTER_PROJECTION,
     decision_model_kind="scripted_controller",
     decision_model_id="ScriptedStableFlightController",
   )
@@ -404,14 +404,14 @@ def test_agent_role_exposes_five_elements_without_runtime_dependency():
   }
   assert schema["authority_scope"]["world_index"] == 2
   assert schema["authority_scope"]["entity_ids"] == [42]
-  assert schema["information_state_source"]["maintained_status"] == COMPATIBILITY_ADAPTER
+  assert schema["information_state_source"]["maintained_status"] == ADAPTER_PROJECTION
   assert schema["decision_model_ref"]["kind"] == "scripted_controller"
   assert schema["action_interface"] == "PilotActionAssignment"
 
   contract = role.as_contract()
   assert contract["role"]["role_id"] == "agent:2:42"
   assert contract["authority_scope"]["has_world_index"] is True
-  assert contract["information_state_source"]["source_label"] == OBS_AGENT_OBSERVATION_COMPAT
+  assert contract["information_state_source"]["source_label"] == OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION
   assert contract["action_interface"]["kind"] == "PilotActionAssignment"
 
 
@@ -435,8 +435,8 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
   role = single_agent_role(
     world_index=0,
     agent_id=11,
-    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+    maintained_status=ADAPTER_PROJECTION,
   )
   payload = SimpleNamespace(stick_pitch=0.25)
   assignment = SimpleNamespace(world_index=0, entity_id=11, action=payload)
@@ -448,7 +448,7 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
     effective_time=12.0,
     valid_until=12.1,
     merge_policy=MERGE_REJECT_ON_CONFLICT,
-    maintained_status=COMPATIBILITY_ADAPTER,
+    maintained_status=ADAPTER_PROJECTION,
   )
 
   assert intent.payload is payload
@@ -470,8 +470,8 @@ def test_coordination_intent_records_payload_fields():
     agent_id=5,
     role_type="flight_lead",
     action_interface="CommandChainAssignment",
-    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-    maintained_status=COMPATIBILITY_ADAPTER,
+    information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+    maintained_status=ADAPTER_PROJECTION,
   )
   mission_command = SimpleNamespace(command_code=3)
   leader_intent = SimpleNamespace(active=True)
@@ -482,7 +482,7 @@ def test_coordination_intent_records_payload_fields():
     leader_intent=leader_intent,
     roster_scope={"team_id": 1},
     update_clock="leader_step",
-    maintained_status=COMPATIBILITY_ADAPTER,
+    maintained_status=ADAPTER_PROJECTION,
   )
 
   assert intent.payload_fields() == ("mission_command", "leader_intent")
@@ -552,8 +552,8 @@ def test_invalid_status_and_merge_policy_are_rejected():
     ActionIntent(
       role=single_agent_role(
         agent_id=1,
-        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
-        maintained_status=COMPATIBILITY_ADAPTER,
+        information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION),
+        maintained_status=ADAPTER_PROJECTION,
       ),
       payload=object(),
       merge_policy="random_order",

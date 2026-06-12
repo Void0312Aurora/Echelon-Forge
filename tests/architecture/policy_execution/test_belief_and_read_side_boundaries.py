@@ -92,7 +92,7 @@ def test_policy_contracts_publish_wp11_information_state_vocabulary() -> None:
     "kPolicyInformationStateAgentObservation",
     "kPolicyInformationStateDecisionBelief",
     "kPolicyMaintainedStatusMaintained",
-    "kPolicyMaintainedStatusCompatibilityAdapter",
+    "kPolicyMaintainedStatusAdapterProjection",
     "kPolicyMaintainedStatusDiagnosticsOnly",
   ):
     assert token in policy_header
@@ -137,10 +137,10 @@ def test_wp24l_maintained_role_helpers_default_to_facade_observation_provenance(
 
   assert "maintained_status: str = MAINTAINED" in shim_source
   assert "or observation_provenance(OBS_FACADE_OBSERVATION_PACKET)" in shim_source
-  assert "or observation_provenance(OBS_AGENT_OBSERVATION_COMPAT)" not in shim_source
+  assert "or observation_provenance(OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION)" not in shim_source
 
 
-def test_wp24l_maintained_role_helper_call_sites_do_not_pass_compatibility_provenance() -> None:
+def test_wp24l_maintained_role_helper_call_sites_do_not_pass_adapter_projection_provenance() -> None:
   violations: list[tuple[str, int, str]] = []
 
   for path in _runtime_python_sources():
@@ -155,12 +155,12 @@ def test_wp24l_maintained_role_helper_call_sites_do_not_pass_compatibility_prove
         continue
       for keyword in node.keywords:
         if keyword.arg == "information_state_source" and ast.unparse(keyword.value).find(
-          "OBS_AGENT_OBSERVATION_COMPAT"
+          "OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION"
         ) >= 0:
           violations.append((path.relative_to(REPO_ROOT).as_posix(), node.lineno, name))
 
   assert not violations, (
-    "maintained role helper call sites must not opt back into compatibility provenance: "
+    "maintained role helper call sites must not opt back into adapter projection provenance: "
     f"{violations}"
   )
 
@@ -216,7 +216,7 @@ def test_law14_read_side_allowlist_stays_focused() -> None:
   assert "LAW14_MAINTAINED_READ_LABEL_ALLOWLIST" in shim_source
   assert "OBS_FACADE_OBSERVATION_PACKET" in shim_source
   assert "OBS_DECISION_BELIEF_PACKET" in shim_source
-  assert "OBS_AGENT_OBSERVATION_COMPAT" in shim_source
+  assert "OBS_AGENT_OBSERVATION_ADAPTER_PROJECTION" in shim_source
   assert "OBS_RAW_WORLD_TRUTH" in shim_source
   assert "OBS_DIAGNOSTICS_ORACLE" in shim_source
   assert (

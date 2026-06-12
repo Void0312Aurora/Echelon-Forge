@@ -1117,7 +1117,7 @@ class RuntimeFacadeTests(unittest.TestCase):
       places=6,
     )
     self.assertEqual(packet.provenance.source_label, "facade_tasking_packet")
-    self.assertEqual(packet.provenance.maintained_status, "compatibility_adapter")
+    self.assertEqual(packet.provenance.maintained_status, "adapter_projection")
 
   def test_runtime_facade_apply_world_setup_defaults_missing_terrain_assignment_to_flat(self) -> None:
     facade = ef_py.RuntimeFacade(1)
