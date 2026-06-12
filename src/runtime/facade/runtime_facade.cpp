@@ -283,7 +283,7 @@ std::uint64_t spawn_legacy_request_through_compatibility_path(
     WorldBatchRuntime& runtime,
     const WorldSpawnRequest& request
 ) {
-    return runtime.spawn_unit_compatibility(request);
+    return runtime.spawn_unit_from_world_spawn_request(request);
 }
 
 std::uint64_t spawn_typed_request_through_maintained_path(

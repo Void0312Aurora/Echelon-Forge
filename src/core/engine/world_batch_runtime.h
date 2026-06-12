@@ -48,7 +48,7 @@ public:
     size_t worker_threads() const noexcept { return worker_threads_; }
     size_t effective_worker_threads() const noexcept;
 
-    std::uint64_t spawn_unit_compatibility(const WorldSpawnRequest& request);
+    std::uint64_t spawn_unit_from_world_spawn_request(const WorldSpawnRequest& request);
     std::uint64_t spawn_typed_platform_unit(
         const TypedPlatformSpawnRequest& request
     );

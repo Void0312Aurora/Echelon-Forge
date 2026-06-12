@@ -269,7 +269,7 @@ size_t WorldBatchRuntime::effective_worker_threads() const noexcept {
     return resolve_worker_threads(worlds_.size());
 }
 
-std::uint64_t WorldBatchRuntime::spawn_unit_compatibility(
+std::uint64_t WorldBatchRuntime::spawn_unit_from_world_spawn_request(
     const WorldSpawnRequest& request
 ) {
     const auto world_index = static_cast<size_t>(request.world_index);
