@@ -7,7 +7,7 @@ from typing import Any, Iterable
 
 from .components import HELD_CAPABILITY_CLAIMS
 from .manifest import EnvironmentManifest, EnvironmentObject
-from .projection import project_manifest_to_compatibility_setup
+from .projection import project_manifest_to_world_zone_projection
 from .validation import validate_environment_manifest
 
 
@@ -231,7 +231,7 @@ def _surface_zone_index(
             "environment_substrate_derived_projection_profile_required",
             "surface_zone_index requires a source projection profile",
         )
-    projection = project_manifest_to_compatibility_setup(
+    projection = project_manifest_to_world_zone_projection(
         manifest,
         profile_id=request.source_projection_profile_id,
     )

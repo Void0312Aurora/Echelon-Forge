@@ -215,7 +215,7 @@ def _rect_zone_from_object(
     )
 
 
-def project_manifest_to_compatibility_setup(
+def project_manifest_to_world_zone_projection(
     manifest: EnvironmentManifest,
     *,
     profile_id: str,
@@ -284,5 +284,5 @@ __all__ = [
     "EnvironmentProjectionEvidence",
     "EnvironmentProjectionResult",
     "ProjectedWorldZone",
-    "project_manifest_to_compatibility_setup",
+    "project_manifest_to_world_zone_projection",
 ]

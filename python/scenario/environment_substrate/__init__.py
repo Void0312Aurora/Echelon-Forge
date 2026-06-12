@@ -62,7 +62,7 @@ from .projection import (
     EnvironmentProjectionEvidence,
     EnvironmentProjectionResult,
     ProjectedWorldZone,
-    project_manifest_to_compatibility_setup,
+    project_manifest_to_world_zone_projection,
 )
 from .projection_setup import (
     ENVIRONMENT_SUBSTRATE_PROJECTION_SETUP_CONTRACT_VERSION,
@@ -147,7 +147,7 @@ __all__ = [
     "default_component_registry",
     "default_layer_registry",
     "derive_environment_seed",
-    "project_manifest_to_compatibility_setup",
+    "project_manifest_to_world_zone_projection",
     "ingest_projection_setup_payloads_into_scenario",
     "validate_environment_catalog_admission",
     "validate_environment_catalog_descriptors",

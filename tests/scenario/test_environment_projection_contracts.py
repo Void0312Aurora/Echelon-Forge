@@ -20,7 +20,7 @@ from python.scenario.environment_substrate import ( # noqa: E402
   build_world_zone_projection_setup_payload,
   canonical_environment_bytes,
   ingest_projection_setup_payloads_into_scenario,
-  project_manifest_to_compatibility_setup,
+  project_manifest_to_world_zone_projection,
   validate_environment_manifest,
 )
 
@@ -76,7 +76,7 @@ def _scenario_with_projection_payload(payload: dict) -> dict:
 def test_g0_j_projection_contract_emits_explicit_world_zone_evidence() -> None:
   fixture = build_deterministic_environment_fixture()
 
-  projection = project_manifest_to_compatibility_setup(
+  projection = project_manifest_to_world_zone_projection(
     fixture,
     profile_id="terrain-rect-surface-v1",
   )
@@ -109,7 +109,7 @@ def test_g0_j_projection_rejects_rich_components_without_dropped_attribute_permi
   )
   manifest = _manifest_from_metadata(metadata)
 
-  projection = project_manifest_to_compatibility_setup(
+  projection = project_manifest_to_world_zone_projection(
     manifest,
     profile_id="terrain-rect-surface-v1",
   )
@@ -128,7 +128,7 @@ def test_g0_j_projection_rejects_misspelled_surface_type_instead_of_defaulting()
   metadata["objects"][0]["components"][0]["attributes"] = {"surface_type": "Concrete"}
   manifest = _manifest_from_metadata(metadata)
 
-  projection = project_manifest_to_compatibility_setup(
+  projection = project_manifest_to_world_zone_projection(
     manifest,
     profile_id="terrain-rect-surface-v1",
   )
@@ -156,7 +156,7 @@ def test_g0_j_projection_rejects_non_rect_geometry_for_world_zone_target() -> No
   }
   manifest = _manifest_from_metadata(metadata)
 
-  projection = project_manifest_to_compatibility_setup(
+  projection = project_manifest_to_world_zone_projection(
     manifest,
     profile_id="terrain-rect-surface-v1",
   )
@@ -171,7 +171,7 @@ def test_g0_j_projection_rejects_unreleased_runtime_targets() -> None:
   metadata["projection_profiles"][0]["target"] = "weather_runtime"
   manifest = _manifest_from_metadata(metadata)
 
-  projection = project_manifest_to_compatibility_setup(
+  projection = project_manifest_to_world_zone_projection(
     manifest,
     profile_id="terrain-rect-surface-v1",
   )

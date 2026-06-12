@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .manifest import EnvironmentManifest
-from .projection import project_manifest_to_compatibility_setup
+from .projection import project_manifest_to_world_zone_projection
 
 
 ENVIRONMENT_SUBSTRATE_PROJECTION_SETUP_CONTRACT_VERSION = (
@@ -82,7 +82,7 @@ def build_world_zone_projection_setup_payload(
     *,
     profile_id: str,
 ) -> EnvironmentProjectionSetupResult:
-    projection = project_manifest_to_compatibility_setup(
+    projection = project_manifest_to_world_zone_projection(
         manifest,
         profile_id=profile_id,
     )
