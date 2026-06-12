@@ -361,6 +361,43 @@ class PolicyExecutionEvalTests(unittest.TestCase):
       finally:
         env.close()
 
+  def test_single_eval_rejects_raw_universal_env_fallback(self) -> None:
+    train_config = {
+      "env": {
+        "include_visual": False,
+        "include_proprio": False,
+        "action_mode": "full",
+        "mission_obs_mode": "basic",
+      },
+      "runtime": {
+        "world_batch_vec_env": False,
+      },
+    }
+    args = Namespace(
+      include_visual=None,
+      include_proprio=None,
+      action_mode=None,
+      mission_obs_mode=None,
+      visual_downsample=None,
+      visual_update_interval=None,
+      temporal_history_len=None,
+    )
+
+    with self.assertRaisesRegex(ValueError, "runtime\\.world_batch_vec_env=true"):
+      _build_single_env("unused_scenario.json", train_config, args)
+
+  def test_eval_tools_do_not_construct_raw_universal_env(self) -> None:
+    for rel_path in (
+      "tools/eval/eval_utils.py",
+      "tools/eval/policy_execution_eval.py",
+      "tools/eval/task_eval_driver.py",
+    ):
+      with self.subTest(path=rel_path):
+        source = (REPO_ROOT / rel_path).read_text(encoding="utf-8")
+        self.assertNotIn("from gym_envs.universal_env import UniversalEnv", source)
+        self.assertNotIn("UniversalEnv(", source)
+        self.assertNotIn("make_universal_env_from_args", source)
+
   def test_load_sb3_policy_supports_historical_shared_and_hmoe_models(self) -> None:
     cases = [
       (

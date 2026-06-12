@@ -199,3 +199,30 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
 
           with self.assertRaisesRegex(ValueError, str(case["expected_error"])):
             LeaderTrainingEnv._resolve_execution_env_spec(env)
+
+  def test_leader_execution_runtime_rejects_raw_universal_env_fallback(self):
+    env = LeaderTrainingEnv.__new__(LeaderTrainingEnv)
+    env.execution_world_batch_runtime = False
+    env.execution_step_runtime_mode = None
+    env.collect_step_timing = False
+    env.execution_train_config = None
+    env.make_execution_args_stub = lambda: type(
+      "_Args",
+      (),
+      {
+        "include_visual": None,
+        "include_proprio": None,
+        "action_mode": None,
+        "mission_obs_mode": None,
+        "visual_downsample": None,
+        "visual_update_interval": None,
+        "temporal_history_len": None,
+      },
+    )()
+    env.load_execution_config = lambda: {}
+    env._execution_env_settings = {}
+    env._execution_wrapper_class = None
+    env._execution_wrapper_kwargs = None
+
+    with self.assertRaisesRegex(RuntimeError, "execution_world_batch_runtime=True"):
+      LeaderTrainingEnv._build_execution_runtime(env)

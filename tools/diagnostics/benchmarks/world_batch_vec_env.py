@@ -8,7 +8,6 @@ import sys
 import time
 
 import numpy as np
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT_HINT = os.path.abspath(os.path.join(_SCRIPT_DIR, "..", "..", ".."))
@@ -21,7 +20,6 @@ from python.testing.runtime import configure_sim_log_level, ensure_repo_imports,
 REPO_ROOT = ensure_repo_imports()
 os.chdir(REPO_ROOT)
 
-from gym_envs.universal_env import UniversalEnv  # noqa: E402
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv  # noqa: E402
 import ef_py  # noqa: E402
 from tools.diagnostics.common import (  # noqa: E402
@@ -37,7 +35,7 @@ from tools.diagnostics.common import (  # noqa: E402
 def _time_reset(vec_env, *, iters: int, seed_base: int) -> tuple[float, dict[str, float]]:
     timing_sums: dict[str, float] = {}
     timing_count = 0
-    timing_scale = 1.0 / float(max(1, int(vec_env.num_envs))) if isinstance(vec_env, WorldBatchVecEnv) else 1.0
+    timing_scale = 1.0 / float(max(1, int(vec_env.num_envs)))
     start = time.perf_counter()
     for idx in range(max(1, int(iters))):
         vec_env.seed(int(seed_base) + idx * 1000)
@@ -60,7 +58,7 @@ def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, 
     shadow_mismatch_count = 0
     shadow_max_reward_total_delta = 0.0
     shadow_max_execution_step_reward_delta = 0.0
-    timing_scale = 1.0 / float(max(1, int(vec_env.num_envs))) if isinstance(vec_env, WorldBatchVecEnv) else 1.0
+    timing_scale = 1.0 / float(max(1, int(vec_env.num_envs)))
     start = time.perf_counter()
     for step_idx in range(max(1, int(steps))):
         _, _, _, infos = vec_env.step(action_batch[step_idx])
@@ -110,18 +108,6 @@ def _time_steps(vec_env, action_batch, *, steps: int) -> tuple[float, dict[str, 
     )
 
 
-def _build_dummy_vec_env(*, scenario_path: str, n_envs: int, env_kwargs: dict) -> DummyVecEnv:
-    return DummyVecEnv(
-        [
-            lambda scenario_path=scenario_path, env_kwargs=dict(env_kwargs): UniversalEnv(
-                scenario_path=scenario_path,
-                **env_kwargs,
-            )
-            for _ in range(int(n_envs))
-        ]
-    )
-
-
 def _build_action_batch(*, steps: int, n_envs: int, action_dim: int, seed: int) -> list[np.ndarray]:
     rng = np.random.RandomState(int(seed) & 0xFFFFFFFF)
     actions = []
@@ -134,7 +120,7 @@ def _build_action_batch(*, steps: int, n_envs: int, action_dim: int, seed: int) 
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Phase 4 execution training adapter benchmark.")
+    parser = argparse.ArgumentParser(description="Maintained WorldBatchVecEnv training-adapter benchmark.")
     parser.add_argument("--scenario", default="scenarios/takeoff/takeoff.json", help="Scenario path to benchmark.")
     parser.add_argument("--n-envs", type=int, default=8, help="Number of parallel worlds/envs.")
     parser.add_argument("--steps", type=int, default=256, help="Number of rollout steps to benchmark.")
@@ -261,7 +247,6 @@ def main() -> int:
         seed=int(args.seed),
     )
 
-    dummy_vec = _build_dummy_vec_env(scenario_path=scenario_path, n_envs=int(args.n_envs), env_kwargs=env_kwargs)
     batch_vec_kwargs = {
         "scenario_path": scenario_path,
         "n_envs": int(args.n_envs),
@@ -276,11 +261,7 @@ def main() -> int:
     batch_vec = WorldBatchVecEnv(**batch_vec_kwargs)
     gpu_device_info = gpu_device_info_dict()
     try:
-        dummy_reset_ms, dummy_reset_timing = _time_reset(dummy_vec, iters=int(args.reset_iters), seed_base=int(args.seed))
         batch_reset_ms, batch_reset_timing = _time_reset(batch_vec, iters=int(args.reset_iters), seed_base=int(args.seed))
-        dummy_step_ms, dummy_step_timing, dummy_shadow_compare_stats = _time_steps(
-            dummy_vec, action_batch, steps=int(args.steps)
-        )
         batch_step_ms, batch_step_timing, batch_shadow_compare_stats = _time_steps(
             batch_vec, action_batch, steps=int(args.steps)
         )
@@ -290,7 +271,6 @@ def main() -> int:
         effective_batch_observation_backend = str(batch_vec._batch_observation_backend_mode())
         effective_batch_visual_backend = str(batch_vec._batch_visual_backend_mode())
     finally:
-        dummy_vec.close()
         batch_vec.close()
 
     results = {
@@ -322,22 +302,15 @@ def main() -> int:
         "gpu_device_info": gpu_device_info,
         "visual_runtime_stats": visual_stats,
         "flight_shaping_runtime_stats": flight_shaping_stats,
-        "dummy_reset_ms": float(dummy_reset_ms),
         "world_batch_reset_ms": float(batch_reset_ms),
-        "reset_speedup": float(dummy_reset_ms / max(batch_reset_ms, 1.0e-12)),
-        "dummy_ms_per_env_step": float(dummy_step_ms),
         "world_batch_ms_per_env_step": float(batch_step_ms),
-        "step_speedup": float(dummy_step_ms / max(batch_step_ms, 1.0e-12)),
-        "dummy_reset_timing_ms_per_env": dummy_reset_timing,
         "world_batch_reset_timing_ms_per_env": batch_reset_timing,
-        "dummy_step_timing_ms_per_env_step": dummy_step_timing,
         "world_batch_step_timing_ms_per_env_step": batch_step_timing,
-        "dummy_shadow_compare_stats": dummy_shadow_compare_stats,
         "world_batch_shadow_compare_stats": batch_shadow_compare_stats,
     }
 
-    print("World Batch VecEnv Phase 4 Benchmark")
-    print("=" * 37)
+    print("World Batch VecEnv Benchmark")
+    print("=" * 29)
     print(f"scenario                  : {results['scenario']}")
     print(f"n_envs                    : {results['n_envs']}")
     print(f"configured threads        : {results['configured_world_batch_threads']}")
@@ -355,12 +328,8 @@ def main() -> int:
         "gpu device               : "
         f"{json.dumps(results['gpu_device_info'], ensure_ascii=True, sort_keys=True)}"
     )
-    print(f"dummy reset               : {results['dummy_reset_ms']:.6f} ms")
     print(f"world batch reset         : {results['world_batch_reset_ms']:.6f} ms")
-    print(f"reset speedup             : {results['reset_speedup']:.2f}x")
-    print(f"dummy ms/env-step         : {results['dummy_ms_per_env_step']:.6f} ms")
     print(f"world batch ms/env-step   : {results['world_batch_ms_per_env_step']:.6f} ms")
-    print(f"step speedup              : {results['step_speedup']:.2f}x")
     if results["include_visual"]:
         print(
             "visual runtime stats     : "
@@ -370,8 +339,6 @@ def main() -> int:
         "flight shaping stats     : "
         f"{json.dumps(results['flight_shaping_runtime_stats'], ensure_ascii=True, sort_keys=True)}"
     )
-    if results["dummy_step_timing_ms_per_env_step"]:
-        print(f"dummy step timing         : {json.dumps(results['dummy_step_timing_ms_per_env_step'], ensure_ascii=True, sort_keys=True)}")
     if results["world_batch_step_timing_ms_per_env_step"]:
         print(
             "world batch step timing  : "

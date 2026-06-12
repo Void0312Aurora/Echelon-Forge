@@ -27,23 +27,14 @@ os.chdir(REPO_ROOT)
 
 import ef_py  # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader  # noqa: E402
-from gym_envs.universal_env import UniversalEnv  # noqa: E402
-
-try:
-    from stable_baselines3.common.env_util import make_vec_env
-    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-except ModuleNotFoundError:  # pragma: no cover
-    make_vec_env = None
-    DummyVecEnv = None
-    SubprocVecEnv = None
 
 
 DATABASE_PATH = resolve_repo_path("examples", "config", "database")
 DEFAULT_ROUTE_CONTRACT = resolve_repo_path(
-    "tests", "contracts", "env", "waypoint", "waypoint_track_reward_regression.json"
+    "tests", "archive", "contracts", "env_regression", "waypoint", "waypoint_track_reward_regression.json"
 )
 DEFAULT_LANDING_CONTRACT = resolve_repo_path(
-    "tests", "contracts", "env", "landing", "ils_threshold_crossing_height_regression.json"
+    "tests", "archive", "contracts", "env_regression", "landing", "ils_threshold_crossing_height_regression.json"
 )
 
 
@@ -805,78 +796,6 @@ def _benchmark_query_pair(compiled_fn, legacy_fn, samples: list[dict[str, float]
     }
 
 
-def _benchmark_env_steps(
-    scenario_path: str,
-    *,
-    seed: int,
-    warmup_steps: int,
-    measure_steps: int,
-    vec_envs: int,
-) -> dict[str, Any]:
-    out: dict[str, Any] = {}
-
-    env = UniversalEnv(
-        scenario_path=scenario_path,
-        include_visual=False,
-        include_proprio=False,
-        action_mode="full",
-        mission_obs_mode="nav_v2",
-    )
-    try:
-        _obs, _info = env.reset(seed=seed)
-        action = np.zeros(env.action_space.shape, dtype=np.float32)
-        for _ in range(max(1, int(warmup_steps))):
-            env.step(action)
-        start = time.perf_counter()
-        for _ in range(max(1, int(measure_steps))):
-            env.step(action)
-        elapsed = time.perf_counter() - start
-        ms_per_env_step = 1000.0 * elapsed / max(1, int(measure_steps))
-        out["single_env"] = {
-            "envs": 1,
-            "ms_per_step": float(ms_per_env_step),
-            "steps_per_sec": float(max(1, int(measure_steps)) / max(elapsed, 1.0e-12)),
-        }
-    finally:
-        env.close()
-
-    if make_vec_env is None or DummyVecEnv is None or SubprocVecEnv is None:
-        out["vector_env"] = {"skipped": "stable_baselines3 unavailable"}
-        return out
-
-    n_envs = max(2, int(vec_envs))
-    vec_env = make_vec_env(
-        UniversalEnv,
-        n_envs=n_envs,
-        env_kwargs={
-            "scenario_path": scenario_path,
-            "include_visual": False,
-            "include_proprio": False,
-            "action_mode": "full",
-            "mission_obs_mode": "nav_v2",
-        },
-        vec_env_cls=SubprocVecEnv if n_envs > 1 else DummyVecEnv,
-    )
-    try:
-        vec_env.reset()
-        action = np.zeros((n_envs, 17), dtype=np.float32)
-        for _ in range(max(1, int(warmup_steps))):
-            vec_env.step(action)
-        start = time.perf_counter()
-        for _ in range(max(1, int(measure_steps))):
-            vec_env.step(action)
-        elapsed = time.perf_counter() - start
-        total_steps = float(n_envs) * float(max(1, int(measure_steps)))
-        out["vector_env"] = {
-            "envs": int(n_envs),
-            "ms_per_env_step": float(1000.0 * elapsed / max(total_steps, 1.0)),
-            "aggregate_steps_per_sec": float(total_steps / max(elapsed, 1.0e-12)),
-        }
-    finally:
-        vec_env.close()
-    return out
-
-
 def _print_summary(results: dict[str, Any]) -> None:
     print("Spatial Query Phase 1 Benchmark")
     print("=" * 34)
@@ -894,19 +813,6 @@ def _print_summary(results: dict[str, Any]) -> None:
         f"legacy_total={nav['legacy']['total_python_time_s']:.4f}s  "
         f"speedup={nav['legacy']['total_python_time_s'] / max(nav['compiled']['total_python_time_s'], 1.0e-12):.2f}x"
     )
-    env_row = results["env_step_benchmark"]
-    print(
-        f"{'single env':>16}: {env_row['single_env']['ms_per_step']:.4f} ms/step  "
-        f"{env_row['single_env']['steps_per_sec']:.1f} steps/s"
-    )
-    vec = env_row.get("vector_env", {})
-    if "aggregate_steps_per_sec" in vec:
-        print(
-            f"{'vector env':>16}: {vec['ms_per_env_step']:.4f} ms/env-step  "
-            f"{vec['aggregate_steps_per_sec']:.1f} env-steps/s ({vec['envs']} envs)"
-        )
-    else:
-        print(f"{'vector env':>16}: {vec.get('skipped', 'n/a')}")
 
 
 def main() -> int:
@@ -918,9 +824,6 @@ def main() -> int:
     parser.add_argument("--iters", type=int, default=128, help="Measured iterations for microbenchmarks.")
     parser.add_argument("--samples-per-leg", type=int, default=24, help="Route samples along each active leg.")
     parser.add_argument("--profile-iters", type=int, default=2000, help="Profiler iterations for nav_v2 helpers.")
-    parser.add_argument("--env-warmup-steps", type=int, default=8, help="Warmup steps for UniversalEnv step benchmark.")
-    parser.add_argument("--env-measure-steps", type=int, default=48, help="Measured steps for UniversalEnv step benchmark.")
-    parser.add_argument("--vec-envs", type=int, default=4, help="Vectorized env count for rollout probe.")
     parser.add_argument("--json-out", default="", help="Optional path to write JSON results.")
     args = parser.parse_args()
 
@@ -999,14 +902,6 @@ def main() -> int:
             iters=int(args.profile_iters),
         )
 
-        env_bench = _benchmark_env_steps(
-            route_scenario_path,
-            seed=int(args.seed),
-            warmup_steps=int(args.env_warmup_steps),
-            measure_steps=int(args.env_measure_steps),
-            vec_envs=int(args.vec_envs),
-        )
-
         results = {
             "route_contract": os.path.abspath(args.route_contract),
             "landing_contract": os.path.abspath(args.landing_contract),
@@ -1019,7 +914,6 @@ def main() -> int:
                 "compiled": nav_compiled_profile,
                 "legacy": nav_legacy_profile,
             },
-            "env_step_benchmark": env_bench,
         }
 
         _print_summary(results)

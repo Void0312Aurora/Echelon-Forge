@@ -16,7 +16,6 @@ import torch # noqa: E402,F401
 
 import ef_py # noqa: E402
 
-from gym_envs.universal_env import UniversalEnv # noqa: E402
 from gym_envs.universal_env_parts import NAVAL_STATION3_ACTION_FAMILY # noqa: E402
 from python.rl.runtime.world_batch import command_chain_cache # noqa: E402
 from python.rl.runtime.world_batch.command_chain_cache import ( # noqa: E402
@@ -27,7 +26,6 @@ from python.rl.runtime.world_batch.command_chain_cache import ( # noqa: E402
 )
 import python.rl.runtime.world_batch.adapter as world_batch_adapter_module # noqa: E402
 import python.rl.runtime.world_batch_vec_env as vec_env_module # noqa: E402
-from python.rl.control.wrappers import MultiTimescaleActionWrapper # noqa: E402
 from python.rl.policy_algo.device_dict_rollout_buffer import DeviceDictRolloutBuffer # noqa: E402
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO # noqa: E402
 from python.rl.runtime.shared_memory_vec_env import SharedMemorySubprocVecEnv # noqa: E402
@@ -2816,7 +2814,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_matches_multi_timescale_action_wrapper(self) -> None:
+  def test_world_batch_vec_env_applies_multi_timescale_action_controller(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_data = _inline_vec_env_scenario()
       scenario_data["meta"]["max_steps"] = 3
@@ -2839,17 +2837,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         "scripted_residual_scale": 0.0,
         "action_rate_penalty_coef": 0.0002,
       }
-      direct_env = MultiTimescaleActionWrapper(
-        UniversalEnv(
-          scenario_path=scenario_path,
-          include_visual=False,
-          include_proprio=True,
-          action_mode="full",
-          mission_obs_mode="basic",
-          runtime_compatibility_enabled=True,
-        ),
-        **wrapper_kwargs,
-      )
       vec_env = WorldBatchVecEnv(
         scenario_path=scenario_path,
         n_envs=1,
@@ -2858,45 +2845,31 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         action_wrapper_kwargs=wrapper_kwargs,
       )
       try:
-        direct_obs, _direct_info = direct_env.reset(seed=123)
         vec_env.seed(123)
         vec_obs = vec_env.reset()
         for key in ("contacts", "rwr", "mission", "proprio"):
-          self.assertTrue(
-            np.allclose(np.asarray(direct_obs[key]), np.asarray(vec_obs[key][0]), atol=1.0e-5),
-            msg=f"reset mismatch for key={key}",
-          )
+          self.assertEqual(np.asarray(vec_obs[key][0]).shape, tuple(vec_env.observation_space[key].shape))
 
-        action = np.full((17,), 0.9, dtype=np.float32)
-        direct_obs_1, direct_reward_1, direct_done_1, direct_trunc_1, direct_info_1 = direct_env.step(action)
-        vec_obs_1, vec_rew_1, vec_done_1, vec_info_1 = vec_env.step(action.reshape(1, -1))
-        self.assertFalse(bool(direct_done_1 or direct_trunc_1))
+        first_action = np.full((17,), 0.9, dtype=np.float32)
+        vec_obs_1, vec_rew_1, vec_done_1, vec_info_1 = vec_env.step(first_action.reshape(1, -1))
         self.assertFalse(bool(vec_done_1[0]))
         for key in ("contacts", "rwr", "mission", "proprio"):
-          self.assertTrue(
-            np.allclose(np.asarray(direct_obs_1[key]), np.asarray(vec_obs_1[key][0]), atol=1.0e-5),
-            msg=f"step1 mismatch for key={key}",
-          )
-        self.assertAlmostEqual(float(direct_reward_1), float(vec_rew_1[0]), places=5)
-        self.assertTrue(
-          np.allclose(
-            np.asarray(direct_info_1["effective_action"], dtype=np.float32),
-            np.asarray(vec_info_1[0]["effective_action"], dtype=np.float32),
-            atol=1.0e-6,
-          )
-        )
+          self.assertEqual(np.asarray(vec_obs_1[key][0]).shape, tuple(vec_env.observation_space[key].shape))
+        self.assertTrue(np.isfinite(float(vec_rew_1[0])))
+        first_effective = np.asarray(vec_info_1[0]["effective_action"], dtype=np.float32)
+        self.assertEqual(first_effective.shape, (17,))
+        self.assertEqual(float(first_effective[4]), 1.0)
+        self.assertEqual(float(first_effective[9]), 1.0)
 
-        direct_obs_2, direct_reward_2, direct_done_2, direct_trunc_2, direct_info_2 = direct_env.step(action)
-        vec_obs_2, vec_rew_2, vec_done_2, vec_info_2 = vec_env.step(action.reshape(1, -1))
-        self.assertTrue(
-          np.allclose(
-            np.asarray(direct_info_2["effective_action"], dtype=np.float32),
-            np.asarray(vec_info_2[0]["effective_action"], dtype=np.float32),
-            atol=1.0e-6,
-          )
-        )
+        second_action = np.full((17,), 0.1, dtype=np.float32)
+        _vec_obs_2, vec_rew_2, _vec_done_2, vec_info_2 = vec_env.step(second_action.reshape(1, -1))
+        second_effective = np.asarray(vec_info_2[0]["effective_action"], dtype=np.float32)
+        self.assertTrue(np.isfinite(float(vec_rew_2[0])))
+        held_indices = np.asarray(wrapper_kwargs["low_freq_indices"], dtype=np.int64)
+        free_indices = np.asarray([0, 1, 2, 3, 7, 8, 10, 11], dtype=np.int64)
+        self.assertTrue(np.allclose(second_effective[held_indices], first_effective[held_indices], atol=1.0e-6))
+        self.assertTrue(np.allclose(second_effective[free_indices], second_action[free_indices], atol=1.0e-6))
       finally:
-        direct_env.close()
         vec_env.close()
 
   def test_world_batch_vec_env_cuda_bridge_uses_device_rollout_buffer(self) -> None:

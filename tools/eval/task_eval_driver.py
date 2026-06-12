@@ -16,7 +16,7 @@ from tools.eval.eval_utils import (
     add_common_env_args,
     bootstrap_repo_imports,
     format_stats,
-    make_universal_env_from_args,
+    make_single_world_batch_env_from_args,
     quantile_summary,
     wrap_deg,
 )
@@ -90,13 +90,13 @@ class ScriptedPolicyAdapter(PolicyAdapter):
 def _build_scripted_stable_controller(env):
     from python.rl.control.scripted_stable_flight import ScriptedStableFlightController
 
-    return ScriptedStableFlightController(action_dim=int(env.action_space.shape[0]), dt=float(env.sim.get_time_step()))
+    return ScriptedStableFlightController(action_dim=int(env.action_space.shape[0]), dt=_env_time_step(env))
 
 
 def _build_scripted_takeoff_controller(env):
     from python.rl.control.scripted_takeoff import ScriptedTakeoffController
 
-    return ScriptedTakeoffController(action_dim=int(env.action_space.shape[0]), dt=float(env.sim.get_time_step()))
+    return ScriptedTakeoffController(action_dim=int(env.action_space.shape[0]), dt=_env_time_step(env))
 
 
 SCRIPTED_CONTROLLER_BUILDERS: dict[str, Callable[[Any], Any]] = {
@@ -225,8 +225,44 @@ def _mission_status_failed(info: dict[str, Any] | Any) -> bool:
     return bool(arr.size >= 4 and float(arr[3]) < -0.5)
 
 
+def _env_base(env):
+    return getattr(env, "unwrapped", env)
+
+
+def _env_loader(env):
+    return getattr(_env_base(env), "loader", None)
+
+
+def _env_sim(env):
+    return getattr(_env_base(env), "sim", None)
+
+
+def _env_agent_id(env) -> int | None:
+    agent_id = getattr(_env_base(env), "agent_id", None)
+    if agent_id is None:
+        return None
+    return int(agent_id)
+
+
+def _env_time_step(env) -> float:
+    sim = _env_sim(env)
+    if sim is not None:
+        return float(sim.get_time_step())
+    world_vec = getattr(env, "world_vec", None)
+    if world_vec is not None:
+        return float(world_vec._world_time_step(0))
+    return 0.05
+
+
+def _env_max_steps(env) -> int:
+    world_vec = getattr(env, "world_vec", None)
+    if world_vec is not None and getattr(world_vec, "envs", None):
+        return int(getattr(world_vec.envs[0], "max_steps", 0))
+    return int(getattr(_env_base(env), "max_steps", 0))
+
+
 def _run_stable_flight_eval(*, backend: str, args: argparse.Namespace) -> int:
-    env = make_universal_env_from_args(args)
+    env = make_single_world_batch_env_from_args(args)
     policy = _policy_adapter_for(task="stable_flight", backend=backend, args=args)
 
     ep_rewards: list[float] = []
@@ -346,7 +382,7 @@ def _run_stable_flight_eval(*, backend: str, args: argparse.Namespace) -> int:
 
 
 def _run_centerline_eval(*, backend: str, args: argparse.Namespace) -> int:
-    env = make_universal_env_from_args(args)
+    env = make_single_world_batch_env_from_args(args)
     policy = _policy_adapter_for(task="centerline", backend=backend, args=args)
 
     ep_max_abs_cross: list[float] = []
@@ -421,8 +457,13 @@ def _resolve_runway_along(env, info: dict[str, Any] | Any) -> float | None:
     except Exception:
         return None
     try:
-        truth = env.sim.get_agent_observation(env.agent_id)
-        valid_rf, along_m, _cross_m, rw_len, rw_wid = env.loader.get_runway_local_frame(float(truth.x), float(truth.y))
+        sim = _env_sim(env)
+        loader = _env_loader(env)
+        agent_id = _env_agent_id(env)
+        if sim is None or loader is None or agent_id is None:
+            return None
+        truth = sim.get_agent_observation(agent_id)
+        valid_rf, along_m, _cross_m, rw_len, rw_wid = loader.get_runway_local_frame(float(truth.x), float(truth.y))
         if bool(valid_rf) and float(rw_len) > 1.0 and float(rw_wid) > 1.0:
             return float(along_m)
     except Exception:
@@ -444,7 +485,7 @@ def _wheel_off_condition(
 
 
 def _run_takeoff_roll_eval(*, backend: str, args: argparse.Namespace) -> int:
-    env = make_universal_env_from_args(args)
+    env = make_single_world_batch_env_from_args(args)
     policy = _policy_adapter_for(task="takeoff_roll", backend=backend, args=args)
 
     wheel_off_dist_m: list[float] = []
@@ -459,11 +500,12 @@ def _run_takeoff_roll_eval(*, backend: str, args: argparse.Namespace) -> int:
         for ep in range(int(args.episodes)):
             obs, _ = env.reset(seed=int(args.seed) + ep)
             policy.reset_episode(env, obs)
-            dt = float(env.sim.get_time_step())
-            max_steps = min(int(args.max_steps), int(env.max_steps))
+            dt = _env_time_step(env)
+            max_steps = min(int(args.max_steps), _env_max_steps(env))
 
             try:
-                rewards_cfg = dict(env.loader.get_rewards_config())
+                loader = _env_loader(env)
+                rewards_cfg = dict(loader.get_rewards_config()) if loader is not None else {}
             except Exception:
                 rewards_cfg = {}
 
@@ -571,7 +613,7 @@ def _run_takeoff_roll_eval(*, backend: str, args: argparse.Namespace) -> int:
 
 
 def _run_waypoint_nav_eval(*, backend: str, args: argparse.Namespace) -> int:
-    env = make_universal_env_from_args(args)
+    env = make_single_world_batch_env_from_args(args)
     policy = _policy_adapter_for(task="waypoint_nav", backend=backend, args=args)
 
     ep_success: list[float] = []

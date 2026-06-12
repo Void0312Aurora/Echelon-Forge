@@ -175,7 +175,7 @@ def _run_leader(
         execution_device=str(leader_cfg.get("execution_device", "cpu")),
         execution_use_autocast=bool(leader_cfg.get("execution_use_autocast", False)),
         execution_step_runtime_mode=leader_cfg.get("execution_step_runtime_mode"),
-        execution_world_batch_runtime=bool(leader_cfg.get("execution_world_batch_runtime", False)),
+        execution_world_batch_runtime=bool(leader_cfg.get("execution_world_batch_runtime", True)),
         execution_world_batch_threads=leader_cfg.get("execution_world_batch_threads"),
         collect_step_timing=True,
     )

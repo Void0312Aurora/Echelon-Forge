@@ -2,7 +2,8 @@
 """
 2D trajectory diagnostic for the continuous takeoff-to-landing task.
 
-This script runs a single episode through the real UniversalEnv + wrapper stack
+This script runs a single episode through the maintained single-world WorldBatch runtime
+and optional wrapper stack
 and exports:
   - a PNG with the flown ground track, selected waypoints, and runway geometry
   - a JSON summary with termination / phase-transition metadata
@@ -40,9 +41,9 @@ from python.testing.runtime import ensure_repo_imports
 
 BASE_DIR = ensure_repo_imports()
 
-from gym_envs.universal_env import UniversalEnv
 from python.env_config import resolve_env_settings
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
+from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
 
 
@@ -142,12 +143,37 @@ def _make_env(
         wrapper_kwargs["scripted_residual_alt_scales"] = []
         wrapper_kwargs["action_rate_penalty_coef"] = 0.0
 
-    env = UniversalEnv(os.path.abspath(scenario_path), **env_settings)
+    env = build_single_world_batch_execution_runtime(
+        scenario_path=os.path.abspath(scenario_path),
+        env_settings=env_settings,
+        wrapper_class=wrapper_class,
+        wrapper_kwargs=wrapper_kwargs,
+        worker_threads=1,
+    )
     if zero_randomization:
         env.set_randomization_overrides(_zero_randomization_overrides())
-    if wrapper_class is not None:
-        env = wrapper_class(env, **(wrapper_kwargs or {}))
     return env
+
+
+def _action_space(env):
+    action_space = getattr(env, "action_space", None)
+    if action_space is not None:
+        return action_space
+    policy_env = getattr(env, "policy_env", None)
+    action_space = getattr(policy_env, "action_space", None)
+    if action_space is None:
+        raise RuntimeError("trajectory diagnostic env does not expose an action space")
+    return action_space
+
+
+def _env_max_steps(env) -> int:
+    world_vec = getattr(env, "world_vec", None)
+    if world_vec is None:
+        handle = getattr(env, "_handle", None)
+        world_vec = getattr(handle, "world_vec", None)
+    if world_vec is not None and getattr(world_vec, "envs", None):
+        return int(getattr(world_vec.envs[0], "max_steps", 0))
+    return int(getattr(getattr(env, "unwrapped", env), "max_steps", 0))
 
 
 def _pick_runway_beacon(loader, x_ref: float, y_ref: float) -> dict[str, Any] | None:
@@ -216,8 +242,8 @@ def _collect_episode(
     waypoints = [dict(wp) for wp in list(getattr(loader, "waypoints", []) or [])]
     waypoint_template_idx = int(loader.mission_cmd.get("_waypoint_template_idx", -2))
 
-    action = np.zeros(env.action_space.shape, dtype=np.float32)
-    limit = int(max_steps) if max_steps is not None else int(getattr(sim_env, "max_steps", 0))
+    action = np.zeros(_action_space(env).shape, dtype=np.float32)
+    limit = int(max_steps) if max_steps is not None else _env_max_steps(env)
     if limit <= 0:
         limit = 20000
 

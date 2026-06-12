@@ -24,7 +24,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - The maintained environment path is still strongest for air/execution and cooperative/common training.
 - Maintained production training reaches the runtime through `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv` for execution and `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` for cooperative execution.
-- `UniversalEnv` remains a stable import path for single-env compatibility, evaluation, and diagnostics, but its raw `ef_py.SimulationKernel` route is quarantined and requires `runtime_compatibility_enabled=True`.
+- `UniversalEnv` remains a quarantined single-env compatibility import path. Active evaluation and diagnostics should use maintained world-batch/facade adapters instead of constructing the raw `ef_py.SimulationKernel` route.
 - Naval hooks exist where explicitly listed, including station actions, screen behavior, scoped reward surfaces, and N4 contact-evidence plumbing through the runtime path.
 - Ground-domain movement, sensing, terrain, fires, damage, and full runtime behavior are not implemented here. References to takeoff ground roll or runway geometry are air/execution runway-phase logic, not ground-domain support.
 
@@ -38,7 +38,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## Subdirectory Conventions
 
 - [universal_env.py](universal_env.py)
-  - Stable single-env import path for compatibility, evaluation, and diagnostics. It is not the default production training backend unless the raw-kernel compatibility flag is explicitly enabled.
+  - Quarantined single-env compatibility import path. It is not an active production training/eval/diagnostics backend.
 - [universal_env_parts/](universal_env_parts)
   - Main implementation subdomain for `UniversalEnv`, maintaining action, observation, space, and step-info assembly logic.
 - [leader_env.py](leader_env.py)
@@ -136,13 +136,13 @@ If you are looking into:
 - "Why does the leader environment use the frozen/scripted execution backend?"
   - Start with `leader_env_parts/execution_runtime/` and [leader_env.py](leader_env.py)
 - "Why does direct `UniversalEnv(...)` construction fail?"
-  - Check whether the caller is intentionally using the quarantined raw-kernel compatibility path and passes `runtime_compatibility_enabled=True`; otherwise prefer the world-batch runtime adapters.
+  - Active callers should use world-batch runtime adapters. Raw single-env construction is a quarantine/archive path and must not be reintroduced into maintained tools or tests.
 
 ## Migration Notes
 
 - `scenario_loader/` has already been split by runtime subdomain. New loader logic should go into the corresponding package instead of expanding `core.py` into a grab bag again.
 - `gym_envs/` should use the packaged scenario entry points under `python/scenario/compiler/` and `python/scenario/runtime/`.
 - `python/scenario/diagnostics/` is diagnostics-only and must not become an environment default path.
-- `universal_env.py` remains a stable single-env compatibility entry point, but maintained training should keep converging on runtime-facade/world-batch adapters.
+- `universal_env.py` remains only as a quarantined compatibility entry point; maintained training, eval, diagnostics, and regression tests should stay on runtime-facade/world-batch adapters.
 - `leader_env.py` remains the stable entry point, but its implementation should continue to move down into `leader_env_parts/`.
 - If the future design keeps only package entry points instead of root-level single-file env modules, make sure the import paths in `tools/`, `tests/`, and training entry points are migrated together first.

@@ -7,10 +7,8 @@ import ef_py
 import numpy as np
 import torch
 
-from gym_envs.universal_env import UniversalEnv
 from gym_envs.scenario_loader import normalize_execution_step_runtime_mode
 from python.env_config import resolve_env_settings
-from python.rl.runtime.execution_runtime import SingleExecutionRuntime
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 from python.rl.control.wrappers import get_action_wrapper_spec
 
@@ -24,31 +22,25 @@ def build_execution_env(env: Any):
 
 
 def build_execution_env_from_spec(env: Any, env_settings, wrapper_class, wrapper_kwargs):
-    if env.execution_backend == "scripted" and wrapper_kwargs is not None:
-        wrapper_kwargs = dict(wrapper_kwargs)
-        wrapper_kwargs["scripted_residual_scale"] = 0.0
-        wrapper_kwargs["scripted_residual_alt_breakpoints_m"] = []
-        wrapper_kwargs["scripted_residual_alt_scales"] = []
-        wrapper_kwargs["action_rate_penalty_coef"] = 0.0
-
-    built_env = UniversalEnv(env.scenario_path, **env_settings)
-    if wrapper_class is not None:
-        built_env = wrapper_class(built_env, **(wrapper_kwargs or {}))
-    return built_env
+    raise RuntimeError(
+        "Leader execution raw UniversalEnv fallback has been removed; "
+        "use execution_world_batch_runtime=True"
+    )
 
 
 def build_execution_runtime(env: Any):
     env_settings, wrapper_class, wrapper_kwargs = resolve_execution_env_spec(env)
-    if env.execution_world_batch_runtime:
-        return build_single_world_batch_execution_runtime(
-            scenario_path=env.scenario_path,
-            env_settings=env_settings,
-            wrapper_class=wrapper_class,
-            wrapper_kwargs=wrapper_kwargs,
-            worker_threads=env.execution_world_batch_threads,
+    if not env.execution_world_batch_runtime:
+        raise RuntimeError(
+            "Leader execution requires execution_world_batch_runtime=True; "
+            "raw UniversalEnv fallback has been removed"
         )
-    return SingleExecutionRuntime(
-        build_execution_env_from_spec(env, env_settings, wrapper_class, wrapper_kwargs)
+    return build_single_world_batch_execution_runtime(
+        scenario_path=env.scenario_path,
+        env_settings=env_settings,
+        wrapper_class=wrapper_class,
+        wrapper_kwargs=wrapper_kwargs,
+        worker_threads=env.execution_world_batch_threads,
     )
 
 
@@ -97,12 +89,6 @@ def close_execution_runtime(runtime: Any, *, active_runtime: Any | None = None) 
         try:
             runtime.close()
             return
-        except Exception:
-            pass
-    if isinstance(runtime, SingleExecutionRuntime):
-        try:
-            if hasattr(runtime.env, "close"):
-                runtime.env.close()
         except Exception:
             pass
 

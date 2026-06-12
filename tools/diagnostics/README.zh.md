@@ -4,7 +4,7 @@
 
 域状态口径：diagnostics 目前仍主要面向 air/execution 与 cooperative/common runtime 工作。naval 条目只覆盖列出的 station、screen 与 contact-evidence 路径。ground-domain 的 movement、sensing、terrain、fires、damage 与完整 runtime diagnostics 还不是这里的 maintained 能力；takeoff ground-roll 表述指跑道阶段的 air/execution 行为。
 
-运行时口径：使用 `WorldBatchRuntime`、`WorldBatchVecEnv` 或 `CooperativeWorldBatchVecEnv` 的 diagnostics 与 maintained runtime-facade mainline 对齐。直接实例化 `UniversalEnv` 的 diagnostics 是 raw-kernel compatibility/debug probe，必须显式 opt in `runtime_compatibility_enabled=True`；尚未接通该 flag 的调用方应视为实现跟进项，而不是 production acceptance。
+运行时口径：维护中的 diagnostics 使用 `WorldBatchRuntime`、`WorldBatchVecEnv` 或 `CooperativeWorldBatchVecEnv`，并与 runtime-facade mainline 对齐。直接实例化 `UniversalEnv` 的 diagnostics 应进入 archive/quarantine，不属于 active production 或 acceptance surface。
 
 这些脚本特意与顶级入口点分离，因为它们通常：
 
@@ -33,7 +33,7 @@
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
 - [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
-  - 受限 air-combat 武器使用过程 probe，用于 raw `UniversalEnv` compatibility path 上的 debug trace、lethality-chain 行与 hybrid action metrics。
+  - 受限 air-combat 武器使用过程 probe，通过 batch=1 `WorldBatchVecEnv` adapter 输出 debug trace、lethality-chain 行与 hybrid action metrics。
 - [event_credit_head_probe.py](event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口。使用 `--mode offline_fit`
     运行 fixed-batch supervised fit，或使用 `--mode online_update`
@@ -43,8 +43,6 @@
     运行抽象 grouped-stopping toy，使用 `--mode real_update` 检查真实 update path，
     使用 `--mode chain_breakpoint` 做 fixed-batch breakpoint attribution，
     或使用 `--mode learnability_audit` 做 oracle fire-timing learnability 检查。
-- [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
-  - cooperative execution 配置的 observation scale sampler，用于数值卫生和特征尺度检查。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - 面向本地 `game/` Arma bridge 的最小行协议 TCP stub。它确认 `begin_session`，消费 `host_frame`，并为 `echelon_bridge.dll` 产出合成 `proxy_state` 载荷。
 - `spatial_query`
@@ -59,14 +57,8 @@
   - WorldBatchVecEnv 训练适配器基准。
 - `policy_observation_bridge`
   - 策略观察桥接基准。
-- `visual_resolution`
-  - 视觉降采样扫描基准。
-- `coarse_route_segments`
-  - 粗略航路段错误基准。
 - `air_combat_post_launch_assessment`
   - air-combat post-launch assessment rollout 基准。
-
-部分 benchmark family 同时包含 legacy/raw `UniversalEnv` 对照分支和 maintained runtime-facade 测量。需要这些分支时，应有意接通 compatibility flag，不要把 raw-env 失败解读成 world-batch runtime 回归。
 
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - 统一的协同轨迹重放/导出 CLI。使用 `--task takeoff` 或 `--task takeoff_to_cruise` 从一个维护的入口点输出特定任务的 PNG + JSON 诊断。

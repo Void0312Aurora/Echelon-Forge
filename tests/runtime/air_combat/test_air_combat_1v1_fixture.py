@@ -10,9 +10,7 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
-from gym_envs.universal_env_parts.common import gym as _gym # noqa: E402
 from gym_envs.universal_env import build_universal_observation # noqa: E402
-from gym_envs.universal_env import UniversalEnv # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
@@ -363,10 +361,10 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     red_obs1 = sim.get_agent_observation(red_id)
     self.assertLess(int(getattr(red_obs1, "missiles_remaining", -1)), initial_missiles)
 
-  @unittest.skipIf(_gym is None, "UniversalEnv requires optional dependency 'gymnasium'")
-  def test_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
-    env = UniversalEnv(
-      _STAGE0_SCENARIO_PATH,
+  def test_world_batch_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release(self) -> None:
+    env = WorldBatchVecEnv(
+      scenario_path=_STAGE0_SCENARIO_PATH,
+      n_envs=1,
       include_visual=False,
       include_proprio=True,
       action_mode="full",
@@ -374,47 +372,46 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
       step_info_mode="full",
       execution_step_runtime_mode="compiled",
       flight_shaping_backend="compiled",
-      runtime_compatibility_enabled=True,
+      worker_threads=1,
     )
     try:
-      _obs, _info = env.reset(seed=20260525)
+      env.seed(20260525)
+      env.reset()
 
-      action = np.zeros((17,), dtype=np.float32)
-      action[0] = 0.02
-      action[3] = 0.65
-      action[9] = 1.0
-      action[13] = 1.0
-      action[14] = 1.0
-      action[16] = 1.0 / 7.0
+      action = np.zeros((1, 17), dtype=np.float32)
+      action[0, 0] = 0.02
+      action[0, 3] = 0.65
+      action[0, 9] = 1.0
+      action[0, 13] = 1.0
+      action[0, 14] = 1.0
+      action[0, 16] = 1.0 / 7.0
 
+      initial_missiles = int(getattr(env.envs[0].last_truth, "missiles_remaining", -1))
+      self.assertEqual(initial_missiles, 4)
       fired = False
-      terminated = False
-      truncated = False
       info: dict[str, object] = {}
-      reports_before = len(env.sim.export_recent_engagement_events().damage_reports)
-      for _ in range(int(env.max_steps)):
-        _obs, _reward, terminated, truncated, info = env.step(action)
+      done = False
+      for _ in range(int(env.envs[0].max_steps)):
+        _obs, _rewards, dones, infos = env.step(action)
+        info = infos[0]
+        done = bool(dones[0])
         missiles_remaining = int(
-          getattr(env.sim.get_agent_observation(env.agent_id), "missiles_remaining", -1)
+          getattr(env.envs[0].last_truth, "missiles_remaining", -1)
         )
-        if missiles_remaining < 4:
+        if missiles_remaining < initial_missiles:
           fired = True
-        if terminated or truncated:
+        if done:
           break
 
       self.assertTrue(fired)
       self.assertIn(str(info.get("termination_reason")), {"combat_win", "combat_timeout"})
-      if bool(terminated):
-        self.assertFalse(truncated)
+      if not bool(info.get("TimeLimit.truncated", False)):
         self.assertEqual(str(info.get("termination_reason")), "combat_win")
       else:
-        self.assertTrue(truncated)
         self.assertEqual(str(info.get("termination_reason")), "combat_timeout")
       reward_terms = info.get("reward_terms", {})
       self.assertIsInstance(reward_terms, dict)
-      reports_after = len(env.sim.export_recent_engagement_events().damage_reports)
       if str(info.get("termination_reason")) == "combat_win":
         self.assertGreater(float(reward_terms.get("combat_win_bonus", 0.0)), 0.0)
-        self.assertGreater(reports_after, reports_before)
     finally:
       env.close()

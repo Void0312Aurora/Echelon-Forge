@@ -24,7 +24,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - maintained env 路径目前仍以 air/execution 与 cooperative/common training 最成熟。
 - maintained production training 会通过 `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv` 进入 execution runtime，并通过 `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv` 进入 cooperative execution。
-- `UniversalEnv` 仍是 single-env compatibility、evaluation 和 diagnostics 的稳定 import path，但它的 raw `ef_py.SimulationKernel` 路径已隔离，需要 `runtime_compatibility_enabled=True`。
+- `UniversalEnv` 仍是隔离的 single-env compatibility import path。active evaluation 与 diagnostics 应使用维护中的 world-batch/facade adapter，而不是构造 raw `ef_py.SimulationKernel` 路径。
 - naval hook 只在明确列出的路径中存在，包括 station action、screen behavior、受限 reward surface，以及通过 runtime 路径承载的 N4 contact-evidence plumbing。
 - ground-domain 的 movement、sensing、terrain、fires、damage 与完整 runtime behavior 尚未在这里实现。README 中的 takeoff ground roll 或 runway geometry 指空域执行的跑道阶段逻辑，不代表 ground-domain 支持。
 
@@ -38,7 +38,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 ## 子目录约定
 
 - [universal_env.py](universal_env.py)
-  - 面向 compatibility、evaluation 和 diagnostics 的稳定 single-env import path。除非显式启用 raw-kernel compatibility flag，否则它不是默认 production training backend。
+  - 隔离的 single-env compatibility import path。它不是 active production training/eval/diagnostics backend。
 - [universal_env_parts/](universal_env_parts)
   - `UniversalEnv` 的主实现子域，维护 action、observation、space、step-info 组装逻辑。
 - [leader_env.py](leader_env.py)
@@ -136,13 +136,13 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 - “为什么 leader 环境会走 frozen/scripted execution backend”
   - 先看 `leader_env_parts/execution_runtime/` 与 [leader_env.py](leader_env.py)
 - “为什么直接构造 `UniversalEnv(...)` 会失败”
-  - 检查调用方是否确实要使用隔离的 raw-kernel compatibility path，并传入 `runtime_compatibility_enabled=True`；否则应优先使用 world-batch runtime adapter。
+  - active 调用方应使用 world-batch runtime adapter。raw single-env 构造属于 quarantine/archive 路径，不应重新进入维护中的 tools 或 tests。
 
 ## 迁移备注
 
 - `scenario_loader/` 已经按运行时子域拆开，后续新增 loader 逻辑应进入相应子包，不要把 `core.py` 再次扩成总包。
 - `gym_envs/` 应使用 `python/scenario/compiler/` 与 `python/scenario/runtime/` 下的打包场景入口。
 - `python/scenario/diagnostics/` 仅用于 diagnostics，不得成为环境默认路径。
-- `universal_env.py` 仍保留为稳定 single-env compatibility 入口，但 maintained training 应继续收敛到 runtime-facade / world-batch adapter。
+- `universal_env.py` 只保留为隔离的 compatibility 入口；maintained training、eval、diagnostics 与 regression tests 应保持在 runtime-facade / world-batch adapter 上。
 - `leader_env.py` 仍保留为稳定入口，但实现应继续向 `leader_env_parts/` 下沉。
 - 如果未来只保留包入口而不再保留根级单文件 env，需要先保证 `tools/`、`tests/`、训练入口的导入路径同步切换。

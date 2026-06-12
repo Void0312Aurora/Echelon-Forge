@@ -6,7 +6,8 @@ import numpy as np
 
 
 def make_waypoint_distance_trackers(env) -> tuple[list[dict[str, Any]], list[float]]:
-    waypoints = list(getattr(getattr(env, "loader", None), "waypoints", []) or [])
+    base_env = getattr(env, "unwrapped", env)
+    waypoints = list(getattr(getattr(base_env, "loader", None), "waypoints", []) or [])
     return waypoints, [float("inf")] * len(waypoints)
 
 
@@ -14,7 +15,8 @@ def update_waypoint_min_distances(env, waypoints: list[dict[str, Any]], wp_min_d
     if not wp_min_d:
         return
     try:
-        truth = env.sim.get_agent_observation(env.agent_id)
+        base_env = getattr(env, "unwrapped", env)
+        truth = base_env.sim.get_agent_observation(base_env.agent_id)
         x = float(getattr(truth, "x", 0.0))
         y = float(getattr(truth, "y", 0.0))
         for i, wp in enumerate(waypoints):

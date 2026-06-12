@@ -18,6 +18,12 @@
   - 遗留评估矩阵辅助脚本，用于解析旧版 `evaluate.py` 文本摘要格式。
 - [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)
   - 已归档的 raw `UniversalEnv` Arma proxy backend。维护中的 Arma bridge diagnostics 面只保留本地 stub 入口。
+- [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
+  - 已归档的 raw single-env observation scale sampler；文件名暗示 cooperative 覆盖，但实现直接构造 `UniversalEnv`。
+- [visual_resolution.py](visual_resolution.py)
+  - 已归档的视觉降采样基准，依赖 raw `UniversalEnv`；活跃 benchmark 现在只暴露维护中的 runtime family。
+- [coarse_route_segments.py](coarse_route_segments.py)
+  - 已归档的粗略航路段 rollout 基准，依赖 raw `UniversalEnv` 和直接策略加载。
 - `legacy_test_diagnostics/`
   - 历史性的单次诊断脚本，从 `tests/diagnostics/` 迁移而来，因为已不再是维护的测试入口。
 - `legacy_scripts/`

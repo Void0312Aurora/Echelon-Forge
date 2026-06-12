@@ -5,7 +5,7 @@
 ## 域状态口径
 
 - 这里的大多数通用 eval 示例仍面向 air/execution 任务；cooperative/common 由 maintained learned-policy 与 leader diagnostics 路径覆盖。
-- 对于 active training/eval parity，应优先使用 runtime-facade / world-batch 路径的配置。直接构造 `UniversalEnv` 的工具属于 compatibility diagnostics，除非它们显式 opt in `runtime_compatibility_enabled`。
+- active training、eval 和 diagnostics 工具使用 runtime-facade / world-batch 路径。直接构造 `UniversalEnv` 的工具应进入 archive/quarantine，不属于维护中的 tools catalog。
 - naval station pre-fire 入口有一个受限 maintained gate：`tools/eval/naval_station_policy_eval.py`。
 - ground tasking/schema bootstrap 目前还没有 `tools/` 下的 maintained eval 或 diagnostics runner；不要从本目录清单推断完整 ground runtime 已支持。
 
@@ -25,9 +25,9 @@
 ## 评估
 
 - [eval_task.py](eval/eval_task.py)
-  - air/execution 任务评估器，支持 `stable_flight`、`takeoff_roll`、`centerline` 和 `waypoint_nav`，可选用 `world_model` 或 `scripted` 后端。它走 raw `UniversalEnv` compatibility path，不是多域 acceptance gate。
+  - air/execution 任务评估器，支持 `stable_flight`、`takeoff_roll`、`centerline` 和 `waypoint_nav`，可选用 `world_model` 或 `scripted` 后端。它使用维护中的 single-world WorldBatchRuntime 路径，不再直接构造 raw `UniversalEnv`。
 - [policy_execution_eval.py](eval/policy_execution_eval.py)
-  - learned execution-policy 评估器，支持 `single` 和 `cooperative` 策略，并带有特定模式的指标。`single` 在 `runtime.world_batch_vec_env=true` 时使用 WorldBatchRuntime，否则回落到 raw `UniversalEnv` compatibility path；`cooperative` 使用 `CooperativeWorldBatchVecEnv`。
+  - learned execution-policy 评估器，支持 `single` 和 `cooperative` 策略，并带有特定模式的指标。`single` 要求 `runtime.world_batch_vec_env=true` 并使用 WorldBatchRuntime；`cooperative` 使用 `CooperativeWorldBatchVecEnv`。
 - [naval_station_policy_eval.py](eval/naval_station_policy_eval.py)
   - 受限 naval station cooperative gate，覆盖 stationing、pre-fire ROE hold reward terms 与 contact-evidence plumbing；这不是 learned-policy acceptance。
 - [task_eval_driver.py](eval/task_eval_driver.py)
@@ -54,13 +54,11 @@
 - [leader_perf_probe.py](diagnostics/leader_perf_probe.py)
   - 维护的 Leader 层吞吐量探测，支持 `auto/subproc/shared/dummy`。
 - [air_combat_weapon_employment_process_probe.py](diagnostics/air_combat_weapon_employment_process_probe.py)
-  - 受限 air-combat 武器使用过程 probe，用于 compatibility env path 上的 debug trace、lethality-chain 行与 hybrid action metrics。
+  - 受限 air-combat 武器使用过程 probe，通过 batch=1 `WorldBatchVecEnv` adapter 输出 debug trace、lethality-chain 行与 hybrid action metrics。
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口，用于 fixed-batch fitting 和 online update-path isolation。
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
   - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint 和 learnability-audit probes。
-- [analyze_cooperative_observation_scales.py](diagnostics/analyze_cooperative_observation_scales.py)
-  - cooperative execution 配置的 observation scale sampler；用于数值卫生检查，不是训练 runner。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
   - 聚焦 cooperative training NaN/Inf 的 tracer，会重建维护中的 cooperative flow，并在发现问题时输出 JSON 报告。
 - [README.md](diagnostics/README.md)
@@ -203,7 +201,7 @@ cmo_python tools/diagnostics/diagnose_cooperative_trajectory.py \
 
 ## 维护指南
 
-- 新的 raw-env/task-metric eval 行为应扩展 `tools/eval/eval_task.py` 和 `tools/eval/task_eval_driver.py`，并在需要时显式处理 compatibility，而不是添加每个任务独立的包装脚本。
+- 新的 task-metric eval 行为应在维护中的 runtime 路径上扩展 `tools/eval/eval_task.py` 和 `tools/eval/task_eval_driver.py`，而不是添加每个任务独立的包装脚本。
 - 新的维护 learned-policy 评估行为应扩展 `tools/eval/policy_execution_eval.py` 和 `tools/eval/sb3_eval_base.py` 中的共享 policy-loading helper，而不是重新引入拆分单/协同包装器。
 - 共享的评估引导应来自 `tools.eval.eval_utils`，而不是复制的设置块。
 - JSON 契约入口点应优先使用 `tools/runners/run_scenario_contract.py`，而不是一次性包装器。

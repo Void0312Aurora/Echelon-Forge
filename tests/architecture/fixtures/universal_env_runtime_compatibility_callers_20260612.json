@@ -2,7 +2,7 @@
   "schema_version": 1,
   "name": "universal_env_runtime_compatibility_callers_20260612",
   "status": "active_governance",
-  "scope": "Active Python call sites that set runtime_compatibility_enabled to the boolean value True outside archive paths.",
+  "scope": "Active Python call sites that set runtime_compatibility_enabled to the boolean value True outside archive paths; expected active count is zero.",
   "scan_roots": [
     "python",
     "gym_envs",
@@ -20,102 +20,5 @@
     "retain_manual_diagnostics_until_tool_migrated_or_archived",
     "retain_negative_guard"
   ],
-  "entries": [
-    {
-      "path": "tools/diagnostics/air_combat_weapon_employment_process_probe.py",
-      "call_count": 1,
-      "surface": "air-combat weapon-employment process diagnostic",
-      "classification": "manual_diagnostics_raw_env",
-      "disposition": "retain_manual_diagnostics_until_tool_migrated_or_archived",
-      "migration_target": "diagnostic mode backed by maintained world-batch execution or an archived manual probe",
-      "next_action": "Decide whether the probe remains operator-facing diagnostics or becomes runtime regression coverage.",
-      "evidence_markers": [
-        "def _build_env",
-        "step_info_mode=\"full\"",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
-      "call_count": 1,
-      "surface": "air-combat UniversalEnv weapon-release runtime regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "world-batch or facade-backed air-combat weapon-release regression",
-      "next_action": "Replace direct UniversalEnv weapon-release smoke after equivalent maintained adapter release-surface coverage exists.",
-      "evidence_markers": [
-        "test_universal_env_full_action_surface_can_trigger_weapon_release",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
-      "call_count": 1,
-      "surface": "air-combat drone weapon-employment raw-env smoke regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "world-batch or facade-backed drone weapon-employment release smoke",
-      "next_action": "Replace the direct UniversalEnv drone weapon-employment smoke after equivalent maintained adapter coverage exists.",
-      "evidence_markers": [
-        "test_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py",
-      "call_count": 1,
-      "surface": "air-combat C2 ROE mission-observation runtime-window age regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "facade or world-batch mission-observation regression",
-      "next_action": "Move age/window assertions to maintained observation packets before removing this raw-env opt-in.",
-      "evidence_markers": [
-        "test_air_combat_c2_roe_v2_runtime_window_age_advances_with_env_steps",
-        "mission_obs_mode=mode",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/air_combat/test_fire_action_release_gate.py",
-      "call_count": 1,
-      "surface": "air-combat fire-action release gate regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "maintained action/release gate regression",
-      "next_action": "Port fire-mask gate checks to a maintained runtime adapter before deleting the raw-env helper.",
-      "evidence_markers": [
-        "def _make_env",
-        "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/mission/test_mission_runtime.py",
-      "call_count": 1,
-      "surface": "compiled observation builder versus UniversalEnv observation parity check",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "observation packet parity check without raw UniversalEnv construction",
-      "next_action": "Replace the legacy-observation baseline with maintained observation packet evidence.",
-      "evidence_markers": [
-        "test_compiled_observation_builder_matches_legacy_observation",
-        "build_universal_observation",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/world_batch/test_world_batch_vec_env.py",
-      "call_count": 1,
-      "surface": "world-batch vec-env versus direct UniversalEnv action-wrapper parity regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "maintained action-wrapper parity baseline without direct UniversalEnv construction",
-      "next_action": "Retain only until MultiTimescaleActionWrapper parity can be proven through a maintained adapter.",
-      "evidence_markers": [
-        "test_world_batch_vec_env_matches_multi_timescale_action_wrapper",
-        "MultiTimescaleActionWrapper(",
-        "runtime_compatibility_enabled=True"
-      ]
-    }
-  ]
+  "entries": []
 }

@@ -18,8 +18,9 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
-from gym_envs.universal_env import UniversalEnv, build_universal_observation # noqa: E402
+from gym_envs.universal_env_parts import build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim, mission_observation_field_index # noqa: E402
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 
 
 def _make_detection(
@@ -1276,24 +1277,25 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
     self.assertIn(1.0, np.unique(team))
     self.assertIn(-1.0, np.unique(team))
 
-  def test_compiled_observation_builder_matches_legacy_observation(self) -> None:
+  def test_compiled_observation_builder_matches_maintained_batch_observation(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/inline_scenario.json"
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_observation_scenario(), f, ensure_ascii=True)
 
-      env = UniversalEnv(
+      env = WorldBatchVecEnv(
         scenario_path=scenario_path,
+        n_envs=1,
         include_visual=False,
         include_proprio=False,
         execution_step_runtime_mode="compiled",
-        runtime_compatibility_enabled=True,
       )
       try:
-        _obs, _info = env.reset()
-        inst = env._last_inst
-        truth = env._last_truth
-        loader = env.loader
+        batch_obs = env.reset()
+        handle = env.envs[0]
+        inst = handle.last_inst
+        truth = handle.last_truth
+        loader = handle.loader
 
         obs_compiled = build_universal_observation(
           loader,
@@ -1305,29 +1307,14 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
           include_proprio=False,
           last_action=None,
           action_space=env.action_space,
-          steps=int(env.steps),
-          max_steps=int(env.max_steps),
+          steps=int(handle.steps),
+          max_steps=int(handle.max_steps),
         )
 
-        loader.use_compiled_execution_step_runtime = False
-        obs_legacy = build_universal_observation(
-          loader,
-          inst,
-          truth,
-          mission_obs_mode=env.mission_obs_mode,
-          max_contacts=env.max_contacts,
-          max_rwr=env.max_rwr,
-          include_proprio=False,
-          last_action=None,
-          action_space=env.action_space,
-          steps=int(env.steps),
-          max_steps=int(env.max_steps),
-        )
-
-        self.assertTrue(np.allclose(obs_compiled["instruments"], obs_legacy["instruments"]))
-        self.assertTrue(np.allclose(obs_compiled["contacts"], obs_legacy["contacts"]))
-        self.assertTrue(np.allclose(obs_compiled["rwr"], obs_legacy["rwr"]))
-        self.assertTrue(np.allclose(obs_compiled["mission"], obs_legacy["mission"]))
+        self.assertTrue(np.allclose(obs_compiled["instruments"], batch_obs["instruments"][0]))
+        self.assertTrue(np.allclose(obs_compiled["contacts"], batch_obs["contacts"][0]))
+        self.assertTrue(np.allclose(obs_compiled["rwr"], batch_obs["rwr"][0]))
+        self.assertTrue(np.allclose(obs_compiled["mission"], batch_obs["mission"][0]))
 
         ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst.alt_baro))
         inst_vec, contacts, rwr = ef_py.compute_execution_observation_runtime_numpy(
@@ -1343,7 +1330,7 @@ class ExecutionObservationRuntimeTests(unittest.TestCase):
         self.assertEqual(np.asarray(inst_vec, dtype=np.float32).shape, (42,))
         self.assertEqual(np.asarray(contacts, dtype=np.float32).shape, (env.max_contacts, 5))
         self.assertEqual(np.asarray(rwr, dtype=np.float32).shape, (env.max_rwr, 4))
-        self.assertTrue(np.allclose(np.asarray(inst_vec, dtype=np.float32), obs_legacy["instruments"]))
+        self.assertTrue(np.allclose(np.asarray(inst_vec, dtype=np.float32), obs_compiled["instruments"]))
       finally:
         env.close()
 

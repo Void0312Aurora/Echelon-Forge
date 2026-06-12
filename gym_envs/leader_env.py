@@ -97,7 +97,7 @@ else:
             execution_device: str = "cpu",
             execution_use_autocast: bool = False,
             execution_step_runtime_mode: str | None = None,
-            execution_world_batch_runtime: bool = False,
+            execution_world_batch_runtime: bool = True,
             execution_world_batch_threads: int | None = None,
             execution_runtime: Any | None = None,
             collect_step_timing: bool = False,

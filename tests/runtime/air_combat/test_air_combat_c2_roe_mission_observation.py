@@ -13,12 +13,12 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
-from gym_envs.universal_env import UniversalEnv, build_universal_observation # noqa: E402
-from gym_envs.universal_env_parts import AIR_COMBAT_HYBRID_V1_ACTION_MODE # noqa: E402
+from gym_envs.universal_env_parts import AIR_COMBAT_HYBRID_V1_ACTION_MODE, build_universal_observation # noqa: E402
 from python.mission_obs_taxonomy import ( # noqa: E402
   mission_observation_dim,
   mission_observation_field_index,
 )
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 
 
 _DB_PATH = resolve_repo_path("examples", "config", "database")
@@ -288,21 +288,22 @@ class AirCombatC2RoeMissionObservationTests(unittest.TestCase):
 
   def test_air_combat_c2_roe_v2_runtime_window_age_advances_with_env_steps(self) -> None:
     mode = "air_combat_c2_roe_v2"
-    env = UniversalEnv(
-      _STAGE1_C2_ROE_SCENARIO_PATH,
+    env = WorldBatchVecEnv(
+      scenario_path=_STAGE1_C2_ROE_SCENARIO_PATH,
+      n_envs=1,
       include_visual=False,
       include_proprio=True,
       action_mode=AIR_COMBAT_HYBRID_V1_ACTION_MODE,
       mission_obs_mode=mode,
-      runtime_compatibility_enabled=True,
     )
     try:
-      obs, _info = env.reset(seed=20260608)
+      env.seed(20260608)
+      obs = env.reset()
       max_legal_age = 0.0
       first_quality = None
       for step in range(1, 420):
-        obs, _reward, terminated, truncated, _info = env.step(_hybrid_hold_action())
-        mission = np.asarray(obs["mission"], dtype=np.float32)
+        obs, _reward, done, _infos = env.step(_hybrid_hold_action().reshape(1, -1))
+        mission = np.asarray(obs["mission"][0], dtype=np.float32)
         max_legal_age = max(
           max_legal_age,
           float(mission[mission_observation_field_index(mode, "legal_open_age_steps")]),
@@ -310,7 +311,7 @@ class AirCombatC2RoeMissionObservationTests(unittest.TestCase):
         if float(mission[mission_observation_field_index(mode, "quality_window_ready")]) > 0.5:
           first_quality = (step, mission)
           break
-        if terminated or truncated:
+        if bool(done[0]):
           break
       self.assertIsNotNone(first_quality)
       quality_step, quality_mission = first_quality

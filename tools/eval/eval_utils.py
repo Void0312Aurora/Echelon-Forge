@@ -34,24 +34,28 @@ def add_common_env_args(
         parser.add_argument("--no_randomization", action="store_true")
 
 
-def make_universal_env_from_args(args, *, mission_obs_mode: str | None = None):
+def make_single_world_batch_env_from_args(args, *, mission_obs_mode: str | None = None):
     bootstrap_repo_imports()
 
-    from gym_envs.universal_env import UniversalEnv
+    from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 
-    env_kwargs = {
+    env_settings = {
         "include_visual": bool(getattr(args, "include_visual", False)),
         "include_proprio": bool(getattr(args, "include_proprio", False)),
         "action_mode": str(getattr(args, "action_mode", "full")),
     }
     if mission_obs_mode is not None:
-        env_kwargs["mission_obs_mode"] = str(mission_obs_mode)
-    env = UniversalEnv(str(args.scenario), **env_kwargs)
+        env_settings["mission_obs_mode"] = str(mission_obs_mode)
+    env = build_single_world_batch_execution_runtime(
+        scenario_path=str(args.scenario),
+        env_settings=env_settings,
+        worker_threads=1,
+    )
 
     if bool(getattr(args, "no_randomization", False)):
-        import world_model_train as wmt
+        from world_model_train import _no_randomization_overrides
 
-        wmt._apply_env_overrides(env, args)
+        env.set_randomization_overrides(_no_randomization_overrides())
     return env
 
 

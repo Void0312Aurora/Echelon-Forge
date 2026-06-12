@@ -20,13 +20,15 @@ from python.testing.runtime import ensure_repo_imports, resolve_repo_path
 
 ensure_repo_imports()
 
-from gym_envs.universal_env import UniversalEnv
+import ef_py
+
 from gym_envs.scenario_loader.reward_runtime.air_combat import (
     air_combat_c2_roe_state_from_mapping,
     classify_air_combat_c2_roe_event,
 )
 from gym_envs.universal_env_parts.air_combat_event_action import _build_fire_event_support
 from python.rl.control.wrappers import MultiTimescaleActionWrapper, get_action_wrapper_spec
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 from tools.eval.sb3_eval_base import load_json_config, load_sb3_policy
 
 
@@ -1557,6 +1559,130 @@ def _base_env(env):
     return getattr(env, "unwrapped", env)
 
 
+def _single_obs(batch_obs: dict[str, Any]) -> dict[str, Any]:
+    return {
+        str(key): np.asarray(value[0], dtype=np.float32, copy=True)
+        for key, value in dict(batch_obs or {}).items()
+    }
+
+
+class _BatchSingleWorldProbeView:
+    def __init__(self, vec_env: WorldBatchVecEnv):
+        self._vec_env = vec_env
+        self._sim_proxy = _BatchSingleWorldSimProxy(vec_env)
+
+    @property
+    def _handle(self):
+        return self._vec_env.envs[0]
+
+    @property
+    def loader(self):
+        return self._handle.loader
+
+    @property
+    def sim(self):
+        return self._sim_proxy
+
+    @property
+    def agent_id(self):
+        return self._handle.agent_id
+
+    @property
+    def steps(self):
+        return self._handle.steps
+
+    @property
+    def max_steps(self):
+        return self._handle.max_steps
+
+    @property
+    def action_mode(self):
+        return self._vec_env.action_mode
+
+    @property
+    def mission_obs_mode(self):
+        return self._vec_env.mission_obs_mode
+
+    @property
+    def _last_action(self):
+        return self._handle.last_action
+
+
+class _BatchSingleWorldSimProxy:
+    def __init__(self, vec_env: WorldBatchVecEnv):
+        self._vec_env = vec_env
+
+    @property
+    def _shim(self):
+        return self._vec_env.envs[0].loader.sim
+
+    def export_recent_engagement_events(self):
+        export_packet = getattr(
+            getattr(self._vec_env, "runtime_facade", None),
+            "export_engagement_event_packet",
+            None,
+        )
+        if not callable(export_packet):
+            raise RuntimeError(
+                "air-combat process diagnostics require RuntimeFacade.export_engagement_event_packet"
+            )
+        request = ef_py.EngagementBatchRequest()
+        ref = ef_py.EngagementEntityRef()
+        ref.world_index = 0
+        ref.entity_id = int(self._vec_env.envs[0].agent_id or 0)
+        request.refs = [ref]
+        request.include_track_packets = True
+        request.include_launch_requests = True
+        request.include_launch_events = True
+        request.include_munition_lifecycle_packets = True
+        request.include_effects_events = True
+        request.include_damage_reports = True
+        request.include_diagnostics_traces = True
+        return export_packet(request)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._shim, name)
+
+
+class _BatchSingleWorldProbeEnv:
+    def __init__(self, vec_env: WorldBatchVecEnv):
+        self._vec_env = vec_env
+        self._view = _BatchSingleWorldProbeView(vec_env)
+
+    @property
+    def action_space(self):
+        return self._vec_env.action_space
+
+    @property
+    def observation_space(self):
+        return self._vec_env.observation_space
+
+    @property
+    def unwrapped(self):
+        return self._view
+
+    def reset(self, *, seed: int | None = None):
+        if seed is not None:
+            self._vec_env.seed(int(seed))
+        obs = self._vec_env.reset()
+        info = {}
+        if self._vec_env.reset_infos:
+            info = dict(self._vec_env.reset_infos[0] or {})
+        return _single_obs(obs), info
+
+    def step(self, action):
+        obs, rewards, dones, infos = self._vec_env.step(np.asarray(action, dtype=np.float32).reshape(1, -1))
+        info = dict(infos[0] or {})
+        truncated = bool(info.get("truncated", info.get("TimeLimit.truncated", False)))
+        terminated = bool(info.get("terminated", bool(dones[0]) and not truncated))
+        if bool(dones[0]) and not (terminated or truncated):
+            terminated = True
+        return _single_obs(obs), float(rewards[0]), bool(terminated), bool(truncated), info
+
+    def close(self) -> None:
+        self._vec_env.close()
+
+
 def _diagnostic_dcr_bridge_overrides(args: argparse.Namespace) -> dict[str, Any]:
     if not bool(getattr(args, "diagnostic_dcr_bridge", False)):
         return {}
@@ -1602,8 +1728,15 @@ def _apply_diagnostic_dcr_bridge(env, overrides: dict[str, Any]) -> None:
 def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
     env_cfg = train_config.get("env", {}) if isinstance(train_config, dict) else {}
     env_cfg = env_cfg if isinstance(env_cfg, dict) else {}
-    env = UniversalEnv(
-        os.path.abspath(scenario_path),
+    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
+    if wrapper_class is not None and wrapper_class is not MultiTimescaleActionWrapper:
+        raise ValueError(
+            "air-combat process diagnostics only supports maintained WorldBatchVecEnv "
+            f"or MultiTimescaleActionWrapper controller configs; got {wrapper_class!r}"
+        )
+    vec_env = WorldBatchVecEnv(
+        scenario_path=os.path.abspath(scenario_path),
+        n_envs=1,
         include_visual=bool(env_cfg.get("include_visual", False)),
         include_proprio=bool(env_cfg.get("include_proprio", True)),
         action_mode=str(env_cfg.get("action_mode", "full")),
@@ -1614,12 +1747,10 @@ def _build_env(scenario_path: str, train_config: dict[str, Any] | None):
         execution_step_runtime_mode=str(env_cfg.get("execution_step_runtime_mode", "compiled")),
         flight_shaping_backend=str(env_cfg.get("flight_shaping_backend", "compiled")),
         step_info_mode="full",
-        runtime_compatibility_enabled=True,
+        worker_threads=1,
+        action_wrapper_kwargs=dict(wrapper_kwargs or {}) if wrapper_class is MultiTimescaleActionWrapper else None,
     )
-    wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)
-    if wrapper_class is MultiTimescaleActionWrapper:
-        return wrapper_class(env, **dict(wrapper_kwargs or {}))
-    return env
+    return _BatchSingleWorldProbeEnv(vec_env)
 
 
 def _controlled_consequence_bridge_record(summary: dict[str, Any]) -> dict[str, Any]:

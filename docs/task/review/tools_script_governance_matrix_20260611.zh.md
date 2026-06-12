@@ -42,14 +42,14 @@
 
 | 功能面 | 当前入口 | 判断 | 后续动作 |
 | --- | --- | --- | --- |
-| task metric eval | `tools/eval/eval_task.py`、`tools/eval/task_eval_driver.py` | 功能名基本稳定。 | 保留；新增 raw-env/task metric 行为应扩展 driver。 |
+| task metric eval | `tools/eval/eval_task.py`、`tools/eval/task_eval_driver.py` | 功能名基本稳定。 | 保留；任务指标评估已收敛到 maintained single-world WorldBatchRuntime，新增行为应扩展 driver。 |
 | learned policy eval | `tools/eval/policy_execution_eval.py`、`tools/eval/sb3_eval_base.py` | 本轮已语义化。 | 保留；`sb3_eval_base.py` 是后端 helper，不作为顶层能力名。 |
 | naval station policy gate | `tools/eval/naval_station_policy_eval.py` | 本轮已语义化。 | 保留；不再使用 N4 作为入口文件名。 |
 | benchmark diagnostics | `tools/diagnostics/benchmark.py`、`tools/diagnostics/run_benchmark_suite.py`、`tools/diagnostics/benchmarks/*` | 已是功能族；post-launch assessment benchmark 已迁入 family。 | 保留；新增 benchmark 进 `benchmarks/` 和 registry。 |
 | cooperative trajectory diagnostics | `tools/diagnostics/diagnose_cooperative_trajectory.py`、`cooperative_trajectory_base.py` | 已是功能族。 | 保留；不要恢复 takeoff/takeoff-to-cruise wrapper。 |
 | flight trajectory diagnostics | `tools/diagnostics/flight_trajectory_diagnostics.py --mode takeoff_to_landing/runway_drift_sweep` | 已合并任务特定轨迹诊断入口。 | 保留统一入口；内部实现位于 `tools/diagnostics/flight_trajectory/`。 |
 | runtime bridge diagnostics | `arma_proxy_backend_stub.py` | 域名清楚，非项目代号。 | 保留 stub；raw `UniversalEnv` env backend 已归档到 `tools/archive/`，不再是活入口。 |
-| air-combat process tracing | `air_combat_weapon_employment_process_probe.py` | 本轮已语义化；入口表达武器使用/杀伤链诊断能力。 | 保留统一入口；历史 stage 配置名只留在场景/训练配置路径中。 |
+| air-combat process tracing | `air_combat_weapon_employment_process_probe.py` | 本轮已语义化；入口表达武器使用/杀伤链诊断能力。 | 保留统一入口；运行时已迁到 batch=1 `WorldBatchVecEnv` adapter，历史 stage 配置名只留在场景/训练配置路径中。 |
 | event-credit diagnostics | `event_credit_head_probe.py --mode offline_fit`、`event_credit_head_probe.py --mode online_update` | 已完成入口合并，默认路径仍可保留历史 A7 实验名。 | 保留统一入口；内部实现位于 `tools/diagnostics/event_credit_head/`。 |
 | fire-timing fault localization | `fire_timing_fault_localization_probe.py --mode structural_toy/real_update/chain_breakpoint/learnability_audit` | 已完成入口合并，默认路径仍可保留历史 M3S2 实验名。 | 保留统一入口；内部实现位于 `tools/diagnostics/fire_timing_fault_localization/`。 |
 | workspace cleanup/audit | `redundancy_audit.py`、`cleanup_redundancy.py`、`isolate_repro_workspace.sh` | 功能名稳定。 | 保留。 |

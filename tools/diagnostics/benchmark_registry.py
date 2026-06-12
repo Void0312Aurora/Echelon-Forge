@@ -57,14 +57,4 @@ BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
         description="Policy-observation bridge benchmark.",
         module_path="tools.diagnostics.benchmarks.policy_observation_bridge",
     ),
-    "visual_resolution": BenchmarkFamily(
-        name="visual_resolution",
-        description="Visual downsample sweep benchmark.",
-        module_path="tools.diagnostics.benchmarks.visual_resolution",
-    ),
-    "coarse_route_segments": BenchmarkFamily(
-        name="coarse_route_segments",
-        description="Coarse route-segment error benchmark.",
-        module_path="tools.diagnostics.benchmarks.coarse_route_segments",
-    ),
 }

@@ -11,7 +11,6 @@ APPROVED_DIAGNOSTICS_TOP_LEVEL = {
   "__init__.py",
   "ablate_visual_training_effect.py",
   "air_combat_weapon_employment_process_probe.py",
-  "analyze_cooperative_observation_scales.py",
   "arma_proxy_backend_stub.py",
   "benchmark.py",
   "benchmark_registry.py",

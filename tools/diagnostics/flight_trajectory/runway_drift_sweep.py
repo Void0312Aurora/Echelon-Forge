@@ -28,8 +28,8 @@ from python.testing.runtime import ensure_repo_imports
 
 BASE_DIR = ensure_repo_imports()
 
-from gym_envs.universal_env import UniversalEnv
 from python.rl.control.scripted_takeoff import ScriptedTakeoffController, scripted_takeoff_action
+from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
 
 
 def _parse_seeds(spec: str) -> list[int]:
@@ -83,6 +83,17 @@ def _make_action(
     raise ValueError(f"unknown action_mode: {action_mode!r}")
 
 
+def _env_base(env):
+    return getattr(env, "unwrapped", env)
+
+
+def _env_max_steps(env) -> int:
+    world_vec = getattr(env, "world_vec", None)
+    if world_vec is not None and getattr(world_vec, "envs", None):
+        return int(getattr(world_vec.envs[0], "max_steps", 0))
+    return int(getattr(_env_base(env), "max_steps", 0))
+
+
 @dataclass(frozen=True)
 class EpisodeResult:
     seed: int
@@ -100,7 +111,7 @@ class EpisodeResult:
 
 
 def _run_one(
-    env: UniversalEnv,
+    env,
     *,
     seed: int,
     policy: str,
@@ -109,14 +120,15 @@ def _run_one(
     trace_every_s: float | None,
 ) -> EpisodeResult:
     obs, _ = env.reset(seed=seed)
-    dt = float(env.sim.get_time_step())
+    base_env = _env_base(env)
+    dt = float(base_env.sim.get_time_step())
     steps = 0
     takeoff_ctrl = None
     if policy == "scripted_takeoff":
         takeoff_ctrl = ScriptedTakeoffController(action_dim=int(env.action_space.shape[0]), dt=dt)
         takeoff_ctrl.reset(obs)
 
-    world_yaw = float(getattr(env.loader, "world_yaw_deg", 0.0))
+    world_yaw = float(getattr(base_env.loader, "world_yaw_deg", 0.0))
     wind_speed = float("nan")
     wind_dir = float("nan")
 
@@ -146,7 +158,7 @@ def _run_one(
         # Wind fields are updated after stepping.
         if k == 0:
             try:
-                inst = env.sim.get_instrument_state(env.agent_id)
+                inst = base_env.sim.get_instrument_state(base_env.agent_id)
                 wind_speed = float(getattr(inst, "wind_speed", float("nan")))
                 wind_dir = float(getattr(inst, "wind_dir", float("nan")))
             except Exception:
@@ -176,7 +188,7 @@ def _run_one(
             t = k * dt
             if t + 1.0e-9 >= next_trace_t:
                 try:
-                    inst = env.sim.get_instrument_state(env.agent_id)
+                    inst = base_env.sim.get_instrument_state(base_env.agent_id)
                     hdg = float(getattr(inst, "heading", 0.0))
                     trk = float(getattr(inst, "ground_track", 0.0))
                     ias = float(getattr(inst, "ias", 0.0))
@@ -234,7 +246,15 @@ def main() -> int:
     args = p.parse_args()
 
     seeds = _parse_seeds(args.seeds)
-    env = UniversalEnv(args.scenario, action_mode=args.action_mode, include_visual=False)
+    env = build_single_world_batch_execution_runtime(
+        scenario_path=args.scenario,
+        env_settings={
+            "action_mode": args.action_mode,
+            "include_visual": False,
+            "include_proprio": False,
+        },
+        worker_threads=1,
+    )
     policy = str(args.policy)
     action = None
     if policy == "fixed":
@@ -253,7 +273,7 @@ def main() -> int:
         if int(env.action_space.shape[0]) not in (2, 4, 17):
             raise ValueError(f"unsupported action_dim for policy={policy!r}: {env.action_space.shape}")
 
-    max_steps = int(args.max_steps) if args.max_steps is not None else int(env.max_steps)
+    max_steps = int(args.max_steps) if args.max_steps is not None else _env_max_steps(env)
 
     results: list[EpisodeResult] = []
     for s in seeds:

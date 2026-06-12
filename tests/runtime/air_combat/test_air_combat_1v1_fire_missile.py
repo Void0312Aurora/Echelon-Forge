@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import unittest
 from pathlib import Path
@@ -13,7 +12,7 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
-from gym_envs.universal_env import UniversalEnv # noqa: E402
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
 from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics # noqa: E402
 
@@ -24,7 +23,6 @@ _SCENARIO_PATH = resolve_repo_path(
   "air_combat_1v1_headon_sensor_smoke_v1.json",
 )
 _DB_PATH = resolve_repo_path("examples", "config", "database")
-_HAS_GYMNASIUM = importlib.util.find_spec("gymnasium") is not None
 
 
 def _load_fixture(seed: int = 20260516) -> tuple[ef_py.SimulationKernel, ScenarioLoader, int, int]:
@@ -449,34 +447,37 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
       500.0,
     )
 
-  @unittest.skipUnless(_HAS_GYMNASIUM, "UniversalEnv requires optional gymnasium dependency")
-  def test_universal_env_full_action_surface_can_trigger_weapon_release(self) -> None:
-    env = UniversalEnv(
-      _SCENARIO_PATH,
+  def test_world_batch_full_action_surface_can_trigger_weapon_release(self) -> None:
+    env = WorldBatchVecEnv(
+      scenario_path=_SCENARIO_PATH,
+      n_envs=1,
       include_visual=False,
       include_proprio=False,
       action_mode="full",
       mission_obs_mode="basic",
-      runtime_compatibility_enabled=True,
+      worker_threads=1,
     )
     try:
-      _obs, _info = env.reset(seed=20260516)
+      env.seed(20260516)
+      env.reset()
 
-      action = np.zeros((17,), dtype=np.float32)
-      action[0] = 0.05
-      action[3] = 0.6
-      action[9] = 1.0
-      action[13] = 1.0
-      action[14] = 1.0
+      action = np.zeros((1, 17), dtype=np.float32)
+      action[0, 0] = 0.05
+      action[0, 3] = 0.6
+      action[0, 9] = 1.0
+      action[0, 13] = 1.0
+      action[0, 14] = 1.0
 
+      initial_missiles = int(getattr(env.envs[0].last_truth, "missiles_remaining", -1))
+      self.assertEqual(initial_missiles, 4)
       fired = False
       for _ in range(120):
-        _obs, _reward, terminated, truncated, _info = env.step(action)
-        missiles_remaining = int(getattr(env.sim.get_agent_observation(env.agent_id), "missiles_remaining", -1))
-        if missiles_remaining < 4:
+        _obs, _rewards, dones, _infos = env.step(action)
+        missiles_remaining = int(getattr(env.envs[0].last_truth, "missiles_remaining", -1))
+        if missiles_remaining < initial_missiles:
           fired = True
           break
-        if terminated or truncated:
+        if bool(dones[0]):
           break
 
       self.assertTrue(fired)

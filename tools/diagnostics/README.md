@@ -10,12 +10,10 @@ screen, and contact-evidence paths. Ground-domain movement, sensing, terrain,
 fires, damage, and full runtime diagnostics are not maintained here yet; takeoff
 ground-roll wording means runway-phase air/execution behavior.
 
-Runtime posture: diagnostics that use `WorldBatchRuntime`, `WorldBatchVecEnv`,
-or `CooperativeWorldBatchVecEnv` are aligned with the maintained runtime-facade
-mainline. Diagnostics that instantiate `UniversalEnv` directly are raw-kernel
-compatibility/debug probes and must explicitly opt into
-`runtime_compatibility_enabled=True`; callers that have not plumbed that flag
-should be treated as implementation follow-up, not production acceptance.
+Runtime posture: maintained diagnostics use `WorldBatchRuntime`,
+`WorldBatchVecEnv`, or `CooperativeWorldBatchVecEnv` and align with the
+runtime-facade mainline. Diagnostics that directly instantiate `UniversalEnv`
+are archive/quarantine material, not active production or acceptance surfaces.
 
 These scripts are intentionally separate from top-level entrypoints because
 they usually:
@@ -45,7 +43,7 @@ Current diagnostics and probes:
 - [ablate_visual_training_effect.py](ablate_visual_training_effect.py)
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
 - [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
-  - Scoped air-combat weapon-employment process probe for debug traces, lethality-chain rows, and hybrid action metrics on the raw-`UniversalEnv` compatibility path.
+  - Scoped air-combat weapon-employment process probe for debug traces, lethality-chain rows, and hybrid action metrics through a batch=1 `WorldBatchVecEnv` adapter.
 - [event_credit_head_probe.py](event_credit_head_probe.py)
   - Unified first-event credit-head diagnostic entry. Use `--mode offline_fit`
     for fixed-batch supervised fitting, or `--mode online_update` for
@@ -57,8 +55,6 @@ Current diagnostics and probes:
     update-path checks, `--mode chain_breakpoint` for fixed-batch breakpoint
     attribution, or `--mode learnability_audit` for oracle fire-timing
     learnability checks.
-- [analyze_cooperative_observation_scales.py](analyze_cooperative_observation_scales.py)
-  - Observation-scale sampler for cooperative execution configs; useful for numeric hygiene and feature scaling checks.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - Minimal line-protocol TCP stub for the local `game/` Arma bridge. It acknowledges `begin_session`, consumes `host_frame`, and emits synthetic `proxy_state` payloads for `echelon_bridge.dll`.
 - `spatial_query`
@@ -73,17 +69,8 @@ Current diagnostics and probes:
   - WorldBatchVecEnv training-adapter benchmark.
 - `policy_observation_bridge`
   - Policy-observation bridge benchmark.
-- `visual_resolution`
-  - Visual downsample sweep benchmark.
-- `coarse_route_segments`
-  - Coarse route-segment error benchmark.
 - `air_combat_post_launch_assessment`
   - Air-combat post-launch assessment rollout benchmark.
-
-Some benchmark families include legacy/raw-`UniversalEnv` comparison branches
-alongside maintained runtime-facade measurements. If those branches are needed,
-wire the compatibility flag intentionally instead of treating a raw-env failure
-as a world-batch runtime regression.
 
 - [diagnose_cooperative_trajectory.py](diagnose_cooperative_trajectory.py)
   - Unified cooperative trajectory replay/export CLI. Use `--task takeoff` or `--task takeoff_to_cruise` to emit task-specific PNG + JSON diagnostics from one maintained entrypoint.

@@ -206,8 +206,10 @@ The active `UniversalEnv` raw-compatibility opt-in surface is tracked by
 `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
 and guarded by
 `tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`.
-New boolean `runtime_compatibility_enabled=True` call sites must be registered
-there with a disposition and migration target instead of appearing silently.
+The expected active count is zero. New boolean
+`runtime_compatibility_enabled=True` call sites should be migrated to a
+maintained runtime/facade path or moved to archive/quarantine; the guard exists
+to stop new active survivors, not to normalize them.
 
 ## Dependency Notes
 

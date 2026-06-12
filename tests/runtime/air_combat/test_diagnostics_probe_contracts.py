@@ -1028,23 +1028,18 @@ class AirCombatProcessProbeTests(unittest.TestCase):
     )
 
   def test_build_env_applies_multi_timescale_wrapper_from_train_config(self) -> None:
-    class DummyEnv:
-      def __init__(self, *args, **kwargs):
-        self.args = args
+    class DummyVecEnv:
+      def __init__(self, **kwargs):
         self.kwargs = kwargs
-        self.unwrapped = self
 
     class DummyWrapper:
-      def __init__(self, env, **kwargs):
-        self.env = env
-        self.kwargs = kwargs
-        self.unwrapped = env.unwrapped
+      pass
 
-    old_env = probe.UniversalEnv
+    old_vec_env = probe.WorldBatchVecEnv
     old_wrapper = probe.MultiTimescaleActionWrapper
     old_get_spec = probe.get_action_wrapper_spec
     try:
-      probe.UniversalEnv = DummyEnv
+      probe.WorldBatchVecEnv = DummyVecEnv
       probe.MultiTimescaleActionWrapper = DummyWrapper
       probe.get_action_wrapper_spec = lambda _cfg: (DummyWrapper, {"scripted_blend_indices": [0, 1, 2, 3]})
 
@@ -1053,12 +1048,15 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         {"env": {"action_mode": "air_combat_hybrid_v1"}},
       )
 
-      self.assertIsInstance(env, DummyWrapper)
-      self.assertEqual(env.kwargs["scripted_blend_indices"], [0, 1, 2, 3])
-      self.assertIs(probe._base_env(env), env.env)
-      self.assertEqual(env.env.kwargs["action_mode"], "air_combat_hybrid_v1")
+      self.assertIsInstance(env, probe._BatchSingleWorldProbeEnv)
+      self.assertIsInstance(env._vec_env, DummyVecEnv)
+      self.assertEqual(env._vec_env.kwargs["action_mode"], "air_combat_hybrid_v1")
+      self.assertEqual(
+        env._vec_env.kwargs["action_wrapper_kwargs"],
+        {"scripted_blend_indices": [0, 1, 2, 3]},
+      )
     finally:
-      probe.UniversalEnv = old_env
+      probe.WorldBatchVecEnv = old_vec_env
       probe.MultiTimescaleActionWrapper = old_wrapper
       probe.get_action_wrapper_spec = old_get_spec
 
