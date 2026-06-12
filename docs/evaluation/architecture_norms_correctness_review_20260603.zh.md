@@ -148,7 +148,7 @@ cmo_python -m pytest -q \
   tests/architecture/command_tasking/test_tasking_bridge_guardrails.py \
   tests/architecture/structural_boundaries \
   tests/runtime/facade/test_runtime_facade.py \
-  tests/runtime/core/test_world_setup_compat.py \
+  tests/runtime/core/test_world_setup_facade_contracts.py \
   tests/runtime/mission/test_mission_command_split_semantics.py \
   tests/runtime/mission/test_mission_command_naval_fields_roundtrip.py \
   tests/runtime/ground/test_ground_native_platform_schema.py \
@@ -277,7 +277,7 @@ ctest --test-dir build-workshop -R ef_test_all --output-on-failure
 
 正确性判断：
 
-- 本轮 `test_world_setup_compat.py` 通过，支持 maintained setup 和 raw compatibility 边界判断。
+- 本轮 `test_world_setup_facade_contracts.py` 通过，支持 maintained setup 和 raw setup 拒绝边界判断。
 - 不能证明训练闭环、policy 收敛或所有 scenario loader 分支正确。
 
 ### 3.5 Command / Tasking / Domain Standards 子架构

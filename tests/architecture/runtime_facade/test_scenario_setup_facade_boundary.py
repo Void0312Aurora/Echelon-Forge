@@ -42,8 +42,10 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
   assert "def apply_world_setup_payload_diagnostics(" in diagnostics_source
   assert "def apply_world_setup_request_diagnostics(" in diagnostics_source
   assert "def read_runtime_world_time_step_diagnostics(" in diagnostics_source
-  assert "world_compatibility_quarantine" in diagnostics_source
-  assert "apply_world_setup_batch(" in diagnostics_source
+  assert "world_compatibility_quarantine" not in diagnostics_source
+  assert "apply_world_setup_batch(" not in diagnostics_source
+  assert "apply_runtime_world_layout_request_maintained(runtime, request)" in diagnostics_source
+  assert "apply_world_setup_request_maintained(runtime, request)" in diagnostics_source
   assert "RuntimeWorldLayoutRequestCompat" in maintained_source
   assert "RuntimeWorldLayoutResultCompat" in maintained_source
   assert "apply_world_setup_payload_diagnostics" not in package_source
@@ -92,7 +94,7 @@ def test_wp24_maintained_python_paths_do_not_import_diagnostics_scenario_setup()
     f"diagnostics scenario setup imports found: {violations}"
   )
 
-def test_wp24_scenario_raw_setup_fallbacks_are_quarantined_by_name() -> None:
+def test_wp24_scenario_raw_setup_fallbacks_are_removed_from_diagnostics() -> None:
   setup_source = (REPO_ROOT / "python" / "scenario" / "diagnostics" / "runtime_setup.py").read_text(
     encoding="utf-8"
   )
@@ -100,19 +102,12 @@ def test_wp24_scenario_raw_setup_fallbacks_are_quarantined_by_name() -> None:
   offenders: list[tuple[str, int, str]] = []
 
   for node in ast.walk(tree):
-    if not isinstance(node, ast.FunctionDef):
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
       continue
-    for child in ast.walk(node):
-      if not (
-        isinstance(child, ast.Call)
-        and isinstance(child.func, ast.Attribute)
-        and child.func.attr in {"apply_world_setup_batch", "apply_world_layout"}
-      ):
-        continue
-      if "diagnostics" not in node.name:
-        offenders.append((node.name, int(getattr(child, "lineno", 0) or 0), child.func.attr))
+    if node.func.attr in {"apply_world_setup_batch", "apply_world_layout"}:
+      offenders.append(("diagnostics_runtime_setup", int(getattr(node, "lineno", 0) or 0), node.func.attr))
 
-  assert not offenders, f"raw setup fallback calls must stay inside diagnostics helpers: {offenders}"
+  assert not offenders, f"raw setup fallback calls must be removed from diagnostics helpers: {offenders}"
 
 def test_wp24_scenario_runtime_does_not_construct_raw_runtime_on_production_path() -> None:
   violations: list[tuple[str, int, str]] = []

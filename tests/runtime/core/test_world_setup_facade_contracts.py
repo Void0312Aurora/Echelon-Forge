@@ -9,8 +9,8 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 
-from python.scenario.diagnostics.runtime_setup import apply_world_setup_payload_diagnostics # noqa: E402
 from python.scenario.diagnostics.runtime_setup import apply_runtime_world_layout_request_diagnostics # noqa: E402
+from python.scenario.diagnostics.runtime_setup import apply_world_setup_payload_diagnostics # noqa: E402
 from python.scenario.diagnostics.runtime_setup import build_batch_world_setup_request # noqa: E402
 from python.scenario.diagnostics.runtime_setup import build_runtime_world_layout_request # noqa: E402
 from python.scenario.diagnostics.runtime_setup import extract_runtime_world_layout_entity_ids # noqa: E402
@@ -45,7 +45,7 @@ class _FacadeOnlyWorldLayoutRuntime:
     return result
 
 
-class _CompatOnlyRuntime:
+class _BatchOnlyRuntime:
   def __init__(self) -> None:
     self.calls: list[str] = []
     self.last_batch_args = None
@@ -79,7 +79,7 @@ class _RawRuntimeWithFutureFacadeSetupMethod:
     raise AssertionError(f"raw world_compatibility_quarantine({index}) access must stay quarantined")
 
 
-class _CompatOnlyWorldLayoutRuntime:
+class _RawSignatureWorldLayoutRuntime:
   def __init__(self) -> None:
     self.calls: list[str] = []
     self.last_layout_args = None
@@ -136,7 +136,7 @@ class _NoTimeStepWorldRuntime:
     raise AssertionError(f"time-step helper should not need raw world({index}) access")
 
 
-class WorldSetupCompatTests(unittest.TestCase):
+class WorldSetupFacadeContractTests(unittest.TestCase):
   def test_build_batch_world_setup_request_normalizes_seed_and_time_step_payloads(self) -> None:
     request = build_batch_world_setup_request(
       seeds=[-1, 5],
@@ -185,24 +185,21 @@ class WorldSetupCompatTests(unittest.TestCase):
     self.assertEqual(runtime.calls, ["apply_world_setup"])
     self.assertEqual(entity_ids, [701, 702])
 
-  def test_apply_world_setup_payload_falls_back_to_batch_runtime_when_facade_api_missing(self) -> None:
-    runtime = _CompatOnlyRuntime()
+  def test_apply_world_setup_payload_rejects_batch_only_runtime(self) -> None:
+    runtime = _BatchOnlyRuntime()
 
-    entity_ids = apply_world_setup_payload_diagnostics(
-      runtime,
-      seeds=[17, 19],
-      terrain_assignments=[],
-      wind_assignments=[],
-      zones=[],
-      spawn_requests=[],
-      time_steps=[0.1, 0.2],
-    )
+    with self.assertRaisesRegex(RuntimeError, "requires a maintained facade setup target"):
+      apply_world_setup_payload_diagnostics(
+        runtime,
+        seeds=[17, 19],
+        terrain_assignments=[],
+        wind_assignments=[],
+        zones=[],
+        spawn_requests=[],
+        time_steps=[0.1, 0.2],
+      )
 
-    self.assertEqual(runtime.calls, ["apply_world_setup_batch"])
-    self.assertEqual(entity_ids, [801, 802, 803])
-    self.assertIsNotNone(runtime.last_batch_args)
-    self.assertEqual(runtime.last_batch_args[0], [17, 19])
-    self.assertEqual(runtime.last_batch_args[5], [0.1, 0.2])
+    self.assertEqual(runtime.calls, [])
 
   def test_apply_world_setup_request_maintained_rejects_raw_runtime_shape_even_if_future_binding_drifts(self) -> None:
     request = build_batch_world_setup_request(
@@ -269,8 +266,8 @@ class WorldSetupCompatTests(unittest.TestCase):
     self.assertEqual(int(result.world_index), 1)
     self.assertEqual(extract_runtime_world_layout_entity_ids(result), [611, 612])
 
-  def test_apply_runtime_world_layout_request_falls_back_to_compat_runtime_signature(self) -> None:
-    runtime = _CompatOnlyWorldLayoutRuntime()
+  def test_apply_runtime_world_layout_request_rejects_raw_signature_runtime(self) -> None:
+    runtime = _RawSignatureWorldLayoutRuntime()
     request = build_runtime_world_layout_request(
       world_index=2,
       seed=27,
@@ -287,15 +284,10 @@ class WorldSetupCompatTests(unittest.TestCase):
       time_steps=[0.08],
     )
 
-    result = apply_runtime_world_layout_request_diagnostics(runtime, request)
+    with self.assertRaisesRegex(RuntimeError, "requires a maintained facade setup target"):
+      apply_runtime_world_layout_request_diagnostics(runtime, request)
 
-    self.assertEqual(runtime.calls, ["apply_world_layout_compat"])
-    self.assertIsNotNone(runtime.last_layout_args)
-    self.assertEqual(runtime.last_layout_args[:4], (2, 27, "legacy", 3.5))
-    self.assertEqual(runtime.last_layout_args[6:10], (True, 2.0, 45.0, 9.5))
-    self.assertEqual(runtime.last_layout_args[-1], [0.08])
-    self.assertEqual(int(result.world_index), 2)
-    self.assertEqual(extract_runtime_world_layout_entity_ids(result), [911, 912])
+    self.assertEqual(runtime.calls, [])
 
   def test_read_runtime_world_time_step_prefers_named_runtime_api(self) -> None:
     runtime = _TimeStepFacadeRuntime()

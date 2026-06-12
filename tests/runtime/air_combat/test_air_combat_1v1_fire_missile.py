@@ -12,6 +12,7 @@ ensure_repo_imports()
 
 import ef_py # noqa: E402
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
+from python.rl.runtime.world_batch import RuntimeFacadeAdapter # noqa: E402
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
 from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics # noqa: E402
@@ -162,15 +163,15 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     self.assertEqual(int(getattr(red_obs, "missiles_remaining", -1)), 1)
 
     compiled = ScenarioCompiler.compile_data(scenario)
-    batch = ef_py.WorldBatchRuntime(1)
-    self.assertTrue(batch.load_database(_DB_PATH))
-    worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[20260516])
+    adapter = RuntimeFacadeAdapter(1)
+    self.assertTrue(adapter.load_database(_DB_PATH))
+    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[20260516])
     self.assertEqual(len(worlds), 1)
 
     batch_blue = int(worlds[0].entities["Blue_Fighter"])
     batch_red = int(worlds[0].entities["Red_Fighter"])
-    batch_blue_obs = batch.world_compatibility_quarantine(0).get_agent_observation(batch_blue)
-    batch_red_obs = batch.world_compatibility_quarantine(0).get_agent_observation(batch_red)
+    batch_blue_obs = adapter.get_agent_observation(0, batch_blue)
+    batch_red_obs = adapter.get_agent_observation(0, batch_red)
     self.assertEqual(int(getattr(batch_blue_obs, "missiles_remaining", -1)), 2)
     self.assertEqual(int(getattr(batch_red_obs, "missiles_remaining", -1)), 1)
 

@@ -19,6 +19,7 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 from gym_envs.scenario_loader import ScenarioLoader # noqa: E402
+from python.rl.runtime.world_batch import RuntimeFacadeAdapter # noqa: E402
 from python.rl.tasking.leader_tasking import infer_route_ref_id # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
 from python.scenario_compiler import ( # noqa: E402
@@ -1612,18 +1613,18 @@ class WorldBatchRuntimeTests(unittest.TestCase):
 class BatchScenarioRuntimeTests(unittest.TestCase):
   def test_load_compiled_scenario_batch_reuses_apply_buffer(self) -> None:
     compiled = ScenarioCompiler.compile_data(_inline_batch_scenario())
-    batch = ef_py.WorldBatchRuntime(2)
-    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+    adapter = RuntimeFacadeAdapter(2)
+    self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
     apply_buffer = BatchWorldApplyBuffer(2)
 
     worlds_a = load_compiled_scenario_batch_diagnostics(
-      batch,
+      adapter,
       compiled,
       seeds=[11, 17],
       apply_buffer=apply_buffer,
     )
     worlds_b = load_compiled_scenario_batch_diagnostics(
-      batch,
+      adapter,
       compiled,
       seeds=[21, 27],
       apply_buffer=apply_buffer,
@@ -1641,7 +1642,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     self.assertEqual(len(worlds_b[1].active_roster), 2)
     self.assertEqual([int(member.world_index) for member in worlds_b[0].active_roster], [0, 0])
     self.assertEqual([int(member.world_index) for member in worlds_b[1].active_roster], [1, 1])
-    obs = batch.world_compatibility_quarantine(0).get_agent_observation(int(worlds_b[0].agent_id))
+    obs = adapter.get_agent_observation(0, int(worlds_b[0].agent_id))
     self.assertEqual(int(obs.id), int(worlds_b[0].agent_id))
 
   def test_load_compiled_scenario_batch_spawns_worlds(self) -> None:
@@ -1652,7 +1653,9 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     with self.assertRaisesRegex(RuntimeError, "maintained facade setup target"):
       load_compiled_scenario_for_setup_target(batch, compiled, seeds=[11, 17])
 
-    worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[11, 17])
+    adapter = RuntimeFacadeAdapter(2)
+    self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
+    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[11, 17])
     self.assertEqual(len(worlds), 2)
     self.assertIsNotNone(worlds[0].agent_id)
     self.assertIsNotNone(worlds[1].agent_id)
@@ -1667,7 +1670,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
       ref.entity_id = int(applied.agent_id)
       refs.append(ref)
 
-    observations = batch.get_agent_observations_batch(refs)
+    observations = adapter.get_agent_observations_batch(refs)
     self.assertEqual(len(observations), 2)
     self.assertNotEqual(float(observations[0].x), float(observations[1].x))
 
@@ -1680,11 +1683,11 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     loader_agent_id = loader.load_compiled_scenario(compiled, seed=23)
     loader_obs = sim.get_agent_observation(int(loader_agent_id))
 
-    batch = ef_py.WorldBatchRuntime(1)
-    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-    worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[23])
+    adapter = RuntimeFacadeAdapter(1)
+    self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
+    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[23])
     self.assertEqual(len(worlds), 1)
-    batch_obs = batch.world_compatibility_quarantine(0).get_agent_observation(int(worlds[0].agent_id))
+    batch_obs = adapter.get_agent_observation(0, int(worlds[0].agent_id))
 
     self.assertAlmostEqual(float(loader.world_yaw_deg), float(worlds[0].layout.world_yaw_deg), places=6)
     self.assertAlmostEqual(float(loader_obs.x), float(batch_obs.x), places=6)
@@ -1785,11 +1788,11 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
   def test_batch_loaded_route_template_preserves_rotated_waypoint_cache(self) -> None:
     compiled = ScenarioCompiler.compile_data(_inline_route_template_scenario())
-    batch = ef_py.WorldBatchRuntime(1)
-    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+    adapter = RuntimeFacadeAdapter(1)
+    self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
 
-    worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[41])
-    loader = ScenarioLoader(batch.world_compatibility_quarantine(0))
+    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[41])
+    loader = adapter.make_scenario_loader(0)
     loader._compiled_scenario = compiled
     loader._compiled_runtime_metadata = compiled.runtime_metadata
     loader.load_prepared_world(worlds[0], seed=41, sync_to_kernel=False)
@@ -1808,11 +1811,11 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
   def test_batch_loaded_route_generator_uses_runtime_agent_spawn_context(self) -> None:
     compiled = ScenarioCompiler.compile_data(_inline_route_generator_scenario())
-    batch = ef_py.WorldBatchRuntime(1)
-    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+    adapter = RuntimeFacadeAdapter(1)
+    self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
 
-    worlds = load_compiled_scenario_batch_diagnostics(batch, compiled, seeds=[53])
-    loader = ScenarioLoader(batch.world_compatibility_quarantine(0))
+    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[53])
+    loader = adapter.make_scenario_loader(0)
     loader._compiled_scenario = compiled
     loader._compiled_runtime_metadata = compiled.runtime_metadata
     loader.load_prepared_world(worlds[0], seed=53, sync_to_kernel=False)

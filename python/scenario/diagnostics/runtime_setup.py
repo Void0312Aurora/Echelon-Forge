@@ -35,59 +35,15 @@ def read_runtime_world_time_step_diagnostics(
         return float(runtime.world_time_step(int(world_index)))
     if fallback_time_step_s is not None:
         return float(fallback_time_step_s)
-    world_getter = getattr(runtime, "world_compatibility_quarantine", None)
-    if callable(world_getter):
-        return float(world_getter(int(world_index)).get_time_step())
-    raise AttributeError("runtime does not expose world_time_step or a diagnostics world getter")
+    raise AttributeError("runtime diagnostics require world_time_step or adapter-supplied fallback_time_step_s")
 
 
 def apply_runtime_world_layout_request_diagnostics(runtime: Any, request: Any) -> Any:
-    raw_runtime_shaped = hasattr(runtime, "world_compatibility_quarantine") or hasattr(runtime, "world")
-    if not raw_runtime_shaped and hasattr(runtime, "apply_world_layout"):
-        return apply_runtime_world_layout_request_maintained(runtime, request)
-    diagnostics_result = RuntimeWorldLayoutResultCompat()
-    diagnostics_result.world_index = int(getattr(request, "world_index", 0))
-    diagnostics_result.entity_ids = [
-        int(entity_id)
-        for entity_id in runtime.apply_world_layout(
-            int(request.world_index),
-            int(request.seed),
-            str(request.terrain_type),
-            float(request.wind_speed_mps),
-            float(request.wind_dir_from_deg),
-            float(request.wind_shear_mps_per_km),
-            bool(request.maritime_configured),
-            float(request.sea_state),
-            float(request.wave_heading_deg),
-            float(request.wave_period_s),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
-        )
-    ]
-    return diagnostics_result
+    return apply_runtime_world_layout_request_maintained(runtime, request)
 
 
 def apply_world_setup_request_diagnostics(runtime: Any, request: Any) -> list[int]:
-    facade_shaped = hasattr(runtime, "apply_world_setup") and not (
-        (hasattr(runtime, "world_compatibility_quarantine") or hasattr(runtime, "world"))
-        and not hasattr(runtime, "facade")
-    )
-    if facade_shaped:
-        return apply_world_setup_request_maintained(runtime, request)
-    if not hasattr(runtime, "apply_world_setup_batch"):
-        raise AttributeError("runtime does not expose apply_world_setup or apply_world_setup_batch")
-    return [
-        int(entity_id)
-        for entity_id in runtime.apply_world_setup_batch(
-            list(request.seeds),
-            list(request.terrain_assignments),
-            list(request.wind_assignments),
-            list(request.zones),
-            list(request.spawn_requests),
-            list(request.time_steps),
-        )
-    ]
+    return apply_world_setup_request_maintained(runtime, request)
 
 
 def apply_world_setup_payload_diagnostics(
@@ -114,19 +70,7 @@ def apply_world_setup_payload_diagnostics(
     )
     if request is not None:
         return apply_world_setup_request_diagnostics(runtime, request)
-    if not hasattr(runtime, "apply_world_setup_batch"):
-        raise AttributeError("runtime does not expose apply_world_setup or apply_world_setup_batch")
-    return [
-        int(entity_id)
-        for entity_id in runtime.apply_world_setup_batch(
-            list(seeds),
-            list(normalized_terrain_assignments),
-            list(wind_assignments),
-            list(zones),
-            list(spawn_requests),
-            list(time_steps),
-        )
-    ]
+    return apply_world_setup_request_diagnostics(runtime, request)
 
 
 def apply_world_layouts_to_batch_diagnostics(
