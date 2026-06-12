@@ -142,7 +142,7 @@ ef_py + python/scenario/compiler + python/scenario/runtime
 
 - `scenario_loader/` 已经按运行时子域拆开，后续新增 loader 逻辑应进入相应子包，不要把 `core.py` 再次扩成总包。
 - `gym_envs/` 应使用 `python/scenario/compiler/` 与 `python/scenario/runtime/` 下的打包场景入口。
-- `python/scenario/diagnostics/` 仅用于 diagnostics，不得成为环境默认路径。
+- 旧 `python/scenario/diagnostics/` setup wrapper 已移除；环境 setup 应直接使用 `python/scenario/runtime/` 的 maintained helper。
 - `universal_env.py` 只保留为隔离的 compatibility 入口；maintained training、eval、diagnostics 与 regression tests 应保持在 runtime-facade / world-batch adapter 上。
 - `leader_env.py` 仍保留为稳定入口，但实现应继续向 `leader_env_parts/` 下沉。
 - 如果未来只保留包入口而不再保留根级单文件 env，需要先保证 `tools/`、`tests/`、训练入口的导入路径同步切换。

@@ -140,6 +140,6 @@ If you are looking into:
 ## Migration Notes
 
 - `python/rl/` has already been consolidated by subdomain. New RL logic should go into the appropriate package instead of restoring a flat file layout.
-- `python/scenario/compiler/` and `python/scenario/runtime/` are the current main implementation entry points. `python/scenario/diagnostics/` is diagnostics-only and should not be imported by maintained runtime paths.
+- `python/scenario/compiler/` and `python/scenario/runtime/` are the current main implementation entry points. The former `python/scenario/diagnostics/` setup wrapper has been removed; maintained runtime paths should import `python/scenario/runtime/` directly.
 - `python/testing/contracts/` is the main contract runner implementation entry point.
 - If `world_model/` or `testing/` grows further, prefer splitting them into additional subpackages inside their own directories instead of falling back to root-level compatibility files.

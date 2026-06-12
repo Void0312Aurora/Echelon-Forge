@@ -140,6 +140,6 @@ src/interfaces/python -> ef_py
 ## 迁移备注
 
 - `python/rl/` 已经按子域收敛，新增 RL 相关逻辑应优先进入对应子包，不要恢复扁平文件布局。
-- `python/scenario/compiler/` 与 `python/scenario/runtime/` 是当前主实现入口；`python/scenario/diagnostics/` 仅用于 diagnostics，不应被 maintained runtime path 导入。
+- `python/scenario/compiler/` 与 `python/scenario/runtime/` 是当前主实现入口；旧 `python/scenario/diagnostics/` setup wrapper 已移除，maintained runtime path 应直接导入 `python/scenario/runtime/`。
 - `python/testing/contracts/` 是 contract runner 主实现入口。
 - 如果后续 `world_model/` 或 `testing/` 继续膨胀，应优先在各自目录内再拆子包，而不是回退到根级兼容文件。

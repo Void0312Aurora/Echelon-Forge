@@ -24,10 +24,11 @@ import ef_py  # noqa: E402
 
 from python.scenario_compiler import ScenarioCompiler  # noqa: E402
 from python.scenario_compiler import _clone_runtime_mission_command  # noqa: E402
-from python.scenario.diagnostics.runtime_setup import apply_world_layouts_to_batch_diagnostics  # noqa: E402
+from python.rl.runtime.world_batch import RuntimeFacadeAdapter  # noqa: E402
 from python.scenario.runtime import (  # noqa: E402
     BatchWorldApplyBuffer,
     apply_world_layout_to_kernel,
+    apply_world_layouts_to_setup_target,
     build_compiled_world_layout,
     prepare_scenario_world_layout,
 )
@@ -47,7 +48,7 @@ def _build_loop_worlds(world_count: int):
 
 
 def _build_batch_world(world_count: int, *, worker_threads: int | None):
-    batch = ef_py.WorldBatchRuntime(int(world_count))
+    batch = RuntimeFacadeAdapter(int(world_count))
     if worker_threads is not None:
         batch.set_worker_threads(max(0, int(worker_threads)))
     db_path = resolve_repo_path("examples", "config", "database")
@@ -164,13 +165,13 @@ def main() -> int:
             apply_world_layout_to_kernel(sim, layout)
 
     def _batch_setup_path() -> None:
-        _ = apply_world_layouts_to_batch_diagnostics(batch, layouts, apply_buffer=apply_buffer)
+        _ = apply_world_layouts_to_setup_target(batch, layouts, apply_buffer=apply_buffer)
 
     loop_setup_ms = _time_call(_loop_setup_path, iters=int(args.setup_iters))
     batch_setup_ms = _time_call(_batch_setup_path, iters=int(args.setup_iters))
 
     loop_applied = [apply_world_layout_to_kernel(sim, layout) for sim, layout in zip(loop_worlds, layouts)]
-    batch_applied = apply_world_layouts_to_batch_diagnostics(
+    batch_applied = apply_world_layouts_to_setup_target(
         batch,
         layouts,
         apply_buffer=apply_buffer,

@@ -76,7 +76,7 @@
 
 - 契约执行逻辑现在位于 [python/testing/contracts/](../python/testing/contracts)。
 - 测试使用的场景侧引导逻辑现在位于 `python/scenario/compiler/` 和 `python/scenario/runtime/` 中。
-- diagnostics-only raw batch 场景 setup helper 位于 `python/scenario/diagnostics/`；maintained 测试应直接导入 `python/scenario/runtime/`。
+- raw batch 场景 setup diagnostics wrapper 已移除；测试应直接导入 `python/scenario/runtime/` 的 maintained setup helper。
 
 ## 契约类型
 

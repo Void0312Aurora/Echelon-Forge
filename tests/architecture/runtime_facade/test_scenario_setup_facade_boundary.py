@@ -23,10 +23,9 @@ def test_scenario_loader_state_shell_classification_is_architecture_contract() -
 
 def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
   maintained_source = (REPO_ROOT / "python" / "scenario" / "runtime" / "world_setup.py").read_text(encoding="utf-8")
-  diagnostics_source = (REPO_ROOT / "python" / "scenario" / "diagnostics" / "runtime_setup.py").read_text(
-    encoding="utf-8"
-  )
   package_source = (REPO_ROOT / "python" / "scenario" / "runtime" / "__init__.py").read_text(encoding="utf-8")
+  diagnostics_setup_path = REPO_ROOT / "python" / "scenario" / "diagnostics" / "runtime_setup.py"
+  diagnostics_package_path = REPO_ROOT / "python" / "scenario" / "diagnostics" / "__init__.py"
 
   assert "def build_runtime_world_layout_request(" in maintained_source
   assert "def apply_runtime_world_layout_request_maintained(setup_target: Any, request: Any) -> Any:" in maintained_source
@@ -38,18 +37,11 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
   assert "diagnostics" not in maintained_source
   assert ".world_compatibility_quarantine(" not in maintained_source
 
-  assert "def apply_runtime_world_layout_request_diagnostics(runtime: Any, request: Any) -> Any:" in diagnostics_source
-  assert "def apply_world_setup_payload_diagnostics(" in diagnostics_source
-  assert "def apply_world_setup_request_diagnostics(" in diagnostics_source
-  assert "def read_runtime_world_time_step_diagnostics(" in diagnostics_source
-  assert "world_compatibility_quarantine" not in diagnostics_source
-  assert "apply_world_setup_batch(" not in diagnostics_source
-  assert "apply_runtime_world_layout_request_maintained(runtime, request)" in diagnostics_source
-  assert "apply_world_setup_request_maintained(runtime, request)" in diagnostics_source
+  assert not diagnostics_setup_path.exists()
+  assert not diagnostics_package_path.exists()
   assert "RuntimeWorldLayoutRequestCompat" in maintained_source
   assert "RuntimeWorldLayoutResultCompat" in maintained_source
-  assert "apply_world_setup_payload_diagnostics" not in package_source
-  assert "apply_runtime_world_layout_request_diagnostics" not in package_source
+  assert "diagnostics" not in package_source
 
 def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> None:
   batch_apply = (SCENARIO_RUNTIME / "batch_apply.py").read_text(encoding="utf-8")
@@ -95,19 +87,8 @@ def test_wp24_maintained_python_paths_do_not_import_diagnostics_scenario_setup()
   )
 
 def test_wp24_scenario_raw_setup_fallbacks_are_removed_from_diagnostics() -> None:
-  setup_source = (REPO_ROOT / "python" / "scenario" / "diagnostics" / "runtime_setup.py").read_text(
-    encoding="utf-8"
-  )
-  tree = ast.parse(setup_source)
-  offenders: list[tuple[str, int, str]] = []
-
-  for node in ast.walk(tree):
-    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
-      continue
-    if node.func.attr in {"apply_world_setup_batch", "apply_world_layout"}:
-      offenders.append(("diagnostics_runtime_setup", int(getattr(node, "lineno", 0) or 0), node.func.attr))
-
-  assert not offenders, f"raw setup fallback calls must be removed from diagnostics helpers: {offenders}"
+  diagnostics_setup_path = REPO_ROOT / "python" / "scenario" / "diagnostics" / "runtime_setup.py"
+  assert not diagnostics_setup_path.exists()
 
 def test_wp24_scenario_runtime_does_not_construct_raw_runtime_on_production_path() -> None:
   violations: list[tuple[str, int, str]] = []

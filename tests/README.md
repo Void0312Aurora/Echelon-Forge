@@ -87,7 +87,7 @@ When a standalone test is needed, prefer:
 
 - Contract execution logic now lives in [python/testing/contracts/](../python/testing/contracts).
 - Scenario-side bootstrap logic used by tests now lives in `python/scenario/compiler/` and `python/scenario/runtime/`.
-- Diagnostics-only raw batch scenario setup helpers live under `python/scenario/diagnostics/`; maintained tests should import `python/scenario/runtime/` directly.
+- Raw batch scenario setup diagnostics wrappers have been removed; tests should import maintained setup helpers from `python/scenario/runtime/` directly.
 
 ## Contract Types
 

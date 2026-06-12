@@ -14,7 +14,6 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 from python.rl.runtime.world_batch import RuntimeFacadeAdapter # noqa: E402
 from python.scenario_compiler import ScenarioCompiler # noqa: E402
-from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics # noqa: E402
 from python.scenario.runtime import BatchWorldApplyBuffer # noqa: E402
 from python.scenario.runtime import active_roster_world_entity_refs # noqa: E402
 from python.scenario.runtime import find_active_roster_member # noqa: E402
@@ -585,7 +584,7 @@ class RuntimeFacadeTests(unittest.TestCase):
     compiled = ScenarioCompiler.compile_data(scenario)
     adapter = RuntimeFacadeAdapter(1)
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
-    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[123])
+    worlds = load_compiled_scenario_for_setup_target(adapter, compiled, seeds=[123])
 
     self.assertEqual(len(worlds), 1)
     roster = worlds[0].active_roster

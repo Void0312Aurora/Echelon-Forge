@@ -28,7 +28,6 @@ from python.scenario_compiler import ( # noqa: E402
   TERRAIN_TYPE_SOURCE_DEFAULT,
   _clone_runtime_mission_command,
 )
-from python.scenario.diagnostics.runtime_setup import load_compiled_scenario_batch_diagnostics # noqa: E402
 from python.scenario.runtime import ( # noqa: E402
   BatchWorldApplyBuffer,
   build_compiled_world_layout,
@@ -1637,13 +1636,13 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
     apply_buffer = BatchWorldApplyBuffer(2)
 
-    worlds_a = load_compiled_scenario_batch_diagnostics(
+    worlds_a = load_compiled_scenario_for_setup_target(
       adapter,
       compiled,
       seeds=[11, 17],
       apply_buffer=apply_buffer,
     )
-    worlds_b = load_compiled_scenario_batch_diagnostics(
+    worlds_b = load_compiled_scenario_for_setup_target(
       adapter,
       compiled,
       seeds=[21, 27],
@@ -1675,7 +1674,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
     adapter = RuntimeFacadeAdapter(2)
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
-    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[11, 17])
+    worlds = load_compiled_scenario_for_setup_target(adapter, compiled, seeds=[11, 17])
     self.assertEqual(len(worlds), 2)
     self.assertIsNotNone(worlds[0].agent_id)
     self.assertIsNotNone(worlds[1].agent_id)
@@ -1705,7 +1704,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
 
     adapter = RuntimeFacadeAdapter(1)
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
-    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[23])
+    worlds = load_compiled_scenario_for_setup_target(adapter, compiled, seeds=[23])
     self.assertEqual(len(worlds), 1)
     batch_obs = adapter.get_agent_observation(0, int(worlds[0].agent_id))
 
@@ -1811,7 +1810,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     adapter = RuntimeFacadeAdapter(1)
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
 
-    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[41])
+    worlds = load_compiled_scenario_for_setup_target(adapter, compiled, seeds=[41])
     loader = adapter.make_scenario_loader(0)
     loader._compiled_scenario = compiled
     loader._compiled_runtime_metadata = compiled.runtime_metadata
@@ -1834,7 +1833,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     adapter = RuntimeFacadeAdapter(1)
     self.assertTrue(adapter.load_database(resolve_repo_path("examples", "config", "database")))
 
-    worlds = load_compiled_scenario_batch_diagnostics(adapter, compiled, seeds=[53])
+    worlds = load_compiled_scenario_for_setup_target(adapter, compiled, seeds=[53])
     loader = adapter.make_scenario_loader(0)
     loader._compiled_scenario = compiled
     loader._compiled_runtime_metadata = compiled.runtime_metadata
