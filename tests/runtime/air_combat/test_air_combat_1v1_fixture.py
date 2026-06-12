@@ -14,6 +14,7 @@ from gym_envs.universal_env_parts.common import gym as _gym # noqa: E402
 from gym_envs.universal_env import build_universal_observation # noqa: E402
 from gym_envs.universal_env import UniversalEnv # noqa: E402
 from python.mission_obs_taxonomy import mission_observation_dim # noqa: E402
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.tasking.bridge import LoaderOwnedScriptedOpponentKernelView # noqa: E402
 
 
@@ -69,21 +70,22 @@ class AirCombat1v1FixtureTests(unittest.TestCase):
     self.assertEqual(int(getattr(hostile_track, "classification", 0)), 2)
     self.assertIn(int(getattr(hostile_track, "source", 0)), {1, 3})
 
-  @unittest.skipIf(_gym is None, "UniversalEnv requires optional dependency 'gymnasium'")
-  def test_universal_env_loads_fixture_with_execution_observation_contract(self) -> None:
-    env = UniversalEnv(
-      _SCENARIO_PATH,
+  def test_world_batch_vec_env_loads_fixture_with_execution_observation_contract(self) -> None:
+    env = WorldBatchVecEnv(
+      scenario_path=_SCENARIO_PATH,
+      n_envs=1,
       include_visual=False,
       include_proprio=False,
       action_mode="full",
       mission_obs_mode="basic",
-      runtime_compatibility_enabled=True,
+      worker_threads=1,
     )
     try:
-      obs, _info = env.reset(seed=20260516)
-      self.assertEqual(obs["contacts"].shape, (env.max_contacts, 5))
-      self.assertEqual(obs["rwr"].shape, (env.max_rwr, 4))
-      self.assertEqual(obs["mission"].shape, (mission_observation_dim("basic"),))
+      env.seed(20260516)
+      obs = env.reset()
+      self.assertEqual(obs["contacts"].shape, (1, env.max_contacts, 5))
+      self.assertEqual(obs["rwr"].shape, (1, env.max_rwr, 4))
+      self.assertEqual(obs["mission"].shape, (1, mission_observation_dim("basic")))
     finally:
       env.close()
 

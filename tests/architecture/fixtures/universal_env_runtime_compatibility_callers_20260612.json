@@ -64,14 +64,13 @@
     },
     {
       "path": "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
-      "call_count": 2,
-      "surface": "air-combat fixture loading and scripted opponent regressions",
+      "call_count": 1,
+      "surface": "air-combat drone weapon-employment raw-env smoke regression",
       "classification": "runtime_regression_raw_env",
       "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "world-batch fixture and scripted-opponent coverage",
-      "next_action": "Migrate fixture observation and scripted-opponent checks once the maintained adapter exposes equivalent assertions.",
+      "migration_target": "world-batch or facade-backed drone weapon-employment release smoke",
+      "next_action": "Replace the direct UniversalEnv drone weapon-employment smoke after equivalent maintained adapter coverage exists.",
       "evidence_markers": [
-        "test_universal_env_loads_fixture_with_execution_observation_contract",
         "test_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release",
         "runtime_compatibility_enabled=True"
       ]

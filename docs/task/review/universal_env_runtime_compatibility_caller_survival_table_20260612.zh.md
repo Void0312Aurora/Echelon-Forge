@@ -18,14 +18,14 @@
 - `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
 - `tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`
 
-AST 口径统计结果：9 个活跃文件，10 个布尔 opt-in 调用。
+AST 口径统计结果：9 个活跃文件，9 个布尔 opt-in 调用。
 
 ## 2. 分类表
 
 | 分类 | 调用数 | 路径 | 当前处理 |
 | --- | ---: | --- | --- |
 | runtime regression | 1 | `tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py` | 保留到 weapon-release 有 maintained adapter 等价覆盖；red scripted opponent raw-env 对照已由 world-batch 覆盖取代。 |
-| runtime regression | 2 | `tests/runtime/air_combat/test_air_combat_1v1_fixture.py` | 保留到 fixture observation 与 scripted-opponent 检查迁到 world-batch/facade 路径。 |
+| runtime regression | 1 | `tests/runtime/air_combat/test_air_combat_1v1_fixture.py` | 保留到 drone weapon-employment release smoke 迁到 world-batch/facade 路径；fixture observation raw-env 对照已由 world-batch reset shape 覆盖取代。 |
 | runtime regression | 1 | `tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py` | 保留到 mission-observation window age 可从 maintained observation packet 断言。 |
 | runtime regression | 1 | `tests/runtime/air_combat/test_fire_action_release_gate.py` | 保留到 fire-mask/release gate 检查迁到 maintained runtime adapter。 |
 | runtime regression | 1 | `tests/runtime/mission/test_mission_runtime.py` | 保留到 observation parity 不再依赖 legacy `UniversalEnv` baseline。 |
@@ -41,7 +41,7 @@ AST 口径统计结果：9 个活跃文件，10 个布尔 opt-in 调用。
 | P0 | `_RuntimeFacadeAdapter` 内部 compatibility flag 测试 | 已完成：删除 adapter-level opt-in 参数、capability 字段和 4 个内部 flag opt-in 测试。 |
 | P1 | JSON env/scripted bridge contract runner | 已完成：删除 `env_regression.py` / `scripted_bridge.py` 活跃 executor，归档对应 JSON specs，并移除 batch runner group。 |
 | P1.5 | maintained VecEnv public compatibility flag | 已完成：删除 `WorldBatchVecEnv` / `CooperativeWorldBatchVecEnv` 构造器死参数，并移除 single-world wrapper 的旧 opt-in rejection 用例。 |
-| P2.1 | 有 maintained 等价覆盖的 raw-env regression | 已完成：删除 naval station raw action/deadband 对照和 air-combat red scripted opponent raw 对照。 |
+| P2.1 | 有 maintained 等价覆盖的 raw-env regression | 已完成：删除 naval station raw action/deadband 对照、air-combat red scripted opponent raw 对照，以及 fixture reset raw observation 对照。 |
 | P2 | runtime regression raw-env 对照 | 按能力迁移到 world-batch/facade：air-combat release、C2 ROE observation、mission observation parity、action-wrapper parity。 |
 | P3 | diagnostics/viz manual 入口 | viz 已迁到 maintained `WorldBatchVecEnv`；Arma env-backed backend 已归档；剩余 diagnostics 后续决定迁移到 maintained runtime adapter，或明确归档为 manual probe。 |
 
