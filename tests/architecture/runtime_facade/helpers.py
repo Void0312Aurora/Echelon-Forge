@@ -219,7 +219,7 @@ def _world_call_lines(path: Path) -> list[int]:
       for node in ast.walk(tree)
       if isinstance(node, ast.Call)
       and isinstance(node.func, ast.Attribute)
-      and node.func.attr in {"world", "world_compatibility_quarantine"}
+      and node.func.attr in {"world", "world_raw_quarantine"}
     }
   )
 
@@ -307,7 +307,7 @@ def _runtime_escape_hatch_counts(path: Path) -> tuple[int, int, int]:
         runtime_calls += 1
       if (
         isinstance(func, ast.Attribute)
-        and func.attr == "world_compatibility_quarantine"
+        and func.attr == "world_raw_quarantine"
         and isinstance(func.value, ast.Call)
         and isinstance(func.value.func, ast.Attribute)
         and func.value.func.attr == "runtime_compatibility_quarantine"

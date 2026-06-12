@@ -1713,8 +1713,8 @@ void bind_runtime(nb::module_ &m) {
              nb::arg("worker_threads"))
         .def("worker_threads", &WorldBatchRuntime::worker_threads)
         .def("effective_worker_threads", &WorldBatchRuntime::effective_worker_threads)
-        .def("world_compatibility_quarantine",
-             nb::overload_cast<size_t>(&WorldBatchRuntime::world_compatibility_quarantine),
+        .def("world_raw_quarantine",
+             nb::overload_cast<size_t>(&WorldBatchRuntime::world_raw_quarantine),
              nb::rv_policy::reference_internal, nb::arg("index"))
         .def("reset_batch", &WorldBatchRuntime::reset_batch,
              nb::arg("seeds") = std::vector<uint32_t>{})

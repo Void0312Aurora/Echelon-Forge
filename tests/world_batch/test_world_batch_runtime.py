@@ -443,7 +443,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     batch.set_time_step(0.05)
     batch.reset_batch([7, 11])
 
-    eid0 = batch.world_compatibility_quarantine(0).spawn_unit(
+    eid0 = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "Aircraft",
       -1400.0,
@@ -456,7 +456,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
       0.0,
       0.0,
     )
-    eid1 = batch.world_compatibility_quarantine(1).spawn_unit(
+    eid1 = batch.world_raw_quarantine(1).spawn_unit(
       ef_py.Side.Blue,
       "Aircraft",
       -2400.0,
@@ -489,7 +489,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     batch.set_time_step(0.05)
     batch.reset_batch([13])
 
-    lead = batch.world_compatibility_quarantine(0).spawn_unit(
+    lead = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "Aircraft",
       -1400.0,
@@ -502,7 +502,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
       180.0,
       0.0,
     )
-    wing = batch.world_compatibility_quarantine(0).spawn_unit(
+    wing = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "Aircraft",
       -1550.0,
@@ -556,7 +556,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
   def test_world_batch_runtime_applies_launch_request_as_single_shot_without_pilot_action(self) -> None:
     batch = ef_py.WorldBatchRuntime(1)
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
-    world = batch.world_compatibility_quarantine(0)
+    world = batch.world_raw_quarantine(0)
     world.set_time_step(0.05)
     shooter = int(
       world.spawn_unit(
@@ -697,8 +697,8 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     obs = batch.get_agent_observations_batch(refs)
     self.assertEqual(int(obs[0].id), int(entity_ids[0]))
     self.assertEqual(int(obs[1].id), int(entity_ids[1]))
-    self.assertAlmostEqual(float(batch.world_compatibility_quarantine(0).get_time_step()), 0.05, places=6)
-    self.assertAlmostEqual(float(batch.world_compatibility_quarantine(1).get_time_step()), 0.08, places=6)
+    self.assertAlmostEqual(float(batch.world_raw_quarantine(0).get_time_step()), 0.05, places=6)
+    self.assertAlmostEqual(float(batch.world_raw_quarantine(1).get_time_step()), 0.08, places=6)
     self.assertNotEqual(float(obs[0].x), float(obs[1].x))
 
   def test_spawn_units_batch_preserves_type_name_and_spawn_overrides(self) -> None:
@@ -722,7 +722,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
 
     self.assertEqual(len(entity_ids), 1)
     self.assertGreater(int(entity_ids[0]), 0)
-    obs = batch.world_compatibility_quarantine(0).get_agent_observation(int(entity_ids[0]))
+    obs = batch.world_raw_quarantine(0).get_agent_observation(int(entity_ids[0]))
     self.assertEqual(int(obs.id), int(entity_ids[0]))
     self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 2)
     self.assertFalse(bool(getattr(obs, "can_fire", True)))
@@ -759,7 +759,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
 
     self.assertEqual(len(entity_ids), 1)
     self.assertGreater(int(entity_ids[0]), 0)
-    self.assertAlmostEqual(float(batch.world_compatibility_quarantine(0).get_time_step()), 0.05, places=6)
+    self.assertAlmostEqual(float(batch.world_raw_quarantine(0).get_time_step()), 0.05, places=6)
     obs = batch.get_agent_observations_batch([_entity_ref(0, int(entity_ids[0]))])[0]
     self.assertEqual(int(obs.id), int(entity_ids[0]))
     self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 1)
@@ -838,10 +838,10 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([3, 5])
 
-    eid0 = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 2.1, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    eid1 = batch.world_compatibility_quarantine(1).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 2.1, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-    batch.world_compatibility_quarantine(0).set_command_link(eid0, 0.0, 0.0)
-    batch.world_compatibility_quarantine(1).set_command_link(eid1, 0.0, 0.0)
+    eid0 = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 2.1, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    eid1 = batch.world_raw_quarantine(1).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 2.1, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    batch.world_raw_quarantine(0).set_command_link(eid0, 0.0, 0.0)
+    batch.world_raw_quarantine(1).set_command_link(eid1, 0.0, 0.0)
     refs = [_entity_ref(0, eid0), _entity_ref(1, eid1)]
 
     cmd0 = ef_py.MissionCommand()
@@ -1276,7 +1276,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([19])
 
-    entity_id = batch.world_compatibility_quarantine(0).spawn_unit(
+    entity_id = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "Aircraft",
       -1200.0,
@@ -1468,7 +1468,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([33])
 
-    ship = batch.world_compatibility_quarantine(0).spawn_unit(
+    ship = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "DDG-51_Flight_I_ASW_Helo_MVP",
       -1400.0,
@@ -1481,7 +1481,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
       10.29,
       0.0,
     )
-    batch.world_compatibility_quarantine(0).set_command_link(int(ship), 0.0, 0.0)
+    batch.world_raw_quarantine(0).set_command_link(int(ship), 0.0, 0.0)
     ref = _entity_ref(0, int(ship))
 
     assignment = ef_py.WorldMissionCommandMaintainedAssignment()
@@ -1519,10 +1519,10 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([29])
 
-    lead = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-    wing = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1550.0, -120.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-    batch.world_compatibility_quarantine(0).set_command_link(int(lead), 0.0, 0.0)
-    batch.world_compatibility_quarantine(0).set_command_link(int(wing), 0.0, 0.0)
+    lead = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1400.0, 0.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    wing = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", -1550.0, -120.0, 1200.0, 90.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    batch.world_raw_quarantine(0).set_command_link(int(lead), 0.0, 0.0)
+    batch.world_raw_quarantine(0).set_command_link(int(wing), 0.0, 0.0)
     refs = [_entity_ref(0, int(lead)), _entity_ref(0, int(wing))]
 
     cmd0 = ef_py.MissionCommand()
@@ -1571,7 +1571,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([31])
 
-    ship = batch.world_compatibility_quarantine(0).spawn_unit(
+    ship = batch.world_raw_quarantine(0).spawn_unit(
       ef_py.Side.Blue,
       "DDG-51_Flight_I_ASW_Helo_MVP",
       -1400.0,
@@ -1584,7 +1584,7 @@ class WorldBatchRuntimeTests(unittest.TestCase):
       10.29,
       0.0,
     )
-    batch.world_compatibility_quarantine(0).set_command_link(int(ship), 0.0, 0.0)
+    batch.world_raw_quarantine(0).set_command_link(int(ship), 0.0, 0.0)
     refs = [_entity_ref(0, int(ship))]
 
     cmd = ef_py.MissionCommand()
@@ -1850,10 +1850,10 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
     batch.reset_batch([17])
 
-    lead = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-    friend = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 1200.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-    foe_close = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Red, "Aircraft", 2000.0, 0.0, 1200.0, 180.0, 0.0, 0.0, 0.0, 180.0, 0.0)
-    foe_far = batch.world_compatibility_quarantine(0).spawn_unit(ef_py.Side.Red, "Aircraft", 60000.0, 0.0, 1200.0, 180.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    lead = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 0.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    friend = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Blue, "Aircraft", 0.0, 1200.0, 1200.0, 0.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    foe_close = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Red, "Aircraft", 2000.0, 0.0, 1200.0, 180.0, 0.0, 0.0, 0.0, 180.0, 0.0)
+    foe_far = batch.world_raw_quarantine(0).spawn_unit(ef_py.Side.Red, "Aircraft", 60000.0, 0.0, 1200.0, 180.0, 0.0, 0.0, 0.0, 180.0, 0.0)
 
     refs = [_entity_ref(0, int(lead))]
     expected_sensor_and_visual = [int(friend), int(foe_close)]
@@ -1884,7 +1884,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     states: list[ef_py.ExecutionEpisodeState] = []
 
     for world_index, seed in enumerate((181, 191)):
-      loader = ScenarioLoader(runtime.world_compatibility_quarantine(world_index))
+      loader = ScenarioLoader(runtime.world_raw_quarantine(world_index))
       loader.set_execution_step_runtime_mode("compiled")
       agent_id = loader.load_scenario_data(copy.deepcopy(_inline_route_scenario()), seed=seed)
       self.assertIsNotNone(agent_id)
@@ -1933,7 +1933,7 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
     loaders: list[ScenarioLoader] = []
 
     for world_index, seed in enumerate((211, 223)):
-      loader = ScenarioLoader(runtime.world_compatibility_quarantine(world_index))
+      loader = ScenarioLoader(runtime.world_raw_quarantine(world_index))
       loader.set_execution_step_runtime_mode("compiled")
       agent_id = loader.load_scenario_data(copy.deepcopy(_inline_route_scenario()), seed=seed)
       self.assertIsNotNone(agent_id)
@@ -1953,8 +1953,8 @@ class BatchScenarioRuntimeTests(unittest.TestCase):
       loader._approach_prev_loc_abs = 0.10 + (0.01 * world_index)
       loader._approach_prev_gs_abs = 0.07 + (0.01 * world_index)
 
-      truth = runtime.world_compatibility_quarantine(world_index).get_agent_observation(int(agent_id))
-      inst_obj = runtime.world_compatibility_quarantine(world_index).get_instrument_state(int(agent_id))
+      truth = runtime.world_raw_quarantine(world_index).get_agent_observation(int(agent_id))
+      inst_obj = runtime.world_raw_quarantine(world_index).get_instrument_state(int(agent_id))
       ils_vec = loader.get_ils_observation(float(truth.x), float(truth.y), float(inst_obj.alt_baro))
       inst_vec, _, _ = ef_py.compute_execution_observation_runtime_numpy(
         inst_obj,

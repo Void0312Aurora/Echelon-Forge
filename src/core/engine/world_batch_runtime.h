@@ -62,10 +62,10 @@ public:
     );
     RecentEngagementEvents export_recent_engagement_events(size_t world_index) const;
 
-    // Compatibility/diagnostics escape hatch only. Maintained facade code should
+    // Raw escape hatch only. Maintained facade code should
     // use batch-owned helper methods instead of keeping raw SimulationKernel handles.
-    SimulationKernel& world_compatibility_quarantine(size_t index);
-    const SimulationKernel& world_compatibility_quarantine(size_t index) const;
+    SimulationKernel& world_raw_quarantine(size_t index);
+    const SimulationKernel& world_raw_quarantine(size_t index) const;
 
     void reset_batch(const std::vector<uint32_t>& seeds = {});
     void step_batch();
@@ -175,7 +175,7 @@ public:
         int downsample,
         const std::vector<std::vector<uint64_t>>& candidate_ids_batch
     ) const;
-    // Compatibility/diagnostics escape hatch only. Maintained facade code should
+    // Raw escape hatch only. Maintained facade code should
     // own candidate-id assembly and route scene collection through the named
     // helper above instead of adding new raw-world call sites.
     std::vector<WorldBatchVisualBindingCompatibilityScene>

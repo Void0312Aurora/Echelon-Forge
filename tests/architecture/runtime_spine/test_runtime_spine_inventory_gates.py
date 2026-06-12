@@ -60,7 +60,7 @@ EXPECTED_SELECTED_NODES = [
   "p10.observation_export.v1",
 ]
 EXPECTED_EXCLUDED_NODES = [
-  "p7.launch_request_adapter_compat.v1",
+  "p7.launch_request_adapter_projection.v1",
   "p10.observation_trace_diagnostics.v1",
 ]
 EXPECTED_SELECTED_BARRIERS = [

@@ -249,11 +249,11 @@ const SimulationKernel& WorldBatchRuntime::checked_world(size_t index) const {
     return *worlds_[index];
 }
 
-SimulationKernel& WorldBatchRuntime::world_compatibility_quarantine(size_t index) {
+SimulationKernel& WorldBatchRuntime::world_raw_quarantine(size_t index) {
     return checked_world(index);
 }
 
-const SimulationKernel& WorldBatchRuntime::world_compatibility_quarantine(size_t index) const {
+const SimulationKernel& WorldBatchRuntime::world_raw_quarantine(size_t index) const {
     return checked_world(index);
 }
 

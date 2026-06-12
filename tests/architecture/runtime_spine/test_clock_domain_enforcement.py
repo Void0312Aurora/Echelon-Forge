@@ -154,7 +154,7 @@ def test_wp16_runtime_window_coordinator_records_strict_selected_slice_clock_dom
       }
 
       const auto* compatibility =
-        find_stage_node_manifest("p7.launch_request_adapter_compat.v1");
+        find_stage_node_manifest("p7.launch_request_adapter_projection.v1");
       const auto* diagnostics =
         find_stage_node_manifest("p10.observation_trace_diagnostics.v1");
       if (compatibility == nullptr || diagnostics == nullptr) {

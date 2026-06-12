@@ -1274,7 +1274,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
         assert proxy_layout is not None
         self.assertEqual(proxy_layout.terrain_type, "legacy")
         self.assertAlmostEqual(float(vec_env._runtime_adapter.get_time_step(0)), 0.05, places=6)
-        self.assertFalse(hasattr(vec_env._runtime_adapter, "world_compatibility_quarantine"))
+        self.assertFalse(hasattr(vec_env._runtime_adapter, "world_raw_quarantine"))
       finally:
         vec_env.close()
 

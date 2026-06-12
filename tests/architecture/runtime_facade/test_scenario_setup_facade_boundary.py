@@ -30,12 +30,12 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
   assert "def build_runtime_world_layout_request(" in maintained_source
   assert "def apply_runtime_world_layout_request_maintained(setup_target: Any, request: Any) -> Any:" in maintained_source
   assert "def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:" in maintained_source
-  assert 'hasattr(setup_target, "world_compatibility_quarantine")' in maintained_source
+  assert 'hasattr(setup_target, "world_raw_quarantine")' in maintained_source
   assert 'hasattr(setup_target, "world")' in maintained_source
   assert 'not hasattr(setup_target, "facade")' in maintained_source
   assert "def apply_world_setup_payload_maintained(" in maintained_source
   assert "diagnostics" not in maintained_source
-  assert ".world_compatibility_quarantine(" not in maintained_source
+  assert ".world_raw_quarantine(" not in maintained_source
 
   assert not diagnostics_setup_path.exists()
   assert not diagnostics_package_path.exists()

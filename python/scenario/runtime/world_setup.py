@@ -137,7 +137,7 @@ def _maintained_setup_target_required_message(surface: str) -> str:
 
 def apply_runtime_world_layout_request_maintained(setup_target: Any, request: Any) -> Any:
     if (
-        hasattr(setup_target, "world_compatibility_quarantine")
+        hasattr(setup_target, "world_raw_quarantine")
         or hasattr(setup_target, "world")
         or not hasattr(setup_target, "apply_world_layout")
     ):
@@ -156,7 +156,7 @@ def apply_runtime_world_layout_request_maintained(setup_target: Any, request: An
 
 def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:
     raw_runtime_shaped = (
-        hasattr(setup_target, "world_compatibility_quarantine")
+        hasattr(setup_target, "world_raw_quarantine")
         or hasattr(setup_target, "world")
     ) and not hasattr(setup_target, "facade")
     if request is None or raw_runtime_shaped or not hasattr(setup_target, "apply_world_setup"):

@@ -21,7 +21,7 @@
       "p10.observation_export.v1"
     ],
     "excluded_node_ids": [
-      "p7.launch_request_adapter_compat.v1",
+      "p7.launch_request_adapter_projection.v1",
       "p10.observation_trace_diagnostics.v1"
     ],
     "barrier_ids": [
@@ -70,7 +70,7 @@
         "p7.fire_control_launch.v1",
         "p9.effects_damage.v1",
         "p10.observation_export.v1",
-        "p7.launch_request_adapter_compat.v1",
+        "p7.launch_request_adapter_projection.v1",
         "p10.observation_trace_diagnostics.v1",
         "enumerate_wp10_maintained_stage_node_manifests()"
       ]
@@ -232,7 +232,7 @@
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
       "reason": "Public raw owner exposes world(), spawn/setup, direct step, and direct observation methods that bypass runtime-window and facade evidence.",
       "evidence_markers": [
-        "SimulationKernel& world_compatibility_quarantine(size_t index);",
+        "SimulationKernel& world_raw_quarantine(size_t index);",
         "void step_batch();",
         "std::vector<uint64_t> spawn_units_batch",
         "std::vector<AgentObservation> get_agent_observations_batch"
@@ -245,7 +245,7 @@
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
       "reason": "Underlying implementation remains necessary, but direct caller ownership should shrink behind explicit compatibility gates.",
       "evidence_markers": [
-        "SimulationKernel& WorldBatchRuntime::world_compatibility_quarantine(size_t index)",
+        "SimulationKernel& WorldBatchRuntime::world_raw_quarantine(size_t index)",
         "uint64_t spawn_from_request(",
         "void WorldBatchRuntime::reset_batch",
         "void WorldBatchRuntime::step_batch"
@@ -284,7 +284,7 @@
       "reason": "Assertions remain diagnostics-focused, but launch synthesis now uses the maintained RuntimeFacade.run_wp10_window path instead of the retired facade runtime escape hatch.",
       "evidence_markers": [
         "facade.run_wp10_window",
-        "PilotActionAssignmentCompat",
+        "PilotActionAssignment",
         "p10.observation_export.v1",
         "\"diagnostics_only\"",
         "diagnostics_trace_surface_not_maintained_decision_path"

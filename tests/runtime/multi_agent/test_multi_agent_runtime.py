@@ -179,15 +179,15 @@ class MultiAgentRuntimeViewTests(unittest.TestCase):
   def test_multi_agent_runtime_view_routes_actions_per_entity(self) -> None:
     runtime = ef_py.WorldBatchRuntime(1)
     self.assertTrue(runtime.load_database(resolve_repo_path("examples", "config", "database")))
-    loader = ScenarioLoader(runtime.world_compatibility_quarantine(0))
+    loader = ScenarioLoader(runtime.world_raw_quarantine(0))
     loader.load_scenario_data(copy.deepcopy(_cooperative_scenario()), seed=43)
 
     lead = loader.get_active_roster_member(entity_name="Lead")
     wing = loader.get_active_roster_member(entity_name="Wing")
     self.assertIsNotNone(lead)
     self.assertIsNotNone(wing)
-    runtime.world_compatibility_quarantine(0).set_command_link(int(lead.entity_id), 0.0, 0.0)
-    runtime.world_compatibility_quarantine(0).set_command_link(int(wing.entity_id), 0.0, 0.0)
+    runtime.world_raw_quarantine(0).set_command_link(int(lead.entity_id), 0.0, 0.0)
+    runtime.world_raw_quarantine(0).set_command_link(int(wing.entity_id), 0.0, 0.0)
 
     view = MultiAgentWorldRuntimeView(
       runtime=runtime,

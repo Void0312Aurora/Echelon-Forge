@@ -20,7 +20,7 @@ def test_world_batch_adapter_keeps_runtime_escape_hatch_deleted() -> None:
   assert "def _compat_runtime_handle(self):" not in source
   assert "def _compat_world(self, index: int):" not in source
   assert "def world(self, index: int):" not in source
-  assert "def world_compatibility_quarantine(self, index: int):" not in source
+  assert "def world_raw_quarantine(self, index: int):" not in source
   assert "class _WorldAccessProxy:" not in source
   assert "def _scenario_loader_runtime(self, index: int) -> _ScenarioLoaderRuntimeProxy:" in source
   assert "def _build_runtime_world_layout_request(self, world_index: int, layout: Any):" in source
@@ -28,15 +28,15 @@ def test_world_batch_adapter_keeps_runtime_escape_hatch_deleted() -> None:
   assert "def _materialize_applied_world(self, world_index: int, layout: Any, entity_ids: Sequence[Any]) -> AppliedScenarioWorld:" in source
   assert "self._compat_runtime = self.facade.runtime_compatibility_quarantine()" not in source
   assert "self._compat_runtime = None" not in source
-  assert "self._compat_runtime_handle().world_compatibility_quarantine(int(index))" not in source
+  assert "self._compat_runtime_handle().world_raw_quarantine(int(index))" not in source
   assert "return _WorldAccessProxy(self, int(index))" not in source
-  assert "apply_world_layout_to_kernel(self.world_compatibility_quarantine(int(world_index)), layout)" not in source
-  assert "ScenarioLoader(self.world_compatibility_quarantine(int(index)))" not in source
+  assert "apply_world_layout_to_kernel(self.world_raw_quarantine(int(world_index)), layout)" not in source
+  assert "ScenarioLoader(self.world_raw_quarantine(int(index)))" not in source
   assert "ScenarioLoader(self._compat_world(int(index)))" not in source
   assert "ScenarioLoader(self._scenario_loader_runtime(int(index)))" in source
-  assert "self.world_compatibility_quarantine(int(world_index)).get_time_step()" not in source
-  assert "self.world_compatibility_quarantine(int(world_index)).get_visual_observation(" not in source
-  assert 'hasattr(self.world_compatibility_quarantine(int(world_index)), "get_visual_observation_downsampled")' not in source
+  assert "self.world_raw_quarantine(int(world_index)).get_time_step()" not in source
+  assert "self.world_raw_quarantine(int(world_index)).get_visual_observation(" not in source
+  assert 'hasattr(self.world_raw_quarantine(int(world_index)), "get_visual_observation_downsampled")' not in source
   assert "def get_visual_observation(" not in source
   assert "def get_visual_observation_downsampled(" not in source
   assert "def supports_visual_observation_downsampled(" not in source
@@ -108,14 +108,14 @@ def test_world_batch_vec_env_access_stays_thin_forwarder_without_raw_runtime_own
   source = _runtime_access_source()
   assert ".batch_runtime." not in source
   assert ".runtime_compatibility_quarantine()" not in source
-  assert ".world_compatibility_quarantine(" not in source
+  assert ".world_raw_quarantine(" not in source
   assert "WorldBatchRuntime" not in source
   assert "RuntimeFacade" not in source
 
 def test_leader_world_batch_runtime_does_not_reach_raw_world_handles() -> None:
   source = _leader_source()
-  assert ".batch_runtime.world_compatibility_quarantine(" not in source
-  assert ".world_vec.batch_runtime.world_compatibility_quarantine(" not in source
+  assert ".batch_runtime.world_raw_quarantine(" not in source
+  assert ".world_vec.batch_runtime.world_raw_quarantine(" not in source
 
 def test_leader_world_batch_runtime_keeps_batch_runtime_surface_removed() -> None:
   source = _leader_source()
@@ -197,7 +197,7 @@ def test_wp22_public_batch_runtime_consumers_stay_explicit_and_localized() -> No
 
   assert not violations, (
     "WP22 maintained non-test Python paths must keep vec_env.batch_runtime inside the explicit "
-    f"compatibility/diagnostics allowlist only: {violations}"
+    f"raw/diagnostics allowlist only: {violations}"
   )
 
 def test_wp22_public_world_escape_hatch_consumers_stay_explicit_and_localized() -> None:
@@ -214,8 +214,8 @@ def test_wp22_public_world_escape_hatch_consumers_stay_explicit_and_localized() 
       violations.append((rel, lineno))
 
   assert not violations, (
-    "WP22 maintained non-test Python paths must keep public `.world_compatibility_quarantine()` escape-hatch calls inside the explicit "
-    f"compatibility adapter allowlist only: {violations}"
+    "WP22 maintained non-test Python paths must keep public `.world_raw_quarantine()` escape-hatch calls inside the explicit "
+    f"raw escape-hatch allowlist only: {violations}"
   )
 
 def test_maintained_paths_do_not_add_new_runtime_facade_runtime_consumers() -> None:
@@ -232,7 +232,7 @@ def test_maintained_paths_do_not_add_new_runtime_facade_runtime_consumers() -> N
 
   assert not violations, (
     "maintained facade-layer paths must keep RuntimeFacade.runtime_compatibility_quarantine() escape hatches inside the "
-    f"explicit compatibility/diagnostics allowlist only: {violations}"
+    f"explicit raw/diagnostics allowlist only: {violations}"
   )
 
 def test_wp22_loader_owned_runtime_paths_do_not_reintroduce_scattered_raw_sim_seams() -> None:
@@ -344,10 +344,10 @@ def test_leader_world_batch_runtime_does_not_call_runtime_facade_compatibility_q
 def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or_world() -> None:
   source = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
 
-  assert "runtime_->world_compatibility_quarantine(" not in source
-  assert "runtime_compatibility_quarantine().world_compatibility_quarantine(" not in source
-  assert "runtime()->world_compatibility_quarantine(" not in source
-  assert "facade->runtime_compatibility_quarantine().world_compatibility_quarantine(" not in source
+  assert "runtime_->world_raw_quarantine(" not in source
+  assert "runtime_compatibility_quarantine().world_raw_quarantine(" not in source
+  assert "runtime()->world_raw_quarantine(" not in source
+  assert "facade->runtime_compatibility_quarantine().world_raw_quarantine(" not in source
   assert "runtime_->apply_world_layout(" in source
   assert "runtime_->world_time_step(" in source
   assert "runtime_->get_visual_candidate_ids_batch(" in source
@@ -358,7 +358,7 @@ def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or
 def test_wp22_gpu_visual_binding_routes_through_named_world_batch_compatibility_helper() -> None:
   source = _gpu_bindings_source()
 
-  assert ".world_compatibility_quarantine(" not in source
+  assert ".world_raw_quarantine(" not in source
   assert "RuntimeFacade" in source
   assert "compute_runtime_facade_visual_binding_outputs(" in source
   assert "compute_compat_world_batch_visual_binding_outputs(" in source
@@ -374,7 +374,7 @@ def test_wp22_world_batch_runtime_quarantines_visual_binding_raw_world_access() 
 
   assert "collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(" in header
   assert "collect_visual_binding_compatibility_scenes_batch(" in header
-  assert "Compatibility/diagnostics escape hatch only." in header
+  assert "Raw escape hatch only." in header
   assert "own candidate-id assembly" in header
   assert "WorldBatchRuntime::collect_visual_binding_compatibility_scenes_from_candidate_ids_batch(" in impl
   assert "WorldBatchRuntime::collect_visual_binding_compatibility_scenes_batch(" in impl

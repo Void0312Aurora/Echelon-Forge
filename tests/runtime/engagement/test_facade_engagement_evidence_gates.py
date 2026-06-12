@@ -143,7 +143,7 @@ def test_recent_effects_damage_and_trace_refs_are_diagnostics_runtime_scoped() -
   runtime = ef_py.WorldBatchRuntime(2)
   assert runtime.load_database(resolve_repo_path("examples", "config", "database"))
 
-  world = runtime.world_compatibility_quarantine(1)
+  world = runtime.world_raw_quarantine(1)
   attacker_id = int(
     world.spawn_unit(
       ef_py.Side.Blue,

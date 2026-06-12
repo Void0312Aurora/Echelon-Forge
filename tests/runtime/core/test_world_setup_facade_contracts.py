@@ -74,8 +74,8 @@ class _RawRuntimeWithFutureFacadeSetupMethod:
   def apply_world_setup(self, request):
     raise AssertionError("raw runtime apply_world_setup must stay quarantined")
 
-  def world_compatibility_quarantine(self, index):
-    raise AssertionError(f"raw world_compatibility_quarantine({index}) access must stay quarantined")
+  def world_raw_quarantine(self, index):
+    raise AssertionError(f"raw world_raw_quarantine({index}) access must stay quarantined")
 
 
 class _RawSignatureWorldLayoutRuntime:
