@@ -769,7 +769,7 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
   ]
   assert [row["candidate_probability"] for row in rows] == [0.52, 0.37, 0.21]
   assert [row["synthetic_sigmoid_probability"] for row in rows] == pytest.approx(
-    [0.11052800000000002, 0.11052800000000002, 0.11052800000000002]
+    [0.35168000000000005, 0.35168000000000005, 0.35168000000000005]
   )
   assert all(
     row["synthetic_sigmoid_probability_source"] == "synthetic_sigmoid"
@@ -782,10 +782,10 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
     for row in rows
   )
   assert rows[0]["candidate_minus_synthetic_sigmoid"] == pytest.approx(
-    0.409472
+    0.16831999999999997
   )
   assert rows[2]["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    1.8999710480602197
+    0.5971337579617834
   )
 
   metrics = comparison["metrics"]
@@ -793,15 +793,15 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
   assert metrics["metric_role"] == (
     "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth"
   )
-  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is True
+  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is False
   assert metrics["mean_candidate_probability"] == pytest.approx(
     0.3666666666666667
   )
   assert metrics["mean_synthetic_sigmoid_probability"] == pytest.approx(
-    0.11052800000000002
+    0.35168000000000005
   )
   assert metrics["mean_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-    0.2561386666666667
+    0.10943999999999998
   )
   assert metrics["replacement_allowed"] is False
   assert "cannot prove accuracy" in metrics["calibration_interpretation"]

@@ -202,7 +202,7 @@ def _build_surface_probe_descriptor(
         inner_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
         middle_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
       ),
-      "min_surface_incidence_cos": 0.5,
+      "min_surface_incidence_cos": 0.0,
       "component_failure_probability": float(PROBE_POINTS[0]["probability"]),
     },
     {
@@ -256,7 +256,7 @@ def _build_surface_probe_descriptor(
         inner_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
         middle_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
       ),
-      "min_surface_incidence_cos": 0.5,
+      "min_surface_incidence_cos": 0.0,
       "component_failure_probability": float(PROBE_POINTS[1]["probability"]),
     },
     {
@@ -290,7 +290,7 @@ def _build_surface_probe_descriptor(
         middle_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
         outer_summary["component_primary_mechanism_blast_impulse_kpa_ms"],
       ),
-      "min_surface_incidence_cos": 0.5,
+      "min_surface_incidence_cos": 0.0,
       "component_failure_probability": float(PROBE_POINTS[2]["probability"]),
     },
   ]
