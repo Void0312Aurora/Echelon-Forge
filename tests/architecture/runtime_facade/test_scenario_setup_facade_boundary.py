@@ -71,6 +71,7 @@ def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> Non
   assert "apply_world_setup_request_maintained(self.facade, request)" in adapter
   assert "if request is not None:" not in adapter
   assert "has_batch_world_setup_result" not in adapter
+  assert "has_world_time_step" not in adapter
   assert "RuntimeFacadeAdapter.apply_world_setup requires maintained BatchWorldSetupResult bindings" in adapter
 
 def test_wp24_legacy_scenario_runtime_shim_is_removed_from_python_surface() -> None:

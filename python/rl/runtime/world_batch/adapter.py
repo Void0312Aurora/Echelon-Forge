@@ -71,7 +71,6 @@ class RuntimeFacadeAdapterCapabilities:
     """Resolved adapter capability snapshot for the current facade binding."""
 
     has_runtime_window_api: bool
-    has_world_time_step: bool
     has_observation_batch_request: bool
     has_export_observation_packet: bool
     has_get_task_orders_maintained_batch: bool
@@ -91,7 +90,6 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
             and hasattr(ef_py, "AgentRole")
             and hasattr(ef_py, "authorize_maintained_action_intent")
         ),
-        has_world_time_step=bool(hasattr(facade, "world_time_step")),
         has_observation_batch_request=bool(hasattr(ef_py, "ObservationBatchRequest")),
         has_export_observation_packet=bool(hasattr(facade, "export_observation_packet")),
         has_get_task_orders_maintained_batch=bool(
@@ -582,9 +580,7 @@ class RuntimeFacadeAdapter:
     def get_time_step(self, world_index: int) -> float:
         if int(world_index) in self._world_time_steps:
             return float(self._world_time_steps[int(world_index)])
-        if self.capabilities.has_world_time_step:
-            return float(self.facade.world_time_step(int(world_index)))
-        raise RuntimeError("RuntimeFacadeAdapter.get_time_step requires maintained facade time-step bindings")
+        return float(self.facade.world_time_step(int(world_index)))
 
     def get_world_layout(self, world_index: int) -> Any | None:
         applied_world = self._world_layouts.get(int(world_index))
