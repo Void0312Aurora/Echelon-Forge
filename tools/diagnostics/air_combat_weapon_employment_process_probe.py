@@ -1157,7 +1157,6 @@ def _c2_roe_event_columns(
         "c2_roe_shot_budget_violation": count_flag("shot_budget_violation"),
         "c2_roe_authorized_salvo_release_count": count_flag("authorized_salvo"),
         "c2_roe_authorized_reattack_release_count": count_flag("authorized_reattack"),
-        "c2_roe_legacy_fallback_release_count": count_flag("legacy_roe_fallback"),
     }
 
 
@@ -1986,9 +1985,6 @@ def _summarize_episode(
     pending_assessment_release_count = int(
         sum(int(row.get("c2_roe_pending_assessment_release_count", 0) or 0) for row in rows)
     )
-    legacy_fallback_release_count = int(
-        sum(int(row.get("c2_roe_legacy_fallback_release_count", 0) or 0) for row in rows)
-    )
     a5_rejection_reason_counts = Counter(
         str(row.get("fire_once_rejected_reason", "") or "unspecified")
         for row in rows
@@ -2467,7 +2463,7 @@ def _summarize_episode(
             "authorized": int(authorized_release_count),
             "unauthorized": int(unauthorized_release_count),
             "violation": int(violation_release_count),
-            "legacy_or_unknown": int(unknown_release_count),
+            "unknown": int(unknown_release_count),
         },
         "repeat_release_before_assessment_count": int(
             sum(int(row.get("c2_roe_premature_second_shot", 0) or 0) for row in rows)
@@ -2484,7 +2480,6 @@ def _summarize_episode(
         "authorized_reattack_release_count": int(
             sum(int(row.get("c2_roe_authorized_reattack_release_count", 0) or 0) for row in rows)
         ),
-        "legacy_roe_fallback_release_count": int(legacy_fallback_release_count),
         "release_steps": release_steps,
         "min_release_interval_steps": min(release_intervals) if release_intervals else None,
         "effects_event_count": int(final.get("effects_event_count", 0)),

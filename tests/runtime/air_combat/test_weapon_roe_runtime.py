@@ -95,7 +95,7 @@ class WeaponRoeRuntimeTests(unittest.TestCase):
     missiles_after_authorized = _fire_with_pilot_action(sim, blue_id)
     self.assertEqual(missiles_after_authorized, missiles_before - 1)
 
-  def test_free_and_zero_preserve_legacy_fallback_behavior(self) -> None:
+  def test_free_and_zero_fail_closed_without_explicit_authorization(self) -> None:
     for roe_state in (0, 3):
       sim, _loader, blue_id, red_id = _load_fixture(seed=20260520 + roe_state)
       _wait_for_track(sim, blue_id, red_id)
@@ -109,8 +109,8 @@ class WeaponRoeRuntimeTests(unittest.TestCase):
       missiles_after = _fire_with_pilot_action(sim, blue_id)
       self.assertEqual(
         missiles_after,
-        missiles_before - 1,
-        f"expected legacy fallback release for roe_state={roe_state}",
+        missiles_before,
+        f"expected fail-closed hold without explicit authorization for roe_state={roe_state}",
       )
 
 

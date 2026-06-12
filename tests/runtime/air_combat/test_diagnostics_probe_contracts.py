@@ -1164,7 +1164,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         "c2_roe_shot_budget_violation": 0,
         "c2_roe_authorized_salvo_release_count": 0,
         "c2_roe_authorized_reattack_release_count": 0,
-        "c2_roe_legacy_fallback_release_count": 0,
         "policy_prob_tms_up": 0.4,
         "policy_logit_tms_up": -0.25,
         "policy_prob_fire_weapon": fire_prob,
@@ -1343,7 +1342,6 @@ class AirCombatProcessProbeTests(unittest.TestCase):
         "c2_roe_shot_budget_violation": 0,
         "c2_roe_authorized_salvo_release_count": salvo,
         "c2_roe_authorized_reattack_release_count": reattack,
-        "c2_roe_legacy_fallback_release_count": 0,
         "effects_event_count": 0,
         "damage_report_count": 0,
       }
@@ -1368,6 +1366,7 @@ class AirCombatProcessProbeTests(unittest.TestCase):
     self.assertEqual(summary["release_count_by_authorization_state"]["authorized"], 1)
     self.assertEqual(summary["release_count_by_authorization_state"]["unauthorized"], 1)
     self.assertEqual(summary["release_count_by_authorization_state"]["violation"], 2)
+    self.assertEqual(summary["release_count_by_authorization_state"]["unknown"], 0)
     self.assertEqual(summary["roe_state_at_fire"], [2, 2])
     self.assertEqual(summary["authorization_to_fire_at_fire"], [1, 1])
 

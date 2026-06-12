@@ -61,22 +61,6 @@ const Detection *find_contact_by_target_id(const ContactList *contacts, uint64_t
     return nullptr;
 }
 
-uint64_t select_primary_hostile_contact_id(const ContactList *contacts) {
-    if (!contacts) {
-        return 0;
-    }
-    const Detection *best = nullptr;
-    for (const auto &c : contacts->contacts) {
-        if (c.target_id == 0) {
-            continue;
-        }
-        if (best == nullptr || c.range < best->range) {
-            best = &c;
-        }
-    }
-    return best ? best->target_id : 0;
-}
-
 bool entity_is_missile(flecs::world &world, uint64_t entity_id) {
     const auto entity = world.entity(entity_id);
     if (!entity.is_valid()) {
@@ -1029,15 +1013,10 @@ SimulationKernelWeaponReleaseService::fire_weapon_from_pilot_action(uint64_t att
     }
     const ContactList *contacts = attacker.get<ContactList>();
 
-    const int roe_state = mission ? mission->roe_state : 0;
     uint64_t target_id = 0;
 
     if (mission_explicit_release_target_available(mission, contacts, attacker_id)) {
         target_id = mission->assigned_target_id;
-    }
-
-    if (target_id == 0 && (roe_state == 0 || roe_state >= 3)) {
-        target_id = select_primary_hostile_contact_id(contacts);
     }
     if (target_id == 0) {
         return flecs::entity::null();

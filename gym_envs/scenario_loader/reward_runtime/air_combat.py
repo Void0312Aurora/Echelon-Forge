@@ -338,11 +338,10 @@ def classify_air_combat_c2_roe_event(
     fire_attempted: bool,
     previous_release_count: int = 0,
     release_ordinal: int = 0,
-) -> dict[str, Any]:
+    ) -> dict[str, Any]:
     c2 = state if isinstance(state, dict) else {}
     contract_present = bool(c2.get("contract_present", False))
-    roe_state = _as_int(c2.get("roe_state", 0), 0)
-    wcs_state = _as_int(c2.get("wcs_state", 1 if contract_present else roe_state), 1 if contract_present else roe_state)
+    wcs_state = _as_int(c2.get("wcs_state", 1), 1)
     shot_policy_state = _as_int(c2.get("shot_policy_state", 0), 0)
     engage_order_state = _as_int(c2.get("engage_order_state", 0), 0)
     shot_budget_remaining = max(0, _as_int(c2.get("shot_budget_remaining", 0), 0))
@@ -351,9 +350,8 @@ def classify_air_combat_c2_roe_event(
     release_number = max(0, int(previous_release_count or 0)) + max(0, int(release_ordinal or 0))
 
     event_happened = bool(released or fire_attempted)
-    legacy_fallback_allowed = (not contract_present or wcs_state == 0) and roe_state in {0, 3}
     hold_order = bool(contract_present and (wcs_state == 1 or shot_policy_state == 0 or engage_order_state in _C2_ROE_HOLD_ENGAGE_STATES))
-    authorized_candidate = bool(authorization_to_fire or legacy_fallback_allowed)
+    authorized_candidate = bool(authorization_to_fire)
 
     bucket = "no_fire"
     if not event_happened:
@@ -372,8 +370,6 @@ def classify_air_combat_c2_roe_event(
         bucket = "authorized_salvo"
     elif contract_present and shot_policy_state == 3:
         bucket = "authorized_reattack"
-    elif legacy_fallback_allowed and not contract_present:
-        bucket = "legacy_roe_fallback"
     elif bool(released):
         bucket = "valid_authorized_release"
     else:
@@ -383,7 +379,6 @@ def classify_air_combat_c2_roe_event(
         "valid_authorized_release",
         "authorized_salvo",
         "authorized_reattack",
-        "legacy_roe_fallback",
     })
     violation_release = bool(released and bucket in {
         "hold_fire_violation",
@@ -409,7 +404,6 @@ def classify_air_combat_c2_roe_event(
         "authorized_first_release": bool(authorized_release and release_number == 0),
         "authorized_salvo": bool(released and bucket == "authorized_salvo"),
         "authorized_reattack": bool(released and bucket == "authorized_reattack"),
-        "legacy_roe_fallback": bool(released and bucket == "legacy_roe_fallback"),
     }
 
 
@@ -1038,17 +1032,15 @@ def _last_weapon_chain_state(loader: Any) -> dict[str, Any]:
 
 def _c2_roe_authorized_action_window(c2_state: dict[str, Any], *, previous_release_count: int) -> bool:
     contract_present = bool(c2_state.get("contract_present", False))
-    roe_state = _as_int(c2_state.get("roe_state", 0), 0)
-    wcs_state = _as_int(c2_state.get("wcs_state", 1 if contract_present else roe_state), 1 if contract_present else roe_state)
+    wcs_state = _as_int(c2_state.get("wcs_state", 1), 1)
     shot_policy_state = _as_int(c2_state.get("shot_policy_state", 0), 0)
     engage_order_state = _as_int(c2_state.get("engage_order_state", 0), 0)
     shot_budget_remaining = max(0, _as_int(c2_state.get("shot_budget_remaining", 0), 0))
     pending_assessment = _as_bool(c2_state.get("pending_assessment", False), False)
     authorization_to_fire = _as_bool(c2_state.get("authorization_to_fire", False), False)
 
-    legacy_fallback_allowed = (not contract_present or wcs_state == 0) and roe_state in {0, 3}
     hold_order = bool(contract_present and (wcs_state == 1 or shot_policy_state == 0 or engage_order_state in _C2_ROE_HOLD_ENGAGE_STATES))
-    authorized_candidate = bool(authorization_to_fire or legacy_fallback_allowed)
+    authorized_candidate = bool(authorization_to_fire)
     if hold_order or not authorized_candidate:
         return False
     if contract_present and shot_budget_remaining <= 0:

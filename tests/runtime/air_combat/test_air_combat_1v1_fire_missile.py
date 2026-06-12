@@ -85,6 +85,15 @@ def _wait_for_track(sim: ef_py.SimulationKernel, shooter_id: int, target_id: int
   raise AssertionError(f"expected shooter {shooter_id} to acquire target track {target_id}")
 
 
+def _authorize_release(sim: ef_py.SimulationKernel, shooter_id: int, target_id: int) -> None:
+  mission = ef_py.MissionCommand()
+  mission.active = True
+  mission.authorization_to_fire = True
+  mission.assigned_target_id = int(target_id)
+  mission.engagement_authority_holder_id = int(shooter_id)
+  sim.set_mission_command(shooter_id, mission)
+
+
 def _missile_ids(sim: ef_py.SimulationKernel) -> set[int]:
   return {
     int(unit.id)
@@ -238,6 +247,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
   def test_fire_weapon_bridge_uses_assigned_target_and_spawns_missile(self) -> None:
     sim, blue_id, red_id = _make_direct_fixture()
     _wait_for_track(sim, blue_id, red_id)
+    _authorize_release(sim, blue_id, red_id)
 
     pilot = ef_py.PilotAction()
     pilot.active = True
@@ -332,6 +342,7 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
   def test_fire_weapon_bridge_latches_held_trigger_after_one_successful_release(self) -> None:
     sim, blue_id, red_id = _make_direct_fixture()
     _wait_for_track(sim, blue_id, red_id)
+    _authorize_release(sim, blue_id, red_id)
     sim.set_weapon_cooldown(blue_id, 0.0, -1.0)
 
     pilot = ef_py.PilotAction()
