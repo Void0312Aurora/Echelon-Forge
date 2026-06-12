@@ -147,4 +147,50 @@ def test_wp24_universal_env_raw_kernel_path_is_explicit_compatibility_quarantine
 
   assert "The standard UniversalEnv execution path owns a raw SimulationKernel" in train_source
   assert "runtime.world_batch_vec_env=true" in train_source
-  assert "env.runtime_compatibility_enabled=true" in train_source
+  assert "env.runtime_compatibility_enabled=true" not in train_source
+  assert "Direct raw UniversalEnv diagnostics must be run outside" in train_source
+
+def test_wp24_legacy_runtime_and_backend_inputs_stay_retired() -> None:
+  production_entrypoints = [
+    REPO_ROOT / "gym_envs" / "scenario_loader" / "common.py",
+    REPO_ROOT / "gym_envs" / "universal_env.py",
+    REPO_ROOT / "tools" / "eval" / "sb3_eval_base.py",
+    REPO_ROOT / "tools" / "diagnostics" / "arma_proxy_backend_echelon_env.py",
+    REPO_ROOT / "tools" / "diagnostics" / "leader_perf_probe.py",
+    REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "policy_observation_bridge.py",
+    REPO_ROOT / "tools" / "diagnostics" / "benchmarks" / "world_batch_vec_env.py",
+  ]
+  forbidden_snippets = (
+    'choices=["compiled", "legacy"]',
+    'choices=["auto", "legacy", "compiled", "gpu_host"]',
+    'choices=["case", "auto", "legacy", "compiled", "gpu_host"]',
+    'return "legacy"',
+    "return 'legacy'",
+  )
+  offenders: list[tuple[str, str]] = []
+
+  for path in production_entrypoints:
+    rel = path.relative_to(REPO_ROOT).as_posix()
+    source = path.read_text(encoding="utf-8")
+    for snippet in forbidden_snippets:
+      if snippet in source:
+        offenders.append((rel, snippet))
+
+  assert not offenders, (
+    "legacy runtime/backend string inputs must stay retired from maintained CLI and "
+    f"normalizer surfaces: {offenders}"
+  )
+
+def test_wp24_public_vec_env_runtime_compatibility_flag_is_retired() -> None:
+  world_batch_source = (
+    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
+  ).read_text(encoding="utf-8")
+  cooperative_source = (
+    REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
+  ).read_text(encoding="utf-8")
+
+  for source in (world_batch_source, cooperative_source):
+    assert "runtime_compatibility_enabled: bool = False" in source
+    assert "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths" in source
+    assert "_RuntimeFacadeAdapter(\n            self.n_envs,\n            runtime_compatibility_enabled=True" not in source
+    assert "_RuntimeFacadeAdapter(\n            self.world_count,\n            runtime_compatibility_enabled=True" not in source

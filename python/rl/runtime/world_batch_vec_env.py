@@ -238,6 +238,10 @@ class WorldBatchVecEnv(VecEnv):
         self.temporal_history_len = max(1, int(temporal_history_len))
         self.step_info_mode = str(step_info_mode).strip().lower()
         self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
+        if self.runtime_compatibility_enabled:
+            raise ValueError(
+                "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths"
+            )
         self.execution_step_runtime_mode = (
             normalize_execution_step_runtime_mode(execution_step_runtime_mode)
             if execution_step_runtime_mode is not None

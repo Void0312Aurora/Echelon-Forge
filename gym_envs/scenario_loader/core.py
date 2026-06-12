@@ -273,7 +273,7 @@ class ScenarioLoader:
 
     def set_flight_shaping_backend(self, backend: str | None) -> None:
         normalized = normalize_flight_shaping_backend(backend)
-        if normalized not in {"auto", "legacy", "compiled", "gpu_host"}:
+        if normalized not in {"auto", "compiled", "gpu_host"}:
             raise ValueError(f"Unknown flight_shaping_backend: {backend!r}")
         self.flight_shaping_backend = normalized
 

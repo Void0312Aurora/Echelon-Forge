@@ -319,8 +319,12 @@ Current status:
 Current status:
 
 - Completed.
-- Benchmarks show that compiled observation has not consistently outperformed legacy on the current cooperative-cruise smoke setup, and the advantage is even less obvious when `include_visual=true`.
-- The current active cooperative configuration remains `batch_observation_backend=legacy` and `batch_visual_backend=compiled`.
+- Historical benchmarks showed that compiled observation had not consistently
+  outperformed the legacy observation path on the cooperative-cruise smoke
+  setup. That result is retained as performance context only.
+- The current active cooperative configuration uses
+  `batch_observation_backend=compiled` and `batch_visual_backend=compiled`;
+  `batch_observation_backend=legacy` is no longer a maintained input.
 
 #### WP6.4: Close the Baseline Matrix
 

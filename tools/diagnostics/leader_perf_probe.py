@@ -106,7 +106,7 @@ def parse_args():
         "--execution-step-runtime-mode",
         "--execution_step_runtime_mode",
         dest="execution_step_runtime_mode",
-        choices=["compiled", "legacy"],
+        choices=["compiled"],
         default=None,
         help="Select the execution step runtime path inside the low-level execution env.",
     )

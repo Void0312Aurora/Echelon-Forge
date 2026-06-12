@@ -163,14 +163,14 @@ def main() -> int:
         "--batch-visual-backend",
         type=str,
         default="auto",
-        choices=["auto", "legacy", "compiled", "gpu_host"],
+        choices=["auto", "compiled", "gpu_host"],
         help="World-batch visual backend to request.",
     )
     parser.add_argument(
         "--batch-observation-backend",
         type=str,
         default="auto",
-        choices=["auto", "legacy", "compiled", "gpu_host"],
+        choices=["auto", "compiled", "gpu_host"],
         help="World-batch observation backend to request.",
     )
     parser.add_argument(
@@ -201,13 +201,13 @@ def main() -> int:
     )
     parser.add_argument(
         "--execution-step-runtime-mode",
-        choices=["compiled", "legacy"],
+        choices=["compiled"],
         default=None,
         help="Select the execution step runtime path inside ScenarioLoader.",
     )
     parser.add_argument(
         "--flight-shaping-backend",
-        choices=["auto", "legacy", "compiled", "gpu_host"],
+        choices=["auto", "compiled", "gpu_host"],
         default=None,
         help="Select the flight-shaping backend inside ScenarioLoader.",
     )

@@ -140,6 +140,11 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError("flight_shaping_backend='legacy' has been removed from maintained env config paths")
     if flight_shaping_backend is not None and flight_shaping_backend not in VALID_FLIGHT_SHAPING_BACKENDS:
         raise ValueError(f"Unknown flight_shaping_backend in merged env config: {flight_shaping_backend!r}")
+    if runtime_compatibility_enabled:
+        raise ValueError(
+            "env.runtime_compatibility_enabled=true has been removed from maintained training config paths; "
+            "use runtime.world_batch_vec_env=true for production setup or direct diagnostics-only UniversalEnv construction."
+        )
     return {
         "include_visual": bool(include_visual),
         "include_proprio": bool(include_proprio),

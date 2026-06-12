@@ -290,7 +290,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--flight-shaping-backend",
-        choices=["case", "auto", "legacy", "compiled", "gpu_host"],
+        choices=["case", "auto", "compiled", "gpu_host"],
         default="case",
         help="Override the benchmark case flight-shaping backend. Use 'case' to keep the built-in case default.",
     )

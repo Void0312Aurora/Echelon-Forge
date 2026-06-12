@@ -127,9 +127,9 @@ else:
                 else None
             )
             self.step_info_mode = str(step_info_mode).strip().lower()
-            if self.execution_step_runtime_mode not in (None, "compiled", "legacy"):
+            if self.execution_step_runtime_mode not in (None, "compiled"):
                 raise ValueError(f"Unknown execution_step_runtime_mode: {execution_step_runtime_mode!r}")
-            if self.flight_shaping_backend not in (None, "auto", "compiled", "legacy", "gpu_host"):
+            if self.flight_shaping_backend not in (None, "auto", "compiled", "gpu_host"):
                 raise ValueError(f"Unknown flight_shaping_backend: {flight_shaping_backend!r}")
             if self.step_info_mode not in ("full", "terminal", "off"):
                 raise ValueError(f"Unknown step_info_mode: {step_info_mode!r}")

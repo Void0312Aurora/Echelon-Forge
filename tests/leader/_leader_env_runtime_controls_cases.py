@@ -160,7 +160,7 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
     self.assertEqual(info["runtime"], "leader_window")
     self.assertIn("task", obs)
 
-  def test_leader_env_resolve_execution_env_spec_runtime_mode_sources(self):
+  def test_leader_env_rejects_legacy_execution_runtime_mode_sources(self):
     cases = (
       {
         "name": "direct_override",
@@ -195,8 +195,5 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
           env._execution_wrapper_class = None
           env._execution_wrapper_kwargs = None
 
-          env_settings, wrapper_class, wrapper_kwargs = LeaderTrainingEnv._resolve_execution_env_spec(env)
-
-          self.assertEqual(env_settings["execution_step_runtime_mode"], "legacy")
-          self.assertIsNone(wrapper_class)
-          self.assertIsNone(wrapper_kwargs)
+          with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
+            LeaderTrainingEnv._resolve_execution_env_spec(env)

@@ -1798,7 +1798,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
           include_visual=False,
           include_proprio=False,
           execution_step_runtime_mode="legacy",
-          runtime_compatibility_enabled=True,
         )
 
   def test_world_batch_vec_env_rejects_boolean_style_runtime_mode_aliases(self) -> None:
@@ -1816,7 +1815,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
               include_visual=False,
               include_proprio=False,
               execution_step_runtime_mode=mode_alias,
-              runtime_compatibility_enabled=True,
             )
 
         with self.subTest(flight_shaping_backend=mode_alias):
@@ -1827,7 +1825,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
               include_visual=False,
               include_proprio=False,
               flight_shaping_backend=mode_alias,
-              runtime_compatibility_enabled=True,
             )
 
   def test_world_batch_vec_env_reports_effective_flight_shaping_backend_mode(self) -> None:
@@ -1872,7 +1869,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
           include_visual=False,
           include_proprio=False,
           flight_shaping_backend="legacy",
-          runtime_compatibility_enabled=True,
         )
 
   def test_world_batch_vec_env_execution_episode_controller_shadow_compare_flag_off_is_noop(self) -> None:

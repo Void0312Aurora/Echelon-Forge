@@ -194,9 +194,11 @@ def _takeoff_shaping_scenario() -> dict:
 
 
 class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
-  def test_runtime_mode_normalizers_keep_legacy_explicit(self) -> None:
-    self.assertEqual(normalize_execution_step_runtime_mode(" legacy "), "legacy")
-    self.assertEqual(normalize_flight_shaping_backend(" legacy "), "legacy")
+  def test_runtime_mode_normalizers_reject_legacy_inputs(self) -> None:
+    with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
+      normalize_execution_step_runtime_mode(" legacy ")
+    with self.assertRaisesRegex(ValueError, "flight_shaping_backend='legacy' has been removed"):
+      normalize_flight_shaping_backend(" legacy ")
 
     for mode_alias in ("python", "off", "0", "false", "on", "1", "true"):
       with self.subTest(alias=mode_alias):
@@ -672,14 +674,8 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
         if "termination_reason" in case:
           self.assertEqual(str(compiled["termination_reason"]), str(case["termination_reason"]))
 
-  def test_flight_shaping_backends_match_legacy_runtime(self) -> None:
+  def test_flight_shaping_backends_match_compiled_reference(self) -> None:
     scenario = _takeoff_shaping_scenario()
-    legacy = self._run_loader_once(
-      scenario,
-      seed=41,
-      compiled=False,
-      flight_shaping_backend="legacy",
-    )
     compiled_backend = self._run_loader_once(
       scenario,
       seed=41,
@@ -705,10 +701,9 @@ class ScenarioLoaderExecutionStepRuntimeParityTests(unittest.TestCase):
       flight_shaping_backend="gpu_host",
     )
 
-    self._assert_loader_results_match(legacy, compiled_backend)
-    self._assert_loader_results_match(legacy, gpu_backend)
-    self._assert_loader_results_match(legacy, compiled_runtime)
-    self._assert_loader_results_match(legacy, gpu_backend_with_compiled_runtime)
+    self._assert_loader_results_match(compiled_backend, gpu_backend)
+    self._assert_loader_results_match(compiled_backend, compiled_runtime)
+    self._assert_loader_results_match(compiled_backend, gpu_backend_with_compiled_runtime)
 
   def test_compiled_episode_runtime_prefers_cxx_reward_metadata(self) -> None:
     sim = ef_py.SimulationKernel()

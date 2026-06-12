@@ -131,13 +131,13 @@ def add_common_sb3_eval_args(
         choices=["full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"],
     )
     if include_runtime_overrides:
-        parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled", "legacy"])
+        parser.add_argument("--execution_step_runtime_mode", type=str, default=None, choices=["compiled"])
         parser.add_argument("--step_info_mode", type=str, default=None, choices=["full", "terminal", "off"])
         parser.add_argument(
             "--flight_shaping_backend",
             type=str,
             default=None,
-            choices=["auto", "legacy", "compiled", "gpu_host"],
+            choices=["auto", "compiled", "gpu_host"],
         )
     parser.add_argument("--json_out", default="", help="Optional JSON output path.")
 

@@ -155,6 +155,10 @@ class CooperativeWorldBatchVecEnv(VecEnv):
         self.batch_visual_backend = _normalize_batch_visual_backend(batch_visual_backend)
         self.step_info_mode = str(step_info_mode).strip().lower()
         self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
+        if self.runtime_compatibility_enabled:
+            raise ValueError(
+                "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths"
+            )
         self.execution_step_runtime_mode = (
             normalize_execution_step_runtime_mode(execution_step_runtime_mode)
             if execution_step_runtime_mode is not None

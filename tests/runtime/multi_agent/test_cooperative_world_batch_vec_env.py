@@ -444,7 +444,6 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
           CooperativeWorldBatchVecEnv(
             **base_kwargs,
             execution_step_runtime_mode="legacy",
-            runtime_compatibility_enabled=True,
           )
 
       with self.subTest(option="batch_observation_backend"):
@@ -459,7 +458,6 @@ class CooperativeWorldBatchVecEnvTests(unittest.TestCase):
           CooperativeWorldBatchVecEnv(
             **base_kwargs,
             flight_shaping_backend="legacy",
-            runtime_compatibility_enabled=True,
           )
 
   def test_cooperative_world_batch_vec_env_smoke(self) -> None:

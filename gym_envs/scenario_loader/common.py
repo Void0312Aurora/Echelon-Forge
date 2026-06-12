@@ -121,21 +121,22 @@ def normalize_execution_step_runtime_mode(mode: str | None) -> str:
         return "compiled"
     normalized = str(mode).strip().lower()
     if normalized == "legacy":
-        return "legacy"
+        raise ValueError("execution_step_runtime_mode='legacy' has been removed from scenario runtime inputs")
     if normalized in {"", "compiled"}:
         return "compiled"
     raise ValueError(f"Unknown execution_step_runtime_mode: {mode!r}")
 
 
 def execution_step_runtime_mode_enabled(mode: str | None) -> bool:
-    return normalize_execution_step_runtime_mode(mode) != "legacy"
+    normalize_execution_step_runtime_mode(mode)
+    return True
 
 
 def normalize_flight_shaping_backend(backend: str | None) -> str:
     raw_backend = "auto" if backend is None else backend
     normalized = str(raw_backend).strip().lower()
     if normalized == "legacy":
-        return "legacy"
+        raise ValueError("flight_shaping_backend='legacy' has been removed from scenario runtime inputs")
     if normalized in {"", "auto"}:
         return "auto"
     if normalized in {"compiled", "gpu_host"}:

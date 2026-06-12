@@ -184,30 +184,21 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       finally:
         runtime.close()
 
-  def test_single_world_runtime_rejects_removed_compatibility_fallback_even_when_opted_in(self) -> None:
+  def test_single_world_runtime_rejects_runtime_compatibility_opt_in(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/single_world_scenario.json"
       with open(scenario_path, "w", encoding="utf-8") as f:
         json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
 
-      runtime = build_single_world_batch_execution_runtime(
-        scenario_path=scenario_path,
-        env_settings={
-          "include_visual": False,
-          "include_proprio": False,
-          "runtime_compatibility_enabled": True,
-        },
-      )
-      try:
-        original_supports = runtime.access.supports_runtime_window_api
-        runtime.access.supports_runtime_window_api = lambda: False # type: ignore[method-assign]
-        _obs, _reset_info = runtime.reset(seed=9)
-        action = np.zeros((17,), dtype=np.float32)
-        with self.assertRaisesRegex(RuntimeError, "run_wp10_window\\(\\) is required"):
-          runtime.step(action)
-        runtime.access.supports_runtime_window_api = original_supports # type: ignore[method-assign]
-      finally:
-        runtime.close()
+      with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=True has been removed"):
+        build_single_world_batch_execution_runtime(
+          scenario_path=scenario_path,
+          env_settings={
+            "include_visual": False,
+            "include_proprio": False,
+            "runtime_compatibility_enabled": True,
+          },
+        )
 
   def test_single_world_runtime_uses_named_compat_reward_and_info_helpers(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -392,7 +383,6 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
         n_envs=1,
         include_visual=False,
         include_proprio=False,
-        runtime_compatibility_enabled=True,
       )
       try:
         vec_env.seed(19)

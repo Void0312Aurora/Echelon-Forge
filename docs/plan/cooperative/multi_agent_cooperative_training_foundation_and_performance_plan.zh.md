@@ -318,8 +318,10 @@ WP6.1 当前判断：
 当前状态：
 
 - 已完成。
-- benchmark 显示 compiled observation 在当前 cooperative cruise smoke 上没有稳定赢过 legacy，`include_visual=true` 时优势更不明显。
-- 当前 active cooperative 配置保持 `batch_observation_backend=legacy`，`batch_visual_backend=compiled`。
+- 历史 benchmark 显示 compiled observation 在当时的 cooperative cruise smoke 上没有稳定赢过
+  legacy observation path；该结论现在只作为性能背景保留。
+- 当前 active cooperative 配置使用 `batch_observation_backend=compiled` 和
+  `batch_visual_backend=compiled`；`batch_observation_backend=legacy` 不再是维护中的输入。
 
 #### WP6.4：基线矩阵收束
 

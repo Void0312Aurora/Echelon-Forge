@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 from gym_envs.universal_env import UniversalEnv
+from gym_envs.scenario_loader import normalize_execution_step_runtime_mode
 from python.env_config import resolve_env_settings
 from python.rl.runtime.execution_runtime import SingleExecutionRuntime
 from python.rl.runtime.single_world_batch_runtime import build_single_world_batch_execution_runtime
@@ -55,7 +56,9 @@ def resolve_execution_env_spec(env: Any):
     exec_cfg = env.load_execution_config()
     env_settings = resolve_env_settings(exec_cfg, env.make_execution_args_stub())
     if env.execution_step_runtime_mode is not None:
-        env_settings["execution_step_runtime_mode"] = env.execution_step_runtime_mode
+        env_settings["execution_step_runtime_mode"] = normalize_execution_step_runtime_mode(
+            env.execution_step_runtime_mode
+        )
     env_settings["collect_step_timing"] = bool(env.collect_step_timing)
     wrapper_class, wrapper_kwargs = get_action_wrapper_spec(exec_cfg)
     env._execution_env_settings = dict(env_settings)

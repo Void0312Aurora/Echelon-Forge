@@ -59,7 +59,6 @@ class EnvConfigTests(unittest.TestCase):
         "execution_step_runtime_mode": " Compiled ",
         "step_info_mode": "TERMINAL",
         "flight_shaping_backend": " GPU_HOST ",
-        "runtime_compatibility_enabled": "yes",
       }
     }
 
@@ -69,7 +68,7 @@ class EnvConfigTests(unittest.TestCase):
     self.assertEqual(resolved["step_info_mode"], "terminal")
     self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
     self.assertEqual(resolved["temporal_history_len"], 16)
-    self.assertTrue(resolved["runtime_compatibility_enabled"])
+    self.assertFalse(resolved["runtime_compatibility_enabled"])
 
   def test_resolve_env_settings_accepts_domain_neutral_shaping_backend_alias(self) -> None:
     train_config = {
@@ -177,6 +176,19 @@ class EnvConfigTests(unittest.TestCase):
       resolve_env_settings(
         {"env": {"runtime_compatibility_enabled": "legacy-ish"}},
         _make_args(),
+      )
+
+  def test_resolve_env_settings_rejects_runtime_compatibility_opt_in(self) -> None:
+    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=true has been removed"):
+      resolve_env_settings(
+        {"env": {"runtime_compatibility_enabled": "yes"}},
+        _make_args(),
+      )
+
+    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=true has been removed"):
+      resolve_env_settings(
+        {},
+        _make_args(runtime_compatibility_enabled=True),
       )
 
   def test_resolve_env_settings_accepts_dedicated_naval_action_mode(self) -> None:

@@ -12,7 +12,7 @@ Its positioning is not to replace the algorithm, policy, or vec-env logic in `py
 
 ## Implemented Training Surfaces
 
-- `agent_layer="execution"` is the single-policy air/execution path. The maintained production setup uses `runtime.world_batch_vec_env=true` and `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv`; the raw `UniversalEnv` / SB3 vec-env route is a quarantined compatibility path and requires `env.runtime_compatibility_enabled=true`.
+- `agent_layer="execution"` is the single-policy air/execution path. The maintained production setup uses `runtime.world_batch_vec_env=true` and `python.rl.runtime.world_batch_vec_env.WorldBatchVecEnv`; raw `UniversalEnv` / SB3 vec-env compatibility is no longer accepted through maintained training config.
 - `agent_layer="cooperative_execution"` is the cooperative/common integration line. It builds `python.rl.runtime.cooperative_world_batch_vec_env.CooperativeWorldBatchVecEnv`, supports the maintained multi-timescale wrapper, and is the active cooperative training surface.
 - `agent_layer="leader"` builds `gym_envs.leader_env.LeaderTrainingEnv` for leader-layer policy work. The single-process batched leader inference path is still opt-in experimental; normal multi-process vectorization is the default.
 - Naval N4 train configs may declare `naval_entry`; bootstrap validates the declared scenario/contract paths and requires `action_mode="naval_station3"` plus `mission_obs_mode="naval_screen_station_v1"`. This is a scoped pre-fire/tasking/contact gate, not a learned naval weapon-outcome acceptance.
