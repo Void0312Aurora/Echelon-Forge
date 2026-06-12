@@ -16,6 +16,10 @@ def _write(path: Path, text: str) -> None:
   path.write_text(text, encoding="utf-8")
 
 
+def _a2_source_path(tmp_path: Path, relative_path: str) -> Path:
+  return tmp_path / audit.A2_SOURCE_ROOT / relative_path
+
+
 def _minimal_ledger() -> str:
   return """# Source Ledger
 
@@ -41,16 +45,11 @@ def test_source_admission_audit_rejects_candidate_manifest_authority_grants(
   tmp_path: Path,
 ) -> None:
   _write(
-    tmp_path
-    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    _a2_source_path(tmp_path, "data_collection/example/source_ledger.zh.md"),
     _minimal_ledger(),
   )
   _write(
-    tmp_path
-    / (
-      "docs/task/air_combat/a2_high_fidelity_damage_model/calibration/"
-      "bad_candidate/validation_manifest_bad.zh.md"
-    ),
+    _a2_source_path(tmp_path, "calibration/bad_candidate/validation_manifest_bad.zh.md"),
     """# Bad Candidate Manifest
 
 状态：candidate / non-authoritative。
@@ -72,8 +71,7 @@ def test_source_admission_audit_rejects_candidate_manifest_authority_grants(
 
 def test_source_admission_audit_warns_on_unpinned_source_rows(tmp_path: Path) -> None:
   _write(
-    tmp_path
-    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    _a2_source_path(tmp_path, "data_collection/example/source_ledger.zh.md"),
     """# Source Ledger
 
 状态：candidate / non-authoritative。包含 source_ref、发布方、权利、scope、交叉验证、residual 和 authority 边界。
@@ -90,15 +88,13 @@ def test_source_admission_audit_warns_on_unpinned_source_rows(tmp_path: Path) ->
 
 def test_source_admission_audit_checks_candidate_update_docs(tmp_path: Path) -> None:
   _write(
-    tmp_path
-    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    _a2_source_path(tmp_path, "data_collection/example/source_ledger.zh.md"),
     _minimal_ledger(),
   )
   _write(
-    tmp_path
-    / (
-      "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/"
-      "source_pin_update_bad_20260528.zh.md"
+    _a2_source_path(
+      tmp_path,
+      "data_collection/example/source_pin_update_bad_20260528.zh.md",
     ),
     """# Bad Candidate Update
 
@@ -123,15 +119,13 @@ def test_source_admission_audit_requires_reasonableness_for_community_updates(
   tmp_path: Path,
 ) -> None:
   _write(
-    tmp_path
-    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    _a2_source_path(tmp_path, "data_collection/example/source_ledger.zh.md"),
     _minimal_ledger(),
   )
   _write(
-    tmp_path
-    / (
-      "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/"
-      "source_pin_update_third_party_community_20260528.zh.md"
+    _a2_source_path(
+      tmp_path,
+      "data_collection/example/source_pin_update_third_party_community_20260528.zh.md",
     ),
     """# Third Party Candidate Update
 
@@ -151,5 +145,24 @@ def test_source_admission_audit_requires_reasonableness_for_community_updates(
   )
   assert any(
     issue.code == "candidate-doc-missing-third-party-reasonableness"
+    for issue in result.issues
+  )
+
+
+def test_source_admission_audit_rejects_legacy_live_root_only(tmp_path: Path) -> None:
+  _write(
+    tmp_path
+    / "docs/task/air_combat/a2_high_fidelity_damage_model/data_collection/example/source_ledger.zh.md",
+    _minimal_ledger(),
+  )
+
+  result = audit.audit_a2_source_admission(tmp_path)
+
+  assert result.checked_ledgers == 0
+  assert result.checked_candidate_docs == 0
+  assert result.checked_calibration_docs == 0
+  assert any(
+    issue.code == "a2-source-root-missing"
+    and issue.path == audit.A2_SOURCE_ROOT.as_posix()
     for issue in result.issues
   )

@@ -12,8 +12,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-ARCHIVED_A2_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
-LEGACY_A2_ROOT = Path("docs/task/air_combat/a2_high_fidelity_damage_model")
+A2_SOURCE_ROOT = Path("docs/task/air_combat/archive/a2_high_fidelity_damage_model")
 
 SOURCE_LEDGER_GLOB = "*/source_ledger*.zh.md"
 CALIBRATION_MARKDOWN_GLOB = "*/*.zh.md"
@@ -432,15 +431,8 @@ def collect_candidate_update_docs(a2_root: Path) -> list[Path]:
   )
 
 
-def resolve_a2_root(repo_root: Path) -> Path:
-  archived = repo_root / ARCHIVED_A2_ROOT
-  legacy = repo_root / LEGACY_A2_ROOT
-  if archived.exists() and (
-    (archived / "data_collection").exists()
-    or (archived / "calibration").exists()
-  ):
-    return ARCHIVED_A2_ROOT
-  return LEGACY_A2_ROOT
+def resolve_a2_root(_repo_root: Path) -> Path:
+  return A2_SOURCE_ROOT
 
 
 def audit_a2_source_admission(repo_root: Path = REPO_ROOT) -> AuditSummary:
@@ -450,6 +442,25 @@ def audit_a2_source_admission(repo_root: Path = REPO_ROOT) -> AuditSummary:
   data_collection = a2_root / "data_collection"
   calibration = a2_root / "calibration"
   issues: list[Issue] = []
+
+  if not a2_root.exists():
+    issues.append(
+      Issue(
+        severity="error",
+        code="a2-source-root-missing",
+        path=rel(a2_root, repo_root),
+        message=(
+          "A2 source governance is scoped to the archived source root; "
+          "the old live A2 task root is no longer a compatibility fallback"
+        ),
+      )
+    )
+    return AuditSummary(
+      checked_ledgers=0,
+      checked_candidate_docs=0,
+      checked_calibration_docs=0,
+      issues=issues,
+    )
 
   ledger_paths = sorted(data_collection.glob(SOURCE_LEDGER_GLOB)) if data_collection.exists() else []
   candidate_update_paths = collect_candidate_update_docs(a2_root)

@@ -55,7 +55,7 @@
 | workspace cleanup/audit | `redundancy_audit.py`、`cleanup_redundancy.py`、`isolate_repro_workspace.sh` | 功能名稳定。 | 保留。 |
 | docs maintenance | `translate_docs_batch.py`、`wp_doc_closure_audit.py` | 功能名稳定。 | 保留。 |
 | damage-model external evidence | `tools/maintenance/damage_model.py` | 本轮已合并 source-rights signoff request、external signoff intake/template/preflight。 | 保留统一入口；内部实现位于 `tools/maintenance/external_signoff_evidence/`。 |
-| damage-model source governance | `tools/maintenance/damage_model.py` | 本轮已合并 source admission audit、source payload pack、source rights output policy。 | 保留统一入口；内部实现位于 `tools/maintenance/source_governance/`。 |
+| damage-model source governance | `tools/maintenance/damage_model.py` | 本轮已合并 source admission audit、source payload pack、source rights output policy；source admission audit 只认 archived A2 source root，不再回退旧 live A2 根。 | 保留统一入口；内部实现位于 `tools/maintenance/source_governance/`。 |
 | damage-model benchmark evidence | `tools/maintenance/damage_model.py` | 本轮已合并 comparison hashes、mechanism evidence、benchmark execution、debris case、spreadsheet recalculation/replacement/lineage admission。 | 保留统一入口；内部实现位于 `tools/maintenance/benchmark_evidence/`。 |
 | damage-model scope/provenance | `tools/maintenance/damage_model.py` | 本轮已合并 geometry/warhead row provenance、target geometry closeout、warhead scope closeout、mechanism source closeout。 | 保留统一入口；内部实现位于 `tools/maintenance/scope_provenance/`。 |
 | damage-model independent review | `tools/maintenance/damage_model.py` | 本轮已合并 Stage B effect-scale review、RES-011/012 review closeout、scope-bucket review、uncertainty review。 | 保留统一入口；内部实现位于 `tools/maintenance/independent_review/`。 |
