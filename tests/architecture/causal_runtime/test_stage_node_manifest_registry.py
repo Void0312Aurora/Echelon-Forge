@@ -33,7 +33,7 @@ def test_wp10_registry_seed_spells_out_required_fields_for_each_maintained_node(
     ".event_families_emitted =",
     ".diagnostic_trace_obligations =",
     ".facade_visibility =",
-    ".compatibility_adapter_allowed =",
+    ".adapter_projection_allowed =",
   ]
   for node_id in (
     "p7.fire_control_launch.v1",
@@ -180,7 +180,7 @@ def test_same_window_publish_claim_requires_allowed_same_window_edges() -> None:
         .event_families_emitted = {"fire_control_and_launch"},
         .diagnostic_trace_obligations = {"launch_event_id"},
         .facade_visibility = std::string(kFacadeVisibilityInternal),
-        .compatibility_adapter_allowed = false,
+        .adapter_projection_allowed = false,
       };
 
       const auto result = validate_stage_node_manifest(manifest);
@@ -204,7 +204,7 @@ def test_same_window_publish_claim_requires_allowed_same_window_edges() -> None:
   assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_compatibility_and_diagnostics_nodes_are_not_maintained_scheduler_truth() -> None:
+def test_adapter_projection_and_diagnostics_nodes_are_not_maintained_scheduler_truth() -> None:
   source = textwrap.dedent(
     r"""
     #include <iostream>
@@ -213,17 +213,17 @@ def test_compatibility_and_diagnostics_nodes_are_not_maintained_scheduler_truth(
 
     int main() {
       using namespace runtime::scheduler;
-      const auto* compatibility =
-        find_stage_node_manifest("p7.launch_request_adapter_compat.v1");
+      const auto* adapter_projection =
+        find_stage_node_manifest("p7.launch_request_adapter_projection.v1");
       const auto* diagnostics =
         find_stage_node_manifest("p10.observation_trace_diagnostics.v1");
 
-      if (compatibility == nullptr || diagnostics == nullptr) {
+      if (adapter_projection == nullptr || diagnostics == nullptr) {
         std::cerr << "missing non-maintained registry entries\n";
         return 1;
       }
-      if (is_maintained_scheduler_truth(*compatibility)) {
-        std::cerr << "compatibility node drifted into maintained truth\n";
+      if (is_maintained_scheduler_truth(*adapter_projection)) {
+        std::cerr << "adapter projection node drifted into maintained truth\n";
         return 1;
       }
       if (is_maintained_scheduler_truth(*diagnostics)) {
@@ -233,7 +233,7 @@ def test_compatibility_and_diagnostics_nodes_are_not_maintained_scheduler_truth(
 
       const auto manifests = enumerate_wp10_maintained_stage_node_manifests();
       for (const auto* manifest : manifests) {
-        if (manifest->node_id == compatibility->node_id ||
+        if (manifest->node_id == adapter_projection->node_id ||
           manifest->node_id == diagnostics->node_id) {
           std::cerr << "non-maintained node leaked into maintained list\n";
           return 1;

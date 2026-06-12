@@ -27,7 +27,7 @@ inline constexpr std::string_view kWriteCommitPolicyDiagnosticOnly = "diagnostic
 inline constexpr std::string_view kFacadeVisibilityInternal = "internal";
 inline constexpr std::string_view kFacadeVisibilityMaintainedSurface = "maintained_facade_surface";
 inline constexpr std::string_view kFacadeVisibilityMaintainedExport = "maintained_facade_export";
-inline constexpr std::string_view kFacadeVisibilityCompatibilityAdapter = "compatibility_adapter";
+inline constexpr std::string_view kFacadeVisibilityAdapterProjection = "adapter_projection";
 inline constexpr std::string_view kFacadeVisibilityDiagnosticsOnly = "diagnostics_only";
 
 struct StageNodeManifest {
@@ -48,7 +48,7 @@ struct StageNodeManifest {
     std::vector<std::string> event_families_emitted;
     std::vector<std::string> diagnostic_trace_obligations;
     std::string facade_visibility;
-    bool compatibility_adapter_allowed = false;
+    bool adapter_projection_allowed = false;
 };
 
 struct StageNodeManifestValidationResult {
@@ -98,7 +98,7 @@ inline bool declares_event_like_outputs(const StageNodeManifest& manifest) {
 }
 
 inline bool is_maintained_scheduler_truth(const StageNodeManifest& manifest) {
-    return manifest.facade_visibility != kFacadeVisibilityCompatibilityAdapter &&
+    return manifest.facade_visibility != kFacadeVisibilityAdapterProjection &&
         manifest.facade_visibility != kFacadeVisibilityDiagnosticsOnly &&
         manifest.write_commit_policy != kWriteCommitPolicyDiagnosticOnly;
 }
@@ -182,10 +182,10 @@ inline StageNodeManifestValidationResult validate_stage_node_manifest(
             "stage_publish manifests must declare the stage_publish barrier"
         );
     }
-    if (manifest.facade_visibility == kFacadeVisibilityCompatibilityAdapter &&
-        !manifest.compatibility_adapter_allowed) {
+    if (manifest.facade_visibility == kFacadeVisibilityAdapterProjection &&
+        !manifest.adapter_projection_allowed) {
         result.add_error(
-            "compatibility_adapter visibility requires compatibility_adapter_allowed"
+            "adapter_projection visibility requires adapter_projection_allowed"
         );
     }
     if (declares_event_like_outputs(manifest)) {
@@ -258,7 +258,7 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
                 "world_id",
             },
             .facade_visibility = std::string(kFacadeVisibilityMaintainedSurface),
-            .compatibility_adapter_allowed = false,
+            .adapter_projection_allowed = false,
         },
         StageNodeManifest{
             .node_id = "p9.effects_damage.v1",
@@ -284,7 +284,7 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
                 "barrier_id",
             },
             .facade_visibility = std::string(kFacadeVisibilityInternal),
-            .compatibility_adapter_allowed = false,
+            .adapter_projection_allowed = false,
         },
         StageNodeManifest{
             .node_id = "p10.observation_export.v1",
@@ -310,10 +310,10 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
                 "damage_report_id",
             },
             .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-            .compatibility_adapter_allowed = false,
+            .adapter_projection_allowed = false,
         },
         StageNodeManifest{
-            .node_id = "p7.launch_request_adapter_compat.v1",
+            .node_id = "p7.launch_request_adapter_projection.v1",
             .semantic_stage = {"P7 FireControlLaunch"},
             .owner_module = "src/runtime/facade/runtime_facade.cpp",
             .input_packets = {"LaunchRequest"},
@@ -322,7 +322,7 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .write_state_shards = {},
             .read_snapshot_policy = std::string(kReadSnapshotPolicyDiagnosticOnly),
             .write_commit_policy = std::string(kWriteCommitPolicyDiagnosticOnly),
-            .clock_domain = "compatibility_passthrough",
+            .clock_domain = "adapter_projection_passthrough",
             .latency_policy = "best_effort_diagnostics",
             .sync_policy = "diagnostics_only",
             .allowed_same_window_edges = {},
@@ -330,11 +330,11 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .event_families_emitted = {},
             .diagnostic_trace_obligations = {
                 "source_id",
-                "compatibility_label",
+                "adapter_projection_label",
                 "input_snapshot_version",
             },
-            .facade_visibility = std::string(kFacadeVisibilityCompatibilityAdapter),
-            .compatibility_adapter_allowed = true,
+            .facade_visibility = std::string(kFacadeVisibilityAdapterProjection),
+            .adapter_projection_allowed = true,
         },
         StageNodeManifest{
             .node_id = "p10.observation_trace_diagnostics.v1",
@@ -358,7 +358,7 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
                 "observation_packet_version",
             },
             .facade_visibility = std::string(kFacadeVisibilityDiagnosticsOnly),
-            .compatibility_adapter_allowed = false,
+            .adapter_projection_allowed = false,
         },
     };
     return registry;

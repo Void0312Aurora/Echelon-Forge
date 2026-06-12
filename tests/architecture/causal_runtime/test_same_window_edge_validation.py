@@ -45,7 +45,7 @@ def test_same_window_edge_validation_passes_for_declared_stage_family_edge() -> 
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "p10.same_window_export.v1",
@@ -65,7 +65,7 @@ def test_same_window_edge_validation_passes_for_declared_stage_family_edge() -> 
           .event_families_emitted = {"observation_and_export"},
           .diagnostic_trace_obligations = {"source_snapshot_version"},
           .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
@@ -121,7 +121,7 @@ def test_same_window_edge_validation_fails_when_producer_does_not_name_consumer(
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "consumer.v1",
@@ -141,7 +141,7 @@ def test_same_window_edge_validation_fails_when_producer_does_not_name_consumer(
           .event_families_emitted = {"observation_and_export"},
           .diagnostic_trace_obligations = {"source_snapshot_version"},
           .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
@@ -203,7 +203,7 @@ def test_same_window_edge_validation_fails_when_read_write_sets_do_not_intersect
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "consumer.v1",
@@ -223,7 +223,7 @@ def test_same_window_edge_validation_fails_when_read_write_sets_do_not_intersect
           .event_families_emitted = {"observation_and_export"},
           .diagnostic_trace_obligations = {"source_snapshot_version"},
           .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
@@ -284,7 +284,7 @@ def test_same_window_edge_validation_fails_when_consumer_omits_stage_publish_bar
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "consumer.v1",
@@ -304,7 +304,7 @@ def test_same_window_edge_validation_fails_when_consumer_omits_stage_publish_bar
           .event_families_emitted = {"observation_and_export"},
           .diagnostic_trace_obligations = {"source_snapshot_version"},
           .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
@@ -365,7 +365,7 @@ def test_same_window_edge_validation_fails_on_cycle() -> None:
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "producer_b.v1",
@@ -385,7 +385,7 @@ def test_same_window_edge_validation_fails_on_cycle() -> None:
           .event_families_emitted = {"effects_and_damage"},
           .diagnostic_trace_obligations = {"damage_report_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
@@ -452,7 +452,7 @@ def test_same_window_edge_validation_fails_for_window_commit_only_producer() -> 
           .event_families_emitted = {"fire_control_and_launch"},
           .diagnostic_trace_obligations = {"launch_event_id"},
           .facade_visibility = std::string(kFacadeVisibilityInternal),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
         StageNodeManifest{
           .node_id = "consumer.v1",
@@ -472,7 +472,7 @@ def test_same_window_edge_validation_fails_for_window_commit_only_producer() -> 
           .event_families_emitted = {"observation_and_export"},
           .diagnostic_trace_obligations = {"source_snapshot_version"},
           .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
-          .compatibility_adapter_allowed = false,
+          .adapter_projection_allowed = false,
         },
       };
 
