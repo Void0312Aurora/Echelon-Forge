@@ -6,7 +6,7 @@
   "n_envs": 4,
   "save_freq": 16384,
   "runtime": {
-    "batch_observation_backend": "legacy",
+    "batch_observation_backend": "compiled",
     "batch_visual_backend": "compiled"
   },
   "cooperative_execution": {
