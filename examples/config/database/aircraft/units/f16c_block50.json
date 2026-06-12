@@ -42,8 +42,8 @@
                     {
                         "name": "apg68_radar_array",
                         "system": "radar",
-                        "offset": [6.6, 0.0, 0.0],
-                        "size": [1.2, 0.8, 0.6],
+                        "offset": [6.55, 0.0, -0.58],
+                        "size": [0.95, 0.6, 0.3],
                         "armor": 3.0,
                         "threshold_scale": 1.30,
                         "mechanism_thresholds": {
@@ -82,6 +82,28 @@
                         "critical": true
                     },
                     {
+                        "name": "dedicated_canopy_surface_component",
+                        "system": "cockpit",
+                        "offset": [3.41, 0.0, -0.30],
+                        "size": [1.70, 0.75, 0.35],
+                        "armor": 2.0,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {
+                            "blast": 0.80,
+                            "fragmentation": 1.10,
+                            "blast_fragmentation": 1.00,
+                            "continuous_rod": 0.85,
+                            "hit_to_kill": 1.15
+                        },
+                        "redundancy_group_id": "canopy_surface_receiver",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.6,
+                        "dependencies": [
+                            {"system": "cockpit", "target_system": "cockpit", "edge_type": "exposure_path", "scale": 0.45, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
                         "name": "nose_avionics_bay",
                         "system": "avionics",
                         "offset": [4.8, 0.0, -0.25],
@@ -103,8 +125,8 @@
                     {
                         "name": "iff_interrogator",
                         "system": "avionics",
-                        "offset": [5.9, 0.0, 0.4],
-                        "size": [0.7, 0.7, 0.25],
+                        "offset": [5.75, 0.0, -0.44],
+                        "size": [0.45, 0.45, 0.18],
                         "armor": 3.0,
                         "threshold_scale": 1.10,
                         "mechanism_thresholds": {
@@ -242,6 +264,28 @@
                         "critical": true
                     },
                     {
+                        "name": "dedicated_intake_lip_or_duct_component",
+                        "system": "engine",
+                        "offset": [3.39, 0.0, -0.64],
+                        "size": [1.00, 0.55, 0.55],
+                        "armor": 3.0,
+                        "threshold_scale": 1.08,
+                        "mechanism_thresholds": {
+                            "blast": 0.90,
+                            "fragmentation": 1.10,
+                            "blast_fragmentation": 1.05,
+                            "continuous_rod": 0.95,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "engine_intake_airflow_path",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 0.7,
+                        "dependencies": [
+                            {"system": "engine", "target_system": "engine", "edge_type": "airflow_path", "scale": 0.55, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
                         "name": "electrical_power_bus",
                         "system": "avionics",
                         "offset": [-2.8, 0.45, 0.05],
@@ -295,8 +339,8 @@
                     {
                         "name": "afterburner_nozzle",
                         "system": "engine",
-                        "offset": [-7.0, 0.0, 0.0],
-                        "size": [1.0, 0.9, 0.9],
+                        "offset": [-6.35, 0.0, -0.5],
+                        "size": [0.9, 0.8, 0.32],
                         "armor": 6.0,
                         "threshold_scale": 1.10,
                         "mechanism_thresholds": {
@@ -377,6 +421,52 @@
                             {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.90, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
                         ],
                         "critical": false
+                    },
+                    {
+                        "name": "left_horizontal_tail_actuator_or_surface_component",
+                        "system": "flight_control",
+                        "offset": [-6.00, -1.79, -1.05],
+                        "size": [1.80, 1.00, 0.32],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 1.45,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "horizontal_tail_control_surfaces",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.8,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_horizontal_tail_actuator_or_surface_component",
+                        "system": "flight_control",
+                        "offset": [-6.00, 1.79, -1.05],
+                        "size": [1.80, 1.00, 0.32],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 1.45,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "horizontal_tail_control_surfaces",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 0.8,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
                     }
                 ]
             },
@@ -389,8 +479,8 @@
                     {
                         "name": "left_wing_fuel_cell",
                         "system": "fuel",
-                        "offset": [-0.8, -2.8, 0.0],
-                        "size": [1.2, 1.2, 0.25],
+                        "offset": [-0.8, -2.8, -0.985],
+                        "size": [1.2, 1.2, 0.20],
                         "armor": 2.0,
                         "threshold_scale": 1.25,
                         "mechanism_thresholds": {
@@ -408,8 +498,8 @@
                     {
                         "name": "right_wing_fuel_cell",
                         "system": "fuel",
-                        "offset": [-0.8, 2.8, 0.0],
-                        "size": [1.2, 1.2, 0.25],
+                        "offset": [-0.8, 2.8, -0.985],
+                        "size": [1.2, 1.2, 0.20],
                         "armor": 2.0,
                         "threshold_scale": 1.25,
                         "mechanism_thresholds": {
@@ -427,7 +517,7 @@
                     {
                         "name": "left_aileron_actuator",
                         "system": "flight_control",
-                        "offset": [-0.8, -4.1, 0.0],
+                        "offset": [-0.8, -4.1, -0.985],
                         "size": [0.9, 0.8, 0.22],
                         "armor": 3.0,
                         "threshold_scale": 1.35,
@@ -450,7 +540,7 @@
                     {
                         "name": "right_aileron_actuator",
                         "system": "flight_control",
-                        "offset": [-0.8, 4.1, 0.0],
+                        "offset": [-0.8, 4.1, -0.985],
                         "size": [0.9, 0.8, 0.22],
                         "armor": 3.0,
                         "threshold_scale": 1.35,
@@ -492,8 +582,8 @@
                     {
                         "name": "left_leading_edge_flap_actuator",
                         "system": "flight_control",
-                        "offset": [-0.2, -1.6, 0.0],
-                        "size": [0.8, 0.7, 0.18],
+                        "offset": [-0.2, -1.15, -0.71],
+                        "size": [0.8, 0.5, 0.18],
                         "armor": 3.0,
                         "threshold_scale": 1.30,
                         "mechanism_thresholds": {
@@ -515,8 +605,8 @@
                     {
                         "name": "right_leading_edge_flap_actuator",
                         "system": "flight_control",
-                        "offset": [-0.2, 1.6, 0.0],
-                        "size": [0.8, 0.7, 0.18],
+                        "offset": [-0.2, 1.15, -0.71],
+                        "size": [0.8, 0.5, 0.18],
                         "armor": 3.0,
                         "threshold_scale": 1.30,
                         "mechanism_thresholds": {

@@ -100,6 +100,16 @@ TEST_SUITE("components_basic") {
         CHECK(damage_component_redundancy_group_key(c) == "hydraulic:rg:3.000000");
     }
 
+    TEST_CASE("damage_component_geometry_defaults_to_axis_aligned_box") {
+        DamageComponent c;
+        CHECK(c.geometry_primitive == "aabb");
+        CHECK(c.geometry_axes[0][0] == doctest::Approx(1.0));
+        CHECK(c.geometry_axes[1][1] == doctest::Approx(1.0));
+        CHECK(c.geometry_axes[2][2] == doctest::Approx(1.0));
+        CHECK(c.geometry_half_extents_m[0] == doctest::Approx(0.0));
+        CHECK(c.geometry_vertices_m.empty());
+    }
+
     // --- Side enum -------------------------------------------------------------
 
     TEST_CASE("side_enum_values_are_distinct") {

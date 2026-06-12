@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 #include <unordered_map>
@@ -52,6 +53,118 @@ struct VulnerabilityEvidenceDescriptor {
 
 using VulnerabilityEvidenceDescriptorMap =
     std::unordered_map<std::string, VulnerabilityEvidenceDescriptor>;
+
+std::array<double, 3> parse_vec3_array(
+    const nlohmann::json& value,
+    const std::array<double, 3>& fallback
+) {
+    if (!value.is_array() || value.size() < 3) {
+        return fallback;
+    }
+    std::array<double, 3> parsed = fallback;
+    for (std::size_t index = 0; index < 3; ++index) {
+        if (value[index].is_number()) {
+            parsed[index] = value[index].get<double>();
+        }
+    }
+    return parsed;
+}
+
+std::vector<std::array<double, 3>> parse_vec3_array_rows(const nlohmann::json& value) {
+    std::vector<std::array<double, 3>> rows;
+    if (!value.is_array()) {
+        return rows;
+    }
+    for (const auto& row_json : value) {
+        if (!row_json.is_array() || row_json.size() < 3) {
+            continue;
+        }
+        rows.push_back(parse_vec3_array(row_json, {{0.0, 0.0, 0.0}}));
+    }
+    return rows;
+}
+
+void parse_damage_component_geometry_json_fields(
+    const nlohmann::json& component_json,
+    DamageComponent* out_component
+) {
+    if (!out_component || !component_json.is_object()) {
+        return;
+    }
+    DamageComponent& component = *out_component;
+    component.geometry_primitive =
+        component_json.value("geometry_primitive", component.geometry_primitive);
+    if (component_json.contains("geometry_source_ref") &&
+        component_json["geometry_source_ref"].is_string()) {
+        component.geometry_source_ref = component_json["geometry_source_ref"].get<std::string>();
+    }
+    if (component_json.contains("geometry_source_region_id") &&
+        component_json["geometry_source_region_id"].is_string()) {
+        component.geometry_source_region_id =
+            component_json["geometry_source_region_id"].get<std::string>();
+    }
+    if (component_json.contains("geometry_surface_component_id") &&
+        component_json["geometry_surface_component_id"].is_string()) {
+        component.geometry_surface_component_id =
+            component_json["geometry_surface_component_id"].get<std::string>();
+    }
+
+    const nlohmann::json* geometry_json = nullptr;
+    if (component_json.contains("geometry") && component_json["geometry"].is_object()) {
+        geometry_json = &component_json["geometry"];
+    }
+    if (geometry_json) {
+        component.geometry_primitive =
+            geometry_json->value("primitive", component.geometry_primitive);
+        component.geometry_source_ref =
+            geometry_json->value("source", component.geometry_source_ref);
+        component.geometry_source_region_id =
+            geometry_json->value("source_region_id", component.geometry_source_region_id);
+        component.geometry_surface_component_id =
+            geometry_json->value("surface_component_id", component.geometry_surface_component_id);
+        if (geometry_json->contains("vertices_m")) {
+            component.geometry_vertices_m =
+                parse_vec3_array_rows((*geometry_json)["vertices_m"]);
+        }
+        if (geometry_json->contains("thin_prism") &&
+            (*geometry_json)["thin_prism"].is_object()) {
+            const auto& thin_json = (*geometry_json)["thin_prism"];
+            component.geometry_thin_axis =
+                thin_json.value("thin_axis", component.geometry_thin_axis);
+            component.geometry_nominal_thickness_m =
+                thin_json.value(
+                    "nominal_thickness_m",
+                    component.geometry_nominal_thickness_m);
+        }
+        const nlohmann::json* obb_json = geometry_json;
+        if (geometry_json->contains("obb") && (*geometry_json)["obb"].is_object()) {
+            obb_json = &(*geometry_json)["obb"];
+        }
+        if (obb_json->contains("axes") && (*obb_json)["axes"].is_array()) {
+            const auto& axes_json = (*obb_json)["axes"];
+            for (std::size_t index = 0; index < 3 && index < axes_json.size(); ++index) {
+                component.geometry_axes[index] =
+                    parse_vec3_array(axes_json[index], component.geometry_axes[index]);
+            }
+        }
+        if (obb_json->contains("half_extents_m")) {
+            component.geometry_half_extents_m =
+                parse_vec3_array(
+                    (*obb_json)["half_extents_m"],
+                    component.geometry_half_extents_m);
+        }
+    }
+    if (component_json.contains("geometry_vertices_m")) {
+        component.geometry_vertices_m =
+            parse_vec3_array_rows(component_json["geometry_vertices_m"]);
+    }
+    if (component_json.contains("geometry_half_extents_m")) {
+        component.geometry_half_extents_m =
+            parse_vec3_array(
+                component_json["geometry_half_extents_m"],
+                component.geometry_half_extents_m);
+    }
+}
 
 void parse_optional_evidence_row_number(
     const nlohmann::json& row_json,
@@ -1201,6 +1314,18 @@ bool parse_unit_json(
                         component.redundancy_weight =
                             component_json.value("redundancy_weight", component.redundancy_weight);
                         component.critical = component_json.value("critical", component.critical);
+                        parse_damage_component_geometry_json_fields(
+                            component_json,
+                            &component);
+                        if (component.geometry_half_extents_m[0] <= 0.0 &&
+                            component.geometry_half_extents_m[1] <= 0.0 &&
+                            component.geometry_half_extents_m[2] <= 0.0) {
+                            component.geometry_half_extents_m = {{
+                                component.dim_l * 0.5,
+                                component.dim_w * 0.5,
+                                component.dim_h * 0.5,
+                            }};
+                        }
                         hb.components.push_back(component);
                     }
                 }

@@ -173,44 +173,197 @@ double hitbox_surface_incidence_cos(
     return has_candidate ? incidence_cos : 0.0;
 }
 
-bool check_component(const Vec3& local_p, const DamageComponent& component) {
-    const double min_x = component.offset_x - component.dim_l * 0.5;
-    const double max_x = component.offset_x + component.dim_l * 0.5;
-    const double min_y = component.offset_y - component.dim_w * 0.5;
-    const double max_y = component.offset_y + component.dim_w * 0.5;
-    const double min_z = component.offset_z - component.dim_h * 0.5;
-    const double max_z = component.offset_z + component.dim_h * 0.5;
+struct ComponentAxisBounds {
+    Vec3 minimum;
+    Vec3 maximum;
+};
 
-    return (local_p.x >= min_x && local_p.x <= max_x &&
-            local_p.y >= min_y && local_p.y <= max_y &&
-            local_p.z >= min_z && local_p.z <= max_z);
+Vec3 component_geometry_axis(const DamageComponent& component, std::size_t index) {
+    if (index >= component.geometry_axes.size()) {
+        return index == 0 ? Vec3{1.0, 0.0, 0.0}
+             : index == 1 ? Vec3{0.0, 1.0, 0.0}
+                          : Vec3{0.0, 0.0, 1.0};
+    }
+    const auto& axis = component.geometry_axes[index];
+    const Vec3 candidate{axis[0], axis[1], axis[2]};
+    const Vec3 normalized = vec3_normalize(candidate);
+    if (vec3_norm(normalized) <= 1.0e-9) {
+        return index == 0 ? Vec3{1.0, 0.0, 0.0}
+             : index == 1 ? Vec3{0.0, 1.0, 0.0}
+                          : Vec3{0.0, 0.0, 1.0};
+    }
+    return normalized;
+}
+
+Vec3 component_geometry_half_extents(const DamageComponent& component) {
+    return {
+        component.geometry_half_extents_m[0] > 0.0
+            ? component.geometry_half_extents_m[0]
+            : component.dim_l * 0.5,
+        component.geometry_half_extents_m[1] > 0.0
+            ? component.geometry_half_extents_m[1]
+            : component.dim_w * 0.5,
+        component.geometry_half_extents_m[2] > 0.0
+            ? component.geometry_half_extents_m[2]
+            : component.dim_h * 0.5,
+    };
+}
+
+bool component_uses_obb_like_geometry(const DamageComponent& component) {
+    return component.geometry_primitive == "obb" ||
+        component.geometry_primitive == "thin_prism";
+}
+
+Vec3 component_obb_local_coordinates(
+    const Vec3& local_p,
+    const DamageComponent& component
+) {
+    const Vec3 delta{
+        local_p.x - component.offset_x,
+        local_p.y - component.offset_y,
+        local_p.z - component.offset_z,
+    };
+    return {
+        vec3_dot(delta, component_geometry_axis(component, 0)),
+        vec3_dot(delta, component_geometry_axis(component, 1)),
+        vec3_dot(delta, component_geometry_axis(component, 2)),
+    };
+}
+
+Vec3 component_obb_world_coordinates(
+    const Vec3& local_p,
+    const DamageComponent& component
+) {
+    const Vec3 axis_x = component_geometry_axis(component, 0);
+    const Vec3 axis_y = component_geometry_axis(component, 1);
+    const Vec3 axis_z = component_geometry_axis(component, 2);
+    return {
+        component.offset_x +
+            axis_x.x * local_p.x + axis_y.x * local_p.y + axis_z.x * local_p.z,
+        component.offset_y +
+            axis_x.y * local_p.x + axis_y.y * local_p.y + axis_z.y * local_p.z,
+        component.offset_z +
+            axis_x.z * local_p.x + axis_y.z * local_p.y + axis_z.z * local_p.z,
+    };
+}
+
+ComponentAxisBounds component_axis_aligned_bounds(const DamageComponent& component) {
+    if (component.geometry_primitive == "convex_hull" &&
+        !component.geometry_vertices_m.empty()) {
+        Vec3 minimum{
+            component.geometry_vertices_m.front()[0],
+            component.geometry_vertices_m.front()[1],
+            component.geometry_vertices_m.front()[2],
+        };
+        Vec3 maximum = minimum;
+        for (const auto& vertex : component.geometry_vertices_m) {
+            minimum.x = std::min(minimum.x, vertex[0]);
+            minimum.y = std::min(minimum.y, vertex[1]);
+            minimum.z = std::min(minimum.z, vertex[2]);
+            maximum.x = std::max(maximum.x, vertex[0]);
+            maximum.y = std::max(maximum.y, vertex[1]);
+            maximum.z = std::max(maximum.z, vertex[2]);
+        }
+        return {minimum, maximum};
+    }
+    if (component_uses_obb_like_geometry(component)) {
+        const Vec3 half = component_geometry_half_extents(component);
+        const Vec3 axis_x = component_geometry_axis(component, 0);
+        const Vec3 axis_y = component_geometry_axis(component, 1);
+        const Vec3 axis_z = component_geometry_axis(component, 2);
+        const Vec3 span{
+            2.0 * (
+                std::abs(axis_x.x) * half.x +
+                std::abs(axis_y.x) * half.y +
+                std::abs(axis_z.x) * half.z),
+            2.0 * (
+                std::abs(axis_x.y) * half.x +
+                std::abs(axis_y.y) * half.y +
+                std::abs(axis_z.y) * half.z),
+            2.0 * (
+                std::abs(axis_x.z) * half.x +
+                std::abs(axis_y.z) * half.y +
+                std::abs(axis_z.z) * half.z),
+        };
+        return {
+            {component.offset_x - span.x * 0.5,
+             component.offset_y - span.y * 0.5,
+             component.offset_z - span.z * 0.5},
+            {component.offset_x + span.x * 0.5,
+             component.offset_y + span.y * 0.5,
+             component.offset_z + span.z * 0.5},
+        };
+    }
+    return {
+        {component.offset_x - component.dim_l * 0.5,
+         component.offset_y - component.dim_w * 0.5,
+         component.offset_z - component.dim_h * 0.5},
+        {component.offset_x + component.dim_l * 0.5,
+         component.offset_y + component.dim_w * 0.5,
+         component.offset_z + component.dim_h * 0.5},
+    };
+}
+
+bool check_component(const Vec3& local_p, const DamageComponent& component) {
+    if (component_uses_obb_like_geometry(component)) {
+        const Vec3 local = component_obb_local_coordinates(local_p, component);
+        const Vec3 half = component_geometry_half_extents(component);
+        return std::abs(local.x) <= half.x &&
+            std::abs(local.y) <= half.y &&
+            std::abs(local.z) <= half.z;
+    }
+    const ComponentAxisBounds bounds = component_axis_aligned_bounds(component);
+    return (local_p.x >= bounds.minimum.x && local_p.x <= bounds.maximum.x &&
+            local_p.y >= bounds.minimum.y && local_p.y <= bounds.maximum.y &&
+            local_p.z >= bounds.minimum.z && local_p.z <= bounds.maximum.z);
 }
 
 double component_surface_distance(const Vec3& local_p, const DamageComponent& component) {
-    const double min_x = component.offset_x - component.dim_l * 0.5;
-    const double max_x = component.offset_x + component.dim_l * 0.5;
-    const double min_y = component.offset_y - component.dim_w * 0.5;
-    const double max_y = component.offset_y + component.dim_w * 0.5;
-    const double min_z = component.offset_z - component.dim_h * 0.5;
-    const double max_z = component.offset_z + component.dim_h * 0.5;
-
-    const double dx = std::max({min_x - local_p.x, 0.0, local_p.x - max_x});
-    const double dy = std::max({min_y - local_p.y, 0.0, local_p.y - max_y});
-    const double dz = std::max({min_z - local_p.z, 0.0, local_p.z - max_z});
+    if (component_uses_obb_like_geometry(component)) {
+        const Vec3 local = component_obb_local_coordinates(local_p, component);
+        const Vec3 half = component_geometry_half_extents(component);
+        const double dx = std::max({-half.x - local.x, 0.0, local.x - half.x});
+        const double dy = std::max({-half.y - local.y, 0.0, local.y - half.y});
+        const double dz = std::max({-half.z - local.z, 0.0, local.z - half.z});
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
+    }
+    const ComponentAxisBounds bounds = component_axis_aligned_bounds(component);
+    const double dx = std::max({bounds.minimum.x - local_p.x, 0.0, local_p.x - bounds.maximum.x});
+    const double dy = std::max({bounds.minimum.y - local_p.y, 0.0, local_p.y - bounds.maximum.y});
+    const double dz = std::max({bounds.minimum.z - local_p.z, 0.0, local_p.z - bounds.maximum.z});
     return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 Vec3 component_nearest_point(const Vec3& local_p, const DamageComponent& component) {
-    const double min_x = component.offset_x - component.dim_l * 0.5;
-    const double max_x = component.offset_x + component.dim_l * 0.5;
-    const double min_y = component.offset_y - component.dim_w * 0.5;
-    const double max_y = component.offset_y + component.dim_w * 0.5;
-    const double min_z = component.offset_z - component.dim_h * 0.5;
-    const double max_z = component.offset_z + component.dim_h * 0.5;
+    if (component_uses_obb_like_geometry(component)) {
+        const Vec3 local = component_obb_local_coordinates(local_p, component);
+        const Vec3 half = component_geometry_half_extents(component);
+        return component_obb_world_coordinates(
+            {
+                std::clamp(local.x, -half.x, half.x),
+                std::clamp(local.y, -half.y, half.y),
+                std::clamp(local.z, -half.z, half.z),
+            },
+            component);
+    }
+    const ComponentAxisBounds bounds = component_axis_aligned_bounds(component);
     return {
-        std::clamp(local_p.x, min_x, max_x),
-        std::clamp(local_p.y, min_y, max_y),
-        std::clamp(local_p.z, min_z, max_z),
+        std::clamp(local_p.x, bounds.minimum.x, bounds.maximum.x),
+        std::clamp(local_p.y, bounds.minimum.y, bounds.maximum.y),
+        std::clamp(local_p.z, bounds.minimum.z, bounds.maximum.z),
+    };
+}
+
+Vec3 component_effective_dimensions(const DamageComponent& component) {
+    if (component_uses_obb_like_geometry(component)) {
+        const Vec3 half = component_geometry_half_extents(component);
+        return {2.0 * half.x, 2.0 * half.y, 2.0 * half.z};
+    }
+    const ComponentAxisBounds bounds = component_axis_aligned_bounds(component);
+    return {
+        std::max(1.0e-6, bounds.maximum.x - bounds.minimum.x),
+        std::max(1.0e-6, bounds.maximum.y - bounds.minimum.y),
+        std::max(1.0e-6, bounds.maximum.z - bounds.minimum.z),
     };
 }
 
@@ -225,9 +378,10 @@ double component_projected_exposure_scale(const Vec3& local_imp, const DamageCom
         return 1.0;
     }
 
-    const double area_forward = std::max(1.0e-6, component.dim_w * component.dim_h);
-    const double area_side = std::max(1.0e-6, component.dim_l * component.dim_h);
-    const double area_top = std::max(1.0e-6, component.dim_l * component.dim_w);
+    const Vec3 dims = component_effective_dimensions(component);
+    const double area_forward = std::max(1.0e-6, dims.y * dims.z);
+    const double area_side = std::max(1.0e-6, dims.x * dims.z);
+    const double area_top = std::max(1.0e-6, dims.x * dims.y);
     const double projected_area =
         (std::abs(ray.x) * area_forward) +
         (std::abs(ray.y) * area_side) +
@@ -238,12 +392,13 @@ double component_projected_exposure_scale(const Vec3& local_imp, const DamageCom
 
 Hitbox component_as_hitbox(const DamageComponent& component, const Hitbox& parent) {
     Hitbox box = parent;
-    box.offset_x = component.offset_x;
-    box.offset_y = component.offset_y;
-    box.offset_z = component.offset_z;
-    box.dim_l = component.dim_l;
-    box.dim_w = component.dim_w;
-    box.dim_h = component.dim_h;
+    const ComponentAxisBounds bounds = component_axis_aligned_bounds(component);
+    box.offset_x = (bounds.minimum.x + bounds.maximum.x) * 0.5;
+    box.offset_y = (bounds.minimum.y + bounds.maximum.y) * 0.5;
+    box.offset_z = (bounds.minimum.z + bounds.maximum.z) * 0.5;
+    box.dim_l = std::max(1.0e-6, bounds.maximum.x - bounds.minimum.x);
+    box.dim_w = std::max(1.0e-6, bounds.maximum.y - bounds.minimum.y);
+    box.dim_h = std::max(1.0e-6, bounds.maximum.z - bounds.minimum.z);
     box.armor_mm = component.armor_mm;
     box.protected_systems = {component.system};
     box.components.clear();

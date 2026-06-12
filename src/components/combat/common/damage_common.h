@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -29,6 +30,19 @@ struct DamageComponent {
     double dim_h = 0.0;
     double armor_mm = 0.0;
     double threshold_scale = 1.0;
+    std::string geometry_primitive = "aabb";
+    std::string geometry_source_ref;
+    std::string geometry_source_region_id;
+    std::string geometry_surface_component_id;
+    std::array<std::array<double, 3>, 3> geometry_axes = {{
+        {{1.0, 0.0, 0.0}},
+        {{0.0, 1.0, 0.0}},
+        {{0.0, 0.0, 1.0}},
+    }};
+    std::array<double, 3> geometry_half_extents_m = {{0.0, 0.0, 0.0}};
+    std::string geometry_thin_axis;
+    double geometry_nominal_thickness_m = 0.0;
+    std::vector<std::array<double, 3>> geometry_vertices_m;
     std::unordered_map<std::string, double> mechanism_threshold_scales;
     std::unordered_map<std::string, double> failure_mode_weights;
     double redundancy_group = 0.0;

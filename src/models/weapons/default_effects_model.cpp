@@ -1,6 +1,7 @@
 #include "core/interfaces/effects_model.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cmath>
 #include <limits>
