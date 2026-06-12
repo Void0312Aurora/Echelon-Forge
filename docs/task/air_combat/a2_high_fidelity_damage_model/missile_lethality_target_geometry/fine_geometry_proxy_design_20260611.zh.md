@@ -80,8 +80,9 @@ TG-P6 的目标是把“审阅用盒子”升级成“更贴近外形的代理�
 1. 生成 `fine_geometry_proxy_candidate_20260611.json`，先覆盖 F-16 的 `14` 个外壳区域。
 2. 为机翼、水平尾翼和垂尾生成 `thin_prism`，为机身段生成 `obb`，为机鼻/座舱/进气道生成待审阅 `convex_hull` 候选。
 3. 在三视图上叠加精细代理和当前长方体，输出体积差、外包差和测试点距离差。
-4. 复核左右翼坐标符号后，才允许把翼面代理用于连续杆或破片路径候选。
-5. 只有 TG-P6 审阅通过后，TG-P7 才能讨论运行时接入。
+4. 为每个外壳区域生成审阅用表面部件候选，列出它可能牵连的现有内部部件和缺失关系。
+5. 复核左右翼坐标符号后，才允许把翼面代理用于连续杆或破片路径候选。
+6. 只有 TG-P6 审阅通过后，TG-P7 才能讨论运行时接入。
 
 ## 验收标准
 
@@ -89,11 +90,60 @@ TG-P6 的目标是把“审阅用盒子”升级成“更贴近外形的代理�
 - 精细代理比当前长方体少覆盖明显空气，尤其是机翼、尾翼、机鼻和进气道。
 - `nose_axis_4m`、`nose_axis_6m`、侧向和上下方位测试点能输出新旧距离对比。
 - 左右翼命名和坐标符号问题不得被自动“修正”或静默忽略。
+- 外壳区域到表面部件、表面部件到现有内部部件的候选关系必须可审阅。
 - 输出仍然标记为审阅候选，不进入运行时主路径。
 
 ## TG-P6-R3 实现备注
 
-`2026-06-12`：第一版 mesh-derived 审阅层现在会按每个源区域筛选审计 glTF 顶点，生成
-top/side/front 2D convex hull silhouettes，并在 `fine_proxy_*.svg` 中叠加这些多边形。若原始源区域内
-顶点不足，会使用明确记录的 `selection_inflation_factor` fallback。这些 silhouette 仍然只是 review-only，
-在 `TG-P7` 前不得进入 runtime 主路径。
+`2026-06-12`：mesh-derived 审阅层现在会按每个源区域和显式审计网格节点名单筛选 glTF 顶点，
+生成 top/side/front 2D convex hull silhouettes，并在 `fine_proxy_*.svg` 中叠加这些多边形。
+原先的放大区域补点规则已撤销；若节点名单和区域框无法提供闭合轮廓，该区域必须失败并进入人工审阅。
+这些 silhouette 仍然只是 review-only，在 `TG-P7` 前不得进入 runtime 主路径。
+
+## TG-P6-R5 实现备注
+
+`2026-06-12`：新增 `surface_component_candidate_20260611.json` 和 CSV，把 `14` 个外壳区域整理成
+审阅用表面部件。每个表面部件记录可能的表面损伤、关联的现有内部部件、旧部件盒漂移、左右符号复核和
+当前缺失的显式运行时部件关系。它只回答“打中这块外形后应该交给哪些部件继续处理”，不声明真实内部结构，
+也不直接改变近炸、连续杆或破片的运行时主路径。
+
+## TG-P6-R6 实现备注
+
+`2026-06-12`：新增 `human_review_triage.html`，按左右符号、部件位置、表面部件交接和测试点
+几何 sanity 把人工复核队列整理成可视化卡片。每张卡都有局部 top/side/front 叠加图，因此人工
+复核可以从几何画面开始，而不是靠肉眼从 CSV 行里推断问题。
+
+## TG-P6-R7 目检备注
+
+`2026-06-12`：新增 `human_review_findings_20260612.zh.md` 和英文辅文，记录第一轮实际目检结论。
+在该 R7 快照时，`TG-P6` 产物可继续作为 review-only 证据，但左右符号、鼻锥 radar/IFF、发动机/喷口、
+缺失运行时表面部件和 `wing_spar_center` 跨区语义阻塞 `TG-P7`；该 blocker 集合后来经 R9/R10 细化，
+并被下方 R11 修复备注替代。
+
+## TG-P6-R8 独立视图备注
+
+`2026-06-12`：新增 `component_review_views/`，为每个现有部件、表面到单个承接部件/缺失关系、
+以及测试点候选部件生成单独页面和 top/side/front SVG。R11 重新生成后 manifest 记录 `75` 个 review-only
+独立页面，评估者不再需要从拥挤总览图里猜具体部件关系。
+
+## TG-P6-R9 独立评估备注
+
+`2026-06-12`：新增 `subagent_independent_review_findings_20260612.zh.md` 和英文辅文，汇总五组
+只读 subagent 独立评估。评估修正了部分粗粒度判断：`engine_core` 和 `wing_spar_center` 先按跨区语义
+held/条件接受处理；在该 R9 快照时，左右符号、radar/IFF、afterburner/nozzle 和缺失 runtime relation
+仍是硬阻塞。
+
+## TG-P6-R10 Subagent 修正备注
+
+`2026-06-12`：新增 `subagent_correction_results_20260612.zh.md` 和英文辅文，记录第一轮写入范围受限的
+subagent 修正。`apg68_radar_array`、`iff_interrogator` 和 `afterburner_nozzle` 已干净绑定到目标区域；
+`engine_core` 和 `wing_spar_center` 已按 review-only 跨区语义表达。在 R10 快照时，`TG-P7` 仍因左右符号
+和缺失 runtime receiver work held；该 blocker 集合已被 R11 替代。
+
+## TG-P6-R11 几何修复备注
+
+`2026-06-12`：新增 `geometry_repair_results_20260612.zh.md` 和英文辅文，记录 R10 之后的 main-thread
+修复。主翼、翼根和平尾左右区域映射现在与部件侧向约定一致；翼面和翼根部件盒已经落到 mesh-derived
+表面上；座舱盖、进气道和平尾 receiver 组件已写入 F-16 damage model。重生成 packet 后，component
+`needs_review` 为 `0`，surface `needs_review` 为 `0`，side-sign blocker 为 `0`，缺失 runtime receiver
+relation 为 `0`。`TG-P7` 只因 `engine_core` 和 `wing_spar_center` 跨区语义 ownership 仍需明确而 held。

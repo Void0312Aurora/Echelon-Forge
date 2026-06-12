@@ -1,7 +1,7 @@
 # A2 Target Geometry Task Clusters
 
-Status: `2026-06-12` finite task-cluster plan with TG-P6 mesh-derived review candidate
-generated for [README.md](README.md).
+Status: `2026-06-13` finite task-cluster plan with TG-P6-R21 latest
+subcomponent promotion applied for [README.md](README.md).
 
 Chinese canonical:
 [missile_lethality_target_geometry_task_clusters_20260611.zh.md](missile_lethality_target_geometry_task_clusters_20260611.zh.md).
@@ -24,8 +24,8 @@ debris/wreck behavior.
 | `TG-P3` | main thread | high | Bind current component boxes to outer regions and flag anomalies. | `component_binding_report_20260611.json`; `component_binding_report_20260611.csv`; focused tests | No vulnerability-probability rewrite | schema check, out-of-envelope report check, focused pytest | Every current component has a region or explicit `needs_review` | depends on `TG-P2` | 2 | pass |
 | `TG-P4` | main thread | medium | Generate static HTML/SVG review packet. | `review_packets/f16c_20260611/scene.html`; SVG; README summary | No web app runtime integration | file existence, no network dependency, basic HTML asset checks | Packet can be opened offline and shows outer shape, legacy boxes, components, and test points | depends on `TG-P2`/`TG-P3`; completed with `TG-P5` | 2 | pass |
 | `TG-P5` | main thread | high | Emit outer/component distance diagnostics for MLF-5 test points. | review point JSON/CSV; focused tests | No real-weapon Pk rerun | CSV rows include nearest outer distance, nearest component distance, candidate count | 4 m nose case has concrete geometry evidence | depends on `TG-P2`; completed with `TG-P4` | 2 | pass |
-| `TG-P6` | main thread | high | Design finer geometry proxies: oriented boxes, convex hulls, or simplified shell meshes. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; `fine_proxy_review_dashboard.html`; proxy review notes | No high-poly GLB as per-frame collision mesh; no runtime main-path change | proxy schema check, mesh silhouette extraction, inflated fallback visibility, dashboard smoke, distance sanity, visual overlay smoke, focused pytest | Error, fit boundary, mesh-derived silhouette, and manual-review items from coarse boxes to finer proxies are recorded | depends on `TG-P4`/`TG-P5` | 2 | pass as mesh-derived review candidate |
-| `TG-P7` | main thread | high | Decide runtime-interface boundary and close as accepted or held. | README/status/acceptance docs; optional design note | No unreviewed proxy in the main path | doc audit, targeted tests if runtime design is accepted | accepted or held decision records next work | depends on `TG-P6` | 1 | planned |
+| `TG-P6` | main thread | high | Design finer geometry proxies and add the review-only surface-component handoff layer from outer hits to component damage. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; `fine_proxy_review_dashboard.html`; `surface_component_candidate_20260611.json`; `surface_component_candidate_20260611.csv`; `human_review_triage.html`; `component_review_views/**`; `semantic_damage_geometry_*`; `internal_component_prior_*`; `semantic_parent_child_layout_*`; `cross_region_held_component_segments_*`; `airframe_constraint_correction_*`; `subcomponent_shape_placement_*`; `subcomponent_latest_promotion_results_20260613.md`; result/status docs; proxy review notes | No high-poly GLB as per-frame collision mesh; no runtime main-path change; no true internal-structure claim | proxy schema check, mesh silhouette extraction, no bounds-expansion fallback, dashboard smoke, surface component schema check, visual triage smoke, isolated view smoke, semantic/receiver/segment schema checks, subcomponent silhouette checks, focused pytest | Error, fit boundary, mesh-derived silhouette, surface-to-current-component candidate links, visual triage cards, isolated component views, semantic parent-child layout, held segments, R21 promoted latest placement rules, and remaining `TG-P7` ownership blocker are recorded | depends on `TG-P4`/`TG-P5` | 21 | pass as review candidate with R21 latest promotion |
+| `TG-P7` | main thread | high | Decide runtime-interface boundary and close as accepted or held. | README/status/acceptance docs; optional design note | No unreviewed proxy in the main path | doc audit, targeted tests if runtime design is accepted | accepted or held decision records next work | depends on `TG-P6` | 1 | held pending cross-region ownership |
 
 ## Dispatch Rules
 
@@ -68,6 +68,10 @@ Each worker returns:
   component-surface distance, direct-hit state, and candidate-component count.
 - The 4 m nose close-to-shape case is no longer explained only as "not direct,
   therefore no damage."
+- Every outer region has a review-only surface component candidate, and the
+  table shows which current components it may affect or which links are missing.
+- Manual review has a visual-first triage page with local overlays for the
+  coordinate-sign, component-placement, surface-handoff, and review-point issues.
 - Docs continue to reject true engineering geometry, structural breakup,
   debris/wreck, Pk, and weapon-specific kill claims.
 
@@ -76,8 +80,12 @@ Each worker returns:
 - MQ-9 geometry: later reuse target, not in the first F-16 acceptance.
 - Structural breakup and debris/wreck: later standalone subprojects.
 - Pk and real-weapon calibration: later standalone subprojects.
-- Main runtime-path replacement: depends on human review packet and diagnostics
-  acceptance.
-- Finer geometry proxy: first F-16 mesh-derived review candidate exists; manual
-  review of inflated fallback regions still gates `TG-P7`, MQ-9, and any other
-  aircraft.
+- Main runtime-path replacement: currently held until `engine_core` and
+  `wing_spar_center` cross-region ownership is accepted, split, or explicitly
+  held. Side-sign, missing receiver, radar/IFF, nozzle, and wing placement
+  blockers are repaired.
+- Finer geometry proxy: first F-16 mesh-derived review candidate exists with
+  bounds-expansion fallback disabled; node whitelists, surface component
+  candidates, visual triage cards, isolated component views, human findings,
+  subagent findings, subagent corrections, geometry repairs, and remaining
+  cross-region ownership decisions still gate MQ-9 and any other aircraft.

@@ -1,8 +1,9 @@
 # A2 Target Geometry Dispatch Queue
 
-Status: `2026-06-12` TG-P6-R4 complete / human review dashboard generated.
-This records the first-round progress plus the TG-P6 continuation; these
-rounds were completed by the main thread without a worker dispatch.
+Status: `2026-06-13` TG-P6-R21 complete / latest subcomponent placement
+promotion applied. This records the first-round progress plus the TG-P6
+continuation; R10 used write-scoped subagents and R11-R21 were integrated by the
+main thread.
 
 Chinese canonical:
 [missile_lethality_target_geometry_dispatch_queue_20260611.zh.md](missile_lethality_target_geometry_dispatch_queue_20260611.zh.md).
@@ -17,9 +18,26 @@ Chinese canonical:
 | `TG-P4-R1` | `TG-P4` | main thread | Generate first HTML/SVG review packet. | `review_packets/f16c_20260611/scene.html`; `top.svg`; `side.svg`; `front.svg` | local file existence; no external network dependency; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass |
 | `TG-P5-R1` | `TG-P5` | main thread | Emit distance diagnostics for nose 4 m / 6 m and related test points. | `review_point_diagnostics_20260611.json`; `review_point_diagnostics_20260611.csv`; focused tests | nearest outer/component distance and candidate count present; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass |
 | `TG-P6-R1` | `TG-P6` | main thread | Design the first finer-geometry proxy candidates. | `fine_geometry_proxy_design_20260611.zh.md`; `fine_geometry_proxy_design_20260611.md` | markdown links; `git diff --check` | pass as design draft |
-| `TG-P6-R2` | `TG-P6` | main thread | Generate first fine-geometry proxy JSON and review overlay. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_top.svg`; `fine_proxy_side.svg`; `fine_proxy_front.svg`; focused tests | proxy schema check; distance sanity; visual smoke; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as review-only candidate; human review still required before `TG-P7` |
-| `TG-P6-R3` | `TG-P6` | main thread | Replace rectangle-only fine overlay with mesh-derived top/side/front silhouettes from audit glTF vertices. | `tools/geometry/airframe_geometry_review.py`; `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; focused tests | mesh silhouette schema check; inflated fallback visibility; visual smoke; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as review-only silhouette candidate; `6` inflated-bound fallbacks require review before `TG-P7` |
+| `TG-P6-R2` | `TG-P6` | main thread | Generate first fine-geometry proxy JSON and review overlay. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_top.svg`; `fine_proxy_side.svg`; `fine_proxy_front.svg`; focused tests | proxy schema check; distance sanity; visual smoke; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as review-only candidate; R7 records visual findings and blockers must be repaired before `TG-P7` |
+| `TG-P6-R3` | `TG-P6` | main thread | Replace rectangle-only fine overlay with mesh-derived top/side/front silhouettes from audit glTF vertices. | `tools/geometry/airframe_geometry_review.py`; `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; focused tests | mesh silhouette schema check; no bounds-expansion fallback; visual smoke; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as review-only silhouette candidate; `inflated_fallback_count=0` after mesh-aligned correction |
 | `TG-P6-R4` | `TG-P6` | main thread | Generate a human review dashboard with per-region zoom panels and flags. | `fine_proxy_review_dashboard.html`; `scene.html`; focused tests | dashboard smoke; candidate/review/hold status visible; component overlays visible; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as human review aid; still not runtime geometry |
+| `TG-P6-R5` | `TG-P6` | main thread | Generate the review-only table from outer regions to surface components and current internal component candidates. | `surface_component_candidate_20260611.json`; `surface_component_candidate_20260611.csv`; `scene.html`; focused tests | 14 outer regions have surface components; drift and missing links are visible; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as review-only component modeling layer; old component boxes and missing links still need review |
+| `TG-P6-R6` | `TG-P6` | main thread | Generate a visual-first human review triage page grouped by actual review issue. | `human_review_triage.html`; `scene.html`; focused tests | coordinate sign, component placement, surface handoff, and review-point cards have local top/side/front overlays; `pytest -q tests/tools/test_airframe_geometry_review.py` | pass as visual review aid; still not runtime geometry |
+| `TG-P6-R7` | `TG-P6` | main thread | Visually inspect the triage page and record findings. | `human_review_findings_20260612.zh.md`; `human_review_findings_20260612.md`; README/status/queue/task-cluster docs | findings identify concrete visual blockers; no runtime integration; `pytest -q tests/tools/test_airframe_geometry_review.py`; `git diff --check` | pass as visual findings record; `TG-P7` held pending repair |
+| `TG-P6-R8` | `TG-P6` | main thread | Generate isolated top/side/front views for each component, handoff, and review-point candidate. | `component_review_views/index.html`; `component_review_views/manifest.json`; `component_review_views/**`; `tools/geometry/airframe_geometry_review.py`; focused tests | 26 components, 29 surface handoffs, and 20 review-point candidates have isolated pages after R11 regeneration; `pytest -q tests/tools/test_airframe_geometry_review.py`; `git diff --check` | pass as isolated review packet; subagent group review dispatched |
+| `TG-P6-R9` | `TG-P6` | main thread + subagents | Run five read-only subagent reviews from the isolated views and summarize findings. | `subagent_independent_review_findings_20260612.zh.md`; `subagent_independent_review_findings_20260612.md`; README/status/queue/task-cluster docs | all five reviews use isolated views and JSON trace data; no runtime edits; `pytest -q tests/tools/test_airframe_geometry_review.py`; `git diff --check` | pass as independent review findings; `TG-P7` remains held |
+| `TG-P6-R10` | `TG-P6` | main thread + subagents | Apply scoped corrections from the independent review findings and regenerate the review packet. | `examples/config/database/aircraft/units/f16c_block50.json`; `tools/geometry/airframe_geometry_review.py`; `tests/tools/test_airframe_geometry_review.py`; `review_packets/f16c_20260611/**`; `subagent_correction_results_20260612.zh.md`; `subagent_correction_results_20260612.md`; README/status/queue/task-cluster docs | R10 historical snapshot: radar/IFF/nozzle source boxes repaired; component report had 6 side-sign hard blockers, 2 cross-region semantics, and 0 geometry bad-box blockers; `pytest -q tests/tools/test_airframe_geometry_review.py`; `git diff --check` | pass as historical review-only correction pass; superseded by R11 |
+| `TG-P6-R11` | `TG-P6` | main thread | Repair side-region mapping, runtime receivers, wing component placement, and direct surface handoff rules after R10. | `examples/config/database/aircraft/units/f16c_block50.json`; `tools/geometry/airframe_geometry_review.py`; `tests/tools/test_airframe_geometry_review.py`; `review_packets/f16c_20260611/**`; `geometry_repair_results_20260612.zh.md`; `geometry_repair_results_20260612.md`; README/status/queue/task-cluster docs | component report has 26/26 bound, 0 needs_review, 0 side-sign blockers, 0 geometry bad-box blockers; surface report has 0 needs_review, 0 missing runtime receiver relations, 8 cross-region semantics; `pytest -q tests/tools/test_airframe_geometry_review.py`; `git diff --check` | pass as review-only geometry repair; `TG-P7` remains held for cross-region ownership only |
+| `TG-P6-R12` | `TG-P6` | main thread | Emit semantic outer-shell damage geometry candidates and parse-ready runtime component JSON. | `semantic_damage_geometry_*`; `semantic_damage_geometry_results_20260612.md`; generator/tests/review packet docs | 14 semantic volumes parse, runtime activation remains 0; focused pytest | pass as review-only semantic geometry |
+| `TG-P6-R13` | `TG-P6` | main thread | Generate constrained internal receiver prior geometry. | `internal_component_prior_*`; `internal_component_prior_results_20260612.md`; generator/tests/review packet docs | 26 priors constrained, post-constraint outside count 0, runtime activation 0; focused pytest | pass as review-only internal prior geometry |
+| `TG-P6-R14` | `TG-P6` | main thread | Build semantic parent-child layout views. | `semantic_parent_child_layout_*`; `semantic_parent_child_layout_results_20260612.md`; generator/tests/review packet docs | 14 parent shell parts and 26 receiver overlays visible; focused pytest | pass as parent-child review layout |
+| `TG-P6-R15` | `TG-P6` | main thread | Split cross-region held receivers into review-only segments. | `cross_region_held_component_segments_*`; `cross_region_held_segment_results_20260612.md`; generator/tests/review packet docs | 8 held segments, outside whole-airframe count 0, runtime activation 0; focused pytest | pass as held-segment review split |
+| `TG-P6-R16` | `TG-P6` | main thread | Add shape-aware whole-airframe silhouette diagnostics. | `airframe_constraint_correction_*`; `airframe_constraint_correction_results_20260612.md`; generator/tests/review packet docs | 34 receiver/segment items diagnosed; exposed items routed to shape-placement review; focused pytest | pass as airframe constraint diagnostic |
+| `TG-P6-R17` | `TG-P6` | main thread | Generate nominal-dimension-preserving subcomponent shape-placement candidates. | `subcomponent_shape_placement_*`; `subcomponent_shape_placement_results_20260613.md`; generator/tests/review packet docs | 14 exposed subcomponents get candidate families and review views; focused pytest | pass as review-only shape-placement candidates |
+| `TG-P6-R18` | `TG-P6` | main thread | Promote zero-exposure shape candidates into review-only generation rules. | generator/tests/review packet docs; `subcomponent_shape_promotion_results_20260613.md` | 4 zero-exposure candidates promoted; runtime activation 0; focused pytest | pass as review-only shape promotion |
+| `TG-P6-R19` | `TG-P6` | main thread | Add local centerline placement candidates for remaining exposed subcomponents. | generator/tests/review packet docs; `subcomponent_centerline_placement_results_20260613.md` | 8 of 10 remaining items clear sampled exposure; runtime activation 0; focused pytest | pass as centerline placement candidate |
+| `TG-P6-R20` | `TG-P6` | main thread | Add latest subcomponent placement candidates for remaining radar/cockpit items and simplify the review legend. | generator/tests/review packet docs; `subcomponent_latest_placement_results_20260613.md` | 10 latest candidates clear sampled exposure; runtime activation 0; focused pytest | pass as latest placement candidate |
+| `TG-P6-R21` | `TG-P6` | main thread | Promote latest accepted placements into review-only prior and held-segment generation rules. | `tools/geometry/airframe_geometry_review.py`; `tests/tools/test_airframe_geometry_review.py`; `review_packets/f16c_20260611/**`; `subcomponent_latest_promotion_results_20260613.md`; README/status/queue/task-cluster docs | internal prior promotion count 9, held segment promotion count 5, silhouette exposure count 0, shape-placement candidate count 0, runtime activation 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as latest placement promotion; `TG-P7` remains held for cross-region ownership |
 
 ## Main Thread Merge Checks
 
@@ -28,15 +46,30 @@ Chinese canonical:
   lethality.
 - Confirm the review packet explains the 4 m nose case instead of only
   restating "not a direct hit."
-- Confirm fine proxy outputs stay review-only and keep left/right sign review
-  visible instead of silently correcting wing or tail proxies.
-- Confirm inflated-bound fallback silhouettes remain visible and do not get
-  treated as precise engineering geometry.
+- Confirm fine proxy outputs stay review-only and keep the left/right coordinate
+  convention explicit instead of implying engineering-authoritative geometry.
+- Confirm surface component candidates remain a review-only handoff table from
+  outer hits to current component damage, not a claim of true internal layout.
+- Confirm the triage page remains a visual review aid over existing review-only
+  candidates, not an acceptance or runtime-integration record.
+- Confirm the R11 repair record supersedes the R7/R10 blockers while keeping
+  `engine_core` and `wing_spar_center` cross-region ownership as the remaining
+  `TG-P7` blocker.
+- Confirm the isolated view packet splits review by single component, single
+  surface handoff, or single review-point candidate instead of relying on
+  crowded overview cards.
+- Confirm subagent findings are folded into the summary and refine the
+  `engine_core` and `wing_spar_center` cross-region boundaries.
+- Confirm R10/R11 corrections repair radar/IFF/nozzle, side mapping, receiver
+  components, and wing placement without claiming runtime integration.
+- Confirm bounds-expansion fallback remains disabled; missing silhouettes must
+  fail into review instead of being treated as precise engineering geometry.
 - Confirm parent README status is synchronized only by the main thread.
 
 ## Held Items
 
-- Runtime near-fuze projection integration: wait for `TG-P4`/`TG-P5`/`TG-P6`
-  acceptance.
+- Runtime near-fuze projection integration: `TG-P7` is currently held until
+  `engine_core` and `wing_spar_center` cross-region ownership is accepted,
+  split, or explicitly held.
 - MQ-9 geometry: wait until the F-16 toolchain is reusable.
 - Structural breakup, debris/wreck, and Pk: later standalone subprojects.
