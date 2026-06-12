@@ -19,7 +19,7 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from gym_envs.leader_env import LeaderTrainingEnv
-from gym_envs.universal_env import UniversalEnv, half_to_unit
+from gym_envs.universal_env_parts.actions import half_to_unit
 from python.rl.control.mission_defs import (
     COMMAND_NAME_TO_CODE,
     CRUISE_PHASE_NAMES,
@@ -33,6 +33,7 @@ from python.rl.control.scripted_takeoff import ScriptedTakeoffController
 from python.rl.control.wrappers import get_action_wrapper_spec
 from python.rl.policy_algo.ppo_adaptive_kl import AdaptiveKLPPO
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv
+from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv
 from python.world_model.features import (
     DEFAULT_ANGLE_DEG_INDICES,
     angle_sincos_features,
@@ -904,6 +905,7 @@ class VizSession:
         leader_exec_steps_remaining = 0
         leader_decision_pending = False
         coop_last_infos: list[dict] = []
+        world_batch_mode = False
         scripted_mode = str(getattr(args, "scripted", "")).strip().lower()
         if scripted_mode in ("", "none", "null", "false", "0"):
             scripted_mode = ""
@@ -1019,23 +1021,36 @@ class VizSession:
 
         if not leader_mode and not cooperative_mode:
             print(
-                f"Initializing Universal Environment with scenario: {args.scenario} "
+                f"Initializing WorldBatchVecEnv visualization runtime with scenario: {args.scenario} "
                 f"(action_mode={action_mode}, include_visual={include_visual}, include_proprio={include_proprio}, "
                 f"mission_obs_mode={mission_obs_mode}, visual_downsample={visual_downsample}, "
                 f"visual_update_interval={visual_update_interval})"
             )
-            base_env = UniversalEnv(
-                args.scenario,
+            runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config, dict) else {}
+            if not isinstance(runtime_cfg, dict):
+                runtime_cfg = {}
+            self.env = WorldBatchVecEnv(
+                scenario_path=args.scenario,
+                n_envs=1,
                 action_mode=action_mode,
                 include_visual=include_visual,
                 include_proprio=include_proprio,
                 mission_obs_mode=mission_obs_mode,
                 visual_downsample=visual_downsample,
                 visual_update_interval=visual_update_interval,
-                runtime_compatibility_enabled=True,
+                temporal_history_len=int(env_defaults.get("temporal_history_len", 1) or 1),
+                step_info_mode=str(env_defaults.get("step_info_mode", "full") or "full"),
+                execution_step_runtime_mode=str(
+                    env_defaults.get("execution_step_runtime_mode", "compiled") or "compiled"
+                ),
+                flight_shaping_backend=str(env_defaults.get("flight_shaping_backend", "compiled") or "compiled"),
+                batch_observation_backend=runtime_cfg.get("batch_observation_backend", "auto"),
+                batch_visual_backend=runtime_cfg.get("batch_visual_backend", "auto"),
+                action_wrapper_kwargs=wrapper_kwargs,
             )
             if bool(getattr(args, "zero_randomization", False)):
-                base_env.set_randomization_overrides(
+                self.env.env_method(
+                    "set_randomization_overrides",
                     {
                         "world_yaw_range": [0.0, 0.0],
                         "wind_speed_range": [0.0, 0.0],
@@ -1044,15 +1059,15 @@ class VizSession:
                         "wind_crosswind_range": [0.0, 0.0],
                         "wind_tailwind_max_mps": 0.0,
                         "wind_shear_range": [0.0, 0.0],
-                    }
+                    },
+                    indices=[0],
                 )
-            self.env = wrapper_class(base_env, **(wrapper_kwargs or {})) if wrapper_class is not None else base_env
-            sim_env = self.env.unwrapped if hasattr(self.env, "unwrapped") else base_env
+            world_batch_mode = True
             if scripted_mode and scripted_mode != "takeoff_cruise_landing":
                 self.model = _ScriptedPolicy(
                     scripted_mode,
                     action_dim=int(self.env.action_space.shape[0]),
-                    dt=float(sim_env.sim.get_time_step()),
+                    dt=0.05,
                 )
         elif cooperative_mode:
             runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config, dict) else {}
@@ -1167,6 +1182,36 @@ class VizSession:
                 _last_truth=primary_slot.last_truth,
             )
 
+        def _refresh_world_batch_adapter() -> None:
+            nonlocal sim_env
+            if not world_batch_mode:
+                return
+            handles = list(getattr(self.env, "_handles", []) or [])
+            if not handles:
+                sim_env = None
+                return
+            handle = handles[0]
+            sim_env = SimpleNamespace(
+                loader=handle.loader,
+                sim=handle.loader.sim,
+                agent_id=int(handle.agent_id) if handle.agent_id is not None else 0,
+                action_mode=str(getattr(self.env, "action_mode", "full")),
+                _last_inst=handle.last_inst,
+                _last_truth=handle.last_truth,
+            )
+
+        def _single_obs_from_vec(obs_now: dict):
+            if not world_batch_mode or not isinstance(obs_now, dict):
+                return obs_now
+            display_obs = {}
+            for key, value in obs_now.items():
+                arr = np.asarray(value)
+                if arr.ndim >= 1 and arr.shape[0] == 1:
+                    display_obs[key] = arr[0]
+                else:
+                    display_obs[key] = value
+            return display_obs
+
         def _reset_env_for_viz(seed_override: int | None = None):
             nonlocal coop_last_infos
             if cooperative_mode:
@@ -1176,6 +1221,12 @@ class VizSession:
                 coop_last_infos = []
                 _refresh_cooperative_adapter()
                 return obs_now
+            if world_batch_mode:
+                if seed_override is not None and hasattr(self.env, "seed"):
+                    self.env.seed(int(seed_override))
+                obs_now = self.env.reset()
+                _refresh_world_batch_adapter()
+                return _single_obs_from_vec(obs_now)
             if seed_override is not None:
                 obs_now, _ = self.env.reset(seed=int(seed_override))
             else:
@@ -1669,7 +1720,17 @@ class VizSession:
                         else:
                             action = np.zeros(self.env.action_space.shape, dtype=np.float32)
 
-                        next_obs, reward, terminated, truncated, info = self.env.step(action)
+                        if world_batch_mode:
+                            batched_action = np.asarray(action, dtype=np.float32).reshape(1, -1)
+                            next_obs_batch, rewards, dones, infos = self.env.step(batched_action)
+                            reward = float(np.asarray(rewards, dtype=np.float32).reshape(-1)[0])
+                            terminated = bool(np.asarray(dones, dtype=bool).reshape(-1)[0])
+                            truncated = False
+                            info = dict(infos[0]) if infos and isinstance(infos[0], dict) else {}
+                            _refresh_world_batch_adapter()
+                            next_obs = _single_obs_from_vec(next_obs_batch)
+                        else:
+                            next_obs, reward, terminated, truncated, info = self.env.step(action)
                         self.episode_return += float(reward)
                         sim_time += sim_env.sim.get_time_step()
                         try:

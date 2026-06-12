@@ -84,13 +84,11 @@ def test_inventory_uses_canonical_classification_and_disposition_vocabulary() ->
   assert allowed_classifications == {
     "runtime_regression_raw_env",
     "manual_diagnostics_raw_env",
-    "manual_visualization_raw_env",
     "negative_rejection_guard",
   }
   assert allowed_dispositions == {
     "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
     "retain_manual_diagnostics_until_tool_migrated_or_archived",
-    "retain_manual_visualization_until_viz_runtime_migrated",
     "retain_negative_guard",
   }
 
@@ -157,6 +155,17 @@ def test_inventory_counts_remaining_registered_surfaces() -> None:
   assert disposition_counts == {
     "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists": 9,
     "retain_manual_diagnostics_until_tool_migrated_or_archived": 2,
-    "retain_manual_visualization_until_viz_runtime_migrated": 1,
     "retain_negative_guard": 3,
   }
+
+
+def test_visualization_session_uses_maintained_world_batch_runtime() -> None:
+  source = (REPO_ROOT / "examples" / "viz" / "runtime" / "viz_session.py").read_text(
+    encoding="utf-8"
+  )
+
+  assert "from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv" in source
+  assert "WorldBatchVecEnv(" in source
+  assert "from gym_envs.universal_env import" not in source
+  assert "UniversalEnv(" not in source
+  assert "runtime_compatibility_enabled=True" not in source

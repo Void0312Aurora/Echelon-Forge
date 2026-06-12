@@ -13,13 +13,11 @@
   "allowed_classifications": [
     "runtime_regression_raw_env",
     "manual_diagnostics_raw_env",
-    "manual_visualization_raw_env",
     "negative_rejection_guard"
   ],
   "allowed_dispositions": [
     "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
     "retain_manual_diagnostics_until_tool_migrated_or_archived",
-    "retain_manual_visualization_until_viz_runtime_migrated",
     "retain_negative_guard"
   ],
   "entries": [
@@ -188,20 +186,6 @@
       "evidence_markers": [
         "test_world_batch_vec_env_matches_multi_timescale_action_wrapper",
         "MultiTimescaleActionWrapper(",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "examples/viz/runtime/viz_session.py",
-      "call_count": 1,
-      "surface": "manual visualization UniversalEnv session",
-      "classification": "manual_visualization_raw_env",
-      "disposition": "retain_manual_visualization_until_viz_runtime_migrated",
-      "migration_target": "visualization runtime session backed by maintained runtime adapter",
-      "next_action": "Treat as manual visualization debt; migrate only with the viz runtime, not with test cleanup.",
-      "evidence_markers": [
-        "Initializing Universal Environment with scenario",
-        "base_env = UniversalEnv",
         "runtime_compatibility_enabled=True"
       ]
     }
