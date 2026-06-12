@@ -174,8 +174,8 @@ cmo_python tools/diagnostics/run_benchmark_suite.py \
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python tools/diagnostics/benchmark.py \
-  --family world_batch_runtime \
-  --world-count 8 --setup-iters 64 --iters 512
+  --family world_batch_vec_env \
+  --n-envs 8 --steps 128 --reset-iters 24
 ```
 
 通过同一维护入口运行 air-combat post-launch assessment 基准：

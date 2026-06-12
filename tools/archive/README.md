@@ -14,6 +14,8 @@ Archived helpers currently include:
   - Manual probe for the C++ batch preparation API.
 - [world_batch_vec_env_benchmark.py](world_batch_vec_env_benchmark.py)
   - Older vec-env throughput benchmark predating the maintained diagnostics layout.
+- [world_batch_runtime.py](world_batch_runtime.py)
+  - Archived raw `WorldBatchRuntime` benchmark. Maintained benchmark entrypoints now use facade/vector-env runtime families.
 - [diagnose_training_matrix.py](diagnose_training_matrix.py)
   - Legacy evaluation-matrix helper that parses the old `evaluate.py` text summary format.
 - [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)

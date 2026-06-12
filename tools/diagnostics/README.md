@@ -63,8 +63,6 @@ Current diagnostics and probes:
   - Scenario compiler cache / instantiate / load benchmark.
 - `mission_runtime`
   - Mission runtime helper microbenchmark.
-- `world_batch_runtime`
-  - WorldBatchRuntime kernel-apply and step/read benchmark.
 - `world_batch_vec_env`
   - WorldBatchVecEnv training-adapter benchmark.
 - `policy_observation_bridge`
@@ -132,8 +130,8 @@ Run one benchmark family through the unified CLI:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_runtime \
-  --world-count 8 --setup-iters 64 --iters 512
+  --family world_batch_vec_env \
+  --n-envs 8 --steps 128 --reset-iters 24
 ```
 
 Run the air-combat post-launch assessment benchmark through the same entrypoint:
@@ -172,7 +170,7 @@ Show family-specific help:
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_runtime \
+  --family world_batch_vec_env \
   --family-help
 ```
 

@@ -42,11 +42,6 @@ BENCHMARK_FAMILIES: dict[str, BenchmarkFamily] = {
         description="Mission runtime helper microbenchmark.",
         module_path="tools.diagnostics.benchmarks.mission_runtime",
     ),
-    "world_batch_runtime": BenchmarkFamily(
-        name="world_batch_runtime",
-        description="WorldBatchRuntime kernel-apply and step/read benchmark.",
-        module_path="tools.diagnostics.benchmarks.world_batch_runtime",
-    ),
     "world_batch_vec_env": BenchmarkFamily(
         name="world_batch_vec_env",
         description="WorldBatchVecEnv training-adapter benchmark.",

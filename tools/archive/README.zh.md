@@ -14,6 +14,8 @@
   - 针对 C++ 批处理准备 API 的手动探测脚本。
 - [world_batch_vec_env_benchmark.py](world_batch_vec_env_benchmark.py)
   - 更早的 vec-env 吞吐量基准测试，早于当前维护的诊断布局。
+- [world_batch_runtime.py](world_batch_runtime.py)
+  - 已归档的 raw `WorldBatchRuntime` 基准。维护中的 benchmark 入口现在使用 facade/vector-env runtime family。
 - [diagnose_training_matrix.py](diagnose_training_matrix.py)
   - 遗留评估矩阵辅助脚本，用于解析旧版 `evaluate.py` 文本摘要格式。
 - [arma_proxy_backend_echelon_env.py](arma_proxy_backend_echelon_env.py)

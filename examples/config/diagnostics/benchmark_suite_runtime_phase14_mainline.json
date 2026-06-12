@@ -14,16 +14,6 @@
       ]
     },
     {
-      "name": "world_batch_runtime",
-      "family": "world_batch_runtime",
-      "args": [
-        "--world-count", "8",
-        "--setup-iters", "64",
-        "--iters", "512",
-        "--sim-log-level", "warn"
-      ]
-    },
-    {
       "name": "world_batch_vec_env",
       "family": "world_batch_vec_env",
       "args": [

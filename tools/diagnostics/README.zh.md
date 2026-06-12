@@ -51,8 +51,6 @@
   - 场景编译器缓存/实例化/加载基准。
 - `mission_runtime`
   - 任务运行时辅助微基准。
-- `world_batch_runtime`
-  - WorldBatchRuntime 内核应用和步骤/读取基准。
 - `world_batch_vec_env`
   - WorldBatchVecEnv 训练适配器基准。
 - `policy_observation_bridge`
@@ -120,8 +118,8 @@ cmake --build build-gpu --target ef_gpu_visual_candidate_phase0_probe -j
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_runtime \
-  --world-count 8 --setup-iters 64 --iters 512
+  --family world_batch_vec_env \
+  --n-envs 8 --steps 128 --reset-iters 24
 ```
 
 通过同一入口运行 air-combat post-launch assessment 基准：
@@ -159,7 +157,7 @@ ssh -N -L 8765:127.0.0.1:8765 HEI
 
 ```bash
 ./.venv/bin/python tools/diagnostics/benchmark.py \
-  --family world_batch_runtime \
+  --family world_batch_vec_env \
   --family-help
 ```
 
