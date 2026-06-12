@@ -86,7 +86,6 @@ When a standalone test is needed, prefer:
 ## Implementation Entry Points
 
 - Contract execution logic now lives in [python/testing/contracts/](../python/testing/contracts).
-- [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) is a compatibility shim that re-exports the packaged contract runner.
 - Scenario-side bootstrap logic used by tests now lives in `python/scenario/compiler/` and `python/scenario/runtime/`.
 - Diagnostics-only raw batch scenario setup helpers live under `python/scenario/diagnostics/`; maintained tests should import `python/scenario/runtime/` directly.
 
@@ -96,16 +95,11 @@ When a standalone test is needed, prefer:
   - Validates `TaskOrder -> LeaderIntent -> PilotReport -> MissionCommand` initialization and kernel sync.
 - `route_generator`
   - Validates generated waypoint routes, geometry, reachability budget, mode cycling, and world-yaw behavior.
-- `scripted_bridge`
-  - Validates wrapper-driven scripted baselines against scenario success criteria.
-- `env_regression`
-  - Validates `UniversalEnv`-level reset/step, reward, observation, render, phase, takeoff, landing, and waypoint regressions.
-  - Prefer reusable assertion-style `check_kind` values, such as observation-vector and step-info assertions, before adding a new one-off env branch.
 - `unit_regression`
   - Validates pure-Python controller/config/loader/wrapper handoff logic without needing full scenario stepping.
   - Also hosts parameterized leader-task generalization checks that mutate C2 task inputs and validate emitted mission-command behavior.
 
-Contract execution lives in [python/testing/contracts/](../python/testing/contracts), with [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) retained only as a compatibility shim.
+Contract execution lives in [python/testing/contracts/](../python/testing/contracts).
 
 ## Contract Batch Failure Policy
 
@@ -145,9 +139,9 @@ Run a batch runner:
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tests/runners/test_contract_batches.py --group chain --group env
+cmo_python tests/runners/test_contract_batches.py --group chain --group route_generator
 
-cmo_python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
+cmo_python tests/runners/test_contract_batches.py --group unit --group same_process
 
 cmo_python tests/runners/test_contract_batches.py --group sim_kernel
 
@@ -178,7 +172,7 @@ Suite tiers:
 - `focused`
   - Small domain-oriented suites for local pre-merge checks and targeted ownership review.
 - `local`
-  - Developer-run suites that may be broader or more environment-sensitive than focused suites, including env regression contract coverage.
+  - Developer-run suites that may be broader or more environment-sensitive than focused suites.
 - `manual`
   - Human-invoked checks, diagnostics, or workflows that need judgment or special setup.
 - `nightly`
@@ -208,11 +202,18 @@ runner checks the base file path before handing the full node ID to pytest.
 Rows that list `tests/smoke/ci_smoke_suite.json` in `suite_membership` must also
 list the concrete `smoke_paths` that are allowed into CI.
 
+The active `UniversalEnv` raw-compatibility opt-in surface is tracked by
+`tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`
+and guarded by
+`tests/architecture/runtime_facade/test_universal_env_compatibility_caller_inventory.py`.
+New boolean `runtime_compatibility_enabled=True` call sites must be registered
+there with a disposition and migration target instead of appearing silently.
+
 ## Dependency Notes
 
 - `gymnasium` is optional in this workspace.
-- Contracts that instantiate `UniversalEnv` or wrappers will print `SKIP` when `gymnasium` is not installed.
-- Kernel-only contracts such as `loader_command_chain` and many route-generator checks can still run without `gymnasium`.
+- Active maintained contract batches should avoid raw `UniversalEnv` construction. Historical raw-env specs are archived under `tests/archive/contracts/`.
+- Kernel-only contracts such as `loader_command_chain` and route-generator checks can run without `gymnasium`.
 
 ## Authoring Guidance
 
@@ -277,10 +278,6 @@ easier.
   - Route generation and route geometry regressions.
 - `tests/contracts/chain/*.json`
   - Command-chain and kernel-sync regressions that exercise maintained loader/runtime wiring.
-- `tests/contracts/env/*/*.json`
-  - `UniversalEnv` reset/step/reward/observation/render/phase regressions.
-- `tests/contracts/bridges/*.json`
-  - Scripted wrapper bridge regressions.
 - `tests/contracts/unit/**/*.json`
   - Pure logic, controller, loader, and config regressions.
 - `tests/contracts/unit/comm/*.json`
@@ -302,17 +299,15 @@ easier.
   - Scripted wrapper mode selection, controller handoff, and residual-cap regressions.
 - `tests/contracts/unit/world_model/*.json`
   - Replay-buffer and world-model dataset regressions.
-- `tests/contracts/bridges/*.json`
-  - Scripted wrapper bridge regressions.
+- `tests/archive/contracts/env_regression/**/*.json`
+  - Archived raw `UniversalEnv` regression specs retained for provenance only.
+- `tests/archive/contracts/scripted_bridge/**/*.json`
+  - Archived scripted wrapper bridge specs retained for provenance only.
 
 ## Current Contract Folders
 
 - `tests/contracts/chain/`
   - Command-chain and kernel-sync contracts.
-- `tests/contracts/bridges/`
-  - Scripted wrapper bridge contracts.
-- `tests/contracts/env/`
-  - `UniversalEnv` regression contracts grouped by scenario surface such as takeoff, landing, waypoint, phase, render, and mission observation.
 - `tests/contracts/route_generator/`
   - Route generation geometry and budget contracts.
 - `tests/contracts/unit/controllers/`

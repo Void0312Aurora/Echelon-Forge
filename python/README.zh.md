@@ -65,8 +65,6 @@ src/interfaces/python -> ef_py
 
 - [scenario_compiler.py](scenario_compiler.py)
   - 根级兼容 shim，仅重导出 `python/scenario/compiler/`。
-- [testing/scenario_contract_runner.py](testing/scenario_contract_runner.py)
-  - 兼容 shim，仅重导出 `python/testing/contracts/` 的 contract 执行入口。
 
 ## 当前文件落点
 
@@ -107,9 +105,7 @@ src/interfaces/python -> ef_py
   - `runtime.py`
     - repo/build 路径注入与测试期导入配置。
   - `contracts/`
-    - JSON contract 执行器主实现，按 `env_regression`、`loader_command_chain`、`route_generator`、`scripted_bridge` 等子模块维护。
-  - `scenario_contract_runner.py`
-    - 兼容 shim；主实现已迁到 `python/testing/contracts/`。
+    - JSON contract 执行器主实现，按 `loader_command_chain`、`route_generator`、`unit` 等子模块维护。
 - `training/`
   - `cli.py`
     - `train.py` 入口的 argparse 参数表。
@@ -145,5 +141,5 @@ src/interfaces/python -> ef_py
 
 - `python/rl/` 已经按子域收敛，新增 RL 相关逻辑应优先进入对应子包，不要恢复扁平文件布局。
 - `python/scenario/compiler/` 与 `python/scenario/runtime/` 是当前主实现入口；`python/scenario/diagnostics/` 仅用于 diagnostics，不应被 maintained runtime path 导入。
-- `python/testing/contracts/` 是 contract runner 主实现入口；`python/testing/scenario_contract_runner.py` 只保留为兼容 shim。
+- `python/testing/contracts/` 是 contract runner 主实现入口。
 - 如果后续 `world_model/` 或 `testing/` 继续膨胀，应优先在各自目录内再拆子包，而不是回退到根级兼容文件。

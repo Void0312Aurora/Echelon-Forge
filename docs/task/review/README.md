@@ -34,6 +34,7 @@ Status: active review record.
 - [Architecture Damage-Model Test Capability Matrix 2026-06-10](architecture_damage_model_test_script_survival_table_20260610.zh.md) (中文)
 - [Architecture Test System Governance Closeout 2026-06-10](architecture_test_system_governance_closeout_20260610.zh.md) (中文)
 - [Tools Script Governance Matrix 2026-06-11](tools_script_governance_matrix_20260611.zh.md) (中文)
+- [UniversalEnv Raw Compatibility Caller Survival Table 2026-06-12](universal_env_runtime_compatibility_caller_survival_table_20260612.zh.md) (中文)
 
 ## Disputed Closure Records
 

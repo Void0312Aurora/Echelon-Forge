@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "name": "universal_env_runtime_compatibility_callers_20260612",
+  "status": "active_governance",
+  "scope": "Active Python call sites that set runtime_compatibility_enabled to the boolean value True outside archive paths.",
+  "scan_roots": [
+    "python",
+    "gym_envs",
+    "tools",
+    "tests",
+    "examples"
+  ],
+  "allowed_classifications": [
+    "runtime_regression_raw_env",
+    "manual_diagnostics_raw_env",
+    "manual_visualization_raw_env",
+    "negative_rejection_guard"
+  ],
+  "allowed_dispositions": [
+    "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+    "retain_manual_diagnostics_until_tool_migrated_or_archived",
+    "retain_manual_visualization_until_viz_runtime_migrated",
+    "retain_negative_guard"
+  ],
+  "entries": [
+    {
+      "path": "tools/diagnostics/air_combat_weapon_employment_process_probe.py",
+      "call_count": 1,
+      "surface": "air-combat weapon-employment process diagnostic",
+      "classification": "manual_diagnostics_raw_env",
+      "disposition": "retain_manual_diagnostics_until_tool_migrated_or_archived",
+      "migration_target": "diagnostic mode backed by maintained world-batch execution or an archived manual probe",
+      "next_action": "Decide whether the probe remains operator-facing diagnostics or becomes runtime regression coverage.",
+      "evidence_markers": [
+        "def _build_env",
+        "step_info_mode=\"full\"",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tools/diagnostics/arma_proxy_backend_echelon_env.py",
+      "call_count": 1,
+      "surface": "Arma proxy backend Echelon env diagnostic",
+      "classification": "manual_diagnostics_raw_env",
+      "disposition": "retain_manual_diagnostics_until_tool_migrated_or_archived",
+      "migration_target": "external proxy diagnostic using a maintained runtime adapter, or archive if no longer used",
+      "next_action": "Keep explicitly manual until Arma proxy ownership is decided.",
+      "evidence_markers": [
+        "def _build_env_settings",
+        "def _build_session_env",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/leader/_leader_env_runtime_controls_cases.py",
+      "call_count": 1,
+      "surface": "leader env rejection guard for legacy execution config",
+      "classification": "negative_rejection_guard",
+      "disposition": "retain_negative_guard",
+      "migration_target": "none; this is a fail-closed regression guard",
+      "next_action": "Retain while env config rejection behavior exists.",
+      "evidence_markers": [
+        "test_leader_env_rejects_legacy_execution_runtime_mode_sources",
+        "\"runtime_compatibility_enabled\": True",
+        "execution_step_runtime_mode='legacy' has been removed"
+      ]
+    },
+    {
+      "path": "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
+      "call_count": 2,
+      "surface": "air-combat UniversalEnv weapon-release runtime regressions",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "world-batch or facade-backed air-combat weapon-release regression",
+      "next_action": "Replace direct UniversalEnv weapon-release checks after equivalent maintained adapter coverage exists.",
+      "evidence_markers": [
+        "test_universal_env_full_action_surface_can_trigger_weapon_release",
+        "test_universal_env_advances_red_scripted_opponent",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/runtime/air_combat/test_air_combat_1v1_fixture.py",
+      "call_count": 2,
+      "surface": "air-combat fixture loading and scripted opponent regressions",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "world-batch fixture and scripted-opponent coverage",
+      "next_action": "Migrate fixture observation and scripted-opponent checks once the maintained adapter exposes equivalent assertions.",
+      "evidence_markers": [
+        "test_universal_env_loads_fixture_with_execution_observation_contract",
+        "test_drone_weapon_employment_fixed_fire_smoke_reaches_weapon_release",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/runtime/air_combat/test_air_combat_c2_roe_mission_observation.py",
+      "call_count": 1,
+      "surface": "air-combat C2 ROE mission-observation runtime-window age regression",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "facade or world-batch mission-observation regression",
+      "next_action": "Move age/window assertions to maintained observation packets before removing this raw-env opt-in.",
+      "evidence_markers": [
+        "test_air_combat_c2_roe_v2_runtime_window_age_advances_with_env_steps",
+        "mission_obs_mode=mode",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/runtime/air_combat/test_fire_action_release_gate.py",
+      "call_count": 1,
+      "surface": "air-combat fire-action release gate regression",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "maintained action/release gate regression",
+      "next_action": "Port fire-mask gate checks to a maintained runtime adapter before deleting the raw-env helper.",
+      "evidence_markers": [
+        "def _make_env",
+        "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/runtime/core/test_env_config.py",
+      "call_count": 1,
+      "surface": "env config rejection guard",
+      "classification": "negative_rejection_guard",
+      "disposition": "retain_negative_guard",
+      "migration_target": "none; this is a fail-closed regression guard",
+      "next_action": "Retain while training config rejects runtime compatibility opt-in.",
+      "evidence_markers": [
+        "test_runtime_compatibility_enabled_rejects_ambiguous_strings",
+        "_make_args(runtime_compatibility_enabled=True)",
+        "runtime_compatibility_enabled=true has been removed"
+      ]
+    },
+    {
+      "path": "tests/runtime/mission/test_mission_runtime.py",
+      "call_count": 1,
+      "surface": "compiled observation builder versus UniversalEnv observation parity check",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "observation packet parity check without raw UniversalEnv construction",
+      "next_action": "Replace the legacy-observation baseline with maintained observation packet evidence.",
+      "evidence_markers": [
+        "test_compiled_observation_builder_matches_legacy_observation",
+        "build_universal_observation",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/runtime/naval/test_naval_station_policy_surface.py",
+      "call_count": 1,
+      "surface": "naval station raw UniversalEnv compatibility action deadband regression",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "naval station maintained adapter regression",
+      "next_action": "Keep until naval station action/deadband assertions run on the maintained runtime path.",
+      "evidence_markers": [
+        "test_raw_universal_env_compat_naval_station3_tiny_action_deadband_updates_proprio",
+        "action_mode=\"naval_station3\"",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "tests/world_batch/test_single_world_batch_runtime.py",
+      "call_count": 1,
+      "surface": "single-world runtime rejection guard",
+      "classification": "negative_rejection_guard",
+      "disposition": "retain_negative_guard",
+      "migration_target": "none; this is a fail-closed regression guard",
+      "next_action": "Retain while single-world runtime rejects raw compatibility opt-in.",
+      "evidence_markers": [
+        "test_single_world_runtime_rejects_runtime_compatibility_opt_in",
+        "\"runtime_compatibility_enabled\": True",
+        "runtime_compatibility_enabled=True has been removed"
+      ]
+    },
+    {
+      "path": "tests/world_batch/test_world_batch_vec_env.py",
+      "call_count": 1,
+      "surface": "world-batch vec-env versus direct UniversalEnv action-wrapper parity regression",
+      "classification": "runtime_regression_raw_env",
+      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
+      "migration_target": "maintained action-wrapper parity baseline without direct UniversalEnv construction",
+      "next_action": "Retain only until MultiTimescaleActionWrapper parity can be proven through a maintained adapter.",
+      "evidence_markers": [
+        "test_world_batch_vec_env_matches_multi_timescale_action_wrapper",
+        "MultiTimescaleActionWrapper(",
+        "runtime_compatibility_enabled=True"
+      ]
+    },
+    {
+      "path": "examples/viz/runtime/viz_session.py",
+      "call_count": 1,
+      "surface": "manual visualization UniversalEnv session",
+      "classification": "manual_visualization_raw_env",
+      "disposition": "retain_manual_visualization_until_viz_runtime_migrated",
+      "migration_target": "visualization runtime session backed by maintained runtime adapter",
+      "next_action": "Treat as manual visualization debt; migrate only with the viz runtime, not with test cleanup.",
+      "evidence_markers": [
+        "Initializing Universal Environment with scenario",
+        "base_env = UniversalEnv",
+        "runtime_compatibility_enabled=True"
+      ]
+    }
+  ]
+}

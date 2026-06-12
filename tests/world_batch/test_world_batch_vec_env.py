@@ -993,29 +993,12 @@ class WorldBatchVecEnvTests(unittest.TestCase):
 
   def test_world_batch_adapter_legacy_task_order_batch_writer_is_removed(self) -> None:
     adapter = vec_env_module._RuntimeFacadeAdapter(1)
-    compat_adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
 
     self.assertFalse(hasattr(adapter, "set_task_orders_batch"))
     self.assertFalse(hasattr(adapter, "set_task_orders_batch_compatibility"))
-    self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch"))
-    self.assertFalse(hasattr(compat_adapter, "set_task_orders_batch_compatibility"))
-
-  def test_world_batch_adapter_runtime_compatibility_flag_is_strict(self) -> None:
-    adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="false")
-    compat_adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="yes")
-
-    self.assertFalse(adapter.runtime_compatibility_enabled)
-    self.assertFalse(adapter.capabilities.runtime_compatibility_enabled)
-    self.assertTrue(compat_adapter.runtime_compatibility_enabled)
-    self.assertTrue(compat_adapter.capabilities.runtime_compatibility_enabled)
-
-    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
-      vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled="legacy-ish")
 
   def test_world_batch_adapter_capability_snapshot_tracks_facade_swaps(self) -> None:
-    adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
-
-    self.assertTrue(adapter.capabilities.runtime_compatibility_enabled)
+    adapter = vec_env_module._RuntimeFacadeAdapter(1)
 
     class _TaskOrderCapableFacade:
       def __init__(self) -> None:
@@ -1065,7 +1048,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
     self.assertEqual(facade.step_batch_calls, 1)
 
   def test_world_batch_adapter_step_worlds_rejects_partial_raw_runtime_step(self) -> None:
-    adapter = vec_env_module._RuntimeFacadeAdapter(2, runtime_compatibility_enabled=True)
+    adapter = vec_env_module._RuntimeFacadeAdapter(2)
 
     class _FacadeWithRawRuntime:
       def step_batch(self):
@@ -1199,43 +1182,6 @@ class WorldBatchVecEnvTests(unittest.TestCase):
     assignment = ef_py.WorldTaskOrderMaintainedAssignment()
     order = ef_py.TaskOrder()
     order.task_id = 31
-    project_world_task_order_maintained_assignment(
-      assignment,
-      world_index=0,
-      entity_id=91,
-      compatibility_task_order_shell=order,
-    )
-
-    with self.assertRaisesRegex(RuntimeError, "requires maintained TaskOrder batch bindings"):
-      adapter.set_task_orders_maintained_batch([assignment])
-
-    self.assertEqual(target.legacy_batches, [])
-
-  def test_world_batch_adapter_task_order_reverse_projection_stays_removed_with_compatibility_opt_in(self) -> None:
-    adapter = vec_env_module._RuntimeFacadeAdapter(1, runtime_compatibility_enabled=True)
-
-    class _LegacyOnlyTarget:
-      def __init__(self) -> None:
-        self.legacy_batches: list[list[Any]] = []
-
-      def set_task_orders_batch(self, assignments):
-        self.legacy_batches.append(list(assignments))
-
-    target = _LegacyOnlyTarget()
-    adapter.facade = target # type: ignore[assignment]
-    assignment = ef_py.WorldTaskOrderMaintainedAssignment()
-    order = ef_py.TaskOrder()
-    order.task_id = 37
-    order.task_type = ef_py.TaskType.CAP
-    order.element_id = 7001
-    order.package_id = 7002
-    order.lead_aircraft_id = 7003
-    order.station_type = ef_py.StationType.Racetrack
-    order.target_altitude_m = 6100.0
-    order.target_speed_mps = 205.0
-    order.formation_role_id = ef_py.FormationRole.Wingman
-    order.wingman_slot_id = ef_py.WingmanSlot.Left
-    order.naval_station_type = ef_py.NavalStationType.Screen
     project_world_task_order_maintained_assignment(
       assignment,
       world_index=0,

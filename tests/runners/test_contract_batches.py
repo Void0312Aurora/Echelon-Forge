@@ -21,8 +21,6 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
 
   if group == "chain":
     return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "chain", "**", "*.json"), recursive=True)), "no chain contracts found")
-  if group == "env":
-    return ("direct", sorted(glob.glob(resolve_repo_path("tests", "contracts", "env", "*", "*.json"))), "no env regression contracts found")
   if group == "unit":
     return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "unit", "**", "*.json"), recursive=True)), "no unit regression contracts found")
   if group == "sim_kernel":
@@ -31,8 +29,6 @@ def _resolve_specs(group: str) -> tuple[str, list[str], str]:
       sorted(glob.glob(resolve_repo_path("tests", "contracts", "unit", "kernel", "*.json"))),
       "no simulation kernel contracts found",
     )
-  if group == "bridges":
-    return ("subprocess", sorted(glob.glob(resolve_repo_path("tests", "contracts", "bridges", "**", "*.json"), recursive=True)), "no scripted bridge contracts found")
   if group == "route_generator":
     return ("direct", sorted(glob.glob(resolve_repo_path("tests", "contracts", "route_generator", "*.json"))), "no route generator contracts found")
   if group == "same_process":
@@ -92,7 +88,7 @@ def _run_subprocess_specs(spec_paths: list[str]) -> int:
 
 
 def _run_direct_specs(spec_paths: list[str]) -> int:
-  from python.testing.scenario_contract_runner import ContractSkipped, run_contract
+  from python.testing.contracts import ContractSkipped, run_contract
 
   for spec_path in spec_paths:
     try:
@@ -113,7 +109,7 @@ def parse_args() -> argparse.Namespace:
     "--group",
     dest="groups",
     action="append",
-    choices=["chain", "env", "unit", "bridges", "route_generator", "same_process", "sim_kernel"],
+    choices=["chain", "unit", "route_generator", "same_process", "sim_kernel"],
     help="Contract group to run. Repeat to select multiple groups. Defaults to all groups.",
   )
   parser.add_argument(
@@ -135,7 +131,7 @@ def main() -> int:
   elif args.default_group == "sim_kernel":
     groups = ["sim_kernel"]
   else:
-    groups = ["chain", "env", "unit", "bridges", "route_generator", "same_process"]
+    groups = ["chain", "unit", "route_generator", "same_process"]
 
   for group in groups:
     mode, spec_paths, empty_message = _resolve_specs(group)
@@ -151,21 +147,17 @@ def main() -> int:
   return 0
 
 
-def test_scenario_contract_runner_reexports_contract_entrypoints() -> None:
-  legacy = importlib.import_module("python.testing.scenario_contract_runner")
+def test_contract_package_exports_contract_entrypoints() -> None:
   contracts = importlib.import_module("python.testing.contracts")
 
-  assert legacy.ContractSkipped is contracts.ContractSkipped
-  assert legacy.run_contract is contracts.run_contract
-  assert legacy.run_loader_command_chain_contract is contracts.run_loader_command_chain_contract
-  assert legacy.run_route_generator_contract is contracts.run_route_generator_contract
-  assert legacy.run_env_regression_contract is contracts.run_env_regression_contract
-  assert legacy.run_unit_regression_contract is contracts.run_unit_regression_contract
-  assert legacy.run_scripted_bridge_contract is contracts.run_scripted_bridge_contract
+  assert contracts.ContractSkipped
+  assert contracts.run_contract
+  assert contracts.run_loader_command_chain_contract
+  assert contracts.run_route_generator_contract
+  assert contracts.run_unit_regression_contract
 
 
-def test_run_contract_legacy_entrypoint_dispatches_via_new_package(tmp_path, monkeypatch) -> None:
-  legacy = importlib.import_module("python.testing.scenario_contract_runner")
+def test_run_contract_entrypoint_dispatches_via_contract_package(tmp_path, monkeypatch) -> None:
   contracts = importlib.import_module("python.testing.contracts")
   spec_path = tmp_path / "contract.json"
   spec_path.write_text(json.dumps({"type": "loader_command_chain"}), encoding="utf-8")
@@ -173,23 +165,23 @@ def test_run_contract_legacy_entrypoint_dispatches_via_new_package(tmp_path, mon
 
   def fake_handler(path: str) -> tuple[bool, str]:
     calls.append(path)
-    return True, "compat dispatch passed"
+    return True, "contract dispatch passed"
 
   monkeypatch.setitem(contracts._CONTRACT_HANDLERS, "loader_command_chain", fake_handler)
 
-  assert legacy.run_contract(str(spec_path)) == (True, "compat dispatch passed")
+  assert contracts.run_contract(str(spec_path)) == (True, "contract dispatch passed")
   assert calls == [str(spec_path)]
 
 
-def test_run_direct_specs_uses_legacy_compat_entrypoint(monkeypatch, capsys) -> None:
-  legacy = importlib.import_module("python.testing.scenario_contract_runner")
+def test_run_direct_specs_uses_contract_package_entrypoint(monkeypatch, capsys) -> None:
+  contracts = importlib.import_module("python.testing.contracts")
   calls: list[str] = []
 
   def fake_run_contract(path: str) -> tuple[bool, str]:
     calls.append(path)
     return True, "batch smoke passed"
 
-  monkeypatch.setattr(legacy, "run_contract", fake_run_contract)
+  monkeypatch.setattr(contracts, "run_contract", fake_run_contract)
 
   assert _run_direct_specs(["tests/contracts/example.json"]) == 0
   assert calls == ["tests/contracts/example.json"]

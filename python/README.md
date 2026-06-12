@@ -65,8 +65,6 @@ src/interfaces/python -> ef_py
 
 - [scenario_compiler.py](scenario_compiler.py)
   - Root-level compatibility shim that only re-exports `python/scenario/compiler/`.
-- [testing/scenario_contract_runner.py](testing/scenario_contract_runner.py)
-  - Compatibility shim that only re-exports the contract execution entry point from `python/testing/contracts/`.
 
 ## Current File Locations
 
@@ -107,9 +105,7 @@ src/interfaces/python -> ef_py
   - `runtime.py`
     - Repo/build path injection and import configuration for tests.
   - `contracts/`
-    - Main JSON contract runner implementation, organized into submodules such as `env_regression`, `loader_command_chain`, `route_generator`, and `scripted_bridge`.
-  - `scenario_contract_runner.py`
-    - Compatibility shim; the main implementation has moved to `python/testing/contracts/`.
+    - Main JSON contract runner implementation, organized into submodules such as `loader_command_chain`, `route_generator`, and `unit`.
 - `training/`
   - `cli.py`
     - The argparse parameter table for the `train.py` entry point.
@@ -145,5 +141,5 @@ If you are looking into:
 
 - `python/rl/` has already been consolidated by subdomain. New RL logic should go into the appropriate package instead of restoring a flat file layout.
 - `python/scenario/compiler/` and `python/scenario/runtime/` are the current main implementation entry points. `python/scenario/diagnostics/` is diagnostics-only and should not be imported by maintained runtime paths.
-- `python/testing/contracts/` is the main contract runner implementation entry point. `python/testing/scenario_contract_runner.py` remains only as a compatibility shim.
+- `python/testing/contracts/` is the main contract runner implementation entry point.
 - If `world_model/` or `testing/` grows further, prefer splitting them into additional subpackages inside their own directories instead of falling back to root-level compatibility files.

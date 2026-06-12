@@ -32,31 +32,6 @@
       "governance_notes": "Route generation, waypoint-mode, reachability, and world-yaw contracts. Keep as data specs unless a shared assertion vocabulary removes duplication."
     },
     {
-      "id": "scripted_wrapper_bridges",
-      "label": "Scripted wrapper bridges",
-      "status": "maintained",
-      "semantic_tier": "local",
-      "runner_group": "bridges",
-      "contract_type": "scripted_bridge",
-      "path_globs": [
-        "tests/contracts/bridges/**/*.json"
-      ],
-      "governance_notes": "Scenario-level bridge checks for wrapper-driven scripted baselines."
-    },
-    {
-      "id": "universal_env_regressions",
-      "label": "UniversalEnv regressions",
-      "status": "maintained",
-      "semantic_tier": "local",
-      "runner_group": "env",
-      "contract_type": "env_regression",
-      "path_globs": [
-        "tests/contracts/env/*/*.json"
-      ],
-      "cleanup_priority": "high",
-      "governance_notes": "Largest remaining one-check-kind-per-regression surface. Observation-vector and step-info assertions are now reusable primitives; continue migrating narrow env check_kind branches into JSON assertion specs."
-    },
-    {
       "id": "tasking_and_command_link_contracts",
       "label": "Tasking and command-link contracts",
       "status": "maintained",
@@ -217,6 +192,28 @@
         "tests/archive/contracts/unit/training/**/*.json"
       ],
       "governance_notes": "Historical weak baselines, pre-frozen leader specs, and alternate task-chain variants. Retained for provenance only and excluded from maintained contract coverage."
+    },
+    {
+      "id": "archived_universal_env_regressions",
+      "label": "Archived UniversalEnv regressions",
+      "status": "archived",
+      "semantic_tier": "archive",
+      "contract_type": "env_regression",
+      "path_globs": [
+        "tests/archive/contracts/env_regression/**/*.json"
+      ],
+      "governance_notes": "Raw UniversalEnv JSON regressions removed from maintained contract coverage. Retained only as migration/provenance samples."
+    },
+    {
+      "id": "archived_scripted_wrapper_bridges",
+      "label": "Archived scripted wrapper bridges",
+      "status": "archived",
+      "semantic_tier": "archive",
+      "contract_type": "scripted_bridge",
+      "path_globs": [
+        "tests/archive/contracts/scripted_bridge/**/*.json"
+      ],
+      "governance_notes": "Legacy scripted bridge contracts removed with the raw UniversalEnv contract executors. Retained only as historical samples."
     }
   ]
 }

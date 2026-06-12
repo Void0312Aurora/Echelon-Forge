@@ -85,8 +85,8 @@
 
 | 目录 | 证据 |
 |------|------|
-| `tests/` | tracked Python 测试文件 227 个；`tests/contracts/` 下活跃 JSON contract 文件 86 个。历史 contract 规范位于 `tests/archive/contracts/`。测试套件按 smoke、focused、local/manual、contract 等路径组织。 |
-| `python/testing/contracts/` | 共享运行器根据 JSON `"type"` 字段分发。处理程序：`loader_command_chain`、`route_generator`、`env_regression`、`unit_regression`、`scripted_bridge`。 |
+| `tests/` | tracked Python 测试文件 227 个；`tests/contracts/` 下活跃 JSON contract 文件 59 个。历史 contract 规范位于 `tests/archive/contracts/`。测试套件按 smoke、focused、local/manual、contract 等路径组织。 |
+| `python/testing/contracts/` | 共享运行器根据 JSON `"type"` 字段分发。活跃处理程序：`loader_command_chain`、`route_generator`、`unit_regression`。已归档 raw-env contract 类型：`env_regression`、`scripted_bridge`。 |
 | `tests/architecture/` | 当前有 87 个 architecture test 文件、444 个 pytest 收集项，并按语义 guard owner 分组；其中大量检查分层规则、导入约束、文档合同和 compatibility quarantine boundary。 |
 
 **模式**：测试意图编码为数据（JSON），通过共享运行器执行。比每次回归手写 Python 脚本更易维护。

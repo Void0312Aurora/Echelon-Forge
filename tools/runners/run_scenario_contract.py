@@ -45,7 +45,7 @@ def main() -> int:
 
     ensure_repo_imports()
 
-    from python.testing.scenario_contract_runner import ContractSkipped, run_contract
+    from python.testing.contracts import ContractSkipped, run_contract
 
     parser = argparse.ArgumentParser(description="Run JSON-driven scenario contract checks")
     parser.add_argument("--spec", nargs="+", default=[], help="One or more JSON contract spec paths")

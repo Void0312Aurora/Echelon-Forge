@@ -119,29 +119,37 @@
 
 ### 3.3 JSON contracts
 
+2026-06-12 更新：`env_regression` 与 `scripted_bridge` 已从活跃 contract runner 删除，旧 JSON 规范移动到 `tests/archive/contracts/`。下表保留本审查的历史基线，同时列出当前活跃口径。
+
 当前 JSON contract 总量：
 
 | 范围 | 数量 |
 | --- | ---: |
-| `tests/contracts/**/*.json` | 103 |
-| 活跃树，排除 `Archive` | 86 |
-| `Archive` | 17 |
+| 当前 `tests/contracts/**/*.json` | 59 |
+| 当前 `tests/archive/contracts/**/*.json` | 44 |
+| 2026-06-01 历史总量 | 103 |
 
 活跃 contract 类型统计：
 
 | type | 数量 |
 | --- | ---: |
 | `unit_regression` | 51 |
-| `env_regression` | 25 |
 | `route_generator` | 7 |
-| `scripted_bridge` | 2 |
 | `loader_command_chain` | 1 |
+
+已归档 contract 类型统计：
+
+| type | 数量 |
+| --- | ---: |
+| `env_regression` | 25 |
+| `scripted_bridge` | 2 |
+| `unit_regression` | 17 |
 
 执行机制：
 
 - 顶层 dispatch 在 `python/testing/contracts/__init__.py`，按 `type` 选择 handler。
 - `unit_regression` 再按 `check_kind` 进入 kernel、comm、leader、wrapper、training 等子 handler。
-- `tests/runners/test_contract_batches.py` 按路径 glob 分组：`chain`、`env`、`unit`、`bridges`、`route_generator`、`same_process`、`sim_kernel`。
+- `tests/runners/test_contract_batches.py` 按路径 glob 分组：`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`。
 - `tools/runners/run_sim_kernel_contracts.py` 只是 `sim_kernel` 默认组的薄包装。
 
 判断：contract 层已经可用，但 execution tier 和 semantic tier 还没有统一。
@@ -190,7 +198,7 @@
 | G-003 | `unit/**/*.json` glob 混合 hard gate / supplemental / diagnostic | supplemental/frozen/diagnostic 被同一 failure policy 处理 | 改成 manifest 或 metadata filtering |
 | G-004 | `sim_kernel` 当前语义不清 | realism scan 失败会被操作上 hard fail，但语义更像 diagnostic/supplemental | 拆 `sim_kernel_gate` 与 `sim_kernel_diagnostic` |
 | G-005 | runner build path 不完全一致 | 从 shell helper、pytest suite、contract batch 直接运行时可能选择不同 build dir | 统一 `python/testing/runtime.py` 与 `cmo_env.sh` |
-| G-006 | `tests/README.md` contract type 清单漏 `env_regression` | 文档与实际 handler 不一致 | 补全文档 |
+| G-006 | `tests/README.md` contract type 清单曾漏 `env_regression` | 该历史缺口已被 2026-06-12 清理取代：`env_regression` 不再是活跃 handler | 关闭旧建议；不要重新补回归档类型 |
 | G-007 | focused/full/local gate 没有 manifest | “有大量测试但不在 CI”容易被误判 | 新增 `tests/suites/` 或扩展 `tests/smoke/` |
 | G-008 | CTest 未注册测试 | C++ 侧测试入口对新读者不可见 | 若需要 CTest gate，应注册；否则 README 说明 C++ 行为由 Python/facade 回归覆盖 |
 
@@ -327,7 +335,7 @@
 
 - 拆 `sim_kernel_gate` / `sim_kernel_diagnostic`。
 - training frozen 的 gating baseline 与 supplemental matrix 分别建 manifest。
-- `env_regression` 补进 `tests/README.md` 的 Contract Types。
+- `env_regression` / `scripted_bridge` 已从活跃 runner 删除；不要再补回 `tests/README.md` 的活跃 Contract Types。
 
 ### P4：选择性扩大 CI
 

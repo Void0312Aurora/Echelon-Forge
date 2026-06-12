@@ -415,19 +415,6 @@
       ],
       "suite_membership": [],
       "governance_notes": "Frozen artifact checks are tracked as protected contracts; promotion to nightly should happen only after artifact availability is stable."
-    },
-    {
-      "id": "env_regression",
-      "label": "Environment regression contracts",
-      "recommended_tier": "local",
-      "contract_paths": [
-        "tests/contracts/env/takeoff/departure_soft_shaping_regression.json",
-        "tests/contracts/env/landing/landing_approach_reward_terms_regression.json",
-        "tests/contracts/env/waypoint/waypoint_track_reward_regression.json",
-        "tests/contracts/env/phase/post_waypoint_transition_regression.json"
-      ],
-      "suite_membership": [],
-      "governance_notes": "Documented as local contract coverage; this change does not add env_regression to CI."
     }
   ]
 }

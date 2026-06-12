@@ -132,7 +132,7 @@ cmo_python tools/runners/run_scenario_contract.py \
 source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
-  tests/contracts/env/mission_obs/mission_obs_nav_v1.json
+  tests/contracts/unit/config/env_config_resolution.json
 ```
 
 运行受限 naval station policy gate：

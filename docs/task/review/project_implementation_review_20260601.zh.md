@@ -2,6 +2,8 @@
 
 状态：`2026-06-01` 只读实现审查记录，基于本地代码阅读、既有验证结果和五路 subagent 实现细节分析。
 
+2026-06-12 更新：本记录中的 `env_regression.py` 修复建议已被 compatibility cleanup 取代；该 runner 已从活跃执行面删除，对应 JSON 规范归档到 `tests/archive/contracts/env_regression/`。
+
 范围：C++ runtime/facade/ECS/physics、Python RL/training、tests/CI/contracts、scenario/config/database、维护工具和入口脚本。
 
 ## 1. 总体评价
@@ -84,7 +86,7 @@
 
 - CI 只安装 `pytest` 和 `numpy`，许多 gymnasium/training 路径在 CI 中无法真实暴露。
 - `run_scenario_contract.py` 遇到 `ContractSkipped` 会打印 SKIP 并继续，contract batch 容易出现 false green。
-- `python/testing/contracts/env_regression.py` 使用 `copy.deepcopy`，但文件头没有 `import copy`，这是一个可以立刻修复的硬 bug。
+- `python/testing/contracts/env_regression.py` 的 `copy.deepcopy` 缺 import 问题已不再适用；该 raw `UniversalEnv` contract runner 已删除并归档其 JSON 规范。
 - 测试系统缺少 checked-in focused/full suite manifest 和 contract metadata，外部读者难以区分 PR gate、manual gate、diagnostic、supplemental。
 
 ### 3.4 Scenario / config / database
@@ -130,7 +132,7 @@
 - `pyproject.toml` 没有 `[project.scripts]`，大量 CLI 仍是 root 脚本。
 - `world_model_train.py` 和 `evaluate.py` 仍带有明显 legacy 风险。
 - cleanup 脚本虽然默认 dry-run，但 root 范围操作需要更强 guard。
-- `.gitignore` 的 `env/` 未锚定，可能让 `tests/contracts/env/` 被忽略。这是高优先级 quick fix。
+- `.gitignore` 的 `env/` 未锚定问题已不再涉及 `tests/contracts/env/`；该目录已归档为 `tests/archive/contracts/env_regression/`。
 
 ## 4. 问题登记
 
@@ -139,8 +141,8 @@
 | ID | 问题 | 影响 | 建议处理 |
 | --- | --- | --- | --- |
 | IMPL-001 | `GroundContactSystem` 捕获裸环境指针，`set_environment_model()` 可替换 owner | 可能出现悬垂指针，属于 C++ hot path correctness 风险 | 改为运行时查 `EnvironmentModelRef`，或在替换 model 后重建/重新注册系统，并加 regression |
-| QA-003 | `env_regression.py` 缺少 `import copy` | env contract 一旦走到 deepcopy 路径会直接失败 | 立刻补 import，并加一条最小 contract/pytest 覆盖 |
-| OPS-002 | `.gitignore` 中 `env/` 未锚定 | 可能误忽略 `tests/contracts/env/` 等目录 | 改成 `/env/`、`/venv/`、`/ENV/`，并确认 contract 文件可被 git 跟踪 |
+| QA-003 | `env_regression.py` 缺少 `import copy` | 2026-06-12 已废止：raw env contract runner 已删除 | 不要修旧 runner；保留归档 JSON 仅作迁移样本 |
+| OPS-002 | `.gitignore` 中 `env/` 未锚定 | 历史风险已不再针对 `tests/contracts/env/`；该路径已退役 | 仅在仍影响活跃路径时处理，不要恢复旧 env contract 目录 |
 | TRAIN-001 | frozen leader config/backend 组合可能回落兼容 env | leader frozen baseline 可能不是期望的 world-batch execution 路径 | frozen leader config 显式要求 world-batch runtime；构造时若 backend/config 不匹配则 fail-fast |
 
 ### P1 / 下一轮 hardening
@@ -170,8 +172,8 @@
 
 ### 5.1 立即修复，低成本高收益
 
-1. 修 `.gitignore`：把 `env/`、`venv/`、`ENV/` 改成 root anchored，确认 `tests/contracts/env/` 不受影响。
-2. 修 `env_regression.py`：补 `import copy`，加最小覆盖。
+1. 如 `.gitignore` 仍影响活跃路径，再修 `env/`、`venv/`、`ENV/` 的 root anchoring；不要以 `tests/contracts/env/` 为目标恢复旧目录。
+2. 2026-06-12 已废止：不再修 `env_regression.py`，该 runner 已删除。
 3. 验证并修复 `GroundContactSystem` 环境模型生命周期问题。
 4. 给 frozen leader 配置/runtime 构造加 fail-fast：声明 frozen execution model 时，必须明确 backend 和 world-batch 运行方式。
 5. 把一小组 contract 放入 focused CI 或新增 checked-in suite manifest，避免 smoke 代表性不足。
@@ -236,8 +238,7 @@
 - `tools/runners/run_scenario_contract.py:29`：捕获 `ContractSkipped`。
 - `tools/runners/run_scenario_contract.py:31`：skip 后继续执行。
 - `tests/runners/test_contract_batches.py:86`：contract batch runner 对 spec 分组/执行。
-- `python/testing/contracts/env_regression.py:1`：文件头当前未 import `copy`。
-- `python/testing/contracts/env_regression.py:484`：使用 `copy.deepcopy`。
+- `python/testing/contracts/env_regression.py`：2026-06-12 已删除；旧 deepcopy 问题仅保留为历史审查痕迹。
 - `python/testing/runtime.py:22`：Python runtime build dir 选择逻辑。
 - `python/testing/runtime.py:91`：ef_py/runtime import 相关逻辑。
 

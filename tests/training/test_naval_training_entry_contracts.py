@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from python.env_config import resolve_env_settings
-from python.testing.scenario_contract_runner import run_contract
+from python.testing.contracts import run_contract
 from python.training.bootstrap import validate_declared_training_entry_env_surface
 
 

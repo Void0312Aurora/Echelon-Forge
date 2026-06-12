@@ -192,5 +192,5 @@ def test_wp24_public_vec_env_runtime_compatibility_flag_is_retired() -> None:
   for source in (world_batch_source, cooperative_source):
     assert "runtime_compatibility_enabled: bool = False" in source
     assert "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths" in source
-    assert "_RuntimeFacadeAdapter(\n            self.n_envs,\n            runtime_compatibility_enabled=True" not in source
-    assert "_RuntimeFacadeAdapter(\n            self.world_count,\n            runtime_compatibility_enabled=True" not in source
+    assert "runtime_compatibility_enabled=self.runtime_compatibility_enabled" not in source
+    assert "runtime_compatibility_enabled=True," not in source

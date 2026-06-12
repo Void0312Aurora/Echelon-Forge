@@ -188,10 +188,7 @@ class CooperativeWorldBatchVecEnv(VecEnv):
                 os.path.join(os.path.dirname(__file__), "..", "..", "..", "examples", "config", "database")
             )
         )
-        self._runtime_adapter = _RuntimeFacadeAdapter(
-            self.world_count,
-            runtime_compatibility_enabled=self.runtime_compatibility_enabled,
-        )
+        self._runtime_adapter = _RuntimeFacadeAdapter(self.world_count)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:
             self._runtime_adapter.set_worker_threads(int(self._worker_threads))

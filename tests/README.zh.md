@@ -75,7 +75,6 @@
 ## 实现入口点
 
 - 契约执行逻辑现在位于 [python/testing/contracts/](../python/testing/contracts)。
-- [python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) 是一个兼容性垫片，重新导出打包的契约运行程序。
 - 测试使用的场景侧引导逻辑现在位于 `python/scenario/compiler/` 和 `python/scenario/runtime/` 中。
 - diagnostics-only raw batch 场景 setup helper 位于 `python/scenario/diagnostics/`；maintained 测试应直接导入 `python/scenario/runtime/`。
 
@@ -85,16 +84,11 @@
   - 验证 `TaskOrder -> LeaderIntent -> PilotReport -> MissionCommand` 初始化和内核同步。
 - `route_generator`
   - 验证生成的航点路线、几何形状、可达性预算、模式循环和世界偏航行为。
-- `scripted_bridge`
-  - 验证包装器驱动的脚本基线是否符合场景成功标准。
-- `env_regression`
-  - 验证 `UniversalEnv` 级 reset/step、reward、observation、render、phase、takeoff、landing 和 waypoint 回归。
-  - 新增 env contract 前，优先复用 observation-vector、step-info 这类 assertion-style `check_kind`，不要先添加一次性 env 分支。
 - `unit_regression`
   - 验证纯 Python 控制器/配置/加载器/包装器交接逻辑，无需完整场景步进。
   - 还包含参数化的领导者任务泛化检查，这些检查变异 C2 任务输入并验证发出的任务命令行为。
 
-契约执行存在于 [python/testing/contracts/](../python/testing/contracts)，[python/testing/scenario_contract_runner.py](../python/testing/scenario_contract_runner.py) 仅作为兼容性垫片保留。
+契约执行存在于 [python/testing/contracts/](../python/testing/contracts)。
 
 ## 契约批量失败策略
 
@@ -134,9 +128,9 @@ cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contrac
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tests/runners/test_contract_batches.py --group chain --group env
+cmo_python tests/runners/test_contract_batches.py --group chain --group route_generator
 
-cmo_python tests/runners/test_contract_batches.py --group unit --group bridges --group route_generator
+cmo_python tests/runners/test_contract_batches.py --group unit --group same_process
 
 cmo_python tests/runners/test_contract_batches.py --group sim_kernel
 
@@ -166,7 +160,7 @@ Suite tier 含义：
 - `focused`
   - 面向具体领域的小型套件，用于本地 pre-merge 检查和目标化 owner review。
 - `local`
-  - 开发者本地运行的套件，可能比 focused 更宽或更依赖环境，包括 env regression 契约覆盖。
+  - 开发者本地运行的套件，可能比 focused 更宽或更依赖环境。
 - `manual`
   - 需要人工判断或特殊设置的人为触发检查、诊断或工作流。
 - `nightly`
@@ -181,8 +175,8 @@ Suite tier 含义：
 ## 依赖说明
 
 - `gymnasium` 在此工作区中是可选的。
-- 实例化 `UniversalEnv` 或包装器的契约在未安装 `gymnasium` 时会打印 `SKIP`。
-- 仅内核的契约（例如 `loader_command_chain` 和许多路线生成器检查）无需 `gymnasium` 即可运行。
+- 活跃维护的 contract batch 应避免 raw `UniversalEnv` 构造；历史 raw-env 规范已归档到 `tests/archive/contracts/`。
+- 仅内核的契约（例如 `loader_command_chain`）和路线生成器检查无需 `gymnasium` 即可运行。
 
 ## 编写指南
 
@@ -238,10 +232,6 @@ Suite tier 含义：
   - 路线生成和路线几何回归。
 - `tests/contracts/chain/*.json`
   - 命令链和内核同步回归，测试维护的加载器/运行时连接。
-- `tests/contracts/env/*/*.json`
-  - `UniversalEnv` 的 reset/step/reward/observation/render/phase 回归。
-- `tests/contracts/bridges/*.json`
-  - 脚本化包装器桥接回归。
 - `tests/contracts/unit/**/*.json`
   - 纯逻辑、控制器、加载器和配置回归。
 - `tests/contracts/unit/comm/*.json`
@@ -263,17 +253,15 @@ Suite tier 含义：
   - 脚本化包装器模式选择、控制器交接和剩余容量回归。
 - `tests/contracts/unit/world_model/*.json`
   - 回放缓冲区和世界模型数据集回归。
-- `tests/contracts/bridges/*.json`
-  - 脚本化包装器桥接回归。
+- `tests/archive/contracts/env_regression/**/*.json`
+  - 已归档 raw `UniversalEnv` 回归规范，仅用于追溯。
+- `tests/archive/contracts/scripted_bridge/**/*.json`
+  - 已归档脚本化包装器桥接规范，仅用于追溯。
 
 ## 当前契约文件夹
 
 - `tests/contracts/chain/`
   - 命令链和内核同步契约。
-- `tests/contracts/bridges/`
-  - 脚本化包装器桥接契约。
-- `tests/contracts/env/`
-  - 按 takeoff、landing、waypoint、phase、render 和 mission observation 等场景面分组的 `UniversalEnv` 回归契约。
 - `tests/contracts/route_generator/`
   - 路线生成几何和预算契约。
 - `tests/contracts/unit/controllers/`

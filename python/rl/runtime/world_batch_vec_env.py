@@ -334,10 +334,7 @@ class WorldBatchVecEnv(VecEnv):
             )
         )
         self._compiled_scenario = ScenarioCompiler.compile_path(self.scenario_path)
-        self._runtime_adapter = _RuntimeFacadeAdapter(
-            self.n_envs,
-            runtime_compatibility_enabled=self.runtime_compatibility_enabled,
-        )
+        self._runtime_adapter = _RuntimeFacadeAdapter(self.n_envs)
         self._batch_apply_buffer = BatchWorldApplyBuffer(self.n_envs)
         self._worker_threads = None if worker_threads is None else max(0, int(worker_threads))
         if self._worker_threads is not None:

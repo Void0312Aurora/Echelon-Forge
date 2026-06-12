@@ -85,8 +85,8 @@ Full-project architecture quality assessment. Evaluating whether implementations
 
 | Directory | Evidence |
 |-----------|----------|
-| `tests/` | 227 tracked Python test files and 86 active JSON contract files under `tests/contracts/`. Historical contract specs live under `tests/archive/contracts/`. CI/test suites are organized into smoke, focused, local/manual, and contract paths. |
-| `python/testing/contracts/` | Shared runners dispatch on JSON `"type"` field. Handlers: `loader_command_chain`, `route_generator`, `env_regression`, `unit_regression`, `scripted_bridge`. |
+| `tests/` | 227 tracked Python test files and 59 active JSON contract files under `tests/contracts/`. Historical contract specs live under `tests/archive/contracts/`. CI/test suites are organized into smoke, focused, local/manual, and contract paths. |
+| `python/testing/contracts/` | Shared runners dispatch on JSON `"type"` field. Active handlers: `loader_command_chain`, `route_generator`, `unit_regression`. Archived raw-env contract types: `env_regression`, `scripted_bridge`. |
 | `tests/architecture/` | 87 architecture test files and 444 collected pytest tests in the current tree, grouped by semantic guard owner; many enforce layering rules, import constraints, documentation contracts, and compatibility quarantine boundaries. |
 
 **Pattern**: Test intent encoded as data (JSON), execution via shared runners. More maintainable than per-regression Python scripts.

@@ -39,7 +39,7 @@ def test_main_runs_suite_and_explicit_specs(monkeypatch, tmp_path: Path) -> None
   suite_path.write_text(json.dumps({"specs": [str(suite_spec)]}), encoding="utf-8")
 
   calls: list[str] = []
-  contract_runner = importlib.import_module("python.testing.scenario_contract_runner")
+  contract_runner = importlib.import_module("python.testing.contracts")
 
   def fake_run_contract(path: str) -> tuple[bool, str]:
     calls.append(path)
