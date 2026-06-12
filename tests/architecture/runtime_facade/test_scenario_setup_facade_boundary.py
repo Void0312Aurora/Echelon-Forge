@@ -39,9 +39,14 @@ def test_runtime_world_layout_setup_seam_stays_named_and_explicit() -> None:
 
   assert not diagnostics_setup_path.exists()
   assert not diagnostics_package_path.exists()
-  assert "RuntimeWorldLayoutRequestCompat" in maintained_source
-  assert "RuntimeWorldLayoutResultCompat" in maintained_source
+  assert "RuntimeWorldLayoutRequestCompat" not in maintained_source
+  assert "RuntimeWorldLayoutResultCompat" not in maintained_source
+  assert "requires maintained RuntimeWorldLayoutRequest bindings" in maintained_source
+  assert "requires maintained RuntimeWorldLayoutResult bindings" in maintained_source
+  assert "requires maintained BatchWorldSetupRequest bindings" in maintained_source
   assert "diagnostics" not in package_source
+  assert "RuntimeWorldLayoutRequestCompat" not in package_source
+  assert "RuntimeWorldLayoutResultCompat" not in package_source
 
 def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> None:
   batch_apply = (SCENARIO_RUNTIME / "batch_apply.py").read_text(encoding="utf-8")
@@ -64,7 +69,9 @@ def test_wp24_scenario_setup_default_path_uses_maintained_facade_target() -> Non
   assert "from python.scenario.runtime.world_setup_compat import" not in adapter
   assert "from python.scenario.diagnostics" not in adapter
   assert "apply_world_setup_request_maintained(self.facade, request)" in adapter
-  assert "requires maintained BatchWorldSetupRequest bindings" in adapter
+  assert "if request is not None:" not in adapter
+  assert "has_batch_world_setup_result" not in adapter
+  assert "RuntimeFacadeAdapter.apply_world_setup requires maintained BatchWorldSetupResult bindings" in adapter
 
 def test_wp24_legacy_scenario_runtime_shim_is_removed_from_python_surface() -> None:
   assert not (REPO_ROOT / "python" / "scenario_runtime.py").exists()

@@ -72,7 +72,6 @@ class RuntimeFacadeAdapterCapabilities:
 
     has_runtime_window_api: bool
     has_world_time_step: bool
-    has_batch_world_setup_result: bool
     has_observation_batch_request: bool
     has_export_observation_packet: bool
     has_get_task_orders_maintained_batch: bool
@@ -93,7 +92,6 @@ def _resolve_runtime_facade_adapter_capabilities(facade: Any) -> RuntimeFacadeAd
             and hasattr(ef_py, "authorize_maintained_action_intent")
         ),
         has_world_time_step=bool(hasattr(facade, "world_time_step")),
-        has_batch_world_setup_result=bool(hasattr(ef_py, "BatchWorldSetupResult")),
         has_observation_batch_request=bool(hasattr(ef_py, "ObservationBatchRequest")),
         has_export_observation_packet=bool(hasattr(facade, "export_observation_packet")),
         has_get_task_orders_maintained_batch=bool(
@@ -650,9 +648,11 @@ class RuntimeFacadeAdapter:
 
     def apply_world_setup(self, request: Any):
         entity_ids = apply_world_setup_request_maintained(self.facade, request)
-        result = ef_py.BatchWorldSetupResult() if self.capabilities.has_batch_world_setup_result else None
-        if result is None:
-            return entity_ids
+        if not hasattr(ef_py, "BatchWorldSetupResult"):
+            raise RuntimeError(
+                "RuntimeFacadeAdapter.apply_world_setup requires maintained BatchWorldSetupResult bindings"
+            )
+        result = ef_py.BatchWorldSetupResult()
         result.entity_ids = list(entity_ids)
         return result
 
@@ -674,11 +674,7 @@ class RuntimeFacadeAdapter:
             spawn_requests=list(requests),
             time_steps=normalized_time_steps,
         )
-        if request is not None:
-            return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
-        raise RuntimeError(
-            "RuntimeFacadeAdapter.apply_world_setup_batch requires maintained BatchWorldSetupRequest bindings"
-        )
+        return extract_batch_world_setup_entity_ids(self.apply_world_setup(request))
 
     def export_observation_packet(self, request_or_refs: Any) -> Any:
         if self.capabilities.has_export_observation_packet:

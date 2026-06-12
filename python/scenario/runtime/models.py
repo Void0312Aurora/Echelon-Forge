@@ -136,29 +136,6 @@ class AppliedScenarioWorld:
 
 
 @dataclass
-class RuntimeWorldLayoutRequestCompat:
-    world_index: int = 0
-    seed: int = 42
-    terrain_type: str = ""
-    wind_speed_mps: float = 0.0
-    wind_dir_from_deg: float = 0.0
-    wind_shear_mps_per_km: float = 0.0
-    maritime_configured: bool = False
-    sea_state: float = 0.0
-    wave_heading_deg: float = 0.0
-    wave_period_s: float = 8.0
-    zones: list[Any] = field(default_factory=list)
-    spawn_requests: list[Any] = field(default_factory=list)
-    time_steps: list[float] = field(default_factory=list)
-
-
-@dataclass
-class RuntimeWorldLayoutResultCompat:
-    world_index: int = 0
-    entity_ids: list[int] = field(default_factory=list)
-
-
-@dataclass
 class BatchWorldApplyBuffer:
     world_count: int
     terrain_assignments: list[Any] | None = None
@@ -256,8 +233,6 @@ __all__ = [
     "AppliedScenarioWorld",
     "BatchWorldApplyBuffer",
     "PreparedScenarioWorldContext",
-    "RuntimeWorldLayoutRequestCompat",
-    "RuntimeWorldLayoutResultCompat",
     "ScenarioRosterMemberLayout",
     "ScenarioSpawnLayout",
     "ScenarioWorldLayout",

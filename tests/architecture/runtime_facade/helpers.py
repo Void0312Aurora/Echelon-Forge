@@ -234,13 +234,6 @@ class EscapeHatchAllowance:
 
 
 SCOPED_ESCAPE_HATCH_ALLOWLIST = {
-  "tests/runtime/facade/test_runtime_facade.py": EscapeHatchAllowance(
-    runtime_calls=0,
-    runtime_world_calls=0,
-    world_batch_ctor_calls=1,
-    classification="compatibility_only",
-    tier="test_only",
-  ),
   "tests/runtime/engagement/test_facade_engagement_evidence_gates.py": EscapeHatchAllowance(
     runtime_calls=0,
     runtime_world_calls=0,

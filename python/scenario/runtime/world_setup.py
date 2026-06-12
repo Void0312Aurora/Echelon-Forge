@@ -11,7 +11,6 @@ from python.scenario_compiler import (
     TERRAIN_TYPE_SOURCE_EXPLICIT,
     _normalize_terrain_type_value,
 )
-from .models import RuntimeWorldLayoutRequestCompat, RuntimeWorldLayoutResultCompat
 
 
 def normalize_world_setup_terrain_assignments(
@@ -64,7 +63,9 @@ def build_batch_world_setup_request(
     time_steps: list[float],
 ):
     if not hasattr(ef_py, "BatchWorldSetupRequest"):
-        return None
+        raise RuntimeError(
+            "build_batch_world_setup_request requires maintained BatchWorldSetupRequest bindings"
+        )
     normalized_terrain_assignments, _ = normalize_world_setup_terrain_assignments(
         terrain_assignments,
         world_count=len(seeds),
@@ -80,7 +81,9 @@ def build_batch_world_setup_request(
 
 
 def extract_batch_world_setup_entity_ids(result: Any) -> list[int]:
-    entity_ids = getattr(result, "entity_ids", result)
+    if not hasattr(result, "entity_ids"):
+        raise RuntimeError("batch world setup requires maintained BatchWorldSetupResult bindings")
+    entity_ids = result.entity_ids
     return [int(entity_id) for entity_id in list(entity_ids)]
 
 
@@ -100,10 +103,11 @@ def build_runtime_world_layout_request(
     spawn_requests: list[Any],
     time_steps: list[float],
 ):
-    if hasattr(ef_py, "RuntimeWorldLayoutRequest"):
-        request = ef_py.RuntimeWorldLayoutRequest()
-    else:
-        request = RuntimeWorldLayoutRequestCompat()
+    if not hasattr(ef_py, "RuntimeWorldLayoutRequest"):
+        raise RuntimeError(
+            "build_runtime_world_layout_request requires maintained RuntimeWorldLayoutRequest bindings"
+        )
+    request = ef_py.RuntimeWorldLayoutRequest()
     request.world_index = int(world_index)
     request.seed = int(seed) & 0xFFFFFFFF
     request.terrain_type = str(terrain_type)
@@ -121,7 +125,9 @@ def build_runtime_world_layout_request(
 
 
 def extract_runtime_world_layout_entity_ids(result: Any) -> list[int]:
-    entity_ids = getattr(result, "entity_ids", result)
+    if not hasattr(result, "entity_ids"):
+        raise RuntimeError("runtime world layout requires maintained RuntimeWorldLayoutResult bindings")
+    entity_ids = result.entity_ids
     return [int(entity_id) for entity_id in list(entity_ids)]
 
 
@@ -143,10 +149,9 @@ def apply_runtime_world_layout_request_maintained(setup_target: Any, request: An
     result = setup_target.apply_world_layout(request)
     if hasattr(result, "entity_ids") and hasattr(result, "world_index"):
         return result
-    maintained_result = RuntimeWorldLayoutResultCompat()
-    maintained_result.world_index = int(getattr(request, "world_index", 0))
-    maintained_result.entity_ids = extract_runtime_world_layout_entity_ids(result)
-    return maintained_result
+    raise RuntimeError(
+        "apply_runtime_world_layout_request_maintained requires maintained RuntimeWorldLayoutResult bindings"
+    )
 
 
 def apply_world_setup_request_maintained(setup_target: Any, request: Any) -> list[int]:

@@ -132,7 +132,7 @@ class WorldSetupFacadeContractTests(unittest.TestCase):
       time_steps=[0, 0.05],
     )
 
-    self.assertIsNotNone(request)
+    self.assertIsInstance(request, ef_py.BatchWorldSetupRequest)
     self.assertEqual(list(request.seeds), [0xFFFFFFFF, 5])
     self.assertEqual(list(request.time_steps), [0.0, 0.05])
     self.assertEqual(len(list(request.terrain_assignments)), 2)
@@ -233,6 +233,7 @@ class WorldSetupFacadeContractTests(unittest.TestCase):
       time_steps=[0.05],
     )
 
+    self.assertIsInstance(request, ef_py.RuntimeWorldLayoutRequest)
     self.assertEqual(int(request.world_index), 3)
     self.assertEqual(int(request.seed), 0xFFFFFFFF - 8)
     self.assertTrue(bool(request.maritime_configured))
@@ -265,6 +266,30 @@ class WorldSetupFacadeContractTests(unittest.TestCase):
     self.assertEqual(int(result.world_index), 1)
     self.assertEqual(extract_runtime_world_layout_entity_ids(result), [611, 612])
 
+  def test_apply_runtime_world_layout_request_rejects_untyped_result_shape(self) -> None:
+    class _UntypedResultRuntime:
+      def apply_world_layout(self, request):
+        return [611, 612]
+
+    request = build_runtime_world_layout_request(
+      world_index=1,
+      seed=21,
+      terrain_type="flat",
+      wind_speed_mps=1.0,
+      wind_dir_from_deg=90.0,
+      wind_shear_mps_per_km=0.0,
+      maritime_configured=False,
+      sea_state=0.0,
+      wave_heading_deg=0.0,
+      wave_period_s=8.0,
+      zones=[],
+      spawn_requests=[],
+      time_steps=[0.05],
+    )
+
+    with self.assertRaisesRegex(RuntimeError, "requires maintained RuntimeWorldLayoutResult bindings"):
+      apply_runtime_world_layout_request_maintained(_UntypedResultRuntime(), request)
+
   def test_apply_runtime_world_layout_request_rejects_raw_signature_runtime(self) -> None:
     runtime = _RawSignatureWorldLayoutRuntime()
     request = build_runtime_world_layout_request(
@@ -288,12 +313,13 @@ class WorldSetupFacadeContractTests(unittest.TestCase):
 
     self.assertEqual(runtime.calls, [])
 
-  def test_extract_batch_world_setup_entity_ids_accepts_result_or_plain_sequence(self) -> None:
+  def test_extract_batch_world_setup_entity_ids_requires_typed_result_shape(self) -> None:
     result = ef_py.BatchWorldSetupResult()
     result.entity_ids = [901, 902]
 
     self.assertEqual(extract_batch_world_setup_entity_ids(result), [901, 902])
-    self.assertEqual(extract_batch_world_setup_entity_ids([903, 904]), [903, 904])
+    with self.assertRaisesRegex(RuntimeError, "requires maintained BatchWorldSetupResult bindings"):
+      extract_batch_world_setup_entity_ids([903, 904])
 
 
 if __name__ == "__main__":
