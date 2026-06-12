@@ -605,6 +605,50 @@ def test_wp22_air_control_resolution_contract_prefers_pilot_then_legacy_then_act
   assert result.returncode == 0, result.stderr + result.stdout
 
 
+def test_wp22_logistics_jettison_resolution_prefers_typed_pilot_action_before_legacy_action() -> None:
+  source = textwrap.dedent(
+    r"""
+    #include <iostream>
+    #include "components/command/legacy_command_bridge.h"
+
+    int main() {
+      PilotAction pilot{};
+      pilot.active = true;
+      pilot.jettison_emergency = true;
+
+      ActionCommand inactive_legacy = make_action_command();
+      inactive_legacy.active = false;
+      inactive_legacy.jettison_tanks = false;
+
+      if (!resolved_compatibility_jettison_tanks(&pilot, &inactive_legacy)) {
+        std::cerr << "typed PilotAction jettison should win before legacy action fallback\n";
+        return 1;
+      }
+
+      pilot.active = false;
+      ActionCommand active_legacy = make_action_command();
+      active_legacy.active = true;
+      active_legacy.jettison_tanks = true;
+      if (!resolved_compatibility_jettison_tanks(&pilot, &active_legacy)) {
+        std::cerr << "legacy ActionCommand jettison should remain as compatibility fallback\n";
+        return 1;
+      }
+
+      active_legacy.jettison_tanks = false;
+      if (resolved_compatibility_jettison_tanks(&pilot, &active_legacy)) {
+        std::cerr << "inactive pilot and legacy action should not request jettison\n";
+        return 1;
+      }
+
+      return 0;
+    }
+    """
+  )
+
+  result = _compile_and_run(source)
+  assert result.returncode == 0, result.stderr + result.stdout
+
+
 def test_wp22_operation_and_command_link_allow_typed_control_state_without_legacy_mirrors() -> None:
   source = textwrap.dedent(
     r"""

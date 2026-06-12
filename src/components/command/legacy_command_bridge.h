@@ -63,15 +63,27 @@ resolve_compatibility_countermeasure_command(const EntityT &entity) {
                                                         entity.template get<ActionCommand>());
 }
 
-inline bool resolved_compatibility_jettison_tanks(const ActionCommand *legacy_action) {
+inline bool resolved_compatibility_jettison_tanks(const PilotAction *pilot,
+                                                  const ActionCommand *legacy_action) {
+    if (const PilotAction *active_pilot = active_pilot_action(pilot)) {
+        if (active_pilot->jettison_emergency) {
+            return true;
+        }
+    }
     const ActionCommand *action = active_legacy_action_command(legacy_action);
     return action && action->jettison_tanks;
+}
+
+inline bool resolved_compatibility_jettison_tanks(const ActionCommand *legacy_action) {
+    return resolved_compatibility_jettison_tanks(nullptr, legacy_action);
 }
 
 template <typename EntityT>
     requires(!std::is_pointer_v<std::remove_reference_t<EntityT>>)
 inline bool resolved_compatibility_jettison_tanks(const EntityT &entity) {
-    return resolved_compatibility_jettison_tanks(entity.template get<ActionCommand>());
+    return resolved_compatibility_jettison_tanks(
+        entity.template get<PilotAction>(),
+        entity.template get<ActionCommand>());
 }
 
 inline ResolvedCompatibilityMessageCommand
