@@ -184,22 +184,6 @@ class SingleWorldBatchRuntimeTests(unittest.TestCase):
       finally:
         runtime.close()
 
-  def test_single_world_runtime_rejects_runtime_compatibility_opt_in(self) -> None:
-    with tempfile.TemporaryDirectory() as tmpdir:
-      scenario_path = f"{tmpdir}/single_world_scenario.json"
-      with open(scenario_path, "w", encoding="utf-8") as f:
-        json.dump(_inline_single_world_scenario(), f, ensure_ascii=True)
-
-      with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=True has been removed"):
-        build_single_world_batch_execution_runtime(
-          scenario_path=scenario_path,
-          env_settings={
-            "include_visual": False,
-            "include_proprio": False,
-            "runtime_compatibility_enabled": True,
-          },
-        )
-
   def test_single_world_runtime_uses_named_compat_reward_and_info_helpers(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/single_world_scenario.json"

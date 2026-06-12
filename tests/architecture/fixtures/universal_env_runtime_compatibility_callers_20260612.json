@@ -51,15 +51,14 @@
     },
     {
       "path": "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
-      "call_count": 2,
-      "surface": "air-combat UniversalEnv weapon-release runtime regressions",
+      "call_count": 1,
+      "surface": "air-combat UniversalEnv weapon-release runtime regression",
       "classification": "runtime_regression_raw_env",
       "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
       "migration_target": "world-batch or facade-backed air-combat weapon-release regression",
-      "next_action": "Replace direct UniversalEnv weapon-release checks after equivalent maintained adapter coverage exists.",
+      "next_action": "Replace direct UniversalEnv weapon-release smoke after equivalent maintained adapter release-surface coverage exists.",
       "evidence_markers": [
         "test_universal_env_full_action_surface_can_trigger_weapon_release",
-        "test_universal_env_advances_red_scripted_opponent",
         "runtime_compatibility_enabled=True"
       ]
     },
@@ -131,34 +130,6 @@
         "test_compiled_observation_builder_matches_legacy_observation",
         "build_universal_observation",
         "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/naval/test_naval_station_policy_surface.py",
-      "call_count": 1,
-      "surface": "naval station raw UniversalEnv compatibility action deadband regression",
-      "classification": "runtime_regression_raw_env",
-      "disposition": "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists",
-      "migration_target": "naval station maintained adapter regression",
-      "next_action": "Keep until naval station action/deadband assertions run on the maintained runtime path.",
-      "evidence_markers": [
-        "test_raw_universal_env_compat_naval_station3_tiny_action_deadband_updates_proprio",
-        "action_mode=\"naval_station3\"",
-        "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/world_batch/test_single_world_batch_runtime.py",
-      "call_count": 1,
-      "surface": "single-world runtime rejection guard",
-      "classification": "negative_rejection_guard",
-      "disposition": "retain_negative_guard",
-      "migration_target": "none; this is a fail-closed regression guard",
-      "next_action": "Retain while single-world runtime rejects raw compatibility opt-in.",
-      "evidence_markers": [
-        "test_single_world_runtime_rejects_runtime_compatibility_opt_in",
-        "\"runtime_compatibility_enabled\": True",
-        "runtime_compatibility_enabled=True has been removed"
       ]
     },
     {

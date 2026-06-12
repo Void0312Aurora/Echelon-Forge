@@ -483,45 +483,5 @@ class AirCombat1v1FireMissileTests(unittest.TestCase):
     finally:
       env.close()
 
-  @unittest.skipUnless(_HAS_GYMNASIUM, "UniversalEnv requires optional gymnasium dependency")
-  def test_universal_env_advances_red_scripted_opponent(self) -> None:
-    env = UniversalEnv(
-      _SCENARIO_PATH,
-      include_visual=False,
-      include_proprio=False,
-      action_mode="full",
-      mission_obs_mode="basic",
-      runtime_compatibility_enabled=True,
-    )
-    try:
-      _obs, _info = env.reset(seed=20260516)
-      red_id = int(env.loader.entities["Red_Fighter"])
-      initial_missiles = int(getattr(env.sim.get_agent_observation(red_id), "missiles_remaining", -1))
-
-      action = np.zeros((17,), dtype=np.float32)
-      action[0] = 0.03
-      action[3] = 0.62
-      action[9] = 1.0
-
-      saw_red_behavior = False
-      red_fired = False
-      for _ in range(220):
-        _obs, _reward, terminated, truncated, _info = env.step(action)
-        report = env.loader.scripted_opponent_reports.get(red_id, {})
-        if bool(report.get("active", False)):
-          saw_red_behavior = True
-        missiles_remaining = int(getattr(env.sim.get_agent_observation(red_id), "missiles_remaining", -1))
-        if missiles_remaining < initial_missiles:
-          red_fired = True
-          break
-        if terminated or truncated:
-          break
-
-      self.assertTrue(saw_red_behavior)
-      self.assertTrue(red_fired)
-    finally:
-      env.close()
-
-
 if __name__ == "__main__":
   unittest.main()

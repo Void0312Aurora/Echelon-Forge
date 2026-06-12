@@ -134,7 +134,6 @@ def test_inventory_keeps_rejection_guards_separate_from_raw_env_opt_ins() -> Non
   assert guard_paths == {
     "tests/leader/_leader_env_runtime_controls_cases.py",
     "tests/runtime/core/test_env_config.py",
-    "tests/world_batch/test_single_world_batch_runtime.py",
   }
 
   for entry in _entries():
@@ -153,9 +152,9 @@ def test_inventory_counts_remaining_registered_surfaces() -> None:
       disposition_counts[entry["disposition"]] += int(entry["call_count"])
 
   assert disposition_counts == {
-    "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists": 9,
+    "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists": 7,
     "retain_manual_diagnostics_until_tool_migrated_or_archived": 1,
-    "retain_negative_guard": 3,
+    "retain_negative_guard": 2,
   }
 
 

@@ -180,7 +180,7 @@ def test_wp24_legacy_runtime_and_backend_inputs_stay_retired() -> None:
     f"normalizer surfaces: {offenders}"
   )
 
-def test_wp24_public_vec_env_runtime_compatibility_flag_is_retired() -> None:
+def test_wp24_public_vec_env_runtime_compatibility_flag_is_absent_from_maintained_adapters() -> None:
   world_batch_source = (
     REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
   ).read_text(encoding="utf-8")
@@ -189,7 +189,6 @@ def test_wp24_public_vec_env_runtime_compatibility_flag_is_retired() -> None:
   ).read_text(encoding="utf-8")
 
   for source in (world_batch_source, cooperative_source):
-    assert "runtime_compatibility_enabled: bool = False" in source
-    assert "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths" in source
+    assert "runtime_compatibility_enabled" not in source
     assert "runtime_compatibility_enabled=self.runtime_compatibility_enabled" not in source
     assert "runtime_compatibility_enabled=True," not in source

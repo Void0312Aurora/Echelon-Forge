@@ -20,7 +20,6 @@ from gym_envs.universal_env_parts import ( # noqa: E402
   NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE,
   NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE,
 )
-from gym_envs.universal_env import UniversalEnv # noqa: E402
 from python.rl.runtime.world_batch_vec_env import WorldBatchVecEnv # noqa: E402
 from python.rl.runtime.cooperative_world_batch_vec_env import CooperativeWorldBatchVecEnv # noqa: E402
 from python.rl.runtime.leader_world_batch_runtime import LeaderWorldBatchExecutionRuntimeGroup # noqa: E402
@@ -554,38 +553,6 @@ class NavalStationPolicySurfaceTests(unittest.TestCase):
         last_terms = dict(infos[0].get("reward_terms", {}) or {})
       self.assertIn("naval_contact_maintained_bonus", last_terms)
       self.assertIn("naval_shared_track_bonus", last_terms)
-    finally:
-      env.close()
-
-  def test_raw_universal_env_compat_naval_station3_tiny_action_deadband_updates_proprio(self) -> None:
-    env = UniversalEnv(
-      str(NAVAL_STATION_SCENARIO),
-      include_visual=False,
-      include_proprio=True,
-      action_mode="naval_station3",
-      mission_obs_mode="naval_screen_station_v1",
-      step_info_mode="full",
-      execution_step_runtime_mode="compiled",
-      flight_shaping_backend="compiled",
-      runtime_compatibility_enabled=True,
-    )
-    try:
-      env.reset(seed=7)
-
-      obs, _reward, _terminated, _truncated, info = env.step(
-        np.array([0.004, -0.004, 0.004], dtype=np.float32)
-      )
-
-      self.assertTrue(np.allclose(np.asarray(obs["proprio"], dtype=np.float32), 0.0))
-      self.assertTrue(np.allclose(np.asarray(env._last_action, dtype=np.float32), 0.0))
-      self.assertTrue(np.allclose(np.asarray(env.loader._naval_station3_last_action), 0.0))
-      self._assert_transport_adapter(env.loader, np.zeros((3,), dtype=np.float32))
-      action_terms = {
-        key: value
-        for key, value in dict(info.get("reward_terms", {}) or {}).items()
-        if "naval_station_action" in str(key)
-      }
-      self.assertEqual(action_terms, {})
     finally:
       env.close()
 

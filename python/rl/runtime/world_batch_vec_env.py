@@ -76,7 +76,6 @@ from python.rl.runtime.world_batch import (
     normalize_batch_visual_backend,
     normalize_flight_shaping_backend,
     normalize_observation_return_mode,
-    normalize_runtime_compatibility_enabled,
     observation_timing_snapshot,
     parse_reward_terms_json,
     pilot_report_snapshot,
@@ -206,7 +205,6 @@ class WorldBatchVecEnv(VecEnv):
         step_info_mode: str = "full",
         execution_step_runtime_mode: str | None = None,
         flight_shaping_backend: str | None = None,
-        runtime_compatibility_enabled: bool = False,
         database_path: str | None = None,
         worker_threads: int | None = None,
         collect_step_timing: bool = False,
@@ -237,11 +235,6 @@ class WorldBatchVecEnv(VecEnv):
         self.visual_update_interval = max(1, int(visual_update_interval))
         self.temporal_history_len = max(1, int(temporal_history_len))
         self.step_info_mode = str(step_info_mode).strip().lower()
-        self.runtime_compatibility_enabled = normalize_runtime_compatibility_enabled(runtime_compatibility_enabled)
-        if self.runtime_compatibility_enabled:
-            raise ValueError(
-                "runtime_compatibility_enabled=True has been removed from maintained VecEnv paths"
-            )
         self.execution_step_runtime_mode = (
             normalize_execution_step_runtime_mode(execution_step_runtime_mode)
             if execution_step_runtime_mode is not None
