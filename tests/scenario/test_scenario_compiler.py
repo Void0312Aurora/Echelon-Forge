@@ -401,6 +401,13 @@ class ScenarioCompilerTests(unittest.TestCase):
       TERRAIN_TYPE_SOURCE_COMPATIBILITY,
     )
 
+  def test_runtime_metadata_rejects_unknown_terrain_type(self) -> None:
+    scenario = _sample_scenario()
+    scenario["environment"]["terrain_type"] = "desert"
+
+    with self.assertRaisesRegex(ValueError, "Unknown terrain_type"):
+      ScenarioCompiler.compile_data(scenario)
+
   def test_runtime_metadata_precompiles_waypoint_templates(self) -> None:
     compiled = ScenarioCompiler.compile_data(_sample_route_template_scenario())
 
@@ -573,6 +580,18 @@ class SpatialQueryRuntimeTests(unittest.TestCase):
 
     self.assertEqual(explicit_layout.terrain_type, DEFAULT_TERRAIN_TYPE)
     self.assertEqual(explicit_layout.terrain_type_source, TERRAIN_TYPE_SOURCE_EXPLICIT)
+
+  def test_prepare_scenario_world_layout_rejects_unknown_terrain_type(self) -> None:
+    scenario = _sample_scenario()
+    scenario["environment"]["terrain_type"] = "desert"
+
+    with self.assertRaisesRegex(ValueError, "Unknown terrain_type"):
+      prepare_scenario_world_layout(
+        scenario,
+        seed=14,
+        rng=np.random.RandomState(14),
+        compiled_template=None,
+      )
 
 
 if __name__ == "__main__":

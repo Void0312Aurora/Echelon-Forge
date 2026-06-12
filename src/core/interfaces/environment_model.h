@@ -65,7 +65,8 @@ public:
 
     // Terrain profile configuration.
     // "flat" means zero-elevation terrain outside explicit zones.
-    // "legacy"/"hill"/"gaussian_hill" preserve the historical procedural mountain.
+    // "legacy"/"hill"/"gaussian_hill"/"mountain" preserve the historical procedural mountain.
+    // Unknown terrain profiles must fail closed instead of falling back to that profile.
     virtual void set_terrain_type(const std::string& /*terrain_type*/) {}
 
     // Maritime-state configuration used by surface-ship runtime proxies.

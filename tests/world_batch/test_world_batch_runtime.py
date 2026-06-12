@@ -766,6 +766,26 @@ class WorldBatchRuntimeTests(unittest.TestCase):
     self.assertEqual(int(getattr(obs, "missiles_remaining", -1)), 1)
     self.assertFalse(bool(getattr(obs, "can_fire", True)))
 
+  def test_apply_world_setup_batch_rejects_unknown_terrain_type(self) -> None:
+    batch = ef_py.WorldBatchRuntime(1)
+    self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))
+
+    terrain = ef_py.WorldTerrainAssignment()
+    terrain.world_index = 0
+    terrain.terrain_type = "desert"
+    wind = ef_py.WorldWindAssignment()
+    wind.world_index = 0
+    spawn = _spawn_request(
+      world_index=0,
+      type_name="Aircraft",
+      entity_name="BadTerrainLead",
+      x=-1400.0,
+      y=0.0,
+    )
+
+    with self.assertRaisesRegex(Exception, "Unknown terrain_type"):
+      batch.apply_world_setup_batch([31], [terrain], [wind], [], [spawn], [0.05])
+
   def test_apply_world_setup_batch_defaults_missing_terrain_assignment_to_flat(self) -> None:
     batch = ef_py.WorldBatchRuntime(1)
     self.assertTrue(batch.load_database(resolve_repo_path("examples", "config", "database")))

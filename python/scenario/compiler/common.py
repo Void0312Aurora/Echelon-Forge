@@ -112,6 +112,8 @@ _SURFACE_TYPE_MAP = {
 }
 
 DEFAULT_TERRAIN_TYPE = "flat"
+VALID_TERRAIN_TYPES = frozenset({"flat", "legacy", "hill", "gaussian_hill", "mountain"})
+COMPATIBILITY_TERRAIN_TYPES = frozenset({"legacy", "hill", "gaussian_hill", "mountain"})
 TERRAIN_TYPE_SOURCE_EXPLICIT = "explicit_schema"
 TERRAIN_TYPE_SOURCE_DEFAULT = "default_mainline"
 TERRAIN_TYPE_SOURCE_COMPATIBILITY = "explicit_legacy_compatibility"
@@ -122,13 +124,18 @@ def _normalize_terrain_type_value(
     *,
     default: str = DEFAULT_TERRAIN_TYPE,
 ) -> str:
-    normalized = str(default if terrain_type is None else terrain_type).strip()
-    return normalized or str(default)
+    normalized = str(default if terrain_type is None else terrain_type).strip().lower()
+    if not normalized:
+        normalized = str(default).strip().lower()
+    if normalized not in VALID_TERRAIN_TYPES:
+        expected = ", ".join(sorted(VALID_TERRAIN_TYPES))
+        raise ValueError(f"Unknown terrain_type {terrain_type!r}; expected one of: {expected}")
+    return normalized
 
 
 def _terrain_type_source_for_value(terrain_type: str) -> str:
     normalized = str(terrain_type).strip().lower()
-    if normalized in {"legacy", "hill", "gaussian_hill", "mountain"}:
+    if normalized in COMPATIBILITY_TERRAIN_TYPES:
         return TERRAIN_TYPE_SOURCE_COMPATIBILITY
     return TERRAIN_TYPE_SOURCE_EXPLICIT
 
@@ -234,6 +241,8 @@ __all__ = [
     "_OBJECTIVE_DYNAMIC_TARGET_MAP",
     "_SURFACE_TYPE_MAP",
     "DEFAULT_TERRAIN_TYPE",
+    "VALID_TERRAIN_TYPES",
+    "COMPATIBILITY_TERRAIN_TYPES",
     "TERRAIN_TYPE_SOURCE_EXPLICIT",
     "TERRAIN_TYPE_SOURCE_DEFAULT",
     "TERRAIN_TYPE_SOURCE_COMPATIBILITY",

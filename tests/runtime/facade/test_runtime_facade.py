@@ -1171,6 +1171,28 @@ class RuntimeFacadeTests(unittest.TestCase):
     self.assertAlmostEqual(float(default_inst.alt_radar), 1200.0, places=2)
     self.assertLess(float(compat_inst.alt_radar), 1200.0 - 100.0)
 
+  def test_runtime_facade_apply_world_setup_rejects_unknown_terrain_type(self) -> None:
+    facade = ef_py.RuntimeFacade(1)
+    self.assertTrue(facade.load_database(resolve_repo_path("examples", "config", "database")))
+
+    request = ef_py.BatchWorldSetupRequest()
+    request.seeds = [125]
+    terrain = ef_py.WorldTerrainAssignment()
+    terrain.world_index = 0
+    terrain.terrain_type = "desert"
+    spawn = ef_py.WorldSpawnRequest()
+    spawn.world_index = 0
+    spawn.side = ef_py.Side.Blue
+    spawn.type_name = "Aircraft"
+    spawn.entity_name = "BadTerrainLead"
+    spawn.is_agent = True
+    request.terrain_assignments = [terrain]
+    request.spawn_requests = [spawn]
+    request.time_steps = [0.05]
+
+    with self.assertRaisesRegex(Exception, "Unknown terrain_type"):
+      facade.apply_world_setup(request)
+
   def test_runtime_facade_typed_platform_setup_materializes_through_explicit_legacy_compatibility_path(self) -> None:
     facade = ef_py.RuntimeFacade(1)
     self.assertTrue(

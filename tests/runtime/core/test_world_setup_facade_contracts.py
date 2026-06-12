@@ -169,6 +169,20 @@ class WorldSetupFacadeContractTests(unittest.TestCase):
     self.assertEqual(normalized_by_world[1], "legacy")
     self.assertEqual(sources, ["default_mainline", "explicit_legacy_compatibility"])
 
+  def test_normalize_world_setup_terrain_assignments_rejects_unknown_terrain_type(self) -> None:
+    unknown = ef_py.WorldTerrainAssignment()
+    unknown.world_index = 0
+    unknown.terrain_type = "desert"
+
+    with self.assertRaisesRegex(ValueError, "Unknown terrain_type"):
+      normalize_world_setup_terrain_assignments([unknown], world_count=1)
+
+  def test_simulation_kernel_set_terrain_type_rejects_unknown_profile(self) -> None:
+    kernel = ef_py.SimulationKernel()
+
+    with self.assertRaisesRegex(Exception, "Unknown terrain_type"):
+      kernel.set_terrain_type("desert")
+
   def test_apply_world_setup_payload_prefers_facade_result_shape(self) -> None:
     runtime = _FacadeOnlyRuntime()
 

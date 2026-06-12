@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <stdexcept>
 
 namespace {
 
@@ -307,10 +308,19 @@ public:
 
     void set_terrain_type(const std::string& terrain_type) override {
         std::string key = terrain_type;
+        key.erase(key.begin(), std::find_if(key.begin(), key.end(), [](unsigned char c) {
+            return !std::isspace(c);
+        }));
+        key.erase(std::find_if(key.rbegin(), key.rend(), [](unsigned char c) {
+            return !std::isspace(c);
+        }).base(), key.end());
         std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) {
             return static_cast<char>(std::tolower(c));
         });
-        if (key.empty() || key == "legacy" || key == "hill" || key == "gaussian_hill" || key == "mountain") {
+        if (key.empty()) {
+            key = "flat";
+        }
+        if (key == "legacy" || key == "hill" || key == "gaussian_hill" || key == "mountain") {
             flat_terrain_ = false;
             return;
         }
@@ -318,8 +328,10 @@ public:
             flat_terrain_ = true;
             return;
         }
-        // Unknown terrain types fall back to the historical profile for backward compatibility.
-        flat_terrain_ = false;
+        throw std::invalid_argument(
+            "Unknown terrain_type '" + terrain_type +
+            "'; expected one of: flat, gaussian_hill, hill, legacy, mountain"
+        );
     }
 
     void set_maritime_state(double sea_state, double wave_heading_deg, double wave_period_s) override {
