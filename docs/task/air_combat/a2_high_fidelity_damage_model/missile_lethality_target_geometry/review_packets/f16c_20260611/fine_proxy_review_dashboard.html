@@ -92,49 +92,51 @@
     Review-only visual diagnostics. This is not a runtime collision mesh, not true F-16 engineering geometry, and not weapon lethality evidence.
   </div>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>nose_radome <span>convex_hull</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.5</div>
-          <div>vertices: 349</div>
-          <div>hull points: top 10 / side 9 / front 15</div>
-          <div>flags: inflated_bounds_x1.5</div>
-          <div>components: apg68_radar_array:candidate_binding, iff_interrogator:candidate_binding</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 94</div>
+          <div>source nodes: Object_4</div>
+          <div>hull points: top 6 / side 5 / front 13</div>
+          <div>flags: candidate_accept_visual_check</div>
+          <div>components: apg68_radar_array:candidate_binding/candidate_direct_region_binding, iff_interrogator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_nose_radome (radome) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="258.47" y="60.11" width="96.71" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="262.34" y="89.46" width="88.97" height="81.08" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="234.29" y="25.16" width="145.06" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="293.55" y="71.76" width="48.12" height="116.49" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
-<rect x="275.51" y="79.04" width="28.07" height="101.93" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
-<polygon points="234.36,159.86 234.49,160.59 237.88,174.73 246.64,168.16 247.50,162.19 247.50,97.81 246.64,91.84 237.88,85.27 234.49,99.41 234.36,100.14" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="244.18" y="134.00" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="273.92" y="25.16" width="105.43" height="139.10" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="278.14" y="54.37" width="97.00" height="80.68" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="317.39" y="51.24" width="40.27" height="86.94" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
+<rect x="294.07" y="62.11" width="19.08" height="65.20" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
+<polygon points="274.39,160.41 280.64,155.88 306.44,134.96 306.44,54.47 280.64,33.55 274.39,29.02" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="291.16" y="98.71" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="258.47" y="60.11" width="96.71" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="262.34" y="79.68" width="88.97" height="100.65" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="234.29" y="25.16" width="145.06" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="293.55" y="97.14" width="48.12" height="85.70" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
-<rect x="275.51" y="65.00" width="28.07" height="35.71" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
-<polygon points="234.36,224.35 237.82,233.14 246.11,234.63 247.50,234.68 247.50,229.83 246.64,218.53 245.25,217.68 235.25,212.32 234.52,213.27" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="245.66" y="228.27" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="273.92" y="142.72" width="105.43" height="92.12" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="278.14" y="155.62" width="97.00" height="66.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="317.39" y="154.51" width="40.27" height="43.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
+<rect x="294.07" y="142.79" width="19.08" height="26.35" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
+<polygon points="274.39,233.14 306.44,226.29 306.44,215.82 280.64,191.65 274.39,227.02" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="292.46" y="222.78" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="55.24" y="60.11" width="58.36" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="67.49" y="79.68" width="33.85" height="100.65" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="87.54" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="60.10" y="97.14" width="48.63" height="85.70" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
-<rect x="63.14" y="65.00" width="42.56" height="35.71" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
-<polygon points="65.74,231.86 66.01,233.14 70.27,234.63 70.98,234.68 97.86,234.68 98.56,234.63 102.82,233.14 103.09,231.86 100.53,223.79 91.07,213.27 87.74,212.79 84.42,212.32 81.09,212.79 77.77,213.27 68.30,223.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="88.42" y="229.38" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="142.72" width="51.64" height="92.12" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="51.49" y="155.62" width="29.95" height="66.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="50.33" y="154.51" width="32.27" height="43.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array candidate_binding</title></rect>
+<rect x="54.36" y="142.79" width="24.21" height="26.35" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator candidate_binding</title></rect>
+<polygon points="42.08,233.14 90.85,233.14 90.66,230.08 90.46,227.02 89.17,220.19 84.99,204.52 76.57,194.99 66.47,191.65 56.36,194.99 47.94,204.52 43.76,220.19 42.47,227.02 42.27,230.08" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="70.47" y="220.27" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -144,11 +146,16 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 5146</div>
-          <div>hull points: top 10 / side 12 / front 17</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 986</div>
+          <div>source nodes: Object_4</div>
+          <div>hull points: top 10 / side 5 / front 16</div>
           <div>flags: candidate_accept_visual_check</div>
-          <div>components: cockpit_crew_station:candidate_binding, nose_avionics_bay:candidate_binding, inertial_navigation_unit:candidate_binding</div>
+          <div>components: cockpit_crew_station:candidate_binding/candidate_direct_region_binding, nose_avionics_bay:candidate_binding/candidate_direct_region_binding, inertial_navigation_unit:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_forward_fuselage_skin (fuselage_skin) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
@@ -160,7 +167,7 @@
 <rect x="184.40" y="86.83" width="39.99" height="86.34" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>inertial_navigation_unit candidate_binding</title></rect>
 <polygon points="187.74,130.00 187.98,159.07 188.60,213.33 276.92,194.38 334.77,172.48 334.77,87.52 276.92,65.62 227.92,59.72 194.65,69.69 187.98,100.93" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
 <text x="243.82" y="129.27" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
 <rect x="187.45" y="25.16" width="158.24" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
@@ -168,9 +175,9 @@
 <rect x="284.38" y="62.29" width="94.98" height="115.69" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>cockpit_crew_station candidate_binding</title></rect>
 <rect x="284.38" y="133.00" width="59.99" height="64.27" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>nose_avionics_bay candidate_binding</title></rect>
 <rect x="184.40" y="104.07" width="39.99" height="44.99" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>inertial_navigation_unit candidate_binding</title></rect>
-<polygon points="187.74,125.41 188.60,234.52 334.77,232.19 334.77,220.88 262.64,138.62 254.34,130.26 245.55,125.22 236.75,121.70 227.90,119.93 219.05,119.68 204.94,121.55 190.84,124.50" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="244.66" y="155.21" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<polygon points="187.74,125.41 188.60,234.52 334.77,232.19 334.77,220.88 267.18,151.95" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="266.61" y="196.99" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
 <rect x="40.65" y="25.16" width="95.05" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
@@ -178,49 +185,54 @@
 <rect x="63.01" y="62.29" width="50.32" height="115.69" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>cockpit_crew_station candidate_binding</title></rect>
 <rect x="65.80" y="133.00" width="44.73" height="64.27" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>nose_avionics_bay candidate_binding</title></rect>
 <rect x="68.60" y="104.07" width="39.14" height="44.99" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>inertial_navigation_unit candidate_binding</title></rect>
-<polygon points="50.39,234.52 93.52,233.16 107.42,232.19 117.35,226.69 120.03,221.16 105.16,143.85 104.99,143.06 102.15,134.41 98.78,128.06 95.41,123.60 91.79,120.70 88.17,119.68 84.55,120.70 80.93,123.60 77.55,128.06 74.18,134.41 71.35,143.06" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="95.98" y="163.47" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<polygon points="50.39,234.52 107.42,232.19 117.35,226.69 120.03,221.16 115.51,199.31 103.95,144.45 101.46,137.58 98.20,132.06 94.94,128.43 91.55,125.97 88.17,125.41 84.78,125.97 81.39,128.43 78.13,132.06 74.87,137.58 72.40,144.45" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="96.54" y="165.02" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>canopy <span>convex_hull</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 2.0</div>
-          <div>vertices: 1679</div>
-          <div>hull points: top 23 / side 16 / front 19</div>
-          <div>flags: inflated_bounds_x2.0</div>
-          <div>components: none</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 2076</div>
+          <div>source nodes: Object_16, Object_6, Object_8</div>
+          <div>hull points: top 19 / side 21 / front 23</div>
+          <div>flags: candidate_accept_visual_check</div>
+          <div>components: dedicated_canopy_surface_component:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_canopy (canopy) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="181.59" y="77.58" width="131.84" height="104.84" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="193.46" y="90.16" width="108.11" height="79.68" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="115.67" y="25.16" width="263.68" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="138.93,135.18 155.54,144.53 172.31,150.31 192.48,156.60 194.60,156.88 227.23,158.67 247.98,159.25 258.20,159.25 268.41,154.20 277.98,148.39 287.72,136.29 287.77,130.00 287.72,123.71 277.98,111.61 268.41,105.80 258.20,100.74 247.98,100.73 227.23,101.32 194.60,103.10 192.48,103.40 172.31,109.69 155.54,115.47 138.93,124.82" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="227.07" y="134.00" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="207.59" y="25.16" width="171.77" height="184.85" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="223.04" y="47.34" width="140.85" height="140.49" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="238.34" y="54.46" width="110.22" height="126.26" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_canopy_surface_component candidate_binding</title></rect>
+<polygon points="210.83,183.35 210.86,184.48 228.29,199.91 271.45,198.88 335.00,193.11 367.16,185.83 371.36,169.30 374.42,152.29 375.55,136.98 376.11,117.59 375.55,98.20 374.42,82.89 371.36,65.87 367.16,49.34 335.00,42.07 271.45,36.29 228.29,35.26 210.86,50.69 210.83,51.82" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="312.73" y="121.59" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="181.59" y="74.20" width="131.84" height="98.08" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="193.46" y="83.03" width="108.11" height="80.42" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="115.67" y="25.16" width="263.68" height="196.15" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="138.93,221.28 248.79,221.15 287.72,220.23 287.77,219.76 278.09,213.54 268.41,208.28 258.15,205.10 247.89,202.88 237.57,201.77 227.24,201.61 210.79,202.79 194.34,204.65 190.72,205.22 170.36,210.04 154.31,214.82 139.00,220.37" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="225.26" y="214.84" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="207.59" y="82.09" width="171.77" height="152.75" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="223.04" y="95.84" width="140.85" height="125.25" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="238.34" y="129.37" width="110.22" height="59.40" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_canopy_surface_component candidate_binding</title></rect>
+<polygon points="210.83,179.45 228.25,196.96 367.05,226.35 371.26,218.83 374.30,212.89 375.40,209.22 376.01,206.84 376.11,205.15 342.06,149.98 327.24,128.62 316.48,115.59 305.72,104.55 294.31,97.89 282.90,93.24 271.42,90.91 259.94,90.58 241.65,93.04 223.35,96.94 219.33,98.14 211.07,169.65 211.03,170.92" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="298.56" y="154.27" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="77.67" y="74.20" width="74.05" height="98.08" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="86.56" y="83.03" width="56.28" height="80.42" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="148.11" height="196.15" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="94.04,218.29 94.04,220.31 111.04,221.28 118.36,221.28 135.37,220.31 135.37,218.29 135.17,216.83 134.96,216.34 131.54,210.89 127.48,206.89 123.42,204.08 119.06,202.25 114.70,201.61 110.34,202.25 105.98,204.08 101.92,206.89 97.86,210.89 94.45,216.34 94.24,216.83" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="118.70" y="216.42" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="82.09" width="71.06" height="152.75" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="49.17" y="95.84" width="54.00" height="125.25" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="51.91" y="129.37" width="48.54" height="59.40" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_canopy_surface_component candidate_binding</title></rect>
+<polygon points="44.53,195.71 44.92,203.05 47.39,217.03 50.26,226.35 102.08,226.35 104.96,217.03 107.42,203.05 107.82,195.71 98.21,136.71 95.85,122.49 95.65,121.44 92.36,110.02 88.46,101.64 84.56,95.75 80.36,91.92 76.17,90.58 71.98,91.92 67.79,95.75 63.89,101.64 59.98,110.02 56.71,121.44 56.51,122.49 54.14,136.71" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="80.17" y="148.99" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -230,43 +242,54 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 1503</div>
-          <div>hull points: top 11 / side 12 / front 16</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 1099</div>
+          <div>source nodes: Object_14, Object_4</div>
+          <div>hull points: top 11 / side 11 / front 16</div>
           <div>flags: candidate_accept_visual_check</div>
-          <div>components: center_fuselage_fuel_cell:candidate_binding, mission_computer:candidate_binding, flight_control_computer:candidate_binding</div>
+          <div>components: center_fuselage_fuel_cell:candidate_binding/candidate_direct_region_binding, mission_computer:candidate_binding/candidate_direct_region_binding, data_link_terminal:candidate_binding/candidate_direct_region_binding, flight_control_computer:candidate_binding/candidate_direct_region_binding, wing_spar_center:review_only_cross_region_semantic_hold/cross_region_structural_semantic_hold</div>
+          <div>surface component: surface_center_fuselage_skin (fuselage_skin) semantics=cross_region_semantic_hold</div>
+          <div>surface flags: cross_region_semantic_hold</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="49.53" y="25.16" width="329.82" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="56.13" y="37.74" width="316.63" height="184.52" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="68.33" width="184.26" height="123.34" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
-<rect x="251.77" y="68.33" width="115.16" height="123.34" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
-<rect x="155.81" y="52.91" width="76.77" height="43.17" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
-<polygon points="72.98,141.57 137.66,228.47 233.60,226.99 333.95,219.01 369.55,213.33 378.84,190.32 378.84,69.69 333.95,40.99 233.60,33.01 137.66,31.53 72.98,118.43" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="247.96" y="141.58" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="70.53" y="103.00" width="308.82" height="54.01" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="76.71" y="106.24" width="296.47" height="47.53" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="62.21" y="114.12" width="172.53" height="31.77" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
+<rect x="259.90" y="114.12" width="107.83" height="31.77" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
+<rect x="40.65" y="117.29" width="71.89" height="25.42" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
+<rect x="170.04" y="110.14" width="71.89" height="11.12" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
+<rect x="62.21" y="25.16" width="172.53" height="209.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>wing_spar_center review_only_cross_region_semantic_hold</title></rect>
+<polygon points="92.49,132.98 153.05,155.36 242.88,154.98 336.84,152.93 370.17,151.46 378.87,145.54 378.87,114.46 336.84,107.07 242.88,105.02 153.05,104.64 92.49,127.02" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="256.58" y="135.95" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="49.53" y="25.96" width="329.82" height="208.07" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="56.13" y="38.45" width="316.63" height="183.11" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="116.87" width="184.26" height="91.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
-<rect x="251.77" y="57.77" width="115.16" height="78.79" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
-<rect x="155.81" y="51.21" width="76.77" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
-<polygon points="72.98,181.43 137.66,221.26 333.95,233.64 369.55,233.71 378.79,198.72 378.84,197.75 377.91,141.81 377.88,141.15 372.99,121.32 77.58,173.07 74.62,176.30 73.80,178.82" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="256.21" y="187.25" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="70.53" y="25.96" width="308.82" height="208.07" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="76.71" y="38.45" width="296.47" height="183.11" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="62.21" y="116.87" width="172.53" height="91.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
+<rect x="259.90" y="57.77" width="107.83" height="78.79" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
+<rect x="40.65" y="64.34" width="71.89" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
+<rect x="170.04" y="51.21" width="71.89" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
+<rect x="62.21" y="118.18" width="172.53" height="23.64" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>wing_spar_center review_only_cross_region_semantic_hold</title></rect>
+<polygon points="92.49,181.43 153.05,221.26 336.84,233.64 370.17,233.71 378.87,197.75 378.42,188.53 376.30,151.06 368.94,122.25 96.79,173.07 94.02,176.30 93.26,178.82" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="253.01" y="191.08" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="102.61" y="25.96" width="144.53" height="208.07" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="111.28" y="38.45" width="127.19" height="183.11" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="132.37" y="116.87" width="85.02" height="91.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
-<rect x="132.37" y="57.77" width="85.02" height="78.79" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
-<rect x="198.26" y="51.21" width="29.76" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
-<polygon points="107.00,221.26 108.02,226.74 113.52,233.64 117.44,233.71 236.23,233.64 241.74,226.74 242.75,221.26 195.21,133.97 190.23,128.27 185.25,124.50 180.06,121.95 174.88,121.32 169.69,121.95 164.51,124.50 159.53,128.27 154.55,133.97" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="175.29" y="174.98" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="166.38" y="25.96" width="87.24" height="208.07" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="171.61" y="38.45" width="76.77" height="183.11" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="184.34" y="116.87" width="51.32" height="91.92" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
+<rect x="184.34" y="57.77" width="51.32" height="78.79" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
+<rect x="189.47" y="64.34" width="41.06" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
+<rect x="224.11" y="51.21" width="17.96" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
+<rect x="40.65" y="118.18" width="338.71" height="23.64" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>wing_spar_center review_only_cross_region_semantic_hold</title></rect>
+<polygon points="169.03,221.26 169.64,226.74 172.96,233.64 175.33,233.71 247.04,233.64 250.36,226.74 250.97,221.26 222.20,134.68 219.21,129.04 216.22,125.34 213.11,122.83 210.00,122.25 206.89,122.83 203.78,125.34 200.79,129.04 197.79,134.68" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="211.83" y="175.44" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -276,34 +299,42 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 1363</div>
-          <div>hull points: top 10 / side 14 / front 15</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 2514</div>
+          <div>source nodes: Object_10, Object_12</div>
+          <div>hull points: top 16 / side 12 / front 9</div>
           <div>flags: candidate_accept_visual_check</div>
-          <div>components: none</div>
+          <div>components: dedicated_intake_lip_or_duct_component:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_intake_lip_and_duct (intake) semantics=cross_region_boundary_candidate_review_only</div>
+          <div>surface flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="129.31" y="25.16" width="250.05" height="114.65" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="149.31" y="42.36" width="210.04" height="80.25" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="142.68,127.52 259.27,139.06 348.09,138.29 370.85,136.69 379.19,102.84 379.29,61.98 370.85,28.27 348.09,26.80 259.27,25.91 142.68,37.45" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="304.03" y="86.48" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="275.68" y="25.16" width="103.68" height="89.98" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="283.97" y="38.66" width="87.09" height="62.98" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="288.43" y="32.87" width="78.03" height="71.76" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component candidate_binding</title></rect>
+<polygon points="281.92,88.50 292.82,96.33 321.97,105.12 325.30,106.01 340.77,104.07 349.28,102.61 371.73,97.63 371.85,97.43 373.11,89.71 373.11,47.80 371.85,40.07 371.73,39.87 323.78,34.29 320.60,34.92 292.82,41.17 282.44,49.10" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="339.32" y="77.41" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="129.31" y="102.54" width="250.05" height="132.30" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="149.31" y="118.41" width="210.04" height="100.55" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="142.68,125.07 156.59,228.66 256.24,232.10 346.96,226.56 370.93,210.40 378.27,184.80 379.29,108.90 379.19,108.50 378.07,104.62 377.90,104.09 377.77,103.96 374.81,102.54 266.84,102.93 142.68,105.36" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="313.16" y="150.32" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="275.68" y="50.38" width="103.68" height="184.46" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="283.97" y="72.51" width="87.09" height="140.19" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="288.43" y="106.73" width="78.03" height="71.32" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component candidate_binding</title></rect>
+<polygon points="281.92,87.44 297.96,199.04 308.98,206.10 353.72,224.18 373.11,224.47 372.97,221.25 350.29,129.88 332.32,91.40 321.01,67.74 317.88,61.98 309.94,60.75 292.82,64.44" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="330.08" y="140.56" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="40.65" y="102.54" width="110.97" height="132.30" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="57.29" y="118.41" width="77.68" height="100.55" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="41.37,140.89 42.11,217.42 42.64,226.56 55.30,232.10 136.96,232.10 149.62,226.56 150.03,217.42 150.89,140.89 129.80,109.04 126.67,105.71 119.77,102.93 95.85,102.54 72.49,102.93 65.59,105.71 62.46,109.04" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="100.10" y="162.12" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="50.38" width="53.93" height="184.46" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="48.74" y="72.51" width="37.75" height="140.19" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="46.94" y="106.73" width="43.01" height="71.32" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component candidate_binding</title></rect>
+<polygon points="46.12,127.21 51.26,224.23 55.89,224.47 81.01,224.47 85.64,224.23 89.11,130.83 84.98,64.44 68.45,60.75 51.92,64.44" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="72.26" y="153.45" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -313,49 +344,51 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 606</div>
-          <div>hull points: top 12 / side 10 / front 12</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 738</div>
+          <div>source nodes: Object_38, Object_4</div>
+          <div>hull points: top 10 / side 9 / front 12</div>
           <div>flags: candidate_accept_visual_check</div>
-          <div>components: data_link_terminal:candidate_binding, electrical_power_bus:candidate_binding, engine_core:candidate_binding, tail_hydraulic_pump:candidate_binding, engine_fuel_control_unit:candidate_binding</div>
+          <div>components: electrical_power_bus:candidate_binding/candidate_direct_region_binding, engine_core:review_only_cross_region_boundary_candidate/cross_region_boundary_candidate_review_only, tail_hydraulic_pump:candidate_binding/candidate_direct_region_binding, engine_fuel_control_unit:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_aft_engine_bay_skin (engine_bay_skin) semantics=cross_region_boundary_candidate_review_only</div>
+          <div>surface flags: cross_region_boundary_candidate_review_only</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="71.59" y="25.16" width="201.49" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="75.62" y="37.74" width="193.43" height="184.52" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="236.54" y="80.66" width="46.09" height="98.67" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
-<rect x="192.75" y="52.91" width="41.48" height="43.17" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
-<rect x="40.65" y="74.50" width="69.14" height="111.01" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core candidate_binding</title></rect>
-<rect x="84.43" y="93.00" width="36.87" height="74.00" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
-<rect x="98.26" y="93.00" width="36.87" height="74.00" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
-<polygon points="75.42,130.00 85.56,205.93 136.03,221.83 181.95,228.47 249.90,228.47 271.75,134.67 272.54,130.00 271.75,125.33 249.90,31.53 181.95,31.53 136.03,38.17 85.56,54.07" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="187.20" y="134.00" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="71.59" y="25.16" width="201.49" height="176.05" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="75.62" y="35.72" width="193.43" height="154.92" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="192.75" y="52.06" width="41.48" height="34.23" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
+<rect x="40.65" y="69.17" width="69.14" height="88.02" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core review_only_cross_region_boundary_candidate</title></rect>
+<rect x="84.43" y="83.84" width="36.87" height="58.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
+<rect x="98.26" y="83.84" width="36.87" height="58.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
+<polygon points="75.42,113.18 85.57,182.75 181.95,191.27 249.90,191.26 271.75,116.89 272.54,113.18 271.75,109.48 249.90,35.10 181.95,35.10 85.57,43.61" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="196.63" y="117.18" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="71.59" y="25.97" width="201.49" height="201.95" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="75.62" y="38.08" width="193.43" height="177.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="236.54" y="64.34" width="46.09" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
-<rect x="192.75" y="93.89" width="41.48" height="59.09" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
-<rect x="40.65" y="70.91" width="69.14" height="118.18" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core candidate_binding</title></rect>
-<rect x="84.43" y="64.34" width="36.87" height="52.53" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
-<rect x="98.26" y="139.85" width="36.87" height="45.96" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
-<polygon points="75.42,186.58 85.56,227.17 249.90,221.26 269.78,181.43 272.54,173.06 235.52,126.73 162.81,107.86 146.48,105.10 81.50,105.10 75.42,174.99" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="169.49" y="164.93" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="71.59" y="70.92" width="201.49" height="163.92" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="75.62" y="80.76" width="193.43" height="144.25" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="192.75" y="78.52" width="41.48" height="45.88" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
+<rect x="40.65" y="60.68" width="69.14" height="91.75" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core review_only_cross_region_boundary_candidate</title></rect>
+<rect x="84.43" y="55.58" width="36.87" height="40.78" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
+<rect x="98.26" y="114.20" width="36.87" height="35.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
+<polygon points="75.42,150.48 85.56,233.37 249.84,227.04 272.54,139.99 235.52,104.02 162.81,89.37 146.48,87.23 81.50,87.23 75.42,141.49" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="157.90" y="144.02" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="292.71" y="25.97" width="86.65" height="201.95" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="297.91" y="38.08" width="76.25" height="177.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="315.65" y="64.34" width="40.77" height="65.66" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
-<rect x="350.05" y="93.89" width="17.84" height="59.09" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
-<rect x="313.10" y="70.91" width="45.87" height="118.18" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core candidate_binding</title></rect>
-<rect x="320.74" y="64.34" width="30.58" height="52.53" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
-<rect x="320.74" y="139.85" width="30.58" height="45.96" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
-<polygon points="295.34,221.26 298.09,224.43 304.66,227.17 367.41,227.17 373.98,224.43 376.72,221.26 343.26,109.38 342.36,106.48 339.47,105.10 332.59,105.10 329.70,106.48 328.80,109.38" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="340.03" y="169.64" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="288.30" y="70.92" width="91.06" height="163.92" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="293.76" y="80.76" width="80.13" height="144.25" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="347.74" y="78.52" width="17.71" height="45.88" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
+<rect x="311.06" y="60.68" width="45.53" height="91.75" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_core review_only_cross_region_boundary_candidate</title></rect>
+<rect x="318.65" y="55.58" width="30.35" height="40.78" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>tail_hydraulic_pump candidate_binding</title></rect>
+<rect x="318.65" y="114.20" width="30.35" height="35.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>engine_fuel_control_unit candidate_binding</title></rect>
+<polygon points="293.44,177.41 300.03,227.83 302.68,233.37 364.97,233.37 367.63,227.83 374.21,177.41 341.01,90.55 340.11,88.30 337.24,87.23 330.41,87.23 327.54,88.30 326.65,90.55" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="337.83" y="154.78" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -365,295 +398,318 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 371</div>
-          <div>hull points: top 6 / side 9 / front 8</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 768</div>
+          <div>source nodes: Object_38</div>
+          <div>hull points: top 10 / side 11 / front 32</div>
           <div>flags: candidate_accept_visual_check</div>
-          <div>components: afterburner_nozzle:candidate_binding, rudder_actuator:candidate_binding</div>
+          <div>components: afterburner_nozzle:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_engine_nozzle (nozzle) semantics=cross_region_boundary_candidate_review_only</div>
+          <div>surface flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="40.65" y="25.16" width="79.00" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="44.60" y="48.23" width="71.10" height="163.55" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="42.25" y="48.66" width="43.67" height="162.68" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
-<rect x="59.72" y="84.81" width="34.94" height="90.38" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
-<polygon points="85.23,129.86 85.53,132.09 100.05,169.55 116.69,130.00 100.05,90.45 85.53,127.46" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="99.51" y="133.90" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="68.85" height="120.05" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.09" y="38.37" width="61.97" height="93.64" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="50.84" y="47.18" width="40.11" height="76.02" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
+<polygon points="45.10,121.07 45.89,122.71 55.19,129.69 78.62,139.51 105.04,126.14 105.04,44.23 78.62,30.86 55.19,40.68 45.89,47.66 45.10,49.30" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="69.97" y="89.19" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="40.65" y="37.28" width="79.00" height="197.56" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="44.60" y="53.09" width="71.10" height="165.95" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="42.25" y="57.42" width="43.67" height="165.88" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
-<rect x="59.72" y="25.16" width="34.94" height="64.51" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
-<polygon points="85.23,146.99 88.96,202.96 89.17,204.78 100.05,229.29 116.69,219.77 116.69,203.50 104.72,107.59 90.88,109.28 85.23,115.04" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="101.51" y="175.02" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="110.18" width="68.85" height="124.66" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.09" y="120.16" width="61.97" height="104.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="50.84" y="110.25" width="40.11" height="29.87" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
+<polygon points="45.10,209.17 45.89,210.74 55.19,217.09 78.62,225.51 105.04,214.16 105.04,189.32 105.04,133.70 78.62,119.52 55.19,129.90 45.89,137.05 45.10,138.68" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="73.52" y="178.99" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="323.99" y="37.28" width="55.37" height="197.56" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="330.08" y="53.09" width="43.19" height="165.95" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="330.19" y="57.42" width="42.96" height="165.88" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
-<rect x="339.74" y="25.16" width="23.87" height="64.51" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
-<polygon points="341.23,229.29 362.11,229.29 355.57,112.65 354.72,108.90 353.03,107.59 350.23,107.59 348.55,108.90 347.70,112.65" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="355.64" y="143.61" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="322.75" y="110.18" width="56.60" height="124.66" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="328.98" y="120.16" width="44.15" height="104.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="333.13" y="110.25" width="35.84" height="29.87" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
+<polygon points="325.44,172.51 326.00,182.87 327.39,192.79 329.82,201.95 332.94,209.98 336.88,216.55 341.25,221.47 346.10,224.45 351.05,225.51 356.08,224.45 360.86,221.47 365.30,216.55 369.17,209.98 372.36,201.95 374.72,192.79 376.18,182.87 376.67,172.51 376.18,162.22 374.72,152.23 372.36,143.13 369.17,135.04 365.30,128.53 360.86,123.55 356.08,120.63 351.05,119.52 346.10,120.63 341.25,123.55 336.88,128.53 332.94,135.04 329.82,143.13 327.23,151.75 326.00,162.22" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="355.07" y="176.51" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>left_wing <span>thin_prism</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.25</div>
-          <div>vertices: 23</div>
-          <div>hull points: top 4 / side 3 / front 4</div>
-          <div>flags: inflated_bounds_x1.25, low_hull_point_count, component_binding_needs_review, surface_sign_or_thickness_review</div>
-          <div>components: right_wing_fuel_cell:needs_review, right_aileron_actuator:needs_review, wing_spar_center:needs_review, right_leading_edge_flap_actuator:needs_review</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 120</div>
+          <div>source nodes: Object_22, Object_34</div>
+          <div>hull points: top 8 / side 7 / front 8</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: left_wing_fuel_cell:candidate_binding/candidate_direct_region_binding, left_aileron_actuator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_left_wing_skin (lifting_surface) semantics=cross_region_semantic_hold</div>
+          <div>surface flags: cross_region_semantic_hold, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="74.52" y="37.71" width="270.97" height="100.41" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="82.65" y="43.74" width="254.71" height="88.36" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="338.71" height="125.52" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="139.01" y="72.03" width="89.88" height="29.16" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_wing_fuel_cell needs_review</title></rect>
-<rect x="150.24" y="45.30" width="67.41" height="19.44" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_aileron_actuator needs_review</title></rect>
-<rect x="94.07" y="74.46" width="179.76" height="160.38" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>wing_spar_center needs_review</title></rect>
-<rect x="198.93" y="107.27" width="59.92" height="17.01" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="283.27,150.02 357.83,150.61 369.21,150.09 372.41,149.42" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="349.68" y="154.04" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="114.04" y="25.91" width="265.31" height="208.92" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="122.00" y="38.45" width="249.39" height="183.85" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="259.81" y="94.46" width="81.03" height="64.40" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_wing_fuel_cell candidate_binding</title></rect>
+<rect x="269.94" y="174.96" width="60.77" height="42.93" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_aileron_actuator candidate_binding</title></rect>
+<polygon points="118.77,35.04 118.82,173.48 176.33,225.72 197.49,225.72 246.12,199.78 374.63,50.76 169.21,35.04 168.19,35.04" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="200.19" y="126.57" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="74.52" y="46.13" width="270.97" height="167.74" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="82.65" y="99.81" width="254.71" height="60.39" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="338.71" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="139.01" y="96.72" width="89.88" height="81.80" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_wing_fuel_cell needs_review</title></rect>
-<rect x="150.24" y="101.63" width="67.41" height="71.99" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_aileron_actuator needs_review</title></rect>
-<rect x="94.07" y="108.18" width="179.76" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>wing_spar_center needs_review</title></rect>
-<rect x="198.93" y="108.18" width="59.92" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="283.27,223.94 372.41,206.94 369.21,184.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="345.63" y="209.23" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="114.04" y="25.16" width="265.31" height="12.91" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="122.00" y="29.29" width="249.39" height="4.65" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="259.81" y="26.06" width="81.03" height="11.10" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_wing_fuel_cell candidate_binding</title></rect>
+<rect x="269.94" y="25.51" width="60.77" height="12.21" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_aileron_actuator candidate_binding</title></rect>
+<polygon points="118.77,32.70 118.82,33.49 221.94,35.86 246.12,35.86 374.63,34.18 330.82,27.38 168.19,29.06" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="229.61" y="36.65" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="196.87" y="46.13" width="162.21" height="167.74" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="206.60" y="99.81" width="142.74" height="60.39" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="176.60" y="25.16" width="202.76" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="256.54" y="96.72" width="47.10" height="81.80" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_wing_fuel_cell needs_review</title></rect>
-<rect x="315.42" y="101.63" width="31.40" height="71.99" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_aileron_actuator needs_review</title></rect>
-<rect x="40.65" y="108.18" width="259.07" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>wing_spar_center needs_review</title></rect>
-<rect x="219.25" y="108.18" width="27.48" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>right_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="176.70,198.60 177.65,223.94 178.63,206.94 177.55,184.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="181.63" y="207.57" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="257.73" height="12.91" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="56.11" y="29.29" width="226.81" height="4.65" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="134.37" y="26.06" width="79.45" height="11.10" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_wing_fuel_cell candidate_binding</title></rect>
+<rect x="61.55" y="25.51" width="52.96" height="12.21" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_aileron_actuator candidate_binding</title></rect>
+<polygon points="51.90,33.84 86.84,35.86 267.73,34.18 287.12,33.81 287.12,32.70 287.12,29.06 268.82,27.38 51.90,31.24" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="202.57" y="36.26" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>right_wing <span>thin_prism</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.25</div>
-          <div>vertices: 23</div>
-          <div>hull points: top 4 / side 3 / front 4</div>
-          <div>flags: inflated_bounds_x1.25, low_hull_point_count, component_binding_needs_review, surface_sign_or_thickness_review</div>
-          <div>components: left_wing_fuel_cell:needs_review, left_aileron_actuator:needs_review, left_leading_edge_flap_actuator:needs_review</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 118</div>
+          <div>source nodes: Object_20, Object_32</div>
+          <div>hull points: top 8 / side 7 / front 8</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: right_wing_fuel_cell:candidate_binding/candidate_direct_region_binding, right_aileron_actuator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_right_wing_skin (lifting_surface) semantics=cross_region_semantic_hold</div>
+          <div>surface flags: cross_region_semantic_hold, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="74.52" y="46.83" width="270.97" height="167.12" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="82.65" y="56.86" width="254.71" height="147.06" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.94" width="338.71" height="208.90" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="139.01" y="108.30" width="89.88" height="48.53" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_wing_fuel_cell needs_review</title></rect>
-<rect x="150.24" y="168.96" width="67.41" height="32.35" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_aileron_actuator needs_review</title></rect>
-<rect x="198.93" y="69.88" width="59.92" height="28.31" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="283.27,27.03 372.41,28.03 369.21,26.93 357.83,26.05" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="349.68" y="31.01" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="162.21" height="138.89" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="45.51" y="33.49" width="152.48" height="122.23" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="129.77" y="75.67" width="49.54" height="42.81" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_wing_fuel_cell candidate_binding</title></rect>
+<rect x="135.96" y="36.43" width="37.15" height="28.54" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_aileron_actuator candidate_binding</title></rect>
+<polygon points="43.54,157.99 73.75,157.99 74.37,157.99 199.96,147.53 121.39,48.47 91.66,31.23 78.73,31.23 43.56,65.95" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="94.87" y="103.80" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="74.52" y="46.13" width="270.97" height="167.74" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="82.65" y="99.81" width="254.71" height="60.39" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="338.71" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="139.01" y="96.72" width="89.88" height="81.80" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_wing_fuel_cell needs_review</title></rect>
-<rect x="150.24" y="101.63" width="67.41" height="71.99" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_aileron_actuator needs_review</title></rect>
-<rect x="198.93" y="108.18" width="59.92" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="283.27,223.94 372.41,206.94 369.21,184.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="345.63" y="209.23" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="226.35" width="162.21" height="8.49" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="45.51" y="229.07" width="152.48" height="3.06" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="129.77" y="226.95" width="49.54" height="7.30" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_wing_fuel_cell candidate_binding</title></rect>
+<rect x="135.96" y="226.58" width="37.15" height="8.03" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_aileron_actuator candidate_binding</title></rect>
+<polygon points="43.54,231.30 43.56,231.82 106.61,233.38 121.39,233.38 199.96,232.28 173.18,227.81 73.75,228.91" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="112.86" y="235.27" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="65.48" y="46.13" width="198.68" height="167.74" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="77.40" y="99.81" width="174.83" height="60.39" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="248.34" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<rect x="133.38" y="96.72" width="57.69" height="81.80" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_wing_fuel_cell needs_review</title></rect>
-<rect x="80.50" y="101.63" width="38.46" height="71.99" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_aileron_actuator needs_review</title></rect>
-<rect x="203.10" y="108.18" width="33.65" height="58.90" fill="#be123c" fill-opacity="0.08" stroke="#be123c" stroke-width="0.90"><title>left_leading_edge_flap_actuator needs_review</title></rect>
-<polygon points="286.50,206.94 287.69,223.94 288.86,198.60 287.82,184.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="291.72" y="207.57" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="220.57" y="226.35" width="158.78" height="8.49" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="230.10" y="229.07" width="139.73" height="3.06" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="272.67" y="226.95" width="48.94" height="7.30" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_wing_fuel_cell candidate_binding</title></rect>
+<rect x="333.85" y="226.58" width="32.63" height="8.03" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_aileron_actuator candidate_binding</title></rect>
+<polygon points="227.50,228.91 227.51,231.30 227.51,232.04 239.46,232.28 350.90,233.38 372.42,232.06 372.42,230.35 238.79,227.81" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="286.06" y="235.02" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card review">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>left_wing_root <span>convex_hull</span></h2>
-          <strong>needs_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 18</div>
-          <div>hull points: top 3 / side 3 / front 3</div>
-          <div>flags: low_hull_point_count, surface_sign_or_thickness_review</div>
-          <div>components: none</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 180</div>
+          <div>source nodes: Object_34, Object_4</div>
+          <div>hull points: top 10 / side 7 / front 7</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: left_leading_edge_flap_actuator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_left_wing_root_fairing (structural_transition) semantics=cross_region_semantic_hold</div>
+          <div>surface flags: cross_region_semantic_hold, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="40.65" y="25.16" width="338.71" height="126.36" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="67.74" y="42.85" width="284.52" height="90.98" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="87.57,145.19 277.62,146.32 182.97,145.04" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="186.72" y="149.52" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
 <rect x="40.65" y="25.16" width="338.71" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
 <rect x="67.74" y="54.52" width="284.52" height="150.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="87.57,216.80 182.97,218.25 277.62,208.41" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="186.72" y="218.49" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="257.12" y="138.74" width="76.49" height="87.37" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="50.88,172.42 122.61,219.01 343.22,223.61 359.45,165.22 363.58,118.89 364.75,101.40 364.89,92.85 364.79,41.45 122.17,43.09 50.89,169.90" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="254.72" y="138.78" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
+<rect x="40.65" y="25.16" width="338.71" height="157.93" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="67.74" y="47.27" width="284.52" height="113.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="257.12" y="86.56" width="76.49" height="34.86" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="50.88,164.89 122.17,179.12 364.75,180.33 364.89,88.30 364.79,34.00 122.17,41.22 50.89,148.31" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="209.79" y="123.45" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="273.55" y="25.16" width="105.80" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="288.37" y="54.52" width="76.18" height="150.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="277.91,208.41 278.99,218.25 278.85,216.80" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="282.58" y="218.49" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="175.44" y="25.16" width="123.77" height="157.93" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="192.77" y="47.27" width="89.11" height="113.71" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="180.60" y="86.56" width="51.57" height="34.86" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="182.07,166.20 214.60,179.12 254.21,180.33 288.49,42.47 289.59,34.00 184.28,135.47 183.77,142.47" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="232.14" y="129.72" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card review">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>right_wing_root <span>convex_hull</span></h2>
-          <strong>needs_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 18</div>
-          <div>hull points: top 3 / side 3 / front 3</div>
-          <div>flags: low_hull_point_count, surface_sign_or_thickness_review</div>
-          <div>components: none</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 180</div>
+          <div>source nodes: Object_32, Object_4</div>
+          <div>hull points: top 10 / side 7 / front 7</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: right_leading_edge_flap_actuator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_right_wing_root_fairing (structural_transition) semantics=cross_region_semantic_hold</div>
+          <div>surface flags: cross_region_semantic_hold, expected_component_bound_elsewhere</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="40.65" y="25.16" width="338.71" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="67.74" y="54.52" width="284.52" height="150.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="87.57,35.67 182.97,35.93 277.62,33.79" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="186.72" y="39.13" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="282.33" height="98.51" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="63.23" y="38.95" width="237.16" height="70.93" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="221.09" y="29.27" width="63.76" height="41.04" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="49.18,54.49 49.18,55.67 108.60,115.25 310.83,116.02 310.91,91.87 310.80,87.85 309.82,79.64 306.38,57.87 292.85,30.44 108.97,32.60" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="219.75" y="76.17" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="40.65" y="25.16" width="338.71" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="67.74" y="54.52" width="284.52" height="150.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="87.57,216.80 182.97,218.25 277.62,208.41" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="186.72" y="218.49" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="166.55" width="282.33" height="68.29" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="63.23" y="176.11" width="237.16" height="49.17" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="221.09" y="193.10" width="63.76" height="15.07" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="49.18,226.97 108.60,233.12 310.80,233.65 310.91,193.85 310.83,170.37 108.60,173.50 49.18,219.80" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="182.30" y="211.32" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="128.94" y="25.16" width="140.16" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="148.56" y="54.52" width="100.92" height="150.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="261.90,218.25 263.33,208.41 262.08,216.80" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="266.44" y="218.49" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="282.74" y="166.55" width="96.62" height="68.29" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="296.27" y="176.11" width="69.56" height="49.17" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="335.07" y="193.10" width="40.26" height="15.07" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_leading_edge_flap_actuator candidate_binding</title></rect>
+<polygon points="290.25,170.37 291.11,174.04 317.87,233.65 348.78,233.12 374.18,227.54 372.86,217.28 372.46,214.25" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="342.21" y="214.03" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>left_horizontal_tail <span>thin_prism</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.5</div>
-          <div>vertices: 204</div>
-          <div>hull points: top 7 / side 8 / front 10</div>
-          <div>flags: inflated_bounds_x1.5, surface_sign_or_thickness_review</div>
-          <div>components: none</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 216</div>
+          <div>source nodes: Object_28, Object_30, Object_36</div>
+          <div>hull points: top 12 / side 13 / front 7</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: left_horizontal_tail_actuator_or_surface_component:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_left_horizontal_tail_skin (tail_surface) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="70.10" y="59.65" width="117.80" height="137.96" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="73.63" y="67.93" width="110.73" height="121.40" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="176.70" height="206.93" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="82.03,231.28 82.33,232.04 198.87,231.33 183.49,222.67 120.31,222.63 83.41,229.65 82.33,230.47" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="122.97" y="232.58" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="141.99" height="209.68" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.90" y="37.74" width="133.47" height="184.52" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="66.22" y="84.18" width="91.08" height="90.98" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="44.19,171.64 44.97,203.58 56.18,226.54 69.28,228.12 83.92,228.47 98.13,228.30 100.82,228.12 179.09,65.96 115.64,31.53 72.82,31.55 57.25,65.96 44.19,170.85" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="84.54" y="160.72" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="70.10" y="60.11" width="117.80" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="73.63" y="104.84" width="110.73" height="50.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="176.70" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="82.03,197.77 85.84,202.02 183.49,197.77 198.87,156.86 183.05,152.66 120.09,152.66 87.81,156.86 82.03,163.11" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="131.90" y="176.46" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="28.46" width="141.99" height="59.61" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.90" y="47.54" width="133.47" height="21.46" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="66.22" y="42.47" width="91.08" height="31.00" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="44.19,69.75 44.97,76.06 56.18,81.09 83.92,83.23 98.13,82.18 100.82,81.12 169.23,53.87 179.09,48.64 169.23,43.40 115.64,33.30 72.82,39.98 57.25,48.64 44.19,68.94" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="99.05" y="66.32" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="282.92" y="60.11" width="77.15" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="287.55" y="104.84" width="67.89" height="50.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="263.63" y="25.16" width="115.72" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="263.67,197.37 264.09,202.02 268.91,197.77 268.93,195.51 268.93,164.42 268.93,159.17 268.32,154.76 266.38,152.66 264.06,152.66 263.70,163.74" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="270.59" y="178.01" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="262.75" y="28.46" width="116.61" height="59.61" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="269.74" y="47.54" width="102.62" height="21.46" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="295.93" y="42.47" width="50.60" height="31.00" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="266.29,79.02 266.58,82.18 266.68,83.23 356.67,56.05 375.81,48.98 375.81,33.30 356.67,41.22" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="327.50" y="64.57" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
-      <section class="region-card hold">
+      <section class="region-card candidate">
         <div class="region-head">
           <h2>right_horizontal_tail <span>thin_prism</span></h2>
-          <strong>hold_for_human_review</strong>
+          <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.5</div>
-          <div>vertices: 192</div>
-          <div>hull points: top 7 / side 8 / front 9</div>
-          <div>flags: inflated_bounds_x1.5, surface_sign_or_thickness_review</div>
-          <div>components: none</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 216</div>
+          <div>source nodes: Object_18, Object_24, Object_26</div>
+          <div>hull points: top 12 / side 13 / front 7</div>
+          <div>flags: surface_sign_or_thickness_review</div>
+          <div>components: right_horizontal_tail_actuator_or_surface_component:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_right_horizontal_tail_skin (tail_surface) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="70.65" y="68.82" width="120.04" height="132.82" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="74.26" y="76.79" width="112.83" height="116.88" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="35.62" width="180.05" height="199.22" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="82.81,36.31 83.12,37.04 84.22,37.76 88.70,38.60 121.82,44.73 186.19,44.70 201.87,36.35" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="125.25" y="43.36" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="92.45" height="113.52" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="43.42" y="31.97" width="86.90" height="99.90" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="57.30" y="57.47" width="59.30" height="49.26" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="42.95,59.80 51.46,116.60 61.59,135.22 89.47,135.24 130.79,116.60 79.82,28.80 78.07,28.70 68.82,28.61 59.29,28.80 50.76,29.66 43.46,42.08 42.95,59.38" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="70.62" y="71.46" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="70.65" y="60.11" width="120.04" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="74.26" y="104.84" width="112.83" height="50.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="40.65" y="25.16" width="180.05" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="82.81,197.77 86.70,202.02 186.19,197.77 201.87,156.86 185.75,152.66 121.59,152.66 88.70,156.86 82.81,163.11" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="133.55" y="176.46" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="204.38" width="92.45" height="30.46" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="43.42" y="214.13" width="86.90" height="10.96" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="57.30" y="211.54" width="59.30" height="15.84" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="42.95,225.48 43.46,228.70 50.76,231.27 68.82,232.36 78.07,231.83 79.82,231.29 124.37,217.37 130.79,214.69 124.37,212.01 89.47,206.86 61.59,210.27 51.46,214.69 42.95,225.06" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="80.07" y="225.68" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="233.44" y="60.11" width="116.73" height="139.78" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="240.44" y="104.84" width="102.73" height="50.32" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="204.25" y="25.16" width="175.10" height="209.68" fill="#dc2626" fill-opacity="0.01" stroke="#dc2626" stroke-width="1.10" stroke-dasharray="8 4"><title>inflated_selection_bounds</title></rect>
-<polygon points="371.34,195.51 371.37,197.77 378.74,202.02 378.75,197.77 378.75,163.11 378.71,152.66 375.20,152.66 372.26,154.76 371.34,159.17" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="379.16" y="179.05" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="303.43" y="204.38" width="75.92" height="30.46" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="307.99" y="214.13" width="66.81" height="10.96" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="324.80" y="211.54" width="32.94" height="15.84" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_horizontal_tail_actuator_or_surface_component candidate_binding</title></rect>
+<polygon points="305.74,206.86 305.74,214.87 318.20,218.48 376.80,232.36 376.86,231.83 377.05,230.21 318.20,210.90" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="343.80" y="224.79" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 
@@ -663,34 +719,42 @@
           <strong>candidate_accept_after_visual_check</strong>
         </div>
         <div class="metrics">
-          <div>inflation: 1.0</div>
-          <div>vertices: 84</div>
-          <div>hull points: top 5 / side 6 / front 6</div>
+          <div>strategy: curated_mesh_node_whitelist_and_source_region_bounds</div>
+          <div>fallback: disabled_no_bounds_expansion</div>
+          <div>vertices: 175</div>
+          <div>source nodes: Object_40</div>
+          <div>hull points: top 7 / side 7 / front 5</div>
           <div>flags: surface_sign_or_thickness_review</div>
-          <div>components: none</div>
+          <div>components: rudder_actuator:candidate_binding/candidate_direct_region_binding</div>
+          <div>surface component: surface_vertical_tail_skin (tail_surface) semantics=candidate_surface_component</div>
+          <div>surface flags: candidate_surface_component</div>
+          <div>missing links: none</div>
         </div>
         <div class="mini-views">
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
-<rect x="40.65" y="176.04" width="164.92" height="58.80" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="48.89" y="198.38" width="148.43" height="14.11" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="55.88,207.25 93.09,207.24 108.94,205.44 93.09,203.64 55.88,203.62" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="85.38" y="209.44" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="169.97" width="85.77" height="64.87" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.93" y="194.62" width="77.20" height="15.57" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="61.36" y="181.97" width="35.50" height="40.86" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
+<polygon points="41.98,202.40 52.15,203.45 67.75,204.56 125.09,207.87 125.09,196.94 67.75,200.25 52.15,201.36" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="79.99" y="206.40" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="40.65" y="25.16" width="164.92" height="161.92" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="48.89" y="28.40" width="148.43" height="155.44" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="55.88,26.53 79.65,73.25 93.09,76.29 108.94,74.14 63.97,26.53 55.88,25.16" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="80.24" y="54.32" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="40.65" y="25.16" width="85.77" height="195.60" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="44.93" y="29.07" width="77.20" height="187.78" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="61.36" y="172.19" width="35.50" height="31.69" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
+<polygon points="41.98,38.58 47.23,69.73 56.73,106.71 93.01,213.52 125.09,211.61 67.75,32.40 51.37,32.40" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="73.02" y="104.71" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
           <svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 420 260"><rect x="0" y="0" width="420" height="260" fill="#ffffff"/>
 <text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="341.01" y="25.16" width="38.35" height="161.92" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="355.58" y="28.40" width="9.20" height="155.44" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="359.00,26.53 359.01,74.28 360.18,76.29 361.36,74.28 361.37,26.53 360.18,25.16" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="364.18" y="54.51" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, red=inflated, purple/red=components, blue=mesh silhouette</text></svg>
+<rect x="345.47" y="25.16" width="33.89" height="195.60" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="358.34" y="29.07" width="8.13" height="187.78" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="351.74" y="172.19" width="21.35" height="31.69" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
+<polygon points="359.55,211.61 362.41,213.52 365.27,211.61 363.54,32.40 361.28,32.40" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="366.41" y="144.31" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="246" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>
         </div>
       </section>
 

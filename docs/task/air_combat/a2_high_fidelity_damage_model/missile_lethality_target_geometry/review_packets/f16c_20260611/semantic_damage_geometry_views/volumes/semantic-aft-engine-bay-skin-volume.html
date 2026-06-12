@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>semantic_aft_engine_bay_skin_volume isolated geometry view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    h1 {
+      font-size: 25px;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .decision-box {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 14px;
+    }
+    .decision-box strong {
+      display: block;
+      color: #0f172a;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .decision-box p {
+      color: #1f2937;
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 4px 0 0;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    .views {
+      display: grid;
+      gap: 18px;
+    }
+    figure {
+      margin: 0;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to isolated review index</a></p>
+    <h1>semantic_aft_engine_bay_skin_volume</h1>
+    <p class="subtitle">semantic volume -&gt; aft_fuselage_engine</p>
+    <div class="decision-box">
+      <div><strong>Review question</strong><p>Can semantic_aft_engine_bay_skin_volume be promoted from mesh-proxy candidate to an active damage component?</p></div>
+      <div><strong>Look at</strong><p>Compare the blue mesh silhouette/support volume with the linked receiver component boxes in all three views.</p></div>
+      <div><strong>Decision needed</strong><p>Keep cross-region receivers held or split them before runtime activation.</p></div>
+    </div>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>semantic component: semantic_aft_engine_bay_skin_volume</li><li>surface component: surface_aft_engine_bay_skin</li><li>outer region: aft_fuselage_engine</li><li>volume role: aft_engine_bay_skin_volume</li><li>geometry primitive: obb</li><li>runtime system candidate: airframe_skin</li><li>direct receivers: electrical_power_bus, engine_fuel_control_unit, tail_hydraulic_pump</li><li>cross-region receivers: engine_core</li><li>receiver handoff: direct_receivers_parse_ready_cross_region_receivers_held</li><li>runtime projection: runtime_schema_parse_ready_candidate_not_activated</li><li>mesh region vertices: 738</li><li>surface review semantics: cross_region_boundary_candidate_review_only</li></ul>
+  </section>
+  <section class="views">
+    <figure><figcaption>top view</figcaption><img src="semantic-aft-engine-bay-skin-volume_top.svg" alt="semantic_aft_engine_bay_skin_volume top view"></figure><figure><figcaption>side view</figcaption><img src="semantic-aft-engine-bay-skin-volume_side.svg" alt="semantic_aft_engine_bay_skin_volume side view"></figure><figure><figcaption>front view</figcaption><img src="semantic-aft-engine-bay-skin-volume_front.svg" alt="semantic_aft_engine_bay_skin_volume front view"></figure>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>semantic_aft_engine_bay_skin_volume parent-child layout view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    figure {
+      margin: 0 0 18px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to parent-child layout index</a></p>
+    <h1>semantic_aft_engine_bay_skin_volume</h1>
+    <p class="subtitle">obb parent -> aft_fuselage_engine; receiver overlays 4; extra slots 3</p>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>parent semantic component: semantic_aft_engine_bay_skin_volume</li><li>parent surface component: surface_aft_engine_bay_skin</li><li>outer model region: aft_fuselage_engine</li><li>volume role: aft_engine_bay_skin_volume</li><li>geometry primitive: obb</li><li>primary receiver: electrical_power_bus</li><li>extra receivers: engine_core, tail_hydraulic_pump, engine_fuel_control_unit</li><li>cross-region held receivers: engine_core</li><li>external held split segments: none</li><li>parent handoff: direct_receivers_parse_ready_cross_region_receivers_held</li><li>layout policy: one_parent_semantic_shell_view_with_receiver_priors_overlaid</li><li>runtime projection: review_only_visual_layout_not_runtime_activation</li><li>child overlays:</li><li>primary_receiver_overlay: electrical_power_bus capsule dims=[0.45, 0.06, 0.06]m evidence=low_confidence_engineering_proxy segments=0 -&gt; already_inside_whole_airframe</li><li>extra_receiver_overlay: engine_core capsule dims=[4.62026, 1.1811, 1.1811]m evidence=public_engine_dimension segments=3 -&gt; cross_region_prior_constrained_inside_airframe_held</li><li>extra_receiver_overlay: tail_hydraulic_pump obb dims=[0.25, 0.18, 0.18]m evidence=low_confidence_engineering_proxy segments=0 -&gt; placed_inside_airframe_exceeds_parent_shell_review</li><li>extra_receiver_overlay: engine_fuel_control_unit obb dims=[0.320548, 0.123952, 0.14351]m evidence=standard_enclosure_proxy_pending_f110_control_unit_dimensions segments=0 -&gt; already_inside_whole_airframe</li><li>external held segment overlays:</li></ul>
+  </section>
+  <section>
+    <figure><figcaption>top view</figcaption><img src="semantic-aft-engine-bay-skin-volume_top.svg" alt="semantic_aft_engine_bay_skin_volume top view"></figure><figure><figcaption>side view</figcaption><img src="semantic-aft-engine-bay-skin-volume_side.svg" alt="semantic_aft_engine_bay_skin_volume side view"></figure><figure><figcaption>front view</figcaption><img src="semantic-aft-engine-bay-skin-volume_front.svg" alt="semantic_aft_engine_bay_skin_volume front view"></figure>
+  </section>
+</main>
+</body>
+</html>

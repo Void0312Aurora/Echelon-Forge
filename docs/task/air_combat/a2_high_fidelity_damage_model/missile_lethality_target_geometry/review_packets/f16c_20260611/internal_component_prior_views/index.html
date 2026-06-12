@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>F-16 Internal Component Prior Views</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    h1 {
+      font-size: 26px;
+    }
+    h2 {
+      font-size: 18px;
+    }
+    p {
+      color: #475569;
+      line-height: 1.35;
+      margin: 8px 0 0;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 8px 14px;
+      margin-top: 14px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    article {
+      border: 1px solid #cbd5e1;
+      border-left: 5px solid #0891b2;
+      border-radius: 6px;
+      padding: 12px;
+      background: #f7fdff;
+    }
+    article.warning {
+      border-left-color: #d97706;
+      background: #fffdf7;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>F-16 Internal Component Prior Views</h1>
+    <p>Each page isolates one current receiver component, its old AABB placement, and a constrained synthetic prior shape. These are review-only internal geometry priors, not true engineering structure.</p>
+    <div class="summary">
+      <div>component priors: 26</div>
+      <div>post-constraint outside: 0</div>
+      <div>cross-region held priors: 2</div>
+      <div>shape counts: capsule:10, ellipsoid:10, obb:6</div>
+      <div><a href="../scene.html">overview packet</a></div>
+      <div><a href="../semantic_damage_geometry_views/index.html">semantic shell views</a></div>
+    </div>
+  </header>
+  <section>
+    <div class="entry-grid">
+
+    <article class="info">
+      <h2><a href="components/apg68-radar-array.html">apg68_radar_array</a></h2>
+      <p>ellipsoid prior constrained by nose_radome,forward_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/cockpit-crew-station.html">cockpit_crew_station</a></h2>
+      <p>ellipsoid prior constrained by canopy,forward_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/dedicated-canopy-surface-component.html">dedicated_canopy_surface_component</a></h2>
+      <p>ellipsoid prior constrained by canopy</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/nose-avionics-bay.html">nose_avionics_bay</a></h2>
+      <p>obb prior constrained by forward_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/iff-interrogator.html">iff_interrogator</a></h2>
+      <p>ellipsoid prior constrained by nose_radome</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/center-fuselage-fuel-cell.html">center_fuselage_fuel_cell</a></h2>
+      <p>ellipsoid prior constrained by center_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/mission-computer.html">mission_computer</a></h2>
+      <p>obb prior constrained by center_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/data-link-terminal.html">data_link_terminal</a></h2>
+      <p>obb prior constrained by center_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/flight-control-computer.html">flight_control_computer</a></h2>
+      <p>obb prior constrained by center_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/inertial-navigation-unit.html">inertial_navigation_unit</a></h2>
+      <p>ellipsoid prior constrained by forward_fuselage</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/dedicated-intake-lip-or-duct-component.html">dedicated_intake_lip_or_duct_component</a></h2>
+      <p>ellipsoid prior constrained by intake</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/electrical-power-bus.html">electrical_power_bus</a></h2>
+      <p>capsule prior constrained by aft_fuselage_engine</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="warning">
+      <h2><a href="components/engine-core.html">engine_core</a></h2>
+      <p>capsule prior constrained by aft_fuselage_engine,engine_nozzle,intake</p>
+      <p>Keep held until multi-region ownership is split or accepted.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/afterburner-nozzle.html">afterburner_nozzle</a></h2>
+      <p>ellipsoid prior constrained by engine_nozzle,aft_fuselage_engine</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/tail-hydraulic-pump.html">tail_hydraulic_pump</a></h2>
+      <p>obb prior constrained by aft_fuselage_engine</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/engine-fuel-control-unit.html">engine_fuel_control_unit</a></h2>
+      <p>obb prior constrained by aft_fuselage_engine</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/rudder-actuator.html">rudder_actuator</a></h2>
+      <p>capsule prior constrained by vertical_tail</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/left-horizontal-tail-actuator-or-surface-component.html">left_horizontal_tail_actuator_or_surface_component</a></h2>
+      <p>capsule prior constrained by left_horizontal_tail</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/right-horizontal-tail-actuator-or-surface-component.html">right_horizontal_tail_actuator_or_surface_component</a></h2>
+      <p>capsule prior constrained by right_horizontal_tail</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/left-wing-fuel-cell.html">left_wing_fuel_cell</a></h2>
+      <p>ellipsoid prior constrained by left_wing</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/right-wing-fuel-cell.html">right_wing_fuel_cell</a></h2>
+      <p>ellipsoid prior constrained by right_wing</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/left-aileron-actuator.html">left_aileron_actuator</a></h2>
+      <p>capsule prior constrained by left_wing</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/right-aileron-actuator.html">right_aileron_actuator</a></h2>
+      <p>capsule prior constrained by right_wing</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="warning">
+      <h2><a href="components/wing-spar-center.html">wing_spar_center</a></h2>
+      <p>capsule prior constrained by center_fuselage,left_wing_root,right_wing_root,left_wing,right_wing</p>
+      <p>Keep held until multi-region ownership is split or accepted.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/left-leading-edge-flap-actuator.html">left_leading_edge_flap_actuator</a></h2>
+      <p>capsule prior constrained by left_wing_root</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    <article class="info">
+      <h2><a href="components/right-leading-edge-flap-actuator.html">right_leading_edge_flap_actuator</a></h2>
+      <p>capsule prior constrained by right_wing_root</p>
+      <p>Review constrained prior before replacing the old AABB receiver.</p>
+    </article>
+
+    </div>
+  </section>
+</main>
+</body>
+</html>

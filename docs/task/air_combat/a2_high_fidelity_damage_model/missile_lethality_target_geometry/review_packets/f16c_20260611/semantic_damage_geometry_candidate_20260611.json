@@ -1,0 +1,7330 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "real_weapon_pk_authority": false,
+    "runtime_active_component": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "runtime_schema_parse_ready_candidate": true,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_internal_component_geometry": false,
+    "true_surface_component_boundaries": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Review each semantic volume page before copying runtime_component_json_candidate into an active unit damage model."
+    },
+    {
+      "priority": "high",
+      "question": "Keep engine_core and wing_spar_center cross-region receiver ownership held until split or explicitly accepted."
+    },
+    {
+      "priority": "medium",
+      "question": "Use runtime_geometry.support_bounds plus primitive/source fields as the first parse-ready handoff from shell geometry to component damage."
+    }
+  ],
+  "rows": [
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "apg68_radar_array",
+        "iff_interrogator"
+      ],
+      "direct_receiver_count": 2,
+      "expected_damage_modes": [
+        "perforation",
+        "surface_tearing",
+        "sensor_aperture_damage_candidate"
+      ],
+      "geometry_primitive": "convex_hull",
+      "mesh_region_vertex_count": 94,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 13,
+          "points_m": [
+            [
+              -0.453403,
+              -0.967086
+            ],
+            [
+              0.453402,
+              -0.967086
+            ],
+            [
+              0.449718,
+              -0.946169
+            ],
+            [
+              0.446034,
+              -0.925253
+            ],
+            [
+              0.422128,
+              -0.878598
+            ],
+            [
+              0.34442,
+              -0.771619
+            ],
+            [
+              0.187927,
+              -0.706533
+            ],
+            [
+              -1e-06,
+              -0.683674
+            ],
+            [
+              -0.187928,
+              -0.706533
+            ],
+            [
+              -0.344421,
+              -0.771619
+            ],
+            [
+              -0.422129,
+              -0.878598
+            ],
+            [
+              -0.446035,
+              -0.925253
+            ],
+            [
+              -0.449719,
+              -0.946169
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 5,
+          "points_m": [
+            [
+              5.060783,
+              -0.967086
+            ],
+            [
+              5.816702,
+              -0.92027
+            ],
+            [
+              5.816702,
+              -0.848803
+            ],
+            [
+              5.208196,
+              -0.683674
+            ],
+            [
+              5.060783,
+              -0.925253
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 6,
+          "points_m": [
+            [
+              5.060783,
+              -0.453403
+            ],
+            [
+              5.208196,
+              -0.422129
+            ],
+            [
+              5.816702,
+              -0.277755
+            ],
+            [
+              5.816702,
+              0.277754
+            ],
+            [
+              5.208196,
+              0.422128
+            ],
+            [
+              5.060783,
+              0.453402
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 2.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_radome",
+            "target_system": "apg68_radar_array"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_radome",
+            "target_system": "iff_interrogator"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "surface_tearing",
+          "sensor_aperture_damage_candidate"
+        ],
+        "geometry": {
+          "convex_hull": {
+            "simplification_error_m": null,
+            "vertex_count": 7,
+            "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+          },
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "apg68_radar_array",
+            "iff_interrogator"
+          ],
+          "primitive": "convex_hull",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "convex_hull",
+          "source_region_bounds": {
+            "center": [
+              6.293264,
+              0.0,
+              -0.664096
+            ],
+            "max": [
+              7.536843,
+              0.48,
+              -0.349524
+            ],
+            "min": [
+              5.049685,
+              -0.48,
+              -0.978668
+            ],
+            "span": [
+              2.487158,
+              0.96,
+              0.629144
+            ]
+          },
+          "source_region_id": "nose_radome",
+          "support_bounds": {
+            "center": [
+              6.293264,
+              0.0,
+              -0.664096
+            ],
+            "max": [
+              7.437357,
+              0.2784,
+              -0.437604
+            ],
+            "min": [
+              5.149171,
+              -0.2784,
+              -0.890588
+            ],
+            "span": [
+              2.288185,
+              0.5568,
+              0.452984
+            ]
+          },
+          "surface_component_id": "surface_nose_radome",
+          "vertices_m": [
+            [
+              7.437357,
+              0.0,
+              -0.664096
+            ],
+            [
+              5.149171,
+              -0.2784,
+              -0.890588
+            ],
+            [
+              5.149171,
+              -0.2784,
+              -0.437604
+            ],
+            [
+              5.149171,
+              0.2784,
+              -0.890588
+            ],
+            [
+              5.149171,
+              0.2784,
+              -0.437604
+            ],
+            [
+              6.293264,
+              0.0,
+              -0.890588
+            ],
+            [
+              6.293264,
+              0.0,
+              -0.437604
+            ]
+          ],
+          "volume_role": "radome_volume"
+        },
+        "geometry_primitive": "convex_hull",
+        "name": "semantic_nose_radome_volume",
+        "offset": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_nose_radome_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.288185,
+          0.5568,
+          0.452984
+        ],
+        "system": "airframe_radome",
+        "threshold_scale": 1.05
+      },
+      "runtime_geometry": {
+        "convex_hull": {
+          "simplification_error_m": null,
+          "vertex_count": 7,
+          "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+        },
+        "primitive": "convex_hull",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "convex_hull",
+        "source_region_bounds": {
+          "center": [
+            6.293264,
+            0.0,
+            -0.664096
+          ],
+          "max": [
+            7.536843,
+            0.48,
+            -0.349524
+          ],
+          "min": [
+            5.049685,
+            -0.48,
+            -0.978668
+          ],
+          "span": [
+            2.487158,
+            0.96,
+            0.629144
+          ]
+        },
+        "source_region_id": "nose_radome",
+        "support_bounds": {
+          "center": [
+            6.293264,
+            0.0,
+            -0.664096
+          ],
+          "max": [
+            7.437357,
+            0.2784,
+            -0.437604
+          ],
+          "min": [
+            5.149171,
+            -0.2784,
+            -0.890588
+          ],
+          "span": [
+            2.288185,
+            0.5568,
+            0.452984
+          ]
+        },
+        "vertices_m": [
+          [
+            7.437357,
+            0.0,
+            -0.664096
+          ],
+          [
+            5.149171,
+            -0.2784,
+            -0.890588
+          ],
+          [
+            5.149171,
+            -0.2784,
+            -0.437604
+          ],
+          [
+            5.149171,
+            0.2784,
+            -0.890588
+          ],
+          [
+            5.149171,
+            0.2784,
+            -0.437604
+          ],
+          [
+            6.293264,
+            0.0,
+            -0.890588
+          ],
+          [
+            6.293264,
+            0.0,
+            -0.437604
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "airframe_radome",
+      "semantic_component_id": "semantic_nose_radome_volume",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.536843,
+          0.48,
+          -0.349524
+        ],
+        "min": [
+          5.049685,
+          -0.48,
+          -0.978668
+        ],
+        "span": [
+          2.487158,
+          0.96,
+          0.629144
+        ]
+      },
+      "source_region_id": "nose_radome",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.437357,
+          0.2784,
+          -0.437604
+        ],
+        "min": [
+          5.149171,
+          -0.2784,
+          -0.890588
+        ],
+        "span": [
+          2.288185,
+          0.5568,
+          0.452984
+        ]
+      },
+      "surface_component_id": "surface_nose_radome",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "radome",
+      "volume_component_role": "radome_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "cockpit_crew_station",
+        "inertial_navigation_unit",
+        "nose_avionics_bay"
+      ],
+      "direct_receiver_count": 3,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "cockpit_or_avionics_exposure_candidate"
+      ],
+      "geometry_primitive": "obb",
+      "mesh_region_vertex_count": 986,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 16,
+          "points_m": [
+            [
+              -0.675635,
+              -0.789797
+            ],
+            [
+              0.34442,
+              -0.771619
+            ],
+            [
+              0.52199,
+              -0.728829
+            ],
+            [
+              0.569823,
+              -0.685828
+            ],
+            [
+              0.489015,
+              -0.515887
+            ],
+            [
+              0.282214,
+              -0.089109
+            ],
+            [
+              0.237823,
+              -0.035649
+            ],
+            [
+              0.179492,
+              0.007281
+            ],
+            [
+              0.121161,
+              0.035506
+            ],
+            [
+              0.060575,
+              0.054621
+            ],
+            [
+              -1e-06,
+              0.059029
+            ],
+            [
+              -0.060576,
+              0.054621
+            ],
+            [
+              -0.121162,
+              0.035506
+            ],
+            [
+              -0.179493,
+              0.007281
+            ],
+            [
+              -0.237825,
+              -0.035649
+            ],
+            [
+              -0.282043,
+              -0.089109
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 5,
+          "points_m": [
+            [
+              2.266907,
+              0.059029
+            ],
+            [
+              2.284069,
+              -0.789797
+            ],
+            [
+              5.208196,
+              -0.771619
+            ],
+            [
+              5.208196,
+              -0.683674
+            ],
+            [
+              3.856061,
+              -0.14747
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 10,
+          "points_m": [
+            [
+              2.266907,
+              -1e-06
+            ],
+            [
+              2.271638,
+              -0.235691
+            ],
+            [
+              2.284069,
+              -0.675635
+            ],
+            [
+              4.050823,
+              -0.521991
+            ],
+            [
+              5.208196,
+              -0.344421
+            ],
+            [
+              5.208196,
+              0.34442
+            ],
+            [
+              4.050823,
+              0.52199
+            ],
+            [
+              3.070669,
+              0.569823
+            ],
+            [
+              2.405039,
+              0.489015
+            ],
+            [
+              2.271638,
+              0.23569
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 4.0,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "cockpit_crew_station"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "inertial_navigation_unit"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "nose_avionics_bay"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "cockpit_or_avionics_exposure_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "cockpit_crew_station",
+            "inertial_navigation_unit",
+            "nose_avionics_bay"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              3.84379,
+              0.0,
+              0.023302
+            ],
+            "half_extents_m": [
+              1.519427,
+              0.748,
+              0.717689
+            ]
+          },
+          "primitive": "obb",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "obb",
+          "source_region_bounds": {
+            "center": [
+              3.84379,
+              0.0,
+              0.023302
+            ],
+            "max": [
+              5.426527,
+              0.85,
+              0.838858
+            ],
+            "min": [
+              2.261053,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              3.165474,
+              1.7,
+              1.631113
+            ]
+          },
+          "source_region_id": "forward_fuselage",
+          "support_bounds": {
+            "center": [
+              3.84379,
+              0.0,
+              0.023302
+            ],
+            "max": [
+              5.363218,
+              0.748,
+              0.740992
+            ],
+            "min": [
+              2.324362,
+              -0.748,
+              -0.694388
+            ],
+            "span": [
+              3.038855,
+              1.496,
+              1.435379
+            ]
+          },
+          "surface_component_id": "surface_forward_fuselage_skin",
+          "vertices_m": [
+            [
+              2.324362,
+              -0.748,
+              -0.694388
+            ],
+            [
+              2.324362,
+              -0.748,
+              0.740992
+            ],
+            [
+              2.324362,
+              0.748,
+              -0.694388
+            ],
+            [
+              2.324362,
+              0.748,
+              0.740992
+            ],
+            [
+              5.363218,
+              -0.748,
+              -0.694388
+            ],
+            [
+              5.363218,
+              -0.748,
+              0.740992
+            ],
+            [
+              5.363218,
+              0.748,
+              -0.694388
+            ],
+            [
+              5.363218,
+              0.748,
+              0.740992
+            ]
+          ],
+          "volume_role": "forward_fuselage_skin_volume"
+        },
+        "geometry_primitive": "obb",
+        "name": "semantic_forward_fuselage_skin_volume",
+        "offset": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_forward_fuselage_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          3.038855,
+          1.496,
+          1.435379
+        ],
+        "system": "airframe_skin",
+        "threshold_scale": 1.0
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            3.84379,
+            0.0,
+            0.023302
+          ],
+          "half_extents_m": [
+            1.519427,
+            0.748,
+            0.717689
+          ]
+        },
+        "primitive": "obb",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "obb",
+        "source_region_bounds": {
+          "center": [
+            3.84379,
+            0.0,
+            0.023302
+          ],
+          "max": [
+            5.426527,
+            0.85,
+            0.838858
+          ],
+          "min": [
+            2.261053,
+            -0.85,
+            -0.792255
+          ],
+          "span": [
+            3.165474,
+            1.7,
+            1.631113
+          ]
+        },
+        "source_region_id": "forward_fuselage",
+        "support_bounds": {
+          "center": [
+            3.84379,
+            0.0,
+            0.023302
+          ],
+          "max": [
+            5.363218,
+            0.748,
+            0.740992
+          ],
+          "min": [
+            2.324362,
+            -0.748,
+            -0.694388
+          ],
+          "span": [
+            3.038855,
+            1.496,
+            1.435379
+          ]
+        },
+        "vertices_m": [
+          [
+            2.324362,
+            -0.748,
+            -0.694388
+          ],
+          [
+            2.324362,
+            -0.748,
+            0.740992
+          ],
+          [
+            2.324362,
+            0.748,
+            -0.694388
+          ],
+          [
+            2.324362,
+            0.748,
+            0.740992
+          ],
+          [
+            5.363218,
+            -0.748,
+            -0.694388
+          ],
+          [
+            5.363218,
+            -0.748,
+            0.740992
+          ],
+          [
+            5.363218,
+            0.748,
+            -0.694388
+          ],
+          [
+            5.363218,
+            0.748,
+            0.740992
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "airframe_skin",
+      "semantic_component_id": "semantic_forward_fuselage_skin_volume",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.426527,
+          0.85,
+          0.838858
+        ],
+        "min": [
+          2.261053,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          3.165474,
+          1.7,
+          1.631113
+        ]
+      },
+      "source_region_id": "forward_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.363218,
+          0.748,
+          0.740992
+        ],
+        "min": [
+          2.324362,
+          -0.748,
+          -0.694388
+        ],
+        "span": [
+          3.038855,
+          1.496,
+          1.435379
+        ]
+      },
+      "surface_component_id": "surface_forward_fuselage_skin",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "fuselage_skin",
+      "volume_component_role": "forward_fuselage_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "dedicated_canopy_surface_component"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "transparent_surface_fracture",
+        "perforation",
+        "cockpit_exposure_candidate"
+      ],
+      "geometry_primitive": "convex_hull",
+      "mesh_region_vertex_count": 2076,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 23,
+          "points_m": [
+            [
+              -0.489016,
+              -0.515887
+            ],
+            [
+              -0.482886,
+              -0.55913
+            ],
+            [
+              -0.444857,
+              -0.641508
+            ],
+            [
+              -0.400377,
+              -0.696468
+            ],
+            [
+              0.400376,
+              -0.696468
+            ],
+            [
+              0.444856,
+              -0.641508
+            ],
+            [
+              0.482885,
+              -0.55913
+            ],
+            [
+              0.489015,
+              -0.515887
+            ],
+            [
+              0.340514,
+              -0.168266
+            ],
+            [
+              0.304006,
+              -0.084468
+            ],
+            [
+              0.300946,
+              -0.078308
+            ],
+            [
+              0.250164,
+              -0.011008
+            ],
+            [
+              0.18984,
+              0.038384
+            ],
+            [
+              0.129516,
+              0.073071
+            ],
+            [
+              0.064763,
+              0.095679
+            ],
+            [
+              -1e-06,
+              0.10357
+            ],
+            [
+              -0.064764,
+              0.095679
+            ],
+            [
+              -0.129517,
+              0.073071
+            ],
+            [
+              -0.189841,
+              0.038384
+            ],
+            [
+              -0.250165,
+              -0.011008
+            ],
+            [
+              -0.300776,
+              -0.078308
+            ],
+            [
+              -0.303836,
+              -0.084468
+            ],
+            [
+              -0.340516,
+              -0.168266
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 21,
+          "points_m": [
+            [
+              2.13574,
+              -0.420101
+            ],
+            [
+              2.404496,
+              -0.523296
+            ],
+            [
+              4.545194,
+              -0.696468
+            ],
+            [
+              4.610077,
+              -0.652168
+            ],
+            [
+              4.656964,
+              -0.617139
+            ],
+            [
+              4.674035,
+              -0.595528
+            ],
+            [
+              4.683346,
+              -0.581486
+            ],
+            [
+              4.684977,
+              -0.571551
+            ],
+            [
+              4.159846,
+              -0.246457
+            ],
+            [
+              3.931182,
+              -0.120585
+            ],
+            [
+              3.765217,
+              -0.043793
+            ],
+            [
+              3.599253,
+              0.021242
+            ],
+            [
+              3.423313,
+              0.060449
+            ],
+            [
+              3.247384,
+              0.087888
+            ],
+            [
+              3.070307,
+              0.101607
+            ],
+            [
+              2.89324,
+              0.10357
+            ],
+            [
+              2.611056,
+              0.089045
+            ],
+            [
+              2.328872,
+              0.066065
+            ],
+            [
+              2.266907,
+              0.059029
+            ],
+            [
+              2.139414,
+              -0.362354
+            ],
+            [
+              2.13888,
+              -0.369823
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 19,
+          "points_m": [
+            [
+              2.13574,
+              -0.390653
+            ],
+            [
+              2.136283,
+              -0.397367
+            ],
+            [
+              2.405039,
+              -0.489016
+            ],
+            [
+              3.070669,
+              -0.482886
+            ],
+            [
+              4.050823,
+              -0.448602
+            ],
+            [
+              4.546854,
+              -0.405369
+            ],
+            [
+              4.611648,
+              -0.307198
+            ],
+            [
+              4.658927,
+              -0.206107
+            ],
+            [
+              4.67622,
+              -0.115173
+            ],
+            [
+              4.684977,
+              -1e-06
+            ],
+            [
+              4.67622,
+              0.115172
+            ],
+            [
+              4.658927,
+              0.206106
+            ],
+            [
+              4.611648,
+              0.307197
+            ],
+            [
+              4.546854,
+              0.405368
+            ],
+            [
+              4.050823,
+              0.448601
+            ],
+            [
+              3.070669,
+              0.482885
+            ],
+            [
+              2.405039,
+              0.489015
+            ],
+            [
+              2.136283,
+              0.397366
+            ],
+            [
+              2.13574,
+              0.390652
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_16",
+        "Object_6",
+        "Object_8"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 1.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "canopy_surface",
+            "target_system": "dedicated_canopy_surface_component"
+          }
+        ],
+        "failure_modes": [
+          "transparent_surface_fracture",
+          "perforation",
+          "cockpit_exposure_candidate"
+        ],
+        "geometry": {
+          "convex_hull": {
+            "simplification_error_m": null,
+            "vertex_count": 6,
+            "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+          },
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "dedicated_canopy_surface_component"
+          ],
+          "primitive": "convex_hull",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "convex_hull",
+          "source_region_bounds": {
+            "center": [
+              3.410359,
+              0.0,
+              -0.296449
+            ],
+            "max": [
+              4.734977,
+              0.549015,
+              0.153571
+            ],
+            "min": [
+              2.08574,
+              -0.549015,
+              -0.746468
+            ],
+            "span": [
+              2.649237,
+              1.09803,
+              0.900039
+            ]
+          },
+          "source_region_id": "canopy",
+          "support_bounds": {
+            "center": [
+              3.410359,
+              0.0,
+              -0.296449
+            ],
+            "max": [
+              4.496546,
+              0.417251,
+              0.072567
+            ],
+            "min": [
+              2.324172,
+              -0.417251,
+              -0.665465
+            ],
+            "span": [
+              2.172374,
+              0.834503,
+              0.738032
+            ]
+          },
+          "surface_component_id": "surface_canopy",
+          "vertices_m": [
+            [
+              2.324172,
+              -0.417251,
+              -0.665465
+            ],
+            [
+              2.324172,
+              0.417251,
+              -0.665465
+            ],
+            [
+              4.496546,
+              -0.417251,
+              -0.665465
+            ],
+            [
+              4.496546,
+              0.417251,
+              -0.665465
+            ],
+            [
+              3.084503,
+              0.0,
+              0.072567
+            ],
+            [
+              3.953453,
+              0.0,
+              0.071116
+            ]
+          ],
+          "volume_role": "canopy_surface_volume"
+        },
+        "geometry_primitive": "convex_hull",
+        "name": "semantic_canopy_surface_volume",
+        "offset": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_canopy_surface_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.172374,
+          0.834503,
+          0.738032
+        ],
+        "system": "canopy_surface",
+        "threshold_scale": 0.9
+      },
+      "runtime_geometry": {
+        "convex_hull": {
+          "simplification_error_m": null,
+          "vertex_count": 6,
+          "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+        },
+        "primitive": "convex_hull",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "convex_hull",
+        "source_region_bounds": {
+          "center": [
+            3.410359,
+            0.0,
+            -0.296449
+          ],
+          "max": [
+            4.734977,
+            0.549015,
+            0.153571
+          ],
+          "min": [
+            2.08574,
+            -0.549015,
+            -0.746468
+          ],
+          "span": [
+            2.649237,
+            1.09803,
+            0.900039
+          ]
+        },
+        "source_region_id": "canopy",
+        "support_bounds": {
+          "center": [
+            3.410359,
+            0.0,
+            -0.296449
+          ],
+          "max": [
+            4.496546,
+            0.417251,
+            0.072567
+          ],
+          "min": [
+            2.324172,
+            -0.417251,
+            -0.665465
+          ],
+          "span": [
+            2.172374,
+            0.834503,
+            0.738032
+          ]
+        },
+        "vertices_m": [
+          [
+            2.324172,
+            -0.417251,
+            -0.665465
+          ],
+          [
+            2.324172,
+            0.417251,
+            -0.665465
+          ],
+          [
+            4.496546,
+            -0.417251,
+            -0.665465
+          ],
+          [
+            4.496546,
+            0.417251,
+            -0.665465
+          ],
+          [
+            3.084503,
+            0.0,
+            0.072567
+          ],
+          [
+            3.953453,
+            0.0,
+            0.071116
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "canopy_surface",
+      "semantic_component_id": "semantic_canopy_surface_volume",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.734977,
+          0.549015,
+          0.153571
+        ],
+        "min": [
+          2.08574,
+          -0.549015,
+          -0.746468
+        ],
+        "span": [
+          2.649237,
+          1.09803,
+          0.900039
+        ]
+      },
+      "source_region_id": "canopy",
+      "source_region_role": "raised_outer_skin",
+      "support_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.496546,
+          0.417251,
+          0.072567
+        ],
+        "min": [
+          2.324172,
+          -0.417251,
+          -0.665465
+        ],
+        "span": [
+          2.172374,
+          0.834503,
+          0.738032
+        ]
+      },
+      "surface_component_id": "surface_canopy",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "canopy",
+      "volume_component_role": "canopy_surface_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "wing_spar_center"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "center_fuselage_fuel_cell",
+        "data_link_terminal",
+        "flight_control_computer",
+        "mission_computer"
+      ],
+      "direct_receiver_count": 4,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "fuel_or_avionics_exposure_candidate"
+      ],
+      "geometry_primitive": "obb",
+      "mesh_region_vertex_count": 1099,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 16,
+          "points_m": [
+            [
+              -0.798357,
+              -0.694987
+            ],
+            [
+              -0.786389,
+              -0.736649
+            ],
+            [
+              -0.721656,
+              -0.789253
+            ],
+            [
+              -0.675635,
+              -0.789797
+            ],
+            [
+              0.721655,
+              -0.789253
+            ],
+            [
+              0.786388,
+              -0.736649
+            ],
+            [
+              0.798356,
+              -0.694987
+            ],
+            [
+              0.237823,
+              -0.035649
+            ],
+            [
+              0.179492,
+              0.007281
+            ],
+            [
+              0.121161,
+              0.035506
+            ],
+            [
+              0.060575,
+              0.054621
+            ],
+            [
+              -1e-06,
+              0.059029
+            ],
+            [
+              -0.060576,
+              0.054621
+            ],
+            [
+              -0.121162,
+              0.035506
+            ],
+            [
+              -0.179493,
+              0.007281
+            ],
+            [
+              -0.237825,
+              -0.035649
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 11,
+          "points_m": [
+            [
+              -1.578842,
+              -0.391665
+            ],
+            [
+              -0.736367,
+              -0.694987
+            ],
+            [
+              1.820339,
+              -0.789253
+            ],
+            [
+              2.284069,
+              -0.789797
+            ],
+            [
+              2.405039,
+              -0.515887
+            ],
+            [
+              2.398809,
+              -0.445719
+            ],
+            [
+              2.369306,
+              -0.160344
+            ],
+            [
+              2.266907,
+              0.059029
+            ],
+            [
+              -1.518961,
+              -0.327949
+            ],
+            [
+              -1.557453,
+              -0.3526
+            ],
+            [
+              -1.568142,
+              -0.371795
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 11,
+          "points_m": [
+            [
+              -1.578842,
+              -0.093793
+            ],
+            [
+              -0.736367,
+              -0.798357
+            ],
+            [
+              0.513318,
+              -0.786389
+            ],
+            [
+              1.820339,
+              -0.721656
+            ],
+            [
+              2.284069,
+              -0.675635
+            ],
+            [
+              2.405039,
+              -0.489016
+            ],
+            [
+              2.405039,
+              0.489015
+            ],
+            [
+              1.820339,
+              0.721655
+            ],
+            [
+              0.513318,
+              0.786388
+            ],
+            [
+              -0.736367,
+              0.798356
+            ],
+            [
+              -1.578842,
+              0.093792
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_14",
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 4.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "center_fuselage_fuel_cell"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "data_link_terminal"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "flight_control_computer"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "mission_computer"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "fuel_or_avionics_exposure_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [
+            "wing_spar_center"
+          ],
+          "direct_receiver_components": [
+            "center_fuselage_fuel_cell",
+            "data_link_terminal",
+            "flight_control_computer",
+            "mission_computer"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              0.26379,
+              0.0,
+              0.0
+            ],
+            "half_extents_m": [
+              2.06208,
+              0.748,
+              0.697184
+            ]
+          },
+          "primitive": "obb",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "obb",
+          "source_region_bounds": {
+            "center": [
+              0.26379,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.41179,
+              0.85,
+              0.792255
+            ],
+            "min": [
+              -1.884211,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              4.296001,
+              1.7,
+              1.58451
+            ]
+          },
+          "source_region_id": "center_fuselage",
+          "support_bounds": {
+            "center": [
+              0.26379,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.32587,
+              0.748,
+              0.697184
+            ],
+            "min": [
+              -1.79829,
+              -0.748,
+              -0.697184
+            ],
+            "span": [
+              4.124161,
+              1.496,
+              1.394369
+            ]
+          },
+          "surface_component_id": "surface_center_fuselage_skin",
+          "vertices_m": [
+            [
+              -1.79829,
+              -0.748,
+              -0.697184
+            ],
+            [
+              -1.79829,
+              -0.748,
+              0.697184
+            ],
+            [
+              -1.79829,
+              0.748,
+              -0.697184
+            ],
+            [
+              -1.79829,
+              0.748,
+              0.697184
+            ],
+            [
+              2.32587,
+              -0.748,
+              -0.697184
+            ],
+            [
+              2.32587,
+              -0.748,
+              0.697184
+            ],
+            [
+              2.32587,
+              0.748,
+              -0.697184
+            ],
+            [
+              2.32587,
+              0.748,
+              0.697184
+            ]
+          ],
+          "volume_role": "center_fuselage_skin_volume"
+        },
+        "geometry_primitive": "obb",
+        "name": "semantic_center_fuselage_skin_volume",
+        "offset": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_center_fuselage_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          4.124161,
+          1.496,
+          1.394369
+        ],
+        "system": "airframe_skin",
+        "threshold_scale": 1.05
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            0.26379,
+            0.0,
+            0.0
+          ],
+          "half_extents_m": [
+            2.06208,
+            0.748,
+            0.697184
+          ]
+        },
+        "primitive": "obb",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "obb",
+        "source_region_bounds": {
+          "center": [
+            0.26379,
+            0.0,
+            0.0
+          ],
+          "max": [
+            2.41179,
+            0.85,
+            0.792255
+          ],
+          "min": [
+            -1.884211,
+            -0.85,
+            -0.792255
+          ],
+          "span": [
+            4.296001,
+            1.7,
+            1.58451
+          ]
+        },
+        "source_region_id": "center_fuselage",
+        "support_bounds": {
+          "center": [
+            0.26379,
+            0.0,
+            0.0
+          ],
+          "max": [
+            2.32587,
+            0.748,
+            0.697184
+          ],
+          "min": [
+            -1.79829,
+            -0.748,
+            -0.697184
+          ],
+          "span": [
+            4.124161,
+            1.496,
+            1.394369
+          ]
+        },
+        "vertices_m": [
+          [
+            -1.79829,
+            -0.748,
+            -0.697184
+          ],
+          [
+            -1.79829,
+            -0.748,
+            0.697184
+          ],
+          [
+            -1.79829,
+            0.748,
+            -0.697184
+          ],
+          [
+            -1.79829,
+            0.748,
+            0.697184
+          ],
+          [
+            2.32587,
+            -0.748,
+            -0.697184
+          ],
+          [
+            2.32587,
+            -0.748,
+            0.697184
+          ],
+          [
+            2.32587,
+            0.748,
+            -0.697184
+          ],
+          [
+            2.32587,
+            0.748,
+            0.697184
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "airframe_skin",
+      "semantic_component_id": "semantic_center_fuselage_skin_volume",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.41179,
+          0.85,
+          0.792255
+        ],
+        "min": [
+          -1.884211,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          4.296001,
+          1.7,
+          1.58451
+        ]
+      },
+      "source_region_id": "center_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.32587,
+          0.748,
+          0.697184
+        ],
+        "min": [
+          -1.79829,
+          -0.748,
+          -0.697184
+        ],
+        "span": [
+          4.124161,
+          1.496,
+          1.394369
+        ]
+      },
+      "surface_component_id": "surface_center_fuselage_skin",
+      "surface_review_flags": [
+        "cross_region_semantic_hold"
+      ],
+      "surface_review_semantics": "cross_region_semantic_hold",
+      "surface_review_status": "review_only_cross_region_semantic_hold",
+      "surface_role": "fuselage_skin",
+      "volume_component_role": "center_fuselage_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "engine_core"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "intake_lip_damage",
+        "perforation",
+        "airflow_path_damage_candidate"
+      ],
+      "geometry_primitive": "convex_hull",
+      "mesh_region_vertex_count": 2514,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 9,
+          "points_m": [
+            [
+              -0.285536,
+              -0.522944
+            ],
+            [
+              -0.219837,
+              -1.271193
+            ],
+            [
+              -0.1606,
+              -1.272975
+            ],
+            [
+              0.160599,
+              -1.272975
+            ],
+            [
+              0.219836,
+              -1.271193
+            ],
+            [
+              0.264095,
+              -0.550806
+            ],
+            [
+              0.211391,
+              -0.03884
+            ],
+            [
+              -1e-06,
+              -0.010384
+            ],
+            [
+              -0.211382,
+              -0.03884
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 12,
+          "points_m": [
+            [
+              2.806623,
+              -0.216209
+            ],
+            [
+              3.012156,
+              -1.076903
+            ],
+            [
+              3.153419,
+              -1.131349
+            ],
+            [
+              3.726796,
+              -1.27076
+            ],
+            [
+              3.97533,
+              -1.272975
+            ],
+            [
+              3.973498,
+              -1.248183
+            ],
+            [
+              3.682859,
+              -0.543498
+            ],
+            [
+              3.452544,
+              -0.246749
+            ],
+            [
+              3.307627,
+              -0.064297
+            ],
+            [
+              3.267485,
+              -0.019876
+            ],
+            [
+              3.16573,
+              -0.010384
+            ],
+            [
+              2.946357,
+              -0.03884
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 16,
+          "points_m": [
+            [
+              2.806623,
+              -0.151349
+            ],
+            [
+              2.946357,
+              -0.211382
+            ],
+            [
+              3.319847,
+              -0.278742
+            ],
+            [
+              3.362546,
+              -0.285536
+            ],
+            [
+              3.560852,
+              -0.270669
+            ],
+            [
+              3.669884,
+              -0.259506
+            ],
+            [
+              3.957614,
+              -0.221357
+            ],
+            [
+              3.959094,
+              -0.219837
+            ],
+            [
+              3.97533,
+              -0.1606
+            ],
+            [
+              3.97533,
+              0.160599
+            ],
+            [
+              3.959094,
+              0.219836
+            ],
+            [
+              3.957614,
+              0.221356
+            ],
+            [
+              3.343028,
+              0.264095
+            ],
+            [
+              3.302342,
+              0.259324
+            ],
+            [
+              2.946357,
+              0.211391
+            ],
+            [
+              2.813226,
+              0.150654
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_10",
+        "Object_12"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 2.0,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "intake_geometry",
+            "target_system": "dedicated_intake_lip_or_duct_component"
+          }
+        ],
+        "failure_modes": [
+          "intake_lip_damage",
+          "perforation",
+          "airflow_path_damage_candidate"
+        ],
+        "geometry": {
+          "convex_hull": {
+            "simplification_error_m": null,
+            "vertex_count": 8,
+            "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+          },
+          "cross_region_receiver_components": [
+            "engine_core"
+          ],
+          "direct_receiver_components": [
+            "dedicated_intake_lip_or_duct_component"
+          ],
+          "primitive": "convex_hull",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "convex_hull",
+          "source_region_bounds": {
+            "center": [
+              3.390977,
+              -0.01072,
+              -0.64168
+            ],
+            "max": [
+              4.05533,
+              0.334096,
+              0.069615
+            ],
+            "min": [
+              2.726624,
+              -0.355536,
+              -1.352975
+            ],
+            "span": [
+              1.328706,
+              0.689632,
+              1.42259
+            ]
+          },
+          "source_region_id": "intake",
+          "support_bounds": {
+            "center": [
+              3.390977,
+              -0.01072,
+              -0.64168
+            ],
+            "max": [
+              3.949034,
+              0.230651,
+              -0.101096
+            ],
+            "min": [
+              2.83292,
+              -0.252091,
+              -1.182264
+            ],
+            "span": [
+              1.116113,
+              0.482742,
+              1.081168
+            ]
+          },
+          "surface_component_id": "surface_intake_lip_and_duct",
+          "vertices_m": [
+            [
+              2.83292,
+              -0.252091,
+              -1.182264
+            ],
+            [
+              2.83292,
+              -0.252091,
+              -0.101096
+            ],
+            [
+              2.83292,
+              0.230651,
+              -1.182264
+            ],
+            [
+              2.83292,
+              0.230651,
+              -0.101096
+            ],
+            [
+              3.949034,
+              -0.252091,
+              -1.182264
+            ],
+            [
+              3.949034,
+              -0.252091,
+              -0.101096
+            ],
+            [
+              3.949034,
+              0.230651,
+              -1.182264
+            ],
+            [
+              3.949034,
+              0.230651,
+              -0.101096
+            ]
+          ],
+          "volume_role": "intake_lip_and_duct_volume"
+        },
+        "geometry_primitive": "convex_hull",
+        "name": "semantic_intake_lip_and_duct_volume",
+        "offset": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_intake_lip_and_duct_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          1.116113,
+          0.482742,
+          1.081168
+        ],
+        "system": "intake_geometry",
+        "threshold_scale": 0.95
+      },
+      "runtime_geometry": {
+        "convex_hull": {
+          "simplification_error_m": null,
+          "vertex_count": 8,
+          "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+        },
+        "primitive": "convex_hull",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "convex_hull",
+        "source_region_bounds": {
+          "center": [
+            3.390977,
+            -0.01072,
+            -0.64168
+          ],
+          "max": [
+            4.05533,
+            0.334096,
+            0.069615
+          ],
+          "min": [
+            2.726624,
+            -0.355536,
+            -1.352975
+          ],
+          "span": [
+            1.328706,
+            0.689632,
+            1.42259
+          ]
+        },
+        "source_region_id": "intake",
+        "support_bounds": {
+          "center": [
+            3.390977,
+            -0.01072,
+            -0.64168
+          ],
+          "max": [
+            3.949034,
+            0.230651,
+            -0.101096
+          ],
+          "min": [
+            2.83292,
+            -0.252091,
+            -1.182264
+          ],
+          "span": [
+            1.116113,
+            0.482742,
+            1.081168
+          ]
+        },
+        "vertices_m": [
+          [
+            2.83292,
+            -0.252091,
+            -1.182264
+          ],
+          [
+            2.83292,
+            -0.252091,
+            -0.101096
+          ],
+          [
+            2.83292,
+            0.230651,
+            -1.182264
+          ],
+          [
+            2.83292,
+            0.230651,
+            -0.101096
+          ],
+          [
+            3.949034,
+            -0.252091,
+            -1.182264
+          ],
+          [
+            3.949034,
+            -0.252091,
+            -0.101096
+          ],
+          [
+            3.949034,
+            0.230651,
+            -1.182264
+          ],
+          [
+            3.949034,
+            0.230651,
+            -0.101096
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "intake_geometry",
+      "semantic_component_id": "semantic_intake_lip_and_duct_volume",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          4.05533,
+          0.334096,
+          0.069615
+        ],
+        "min": [
+          2.726624,
+          -0.355536,
+          -1.352975
+        ],
+        "span": [
+          1.328706,
+          0.689632,
+          1.42259
+        ]
+      },
+      "source_region_id": "intake",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          3.949034,
+          0.230651,
+          -0.101096
+        ],
+        "min": [
+          2.83292,
+          -0.252091,
+          -1.182264
+        ],
+        "span": [
+          1.116113,
+          0.482742,
+          1.081168
+        ]
+      },
+      "surface_component_id": "surface_intake_lip_and_duct",
+      "surface_review_flags": [
+        "cross_region_boundary_candidate_review_only",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_boundary_candidate_review_only",
+      "surface_review_status": "review_only_cross_region_boundary_candidate",
+      "surface_role": "intake",
+      "volume_component_role": "intake_lip_and_duct_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "engine_core"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "electrical_power_bus",
+        "engine_fuel_control_unit",
+        "tail_hydraulic_pump"
+      ],
+      "direct_receiver_count": 3,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "engine_bay_exposure_candidate"
+      ],
+      "geometry_primitive": "obb",
+      "mesh_region_vertex_count": 738,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 12,
+          "points_m": [
+            [
+              -0.798387,
+              -0.694997
+            ],
+            [
+              -0.668177,
+              -1.189528
+            ],
+            [
+              -0.615623,
+              -1.243873
+            ],
+            [
+              0.615622,
+              -1.243873
+            ],
+            [
+              0.668176,
+              -1.189528
+            ],
+            [
+              0.798386,
+              -0.694997
+            ],
+            [
+              0.141907,
+              0.157051
+            ],
+            [
+              0.124251,
+              0.179095
+            ],
+            [
+              0.067501,
+              0.189614
+            ],
+            [
+              -0.067512,
+              0.189614
+            ],
+            [
+              -0.124252,
+              0.179095
+            ],
+            [
+              -0.141908,
+              0.157051
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 9,
+          "points_m": [
+            [
+              -5.795555,
+              -0.43088
+            ],
+            [
+              -5.575648,
+              -1.243873
+            ],
+            [
+              -2.011429,
+              -1.181798
+            ],
+            [
+              -1.518961,
+              -0.327949
+            ],
+            [
+              -2.322179,
+              0.024897
+            ],
+            [
+              -3.899526,
+              0.168576
+            ],
+            [
+              -4.253932,
+              0.189614
+            ],
+            [
+              -5.663704,
+              0.189614
+            ],
+            [
+              -5.795555,
+              -0.342604
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 10,
+          "points_m": [
+            [
+              -5.795555,
+              -1e-06
+            ],
+            [
+              -5.575357,
+              -0.711329
+            ],
+            [
+              -3.484343,
+              -0.798387
+            ],
+            [
+              -2.0101,
+              -0.798347
+            ],
+            [
+              -1.536063,
+              -0.037858
+            ],
+            [
+              -1.518961,
+              -1e-06
+            ],
+            [
+              -1.536063,
+              0.037857
+            ],
+            [
+              -2.0101,
+              0.798346
+            ],
+            [
+              -3.484343,
+              0.798386
+            ],
+            [
+              -5.575357,
+              0.711327
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_38",
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 4.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "electrical_power_bus"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "engine_fuel_control_unit"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "airframe_skin",
+            "target_system": "tail_hydraulic_pump"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "engine_bay_exposure_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [
+            "engine_core"
+          ],
+          "direct_receiver_components": [
+            "electrical_power_bus",
+            "engine_fuel_control_unit",
+            "tail_hydraulic_pump"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "half_extents_m": [
+              2.098257,
+              0.792,
+              0.707437
+            ]
+          },
+          "primitive": "obb",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "obb",
+          "source_region_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "max": [
+              -1.507369,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -5.878738,
+              -0.9,
+              -1.258287
+            ],
+            "span": [
+              4.371369,
+              1.8,
+              1.607811
+            ]
+          },
+          "source_region_id": "aft_fuselage_engine",
+          "support_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "max": [
+              -1.594796,
+              0.792,
+              0.253056
+            ],
+            "min": [
+              -5.79131,
+              -0.792,
+              -1.161818
+            ],
+            "span": [
+              4.196514,
+              1.584,
+              1.414874
+            ]
+          },
+          "surface_component_id": "surface_aft_engine_bay_skin",
+          "vertices_m": [
+            [
+              -5.79131,
+              -0.792,
+              -1.161818
+            ],
+            [
+              -5.79131,
+              -0.792,
+              0.253056
+            ],
+            [
+              -5.79131,
+              0.792,
+              -1.161818
+            ],
+            [
+              -5.79131,
+              0.792,
+              0.253056
+            ],
+            [
+              -1.594796,
+              -0.792,
+              -1.161818
+            ],
+            [
+              -1.594796,
+              -0.792,
+              0.253056
+            ],
+            [
+              -1.594796,
+              0.792,
+              -1.161818
+            ],
+            [
+              -1.594796,
+              0.792,
+              0.253056
+            ]
+          ],
+          "volume_role": "aft_engine_bay_skin_volume"
+        },
+        "geometry_primitive": "obb",
+        "name": "semantic_aft_engine_bay_skin_volume",
+        "offset": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_aft_engine_bay_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          4.196514,
+          1.584,
+          1.414874
+        ],
+        "system": "airframe_skin",
+        "threshold_scale": 1.05
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -3.693053,
+            0.0,
+            -0.454381
+          ],
+          "half_extents_m": [
+            2.098257,
+            0.792,
+            0.707437
+          ]
+        },
+        "primitive": "obb",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "obb",
+        "source_region_bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.454381
+          ],
+          "max": [
+            -1.507369,
+            0.9,
+            0.349524
+          ],
+          "min": [
+            -5.878738,
+            -0.9,
+            -1.258287
+          ],
+          "span": [
+            4.371369,
+            1.8,
+            1.607811
+          ]
+        },
+        "source_region_id": "aft_fuselage_engine",
+        "support_bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.454381
+          ],
+          "max": [
+            -1.594796,
+            0.792,
+            0.253056
+          ],
+          "min": [
+            -5.79131,
+            -0.792,
+            -1.161818
+          ],
+          "span": [
+            4.196514,
+            1.584,
+            1.414874
+          ]
+        },
+        "vertices_m": [
+          [
+            -5.79131,
+            -0.792,
+            -1.161818
+          ],
+          [
+            -5.79131,
+            -0.792,
+            0.253056
+          ],
+          [
+            -5.79131,
+            0.792,
+            -1.161818
+          ],
+          [
+            -5.79131,
+            0.792,
+            0.253056
+          ],
+          [
+            -1.594796,
+            -0.792,
+            -1.161818
+          ],
+          [
+            -1.594796,
+            -0.792,
+            0.253056
+          ],
+          [
+            -1.594796,
+            0.792,
+            -1.161818
+          ],
+          [
+            -1.594796,
+            0.792,
+            0.253056
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "airframe_skin",
+      "semantic_component_id": "semantic_aft_engine_bay_skin_volume",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.507369,
+          0.9,
+          0.349524
+        ],
+        "min": [
+          -5.878738,
+          -0.9,
+          -1.258287
+        ],
+        "span": [
+          4.371369,
+          1.8,
+          1.607811
+        ]
+      },
+      "source_region_id": "aft_fuselage_engine",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.594796,
+          0.792,
+          0.253056
+        ],
+        "min": [
+          -5.79131,
+          -0.792,
+          -1.161818
+        ],
+        "span": [
+          4.196514,
+          1.584,
+          1.414874
+        ]
+      },
+      "surface_component_id": "surface_aft_engine_bay_skin",
+      "surface_review_flags": [
+        "cross_region_boundary_candidate_review_only"
+      ],
+      "surface_review_semantics": "cross_region_boundary_candidate_review_only",
+      "surface_review_status": "review_only_cross_region_boundary_candidate",
+      "surface_role": "engine_bay_skin",
+      "volume_component_role": "aft_engine_bay_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "engine_core"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "afterburner_nozzle"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "nozzle_petal_damage",
+        "perforation",
+        "exhaust_area_change_candidate"
+      ],
+      "geometry_primitive": "obb",
+      "mesh_region_vertex_count": 768,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 32,
+          "points_m": [
+            [
+              -0.571706,
+              -1.007126
+            ],
+            [
+              -0.559255,
+              -1.118091
+            ],
+            [
+              -0.528192,
+              -1.224426
+            ],
+            [
+              -0.473998,
+              -1.322527
+            ],
+            [
+              -0.404262,
+              -1.408649
+            ],
+            [
+              -0.316458,
+              -1.478999
+            ],
+            [
+              -0.21878,
+              -1.531734
+            ],
+            [
+              -0.110623,
+              -1.563682
+            ],
+            [
+              -1e-06,
+              -1.574956
+            ],
+            [
+              0.112172,
+              -1.563682
+            ],
+            [
+              0.218779,
+              -1.531734
+            ],
+            [
+              0.318007,
+              -1.478999
+            ],
+            [
+              0.404261,
+              -1.408649
+            ],
+            [
+              0.475547,
+              -1.322527
+            ],
+            [
+              0.528191,
+              -1.224426
+            ],
+            [
+              0.560814,
+              -1.118091
+            ],
+            [
+              0.571705,
+              -1.007126
+            ],
+            [
+              0.560814,
+              -0.896805
+            ],
+            [
+              0.528191,
+              -0.789826
+            ],
+            [
+              0.475547,
+              -0.692359
+            ],
+            [
+              0.404261,
+              -0.605602
+            ],
+            [
+              0.318007,
+              -0.535887
+            ],
+            [
+              0.218779,
+              -0.482518
+            ],
+            [
+              0.112172,
+              -0.451213
+            ],
+            [
+              -1e-06,
+              -0.439295
+            ],
+            [
+              -0.110623,
+              -0.451213
+            ],
+            [
+              -0.21878,
+              -0.482518
+            ],
+            [
+              -0.316458,
+              -0.535887
+            ],
+            [
+              -0.404262,
+              -0.605602
+            ],
+            [
+              -0.473998,
+              -0.692359
+            ],
+            [
+              -0.531826,
+              -0.784702
+            ],
+            [
+              -0.559255,
+              -0.896805
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 11,
+          "points_m": [
+            [
+              -6.92874,
+              -1.399932
+            ],
+            [
+              -6.911065,
+              -1.416792
+            ],
+            [
+              -6.702331,
+              -1.484787
+            ],
+            [
+              -6.176535,
+              -1.574956
+            ],
+            [
+              -5.583772,
+              -1.453352
+            ],
+            [
+              -5.583771,
+              -1.187273
+            ],
+            [
+              -5.583771,
+              -0.591299
+            ],
+            [
+              -6.176535,
+              -0.439295
+            ],
+            [
+              -6.702331,
+              -0.550532
+            ],
+            [
+              -6.911064,
+              -0.627203
+            ],
+            [
+              -6.92874,
+              -0.644667
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 10,
+          "points_m": [
+            [
+              -6.92874,
+              -0.377638
+            ],
+            [
+              -6.911065,
+              -0.394881
+            ],
+            [
+              -6.702331,
+              -0.468341
+            ],
+            [
+              -6.176535,
+              -0.571706
+            ],
+            [
+              -5.583771,
+              -0.431027
+            ],
+            [
+              -5.583771,
+              0.431026
+            ],
+            [
+              -6.176535,
+              0.571705
+            ],
+            [
+              -6.702331,
+              0.46835
+            ],
+            [
+              -6.911065,
+              0.39488
+            ],
+            [
+              -6.92874,
+              0.377637
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_38"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 3.0,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "engine_nozzle_geometry",
+            "target_system": "afterburner_nozzle"
+          }
+        ],
+        "failure_modes": [
+          "nozzle_petal_damage",
+          "perforation",
+          "exhaust_area_change_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [
+            "engine_core"
+          ],
+          "direct_receiver_components": [
+            "afterburner_nozzle"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -6.256255,
+              -1e-06,
+              -1.007126
+            ],
+            "half_extents_m": [
+              0.695235,
+              0.492731,
+              0.560977
+            ]
+          },
+          "primitive": "obb",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "obb",
+          "source_region_bounds": {
+            "center": [
+              -6.256255,
+              -1e-06,
+              -1.007126
+            ],
+            "max": [
+              -5.483772,
+              0.631705,
+              -0.339296
+            ],
+            "min": [
+              -7.028739,
+              -0.631707,
+              -1.674956
+            ],
+            "span": [
+              1.544967,
+              1.263412,
+              1.33566
+            ]
+          },
+          "source_region_id": "engine_nozzle",
+          "support_bounds": {
+            "center": [
+              -6.256255,
+              -1e-06,
+              -1.007126
+            ],
+            "max": [
+              -5.56102,
+              0.49273,
+              -0.446149
+            ],
+            "min": [
+              -6.95149,
+              -0.492732,
+              -1.568103
+            ],
+            "span": [
+              1.39047,
+              0.985461,
+              1.121954
+            ]
+          },
+          "surface_component_id": "surface_engine_nozzle",
+          "vertices_m": [
+            [
+              -6.95149,
+              -0.492732,
+              -1.568103
+            ],
+            [
+              -6.95149,
+              -0.492732,
+              -0.446149
+            ],
+            [
+              -6.95149,
+              0.49273,
+              -1.568103
+            ],
+            [
+              -6.95149,
+              0.49273,
+              -0.446149
+            ],
+            [
+              -5.56102,
+              -0.492732,
+              -1.568103
+            ],
+            [
+              -5.56102,
+              -0.492732,
+              -0.446149
+            ],
+            [
+              -5.56102,
+              0.49273,
+              -1.568103
+            ],
+            [
+              -5.56102,
+              0.49273,
+              -0.446149
+            ]
+          ],
+          "volume_role": "engine_nozzle_volume"
+        },
+        "geometry_primitive": "obb",
+        "name": "semantic_engine_nozzle_volume",
+        "offset": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_engine_nozzle_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          1.39047,
+          0.985461,
+          1.121954
+        ],
+        "system": "engine_nozzle_geometry",
+        "threshold_scale": 1.0
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -6.256255,
+            -1e-06,
+            -1.007126
+          ],
+          "half_extents_m": [
+            0.695235,
+            0.492731,
+            0.560977
+          ]
+        },
+        "primitive": "obb",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "obb",
+        "source_region_bounds": {
+          "center": [
+            -6.256255,
+            -1e-06,
+            -1.007126
+          ],
+          "max": [
+            -5.483772,
+            0.631705,
+            -0.339296
+          ],
+          "min": [
+            -7.028739,
+            -0.631707,
+            -1.674956
+          ],
+          "span": [
+            1.544967,
+            1.263412,
+            1.33566
+          ]
+        },
+        "source_region_id": "engine_nozzle",
+        "support_bounds": {
+          "center": [
+            -6.256255,
+            -1e-06,
+            -1.007126
+          ],
+          "max": [
+            -5.56102,
+            0.49273,
+            -0.446149
+          ],
+          "min": [
+            -6.95149,
+            -0.492732,
+            -1.568103
+          ],
+          "span": [
+            1.39047,
+            0.985461,
+            1.121954
+          ]
+        },
+        "vertices_m": [
+          [
+            -6.95149,
+            -0.492732,
+            -1.568103
+          ],
+          [
+            -6.95149,
+            -0.492732,
+            -0.446149
+          ],
+          [
+            -6.95149,
+            0.49273,
+            -1.568103
+          ],
+          [
+            -6.95149,
+            0.49273,
+            -0.446149
+          ],
+          [
+            -5.56102,
+            -0.492732,
+            -1.568103
+          ],
+          [
+            -5.56102,
+            -0.492732,
+            -0.446149
+          ],
+          [
+            -5.56102,
+            0.49273,
+            -1.568103
+          ],
+          [
+            -5.56102,
+            0.49273,
+            -0.446149
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "engine_nozzle_geometry",
+      "semantic_component_id": "semantic_engine_nozzle_volume",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.483772,
+          0.631705,
+          -0.339296
+        ],
+        "min": [
+          -7.028739,
+          -0.631707,
+          -1.674956
+        ],
+        "span": [
+          1.544967,
+          1.263412,
+          1.33566
+        ]
+      },
+      "source_region_id": "engine_nozzle",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.56102,
+          0.49273,
+          -0.446149
+        ],
+        "min": [
+          -6.95149,
+          -0.492732,
+          -1.568103
+        ],
+        "span": [
+          1.39047,
+          0.985461,
+          1.121954
+        ]
+      },
+      "surface_component_id": "surface_engine_nozzle",
+      "surface_review_flags": [
+        "cross_region_boundary_candidate_review_only",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_boundary_candidate_review_only",
+      "surface_review_status": "review_only_cross_region_boundary_candidate",
+      "surface_role": "nozzle",
+      "volume_component_role": "engine_nozzle_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "wing_spar_center"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "left_aileron_actuator",
+        "left_wing_fuel_cell"
+      ],
+      "direct_receiver_count": 2,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "geometry_primitive": "thin_prism",
+      "mesh_region_vertex_count": 120,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 8,
+          "points_m": [
+            [
+              -4.645767,
+              -1.025094
+            ],
+            [
+              -4.118059,
+              -1.061361
+            ],
+            [
+              -1.385735,
+              -1.031254
+            ],
+            [
+              -1.092852,
+              -1.02452
+            ],
+            [
+              -1.092801,
+              -1.004459
+            ],
+            [
+              -1.092751,
+              -0.938901
+            ],
+            [
+              -1.369288,
+              -0.908724
+            ],
+            [
+              -4.645767,
+              -0.978207
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -3.488793,
+              -1.004459
+            ],
+            [
+              -3.488098,
+              -1.018742
+            ],
+            [
+              -1.960929,
+              -1.061361
+            ],
+            [
+              -1.602799,
+              -1.061361
+            ],
+            [
+              0.300367,
+              -1.031254
+            ],
+            [
+              -0.348443,
+              -0.908724
+            ],
+            [
+              -2.75691,
+              -0.938901
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 8,
+          "points_m": [
+            [
+              -3.488793,
+              -1.092801
+            ],
+            [
+              -3.488098,
+              -3.672518
+            ],
+            [
+              -2.636363,
+              -4.645767
+            ],
+            [
+              -2.323005,
+              -4.645767
+            ],
+            [
+              -1.602799,
+              -4.162479
+            ],
+            [
+              0.300367,
+              -1.385735
+            ],
+            [
+              -2.741811,
+              -1.092801
+            ],
+            [
+              -2.75691,
+              -1.092751
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_22",
+        "Object_34"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 2.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_skin",
+            "target_system": "left_aileron_actuator"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_skin",
+            "target_system": "left_wing_fuel_cell"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "surface_area_loss",
+          "control_surface_damage_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [
+            "wing_spar_center"
+          ],
+          "direct_receiver_components": [
+            "left_aileron_actuator",
+            "left_wing_fuel_cell"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -1.594213,
+              -2.869258,
+              -0.985043
+            ],
+            "half_extents_m": [
+              1.846706,
+              1.712927,
+              0.041875
+            ]
+          },
+          "primitive": "thin_prism",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "thin_prism",
+          "source_region_bounds": {
+            "center": [
+              -1.594213,
+              -2.869258,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              -0.92275,
+              -0.868724
+            ],
+            "min": [
+              -3.558793,
+              -4.815766,
+              -1.101361
+            ],
+            "span": [
+              3.929161,
+              3.893016,
+              0.232637
+            ]
+          },
+          "source_region_id": "left_wing",
+          "support_bounds": {
+            "center": [
+              -1.594213,
+              -2.869258,
+              -0.985043
+            ],
+            "max": [
+              0.252493,
+              -1.156331,
+              -0.943168
+            ],
+            "min": [
+              -3.440919,
+              -4.582185,
+              -1.026918
+            ],
+            "span": [
+              3.693411,
+              3.425854,
+              0.083749
+            ]
+          },
+          "surface_component_id": "surface_left_wing_skin",
+          "thin_prism": {
+            "nominal_thickness_m": 0.083749,
+            "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+            "thin_axis": "z"
+          },
+          "vertices_m": [
+            [
+              -3.440919,
+              -4.582185,
+              -1.026918
+            ],
+            [
+              -3.440919,
+              -4.582185,
+              -0.943168
+            ],
+            [
+              -3.440919,
+              -1.156331,
+              -1.026918
+            ],
+            [
+              -3.440919,
+              -1.156331,
+              -0.943168
+            ],
+            [
+              0.252493,
+              -4.582185,
+              -1.026918
+            ],
+            [
+              0.252493,
+              -4.582185,
+              -0.943168
+            ],
+            [
+              0.252493,
+              -1.156331,
+              -1.026918
+            ],
+            [
+              0.252493,
+              -1.156331,
+              -0.943168
+            ]
+          ],
+          "volume_role": "left_wing_skin_volume"
+        },
+        "geometry_primitive": "thin_prism",
+        "name": "semantic_left_wing_skin_volume",
+        "offset": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_left_wing_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          3.693411,
+          3.425854,
+          0.083749
+        ],
+        "system": "wing_skin",
+        "threshold_scale": 0.95
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -1.594213,
+            -2.869258,
+            -0.985043
+          ],
+          "half_extents_m": [
+            1.846706,
+            1.712927,
+            0.041875
+          ]
+        },
+        "primitive": "thin_prism",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "thin_prism",
+        "source_region_bounds": {
+          "center": [
+            -1.594213,
+            -2.869258,
+            -0.985043
+          ],
+          "max": [
+            0.370368,
+            -0.92275,
+            -0.868724
+          ],
+          "min": [
+            -3.558793,
+            -4.815766,
+            -1.101361
+          ],
+          "span": [
+            3.929161,
+            3.893016,
+            0.232637
+          ]
+        },
+        "source_region_id": "left_wing",
+        "support_bounds": {
+          "center": [
+            -1.594213,
+            -2.869258,
+            -0.985043
+          ],
+          "max": [
+            0.252493,
+            -1.156331,
+            -0.943168
+          ],
+          "min": [
+            -3.440919,
+            -4.582185,
+            -1.026918
+          ],
+          "span": [
+            3.693411,
+            3.425854,
+            0.083749
+          ]
+        },
+        "thin_prism": {
+          "nominal_thickness_m": 0.083749,
+          "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+          "thin_axis": "z"
+        },
+        "vertices_m": [
+          [
+            -3.440919,
+            -4.582185,
+            -1.026918
+          ],
+          [
+            -3.440919,
+            -4.582185,
+            -0.943168
+          ],
+          [
+            -3.440919,
+            -1.156331,
+            -1.026918
+          ],
+          [
+            -3.440919,
+            -1.156331,
+            -0.943168
+          ],
+          [
+            0.252493,
+            -4.582185,
+            -1.026918
+          ],
+          [
+            0.252493,
+            -4.582185,
+            -0.943168
+          ],
+          [
+            0.252493,
+            -1.156331,
+            -1.026918
+          ],
+          [
+            0.252493,
+            -1.156331,
+            -0.943168
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "wing_skin",
+      "semantic_component_id": "semantic_left_wing_skin_volume",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          -0.92275,
+          -0.868724
+        ],
+        "min": [
+          -3.558793,
+          -4.815766,
+          -1.101361
+        ],
+        "span": [
+          3.929161,
+          3.893016,
+          0.232637
+        ]
+      },
+      "source_region_id": "left_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.252493,
+          -1.156331,
+          -0.943168
+        ],
+        "min": [
+          -3.440919,
+          -4.582185,
+          -1.026918
+        ],
+        "span": [
+          3.693411,
+          3.425854,
+          0.083749
+        ]
+      },
+      "surface_component_id": "surface_left_wing_skin",
+      "surface_review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_semantic_hold",
+      "surface_review_status": "review_only_cross_region_semantic_hold",
+      "surface_role": "lifting_surface",
+      "volume_component_role": "left_wing_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "wing_spar_center"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "right_aileron_actuator",
+        "right_wing_fuel_cell"
+      ],
+      "direct_receiver_count": 2,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "geometry_primitive": "thin_prism",
+      "mesh_region_vertex_count": 118,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 8,
+          "points_m": [
+            [
+              1.092659,
+              -0.938901
+            ],
+            [
+              1.092699,
+              -1.004469
+            ],
+            [
+              1.09275,
+              -1.02452
+            ],
+            [
+              1.385734,
+              -1.031254
+            ],
+            [
+              4.118058,
+              -1.061361
+            ],
+            [
+              4.645756,
+              -1.025094
+            ],
+            [
+              4.645756,
+              -0.978207
+            ],
+            [
+              1.369287,
+              -0.908724
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -3.488782,
+              -1.004469
+            ],
+            [
+              -3.488068,
+              -1.018742
+            ],
+            [
+              -1.960929,
+              -1.061361
+            ],
+            [
+              -1.602799,
+              -1.061361
+            ],
+            [
+              0.300367,
+              -1.031254
+            ],
+            [
+              -0.348443,
+              -0.908724
+            ],
+            [
+              -2.7569,
+              -0.938901
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 8,
+          "points_m": [
+            [
+              -3.488782,
+              1.092699
+            ],
+            [
+              -2.7569,
+              1.092659
+            ],
+            [
+              -2.741791,
+              1.092699
+            ],
+            [
+              0.300367,
+              1.385734
+            ],
+            [
+              -1.602799,
+              4.162478
+            ],
+            [
+              -2.323005,
+              4.645756
+            ],
+            [
+              -2.636363,
+              4.645756
+            ],
+            [
+              -3.488068,
+              3.672416
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_20",
+        "Object_32"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 2.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_skin",
+            "target_system": "right_aileron_actuator"
+          },
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_skin",
+            "target_system": "right_wing_fuel_cell"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "surface_area_loss",
+          "control_surface_damage_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [
+            "wing_spar_center"
+          ],
+          "direct_receiver_components": [
+            "right_aileron_actuator",
+            "right_wing_fuel_cell"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -1.594207,
+              2.869209,
+              -0.985043
+            ],
+            "half_extents_m": [
+              1.846701,
+              1.712962,
+              0.041875
+            ]
+          },
+          "primitive": "thin_prism",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "thin_prism",
+          "source_region_bounds": {
+            "center": [
+              -1.594207,
+              2.869209,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              4.815757,
+              -0.868724
+            ],
+            "min": [
+              -3.558783,
+              0.92266,
+              -1.101361
+            ],
+            "span": [
+              3.929151,
+              3.893097,
+              0.232637
+            ]
+          },
+          "source_region_id": "right_wing",
+          "support_bounds": {
+            "center": [
+              -1.594207,
+              2.869209,
+              -0.985043
+            ],
+            "max": [
+              0.252494,
+              4.582172,
+              -0.943168
+            ],
+            "min": [
+              -3.440908,
+              1.156246,
+              -1.026918
+            ],
+            "span": [
+              3.693402,
+              3.425925,
+              0.083749
+            ]
+          },
+          "surface_component_id": "surface_right_wing_skin",
+          "thin_prism": {
+            "nominal_thickness_m": 0.083749,
+            "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+            "thin_axis": "z"
+          },
+          "vertices_m": [
+            [
+              -3.440908,
+              1.156246,
+              -1.026918
+            ],
+            [
+              -3.440908,
+              1.156246,
+              -0.943168
+            ],
+            [
+              -3.440908,
+              4.582172,
+              -1.026918
+            ],
+            [
+              -3.440908,
+              4.582172,
+              -0.943168
+            ],
+            [
+              0.252494,
+              1.156246,
+              -1.026918
+            ],
+            [
+              0.252494,
+              1.156246,
+              -0.943168
+            ],
+            [
+              0.252494,
+              4.582172,
+              -1.026918
+            ],
+            [
+              0.252494,
+              4.582172,
+              -0.943168
+            ]
+          ],
+          "volume_role": "right_wing_skin_volume"
+        },
+        "geometry_primitive": "thin_prism",
+        "name": "semantic_right_wing_skin_volume",
+        "offset": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_right_wing_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          3.693402,
+          3.425925,
+          0.083749
+        ],
+        "system": "wing_skin",
+        "threshold_scale": 0.95
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -1.594207,
+            2.869209,
+            -0.985043
+          ],
+          "half_extents_m": [
+            1.846701,
+            1.712962,
+            0.041875
+          ]
+        },
+        "primitive": "thin_prism",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "thin_prism",
+        "source_region_bounds": {
+          "center": [
+            -1.594207,
+            2.869209,
+            -0.985043
+          ],
+          "max": [
+            0.370368,
+            4.815757,
+            -0.868724
+          ],
+          "min": [
+            -3.558783,
+            0.92266,
+            -1.101361
+          ],
+          "span": [
+            3.929151,
+            3.893097,
+            0.232637
+          ]
+        },
+        "source_region_id": "right_wing",
+        "support_bounds": {
+          "center": [
+            -1.594207,
+            2.869209,
+            -0.985043
+          ],
+          "max": [
+            0.252494,
+            4.582172,
+            -0.943168
+          ],
+          "min": [
+            -3.440908,
+            1.156246,
+            -1.026918
+          ],
+          "span": [
+            3.693402,
+            3.425925,
+            0.083749
+          ]
+        },
+        "thin_prism": {
+          "nominal_thickness_m": 0.083749,
+          "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+          "thin_axis": "z"
+        },
+        "vertices_m": [
+          [
+            -3.440908,
+            1.156246,
+            -1.026918
+          ],
+          [
+            -3.440908,
+            1.156246,
+            -0.943168
+          ],
+          [
+            -3.440908,
+            4.582172,
+            -1.026918
+          ],
+          [
+            -3.440908,
+            4.582172,
+            -0.943168
+          ],
+          [
+            0.252494,
+            1.156246,
+            -1.026918
+          ],
+          [
+            0.252494,
+            1.156246,
+            -0.943168
+          ],
+          [
+            0.252494,
+            4.582172,
+            -1.026918
+          ],
+          [
+            0.252494,
+            4.582172,
+            -0.943168
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "wing_skin",
+      "semantic_component_id": "semantic_right_wing_skin_volume",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          4.815757,
+          -0.868724
+        ],
+        "min": [
+          -3.558783,
+          0.92266,
+          -1.101361
+        ],
+        "span": [
+          3.929151,
+          3.893097,
+          0.232637
+        ]
+      },
+      "source_region_id": "right_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.252494,
+          4.582172,
+          -0.943168
+        ],
+        "min": [
+          -3.440908,
+          1.156246,
+          -1.026918
+        ],
+        "span": [
+          3.693402,
+          3.425925,
+          0.083749
+        ]
+      },
+      "surface_component_id": "surface_right_wing_skin",
+      "surface_review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_semantic_hold",
+      "surface_review_status": "review_only_cross_region_semantic_hold",
+      "surface_role": "lifting_surface",
+      "volume_component_role": "right_wing_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "wing_spar_center"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "spar_or_fuel_cell_exposure_candidate"
+      ],
+      "geometry_primitive": "convex_hull",
+      "mesh_region_vertex_count": 180,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -1.385735,
+              -1.031254
+            ],
+            [
+              -1.070304,
+              -1.09797
+            ],
+            [
+              -0.686335,
+              -1.104241
+            ],
+            [
+              -0.353913,
+              -0.392309
+            ],
+            [
+              -0.343233,
+              -0.348554
+            ],
+            [
+              -1.364346,
+              -0.872557
+            ],
+            [
+              -1.369288,
+              -0.908724
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -2.75691,
+              -1.02452
+            ],
+            [
+              -2.011429,
+              -1.09797
+            ],
+            [
+              0.525528,
+              -1.104241
+            ],
+            [
+              0.527028,
+              -0.628976
+            ],
+            [
+              0.525961,
+              -0.348554
+            ],
+            [
+              -2.011429,
+              -0.385857
+            ],
+            [
+              -2.7569,
+              -0.938901
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 10,
+          "points_m": [
+            [
+              -2.75691,
+              -1.092751
+            ],
+            [
+              -2.006748,
+              -1.359413
+            ],
+            [
+              0.300367,
+              -1.385735
+            ],
+            [
+              0.470187,
+              -1.051582
+            ],
+            [
+              0.513318,
+              -0.786389
+            ],
+            [
+              0.525528,
+              -0.686335
+            ],
+            [
+              0.527028,
+              -0.637375
+            ],
+            [
+              0.525961,
+              -0.343233
+            ],
+            [
+              -2.011429,
+              -0.352605
+            ],
+            [
+              -2.7569,
+              -1.078327
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_34",
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 3.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_root_fairing",
+            "target_system": "left_leading_edge_flap_actuator"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "spar_or_fuel_cell_exposure_candidate"
+        ],
+        "geometry": {
+          "convex_hull": {
+            "simplification_error_m": null,
+            "vertex_count": 8,
+            "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+          },
+          "cross_region_receiver_components": [
+            "wing_spar_center"
+          ],
+          "direct_receiver_components": [
+            "left_leading_edge_flap_actuator"
+          ],
+          "primitive": "convex_hull",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "convex_hull",
+          "source_region_bounds": {
+            "center": [
+              -1.092842,
+              -0.85,
+              -0.7107
+            ],
+            "max": [
+              0.678316,
+              -0.25,
+              -0.302921
+            ],
+            "min": [
+              -2.864,
+              -1.45,
+              -1.118478
+            ],
+            "span": [
+              3.542316,
+              1.2,
+              0.815557
+            ]
+          },
+          "source_region_id": "left_wing_root",
+          "support_bounds": {
+            "center": [
+              -1.092842,
+              -0.85,
+              -0.7107
+            ],
+            "max": [
+              0.394931,
+              -0.418,
+              -0.417099
+            ],
+            "min": [
+              -2.580615,
+              -1.282,
+              -1.004301
+            ],
+            "span": [
+              2.975545,
+              0.864,
+              0.587201
+            ]
+          },
+          "surface_component_id": "surface_left_wing_root_fairing",
+          "vertices_m": [
+            [
+              -2.580615,
+              -1.282,
+              -1.004301
+            ],
+            [
+              -2.580615,
+              -1.282,
+              -0.417099
+            ],
+            [
+              -2.580615,
+              -0.418,
+              -1.004301
+            ],
+            [
+              -2.580615,
+              -0.418,
+              -0.417099
+            ],
+            [
+              0.394931,
+              -1.282,
+              -1.004301
+            ],
+            [
+              0.394931,
+              -1.282,
+              -0.417099
+            ],
+            [
+              0.394931,
+              -0.418,
+              -1.004301
+            ],
+            [
+              0.394931,
+              -0.418,
+              -0.417099
+            ]
+          ],
+          "volume_role": "left_wing_root_fairing_volume"
+        },
+        "geometry_primitive": "convex_hull",
+        "name": "semantic_left_wing_root_fairing_volume",
+        "offset": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_left_wing_root_fairing_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.975545,
+          0.864,
+          0.587201
+        ],
+        "system": "wing_root_fairing",
+        "threshold_scale": 1.0
+      },
+      "runtime_geometry": {
+        "convex_hull": {
+          "simplification_error_m": null,
+          "vertex_count": 8,
+          "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+        },
+        "primitive": "convex_hull",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "convex_hull",
+        "source_region_bounds": {
+          "center": [
+            -1.092842,
+            -0.85,
+            -0.7107
+          ],
+          "max": [
+            0.678316,
+            -0.25,
+            -0.302921
+          ],
+          "min": [
+            -2.864,
+            -1.45,
+            -1.118478
+          ],
+          "span": [
+            3.542316,
+            1.2,
+            0.815557
+          ]
+        },
+        "source_region_id": "left_wing_root",
+        "support_bounds": {
+          "center": [
+            -1.092842,
+            -0.85,
+            -0.7107
+          ],
+          "max": [
+            0.394931,
+            -0.418,
+            -0.417099
+          ],
+          "min": [
+            -2.580615,
+            -1.282,
+            -1.004301
+          ],
+          "span": [
+            2.975545,
+            0.864,
+            0.587201
+          ]
+        },
+        "vertices_m": [
+          [
+            -2.580615,
+            -1.282,
+            -1.004301
+          ],
+          [
+            -2.580615,
+            -1.282,
+            -0.417099
+          ],
+          [
+            -2.580615,
+            -0.418,
+            -1.004301
+          ],
+          [
+            -2.580615,
+            -0.418,
+            -0.417099
+          ],
+          [
+            0.394931,
+            -1.282,
+            -1.004301
+          ],
+          [
+            0.394931,
+            -1.282,
+            -0.417099
+          ],
+          [
+            0.394931,
+            -0.418,
+            -1.004301
+          ],
+          [
+            0.394931,
+            -0.418,
+            -0.417099
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "wing_root_fairing",
+      "semantic_component_id": "semantic_left_wing_root_fairing_volume",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          -0.25,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          -1.45,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "left_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          -0.418,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          -1.282,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "surface_component_id": "surface_left_wing_root_fairing",
+      "surface_review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_semantic_hold",
+      "surface_review_status": "review_only_cross_region_semantic_hold",
+      "surface_role": "structural_transition",
+      "volume_component_role": "left_wing_root_fairing_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [
+        "wing_spar_center"
+      ],
+      "cross_region_receiver_count": 1,
+      "direct_receiver_components": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "spar_or_fuel_cell_exposure_candidate"
+      ],
+      "geometry_primitive": "convex_hull",
+      "mesh_region_vertex_count": 180,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              0.343232,
+              -0.348554
+            ],
+            [
+              0.353912,
+              -0.392309
+            ],
+            [
+              0.686334,
+              -1.104241
+            ],
+            [
+              1.070303,
+              -1.09797
+            ],
+            [
+              1.385734,
+              -1.031254
+            ],
+            [
+              1.369287,
+              -0.908724
+            ],
+            [
+              1.364344,
+              -0.872557
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -2.75691,
+              -1.02452
+            ],
+            [
+              -2.011429,
+              -1.09797
+            ],
+            [
+              0.525528,
+              -1.104241
+            ],
+            [
+              0.527028,
+              -0.628976
+            ],
+            [
+              0.525961,
+              -0.348554
+            ],
+            [
+              -2.011429,
+              -0.385857
+            ],
+            [
+              -2.7569,
+              -0.938901
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 10,
+          "points_m": [
+            [
+              -2.75691,
+              1.09275
+            ],
+            [
+              -2.7569,
+              1.078326
+            ],
+            [
+              -2.011429,
+              0.352603
+            ],
+            [
+              0.525961,
+              0.343232
+            ],
+            [
+              0.527028,
+              0.637374
+            ],
+            [
+              0.525528,
+              0.686334
+            ],
+            [
+              0.513318,
+              0.786388
+            ],
+            [
+              0.470187,
+              1.051581
+            ],
+            [
+              0.300367,
+              1.385734
+            ],
+            [
+              -2.006748,
+              1.359412
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_32",
+        "Object_4"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "runtime_component_json_candidate": {
+        "armor": 3.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "wing_root_fairing",
+            "target_system": "right_leading_edge_flap_actuator"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "spar_or_fuel_cell_exposure_candidate"
+        ],
+        "geometry": {
+          "convex_hull": {
+            "simplification_error_m": null,
+            "vertex_count": 8,
+            "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+          },
+          "cross_region_receiver_components": [
+            "wing_spar_center"
+          ],
+          "direct_receiver_components": [
+            "right_leading_edge_flap_actuator"
+          ],
+          "primitive": "convex_hull",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "convex_hull",
+          "source_region_bounds": {
+            "center": [
+              -1.092842,
+              0.85,
+              -0.7107
+            ],
+            "max": [
+              0.678316,
+              1.45,
+              -0.302921
+            ],
+            "min": [
+              -2.864,
+              0.25,
+              -1.118478
+            ],
+            "span": [
+              3.542316,
+              1.2,
+              0.815557
+            ]
+          },
+          "source_region_id": "right_wing_root",
+          "support_bounds": {
+            "center": [
+              -1.092842,
+              0.85,
+              -0.7107
+            ],
+            "max": [
+              0.394931,
+              1.282,
+              -0.417099
+            ],
+            "min": [
+              -2.580615,
+              0.418,
+              -1.004301
+            ],
+            "span": [
+              2.975545,
+              0.864,
+              0.587201
+            ]
+          },
+          "surface_component_id": "surface_right_wing_root_fairing",
+          "vertices_m": [
+            [
+              -2.580615,
+              0.418,
+              -1.004301
+            ],
+            [
+              -2.580615,
+              0.418,
+              -0.417099
+            ],
+            [
+              -2.580615,
+              1.282,
+              -1.004301
+            ],
+            [
+              -2.580615,
+              1.282,
+              -0.417099
+            ],
+            [
+              0.394931,
+              0.418,
+              -1.004301
+            ],
+            [
+              0.394931,
+              0.418,
+              -0.417099
+            ],
+            [
+              0.394931,
+              1.282,
+              -1.004301
+            ],
+            [
+              0.394931,
+              1.282,
+              -0.417099
+            ]
+          ],
+          "volume_role": "right_wing_root_fairing_volume"
+        },
+        "geometry_primitive": "convex_hull",
+        "name": "semantic_right_wing_root_fairing_volume",
+        "offset": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_right_wing_root_fairing_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.975545,
+          0.864,
+          0.587201
+        ],
+        "system": "wing_root_fairing",
+        "threshold_scale": 1.0
+      },
+      "runtime_geometry": {
+        "convex_hull": {
+          "simplification_error_m": null,
+          "vertex_count": 8,
+          "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+        },
+        "primitive": "convex_hull",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "convex_hull",
+        "source_region_bounds": {
+          "center": [
+            -1.092842,
+            0.85,
+            -0.7107
+          ],
+          "max": [
+            0.678316,
+            1.45,
+            -0.302921
+          ],
+          "min": [
+            -2.864,
+            0.25,
+            -1.118478
+          ],
+          "span": [
+            3.542316,
+            1.2,
+            0.815557
+          ]
+        },
+        "source_region_id": "right_wing_root",
+        "support_bounds": {
+          "center": [
+            -1.092842,
+            0.85,
+            -0.7107
+          ],
+          "max": [
+            0.394931,
+            1.282,
+            -0.417099
+          ],
+          "min": [
+            -2.580615,
+            0.418,
+            -1.004301
+          ],
+          "span": [
+            2.975545,
+            0.864,
+            0.587201
+          ]
+        },
+        "vertices_m": [
+          [
+            -2.580615,
+            0.418,
+            -1.004301
+          ],
+          [
+            -2.580615,
+            0.418,
+            -0.417099
+          ],
+          [
+            -2.580615,
+            1.282,
+            -1.004301
+          ],
+          [
+            -2.580615,
+            1.282,
+            -0.417099
+          ],
+          [
+            0.394931,
+            0.418,
+            -1.004301
+          ],
+          [
+            0.394931,
+            0.418,
+            -0.417099
+          ],
+          [
+            0.394931,
+            1.282,
+            -1.004301
+          ],
+          [
+            0.394931,
+            1.282,
+            -0.417099
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "wing_root_fairing",
+      "semantic_component_id": "semantic_right_wing_root_fairing_volume",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          1.45,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          0.25,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "right_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          1.282,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          0.418,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "surface_component_id": "surface_right_wing_root_fairing",
+      "surface_review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "surface_review_semantics": "cross_region_semantic_hold",
+      "surface_review_status": "review_only_cross_region_semantic_hold",
+      "surface_role": "structural_transition",
+      "volume_component_role": "right_wing_root_fairing_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "left_horizontal_tail_actuator_or_surface_component"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "geometry_primitive": "thin_prism",
+      "mesh_region_vertex_count": 216,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -2.875882,
+              -1.267276
+            ],
+            [
+              -2.870135,
+              -1.299879
+            ],
+            [
+              -2.868212,
+              -1.31075
+            ],
+            [
+              -1.089661,
+              -1.030166
+            ],
+            [
+              -0.711389,
+              -0.95721
+            ],
+            [
+              -0.711288,
+              -0.795332
+            ],
+            [
+              -1.089661,
+              -0.877106
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 13,
+          "points_m": [
+            [
+              -7.335397,
+              -1.17162
+            ],
+            [
+              -7.319956,
+              -1.236706
+            ],
+            [
+              -7.098469,
+              -1.288635
+            ],
+            [
+              -6.550045,
+              -1.31075
+            ],
+            [
+              -6.269301,
+              -1.299879
+            ],
+            [
+              -6.216184,
+              -1.289008
+            ],
+            [
+              -4.864129,
+              -1.00769
+            ],
+            [
+              -4.669165,
+              -0.953636
+            ],
+            [
+              -4.864129,
+              -0.899583
+            ],
+            [
+              -5.92328,
+              -0.795332
+            ],
+            [
+              -6.76955,
+              -0.864272
+            ],
+            [
+              -7.07713,
+              -0.953636
+            ],
+            [
+              -7.335397,
+              -1.163266
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 12,
+          "points_m": [
+            [
+              -7.335397,
+              -2.251241
+            ],
+            [
+              -7.319956,
+              -2.602335
+            ],
+            [
+              -7.098469,
+              -2.854623
+            ],
+            [
+              -6.839547,
+              -2.872047
+            ],
+            [
+              -6.550045,
+              -2.875882
+            ],
+            [
+              -6.269301,
+              -2.87396
+            ],
+            [
+              -6.216184,
+              -2.872047
+            ],
+            [
+              -4.669165,
+              -1.089661
+            ],
+            [
+              -5.92328,
+              -0.711288
+            ],
+            [
+              -6.76955,
+              -0.71155
+            ],
+            [
+              -7.07713,
+              -1.089661
+            ],
+            [
+              -7.335397,
+              -2.242604
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_28",
+        "Object_30",
+        "Object_36"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 2.0,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "tail_surface_skin",
+            "target_system": "left_horizontal_tail_actuator_or_surface_component"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "surface_area_loss",
+          "control_surface_damage_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "left_horizontal_tail_actuator_or_surface_component"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -6.002281,
+              -1.793586,
+              -1.05304
+            ],
+            "half_extents_m": [
+              1.318929,
+              1.014021,
+              0.110775
+            ]
+          },
+          "primitive": "thin_prism",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "thin_prism",
+          "source_region_bounds": {
+            "center": [
+              -6.002281,
+              -1.793586,
+              -1.05304
+            ],
+            "max": [
+              -4.599165,
+              -0.641289,
+              -0.745331
+            ],
+            "min": [
+              -7.405397,
+              -2.945882,
+              -1.36075
+            ],
+            "span": [
+              2.806232,
+              2.304593,
+              0.615419
+            ]
+          },
+          "source_region_id": "left_horizontal_tail",
+          "support_bounds": {
+            "center": [
+              -6.002281,
+              -1.793586,
+              -1.05304
+            ],
+            "max": [
+              -4.683352,
+              -0.779565,
+              -0.942265
+            ],
+            "min": [
+              -7.32121,
+              -2.807607,
+              -1.163815
+            ],
+            "span": [
+              2.637858,
+              2.028042,
+              0.221551
+            ]
+          },
+          "surface_component_id": "surface_left_horizontal_tail_skin",
+          "thin_prism": {
+            "nominal_thickness_m": 0.221551,
+            "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+            "thin_axis": "z"
+          },
+          "vertices_m": [
+            [
+              -7.32121,
+              -2.807607,
+              -1.163815
+            ],
+            [
+              -7.32121,
+              -2.807607,
+              -0.942265
+            ],
+            [
+              -7.32121,
+              -0.779565,
+              -1.163815
+            ],
+            [
+              -7.32121,
+              -0.779565,
+              -0.942265
+            ],
+            [
+              -4.683352,
+              -2.807607,
+              -1.163815
+            ],
+            [
+              -4.683352,
+              -2.807607,
+              -0.942265
+            ],
+            [
+              -4.683352,
+              -0.779565,
+              -1.163815
+            ],
+            [
+              -4.683352,
+              -0.779565,
+              -0.942265
+            ]
+          ],
+          "volume_role": "left_horizontal_tail_skin_volume"
+        },
+        "geometry_primitive": "thin_prism",
+        "name": "semantic_left_horizontal_tail_skin_volume",
+        "offset": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_left_horizontal_tail_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.637858,
+          2.028042,
+          0.221551
+        ],
+        "system": "tail_surface_skin",
+        "threshold_scale": 0.95
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -6.002281,
+            -1.793586,
+            -1.05304
+          ],
+          "half_extents_m": [
+            1.318929,
+            1.014021,
+            0.110775
+          ]
+        },
+        "primitive": "thin_prism",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "thin_prism",
+        "source_region_bounds": {
+          "center": [
+            -6.002281,
+            -1.793586,
+            -1.05304
+          ],
+          "max": [
+            -4.599165,
+            -0.641289,
+            -0.745331
+          ],
+          "min": [
+            -7.405397,
+            -2.945882,
+            -1.36075
+          ],
+          "span": [
+            2.806232,
+            2.304593,
+            0.615419
+          ]
+        },
+        "source_region_id": "left_horizontal_tail",
+        "support_bounds": {
+          "center": [
+            -6.002281,
+            -1.793586,
+            -1.05304
+          ],
+          "max": [
+            -4.683352,
+            -0.779565,
+            -0.942265
+          ],
+          "min": [
+            -7.32121,
+            -2.807607,
+            -1.163815
+          ],
+          "span": [
+            2.637858,
+            2.028042,
+            0.221551
+          ]
+        },
+        "thin_prism": {
+          "nominal_thickness_m": 0.221551,
+          "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+          "thin_axis": "z"
+        },
+        "vertices_m": [
+          [
+            -7.32121,
+            -2.807607,
+            -1.163815
+          ],
+          [
+            -7.32121,
+            -2.807607,
+            -0.942265
+          ],
+          [
+            -7.32121,
+            -0.779565,
+            -1.163815
+          ],
+          [
+            -7.32121,
+            -0.779565,
+            -0.942265
+          ],
+          [
+            -4.683352,
+            -2.807607,
+            -1.163815
+          ],
+          [
+            -4.683352,
+            -2.807607,
+            -0.942265
+          ],
+          [
+            -4.683352,
+            -0.779565,
+            -1.163815
+          ],
+          [
+            -4.683352,
+            -0.779565,
+            -0.942265
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "tail_surface_skin",
+      "semantic_component_id": "semantic_left_horizontal_tail_skin_volume",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          -0.641289,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          -2.945882,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304593,
+          0.615419
+        ]
+      },
+      "source_region_id": "left_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          -0.779565,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          -2.807607,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028042,
+          0.221551
+        ]
+      },
+      "surface_component_id": "surface_left_horizontal_tail_skin",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "tail_surface",
+      "volume_component_role": "left_horizontal_tail_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "right_horizontal_tail_actuator_or_surface_component"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "geometry_primitive": "thin_prism",
+      "mesh_region_vertex_count": 216,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              0.711287,
+              -0.795332
+            ],
+            [
+              0.711388,
+              -0.95721
+            ],
+            [
+              1.08966,
+              -1.030166
+            ],
+            [
+              2.868211,
+              -1.31075
+            ],
+            [
+              2.870134,
+              -1.299879
+            ],
+            [
+              2.875881,
+              -1.267276
+            ],
+            [
+              1.08966,
+              -0.877106
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 13,
+          "points_m": [
+            [
+              -7.335397,
+              -1.17162
+            ],
+            [
+              -7.319956,
+              -1.236706
+            ],
+            [
+              -7.098469,
+              -1.288635
+            ],
+            [
+              -6.550045,
+              -1.31075
+            ],
+            [
+              -6.269301,
+              -1.299879
+            ],
+            [
+              -6.216184,
+              -1.289008
+            ],
+            [
+              -4.864129,
+              -1.00769
+            ],
+            [
+              -4.669165,
+              -0.953636
+            ],
+            [
+              -4.864129,
+              -0.899583
+            ],
+            [
+              -5.92328,
+              -0.795332
+            ],
+            [
+              -6.76955,
+              -0.864272
+            ],
+            [
+              -7.07713,
+              -0.953636
+            ],
+            [
+              -7.335397,
+              -1.163266
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 12,
+          "points_m": [
+            [
+              -7.335397,
+              2.242603
+            ],
+            [
+              -7.07713,
+              1.08966
+            ],
+            [
+              -6.76955,
+              0.711549
+            ],
+            [
+              -5.92328,
+              0.711287
+            ],
+            [
+              -4.669165,
+              1.08966
+            ],
+            [
+              -6.216184,
+              2.872046
+            ],
+            [
+              -6.269301,
+              2.873959
+            ],
+            [
+              -6.550045,
+              2.875881
+            ],
+            [
+              -6.839547,
+              2.872046
+            ],
+            [
+              -7.098469,
+              2.854622
+            ],
+            [
+              -7.319956,
+              2.602334
+            ],
+            [
+              -7.335397,
+              2.25124
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_18",
+        "Object_24",
+        "Object_26"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 2.0,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "tail_surface_skin",
+            "target_system": "right_horizontal_tail_actuator_or_surface_component"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "surface_area_loss",
+          "control_surface_damage_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "right_horizontal_tail_actuator_or_surface_component"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -6.002281,
+              1.793584,
+              -1.05304
+            ],
+            "half_extents_m": [
+              1.318929,
+              1.014021,
+              0.110775
+            ]
+          },
+          "primitive": "thin_prism",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "thin_prism",
+          "source_region_bounds": {
+            "center": [
+              -6.002281,
+              1.793584,
+              -1.05304
+            ],
+            "max": [
+              -4.599165,
+              2.945881,
+              -0.745331
+            ],
+            "min": [
+              -7.405397,
+              0.641287,
+              -1.36075
+            ],
+            "span": [
+              2.806232,
+              2.304594,
+              0.615419
+            ]
+          },
+          "source_region_id": "right_horizontal_tail",
+          "support_bounds": {
+            "center": [
+              -6.002281,
+              1.793584,
+              -1.05304
+            ],
+            "max": [
+              -4.683352,
+              2.807605,
+              -0.942265
+            ],
+            "min": [
+              -7.32121,
+              0.779563,
+              -1.163815
+            ],
+            "span": [
+              2.637858,
+              2.028043,
+              0.221551
+            ]
+          },
+          "surface_component_id": "surface_right_horizontal_tail_skin",
+          "thin_prism": {
+            "nominal_thickness_m": 0.221551,
+            "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+            "thin_axis": "z"
+          },
+          "vertices_m": [
+            [
+              -7.32121,
+              0.779563,
+              -1.163815
+            ],
+            [
+              -7.32121,
+              0.779563,
+              -0.942265
+            ],
+            [
+              -7.32121,
+              2.807605,
+              -1.163815
+            ],
+            [
+              -7.32121,
+              2.807605,
+              -0.942265
+            ],
+            [
+              -4.683352,
+              0.779563,
+              -1.163815
+            ],
+            [
+              -4.683352,
+              0.779563,
+              -0.942265
+            ],
+            [
+              -4.683352,
+              2.807605,
+              -1.163815
+            ],
+            [
+              -4.683352,
+              2.807605,
+              -0.942265
+            ]
+          ],
+          "volume_role": "right_horizontal_tail_skin_volume"
+        },
+        "geometry_primitive": "thin_prism",
+        "name": "semantic_right_horizontal_tail_skin_volume",
+        "offset": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_right_horizontal_tail_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          2.637858,
+          2.028043,
+          0.221551
+        ],
+        "system": "tail_surface_skin",
+        "threshold_scale": 0.95
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -6.002281,
+            1.793584,
+            -1.05304
+          ],
+          "half_extents_m": [
+            1.318929,
+            1.014021,
+            0.110775
+          ]
+        },
+        "primitive": "thin_prism",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "thin_prism",
+        "source_region_bounds": {
+          "center": [
+            -6.002281,
+            1.793584,
+            -1.05304
+          ],
+          "max": [
+            -4.599165,
+            2.945881,
+            -0.745331
+          ],
+          "min": [
+            -7.405397,
+            0.641287,
+            -1.36075
+          ],
+          "span": [
+            2.806232,
+            2.304594,
+            0.615419
+          ]
+        },
+        "source_region_id": "right_horizontal_tail",
+        "support_bounds": {
+          "center": [
+            -6.002281,
+            1.793584,
+            -1.05304
+          ],
+          "max": [
+            -4.683352,
+            2.807605,
+            -0.942265
+          ],
+          "min": [
+            -7.32121,
+            0.779563,
+            -1.163815
+          ],
+          "span": [
+            2.637858,
+            2.028043,
+            0.221551
+          ]
+        },
+        "thin_prism": {
+          "nominal_thickness_m": 0.221551,
+          "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+          "thin_axis": "z"
+        },
+        "vertices_m": [
+          [
+            -7.32121,
+            0.779563,
+            -1.163815
+          ],
+          [
+            -7.32121,
+            0.779563,
+            -0.942265
+          ],
+          [
+            -7.32121,
+            2.807605,
+            -1.163815
+          ],
+          [
+            -7.32121,
+            2.807605,
+            -0.942265
+          ],
+          [
+            -4.683352,
+            0.779563,
+            -1.163815
+          ],
+          [
+            -4.683352,
+            0.779563,
+            -0.942265
+          ],
+          [
+            -4.683352,
+            2.807605,
+            -1.163815
+          ],
+          [
+            -4.683352,
+            2.807605,
+            -0.942265
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "tail_surface_skin",
+      "semantic_component_id": "semantic_right_horizontal_tail_skin_volume",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          2.945881,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          0.641287,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304594,
+          0.615419
+        ]
+      },
+      "source_region_id": "right_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          2.807605,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          0.779563,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028043,
+          0.221551
+        ]
+      },
+      "surface_component_id": "surface_right_horizontal_tail_skin",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "tail_surface",
+      "volume_component_role": "right_horizontal_tail_skin_volume"
+    },
+    {
+      "authority_boundary": "semantic_mesh_proxy_volume_candidate_not_active_runtime_damage_model",
+      "bad_geometry_receiver_components": [],
+      "blocked_receiver_components": [],
+      "cross_region_receiver_components": [],
+      "cross_region_receiver_count": 0,
+      "direct_receiver_components": [
+        "rudder_actuator"
+      ],
+      "direct_receiver_count": 1,
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "rudder_damage_candidate"
+      ],
+      "geometry_primitive": "thin_prism",
+      "mesh_region_vertex_count": 175,
+      "mesh_silhouette_hulls": {
+        "front": {
+          "axes": [
+            "y",
+            "z"
+          ],
+          "point_count": 5,
+          "points_m": [
+            [
+              -0.066908,
+              0.189614
+            ],
+            [
+              -1e-06,
+              0.168577
+            ],
+            [
+              0.066907,
+              0.189614
+            ],
+            [
+              0.026392,
+              2.168887
+            ],
+            [
+              -0.026393,
+              2.168887
+            ]
+          ]
+        },
+        "side": {
+          "axes": [
+            "x",
+            "z"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -7.536843,
+              2.100722
+            ],
+            [
+              -7.418399,
+              1.756623
+            ],
+            [
+              -7.20431,
+              1.348215
+            ],
+            [
+              -6.386597,
+              0.168577
+            ],
+            [
+              -5.663704,
+              0.189614
+            ],
+            [
+              -6.955907,
+              2.168887
+            ],
+            [
+              -7.32522,
+              2.168887
+            ]
+          ]
+        },
+        "top": {
+          "axes": [
+            "x",
+            "y"
+          ],
+          "point_count": 7,
+          "points_m": [
+            [
+              -7.536843,
+              -1e-06
+            ],
+            [
+              -7.307585,
+              -0.012754
+            ],
+            [
+              -6.955907,
+              -0.026393
+            ],
+            [
+              -5.663704,
+              -0.066908
+            ],
+            [
+              -5.663704,
+              0.066907
+            ],
+            [
+              -6.955907,
+              0.026392
+            ],
+            [
+              -7.307585,
+              0.012753
+            ]
+          ]
+        }
+      },
+      "mesh_source_nodes": [
+        "Object_40"
+      ],
+      "receiver_handoff_status": "direct_receivers_parse_ready",
+      "runtime_component_json_candidate": {
+        "armor": 2.5,
+        "critical": false,
+        "dependencies": [
+          {
+            "edge_type": "semantic_surface_handoff_candidate",
+            "provenance": "A2 target-geometry semantic volume handoff candidate; mesh-proxy review geometry, non-authoritative",
+            "scale": 0.35,
+            "system": "tail_surface_skin",
+            "target_system": "rudder_actuator"
+          }
+        ],
+        "failure_modes": [
+          "perforation",
+          "skin_tearing",
+          "surface_area_loss",
+          "rudder_damage_candidate"
+        ],
+        "geometry": {
+          "cross_region_receiver_components": [],
+          "direct_receiver_components": [
+            "rudder_actuator"
+          ],
+          "obb": {
+            "axes": [
+              [
+                1.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                1.0
+              ]
+            ],
+            "center_m": [
+              -6.600274,
+              -1e-06,
+              1.168732
+            ],
+            "half_extents_m": [
+              0.869913,
+              0.095257,
+              1.036949
+            ]
+          },
+          "primitive": "thin_prism",
+          "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+          "source": "a2_mesh_proxy_support_volume",
+          "source_proxy_kind": "thin_prism",
+          "source_region_bounds": {
+            "center": [
+              -6.600274,
+              -1e-06,
+              1.168732
+            ],
+            "max": [
+              -5.633704,
+              0.396906,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -0.396907,
+              0.088577
+            ],
+            "span": [
+              1.93314,
+              0.793813,
+              2.16031
+            ]
+          },
+          "source_region_id": "vertical_tail",
+          "support_bounds": {
+            "center": [
+              -6.600274,
+              -1e-06,
+              1.168732
+            ],
+            "max": [
+              -5.730361,
+              0.095257,
+              2.205681
+            ],
+            "min": [
+              -7.470187,
+              -0.095259,
+              0.131783
+            ],
+            "span": [
+              1.739826,
+              0.190515,
+              2.073898
+            ]
+          },
+          "surface_component_id": "surface_vertical_tail_skin",
+          "thin_prism": {
+            "nominal_thickness_m": 0.190515,
+            "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+            "thin_axis": "y"
+          },
+          "vertices_m": [
+            [
+              -7.470187,
+              -0.095259,
+              0.131783
+            ],
+            [
+              -7.470187,
+              -0.095259,
+              2.205681
+            ],
+            [
+              -7.470187,
+              0.095257,
+              0.131783
+            ],
+            [
+              -7.470187,
+              0.095257,
+              2.205681
+            ],
+            [
+              -5.730361,
+              -0.095259,
+              0.131783
+            ],
+            [
+              -5.730361,
+              -0.095259,
+              2.205681
+            ],
+            [
+              -5.730361,
+              0.095257,
+              0.131783
+            ],
+            [
+              -5.730361,
+              0.095257,
+              2.205681
+            ]
+          ],
+          "volume_role": "vertical_tail_skin_volume"
+        },
+        "geometry_primitive": "thin_prism",
+        "name": "semantic_vertical_tail_skin_volume",
+        "offset": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "redundancy_group": 0.0,
+        "redundancy_group_id": "semantic_vertical_tail_skin_volume",
+        "redundancy_weight": 0.35,
+        "size": [
+          1.739826,
+          0.190515,
+          2.073898
+        ],
+        "system": "tail_surface_skin",
+        "threshold_scale": 1.0
+      },
+      "runtime_geometry": {
+        "obb": {
+          "axes": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "center_m": [
+            -6.600274,
+            -1e-06,
+            1.168732
+          ],
+          "half_extents_m": [
+            0.869913,
+            0.095257,
+            1.036949
+          ]
+        },
+        "primitive": "thin_prism",
+        "source": "a2_mesh_proxy_support_volume",
+        "source_proxy_kind": "thin_prism",
+        "source_region_bounds": {
+          "center": [
+            -6.600274,
+            -1e-06,
+            1.168732
+          ],
+          "max": [
+            -5.633704,
+            0.396906,
+            2.248887
+          ],
+          "min": [
+            -7.566844,
+            -0.396907,
+            0.088577
+          ],
+          "span": [
+            1.93314,
+            0.793813,
+            2.16031
+          ]
+        },
+        "source_region_id": "vertical_tail",
+        "support_bounds": {
+          "center": [
+            -6.600274,
+            -1e-06,
+            1.168732
+          ],
+          "max": [
+            -5.730361,
+            0.095257,
+            2.205681
+          ],
+          "min": [
+            -7.470187,
+            -0.095259,
+            0.131783
+          ],
+          "span": [
+            1.739826,
+            0.190515,
+            2.073898
+          ]
+        },
+        "thin_prism": {
+          "nominal_thickness_m": 0.190515,
+          "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+          "thin_axis": "y"
+        },
+        "vertices_m": [
+          [
+            -7.470187,
+            -0.095259,
+            0.131783
+          ],
+          [
+            -7.470187,
+            -0.095259,
+            2.205681
+          ],
+          [
+            -7.470187,
+            0.095257,
+            0.131783
+          ],
+          [
+            -7.470187,
+            0.095257,
+            2.205681
+          ],
+          [
+            -5.730361,
+            -0.095259,
+            0.131783
+          ],
+          [
+            -5.730361,
+            -0.095259,
+            2.205681
+          ],
+          [
+            -5.730361,
+            0.095257,
+            0.131783
+          ],
+          [
+            -5.730361,
+            0.095257,
+            2.205681
+          ]
+        ]
+      },
+      "runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "runtime_system": "tail_surface_skin",
+      "semantic_component_id": "semantic_vertical_tail_skin_volume",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.633704,
+          0.396906,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -0.396907,
+          0.088577
+        ],
+        "span": [
+          1.93314,
+          0.793813,
+          2.16031
+        ]
+      },
+      "source_region_id": "vertical_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.730361,
+          0.095257,
+          2.205681
+        ],
+        "min": [
+          -7.470187,
+          -0.095259,
+          0.131783
+        ],
+        "span": [
+          1.739826,
+          0.190515,
+          2.073898
+        ]
+      },
+      "surface_component_id": "surface_vertical_tail_skin",
+      "surface_review_flags": [
+        "candidate_surface_component"
+      ],
+      "surface_review_semantics": "candidate_surface_component",
+      "surface_review_status": "candidate_surface_component",
+      "surface_role": "tail_surface",
+      "volume_component_role": "vertical_tail_skin_volume"
+    }
+  ],
+  "schema_version": "a2.target_geometry_semantic_damage_geometry_candidate.v1",
+  "source_fine_proxy_schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
+  "source_mapping_schema_version": "a2.target_geometry_mapping_candidate.v1",
+  "source_surface_component_schema_version": "a2.target_geometry_surface_component_candidate.v1",
+  "status": "semantic_damage_geometry_candidate_generated_review_only",
+  "summary": {
+    "bad_geometry_receiver_count": 0,
+    "blocked_receiver_count": 0,
+    "cross_region_handoff_held_count": 8,
+    "cross_region_receiver_reference_count": 8,
+    "direct_receiver_component_reference_count": 24,
+    "geometry_primitive_counts": {
+      "convex_hull": 5,
+      "obb": 4,
+      "thin_prism": 5
+    },
+    "review_status": "manual_review_required_before_activation",
+    "runtime_active_component_count": 0,
+    "runtime_parse_ready_component_count": 14,
+    "semantic_volume_component_count": 14
+  }
+}

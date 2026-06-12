@@ -1,0 +1,370 @@
+{
+  "authority_boundary": {
+    "parent_child_damage_ownership": false,
+    "runtime_active_component": false,
+    "runtime_damage_model": false,
+    "true_internal_component_geometry": false
+  },
+  "entries": [
+    {
+      "bound_receiver_count": 2,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "apg68_radar_array",
+        "iff_interrogator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 1,
+      "html": "parents/semantic-nose-radome-volume.html",
+      "parent_semantic_component_id": "semantic_nose_radome_volume",
+      "priority": "info",
+      "slug": "semantic-nose-radome-volume",
+      "source_region_id": "nose_radome",
+      "subtitle": "nose_radome: 2 receiver overlays, 1 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-nose-radome-volume_front.svg",
+        "side": "parents/semantic-nose-radome-volume_side.svg",
+        "top": "parents/semantic-nose-radome-volume_top.svg"
+      },
+      "title": "semantic_nose_radome_volume"
+    },
+    {
+      "bound_receiver_count": 3,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "cockpit_crew_station",
+        "nose_avionics_bay",
+        "inertial_navigation_unit"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 2,
+      "html": "parents/semantic-forward-fuselage-skin-volume.html",
+      "parent_semantic_component_id": "semantic_forward_fuselage_skin_volume",
+      "priority": "info",
+      "slug": "semantic-forward-fuselage-skin-volume",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "forward_fuselage: 3 receiver overlays, 2 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-forward-fuselage-skin-volume_front.svg",
+        "side": "parents/semantic-forward-fuselage-skin-volume_side.svg",
+        "top": "parents/semantic-forward-fuselage-skin-volume_top.svg"
+      },
+      "title": "semantic_forward_fuselage_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "dedicated_canopy_surface_component"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-canopy-surface-volume.html",
+      "parent_semantic_component_id": "semantic_canopy_surface_volume",
+      "priority": "info",
+      "slug": "semantic-canopy-surface-volume",
+      "source_region_id": "canopy",
+      "subtitle": "canopy: 1 receiver overlays, 0 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-canopy-surface-volume_front.svg",
+        "side": "parents/semantic-canopy-surface-volume_side.svg",
+        "top": "parents/semantic-canopy-surface-volume_top.svg"
+      },
+      "title": "semantic_canopy_surface_volume"
+    },
+    {
+      "bound_receiver_count": 5,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "center_fuselage_fuel_cell",
+        "mission_computer",
+        "data_link_terminal",
+        "flight_control_computer",
+        "wing_spar_center"
+      ],
+      "cross_region_held_receiver_names": [
+        "wing_spar_center"
+      ],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 4,
+      "html": "parents/semantic-center-fuselage-skin-volume.html",
+      "parent_semantic_component_id": "semantic_center_fuselage_skin_volume",
+      "priority": "warning",
+      "slug": "semantic-center-fuselage-skin-volume",
+      "source_region_id": "center_fuselage",
+      "subtitle": "center_fuselage: 5 receiver overlays, 4 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-center-fuselage-skin-volume_front.svg",
+        "side": "parents/semantic-center-fuselage-skin-volume_side.svg",
+        "top": "parents/semantic-center-fuselage-skin-volume_top.svg"
+      },
+      "title": "semantic_center_fuselage_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-intake-lip-and-duct-volume.html",
+      "parent_semantic_component_id": "semantic_intake_lip_and_duct_volume",
+      "priority": "info",
+      "slug": "semantic-intake-lip-and-duct-volume",
+      "source_region_id": "intake",
+      "subtitle": "intake: 1 receiver overlays, 0 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-intake-lip-and-duct-volume_front.svg",
+        "side": "parents/semantic-intake-lip-and-duct-volume_side.svg",
+        "top": "parents/semantic-intake-lip-and-duct-volume_top.svg"
+      },
+      "title": "semantic_intake_lip_and_duct_volume"
+    },
+    {
+      "bound_receiver_count": 4,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "electrical_power_bus",
+        "engine_core",
+        "tail_hydraulic_pump",
+        "engine_fuel_control_unit"
+      ],
+      "cross_region_held_receiver_names": [
+        "engine_core"
+      ],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 3,
+      "html": "parents/semantic-aft-engine-bay-skin-volume.html",
+      "parent_semantic_component_id": "semantic_aft_engine_bay_skin_volume",
+      "priority": "warning",
+      "slug": "semantic-aft-engine-bay-skin-volume",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "aft_fuselage_engine: 4 receiver overlays, 3 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-aft-engine-bay-skin-volume_front.svg",
+        "side": "parents/semantic-aft-engine-bay-skin-volume_side.svg",
+        "top": "parents/semantic-aft-engine-bay-skin-volume_top.svg"
+      },
+      "title": "semantic_aft_engine_bay_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "afterburner_nozzle"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [
+        "engine_core_afterburner_segment"
+      ],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-engine-nozzle-volume.html",
+      "parent_semantic_component_id": "semantic_engine_nozzle_volume",
+      "priority": "warning",
+      "slug": "semantic-engine-nozzle-volume",
+      "source_region_id": "engine_nozzle",
+      "subtitle": "engine_nozzle: 1 receiver overlays, 0 extra, 1 external held segments",
+      "svg": {
+        "front": "parents/semantic-engine-nozzle-volume_front.svg",
+        "side": "parents/semantic-engine-nozzle-volume_side.svg",
+        "top": "parents/semantic-engine-nozzle-volume_top.svg"
+      },
+      "title": "semantic_engine_nozzle_volume"
+    },
+    {
+      "bound_receiver_count": 2,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "left_wing_fuel_cell",
+        "left_aileron_actuator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [
+        "wing_spar_center_left_inner_wing_segment"
+      ],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 1,
+      "html": "parents/semantic-left-wing-skin-volume.html",
+      "parent_semantic_component_id": "semantic_left_wing_skin_volume",
+      "priority": "warning",
+      "slug": "semantic-left-wing-skin-volume",
+      "source_region_id": "left_wing",
+      "subtitle": "left_wing: 2 receiver overlays, 1 extra, 1 external held segments",
+      "svg": {
+        "front": "parents/semantic-left-wing-skin-volume_front.svg",
+        "side": "parents/semantic-left-wing-skin-volume_side.svg",
+        "top": "parents/semantic-left-wing-skin-volume_top.svg"
+      },
+      "title": "semantic_left_wing_skin_volume"
+    },
+    {
+      "bound_receiver_count": 2,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "right_wing_fuel_cell",
+        "right_aileron_actuator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [
+        "wing_spar_center_right_inner_wing_segment"
+      ],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 1,
+      "html": "parents/semantic-right-wing-skin-volume.html",
+      "parent_semantic_component_id": "semantic_right_wing_skin_volume",
+      "priority": "warning",
+      "slug": "semantic-right-wing-skin-volume",
+      "source_region_id": "right_wing",
+      "subtitle": "right_wing: 2 receiver overlays, 1 extra, 1 external held segments",
+      "svg": {
+        "front": "parents/semantic-right-wing-skin-volume_front.svg",
+        "side": "parents/semantic-right-wing-skin-volume_side.svg",
+        "top": "parents/semantic-right-wing-skin-volume_top.svg"
+      },
+      "title": "semantic_right_wing_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [
+        "wing_spar_center_left_root_segment"
+      ],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-left-wing-root-fairing-volume.html",
+      "parent_semantic_component_id": "semantic_left_wing_root_fairing_volume",
+      "priority": "warning",
+      "slug": "semantic-left-wing-root-fairing-volume",
+      "source_region_id": "left_wing_root",
+      "subtitle": "left_wing_root: 1 receiver overlays, 0 extra, 1 external held segments",
+      "svg": {
+        "front": "parents/semantic-left-wing-root-fairing-volume_front.svg",
+        "side": "parents/semantic-left-wing-root-fairing-volume_side.svg",
+        "top": "parents/semantic-left-wing-root-fairing-volume_top.svg"
+      },
+      "title": "semantic_left_wing_root_fairing_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [
+        "wing_spar_center_right_root_segment"
+      ],
+      "decision_needed": "Review red held overlays before runtime ownership decisions.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-right-wing-root-fairing-volume.html",
+      "parent_semantic_component_id": "semantic_right_wing_root_fairing_volume",
+      "priority": "warning",
+      "slug": "semantic-right-wing-root-fairing-volume",
+      "source_region_id": "right_wing_root",
+      "subtitle": "right_wing_root: 1 receiver overlays, 0 extra, 1 external held segments",
+      "svg": {
+        "front": "parents/semantic-right-wing-root-fairing-volume_front.svg",
+        "side": "parents/semantic-right-wing-root-fairing-volume_side.svg",
+        "top": "parents/semantic-right-wing-root-fairing-volume_top.svg"
+      },
+      "title": "semantic_right_wing_root_fairing_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "left_horizontal_tail_actuator_or_surface_component"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-left-horizontal-tail-skin-volume.html",
+      "parent_semantic_component_id": "semantic_left_horizontal_tail_skin_volume",
+      "priority": "info",
+      "slug": "semantic-left-horizontal-tail-skin-volume",
+      "source_region_id": "left_horizontal_tail",
+      "subtitle": "left_horizontal_tail: 1 receiver overlays, 0 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-left-horizontal-tail-skin-volume_front.svg",
+        "side": "parents/semantic-left-horizontal-tail-skin-volume_side.svg",
+        "top": "parents/semantic-left-horizontal-tail-skin-volume_top.svg"
+      },
+      "title": "semantic_left_horizontal_tail_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "right_horizontal_tail_actuator_or_surface_component"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-right-horizontal-tail-skin-volume.html",
+      "parent_semantic_component_id": "semantic_right_horizontal_tail_skin_volume",
+      "priority": "info",
+      "slug": "semantic-right-horizontal-tail-skin-volume",
+      "source_region_id": "right_horizontal_tail",
+      "subtitle": "right_horizontal_tail: 1 receiver overlays, 0 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-right-horizontal-tail-skin-volume_front.svg",
+        "side": "parents/semantic-right-horizontal-tail-skin-volume_side.svg",
+        "top": "parents/semantic-right-horizontal-tail-skin-volume_top.svg"
+      },
+      "title": "semantic_right_horizontal_tail_skin_volume"
+    },
+    {
+      "bound_receiver_count": 1,
+      "category": "parent_shells",
+      "child_receiver_component_names": [
+        "rudder_actuator"
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_ids": [],
+      "decision_needed": "Review receiver overlays inside this parent before activation.",
+      "extra_receiver_slot_count": 0,
+      "html": "parents/semantic-vertical-tail-skin-volume.html",
+      "parent_semantic_component_id": "semantic_vertical_tail_skin_volume",
+      "priority": "info",
+      "slug": "semantic-vertical-tail-skin-volume",
+      "source_region_id": "vertical_tail",
+      "subtitle": "vertical_tail: 1 receiver overlays, 0 extra, 0 external held segments",
+      "svg": {
+        "front": "parents/semantic-vertical-tail-skin-volume_front.svg",
+        "side": "parents/semantic-vertical-tail-skin-volume_side.svg",
+        "top": "parents/semantic-vertical-tail-skin-volume_top.svg"
+      },
+      "title": "semantic_vertical_tail_skin_volume"
+    }
+  ],
+  "index_html": "index.html",
+  "schema_version": "a2.target_geometry_semantic_parent_child_layout_views.v1",
+  "status": "semantic_parent_child_layout_views_generated_review_only",
+  "summary": {
+    "bound_receiver_component_count": 26,
+    "cross_region_held_receiver_count": 2,
+    "cross_region_held_segment_count": 8,
+    "cross_region_held_segment_overlay_count": 5,
+    "entry_count": 14,
+    "extra_receiver_slot_count": 12,
+    "parent_entry_count": 14
+  }
+}

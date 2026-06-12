@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>engine_core internal prior view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    figure {
+      margin: 0 0 18px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to internal prior index</a></p>
+    <h1>engine_core</h1>
+    <p class="subtitle">capsule prior -> aft_fuselage_engine; constraint status cross_region_prior_constrained_inside_airframe_held</p>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>component: engine_core</li><li>system: engine</li><li>role: cross_region_engine_receiver</li><li>prior shape: capsule axis=x</li><li>bound region: aft_fuselage_engine</li><li>constraint regions: aft_fuselage_engine, engine_nozzle, intake</li><li>constraint mode: multi_region_placement_source_region_bounds_whole_airframe_constraint</li><li>constraint status: cross_region_prior_constrained_inside_airframe_held</li><li>old AABB containment: 0.88836</li><li>adjustment: {&quot;airframe_projection_center_shift_m&quot;: 0.0, &quot;center_shift_m&quot;: 0.0, &quot;placement_outside_fraction&quot;: 0.0, &quot;post_constraint_outside_fraction&quot;: 0.0, &quot;pre_constraint_outside_fraction&quot;: 0.0, &quot;required_fit_scale&quot;: 1.0, &quot;shrink_scale&quot;: 1.0, &quot;size_preserved&quot;: true, &quot;size_shrink_allowed&quot;: false}</li><li>component review semantics: cross_region_boundary_candidate_review_only</li><li>rationale: engine core uses public F110-GE-129 engine length and maximum diameter; R21 promotes the rounded lower centerline capsule candidate, while ownership remains cross-region held.</li><li>runtime projection: runtime_schema_candidate_not_activated_prior_shape_review_required</li></ul>
+  </section>
+  <section>
+    <figure><figcaption>top view</figcaption><img src="engine-core_top.svg" alt="engine_core top view"></figure><figure><figcaption>side view</figcaption><img src="engine-core_side.svg" alt="engine_core side view"></figure><figure><figcaption>front view</figcaption><img src="engine-core_front.svg" alt="engine_core front view"></figure>
+  </section>
+</main>
+</body>
+</html>

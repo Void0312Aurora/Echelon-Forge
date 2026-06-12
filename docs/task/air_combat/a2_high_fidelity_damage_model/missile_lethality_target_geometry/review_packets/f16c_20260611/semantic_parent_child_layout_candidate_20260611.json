@@ -1,0 +1,6033 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "parent_child_damage_ownership": false,
+    "public_size_reference_seeded_geometry": true,
+    "real_weapon_pk_authority": false,
+    "runtime_active_component": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_internal_component_geometry": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Review the 14 parent shell pages as the primary geometry surface; do not review the 26 receiver priors as independent top-level parts."
+    },
+    {
+      "priority": "high",
+      "question": "Treat extra receiver slots as overlays inside the parent shell, not as accepted parent-child damage ownership."
+    },
+    {
+      "priority": "high",
+      "question": "Keep red cross-region held receivers unactivated until engine_core and wing_spar_center ownership is split or explicitly accepted."
+    }
+  ],
+  "rows": [
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 2,
+      "child_receiver_priors": [
+        {
+          "component_name": "apg68_radar_array",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "sensor_aperture_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                4.187559,
+                0.0,
+                -0.52538
+              ],
+              "max": [
+                4.238359,
+                0.3683,
+                -0.28408
+              ],
+              "min": [
+                4.136759,
+                -0.3683,
+                -0.76668
+              ],
+              "span": [
+                0.1016,
+                0.7366,
+                0.4826
+              ]
+            },
+            "center_m": [
+              4.187559,
+              0.0,
+              -0.52538
+            ],
+            "half_extents_m": [
+              0.0508,
+              0.3683,
+              0.2413
+            ],
+            "radii_m": [
+              0.0508,
+              0.3683,
+              0.2413
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.018911
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "nose_radome",
+            "forward_fuselage"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.1016,
+            0.7366,
+            0.4826
+          ],
+          "placement_bounds": {
+            "center": [
+              4.898948,
+              0.0,
+              -0.069905
+            ],
+            "max": [
+              7.536843,
+              0.85,
+              0.838858
+            ],
+            "min": [
+              2.261053,
+              -0.85,
+              -0.978668
+            ],
+            "span": [
+              5.27579,
+              1.7,
+              1.817526
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_related_apg66_antenna_dimensions",
+          "size_evidence_level": "public_related_family_dimension_not_apg68_exact",
+          "size_source_urls": [
+            "https://www.radartutorial.eu/19.kartei/08.airborne/karte018.en.html",
+            "https://www.forecastinternational.com/archive/disp_pdf.cfm?DACH_RECNO=1039"
+          ],
+          "system": "radar",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "iff_interrogator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "small_avionics_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                5.287559,
+                0.0,
+                -0.82538
+              ],
+              "max": [
+                5.471709,
+                0.0762,
+                -0.720478
+              ],
+              "min": [
+                5.103409,
+                -0.0762,
+                -0.930282
+              ],
+              "span": [
+                0.3683,
+                0.1524,
+                0.209804
+              ]
+            },
+            "center_m": [
+              5.287559,
+              0.0,
+              -0.82538
+            ],
+            "half_extents_m": [
+              0.18415,
+              0.0762,
+              0.104902
+            ],
+            "radii_m": [
+              0.18415,
+              0.0762,
+              0.104902
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.006166
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.601971,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.06876,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "nose_radome"
+          ],
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.3683,
+            0.1524,
+            0.209804
+          ],
+          "placement_bounds": {
+            "center": [
+              6.293264,
+              0.0,
+              -0.664096
+            ],
+            "max": [
+              7.536843,
+              0.48,
+              -0.349524
+            ],
+            "min": [
+              5.049685,
+              -0.48,
+              -0.978668
+            ],
+            "span": [
+              2.487158,
+              0.96,
+              0.629144
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_apx_family_lru_dimensions",
+          "size_evidence_level": "public_lru_dimension_related_f16_iff_family",
+          "size_source_urls": [
+            "https://www.baesystems.com/en/product/apx-125-advanced-identification-friend-or-foe"
+          ],
+          "system": "avionics",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [
+        "iff_interrogator"
+      ],
+      "extra_receiver_slot_count": 1,
+      "geometry_primitive": "convex_hull",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_nose_radome_volume",
+      "parent_surface_component_id": "surface_nose_radome",
+      "primary_receiver_component_name": "apg68_radar_array",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.536843,
+          0.48,
+          -0.349524
+        ],
+        "min": [
+          5.049685,
+          -0.48,
+          -0.978668
+        ],
+        "span": [
+          2.487158,
+          0.96,
+          0.629144
+        ]
+      },
+      "source_region_id": "nose_radome",
+      "support_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.437357,
+          0.2784,
+          -0.437604
+        ],
+        "min": [
+          5.149171,
+          -0.2784,
+          -0.890588
+        ],
+        "span": [
+          2.288185,
+          0.5568,
+          0.452984
+        ]
+      },
+      "volume_component_role": "radome_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 3,
+      "child_receiver_priors": [
+        {
+          "component_name": "cockpit_crew_station",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "crew_volume_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                3.787559,
+                0.0,
+                -0.62538
+              ],
+              "max": [
+                4.412559,
+                0.254,
+                -0.05038
+              ],
+              "min": [
+                3.162559,
+                -0.254,
+                -1.20038
+              ],
+              "span": [
+                1.25,
+                0.508,
+                1.15
+              ]
+            },
+            "center_m": [
+              3.787559,
+              0.0,
+              -0.62538
+            ],
+            "half_extents_m": [
+              0.625,
+              0.254,
+              0.575
+            ],
+            "radii_m": [
+              0.625,
+              0.254,
+              0.575
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.382358
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.35489,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "canopy",
+            "forward_fuselage"
+          ],
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            1.25,
+            0.508,
+            1.15
+          ],
+          "placement_bounds": {
+            "center": [
+              3.756133,
+              0.0,
+              0.023301
+            ],
+            "max": [
+              5.426527,
+              0.85,
+              0.838858
+            ],
+            "min": [
+              2.08574,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              3.340787,
+              1.7,
+              1.631113
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_aces_ii_seat_width_plus_crew_envelope_estimate",
+          "size_evidence_level": "public_partial_dimension_engineering_envelope",
+          "size_source_urls": [
+            "https://www.ejectionsite.com/acesii.htm",
+            "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/"
+          ],
+          "system": "cockpit",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "nose_avionics_bay",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "avionics_bay_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                5.287559,
+                0.0,
+                -0.82538
+              ],
+              "max": [
+                5.447833,
+                0.061976,
+                -0.753625
+              ],
+              "min": [
+                5.127285,
+                -0.061976,
+                -0.897135
+              ],
+              "span": [
+                0.320548,
+                0.123952,
+                0.14351
+              ]
+            },
+            "center_m": [
+              5.287559,
+              0.0,
+              -0.82538
+            ],
+            "half_extents_m": [
+              0.160274,
+              0.061976,
+              0.071755
+            ],
+            "shape": "obb",
+            "volume_m3": 0.005702
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.754172,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "forward_fuselage"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.320548,
+            0.123952,
+            0.14351
+          ],
+          "placement_bounds": {
+            "center": [
+              3.84379,
+              0.0,
+              0.023301
+            ],
+            "max": [
+              5.426527,
+              0.85,
+              0.838858
+            ],
+            "min": [
+              2.261053,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              3.165474,
+              1.7,
+              1.631113
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+          "size_evidence_level": "standard_enclosure_proxy_not_true_f16_bay",
+          "size_source_urls": [
+            "https://www.elma.com/en/products/systems/atr-cases/"
+          ],
+          "system": "avionics",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "inertial_navigation_unit",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "small_avionics_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                2.6,
+                0.0,
+                0.01467
+              ],
+              "max": [
+                2.72446,
+                0.0889,
+                0.10357
+              ],
+              "min": [
+                2.47554,
+                -0.0889,
+                -0.07423
+              ],
+              "span": [
+                0.24892,
+                0.1778,
+                0.1778
+              ]
+            },
+            "center_m": [
+              2.6,
+              0.0,
+              0.01467
+            ],
+            "half_extents_m": [
+              0.12446,
+              0.0889,
+              0.0889
+            ],
+            "radii_m": [
+              0.12446,
+              0.0889,
+              0.0889
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.00412
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.03533,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "forward_fuselage"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.24892,
+            0.1778,
+            0.1778
+          ],
+          "placement_bounds": {
+            "center": [
+              3.84379,
+              0.0,
+              0.023301
+            ],
+            "max": [
+              5.426527,
+              0.85,
+              0.838858
+            ],
+            "min": [
+              2.261053,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              3.165474,
+              1.7,
+              1.631113
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_honeywell_h764g_egi_dimensions",
+          "size_evidence_level": "public_lru_dimension",
+          "size_source_urls": [
+            "https://aerospace.honeywell.com/us/en/products-and-services/product/hardware-and-systems/navigation-and-radios/h-764g-embedded-gps-inertial-navigation-system"
+          ],
+          "system": "navigation",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [
+        "nose_avionics_bay",
+        "inertial_navigation_unit"
+      ],
+      "extra_receiver_slot_count": 2,
+      "geometry_primitive": "obb",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_forward_fuselage_skin_volume",
+      "parent_surface_component_id": "surface_forward_fuselage_skin",
+      "primary_receiver_component_name": "cockpit_crew_station",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.426527,
+          0.85,
+          0.838858
+        ],
+        "min": [
+          2.261053,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          3.165474,
+          1.7,
+          1.631113
+        ]
+      },
+      "source_region_id": "forward_fuselage",
+      "support_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.363218,
+          0.748,
+          0.740992
+        ],
+        "min": [
+          2.324362,
+          -0.748,
+          -0.694388
+        ],
+        "span": [
+          3.038855,
+          1.496,
+          1.435379
+        ]
+      },
+      "volume_component_role": "forward_fuselage_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "dedicated_canopy_surface_component",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "surface_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                3.41,
+                0.0,
+                -0.3
+              ],
+              "max": [
+                4.158,
+                0.33,
+                -0.202
+              ],
+              "min": [
+                2.662,
+                -0.33,
+                -0.398
+              ],
+              "span": [
+                1.496,
+                0.66,
+                0.196
+              ]
+            },
+            "center_m": [
+              3.41,
+              0.0,
+              -0.3
+            ],
+            "half_extents_m": [
+              0.748,
+              0.33,
+              0.098
+            ],
+            "radii_m": [
+              0.748,
+              0.33,
+              0.098
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.101328
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": true
+          },
+          "constraint_region_ids": [
+            "canopy"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            1.496,
+            0.66,
+            0.196
+          ],
+          "placement_bounds": {
+            "center": [
+              3.410359,
+              0.0,
+              -0.296449
+            ],
+            "max": [
+              4.734977,
+              0.549015,
+              0.153571
+            ],
+            "min": [
+              2.08574,
+              -0.549015,
+              -0.746468
+            ],
+            "span": [
+              2.649237,
+              1.09803,
+              0.900039
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "mesh_semantic_surface_span",
+          "size_evidence_level": "asset_mesh_derived_surface_not_public_engineering_dimension",
+          "size_source_urls": [
+            "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf"
+          ],
+          "system": "cockpit",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "convex_hull",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_canopy_surface_volume",
+      "parent_surface_component_id": "surface_canopy",
+      "primary_receiver_component_name": "dedicated_canopy_surface_component",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.734977,
+          0.549015,
+          0.153571
+        ],
+        "min": [
+          2.08574,
+          -0.549015,
+          -0.746468
+        ],
+        "span": [
+          2.649237,
+          1.09803,
+          0.900039
+        ]
+      },
+      "source_region_id": "canopy",
+      "support_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.496546,
+          0.417251,
+          0.072567
+        ],
+        "min": [
+          2.324172,
+          -0.417251,
+          -0.665465
+        ],
+        "span": [
+          2.172374,
+          0.834503,
+          0.738032
+        ]
+      },
+      "volume_component_role": "canopy_surface_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 5,
+      "child_receiver_priors": [
+        {
+          "component_name": "center_fuselage_fuel_cell",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "fuel_cell_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -0.278842,
+                0.0,
+                -0.600971
+              ],
+              "max": [
+                1.021158,
+                0.45,
+                -0.240971
+              ],
+              "min": [
+                -1.578842,
+                -0.45,
+                -0.960971
+              ],
+              "span": [
+                2.6,
+                0.9,
+                0.72
+              ]
+            },
+            "center_m": [
+              -0.278842,
+              0.0,
+              -0.600971
+            ],
+            "half_extents_m": [
+              1.3,
+              0.45,
+              0.36
+            ],
+            "radii_m": [
+              1.3,
+              0.45,
+              0.36
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.882159
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.23433,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "center_fuselage"
+          ],
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            2.6,
+            0.9,
+            0.72
+          ],
+          "placement_bounds": {
+            "center": [
+              0.263789,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.41179,
+              0.85,
+              0.792255
+            ],
+            "min": [
+              -1.884211,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              4.296001,
+              1.7,
+              1.58451
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+          "size_evidence_level": "public_total_capacity_partition_estimate",
+          "size_source_urls": [
+            "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/"
+          ],
+          "system": "fuel",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "mission_computer",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "avionics_box_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                1.68794,
+                0.0,
+                -0.365384
+              ],
+              "max": [
+                1.848214,
+                0.061976,
+                -0.293629
+              ],
+              "min": [
+                1.527666,
+                -0.061976,
+                -0.437139
+              ],
+              "span": [
+                0.320548,
+                0.123952,
+                0.14351
+              ]
+            },
+            "center_m": [
+              1.68794,
+              0.0,
+              -0.365384
+            ],
+            "half_extents_m": [
+              0.160274,
+              0.061976,
+              0.071755
+            ],
+            "shape": "obb",
+            "volume_m3": 0.005702
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.643443,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "center_fuselage"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.320548,
+            0.123952,
+            0.14351
+          ],
+          "placement_bounds": {
+            "center": [
+              0.263789,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.41179,
+              0.85,
+              0.792255
+            ],
+            "min": [
+              -1.884211,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              4.296001,
+              1.7,
+              1.58451
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+          "size_evidence_level": "standard_enclosure_proxy_pending_f16_mmc_dimensions",
+          "size_source_urls": [
+            "https://www.elma.com/en/products/systems/atr-cases/"
+          ],
+          "system": "avionics",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "data_link_terminal",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "small_avionics_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -1.29108,
+                0.0,
+                -0.985042
+              ],
+              "max": [
+                -1.11963,
+                0.09525,
+                -0.888522
+              ],
+              "min": [
+                -1.46253,
+                -0.09525,
+                -1.081562
+              ],
+              "span": [
+                0.3429,
+                0.1905,
+                0.19304
+              ]
+            },
+            "center_m": [
+              -1.29108,
+              0.0,
+              -0.985042
+            ],
+            "half_extents_m": [
+              0.17145,
+              0.09525,
+              0.09652
+            ],
+            "shape": "obb",
+            "volume_m3": 0.01261
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 1.335788,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.25442,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "center_fuselage"
+          ],
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.3429,
+            0.1905,
+            0.19304
+          ],
+          "placement_bounds": {
+            "center": [
+              0.263789,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.41179,
+              0.85,
+              0.792255
+            ],
+            "min": [
+              -1.884211,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              4.296001,
+              1.7,
+              1.58451
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_mids_lvt_terminal_dimensions",
+          "size_evidence_level": "public_lru_dimension",
+          "size_source_urls": [
+            "https://www.datalinksolutions.net/products/mids-lvt/"
+          ],
+          "system": "data_link",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "flight_control_computer",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "avionics_box_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -0.064081,
+                0.45,
+                -0.726398
+              ],
+              "max": [
+                0.096193,
+                0.511976,
+                -0.654643
+              ],
+              "min": [
+                -0.224355,
+                0.388024,
+                -0.798153
+              ],
+              "span": [
+                0.320548,
+                0.123952,
+                0.14351
+              ]
+            },
+            "center_m": [
+              -0.064081,
+              0.45,
+              -0.726398
+            ],
+            "half_extents_m": [
+              0.160274,
+              0.061976,
+              0.071755
+            ],
+            "shape": "obb",
+            "volume_m3": 0.005702
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 1.078304,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "center_fuselage"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.320548,
+            0.123952,
+            0.14351
+          ],
+          "placement_bounds": {
+            "center": [
+              0.263789,
+              0.0,
+              0.0
+            ],
+            "max": [
+              2.41179,
+              0.85,
+              0.792255
+            ],
+            "min": [
+              -1.884211,
+              -0.85,
+              -0.792255
+            ],
+            "span": [
+              4.296001,
+              1.7,
+              1.58451
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+          "size_evidence_level": "standard_enclosure_proxy_pending_f16_flcc_dimensions",
+          "size_source_urls": [
+            "https://www.elma.com/en/products/systems/atr-cases/"
+          ],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "wing_spar_center",
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_role": "cross_region_structural_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 3.3,
+            "bounds": {
+              "center": [
+                -1.092842,
+                0.0,
+                -0.985043
+              ],
+              "max": [
+                -1.002842,
+                3.3,
+                -0.895043
+              ],
+              "min": [
+                -1.182842,
+                -3.3,
+                -1.075043
+              ],
+              "span": [
+                0.18,
+                6.6,
+                0.18
+              ]
+            },
+            "center_m": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "cylinder_half_length_m": 3.21,
+            "half_extents_m": [
+              0.09,
+              3.3,
+              0.09
+            ],
+            "radius_m": 0.09,
+            "shape": "capsule",
+            "volume_m3": 0.166423
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "held_segment_count": 5,
+          "held_segments": [
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                0.8,
+                0.0
+              ],
+              "geometry": {
+                "bounds": {
+                  "center": [
+                    -1.092842,
+                    -1.575,
+                    -0.985043
+                  ],
+                  "max": [
+                    -1.002842,
+                    -0.65,
+                    -0.895043
+                  ],
+                  "min": [
+                    -1.182842,
+                    -2.5,
+                    -1.075043
+                  ],
+                  "span": [
+                    0.18,
+                    1.85,
+                    0.18
+                  ]
+                },
+                "center_m": [
+                  -1.092842,
+                  -1.575,
+                  -0.985043
+                ],
+                "half_extents_m": [
+                  0.09,
+                  0.925,
+                  0.09
+                ],
+                "radii_m": [
+                  0.09,
+                  0.925,
+                  0.09
+                ],
+                "shape": "ellipsoid",
+                "volume_m3": 0.031385
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                0.18,
+                1.85,
+                0.18
+              ],
+              "owner_region_ids": [
+                "left_wing"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "wing_spar_center",
+              "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "",
+              "segment_id": "wing_spar_center_left_inner_wing_segment",
+              "segment_index": 0,
+              "segment_role": "left_inner_wing_spar_proxy",
+              "segment_shape": "ellipsoid",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_left_inner_wing_spar_latest_centerline_ellipsoid",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "max": [
+                  -1.002842,
+                  3.3,
+                  -0.895043
+                ],
+                "min": [
+                  -1.182842,
+                  -3.3,
+                  -1.075043
+                ],
+                "span": [
+                  0.18,
+                  6.6,
+                  0.18
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "axis": "y",
+                "axis_half_extent_m": 0.3,
+                "bounds": {
+                  "center": [
+                    -1.092842,
+                    -1.15,
+                    -0.985043
+                  ],
+                  "max": [
+                    -1.002842,
+                    -0.85,
+                    -0.895043
+                  ],
+                  "min": [
+                    -1.182842,
+                    -1.45,
+                    -1.075043
+                  ],
+                  "span": [
+                    0.18,
+                    0.6,
+                    0.18
+                  ]
+                },
+                "center_m": [
+                  -1.092842,
+                  -1.15,
+                  -0.985043
+                ],
+                "cylinder_half_length_m": 0.21,
+                "half_extents_m": [
+                  0.09,
+                  0.3,
+                  0.09
+                ],
+                "radius_m": 0.09,
+                "shape": "capsule",
+                "volume_m3": 0.013741
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                0.18,
+                0.6,
+                0.18
+              ],
+              "owner_region_ids": [
+                "left_wing_root"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "wing_spar_center",
+              "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "y",
+              "segment_id": "wing_spar_center_left_root_segment",
+              "segment_index": 1,
+              "segment_role": "left_wing_root_spar_proxy",
+              "segment_shape": "capsule",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "max": [
+                  -1.002842,
+                  3.3,
+                  -0.895043
+                ],
+                "min": [
+                  -1.182842,
+                  -3.3,
+                  -1.075043
+                ],
+                "span": [
+                  0.18,
+                  6.6,
+                  0.18
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "axis": "y",
+                "axis_half_extent_m": 0.85,
+                "bounds": {
+                  "center": [
+                    -1.092842,
+                    0.0,
+                    -0.985043
+                  ],
+                  "max": [
+                    -1.002842,
+                    0.85,
+                    -0.895043
+                  ],
+                  "min": [
+                    -1.182842,
+                    -0.85,
+                    -1.075043
+                  ],
+                  "span": [
+                    0.18,
+                    1.7,
+                    0.18
+                  ]
+                },
+                "center_m": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "cylinder_half_length_m": 0.76,
+                "half_extents_m": [
+                  0.09,
+                  0.85,
+                  0.09
+                ],
+                "radius_m": 0.09,
+                "shape": "capsule",
+                "volume_m3": 0.041733
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                0.18,
+                1.7,
+                0.18
+              ],
+              "owner_region_ids": [
+                "center_fuselage"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "wing_spar_center",
+              "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "y",
+              "segment_id": "wing_spar_center_carrythrough_segment",
+              "segment_index": 2,
+              "segment_role": "center_fuselage_carrythrough_box_proxy",
+              "segment_shape": "capsule",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "max": [
+                  -1.002842,
+                  3.3,
+                  -0.895043
+                ],
+                "min": [
+                  -1.182842,
+                  -3.3,
+                  -1.075043
+                ],
+                "span": [
+                  0.18,
+                  6.6,
+                  0.18
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "axis": "y",
+                "axis_half_extent_m": 0.3,
+                "bounds": {
+                  "center": [
+                    -1.092842,
+                    1.15,
+                    -0.985043
+                  ],
+                  "max": [
+                    -1.002842,
+                    1.45,
+                    -0.895043
+                  ],
+                  "min": [
+                    -1.182842,
+                    0.85,
+                    -1.075043
+                  ],
+                  "span": [
+                    0.18,
+                    0.6,
+                    0.18
+                  ]
+                },
+                "center_m": [
+                  -1.092842,
+                  1.15,
+                  -0.985043
+                ],
+                "cylinder_half_length_m": 0.21,
+                "half_extents_m": [
+                  0.09,
+                  0.3,
+                  0.09
+                ],
+                "radius_m": 0.09,
+                "shape": "capsule",
+                "volume_m3": 0.013741
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                0.18,
+                0.6,
+                0.18
+              ],
+              "owner_region_ids": [
+                "right_wing_root"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "wing_spar_center",
+              "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "y",
+              "segment_id": "wing_spar_center_right_root_segment",
+              "segment_index": 3,
+              "segment_role": "right_wing_root_spar_proxy",
+              "segment_shape": "capsule",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "max": [
+                  -1.002842,
+                  3.3,
+                  -0.895043
+                ],
+                "min": [
+                  -1.182842,
+                  -3.3,
+                  -1.075043
+                ],
+                "span": [
+                  0.18,
+                  6.6,
+                  0.18
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                -0.8,
+                0.0
+              ],
+              "geometry": {
+                "bounds": {
+                  "center": [
+                    -1.092842,
+                    1.575,
+                    -0.985043
+                  ],
+                  "max": [
+                    -1.002842,
+                    2.5,
+                    -0.895043
+                  ],
+                  "min": [
+                    -1.182842,
+                    0.65,
+                    -1.075043
+                  ],
+                  "span": [
+                    0.18,
+                    1.85,
+                    0.18
+                  ]
+                },
+                "center_m": [
+                  -1.092842,
+                  1.575,
+                  -0.985043
+                ],
+                "half_extents_m": [
+                  0.09,
+                  0.925,
+                  0.09
+                ],
+                "radii_m": [
+                  0.09,
+                  0.925,
+                  0.09
+                ],
+                "shape": "ellipsoid",
+                "volume_m3": 0.031385
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                0.18,
+                1.85,
+                0.18
+              ],
+              "owner_region_ids": [
+                "right_wing"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "wing_spar_center",
+              "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "",
+              "segment_id": "wing_spar_center_right_inner_wing_segment",
+              "segment_index": 4,
+              "segment_role": "right_inner_wing_spar_proxy",
+              "segment_shape": "ellipsoid",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_right_inner_wing_spar_latest_centerline_ellipsoid",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -1.092842,
+                  0.0,
+                  -0.985043
+                ],
+                "max": [
+                  -1.002842,
+                  3.3,
+                  -0.895043
+                ],
+                "min": [
+                  -1.182842,
+                  -3.3,
+                  -1.075043
+                ],
+                "span": [
+                  0.18,
+                  6.6,
+                  0.18
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            }
+          ],
+          "is_cross_region_held": true,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.18,
+            6.6,
+            0.18
+          ],
+          "placement_bounds": {
+            "center": [
+              -0.573502,
+              -5e-06,
+              -0.163112
+            ],
+            "max": [
+              2.41179,
+              4.815757,
+              0.792255
+            ],
+            "min": [
+              -3.558793,
+              -4.815766,
+              -1.118478
+            ],
+            "span": [
+              5.970583,
+              9.631523,
+              1.910733
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "center_wing_box_runtime_span_with_wing_root_mesh_center",
+          "size_evidence_level": "cross_region_structure_proxy_pending_true_spar_dimensions",
+          "size_source_urls": [
+            "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/",
+            "examples/config/database/aircraft/units/f16c_block50.json",
+            "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf"
+          ],
+          "system": "wings",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [
+        "wing_spar_center"
+      ],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [
+        "mission_computer",
+        "data_link_terminal",
+        "flight_control_computer",
+        "wing_spar_center"
+      ],
+      "extra_receiver_slot_count": 4,
+      "geometry_primitive": "obb",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_center_fuselage_skin_volume",
+      "parent_surface_component_id": "surface_center_fuselage_skin",
+      "primary_receiver_component_name": "center_fuselage_fuel_cell",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.41179,
+          0.85,
+          0.792255
+        ],
+        "min": [
+          -1.884211,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          4.296001,
+          1.7,
+          1.58451
+        ]
+      },
+      "source_region_id": "center_fuselage",
+      "support_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.32587,
+          0.748,
+          0.697184
+        ],
+        "min": [
+          -1.79829,
+          -0.748,
+          -0.697184
+        ],
+        "span": [
+          4.124161,
+          1.496,
+          1.394369
+        ]
+      },
+      "volume_component_role": "center_fuselage_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "dedicated_intake_lip_or_duct_component",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "duct_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                3.39,
+                0.0,
+                -0.64
+              ],
+              "max": [
+                3.89,
+                0.29,
+                -0.09
+              ],
+              "min": [
+                2.89,
+                -0.29,
+                -1.19
+              ],
+              "span": [
+                1.0,
+                0.58,
+                1.1
+              ]
+            },
+            "center_m": [
+              3.39,
+              0.0,
+              -0.64
+            ],
+            "half_extents_m": [
+              0.5,
+              0.29,
+              0.55
+            ],
+            "radii_m": [
+              0.5,
+              0.29,
+              0.55
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.334056
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "intake"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            1.0,
+            0.58,
+            1.1
+          ],
+          "placement_bounds": {
+            "center": [
+              3.390977,
+              -0.01072,
+              -0.64168
+            ],
+            "max": [
+              4.05533,
+              0.334096,
+              0.069615
+            ],
+            "min": [
+              2.726624,
+              -0.355536,
+              -1.352975
+            ],
+            "span": [
+              1.328706,
+              0.689632,
+              1.42259
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "mesh_semantic_intake_region_measurement",
+          "size_evidence_level": "asset_mesh_derived_duct_dimension_not_public_engineering_dimension",
+          "size_source_urls": [
+            "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf"
+          ],
+          "system": "engine",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "convex_hull",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_intake_lip_and_duct_volume",
+      "parent_surface_component_id": "surface_intake_lip_and_duct",
+      "primary_receiver_component_name": "dedicated_intake_lip_or_duct_component",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          4.05533,
+          0.334096,
+          0.069615
+        ],
+        "min": [
+          2.726624,
+          -0.355536,
+          -1.352975
+        ],
+        "span": [
+          1.328706,
+          0.689632,
+          1.42259
+        ]
+      },
+      "source_region_id": "intake",
+      "support_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          3.949034,
+          0.230651,
+          -0.101096
+        ],
+        "min": [
+          2.83292,
+          -0.252091,
+          -1.182264
+        ],
+        "span": [
+          1.116113,
+          0.482742,
+          1.081168
+        ]
+      },
+      "volume_component_role": "intake_lip_and_duct_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 4,
+      "child_receiver_priors": [
+        {
+          "component_name": "electrical_power_bus",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "electrical_bus_receiver",
+          "constrained_geometry": {
+            "axis": "x",
+            "axis_half_extent_m": 0.225,
+            "bounds": {
+              "center": [
+                -2.8,
+                -1e-06,
+                -0.296449
+              ],
+              "max": [
+                -2.575,
+                0.029999,
+                -0.266449
+              ],
+              "min": [
+                -3.025,
+                -0.030001,
+                -0.326449
+              ],
+              "span": [
+                0.45,
+                0.06,
+                0.06
+              ]
+            },
+            "center_m": [
+              -2.8,
+              -1e-06,
+              -0.296449
+            ],
+            "cylinder_half_length_m": 0.195,
+            "half_extents_m": [
+              0.225,
+              0.03,
+              0.03
+            ],
+            "radius_m": 0.03,
+            "shape": "capsule",
+            "volume_m3": 0.001216
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.567915,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.45,
+            0.06,
+            0.06
+          ],
+          "placement_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "max": [
+              -1.507369,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -5.878738,
+              -0.9,
+              -1.258287
+            ],
+            "span": [
+              4.371369,
+              1.8,
+              1.607811
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "x",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_bus_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "avionics",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "engine_core",
+          "component_review_semantics": "cross_region_boundary_candidate_review_only",
+          "component_role": "cross_region_engine_receiver",
+          "constrained_geometry": {
+            "axis": "x",
+            "axis_half_extent_m": 2.31013,
+            "bounds": {
+              "center": [
+                -3.693053,
+                0.0,
+                -0.554381
+              ],
+              "max": [
+                -1.382923,
+                0.59055,
+                0.036169
+              ],
+              "min": [
+                -6.003183,
+                -0.59055,
+                -1.144931
+              ],
+              "span": [
+                4.62026,
+                1.1811,
+                1.1811
+              ]
+            },
+            "center_m": [
+              -3.693053,
+              0.0,
+              -0.554381
+            ],
+            "cylinder_half_length_m": 1.71958,
+            "half_extents_m": [
+              2.31013,
+              0.59055,
+              0.59055
+            ],
+            "radius_m": 0.59055,
+            "shape": "capsule",
+            "volume_m3": 4.630739
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle",
+            "intake"
+          ],
+          "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "held_segment_count": 3,
+          "held_segments": [
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.207628,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "axis": "x",
+                "axis_half_extent_m": 0.770043,
+                "bounds": {
+                  "center": [
+                    -5.025512,
+                    0.0,
+                    -0.554381
+                  ],
+                  "max": [
+                    -4.255468,
+                    0.59055,
+                    0.036169
+                  ],
+                  "min": [
+                    -5.795555,
+                    -0.59055,
+                    -1.144931
+                  ],
+                  "span": [
+                    1.540087,
+                    1.1811,
+                    1.1811
+                  ]
+                },
+                "center_m": [
+                  -5.025512,
+                  0.0,
+                  -0.554381
+                ],
+                "cylinder_half_length_m": 0.179493,
+                "half_extents_m": [
+                  0.770043,
+                  0.59055,
+                  0.59055
+                ],
+                "radius_m": 0.59055,
+                "shape": "capsule",
+                "volume_m3": 1.256014
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                1.540087,
+                1.1811,
+                1.1811
+              ],
+              "owner_region_ids": [
+                "aft_fuselage_engine",
+                "engine_nozzle"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "engine_core",
+              "parent_component_review_semantics": "cross_region_boundary_candidate_review_only",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "x",
+              "segment_id": "engine_core_afterburner_segment",
+              "segment_index": 0,
+              "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+              "segment_shape": "capsule",
+              "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+              "source_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R18_promoted_R17_segmented_engine_afterburner_capsule_with_center_shift",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -3.693053,
+                  0.0,
+                  -0.554381
+                ],
+                "max": [
+                  -1.382923,
+                  0.59055,
+                  0.036169
+                ],
+                "min": [
+                  -6.003183,
+                  -0.59055,
+                  -1.144931
+                ],
+                "span": [
+                  4.62026,
+                  1.1811,
+                  1.1811
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "bounds": {
+                  "center": [
+                    -3.693053,
+                    0.0,
+                    -0.554381
+                  ],
+                  "max": [
+                    -2.92301,
+                    0.59055,
+                    0.036169
+                  ],
+                  "min": [
+                    -4.463096,
+                    -0.59055,
+                    -1.144931
+                  ],
+                  "span": [
+                    1.540087,
+                    1.1811,
+                    1.1811
+                  ]
+                },
+                "center_m": [
+                  -3.693053,
+                  0.0,
+                  -0.554381
+                ],
+                "half_extents_m": [
+                  0.770043,
+                  0.59055,
+                  0.59055
+                ],
+                "radii_m": [
+                  0.770043,
+                  0.59055,
+                  0.59055
+                ],
+                "shape": "ellipsoid",
+                "volume_m3": 1.124908
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                1.540087,
+                1.1811,
+                1.1811
+              ],
+              "owner_region_ids": [
+                "aft_fuselage_engine"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "engine_core",
+              "parent_component_review_semantics": "cross_region_boundary_candidate_review_only",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "",
+              "segment_id": "engine_core_hot_section_segment",
+              "segment_index": 1,
+              "segment_role": "main_core_hot_section_proxy",
+              "segment_shape": "ellipsoid",
+              "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+              "source_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R18_promoted_R17_segmented_engine_hot_section_ellipsoid",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -3.693053,
+                  0.0,
+                  -0.554381
+                ],
+                "max": [
+                  -1.382923,
+                  0.59055,
+                  0.036169
+                ],
+                "min": [
+                  -6.003183,
+                  -0.59055,
+                  -1.144931
+                ],
+                "span": [
+                  4.62026,
+                  1.1811,
+                  1.1811
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            },
+            {
+              "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+              "center_offset_m": [
+                -0.2,
+                0.0,
+                0.0
+              ],
+              "geometry": {
+                "bounds": {
+                  "center": [
+                    -2.352966,
+                    0.0,
+                    -0.554381
+                  ],
+                  "max": [
+                    -1.582923,
+                    0.59055,
+                    0.036169
+                  ],
+                  "min": [
+                    -3.12301,
+                    -0.59055,
+                    -1.144931
+                  ],
+                  "span": [
+                    1.540087,
+                    1.1811,
+                    1.1811
+                  ]
+                },
+                "center_m": [
+                  -2.352966,
+                  0.0,
+                  -0.554381
+                ],
+                "half_extents_m": [
+                  0.770043,
+                  0.59055,
+                  0.59055
+                ],
+                "radii_m": [
+                  0.770043,
+                  0.59055,
+                  0.59055
+                ],
+                "shape": "ellipsoid",
+                "volume_m3": 1.124908
+              },
+              "inside_parent_prior_bounds": true,
+              "inside_whole_airframe_bounds": true,
+              "nominal_dimensions_m": [
+                1.540087,
+                1.1811,
+                1.1811
+              ],
+              "owner_region_ids": [
+                "aft_fuselage_engine"
+              ],
+              "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+              "parent_component_name": "engine_core",
+              "parent_component_review_semantics": "cross_region_boundary_candidate_review_only",
+              "parent_prior_outside_fraction": 0.0,
+              "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+              "segment_axis": "",
+              "segment_id": "engine_core_forward_compressor_segment",
+              "segment_index": 2,
+              "segment_role": "forward_compressor_proxy",
+              "segment_shape": "ellipsoid",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R21_promoted_forward_compressor_local_silhouette_clearance_ellipsoid",
+              "source_parent_prior_bounds": {
+                "center": [
+                  -3.693053,
+                  0.0,
+                  -0.554381
+                ],
+                "max": [
+                  -1.382923,
+                  0.59055,
+                  0.036169
+                ],
+                "min": [
+                  -6.003183,
+                  -0.59055,
+                  -1.144931
+                ],
+                "span": [
+                  4.62026,
+                  1.1811,
+                  1.1811
+                ]
+              },
+              "source_parent_segment_shape": "capsule",
+              "whole_airframe_bounds": {
+                "center": [
+                  -0.015,
+                  -5e-06,
+                  0.286965
+                ],
+                "max": [
+                  7.536843,
+                  4.815757,
+                  2.248887
+                ],
+                "min": [
+                  -7.566844,
+                  -4.815766,
+                  -1.674956
+                ],
+                "span": [
+                  15.103687,
+                  9.631523,
+                  3.923843
+                ]
+              },
+              "whole_airframe_outside_fraction": 0.0
+            }
+          ],
+          "is_cross_region_held": true,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            4.62026,
+            1.1811,
+            1.1811
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.486705,
+              0.0,
+              -0.662716
+            ],
+            "max": [
+              4.05533,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -7.028739,
+              -0.9,
+              -1.674956
+            ],
+            "span": [
+              11.084069,
+              1.8,
+              2.02448
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "x",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "public_f110_ge_129_engine_dimensions",
+          "size_evidence_level": "public_engine_dimension",
+          "size_source_urls": [
+            "https://www.geaerospace.com/propulsion/military/f110"
+          ],
+          "system": "engine",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "tail_hydraulic_pump",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "small_hydraulic_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -5.025768,
+                0.0,
+                -0.52713
+              ],
+              "max": [
+                -4.900768,
+                0.09,
+                -0.43713
+              ],
+              "min": [
+                -5.150768,
+                -0.09,
+                -0.61713
+              ],
+              "span": [
+                0.25,
+                0.18,
+                0.18
+              ]
+            },
+            "center_m": [
+              -5.025768,
+              0.0,
+              -0.52713
+            ],
+            "half_extents_m": [
+              0.125,
+              0.09,
+              0.09
+            ],
+            "shape": "obb",
+            "volume_m3": 0.0081
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.845281,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.22487,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.25,
+            0.18,
+            0.18
+          ],
+          "placement_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "max": [
+              -1.507369,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -5.878738,
+              -0.9,
+              -1.258287
+            ],
+            "span": [
+              4.371369,
+              1.8,
+              1.607811
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_pump_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "hydraulic",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "engine_fuel_control_unit",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "small_engine_control_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -4.9,
+                0.0,
+                -0.25
+              ],
+              "max": [
+                -4.739726,
+                0.061976,
+                -0.178245
+              ],
+              "min": [
+                -5.060274,
+                -0.061976,
+                -0.321755
+              ],
+              "span": [
+                0.320548,
+                0.123952,
+                0.14351
+              ]
+            },
+            "center_m": [
+              -4.9,
+              0.0,
+              -0.25
+            ],
+            "half_extents_m": [
+              0.160274,
+              0.061976,
+              0.071755
+            ],
+            "shape": "obb",
+            "volume_m3": 0.005702
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.320548,
+            0.123952,
+            0.14351
+          ],
+          "placement_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.454381
+            ],
+            "max": [
+              -1.507369,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -5.878738,
+              -0.9,
+              -1.258287
+            ],
+            "span": [
+              4.371369,
+              1.8,
+              1.607811
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "obb",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "standard_half_atr_control_box_proxy",
+          "size_evidence_level": "standard_enclosure_proxy_pending_f110_control_unit_dimensions",
+          "size_source_urls": [
+            "https://www.elma.com/en/products/systems/atr-cases/"
+          ],
+          "system": "engine",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [
+        "engine_core"
+      ],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [
+        "engine_core",
+        "tail_hydraulic_pump",
+        "engine_fuel_control_unit"
+      ],
+      "extra_receiver_slot_count": 3,
+      "geometry_primitive": "obb",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_aft_engine_bay_skin_volume",
+      "parent_surface_component_id": "surface_aft_engine_bay_skin",
+      "primary_receiver_component_name": "electrical_power_bus",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.507369,
+          0.9,
+          0.349524
+        ],
+        "min": [
+          -5.878738,
+          -0.9,
+          -1.258287
+        ],
+        "span": [
+          4.371369,
+          1.8,
+          1.607811
+        ]
+      },
+      "source_region_id": "aft_fuselage_engine",
+      "support_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.594796,
+          0.792,
+          0.253056
+        ],
+        "min": [
+          -5.79131,
+          -0.792,
+          -1.161818
+        ],
+        "span": [
+          4.196514,
+          1.584,
+          1.414874
+        ]
+      },
+      "volume_component_role": "aft_engine_bay_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "afterburner_nozzle",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "nozzle_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -5.75,
+                -0.2,
+                -0.7
+              ],
+              "max": [
+                -5.375,
+                0.39055,
+                -0.10945
+              ],
+              "min": [
+                -6.125,
+                -0.79055,
+                -1.29055
+              ],
+              "span": [
+                0.75,
+                1.1811,
+                1.1811
+              ]
+            },
+            "center_m": [
+              -5.75,
+              -0.2,
+              -0.7
+            ],
+            "half_extents_m": [
+              0.375,
+              0.59055,
+              0.59055
+            ],
+            "radii_m": [
+              0.375,
+              0.59055,
+              0.59055
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.547814
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "engine_nozzle",
+            "aft_fuselage_engine"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.75,
+            1.1811,
+            1.1811
+          ],
+          "placement_bounds": {
+            "center": [
+              -4.268054,
+              0.0,
+              -0.662716
+            ],
+            "max": [
+              -1.507369,
+              0.9,
+              0.349524
+            ],
+            "min": [
+              -7.028739,
+              -0.9,
+              -1.674956
+            ],
+            "span": [
+              5.52137,
+              1.8,
+              2.02448
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "f110_diameter_plus_nozzle_region_length_estimate",
+          "size_evidence_level": "public_engine_diameter_mesh_length_estimate",
+          "size_source_urls": [
+            "https://www.geaerospace.com/propulsion/military/f110",
+            "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf"
+          ],
+          "system": "engine",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 1,
+      "cross_region_held_segment_overlays": [
+        {
+          "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+          "center_offset_m": [
+            0.207628,
+            0.0,
+            0.0
+          ],
+          "geometry": {
+            "axis": "x",
+            "axis_half_extent_m": 0.770043,
+            "bounds": {
+              "center": [
+                -5.025512,
+                0.0,
+                -0.554381
+              ],
+              "max": [
+                -4.255468,
+                0.59055,
+                0.036169
+              ],
+              "min": [
+                -5.795555,
+                -0.59055,
+                -1.144931
+              ],
+              "span": [
+                1.540087,
+                1.1811,
+                1.1811
+              ]
+            },
+            "center_m": [
+              -5.025512,
+              0.0,
+              -0.554381
+            ],
+            "cylinder_half_length_m": 0.179493,
+            "half_extents_m": [
+              0.770043,
+              0.59055,
+              0.59055
+            ],
+            "radius_m": 0.59055,
+            "shape": "capsule",
+            "volume_m3": 1.256014
+          },
+          "inside_parent_prior_bounds": true,
+          "inside_whole_airframe_bounds": true,
+          "nominal_dimensions_m": [
+            1.540087,
+            1.1811,
+            1.1811
+          ],
+          "owner_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle"
+          ],
+          "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "parent_component_name": "engine_core",
+          "parent_component_review_semantics": "cross_region_boundary_candidate_review_only",
+          "parent_prior_outside_fraction": 0.0,
+          "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+          "segment_axis": "x",
+          "segment_id": "engine_core_afterburner_segment",
+          "segment_index": 0,
+          "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+          "segment_shape": "capsule",
+          "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+          "source_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R18_promoted_R17_segmented_engine_afterburner_capsule_with_center_shift",
+          "source_parent_prior_bounds": {
+            "center": [
+              -3.693053,
+              0.0,
+              -0.554381
+            ],
+            "max": [
+              -1.382923,
+              0.59055,
+              0.036169
+            ],
+            "min": [
+              -6.003183,
+              -0.59055,
+              -1.144931
+            ],
+            "span": [
+              4.62026,
+              1.1811,
+              1.1811
+            ]
+          },
+          "source_parent_segment_shape": "capsule",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          },
+          "whole_airframe_outside_fraction": 0.0
+        }
+      ],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "obb",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_engine_nozzle_volume",
+      "parent_surface_component_id": "surface_engine_nozzle",
+      "primary_receiver_component_name": "afterburner_nozzle",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "obb",
+      "source_region_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.483772,
+          0.631705,
+          -0.339296
+        ],
+        "min": [
+          -7.028739,
+          -0.631707,
+          -1.674956
+        ],
+        "span": [
+          1.544967,
+          1.263412,
+          1.33566
+        ]
+      },
+      "source_region_id": "engine_nozzle",
+      "support_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.56102,
+          0.49273,
+          -0.446149
+        ],
+        "min": [
+          -6.95149,
+          -0.492732,
+          -1.568103
+        ],
+        "span": [
+          1.39047,
+          0.985461,
+          1.121954
+        ]
+      },
+      "volume_component_role": "engine_nozzle_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 2,
+      "child_receiver_priors": [
+        {
+          "component_name": "left_wing_fuel_cell",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "wing_fuel_cell_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -1.4,
+                -2.3,
+                -0.985
+              ],
+              "max": [
+                -0.4,
+                -1.2,
+                -0.91
+              ],
+              "min": [
+                -2.4,
+                -3.4,
+                -1.06
+              ],
+              "span": [
+                2.0,
+                2.2,
+                0.15
+              ]
+            },
+            "center_m": [
+              -1.4,
+              -2.3,
+              -0.985
+            ],
+            "half_extents_m": [
+              1.0,
+              1.1,
+              0.075
+            ],
+            "radii_m": [
+              1.0,
+              1.1,
+              0.075
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.345575
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "left_wing"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            2.0,
+            2.2,
+            0.15
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.594213,
+              -2.869258,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              -0.92275,
+              -0.868724
+            ],
+            "min": [
+              -3.558793,
+              -4.815766,
+              -1.101361
+            ],
+            "span": [
+              3.929161,
+              3.893016,
+              0.232637
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+          "size_evidence_level": "public_total_capacity_partition_estimate",
+          "size_source_urls": [
+            "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/"
+          ],
+          "system": "fuel",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "left_aileron_actuator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "control_surface_actuator_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.225,
+            "bounds": {
+              "center": [
+                -2.342176,
+                -2.723827,
+                -0.985
+              ],
+              "max": [
+                -2.302176,
+                -2.498827,
+                -0.945
+              ],
+              "min": [
+                -2.382176,
+                -2.948827,
+                -1.025
+              ],
+              "span": [
+                0.08,
+                0.45,
+                0.08
+              ]
+            },
+            "center_m": [
+              -2.342176,
+              -2.723827,
+              -0.985
+            ],
+            "cylinder_half_length_m": 0.185,
+            "half_extents_m": [
+              0.04,
+              0.225,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.002128
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 2.06692,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "left_wing"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.45,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.594213,
+              -2.869258,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              -0.92275,
+              -0.868724
+            ],
+            "min": [
+              -3.558793,
+              -4.815766,
+              -1.101361
+            ],
+            "span": [
+              3.929161,
+              3.893016,
+              0.232637
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_aileron_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 1,
+      "cross_region_held_segment_overlays": [
+        {
+          "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+          "center_offset_m": [
+            0.0,
+            0.8,
+            0.0
+          ],
+          "geometry": {
+            "bounds": {
+              "center": [
+                -1.092842,
+                -1.575,
+                -0.985043
+              ],
+              "max": [
+                -1.002842,
+                -0.65,
+                -0.895043
+              ],
+              "min": [
+                -1.182842,
+                -2.5,
+                -1.075043
+              ],
+              "span": [
+                0.18,
+                1.85,
+                0.18
+              ]
+            },
+            "center_m": [
+              -1.092842,
+              -1.575,
+              -0.985043
+            ],
+            "half_extents_m": [
+              0.09,
+              0.925,
+              0.09
+            ],
+            "radii_m": [
+              0.09,
+              0.925,
+              0.09
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.031385
+          },
+          "inside_parent_prior_bounds": true,
+          "inside_whole_airframe_bounds": true,
+          "nominal_dimensions_m": [
+            0.18,
+            1.85,
+            0.18
+          ],
+          "owner_region_ids": [
+            "left_wing"
+          ],
+          "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "parent_component_name": "wing_spar_center",
+          "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+          "parent_prior_outside_fraction": 0.0,
+          "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+          "segment_axis": "",
+          "segment_id": "wing_spar_center_left_inner_wing_segment",
+          "segment_index": 0,
+          "segment_role": "left_inner_wing_spar_proxy",
+          "segment_shape": "ellipsoid",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_left_inner_wing_spar_latest_centerline_ellipsoid",
+          "source_parent_prior_bounds": {
+            "center": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "max": [
+              -1.002842,
+              3.3,
+              -0.895043
+            ],
+            "min": [
+              -1.182842,
+              -3.3,
+              -1.075043
+            ],
+            "span": [
+              0.18,
+              6.6,
+              0.18
+            ]
+          },
+          "source_parent_segment_shape": "capsule",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          },
+          "whole_airframe_outside_fraction": 0.0
+        }
+      ],
+      "extra_receiver_component_names": [
+        "left_aileron_actuator"
+      ],
+      "extra_receiver_slot_count": 1,
+      "geometry_primitive": "thin_prism",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_left_wing_skin_volume",
+      "parent_surface_component_id": "surface_left_wing_skin",
+      "primary_receiver_component_name": "left_wing_fuel_cell",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          -0.92275,
+          -0.868724
+        ],
+        "min": [
+          -3.558793,
+          -4.815766,
+          -1.101361
+        ],
+        "span": [
+          3.929161,
+          3.893016,
+          0.232637
+        ]
+      },
+      "source_region_id": "left_wing",
+      "support_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.252493,
+          -1.156331,
+          -0.943168
+        ],
+        "min": [
+          -3.440919,
+          -4.582185,
+          -1.026918
+        ],
+        "span": [
+          3.693411,
+          3.425854,
+          0.083749
+        ]
+      },
+      "volume_component_role": "left_wing_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 2,
+      "child_receiver_priors": [
+        {
+          "component_name": "right_wing_fuel_cell",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "wing_fuel_cell_receiver",
+          "constrained_geometry": {
+            "bounds": {
+              "center": [
+                -1.4,
+                2.3,
+                -0.985
+              ],
+              "max": [
+                -0.4,
+                3.4,
+                -0.91
+              ],
+              "min": [
+                -2.4,
+                1.2,
+                -1.06
+              ],
+              "span": [
+                2.0,
+                2.2,
+                0.15
+              ]
+            },
+            "center_m": [
+              -1.4,
+              2.3,
+              -0.985
+            ],
+            "half_extents_m": [
+              1.0,
+              1.1,
+              0.075
+            ],
+            "radii_m": [
+              1.0,
+              1.1,
+              0.075
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.345575
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "right_wing"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "primary_receiver_overlay",
+          "nominal_dimensions_m": [
+            2.0,
+            2.2,
+            0.15
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.594207,
+              2.869209,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              4.815757,
+              -0.868724
+            ],
+            "min": [
+              -3.558783,
+              0.92266,
+              -1.101361
+            ],
+            "span": [
+              3.929151,
+              3.893097,
+              0.232637
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+          "size_evidence_level": "public_total_capacity_partition_estimate",
+          "size_source_urls": [
+            "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/"
+          ],
+          "system": "fuel",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        },
+        {
+          "component_name": "right_aileron_actuator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "control_surface_actuator_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.225,
+            "bounds": {
+              "center": [
+                -2.342168,
+                2.723775,
+                -0.985
+              ],
+              "max": [
+                -2.302168,
+                2.948775,
+                -0.945
+              ],
+              "min": [
+                -2.382168,
+                2.498775,
+                -1.025
+              ],
+              "span": [
+                0.08,
+                0.45,
+                0.08
+              ]
+            },
+            "center_m": [
+              -2.342168,
+              2.723775,
+              -0.985
+            ],
+            "cylinder_half_length_m": 0.185,
+            "half_extents_m": [
+              0.04,
+              0.225,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.002128
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 2.066949,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "right_wing"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "extra_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.45,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.594207,
+              2.869209,
+              -0.985043
+            ],
+            "max": [
+              0.370368,
+              4.815757,
+              -0.868724
+            ],
+            "min": [
+              -3.558783,
+              0.92266,
+              -1.101361
+            ],
+            "span": [
+              3.929151,
+              3.893097,
+              0.232637
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_aileron_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 1,
+      "cross_region_held_segment_overlays": [
+        {
+          "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+          "center_offset_m": [
+            0.0,
+            -0.8,
+            0.0
+          ],
+          "geometry": {
+            "bounds": {
+              "center": [
+                -1.092842,
+                1.575,
+                -0.985043
+              ],
+              "max": [
+                -1.002842,
+                2.5,
+                -0.895043
+              ],
+              "min": [
+                -1.182842,
+                0.65,
+                -1.075043
+              ],
+              "span": [
+                0.18,
+                1.85,
+                0.18
+              ]
+            },
+            "center_m": [
+              -1.092842,
+              1.575,
+              -0.985043
+            ],
+            "half_extents_m": [
+              0.09,
+              0.925,
+              0.09
+            ],
+            "radii_m": [
+              0.09,
+              0.925,
+              0.09
+            ],
+            "shape": "ellipsoid",
+            "volume_m3": 0.031385
+          },
+          "inside_parent_prior_bounds": true,
+          "inside_whole_airframe_bounds": true,
+          "nominal_dimensions_m": [
+            0.18,
+            1.85,
+            0.18
+          ],
+          "owner_region_ids": [
+            "right_wing"
+          ],
+          "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "parent_component_name": "wing_spar_center",
+          "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+          "parent_prior_outside_fraction": 0.0,
+          "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+          "segment_axis": "",
+          "segment_id": "wing_spar_center_right_inner_wing_segment",
+          "segment_index": 4,
+          "segment_role": "right_inner_wing_spar_proxy",
+          "segment_shape": "ellipsoid",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_right_inner_wing_spar_latest_centerline_ellipsoid",
+          "source_parent_prior_bounds": {
+            "center": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "max": [
+              -1.002842,
+              3.3,
+              -0.895043
+            ],
+            "min": [
+              -1.182842,
+              -3.3,
+              -1.075043
+            ],
+            "span": [
+              0.18,
+              6.6,
+              0.18
+            ]
+          },
+          "source_parent_segment_shape": "capsule",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          },
+          "whole_airframe_outside_fraction": 0.0
+        }
+      ],
+      "extra_receiver_component_names": [
+        "right_aileron_actuator"
+      ],
+      "extra_receiver_slot_count": 1,
+      "geometry_primitive": "thin_prism",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_right_wing_skin_volume",
+      "parent_surface_component_id": "surface_right_wing_skin",
+      "primary_receiver_component_name": "right_wing_fuel_cell",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          4.815757,
+          -0.868724
+        ],
+        "min": [
+          -3.558783,
+          0.92266,
+          -1.101361
+        ],
+        "span": [
+          3.929151,
+          3.893097,
+          0.232637
+        ]
+      },
+      "source_region_id": "right_wing",
+      "support_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.252494,
+          4.582172,
+          -0.943168
+        ],
+        "min": [
+          -3.440908,
+          1.156246,
+          -1.026918
+        ],
+        "span": [
+          3.693402,
+          3.425925,
+          0.083749
+        ]
+      },
+      "volume_component_role": "right_wing_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "left_leading_edge_flap_actuator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "control_surface_actuator_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.275,
+            "bounds": {
+              "center": [
+                -0.2,
+                -1.100915,
+                -0.949957
+              ],
+              "max": [
+                -0.16,
+                -0.825915,
+                -0.909957
+              ],
+              "min": [
+                -0.24,
+                -1.375915,
+                -0.989957
+              ],
+              "span": [
+                0.08,
+                0.55,
+                0.08
+              ]
+            },
+            "center_m": [
+              -0.2,
+              -1.100915,
+              -0.949957
+            ],
+            "cylinder_half_length_m": 0.235,
+            "half_extents_m": [
+              0.04,
+              0.275,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.002631
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.244926,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "left_wing_root"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.55,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.092842,
+              -0.85,
+              -0.7107
+            ],
+            "max": [
+              0.678316,
+              -0.25,
+              -0.302921
+            ],
+            "min": [
+              -2.864,
+              -1.45,
+              -1.118478
+            ],
+            "span": [
+              3.542316,
+              1.2,
+              0.815557
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_lef_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 1,
+      "cross_region_held_segment_overlays": [
+        {
+          "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+          "center_offset_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.3,
+            "bounds": {
+              "center": [
+                -1.092842,
+                -1.15,
+                -0.985043
+              ],
+              "max": [
+                -1.002842,
+                -0.85,
+                -0.895043
+              ],
+              "min": [
+                -1.182842,
+                -1.45,
+                -1.075043
+              ],
+              "span": [
+                0.18,
+                0.6,
+                0.18
+              ]
+            },
+            "center_m": [
+              -1.092842,
+              -1.15,
+              -0.985043
+            ],
+            "cylinder_half_length_m": 0.21,
+            "half_extents_m": [
+              0.09,
+              0.3,
+              0.09
+            ],
+            "radius_m": 0.09,
+            "shape": "capsule",
+            "volume_m3": 0.013741
+          },
+          "inside_parent_prior_bounds": true,
+          "inside_whole_airframe_bounds": true,
+          "nominal_dimensions_m": [
+            0.18,
+            0.6,
+            0.18
+          ],
+          "owner_region_ids": [
+            "left_wing_root"
+          ],
+          "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "parent_component_name": "wing_spar_center",
+          "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+          "parent_prior_outside_fraction": 0.0,
+          "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+          "segment_axis": "y",
+          "segment_id": "wing_spar_center_left_root_segment",
+          "segment_index": 1,
+          "segment_role": "left_wing_root_spar_proxy",
+          "segment_shape": "capsule",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+          "source_parent_prior_bounds": {
+            "center": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "max": [
+              -1.002842,
+              3.3,
+              -0.895043
+            ],
+            "min": [
+              -1.182842,
+              -3.3,
+              -1.075043
+            ],
+            "span": [
+              0.18,
+              6.6,
+              0.18
+            ]
+          },
+          "source_parent_segment_shape": "capsule",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          },
+          "whole_airframe_outside_fraction": 0.0
+        }
+      ],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "convex_hull",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_left_wing_root_fairing_volume",
+      "parent_surface_component_id": "surface_left_wing_root_fairing",
+      "primary_receiver_component_name": "left_leading_edge_flap_actuator",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          -0.25,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          -1.45,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "left_wing_root",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          -0.418,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          -1.282,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "volume_component_role": "left_wing_root_fairing_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "right_leading_edge_flap_actuator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "control_surface_actuator_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.275,
+            "bounds": {
+              "center": [
+                -0.2,
+                1.100914,
+                -0.949957
+              ],
+              "max": [
+                -0.16,
+                1.375914,
+                -0.909957
+              ],
+              "min": [
+                -0.24,
+                0.825914,
+                -0.989957
+              ],
+              "span": [
+                0.08,
+                0.55,
+                0.08
+              ]
+            },
+            "center_m": [
+              -0.2,
+              1.100914,
+              -0.949957
+            ],
+            "cylinder_half_length_m": 0.235,
+            "half_extents_m": [
+              0.04,
+              0.275,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.002631
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.244926,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "right_wing_root"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.55,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -1.092842,
+              0.85,
+              -0.7107
+            ],
+            "max": [
+              0.678316,
+              1.45,
+              -0.302921
+            ],
+            "min": [
+              -2.864,
+              0.25,
+              -1.118478
+            ],
+            "span": [
+              3.542316,
+              1.2,
+              0.815557
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_lef_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 1,
+      "cross_region_held_segment_overlays": [
+        {
+          "authority_boundary": "synthetic_split_of_held_cross_region_receiver_not_true_internal_structure",
+          "center_offset_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.3,
+            "bounds": {
+              "center": [
+                -1.092842,
+                1.15,
+                -0.985043
+              ],
+              "max": [
+                -1.002842,
+                1.45,
+                -0.895043
+              ],
+              "min": [
+                -1.182842,
+                0.85,
+                -1.075043
+              ],
+              "span": [
+                0.18,
+                0.6,
+                0.18
+              ]
+            },
+            "center_m": [
+              -1.092842,
+              1.15,
+              -0.985043
+            ],
+            "cylinder_half_length_m": 0.21,
+            "half_extents_m": [
+              0.09,
+              0.3,
+              0.09
+            ],
+            "radius_m": 0.09,
+            "shape": "capsule",
+            "volume_m3": 0.013741
+          },
+          "inside_parent_prior_bounds": true,
+          "inside_whole_airframe_bounds": true,
+          "nominal_dimensions_m": [
+            0.18,
+            0.6,
+            0.18
+          ],
+          "owner_region_ids": [
+            "right_wing_root"
+          ],
+          "parent_component_constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+          "parent_component_name": "wing_spar_center",
+          "parent_component_review_semantics": "cross_region_structural_semantic_hold",
+          "parent_prior_outside_fraction": 0.0,
+          "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
+          "segment_axis": "y",
+          "segment_id": "wing_spar_center_right_root_segment",
+          "segment_index": 3,
+          "segment_role": "right_wing_root_spar_proxy",
+          "segment_shape": "capsule",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+          "source_parent_prior_bounds": {
+            "center": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "max": [
+              -1.002842,
+              3.3,
+              -0.895043
+            ],
+            "min": [
+              -1.182842,
+              -3.3,
+              -1.075043
+            ],
+            "span": [
+              0.18,
+              6.6,
+              0.18
+            ]
+          },
+          "source_parent_segment_shape": "capsule",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          },
+          "whole_airframe_outside_fraction": 0.0
+        }
+      ],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "convex_hull",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready_cross_region_receivers_held",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_right_wing_root_fairing_volume",
+      "parent_surface_component_id": "surface_right_wing_root_fairing",
+      "primary_receiver_component_name": "right_leading_edge_flap_actuator",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "convex_hull",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          1.45,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          0.25,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "right_wing_root",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          1.282,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          0.418,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "volume_component_role": "right_wing_root_fairing_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "tail_surface_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.325,
+            "bounds": {
+              "center": [
+                -6.0,
+                -1.79,
+                -1.05
+              ],
+              "max": [
+                -5.96,
+                -1.465,
+                -1.01
+              ],
+              "min": [
+                -6.04,
+                -2.115,
+                -1.09
+              ],
+              "span": [
+                0.08,
+                0.65,
+                0.08
+              ]
+            },
+            "center_m": [
+              -6.0,
+              -1.79,
+              -1.05
+            ],
+            "cylinder_half_length_m": 0.285,
+            "half_extents_m": [
+              0.04,
+              0.325,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.003133
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "left_horizontal_tail"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.65,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -6.002281,
+              -1.793586,
+              -1.05304
+            ],
+            "max": [
+              -4.599165,
+              -0.641289,
+              -0.745331
+            ],
+            "min": [
+              -7.405397,
+              -2.945882,
+              -1.36075
+            ],
+            "span": [
+              2.806232,
+              2.304593,
+              0.615419
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_tail_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "thin_prism",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_left_horizontal_tail_skin_volume",
+      "parent_surface_component_id": "surface_left_horizontal_tail_skin",
+      "primary_receiver_component_name": "left_horizontal_tail_actuator_or_surface_component",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          -0.641289,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          -2.945882,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304593,
+          0.615419
+        ]
+      },
+      "source_region_id": "left_horizontal_tail",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          -0.779565,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          -2.807607,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028042,
+          0.221551
+        ]
+      },
+      "volume_component_role": "left_horizontal_tail_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "tail_surface_receiver",
+          "constrained_geometry": {
+            "axis": "y",
+            "axis_half_extent_m": 0.325,
+            "bounds": {
+              "center": [
+                -6.0,
+                1.79,
+                -1.05
+              ],
+              "max": [
+                -5.96,
+                2.115,
+                -1.01
+              ],
+              "min": [
+                -6.04,
+                1.465,
+                -1.09
+              ],
+              "span": [
+                0.08,
+                0.65,
+                0.08
+              ]
+            },
+            "center_m": [
+              -6.0,
+              1.79,
+              -1.05
+            ],
+            "cylinder_half_length_m": 0.285,
+            "half_extents_m": [
+              0.04,
+              0.325,
+              0.04
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.003133
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 0.0,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "right_horizontal_tail"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.65,
+            0.08
+          ],
+          "placement_bounds": {
+            "center": [
+              -6.002281,
+              1.793584,
+              -1.05304
+            ],
+            "max": [
+              -4.599165,
+              2.945881,
+              -0.745331
+            ],
+            "min": [
+              -7.405397,
+              0.641287,
+              -1.36075
+            ],
+            "span": [
+              2.806232,
+              2.304594,
+              0.615419
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_tail_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "thin_prism",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_right_horizontal_tail_skin_volume",
+      "parent_surface_component_id": "surface_right_horizontal_tail_skin",
+      "primary_receiver_component_name": "right_horizontal_tail_actuator_or_surface_component",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          2.945881,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          0.641287,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304594,
+          0.615419
+        ]
+      },
+      "source_region_id": "right_horizontal_tail",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          2.807605,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          0.779563,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028043,
+          0.221551
+        ]
+      },
+      "volume_component_role": "right_horizontal_tail_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    },
+    {
+      "authority_boundary": "display_grouping_only_parent_child_damage_ownership_not_accepted",
+      "bound_receiver_count": 1,
+      "child_receiver_priors": [
+        {
+          "component_name": "rudder_actuator",
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_role": "control_surface_actuator_receiver",
+          "constrained_geometry": {
+            "axis": "z",
+            "axis_half_extent_m": 0.225,
+            "bounds": {
+              "center": [
+                -6.974901,
+                0.0,
+                1.568794
+              ],
+              "max": [
+                -6.934901,
+                0.04,
+                1.793794
+              ],
+              "min": [
+                -7.014901,
+                -0.04,
+                1.343794
+              ],
+              "span": [
+                0.08,
+                0.08,
+                0.45
+              ]
+            },
+            "center_m": [
+              -6.974901,
+              0.0,
+              1.568794
+            ],
+            "cylinder_half_length_m": 0.185,
+            "half_extents_m": [
+              0.04,
+              0.04,
+              0.225
+            ],
+            "radius_m": 0.04,
+            "shape": "capsule",
+            "volume_m3": 0.002128
+          },
+          "constraint_adjustment": {
+            "airframe_projection_center_shift_m": 1.152072,
+            "center_shift_m": 0.0,
+            "placement_outside_fraction": 0.0,
+            "post_constraint_outside_fraction": 0.0,
+            "pre_constraint_outside_fraction": 0.0,
+            "required_fit_scale": 1.0,
+            "shrink_scale": 1.0,
+            "size_preserved": true,
+            "size_shrink_allowed": false
+          },
+          "constraint_region_ids": [
+            "vertical_tail"
+          ],
+          "constraint_status": "already_inside_whole_airframe",
+          "held_segment_count": 0,
+          "held_segments": [],
+          "is_cross_region_held": false,
+          "layout_role": "single_receiver_overlay",
+          "nominal_dimensions_m": [
+            0.08,
+            0.08,
+            0.45
+          ],
+          "placement_bounds": {
+            "center": [
+              -6.600274,
+              -1e-06,
+              1.168732
+            ],
+            "max": [
+              -5.633704,
+              0.396906,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -0.396907,
+              0.088577
+            ],
+            "span": [
+              1.93314,
+              0.793813,
+              2.16031
+            ]
+          },
+          "placement_bounds_source": "source_region_bounds",
+          "prior_axis": "z",
+          "prior_shape": "capsule",
+          "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
+          "size_basis": "engineering_proxy_no_public_f16_rudder_actuator_dimensions",
+          "size_evidence_level": "low_confidence_engineering_proxy",
+          "size_source_urls": [],
+          "system": "flight_control",
+          "whole_airframe_bounds": {
+            "center": [
+              -0.015,
+              -5e-06,
+              0.286965
+            ],
+            "max": [
+              7.536843,
+              4.815757,
+              2.248887
+            ],
+            "min": [
+              -7.566844,
+              -4.815766,
+              -1.674956
+            ],
+            "span": [
+              15.103687,
+              9.631523,
+              3.923843
+            ]
+          }
+        }
+      ],
+      "cross_region_held_receiver_names": [],
+      "cross_region_held_segment_overlay_count": 0,
+      "cross_region_held_segment_overlays": [],
+      "extra_receiver_component_names": [],
+      "extra_receiver_slot_count": 0,
+      "geometry_primitive": "thin_prism",
+      "layout_policy": "one_parent_semantic_shell_view_with_receiver_priors_overlaid",
+      "parent_receiver_handoff_status": "direct_receivers_parse_ready",
+      "parent_runtime_projection_status": "runtime_schema_parse_ready_candidate_not_activated",
+      "parent_semantic_component_id": "semantic_vertical_tail_skin_volume",
+      "parent_surface_component_id": "surface_vertical_tail_skin",
+      "primary_receiver_component_name": "rudder_actuator",
+      "runtime_projection_status": "review_only_visual_layout_not_runtime_activation",
+      "source_proxy_kind": "thin_prism",
+      "source_region_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.633704,
+          0.396906,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -0.396907,
+          0.088577
+        ],
+        "span": [
+          1.93314,
+          0.793813,
+          2.16031
+        ]
+      },
+      "source_region_id": "vertical_tail",
+      "support_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.730361,
+          0.095257,
+          2.205681
+        ],
+        "min": [
+          -7.470187,
+          -0.095259,
+          0.131783
+        ],
+        "span": [
+          1.739826,
+          0.190515,
+          2.073898
+        ]
+      },
+      "volume_component_role": "vertical_tail_skin_volume",
+      "whole_airframe_bounds": {
+        "center": [
+          -0.015,
+          -5e-06,
+          0.286965
+        ],
+        "max": [
+          7.536843,
+          4.815757,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -4.815766,
+          -1.674956
+        ],
+        "span": [
+          15.103687,
+          9.631523,
+          3.923843
+        ]
+      }
+    }
+  ],
+  "schema_version": "a2.target_geometry_semantic_parent_child_layout_candidate.v1",
+  "source_cross_region_held_segment_schema_version": "a2.target_geometry_cross_region_held_component_segments.v1",
+  "source_internal_component_prior_schema_version": "a2.target_geometry_internal_component_prior_candidate.v1",
+  "source_semantic_damage_geometry_schema_version": "a2.target_geometry_semantic_damage_geometry_candidate.v1",
+  "status": "semantic_parent_child_layout_candidate_generated_review_only",
+  "summary": {
+    "bound_receiver_component_count": 26,
+    "cross_region_held_receiver_count": 2,
+    "cross_region_held_segment_count": 8,
+    "cross_region_held_segment_overlay_count": 5,
+    "extra_receiver_slot_count": 12,
+    "parent_semantic_component_count": 14,
+    "parent_without_receiver_count": 0,
+    "review_status": "manual_review_required_before_activation",
+    "runtime_active_component_count": 0
+  }
+}

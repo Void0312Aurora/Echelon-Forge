@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>nose_avionics_bay internal prior view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    figure {
+      margin: 0 0 18px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to internal prior index</a></p>
+    <h1>nose_avionics_bay</h1>
+    <p class="subtitle">obb prior -> forward_fuselage; constraint status already_inside_whole_airframe</p>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>component: nose_avionics_bay</li><li>system: avionics</li><li>role: avionics_bay_receiver</li><li>prior shape: obb axis=none</li><li>bound region: forward_fuselage</li><li>constraint regions: forward_fuselage</li><li>constraint mode: single_parent_placement_source_region_bounds_whole_airframe_constraint</li><li>constraint status: already_inside_whole_airframe</li><li>old AABB containment: 1.0</li><li>adjustment: {&quot;airframe_projection_center_shift_m&quot;: 0.754172, &quot;center_shift_m&quot;: 0.0, &quot;placement_outside_fraction&quot;: 0.0, &quot;post_constraint_outside_fraction&quot;: 0.0, &quot;pre_constraint_outside_fraction&quot;: 0.0, &quot;required_fit_scale&quot;: 1.0, &quot;shrink_scale&quot;: 1.0, &quot;size_preserved&quot;: true, &quot;size_shrink_allowed&quot;: false}</li><li>component review semantics: candidate_direct_region_binding</li><li>rationale: nose avionics bay is a semantic receiver rather than one public LRU; a half-ATR avionics enclosure proxy is used until F-16 bay dimensions are available.</li><li>runtime projection: runtime_schema_candidate_not_activated_prior_shape_review_required</li></ul>
+  </section>
+  <section>
+    <figure><figcaption>top view</figcaption><img src="nose-avionics-bay_top.svg" alt="nose_avionics_bay top view"></figure><figure><figcaption>side view</figcaption><img src="nose-avionics-bay_side.svg" alt="nose_avionics_bay side view"></figure><figure><figcaption>front view</figcaption><img src="nose-avionics-bay_front.svg" alt="nose_avionics_bay front view"></figure>
+  </section>
+</main>
+</body>
+</html>

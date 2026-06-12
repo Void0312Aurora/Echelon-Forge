@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="380.29" y="61.91" width="199.41" height="496.18" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="392.26" y="91.68" width="175.48" height="436.64" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="421.35" y="278.69" width="117.30" height="219.20" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>center_fuselage_fuel_cell candidate_binding</title></rect>
+<text x="425.35" y="291.69" font-size="10" font-family="monospace" fill="#7c3aed">center_fuselage_fuel_cell candidate_binding</text>
+<rect x="433.08" y="153.43" width="93.84" height="156.57" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal candidate_binding</title></rect>
+<text x="437.08" y="166.43" font-size="10" font-family="monospace" fill="#7c3aed">data_link_terminal candidate_binding</text>
+<rect x="512.26" y="122.11" width="41.06" height="156.57" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
+<text x="516.26" y="135.11" font-size="10" font-family="monospace" fill="#7c3aed">flight_control_computer candidate_binding</text>
+<rect x="421.35" y="137.77" width="117.30" height="187.89" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
+<text x="425.35" y="150.77" font-size="10" font-family="monospace" fill="#7c3aed">mission_computer candidate_binding</text>
+<rect x="92.90" y="281.82" width="774.19" height="56.37" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>wing_spar_center review_only_cross_region_semantic_hold</title></rect>
+<text x="96.90" y="294.82" font-size="10" font-family="monospace" fill="#7c3aed">wing_spar_center review_only_cross_region_semantic_hold</text>
+<polygon points="386.35,527.63 387.75,540.68 395.35,557.15 400.75,557.32 564.65,557.15 572.24,540.68 573.65,527.63 507.90,321.16 501.05,307.72 494.21,298.88 487.11,292.90 480.00,291.52 472.89,292.90 465.79,298.88 458.95,307.72 452.10,321.16" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="479.05" y="412.82" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

@@ -1,0 +1,3005 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "real_weapon_pk_authority": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_surface_component_boundaries": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Review every surface component with old internal components that are drifted or sign-mismatched before runtime use."
+    },
+    {
+      "priority": "high",
+      "question": "Add explicit canopy, intake, and horizontal-tail runtime component links if their surface damage should affect flight or sensors."
+    },
+    {
+      "priority": "medium",
+      "question": "Use this report as the handoff table from outer-shape hits to component-damage propagation."
+    }
+  ],
+  "rows": [
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "apg68_radar_array",
+        "iff_interrogator"
+      ],
+      "clean_direct_link_count": 2,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "perforation",
+        "surface_tearing",
+        "sensor_aperture_damage_candidate"
+      ],
+      "linked_internal_component_count": 2,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "nose_radome",
+          "candidate_region_rank": {
+            "center_distance_m": 0.270158,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.11383
+          },
+          "center_distance_m": 0.270158,
+          "component_name": "apg68_radar_array",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "nose_radome",
+          "suppressed_anomalies": [],
+          "system": "radar"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "nose_radome",
+          "candidate_region_rank": {
+            "center_distance_m": 0.587669,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.02426
+          },
+          "center_distance_m": 0.587669,
+          "component_name": "iff_interrogator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "nose_radome",
+          "suppressed_anomalies": [],
+          "system": "avionics"
+        }
+      ],
+      "mesh_region_vertex_count": 94,
+      "mesh_source_nodes": [
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "convex_hull",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.536843,
+          0.48,
+          -0.349524
+        ],
+        "min": [
+          5.049685,
+          -0.48,
+          -0.978668
+        ],
+        "span": [
+          2.487158,
+          0.96,
+          0.629144
+        ]
+      },
+      "source_region_id": "nose_radome",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          6.293264,
+          0.0,
+          -0.664096
+        ],
+        "max": [
+          7.437357,
+          0.2784,
+          -0.437604
+        ],
+        "min": [
+          5.149171,
+          -0.2784,
+          -0.890588
+        ],
+        "span": [
+          2.288185,
+          0.5568,
+          0.452984
+        ]
+      },
+      "surface_component_id": "surface_nose_radome",
+      "surface_role": "radome"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "cockpit_crew_station",
+        "inertial_navigation_unit",
+        "nose_avionics_bay"
+      ],
+      "clean_direct_link_count": 3,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "cockpit_or_avionics_exposure_candidate"
+      ],
+      "linked_internal_component_count": 3,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "forward_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.30846,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.64554,
+            "rank": 1,
+            "region_overlap_fraction": 0.11319
+          },
+          "center_distance_m": 1.30846,
+          "component_name": "cockpit_crew_station",
+          "component_overlap_fraction": 0.64554,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "forward_fuselage",
+          "suppressed_anomalies": [],
+          "system": "cockpit"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "forward_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.244077,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.92368,
+            "rank": 1,
+            "region_overlap_fraction": 0.02063
+          },
+          "center_distance_m": 1.244077,
+          "component_name": "inertial_navigation_unit",
+          "component_overlap_fraction": 0.92368,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "forward_fuselage",
+          "suppressed_anomalies": [],
+          "system": "navigation"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "forward_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 0.994501,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.05469
+          },
+          "center_distance_m": 0.994501,
+          "component_name": "nose_avionics_bay",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "forward_fuselage",
+          "suppressed_anomalies": [],
+          "system": "avionics"
+        }
+      ],
+      "mesh_region_vertex_count": 986,
+      "mesh_source_nodes": [
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "obb",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.426527,
+          0.85,
+          0.838858
+        ],
+        "min": [
+          2.261053,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          3.165474,
+          1.7,
+          1.631113
+        ]
+      },
+      "source_region_id": "forward_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          3.84379,
+          0.0,
+          0.023302
+        ],
+        "max": [
+          5.363218,
+          0.748,
+          0.740992
+        ],
+        "min": [
+          2.324362,
+          -0.748,
+          -0.694388
+        ],
+        "span": [
+          3.038855,
+          1.496,
+          1.435379
+        ]
+      },
+      "surface_component_id": "surface_forward_fuselage_skin",
+      "surface_role": "fuselage_skin"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "dedicated_canopy_surface_component"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "transparent_surface_fracture",
+        "perforation",
+        "cockpit_exposure_candidate"
+      ],
+      "linked_internal_component_count": 1,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "canopy",
+          "candidate_region_rank": {
+            "center_distance_m": 0.003569,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.17044
+          },
+          "center_distance_m": 0.003569,
+          "component_name": "dedicated_canopy_surface_component",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "canopy",
+          "suppressed_anomalies": [],
+          "system": "cockpit"
+        }
+      ],
+      "mesh_region_vertex_count": 2076,
+      "mesh_source_nodes": [
+        "Object_16",
+        "Object_6",
+        "Object_8"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "convex_hull",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.734977,
+          0.549015,
+          0.153571
+        ],
+        "min": [
+          2.08574,
+          -0.549015,
+          -0.746468
+        ],
+        "span": [
+          2.649237,
+          1.09803,
+          0.900039
+        ]
+      },
+      "source_region_id": "canopy",
+      "source_region_role": "raised_outer_skin",
+      "support_bounds": {
+        "center": [
+          3.410359,
+          0.0,
+          -0.296449
+        ],
+        "max": [
+          4.496546,
+          0.417251,
+          0.072567
+        ],
+        "min": [
+          2.324172,
+          -0.417251,
+          -0.665465
+        ],
+        "span": [
+          2.172374,
+          0.834503,
+          0.738032
+        ]
+      },
+      "surface_component_id": "surface_canopy",
+      "surface_role": "canopy"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "center_fuselage_fuel_cell",
+        "data_link_terminal",
+        "flight_control_computer",
+        "mission_computer"
+      ],
+      "clean_direct_link_count": 4,
+      "cross_region_semantic_component_names": [
+        "wing_spar_center"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "fuel_or_avionics_exposure_candidate"
+      ],
+      "linked_internal_component_count": 5,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.092771,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.95175,
+            "rank": 1,
+            "region_overlap_fraction": 0.13817
+          },
+          "center_distance_m": 1.092771,
+          "component_name": "center_fuselage_fuel_cell",
+          "component_overlap_fraction": 0.95175,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "center_fuselage",
+          "suppressed_anomalies": [],
+          "system": "fuel"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 2.078877,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.58421,
+            "rank": 1,
+            "region_overlap_fraction": 0.02019
+          },
+          "center_distance_m": 2.078877,
+          "component_name": "data_link_terminal",
+          "component_overlap_fraction": 0.58421,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "center_fuselage",
+          "suppressed_anomalies": [],
+          "system": "data_link"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 0.62816,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.01512
+          },
+          "center_distance_m": 0.62816,
+          "component_name": "flight_control_computer",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.45,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "center_fuselage",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.261236,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.07777
+          },
+          "center_distance_m": 1.261236,
+          "component_name": "mission_computer",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "center_fuselage",
+          "suppressed_anomalies": [],
+          "system": "avionics"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.06379,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.24515,
+            "rank": 1,
+            "region_overlap_fraction": 0.0604
+          },
+          "center_distance_m": 1.06379,
+          "component_name": "wing_spar_center",
+          "component_overlap_fraction": 0.24515,
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_review_severity": "review_only_hold",
+          "component_review_status": "review_only_cross_region_semantic_hold",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics",
+            "low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself",
+            "review-only hold, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "center_fuselage",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "wings"
+        }
+      ],
+      "mesh_region_vertex_count": 1099,
+      "mesh_source_nodes": [
+        "Object_14",
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "obb",
+      "review_flags": [
+        "cross_region_semantic_hold"
+      ],
+      "review_semantics": "cross_region_semantic_hold",
+      "review_status": "review_only_cross_region_semantic_hold",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.41179,
+          0.85,
+          0.792255
+        ],
+        "min": [
+          -1.884211,
+          -0.85,
+          -0.792255
+        ],
+        "span": [
+          4.296001,
+          1.7,
+          1.58451
+        ]
+      },
+      "source_region_id": "center_fuselage",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          0.26379,
+          0.0,
+          0.0
+        ],
+        "max": [
+          2.32587,
+          0.748,
+          0.697184
+        ],
+        "min": [
+          -1.79829,
+          -0.748,
+          -0.697184
+        ],
+        "span": [
+          4.124161,
+          1.496,
+          1.394369
+        ]
+      },
+      "surface_component_id": "surface_center_fuselage_skin",
+      "surface_role": "fuselage_skin"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [
+        "engine_core"
+      ],
+      "expected_damage_modes": [
+        "intake_lip_damage",
+        "perforation",
+        "airflow_path_damage_candidate"
+      ],
+      "linked_internal_component_count": 3,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "intake",
+          "candidate_region_rank": {
+            "center_distance_m": 0.010895,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.23206
+          },
+          "center_distance_m": 0.010895,
+          "component_name": "dedicated_intake_lip_or_duct_component",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -0.01072,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "intake",
+          "suppressed_anomalies": [],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": null,
+          "center_distance_m": 2.155386,
+          "component_name": "engine_core",
+          "component_overlap_fraction": 0.49081,
+          "component_review_semantics": "cross_region_boundary_candidate_review_only",
+          "component_review_severity": "review_only_candidate",
+          "component_review_status": "review_only_cross_region_boundary_candidate",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path"
+          ],
+          "review_notes": [
+            "engine_core spans the review boundary between intake/aft engine bay/nozzle semantics",
+            "low outer-region overlap is not treated as bad geometry while center remains in aft_fuselage_engine",
+            "review-only candidate, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle",
+            "intake"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "intake",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": null,
+          "center_distance_m": 1.224129,
+          "component_name": "engine_fuel_control_unit",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "intake",
+          "suppressed_anomalies": [],
+          "system": "engine"
+        }
+      ],
+      "mesh_region_vertex_count": 2514,
+      "mesh_source_nodes": [
+        "Object_10",
+        "Object_12"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "convex_hull",
+      "review_flags": [
+        "cross_region_boundary_candidate_review_only",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_boundary_candidate_review_only",
+      "review_status": "review_only_cross_region_boundary_candidate",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          4.05533,
+          0.334096,
+          0.069615
+        ],
+        "min": [
+          2.726624,
+          -0.355536,
+          -1.352975
+        ],
+        "span": [
+          1.328706,
+          0.689632,
+          1.42259
+        ]
+      },
+      "source_region_id": "intake",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          3.949034,
+          0.230651,
+          -0.101096
+        ],
+        "min": [
+          2.83292,
+          -0.252091,
+          -1.182264
+        ],
+        "span": [
+          1.116113,
+          0.482742,
+          1.081168
+        ]
+      },
+      "surface_component_id": "surface_intake_lip_and_duct",
+      "surface_role": "intake"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "electrical_power_bus",
+        "engine_fuel_control_unit",
+        "tail_hydraulic_pump"
+      ],
+      "clean_direct_link_count": 3,
+      "cross_region_semantic_component_names": [
+        "engine_core"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "engine_bay_exposure_candidate"
+      ],
+      "linked_internal_component_count": 4,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 1.12002,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.0112
+          },
+          "center_distance_m": 1.12002,
+          "component_name": "electrical_power_bus",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.45,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "aft_fuselage_engine",
+          "suppressed_anomalies": [],
+          "system": "avionics"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 2.155386,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.49081,
+            "rank": 1,
+            "region_overlap_fraction": 0.04714
+          },
+          "center_distance_m": 2.155386,
+          "component_name": "engine_core",
+          "component_overlap_fraction": 0.49081,
+          "component_review_semantics": "cross_region_boundary_candidate_review_only",
+          "component_review_severity": "review_only_candidate",
+          "component_review_status": "review_only_cross_region_boundary_candidate",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "engine_core spans the review boundary between intake/aft engine bay/nozzle semantics",
+            "low outer-region overlap is not treated as bad geometry while center remains in aft_fuselage_engine",
+            "review-only candidate, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle",
+            "intake"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "aft_fuselage_engine",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 1.224129,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.01328
+          },
+          "center_distance_m": 1.224129,
+          "component_name": "engine_fuel_control_unit",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "aft_fuselage_engine",
+          "suppressed_anomalies": [],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 1.685224,
+            "center_inside_region": true,
+            "component_overlap_fraction": 0.62381,
+            "rank": 1,
+            "region_overlap_fraction": 0.00947
+          },
+          "center_distance_m": 1.685224,
+          "component_name": "tail_hydraulic_pump",
+          "component_overlap_fraction": 0.62381,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "aft_fuselage_engine",
+          "suppressed_anomalies": [],
+          "system": "hydraulic"
+        }
+      ],
+      "mesh_region_vertex_count": 738,
+      "mesh_source_nodes": [
+        "Object_38",
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "obb",
+      "review_flags": [
+        "cross_region_boundary_candidate_review_only"
+      ],
+      "review_semantics": "cross_region_boundary_candidate_review_only",
+      "review_status": "review_only_cross_region_boundary_candidate",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.507369,
+          0.9,
+          0.349524
+        ],
+        "min": [
+          -5.878738,
+          -0.9,
+          -1.258287
+        ],
+        "span": [
+          4.371369,
+          1.8,
+          1.607811
+        ]
+      },
+      "source_region_id": "aft_fuselage_engine",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.454381
+        ],
+        "max": [
+          -1.594796,
+          0.792,
+          0.253056
+        ],
+        "min": [
+          -5.79131,
+          -0.792,
+          -1.161818
+        ],
+        "span": [
+          4.196514,
+          1.584,
+          1.414874
+        ]
+      },
+      "surface_component_id": "surface_aft_engine_bay_skin",
+      "surface_role": "engine_bay_skin"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "afterburner_nozzle"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [
+        "engine_core"
+      ],
+      "expected_damage_modes": [
+        "nozzle_petal_damage",
+        "perforation",
+        "exhaust_area_change_candidate"
+      ],
+      "linked_internal_component_count": 3,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "engine_nozzle",
+          "candidate_region_rank": {
+            "center_distance_m": 0.515718,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.08837
+          },
+          "center_distance_m": 0.515718,
+          "component_name": "afterburner_nozzle",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -1e-06,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "engine_nozzle",
+          "suppressed_anomalies": [],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 1.105654,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.08743,
+            "rank": 3,
+            "region_overlap_fraction": 0.04075
+          },
+          "center_distance_m": 2.155386,
+          "component_name": "engine_core",
+          "component_overlap_fraction": 0.49081,
+          "component_review_semantics": "cross_region_boundary_candidate_review_only",
+          "component_review_severity": "review_only_candidate",
+          "component_review_status": "review_only_cross_region_boundary_candidate",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "engine_core spans the review boundary between intake/aft engine bay/nozzle semantics",
+            "low outer-region overlap is not treated as bad geometry while center remains in aft_fuselage_engine",
+            "review-only candidate, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle",
+            "intake"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "engine_nozzle",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "engine"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "aft_fuselage_engine",
+          "candidate_region_rank": {
+            "center_distance_m": 1.553276,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 2,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 1.224129,
+          "component_name": "engine_fuel_control_unit",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "engine_nozzle",
+          "suppressed_anomalies": [],
+          "system": "engine"
+        }
+      ],
+      "mesh_region_vertex_count": 768,
+      "mesh_source_nodes": [
+        "Object_38"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "obb",
+      "review_flags": [
+        "cross_region_boundary_candidate_review_only",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_boundary_candidate_review_only",
+      "review_status": "review_only_cross_region_boundary_candidate",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.483772,
+          0.631705,
+          -0.339296
+        ],
+        "min": [
+          -7.028739,
+          -0.631707,
+          -1.674956
+        ],
+        "span": [
+          1.544967,
+          1.263412,
+          1.33566
+        ]
+      },
+      "source_region_id": "engine_nozzle",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.56102,
+          0.49273,
+          -0.446149
+        ],
+        "min": [
+          -6.95149,
+          -0.492732,
+          -1.568103
+        ],
+        "span": [
+          1.39047,
+          0.985461,
+          1.121954
+        ]
+      },
+      "surface_component_id": "surface_engine_nozzle",
+      "surface_role": "nozzle"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "left_aileron_actuator",
+        "left_wing_fuel_cell"
+      ],
+      "clean_direct_link_count": 2,
+      "cross_region_semantic_component_names": [
+        "wing_spar_center"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "linked_internal_component_count": 4,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 1.464753,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.04451
+          },
+          "center_distance_m": 1.464753,
+          "component_name": "left_aileron_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -2.869258,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -4.1,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_wing_root",
+          "candidate_region_rank": {
+            "center_distance_m": 2.230544,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 4,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 0.941896,
+          "component_name": "left_leading_edge_flap_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -0.85,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -1.15,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 0.797227,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.08093
+          },
+          "center_distance_m": 0.797227,
+          "component_name": "left_wing_fuel_cell",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -2.869258,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -2.8,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing",
+          "suppressed_anomalies": [],
+          "system": "fuel"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": null,
+          "center_distance_m": 1.06379,
+          "component_name": "wing_spar_center",
+          "component_overlap_fraction": 0.24515,
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_review_severity": "review_only_hold",
+          "component_review_status": "review_only_cross_region_semantic_hold",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path"
+          ],
+          "review_notes": [
+            "wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics",
+            "low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself",
+            "review-only hold, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "wings"
+        }
+      ],
+      "mesh_region_vertex_count": 120,
+      "mesh_source_nodes": [
+        "Object_22",
+        "Object_34"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "thin_prism",
+      "review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_semantic_hold",
+      "review_status": "review_only_cross_region_semantic_hold",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          -0.92275,
+          -0.868724
+        ],
+        "min": [
+          -3.558793,
+          -4.815766,
+          -1.101361
+        ],
+        "span": [
+          3.929161,
+          3.893016,
+          0.232637
+        ]
+      },
+      "source_region_id": "left_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -1.594213,
+          -2.869258,
+          -0.985043
+        ],
+        "max": [
+          0.252493,
+          -1.156331,
+          -0.943168
+        ],
+        "min": [
+          -3.440919,
+          -4.582185,
+          -1.026918
+        ],
+        "span": [
+          3.693411,
+          3.425854,
+          0.083749
+        ]
+      },
+      "surface_component_id": "surface_left_wing_skin",
+      "surface_role": "lifting_surface"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "right_aileron_actuator",
+        "right_wing_fuel_cell"
+      ],
+      "clean_direct_link_count": 2,
+      "cross_region_semantic_component_names": [
+        "wing_spar_center"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "linked_internal_component_count": 4,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 1.464791,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.04451
+          },
+          "center_distance_m": 1.464791,
+          "component_name": "right_aileron_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 2.869209,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 4.1,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_wing_root",
+          "candidate_region_rank": {
+            "center_distance_m": 2.230502,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 4,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 0.941896,
+          "component_name": "right_leading_edge_flap_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.85,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 1.15,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 0.797217,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.08093
+          },
+          "center_distance_m": 0.797217,
+          "component_name": "right_wing_fuel_cell",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 2.869209,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 2.8,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing",
+          "suppressed_anomalies": [],
+          "system": "fuel"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 3.135831,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 5,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 1.06379,
+          "component_name": "wing_spar_center",
+          "component_overlap_fraction": 0.24515,
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_review_severity": "review_only_hold",
+          "component_review_status": "review_only_cross_region_semantic_hold",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics",
+            "low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself",
+            "review-only hold, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "wings"
+        }
+      ],
+      "mesh_region_vertex_count": 118,
+      "mesh_source_nodes": [
+        "Object_20",
+        "Object_32"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "thin_prism",
+      "review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_semantic_hold",
+      "review_status": "review_only_cross_region_semantic_hold",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.370368,
+          4.815757,
+          -0.868724
+        ],
+        "min": [
+          -3.558783,
+          0.92266,
+          -1.101361
+        ],
+        "span": [
+          3.929151,
+          3.893097,
+          0.232637
+        ]
+      },
+      "source_region_id": "right_wing",
+      "source_region_role": "lifting_surface",
+      "support_bounds": {
+        "center": [
+          -1.594207,
+          2.869209,
+          -0.985043
+        ],
+        "max": [
+          0.252494,
+          4.582172,
+          -0.943168
+        ],
+        "min": [
+          -3.440908,
+          1.156246,
+          -1.026918
+        ],
+        "span": [
+          3.693402,
+          3.425925,
+          0.083749
+        ]
+      },
+      "surface_component_id": "surface_right_wing_skin",
+      "surface_role": "lifting_surface"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [
+        "wing_spar_center"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "spar_or_fuel_cell_exposure_candidate"
+      ],
+      "linked_internal_component_count": 3,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_wing_root",
+          "candidate_region_rank": {
+            "center_distance_m": 0.941896,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.02077
+          },
+          "center_distance_m": 0.941896,
+          "component_name": "left_leading_edge_flap_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -0.85,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -1.15,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing_root",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 1.990853,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 2,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 0.797227,
+          "component_name": "left_wing_fuel_cell",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -2.869258,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -2.8,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing_root",
+          "suppressed_anomalies": [],
+          "system": "fuel"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.146015,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 3,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 1.06379,
+          "component_name": "wing_spar_center",
+          "component_overlap_fraction": 0.24515,
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_review_severity": "review_only_hold",
+          "component_review_status": "review_only_cross_region_semantic_hold",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics",
+            "low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself",
+            "review-only hold, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_wing_root",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "wings"
+        }
+      ],
+      "mesh_region_vertex_count": 180,
+      "mesh_source_nodes": [
+        "Object_34",
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "convex_hull",
+      "review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_semantic_hold",
+      "review_status": "review_only_cross_region_semantic_hold",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          -0.25,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          -1.45,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "left_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          -0.418,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          -1.282,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "surface_component_id": "surface_left_wing_root_fairing",
+      "surface_role": "structural_transition"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [
+        "wing_spar_center"
+      ],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "spar_or_fuel_cell_exposure_candidate"
+      ],
+      "linked_internal_component_count": 3,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_wing_root",
+          "candidate_region_rank": {
+            "center_distance_m": 0.941896,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.02077
+          },
+          "center_distance_m": 0.941896,
+          "component_name": "right_leading_edge_flap_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.85,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 1.15,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing_root",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_wing",
+          "candidate_region_rank": {
+            "center_distance_m": 1.990853,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 2,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 0.797217,
+          "component_name": "right_wing_fuel_cell",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": true,
+          "geometry_observations": [],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 2.869209,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 2.8,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing_root",
+          "suppressed_anomalies": [],
+          "system": "fuel"
+        },
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "center_fuselage",
+          "candidate_region_rank": {
+            "center_distance_m": 1.146015,
+            "center_inside_region": false,
+            "component_overlap_fraction": 0.0,
+            "rank": 4,
+            "region_overlap_fraction": 0.0
+          },
+          "center_distance_m": 1.06379,
+          "component_name": "wing_spar_center",
+          "component_overlap_fraction": 0.24515,
+          "component_review_semantics": "cross_region_structural_semantic_hold",
+          "component_review_severity": "review_only_hold",
+          "component_review_status": "review_only_cross_region_semantic_hold",
+          "critical": true,
+          "geometry_observations": [
+            "low_outer_region_overlap"
+          ],
+          "relations": [
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics",
+            "low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself",
+            "review-only hold, not accepted runtime damage integration",
+            "suppressed geometry observation: low_outer_region_overlap"
+          ],
+          "semantic_region_ids": [
+            "center_fuselage",
+            "left_wing_root",
+            "right_wing_root",
+            "left_wing",
+            "right_wing"
+          ],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 0.0,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_wing_root",
+          "suppressed_anomalies": [
+            "low_outer_region_overlap"
+          ],
+          "system": "wings"
+        }
+      ],
+      "mesh_region_vertex_count": 180,
+      "mesh_source_nodes": [
+        "Object_32",
+        "Object_4"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "convex_hull",
+      "review_flags": [
+        "cross_region_semantic_hold",
+        "expected_component_bound_elsewhere"
+      ],
+      "review_semantics": "cross_region_semantic_hold",
+      "review_status": "review_only_cross_region_semantic_hold",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          1.45,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          0.25,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "right_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          1.282,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          0.418,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "surface_component_id": "surface_right_wing_root_fairing",
+      "surface_role": "structural_transition"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "left_horizontal_tail_actuator_or_surface_component"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "linked_internal_component_count": 1,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "left_horizontal_tail",
+          "candidate_region_rank": {
+            "center_distance_m": 0.005225,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.14472
+          },
+          "center_distance_m": 0.005225,
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -1.793586,
+            "bound_region_center_y_sign": "negative_y",
+            "bound_region_declared_side": "left",
+            "component_center_y_m": -1.79,
+            "component_center_y_sign": "negative_y",
+            "component_declared_side": "left",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "left_horizontal_tail",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        }
+      ],
+      "mesh_region_vertex_count": 216,
+      "mesh_source_nodes": [
+        "Object_28",
+        "Object_30",
+        "Object_36"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "thin_prism",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          -0.641289,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          -2.945882,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304593,
+          0.615419
+        ]
+      },
+      "source_region_id": "left_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          -1.793586,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          -0.779565,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          -2.807607,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028042,
+          0.221551
+        ]
+      },
+      "surface_component_id": "surface_left_horizontal_tail_skin",
+      "surface_role": "tail_surface"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "right_horizontal_tail_actuator_or_surface_component"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "control_surface_damage_candidate"
+      ],
+      "linked_internal_component_count": 1,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "right_horizontal_tail",
+          "candidate_region_rank": {
+            "center_distance_m": 0.005224,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.14472
+          },
+          "center_distance_m": 0.005224,
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": 1.793584,
+            "bound_region_center_y_sign": "positive_y",
+            "bound_region_declared_side": "right",
+            "component_center_y_m": 1.79,
+            "component_center_y_sign": "positive_y",
+            "component_declared_side": "right",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "right_horizontal_tail",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        }
+      ],
+      "mesh_region_vertex_count": 216,
+      "mesh_source_nodes": [
+        "Object_18",
+        "Object_24",
+        "Object_26"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "thin_prism",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          2.945881,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          0.641287,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304594,
+          0.615419
+        ]
+      },
+      "source_region_id": "right_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          2.807605,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          0.779563,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028043,
+          0.221551
+        ]
+      },
+      "surface_component_id": "surface_right_horizontal_tail_skin",
+      "surface_role": "tail_surface"
+    },
+    {
+      "authority_boundary": "review_only_surface_component_candidate_not_runtime_damage_model",
+      "bad_geometry_component_names": [],
+      "blocked_component_names": [],
+      "clean_direct_component_names": [
+        "rudder_actuator"
+      ],
+      "clean_direct_link_count": 1,
+      "cross_region_semantic_component_names": [],
+      "expected_damage_modes": [
+        "perforation",
+        "skin_tearing",
+        "surface_area_loss",
+        "rudder_damage_candidate"
+      ],
+      "linked_internal_component_count": 1,
+      "linked_internal_components": [
+        {
+          "anomalies": [],
+          "blocked_region_binding": {
+            "blocked": false,
+            "blocked_region_id": "",
+            "preferred_region_ids": []
+          },
+          "bound_region_id": "vertical_tail",
+          "candidate_region_rank": {
+            "center_distance_m": 0.725618,
+            "center_inside_region": true,
+            "component_overlap_fraction": 1.0,
+            "rank": 1,
+            "region_overlap_fraction": 0.04223
+          },
+          "center_distance_m": 0.725618,
+          "component_name": "rudder_actuator",
+          "component_overlap_fraction": 1.0,
+          "component_review_semantics": "candidate_direct_region_binding",
+          "component_review_severity": "candidate",
+          "component_review_status": "candidate_binding",
+          "critical": false,
+          "geometry_observations": [],
+          "relations": [
+            "bound_to_this_outer_region",
+            "expected_surface_effect_path",
+            "ranked_region_candidate"
+          ],
+          "review_notes": [
+            "candidate direct binding after visual review"
+          ],
+          "semantic_region_ids": [],
+          "side_sign_relation": {
+            "bound_region_center_y_m": -1e-06,
+            "bound_region_center_y_sign": "centerline_y",
+            "bound_region_declared_side": "none",
+            "component_center_y_m": 0.0,
+            "component_center_y_sign": "centerline_y",
+            "component_declared_side": "none",
+            "side_sign_mismatch": false
+          },
+          "source_region_id": "vertical_tail",
+          "suppressed_anomalies": [],
+          "system": "flight_control"
+        }
+      ],
+      "mesh_region_vertex_count": 175,
+      "mesh_source_nodes": [
+        "Object_40"
+      ],
+      "missing_existing_runtime_component_relations": [],
+      "missing_expected_component_names": [],
+      "proxy_kind": "thin_prism",
+      "review_flags": [
+        "candidate_surface_component"
+      ],
+      "review_semantics": "candidate_surface_component",
+      "review_status": "candidate_surface_component",
+      "runtime_relation_status": "runtime_relation_review_only_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.633704,
+          0.396906,
+          2.248887
+        ],
+        "min": [
+          -7.566844,
+          -0.396907,
+          0.088577
+        ],
+        "span": [
+          1.93314,
+          0.793813,
+          2.16031
+        ]
+      },
+      "source_region_id": "vertical_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.600274,
+          -1e-06,
+          1.168732
+        ],
+        "max": [
+          -5.730361,
+          0.095257,
+          2.205681
+        ],
+        "min": [
+          -7.470187,
+          -0.095259,
+          0.131783
+        ],
+        "span": [
+          1.739826,
+          0.190515,
+          2.073898
+        ]
+      },
+      "surface_component_id": "surface_vertical_tail_skin",
+      "surface_role": "tail_surface"
+    }
+  ],
+  "schema_version": "a2.target_geometry_surface_component_candidate.v1",
+  "source_fine_proxy_schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
+  "source_mapping_schema_version": "a2.target_geometry_mapping_candidate.v1",
+  "status": "surface_component_candidate_generated_review_only",
+  "summary": {
+    "candidate_surface_component_count": 6,
+    "cross_region_semantic_hold_count": 8,
+    "invalid_region_binding_blocked_count": 0,
+    "linked_component_needs_review_count": 0,
+    "missing_existing_runtime_component_relation_count": 0,
+    "missing_runtime_link_held_count": 0,
+    "needs_review_count": 0,
+    "no_direct_component_bound_count": 0,
+    "review_status": "manual_review_required",
+    "side_sign_hard_blocker_count": 0,
+    "surface_component_count": 14
+  }
+}

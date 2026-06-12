@@ -90,81 +90,76 @@
       "fit_metrics": {
         "aabb_volume_ratio": 0.38419,
         "max_support_surface_inset_m": 0.2016,
-        "proxy_support_volume_m3": 0.870552,
-        "source_aabb_volume_m3": 2.265928
+        "proxy_support_volume_m3": 0.577129,
+        "source_aabb_volume_m3": 1.502189
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7008,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 15,
+            "point_count": 13,
             "points_m": [
               [
-                -0.307198,
-                -0.64324
+                -0.453403,
+                -0.967086
               ],
               [
-                -0.302809,
-                -0.652168
+                0.453402,
+                -0.967086
               ],
               [
-                -0.232641,
-                -0.662606
+                0.449718,
+                -0.946169
               ],
               [
-                -0.221095,
-                -0.663019
+                0.446034,
+                -0.925253
               ],
               [
-                0.221094,
-                -0.663019
+                0.422128,
+                -0.878598
               ],
               [
-                0.23264,
-                -0.662606
+                0.34442,
+                -0.771619
               ],
               [
-                0.302808,
-                -0.652168
-              ],
-              [
-                0.307197,
-                -0.64324
-              ],
-              [
-                0.265122,
-                -0.586761
-              ],
-              [
-                0.109394,
-                -0.513069
-              ],
-              [
-                0.054697,
-                -0.509737
+                0.187927,
+                -0.706533
               ],
               [
                 -1e-06,
-                -0.506406
+                -0.683674
               ],
               [
-                -0.054698,
-                -0.509737
+                -0.187928,
+                -0.706533
               ],
               [
-                -0.109395,
-                -0.513069
+                -0.344421,
+                -0.771619
               ],
               [
-                -0.265123,
-                -0.586761
+                -0.422129,
+                -0.878598
+              ],
+              [
+                -0.446035,
+                -0.925253
+              ],
+              [
+                -0.449719,
+                -0.946169
               ]
             ]
           },
@@ -173,43 +168,27 @@
               "x",
               "z"
             ],
-            "point_count": 9,
+            "point_count": 5,
             "points_m": [
               [
-                4.523844,
-                -0.590646
+                5.060783,
+                -0.967086
               ],
               [
-                4.610077,
-                -0.652168
+                5.816702,
+                -0.92027
               ],
               [
-                4.816718,
-                -0.662606
+                5.816702,
+                -0.848803
               ],
               [
-                4.851525,
-                -0.663019
+                5.208196,
+                -0.683674
               ],
               [
-                4.851525,
-                -0.629007
-              ],
-              [
-                4.830085,
-                -0.54988
-              ],
-              [
-                4.795278,
-                -0.543951
-              ],
-              [
-                4.545999,
-                -0.506406
-              ],
-              [
-                4.527709,
-                -0.513069
+                5.060783,
+                -0.925253
               ]
             ]
           },
@@ -218,78 +197,68 @@
               "x",
               "y"
             ],
-            "point_count": 10,
+            "point_count": 6,
             "points_m": [
               [
-                4.523844,
-                -0.20504
+                5.060783,
+                -0.453403
               ],
               [
-                4.527025,
-                -0.210073
+                5.208196,
+                -0.422129
               ],
               [
-                4.611648,
-                -0.307198
+                5.816702,
+                -0.277755
               ],
               [
-                4.830085,
-                -0.262053
+                5.816702,
+                0.277754
               ],
               [
-                4.851525,
-                -0.221095
+                5.208196,
+                0.422128
               ],
               [
-                4.851525,
-                0.221094
-              ],
-              [
-                4.830085,
-                0.262052
-              ],
-              [
-                4.611648,
-                0.307197
-              ],
-              [
-                4.527025,
-                0.210072
-              ],
-              [
-                4.523844,
-                0.205039
+                5.060783,
+                0.453402
               ]
             ]
           }
         },
-        "region_vertex_count": 349,
+        "region_vertex_count": 94,
+        "selected_node_vertex_counts": {
+          "Object_4": 94
+        },
         "selection_bounds": {
           "center": [
-            6.330948,
+            6.293264,
             0.0,
-            0.069905
-          ],
-          "max": [
-            8.139791,
-            0.72,
-            0.803906
-          ],
-          "min": [
-            4.522106,
-            -0.72,
             -0.664096
           ],
+          "max": [
+            7.536843,
+            0.48,
+            -0.349524
+          ],
+          "min": [
+            5.049685,
+            -0.48,
+            -0.978668
+          ],
           "span": [
-            3.617685,
-            1.44,
-            1.468002
+            2.487158,
+            0.96,
+            0.629144
           ]
         },
-        "selection_inflation_factor": 1.5,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_4"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "proxy_kind": "convex_hull",
       "review_status": "manual_review_required",
@@ -307,85 +276,85 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          6.330948,
+          6.293264,
           0.0,
-          0.069905
+          -0.664096
         ],
         "max": [
           7.536843,
           0.48,
-          0.559239
+          -0.349524
         ],
         "min": [
-          5.125053,
+          5.049685,
           -0.48,
-          -0.419429
+          -0.978668
         ],
         "span": [
-          2.41179,
+          2.487158,
           0.96,
-          0.978668
+          0.629144
         ]
       },
       "source_region_id": "nose_radome",
       "source_region_role": "outer_skin",
       "support_bounds": {
         "center": [
-          6.330948,
+          6.293264,
           0.0,
-          0.069905
+          -0.664096
         ],
         "max": [
-          7.440371,
+          7.437357,
           0.2784,
-          0.422225
+          -0.437604
         ],
         "min": [
-          5.221525,
+          5.149171,
           -0.2784,
-          -0.282415
+          -0.890588
         ],
         "span": [
-          2.218847,
+          2.288185,
           0.5568,
-          0.704641
+          0.452984
         ]
       },
       "vertices_m": [
         [
-          7.440371,
+          7.437357,
           0.0,
-          0.069905
+          -0.664096
         ],
         [
-          5.221525,
+          5.149171,
           -0.2784,
-          -0.282415
+          -0.890588
         ],
         [
-          5.221525,
+          5.149171,
           -0.2784,
-          0.422225
+          -0.437604
         ],
         [
-          5.221525,
+          5.149171,
           0.2784,
-          -0.282415
+          -0.890588
         ],
         [
-          5.221525,
+          5.149171,
           0.2784,
-          0.422225
+          -0.437604
         ],
         [
-          6.330948,
+          6.293264,
           0.0,
-          -0.282415
+          -0.890588
         ],
         [
-          6.330948,
+          6.293264,
           0.0,
-          0.422225
+          -0.437604
         ]
       ]
     },
@@ -398,24 +367,23 @@
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7008,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 17,
+            "point_count": 16,
             "points_m": [
               [
                 -0.675635,
                 -0.789797
-              ],
-              [
-                0.095735,
-                -0.779198
               ],
               [
                 0.34442,
@@ -430,52 +398,52 @@
                 -0.685828
               ],
               [
-                0.304006,
-                -0.084468
+                0.489015,
+                -0.515887
               ],
               [
-                0.300946,
-                -0.078308
+                0.282214,
+                -0.089109
               ],
               [
-                0.250164,
-                -0.011008
+                0.237823,
+                -0.035649
               ],
               [
-                0.18984,
-                0.038384
+                0.179492,
+                0.007281
               ],
               [
-                0.129516,
-                0.073071
+                0.121161,
+                0.035506
               ],
               [
-                0.064763,
-                0.095679
+                0.060575,
+                0.054621
               ],
               [
                 -1e-06,
-                0.10357
+                0.059029
               ],
               [
-                -0.064764,
-                0.095679
+                -0.060576,
+                0.054621
               ],
               [
-                -0.129517,
-                0.073071
+                -0.121162,
+                0.035506
               ],
               [
-                -0.189841,
-                0.038384
+                -0.179493,
+                0.007281
               ],
               [
-                -0.250165,
-                -0.011008
+                -0.237825,
+                -0.035649
               ],
               [
-                -0.300776,
-                -0.078308
+                -0.282043,
+                -0.089109
               ]
             ]
           },
@@ -484,7 +452,7 @@
               "x",
               "z"
             ],
-            "point_count": 12,
+            "point_count": 5,
             "points_m": [
               [
                 2.266907,
@@ -503,36 +471,8 @@
                 -0.683674
               ],
               [
-                3.765217,
-                -0.043793
-              ],
-              [
-                3.599253,
-                0.021242
-              ],
-              [
-                3.423313,
-                0.060449
-              ],
-              [
-                3.247384,
-                0.087888
-              ],
-              [
-                3.070307,
-                0.101607
-              ],
-              [
-                2.89324,
-                0.10357
-              ],
-              [
-                2.611056,
-                0.089045
-              ],
-              [
-                2.328872,
-                0.066065
+                3.856061,
+                -0.14747
               ]
             ]
           },
@@ -586,7 +526,10 @@
             ]
           }
         },
-        "region_vertex_count": 5146,
+        "region_vertex_count": 986,
+        "selected_node_vertex_counts": {
+          "Object_4": 986
+        },
         "selection_bounds": {
           "center": [
             3.84379,
@@ -609,10 +552,13 @@
             1.631113
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_4"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -754,46 +700,61 @@
       },
       "fit_metrics": {
         "aabb_volume_ratio": 0.51102,
-        "max_support_surface_inset_m": 0.203495,
-        "proxy_support_volume_m3": 1.540047,
-        "source_aabb_volume_m3": 3.01365
+        "max_support_surface_inset_m": 0.238431,
+        "proxy_support_volume_m3": 1.337943,
+        "source_aabb_volume_m3": 2.618161
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 2076,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 19,
+            "point_count": 23,
             "points_m": [
               [
-                -0.306896,
-                -0.102406
+                -0.489016,
+                -0.515887
               ],
               [
-                -0.306876,
-                -0.127399
+                -0.482886,
+                -0.55913
               ],
               [
-                -0.054336,
-                -0.139327
+                -0.444857,
+                -0.641508
               ],
               [
-                0.054335,
-                -0.139327
+                -0.400377,
+                -0.696468
               ],
               [
-                0.307046,
-                -0.127399
+                0.400376,
+                -0.696468
               ],
               [
-                0.307076,
-                -0.102406
+                0.444856,
+                -0.641508
+              ],
+              [
+                0.482885,
+                -0.55913
+              ],
+              [
+                0.489015,
+                -0.515887
+              ],
+              [
+                0.340514,
+                -0.168266
               ],
               [
                 0.304006,
@@ -846,6 +807,10 @@
               [
                 -0.303836,
                 -0.084468
+              ],
+              [
+                -0.340516,
+                -0.168266
               ]
             ]
           },
@@ -854,19 +819,43 @@
               "x",
               "z"
             ],
-            "point_count": 16,
+            "point_count": 21,
             "points_m": [
               [
-                1.378623,
-                -0.139327
+                2.13574,
+                -0.420101
               ],
               [
-                3.262744,
-                -0.137757
+                2.404496,
+                -0.523296
               ],
               [
-                3.930427,
-                -0.126463
+                4.545194,
+                -0.696468
+              ],
+              [
+                4.610077,
+                -0.652168
+              ],
+              [
+                4.656964,
+                -0.617139
+              ],
+              [
+                4.674035,
+                -0.595528
+              ],
+              [
+                4.683346,
+                -0.581486
+              ],
+              [
+                4.684977,
+                -0.571551
+              ],
+              [
+                4.159846,
+                -0.246457
               ],
               [
                 3.931182,
@@ -909,16 +898,12 @@
                 0.059029
               ],
               [
-                1.917665,
-                -0.000469
+                2.139414,
+                -0.362354
               ],
               [
-                1.642426,
-                -0.059596
-              ],
-              [
-                1.3798,
-                -0.128133
+                2.13888,
+                -0.369823
               ]
             ]
           },
@@ -927,130 +912,124 @@
               "x",
               "y"
             ],
-            "point_count": 23,
+            "point_count": 19,
             "points_m": [
               [
-                1.378623,
-                -0.054336
+                2.13574,
+                -0.390653
               ],
               [
-                1.663514,
-                -0.152497
+                2.136283,
+                -0.397367
               ],
               [
-                1.951073,
-                -0.213053
+                2.405039,
+                -0.489016
               ],
               [
-                2.297074,
-                -0.279084
+                3.070669,
+                -0.482886
               ],
               [
-                2.333351,
-                -0.282043
+                4.050823,
+                -0.448602
               ],
               [
-                2.893068,
-                -0.300776
+                4.546854,
+                -0.405369
               ],
               [
-                3.248823,
-                -0.306896
+                4.611648,
+                -0.307198
               ],
               [
-                3.424038,
-                -0.306876
+                4.658927,
+                -0.206107
               ],
               [
-                3.599253,
-                -0.25391
+                4.67622,
+                -0.115173
               ],
               [
-                3.763264,
-                -0.192931
-              ],
-              [
-                3.930427,
-                -0.065972
-              ],
-              [
-                3.931182,
+                4.684977,
                 -1e-06
               ],
               [
-                3.930427,
-                0.065971
+                4.67622,
+                0.115172
               ],
               [
-                3.763264,
-                0.19293
+                4.658927,
+                0.206106
               ],
               [
-                3.599253,
-                0.253909
+                4.611648,
+                0.307197
               ],
               [
-                3.424038,
-                0.307046
+                4.546854,
+                0.405368
               ],
               [
-                3.248823,
-                0.307076
+                4.050823,
+                0.448601
               ],
               [
-                2.893068,
-                0.300946
+                3.070669,
+                0.482885
               ],
               [
-                2.333351,
-                0.282214
+                2.405039,
+                0.489015
               ],
               [
-                2.297074,
-                0.279083
+                2.136283,
+                0.397366
               ],
               [
-                1.951073,
-                0.213052
-              ],
-              [
-                1.663514,
-                0.152496
-              ],
-              [
-                1.378623,
-                0.054335
+                2.13574,
+                0.390652
               ]
             ]
           }
         },
-        "region_vertex_count": 1679,
+        "region_vertex_count": 2076,
+        "selected_node_vertex_counts": {
+          "Object_16": 12,
+          "Object_6": 1140,
+          "Object_8": 924
+        },
         "selection_bounds": {
           "center": [
-            3.240842,
+            3.410359,
             0.0,
-            1.071874
+            -0.296449
           ],
           "max": [
-            5.501895,
-            1.1,
-            2.283558
+            4.734977,
+            0.549015,
+            0.153571
           ],
           "min": [
-            0.979789,
-            -1.1,
-            -0.13981
+            2.08574,
+            -0.549015,
+            -0.746468
           ],
           "span": [
-            4.522106,
-            2.2,
-            2.423368
+            2.649237,
+            1.09803,
+            0.900039
           ]
         },
-        "selection_inflation_factor": 2.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_16",
+          "Object_6",
+          "Object_8"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "proxy_kind": "convex_hull",
       "review_status": "manual_review_required",
@@ -1068,80 +1047,80 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          3.240842,
+          3.410359,
           0.0,
-          1.071874
+          -0.296449
         ],
         "max": [
-          4.371369,
-          0.55,
-          1.677716
+          4.734977,
+          0.549015,
+          0.153571
         ],
         "min": [
-          2.110316,
-          -0.55,
-          0.466032
+          2.08574,
+          -0.549015,
+          -0.746468
         ],
         "span": [
-          2.261053,
-          1.1,
-          1.211684
+          2.649237,
+          1.09803,
+          0.900039
         ]
       },
       "source_region_id": "canopy",
       "source_region_role": "raised_outer_skin",
       "support_bounds": {
         "center": [
-          3.240842,
+          3.410359,
           0.0,
-          1.071874
+          -0.296449
         ],
         "max": [
-          4.167874,
-          0.418,
-          1.568664
+          4.496546,
+          0.417251,
+          0.072567
         ],
         "min": [
-          2.31381,
-          -0.418,
-          0.575084
+          2.324172,
+          -0.417251,
+          -0.665465
         ],
         "span": [
-          1.854063,
-          0.836,
-          0.993581
+          2.172374,
+          0.834503,
+          0.738032
         ]
       },
       "vertices_m": [
         [
-          2.31381,
-          -0.418,
-          0.575084
+          2.324172,
+          -0.417251,
+          -0.665465
         ],
         [
-          2.31381,
-          0.418,
-          0.575084
+          2.324172,
+          0.417251,
+          -0.665465
         ],
         [
-          4.167874,
-          -0.418,
-          0.575084
+          4.496546,
+          -0.417251,
+          -0.665465
         ],
         [
-          4.167874,
-          0.418,
-          0.575084
+          4.496546,
+          0.417251,
+          -0.665465
         ],
         [
-          2.962732,
+          3.084503,
           0.0,
-          1.568664
+          0.072567
         ],
         [
-          3.704358,
+          3.953453,
           0.0,
-          1.537291
+          0.071116
         ]
       ]
     },
@@ -1154,9 +1133,12 @@
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7212,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
@@ -1194,40 +1176,40 @@
                 -0.694987
               ],
               [
-                0.239142,
-                -0.030204
+                0.237823,
+                -0.035649
               ],
               [
-                0.180559,
-                0.01319
+                0.179492,
+                0.007281
               ],
               [
-                0.121987,
-                0.041877
+                0.121161,
+                0.035506
               ],
               [
-                0.060998,
-                0.061324
+                0.060575,
+                0.054621
               ],
               [
                 -1e-06,
-                0.066065
+                0.059029
               ],
               [
-                -0.060999,
-                0.061324
+                -0.060576,
+                0.054621
               ],
               [
-                -0.121988,
-                0.041877
+                -0.121162,
+                0.035506
               ],
               [
-                -0.18056,
-                0.01319
+                -0.179493,
+                0.007281
               ],
               [
-                -0.239143,
-                -0.030204
+                -0.237825,
+                -0.035649
               ]
             ]
           },
@@ -1236,7 +1218,7 @@
               "x",
               "z"
             ],
-            "point_count": 12,
+            "point_count": 11,
             "points_m": [
               [
                 -1.578842,
@@ -1255,24 +1237,20 @@
                 -0.789797
               ],
               [
-                2.404496,
-                -0.523296
-              ],
-              [
                 2.405039,
                 -0.515887
               ],
               [
-                2.39294,
-                -0.089944
+                2.398809,
+                -0.445719
               ],
               [
-                2.392528,
-                -0.084891
+                2.369306,
+                -0.160344
               ],
               [
-                2.328872,
-                0.066065
+                2.266907,
+                0.059029
               ],
               [
                 -1.518961,
@@ -1342,7 +1320,11 @@
             ]
           }
         },
-        "region_vertex_count": 1503,
+        "region_vertex_count": 1099,
+        "selected_node_vertex_counts": {
+          "Object_14": 204,
+          "Object_4": 895
+        },
         "selection_bounds": {
           "center": [
             0.26379,
@@ -1365,10 +1347,14 @@
             1.58451
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_14",
+          "Object_4"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -1510,82 +1496,61 @@
       },
       "fit_metrics": {
         "aabb_volume_ratio": 0.44688,
-        "max_support_surface_inset_m": 0.223091,
-        "proxy_support_volume_m3": 2.232449,
-        "source_aabb_volume_m3": 4.995633
+        "max_support_surface_inset_m": 0.170711,
+        "proxy_support_volume_m3": 0.582528,
+        "source_aabb_volume_m3": 1.303545
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 2514,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 15,
+            "point_count": 9,
             "points_m": [
               [
-                -0.611929,
-                -0.651795
+                -0.285536,
+                -0.522944
               ],
               [
-                -0.603595,
-                -1.487486
+                -0.219837,
+                -1.271193
               ],
               [
-                -0.597696,
-                -1.587298
+                -0.1606,
+                -1.272975
               ],
               [
-                -0.456262,
-                -1.647844
+                0.160599,
+                -1.272975
               ],
               [
-                0.456261,
-                -1.647844
+                0.219836,
+                -1.271193
               ],
               [
-                0.597695,
-                -1.587298
+                0.264095,
+                -0.550806
               ],
               [
-                0.602235,
-                -1.487486
+                0.211391,
+                -0.03884
               ],
               [
-                0.611928,
-                -0.651795
+                -1e-06,
+                -0.010384
               ],
               [
-                0.376258,
-                -0.304023
-              ],
-              [
-                0.341229,
-                -0.267645
-              ],
-              [
-                0.264186,
-                -0.237347
-              ],
-              [
-                -0.003181,
-                -0.233039
-              ],
-              [
-                -0.264187,
-                -0.237347
-              ],
-              [
-                -0.34123,
-                -0.267645
-              ],
-              [
-                -0.376259,
-                -0.304023
+                -0.211382,
+                -0.03884
               ]
             ]
           },
@@ -1594,63 +1559,55 @@
               "x",
               "z"
             ],
-            "point_count": 14,
+            "point_count": 12,
             "points_m": [
               [
-                0.525961,
-                -0.479086
+                2.806623,
+                -0.216209
               ],
               [
-                0.681115,
-                -1.610228
-              ],
-              [
-                1.792497,
-                -1.647844
-              ],
-              [
-                2.804218,
-                -1.587298
-              ],
-              [
-                3.071484,
-                -1.410896
+                3.012156,
+                -1.076903
               ],
               [
                 3.153419,
                 -1.131349
               ],
               [
-                3.164764,
-                -0.302473
+                3.726796,
+                -1.27076
               ],
               [
-                3.163687,
-                -0.298145
+                3.97533,
+                -1.272975
               ],
               [
-                3.151145,
-                -0.255788
+                3.973498,
+                -1.248183
               ],
               [
-                3.149202,
-                -0.24995
+                3.682859,
+                -0.543498
               ],
               [
-                3.147833,
-                -0.24852
+                3.452544,
+                -0.246749
               ],
               [
-                3.114837,
-                -0.233039
+                3.307627,
+                -0.064297
               ],
               [
-                1.910669,
-                -0.237347
+                3.267485,
+                -0.019876
               ],
               [
-                0.525961,
-                -0.2638
+                3.16573,
+                -0.010384
+              ],
+              [
+                2.946357,
+                -0.03884
               ]
             ]
           },
@@ -1659,78 +1616,110 @@
               "x",
               "y"
             ],
-            "point_count": 10,
+            "point_count": 16,
             "points_m": [
               [
-                0.525961,
-                -0.487103
+                2.806623,
+                -0.151349
               ],
               [
-                1.826237,
-                -0.611929
+                2.946357,
+                -0.211382
               ],
               [
-                2.816769,
-                -0.603595
+                3.319847,
+                -0.278742
               ],
               [
-                3.070669,
-                -0.586332
+                3.362546,
+                -0.285536
               ],
               [
-                3.163687,
-                -0.220149
+                3.560852,
+                -0.270669
               ],
               [
-                3.164764,
-                0.221769
+                3.669884,
+                -0.259506
               ],
               [
-                3.070669,
-                0.586331
+                3.957614,
+                -0.221357
               ],
               [
-                2.816769,
-                0.602235
+                3.959094,
+                -0.219837
               ],
               [
-                1.826237,
-                0.611928
+                3.97533,
+                -0.1606
               ],
               [
-                0.525961,
-                0.487102
+                3.97533,
+                0.160599
+              ],
+              [
+                3.959094,
+                0.219836
+              ],
+              [
+                3.957614,
+                0.221356
+              ],
+              [
+                3.343028,
+                0.264095
+              ],
+              [
+                3.302342,
+                0.259324
+              ],
+              [
+                2.946357,
+                0.211391
+              ],
+              [
+                2.813226,
+                0.150654
               ]
             ]
           }
         },
-        "region_vertex_count": 1363,
+        "region_vertex_count": 2514,
+        "selected_node_vertex_counts": {
+          "Object_10": 219,
+          "Object_12": 2295
+        },
         "selection_bounds": {
           "center": [
-            1.771158,
-            0.0,
-            -0.955366
+            3.390977,
+            -0.01072,
+            -0.64168
           ],
           "max": [
-            3.165474,
-            0.62,
-            -0.233016
+            4.05533,
+            0.334096,
+            0.069615
           ],
           "min": [
-            0.376842,
-            -0.62,
-            -1.677716
+            2.726624,
+            -0.355536,
+            -1.352975
           ],
           "span": [
-            2.788632,
-            1.24,
-            1.4447
+            1.328706,
+            0.689632,
+            1.42259
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_10",
+          "Object_12"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "proxy_kind": "convex_hull",
       "review_status": "manual_review_required",
@@ -1748,105 +1737,108 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          1.771158,
-          0.0,
-          -0.955366
+          3.390977,
+          -0.01072,
+          -0.64168
         ],
         "max": [
-          3.165474,
-          0.62,
-          -0.233016
+          4.05533,
+          0.334096,
+          0.069615
         ],
         "min": [
-          0.376842,
-          -0.62,
-          -1.677716
+          2.726624,
+          -0.355536,
+          -1.352975
         ],
         "span": [
-          2.788632,
-          1.24,
-          1.4447
+          1.328706,
+          0.689632,
+          1.42259
         ]
       },
       "source_region_id": "intake",
       "source_region_role": "outer_skin",
       "support_bounds": {
         "center": [
-          1.771158,
-          0.0,
-          -0.955366
+          3.390977,
+          -0.01072,
+          -0.64168
         ],
         "max": [
-          2.942383,
-          0.434,
-          -0.40638
+          3.949034,
+          0.230651,
+          -0.101096
         ],
         "min": [
-          0.599933,
-          -0.434,
-          -1.504352
+          2.83292,
+          -0.252091,
+          -1.182264
         ],
         "span": [
-          2.342451,
-          0.868,
-          1.097972
+          1.116113,
+          0.482742,
+          1.081168
         ]
       },
       "vertices_m": [
         [
-          0.599933,
-          -0.434,
-          -1.504352
+          2.83292,
+          -0.252091,
+          -1.182264
         ],
         [
-          0.599933,
-          -0.434,
-          -0.40638
+          2.83292,
+          -0.252091,
+          -0.101096
         ],
         [
-          0.599933,
-          0.434,
-          -1.504352
+          2.83292,
+          0.230651,
+          -1.182264
         ],
         [
-          0.599933,
-          0.434,
-          -0.40638
+          2.83292,
+          0.230651,
+          -0.101096
         ],
         [
-          2.942383,
-          -0.434,
-          -1.504352
+          3.949034,
+          -0.252091,
+          -1.182264
         ],
         [
-          2.942383,
-          -0.434,
-          -0.40638
+          3.949034,
+          -0.252091,
+          -0.101096
         ],
         [
-          2.942383,
-          0.434,
-          -1.504352
+          3.949034,
+          0.230651,
+          -1.182264
         ],
         [
-          2.942383,
-          0.434,
-          -0.40638
+          3.949034,
+          0.230651,
+          -0.101096
         ]
       ]
     },
     {
       "fit_metrics": {
         "aabb_volume_ratio": 0.74342,
-        "max_support_surface_inset_m": 0.102,
-        "proxy_support_volume_m3": 8.496361,
-        "source_aabb_volume_m3": 11.42869
+        "max_support_surface_inset_m": 0.108,
+        "proxy_support_volume_m3": 9.405061,
+        "source_aabb_volume_m3": 12.651003
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7776,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
@@ -1860,20 +1852,20 @@
                 -0.694997
               ],
               [
-                -0.744525,
-                -0.719144
+                -0.668177,
+                -1.189528
               ],
               [
                 -0.615623,
-                -0.73998
+                -1.243873
               ],
               [
                 0.615622,
-                -0.73998
+                -1.243873
               ],
               [
-                0.744524,
-                -0.719144
+                0.668176,
+                -1.189528
               ],
               [
                 0.798386,
@@ -1910,7 +1902,7 @@
               "x",
               "z"
             ],
-            "point_count": 10,
+            "point_count": 9,
             "points_m": [
               [
                 -5.795555,
@@ -1918,15 +1910,11 @@
               ],
               [
                 -5.575648,
-                -0.73998
+                -1.243873
               ],
               [
-                -2.0101,
-                -0.694987
-              ],
-              [
-                -1.578842,
-                -0.391665
+                -2.011429,
+                -1.181798
               ],
               [
                 -1.518961,
@@ -1959,19 +1947,15 @@
               "x",
               "y"
             ],
-            "point_count": 12,
+            "point_count": 10,
             "points_m": [
               [
                 -5.795555,
                 -1e-06
               ],
               [
-                -5.575648,
-                -0.615623
-              ],
-              [
-                -4.480623,
-                -0.744525
+                -5.575357,
+                -0.711329
               ],
               [
                 -3.484343,
@@ -2002,43 +1986,47 @@
                 0.798386
               ],
               [
-                -4.480623,
-                0.744524
-              ],
-              [
-                -5.575648,
-                0.615622
+                -5.575357,
+                0.711327
               ]
             ]
           }
         },
-        "region_vertex_count": 606,
+        "region_vertex_count": 738,
+        "selected_node_vertex_counts": {
+          "Object_38": 84,
+          "Object_4": 654
+        },
         "selection_bounds": {
           "center": [
             -3.693053,
             0.0,
-            0.023302
+            -0.454381
           ],
           "max": [
             -1.507369,
-            0.85,
-            0.792255
+            0.9,
+            0.349524
           ],
           "min": [
             -5.878738,
-            -0.85,
-            -0.745652
+            -0.9,
+            -1.258287
           ],
           "span": [
             4.371369,
-            1.7,
-            1.537907
+            1.8,
+            1.607811
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_38",
+          "Object_4"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -2061,12 +2049,12 @@
         "center_m": [
           -3.693053,
           0.0,
-          0.023302
+          -0.454381
         ],
         "half_extents_m": [
           2.098257,
-          0.748,
-          0.676679
+          0.792,
+          0.707437
         ]
       },
       "proxy_kind": "obb",
@@ -2087,22 +2075,22 @@
         "center": [
           -3.693053,
           0.0,
-          0.023302
+          -0.454381
         ],
         "max": [
           -1.507369,
-          0.85,
-          0.792255
+          0.9,
+          0.349524
         ],
         "min": [
           -5.878738,
-          -0.85,
-          -0.745652
+          -0.9,
+          -1.258287
         ],
         "span": [
           4.371369,
-          1.7,
-          1.537907
+          1.8,
+          1.607811
         ]
       },
       "source_region_id": "aft_fuselage_engine",
@@ -2111,79 +2099,505 @@
         "center": [
           -3.693053,
           0.0,
-          0.023302
+          -0.454381
         ],
         "max": [
           -1.594796,
-          0.748,
-          0.699981
+          0.792,
+          0.253056
         ],
         "min": [
           -5.79131,
-          -0.748,
-          -0.653377
+          -0.792,
+          -1.161818
         ],
         "span": [
           4.196514,
-          1.496,
-          1.353358
+          1.584,
+          1.414874
         ]
       },
       "vertices_m": [
         [
           -5.79131,
-          -0.748,
-          -0.653377
+          -0.792,
+          -1.161818
         ],
         [
           -5.79131,
-          -0.748,
-          0.699981
+          -0.792,
+          0.253056
         ],
         [
           -5.79131,
-          0.748,
-          -0.653377
+          0.792,
+          -1.161818
         ],
         [
           -5.79131,
-          0.748,
-          0.699981
+          0.792,
+          0.253056
         ],
         [
           -1.594796,
-          -0.748,
-          -0.653377
+          -0.792,
+          -1.161818
         ],
         [
           -1.594796,
-          -0.748,
-          0.699981
+          -0.792,
+          0.253056
         ],
         [
           -1.594796,
-          0.748,
-          -0.653377
+          0.792,
+          -1.161818
         ],
         [
           -1.594796,
-          0.748,
-          0.699981
+          0.792,
+          0.253056
         ]
       ]
     },
     {
       "fit_metrics": {
         "aabb_volume_ratio": 0.58968,
-        "max_support_surface_inset_m": 0.1276,
-        "proxy_support_volume_m3": 1.32623,
-        "source_aabb_volume_m3": 2.249067
+        "max_support_surface_inset_m": 0.138975,
+        "proxy_support_volume_m3": 1.537362,
+        "source_aabb_volume_m3": 2.607115
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists."
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 768,
+        "fallback_policy": "disabled_no_bounds_expansion",
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 32,
+            "points_m": [
+              [
+                -0.571706,
+                -1.007126
+              ],
+              [
+                -0.559255,
+                -1.118091
+              ],
+              [
+                -0.528192,
+                -1.224426
+              ],
+              [
+                -0.473998,
+                -1.322527
+              ],
+              [
+                -0.404262,
+                -1.408649
+              ],
+              [
+                -0.316458,
+                -1.478999
+              ],
+              [
+                -0.21878,
+                -1.531734
+              ],
+              [
+                -0.110623,
+                -1.563682
+              ],
+              [
+                -1e-06,
+                -1.574956
+              ],
+              [
+                0.112172,
+                -1.563682
+              ],
+              [
+                0.218779,
+                -1.531734
+              ],
+              [
+                0.318007,
+                -1.478999
+              ],
+              [
+                0.404261,
+                -1.408649
+              ],
+              [
+                0.475547,
+                -1.322527
+              ],
+              [
+                0.528191,
+                -1.224426
+              ],
+              [
+                0.560814,
+                -1.118091
+              ],
+              [
+                0.571705,
+                -1.007126
+              ],
+              [
+                0.560814,
+                -0.896805
+              ],
+              [
+                0.528191,
+                -0.789826
+              ],
+              [
+                0.475547,
+                -0.692359
+              ],
+              [
+                0.404261,
+                -0.605602
+              ],
+              [
+                0.318007,
+                -0.535887
+              ],
+              [
+                0.218779,
+                -0.482518
+              ],
+              [
+                0.112172,
+                -0.451213
+              ],
+              [
+                -1e-06,
+                -0.439295
+              ],
+              [
+                -0.110623,
+                -0.451213
+              ],
+              [
+                -0.21878,
+                -0.482518
+              ],
+              [
+                -0.316458,
+                -0.535887
+              ],
+              [
+                -0.404262,
+                -0.605602
+              ],
+              [
+                -0.473998,
+                -0.692359
+              ],
+              [
+                -0.531826,
+                -0.784702
+              ],
+              [
+                -0.559255,
+                -0.896805
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 11,
+            "points_m": [
+              [
+                -6.92874,
+                -1.399932
+              ],
+              [
+                -6.911065,
+                -1.416792
+              ],
+              [
+                -6.702331,
+                -1.484787
+              ],
+              [
+                -6.176535,
+                -1.574956
+              ],
+              [
+                -5.583772,
+                -1.453352
+              ],
+              [
+                -5.583771,
+                -1.187273
+              ],
+              [
+                -5.583771,
+                -0.591299
+              ],
+              [
+                -6.176535,
+                -0.439295
+              ],
+              [
+                -6.702331,
+                -0.550532
+              ],
+              [
+                -6.911064,
+                -0.627203
+              ],
+              [
+                -6.92874,
+                -0.644667
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                -6.92874,
+                -0.377638
+              ],
+              [
+                -6.911065,
+                -0.394881
+              ],
+              [
+                -6.702331,
+                -0.468341
+              ],
+              [
+                -6.176535,
+                -0.571706
+              ],
+              [
+                -5.583771,
+                -0.431027
+              ],
+              [
+                -5.583771,
+                0.431026
+              ],
+              [
+                -6.176535,
+                0.571705
+              ],
+              [
+                -6.702331,
+                0.46835
+              ],
+              [
+                -6.911065,
+                0.39488
+              ],
+              [
+                -6.92874,
+                0.377637
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 768,
+        "selected_node_vertex_counts": {
+          "Object_38": 768
+        },
+        "selection_bounds": {
+          "center": [
+            -6.256255,
+            -1e-06,
+            -1.007126
+          ],
+          "max": [
+            -5.483772,
+            0.631705,
+            -0.339296
+          ],
+          "min": [
+            -7.028739,
+            -0.631707,
+            -1.674956
+          ],
+          "span": [
+            1.544967,
+            1.263412,
+            1.33566
+          ]
+        },
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_38"
+        ],
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "half_extents_m": [
+          0.695235,
+          0.492731,
+          0.560977
+        ]
+      },
+      "proxy_kind": "obb",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.483772,
+          0.631705,
+          -0.339296
+        ],
+        "min": [
+          -7.028739,
+          -0.631707,
+          -1.674956
+        ],
+        "span": [
+          1.544967,
+          1.263412,
+          1.33566
+        ]
+      },
+      "source_region_id": "engine_nozzle",
+      "source_region_role": "outer_skin",
+      "support_bounds": {
+        "center": [
+          -6.256255,
+          -1e-06,
+          -1.007126
+        ],
+        "max": [
+          -5.56102,
+          0.49273,
+          -0.446149
+        ],
+        "min": [
+          -6.95149,
+          -0.492732,
+          -1.568103
+        ],
+        "span": [
+          1.39047,
+          0.985461,
+          1.121954
+        ]
+      },
+      "vertices_m": [
+        [
+          -6.95149,
+          -0.492732,
+          -1.568103
+        ],
+        [
+          -6.95149,
+          -0.492732,
+          -0.446149
+        ],
+        [
+          -6.95149,
+          0.49273,
+          -1.568103
+        ],
+        [
+          -6.95149,
+          0.49273,
+          -0.446149
+        ],
+        [
+          -5.56102,
+          -0.492732,
+          -1.568103
+        ],
+        [
+          -5.56102,
+          -0.492732,
+          -0.446149
+        ],
+        [
+          -5.56102,
+          0.49273,
+          -1.568103
+        ],
+        [
+          -5.56102,
+          0.49273,
+          -0.446149
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.29779,
+        "max_support_surface_inset_m": 0.233581,
+        "proxy_support_volume_m3": 1.059683,
+        "source_aabb_volume_m3": 3.558482
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
+      ],
+      "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 120,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
@@ -2193,36 +2607,36 @@
             "point_count": 8,
             "points_m": [
               [
-                -0.21878,
-                -0.482518
+                -4.645767,
+                -1.025094
               ],
               [
-                0.218779,
-                -0.482518
+                -4.118059,
+                -1.061361
               ],
               [
-                0.081734,
-                0.150327
+                -1.385735,
+                -1.031254
               ],
               [
-                0.063847,
-                0.17064
+                -1.092852,
+                -1.02452
               ],
               [
-                0.028566,
-                0.177797
+                -1.092801,
+                -1.004459
               ],
               [
-                -0.030087,
-                0.177797
+                -1.092751,
+                -0.938901
               ],
               [
-                -0.065378,
-                0.17064
+                -1.369288,
+                -0.908724
               ],
               [
-                -0.083265,
-                0.150327
+                -4.645767,
+                -0.978207
               ]
             ]
           },
@@ -2231,43 +2645,35 @@
               "x",
               "z"
             ],
-            "point_count": 9,
+            "point_count": 7,
             "points_m": [
               [
-                -6.516013,
-                -0.03598
+                -3.488793,
+                -1.004459
               ],
               [
-                -6.430504,
-                -0.339674
+                -3.488098,
+                -1.018742
               ],
               [
-                -6.425642,
-                -0.349569
+                -1.960929,
+                -1.061361
               ],
               [
-                -6.176535,
-                -0.482518
+                -1.602799,
+                -1.061361
               ],
               [
-                -5.795555,
-                -0.43088
+                0.300367,
+                -1.031254
               ],
               [
-                -5.795555,
-                -0.342604
+                -0.348443,
+                -0.908724
               ],
               [
-                -6.069696,
-                0.177797
-              ],
-              [
-                -6.386597,
-                0.168577
-              ],
-              [
-                -6.516013,
-                0.137353
+                -2.75691,
+                -0.938901
               ]
             ]
           },
@@ -2276,62 +2682,78 @@
               "x",
               "y"
             ],
-            "point_count": 6,
+            "point_count": 8,
             "points_m": [
               [
-                -6.516013,
-                0.000785
+                -3.488793,
+                -1.092801
               ],
               [
-                -6.509128,
-                -0.011546
+                -3.488098,
+                -3.672518
               ],
               [
-                -6.176535,
-                -0.21878
+                -2.636363,
+                -4.645767
               ],
               [
-                -5.795555,
-                -1e-06
+                -2.323005,
+                -4.645767
               ],
               [
-                -6.176535,
-                0.218779
+                -1.602799,
+                -4.162479
               ],
               [
-                -6.509128,
-                0.014051
+                0.300367,
+                -1.385735
+              ],
+              [
+                -2.741811,
+                -1.092801
+              ],
+              [
+                -2.75691,
+                -1.092751
               ]
             ]
           }
         },
-        "region_vertex_count": 371,
+        "region_vertex_count": 120,
+        "selected_node_vertex_counts": {
+          "Object_22": 36,
+          "Object_34": 84
+        },
         "selection_bounds": {
           "center": [
-            -6.632422,
-            0.0,
-            0.023302
+            -1.594213,
+            -2.869258,
+            -0.985043
           ],
           "max": [
-            -5.728001,
-            0.58,
-            0.559239
+            0.370368,
+            -0.92275,
+            -0.868724
           ],
           "min": [
-            -7.536843,
-            -0.58,
-            -0.512636
+            -3.558793,
+            -4.815766,
+            -1.101361
           ],
           "span": [
-            1.808842,
-            1.16,
-            1.071874
+            3.929161,
+            3.893016,
+            0.232637
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_22",
+          "Object_34"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -2352,260 +2774,14 @@
           ]
         ],
         "center_m": [
-          -6.632422,
-          0.0,
-          0.023302
+          -1.594213,
+          -2.869258,
+          -0.985043
         ],
         "half_extents_m": [
-          0.813979,
-          0.4524,
-          0.450187
-        ]
-      },
-      "proxy_kind": "obb",
-      "review_status": "manual_review_required",
-      "runtime_allowed_use": [
-        "distance_diagnostic_candidate",
-        "review_visualization_input"
-      ],
-      "runtime_prohibited_use": [
-        "runtime_collision_mesh",
-        "real_f16_engineering_geometry",
-        "true_internal_component_boundary",
-        "real_weapon_pk",
-        "structural_breakup_or_debris_claim"
-      ],
-      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
-      "source_region_bounds": {
-        "center": [
-          -6.632422,
-          0.0,
-          0.023302
-        ],
-        "max": [
-          -5.728001,
-          0.58,
-          0.559239
-        ],
-        "min": [
-          -7.536843,
-          -0.58,
-          -0.512636
-        ],
-        "span": [
-          1.808842,
-          1.16,
-          1.071874
-        ]
-      },
-      "source_region_id": "engine_nozzle",
-      "source_region_role": "outer_skin",
-      "support_bounds": {
-        "center": [
-          -6.632422,
-          0.0,
-          0.023302
-        ],
-        "max": [
-          -5.818443,
-          0.4524,
-          0.473489
-        ],
-        "min": [
-          -7.446401,
-          -0.4524,
-          -0.426885
-        ],
-        "span": [
-          1.627958,
-          0.9048,
-          0.900374
-        ]
-      },
-      "vertices_m": [
-        [
-          -7.446401,
-          -0.4524,
-          -0.426885
-        ],
-        [
-          -7.446401,
-          -0.4524,
-          0.473489
-        ],
-        [
-          -7.446401,
-          0.4524,
-          -0.426885
-        ],
-        [
-          -7.446401,
-          0.4524,
-          0.473489
-        ],
-        [
-          -5.818443,
-          -0.4524,
-          -0.426885
-        ],
-        [
-          -5.818443,
-          -0.4524,
-          0.473489
-        ],
-        [
-          -5.818443,
-          0.4524,
-          -0.426885
-        ],
-        [
-          -5.818443,
-          0.4524,
-          0.473489
-        ]
-      ]
-    },
-    {
-      "fit_metrics": {
-        "aabb_volume_ratio": 0.29779,
-        "max_support_surface_inset_m": 0.247941,
-        "proxy_support_volume_m3": 2.282178,
-        "source_aabb_volume_m3": 7.663665
-      },
-      "manual_review_notes": [
-        "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
-      ],
-      "mesh_derived_review_geometry": {
-        "hulls": {
-          "front": {
-            "axes": [
-              "y",
-              "z"
-            ],
-            "point_count": 4,
-            "points_m": [
-              [
-                0.166206,
-                -0.186334
-              ],
-              [
-                0.190424,
-                -0.2638
-              ],
-              [
-                0.215196,
-                -0.21184
-              ],
-              [
-                0.187827,
-                -0.144148
-              ]
-            ]
-          },
-          "side": {
-            "axes": [
-              "x",
-              "z"
-            ],
-            "point_count": 3,
-            "points_m": [
-              [
-                0.525961,
-                -0.2638
-              ],
-              [
-                1.716098,
-                -0.21184
-              ],
-              [
-                1.673449,
-                -0.144148
-              ]
-            ]
-          },
-          "top": {
-            "axes": [
-              "x",
-              "y"
-            ],
-            "point_count": 4,
-            "points_m": [
-              [
-                0.525961,
-                0.190424
-              ],
-              [
-                1.521526,
-                0.166206
-              ],
-              [
-                1.673449,
-                0.187827
-              ],
-              [
-                1.716098,
-                0.215196
-              ]
-            ]
-          }
-        },
-        "region_vertex_count": 23,
-        "selection_bounds": {
-          "center": [
-            -0.452211,
-            2.746173,
-            0.023302
-          ],
-          "max": [
-            1.808842,
-            5.328889,
-            0.343699
-          ],
-          "min": [
-            -2.713264,
-            0.163457,
-            -0.297096
-          ],
-          "span": [
-            4.522106,
-            5.165432,
-            0.640795
-          ]
-        },
-        "selection_inflation_factor": 1.25,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
-        "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
-      },
-      "obb": {
-        "axes": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "center_m": [
-          -0.452211,
-          2.746173,
-          0.023302
-        ],
-        "half_extents_m": [
-          1.700312,
-          1.818232,
-          0.092274
+          1.846706,
+          1.712927,
+          0.041875
         ]
       },
       "proxy_kind": "thin_prism",
@@ -2624,134 +2800,153 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          -0.452211,
-          2.746173,
-          0.023302
+          -1.594213,
+          -2.869258,
+          -0.985043
         ],
         "max": [
-          1.356632,
-          4.812346,
-          0.279619
+          0.370368,
+          -0.92275,
+          -0.868724
         ],
         "min": [
-          -2.261053,
-          0.68,
-          -0.233016
+          -3.558793,
+          -4.815766,
+          -1.101361
         ],
         "span": [
-          3.617685,
-          4.132346,
-          0.512636
+          3.929161,
+          3.893016,
+          0.232637
         ]
       },
       "source_region_id": "left_wing",
       "source_region_role": "lifting_surface",
       "support_bounds": {
         "center": [
-          -0.452211,
-          2.746173,
-          0.023302
+          -1.594213,
+          -2.869258,
+          -0.985043
         ],
         "max": [
-          1.248101,
-          4.564405,
-          0.115576
+          0.252493,
+          -1.156331,
+          -0.943168
         ],
         "min": [
-          -2.152523,
-          0.927941,
-          -0.068972
+          -3.440919,
+          -4.582185,
+          -1.026918
         ],
         "span": [
-          3.400624,
-          3.636464,
-          0.184549
+          3.693411,
+          3.425854,
+          0.083749
         ]
       },
       "thin_prism": {
-        "nominal_thickness_m": 0.184549,
+        "nominal_thickness_m": 0.083749,
         "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
         "thin_axis": "z"
       },
       "vertices_m": [
         [
-          -2.152523,
-          0.927941,
-          -0.068972
+          -3.440919,
+          -4.582185,
+          -1.026918
         ],
         [
-          -2.152523,
-          0.927941,
-          0.115576
+          -3.440919,
+          -4.582185,
+          -0.943168
         ],
         [
-          -2.152523,
-          4.564405,
-          -0.068972
+          -3.440919,
+          -1.156331,
+          -1.026918
         ],
         [
-          -2.152523,
-          4.564405,
-          0.115576
+          -3.440919,
+          -1.156331,
+          -0.943168
         ],
         [
-          1.248101,
-          0.927941,
-          -0.068972
+          0.252493,
+          -4.582185,
+          -1.026918
         ],
         [
-          1.248101,
-          0.927941,
-          0.115576
+          0.252493,
+          -4.582185,
+          -0.943168
         ],
         [
-          1.248101,
-          4.564405,
-          -0.068972
+          0.252493,
+          -1.156331,
+          -1.026918
         ],
         [
-          1.248101,
-          4.564405,
-          0.115576
+          0.252493,
+          -1.156331,
+          -0.943168
         ]
       ]
     },
     {
       "fit_metrics": {
         "aabb_volume_ratio": 0.29779,
-        "max_support_surface_inset_m": 0.247941,
-        "proxy_support_volume_m3": 2.282178,
-        "source_aabb_volume_m3": 7.663665
+        "max_support_surface_inset_m": 0.233586,
+        "proxy_support_volume_m3": 1.059703,
+        "source_aabb_volume_m3": 3.558547
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
         "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 118,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 4,
+            "point_count": 8,
             "points_m": [
               [
-                -0.215197,
-                -0.21184
+                1.092659,
+                -0.938901
               ],
               [
-                -0.190425,
-                -0.2638
+                1.092699,
+                -1.004469
               ],
               [
-                -0.166207,
-                -0.186334
+                1.09275,
+                -1.02452
               ],
               [
-                -0.187828,
-                -0.144148
+                1.385734,
+                -1.031254
+              ],
+              [
+                4.118058,
+                -1.061361
+              ],
+              [
+                4.645756,
+                -1.025094
+              ],
+              [
+                4.645756,
+                -0.978207
+              ],
+              [
+                1.369287,
+                -0.908724
               ]
             ]
           },
@@ -2760,19 +2955,35 @@
               "x",
               "z"
             ],
-            "point_count": 3,
+            "point_count": 7,
             "points_m": [
               [
-                0.525961,
-                -0.2638
+                -3.488782,
+                -1.004469
               ],
               [
-                1.716098,
-                -0.21184
+                -3.488068,
+                -1.018742
               ],
               [
-                1.673449,
-                -0.144148
+                -1.960929,
+                -1.061361
+              ],
+              [
+                -1.602799,
+                -1.061361
+              ],
+              [
+                0.300367,
+                -1.031254
+              ],
+              [
+                -0.348443,
+                -0.908724
+              ],
+              [
+                -2.7569,
+                -0.938901
               ]
             ]
           },
@@ -2781,54 +2992,78 @@
               "x",
               "y"
             ],
-            "point_count": 4,
+            "point_count": 8,
             "points_m": [
               [
-                0.525961,
-                -0.190425
+                -3.488782,
+                1.092699
               ],
               [
-                1.716098,
-                -0.215197
+                -2.7569,
+                1.092659
               ],
               [
-                1.673449,
-                -0.187828
+                -2.741791,
+                1.092699
               ],
               [
-                1.521526,
-                -0.166207
+                0.300367,
+                1.385734
+              ],
+              [
+                -1.602799,
+                4.162478
+              ],
+              [
+                -2.323005,
+                4.645756
+              ],
+              [
+                -2.636363,
+                4.645756
+              ],
+              [
+                -3.488068,
+                3.672416
               ]
             ]
           }
         },
-        "region_vertex_count": 23,
+        "region_vertex_count": 118,
+        "selected_node_vertex_counts": {
+          "Object_20": 36,
+          "Object_32": 82
+        },
         "selection_bounds": {
           "center": [
-            -0.452211,
-            -2.746173,
-            0.023302
+            -1.594207,
+            2.869209,
+            -0.985043
           ],
           "max": [
-            1.808842,
-            -0.163457,
-            0.343699
+            0.370368,
+            4.815757,
+            -0.868724
           ],
           "min": [
-            -2.713264,
-            -5.328889,
-            -0.297096
+            -3.558783,
+            0.92266,
+            -1.101361
           ],
           "span": [
-            4.522106,
-            5.165432,
-            0.640795
+            3.929151,
+            3.893097,
+            0.232637
           ]
         },
-        "selection_inflation_factor": 1.25,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_20",
+          "Object_32"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -2849,14 +3084,14 @@
           ]
         ],
         "center_m": [
-          -0.452211,
-          -2.746173,
-          0.023302
+          -1.594207,
+          2.869209,
+          -0.985043
         ],
         "half_extents_m": [
-          1.700312,
-          1.818232,
-          0.092274
+          1.846701,
+          1.712962,
+          0.041875
         ]
       },
       "proxy_kind": "thin_prism",
@@ -2875,95 +3110,95 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          -0.452211,
-          -2.746173,
-          0.023302
+          -1.594207,
+          2.869209,
+          -0.985043
         ],
         "max": [
-          1.356632,
-          -0.68,
-          0.279619
+          0.370368,
+          4.815757,
+          -0.868724
         ],
         "min": [
-          -2.261053,
-          -4.812346,
-          -0.233016
+          -3.558783,
+          0.92266,
+          -1.101361
         ],
         "span": [
-          3.617685,
-          4.132346,
-          0.512636
+          3.929151,
+          3.893097,
+          0.232637
         ]
       },
       "source_region_id": "right_wing",
       "source_region_role": "lifting_surface",
       "support_bounds": {
         "center": [
-          -0.452211,
-          -2.746173,
-          0.023302
+          -1.594207,
+          2.869209,
+          -0.985043
         ],
         "max": [
-          1.248101,
-          -0.927941,
-          0.115576
+          0.252494,
+          4.582172,
+          -0.943168
         ],
         "min": [
-          -2.152523,
-          -4.564405,
-          -0.068972
+          -3.440908,
+          1.156246,
+          -1.026918
         ],
         "span": [
-          3.400624,
-          3.636464,
-          0.184549
+          3.693402,
+          3.425925,
+          0.083749
         ]
       },
       "thin_prism": {
-        "nominal_thickness_m": 0.184549,
+        "nominal_thickness_m": 0.083749,
         "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
         "thin_axis": "z"
       },
       "vertices_m": [
         [
-          -2.152523,
-          -4.564405,
-          -0.068972
+          -3.440908,
+          1.156246,
+          -1.026918
         ],
         [
-          -2.152523,
-          -4.564405,
-          0.115576
+          -3.440908,
+          1.156246,
+          -0.943168
         ],
         [
-          -2.152523,
-          -0.927941,
-          -0.068972
+          -3.440908,
+          4.582172,
+          -1.026918
         ],
         [
-          -2.152523,
-          -0.927941,
-          0.115576
+          -3.440908,
+          4.582172,
+          -0.943168
         ],
         [
-          1.248101,
-          -4.564405,
-          -0.068972
+          0.252494,
+          1.156246,
+          -1.026918
         ],
         [
-          1.248101,
-          -4.564405,
-          0.115576
+          0.252494,
+          1.156246,
+          -0.943168
         ],
         [
-          1.248101,
-          -0.927941,
-          -0.068972
+          0.252494,
+          4.582172,
+          -1.026918
         ],
         [
-          1.248101,
-          -0.927941,
-          0.115576
+          0.252494,
+          4.582172,
+          -0.943168
         ]
       ]
     },
@@ -2975,23 +3210,311 @@
       },
       "fit_metrics": {
         "aabb_volume_ratio": 0.43546,
-        "max_support_surface_inset_m": 0.361768,
-        "proxy_support_volume_m3": 1.927173,
-        "source_aabb_volume_m3": 4.425642
+        "max_support_surface_inset_m": 0.283386,
+        "proxy_support_volume_m3": 1.509618,
+        "source_aabb_volume_m3": 3.466753
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
         "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7092,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 3,
+            "point_count": 7,
+            "points_m": [
+              [
+                -1.385735,
+                -1.031254
+              ],
+              [
+                -1.070304,
+                -1.09797
+              ],
+              [
+                -0.686335,
+                -1.104241
+              ],
+              [
+                -0.353913,
+                -0.392309
+              ],
+              [
+                -0.343233,
+                -0.348554
+              ],
+              [
+                -1.364346,
+                -0.872557
+              ],
+              [
+                -1.369288,
+                -0.908724
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 7,
+            "points_m": [
+              [
+                -2.75691,
+                -1.02452
+              ],
+              [
+                -2.011429,
+                -1.09797
+              ],
+              [
+                0.525528,
+                -1.104241
+              ],
+              [
+                0.527028,
+                -0.628976
+              ],
+              [
+                0.525961,
+                -0.348554
+              ],
+              [
+                -2.011429,
+                -0.385857
+              ],
+              [
+                -2.7569,
+                -0.938901
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 10,
+            "points_m": [
+              [
+                -2.75691,
+                -1.092751
+              ],
+              [
+                -2.006748,
+                -1.359413
+              ],
+              [
+                0.300367,
+                -1.385735
+              ],
+              [
+                0.470187,
+                -1.051582
+              ],
+              [
+                0.513318,
+                -0.786389
+              ],
+              [
+                0.525528,
+                -0.686335
+              ],
+              [
+                0.527028,
+                -0.637375
+              ],
+              [
+                0.525961,
+                -0.343233
+              ],
+              [
+                -2.011429,
+                -0.352605
+              ],
+              [
+                -2.7569,
+                -1.078327
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 180,
+        "selected_node_vertex_counts": {
+          "Object_34": 12,
+          "Object_4": 168
+        },
+        "selection_bounds": {
+          "center": [
+            -1.092842,
+            -0.85,
+            -0.7107
+          ],
+          "max": [
+            0.678316,
+            -0.25,
+            -0.302921
+          ],
+          "min": [
+            -2.864,
+            -1.45,
+            -1.118478
+          ],
+          "span": [
+            3.542316,
+            1.2,
+            0.815557
+          ]
+        },
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_34",
+          "Object_4"
+        ],
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
+      },
+      "proxy_kind": "convex_hull",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.678316,
+          -0.25,
+          -0.302921
+        ],
+        "min": [
+          -2.864,
+          -1.45,
+          -1.118478
+        ],
+        "span": [
+          3.542316,
+          1.2,
+          0.815557
+        ]
+      },
+      "source_region_id": "left_wing_root",
+      "source_region_role": "structural_transition",
+      "support_bounds": {
+        "center": [
+          -1.092842,
+          -0.85,
+          -0.7107
+        ],
+        "max": [
+          0.394931,
+          -0.418,
+          -0.417099
+        ],
+        "min": [
+          -2.580615,
+          -1.282,
+          -1.004301
+        ],
+        "span": [
+          2.975545,
+          0.864,
+          0.587201
+        ]
+      },
+      "vertices_m": [
+        [
+          -2.580615,
+          -1.282,
+          -1.004301
+        ],
+        [
+          -2.580615,
+          -1.282,
+          -0.417099
+        ],
+        [
+          -2.580615,
+          -0.418,
+          -1.004301
+        ],
+        [
+          -2.580615,
+          -0.418,
+          -0.417099
+        ],
+        [
+          0.394931,
+          -1.282,
+          -1.004301
+        ],
+        [
+          0.394931,
+          -1.282,
+          -0.417099
+        ],
+        [
+          0.394931,
+          -0.418,
+          -1.004301
+        ],
+        [
+          0.394931,
+          -0.418,
+          -0.417099
+        ]
+      ]
+    },
+    {
+      "convex_hull": {
+        "simplification_error_m": null,
+        "vertex_count": 8,
+        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
+      },
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.43546,
+        "max_support_surface_inset_m": 0.283386,
+        "proxy_support_volume_m3": 1.509618,
+        "source_aabb_volume_m3": 3.466753
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
+      ],
+      "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 7090,
+        "fallback_policy": "disabled_no_bounds_expansion",
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 7,
             "points_m": [
               [
                 0.343232,
@@ -3002,8 +3525,24 @@
                 -0.392309
               ],
               [
-                0.352603,
-                -0.385857
+                0.686334,
+                -1.104241
+              ],
+              [
+                1.070303,
+                -1.09797
+              ],
+              [
+                1.385734,
+                -1.031254
+              ],
+              [
+                1.369287,
+                -0.908724
+              ],
+              [
+                1.364344,
+                -0.872557
               ]
             ]
           },
@@ -3012,19 +3551,35 @@
               "x",
               "z"
             ],
-            "point_count": 3,
+            "point_count": 7,
             "points_m": [
+              [
+                -2.75691,
+                -1.02452
+              ],
+              [
+                -2.011429,
+                -1.09797
+              ],
+              [
+                0.525528,
+                -1.104241
+              ],
+              [
+                0.527028,
+                -0.628976
+              ],
+              [
+                0.525961,
+                -0.348554
+              ],
               [
                 -2.011429,
                 -0.385857
               ],
               [
-                -0.737696,
-                -0.392309
-              ],
-              [
-                0.525961,
-                -0.348554
+                -2.7569,
+                -0.938901
               ]
             ]
           },
@@ -3033,8 +3588,16 @@
               "x",
               "y"
             ],
-            "point_count": 3,
+            "point_count": 10,
             "points_m": [
+              [
+                -2.75691,
+                1.09275
+              ],
+              [
+                -2.7569,
+                1.078326
+              ],
               [
                 -2.011429,
                 0.352603
@@ -3044,39 +3607,67 @@
                 0.343232
               ],
               [
-                -0.737696,
-                0.353912
+                0.527028,
+                0.637374
+              ],
+              [
+                0.525528,
+                0.686334
+              ],
+              [
+                0.513318,
+                0.786388
+              ],
+              [
+                0.470187,
+                1.051581
+              ],
+              [
+                0.300367,
+                1.385734
+              ],
+              [
+                -2.006748,
+                1.359412
               ]
             ]
           }
         },
-        "region_vertex_count": 18,
+        "region_vertex_count": 180,
+        "selected_node_vertex_counts": {
+          "Object_32": 12,
+          "Object_4": 168
+        },
         "selection_bounds": {
           "center": [
-            -0.376842,
-            0.825,
-            0.0
+            -1.092842,
+            0.85,
+            -0.7107
           ],
           "max": [
-            1.884211,
-            1.35,
-            0.466032
+            0.678316,
+            1.45,
+            -0.302921
           ],
           "min": [
-            -2.637895,
-            0.3,
-            -0.466032
+            -2.864,
+            0.25,
+            -1.118478
           ],
           "span": [
-            4.522106,
-            1.05,
-            0.932065
+            3.542316,
+            1.2,
+            0.815557
           ]
         },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_32",
+          "Object_4"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "proxy_kind": "convex_hull",
       "review_status": "manual_review_required",
@@ -3094,367 +3685,144 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          -0.376842,
-          0.825,
-          0.0
+          -1.092842,
+          0.85,
+          -0.7107
         ],
         "max": [
-          1.884211,
-          1.35,
-          0.466032
+          0.678316,
+          1.45,
+          -0.302921
         ],
         "min": [
-          -2.637895,
-          0.3,
-          -0.466032
+          -2.864,
+          0.25,
+          -1.118478
         ],
         "span": [
-          4.522106,
-          1.05,
-          0.932065
-        ]
-      },
-      "source_region_id": "left_wing_root",
-      "source_region_role": "structural_transition",
-      "support_bounds": {
-        "center": [
-          -0.376842,
-          0.825,
-          0.0
-        ],
-        "max": [
-          1.522443,
-          1.203,
-          0.335543
-        ],
-        "min": [
-          -2.276127,
-          0.447,
-          -0.335543
-        ],
-        "span": [
-          3.798569,
-          0.756,
-          0.671087
-        ]
-      },
-      "vertices_m": [
-        [
-          -2.276127,
-          0.447,
-          -0.335543
-        ],
-        [
-          -2.276127,
-          0.447,
-          0.335543
-        ],
-        [
-          -2.276127,
-          1.203,
-          -0.335543
-        ],
-        [
-          -2.276127,
-          1.203,
-          0.335543
-        ],
-        [
-          1.522443,
-          0.447,
-          -0.335543
-        ],
-        [
-          1.522443,
-          0.447,
-          0.335543
-        ],
-        [
-          1.522443,
-          1.203,
-          -0.335543
-        ],
-        [
-          1.522443,
-          1.203,
-          0.335543
-        ]
-      ]
-    },
-    {
-      "convex_hull": {
-        "simplification_error_m": null,
-        "vertex_count": 8,
-        "vertex_source": "simplified_review_support_points_not_raw_mesh_vertices"
-      },
-      "fit_metrics": {
-        "aabb_volume_ratio": 0.43546,
-        "max_support_surface_inset_m": 0.361768,
-        "proxy_support_volume_m3": 1.927173,
-        "source_aabb_volume_m3": 4.425642
-      },
-      "manual_review_notes": [
-        "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
-      ],
-      "mesh_derived_review_geometry": {
-        "hulls": {
-          "front": {
-            "axes": [
-              "y",
-              "z"
-            ],
-            "point_count": 3,
-            "points_m": [
-              [
-                -0.353913,
-                -0.392309
-              ],
-              [
-                -0.343233,
-                -0.348554
-              ],
-              [
-                -0.352605,
-                -0.385857
-              ]
-            ]
-          },
-          "side": {
-            "axes": [
-              "x",
-              "z"
-            ],
-            "point_count": 3,
-            "points_m": [
-              [
-                -2.011429,
-                -0.385857
-              ],
-              [
-                -0.737696,
-                -0.392309
-              ],
-              [
-                0.525961,
-                -0.348554
-              ]
-            ]
-          },
-          "top": {
-            "axes": [
-              "x",
-              "y"
-            ],
-            "point_count": 3,
-            "points_m": [
-              [
-                -2.011429,
-                -0.352605
-              ],
-              [
-                -0.737696,
-                -0.353913
-              ],
-              [
-                0.525961,
-                -0.343233
-              ]
-            ]
-          }
-        },
-        "region_vertex_count": 18,
-        "selection_bounds": {
-          "center": [
-            -0.376842,
-            -0.825,
-            0.0
-          ],
-          "max": [
-            1.884211,
-            -0.3,
-            0.466032
-          ],
-          "min": [
-            -2.637895,
-            -1.35,
-            -0.466032
-          ],
-          "span": [
-            4.522106,
-            1.05,
-            0.932065
-          ]
-        },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
-        "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
-      },
-      "proxy_kind": "convex_hull",
-      "review_status": "manual_review_required",
-      "runtime_allowed_use": [
-        "distance_diagnostic_candidate",
-        "review_visualization_input"
-      ],
-      "runtime_prohibited_use": [
-        "runtime_collision_mesh",
-        "real_f16_engineering_geometry",
-        "true_internal_component_boundary",
-        "real_weapon_pk",
-        "structural_breakup_or_debris_claim"
-      ],
-      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
-      "source_region_bounds": {
-        "center": [
-          -0.376842,
-          -0.825,
-          0.0
-        ],
-        "max": [
-          1.884211,
-          -0.3,
-          0.466032
-        ],
-        "min": [
-          -2.637895,
-          -1.35,
-          -0.466032
-        ],
-        "span": [
-          4.522106,
-          1.05,
-          0.932065
+          3.542316,
+          1.2,
+          0.815557
         ]
       },
       "source_region_id": "right_wing_root",
       "source_region_role": "structural_transition",
       "support_bounds": {
         "center": [
-          -0.376842,
-          -0.825,
-          0.0
+          -1.092842,
+          0.85,
+          -0.7107
         ],
         "max": [
-          1.522443,
-          -0.447,
-          0.335543
+          0.394931,
+          1.282,
+          -0.417099
         ],
         "min": [
-          -2.276127,
-          -1.203,
-          -0.335543
+          -2.580615,
+          0.418,
+          -1.004301
         ],
         "span": [
-          3.798569,
-          0.756,
-          0.671087
+          2.975545,
+          0.864,
+          0.587201
         ]
       },
       "vertices_m": [
         [
-          -2.276127,
-          -1.203,
-          -0.335543
+          -2.580615,
+          0.418,
+          -1.004301
         ],
         [
-          -2.276127,
-          -1.203,
-          0.335543
+          -2.580615,
+          0.418,
+          -0.417099
         ],
         [
-          -2.276127,
-          -0.447,
-          -0.335543
+          -2.580615,
+          1.282,
+          -1.004301
         ],
         [
-          -2.276127,
-          -0.447,
-          0.335543
+          -2.580615,
+          1.282,
+          -0.417099
         ],
         [
-          1.522443,
-          -1.203,
-          -0.335543
+          0.394931,
+          0.418,
+          -1.004301
         ],
         [
-          1.522443,
-          -1.203,
-          0.335543
+          0.394931,
+          0.418,
+          -0.417099
         ],
         [
-          1.522443,
-          -0.447,
-          -0.335543
+          0.394931,
+          1.282,
+          -1.004301
         ],
         [
-          1.522443,
-          -0.447,
-          0.335543
+          0.394931,
+          1.282,
+          -0.417099
         ]
       ]
     },
     {
       "fit_metrics": {
         "aabb_volume_ratio": 0.29779,
-        "max_support_surface_inset_m": 0.223695,
-        "proxy_support_volume_m3": 1.235548,
-        "source_aabb_volume_m3": 4.149034
+        "max_support_surface_inset_m": 0.196934,
+        "proxy_support_volume_m3": 1.185228,
+        "source_aabb_volume_m3": 3.980052
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
         "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 216,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 10,
+            "point_count": 7,
             "points_m": [
               [
-                -0.011546,
-                -0.033967
+                -2.875882,
+                -1.267276
               ],
               [
-                0.000664,
-                -0.057229
+                -2.870135,
+                -1.299879
               ],
               [
-                0.141313,
-                -0.03597
+                -2.868212,
+                -1.31075
               ],
               [
-                0.141897,
-                -0.024706
+                -1.089661,
+                -1.030166
               ],
               [
-                0.141907,
-                0.13078
+                -0.711389,
+                -0.95721
               ],
               [
-                0.141907,
-                0.157051
+                -0.711288,
+                -0.795332
               ],
               [
-                0.124251,
-                0.179095
-              ],
-              [
-                0.067501,
-                0.189614
-              ],
-              [
-                -1e-06,
-                0.189614
-              ],
-              [
-                -0.01061,
-                0.134202
+                -1.089661,
+                -0.877106
               ]
             ]
           },
@@ -3463,39 +3831,59 @@
               "x",
               "z"
             ],
-            "point_count": 8,
+            "point_count": 13,
             "points_m": [
               [
-                -6.516013,
-                -0.03598
+                -7.335397,
+                -1.17162
               ],
               [
-                -6.430504,
-                -0.057229
+                -7.319956,
+                -1.236706
               ],
               [
-                -4.244068,
-                -0.03597
+                -7.098469,
+                -1.288635
               ],
               [
-                -3.899526,
-                0.168576
+                -6.550045,
+                -1.31075
               ],
               [
-                -4.253932,
-                0.189614
+                -6.269301,
+                -1.299879
               ],
               [
-                -5.663704,
-                0.189614
+                -6.216184,
+                -1.289008
               ],
               [
-                -6.386597,
-                0.168577
+                -4.864129,
+                -1.00769
               ],
               [
-                -6.516013,
-                0.137353
+                -4.669165,
+                -0.953636
+              ],
+              [
+                -4.864129,
+                -0.899583
+              ],
+              [
+                -5.92328,
+                -0.795332
+              ],
+              [
+                -6.76955,
+                -0.864272
+              ],
+              [
+                -7.07713,
+                -0.953636
+              ],
+              [
+                -7.335397,
+                -1.163266
               ]
             ]
           },
@@ -3504,66 +3892,96 @@
               "x",
               "y"
             ],
-            "point_count": 7,
+            "point_count": 12,
             "points_m": [
               [
-                -6.516013,
-                0.000785
+                -7.335397,
+                -2.251241
               ],
               [
-                -6.509128,
-                -0.011546
+                -7.319956,
+                -2.602335
               ],
               [
-                -3.899526,
-                -1e-06
+                -7.098469,
+                -2.854623
               ],
               [
-                -4.244068,
-                0.141313
+                -6.839547,
+                -2.872047
               ],
               [
-                -5.658802,
-                0.141907
+                -6.550045,
+                -2.875882
               ],
               [
-                -6.485,
-                0.027318
+                -6.269301,
+                -2.87396
               ],
               [
-                -6.509128,
-                0.014051
+                -6.216184,
+                -2.872047
+              ],
+              [
+                -4.669165,
+                -1.089661
+              ],
+              [
+                -5.92328,
+                -0.711288
+              ],
+              [
+                -6.76955,
+                -0.71155
+              ],
+              [
+                -7.07713,
+                -1.089661
+              ],
+              [
+                -7.335397,
+                -2.242604
               ]
             ]
           }
         },
-        "region_vertex_count": 204,
+        "region_vertex_count": 216,
+        "selected_node_vertex_counts": {
+          "Object_28": 24,
+          "Object_30": 24,
+          "Object_36": 168
+        },
         "selection_bounds": {
           "center": [
-            -5.464211,
-            1.675,
-            0.302921
+            -6.002281,
+            -1.793586,
+            -1.05304
           ],
           "max": [
-            -3.48579,
-            3.3625,
-            0.827207
+            -4.599165,
+            -0.641289,
+            -0.745331
           ],
           "min": [
-            -7.442632,
-            -0.0125,
-            -0.221365
+            -7.405397,
+            -2.945882,
+            -1.36075
           ],
           "span": [
-            3.956842,
-            3.375,
-            1.048572
+            2.806232,
+            2.304593,
+            0.615419
           ]
         },
-        "selection_inflation_factor": 1.5,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_28",
+          "Object_30",
+          "Object_36"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -3584,14 +4002,14 @@
           ]
         ],
         "center_m": [
-          -5.464211,
-          1.675,
-          0.302921
+          -6.002281,
+          -1.793586,
+          -1.05304
         ],
         "half_extents_m": [
-          1.23981,
-          0.99,
-          0.125829
+          1.318929,
+          1.014021,
+          0.110775
         ]
       },
       "proxy_kind": "thin_prism",
@@ -3610,154 +4028,149 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          -5.464211,
-          1.675,
-          0.302921
+          -6.002281,
+          -1.793586,
+          -1.05304
         ],
         "max": [
-          -4.145264,
-          2.8,
-          0.652445
+          -4.599165,
+          -0.641289,
+          -0.745331
         ],
         "min": [
-          -6.783159,
-          0.55,
-          -0.046603
+          -7.405397,
+          -2.945882,
+          -1.36075
         ],
         "span": [
-          2.637895,
-          2.25,
-          0.699048
+          2.806232,
+          2.304593,
+          0.615419
         ]
       },
       "source_region_id": "left_horizontal_tail",
       "source_region_role": "tail_surface",
       "support_bounds": {
         "center": [
-          -5.464211,
-          1.675,
-          0.302921
+          -6.002281,
+          -1.793586,
+          -1.05304
         ],
         "max": [
-          -4.2244,
-          2.665,
-          0.42875
+          -4.683352,
+          -0.779565,
+          -0.942265
         ],
         "min": [
-          -6.704022,
-          0.685,
-          0.177092
+          -7.32121,
+          -2.807607,
+          -1.163815
         ],
         "span": [
-          2.479621,
-          1.98,
-          0.251657
+          2.637858,
+          2.028042,
+          0.221551
         ]
       },
       "thin_prism": {
-        "nominal_thickness_m": 0.251657,
+        "nominal_thickness_m": 0.221551,
         "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
         "thin_axis": "z"
       },
       "vertices_m": [
         [
-          -6.704022,
-          0.685,
-          0.177092
+          -7.32121,
+          -2.807607,
+          -1.163815
         ],
         [
-          -6.704022,
-          0.685,
-          0.42875
+          -7.32121,
+          -2.807607,
+          -0.942265
         ],
         [
-          -6.704022,
-          2.665,
-          0.177092
+          -7.32121,
+          -0.779565,
+          -1.163815
         ],
         [
-          -6.704022,
-          2.665,
-          0.42875
+          -7.32121,
+          -0.779565,
+          -0.942265
         ],
         [
-          -4.2244,
-          0.685,
-          0.177092
+          -4.683352,
+          -2.807607,
+          -1.163815
         ],
         [
-          -4.2244,
-          0.685,
-          0.42875
+          -4.683352,
+          -2.807607,
+          -0.942265
         ],
         [
-          -4.2244,
-          2.665,
-          0.177092
+          -4.683352,
+          -0.779565,
+          -1.163815
         ],
         [
-          -4.2244,
-          2.665,
-          0.42875
+          -4.683352,
+          -0.779565,
+          -0.942265
         ]
       ]
     },
     {
       "fit_metrics": {
         "aabb_volume_ratio": 0.29779,
-        "max_support_surface_inset_m": 0.223695,
-        "proxy_support_volume_m3": 1.235548,
-        "source_aabb_volume_m3": 4.149034
+        "max_support_surface_inset_m": 0.196934,
+        "proxy_support_volume_m3": 1.185229,
+        "source_aabb_volume_m3": 3.980053
       },
       "manual_review_notes": [
         "First-pass fine proxy for TG-P6 review only.",
         "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
       ],
       "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 216,
+        "fallback_policy": "disabled_no_bounds_expansion",
         "hulls": {
           "front": {
             "axes": [
               "y",
               "z"
             ],
-            "point_count": 9,
+            "point_count": 7,
             "points_m": [
               [
-                -0.141908,
-                -0.024706
+                0.711287,
+                -0.795332
               ],
               [
-                -0.141314,
-                -0.03597
+                0.711388,
+                -0.95721
               ],
               [
-                0.000664,
-                -0.057229
+                1.08966,
+                -1.030166
               ],
               [
-                0.000785,
-                -0.03598
+                2.868211,
+                -1.31075
               ],
               [
-                0.000785,
-                0.137353
+                2.870134,
+                -1.299879
               ],
               [
-                -1e-06,
-                0.189614
+                2.875881,
+                -1.267276
               ],
               [
-                -0.067512,
-                0.189614
-              ],
-              [
-                -0.124252,
-                0.179095
-              ],
-              [
-                -0.141908,
-                0.157051
+                1.08966,
+                -0.877106
               ]
             ]
           },
@@ -3766,39 +4179,375 @@
               "x",
               "z"
             ],
-            "point_count": 8,
+            "point_count": 13,
             "points_m": [
               [
-                -6.516013,
-                -0.03598
+                -7.335397,
+                -1.17162
               ],
               [
-                -6.430504,
-                -0.057229
+                -7.319956,
+                -1.236706
               ],
               [
-                -4.244068,
-                -0.03597
+                -7.098469,
+                -1.288635
               ],
               [
-                -3.899526,
-                0.168576
+                -6.550045,
+                -1.31075
               ],
               [
-                -4.253932,
+                -6.269301,
+                -1.299879
+              ],
+              [
+                -6.216184,
+                -1.289008
+              ],
+              [
+                -4.864129,
+                -1.00769
+              ],
+              [
+                -4.669165,
+                -0.953636
+              ],
+              [
+                -4.864129,
+                -0.899583
+              ],
+              [
+                -5.92328,
+                -0.795332
+              ],
+              [
+                -6.76955,
+                -0.864272
+              ],
+              [
+                -7.07713,
+                -0.953636
+              ],
+              [
+                -7.335397,
+                -1.163266
+              ]
+            ]
+          },
+          "top": {
+            "axes": [
+              "x",
+              "y"
+            ],
+            "point_count": 12,
+            "points_m": [
+              [
+                -7.335397,
+                2.242603
+              ],
+              [
+                -7.07713,
+                1.08966
+              ],
+              [
+                -6.76955,
+                0.711549
+              ],
+              [
+                -5.92328,
+                0.711287
+              ],
+              [
+                -4.669165,
+                1.08966
+              ],
+              [
+                -6.216184,
+                2.872046
+              ],
+              [
+                -6.269301,
+                2.873959
+              ],
+              [
+                -6.550045,
+                2.875881
+              ],
+              [
+                -6.839547,
+                2.872046
+              ],
+              [
+                -7.098469,
+                2.854622
+              ],
+              [
+                -7.319956,
+                2.602334
+              ],
+              [
+                -7.335397,
+                2.25124
+              ]
+            ]
+          }
+        },
+        "region_vertex_count": 216,
+        "selected_node_vertex_counts": {
+          "Object_18": 168,
+          "Object_24": 24,
+          "Object_26": 24
+        },
+        "selection_bounds": {
+          "center": [
+            -6.002281,
+            1.793584,
+            -1.05304
+          ],
+          "max": [
+            -4.599165,
+            2.945881,
+            -0.745331
+          ],
+          "min": [
+            -7.405397,
+            0.641287,
+            -1.36075
+          ],
+          "span": [
+            2.806232,
+            2.304594,
+            0.615419
+          ]
+        },
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_18",
+          "Object_24",
+          "Object_26"
+        ],
+        "source_vertex_count": 13415,
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
+      },
+      "obb": {
+        "axes": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_m": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "half_extents_m": [
+          1.318929,
+          1.014021,
+          0.110775
+        ]
+      },
+      "proxy_kind": "thin_prism",
+      "review_status": "manual_review_required",
+      "runtime_allowed_use": [
+        "distance_diagnostic_candidate",
+        "review_visualization_input"
+      ],
+      "runtime_prohibited_use": [
+        "runtime_collision_mesh",
+        "real_f16_engineering_geometry",
+        "true_internal_component_boundary",
+        "real_weapon_pk",
+        "structural_breakup_or_debris_claim"
+      ],
+      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
+      "source_region_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.599165,
+          2.945881,
+          -0.745331
+        ],
+        "min": [
+          -7.405397,
+          0.641287,
+          -1.36075
+        ],
+        "span": [
+          2.806232,
+          2.304594,
+          0.615419
+        ]
+      },
+      "source_region_id": "right_horizontal_tail",
+      "source_region_role": "tail_surface",
+      "support_bounds": {
+        "center": [
+          -6.002281,
+          1.793584,
+          -1.05304
+        ],
+        "max": [
+          -4.683352,
+          2.807605,
+          -0.942265
+        ],
+        "min": [
+          -7.32121,
+          0.779563,
+          -1.163815
+        ],
+        "span": [
+          2.637858,
+          2.028043,
+          0.221551
+        ]
+      },
+      "thin_prism": {
+        "nominal_thickness_m": 0.221551,
+        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
+        "thin_axis": "z"
+      },
+      "vertices_m": [
+        [
+          -7.32121,
+          0.779563,
+          -1.163815
+        ],
+        [
+          -7.32121,
+          0.779563,
+          -0.942265
+        ],
+        [
+          -7.32121,
+          2.807605,
+          -1.163815
+        ],
+        [
+          -7.32121,
+          2.807605,
+          -0.942265
+        ],
+        [
+          -4.683352,
+          0.779563,
+          -1.163815
+        ],
+        [
+          -4.683352,
+          0.779563,
+          -0.942265
+        ],
+        [
+          -4.683352,
+          2.807605,
+          -1.163815
+        ],
+        [
+          -4.683352,
+          2.807605,
+          -0.942265
+        ]
+      ]
+    },
+    {
+      "fit_metrics": {
+        "aabb_volume_ratio": 0.20736,
+        "max_support_surface_inset_m": 0.301649,
+        "proxy_support_volume_m3": 0.68742,
+        "source_aabb_volume_m3": 3.315107
+      },
+      "manual_review_notes": [
+        "First-pass fine proxy for TG-P6 review only.",
+        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
+        "Left/right coordinate sign and thin-surface orientation remain explicit review items.",
+        "Mesh-derived silhouette uses a curated audit-node whitelist; missing nodes fail review instead of using expanded bounds."
+      ],
+      "mesh_derived_review_geometry": {
+        "candidate_vertex_count": 175,
+        "fallback_policy": "disabled_no_bounds_expansion",
+        "hulls": {
+          "front": {
+            "axes": [
+              "y",
+              "z"
+            ],
+            "point_count": 5,
+            "points_m": [
+              [
+                -0.066908,
                 0.189614
               ],
               [
-                -5.663704,
+                -1e-06,
+                0.168577
+              ],
+              [
+                0.066907,
                 0.189614
+              ],
+              [
+                0.026392,
+                2.168887
+              ],
+              [
+                -0.026393,
+                2.168887
+              ]
+            ]
+          },
+          "side": {
+            "axes": [
+              "x",
+              "z"
+            ],
+            "point_count": 7,
+            "points_m": [
+              [
+                -7.536843,
+                2.100722
+              ],
+              [
+                -7.418399,
+                1.756623
+              ],
+              [
+                -7.20431,
+                1.348215
               ],
               [
                 -6.386597,
                 0.168577
               ],
               [
-                -6.516013,
-                0.137353
+                -5.663704,
+                0.189614
+              ],
+              [
+                -6.955907,
+                2.168887
+              ],
+              [
+                -7.32522,
+                2.168887
               ]
             ]
           },
@@ -3810,63 +4559,69 @@
             "point_count": 7,
             "points_m": [
               [
-                -6.516013,
-                0.000785
-              ],
-              [
-                -6.509128,
-                -0.011546
-              ],
-              [
-                -6.485,
-                -0.023887
-              ],
-              [
-                -6.386597,
-                -0.038039
-              ],
-              [
-                -5.658802,
-                -0.141908
-              ],
-              [
-                -4.244068,
-                -0.141314
-              ],
-              [
-                -3.899526,
+                -7.536843,
                 -1e-06
+              ],
+              [
+                -7.307585,
+                -0.012754
+              ],
+              [
+                -6.955907,
+                -0.026393
+              ],
+              [
+                -5.663704,
+                -0.066908
+              ],
+              [
+                -5.663704,
+                0.066907
+              ],
+              [
+                -6.955907,
+                0.026392
+              ],
+              [
+                -7.307585,
+                0.012753
               ]
             ]
           }
         },
-        "region_vertex_count": 192,
+        "region_vertex_count": 175,
+        "selected_node_vertex_counts": {
+          "Object_40": 175
+        },
         "selection_bounds": {
           "center": [
-            -5.464211,
-            -1.675,
-            0.302921
+            -6.600274,
+            -1e-06,
+            1.168732
           ],
           "max": [
-            -3.48579,
-            0.0125,
-            0.827207
+            -5.633704,
+            0.396906,
+            2.248887
           ],
           "min": [
-            -7.442632,
-            -3.3625,
-            -0.221365
+            -7.566844,
+            -0.396907,
+            0.088577
           ],
           "span": [
-            3.956842,
-            3.375,
-            1.048572
+            1.93314,
+            0.793813,
+            2.16031
           ]
         },
-        "selection_inflation_factor": 1.5,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
+        "selection_strategy": "curated_mesh_node_whitelist_and_source_region_bounds",
+        "source": "audit_gltf_vertices_filtered_by_curated_mesh_nodes_and_region_bounds",
+        "source_node_names": [
+          "Object_40"
+        ],
         "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted_from_inflated_region_bounds"
+        "status": "mesh_silhouette_extracted_from_curated_mesh_nodes"
       },
       "obb": {
         "axes": [
@@ -3887,14 +4642,14 @@
           ]
         ],
         "center_m": [
-          -5.464211,
-          -1.675,
-          0.302921
+          -6.600274,
+          -1e-06,
+          1.168732
         ],
         "half_extents_m": [
-          1.23981,
-          0.99,
-          0.125829
+          0.869913,
+          0.095257,
+          1.036949
         ]
       },
       "proxy_kind": "thin_prism",
@@ -3913,370 +4668,95 @@
       "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
       "source_region_bounds": {
         "center": [
-          -5.464211,
-          -1.675,
-          0.302921
+          -6.600274,
+          -1e-06,
+          1.168732
         ],
         "max": [
-          -4.145264,
-          -0.55,
-          0.652445
+          -5.633704,
+          0.396906,
+          2.248887
         ],
         "min": [
-          -6.783159,
-          -2.8,
-          -0.046603
+          -7.566844,
+          -0.396907,
+          0.088577
         ],
         "span": [
-          2.637895,
-          2.25,
-          0.699048
-        ]
-      },
-      "source_region_id": "right_horizontal_tail",
-      "source_region_role": "tail_surface",
-      "support_bounds": {
-        "center": [
-          -5.464211,
-          -1.675,
-          0.302921
-        ],
-        "max": [
-          -4.2244,
-          -0.685,
-          0.42875
-        ],
-        "min": [
-          -6.704022,
-          -2.665,
-          0.177092
-        ],
-        "span": [
-          2.479621,
-          1.98,
-          0.251657
-        ]
-      },
-      "thin_prism": {
-        "nominal_thickness_m": 0.251657,
-        "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
-        "thin_axis": "z"
-      },
-      "vertices_m": [
-        [
-          -6.704022,
-          -2.665,
-          0.177092
-        ],
-        [
-          -6.704022,
-          -2.665,
-          0.42875
-        ],
-        [
-          -6.704022,
-          -0.685,
-          0.177092
-        ],
-        [
-          -6.704022,
-          -0.685,
-          0.42875
-        ],
-        [
-          -4.2244,
-          -2.665,
-          0.177092
-        ],
-        [
-          -4.2244,
-          -2.665,
-          0.42875
-        ],
-        [
-          -4.2244,
-          -0.685,
-          0.177092
-        ],
-        [
-          -4.2244,
-          -0.685,
-          0.42875
-        ]
-      ]
-    },
-    {
-      "fit_metrics": {
-        "aabb_volume_ratio": 0.20736,
-        "max_support_surface_inset_m": 0.2888,
-        "proxy_support_volume_m3": 0.928276,
-        "source_aabb_volume_m3": 4.476639
-      },
-      "manual_review_notes": [
-        "First-pass fine proxy for TG-P6 review only.",
-        "Use support_bounds for distance sanity until a later audited hull or shell exists.",
-        "Left/right coordinate sign and thin-surface orientation remain explicit review items."
-      ],
-      "mesh_derived_review_geometry": {
-        "hulls": {
-          "front": {
-            "axes": [
-              "y",
-              "z"
-            ],
-            "point_count": 6,
-            "points_m": [
-              [
-                -0.023464,
-                2.31476
-              ],
-              [
-                -0.023263,
-                1.778788
-              ],
-              [
-                -1e-06,
-                1.756291
-              ],
-              [
-                0.023261,
-                1.778788
-              ],
-              [
-                0.023463,
-                2.31476
-              ],
-              [
-                -1e-06,
-                2.330161
-              ]
-            ]
-          },
-          "side": {
-            "axes": [
-              "x",
-              "z"
-            ],
-            "point_count": 6,
-            "points_m": [
-              [
-                -6.333127,
-                2.31476
-              ],
-              [
-                -5.865884,
-                1.790404
-              ],
-              [
-                -5.601799,
-                1.756291
-              ],
-              [
-                -5.290293,
-                1.780389
-              ],
-              [
-                -6.174008,
-                2.31476
-              ],
-              [
-                -6.333127,
-                2.330161
-              ]
-            ]
-          },
-          "top": {
-            "axes": [
-              "x",
-              "y"
-            ],
-            "point_count": 5,
-            "points_m": [
-              [
-                -6.333127,
-                -0.023464
-              ],
-              [
-                -5.601799,
-                -0.023263
-              ],
-              [
-                -5.290293,
-                -1e-06
-              ],
-              [
-                -5.601799,
-                0.023261
-              ],
-              [
-                -6.333127,
-                0.023463
-              ]
-            ]
-          }
-        },
-        "region_vertex_count": 84,
-        "selection_bounds": {
-          "center": [
-            -5.012001,
-            0.0,
-            1.421399
-          ],
-          "max": [
-            -3.391579,
-            0.38,
-            2.330161
-          ],
-          "min": [
-            -6.632422,
-            -0.38,
-            0.512636
-          ],
-          "span": [
-            3.240842,
-            0.76,
-            1.817526
-          ]
-        },
-        "selection_inflation_factor": 1.0,
-        "source": "audit_gltf_vertices_filtered_by_region_bounds_with_recorded_inflation",
-        "source_vertex_count": 13415,
-        "status": "mesh_silhouette_extracted"
-      },
-      "obb": {
-        "axes": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "center_m": [
-          -5.012001,
-          0.0,
-          1.421399
-        ],
-        "half_extents_m": [
-          1.458379,
-          0.0912,
-          0.872413
-        ]
-      },
-      "proxy_kind": "thin_prism",
-      "review_status": "manual_review_required",
-      "runtime_allowed_use": [
-        "distance_diagnostic_candidate",
-        "review_visualization_input"
-      ],
-      "runtime_prohibited_use": [
-        "runtime_collision_mesh",
-        "real_f16_engineering_geometry",
-        "true_internal_component_boundary",
-        "real_weapon_pk",
-        "structural_breakup_or_debris_claim"
-      ],
-      "source_basis": "review_mapping_plus_audit_mesh_silhouette_candidate",
-      "source_region_bounds": {
-        "center": [
-          -5.012001,
-          0.0,
-          1.421399
-        ],
-        "max": [
-          -3.391579,
-          0.38,
-          2.330161
-        ],
-        "min": [
-          -6.632422,
-          -0.38,
-          0.512636
-        ],
-        "span": [
-          3.240842,
-          0.76,
-          1.817526
+          1.93314,
+          0.793813,
+          2.16031
         ]
       },
       "source_region_id": "vertical_tail",
       "source_region_role": "tail_surface",
       "support_bounds": {
         "center": [
-          -5.012001,
-          0.0,
-          1.421399
+          -6.600274,
+          -1e-06,
+          1.168732
         ],
         "max": [
-          -3.553622,
-          0.0912,
-          2.293811
+          -5.730361,
+          0.095257,
+          2.205681
         ],
         "min": [
-          -6.47038,
-          -0.0912,
-          0.548987
+          -7.470187,
+          -0.095259,
+          0.131783
         ],
         "span": [
-          2.916758,
-          0.1824,
-          1.744825
+          1.739826,
+          0.190515,
+          2.073898
         ]
       },
       "thin_prism": {
-        "nominal_thickness_m": 0.1824,
+        "nominal_thickness_m": 0.190515,
         "thickness_basis": "review_candidate_reduces_air_volume_from_outer_region_aabb",
         "thin_axis": "y"
       },
       "vertices_m": [
         [
-          -6.47038,
-          -0.0912,
-          0.548987
+          -7.470187,
+          -0.095259,
+          0.131783
         ],
         [
-          -6.47038,
-          -0.0912,
-          2.293811
+          -7.470187,
+          -0.095259,
+          2.205681
         ],
         [
-          -6.47038,
-          0.0912,
-          0.548987
+          -7.470187,
+          0.095257,
+          0.131783
         ],
         [
-          -6.47038,
-          0.0912,
-          2.293811
+          -7.470187,
+          0.095257,
+          2.205681
         ],
         [
-          -3.553622,
-          -0.0912,
-          0.548987
+          -5.730361,
+          -0.095259,
+          0.131783
         ],
         [
-          -3.553622,
-          -0.0912,
-          2.293811
+          -5.730361,
+          -0.095259,
+          2.205681
         ],
         [
-          -3.553622,
-          0.0912,
-          0.548987
+          -5.730361,
+          0.095257,
+          0.131783
         ],
         [
-          -3.553622,
-          0.0912,
-          2.293811
+          -5.730361,
+          0.095257,
+          2.205681
         ]
       ]
     }
@@ -4290,29 +4770,29 @@
         {
           "contains_point": true,
           "distance_m": 0.0,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 0.0,
+          "source_region_id": "canopy"
+        },
+        {
+          "contains_point": true,
+          "distance_m": 0.0,
           "proxy_kind": "obb",
           "source_aabb_distance_m": 0.0,
           "source_region_id": "forward_fuselage"
         },
         {
           "contains_point": false,
-          "distance_m": 0.575084,
+          "distance_m": 0.113216,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 0.466032,
-          "source_region_id": "canopy"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 1.133004,
-          "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 0.866447,
+          "source_aabb_distance_m": 0.0,
           "source_region_id": "intake"
         },
         {
           "contains_point": false,
-          "distance_m": 1.221525,
+          "distance_m": 1.229671,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 1.125053,
+          "source_aabb_distance_m": 1.106348,
           "source_region_id": "nose_radome"
         },
         {
@@ -4323,10 +4803,10 @@
           "source_region_id": "center_fuselage"
         }
       ],
-      "inside_fine_proxy_count": 1,
+      "inside_fine_proxy_count": 2,
       "nearest_fine_proxy_distance_m": 0.0,
-      "nearest_fine_proxy_kind": "obb",
-      "nearest_fine_proxy_region_id": "forward_fuselage",
+      "nearest_fine_proxy_kind": "convex_hull",
+      "nearest_fine_proxy_region_id": "canopy",
       "nearest_source_aabb_distance_m": 0.0,
       "nearest_source_aabb_region_id": "forward_fuselage",
       "point_id": "nose_axis_4m",
@@ -4339,13 +4819,13 @@
     {
       "aspect": "nose",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_minus_source_distance_delta_m": 0.08808,
       "fine_proxy_rankings": [
         {
-          "contains_point": true,
-          "distance_m": 0.0,
+          "contains_point": false,
+          "distance_m": 0.437604,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 0.0,
+          "source_aabb_distance_m": 0.349524,
           "source_region_id": "nose_radome"
         },
         {
@@ -4357,16 +4837,16 @@
         },
         {
           "contains_point": false,
-          "distance_m": 1.920262,
+          "distance_m": 1.503454,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 1.693997,
+          "source_aabb_distance_m": 1.265023,
           "source_region_id": "canopy"
         },
         {
           "contains_point": false,
-          "distance_m": 3.084504,
+          "distance_m": 2.053456,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 2.844088,
+          "source_aabb_distance_m": 1.94467,
           "source_region_id": "intake"
         },
         {
@@ -4377,11 +4857,11 @@
           "source_region_id": "center_fuselage"
         }
       ],
-      "inside_fine_proxy_count": 1,
-      "nearest_fine_proxy_distance_m": 0.0,
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 0.437604,
       "nearest_fine_proxy_kind": "convex_hull",
       "nearest_fine_proxy_region_id": "nose_radome",
-      "nearest_source_aabb_distance_m": 0.0,
+      "nearest_source_aabb_distance_m": 0.349524,
       "nearest_source_aabb_region_id": "nose_radome",
       "point_id": "nose_axis_6m",
       "point_m": [
@@ -4404,31 +4884,31 @@
         },
         {
           "contains_point": false,
-          "distance_m": 0.548987,
+          "distance_m": 1.400911,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.512636,
-          "source_region_id": "vertical_tail"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 0.742255,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.56886,
-          "source_region_id": "left_horizontal_tail"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 0.742255,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.56886,
+          "source_aabb_distance_m": 1.151419,
           "source_region_id": "right_horizontal_tail"
         },
         {
           "contains_point": false,
-          "distance_m": 1.780884,
+          "distance_m": 1.400912,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 1.15142,
+          "source_region_id": "left_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.537319,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 1.394751,
+          "source_aabb_distance_m": 1.201981,
           "source_region_id": "left_wing_root"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.537319,
+          "proxy_kind": "convex_hull",
+          "source_aabb_distance_m": 1.201981,
+          "source_region_id": "right_wing_root"
         }
       ],
       "inside_fine_proxy_count": 1,
@@ -4447,14 +4927,14 @@
     {
       "aspect": "tail",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_minus_source_distance_delta_m": 0.043206,
       "fine_proxy_rankings": [
         {
-          "contains_point": true,
-          "distance_m": 0.0,
-          "proxy_kind": "obb",
-          "source_aabb_distance_m": 0.0,
-          "source_region_id": "engine_nozzle"
+          "contains_point": false,
+          "distance_m": 0.131783,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.088577,
+          "source_region_id": "vertical_tail"
         },
         {
           "contains_point": false,
@@ -4465,32 +4945,32 @@
         },
         {
           "contains_point": false,
-          "distance_m": 0.548987,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.512636,
-          "source_region_id": "vertical_tail"
+          "distance_m": 0.446149,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 0.339296,
+          "source_region_id": "engine_nozzle"
         },
         {
           "contains_point": false,
-          "distance_m": 0.707521,
+          "distance_m": 1.22294,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.55,
-          "source_region_id": "left_horizontal_tail"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 0.707521,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.55,
+          "source_aabb_distance_m": 0.983243,
           "source_region_id": "right_horizontal_tail"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 1.222941,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 0.983245,
+          "source_region_id": "left_horizontal_tail"
         }
       ],
-      "inside_fine_proxy_count": 1,
-      "nearest_fine_proxy_distance_m": 0.0,
-      "nearest_fine_proxy_kind": "obb",
-      "nearest_fine_proxy_region_id": "engine_nozzle",
-      "nearest_source_aabb_distance_m": 0.0,
-      "nearest_source_aabb_region_id": "engine_nozzle",
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 0.131783,
+      "nearest_fine_proxy_kind": "thin_prism",
+      "nearest_fine_proxy_region_id": "vertical_tail",
+      "nearest_source_aabb_distance_m": 0.088577,
+      "nearest_source_aabb_region_id": "vertical_tail",
       "point_id": "tail_axis_6m",
       "point_m": [
         -6.0,
@@ -4501,21 +4981,21 @@
     {
       "aspect": "beam",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_minus_source_distance_delta_m": 0.074444,
       "fine_proxy_rankings": [
         {
-          "contains_point": true,
-          "distance_m": 0.0,
+          "contains_point": false,
+          "distance_m": 0.943168,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.0,
-          "source_region_id": "left_wing"
+          "source_aabb_distance_m": 0.868724,
+          "source_region_id": "right_wing"
         },
         {
           "contains_point": false,
-          "distance_m": 2.797,
+          "distance_m": 2.749817,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 2.65,
-          "source_region_id": "left_wing_root"
+          "source_aabb_distance_m": 2.567929,
+          "source_region_id": "right_wing_root"
         },
         {
           "contains_point": false,
@@ -4526,25 +5006,25 @@
         },
         {
           "contains_point": false,
-          "distance_m": 3.621999,
+          "distance_m": 3.582546,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 3.492086,
+          "source_aabb_distance_m": 3.447051,
           "source_region_id": "aft_fuselage_engine"
         },
         {
           "contains_point": false,
-          "distance_m": 3.638876,
-          "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.408916,
-          "source_region_id": "intake"
+          "distance_m": 3.997269,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.877481,
+          "source_region_id": "forward_fuselage"
         }
       ],
-      "inside_fine_proxy_count": 1,
-      "nearest_fine_proxy_distance_m": 0.0,
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 0.943168,
       "nearest_fine_proxy_kind": "thin_prism",
-      "nearest_fine_proxy_region_id": "left_wing",
-      "nearest_source_aabb_distance_m": 0.0,
-      "nearest_source_aabb_region_id": "left_wing",
+      "nearest_fine_proxy_region_id": "right_wing",
+      "nearest_source_aabb_distance_m": 0.868724,
+      "nearest_source_aabb_region_id": "right_wing",
       "point_id": "right_beam_4m",
       "point_m": [
         0.0,
@@ -4555,21 +5035,21 @@
     {
       "aspect": "beam",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.247941,
+      "fine_minus_source_distance_delta_m": 0.23417,
       "fine_proxy_rankings": [
         {
           "contains_point": false,
-          "distance_m": 1.435595,
+          "distance_m": 1.702881,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 1.187654,
-          "source_region_id": "left_wing"
+          "source_aabb_distance_m": 1.468711,
+          "source_region_id": "right_wing"
         },
         {
           "contains_point": false,
-          "distance_m": 4.797,
+          "distance_m": 4.736401,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 4.65,
-          "source_region_id": "left_wing_root"
+          "source_aabb_distance_m": 4.560072,
+          "source_region_id": "right_wing_root"
         },
         {
           "contains_point": false,
@@ -4580,25 +5060,25 @@
         },
         {
           "contains_point": false,
-          "distance_m": 5.385085,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 5.236718,
-          "source_region_id": "left_horizontal_tail"
+          "distance_m": 5.446709,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.318098,
+          "source_region_id": "aft_fuselage_engine"
         },
         {
           "contains_point": false,
-          "distance_m": 5.488796,
+          "distance_m": 5.743358,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 5.366066,
-          "source_region_id": "aft_fuselage_engine"
+          "source_aabb_distance_m": 5.624488,
+          "source_region_id": "forward_fuselage"
         }
       ],
       "inside_fine_proxy_count": 0,
-      "nearest_fine_proxy_distance_m": 1.435595,
+      "nearest_fine_proxy_distance_m": 1.702881,
       "nearest_fine_proxy_kind": "thin_prism",
-      "nearest_fine_proxy_region_id": "left_wing",
-      "nearest_source_aabb_distance_m": 1.187654,
-      "nearest_source_aabb_region_id": "left_wing",
+      "nearest_fine_proxy_region_id": "right_wing",
+      "nearest_source_aabb_distance_m": 1.468711,
+      "nearest_source_aabb_region_id": "right_wing",
       "point_id": "right_beam_6m",
       "point_m": [
         0.0,
@@ -4609,21 +5089,21 @@
     {
       "aspect": "beam",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.0,
+      "fine_minus_source_distance_delta_m": 0.074444,
       "fine_proxy_rankings": [
         {
-          "contains_point": true,
-          "distance_m": 0.0,
+          "contains_point": false,
+          "distance_m": 0.943168,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 0.0,
-          "source_region_id": "right_wing"
+          "source_aabb_distance_m": 0.868724,
+          "source_region_id": "left_wing"
         },
         {
           "contains_point": false,
-          "distance_m": 2.797,
+          "distance_m": 2.749817,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 2.65,
-          "source_region_id": "right_wing_root"
+          "source_aabb_distance_m": 2.567929,
+          "source_region_id": "left_wing_root"
         },
         {
           "contains_point": false,
@@ -4634,25 +5114,25 @@
         },
         {
           "contains_point": false,
-          "distance_m": 3.621999,
+          "distance_m": 3.582546,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 3.492086,
+          "source_aabb_distance_m": 3.447051,
           "source_region_id": "aft_fuselage_engine"
         },
         {
           "contains_point": false,
-          "distance_m": 3.638876,
-          "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.408916,
-          "source_region_id": "intake"
+          "distance_m": 3.997269,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.877481,
+          "source_region_id": "forward_fuselage"
         }
       ],
-      "inside_fine_proxy_count": 1,
-      "nearest_fine_proxy_distance_m": 0.0,
+      "inside_fine_proxy_count": 0,
+      "nearest_fine_proxy_distance_m": 0.943168,
       "nearest_fine_proxy_kind": "thin_prism",
-      "nearest_fine_proxy_region_id": "right_wing",
-      "nearest_source_aabb_distance_m": 0.0,
-      "nearest_source_aabb_region_id": "right_wing",
+      "nearest_fine_proxy_region_id": "left_wing",
+      "nearest_source_aabb_distance_m": 0.868724,
+      "nearest_source_aabb_region_id": "left_wing",
       "point_id": "left_beam_4m",
       "point_m": [
         0.0,
@@ -4663,21 +5143,21 @@
     {
       "aspect": "beam",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.247941,
+      "fine_minus_source_distance_delta_m": 0.234166,
       "fine_proxy_rankings": [
         {
           "contains_point": false,
-          "distance_m": 1.435595,
+          "distance_m": 1.70287,
           "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 1.187654,
-          "source_region_id": "right_wing"
+          "source_aabb_distance_m": 1.468704,
+          "source_region_id": "left_wing"
         },
         {
           "contains_point": false,
-          "distance_m": 4.797,
+          "distance_m": 4.736401,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 4.65,
-          "source_region_id": "right_wing_root"
+          "source_aabb_distance_m": 4.560072,
+          "source_region_id": "left_wing_root"
         },
         {
           "contains_point": false,
@@ -4688,25 +5168,25 @@
         },
         {
           "contains_point": false,
-          "distance_m": 5.385085,
-          "proxy_kind": "thin_prism",
-          "source_aabb_distance_m": 5.236718,
-          "source_region_id": "right_horizontal_tail"
+          "distance_m": 5.446709,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 5.318098,
+          "source_region_id": "aft_fuselage_engine"
         },
         {
           "contains_point": false,
-          "distance_m": 5.488796,
+          "distance_m": 5.743358,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 5.366066,
-          "source_region_id": "aft_fuselage_engine"
+          "source_aabb_distance_m": 5.624488,
+          "source_region_id": "forward_fuselage"
         }
       ],
       "inside_fine_proxy_count": 0,
-      "nearest_fine_proxy_distance_m": 1.435595,
+      "nearest_fine_proxy_distance_m": 1.70287,
       "nearest_fine_proxy_kind": "thin_prism",
-      "nearest_fine_proxy_region_id": "right_wing",
-      "nearest_source_aabb_distance_m": 1.187654,
-      "nearest_source_aabb_region_id": "right_wing",
+      "nearest_fine_proxy_region_id": "left_wing",
+      "nearest_source_aabb_distance_m": 1.468704,
+      "nearest_source_aabb_region_id": "left_wing",
       "point_id": "left_beam_6m",
       "point_m": [
         0.0,
@@ -4717,7 +5197,7 @@
     {
       "aspect": "above",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.164913,
+      "fine_minus_source_distance_delta_m": 0.095071,
       "fine_proxy_rankings": [
         {
           "contains_point": false,
@@ -4728,30 +5208,30 @@
         },
         {
           "contains_point": false,
-          "distance_m": 3.356354,
-          "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.137903,
-          "source_region_id": "canopy"
+          "distance_m": 4.002973,
+          "proxy_kind": "obb",
+          "source_aabb_distance_m": 3.886538,
+          "source_region_id": "forward_fuselage"
         },
         {
           "contains_point": false,
-          "distance_m": 3.665174,
+          "distance_m": 4.072219,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 3.544261,
+          "source_aabb_distance_m": 3.949448,
           "source_region_id": "aft_fuselage_engine"
         },
         {
           "contains_point": false,
-          "distance_m": 3.691619,
+          "distance_m": 4.436833,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.546679,
+          "source_aabb_distance_m": 4.310177,
           "source_region_id": "left_wing_root"
         },
         {
           "contains_point": false,
-          "distance_m": 3.691619,
+          "distance_m": 4.436833,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.546679,
+          "source_aabb_distance_m": 4.310177,
           "source_region_id": "right_wing_root"
         }
       ],
@@ -4759,8 +5239,8 @@
       "nearest_fine_proxy_distance_m": 3.302816,
       "nearest_fine_proxy_kind": "obb",
       "nearest_fine_proxy_region_id": "center_fuselage",
-      "nearest_source_aabb_distance_m": 3.137903,
-      "nearest_source_aabb_region_id": "canopy",
+      "nearest_source_aabb_distance_m": 3.207745,
+      "nearest_source_aabb_region_id": "center_fuselage",
       "point_id": "above_4m",
       "point_m": [
         0.0,
@@ -4771,50 +5251,50 @@
     {
       "aspect": "below",
       "authority_boundary": "review_only_distance_sanity_not_runtime_lethality_decision",
-      "fine_minus_source_distance_delta_m": 0.214084,
+      "fine_minus_source_distance_delta_m": 0.132374,
       "fine_proxy_rankings": [
         {
           "contains_point": false,
-          "distance_m": 2.566745,
+          "distance_m": 3.024721,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 2.352661,
-          "source_region_id": "intake"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 3.302816,
-          "proxy_kind": "obb",
-          "source_aabb_distance_m": 3.207745,
-          "source_region_id": "center_fuselage"
-        },
-        {
-          "contains_point": false,
-          "distance_m": 3.691619,
-          "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.546679,
+          "source_aabb_distance_m": 2.892347,
           "source_region_id": "left_wing_root"
         },
         {
           "contains_point": false,
-          "distance_m": 3.691619,
+          "distance_m": 3.024721,
           "proxy_kind": "convex_hull",
-          "source_aabb_distance_m": 3.546679,
+          "source_aabb_distance_m": 2.892347,
           "source_region_id": "right_wing_root"
         },
         {
           "contains_point": false,
-          "distance_m": 3.70719,
+          "distance_m": 3.190003,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 3.041942,
+          "source_region_id": "right_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.190034,
+          "proxy_kind": "thin_prism",
+          "source_aabb_distance_m": 3.041969,
+          "source_region_id": "left_wing"
+        },
+        {
+          "contains_point": false,
+          "distance_m": 3.255557,
           "proxy_kind": "obb",
-          "source_aabb_distance_m": 3.586494,
+          "source_aabb_distance_m": 3.128762,
           "source_region_id": "aft_fuselage_engine"
         }
       ],
       "inside_fine_proxy_count": 0,
-      "nearest_fine_proxy_distance_m": 2.566745,
+      "nearest_fine_proxy_distance_m": 3.024721,
       "nearest_fine_proxy_kind": "convex_hull",
-      "nearest_fine_proxy_region_id": "intake",
-      "nearest_source_aabb_distance_m": 2.352661,
-      "nearest_source_aabb_region_id": "intake",
+      "nearest_fine_proxy_region_id": "left_wing_root",
+      "nearest_source_aabb_distance_m": 2.892347,
+      "nearest_source_aabb_region_id": "left_wing_root",
       "point_id": "below_4m",
       "point_m": [
         0.0,
@@ -4827,7 +5307,9 @@
   "source_mapping_schema_version": "a2.target_geometry_mapping_candidate.v1",
   "status": "fine_geometry_proxy_candidate_generated_review_only",
   "summary": {
+    "fallback_policy": "disabled_no_bounds_expansion",
     "held_region_count": 0,
+    "inflated_fallback_count": 0,
     "mesh_derived_silhouette_count": 14,
     "mesh_source_vertex_count": 13415,
     "proxy_count": 14,
@@ -4839,8 +5321,8 @@
     "review_point_count": 10,
     "review_status": "manual_review_required",
     "source_outer_region_count": 14,
-    "total_proxy_support_volume_m3": 41.412028,
-    "total_proxy_support_volume_ratio": 0.50965,
-    "total_source_aabb_volume_m3": 81.255804
+    "total_proxy_support_volume_m3": 36.764839,
+    "total_proxy_support_volume_ratio": 0.55404,
+    "total_source_aabb_volume_m3": 66.357275
   }
 }

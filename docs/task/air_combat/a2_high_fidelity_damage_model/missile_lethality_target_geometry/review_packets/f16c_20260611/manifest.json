@@ -54,7 +54,7 @@
           1.2
         ]
       },
-      "component_count": 22,
+      "component_count": 26,
       "hitbox_count": 4,
       "systems": [
         "avionics",
@@ -71,9 +71,9 @@
     }
   },
   "file_hashes": {
-    "aircraft_database_sha256": "4259d631c10863cb673a13d365f50f6745c85597992f391ee976087c9f6194c4",
-    "audit_scene_gltf_sha256": "5e04a7de4105bb07a3ed6a89e1b9f1a2ac9b632637b2da08cf92263a4c5256a2",
-    "intake_metadata_sha256": "88d4bc04989a13a8f705006d99b27fcf9a535e93107f20ad9ec58b6deadf6c73",
+    "aircraft_database_sha256": "4ab214f65f03a00f58f743bad0176f2a206fe34e195dd2e7fdc3ef162f5daf35",
+    "audit_scene_gltf_sha256": "808002e5e4d78afad2fda80b5ec5bd36801f53927d66c2f08056c25280217c0d",
+    "intake_metadata_sha256": "d714a7f46a0deb906b3737f7be39ea3ec086f59046977dcf6850b33fdaf2731e",
     "runtime_visual_glb_sha256": "243f164005c49bce0bb25202e449911fed99cbfa94e9bef25321dcbd7476d44f"
   },
   "generated_on": "2026-06-11",

@@ -8,56 +8,60 @@
 <rect x="339.21" y="299.44" width="521.58" height="161.12" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_1</title></rect>
 <rect x="85.29" y="306.15" width="205.89" height="147.69" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_2</title></rect>
 <rect x="442.15" y="356.50" width="205.89" height="46.99" fill="#c47a00" fill-opacity="0.02" stroke="#c47a00" stroke-width="1.20" stroke-dasharray="5 4"><title>legacy_hitbox_3</title></rect>
-<rect x="951.72" y="304.91" width="165.52" height="131.40" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>nose_radome</title></rect>
-<text x="955.72" y="317.91" font-size="10" font-family="monospace" fill="#2f6f9f">nose_radome</text>
+<rect x="946.55" y="426.93" width="170.69" height="84.47" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>nose_radome</title></rect>
+<text x="950.55" y="439.93" font-size="10" font-family="monospace" fill="#2f6f9f">nose_radome</text>
 <rect x="755.17" y="267.37" width="217.24" height="219.01" fill="#b24d3e" fill-opacity="0.18" stroke="#b24d3e" stroke-width="1.20"><title>forward_fuselage</title></rect>
 <text x="759.17" y="280.37" font-size="10" font-family="monospace" fill="#b24d3e">forward_fuselage</text>
-<rect x="744.83" y="154.74" width="155.17" height="162.69" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>canopy</title></rect>
-<text x="748.83" y="167.74" font-size="10" font-family="monospace" fill="#4f8a4b">canopy</text>
+<rect x="743.14" y="359.38" width="181.81" height="120.85" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>canopy</title></rect>
+<text x="747.14" y="372.38" font-size="10" font-family="monospace" fill="#4f8a4b">canopy</text>
 <rect x="470.69" y="273.63" width="294.83" height="212.75" fill="#8a5a9f" fill-opacity="0.18" stroke="#8a5a9f" stroke-width="1.20"><title>center_fuselage</title></rect>
 <text x="474.69" y="286.63" font-size="10" font-family="monospace" fill="#8a5a9f">center_fuselage</text>
-<rect x="625.86" y="411.29" width="191.38" height="193.98" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>intake</title></rect>
-<text x="629.86" y="424.29" font-size="10" font-family="monospace" fill="#b27a2f">intake</text>
-<rect x="196.55" y="273.63" width="300.00" height="206.49" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>aft_fuselage_engine</title></rect>
-<text x="200.55" y="286.63" font-size="10" font-family="monospace" fill="#2f827d">aft_fuselage_engine</text>
-<rect x="82.76" y="304.91" width="124.14" height="143.92" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>engine_nozzle</title></rect>
-<text x="86.76" y="317.91" font-size="10" font-family="monospace" fill="#6f6f6f">engine_nozzle</text>
-<rect x="444.83" y="342.46" width="248.28" height="68.83" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>left_wing</title></rect>
-<text x="448.83" y="355.46" font-size="10" font-family="monospace" fill="#2f6f9f">left_wing</text>
-<rect x="444.83" y="342.46" width="248.28" height="68.83" fill="#b24d3e" fill-opacity="0.18" stroke="#b24d3e" stroke-width="1.20"><title>right_wing</title></rect>
-<text x="448.83" y="355.46" font-size="10" font-family="monospace" fill="#b24d3e">right_wing</text>
-<rect x="418.97" y="317.43" width="310.34" height="125.15" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>left_wing_root</title></rect>
-<text x="422.97" y="330.43" font-size="10" font-family="monospace" fill="#4f8a4b">left_wing_root</text>
-<rect x="418.97" y="317.43" width="310.34" height="125.15" fill="#8a5a9f" fill-opacity="0.18" stroke="#8a5a9f" stroke-width="1.20"><title>right_wing_root</title></rect>
-<text x="422.97" y="330.43" font-size="10" font-family="monospace" fill="#8a5a9f">right_wing_root</text>
-<rect x="134.48" y="292.40" width="181.03" height="93.86" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>left_horizontal_tail</title></rect>
-<text x="138.48" y="305.40" font-size="10" font-family="monospace" fill="#b27a2f">left_horizontal_tail</text>
-<rect x="134.48" y="292.40" width="181.03" height="93.86" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>right_horizontal_tail</title></rect>
-<text x="138.48" y="305.40" font-size="10" font-family="monospace" fill="#2f827d">right_horizontal_tail</text>
-<rect x="144.83" y="67.13" width="222.41" height="244.04" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>vertical_tail</title></rect>
-<text x="148.83" y="80.13" font-size="10" font-family="monospace" fill="#6f6f6f">vertical_tail</text>
-<rect x="1011.77" y="339.72" width="82.35" height="80.56" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>apg68_radar_array -&gt; nose_radome</title></rect>
+<rect x="787.12" y="370.65" width="91.19" height="191.01" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>intake</title></rect>
+<text x="791.12" y="383.65" font-size="10" font-family="monospace" fill="#b27a2f">intake</text>
+<rect x="196.55" y="333.07" width="300.00" height="215.88" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>aft_fuselage_engine</title></rect>
+<text x="200.55" y="346.07" font-size="10" font-family="monospace" fill="#2f827d">aft_fuselage_engine</text>
+<rect x="117.63" y="425.56" width="106.03" height="179.34" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>engine_nozzle</title></rect>
+<text x="121.63" y="438.56" font-size="10" font-family="monospace" fill="#6f6f6f">engine_nozzle</text>
+<rect x="355.77" y="496.64" width="269.65" height="31.24" fill="#2f6f9f" fill-opacity="0.18" stroke="#2f6f9f" stroke-width="1.20"><title>left_wing</title></rect>
+<text x="359.77" y="509.64" font-size="10" font-family="monospace" fill="#2f6f9f">left_wing</text>
+<rect x="355.77" y="496.64" width="269.65" height="31.24" fill="#b24d3e" fill-opacity="0.18" stroke="#b24d3e" stroke-width="1.20"><title>right_wing</title></rect>
+<text x="359.77" y="509.64" font-size="10" font-family="monospace" fill="#b24d3e">right_wing</text>
+<rect x="403.45" y="420.67" width="243.10" height="109.50" fill="#4f8a4b" fill-opacity="0.18" stroke="#4f8a4b" stroke-width="1.20"><title>left_wing_root</title></rect>
+<text x="407.45" y="433.67" font-size="10" font-family="monospace" fill="#4f8a4b">left_wing_root</text>
+<rect x="403.45" y="420.67" width="243.10" height="109.50" fill="#8a5a9f" fill-opacity="0.18" stroke="#8a5a9f" stroke-width="1.20"><title>right_wing_root</title></rect>
+<text x="407.45" y="433.67" font-size="10" font-family="monospace" fill="#8a5a9f">right_wing_root</text>
+<rect x="91.78" y="480.07" width="192.59" height="82.63" fill="#b27a2f" fill-opacity="0.18" stroke="#b27a2f" stroke-width="1.20"><title>left_horizontal_tail</title></rect>
+<text x="95.78" y="493.07" font-size="10" font-family="monospace" fill="#b27a2f">left_horizontal_tail</text>
+<rect x="91.78" y="480.07" width="192.59" height="82.63" fill="#2f827d" fill-opacity="0.18" stroke="#2f827d" stroke-width="1.20"><title>right_horizontal_tail</title></rect>
+<text x="95.78" y="493.07" font-size="10" font-family="monospace" fill="#2f827d">right_horizontal_tail</text>
+<rect x="80.70" y="78.05" width="132.67" height="290.06" fill="#6f6f6f" fill-opacity="0.18" stroke="#6f6f6f" stroke-width="1.20"><title>vertical_tail</title></rect>
+<text x="84.70" y="91.05" font-size="10" font-family="monospace" fill="#6f6f6f">vertical_tail</text>
+<rect x="1016.92" y="437.74" width="65.20" height="40.28" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>apg68_radar_array -&gt; nose_radome</title></rect>
 <rect x="888.24" y="306.15" width="130.39" height="120.84" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>cockpit_crew_station -&gt; forward_fuselage</title></rect>
+<rect x="775.69" y="396.78" width="116.67" height="46.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>dedicated_canopy_surface_component -&gt; canopy</title></rect>
 <rect x="888.24" y="380.00" width="82.35" height="67.13" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>nose_avionics_bay -&gt; forward_fuselage</title></rect>
-<rect x="980.89" y="309.51" width="48.04" height="33.57" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>iff_interrogator -&gt; nose_radome</title></rect>
+<rect x="979.17" y="426.99" width="30.88" height="24.17" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>iff_interrogator -&gt; nose_radome</title></rect>
 <rect x="462.74" y="366.57" width="164.71" height="93.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>center_fuselage_fuel_cell -&gt; center_fuselage</title></rect>
 <rect x="651.47" y="306.15" width="102.94" height="80.56" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>mission_computer -&gt; center_fuselage</title></rect>
-<rect x="442.15" y="312.87" width="68.63" height="67.13" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>data_link_terminal -&gt; aft_fuselage_engine</title></rect>
+<rect x="442.15" y="312.87" width="68.63" height="67.13" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>data_link_terminal -&gt; center_fuselage</title></rect>
 <rect x="565.69" y="299.44" width="68.63" height="67.13" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>flight_control_computer -&gt; center_fuselage</title></rect>
 <rect x="750.98" y="349.79" width="54.90" height="46.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>inertial_navigation_unit -&gt; forward_fuselage</title></rect>
+<rect x="798.34" y="429.01" width="68.63" height="73.85" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component -&gt; intake</title></rect>
 <rect x="376.96" y="343.08" width="61.77" height="60.42" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>electrical_power_bus -&gt; aft_fuselage_engine</title></rect>
 <rect x="150.48" y="319.58" width="102.94" height="120.84" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>engine_core -&gt; aft_fuselage_engine</title></rect>
-<rect x="85.29" y="319.58" width="68.63" height="120.84" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>afterburner_nozzle -&gt; engine_nozzle</title></rect>
+<rect x="133.33" y="425.65" width="61.77" height="42.97" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>afterburner_nozzle -&gt; engine_nozzle</title></rect>
 <rect x="215.68" y="312.87" width="54.90" height="53.71" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>tail_hydraulic_pump -&gt; aft_fuselage_engine</title></rect>
 <rect x="236.27" y="390.07" width="54.90" height="46.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>engine_fuel_control_unit -&gt; aft_fuselage_engine</title></rect>
-<rect x="112.74" y="296.08" width="54.90" height="46.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>rudder_actuator -&gt; engine_nozzle</title></rect>
-<rect x="503.92" y="363.22" width="82.35" height="33.57" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_wing_fuel_cell -&gt; right_wing</title></rect>
-<rect x="503.92" y="363.22" width="82.35" height="33.57" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_wing_fuel_cell -&gt; left_wing</title></rect>
-<rect x="514.21" y="365.23" width="61.77" height="29.54" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_aileron_actuator -&gt; right_wing</title></rect>
-<rect x="514.21" y="365.23" width="61.77" height="29.54" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_aileron_actuator -&gt; left_wing</title></rect>
-<rect x="462.74" y="367.92" width="164.71" height="24.17" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>wing_spar_center -&gt; left_wing</title></rect>
-<rect x="558.82" y="367.92" width="54.90" height="24.17" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>left_leading_edge_flap_actuator -&gt; right_wing</title></rect>
-<rect x="558.82" y="367.92" width="54.90" height="24.17" fill="#9b1c31" fill-opacity="0.05" stroke="#9b1c31" stroke-width="0.90"><title>right_leading_edge_flap_actuator -&gt; left_wing</title></rect>
+<rect x="112.74" y="296.08" width="54.90" height="46.99" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>rudder_actuator -&gt; vertical_tail</title></rect>
+<rect x="126.46" y="499.50" width="123.53" height="42.97" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>left_horizontal_tail_actuator_or_surface_component -&gt; left_horizontal_tail</title></rect>
+<rect x="126.46" y="499.50" width="123.53" height="42.97" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>right_horizontal_tail_actuator_or_surface_component -&gt; right_horizontal_tail</title></rect>
+<rect x="503.92" y="498.83" width="82.35" height="26.85" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>left_wing_fuel_cell -&gt; left_wing</title></rect>
+<rect x="503.92" y="498.83" width="82.35" height="26.85" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>right_wing_fuel_cell -&gt; right_wing</title></rect>
+<rect x="514.21" y="497.48" width="61.77" height="29.54" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>left_aileron_actuator -&gt; left_wing</title></rect>
+<rect x="514.21" y="497.48" width="61.77" height="29.54" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>right_aileron_actuator -&gt; right_wing</title></rect>
+<rect x="462.74" y="367.92" width="164.71" height="24.17" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>wing_spar_center -&gt; center_fuselage</title></rect>
+<rect x="558.82" y="463.25" width="54.90" height="24.17" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>left_leading_edge_flap_actuator -&gt; left_wing_root</title></rect>
+<rect x="558.82" y="463.25" width="54.90" height="24.17" fill="#5b3f93" fill-opacity="0.05" stroke="#5b3f93" stroke-width="0.90"><title>right_leading_edge_flap_actuator -&gt; right_wing_root</title></rect>
 <circle cx="874.51" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>1: nose_axis_4m</title></circle>
 <text x="880.51" y="374.00" font-size="10" font-family="monospace" fill="#0f172a">1</text>
 <circle cx="1011.77" cy="380.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>2: nose_axis_6m</title></circle>

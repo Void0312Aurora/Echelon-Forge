@@ -55,9 +55,18 @@
     {
       "aspect": "nose",
       "authority_boundary": "review_only_not_runtime_lethality_decision",
-      "candidate_component_count": 6,
+      "candidate_component_count": 7,
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
+        {
+          "bound_region_id": "canopy",
+          "component_name": "dedicated_canopy_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.125,
+          "review_status": "candidate_binding",
+          "system": "cockpit"
+        },
         {
           "bound_region_id": "forward_fuselage",
           "component_name": "cockpit_crew_station",
@@ -77,6 +86,15 @@
           "system": "avionics"
         },
         {
+          "bound_region_id": "intake",
+          "component_name": "dedicated_intake_lip_or_duct_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.381215,
+          "review_status": "candidate_binding",
+          "system": "engine"
+        },
+        {
           "bound_region_id": "forward_fuselage",
           "component_name": "inertial_navigation_unit",
           "contains_point": false,
@@ -90,7 +108,7 @@
           "component_name": "iff_interrogator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.574206,
+          "distance_m": 1.564649,
           "review_status": "candidate_binding",
           "system": "avionics"
         },
@@ -102,19 +120,19 @@
           "distance_m": 1.75,
           "review_status": "candidate_binding",
           "system": "avionics"
-        },
-        {
-          "bound_region_id": "nose_radome",
-          "component_name": "apg68_radar_array",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 2.0,
-          "review_status": "candidate_binding",
-          "system": "radar"
         }
       ],
       "component_rankings": [
         {
+          "bound_region_id": "canopy",
+          "component_name": "dedicated_canopy_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.125,
+          "review_status": "candidate_binding",
+          "system": "cockpit"
+        },
+        {
           "bound_region_id": "forward_fuselage",
           "component_name": "cockpit_crew_station",
           "contains_point": false,
@@ -133,6 +151,15 @@
           "system": "avionics"
         },
         {
+          "bound_region_id": "intake",
+          "component_name": "dedicated_intake_lip_or_duct_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.381215,
+          "review_status": "candidate_binding",
+          "system": "engine"
+        },
+        {
           "bound_region_id": "forward_fuselage",
           "component_name": "inertial_navigation_unit",
           "contains_point": false,
@@ -146,7 +173,7 @@
           "component_name": "iff_interrogator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.574206,
+          "distance_m": 1.564649,
           "review_status": "candidate_binding",
           "system": "avionics"
         },
@@ -164,35 +191,17 @@
           "component_name": "apg68_radar_array",
           "contains_point": false,
           "critical": true,
-          "distance_m": 2.0,
+          "distance_m": 2.119086,
           "review_status": "candidate_binding",
           "system": "radar"
-        },
-        {
-          "bound_region_id": "center_fuselage",
-          "component_name": "flight_control_computer",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 3.512211,
-          "review_status": "candidate_binding",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "center_fuselage",
-          "component_name": "center_fuselage_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 3.6,
-          "review_status": "candidate_binding",
-          "system": "fuel"
         }
       ],
       "inside_component_count": 0,
-      "inside_outer_region_count": 1,
+      "inside_outer_region_count": 3,
       "interpretation": "inside_outer_shape_with_nearby_component_candidates_review_only",
       "label": "nose x=4m",
-      "nearest_component_distance_m": 0.2,
-      "nearest_component_name": "cockpit_crew_station",
+      "nearest_component_distance_m": 0.125,
+      "nearest_component_name": "dedicated_canopy_surface_component",
       "nearest_component_system": "cockpit",
       "nearest_outer_distance_m": 0.0,
       "nearest_outer_region_id": "forward_fuselage",
@@ -206,23 +215,23 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 1.313482,
-          "contains_point": false,
-          "distance_m": 0.466032,
+          "center_distance_m": 0.659969,
+          "contains_point": true,
+          "distance_m": 0.0,
           "region_id": "canopy",
           "region_role": "raised_outer_skin"
         },
         {
-          "center_distance_m": 2.424966,
-          "contains_point": false,
-          "distance_m": 0.866447,
+          "center_distance_m": 0.884747,
+          "contains_point": true,
+          "distance_m": 0.0,
           "region_id": "intake",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 2.331996,
+          "center_distance_m": 2.387485,
           "contains_point": false,
-          "distance_m": 1.125053,
+          "distance_m": 1.106348,
           "region_id": "nose_radome",
           "region_role": "outer_skin"
         },
@@ -246,18 +255,9 @@
     {
       "aspect": "nose",
       "authority_boundary": "review_only_not_runtime_lethality_decision",
-      "candidate_component_count": 4,
+      "candidate_component_count": 5,
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
-        {
-          "bound_region_id": "nose_radome",
-          "component_name": "apg68_radar_array",
-          "contains_point": true,
-          "critical": true,
-          "distance_m": 0.0,
-          "review_status": "candidate_binding",
-          "system": "radar"
-        },
         {
           "bound_region_id": "forward_fuselage",
           "component_name": "cockpit_crew_station",
@@ -272,9 +272,18 @@
           "component_name": "iff_interrogator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 0.275,
+          "distance_m": 0.350892,
           "review_status": "candidate_binding",
           "system": "avionics"
+        },
+        {
+          "bound_region_id": "nose_radome",
+          "component_name": "apg68_radar_array",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 0.436492,
+          "review_status": "candidate_binding",
+          "system": "radar"
         },
         {
           "bound_region_id": "forward_fuselage",
@@ -284,19 +293,19 @@
           "distance_m": 0.6,
           "review_status": "candidate_binding",
           "system": "avionics"
+        },
+        {
+          "bound_region_id": "canopy",
+          "component_name": "dedicated_canopy_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.744484,
+          "review_status": "candidate_binding",
+          "system": "cockpit"
         }
       ],
       "component_rankings": [
         {
-          "bound_region_id": "nose_radome",
-          "component_name": "apg68_radar_array",
-          "contains_point": true,
-          "critical": true,
-          "distance_m": 0.0,
-          "review_status": "candidate_binding",
-          "system": "radar"
-        },
-        {
           "bound_region_id": "forward_fuselage",
           "component_name": "cockpit_crew_station",
           "contains_point": true,
@@ -310,9 +319,18 @@
           "component_name": "iff_interrogator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 0.275,
+          "distance_m": 0.350892,
           "review_status": "candidate_binding",
           "system": "avionics"
+        },
+        {
+          "bound_region_id": "nose_radome",
+          "component_name": "apg68_radar_array",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 0.436492,
+          "review_status": "candidate_binding",
+          "system": "radar"
         },
         {
           "bound_region_id": "forward_fuselage",
@@ -322,6 +340,24 @@
           "distance_m": 0.6,
           "review_status": "candidate_binding",
           "system": "avionics"
+        },
+        {
+          "bound_region_id": "canopy",
+          "component_name": "dedicated_canopy_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.744484,
+          "review_status": "candidate_binding",
+          "system": "cockpit"
+        },
+        {
+          "bound_region_id": "intake",
+          "component_name": "dedicated_intake_lip_or_duct_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 2.141337,
+          "review_status": "candidate_binding",
+          "system": "engine"
         },
         {
           "bound_region_id": "forward_fuselage",
@@ -340,41 +376,23 @@
           "distance_m": 3.75,
           "review_status": "candidate_binding",
           "system": "avionics"
-        },
-        {
-          "bound_region_id": "center_fuselage",
-          "component_name": "flight_control_computer",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 5.507779,
-          "review_status": "candidate_binding",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "center_fuselage",
-          "component_name": "center_fuselage_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 5.6,
-          "review_status": "candidate_binding",
-          "system": "fuel"
         }
       ],
-      "inside_component_count": 2,
-      "inside_outer_region_count": 1,
+      "inside_component_count": 1,
+      "inside_outer_region_count": 0,
       "interpretation": "point_inside_component_box_review_only",
       "label": "nose x=6m",
       "nearest_component_distance_m": 0.0,
-      "nearest_component_name": "apg68_radar_array",
-      "nearest_component_system": "radar",
-      "nearest_outer_distance_m": 0.0,
+      "nearest_component_name": "cockpit_crew_station",
+      "nearest_component_system": "cockpit",
+      "nearest_outer_distance_m": 0.349524,
       "nearest_outer_region_id": "nose_radome",
       "nearest_outer_region_role": "outer_skin",
       "outer_region_rankings": [
         {
-          "center_distance_m": 0.33825,
-          "contains_point": true,
-          "distance_m": 0.0,
+          "center_distance_m": 0.725966,
+          "contains_point": false,
+          "distance_m": 0.349524,
           "region_id": "nose_radome",
           "region_role": "outer_skin"
         },
@@ -386,16 +404,16 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 2.960045,
+          "center_distance_m": 2.606554,
           "contains_point": false,
-          "distance_m": 1.693997,
+          "distance_m": 1.265023,
           "region_id": "canopy",
           "region_role": "raised_outer_skin"
         },
         {
-          "center_distance_m": 4.335416,
+          "center_distance_m": 2.686795,
           "contains_point": false,
-          "distance_m": 2.844088,
+          "distance_m": 1.94467,
           "region_id": "intake",
           "region_role": "outer_skin"
         },
@@ -419,7 +437,7 @@
     {
       "aspect": "tail",
       "authority_boundary": "review_only_not_runtime_lethality_decision",
-      "candidate_component_count": 7,
+      "candidate_component_count": 10,
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
@@ -455,11 +473,11 @@
           "contains_point": false,
           "critical": true,
           "distance_m": 1.05,
-          "review_status": "candidate_binding",
+          "review_status": "review_only_cross_region_boundary_candidate",
           "system": "engine"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -468,22 +486,31 @@
           "system": "data_link"
         },
         {
-          "bound_region_id": "center_fuselage",
-          "component_name": "center_fuselage_fuel_cell",
+          "bound_region_id": "left_horizontal_tail",
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
           "contains_point": false,
-          "critical": true,
-          "distance_m": 2.0,
+          "critical": false,
+          "distance_m": 1.914732,
           "review_status": "candidate_binding",
-          "system": "fuel"
+          "system": "flight_control"
         },
         {
-          "bound_region_id": "left_wing",
-          "component_name": "wing_spar_center",
+          "bound_region_id": "right_horizontal_tail",
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
           "contains_point": false,
-          "critical": true,
-          "distance_m": 2.0,
-          "review_status": "needs_review",
-          "system": "wings"
+          "critical": false,
+          "distance_m": 1.914732,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "engine_nozzle",
+          "component_name": "afterburner_nozzle",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.930181,
+          "review_status": "candidate_binding",
+          "system": "engine"
         }
       ],
       "component_rankings": [
@@ -520,11 +547,11 @@
           "contains_point": false,
           "critical": true,
           "distance_m": 1.05,
-          "review_status": "candidate_binding",
+          "review_status": "review_only_cross_region_boundary_candidate",
           "system": "engine"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -533,31 +560,31 @@
           "system": "data_link"
         },
         {
-          "bound_region_id": "center_fuselage",
-          "component_name": "center_fuselage_fuel_cell",
+          "bound_region_id": "left_horizontal_tail",
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
           "contains_point": false,
-          "critical": true,
-          "distance_m": 2.0,
+          "critical": false,
+          "distance_m": 1.914732,
           "review_status": "candidate_binding",
-          "system": "fuel"
+          "system": "flight_control"
         },
         {
-          "bound_region_id": "left_wing",
-          "component_name": "wing_spar_center",
+          "bound_region_id": "right_horizontal_tail",
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
           "contains_point": false,
-          "critical": true,
-          "distance_m": 2.0,
-          "review_status": "needs_review",
-          "system": "wings"
+          "critical": false,
+          "distance_m": 1.914732,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
         },
         {
           "bound_region_id": "engine_nozzle",
-          "component_name": "rudder_actuator",
+          "component_name": "afterburner_nozzle",
           "contains_point": false,
           "critical": false,
-          "distance_m": 2.316382,
+          "distance_m": 1.930181,
           "review_status": "candidate_binding",
-          "system": "flight_control"
+          "system": "engine"
         }
       ],
       "inside_component_count": 0,
@@ -572,38 +599,38 @@
       "nearest_outer_region_role": "outer_skin",
       "outer_region_rankings": [
         {
-          "center_distance_m": 0.30783,
+          "center_distance_m": 0.548342,
           "contains_point": true,
           "distance_m": 0.0,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 1.744856,
+          "center_distance_m": 2.887034,
           "contains_point": false,
-          "distance_m": 0.512636,
-          "region_id": "vertical_tail",
-          "region_role": "tail_surface"
-        },
-        {
-          "center_distance_m": 2.245284,
-          "contains_point": false,
-          "distance_m": 0.56886,
-          "region_id": "left_horizontal_tail",
-          "region_role": "tail_surface"
-        },
-        {
-          "center_distance_m": 2.245284,
-          "contains_point": false,
-          "distance_m": 0.56886,
+          "distance_m": 1.151419,
           "region_id": "right_horizontal_tail",
           "region_role": "tail_surface"
         },
         {
-          "center_distance_m": 3.715898,
+          "center_distance_m": 2.887035,
           "contains_point": false,
-          "distance_m": 1.394751,
+          "distance_m": 1.15142,
+          "region_id": "left_horizontal_tail",
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 3.111135,
+          "contains_point": false,
+          "distance_m": 1.201981,
           "region_id": "left_wing_root",
+          "region_role": "structural_transition"
+        },
+        {
+          "center_distance_m": 3.111135,
+          "contains_point": false,
+          "distance_m": 1.201981,
+          "region_id": "right_wing_root",
           "region_role": "structural_transition"
         }
       ],
@@ -619,7 +646,7 @@
     {
       "aspect": "tail",
       "authority_boundary": "review_only_not_runtime_lethality_decision",
-      "candidate_component_count": 5,
+      "candidate_component_count": 7,
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
@@ -628,11 +655,20 @@
           "contains_point": true,
           "critical": true,
           "distance_m": 0.0,
-          "review_status": "candidate_binding",
+          "review_status": "review_only_cross_region_boundary_candidate",
           "system": "engine"
         },
         {
           "bound_region_id": "engine_nozzle",
+          "component_name": "afterburner_nozzle",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.34,
+          "review_status": "candidate_binding",
+          "system": "engine"
+        },
+        {
+          "bound_region_id": "vertical_tail",
           "component_name": "rudder_actuator",
           "contains_point": false,
           "critical": false,
@@ -650,15 +686,6 @@
           "system": "hydraulic"
         },
         {
-          "bound_region_id": "engine_nozzle",
-          "component_name": "afterburner_nozzle",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.5,
-          "review_status": "candidate_binding",
-          "system": "engine"
-        },
-        {
           "bound_region_id": "aft_fuselage_engine",
           "component_name": "engine_fuel_control_unit",
           "contains_point": false,
@@ -666,6 +693,24 @@
           "distance_m": 0.704006,
           "review_status": "candidate_binding",
           "system": "engine"
+        },
+        {
+          "bound_region_id": "left_horizontal_tail",
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.567227,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "right_horizontal_tail",
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.567227,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
         }
       ],
       "component_rankings": [
@@ -675,11 +720,20 @@
           "contains_point": true,
           "critical": true,
           "distance_m": 0.0,
-          "review_status": "candidate_binding",
+          "review_status": "review_only_cross_region_boundary_candidate",
           "system": "engine"
         },
         {
           "bound_region_id": "engine_nozzle",
+          "component_name": "afterburner_nozzle",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.34,
+          "review_status": "candidate_binding",
+          "system": "engine"
+        },
+        {
+          "bound_region_id": "vertical_tail",
           "component_name": "rudder_actuator",
           "contains_point": false,
           "critical": false,
@@ -697,15 +751,6 @@
           "system": "hydraulic"
         },
         {
-          "bound_region_id": "engine_nozzle",
-          "component_name": "afterburner_nozzle",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.5,
-          "review_status": "candidate_binding",
-          "system": "engine"
-        },
-        {
           "bound_region_id": "aft_fuselage_engine",
           "component_name": "engine_fuel_control_unit",
           "contains_point": false,
@@ -715,6 +760,24 @@
           "system": "engine"
         },
         {
+          "bound_region_id": "left_horizontal_tail",
+          "component_name": "left_horizontal_tail_actuator_or_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.567227,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "right_horizontal_tail",
+          "component_name": "right_horizontal_tail_actuator_or_surface_component",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 1.567227,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
           "bound_region_id": "aft_fuselage_engine",
           "component_name": "electrical_power_bus",
           "contains_point": false,
@@ -722,70 +785,52 @@
           "distance_m": 2.763716,
           "review_status": "candidate_binding",
           "system": "avionics"
-        },
-        {
-          "bound_region_id": "aft_fuselage_engine",
-          "component_name": "data_link_terminal",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 3.7,
-          "review_status": "candidate_binding",
-          "system": "data_link"
-        },
-        {
-          "bound_region_id": "center_fuselage",
-          "component_name": "center_fuselage_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 4.0,
-          "review_status": "candidate_binding",
-          "system": "fuel"
         }
       ],
       "inside_component_count": 1,
-      "inside_outer_region_count": 1,
+      "inside_outer_region_count": 0,
       "interpretation": "point_inside_component_box_review_only",
       "label": "tail x=-6m",
       "nearest_component_distance_m": 0.0,
       "nearest_component_name": "engine_core",
       "nearest_component_system": "engine",
-      "nearest_outer_distance_m": 0.0,
-      "nearest_outer_region_id": "engine_nozzle",
-      "nearest_outer_region_role": "outer_skin",
+      "nearest_outer_distance_m": 0.088577,
+      "nearest_outer_region_id": "vertical_tail",
+      "nearest_outer_region_role": "tail_surface",
       "outer_region_rankings": [
         {
-          "center_distance_m": 0.632851,
-          "contains_point": true,
-          "distance_m": 0.0,
-          "region_id": "engine_nozzle",
-          "region_role": "outer_skin"
+          "center_distance_m": 1.313873,
+          "contains_point": false,
+          "distance_m": 0.088577,
+          "region_id": "vertical_tail",
+          "region_role": "tail_surface"
         },
         {
-          "center_distance_m": 2.307065,
+          "center_distance_m": 2.351269,
           "contains_point": false,
           "distance_m": 0.121262,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 1.731045,
+          "center_distance_m": 1.039216,
           "contains_point": false,
-          "distance_m": 0.512636,
-          "region_id": "vertical_tail",
-          "region_role": "tail_surface"
+          "distance_m": 0.339296,
+          "region_id": "engine_nozzle",
+          "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 1.784504,
+          "center_distance_m": 2.079866,
           "contains_point": false,
-          "distance_m": 0.55,
-          "region_id": "left_horizontal_tail",
-          "region_role": "tail_surface"
-        },
-        {
-          "center_distance_m": 1.784504,
-          "contains_point": false,
-          "distance_m": 0.55,
+          "distance_m": 0.983243,
           "region_id": "right_horizontal_tail",
+          "region_role": "tail_surface"
+        },
+        {
+          "center_distance_m": 2.079868,
+          "contains_point": false,
+          "distance_m": 0.983245,
+          "region_id": "left_horizontal_tail",
           "region_role": "tail_surface"
         }
       ],
@@ -805,68 +850,68 @@
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
-          "bound_region_id": "left_wing",
-          "component_name": "right_aileron_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.35,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "left_wing",
-          "component_name": "right_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 0.632456,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 0.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
+        },
+        {
+          "bound_region_id": "right_wing",
+          "component_name": "right_aileron_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.942404,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "right_wing",
+          "component_name": "right_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 1.087761,
+          "review_status": "candidate_binding",
+          "system": "fuel"
         }
       ],
       "component_rankings": [
         {
-          "bound_region_id": "left_wing",
-          "component_name": "right_aileron_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.35,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "left_wing",
-          "component_name": "right_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 0.632456,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 0.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
         },
         {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "right_wing",
+          "component_name": "right_aileron_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.942404,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "right_wing",
+          "component_name": "right_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 1.087761,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "right_wing_root",
           "component_name": "right_leading_edge_flap_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 2.05,
-          "review_status": "needs_review",
+          "distance_m": 2.672901,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
@@ -897,7 +942,7 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -907,28 +952,28 @@
         }
       ],
       "inside_component_count": 0,
-      "inside_outer_region_count": 1,
-      "interpretation": "inside_outer_shape_with_nearby_component_candidates_review_only",
+      "inside_outer_region_count": 0,
+      "interpretation": "outside_outer_shape_but_near_component_candidate_review_only",
       "label": "beam y=4m",
-      "nearest_component_distance_m": 0.35,
-      "nearest_component_name": "right_aileron_actuator",
-      "nearest_component_system": "flight_control",
-      "nearest_outer_distance_m": 0.0,
-      "nearest_outer_region_id": "left_wing",
+      "nearest_component_distance_m": 0.7,
+      "nearest_component_name": "wing_spar_center",
+      "nearest_component_system": "wings",
+      "nearest_outer_distance_m": 0.868724,
+      "nearest_outer_region_id": "right_wing",
       "nearest_outer_region_role": "lifting_surface",
       "outer_region_rankings": [
         {
-          "center_distance_m": 1.333087,
-          "contains_point": true,
-          "distance_m": 0.0,
-          "region_id": "left_wing",
+          "center_distance_m": 2.18872,
+          "contains_point": false,
+          "distance_m": 0.868724,
+          "region_id": "right_wing",
           "region_role": "lifting_surface"
         },
         {
-          "center_distance_m": 3.197286,
+          "center_distance_m": 3.409091,
           "contains_point": false,
-          "distance_m": 2.65,
-          "region_id": "left_wing_root",
+          "distance_m": 2.567929,
+          "region_id": "right_wing_root",
           "region_role": "structural_transition"
         },
         {
@@ -939,17 +984,17 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 4.477692,
+          "center_distance_m": 5.463067,
           "contains_point": false,
-          "distance_m": 3.408916,
-          "region_id": "intake",
+          "distance_m": 3.447051,
+          "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 5.444188,
+          "center_distance_m": 5.547546,
           "contains_point": false,
-          "distance_m": 3.492086,
-          "region_id": "aft_fuselage_engine",
+          "distance_m": 3.877481,
+          "region_id": "forward_fuselage",
           "region_role": "outer_skin"
         }
       ],
@@ -969,50 +1014,50 @@
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "right_wing",
           "component_name": "right_aileron_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.540292,
-          "review_status": "needs_review",
+          "distance_m": 1.771475,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         }
       ],
       "component_rankings": [
         {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "right_wing",
           "component_name": "right_aileron_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.540292,
-          "review_status": "needs_review",
+          "distance_m": 1.771475,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
-          "bound_region_id": "left_wing",
-          "component_name": "right_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 2.607681,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 2.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
         },
         {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "right_wing",
+          "component_name": "right_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 2.753766,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "right_wing_root",
           "component_name": "right_leading_edge_flap_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 4.05,
-          "review_status": "needs_review",
+          "distance_m": 4.641595,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
@@ -1043,7 +1088,7 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -1056,25 +1101,25 @@
       "inside_outer_region_count": 0,
       "interpretation": "outside_outer_shape_but_near_component_candidate_review_only",
       "label": "beam y=6m",
-      "nearest_component_distance_m": 1.540292,
+      "nearest_component_distance_m": 1.771475,
       "nearest_component_name": "right_aileron_actuator",
       "nearest_component_system": "flight_control",
-      "nearest_outer_distance_m": 1.187654,
-      "nearest_outer_region_id": "left_wing",
+      "nearest_outer_distance_m": 1.468711,
+      "nearest_outer_region_id": "right_wing",
       "nearest_outer_region_role": "lifting_surface",
       "outer_region_rankings": [
         {
-          "center_distance_m": 3.285183,
+          "center_distance_m": 3.648789,
           "contains_point": false,
-          "distance_m": 1.187654,
-          "region_id": "left_wing",
+          "distance_m": 1.468711,
+          "region_id": "right_wing",
           "region_role": "lifting_surface"
         },
         {
-          "center_distance_m": 5.188703,
+          "center_distance_m": 5.312429,
           "contains_point": false,
-          "distance_m": 4.65,
-          "region_id": "left_wing_root",
+          "distance_m": 4.560072,
+          "region_id": "right_wing_root",
           "region_role": "structural_transition"
         },
         {
@@ -1085,18 +1130,18 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 6.975313,
+          "center_distance_m": 7.060106,
           "contains_point": false,
-          "distance_m": 5.236718,
-          "region_id": "left_horizontal_tail",
-          "region_role": "tail_surface"
-        },
-        {
-          "center_distance_m": 7.045508,
-          "contains_point": false,
-          "distance_m": 5.366066,
+          "distance_m": 5.318098,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 7.404742,
+          "contains_point": false,
+          "distance_m": 5.57095,
+          "region_id": "right_horizontal_tail",
+          "region_role": "tail_surface"
         }
       ],
       "point_id": "right_beam_6m",
@@ -1115,68 +1160,68 @@
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
-          "bound_region_id": "right_wing",
-          "component_name": "left_aileron_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.35,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "right_wing",
-          "component_name": "left_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 0.632456,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 0.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
+        },
+        {
+          "bound_region_id": "left_wing",
+          "component_name": "left_aileron_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.942404,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "left_wing",
+          "component_name": "left_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 1.087761,
+          "review_status": "candidate_binding",
+          "system": "fuel"
         }
       ],
       "component_rankings": [
         {
-          "bound_region_id": "right_wing",
-          "component_name": "left_aileron_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 0.35,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "right_wing",
-          "component_name": "left_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 0.632456,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 0.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
         },
         {
-          "bound_region_id": "right_wing",
+          "bound_region_id": "left_wing",
+          "component_name": "left_aileron_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 0.942404,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "left_wing",
+          "component_name": "left_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 1.087761,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "left_wing_root",
           "component_name": "left_leading_edge_flap_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 2.05,
-          "review_status": "needs_review",
+          "distance_m": 2.672901,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
@@ -1198,7 +1243,7 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -1217,28 +1262,28 @@
         }
       ],
       "inside_component_count": 0,
-      "inside_outer_region_count": 1,
-      "interpretation": "inside_outer_shape_with_nearby_component_candidates_review_only",
+      "inside_outer_region_count": 0,
+      "interpretation": "outside_outer_shape_but_near_component_candidate_review_only",
       "label": "beam y=-4m",
-      "nearest_component_distance_m": 0.35,
-      "nearest_component_name": "left_aileron_actuator",
-      "nearest_component_system": "flight_control",
-      "nearest_outer_distance_m": 0.0,
-      "nearest_outer_region_id": "right_wing",
+      "nearest_component_distance_m": 0.7,
+      "nearest_component_name": "wing_spar_center",
+      "nearest_component_system": "wings",
+      "nearest_outer_distance_m": 0.868724,
+      "nearest_outer_region_id": "left_wing",
       "nearest_outer_region_role": "lifting_surface",
       "outer_region_rankings": [
         {
-          "center_distance_m": 1.333087,
-          "contains_point": true,
-          "distance_m": 0.0,
-          "region_id": "right_wing",
+          "center_distance_m": 2.188699,
+          "contains_point": false,
+          "distance_m": 0.868724,
+          "region_id": "left_wing",
           "region_role": "lifting_surface"
         },
         {
-          "center_distance_m": 3.197286,
+          "center_distance_m": 3.409091,
           "contains_point": false,
-          "distance_m": 2.65,
-          "region_id": "right_wing_root",
+          "distance_m": 2.567929,
+          "region_id": "left_wing_root",
           "region_role": "structural_transition"
         },
         {
@@ -1249,17 +1294,17 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 4.477692,
+          "center_distance_m": 5.463067,
           "contains_point": false,
-          "distance_m": 3.408916,
-          "region_id": "intake",
+          "distance_m": 3.447051,
+          "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 5.444188,
+          "center_distance_m": 5.547546,
           "contains_point": false,
-          "distance_m": 3.492086,
-          "region_id": "aft_fuselage_engine",
+          "distance_m": 3.877481,
+          "region_id": "forward_fuselage",
           "region_role": "outer_skin"
         }
       ],
@@ -1279,50 +1324,50 @@
       "candidate_component_radius_m": 2.0,
       "candidate_components": [
         {
-          "bound_region_id": "right_wing",
+          "bound_region_id": "left_wing",
           "component_name": "left_aileron_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.540292,
-          "review_status": "needs_review",
+          "distance_m": 1.771475,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         }
       ],
       "component_rankings": [
         {
-          "bound_region_id": "right_wing",
+          "bound_region_id": "left_wing",
           "component_name": "left_aileron_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 1.540292,
-          "review_status": "needs_review",
+          "distance_m": 1.771475,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
-          "bound_region_id": "right_wing",
-          "component_name": "left_wing_fuel_cell",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 2.607681,
-          "review_status": "needs_review",
-          "system": "fuel"
-        },
-        {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 2.7,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
         },
         {
-          "bound_region_id": "right_wing",
+          "bound_region_id": "left_wing",
+          "component_name": "left_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 2.753766,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "left_wing_root",
           "component_name": "left_leading_edge_flap_actuator",
           "contains_point": false,
           "critical": false,
-          "distance_m": 4.05,
-          "review_status": "needs_review",
+          "distance_m": 4.641595,
+          "review_status": "candidate_binding",
           "system": "flight_control"
         },
         {
@@ -1344,7 +1389,7 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -1366,25 +1411,25 @@
       "inside_outer_region_count": 0,
       "interpretation": "outside_outer_shape_but_near_component_candidate_review_only",
       "label": "beam y=-6m",
-      "nearest_component_distance_m": 1.540292,
+      "nearest_component_distance_m": 1.771475,
       "nearest_component_name": "left_aileron_actuator",
       "nearest_component_system": "flight_control",
-      "nearest_outer_distance_m": 1.187654,
-      "nearest_outer_region_id": "right_wing",
+      "nearest_outer_distance_m": 1.468704,
+      "nearest_outer_region_id": "left_wing",
       "nearest_outer_region_role": "lifting_surface",
       "outer_region_rankings": [
         {
-          "center_distance_m": 3.285183,
+          "center_distance_m": 3.648749,
           "contains_point": false,
-          "distance_m": 1.187654,
-          "region_id": "right_wing",
+          "distance_m": 1.468704,
+          "region_id": "left_wing",
           "region_role": "lifting_surface"
         },
         {
-          "center_distance_m": 5.188703,
+          "center_distance_m": 5.312429,
           "contains_point": false,
-          "distance_m": 4.65,
-          "region_id": "right_wing_root",
+          "distance_m": 4.560072,
+          "region_id": "left_wing_root",
           "region_role": "structural_transition"
         },
         {
@@ -1395,18 +1440,18 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 6.975313,
+          "center_distance_m": 7.060106,
           "contains_point": false,
-          "distance_m": 5.236718,
-          "region_id": "right_horizontal_tail",
-          "region_role": "tail_surface"
-        },
-        {
-          "center_distance_m": 7.045508,
-          "contains_point": false,
-          "distance_m": 5.366066,
+          "distance_m": 5.318098,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 7.404741,
+          "contains_point": false,
+          "distance_m": 5.570949,
+          "region_id": "left_horizontal_tail",
+          "region_role": "tail_surface"
         }
       ],
       "point_id": "left_beam_6m",
@@ -1444,7 +1489,7 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "aft_fuselage_engine",
+          "bound_region_id": "center_fuselage",
           "component_name": "data_link_terminal",
           "contains_point": false,
           "critical": false,
@@ -1462,31 +1507,13 @@
           "system": "fuel"
         },
         {
-          "bound_region_id": "left_wing",
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 3.91,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
-        },
-        {
-          "bound_region_id": "right_wing",
-          "component_name": "left_leading_edge_flap_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 4.104948,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "left_wing",
-          "component_name": "right_leading_edge_flap_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 4.104948,
-          "review_status": "needs_review",
-          "system": "flight_control"
         },
         {
           "bound_region_id": "forward_fuselage",
@@ -1496,6 +1523,24 @@
           "distance_m": 4.369282,
           "review_status": "candidate_binding",
           "system": "navigation"
+        },
+        {
+          "bound_region_id": "aft_fuselage_engine",
+          "component_name": "electrical_power_bus",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 4.412907,
+          "review_status": "candidate_binding",
+          "system": "avionics"
+        },
+        {
+          "bound_region_id": "left_wing_root",
+          "component_name": "left_leading_edge_flap_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 4.706846,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
         }
       ],
       "inside_component_count": 0,
@@ -1505,17 +1550,10 @@
       "nearest_component_distance_m": 3.411103,
       "nearest_component_name": "flight_control_computer",
       "nearest_component_system": "flight_control",
-      "nearest_outer_distance_m": 3.137903,
-      "nearest_outer_region_id": "canopy",
-      "nearest_outer_region_role": "raised_outer_skin",
+      "nearest_outer_distance_m": 3.207745,
+      "nearest_outer_region_id": "center_fuselage",
+      "nearest_outer_region_role": "outer_skin",
       "outer_region_rankings": [
-        {
-          "center_distance_m": 4.36772,
-          "contains_point": false,
-          "distance_m": 3.137903,
-          "region_id": "canopy",
-          "region_role": "raised_outer_skin"
-        },
         {
           "center_distance_m": 4.008689,
           "contains_point": false,
@@ -1524,23 +1562,30 @@
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 5.42704,
+          "center_distance_m": 5.530719,
           "contains_point": false,
-          "distance_m": 3.544261,
+          "distance_m": 3.886538,
+          "region_id": "forward_fuselage",
+          "region_role": "outer_skin"
+        },
+        {
+          "center_distance_m": 5.786203,
+          "contains_point": false,
+          "distance_m": 3.949448,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         },
         {
-          "center_distance_m": 4.101541,
+          "center_distance_m": 4.909939,
           "contains_point": false,
-          "distance_m": 3.546679,
+          "distance_m": 4.310177,
           "region_id": "left_wing_root",
           "region_role": "structural_transition"
         },
         {
-          "center_distance_m": 4.101541,
+          "center_distance_m": 4.909939,
           "contains_point": false,
-          "distance_m": 3.546679,
+          "distance_m": 4.310177,
           "region_id": "right_wing_root",
           "region_role": "structural_transition"
         }
@@ -1562,6 +1607,24 @@
       "candidate_components": [],
       "component_rankings": [
         {
+          "bound_region_id": "left_wing_root",
+          "component_name": "left_leading_edge_flap_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 3.324154,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
+          "bound_region_id": "right_wing_root",
+          "component_name": "right_leading_edge_flap_actuator",
+          "contains_point": false,
+          "critical": false,
+          "distance_m": 3.324154,
+          "review_status": "candidate_binding",
+          "system": "flight_control"
+        },
+        {
           "bound_region_id": "center_fuselage",
           "component_name": "center_fuselage_fuel_cell",
           "contains_point": false,
@@ -1572,11 +1635,29 @@
         },
         {
           "bound_region_id": "left_wing",
+          "component_name": "left_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 3.657489,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "right_wing",
+          "component_name": "right_wing_fuel_cell",
+          "contains_point": false,
+          "critical": true,
+          "distance_m": 3.657489,
+          "review_status": "candidate_binding",
+          "system": "fuel"
+        },
+        {
+          "bound_region_id": "center_fuselage",
           "component_name": "wing_spar_center",
           "contains_point": false,
           "critical": true,
           "distance_m": 3.91,
-          "review_status": "needs_review",
+          "review_status": "review_only_cross_region_semantic_hold",
           "system": "wings"
         },
         {
@@ -1589,24 +1670,6 @@
           "system": "avionics"
         },
         {
-          "bound_region_id": "right_wing",
-          "component_name": "left_leading_edge_flap_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 4.104948,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
-          "bound_region_id": "left_wing",
-          "component_name": "right_leading_edge_flap_actuator",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 4.104948,
-          "review_status": "needs_review",
-          "system": "flight_control"
-        },
-        {
           "bound_region_id": "center_fuselage",
           "component_name": "flight_control_computer",
           "contains_point": false,
@@ -1614,69 +1677,51 @@
           "distance_m": 4.109212,
           "review_status": "candidate_binding",
           "system": "flight_control"
-        },
-        {
-          "bound_region_id": "aft_fuselage_engine",
-          "component_name": "data_link_terminal",
-          "contains_point": false,
-          "critical": false,
-          "distance_m": 4.205948,
-          "review_status": "candidate_binding",
-          "system": "data_link"
-        },
-        {
-          "bound_region_id": "forward_fuselage",
-          "component_name": "inertial_navigation_unit",
-          "contains_point": false,
-          "critical": true,
-          "distance_m": 4.455965,
-          "review_status": "candidate_binding",
-          "system": "navigation"
         }
       ],
       "inside_component_count": 0,
       "inside_outer_region_count": 0,
       "interpretation": "outside_outer_shape_no_near_component_candidate_review_only",
       "label": "below z=-4m",
-      "nearest_component_distance_m": 3.4,
-      "nearest_component_name": "center_fuselage_fuel_cell",
-      "nearest_component_system": "fuel",
-      "nearest_outer_distance_m": 2.352661,
-      "nearest_outer_region_id": "intake",
-      "nearest_outer_region_role": "outer_skin",
+      "nearest_component_distance_m": 3.324154,
+      "nearest_component_name": "left_leading_edge_flap_actuator",
+      "nearest_component_system": "flight_control",
+      "nearest_outer_distance_m": 2.892347,
+      "nearest_outer_region_id": "left_wing_root",
+      "nearest_outer_region_role": "structural_transition",
       "outer_region_rankings": [
         {
-          "center_distance_m": 3.522328,
+          "center_distance_m": 3.568795,
           "contains_point": false,
-          "distance_m": 2.352661,
-          "region_id": "intake",
-          "region_role": "outer_skin"
-        },
-        {
-          "center_distance_m": 4.008689,
-          "contains_point": false,
-          "distance_m": 3.207745,
-          "region_id": "center_fuselage",
-          "region_role": "outer_skin"
-        },
-        {
-          "center_distance_m": 4.101541,
-          "contains_point": false,
-          "distance_m": 3.546679,
+          "distance_m": 2.892347,
           "region_id": "left_wing_root",
           "region_role": "structural_transition"
         },
         {
-          "center_distance_m": 4.101541,
+          "center_distance_m": 3.568795,
           "contains_point": false,
-          "distance_m": 3.546679,
+          "distance_m": 2.892347,
           "region_id": "right_wing_root",
           "region_role": "structural_transition"
         },
         {
-          "center_distance_m": 5.461282,
+          "center_distance_m": 4.456885,
           "contains_point": false,
-          "distance_m": 3.586494,
+          "distance_m": 3.041942,
+          "region_id": "right_wing",
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 4.456918,
+          "contains_point": false,
+          "distance_m": 3.041969,
+          "region_id": "left_wing",
+          "region_role": "lifting_surface"
+        },
+        {
+          "center_distance_m": 5.119576,
+          "contains_point": false,
+          "distance_m": 3.128762,
           "region_id": "aft_fuselage_engine",
           "region_role": "outer_skin"
         }
@@ -1695,7 +1740,7 @@
   "status": "review_point_distance_diagnostics_generated_review_only",
   "summary": {
     "inside_component_point_count": 2,
-    "inside_outer_region_point_count": 6,
+    "inside_outer_region_point_count": 2,
     "review_point_count": 10,
     "review_status": "manual_review_required",
     "zero_outer_distance_without_component_candidate_count": 0

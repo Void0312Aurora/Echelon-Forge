@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="423.29" y="402.33" width="40.54" height="57.72" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>parent_surface_support_bounds</title></rect>
+<rect x="92.90" y="60.00" width="701.31" height="500.00" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.20" stroke-dasharray="2 3"><title>shell_constraint_bounds</title></rect>
+<text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
+<rect x="421.71" y="401.36" width="43.69" height="38.23" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>apg68_radar_array old_aabb</title></rect>
+<text x="425.71" y="414.36" font-size="10" font-family="monospace" fill="#7c3aed">apg68_radar_array old_aabb</text>
+<rect x="416.74" y="382.77" width="53.63" height="61.50" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>apg68_radar_array constrained_ellipsoid</title></rect>
+<text x="420.74" y="395.77" font-size="10" font-family="monospace" fill="#0891b2">apg68_radar_array constrained_ellipsoid</text>
+<polygon points="410.54,469.80 476.57,469.80 476.30,467.13 476.04,464.47 474.30,458.52 468.64,444.89 457.24,436.60 443.56,433.68 429.88,436.60 418.48,444.89 412.82,458.52 411.08,464.47 410.81,467.13" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
+<text x="447.56" y="459.12" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

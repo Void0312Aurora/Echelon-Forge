@@ -59,7 +59,7 @@
         1.2
       ]
     },
-    "component_count": 22,
+    "component_count": 26,
     "hitbox_count": 4,
     "systems": [
       "avionics",
@@ -138,24 +138,24 @@
     {
       "bounds": {
         "center": [
-          6.330948,
+          6.293264,
           0.0,
-          0.069905
+          -0.664096
         ],
         "max": [
           7.536843,
           0.48,
-          0.559239
+          -0.349524
         ],
         "min": [
-          5.125053,
+          5.049685,
           -0.48,
-          -0.419429
+          -0.978668
         ],
         "span": [
-          2.41179,
+          2.487158,
           0.96,
-          0.978668
+          0.629144
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -163,11 +163,15 @@
       "id": "nose_radome",
       "label": "nose_radome",
       "manual_review_required": true,
-      "rationale": "Forward-most narrow body area; seeded from public length scale and nose direction.",
+      "mesh_silhouette_source_nodes": [
+        "Object_4"
+      ],
+      "rationale": "Forward-most narrow body area; height corrected from audit mesh nose slice instead of expanded selection.",
       "role": "outer_skin",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "audit_mesh_aligned_nose_slice_plus_public_length_scale",
       "source_mesh_node_candidates": [
         {
+          "coverage_fraction_of_node_box": 0.00224,
           "coverage_fraction_of_region_box": 1.0,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
@@ -225,67 +229,15 @@
       "id": "forward_fuselage",
       "label": "forward_fuselage",
       "manual_review_required": true,
+      "mesh_silhouette_source_nodes": [
+        "Object_4"
+      ],
       "rationale": "Forward fuselage and avionics/cockpit support area; covers the old 4 m/6 m nose test zone.",
       "role": "outer_skin",
       "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
-          "mesh_name": "Object_0",
-          "node_name": "Object_4",
-          "sim_bounds": {
-            "center": [
-              0.071361,
-              -1e-06,
-              0.0
-            ],
-            "max": [
-              7.536842,
-              4.812344,
-              2.330161
-            ],
-            "min": [
-              -7.39412,
-              -4.812345,
-              -2.330161
-            ],
-            "span": [
-              14.930962,
-              9.624689,
-              4.660323
-            ]
-          },
-          "triangle_count": 2359
-        },
-        {
-          "coverage_fraction_of_region_box": 0.20595,
-          "mesh_name": "Object_1",
-          "node_name": "Object_6",
-          "sim_bounds": {
-            "center": [
-              3.410359,
-              0.0,
-              -0.315201
-            ],
-            "max": [
-              4.684977,
-              0.489015,
-              0.066066
-            ],
-            "min": [
-              2.13574,
-              -0.489015,
-              -0.696468
-            ],
-            "span": [
-              2.549237,
-              0.978031,
-              0.762534
-            ]
-          },
-          "triangle_count": 380
-        },
-        {
+          "coverage_fraction_of_node_box": 1.0,
           "coverage_fraction_of_region_box": 0.13056,
           "mesh_name": "Object_2",
           "node_name": "Object_8",
@@ -314,34 +266,65 @@
           "triangle_count": 308
         },
         {
-          "coverage_fraction_of_region_box": 0.04466,
-          "mesh_name": "Object_4",
-          "node_name": "Object_12",
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.00072,
+          "mesh_name": "Object_6",
+          "node_name": "Object_16",
           "sim_bounds": {
             "center": [
-              3.51924,
-              -0.01072,
-              -0.64168
+              3.903722,
+              -1e-06,
+              -0.263327
             ],
             "max": [
-              3.97533,
-              0.264096,
-              -0.010385
+              3.960724,
+              0.134478,
+              -0.160817
             ],
             "min": [
-              3.063149,
-              -0.285536,
-              -1.272975
+              3.846719,
+              -0.13448,
+              -0.365836
             ],
             "span": [
-              0.912181,
-              0.549631,
-              1.26259
+              0.114005,
+              0.268958,
+              0.205019
             ]
           },
-          "triangle_count": 765
+          "triangle_count": 4
         },
         {
+          "coverage_fraction_of_node_box": 0.95084,
+          "coverage_fraction_of_region_box": 0.20595,
+          "mesh_name": "Object_1",
+          "node_name": "Object_6",
+          "sim_bounds": {
+            "center": [
+              3.410359,
+              0.0,
+              -0.315201
+            ],
+            "max": [
+              4.684977,
+              0.489015,
+              0.066066
+            ],
+            "min": [
+              2.13574,
+              -0.489015,
+              -0.696468
+            ],
+            "span": [
+              2.549237,
+              0.978031,
+              0.762534
+            ]
+          },
+          "triangle_count": 380
+        },
+        {
+          "coverage_fraction_of_node_box": 0.68962,
           "coverage_fraction_of_region_box": 0.02994,
           "mesh_name": "Object_3",
           "node_name": "Object_10",
@@ -370,6 +353,36 @@
           "triangle_count": 76
         },
         {
+          "coverage_fraction_of_node_box": 0.61926,
+          "coverage_fraction_of_region_box": 0.04466,
+          "mesh_name": "Object_4",
+          "node_name": "Object_12",
+          "sim_bounds": {
+            "center": [
+              3.51924,
+              -0.01072,
+              -0.64168
+            ],
+            "max": [
+              3.97533,
+              0.264096,
+              -0.010385
+            ],
+            "min": [
+              3.063149,
+              -0.285536,
+              -1.272975
+            ],
+            "span": [
+              0.912181,
+              0.549631,
+              1.26259
+            ]
+          },
+          "triangle_count": 765
+        },
+        {
+          "coverage_fraction_of_node_box": 0.11756,
           "coverage_fraction_of_region_box": 0.00346,
           "mesh_name": "Object_5",
           "node_name": "Object_14",
@@ -402,24 +415,24 @@
     {
       "bounds": {
         "center": [
-          3.240842,
+          3.410359,
           0.0,
-          1.071874
+          -0.296449
         ],
         "max": [
-          4.371369,
-          0.55,
-          1.677716
+          4.734977,
+          0.549015,
+          0.153571
         ],
         "min": [
-          2.110316,
-          -0.55,
-          0.466032
+          2.08574,
+          -0.549015,
+          -0.746468
         ],
         "span": [
-          2.261053,
-          1.1,
-          1.211684
+          2.649237,
+          1.09803,
+          0.900039
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -427,37 +440,188 @@
       "id": "canopy",
       "label": "canopy",
       "manual_review_required": true,
-      "rationale": "Raised cockpit canopy candidate; kept separate because old hitboxes understate height.",
+      "mesh_silhouette_source_nodes": [
+        "Object_6",
+        "Object_8",
+        "Object_16"
+      ],
+      "rationale": "Canopy candidate aligned to the audit mesh canopy nodes; kept separate because old hitboxes understate shape.",
       "role": "raised_outer_skin",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
-          "mesh_name": "Object_0",
-          "node_name": "Object_4",
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.72615,
+          "mesh_name": "Object_1",
+          "node_name": "Object_6",
           "sim_bounds": {
             "center": [
-              0.071361,
-              -1e-06,
-              0.0
+              3.410359,
+              0.0,
+              -0.315201
             ],
             "max": [
-              7.536842,
-              4.812344,
-              2.330161
+              4.684977,
+              0.489015,
+              0.066066
             ],
             "min": [
-              -7.39412,
-              -4.812345,
-              -2.330161
+              2.13574,
+              -0.489015,
+              -0.696468
             ],
             "span": [
-              14.930962,
-              9.624689,
-              4.660323
+              2.549237,
+              0.978031,
+              0.762534
             ]
           },
-          "triangle_count": 2359
+          "triangle_count": 380
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.43771,
+          "mesh_name": "Object_2",
+          "node_name": "Object_8",
+          "sim_bounds": {
+            "center": [
+              3.437435,
+              -1e-06,
+              -0.221831
+            ],
+            "max": [
+              4.545999,
+              0.397114,
+              0.103571
+            ],
+            "min": [
+              2.328871,
+              -0.397115,
+              -0.547232
+            ],
+            "span": [
+              2.217128,
+              0.794229,
+              0.650803
+            ]
+          },
+          "triangle_count": 308
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.0024,
+          "mesh_name": "Object_6",
+          "node_name": "Object_16",
+          "sim_bounds": {
+            "center": [
+              3.903722,
+              -1e-06,
+              -0.263327
+            ],
+            "max": [
+              3.960724,
+              0.134478,
+              -0.160817
+            ],
+            "min": [
+              3.846719,
+              -0.13448,
+              -0.365836
+            ],
+            "span": [
+              0.114005,
+              0.268958,
+              0.205019
+            ]
+          },
+          "triangle_count": 4
+        },
+        {
+          "coverage_fraction_of_node_box": 0.64771,
+          "coverage_fraction_of_region_box": 0.09428,
+          "mesh_name": "Object_3",
+          "node_name": "Object_10",
+          "sim_bounds": {
+            "center": [
+              3.219164,
+              5e-06,
+              -0.585095
+            ],
+            "max": [
+              3.631704,
+              0.211391,
+              -0.038841
+            ],
+            "min": [
+              2.806624,
+              -0.211381,
+              -1.131349
+            ],
+            "span": [
+              0.825081,
+              0.422773,
+              1.092508
+            ]
+          },
+          "triangle_count": 76
+        },
+        {
+          "coverage_fraction_of_node_box": 0.583,
+          "coverage_fraction_of_region_box": 0.14096,
+          "mesh_name": "Object_4",
+          "node_name": "Object_12",
+          "sim_bounds": {
+            "center": [
+              3.51924,
+              -0.01072,
+              -0.64168
+            ],
+            "max": [
+              3.97533,
+              0.264096,
+              -0.010385
+            ],
+            "min": [
+              3.063149,
+              -0.285536,
+              -1.272975
+            ],
+            "span": [
+              0.912181,
+              0.549631,
+              1.26259
+            ]
+          },
+          "triangle_count": 765
+        },
+        {
+          "coverage_fraction_of_node_box": 0.29264,
+          "coverage_fraction_of_region_box": 0.02884,
+          "mesh_name": "Object_5",
+          "node_name": "Object_14",
+          "sim_bounds": {
+            "center": [
+              1.878106,
+              0.0,
+              -0.138506
+            ],
+            "max": [
+              2.378767,
+              0.335935,
+              0.053252
+            ],
+            "min": [
+              1.377445,
+              -0.335935,
+              -0.330264
+            ],
+            "span": [
+              1.001322,
+              0.67187,
+              0.383516
+            ]
+          },
+          "triangle_count": 68
         }
       ]
     },
@@ -489,39 +653,16 @@
       "id": "center_fuselage",
       "label": "center_fuselage",
       "manual_review_required": true,
+      "mesh_silhouette_source_nodes": [
+        "Object_4",
+        "Object_14"
+      ],
       "rationale": "Main body core around fuel, avionics, and flight-control components.",
       "role": "outer_skin",
       "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
-          "mesh_name": "Object_0",
-          "node_name": "Object_4",
-          "sim_bounds": {
-            "center": [
-              0.071361,
-              -1e-06,
-              0.0
-            ],
-            "max": [
-              7.536842,
-              4.812344,
-              2.330161
-            ],
-            "min": [
-              -7.39412,
-              -4.812345,
-              -2.330161
-            ],
-            "span": [
-              14.930962,
-              9.624689,
-              4.660323
-            ]
-          },
-          "triangle_count": 2359
-        },
-        {
+          "coverage_fraction_of_node_box": 1.0,
           "coverage_fraction_of_region_box": 0.0223,
           "mesh_name": "Object_5",
           "node_name": "Object_14",
@@ -550,6 +691,7 @@
           "triangle_count": 68
         },
         {
+          "coverage_fraction_of_node_box": 0.10829,
           "coverage_fraction_of_region_box": 0.01779,
           "mesh_name": "Object_1",
           "node_name": "Object_6",
@@ -578,6 +720,7 @@
           "triangle_count": 380
         },
         {
+          "coverage_fraction_of_node_box": 0.0374,
           "coverage_fraction_of_region_box": 0.0037,
           "mesh_name": "Object_2",
           "node_name": "Object_8",
@@ -604,42 +747,9 @@
             ]
           },
           "triangle_count": 308
-        }
-      ]
-    },
-    {
-      "bounds": {
-        "center": [
-          1.771158,
-          0.0,
-          -0.955366
-        ],
-        "max": [
-          3.165474,
-          0.62,
-          -0.233016
-        ],
-        "min": [
-          0.376842,
-          -0.62,
-          -1.677716
-        ],
-        "span": [
-          2.788632,
-          1.24,
-          1.4447
-        ]
-      },
-      "bounds_kind": "review_aabb_sim_m",
-      "confidence": "low_initial_review_candidate",
-      "id": "intake",
-      "label": "intake",
-      "manual_review_required": true,
-      "rationale": "Lower intake candidate; separated from center fuselage for underside proximity review.",
-      "role": "outer_skin",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
-      "source_mesh_node_candidates": [
+        },
         {
+          "coverage_fraction_of_node_box": 0.01728,
           "coverage_fraction_of_region_box": 1.0,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
@@ -666,65 +776,77 @@
             ]
           },
           "triangle_count": 2359
-        },
+        }
+      ]
+    },
+    {
+      "bounds": {
+        "center": [
+          3.390977,
+          -0.01072,
+          -0.64168
+        ],
+        "max": [
+          4.05533,
+          0.334096,
+          0.069615
+        ],
+        "min": [
+          2.726624,
+          -0.355536,
+          -1.352975
+        ],
+        "span": [
+          1.328706,
+          0.689632,
+          1.42259
+        ]
+      },
+      "bounds_kind": "review_aabb_sim_m",
+      "confidence": "low_initial_review_candidate",
+      "id": "intake",
+      "label": "intake",
+      "manual_review_required": true,
+      "mesh_silhouette_source_nodes": [
+        "Object_10",
+        "Object_12"
+      ],
+      "rationale": "Lower intake candidate aligned to the audit mesh intake nodes for underside proximity review.",
+      "role": "outer_skin",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
+      "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 0.09343,
-          "mesh_name": "Object_1",
-          "node_name": "Object_6",
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.48561,
+          "mesh_name": "Object_4",
+          "node_name": "Object_12",
           "sim_bounds": {
             "center": [
-              3.410359,
-              0.0,
-              -0.315201
+              3.51924,
+              -0.01072,
+              -0.64168
             ],
             "max": [
-              4.684977,
-              0.489015,
-              0.066066
+              3.97533,
+              0.264096,
+              -0.010385
             ],
             "min": [
-              2.13574,
-              -0.489015,
-              -0.696468
+              3.063149,
+              -0.285536,
+              -1.272975
             ],
             "span": [
-              2.549237,
-              0.978031,
-              0.762534
+              0.912181,
+              0.549631,
+              1.26259
             ]
           },
-          "triangle_count": 380
+          "triangle_count": 765
         },
         {
-          "coverage_fraction_of_region_box": 0.04179,
-          "mesh_name": "Object_2",
-          "node_name": "Object_8",
-          "sim_bounds": {
-            "center": [
-              3.437435,
-              -1e-06,
-              -0.221831
-            ],
-            "max": [
-              4.545999,
-              0.397114,
-              0.103571
-            ],
-            "min": [
-              2.328871,
-              -0.397115,
-              -0.547232
-            ],
-            "span": [
-              2.217128,
-              0.794229,
-              0.650803
-            ]
-          },
-          "triangle_count": 308
-        },
-        {
-          "coverage_fraction_of_region_box": 0.02728,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.29235,
           "mesh_name": "Object_3",
           "node_name": "Object_10",
           "sim_bounds": {
@@ -752,60 +874,120 @@
           "triangle_count": 76
         },
         {
-          "coverage_fraction_of_region_box": 0.0131,
-          "mesh_name": "Object_5",
-          "node_name": "Object_14",
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.00482,
+          "mesh_name": "Object_6",
+          "node_name": "Object_16",
           "sim_bounds": {
             "center": [
-              1.878106,
-              0.0,
-              -0.138506
+              3.903722,
+              -1e-06,
+              -0.263327
             ],
             "max": [
-              2.378767,
-              0.335935,
-              0.053252
+              3.960724,
+              0.134478,
+              -0.160817
             ],
             "min": [
-              1.377445,
-              -0.335935,
-              -0.330264
+              3.846719,
+              -0.13448,
+              -0.365836
             ],
             "span": [
-              1.001322,
-              0.67187,
-              0.383516
+              0.114005,
+              0.268958,
+              0.205019
             ]
           },
-          "triangle_count": 68
+          "triangle_count": 4
         },
         {
-          "coverage_fraction_of_region_box": 0.01171,
-          "mesh_name": "Object_4",
-          "node_name": "Object_12",
+          "coverage_fraction_of_node_box": 0.49322,
+          "coverage_fraction_of_region_box": 0.43361,
+          "mesh_name": "Object_2",
+          "node_name": "Object_8",
           "sim_bounds": {
             "center": [
-              3.51924,
-              -0.01072,
-              -0.64168
+              3.437435,
+              -1e-06,
+              -0.221831
             ],
             "max": [
-              3.97533,
-              0.264096,
-              -0.010385
+              4.545999,
+              0.397114,
+              0.103571
             ],
             "min": [
-              3.063149,
-              -0.285536,
-              -1.272975
+              2.328871,
+              -0.397115,
+              -0.547232
             ],
             "span": [
-              0.912181,
-              0.549631,
-              1.26259
+              2.217128,
+              0.794229,
+              0.650803
             ]
           },
-          "triangle_count": 765
+          "triangle_count": 308
+        },
+        {
+          "coverage_fraction_of_node_box": 0.36752,
+          "coverage_fraction_of_region_box": 0.53602,
+          "mesh_name": "Object_1",
+          "node_name": "Object_6",
+          "sim_bounds": {
+            "center": [
+              3.410359,
+              0.0,
+              -0.315201
+            ],
+            "max": [
+              4.684977,
+              0.489015,
+              0.066066
+            ],
+            "min": [
+              2.13574,
+              -0.489015,
+              -0.696468
+            ],
+            "span": [
+              2.549237,
+              0.978031,
+              0.762534
+            ]
+          },
+          "triangle_count": 380
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00195,
+          "coverage_fraction_of_region_box": 1.0,
+          "mesh_name": "Object_0",
+          "node_name": "Object_4",
+          "sim_bounds": {
+            "center": [
+              0.071361,
+              -1e-06,
+              0.0
+            ],
+            "max": [
+              7.536842,
+              4.812344,
+              2.330161
+            ],
+            "min": [
+              -7.39412,
+              -4.812345,
+              -2.330161
+            ],
+            "span": [
+              14.930962,
+              9.624689,
+              4.660323
+            ]
+          },
+          "triangle_count": 2359
         }
       ]
     },
@@ -814,22 +996,22 @@
         "center": [
           -3.693053,
           0.0,
-          0.023302
+          -0.454381
         ],
         "max": [
           -1.507369,
-          0.85,
-          0.792255
+          0.9,
+          0.349524
         ],
         "min": [
           -5.878738,
-          -0.85,
-          -0.745652
+          -0.9,
+          -1.258287
         ],
         "span": [
           4.371369,
-          1.7,
-          1.537907
+          1.8,
+          1.607811
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -837,11 +1019,45 @@
       "id": "aft_fuselage_engine",
       "label": "aft_fuselage_engine",
       "manual_review_required": true,
+      "mesh_silhouette_source_nodes": [
+        "Object_4",
+        "Object_38"
+      ],
       "rationale": "Aft fuselage and engine bay candidate for tail-aspect blast/fragment review.",
       "role": "outer_skin",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "audit_mesh_aligned_aft_body_slice_plus_public_length_scale",
       "source_mesh_node_candidates": [
         {
+          "coverage_fraction_of_node_box": 0.15816,
+          "coverage_fraction_of_region_box": 0.02183,
+          "mesh_name": "Object_17",
+          "node_name": "Object_38",
+          "sim_bounds": {
+            "center": [
+              -6.256255,
+              -1e-06,
+              -1.007126
+            ],
+            "max": [
+              -5.583772,
+              0.571705,
+              -0.439296
+            ],
+            "min": [
+              -6.928739,
+              -0.571707,
+              -1.574956
+            ],
+            "span": [
+              1.344968,
+              1.143412,
+              1.13566
+            ]
+          },
+          "triangle_count": 256
+        },
+        {
+          "coverage_fraction_of_node_box": 0.01889,
           "coverage_fraction_of_region_box": 1.0,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
@@ -870,35 +1086,8 @@
           "triangle_count": 2359
         },
         {
-          "coverage_fraction_of_region_box": 0.00904,
-          "mesh_name": "Object_17",
-          "node_name": "Object_38",
-          "sim_bounds": {
-            "center": [
-              -6.256255,
-              -1e-06,
-              -1.007126
-            ],
-            "max": [
-              -5.583772,
-              0.571705,
-              -0.439296
-            ],
-            "min": [
-              -6.928739,
-              -0.571707,
-              -1.574956
-            ],
-            "span": [
-              1.344968,
-              1.143412,
-              1.13566
-            ]
-          },
-          "triangle_count": 256
-        },
-        {
-          "coverage_fraction_of_region_box": 0.00157,
+          "coverage_fraction_of_node_box": 0.01038,
+          "coverage_fraction_of_region_box": 0.00041,
           "mesh_name": "Object_18",
           "node_name": "Object_40",
           "sim_bounds": {
@@ -930,24 +1119,24 @@
     {
       "bounds": {
         "center": [
-          -6.632422,
-          0.0,
-          0.023302
+          -6.256255,
+          -1e-06,
+          -1.007126
         ],
         "max": [
-          -5.728001,
-          0.58,
-          0.559239
+          -5.483772,
+          0.631705,
+          -0.339296
         ],
         "min": [
-          -7.536843,
-          -0.58,
-          -0.512636
+          -7.028739,
+          -0.631707,
+          -1.674956
         ],
         "span": [
-          1.808842,
-          1.16,
-          1.071874
+          1.544967,
+          1.263412,
+          1.33566
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -955,40 +1144,16 @@
       "id": "engine_nozzle",
       "label": "engine_nozzle",
       "manual_review_required": true,
-      "rationale": "Rear nozzle candidate; kept distinct for tail-on shot diagnostics.",
+      "mesh_silhouette_source_nodes": [
+        "Object_38"
+      ],
+      "rationale": "Rear nozzle candidate aligned to the audit mesh nozzle node for tail-on shot diagnostics.",
       "role": "outer_skin",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 0.9211,
-          "mesh_name": "Object_0",
-          "node_name": "Object_4",
-          "sim_bounds": {
-            "center": [
-              0.071361,
-              -1e-06,
-              0.0
-            ],
-            "max": [
-              7.536842,
-              4.812344,
-              2.330161
-            ],
-            "min": [
-              -7.39412,
-              -4.812345,
-              -2.330161
-            ],
-            "span": [
-              14.930962,
-              9.624689,
-              4.660323
-            ]
-          },
-          "triangle_count": 2359
-        },
-        {
-          "coverage_fraction_of_region_box": 0.04477,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.66989,
           "mesh_name": "Object_17",
           "node_name": "Object_38",
           "sim_bounds": {
@@ -1016,56 +1181,57 @@
           "triangle_count": 256
         },
         {
-          "coverage_fraction_of_region_box": 0.04204,
-          "mesh_name": "Object_18",
-          "node_name": "Object_40",
+          "coverage_fraction_of_node_box": 0.00389,
+          "coverage_fraction_of_region_box": 1.0,
+          "mesh_name": "Object_0",
+          "node_name": "Object_4",
           "sim_bounds": {
             "center": [
-              -6.600274,
+              0.071361,
               -1e-06,
-              1.168732
+              0.0
             ],
             "max": [
-              -5.663704,
-              0.066906,
-              2.168887
+              7.536842,
+              4.812344,
+              2.330161
             ],
             "min": [
-              -7.536844,
-              -0.066907,
-              0.168577
+              -7.39412,
+              -4.812345,
+              -2.330161
             ],
             "span": [
-              1.873139,
-              0.133813,
-              2.00031
+              14.930962,
+              9.624689,
+              4.660323
             ]
           },
-          "triangle_count": 60
+          "triangle_count": 2359
         }
       ]
     },
     {
       "bounds": {
         "center": [
-          -0.452211,
-          2.746173,
-          0.023302
+          -1.594213,
+          -2.869258,
+          -0.985043
         ],
         "max": [
-          1.356632,
-          4.812346,
-          0.279619
+          0.370368,
+          -0.92275,
+          -0.868724
         ],
         "min": [
-          -2.261053,
-          0.68,
-          -0.233016
+          -3.558793,
+          -4.815766,
+          -1.101361
         ],
         "span": [
-          3.617685,
-          4.132346,
-          0.512636
+          3.929161,
+          3.893016,
+          0.232637
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1073,12 +1239,75 @@
       "id": "left_wing",
       "label": "left_wing",
       "manual_review_required": true,
-      "rationale": "Left wing lifting surface, thin but broad; review uses project-positive y as right/left convention only by sign.",
+      "mesh_silhouette_source_nodes": [
+        "Object_34",
+        "Object_22"
+      ],
+      "rationale": "Left wing lifting surface aligned to the audit mesh wing nodes; sign naming remains review-only.",
       "role": "lifting_surface",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.41299,
+          "mesh_name": "Object_15",
+          "node_name": "Object_34",
+          "sim_bounds": {
+            "center": [
+              -1.167997,
+              -3.00651,
+              -0.985043
+            ],
+            "max": [
+              0.300368,
+              -1.367254,
+              -0.908724
+            ],
+            "min": [
+              -2.636362,
+              -4.645766,
+              -1.061361
+            ],
+            "span": [
+              2.936729,
+              3.278512,
+              0.152637
+            ]
+          },
+          "triangle_count": 28
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.04637,
+          "mesh_name": "Object_9",
+          "node_name": "Object_22",
+          "sim_bounds": {
+            "center": [
+              -3.115302,
+              -2.382634,
+              -0.98171
+            ],
+            "max": [
+              -2.741812,
+              -1.09275,
+              -0.938901
+            ],
+            "min": [
+              -3.488793,
+              -3.672517,
+              -1.02452
+            ],
+            "span": [
+              0.746981,
+              2.579767,
+              0.085619
+            ]
+          },
+          "triangle_count": 12
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00531,
+          "coverage_fraction_of_region_box": 0.99912,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
           "sim_bounds": {
@@ -1110,24 +1339,24 @@
     {
       "bounds": {
         "center": [
-          -0.452211,
-          -2.746173,
-          0.023302
+          -1.594207,
+          2.869209,
+          -0.985043
         ],
         "max": [
-          1.356632,
-          -0.68,
-          0.279619
+          0.370368,
+          4.815757,
+          -0.868724
         ],
         "min": [
-          -2.261053,
-          -4.812346,
-          -0.233016
+          -3.558783,
+          0.92266,
+          -1.101361
         ],
         "span": [
-          3.617685,
-          4.132346,
-          0.512636
+          3.929151,
+          3.893097,
+          0.232637
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1135,12 +1364,75 @@
       "id": "right_wing",
       "label": "right_wing",
       "manual_review_required": true,
-      "rationale": "Right wing lifting surface, mirrored from left wing candidate.",
+      "mesh_silhouette_source_nodes": [
+        "Object_32",
+        "Object_20"
+      ],
+      "rationale": "Right wing lifting surface aligned to the audit mesh wing nodes; sign naming remains review-only.",
       "role": "lifting_surface",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.41298,
+          "mesh_name": "Object_14",
+          "node_name": "Object_32",
+          "sim_bounds": {
+            "center": [
+              -1.167997,
+              3.006505,
+              -0.985043
+            ],
+            "max": [
+              0.300368,
+              4.645757,
+              -0.908724
+            ],
+            "min": [
+              -2.636362,
+              1.367253,
+              -1.061361
+            ],
+            "span": [
+              2.936729,
+              3.278504,
+              0.152637
+            ]
+          },
+          "triangle_count": 28
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.04637,
+          "mesh_name": "Object_8",
+          "node_name": "Object_20",
+          "sim_bounds": {
+            "center": [
+              -3.115287,
+              2.382538,
+              -0.98171
+            ],
+            "max": [
+              -2.741792,
+              3.672417,
+              -0.938901
+            ],
+            "min": [
+              -3.488783,
+              1.09266,
+              -1.02452
+            ],
+            "span": [
+              0.746991,
+              2.579757,
+              0.085619
+            ]
+          },
+          "triangle_count": 12
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00531,
+          "coverage_fraction_of_region_box": 0.99912,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
           "sim_bounds": {
@@ -1172,24 +1464,24 @@
     {
       "bounds": {
         "center": [
-          -0.376842,
-          0.825,
-          0.0
+          -1.092842,
+          -0.85,
+          -0.7107
         ],
         "max": [
-          1.884211,
-          1.35,
-          0.466032
+          0.678316,
+          -0.25,
+          -0.302921
         ],
         "min": [
-          -2.637895,
-          0.3,
-          -0.466032
+          -2.864,
+          -1.45,
+          -1.118478
         ],
         "span": [
-          4.522106,
-          1.05,
-          0.932065
+          3.542316,
+          1.2,
+          0.815557
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1197,11 +1489,74 @@
       "id": "left_wing_root",
       "label": "left_wing_root",
       "manual_review_required": true,
-      "rationale": "Left wing root transition; useful for component binding and grazing-warhead review.",
+      "mesh_silhouette_source_nodes": [
+        "Object_4",
+        "Object_34"
+      ],
+      "rationale": "Left wing root transition corrected toward the audit mesh wing plane; useful for grazing-warhead review.",
       "role": "structural_transition",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "audit_mesh_aligned_wing_root_slice_plus_public_length_scale",
       "source_mesh_node_candidates": [
         {
+          "coverage_fraction_of_node_box": 0.02524,
+          "coverage_fraction_of_region_box": 0.0107,
+          "mesh_name": "Object_15",
+          "node_name": "Object_34",
+          "sim_bounds": {
+            "center": [
+              -1.167997,
+              -3.00651,
+              -0.985043
+            ],
+            "max": [
+              0.300368,
+              -1.367254,
+              -0.908724
+            ],
+            "min": [
+              -2.636362,
+              -4.645766,
+              -1.061361
+            ],
+            "span": [
+              2.936729,
+              3.278512,
+              0.152637
+            ]
+          },
+          "triangle_count": 28
+        },
+        {
+          "coverage_fraction_of_node_box": 0.02265,
+          "coverage_fraction_of_region_box": 0.00108,
+          "mesh_name": "Object_9",
+          "node_name": "Object_22",
+          "sim_bounds": {
+            "center": [
+              -3.115302,
+              -2.382634,
+              -0.98171
+            ],
+            "max": [
+              -2.741812,
+              -1.09275,
+              -0.938901
+            ],
+            "min": [
+              -3.488793,
+              -3.672517,
+              -1.02452
+            ],
+            "span": [
+              0.746981,
+              2.579767,
+              0.085619
+            ]
+          },
+          "triangle_count": 12
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00518,
           "coverage_fraction_of_region_box": 1.0,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
@@ -1228,58 +1583,30 @@
             ]
           },
           "triangle_count": 2359
-        },
-        {
-          "coverage_fraction_of_region_box": 0.00158,
-          "mesh_name": "Object_5",
-          "node_name": "Object_14",
-          "sim_bounds": {
-            "center": [
-              1.878106,
-              0.0,
-              -0.138506
-            ],
-            "max": [
-              2.378767,
-              0.335935,
-              0.053252
-            ],
-            "min": [
-              1.377445,
-              -0.335935,
-              -0.330264
-            ],
-            "span": [
-              1.001322,
-              0.67187,
-              0.383516
-            ]
-          },
-          "triangle_count": 68
         }
       ]
     },
     {
       "bounds": {
         "center": [
-          -0.376842,
-          -0.825,
-          0.0
+          -1.092842,
+          0.85,
+          -0.7107
         ],
         "max": [
-          1.884211,
-          -0.3,
-          0.466032
+          0.678316,
+          1.45,
+          -0.302921
         ],
         "min": [
-          -2.637895,
-          -1.35,
-          -0.466032
+          -2.864,
+          0.25,
+          -1.118478
         ],
         "span": [
-          4.522106,
-          1.05,
-          0.932065
+          3.542316,
+          1.2,
+          0.815557
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1287,11 +1614,74 @@
       "id": "right_wing_root",
       "label": "right_wing_root",
       "manual_review_required": true,
-      "rationale": "Right wing root transition; mirrored from left wing root candidate.",
+      "mesh_silhouette_source_nodes": [
+        "Object_4",
+        "Object_32"
+      ],
+      "rationale": "Right wing root transition corrected toward the audit mesh wing plane; mirrored from left wing root candidate.",
       "role": "structural_transition",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "audit_mesh_aligned_wing_root_slice_plus_public_length_scale",
       "source_mesh_node_candidates": [
         {
+          "coverage_fraction_of_node_box": 0.02524,
+          "coverage_fraction_of_region_box": 0.0107,
+          "mesh_name": "Object_14",
+          "node_name": "Object_32",
+          "sim_bounds": {
+            "center": [
+              -1.167997,
+              3.006505,
+              -0.985043
+            ],
+            "max": [
+              0.300368,
+              4.645757,
+              -0.908724
+            ],
+            "min": [
+              -2.636362,
+              1.367253,
+              -1.061361
+            ],
+            "span": [
+              2.936729,
+              3.278504,
+              0.152637
+            ]
+          },
+          "triangle_count": 28
+        },
+        {
+          "coverage_fraction_of_node_box": 0.02266,
+          "coverage_fraction_of_region_box": 0.00108,
+          "mesh_name": "Object_8",
+          "node_name": "Object_20",
+          "sim_bounds": {
+            "center": [
+              -3.115287,
+              2.382538,
+              -0.98171
+            ],
+            "max": [
+              -2.741792,
+              3.672417,
+              -0.938901
+            ],
+            "min": [
+              -3.488783,
+              1.09266,
+              -1.02452
+            ],
+            "span": [
+              0.746991,
+              2.579757,
+              0.085619
+            ]
+          },
+          "triangle_count": 12
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00518,
           "coverage_fraction_of_region_box": 1.0,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
@@ -1318,58 +1708,30 @@
             ]
           },
           "triangle_count": 2359
-        },
-        {
-          "coverage_fraction_of_region_box": 0.00158,
-          "mesh_name": "Object_5",
-          "node_name": "Object_14",
-          "sim_bounds": {
-            "center": [
-              1.878106,
-              0.0,
-              -0.138506
-            ],
-            "max": [
-              2.378767,
-              0.335935,
-              0.053252
-            ],
-            "min": [
-              1.377445,
-              -0.335935,
-              -0.330264
-            ],
-            "span": [
-              1.001322,
-              0.67187,
-              0.383516
-            ]
-          },
-          "triangle_count": 68
         }
       ]
     },
     {
       "bounds": {
         "center": [
-          -5.464211,
-          1.675,
-          0.302921
+          -6.002281,
+          -1.793586,
+          -1.05304
         ],
         "max": [
-          -4.145264,
-          2.8,
-          0.652445
+          -4.599165,
+          -0.641289,
+          -0.745331
         ],
         "min": [
-          -6.783159,
-          0.55,
-          -0.046603
+          -7.405397,
+          -2.945882,
+          -1.36075
         ],
         "span": [
-          2.637895,
-          2.25,
-          0.699048
+          2.806232,
+          2.304593,
+          0.615419
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1377,12 +1739,105 @@
       "id": "left_horizontal_tail",
       "label": "left_horizontal_tail",
       "manual_review_required": true,
-      "rationale": "Left horizontal tail candidate for aft control-surface exposure.",
+      "mesh_silhouette_source_nodes": [
+        "Object_36",
+        "Object_28",
+        "Object_30"
+      ],
+      "rationale": "Left horizontal tail candidate aligned to audit mesh tail-plane nodes for aft control-surface exposure.",
       "role": "tail_surface",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.51889,
+          "mesh_name": "Object_16",
+          "node_name": "Object_36",
+          "sim_bounds": {
+            "center": [
+              -6.002281,
+              -1.982771,
+              -1.093929
+            ],
+            "max": [
+              -4.669165,
+              -1.08966,
+              -0.877107
+            ],
+            "min": [
+              -7.335397,
+              -2.875882,
+              -1.31075
+            ],
+            "span": [
+              2.666232,
+              1.786222,
+              0.433643
+            ]
+          },
+          "triangle_count": 58
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.01216,
+          "mesh_name": "Object_12",
+          "node_name": "Object_28",
+          "sim_bounds": {
+            "center": [
+              -6.345736,
+              -0.900263,
+              -0.87088
+            ],
+            "max": [
+              -5.921881,
+              -0.711289,
+              -0.795331
+            ],
+            "min": [
+              -6.76959,
+              -1.089238,
+              -0.946428
+            ],
+            "span": [
+              0.847709,
+              0.377949,
+              0.151097
+            ]
+          },
+          "triangle_count": 8
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.01062,
+          "mesh_name": "Object_13",
+          "node_name": "Object_30",
+          "sim_bounds": {
+            "center": [
+              -6.345856,
+              -0.896236,
+              -0.931697
+            ],
+            "max": [
+              -5.922122,
+              -0.711338,
+              -0.864272
+            ],
+            "min": [
+              -6.76959,
+              -1.081134,
+              -0.999123
+            ],
+            "span": [
+              0.847468,
+              0.369796,
+              0.134851
+            ]
+          },
+          "triangle_count": 8
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00592,
+          "coverage_fraction_of_region_box": 0.99598,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
           "sim_bounds": {
@@ -1414,24 +1869,24 @@
     {
       "bounds": {
         "center": [
-          -5.464211,
-          -1.675,
-          0.302921
+          -6.002281,
+          1.793584,
+          -1.05304
         ],
         "max": [
-          -4.145264,
-          -0.55,
-          0.652445
+          -4.599165,
+          2.945881,
+          -0.745331
         ],
         "min": [
-          -6.783159,
-          -2.8,
-          -0.046603
+          -7.405397,
+          0.641287,
+          -1.36075
         ],
         "span": [
-          2.637895,
-          2.25,
-          0.699048
+          2.806232,
+          2.304594,
+          0.615419
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1439,12 +1894,105 @@
       "id": "right_horizontal_tail",
       "label": "right_horizontal_tail",
       "manual_review_required": true,
-      "rationale": "Right horizontal tail candidate for aft control-surface exposure.",
+      "mesh_silhouette_source_nodes": [
+        "Object_18",
+        "Object_24",
+        "Object_26"
+      ],
+      "rationale": "Right horizontal tail candidate aligned to audit mesh tail-plane nodes for aft control-surface exposure.",
       "role": "tail_surface",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.51889,
+          "mesh_name": "Object_7",
+          "node_name": "Object_18",
+          "sim_bounds": {
+            "center": [
+              -6.002281,
+              1.98277,
+              -1.093929
+            ],
+            "max": [
+              -4.669165,
+              2.875881,
+              -0.877107
+            ],
+            "min": [
+              -7.335397,
+              1.08966,
+              -1.31075
+            ],
+            "span": [
+              2.666232,
+              1.786221,
+              0.433643
+            ]
+          },
+          "triangle_count": 58
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.01216,
+          "mesh_name": "Object_11",
+          "node_name": "Object_26",
+          "sim_bounds": {
+            "center": [
+              -6.345736,
+              0.900261,
+              -0.87088
+            ],
+            "max": [
+              -5.921881,
+              1.089236,
+              -0.795331
+            ],
+            "min": [
+              -6.76959,
+              0.711287,
+              -0.946428
+            ],
+            "span": [
+              0.847709,
+              0.377949,
+              0.151097
+            ]
+          },
+          "triangle_count": 8
+        },
+        {
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.01062,
+          "mesh_name": "Object_10",
+          "node_name": "Object_24",
+          "sim_bounds": {
+            "center": [
+              -6.345856,
+              0.896236,
+              -0.931697
+            ],
+            "max": [
+              -5.922122,
+              1.081134,
+              -0.864272
+            ],
+            "min": [
+              -6.76959,
+              0.711338,
+              -0.999123
+            ],
+            "span": [
+              0.847468,
+              0.369796,
+              0.134851
+            ]
+          },
+          "triangle_count": 8
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00592,
+          "coverage_fraction_of_region_box": 0.99598,
           "mesh_name": "Object_0",
           "node_name": "Object_4",
           "sim_bounds": {
@@ -1476,24 +2024,24 @@
     {
       "bounds": {
         "center": [
-          -5.012001,
-          0.0,
-          1.421399
+          -6.600274,
+          -1e-06,
+          1.168732
         ],
         "max": [
-          -3.391579,
-          0.38,
-          2.330161
+          -5.633704,
+          0.396906,
+          2.248887
         ],
         "min": [
-          -6.632422,
-          -0.38,
-          0.512636
+          -7.566844,
+          -0.396907,
+          0.088577
         ],
         "span": [
-          3.240842,
-          0.76,
-          1.817526
+          1.93314,
+          0.793813,
+          2.16031
         ]
       },
       "bounds_kind": "review_aabb_sim_m",
@@ -1501,40 +2049,16 @@
       "id": "vertical_tail",
       "label": "vertical_tail",
       "manual_review_required": true,
+      "mesh_silhouette_source_nodes": [
+        "Object_40"
+      ],
       "rationale": "Vertical tail candidate; separated because old damage boxes omit most aircraft height.",
       "role": "tail_surface",
-      "source_basis": "scaled_outer_envelope_fraction_plus_manual_review_seed",
+      "source_basis": "curated_audit_mesh_node_bounds_plus_manual_review_margin",
       "source_mesh_node_candidates": [
         {
-          "coverage_fraction_of_region_box": 1.0,
-          "mesh_name": "Object_0",
-          "node_name": "Object_4",
-          "sim_bounds": {
-            "center": [
-              0.071361,
-              -1e-06,
-              0.0
-            ],
-            "max": [
-              7.536842,
-              4.812344,
-              2.330161
-            ],
-            "min": [
-              -7.39412,
-              -4.812345,
-              -2.330161
-            ],
-            "span": [
-              14.930962,
-              9.624689,
-              4.660323
-            ]
-          },
-          "triangle_count": 2359
-        },
-        {
-          "coverage_fraction_of_region_box": 0.04796,
+          "coverage_fraction_of_node_box": 1.0,
+          "coverage_fraction_of_region_box": 0.15124,
           "mesh_name": "Object_18",
           "node_name": "Object_40",
           "sim_bounds": {
@@ -1560,6 +2084,35 @@
             ]
           },
           "triangle_count": 60
+        },
+        {
+          "coverage_fraction_of_node_box": 0.00451,
+          "coverage_fraction_of_region_box": 0.91065,
+          "mesh_name": "Object_0",
+          "node_name": "Object_4",
+          "sim_bounds": {
+            "center": [
+              0.071361,
+              -1e-06,
+              0.0
+            ],
+            "max": [
+              7.536842,
+              4.812344,
+              2.330161
+            ],
+            "min": [
+              -7.39412,
+              -4.812345,
+              -2.330161
+            ],
+            "span": [
+              14.930962,
+              9.624689,
+              4.660323
+            ]
+          },
+          "triangle_count": 2359
         }
       ]
     }

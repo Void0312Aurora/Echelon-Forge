@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>nose_axis_4m -&gt; nose_avionics_bay isolated geometry view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    h1 {
+      font-size: 25px;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .decision-box {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 14px;
+    }
+    .decision-box strong {
+      display: block;
+      color: #0f172a;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .decision-box p {
+      color: #1f2937;
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 4px 0 0;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    .views {
+      display: grid;
+      gap: 18px;
+    }
+    figure {
+      margin: 0;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to isolated review index</a></p>
+    <h1>nose_axis_4m -&gt; nose_avionics_bay</h1>
+    <p class="subtitle">review point candidate</p>
+    <div class="decision-box">
+      <div><strong>Review question</strong><p>Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?</p></div>
+      <div><strong>Look at</strong><p>The black point should be read against the nose/forward-fuselage blue silhouette and nearby red component boxes.</p></div>
+      <div><strong>Decision needed</strong><p>Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.</p></div>
+    </div>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>point: nose_axis_4m at [4.0, 0.0, 0.0]</li><li>nearest outer region: forward_fuselage</li><li>nearest outer distance: 0.0 m</li><li>nearest fine proxy: canopy</li><li>isolated candidate component: nose_avionics_bay</li><li>nearest component: dedicated_canopy_surface_component</li><li>nearest component distance: 0.125 m</li><li>candidate component count: 7</li><li>interpretation: inside_outer_shape_with_nearby_component_candidates_review_only</li></ul>
+  </section>
+  <section class="views">
+    <figure><figcaption>top view</figcaption><img src="nose-axis-4m-nose-avionics-bay_top.svg" alt="nose_axis_4m -&gt; nose_avionics_bay top view"></figure><figure><figcaption>side view</figcaption><img src="nose-axis-4m-nose-avionics-bay_side.svg" alt="nose_axis_4m -&gt; nose_avionics_bay side view"></figure><figure><figcaption>front view</figcaption><img src="nose-axis-4m-nose-avionics-bay_front.svg" alt="nose_axis_4m -&gt; nose_avionics_bay front view"></figure>
+  </section>
+</main>
+</body>
+</html>

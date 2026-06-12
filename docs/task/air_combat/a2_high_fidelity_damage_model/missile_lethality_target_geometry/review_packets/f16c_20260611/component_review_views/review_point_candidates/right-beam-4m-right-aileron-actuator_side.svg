@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
+<rect x="92.90" y="539.76" width="370.76" height="20.24" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="104.03" y="546.24" width="348.52" height="7.29" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="310.76" y="540.31" width="84.93" height="19.14" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>right_aileron_actuator candidate_binding</title></rect>
+<text x="314.76" y="553.31" font-size="10" font-family="monospace" fill="#7c3aed">right_aileron_actuator candidate_binding</text>
+<polygon points="99.51,551.57 99.58,552.81 243.68,556.52 277.47,556.52 457.06,553.90 395.84,543.24 168.57,545.87" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="252.81" y="555.49" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<circle cx="428.72" cy="464.18" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>right_beam_4m</title></circle>
+<text x="434.72" y="458.18" font-size="10" font-family="monospace" fill="#0f172a">5</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

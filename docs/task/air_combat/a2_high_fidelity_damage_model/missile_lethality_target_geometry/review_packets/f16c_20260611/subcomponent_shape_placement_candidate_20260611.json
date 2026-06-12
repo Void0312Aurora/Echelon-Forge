@@ -1,0 +1,98 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "airframe_silhouette_constraint_diagnostic": true,
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "center_shift_candidate_not_applied": true,
+    "centerline_candidate_not_applied_to_internal_prior_rules": false,
+    "latest_candidate_not_applied_to_internal_prior_rules": false,
+    "latest_candidate_promoted_to_internal_prior_or_segment_rules": true,
+    "nominal_dimensions_preserved": true,
+    "public_size_reference_seeded_geometry": true,
+    "real_weapon_pk_authority": false,
+    "runtime_active_component": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "runtime_schema_parse_ready_candidate": true,
+    "shape_candidate_not_applied_to_internal_prior_rules": false,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_internal_component_geometry": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "No remaining shape-placement candidates after R21 review-only rule promotion; continue to hold runtime activation for explicit ownership decisions."
+    },
+    {
+      "priority": "medium",
+      "question": "Keep runtime damage behavior unchanged until the promoted review-only rules are explicitly accepted, split, or deliberately held with tests."
+    }
+  ],
+  "rows": [],
+  "schema_version": "a2.target_geometry_subcomponent_shape_placement_candidate.v1",
+  "source_airframe_constraint_correction_schema_version": "a2.target_geometry_airframe_constraint_correction_candidate.v1",
+  "source_fine_proxy_schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
+  "status": "subcomponent_shape_placement_candidate_generated_review_only",
+  "summary": {
+    "candidate_no_improvement_count": 0,
+    "candidate_reduces_exposure_count": 0,
+    "candidate_resolves_exposure_count": 0,
+    "candidate_shape_family_counts": {},
+    "candidate_total_outside_sample_count": 0,
+    "candidate_total_outside_sample_reduction": 0,
+    "candidate_unresolved_exposure_count": 0,
+    "centerline_candidate_count": 0,
+    "centerline_candidate_incremental_outside_sample_reduction": 0,
+    "centerline_candidate_reduces_exposure_count": 0,
+    "centerline_candidate_resolves_exposure_count": 0,
+    "centerline_candidate_status_counts": {},
+    "centerline_candidate_total_outside_sample_count": 0,
+    "centerline_candidate_total_outside_sample_reduction": 0,
+    "centerline_candidate_unresolved_exposure_count": 0,
+    "current_total_outside_sample_count": 0,
+    "latest_candidate_count": 0,
+    "latest_candidate_incremental_outside_sample_reduction": 0,
+    "latest_candidate_resolves_exposure_count": 0,
+    "latest_candidate_status_counts": {},
+    "latest_candidate_total_outside_sample_count": 0,
+    "latest_candidate_total_outside_sample_reduction": 0,
+    "latest_candidate_unresolved_exposure_count": 0,
+    "nominal_dimension_preserved_count": 0,
+    "review_status": "manual_review_required_before_activation",
+    "runtime_active_component_count": 0,
+    "shape_design_status_counts": {},
+    "shape_placement_candidate_count": 0,
+    "source_constraint_item_count": 34,
+    "source_silhouette_exposure_item_count": 0
+  }
+}

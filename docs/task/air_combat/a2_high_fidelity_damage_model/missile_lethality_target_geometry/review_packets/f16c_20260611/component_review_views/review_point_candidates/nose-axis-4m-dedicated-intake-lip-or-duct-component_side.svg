@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
+<rect x="465.49" y="60.00" width="401.61" height="465.01" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="473.52" y="87.90" width="385.55" height="409.21" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="545.28" y="403.20" width="126.87" height="156.80" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component candidate_binding</title></rect>
+<text x="549.28" y="416.20" font-size="10" font-family="monospace" fill="#7c3aed">dedicated_intake_lip_or_duct_component candidate_binding</text>
+<polygon points="466.23,282.32 468.41,524.31 839.40,519.12 839.40,494.05 667.85,341.19" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="660.26" y="436.20" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<circle cx="686.11" cy="299.15" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>nose_axis_4m</title></circle>
+<text x="692.11" y="293.15" font-size="10" font-family="monospace" fill="#0f172a">1</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

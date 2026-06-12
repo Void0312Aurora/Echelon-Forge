@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">top (x/y)</text>
+<rect x="92.90" y="328.94" width="774.19" height="90.91" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="154.84" y="341.67" width="650.32" height="65.45" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="587.71" y="378.18" width="174.84" height="37.88" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_leading_edge_flap_actuator candidate_binding</title></rect>
+<text x="591.71" y="391.18" font-size="10" font-family="monospace" fill="#7c3aed">left_leading_edge_flap_actuator candidate_binding</text>
+<rect x="281.74" y="60.00" width="524.53" height="500.00" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>wing_spar_center review_only_cross_region_semantic_hold</title></rect>
+<text x="285.74" y="73.00" font-size="10" font-family="monospace" fill="#7c3aed">wing_spar_center review_only_cross_region_semantic_hold</text>
+<polygon points="116.31,392.78 280.26,412.99 784.49,414.98 821.61,389.67 831.04,369.57 833.70,362.00 834.03,358.29 833.80,336.00 279.24,336.71 116.31,391.69" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="577.08" y="380.47" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

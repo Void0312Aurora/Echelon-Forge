@@ -1,0 +1,2570 @@
+{
+  "authority_boundary": {
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "true_internal_component_geometry": false
+  },
+  "entries": [
+    {
+      "category": "components",
+      "component_names": [
+        "apg68_radar_array"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: apg68_radar_array",
+        "system: radar",
+        "bound outer region: nose_radome",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.270158 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/apg68-radar-array.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does apg68_radar_array visibly match its assigned outer region nose_radome?",
+      "slug": "apg68-radar-array",
+      "source_region_id": "nose_radome",
+      "subtitle": "component binding -> nose_radome",
+      "svg": {
+        "front": "components/apg68-radar-array_front.svg",
+        "side": "components/apg68-radar-array_side.svg",
+        "top": "components/apg68-radar-array_top.svg"
+      },
+      "title": "apg68_radar_array"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "cockpit_crew_station"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: cockpit_crew_station",
+        "system: cockpit",
+        "bound outer region: forward_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.30846 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/cockpit-crew-station.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does cockpit_crew_station visibly match its assigned outer region forward_fuselage?",
+      "slug": "cockpit-crew-station",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "component binding -> forward_fuselage",
+      "svg": {
+        "front": "components/cockpit-crew-station_front.svg",
+        "side": "components/cockpit-crew-station_side.svg",
+        "top": "components/cockpit-crew-station_top.svg"
+      },
+      "title": "cockpit_crew_station"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "dedicated_canopy_surface_component"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: dedicated_canopy_surface_component",
+        "system: cockpit",
+        "bound outer region: canopy",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.003569 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/dedicated-canopy-surface-component.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does dedicated_canopy_surface_component visibly match its assigned outer region canopy?",
+      "slug": "dedicated-canopy-surface-component",
+      "source_region_id": "canopy",
+      "subtitle": "component binding -> canopy",
+      "svg": {
+        "front": "components/dedicated-canopy-surface-component_front.svg",
+        "side": "components/dedicated-canopy-surface-component_side.svg",
+        "top": "components/dedicated-canopy-surface-component_top.svg"
+      },
+      "title": "dedicated_canopy_surface_component"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "nose_avionics_bay"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: nose_avionics_bay",
+        "system: avionics",
+        "bound outer region: forward_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.994501 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/nose-avionics-bay.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does nose_avionics_bay visibly match its assigned outer region forward_fuselage?",
+      "slug": "nose-avionics-bay",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "component binding -> forward_fuselage",
+      "svg": {
+        "front": "components/nose-avionics-bay_front.svg",
+        "side": "components/nose-avionics-bay_side.svg",
+        "top": "components/nose-avionics-bay_top.svg"
+      },
+      "title": "nose_avionics_bay"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "iff_interrogator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: iff_interrogator",
+        "system: avionics",
+        "bound outer region: nose_radome",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.587669 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/iff-interrogator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does iff_interrogator visibly match its assigned outer region nose_radome?",
+      "slug": "iff-interrogator",
+      "source_region_id": "nose_radome",
+      "subtitle": "component binding -> nose_radome",
+      "svg": {
+        "front": "components/iff-interrogator_front.svg",
+        "side": "components/iff-interrogator_side.svg",
+        "top": "components/iff-interrogator_top.svg"
+      },
+      "title": "iff_interrogator"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "center_fuselage_fuel_cell"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: center_fuselage_fuel_cell",
+        "system: fuel",
+        "bound outer region: center_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.092771 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/center-fuselage-fuel-cell.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does center_fuselage_fuel_cell visibly match its assigned outer region center_fuselage?",
+      "slug": "center-fuselage-fuel-cell",
+      "source_region_id": "center_fuselage",
+      "subtitle": "component binding -> center_fuselage",
+      "svg": {
+        "front": "components/center-fuselage-fuel-cell_front.svg",
+        "side": "components/center-fuselage-fuel-cell_side.svg",
+        "top": "components/center-fuselage-fuel-cell_top.svg"
+      },
+      "title": "center_fuselage_fuel_cell"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "mission_computer"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: mission_computer",
+        "system: avionics",
+        "bound outer region: center_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.261236 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/mission-computer.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does mission_computer visibly match its assigned outer region center_fuselage?",
+      "slug": "mission-computer",
+      "source_region_id": "center_fuselage",
+      "subtitle": "component binding -> center_fuselage",
+      "svg": {
+        "front": "components/mission-computer_front.svg",
+        "side": "components/mission-computer_side.svg",
+        "top": "components/mission-computer_top.svg"
+      },
+      "title": "mission_computer"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "data_link_terminal"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: data_link_terminal",
+        "system: data_link",
+        "bound outer region: center_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 2.078877 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/data-link-terminal.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does data_link_terminal visibly match its assigned outer region center_fuselage?",
+      "slug": "data-link-terminal",
+      "source_region_id": "center_fuselage",
+      "subtitle": "component binding -> center_fuselage",
+      "svg": {
+        "front": "components/data-link-terminal_front.svg",
+        "side": "components/data-link-terminal_side.svg",
+        "top": "components/data-link-terminal_top.svg"
+      },
+      "title": "data_link_terminal"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "flight_control_computer"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: flight_control_computer",
+        "system: flight_control",
+        "bound outer region: center_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.62816 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.45, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/flight-control-computer.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does flight_control_computer visibly match its assigned outer region center_fuselage?",
+      "slug": "flight-control-computer",
+      "source_region_id": "center_fuselage",
+      "subtitle": "component binding -> center_fuselage",
+      "svg": {
+        "front": "components/flight-control-computer_front.svg",
+        "side": "components/flight-control-computer_side.svg",
+        "top": "components/flight-control-computer_top.svg"
+      },
+      "title": "flight_control_computer"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "inertial_navigation_unit"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: inertial_navigation_unit",
+        "system: navigation",
+        "bound outer region: forward_fuselage",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.244077 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/inertial-navigation-unit.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does inertial_navigation_unit visibly match its assigned outer region forward_fuselage?",
+      "slug": "inertial-navigation-unit",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "component binding -> forward_fuselage",
+      "svg": {
+        "front": "components/inertial-navigation-unit_front.svg",
+        "side": "components/inertial-navigation-unit_side.svg",
+        "top": "components/inertial-navigation-unit_top.svg"
+      },
+      "title": "inertial_navigation_unit"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: dedicated_intake_lip_or_duct_component",
+        "system: engine",
+        "bound outer region: intake",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.010895 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -0.01072, \"bound_region_center_y_sign\": \"negative_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/dedicated-intake-lip-or-duct-component.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does dedicated_intake_lip_or_duct_component visibly match its assigned outer region intake?",
+      "slug": "dedicated-intake-lip-or-duct-component",
+      "source_region_id": "intake",
+      "subtitle": "component binding -> intake",
+      "svg": {
+        "front": "components/dedicated-intake-lip-or-duct-component_front.svg",
+        "side": "components/dedicated-intake-lip-or-duct-component_side.svg",
+        "top": "components/dedicated-intake-lip-or-duct-component_top.svg"
+      },
+      "title": "dedicated_intake_lip_or_duct_component"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "electrical_power_bus"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: electrical_power_bus",
+        "system: avionics",
+        "bound outer region: aft_fuselage_engine",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.12002 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.45, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/electrical-power-bus.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does electrical_power_bus visibly match its assigned outer region aft_fuselage_engine?",
+      "slug": "electrical-power-bus",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "component binding -> aft_fuselage_engine",
+      "svg": {
+        "front": "components/electrical-power-bus_front.svg",
+        "side": "components/electrical-power-bus_side.svg",
+        "top": "components/electrical-power-bus_top.svg"
+      },
+      "title": "electrical_power_bus"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "engine_core"
+      ],
+      "decision_needed": "Keep as review-only candidate or split it; do not treat this as accepted runtime integration.",
+      "details": [
+        "component: engine_core",
+        "system: engine",
+        "bound outer region: aft_fuselage_engine",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "review severity: review_only_candidate",
+        "component center distance to region: 2.155386 m",
+        "anomalies: ",
+        "geometry observations: low_outer_region_overlap",
+        "suppressed anomalies: low_outer_region_overlap",
+        "semantic regions: aft_fuselage_engine, engine_nozzle, intake",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: engine_core spans the review boundary between intake/aft engine bay/nozzle semantics | low outer-region overlap is not treated as bad geometry while center remains in aft_fuselage_engine | review-only candidate, not accepted runtime damage integration | suppressed geometry observation: low_outer_region_overlap"
+      ],
+      "html": "components/engine-core.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Is engine_core acceptable as a review-only cross-region boundary candidate?",
+      "slug": "engine-core",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "component binding -> aft_fuselage_engine",
+      "svg": {
+        "front": "components/engine-core_front.svg",
+        "side": "components/engine-core_side.svg",
+        "top": "components/engine-core_top.svg"
+      },
+      "title": "engine_core"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "afterburner_nozzle"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: afterburner_nozzle",
+        "system: engine",
+        "bound outer region: engine_nozzle",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.515718 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -1e-06, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/afterburner-nozzle.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does afterburner_nozzle visibly match its assigned outer region engine_nozzle?",
+      "slug": "afterburner-nozzle",
+      "source_region_id": "engine_nozzle",
+      "subtitle": "component binding -> engine_nozzle",
+      "svg": {
+        "front": "components/afterburner-nozzle_front.svg",
+        "side": "components/afterburner-nozzle_side.svg",
+        "top": "components/afterburner-nozzle_top.svg"
+      },
+      "title": "afterburner_nozzle"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "tail_hydraulic_pump"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: tail_hydraulic_pump",
+        "system: hydraulic",
+        "bound outer region: aft_fuselage_engine",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.685224 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/tail-hydraulic-pump.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does tail_hydraulic_pump visibly match its assigned outer region aft_fuselage_engine?",
+      "slug": "tail-hydraulic-pump",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "component binding -> aft_fuselage_engine",
+      "svg": {
+        "front": "components/tail-hydraulic-pump_front.svg",
+        "side": "components/tail-hydraulic-pump_side.svg",
+        "top": "components/tail-hydraulic-pump_top.svg"
+      },
+      "title": "tail_hydraulic_pump"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "engine_fuel_control_unit"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: engine_fuel_control_unit",
+        "system: engine",
+        "bound outer region: aft_fuselage_engine",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.224129 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/engine-fuel-control-unit.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does engine_fuel_control_unit visibly match its assigned outer region aft_fuselage_engine?",
+      "slug": "engine-fuel-control-unit",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "component binding -> aft_fuselage_engine",
+      "svg": {
+        "front": "components/engine-fuel-control-unit_front.svg",
+        "side": "components/engine-fuel-control-unit_side.svg",
+        "top": "components/engine-fuel-control-unit_top.svg"
+      },
+      "title": "engine_fuel_control_unit"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "rudder_actuator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: rudder_actuator",
+        "system: flight_control",
+        "bound outer region: vertical_tail",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.725618 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -1e-06, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/rudder-actuator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does rudder_actuator visibly match its assigned outer region vertical_tail?",
+      "slug": "rudder-actuator",
+      "source_region_id": "vertical_tail",
+      "subtitle": "component binding -> vertical_tail",
+      "svg": {
+        "front": "components/rudder-actuator_front.svg",
+        "side": "components/rudder-actuator_side.svg",
+        "top": "components/rudder-actuator_top.svg"
+      },
+      "title": "rudder_actuator"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "left_horizontal_tail_actuator_or_surface_component"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: left_horizontal_tail_actuator_or_surface_component",
+        "system: flight_control",
+        "bound outer region: left_horizontal_tail",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.005225 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -1.793586, \"bound_region_center_y_sign\": \"negative_y\", \"bound_region_declared_side\": \"left\", \"component_center_y_m\": -1.79, \"component_center_y_sign\": \"negative_y\", \"component_declared_side\": \"left\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/left-horizontal-tail-actuator-or-surface-component.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does left_horizontal_tail_actuator_or_surface_component visibly match its assigned outer region left_horizontal_tail?",
+      "slug": "left-horizontal-tail-actuator-or-surface-component",
+      "source_region_id": "left_horizontal_tail",
+      "subtitle": "component binding -> left_horizontal_tail",
+      "svg": {
+        "front": "components/left-horizontal-tail-actuator-or-surface-component_front.svg",
+        "side": "components/left-horizontal-tail-actuator-or-surface-component_side.svg",
+        "top": "components/left-horizontal-tail-actuator-or-surface-component_top.svg"
+      },
+      "title": "left_horizontal_tail_actuator_or_surface_component"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "right_horizontal_tail_actuator_or_surface_component"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: right_horizontal_tail_actuator_or_surface_component",
+        "system: flight_control",
+        "bound outer region: right_horizontal_tail",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.005224 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 1.793584, \"bound_region_center_y_sign\": \"positive_y\", \"bound_region_declared_side\": \"right\", \"component_center_y_m\": 1.79, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"right\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/right-horizontal-tail-actuator-or-surface-component.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does right_horizontal_tail_actuator_or_surface_component visibly match its assigned outer region right_horizontal_tail?",
+      "slug": "right-horizontal-tail-actuator-or-surface-component",
+      "source_region_id": "right_horizontal_tail",
+      "subtitle": "component binding -> right_horizontal_tail",
+      "svg": {
+        "front": "components/right-horizontal-tail-actuator-or-surface-component_front.svg",
+        "side": "components/right-horizontal-tail-actuator-or-surface-component_side.svg",
+        "top": "components/right-horizontal-tail-actuator-or-surface-component_top.svg"
+      },
+      "title": "right_horizontal_tail_actuator_or_surface_component"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "left_wing_fuel_cell"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: left_wing_fuel_cell",
+        "system: fuel",
+        "bound outer region: left_wing",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.797227 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -2.869258, \"bound_region_center_y_sign\": \"negative_y\", \"bound_region_declared_side\": \"left\", \"component_center_y_m\": -2.8, \"component_center_y_sign\": \"negative_y\", \"component_declared_side\": \"left\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/left-wing-fuel-cell.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does left_wing_fuel_cell visibly match its assigned outer region left_wing?",
+      "slug": "left-wing-fuel-cell",
+      "source_region_id": "left_wing",
+      "subtitle": "component binding -> left_wing",
+      "svg": {
+        "front": "components/left-wing-fuel-cell_front.svg",
+        "side": "components/left-wing-fuel-cell_side.svg",
+        "top": "components/left-wing-fuel-cell_top.svg"
+      },
+      "title": "left_wing_fuel_cell"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "right_wing_fuel_cell"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: right_wing_fuel_cell",
+        "system: fuel",
+        "bound outer region: right_wing",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.797217 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 2.869209, \"bound_region_center_y_sign\": \"positive_y\", \"bound_region_declared_side\": \"right\", \"component_center_y_m\": 2.8, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"right\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/right-wing-fuel-cell.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does right_wing_fuel_cell visibly match its assigned outer region right_wing?",
+      "slug": "right-wing-fuel-cell",
+      "source_region_id": "right_wing",
+      "subtitle": "component binding -> right_wing",
+      "svg": {
+        "front": "components/right-wing-fuel-cell_front.svg",
+        "side": "components/right-wing-fuel-cell_side.svg",
+        "top": "components/right-wing-fuel-cell_top.svg"
+      },
+      "title": "right_wing_fuel_cell"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "left_aileron_actuator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: left_aileron_actuator",
+        "system: flight_control",
+        "bound outer region: left_wing",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.464753 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -2.869258, \"bound_region_center_y_sign\": \"negative_y\", \"bound_region_declared_side\": \"left\", \"component_center_y_m\": -4.1, \"component_center_y_sign\": \"negative_y\", \"component_declared_side\": \"left\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/left-aileron-actuator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does left_aileron_actuator visibly match its assigned outer region left_wing?",
+      "slug": "left-aileron-actuator",
+      "source_region_id": "left_wing",
+      "subtitle": "component binding -> left_wing",
+      "svg": {
+        "front": "components/left-aileron-actuator_front.svg",
+        "side": "components/left-aileron-actuator_side.svg",
+        "top": "components/left-aileron-actuator_top.svg"
+      },
+      "title": "left_aileron_actuator"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "right_aileron_actuator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: right_aileron_actuator",
+        "system: flight_control",
+        "bound outer region: right_wing",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 1.464791 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 2.869209, \"bound_region_center_y_sign\": \"positive_y\", \"bound_region_declared_side\": \"right\", \"component_center_y_m\": 4.1, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"right\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/right-aileron-actuator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does right_aileron_actuator visibly match its assigned outer region right_wing?",
+      "slug": "right-aileron-actuator",
+      "source_region_id": "right_wing",
+      "subtitle": "component binding -> right_wing",
+      "svg": {
+        "front": "components/right-aileron-actuator_front.svg",
+        "side": "components/right-aileron-actuator_side.svg",
+        "top": "components/right-aileron-actuator_top.svg"
+      },
+      "title": "right_aileron_actuator"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Hold or split the semantic receiver before runtime projection; low overlap alone is not a bad-box verdict.",
+      "details": [
+        "component: wing_spar_center",
+        "system: wings",
+        "bound outer region: center_fuselage",
+        "review semantics: cross_region_structural_semantic_hold",
+        "review severity: review_only_hold",
+        "component center distance to region: 1.06379 m",
+        "anomalies: ",
+        "geometry observations: low_outer_region_overlap",
+        "suppressed anomalies: low_outer_region_overlap",
+        "semantic regions: center_fuselage, left_wing_root, right_wing_root, left_wing, right_wing",
+        "side relation: {\"bound_region_center_y_m\": 0.0, \"bound_region_center_y_sign\": \"centerline_y\", \"bound_region_declared_side\": \"none\", \"component_center_y_m\": 0.0, \"component_center_y_sign\": \"centerline_y\", \"component_declared_side\": \"none\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics | low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself | review-only hold, not accepted runtime damage integration | suppressed geometry observation: low_outer_region_overlap"
+      ],
+      "html": "components/wing-spar-center.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Should wing_spar_center remain a held cross-region structural semantic candidate?",
+      "slug": "wing-spar-center",
+      "source_region_id": "center_fuselage",
+      "subtitle": "component binding -> center_fuselage",
+      "svg": {
+        "front": "components/wing-spar-center_front.svg",
+        "side": "components/wing-spar-center_side.svg",
+        "top": "components/wing-spar-center_top.svg"
+      },
+      "title": "wing_spar_center"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: left_leading_edge_flap_actuator",
+        "system: flight_control",
+        "bound outer region: left_wing_root",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.941896 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": -0.85, \"bound_region_center_y_sign\": \"negative_y\", \"bound_region_declared_side\": \"left\", \"component_center_y_m\": -1.15, \"component_center_y_sign\": \"negative_y\", \"component_declared_side\": \"left\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/left-leading-edge-flap-actuator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does left_leading_edge_flap_actuator visibly match its assigned outer region left_wing_root?",
+      "slug": "left-leading-edge-flap-actuator",
+      "source_region_id": "left_wing_root",
+      "subtitle": "component binding -> left_wing_root",
+      "svg": {
+        "front": "components/left-leading-edge-flap-actuator_front.svg",
+        "side": "components/left-leading-edge-flap-actuator_side.svg",
+        "top": "components/left-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "left_leading_edge_flap_actuator"
+    },
+    {
+      "category": "components",
+      "component_names": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Accept, repair component placement, or hold runtime use for this region.",
+      "details": [
+        "component: right_leading_edge_flap_actuator",
+        "system: flight_control",
+        "bound outer region: right_wing_root",
+        "review semantics: candidate_direct_region_binding",
+        "review severity: candidate",
+        "component center distance to region: 0.941896 m",
+        "anomalies: ",
+        "geometry observations: ",
+        "suppressed anomalies: none",
+        "semantic regions: none",
+        "side relation: {\"bound_region_center_y_m\": 0.85, \"bound_region_center_y_sign\": \"positive_y\", \"bound_region_declared_side\": \"right\", \"component_center_y_m\": 1.15, \"component_center_y_sign\": \"positive_y\", \"component_declared_side\": \"right\", \"side_sign_mismatch\": false}",
+        "blocked region binding: {\"blocked\": false, \"blocked_region_id\": \"\", \"preferred_region_ids\": []}",
+        "review notes: candidate direct binding after visual review"
+      ],
+      "html": "components/right-leading-edge-flap-actuator.html",
+      "priority": "info",
+      "review_point_ids": [],
+      "review_question": "Does right_leading_edge_flap_actuator visibly match its assigned outer region right_wing_root?",
+      "slug": "right-leading-edge-flap-actuator",
+      "source_region_id": "right_wing_root",
+      "subtitle": "component binding -> right_wing_root",
+      "svg": {
+        "front": "components/right-leading-edge-flap-actuator_front.svg",
+        "side": "components/right-leading-edge-flap-actuator_side.svg",
+        "top": "components/right-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "right_leading_edge_flap_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "center_fuselage_fuel_cell"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_center_fuselage_skin",
+        "outer region: center_fuselage",
+        "surface role: fuselage_skin",
+        "isolated linked component: center_fuselage_fuel_cell",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: center_fuselage_fuel_cell, data_link_terminal, flight_control_computer, mission_computer",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-center-fuselage-skin-center-fuselage-fuel-cell.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_center_fuselage_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-center-fuselage-skin-center-fuselage-fuel-cell",
+      "source_region_id": "center_fuselage",
+      "subtitle": "surface handoff -> center_fuselage",
+      "svg": {
+        "front": "surface_links/surface-center-fuselage-skin-center-fuselage-fuel-cell_front.svg",
+        "side": "surface_links/surface-center-fuselage-skin-center-fuselage-fuel-cell_side.svg",
+        "top": "surface_links/surface-center-fuselage-skin-center-fuselage-fuel-cell_top.svg"
+      },
+      "title": "surface_center_fuselage_skin -> center_fuselage_fuel_cell"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "data_link_terminal"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_center_fuselage_skin",
+        "outer region: center_fuselage",
+        "surface role: fuselage_skin",
+        "isolated linked component: data_link_terminal",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: center_fuselage_fuel_cell, data_link_terminal, flight_control_computer, mission_computer",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-center-fuselage-skin-data-link-terminal.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_center_fuselage_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-center-fuselage-skin-data-link-terminal",
+      "source_region_id": "center_fuselage",
+      "subtitle": "surface handoff -> center_fuselage",
+      "svg": {
+        "front": "surface_links/surface-center-fuselage-skin-data-link-terminal_front.svg",
+        "side": "surface_links/surface-center-fuselage-skin-data-link-terminal_side.svg",
+        "top": "surface_links/surface-center-fuselage-skin-data-link-terminal_top.svg"
+      },
+      "title": "surface_center_fuselage_skin -> data_link_terminal"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "flight_control_computer"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_center_fuselage_skin",
+        "outer region: center_fuselage",
+        "surface role: fuselage_skin",
+        "isolated linked component: flight_control_computer",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: center_fuselage_fuel_cell, data_link_terminal, flight_control_computer, mission_computer",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-center-fuselage-skin-flight-control-computer.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_center_fuselage_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-center-fuselage-skin-flight-control-computer",
+      "source_region_id": "center_fuselage",
+      "subtitle": "surface handoff -> center_fuselage",
+      "svg": {
+        "front": "surface_links/surface-center-fuselage-skin-flight-control-computer_front.svg",
+        "side": "surface_links/surface-center-fuselage-skin-flight-control-computer_side.svg",
+        "top": "surface_links/surface-center-fuselage-skin-flight-control-computer_top.svg"
+      },
+      "title": "surface_center_fuselage_skin -> flight_control_computer"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "mission_computer"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_center_fuselage_skin",
+        "outer region: center_fuselage",
+        "surface role: fuselage_skin",
+        "isolated linked component: mission_computer",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: center_fuselage_fuel_cell, data_link_terminal, flight_control_computer, mission_computer",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-center-fuselage-skin-mission-computer.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_center_fuselage_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-center-fuselage-skin-mission-computer",
+      "source_region_id": "center_fuselage",
+      "subtitle": "surface handoff -> center_fuselage",
+      "svg": {
+        "front": "surface_links/surface-center-fuselage-skin-mission-computer_front.svg",
+        "side": "surface_links/surface-center-fuselage-skin-mission-computer_side.svg",
+        "top": "surface_links/surface-center-fuselage-skin-mission-computer_top.svg"
+      },
+      "title": "surface_center_fuselage_skin -> mission_computer"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_center_fuselage_skin",
+        "outer region: center_fuselage",
+        "surface role: fuselage_skin",
+        "isolated linked component: wing_spar_center",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: center_fuselage_fuel_cell, data_link_terminal, flight_control_computer, mission_computer",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-center-fuselage-skin-wing-spar-center.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_center_fuselage_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-center-fuselage-skin-wing-spar-center",
+      "source_region_id": "center_fuselage",
+      "subtitle": "surface handoff -> center_fuselage",
+      "svg": {
+        "front": "surface_links/surface-center-fuselage-skin-wing-spar-center_front.svg",
+        "side": "surface_links/surface-center-fuselage-skin-wing-spar-center_side.svg",
+        "top": "surface_links/surface-center-fuselage-skin-wing-spar-center_top.svg"
+      },
+      "title": "surface_center_fuselage_skin -> wing_spar_center"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_intake_lip_and_duct",
+        "outer region: intake",
+        "surface role: intake",
+        "isolated linked component: dedicated_intake_lip_or_duct_component",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: dedicated_intake_lip_or_duct_component",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-intake-lip-and-duct-dedicated-intake-lip-or-duct-component.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_intake_lip_and_duct are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-intake-lip-and-duct-dedicated-intake-lip-or-duct-component",
+      "source_region_id": "intake",
+      "subtitle": "surface handoff -> intake",
+      "svg": {
+        "front": "surface_links/surface-intake-lip-and-duct-dedicated-intake-lip-or-duct-component_front.svg",
+        "side": "surface_links/surface-intake-lip-and-duct-dedicated-intake-lip-or-duct-component_side.svg",
+        "top": "surface_links/surface-intake-lip-and-duct-dedicated-intake-lip-or-duct-component_top.svg"
+      },
+      "title": "surface_intake_lip_and_duct -> dedicated_intake_lip_or_duct_component"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_core"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_intake_lip_and_duct",
+        "outer region: intake",
+        "surface role: intake",
+        "isolated linked component: engine_core",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: dedicated_intake_lip_or_duct_component",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-intake-lip-and-duct-engine-core.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_intake_lip_and_duct are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-intake-lip-and-duct-engine-core",
+      "source_region_id": "intake",
+      "subtitle": "surface handoff -> intake",
+      "svg": {
+        "front": "surface_links/surface-intake-lip-and-duct-engine-core_front.svg",
+        "side": "surface_links/surface-intake-lip-and-duct-engine-core_side.svg",
+        "top": "surface_links/surface-intake-lip-and-duct-engine-core_top.svg"
+      },
+      "title": "surface_intake_lip_and_duct -> engine_core"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_fuel_control_unit"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_intake_lip_and_duct",
+        "outer region: intake",
+        "surface role: intake",
+        "isolated linked component: engine_fuel_control_unit",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: dedicated_intake_lip_or_duct_component",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-intake-lip-and-duct-engine-fuel-control-unit.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_intake_lip_and_duct are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-intake-lip-and-duct-engine-fuel-control-unit",
+      "source_region_id": "intake",
+      "subtitle": "surface handoff -> intake",
+      "svg": {
+        "front": "surface_links/surface-intake-lip-and-duct-engine-fuel-control-unit_front.svg",
+        "side": "surface_links/surface-intake-lip-and-duct-engine-fuel-control-unit_side.svg",
+        "top": "surface_links/surface-intake-lip-and-duct-engine-fuel-control-unit_top.svg"
+      },
+      "title": "surface_intake_lip_and_duct -> engine_fuel_control_unit"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "electrical_power_bus"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_aft_engine_bay_skin",
+        "outer region: aft_fuselage_engine",
+        "surface role: engine_bay_skin",
+        "isolated linked component: electrical_power_bus",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: electrical_power_bus, engine_fuel_control_unit, tail_hydraulic_pump",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-aft-engine-bay-skin-electrical-power-bus.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_aft_engine_bay_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-aft-engine-bay-skin-electrical-power-bus",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "surface handoff -> aft_fuselage_engine",
+      "svg": {
+        "front": "surface_links/surface-aft-engine-bay-skin-electrical-power-bus_front.svg",
+        "side": "surface_links/surface-aft-engine-bay-skin-electrical-power-bus_side.svg",
+        "top": "surface_links/surface-aft-engine-bay-skin-electrical-power-bus_top.svg"
+      },
+      "title": "surface_aft_engine_bay_skin -> electrical_power_bus"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_core"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_aft_engine_bay_skin",
+        "outer region: aft_fuselage_engine",
+        "surface role: engine_bay_skin",
+        "isolated linked component: engine_core",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: electrical_power_bus, engine_fuel_control_unit, tail_hydraulic_pump",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-aft-engine-bay-skin-engine-core.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_aft_engine_bay_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-aft-engine-bay-skin-engine-core",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "surface handoff -> aft_fuselage_engine",
+      "svg": {
+        "front": "surface_links/surface-aft-engine-bay-skin-engine-core_front.svg",
+        "side": "surface_links/surface-aft-engine-bay-skin-engine-core_side.svg",
+        "top": "surface_links/surface-aft-engine-bay-skin-engine-core_top.svg"
+      },
+      "title": "surface_aft_engine_bay_skin -> engine_core"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_fuel_control_unit"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_aft_engine_bay_skin",
+        "outer region: aft_fuselage_engine",
+        "surface role: engine_bay_skin",
+        "isolated linked component: engine_fuel_control_unit",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: electrical_power_bus, engine_fuel_control_unit, tail_hydraulic_pump",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-aft-engine-bay-skin-engine-fuel-control-unit.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_aft_engine_bay_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-aft-engine-bay-skin-engine-fuel-control-unit",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "surface handoff -> aft_fuselage_engine",
+      "svg": {
+        "front": "surface_links/surface-aft-engine-bay-skin-engine-fuel-control-unit_front.svg",
+        "side": "surface_links/surface-aft-engine-bay-skin-engine-fuel-control-unit_side.svg",
+        "top": "surface_links/surface-aft-engine-bay-skin-engine-fuel-control-unit_top.svg"
+      },
+      "title": "surface_aft_engine_bay_skin -> engine_fuel_control_unit"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "tail_hydraulic_pump"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_aft_engine_bay_skin",
+        "outer region: aft_fuselage_engine",
+        "surface role: engine_bay_skin",
+        "isolated linked component: tail_hydraulic_pump",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: electrical_power_bus, engine_fuel_control_unit, tail_hydraulic_pump",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-aft-engine-bay-skin-tail-hydraulic-pump.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_aft_engine_bay_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-aft-engine-bay-skin-tail-hydraulic-pump",
+      "source_region_id": "aft_fuselage_engine",
+      "subtitle": "surface handoff -> aft_fuselage_engine",
+      "svg": {
+        "front": "surface_links/surface-aft-engine-bay-skin-tail-hydraulic-pump_front.svg",
+        "side": "surface_links/surface-aft-engine-bay-skin-tail-hydraulic-pump_side.svg",
+        "top": "surface_links/surface-aft-engine-bay-skin-tail-hydraulic-pump_top.svg"
+      },
+      "title": "surface_aft_engine_bay_skin -> tail_hydraulic_pump"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "afterburner_nozzle"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_engine_nozzle",
+        "outer region: engine_nozzle",
+        "surface role: nozzle",
+        "isolated linked component: afterburner_nozzle",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: afterburner_nozzle",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-engine-nozzle-afterburner-nozzle.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_engine_nozzle are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-engine-nozzle-afterburner-nozzle",
+      "source_region_id": "engine_nozzle",
+      "subtitle": "surface handoff -> engine_nozzle",
+      "svg": {
+        "front": "surface_links/surface-engine-nozzle-afterburner-nozzle_front.svg",
+        "side": "surface_links/surface-engine-nozzle-afterburner-nozzle_side.svg",
+        "top": "surface_links/surface-engine-nozzle-afterburner-nozzle_top.svg"
+      },
+      "title": "surface_engine_nozzle -> afterburner_nozzle"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_core"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_engine_nozzle",
+        "outer region: engine_nozzle",
+        "surface role: nozzle",
+        "isolated linked component: engine_core",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: afterburner_nozzle",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-engine-nozzle-engine-core.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_engine_nozzle are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-engine-nozzle-engine-core",
+      "source_region_id": "engine_nozzle",
+      "subtitle": "surface handoff -> engine_nozzle",
+      "svg": {
+        "front": "surface_links/surface-engine-nozzle-engine-core_front.svg",
+        "side": "surface_links/surface-engine-nozzle-engine-core_side.svg",
+        "top": "surface_links/surface-engine-nozzle-engine-core_top.svg"
+      },
+      "title": "surface_engine_nozzle -> engine_core"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "engine_fuel_control_unit"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_engine_nozzle",
+        "outer region: engine_nozzle",
+        "surface role: nozzle",
+        "isolated linked component: engine_fuel_control_unit",
+        "review semantics: cross_region_boundary_candidate_review_only",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: afterburner_nozzle",
+        "cross-region semantic components: engine_core",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_boundary_candidate_review_only, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-engine-nozzle-engine-fuel-control-unit.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_engine_nozzle are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-engine-nozzle-engine-fuel-control-unit",
+      "source_region_id": "engine_nozzle",
+      "subtitle": "surface handoff -> engine_nozzle",
+      "svg": {
+        "front": "surface_links/surface-engine-nozzle-engine-fuel-control-unit_front.svg",
+        "side": "surface_links/surface-engine-nozzle-engine-fuel-control-unit_side.svg",
+        "top": "surface_links/surface-engine-nozzle-engine-fuel-control-unit_top.svg"
+      },
+      "title": "surface_engine_nozzle -> engine_fuel_control_unit"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "left_aileron_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_skin",
+        "outer region: left_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: left_aileron_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_aileron_actuator, left_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-skin-left-aileron-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-skin-left-aileron-actuator",
+      "source_region_id": "left_wing",
+      "subtitle": "surface handoff -> left_wing",
+      "svg": {
+        "front": "surface_links/surface-left-wing-skin-left-aileron-actuator_front.svg",
+        "side": "surface_links/surface-left-wing-skin-left-aileron-actuator_side.svg",
+        "top": "surface_links/surface-left-wing-skin-left-aileron-actuator_top.svg"
+      },
+      "title": "surface_left_wing_skin -> left_aileron_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_skin",
+        "outer region: left_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: left_leading_edge_flap_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_aileron_actuator, left_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-skin-left-leading-edge-flap-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-skin-left-leading-edge-flap-actuator",
+      "source_region_id": "left_wing",
+      "subtitle": "surface handoff -> left_wing",
+      "svg": {
+        "front": "surface_links/surface-left-wing-skin-left-leading-edge-flap-actuator_front.svg",
+        "side": "surface_links/surface-left-wing-skin-left-leading-edge-flap-actuator_side.svg",
+        "top": "surface_links/surface-left-wing-skin-left-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "surface_left_wing_skin -> left_leading_edge_flap_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "left_wing_fuel_cell"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_skin",
+        "outer region: left_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: left_wing_fuel_cell",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_aileron_actuator, left_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-skin-left-wing-fuel-cell.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-skin-left-wing-fuel-cell",
+      "source_region_id": "left_wing",
+      "subtitle": "surface handoff -> left_wing",
+      "svg": {
+        "front": "surface_links/surface-left-wing-skin-left-wing-fuel-cell_front.svg",
+        "side": "surface_links/surface-left-wing-skin-left-wing-fuel-cell_side.svg",
+        "top": "surface_links/surface-left-wing-skin-left-wing-fuel-cell_top.svg"
+      },
+      "title": "surface_left_wing_skin -> left_wing_fuel_cell"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_skin",
+        "outer region: left_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: wing_spar_center",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_aileron_actuator, left_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-skin-wing-spar-center.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-skin-wing-spar-center",
+      "source_region_id": "left_wing",
+      "subtitle": "surface handoff -> left_wing",
+      "svg": {
+        "front": "surface_links/surface-left-wing-skin-wing-spar-center_front.svg",
+        "side": "surface_links/surface-left-wing-skin-wing-spar-center_side.svg",
+        "top": "surface_links/surface-left-wing-skin-wing-spar-center_top.svg"
+      },
+      "title": "surface_left_wing_skin -> wing_spar_center"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "right_aileron_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_skin",
+        "outer region: right_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: right_aileron_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_aileron_actuator, right_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-skin-right-aileron-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-skin-right-aileron-actuator",
+      "source_region_id": "right_wing",
+      "subtitle": "surface handoff -> right_wing",
+      "svg": {
+        "front": "surface_links/surface-right-wing-skin-right-aileron-actuator_front.svg",
+        "side": "surface_links/surface-right-wing-skin-right-aileron-actuator_side.svg",
+        "top": "surface_links/surface-right-wing-skin-right-aileron-actuator_top.svg"
+      },
+      "title": "surface_right_wing_skin -> right_aileron_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_skin",
+        "outer region: right_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: right_leading_edge_flap_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_aileron_actuator, right_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-skin-right-leading-edge-flap-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-skin-right-leading-edge-flap-actuator",
+      "source_region_id": "right_wing",
+      "subtitle": "surface handoff -> right_wing",
+      "svg": {
+        "front": "surface_links/surface-right-wing-skin-right-leading-edge-flap-actuator_front.svg",
+        "side": "surface_links/surface-right-wing-skin-right-leading-edge-flap-actuator_side.svg",
+        "top": "surface_links/surface-right-wing-skin-right-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "surface_right_wing_skin -> right_leading_edge_flap_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "right_wing_fuel_cell"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_skin",
+        "outer region: right_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: right_wing_fuel_cell",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_aileron_actuator, right_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-skin-right-wing-fuel-cell.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-skin-right-wing-fuel-cell",
+      "source_region_id": "right_wing",
+      "subtitle": "surface handoff -> right_wing",
+      "svg": {
+        "front": "surface_links/surface-right-wing-skin-right-wing-fuel-cell_front.svg",
+        "side": "surface_links/surface-right-wing-skin-right-wing-fuel-cell_side.svg",
+        "top": "surface_links/surface-right-wing-skin-right-wing-fuel-cell_top.svg"
+      },
+      "title": "surface_right_wing_skin -> right_wing_fuel_cell"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_skin",
+        "outer region: right_wing",
+        "surface role: lifting_surface",
+        "isolated linked component: wing_spar_center",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_aileron_actuator, right_wing_fuel_cell",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-skin-wing-spar-center.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_skin are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-skin-wing-spar-center",
+      "source_region_id": "right_wing",
+      "subtitle": "surface handoff -> right_wing",
+      "svg": {
+        "front": "surface_links/surface-right-wing-skin-wing-spar-center_front.svg",
+        "side": "surface_links/surface-right-wing-skin-wing-spar-center_side.svg",
+        "top": "surface_links/surface-right-wing-skin-wing-spar-center_top.svg"
+      },
+      "title": "surface_right_wing_skin -> wing_spar_center"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "left_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_root_fairing",
+        "outer region: left_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: left_leading_edge_flap_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-root-fairing-left-leading-edge-flap-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-root-fairing-left-leading-edge-flap-actuator",
+      "source_region_id": "left_wing_root",
+      "subtitle": "surface handoff -> left_wing_root",
+      "svg": {
+        "front": "surface_links/surface-left-wing-root-fairing-left-leading-edge-flap-actuator_front.svg",
+        "side": "surface_links/surface-left-wing-root-fairing-left-leading-edge-flap-actuator_side.svg",
+        "top": "surface_links/surface-left-wing-root-fairing-left-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "surface_left_wing_root_fairing -> left_leading_edge_flap_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "left_wing_fuel_cell"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_root_fairing",
+        "outer region: left_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: left_wing_fuel_cell",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-root-fairing-left-wing-fuel-cell.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-root-fairing-left-wing-fuel-cell",
+      "source_region_id": "left_wing_root",
+      "subtitle": "surface handoff -> left_wing_root",
+      "svg": {
+        "front": "surface_links/surface-left-wing-root-fairing-left-wing-fuel-cell_front.svg",
+        "side": "surface_links/surface-left-wing-root-fairing-left-wing-fuel-cell_side.svg",
+        "top": "surface_links/surface-left-wing-root-fairing-left-wing-fuel-cell_top.svg"
+      },
+      "title": "surface_left_wing_root_fairing -> left_wing_fuel_cell"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_left_wing_root_fairing",
+        "outer region: left_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: wing_spar_center",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: left_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-left-wing-root-fairing-wing-spar-center.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_left_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-left-wing-root-fairing-wing-spar-center",
+      "source_region_id": "left_wing_root",
+      "subtitle": "surface handoff -> left_wing_root",
+      "svg": {
+        "front": "surface_links/surface-left-wing-root-fairing-wing-spar-center_front.svg",
+        "side": "surface_links/surface-left-wing-root-fairing-wing-spar-center_side.svg",
+        "top": "surface_links/surface-left-wing-root-fairing-wing-spar-center_top.svg"
+      },
+      "title": "surface_left_wing_root_fairing -> wing_spar_center"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "right_leading_edge_flap_actuator"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_root_fairing",
+        "outer region: right_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: right_leading_edge_flap_actuator",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-root-fairing-right-leading-edge-flap-actuator.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-root-fairing-right-leading-edge-flap-actuator",
+      "source_region_id": "right_wing_root",
+      "subtitle": "surface handoff -> right_wing_root",
+      "svg": {
+        "front": "surface_links/surface-right-wing-root-fairing-right-leading-edge-flap-actuator_front.svg",
+        "side": "surface_links/surface-right-wing-root-fairing-right-leading-edge-flap-actuator_side.svg",
+        "top": "surface_links/surface-right-wing-root-fairing-right-leading-edge-flap-actuator_top.svg"
+      },
+      "title": "surface_right_wing_root_fairing -> right_leading_edge_flap_actuator"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "right_wing_fuel_cell"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_root_fairing",
+        "outer region: right_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: right_wing_fuel_cell",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-root-fairing-right-wing-fuel-cell.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-root-fairing-right-wing-fuel-cell",
+      "source_region_id": "right_wing_root",
+      "subtitle": "surface handoff -> right_wing_root",
+      "svg": {
+        "front": "surface_links/surface-right-wing-root-fairing-right-wing-fuel-cell_front.svg",
+        "side": "surface_links/surface-right-wing-root-fairing-right-wing-fuel-cell_side.svg",
+        "top": "surface_links/surface-right-wing-root-fairing-right-wing-fuel-cell_top.svg"
+      },
+      "title": "surface_right_wing_root_fairing -> right_wing_fuel_cell"
+    },
+    {
+      "category": "surface_links",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Keep clean direct links separate, and keep cross-region links held or review-only until runtime ownership is explicit.",
+      "details": [
+        "surface component: surface_right_wing_root_fairing",
+        "outer region: right_wing_root",
+        "surface role: structural_transition",
+        "isolated linked component: wing_spar_center",
+        "review semantics: cross_region_semantic_hold",
+        "runtime relation status: runtime_relation_review_only_candidate",
+        "clean direct components: right_leading_edge_flap_actuator",
+        "cross-region semantic components: wing_spar_center",
+        "blocked components: none",
+        "bad geometry components: none",
+        "review flags: cross_region_semantic_hold, expected_component_bound_elsewhere",
+        "missing runtime links: none"
+      ],
+      "html": "surface_links/surface-right-wing-root-fairing-wing-spar-center.html",
+      "priority": "warning",
+      "review_point_ids": [],
+      "review_question": "Which links for surface_right_wing_root_fairing are clean direct receivers versus review-only cross-region semantics?",
+      "slug": "surface-right-wing-root-fairing-wing-spar-center",
+      "source_region_id": "right_wing_root",
+      "subtitle": "surface handoff -> right_wing_root",
+      "svg": {
+        "front": "surface_links/surface-right-wing-root-fairing-wing-spar-center_front.svg",
+        "side": "surface_links/surface-right-wing-root-fairing-wing-spar-center_side.svg",
+        "top": "surface_links/surface-right-wing-root-fairing-wing-spar-center_top.svg"
+      },
+      "title": "surface_right_wing_root_fairing -> wing_spar_center"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "dedicated_canopy_surface_component"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: dedicated_canopy_surface_component",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-dedicated-canopy-surface-component.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-dedicated-canopy-surface-component",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-dedicated-canopy-surface-component_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-dedicated-canopy-surface-component_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-dedicated-canopy-surface-component_top.svg"
+      },
+      "title": "nose_axis_4m -> dedicated_canopy_surface_component"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "cockpit_crew_station"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: cockpit_crew_station",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-cockpit-crew-station.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-cockpit-crew-station",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-cockpit-crew-station_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-cockpit-crew-station_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-cockpit-crew-station_top.svg"
+      },
+      "title": "nose_axis_4m -> cockpit_crew_station"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "nose_avionics_bay"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: nose_avionics_bay",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-nose-avionics-bay.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-nose-avionics-bay",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-nose-avionics-bay_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-nose-avionics-bay_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-nose-avionics-bay_top.svg"
+      },
+      "title": "nose_axis_4m -> nose_avionics_bay"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "dedicated_intake_lip_or_duct_component"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: dedicated_intake_lip_or_duct_component",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-dedicated-intake-lip-or-duct-component.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-dedicated-intake-lip-or-duct-component",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-dedicated-intake-lip-or-duct-component_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-dedicated-intake-lip-or-duct-component_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-dedicated-intake-lip-or-duct-component_top.svg"
+      },
+      "title": "nose_axis_4m -> dedicated_intake_lip_or_duct_component"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "inertial_navigation_unit"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: inertial_navigation_unit",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-inertial-navigation-unit.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-inertial-navigation-unit",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-inertial-navigation-unit_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-inertial-navigation-unit_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-inertial-navigation-unit_top.svg"
+      },
+      "title": "nose_axis_4m -> inertial_navigation_unit"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "iff_interrogator"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: iff_interrogator",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-iff-interrogator.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-iff-interrogator",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-iff-interrogator_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-iff-interrogator_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-iff-interrogator_top.svg"
+      },
+      "title": "nose_axis_4m -> iff_interrogator"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "mission_computer"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_4m at [4.0, 0.0, 0.0]",
+        "nearest outer region: forward_fuselage",
+        "nearest outer distance: 0.0 m",
+        "nearest fine proxy: canopy",
+        "isolated candidate component: mission_computer",
+        "nearest component: dedicated_canopy_surface_component",
+        "nearest component distance: 0.125 m",
+        "candidate component count: 7",
+        "interpretation: inside_outer_shape_with_nearby_component_candidates_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-4m-mission-computer.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_4m"
+      ],
+      "review_question": "Does nose_axis_4m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-4m-mission-computer",
+      "source_region_id": "forward_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-4m-mission-computer_front.svg",
+        "side": "review_point_candidates/nose-axis-4m-mission-computer_side.svg",
+        "top": "review_point_candidates/nose-axis-4m-mission-computer_top.svg"
+      },
+      "title": "nose_axis_4m -> mission_computer"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "cockpit_crew_station"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_6m at [6.0, 0.0, 0.0]",
+        "nearest outer region: nose_radome",
+        "nearest outer distance: 0.349524 m",
+        "nearest fine proxy: nose_radome",
+        "isolated candidate component: cockpit_crew_station",
+        "nearest component: cockpit_crew_station",
+        "nearest component distance: 0.0 m",
+        "candidate component count: 5",
+        "interpretation: point_inside_component_box_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-6m-cockpit-crew-station.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_6m"
+      ],
+      "review_question": "Does nose_axis_6m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-6m-cockpit-crew-station",
+      "source_region_id": "nose_radome",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-6m-cockpit-crew-station_front.svg",
+        "side": "review_point_candidates/nose-axis-6m-cockpit-crew-station_side.svg",
+        "top": "review_point_candidates/nose-axis-6m-cockpit-crew-station_top.svg"
+      },
+      "title": "nose_axis_6m -> cockpit_crew_station"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "iff_interrogator"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_6m at [6.0, 0.0, 0.0]",
+        "nearest outer region: nose_radome",
+        "nearest outer distance: 0.349524 m",
+        "nearest fine proxy: nose_radome",
+        "isolated candidate component: iff_interrogator",
+        "nearest component: cockpit_crew_station",
+        "nearest component distance: 0.0 m",
+        "candidate component count: 5",
+        "interpretation: point_inside_component_box_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-6m-iff-interrogator.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_6m"
+      ],
+      "review_question": "Does nose_axis_6m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-6m-iff-interrogator",
+      "source_region_id": "nose_radome",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-6m-iff-interrogator_front.svg",
+        "side": "review_point_candidates/nose-axis-6m-iff-interrogator_side.svg",
+        "top": "review_point_candidates/nose-axis-6m-iff-interrogator_top.svg"
+      },
+      "title": "nose_axis_6m -> iff_interrogator"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "apg68_radar_array"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_6m at [6.0, 0.0, 0.0]",
+        "nearest outer region: nose_radome",
+        "nearest outer distance: 0.349524 m",
+        "nearest fine proxy: nose_radome",
+        "isolated candidate component: apg68_radar_array",
+        "nearest component: cockpit_crew_station",
+        "nearest component distance: 0.0 m",
+        "candidate component count: 5",
+        "interpretation: point_inside_component_box_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-6m-apg68-radar-array.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_6m"
+      ],
+      "review_question": "Does nose_axis_6m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-6m-apg68-radar-array",
+      "source_region_id": "nose_radome",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-6m-apg68-radar-array_front.svg",
+        "side": "review_point_candidates/nose-axis-6m-apg68-radar-array_side.svg",
+        "top": "review_point_candidates/nose-axis-6m-apg68-radar-array_top.svg"
+      },
+      "title": "nose_axis_6m -> apg68_radar_array"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "nose_avionics_bay"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_6m at [6.0, 0.0, 0.0]",
+        "nearest outer region: nose_radome",
+        "nearest outer distance: 0.349524 m",
+        "nearest fine proxy: nose_radome",
+        "isolated candidate component: nose_avionics_bay",
+        "nearest component: cockpit_crew_station",
+        "nearest component distance: 0.0 m",
+        "candidate component count: 5",
+        "interpretation: point_inside_component_box_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-6m-nose-avionics-bay.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_6m"
+      ],
+      "review_question": "Does nose_axis_6m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-6m-nose-avionics-bay",
+      "source_region_id": "nose_radome",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-6m-nose-avionics-bay_front.svg",
+        "side": "review_point_candidates/nose-axis-6m-nose-avionics-bay_side.svg",
+        "top": "review_point_candidates/nose-axis-6m-nose-avionics-bay_top.svg"
+      },
+      "title": "nose_axis_6m -> nose_avionics_bay"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "dedicated_canopy_surface_component"
+      ],
+      "decision_needed": "Decide whether this point has a valid candidate-component path, or whether nose proximity must remain held.",
+      "details": [
+        "point: nose_axis_6m at [6.0, 0.0, 0.0]",
+        "nearest outer region: nose_radome",
+        "nearest outer distance: 0.349524 m",
+        "nearest fine proxy: nose_radome",
+        "isolated candidate component: dedicated_canopy_surface_component",
+        "nearest component: cockpit_crew_station",
+        "nearest component distance: 0.0 m",
+        "candidate component count: 5",
+        "interpretation: point_inside_component_box_review_only"
+      ],
+      "html": "review_point_candidates/nose-axis-6m-dedicated-canopy-surface-component.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "nose_axis_6m"
+      ],
+      "review_question": "Does nose_axis_6m explain the nose close-to-shape behavior without relying on direct-hit boxes?",
+      "slug": "nose-axis-6m-dedicated-canopy-surface-component",
+      "source_region_id": "nose_radome",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/nose-axis-6m-dedicated-canopy-surface-component_front.svg",
+        "side": "review_point_candidates/nose-axis-6m-dedicated-canopy-surface-component_side.svg",
+        "top": "review_point_candidates/nose-axis-6m-dedicated-canopy-surface-component_top.svg"
+      },
+      "title": "nose_axis_6m -> dedicated_canopy_surface_component"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: right_beam_4m at [0.0, 4.0, 0.0]",
+        "nearest outer region: right_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: right_wing",
+        "isolated candidate component: wing_spar_center",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/right-beam-4m-wing-spar-center.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "right_beam_4m"
+      ],
+      "review_question": "Does right_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "right-beam-4m-wing-spar-center",
+      "source_region_id": "right_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/right-beam-4m-wing-spar-center_front.svg",
+        "side": "review_point_candidates/right-beam-4m-wing-spar-center_side.svg",
+        "top": "review_point_candidates/right-beam-4m-wing-spar-center_top.svg"
+      },
+      "title": "right_beam_4m -> wing_spar_center"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "right_aileron_actuator"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: right_beam_4m at [0.0, 4.0, 0.0]",
+        "nearest outer region: right_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: right_wing",
+        "isolated candidate component: right_aileron_actuator",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/right-beam-4m-right-aileron-actuator.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "right_beam_4m"
+      ],
+      "review_question": "Does right_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "right-beam-4m-right-aileron-actuator",
+      "source_region_id": "right_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/right-beam-4m-right-aileron-actuator_front.svg",
+        "side": "review_point_candidates/right-beam-4m-right-aileron-actuator_side.svg",
+        "top": "review_point_candidates/right-beam-4m-right-aileron-actuator_top.svg"
+      },
+      "title": "right_beam_4m -> right_aileron_actuator"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "right_wing_fuel_cell"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: right_beam_4m at [0.0, 4.0, 0.0]",
+        "nearest outer region: right_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: right_wing",
+        "isolated candidate component: right_wing_fuel_cell",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/right-beam-4m-right-wing-fuel-cell.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "right_beam_4m"
+      ],
+      "review_question": "Does right_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "right-beam-4m-right-wing-fuel-cell",
+      "source_region_id": "right_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/right-beam-4m-right-wing-fuel-cell_front.svg",
+        "side": "review_point_candidates/right-beam-4m-right-wing-fuel-cell_side.svg",
+        "top": "review_point_candidates/right-beam-4m-right-wing-fuel-cell_top.svg"
+      },
+      "title": "right_beam_4m -> right_wing_fuel_cell"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "wing_spar_center"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: left_beam_4m at [0.0, -4.0, 0.0]",
+        "nearest outer region: left_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: left_wing",
+        "isolated candidate component: wing_spar_center",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/left-beam-4m-wing-spar-center.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "left_beam_4m"
+      ],
+      "review_question": "Does left_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "left-beam-4m-wing-spar-center",
+      "source_region_id": "left_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/left-beam-4m-wing-spar-center_front.svg",
+        "side": "review_point_candidates/left-beam-4m-wing-spar-center_side.svg",
+        "top": "review_point_candidates/left-beam-4m-wing-spar-center_top.svg"
+      },
+      "title": "left_beam_4m -> wing_spar_center"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "left_aileron_actuator"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: left_beam_4m at [0.0, -4.0, 0.0]",
+        "nearest outer region: left_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: left_wing",
+        "isolated candidate component: left_aileron_actuator",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/left-beam-4m-left-aileron-actuator.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "left_beam_4m"
+      ],
+      "review_question": "Does left_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "left-beam-4m-left-aileron-actuator",
+      "source_region_id": "left_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/left-beam-4m-left-aileron-actuator_front.svg",
+        "side": "review_point_candidates/left-beam-4m-left-aileron-actuator_side.svg",
+        "top": "review_point_candidates/left-beam-4m-left-aileron-actuator_top.svg"
+      },
+      "title": "left_beam_4m -> left_aileron_actuator"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [
+        "left_wing_fuel_cell"
+      ],
+      "decision_needed": "Do not use beam/wing projection at runtime until point side, wing side, and component names agree.",
+      "details": [
+        "point: left_beam_4m at [0.0, -4.0, 0.0]",
+        "nearest outer region: left_wing",
+        "nearest outer distance: 0.868724 m",
+        "nearest fine proxy: left_wing",
+        "isolated candidate component: left_wing_fuel_cell",
+        "nearest component: wing_spar_center",
+        "nearest component distance: 0.7 m",
+        "candidate component count: 3",
+        "interpretation: outside_outer_shape_but_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/left-beam-4m-left-wing-fuel-cell.html",
+      "priority": "critical",
+      "review_point_ids": [
+        "left_beam_4m"
+      ],
+      "review_question": "Does left_beam_4m expose a left/right coordinate-sign problem?",
+      "slug": "left-beam-4m-left-wing-fuel-cell",
+      "source_region_id": "left_wing",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/left-beam-4m-left-wing-fuel-cell_front.svg",
+        "side": "review_point_candidates/left-beam-4m-left-wing-fuel-cell_side.svg",
+        "top": "review_point_candidates/left-beam-4m-left-wing-fuel-cell_top.svg"
+      },
+      "title": "left_beam_4m -> left_wing_fuel_cell"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [],
+      "decision_needed": "Accept as diagnostic-only, add missing component candidates, or hold runtime use.",
+      "details": [
+        "point: above_4m at [0.0, 0.0, 4.0]",
+        "nearest outer region: center_fuselage",
+        "nearest outer distance: 3.207745 m",
+        "nearest fine proxy: center_fuselage",
+        "isolated candidate component: no_near_component_candidate",
+        "nearest component: flight_control_computer",
+        "nearest component distance: 3.411103 m",
+        "candidate component count: 0",
+        "interpretation: outside_outer_shape_no_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/above-4m-no-near-component-candidate.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "above_4m"
+      ],
+      "review_question": "Does above_4m have a plausible outer-surface and component interpretation?",
+      "slug": "above-4m-no-near-component-candidate",
+      "source_region_id": "center_fuselage",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/above-4m-no-near-component-candidate_front.svg",
+        "side": "review_point_candidates/above-4m-no-near-component-candidate_side.svg",
+        "top": "review_point_candidates/above-4m-no-near-component-candidate_top.svg"
+      },
+      "title": "above_4m -> no_near_component_candidate"
+    },
+    {
+      "category": "review_point_candidates",
+      "component_names": [],
+      "decision_needed": "Accept as diagnostic-only, add missing component candidates, or hold runtime use.",
+      "details": [
+        "point: below_4m at [0.0, 0.0, -4.0]",
+        "nearest outer region: left_wing_root",
+        "nearest outer distance: 2.892347 m",
+        "nearest fine proxy: left_wing_root",
+        "isolated candidate component: no_near_component_candidate",
+        "nearest component: left_leading_edge_flap_actuator",
+        "nearest component distance: 3.324154 m",
+        "candidate component count: 0",
+        "interpretation: outside_outer_shape_no_near_component_candidate_review_only"
+      ],
+      "html": "review_point_candidates/below-4m-no-near-component-candidate.html",
+      "priority": "warning",
+      "review_point_ids": [
+        "below_4m"
+      ],
+      "review_question": "Does below_4m have a plausible outer-surface and component interpretation?",
+      "slug": "below-4m-no-near-component-candidate",
+      "source_region_id": "left_wing_root",
+      "subtitle": "review point candidate",
+      "svg": {
+        "front": "review_point_candidates/below-4m-no-near-component-candidate_front.svg",
+        "side": "review_point_candidates/below-4m-no-near-component-candidate_side.svg",
+        "top": "review_point_candidates/below-4m-no-near-component-candidate_top.svg"
+      },
+      "title": "below_4m -> no_near_component_candidate"
+    }
+  ],
+  "index_html": "index.html",
+  "schema_version": "a2.target_geometry_isolated_component_review_views.v1",
+  "status": "isolated_component_review_views_generated_review_only",
+  "summary": {
+    "component_entry_count": 26,
+    "entry_count": 75,
+    "review_point_candidate_entry_count": 20,
+    "surface_link_entry_count": 29
+  }
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="381.38" y="371.35" width="129.21" height="21.62" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>parent_surface_support_bounds</title></rect>
+<rect x="253.44" y="60.00" width="613.66" height="382.83" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.20" stroke-dasharray="2 3"><title>shell_constraint_bounds</title></rect>
+<text x="257.44" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
+<rect x="414.36" y="366.25" width="63.71" height="31.22" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>left_horizontal_tail_actuator_or_surface_component old_aabb</title></rect>
+<text x="418.36" y="379.25" font-size="10" font-family="monospace" fill="#7c3aed">left_horizontal_tail_actuator_or_surface_component old_aabb</text>
+<rect x="425.51" y="377.95" width="41.41" height="7.81" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>left_horizontal_tail_actuator_or_surface_component constrained_capsule</title></rect>
+<text x="429.51" y="390.95" font-size="10" font-family="monospace" fill="#0891b2">left_horizontal_tail_actuator_or_surface_component constrained_capsule</text>
+<polygon points="377.03,403.06 377.40,406.24 377.52,407.30 490.84,379.92 514.94,372.80 514.95,357.01 490.84,364.99" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
+<text x="453.08" y="388.47" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="234.54" y="61.91" width="330.36" height="496.18" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="254.36" y="91.68" width="290.72" height="436.64" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="302.56" y="137.77" width="194.33" height="187.89" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer candidate_binding</title></rect>
+<text x="306.56" y="150.77" font-size="10" font-family="monospace" fill="#7c3aed">mission_computer candidate_binding</text>
+<polygon points="244.58,527.63 246.90,540.68 259.48,557.15 268.42,557.32 539.96,557.15 552.54,540.68 554.87,527.63 445.94,321.16 434.60,307.72 423.27,298.88 411.49,292.90 399.72,291.52 387.95,292.90 376.18,298.88 364.84,307.72 353.51,321.16" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="395.52" y="412.82" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

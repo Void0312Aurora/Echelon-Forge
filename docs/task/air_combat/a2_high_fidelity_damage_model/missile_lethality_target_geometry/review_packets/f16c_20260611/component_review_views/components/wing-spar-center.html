@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>wing_spar_center isolated geometry view</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #111827;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header, section {
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+      margin: 0 0 18px;
+      padding: 18px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    h1 {
+      font-size: 25px;
+    }
+    .subtitle {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .decision-box {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 14px;
+    }
+    .decision-box strong {
+      display: block;
+      color: #0f172a;
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .decision-box p {
+      color: #1f2937;
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 4px 0 0;
+    }
+    ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 5px 12px;
+      margin: 0;
+      padding-left: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #334155;
+    }
+    .views {
+      display: grid;
+      gap: 18px;
+    }
+    figure {
+      margin: 0;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    figcaption {
+      color: #475569;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    a {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p><a href="../index.html">Back to isolated review index</a></p>
+    <h1>wing_spar_center</h1>
+    <p class="subtitle">component binding -&gt; center_fuselage</p>
+    <div class="decision-box">
+      <div><strong>Review question</strong><p>Should wing_spar_center remain a held cross-region structural semantic candidate?</p></div>
+      <div><strong>Look at</strong><p>Check the broad thin box across center fuselage and wing-root surfaces before assigning a single receiver.</p></div>
+      <div><strong>Decision needed</strong><p>Hold or split the semantic receiver before runtime projection; low overlap alone is not a bad-box verdict.</p></div>
+    </div>
+  </header>
+  <section>
+    <h2>Trace Details</h2>
+    <ul><li>component: wing_spar_center</li><li>system: wings</li><li>bound outer region: center_fuselage</li><li>review semantics: cross_region_structural_semantic_hold</li><li>review severity: review_only_hold</li><li>component center distance to region: 1.06379 m</li><li>anomalies: </li><li>geometry observations: low_outer_region_overlap</li><li>suppressed anomalies: low_outer_region_overlap</li><li>semantic regions: center_fuselage, left_wing_root, right_wing_root, left_wing, right_wing</li><li>side relation: {&quot;bound_region_center_y_m&quot;: 0.0, &quot;bound_region_center_y_sign&quot;: &quot;centerline_y&quot;, &quot;bound_region_declared_side&quot;: &quot;none&quot;, &quot;component_center_y_m&quot;: 0.0, &quot;component_center_y_sign&quot;: &quot;centerline_y&quot;, &quot;component_declared_side&quot;: &quot;none&quot;, &quot;side_sign_mismatch&quot;: false}</li><li>blocked region binding: {&quot;blocked&quot;: false, &quot;blocked_region_id&quot;: &quot;&quot;, &quot;preferred_region_ids&quot;: []}</li><li>review notes: wing_spar_center is a broad thin structural component crossing fuselage and wing-root semantics | low single-region overlap is held as a cross-region semantic candidate, not a bad box by itself | review-only hold, not accepted runtime damage integration | suppressed geometry observation: low_outer_region_overlap</li></ul>
+  </section>
+  <section class="views">
+    <figure><figcaption>top view</figcaption><img src="wing-spar-center_top.svg" alt="wing_spar_center top view"></figure><figure><figcaption>side view</figcaption><img src="wing-spar-center_side.svg" alt="wing_spar_center side view"></figure><figure><figcaption>front view</figcaption><img src="wing-spar-center_front.svg" alt="wing_spar_center front view"></figure>
+  </section>
+</main>
+</body>
+</html>

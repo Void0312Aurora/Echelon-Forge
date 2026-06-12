@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="92.90" y="340.34" width="118.03" height="219.66" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="117.69" y="371.09" width="68.46" height="158.16" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="102.74" y="218.30" width="98.36" height="174.57" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>nose_avionics_bay candidate_binding</title></rect>
+<text x="106.74" y="231.30" font-size="10" font-family="monospace" fill="#7c3aed">nose_avionics_bay candidate_binding</text>
+<polygon points="96.17,555.96 207.67,555.96 207.21,548.65 206.76,541.35 203.82,525.06 194.27,487.71 175.03,464.99 151.92,457.00 128.81,464.99 109.57,487.71 100.02,525.06 97.08,541.35 96.63,548.65" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="155.92" y="519.73" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<circle cx="151.92" cy="218.30" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>nose_axis_6m</title></circle>
+<text x="157.92" y="212.30" font-size="10" font-family="monospace" fill="#0f172a">2</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

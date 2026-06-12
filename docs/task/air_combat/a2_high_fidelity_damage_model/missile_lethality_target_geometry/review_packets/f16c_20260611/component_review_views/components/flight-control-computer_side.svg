@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
+<rect x="92.90" y="61.91" width="774.19" height="496.18" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="108.39" y="91.68" width="743.23" height="436.64" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="342.36" y="122.11" width="180.21" height="156.57" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer candidate_binding</title></rect>
+<text x="346.36" y="135.11" font-size="10" font-family="monospace" fill="#7c3aed">flight_control_computer candidate_binding</text>
+<polygon points="147.93,432.65 299.76,527.63 760.51,557.15 844.08,557.32 865.88,471.55 864.76,449.57 859.44,360.21 840.99,291.52 158.73,412.69 151.79,420.41 149.86,426.42" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="544.34" y="450.10" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

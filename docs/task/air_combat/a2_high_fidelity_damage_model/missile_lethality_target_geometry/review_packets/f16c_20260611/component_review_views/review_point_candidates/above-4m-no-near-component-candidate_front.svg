@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="234.54" y="394.25" width="330.36" height="165.11" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="254.36" y="404.16" width="290.72" height="145.30" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<polygon points="244.58,549.23 246.90,553.57 259.48,559.05 268.42,559.11 539.96,559.05 552.54,553.57 554.87,549.23 445.94,480.52 434.60,476.05 423.27,473.11 411.49,471.12 399.72,470.66 387.95,471.12 376.18,473.11 364.84,476.05 353.51,480.52" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="395.52" y="513.69" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<circle cx="399.72" cy="60.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>above_4m</title></circle>
+<text x="405.72" y="54.00" font-size="10" font-family="monospace" fill="#0f172a">9</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

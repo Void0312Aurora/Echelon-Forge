@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
+<rect x="92.90" y="195.75" width="162.42" height="364.25" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
+<rect x="112.39" y="228.54" width="123.44" height="298.68" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
+<rect x="118.64" y="308.49" width="110.94" height="141.65" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_canopy_surface_component candidate_binding</title></rect>
+<text x="122.64" y="321.49" font-size="10" font-family="monospace" fill="#7c3aed">dedicated_canopy_surface_component candidate_binding</text>
+<polygon points="101.78,466.68 102.68,484.18 108.31,517.52 114.89,539.76 233.33,539.76 239.91,517.52 245.54,484.18 246.44,466.68 224.48,326.00 219.08,292.09 218.63,289.60 211.11,262.36 202.19,242.37 193.27,228.33 183.69,219.18 174.11,215.99 164.53,219.18 154.95,228.33 146.03,242.37 137.11,262.36 129.62,289.60 129.17,292.09 123.74,326.00" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
+<text x="178.11" y="349.75" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
+<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

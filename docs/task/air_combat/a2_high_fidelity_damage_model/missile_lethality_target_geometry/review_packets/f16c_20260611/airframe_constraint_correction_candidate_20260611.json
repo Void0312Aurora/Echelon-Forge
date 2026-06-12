@@ -1,0 +1,6892 @@
+{
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "airframe_silhouette_constraint_diagnostic": true,
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "center_shift_candidate_not_applied": true,
+    "public_size_reference_seeded_geometry": true,
+    "real_weapon_pk_authority": false,
+    "runtime_active_component": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "runtime_schema_parse_ready_candidate": true,
+    "structural_breakup_or_debris_claim": false,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_internal_component_geometry": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-11",
+  "manual_review_queue": [
+    {
+      "priority": "high",
+      "question": "Review items with silhouette exposure before accepting their size or placement priors."
+    },
+    {
+      "priority": "high",
+      "question": "Apply center-shift candidates only after confirming the movement matches component semantics."
+    },
+    {
+      "priority": "medium",
+      "question": "Replace low-confidence engineering proxies with better dimensions before runtime activation."
+    }
+  ],
+  "rows": [
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "nose_radome",
+      "candidate_bounds": {
+        "center": [
+          4.187559,
+          0.0,
+          -0.52538
+        ],
+        "max": [
+          4.238359,
+          0.3683,
+          -0.28408
+        ],
+        "min": [
+          4.136759,
+          -0.3683,
+          -0.76668
+        ],
+        "span": [
+          0.1016,
+          0.7366,
+          0.4826
+        ]
+      },
+      "candidate_center_m": [
+        4.187559,
+        0.0,
+        -0.52538
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.3683,
+              -0.76668,
+              0.3683,
+              -0.28408
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              4.136759,
+              -0.76668,
+              4.238359,
+              -0.28408
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              4.136759,
+              -0.3683,
+              4.238359,
+              0.3683
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "apg68_radar_array",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "sensor_aperture_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            4.187559,
+            0.0,
+            -0.52538
+          ],
+          "max": [
+            4.238359,
+            0.3683,
+            -0.28408
+          ],
+          "min": [
+            4.136759,
+            -0.3683,
+            -0.76668
+          ],
+          "span": [
+            0.1016,
+            0.7366,
+            0.4826
+          ]
+        },
+        "center_m": [
+          4.187559,
+          0.0,
+          -0.52538
+        ],
+        "half_extents_m": [
+          0.0508,
+          0.3683,
+          0.2413
+        ],
+        "radii_m": [
+          0.0508,
+          0.3683,
+          0.2413
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.018911
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.3683,
+              -0.76668,
+              0.3683,
+              -0.28408
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              4.136759,
+              -0.76668,
+              4.238359,
+              -0.28408
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              4.136759,
+              -0.3683,
+              4.238359,
+              0.3683
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "apg68_radar_array",
+      "nominal_dimensions_m": [
+        0.1016,
+        0.7366,
+        0.4826
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "nose_radome",
+        "forward_fuselage"
+      ],
+      "parent_component_name": "apg68_radar_array",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_related_apg66_antenna_dimensions",
+      "size_evidence_level": "public_related_family_dimension_not_apg68_exact",
+      "system": "radar",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "forward_fuselage",
+      "candidate_bounds": {
+        "center": [
+          3.787559,
+          0.0,
+          -0.62538
+        ],
+        "max": [
+          4.412559,
+          0.254,
+          -0.05038
+        ],
+        "min": [
+          3.162559,
+          -0.254,
+          -1.20038
+        ],
+        "span": [
+          1.25,
+          0.508,
+          1.15
+        ]
+      },
+      "candidate_center_m": [
+        3.787559,
+        0.0,
+        -0.62538
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.20038,
+              0.254,
+              -0.05038
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -1.20038,
+              4.412559,
+              -0.05038
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -0.254,
+              4.412559,
+              0.254
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "cockpit_crew_station",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "crew_volume_receiver",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            3.787559,
+            0.0,
+            -0.62538
+          ],
+          "max": [
+            4.412559,
+            0.254,
+            -0.05038
+          ],
+          "min": [
+            3.162559,
+            -0.254,
+            -1.20038
+          ],
+          "span": [
+            1.25,
+            0.508,
+            1.15
+          ]
+        },
+        "center_m": [
+          3.787559,
+          0.0,
+          -0.62538
+        ],
+        "half_extents_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "radii_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.382358
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.20038,
+              0.254,
+              -0.05038
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -1.20038,
+              4.412559,
+              -0.05038
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -0.254,
+              4.412559,
+              0.254
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "cockpit_crew_station",
+      "nominal_dimensions_m": [
+        1.25,
+        0.508,
+        1.15
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "canopy",
+        "forward_fuselage"
+      ],
+      "parent_component_name": "cockpit_crew_station",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_aces_ii_seat_width_plus_crew_envelope_estimate",
+      "size_evidence_level": "public_partial_dimension_engineering_envelope",
+      "system": "cockpit",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "canopy",
+      "candidate_bounds": {
+        "center": [
+          3.41,
+          0.0,
+          -0.3
+        ],
+        "max": [
+          4.158,
+          0.33,
+          -0.202
+        ],
+        "min": [
+          2.662,
+          -0.33,
+          -0.398
+        ],
+        "span": [
+          1.496,
+          0.66,
+          0.196
+        ]
+      },
+      "candidate_center_m": [
+        3.41,
+        0.0,
+        -0.3
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.33,
+              -0.398,
+              0.33,
+              -0.202
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662,
+              -0.398,
+              4.158,
+              -0.202
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662,
+              -0.33,
+              4.158,
+              0.33
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "dedicated_canopy_surface_component",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "surface_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            3.41,
+            0.0,
+            -0.3
+          ],
+          "max": [
+            4.158,
+            0.33,
+            -0.202
+          ],
+          "min": [
+            2.662,
+            -0.33,
+            -0.398
+          ],
+          "span": [
+            1.496,
+            0.66,
+            0.196
+          ]
+        },
+        "center_m": [
+          3.41,
+          0.0,
+          -0.3
+        ],
+        "half_extents_m": [
+          0.748,
+          0.33,
+          0.098
+        ],
+        "radii_m": [
+          0.748,
+          0.33,
+          0.098
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.101328
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.33,
+              -0.398,
+              0.33,
+              -0.202
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662,
+              -0.398,
+              4.158,
+              -0.202
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662,
+              -0.33,
+              4.158,
+              0.33
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "dedicated_canopy_surface_component",
+      "nominal_dimensions_m": [
+        1.496,
+        0.66,
+        0.196
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "canopy"
+      ],
+      "parent_component_name": "dedicated_canopy_surface_component",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "mesh_semantic_surface_span",
+      "size_evidence_level": "asset_mesh_derived_surface_not_public_engineering_dimension",
+      "system": "cockpit",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "forward_fuselage",
+      "candidate_bounds": {
+        "center": [
+          5.287559,
+          0.0,
+          -0.82538
+        ],
+        "max": [
+          5.447833,
+          0.061976,
+          -0.753625
+        ],
+        "min": [
+          5.127285,
+          -0.061976,
+          -0.897135
+        ],
+        "span": [
+          0.320548,
+          0.123952,
+          0.14351
+        ]
+      },
+      "candidate_center_m": [
+        5.287559,
+        0.0,
+        -0.82538
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.897135,
+              0.061976,
+              -0.753625
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.127285,
+              -0.897135,
+              5.447833,
+              -0.753625
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.127285,
+              -0.061976,
+              5.447833,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "nose_avionics_bay",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "avionics_bay_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            5.287559,
+            0.0,
+            -0.82538
+          ],
+          "max": [
+            5.447833,
+            0.061976,
+            -0.753625
+          ],
+          "min": [
+            5.127285,
+            -0.061976,
+            -0.897135
+          ],
+          "span": [
+            0.320548,
+            0.123952,
+            0.14351
+          ]
+        },
+        "center_m": [
+          5.287559,
+          0.0,
+          -0.82538
+        ],
+        "half_extents_m": [
+          0.160274,
+          0.061976,
+          0.071755
+        ],
+        "shape": "obb",
+        "volume_m3": 0.005702
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.897135,
+              0.061976,
+              -0.753625
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.127285,
+              -0.897135,
+              5.447833,
+              -0.753625
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.127285,
+              -0.061976,
+              5.447833,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "nose_avionics_bay",
+      "nominal_dimensions_m": [
+        0.320548,
+        0.123952,
+        0.14351
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "forward_fuselage"
+      ],
+      "parent_component_name": "nose_avionics_bay",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+      "size_evidence_level": "standard_enclosure_proxy_not_true_f16_bay",
+      "system": "avionics",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "nose_radome",
+      "candidate_bounds": {
+        "center": [
+          5.287559,
+          0.0,
+          -0.82538
+        ],
+        "max": [
+          5.471709,
+          0.0762,
+          -0.720478
+        ],
+        "min": [
+          5.103409,
+          -0.0762,
+          -0.930282
+        ],
+        "span": [
+          0.3683,
+          0.1524,
+          0.209804
+        ]
+      },
+      "candidate_center_m": [
+        5.287559,
+        0.0,
+        -0.82538
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0762,
+              -0.930282,
+              0.0762,
+              -0.720478
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.103409,
+              -0.930282,
+              5.471709,
+              -0.720478
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.103409,
+              -0.0762,
+              5.471709,
+              0.0762
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "iff_interrogator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "small_avionics_receiver",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            5.287559,
+            0.0,
+            -0.82538
+          ],
+          "max": [
+            5.471709,
+            0.0762,
+            -0.720478
+          ],
+          "min": [
+            5.103409,
+            -0.0762,
+            -0.930282
+          ],
+          "span": [
+            0.3683,
+            0.1524,
+            0.209804
+          ]
+        },
+        "center_m": [
+          5.287559,
+          0.0,
+          -0.82538
+        ],
+        "half_extents_m": [
+          0.18415,
+          0.0762,
+          0.104902
+        ],
+        "radii_m": [
+          0.18415,
+          0.0762,
+          0.104902
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.006166
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0762,
+              -0.930282,
+              0.0762,
+              -0.720478
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.103409,
+              -0.930282,
+              5.471709,
+              -0.720478
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              5.103409,
+              -0.0762,
+              5.471709,
+              0.0762
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "iff_interrogator",
+      "nominal_dimensions_m": [
+        0.3683,
+        0.1524,
+        0.209804
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "nose_radome"
+      ],
+      "parent_component_name": "iff_interrogator",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_apx_family_lru_dimensions",
+      "size_evidence_level": "public_lru_dimension_related_f16_iff_family",
+      "system": "avionics",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -0.278842,
+          0.0,
+          -0.429797
+        ],
+        "max": [
+          1.021158,
+          0.45,
+          -0.069797
+        ],
+        "min": [
+          -1.578842,
+          -0.45,
+          -0.789797
+        ],
+        "span": [
+          2.6,
+          0.9,
+          0.72
+        ]
+      },
+      "candidate_center_m": [
+        -0.278842,
+        0.0,
+        -0.429797
+      ],
+      "candidate_center_shift_m": 0.171174,
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.93333,
+        "outside_sample_count": 1,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.45,
+              -0.789797,
+              0.45,
+              -0.069797
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 4,
+            "inside_sample_fraction": 0.8,
+            "outside_sample_count": 1,
+            "projected_bounds": [
+              -1.578842,
+              -0.789797,
+              1.021158,
+              -0.069797
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.578842,
+              -0.45,
+              1.021158,
+              0.45
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "center_fuselage_fuel_cell",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "fuel_cell_receiver",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -0.278842,
+            0.0,
+            -0.600971
+          ],
+          "max": [
+            1.021158,
+            0.45,
+            -0.240971
+          ],
+          "min": [
+            -1.578842,
+            -0.45,
+            -0.960971
+          ],
+          "span": [
+            2.6,
+            0.9,
+            0.72
+          ]
+        },
+        "center_m": [
+          -0.278842,
+          0.0,
+          -0.600971
+        ],
+        "half_extents_m": [
+          1.3,
+          0.45,
+          0.36
+        ],
+        "radii_m": [
+          1.3,
+          0.45,
+          0.36
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.882159
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.45,
+              -0.960971,
+              0.45,
+              -0.240971
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.578842,
+              -0.960971,
+              1.021158,
+              -0.240971
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.578842,
+              -0.45,
+              1.021158,
+              0.45
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "center_fuselage_fuel_cell",
+      "nominal_dimensions_m": [
+        2.6,
+        0.9,
+        0.72
+      ],
+      "outside_sample_reduction": -1,
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "center_fuselage_fuel_cell",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+      "size_evidence_level": "public_total_capacity_partition_estimate",
+      "system": "fuel",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          1.68794,
+          0.0,
+          -0.365384
+        ],
+        "max": [
+          1.848214,
+          0.061976,
+          -0.293629
+        ],
+        "min": [
+          1.527666,
+          -0.061976,
+          -0.437139
+        ],
+        "span": [
+          0.320548,
+          0.123952,
+          0.14351
+        ]
+      },
+      "candidate_center_m": [
+        1.68794,
+        0.0,
+        -0.365384
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.437139,
+              0.061976,
+              -0.293629
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.527666,
+              -0.437139,
+              1.848214,
+              -0.293629
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.527666,
+              -0.061976,
+              1.848214,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "mission_computer",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "avionics_box_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            1.68794,
+            0.0,
+            -0.365384
+          ],
+          "max": [
+            1.848214,
+            0.061976,
+            -0.293629
+          ],
+          "min": [
+            1.527666,
+            -0.061976,
+            -0.437139
+          ],
+          "span": [
+            0.320548,
+            0.123952,
+            0.14351
+          ]
+        },
+        "center_m": [
+          1.68794,
+          0.0,
+          -0.365384
+        ],
+        "half_extents_m": [
+          0.160274,
+          0.061976,
+          0.071755
+        ],
+        "shape": "obb",
+        "volume_m3": 0.005702
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.437139,
+              0.061976,
+              -0.293629
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.527666,
+              -0.437139,
+              1.848214,
+              -0.293629
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.527666,
+              -0.061976,
+              1.848214,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "mission_computer",
+      "nominal_dimensions_m": [
+        0.320548,
+        0.123952,
+        0.14351
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "mission_computer",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+      "size_evidence_level": "standard_enclosure_proxy_pending_f16_mmc_dimensions",
+      "system": "avionics",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.29108,
+          0.0,
+          -0.985042
+        ],
+        "max": [
+          -1.11963,
+          0.09525,
+          -0.888522
+        ],
+        "min": [
+          -1.46253,
+          -0.09525,
+          -1.081562
+        ],
+        "span": [
+          0.3429,
+          0.1905,
+          0.19304
+        ]
+      },
+      "candidate_center_m": [
+        -1.29108,
+        0.0,
+        -0.985042
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.09525,
+              -1.081562,
+              0.09525,
+              -0.888522
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.46253,
+              -1.081562,
+              -1.11963,
+              -0.888522
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.46253,
+              -0.09525,
+              -1.11963,
+              0.09525
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "data_link_terminal",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "small_avionics_receiver",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -1.29108,
+            0.0,
+            -0.985042
+          ],
+          "max": [
+            -1.11963,
+            0.09525,
+            -0.888522
+          ],
+          "min": [
+            -1.46253,
+            -0.09525,
+            -1.081562
+          ],
+          "span": [
+            0.3429,
+            0.1905,
+            0.19304
+          ]
+        },
+        "center_m": [
+          -1.29108,
+          0.0,
+          -0.985042
+        ],
+        "half_extents_m": [
+          0.17145,
+          0.09525,
+          0.09652
+        ],
+        "shape": "obb",
+        "volume_m3": 0.01261
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.09525,
+              -1.081562,
+              0.09525,
+              -0.888522
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.46253,
+              -1.081562,
+              -1.11963,
+              -0.888522
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.46253,
+              -0.09525,
+              -1.11963,
+              0.09525
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "data_link_terminal",
+      "nominal_dimensions_m": [
+        0.3429,
+        0.1905,
+        0.19304
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "data_link_terminal",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_mids_lvt_terminal_dimensions",
+      "size_evidence_level": "public_lru_dimension",
+      "system": "data_link",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -0.064081,
+          0.45,
+          -0.726398
+        ],
+        "max": [
+          0.096193,
+          0.511976,
+          -0.654643
+        ],
+        "min": [
+          -0.224355,
+          0.388024,
+          -0.798153
+        ],
+        "span": [
+          0.320548,
+          0.123952,
+          0.14351
+        ]
+      },
+      "candidate_center_m": [
+        -0.064081,
+        0.45,
+        -0.726398
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.388024,
+              -0.798153,
+              0.511976,
+              -0.654643
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.224355,
+              -0.798153,
+              0.096193,
+              -0.654643
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.224355,
+              0.388024,
+              0.096193,
+              0.511976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "flight_control_computer",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "avionics_box_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -0.064081,
+            0.45,
+            -0.726398
+          ],
+          "max": [
+            0.096193,
+            0.511976,
+            -0.654643
+          ],
+          "min": [
+            -0.224355,
+            0.388024,
+            -0.798153
+          ],
+          "span": [
+            0.320548,
+            0.123952,
+            0.14351
+          ]
+        },
+        "center_m": [
+          -0.064081,
+          0.45,
+          -0.726398
+        ],
+        "half_extents_m": [
+          0.160274,
+          0.061976,
+          0.071755
+        ],
+        "shape": "obb",
+        "volume_m3": 0.005702
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.388024,
+              -0.798153,
+              0.511976,
+              -0.654643
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.224355,
+              -0.798153,
+              0.096193,
+              -0.654643
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.224355,
+              0.388024,
+              0.096193,
+              0.511976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "flight_control_computer",
+      "nominal_dimensions_m": [
+        0.320548,
+        0.123952,
+        0.14351
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "flight_control_computer",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "standard_half_atr_avionics_enclosure_proxy",
+      "size_evidence_level": "standard_enclosure_proxy_pending_f16_flcc_dimensions",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "forward_fuselage",
+      "candidate_bounds": {
+        "center": [
+          2.6,
+          0.0,
+          0.01467
+        ],
+        "max": [
+          2.72446,
+          0.0889,
+          0.10357
+        ],
+        "min": [
+          2.47554,
+          -0.0889,
+          -0.07423
+        ],
+        "span": [
+          0.24892,
+          0.1778,
+          0.1778
+        ]
+      },
+      "candidate_center_m": [
+        2.6,
+        0.0,
+        0.01467
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.07423,
+              0.0889,
+              0.10357
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.07423,
+              2.72446,
+              0.10357
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "inertial_navigation_unit",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "small_avionics_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            2.6,
+            0.0,
+            0.01467
+          ],
+          "max": [
+            2.72446,
+            0.0889,
+            0.10357
+          ],
+          "min": [
+            2.47554,
+            -0.0889,
+            -0.07423
+          ],
+          "span": [
+            0.24892,
+            0.1778,
+            0.1778
+          ]
+        },
+        "center_m": [
+          2.6,
+          0.0,
+          0.01467
+        ],
+        "half_extents_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "radii_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.00412
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.07423,
+              0.0889,
+              0.10357
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.07423,
+              2.72446,
+              0.10357
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "inertial_navigation_unit",
+      "nominal_dimensions_m": [
+        0.24892,
+        0.1778,
+        0.1778
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "forward_fuselage"
+      ],
+      "parent_component_name": "inertial_navigation_unit",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_honeywell_h764g_egi_dimensions",
+      "size_evidence_level": "public_lru_dimension",
+      "system": "navigation",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "intake",
+      "candidate_bounds": {
+        "center": [
+          3.39,
+          0.0,
+          -0.64
+        ],
+        "max": [
+          3.89,
+          0.29,
+          -0.09
+        ],
+        "min": [
+          2.89,
+          -0.29,
+          -1.19
+        ],
+        "span": [
+          1.0,
+          0.58,
+          1.1
+        ]
+      },
+      "candidate_center_m": [
+        3.39,
+        0.0,
+        -0.64
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.29,
+              -1.19,
+              0.29,
+              -0.09
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.89,
+              -1.19,
+              3.89,
+              -0.09
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.89,
+              -0.29,
+              3.89,
+              0.29
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "dedicated_intake_lip_or_duct_component",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "duct_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            3.39,
+            0.0,
+            -0.64
+          ],
+          "max": [
+            3.89,
+            0.29,
+            -0.09
+          ],
+          "min": [
+            2.89,
+            -0.29,
+            -1.19
+          ],
+          "span": [
+            1.0,
+            0.58,
+            1.1
+          ]
+        },
+        "center_m": [
+          3.39,
+          0.0,
+          -0.64
+        ],
+        "half_extents_m": [
+          0.5,
+          0.29,
+          0.55
+        ],
+        "radii_m": [
+          0.5,
+          0.29,
+          0.55
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.334056
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.29,
+              -1.19,
+              0.29,
+              -0.09
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.89,
+              -1.19,
+              3.89,
+              -0.09
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.89,
+              -0.29,
+              3.89,
+              0.29
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "dedicated_intake_lip_or_duct_component",
+      "nominal_dimensions_m": [
+        1.0,
+        0.58,
+        1.1
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "intake"
+      ],
+      "parent_component_name": "dedicated_intake_lip_or_duct_component",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "mesh_semantic_intake_region_measurement",
+      "size_evidence_level": "asset_mesh_derived_duct_dimension_not_public_engineering_dimension",
+      "system": "engine",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -2.8,
+          -1e-06,
+          -0.296449
+        ],
+        "max": [
+          -2.575,
+          0.029999,
+          -0.266449
+        ],
+        "min": [
+          -3.025,
+          -0.030001,
+          -0.326449
+        ],
+        "span": [
+          0.45,
+          0.06,
+          0.06
+        ]
+      },
+      "candidate_center_m": [
+        -2.8,
+        -1e-06,
+        -0.296449
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.030001,
+              -0.326449,
+              0.029999,
+              -0.266449
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.025,
+              -0.326449,
+              -2.575,
+              -0.266449
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.025,
+              -0.030001,
+              -2.575,
+              0.029999
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "electrical_power_bus",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "electrical_bus_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.225,
+        "bounds": {
+          "center": [
+            -2.8,
+            -1e-06,
+            -0.296449
+          ],
+          "max": [
+            -2.575,
+            0.029999,
+            -0.266449
+          ],
+          "min": [
+            -3.025,
+            -0.030001,
+            -0.326449
+          ],
+          "span": [
+            0.45,
+            0.06,
+            0.06
+          ]
+        },
+        "center_m": [
+          -2.8,
+          -1e-06,
+          -0.296449
+        ],
+        "cylinder_half_length_m": 0.195,
+        "half_extents_m": [
+          0.225,
+          0.03,
+          0.03
+        ],
+        "radius_m": 0.03,
+        "shape": "capsule",
+        "volume_m3": 0.001216
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.030001,
+              -0.326449,
+              0.029999,
+              -0.266449
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.025,
+              -0.326449,
+              -2.575,
+              -0.266449
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.025,
+              -0.030001,
+              -2.575,
+              0.029999
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "electrical_power_bus",
+      "nominal_dimensions_m": [
+        0.45,
+        0.06,
+        0.06
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "electrical_power_bus",
+      "prior_axis": "x",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_bus_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "avionics",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "max": [
+          -1.382923,
+          0.59055,
+          0.036169
+        ],
+        "min": [
+          -6.003183,
+          -0.59055,
+          -1.144931
+        ],
+        "span": [
+          4.62026,
+          1.1811,
+          1.1811
+        ]
+      },
+      "candidate_center_m": [
+        -3.693053,
+        0.0,
+        -0.554381
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -1.144931,
+              -1.382923,
+              0.036169
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "engine_core",
+      "component_review_semantics": "cross_region_boundary_candidate_review_only",
+      "component_role": "cross_region_engine_receiver",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 2.31013,
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -1.382923,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -6.003183,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            4.62026,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "cylinder_half_length_m": 1.71958,
+        "half_extents_m": [
+          2.31013,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 4.630739
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -1.144931,
+              -1.382923,
+              0.036169
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "engine_core",
+      "nominal_dimensions_m": [
+        4.62026,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine",
+        "engine_nozzle",
+        "intake"
+      ],
+      "parent_component_name": "engine_core",
+      "prior_axis": "x",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_f110_ge_129_engine_dimensions",
+      "size_evidence_level": "public_engine_dimension",
+      "system": "engine",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "engine_nozzle",
+      "candidate_bounds": {
+        "center": [
+          -5.958771,
+          -0.2,
+          -0.7
+        ],
+        "max": [
+          -5.583771,
+          0.39055,
+          -0.10945
+        ],
+        "min": [
+          -6.333771,
+          -0.79055,
+          -1.29055
+        ],
+        "span": [
+          0.75,
+          1.1811,
+          1.1811
+        ]
+      },
+      "candidate_center_m": [
+        -5.958771,
+        -0.2,
+        -0.7
+      ],
+      "candidate_center_shift_m": 0.208771,
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.93333,
+        "outside_sample_count": 1,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.79055,
+              -1.29055,
+              0.39055,
+              -0.10945
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 4,
+            "inside_sample_fraction": 0.8,
+            "outside_sample_count": 1,
+            "projected_bounds": [
+              -6.333771,
+              -1.29055,
+              -5.583771,
+              -0.10945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.333771,
+              -0.79055,
+              -5.583771,
+              0.39055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "afterburner_nozzle",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "nozzle_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -5.75,
+            -0.2,
+            -0.7
+          ],
+          "max": [
+            -5.375,
+            0.39055,
+            -0.10945
+          ],
+          "min": [
+            -6.125,
+            -0.79055,
+            -1.29055
+          ],
+          "span": [
+            0.75,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -5.75,
+          -0.2,
+          -0.7
+        ],
+        "half_extents_m": [
+          0.375,
+          0.59055,
+          0.59055
+        ],
+        "radii_m": [
+          0.375,
+          0.59055,
+          0.59055
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.547814
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.79055,
+              -1.29055,
+              0.39055,
+              -0.10945
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.125,
+              -1.29055,
+              -5.375,
+              -0.10945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.125,
+              -0.79055,
+              -5.375,
+              0.39055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "afterburner_nozzle",
+      "nominal_dimensions_m": [
+        0.75,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": -1,
+      "owner_region_ids": [
+        "engine_nozzle",
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "afterburner_nozzle",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "f110_diameter_plus_nozzle_region_length_estimate",
+      "size_evidence_level": "public_engine_diameter_mesh_length_estimate",
+      "system": "engine",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -5.025768,
+          0.0,
+          -0.52713
+        ],
+        "max": [
+          -4.900768,
+          0.09,
+          -0.43713
+        ],
+        "min": [
+          -5.150768,
+          -0.09,
+          -0.61713
+        ],
+        "span": [
+          0.25,
+          0.18,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -5.025768,
+        0.0,
+        -0.52713
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.09,
+              -0.61713,
+              0.09,
+              -0.43713
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.150768,
+              -0.61713,
+              -4.900768,
+              -0.43713
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.150768,
+              -0.09,
+              -4.900768,
+              0.09
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "tail_hydraulic_pump",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "small_hydraulic_receiver",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -5.025768,
+            0.0,
+            -0.52713
+          ],
+          "max": [
+            -4.900768,
+            0.09,
+            -0.43713
+          ],
+          "min": [
+            -5.150768,
+            -0.09,
+            -0.61713
+          ],
+          "span": [
+            0.25,
+            0.18,
+            0.18
+          ]
+        },
+        "center_m": [
+          -5.025768,
+          0.0,
+          -0.52713
+        ],
+        "half_extents_m": [
+          0.125,
+          0.09,
+          0.09
+        ],
+        "shape": "obb",
+        "volume_m3": 0.0081
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.09,
+              -0.61713,
+              0.09,
+              -0.43713
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.150768,
+              -0.61713,
+              -4.900768,
+              -0.43713
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.150768,
+              -0.09,
+              -4.900768,
+              0.09
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "tail_hydraulic_pump",
+      "nominal_dimensions_m": [
+        0.25,
+        0.18,
+        0.18
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "tail_hydraulic_pump",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_pump_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "hydraulic",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -4.9,
+          0.0,
+          -0.25
+        ],
+        "max": [
+          -4.739726,
+          0.061976,
+          -0.178245
+        ],
+        "min": [
+          -5.060274,
+          -0.061976,
+          -0.321755
+        ],
+        "span": [
+          0.320548,
+          0.123952,
+          0.14351
+        ]
+      },
+      "candidate_center_m": [
+        -4.9,
+        0.0,
+        -0.25
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.321755,
+              0.061976,
+              -0.178245
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.060274,
+              -0.321755,
+              -4.739726,
+              -0.178245
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.060274,
+              -0.061976,
+              -4.739726,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "engine_fuel_control_unit",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "small_engine_control_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -4.9,
+            0.0,
+            -0.25
+          ],
+          "max": [
+            -4.739726,
+            0.061976,
+            -0.178245
+          ],
+          "min": [
+            -5.060274,
+            -0.061976,
+            -0.321755
+          ],
+          "span": [
+            0.320548,
+            0.123952,
+            0.14351
+          ]
+        },
+        "center_m": [
+          -4.9,
+          0.0,
+          -0.25
+        ],
+        "half_extents_m": [
+          0.160274,
+          0.061976,
+          0.071755
+        ],
+        "shape": "obb",
+        "volume_m3": 0.005702
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 27,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.061976,
+              -0.321755,
+              0.061976,
+              -0.178245
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.060274,
+              -0.321755,
+              -4.739726,
+              -0.178245
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.060274,
+              -0.061976,
+              -4.739726,
+              0.061976
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "engine_fuel_control_unit",
+      "nominal_dimensions_m": [
+        0.320548,
+        0.123952,
+        0.14351
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "engine_fuel_control_unit",
+      "prior_axis": "",
+      "prior_shape": "obb",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "standard_half_atr_control_box_proxy",
+      "size_evidence_level": "standard_enclosure_proxy_pending_f110_control_unit_dimensions",
+      "system": "engine",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "vertical_tail",
+      "candidate_bounds": {
+        "center": [
+          -6.974901,
+          0.0,
+          1.568794
+        ],
+        "max": [
+          -6.934901,
+          0.04,
+          1.793794
+        ],
+        "min": [
+          -7.014901,
+          -0.04,
+          1.343794
+        ],
+        "span": [
+          0.08,
+          0.08,
+          0.45
+        ]
+      },
+      "candidate_center_m": [
+        -6.974901,
+        0.0,
+        1.568794
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.04,
+              1.343794,
+              0.04,
+              1.793794
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -7.014901,
+              1.343794,
+              -6.934901,
+              1.793794
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -7.014901,
+              -0.04,
+              -6.934901,
+              0.04
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "rudder_actuator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "control_surface_actuator_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "z",
+        "axis_half_extent_m": 0.225,
+        "bounds": {
+          "center": [
+            -6.974901,
+            0.0,
+            1.568794
+          ],
+          "max": [
+            -6.934901,
+            0.04,
+            1.793794
+          ],
+          "min": [
+            -7.014901,
+            -0.04,
+            1.343794
+          ],
+          "span": [
+            0.08,
+            0.08,
+            0.45
+          ]
+        },
+        "center_m": [
+          -6.974901,
+          0.0,
+          1.568794
+        ],
+        "cylinder_half_length_m": 0.185,
+        "half_extents_m": [
+          0.04,
+          0.04,
+          0.225
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.002128
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.04,
+              1.343794,
+              0.04,
+              1.793794
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -7.014901,
+              1.343794,
+              -6.934901,
+              1.793794
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -7.014901,
+              -0.04,
+              -6.934901,
+              0.04
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "rudder_actuator",
+      "nominal_dimensions_m": [
+        0.08,
+        0.08,
+        0.45
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "vertical_tail"
+      ],
+      "parent_component_name": "rudder_actuator",
+      "prior_axis": "z",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_rudder_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "left_horizontal_tail",
+      "candidate_bounds": {
+        "center": [
+          -6.0,
+          -1.79,
+          -1.05
+        ],
+        "max": [
+          -5.96,
+          -1.465,
+          -1.01
+        ],
+        "min": [
+          -6.04,
+          -2.115,
+          -1.09
+        ],
+        "span": [
+          0.08,
+          0.65,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -6.0,
+        -1.79,
+        -1.05
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.115,
+              -1.09,
+              -1.465,
+              -1.01
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -1.09,
+              -5.96,
+              -1.01
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -2.115,
+              -5.96,
+              -1.465
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "left_horizontal_tail_actuator_or_surface_component",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "tail_surface_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.325,
+        "bounds": {
+          "center": [
+            -6.0,
+            -1.79,
+            -1.05
+          ],
+          "max": [
+            -5.96,
+            -1.465,
+            -1.01
+          ],
+          "min": [
+            -6.04,
+            -2.115,
+            -1.09
+          ],
+          "span": [
+            0.08,
+            0.65,
+            0.08
+          ]
+        },
+        "center_m": [
+          -6.0,
+          -1.79,
+          -1.05
+        ],
+        "cylinder_half_length_m": 0.285,
+        "half_extents_m": [
+          0.04,
+          0.325,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.003133
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.115,
+              -1.09,
+              -1.465,
+              -1.01
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -1.09,
+              -5.96,
+              -1.01
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -2.115,
+              -5.96,
+              -1.465
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "left_horizontal_tail_actuator_or_surface_component",
+      "nominal_dimensions_m": [
+        0.08,
+        0.65,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "left_horizontal_tail"
+      ],
+      "parent_component_name": "left_horizontal_tail_actuator_or_surface_component",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_tail_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "right_horizontal_tail",
+      "candidate_bounds": {
+        "center": [
+          -6.0,
+          1.79,
+          -1.05
+        ],
+        "max": [
+          -5.96,
+          2.115,
+          -1.01
+        ],
+        "min": [
+          -6.04,
+          1.465,
+          -1.09
+        ],
+        "span": [
+          0.08,
+          0.65,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -6.0,
+        1.79,
+        -1.05
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.465,
+              -1.09,
+              2.115,
+              -1.01
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -1.09,
+              -5.96,
+              -1.01
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              1.465,
+              -5.96,
+              2.115
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "right_horizontal_tail_actuator_or_surface_component",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "tail_surface_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.325,
+        "bounds": {
+          "center": [
+            -6.0,
+            1.79,
+            -1.05
+          ],
+          "max": [
+            -5.96,
+            2.115,
+            -1.01
+          ],
+          "min": [
+            -6.04,
+            1.465,
+            -1.09
+          ],
+          "span": [
+            0.08,
+            0.65,
+            0.08
+          ]
+        },
+        "center_m": [
+          -6.0,
+          1.79,
+          -1.05
+        ],
+        "cylinder_half_length_m": 0.285,
+        "half_extents_m": [
+          0.04,
+          0.325,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.003133
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.465,
+              -1.09,
+              2.115,
+              -1.01
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              -1.09,
+              -5.96,
+              -1.01
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.04,
+              1.465,
+              -5.96,
+              2.115
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "right_horizontal_tail_actuator_or_surface_component",
+      "nominal_dimensions_m": [
+        0.08,
+        0.65,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "right_horizontal_tail"
+      ],
+      "parent_component_name": "right_horizontal_tail_actuator_or_surface_component",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_tail_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "left_wing",
+      "candidate_bounds": {
+        "center": [
+          -1.4,
+          -2.3,
+          -0.985
+        ],
+        "max": [
+          -0.4,
+          -1.2,
+          -0.91
+        ],
+        "min": [
+          -2.4,
+          -3.4,
+          -1.06
+        ],
+        "span": [
+          2.0,
+          2.2,
+          0.15
+        ]
+      },
+      "candidate_center_m": [
+        -1.4,
+        -2.3,
+        -0.985
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.4,
+              -1.06,
+              -1.2,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -1.06,
+              -0.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -3.4,
+              -0.4,
+              -1.2
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "left_wing_fuel_cell",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "wing_fuel_cell_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -1.4,
+            -2.3,
+            -0.985
+          ],
+          "max": [
+            -0.4,
+            -1.2,
+            -0.91
+          ],
+          "min": [
+            -2.4,
+            -3.4,
+            -1.06
+          ],
+          "span": [
+            2.0,
+            2.2,
+            0.15
+          ]
+        },
+        "center_m": [
+          -1.4,
+          -2.3,
+          -0.985
+        ],
+        "half_extents_m": [
+          1.0,
+          1.1,
+          0.075
+        ],
+        "radii_m": [
+          1.0,
+          1.1,
+          0.075
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.345575
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.4,
+              -1.06,
+              -1.2,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -1.06,
+              -0.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -3.4,
+              -0.4,
+              -1.2
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "left_wing_fuel_cell",
+      "nominal_dimensions_m": [
+        2.0,
+        2.2,
+        0.15
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "left_wing"
+      ],
+      "parent_component_name": "left_wing_fuel_cell",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+      "size_evidence_level": "public_total_capacity_partition_estimate",
+      "system": "fuel",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "right_wing",
+      "candidate_bounds": {
+        "center": [
+          -1.4,
+          2.3,
+          -0.985
+        ],
+        "max": [
+          -0.4,
+          3.4,
+          -0.91
+        ],
+        "min": [
+          -2.4,
+          1.2,
+          -1.06
+        ],
+        "span": [
+          2.0,
+          2.2,
+          0.15
+        ]
+      },
+      "candidate_center_m": [
+        -1.4,
+        2.3,
+        -0.985
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.2,
+              -1.06,
+              3.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -1.06,
+              -0.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              1.2,
+              -0.4,
+              3.4
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "right_wing_fuel_cell",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "wing_fuel_cell_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -1.4,
+            2.3,
+            -0.985
+          ],
+          "max": [
+            -0.4,
+            3.4,
+            -0.91
+          ],
+          "min": [
+            -2.4,
+            1.2,
+            -1.06
+          ],
+          "span": [
+            2.0,
+            2.2,
+            0.15
+          ]
+        },
+        "center_m": [
+          -1.4,
+          2.3,
+          -0.985
+        ],
+        "half_extents_m": [
+          1.0,
+          1.1,
+          0.075
+        ],
+        "radii_m": [
+          1.0,
+          1.1,
+          0.075
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.345575
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.2,
+              -1.06,
+              3.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              -1.06,
+              -0.4,
+              -0.91
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.4,
+              1.2,
+              -0.4,
+              3.4
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "right_wing_fuel_cell",
+      "nominal_dimensions_m": [
+        2.0,
+        2.2,
+        0.15
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "right_wing"
+      ],
+      "parent_component_name": "right_wing_fuel_cell",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "f16_internal_fuel_capacity_partition_estimate",
+      "size_evidence_level": "public_total_capacity_partition_estimate",
+      "system": "fuel",
+      "triage_status": "inside_airframe_candidate"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "left_wing",
+      "candidate_bounds": {
+        "center": [
+          -2.342176,
+          -2.723827,
+          -0.985
+        ],
+        "max": [
+          -2.302176,
+          -2.498827,
+          -0.945
+        ],
+        "min": [
+          -2.382176,
+          -2.948827,
+          -1.025
+        ],
+        "span": [
+          0.08,
+          0.45,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -2.342176,
+        -2.723827,
+        -0.985
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.948827,
+              -1.025,
+              -2.498827,
+              -0.945
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382176,
+              -1.025,
+              -2.302176,
+              -0.945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382176,
+              -2.948827,
+              -2.302176,
+              -2.498827
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "left_aileron_actuator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "control_surface_actuator_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.225,
+        "bounds": {
+          "center": [
+            -2.342176,
+            -2.723827,
+            -0.985
+          ],
+          "max": [
+            -2.302176,
+            -2.498827,
+            -0.945
+          ],
+          "min": [
+            -2.382176,
+            -2.948827,
+            -1.025
+          ],
+          "span": [
+            0.08,
+            0.45,
+            0.08
+          ]
+        },
+        "center_m": [
+          -2.342176,
+          -2.723827,
+          -0.985
+        ],
+        "cylinder_half_length_m": 0.185,
+        "half_extents_m": [
+          0.04,
+          0.225,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.002128
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.948827,
+              -1.025,
+              -2.498827,
+              -0.945
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382176,
+              -1.025,
+              -2.302176,
+              -0.945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382176,
+              -2.948827,
+              -2.302176,
+              -2.498827
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "left_aileron_actuator",
+      "nominal_dimensions_m": [
+        0.08,
+        0.45,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "left_wing"
+      ],
+      "parent_component_name": "left_aileron_actuator",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_aileron_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "right_wing",
+      "candidate_bounds": {
+        "center": [
+          -2.342168,
+          2.723775,
+          -0.985
+        ],
+        "max": [
+          -2.302168,
+          2.948775,
+          -0.945
+        ],
+        "min": [
+          -2.382168,
+          2.498775,
+          -1.025
+        ],
+        "span": [
+          0.08,
+          0.45,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -2.342168,
+        2.723775,
+        -0.985
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.498775,
+              -1.025,
+              2.948775,
+              -0.945
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382168,
+              -1.025,
+              -2.302168,
+              -0.945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382168,
+              2.498775,
+              -2.302168,
+              2.948775
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "right_aileron_actuator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "control_surface_actuator_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.225,
+        "bounds": {
+          "center": [
+            -2.342168,
+            2.723775,
+            -0.985
+          ],
+          "max": [
+            -2.302168,
+            2.948775,
+            -0.945
+          ],
+          "min": [
+            -2.382168,
+            2.498775,
+            -1.025
+          ],
+          "span": [
+            0.08,
+            0.45,
+            0.08
+          ]
+        },
+        "center_m": [
+          -2.342168,
+          2.723775,
+          -0.985
+        ],
+        "cylinder_half_length_m": 0.185,
+        "half_extents_m": [
+          0.04,
+          0.225,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.002128
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.498775,
+              -1.025,
+              2.948775,
+              -0.945
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382168,
+              -1.025,
+              -2.302168,
+              -0.945
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.382168,
+              2.498775,
+              -2.302168,
+              2.948775
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "right_aileron_actuator",
+      "nominal_dimensions_m": [
+        0.08,
+        0.45,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "right_wing"
+      ],
+      "parent_component_name": "right_aileron_actuator",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_aileron_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          3.3,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          -3.3,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          6.6,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        0.0,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.3,
+              -1.075043,
+              3.3,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -3.3,
+              -1.002842,
+              3.3
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "cross_region_structural_receiver",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 3.3,
+        "bounds": {
+          "center": [
+            -1.092842,
+            0.0,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            3.3,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            -3.3,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            6.6,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "cylinder_half_length_m": 3.21,
+        "half_extents_m": [
+          0.09,
+          3.3,
+          0.09
+        ],
+        "radius_m": 0.09,
+        "shape": "capsule",
+        "volume_m3": 0.166423
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.3,
+              -1.075043,
+              3.3,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -3.3,
+              -1.002842,
+              3.3
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center",
+      "nominal_dimensions_m": [
+        0.18,
+        6.6,
+        0.18
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "center_fuselage",
+        "left_wing_root",
+        "right_wing_root",
+        "left_wing",
+        "right_wing"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "center_wing_box_runtime_span_with_wing_root_mesh_center",
+      "size_evidence_level": "cross_region_structure_proxy_pending_true_spar_dimensions",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "left_wing_root",
+      "candidate_bounds": {
+        "center": [
+          -0.2,
+          -1.100915,
+          -0.949957
+        ],
+        "max": [
+          -0.16,
+          -0.825915,
+          -0.909957
+        ],
+        "min": [
+          -0.24,
+          -1.375915,
+          -0.989957
+        ],
+        "span": [
+          0.08,
+          0.55,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -0.2,
+        -1.100915,
+        -0.949957
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.375915,
+              -0.989957,
+              -0.825915,
+              -0.909957
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -0.989957,
+              -0.16,
+              -0.909957
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -1.375915,
+              -0.16,
+              -0.825915
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "left_leading_edge_flap_actuator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "control_surface_actuator_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.275,
+        "bounds": {
+          "center": [
+            -0.2,
+            -1.100915,
+            -0.949957
+          ],
+          "max": [
+            -0.16,
+            -0.825915,
+            -0.909957
+          ],
+          "min": [
+            -0.24,
+            -1.375915,
+            -0.989957
+          ],
+          "span": [
+            0.08,
+            0.55,
+            0.08
+          ]
+        },
+        "center_m": [
+          -0.2,
+          -1.100915,
+          -0.949957
+        ],
+        "cylinder_half_length_m": 0.235,
+        "half_extents_m": [
+          0.04,
+          0.275,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.002631
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.375915,
+              -0.989957,
+              -0.825915,
+              -0.909957
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -0.989957,
+              -0.16,
+              -0.909957
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -1.375915,
+              -0.16,
+              -0.825915
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "left_leading_edge_flap_actuator",
+      "nominal_dimensions_m": [
+        0.08,
+        0.55,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "left_wing_root"
+      ],
+      "parent_component_name": "left_leading_edge_flap_actuator",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_lef_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "right_wing_root",
+      "candidate_bounds": {
+        "center": [
+          -0.2,
+          1.100914,
+          -0.949957
+        ],
+        "max": [
+          -0.16,
+          1.375914,
+          -0.909957
+        ],
+        "min": [
+          -0.24,
+          0.825914,
+          -0.989957
+        ],
+        "span": [
+          0.08,
+          0.55,
+          0.08
+        ]
+      },
+      "candidate_center_m": [
+        -0.2,
+        1.100914,
+        -0.949957
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.825914,
+              -0.989957,
+              1.375914,
+              -0.909957
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -0.989957,
+              -0.16,
+              -0.909957
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              0.825914,
+              -0.16,
+              1.375914
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "right_leading_edge_flap_actuator",
+      "component_review_semantics": "candidate_direct_region_binding",
+      "component_role": "control_surface_actuator_receiver",
+      "constraint_status": "already_inside_whole_airframe",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.275,
+        "bounds": {
+          "center": [
+            -0.2,
+            1.100914,
+            -0.949957
+          ],
+          "max": [
+            -0.16,
+            1.375914,
+            -0.909957
+          ],
+          "min": [
+            -0.24,
+            0.825914,
+            -0.989957
+          ],
+          "span": [
+            0.08,
+            0.55,
+            0.08
+          ]
+        },
+        "center_m": [
+          -0.2,
+          1.100914,
+          -0.949957
+        ],
+        "cylinder_half_length_m": 0.235,
+        "half_extents_m": [
+          0.04,
+          0.275,
+          0.04
+        ],
+        "radius_m": 0.04,
+        "shape": "capsule",
+        "volume_m3": 0.002631
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.825914,
+              -0.989957,
+              1.375914,
+              -0.909957
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              -0.989957,
+              -0.16,
+              -0.909957
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.24,
+              0.825914,
+              -0.16,
+              1.375914
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "right_leading_edge_flap_actuator",
+      "nominal_dimensions_m": [
+        0.08,
+        0.55,
+        0.08
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "right_wing_root"
+      ],
+      "parent_component_name": "right_leading_edge_flap_actuator",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "replace_low_confidence_engineering_proxy_with_better_size_source",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "engineering_proxy_no_public_f16_lef_actuator_dimensions",
+      "size_evidence_level": "low_confidence_engineering_proxy",
+      "system": "flight_control",
+      "triage_status": "inside_airframe_low_confidence_size_review"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -5.025512,
+          0.0,
+          -0.554381
+        ],
+        "max": [
+          -4.255469,
+          0.59055,
+          0.036169
+        ],
+        "min": [
+          -5.795555,
+          -0.59055,
+          -1.144931
+        ],
+        "span": [
+          1.540086,
+          1.1811,
+          1.1811
+        ]
+      },
+      "candidate_center_m": [
+        -5.025512,
+        0.0,
+        -0.554381
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.795555,
+              -1.144931,
+              -4.255469,
+              0.036169
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.795555,
+              -0.59055,
+              -4.255469,
+              0.59055
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "engine_core_afterburner_segment",
+      "component_review_semantics": "cross_region_boundary_candidate_review_only",
+      "component_role": "aft_afterburner_and_nozzle_overlap_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.770043,
+        "bounds": {
+          "center": [
+            -5.025512,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -4.255468,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -5.795555,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            1.540087,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -5.025512,
+          0.0,
+          -0.554381
+        ],
+        "cylinder_half_length_m": 0.179493,
+        "half_extents_m": [
+          0.770043,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 1.256014
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.795555,
+              -1.144931,
+              -4.255468,
+              0.036169
+            ],
+            "sample_count": 9,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -5.795555,
+              -0.59055,
+              -4.255468,
+              0.59055
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "engine_core_afterburner_segment",
+      "nominal_dimensions_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine",
+        "engine_nozzle"
+      ],
+      "parent_component_name": "engine_core",
+      "prior_axis": "x",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R18_promoted_R17_segmented_engine_afterburner_capsule_with_center_shift",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "engine",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "max": [
+          -2.92301,
+          0.59055,
+          0.036169
+        ],
+        "min": [
+          -4.463096,
+          -0.59055,
+          -1.144931
+        ],
+        "span": [
+          1.540086,
+          1.1811,
+          1.1811
+        ]
+      },
+      "candidate_center_m": [
+        -3.693053,
+        0.0,
+        -0.554381
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -4.463096,
+              -1.144931,
+              -2.92301,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -4.463096,
+              -0.59055,
+              -2.92301,
+              0.59055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "engine_core_hot_section_segment",
+      "component_review_semantics": "cross_region_boundary_candidate_review_only",
+      "component_role": "main_core_hot_section_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -2.92301,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -4.463096,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            1.540087,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "half_extents_m": [
+          0.770043,
+          0.59055,
+          0.59055
+        ],
+        "radii_m": [
+          0.770043,
+          0.59055,
+          0.59055
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 1.124908
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -4.463096,
+              -1.144931,
+              -2.92301,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -4.463096,
+              -0.59055,
+              -2.92301,
+              0.59055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "engine_core_hot_section_segment",
+      "nominal_dimensions_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "engine_core",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R18_promoted_R17_segmented_engine_hot_section_ellipsoid",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "engine",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_bounds": {
+        "center": [
+          -2.352966,
+          0.0,
+          -0.554381
+        ],
+        "max": [
+          -1.582923,
+          0.59055,
+          0.036169
+        ],
+        "min": [
+          -3.123009,
+          -0.59055,
+          -1.144931
+        ],
+        "span": [
+          1.540086,
+          1.1811,
+          1.1811
+        ]
+      },
+      "candidate_center_m": [
+        -2.352966,
+        0.0,
+        -0.554381
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.123009,
+              -1.144931,
+              -1.582923,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.123009,
+              -0.59055,
+              -1.582923,
+              0.59055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "engine_core_forward_compressor_segment",
+      "component_review_semantics": "cross_region_boundary_candidate_review_only",
+      "component_role": "forward_compressor_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -2.352966,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -1.582923,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -3.12301,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            1.540087,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -2.352966,
+          0.0,
+          -0.554381
+        ],
+        "half_extents_m": [
+          0.770043,
+          0.59055,
+          0.59055
+        ],
+        "radii_m": [
+          0.770043,
+          0.59055,
+          0.59055
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 1.124908
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.12301,
+              -1.144931,
+              -1.582923,
+              0.036169
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -3.12301,
+              -0.59055,
+              -1.582923,
+              0.59055
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "engine_core_forward_compressor_segment",
+      "nominal_dimensions_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "engine_core",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "public_f110_length_split_into_review_segments_preserving_total_span;R21_promoted_forward_compressor_local_silhouette_clearance_ellipsoid",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "engine",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          -2.017751,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          -1.092751,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          -2.942751,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          1.85,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        -2.017751,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.442751,
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.93333,
+        "outside_sample_count": 1,
+        "outside_view_count": 1,
+        "outside_views": [
+          "front"
+        ],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 4,
+            "inside_sample_fraction": 0.8,
+            "outside_sample_count": 1,
+            "projected_bounds": [
+              -2.942751,
+              -1.075043,
+              -1.092751,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -2.942751,
+              -1.002842,
+              -1.092751
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center_left_inner_wing_segment",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "left_inner_wing_spar_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -1.092842,
+            -1.575,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            -0.65,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            -2.5,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            1.85,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          -1.575,
+          -0.985043
+        ],
+        "half_extents_m": [
+          0.09,
+          0.925,
+          0.09
+        ],
+        "radii_m": [
+          0.09,
+          0.925,
+          0.09
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.031385
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -2.5,
+              -1.075043,
+              -0.65,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -2.5,
+              -1.002842,
+              -0.65
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center_left_inner_wing_segment",
+      "nominal_dimensions_m": [
+        0.18,
+        1.85,
+        0.18
+      ],
+      "outside_sample_reduction": -1,
+      "owner_region_ids": [
+        "left_wing"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_left_inner_wing_spar_latest_centerline_ellipsoid",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          -1.085735,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          -0.785735,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          -1.385735,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          0.6,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        -1.085735,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.064265,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.385735,
+              -1.075043,
+              -0.785735,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.385735,
+              -1.002842,
+              -0.785735
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center_left_root_segment",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "left_wing_root_spar_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.3,
+        "bounds": {
+          "center": [
+            -1.092842,
+            -1.15,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            -0.85,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            -1.45,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            0.6,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          -1.15,
+          -0.985043
+        ],
+        "cylinder_half_length_m": 0.21,
+        "half_extents_m": [
+          0.09,
+          0.3,
+          0.09
+        ],
+        "radius_m": 0.09,
+        "shape": "capsule",
+        "volume_m3": 0.013741
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.45,
+              -1.075043,
+              -0.85,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.45,
+              -1.002842,
+              -0.85
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center_left_root_segment",
+      "nominal_dimensions_m": [
+        0.18,
+        0.6,
+        0.18
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "left_wing_root"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          0.85,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          -0.85,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          1.7,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        0.0,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.0,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.85,
+              -1.075043,
+              0.85,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -0.85,
+              -1.002842,
+              0.85
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center_carrythrough_segment",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "center_fuselage_carrythrough_box_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.85,
+        "bounds": {
+          "center": [
+            -1.092842,
+            0.0,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            0.85,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            -0.85,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            1.7,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "cylinder_half_length_m": 0.76,
+        "half_extents_m": [
+          0.09,
+          0.85,
+          0.09
+        ],
+        "radius_m": 0.09,
+        "shape": "capsule",
+        "volume_m3": 0.041733
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.85,
+              -1.075043,
+              0.85,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -0.85,
+              -1.002842,
+              0.85
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center_carrythrough_segment",
+      "nominal_dimensions_m": [
+        0.18,
+        1.7,
+        0.18
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          1.085734,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          1.385734,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          0.785734,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          0.6,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        1.085734,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.064266,
+      "candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.785734,
+              -1.075043,
+              1.385734,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              0.785734,
+              -1.002842,
+              1.385734
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center_right_root_segment",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "right_wing_root_spar_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "axis": "y",
+        "axis_half_extent_m": 0.3,
+        "bounds": {
+          "center": [
+            -1.092842,
+            1.15,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            1.45,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            0.85,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            0.6,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          1.15,
+          -0.985043
+        ],
+        "cylinder_half_length_m": 0.21,
+        "half_extents_m": [
+          0.09,
+          0.3,
+          0.09
+        ],
+        "radius_m": 0.09,
+        "shape": "capsule",
+        "volume_m3": 0.013741
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 23,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.85,
+              -1.075043,
+              1.45,
+              -0.895043
+            ],
+            "sample_count": 9,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 9,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              0.85,
+              -1.002842,
+              1.45
+            ],
+            "sample_count": 9,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center_right_root_segment",
+      "nominal_dimensions_m": [
+        0.18,
+        0.6,
+        0.18
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "right_wing_root"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "y",
+      "prior_shape": "capsule",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    },
+    {
+      "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
+      "bound_region_id": "center_fuselage",
+      "candidate_bounds": {
+        "center": [
+          -1.092842,
+          2.017659,
+          -0.985043
+        ],
+        "max": [
+          -1.002842,
+          2.942659,
+          -0.895043
+        ],
+        "min": [
+          -1.182842,
+          1.092659,
+          -1.075043
+        ],
+        "span": [
+          0.18,
+          1.85,
+          0.18
+        ]
+      },
+      "candidate_center_m": [
+        -1.092842,
+        2.017659,
+        -0.985043
+      ],
+      "candidate_center_shift_m": 0.442659,
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.93333,
+        "outside_sample_count": 1,
+        "outside_view_count": 1,
+        "outside_views": [
+          "front"
+        ],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 4,
+            "inside_sample_fraction": 0.8,
+            "outside_sample_count": 1,
+            "projected_bounds": [
+              1.092659,
+              -1.075043,
+              2.942659,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              1.092659,
+              -1.002842,
+              2.942659
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "component_name": "wing_spar_center_right_inner_wing_segment",
+      "component_review_semantics": "cross_region_structural_semantic_hold",
+      "component_role": "right_inner_wing_spar_proxy",
+      "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            -1.092842,
+            1.575,
+            -0.985043
+          ],
+          "max": [
+            -1.002842,
+            2.5,
+            -0.895043
+          ],
+          "min": [
+            -1.182842,
+            0.65,
+            -1.075043
+          ],
+          "span": [
+            0.18,
+            1.85,
+            0.18
+          ]
+        },
+        "center_m": [
+          -1.092842,
+          1.575,
+          -0.985043
+        ],
+        "half_extents_m": [
+          0.09,
+          0.925,
+          0.09
+        ],
+        "radii_m": [
+          0.09,
+          0.925,
+          0.09
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.031385
+      },
+      "current_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 15,
+        "views": {
+          "front": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              0.65,
+              -1.075043,
+              2.5,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "front"
+          },
+          "side": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              -1.075043,
+              -1.002842,
+              -0.895043
+            ],
+            "sample_count": 5,
+            "view": "side"
+          },
+          "top": {
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 5,
+            "inside_sample_fraction": 1.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -1.182842,
+              0.65,
+              -1.002842,
+              2.5
+            ],
+            "sample_count": 5,
+            "view": "top"
+          }
+        }
+      },
+      "item_id": "wing_spar_center_right_inner_wing_segment",
+      "nominal_dimensions_m": [
+        0.18,
+        1.85,
+        0.18
+      ],
+      "outside_sample_reduction": -1,
+      "owner_region_ids": [
+        "right_wing"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "prior_axis": "",
+      "prior_shape": "ellipsoid",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
+      "record_type": "held_split_segment",
+      "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
+      "size_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_right_inner_wing_spar_latest_centerline_ellipsoid",
+      "size_evidence_level": "held_segment_split_proxy",
+      "system": "wings",
+      "triage_status": "inside_airframe_cross_region_ownership_held"
+    }
+  ],
+  "schema_version": "a2.target_geometry_airframe_constraint_correction_candidate.v1",
+  "source_cross_region_held_segment_schema_version": "a2.target_geometry_cross_region_held_component_segments.v1",
+  "source_fine_proxy_schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
+  "source_internal_component_prior_schema_version": "a2.target_geometry_internal_component_prior_candidate.v1",
+  "status": "airframe_constraint_correction_candidate_generated_review_only",
+  "summary": {
+    "center_shift_reduces_item_count": 0,
+    "center_shift_resolves_item_count": 0,
+    "held_split_segment_count": 8,
+    "item_count": 34,
+    "low_confidence_inside_item_count": 9,
+    "receiver_prior_count": 26,
+    "review_status": "manual_review_required_before_activation",
+    "runtime_active_component_count": 0,
+    "silhouette_exposure_item_count": 0,
+    "size_or_shape_review_item_count": 0,
+    "triage_status_counts": {
+      "inside_airframe_candidate": 15,
+      "inside_airframe_cross_region_ownership_held": 10,
+      "inside_airframe_low_confidence_size_review": 9
+    }
+  }
+}

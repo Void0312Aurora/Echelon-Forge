@@ -1,0 +1,28 @@
+{
+  "authority_boundary": {
+    "runtime_active_component": false,
+    "runtime_damage_model": false,
+    "true_internal_component_geometry": false
+  },
+  "entries": [],
+  "index_html": "index.html",
+  "latest_component_atlas_svg": [],
+  "overview_svg": {
+    "front": "overview_latest_front.svg",
+    "side": "overview_latest_side.svg",
+    "top": "overview_latest_top.svg"
+  },
+  "overview_triptych_svg": "overview_latest_triptych.svg",
+  "schema_version": "a2.target_geometry_subcomponent_shape_placement_views.v1",
+  "status": "subcomponent_shape_placement_views_generated_review_only",
+  "summary": {
+    "centerline_candidate_resolved_entry_count": 0,
+    "entry_count": 0,
+    "latest_component_atlas_entry_count": 0,
+    "latest_component_atlas_part_count": 0,
+    "overview_view_count": 3,
+    "resolved_entry_count": 0,
+    "shape_candidate_resolved_entry_count": 0,
+    "unresolved_entry_count": 0
+  }
+}
