@@ -61,7 +61,7 @@ def test_wp22_default_factory_uses_explicit_spawn_compatibility_helper() -> None
 def test_wp22_default_factory_spawn_body_routes_legacy_seed_through_named_seam() -> None:
   text = _header_text()
 
-  spawn_anchor = text.index("flecs::entity spawn(flecs::world& ecs,")
+  spawn_anchor = text.index("flecs::entity spawn(")
   spawn_body = text[spawn_anchor:]
 
   seam_call = "default_unit_factory_detail::apply_spawn_compatibility_control_state_seed("

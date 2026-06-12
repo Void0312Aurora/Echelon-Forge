@@ -112,7 +112,7 @@ Stable typed spawn rejection reasons now include:
 - `typed_platform_spawn_requires_resolved_spawn_plan`
 - `typed_platform_spawn_resolved_plan_invalid`
 - `typed_platform_spawn_requires_typed_platform_request_kind`
-- `typed_platform_spawn_requires_type_name_compatibility_path`
+- `typed_platform_spawn_requires_type_name_projection_path`
 - `typed_platform_spawn_evidence_required`
 - `typed_platform_spawn_world_index_out_of_range`
 - `typed_platform_spawn_materialization_failed`

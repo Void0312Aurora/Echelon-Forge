@@ -29,9 +29,9 @@ def test_wp14_platform_capability_header_declares_platform_vocabulary_and_not_ba
     "survivability",
     "command",
     "doctrine",
-    "type_name_compatibility",
+    "type_name_projection",
     "typed_platform_request",
-    "factory_compatibility_materialization",
+    "factory_projection_materialization",
     "resolved_spawn_plan_bridge",
     "platform_capability_family_not_maintained",
     "resolved_spawn_plan_contains_unsupported_required_capability",
@@ -98,12 +98,12 @@ def test_wp14_platform_capability_valid_bundle_and_resolved_plan_validate_cleanl
 
       ResolvedPlatformSpawnPlan plan{};
       plan.plan_id = "resolved_plan.f16c.block50";
-      plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+      plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameProjection);
       plan.source_type_name = "F-16C_Block50";
       plan.capability_bundle_id = bundle.bundle_id;
       plan.resolved_platform_definition_ref = "unit_definition:F-16C_Block50";
       plan.materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+        std::string(kPlatformMaterializationStrategyFactoryProjection);
       plan.template_evidence_ref = bundle.template_evidence_ref;
       plan.resolution_evidence_ref = "resolved_bundle_from_type_name";
       plan.materialization_evidence_ref = "factory_materialization_bridge";
@@ -112,7 +112,7 @@ def test_wp14_platform_capability_valid_bundle_and_resolved_plan_validate_cleanl
         "factory_materialization_bridge"
       };
       plan.resolved_capabilities = bundle.capabilities;
-      plan.compatibility_path_preserved = true;
+      plan.type_name_projection_preserved = true;
       plan.admitted = true;
 
       const auto plan_result = validate_resolved_platform_spawn_plan(plan);
@@ -226,13 +226,13 @@ def test_wp14_resolved_spawn_plan_rejects_unsupported_required_capabilities_and_
       ResolvedPlatformSpawnPlan admitted{};
       admitted.plan_id = "resolved_plan.ddg51";
       admitted.source_request_kind =
-        std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        std::string(kPlatformSpawnRequestKindTypeNameProjection);
       admitted.source_type_name = "DDG-51_Flight_I_USS_Arleigh_Burke";
       admitted.capability_bundle_id = "bundle.ddg51";
       admitted.resolved_platform_definition_ref =
         "unit_definition:DDG-51_Flight_I_USS_Arleigh_Burke";
       admitted.materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+        std::string(kPlatformMaterializationStrategyFactoryProjection);
       admitted.template_evidence_ref =
         "type_name_template:DDG-51_Flight_I_USS_Arleigh_Burke";
       admitted.resolution_evidence_ref = "resolved_bundle_from_type_name";
@@ -242,7 +242,7 @@ def test_wp14_resolved_spawn_plan_rejects_unsupported_required_capabilities_and_
         "factory_materialization_bridge"
       };
       admitted.resolved_capabilities = {required};
-      admitted.compatibility_path_preserved = true;
+      admitted.type_name_projection_preserved = true;
       admitted.admitted = true;
 
       const auto unsupported_required =
@@ -257,10 +257,10 @@ def test_wp14_resolved_spawn_plan_rejects_unsupported_required_capabilities_and_
       ResolvedPlatformSpawnPlan rejected{};
       rejected.plan_id = "resolved_plan.rejected";
       rejected.source_request_kind =
-        std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        std::string(kPlatformSpawnRequestKindTypeNameProjection);
       rejected.source_type_name = "Aircraft";
       rejected.capability_bundle_id = "bundle.aircraft";
-      rejected.compatibility_path_preserved = true;
+      rejected.type_name_projection_preserved = true;
       rejected.admitted = false;
 
       const auto missing_reason =
@@ -280,13 +280,13 @@ def test_wp14_resolved_spawn_plan_rejects_unsupported_required_capabilities_and_
         return 1;
       }
 
-      rejected.compatibility_path_preserved = false;
-      const auto compatibility_broken =
+      rejected.type_name_projection_preserved = false;
+      const auto projection_broken =
         validate_resolved_platform_spawn_plan(rejected);
-      if (compatibility_broken.valid ||
-        compatibility_broken.rejection_reason !=
-          kResolvedPlatformSpawnPlanRejectionCompatibilityPathRequired) {
-        std::cerr << "compatibility path break was not rejected\n";
+      if (projection_broken.valid ||
+        projection_broken.rejection_reason !=
+          kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired) {
+        std::cerr << "type_name projection path break was not rejected\n";
         return 1;
       }
 
@@ -311,7 +311,7 @@ def test_wp14_effects_materialization_uses_wp14_a_family_vocabulary_only() -> No
     "kCapabilityFamilyCommand",
     "kCapabilityFamilyDoctrine",
     "kPlatformCapabilityUnsupportedEffectNotMaterialized",
-    "kPlatformCapabilityUnsupportedCompatibilityPathRequired",
+    "kPlatformCapabilityUnsupportedTypeNameProjectionRequired",
     "kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability",
   ):
     assert token in header
@@ -423,13 +423,13 @@ def test_wp14_effects_materialization_plan_can_fail_closed_without_changing_beha
       );
 
       ResolvedPlatformSpawnPlan plan{};
-      plan.plan_id = "resolved_plan.compat";
-      plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+      plan.plan_id = "resolved_plan.projection";
+      plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameProjection);
       plan.source_type_name = "F-16C_Block50";
       plan.capability_bundle_id = "bundle.f16";
       plan.resolved_platform_definition_ref = "unit_definition:F-16C_Block50";
       plan.materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+        std::string(kPlatformMaterializationStrategyFactoryProjection);
       plan.template_evidence_ref = "type_name_template:F-16C_Block50";
       plan.resolution_evidence_ref = "resolved_bundle_from_type_name";
       plan.materialization_evidence_ref = "factory_materialization_bridge";
@@ -438,7 +438,7 @@ def test_wp14_effects_materialization_plan_can_fail_closed_without_changing_beha
         "factory_materialization_bridge"
       };
       plan.resolved_capabilities = {supported, optional_unsupported};
-      plan.compatibility_path_preserved = true;
+      plan.type_name_projection_preserved = true;
       plan.admitted = true;
 
       const auto accepted = validate_resolved_platform_spawn_plan(plan);

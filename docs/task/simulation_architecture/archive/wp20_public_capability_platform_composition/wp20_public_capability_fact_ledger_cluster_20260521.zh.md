@@ -73,8 +73,8 @@ source-backed 事实。
 
 当前事实：
 
-- contract header 已经包含兼容性保留与 typed request 相关 vocabulary，例如
-  `type_name_compatibility`、`typed_platform_request`、`resolved_spawn_plan_bridge`。
+- contract header 已经包含 type-name projection 与 typed request 相关 vocabulary，例如
+  `type_name_projection`、`typed_platform_request`、`resolved_spawn_plan_bridge`。
 - 该 header 中没有 `RuntimeCapabilities`，这与 WP14 的边界一致：backend/fidelity
   capability projection 与 platform capability composition 仍然分离。
 
@@ -275,7 +275,7 @@ B/C/D 的第一条推荐实现 seam：
 为什么这个 seam 安全：
 
 - 它复用已经经过测试的 source facts，而不是引入并行 spawn schema；
-- 它保留 compatibility path 与 legacy `type_name` surface；
+- 它保留 type-name projection path 与现有 `type_name` surface；
 - 它继续把 backend capability projection 与 platform composition 分离；
 - 它避免在 typed consume bridge 被证明前改变 `SimulationKernel` 的 materialization semantics。
 

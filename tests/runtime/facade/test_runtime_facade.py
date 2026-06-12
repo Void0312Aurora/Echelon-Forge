@@ -263,7 +263,7 @@ def _make_typed_platform_spawn_request(
     f"bundle:{source_type_name}:evidence",
     f"shared:{source_type_name}:evidence",
   ]
-  bundle.compatibility_path_preserved = True
+  bundle.type_name_projection_preserved = True
   request.capability_bundle = bundle
 
   plan = ef_py.ResolvedPlatformSpawnPlan()
@@ -281,14 +281,14 @@ def _make_typed_platform_spawn_request(
     f"shared:{source_type_name}:evidence",
   ]
   plan.resolved_capabilities = [mobility]
-  plan.compatibility_path_preserved = True
+  plan.type_name_projection_preserved = True
   plan.admitted = True
   request.resolved_spawn_plan = plan
   request.facade_evidence_refs = [
     "BatchWorldSetupRequest.typed_platform_spawn_requests",
     f"facade:{request_id}",
   ]
-  request.compatibility_path_preserved = True
+  request.type_name_projection_preserved = True
   return request
 
 
@@ -305,9 +305,9 @@ def _make_maintained_typed_platform_spawn_request(
     source_type_name=source_type_name,
     entity_name=entity_name,
   )
-  request.compatibility_path_preserved = False
-  request.capability_bundle.compatibility_path_preserved = False
-  request.resolved_spawn_plan.compatibility_path_preserved = False
+  request.type_name_projection_preserved = False
+  request.capability_bundle.type_name_projection_preserved = False
+  request.resolved_spawn_plan.type_name_projection_preserved = False
   return request
 
 
@@ -1143,32 +1143,32 @@ class RuntimeFacadeTests(unittest.TestCase):
     facade.step_batch()
     default_inst = facade.get_instrument_states_batch([_entity_ref(0, int(default_result.entity_ids[0]))])[0]
 
-    compat_request = ef_py.BatchWorldSetupRequest()
-    compat_request.seeds = [124]
+    terrain_request = ef_py.BatchWorldSetupRequest()
+    terrain_request.seeds = [124]
     legacy_terrain = ef_py.WorldTerrainAssignment()
     legacy_terrain.world_index = 0
     legacy_terrain.terrain_type = "legacy"
-    compat_spawn = ef_py.WorldSpawnRequest()
-    compat_spawn.world_index = 0
-    compat_spawn.side = ef_py.Side.Blue
-    compat_spawn.type_name = "Aircraft"
-    compat_spawn.entity_name = "LegacyLead"
-    compat_spawn.is_agent = True
-    compat_spawn.x = 25000.0
-    compat_spawn.y = 25000.0
-    compat_spawn.z = 1200.0
-    compat_spawn.heading = 90.0
-    compat_spawn.vy = 180.0
-    compat_request.terrain_assignments = [legacy_terrain]
-    compat_request.spawn_requests = [compat_spawn]
-    compat_request.time_steps = [0.05]
+    terrain_spawn = ef_py.WorldSpawnRequest()
+    terrain_spawn.world_index = 0
+    terrain_spawn.side = ef_py.Side.Blue
+    terrain_spawn.type_name = "Aircraft"
+    terrain_spawn.entity_name = "TerrainLead"
+    terrain_spawn.is_agent = True
+    terrain_spawn.x = 25000.0
+    terrain_spawn.y = 25000.0
+    terrain_spawn.z = 1200.0
+    terrain_spawn.heading = 90.0
+    terrain_spawn.vy = 180.0
+    terrain_request.terrain_assignments = [legacy_terrain]
+    terrain_request.spawn_requests = [terrain_spawn]
+    terrain_request.time_steps = [0.05]
 
-    compat_result = facade.apply_world_setup(compat_request)
+    terrain_result = facade.apply_world_setup(terrain_request)
     facade.step_batch()
-    compat_inst = facade.get_instrument_states_batch([_entity_ref(0, int(compat_result.entity_ids[0]))])[0]
+    terrain_inst = facade.get_instrument_states_batch([_entity_ref(0, int(terrain_result.entity_ids[0]))])[0]
 
     self.assertAlmostEqual(float(default_inst.alt_radar), 1200.0, places=2)
-    self.assertLess(float(compat_inst.alt_radar), 1200.0 - 100.0)
+    self.assertLess(float(terrain_inst.alt_radar), 1200.0 - 100.0)
 
   def test_runtime_facade_apply_world_setup_rejects_unknown_terrain_type(self) -> None:
     facade = ef_py.RuntimeFacade(1)
@@ -1192,7 +1192,7 @@ class RuntimeFacadeTests(unittest.TestCase):
     with self.assertRaisesRegex(Exception, "Unknown terrain_type"):
       facade.apply_world_setup(request)
 
-  def test_runtime_facade_typed_platform_setup_materializes_through_explicit_legacy_compatibility_path(self) -> None:
+  def test_runtime_facade_typed_platform_setup_materializes_through_type_name_projection_bridge(self) -> None:
     facade = ef_py.RuntimeFacade(1)
     self.assertTrue(
       facade.load_database(resolve_repo_path("examples", "config", "database"))
@@ -1205,20 +1205,20 @@ class RuntimeFacadeTests(unittest.TestCase):
     terrain.terrain_type = "legacy"
     wind = ef_py.WorldWindAssignment()
     wind.world_index = 0
-    legacy_spawn = ef_py.WorldSpawnRequest()
-    legacy_spawn.world_index = 0
-    legacy_spawn.side = ef_py.Side.Blue
-    legacy_spawn.type_name = "Aircraft"
-    legacy_spawn.entity_name = "LegacyLead"
-    legacy_spawn.is_agent = True
-    legacy_spawn.x = -1400.0
-    legacy_spawn.y = 0.0
-    legacy_spawn.z = 1200.0
-    legacy_spawn.heading = 90.0
-    legacy_spawn.vy = 180.0
+    baseline_spawn = ef_py.WorldSpawnRequest()
+    baseline_spawn.world_index = 0
+    baseline_spawn.side = ef_py.Side.Blue
+    baseline_spawn.type_name = "Aircraft"
+    baseline_spawn.entity_name = "BaselineLead"
+    baseline_spawn.is_agent = True
+    baseline_spawn.x = -1400.0
+    baseline_spawn.y = 0.0
+    baseline_spawn.z = 1200.0
+    baseline_spawn.heading = 90.0
+    baseline_spawn.vy = 180.0
     setup_request.terrain_assignments = [terrain]
     setup_request.wind_assignments = [wind]
-    setup_request.spawn_requests = [legacy_spawn]
+    setup_request.spawn_requests = [baseline_spawn]
     setup_request.typed_platform_spawn_requests = [
       _make_typed_platform_spawn_request()
     ]
@@ -1242,7 +1242,7 @@ class RuntimeFacadeTests(unittest.TestCase):
     self.assertEqual(typed_result.capability_bundle_id, "bundle:Aircraft")
     self.assertEqual(
       typed_result.setup_surface,
-      "mixed_typed_setup_compatibility_bridge",
+      "mixed_typed_setup_type_name_projection_bridge",
     )
     self.assertEqual(typed_result.rejection_reason, "")
     self.assertEqual(list(typed_result.errors), [])
@@ -1252,11 +1252,11 @@ class RuntimeFacadeTests(unittest.TestCase):
     )
     self.assertIn("plan:typed-spawn:lead:evidence", list(typed_result.evidence_refs))
     self.assertIn(
-      "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge",
+      "RuntimeFacade.apply_world_setup.type_name_projection_typed_platform_spawn_bridge",
       list(typed_result.evidence_refs),
     )
     self.assertIn(
-      "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization",
+      "RuntimeFacade.apply_world_setup.type_name_projection_materialization",
       list(typed_result.evidence_refs),
     )
     self.assertNotEqual(int(typed_result.entity_id), int(setup_result.entity_ids[0]))
@@ -1378,7 +1378,7 @@ class RuntimeFacadeTests(unittest.TestCase):
       )
     )
 
-  def test_runtime_facade_maintained_typed_setup_request_materializes_without_legacy_rematerialization(self) -> None:
+  def test_runtime_facade_maintained_typed_setup_request_materializes_without_type_name_projection_rematerialization(self) -> None:
     facade = ef_py.RuntimeFacade(1)
     self.assertTrue(
       facade.load_database(resolve_repo_path("examples", "config", "database"))
@@ -1424,11 +1424,11 @@ class RuntimeFacadeTests(unittest.TestCase):
       list(typed_result.evidence_refs),
     )
     self.assertNotIn(
-      "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization",
+      "RuntimeFacade.apply_world_setup.type_name_projection_materialization",
       list(typed_result.evidence_refs),
     )
     self.assertNotIn(
-      "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge",
+      "RuntimeFacade.apply_world_setup.type_name_projection_typed_platform_spawn_bridge",
       list(typed_result.evidence_refs),
     )
 

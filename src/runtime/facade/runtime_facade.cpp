@@ -258,28 +258,28 @@ void append_runtime_evidence_ref(
     evidence_refs.push_back(ref);
 }
 
-WorldSpawnRequest legacy_compatibility_spawn_request_from_typed_request(
+WorldSpawnRequest world_spawn_request_from_type_name_projection(
     const TypedPlatformSpawnRequest& request
 ) {
-    WorldSpawnRequest legacy{};
-    legacy.world_index = request.world_index;
-    legacy.side = request.side;
-    legacy.type_name = request.source_type_name;
-    legacy.entity_name = request.entity_name;
-    legacy.is_agent = request.is_agent;
-    legacy.x = request.x;
-    legacy.y = request.y;
-    legacy.z = request.z;
-    legacy.heading = request.heading;
-    legacy.pitch = request.pitch;
-    legacy.roll = request.roll;
-    legacy.vx = request.vx;
-    legacy.vy = request.vy;
-    legacy.vz = request.vz;
-    return legacy;
+    WorldSpawnRequest projection{};
+    projection.world_index = request.world_index;
+    projection.side = request.side;
+    projection.type_name = request.source_type_name;
+    projection.entity_name = request.entity_name;
+    projection.is_agent = request.is_agent;
+    projection.x = request.x;
+    projection.y = request.y;
+    projection.z = request.z;
+    projection.heading = request.heading;
+    projection.pitch = request.pitch;
+    projection.roll = request.roll;
+    projection.vx = request.vx;
+    projection.vy = request.vy;
+    projection.vz = request.vz;
+    return projection;
 }
 
-std::uint64_t spawn_legacy_request_through_compatibility_path(
+std::uint64_t spawn_world_request_through_type_name_projection(
     WorldBatchRuntime& runtime,
     const WorldSpawnRequest& request
 ) {
@@ -293,7 +293,7 @@ std::uint64_t spawn_typed_request_through_maintained_path(
     return runtime.spawn_typed_platform_unit(request);
 }
 
-TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
+TypedPlatformSpawnResult materialize_type_name_projection_typed_platform_spawn_request(
     WorldBatchRuntime& runtime,
     std::uint64_t request_index,
     const TypedPlatformSpawnRequest& request
@@ -314,7 +314,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         admission.errors = validation.errors;
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_validation_failed"
+            "RuntimeFacade.apply_world_setup.type_name_projection_validation_failed"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -328,7 +328,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         admission.add_error("typed platform spawn world_index is outside the configured runtime batch");
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_world_index_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_world_index_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -341,7 +341,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         );
         if (!request.resolved_spawn_plan.rejection_reason.empty()) {
             admission.add_error(
-                "resolved_spawn_plan rejected bridge admission: " +
+                "resolved_spawn_plan rejected type_name projection admission: " +
                 request.resolved_spawn_plan.rejection_reason
             );
         }
@@ -353,25 +353,25 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         }
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_plan_admission_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_plan_admission_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
         return result;
     }
 
-    if (!request.compatibility_path_preserved ||
-        !request.capability_bundle.compatibility_path_preserved ||
-        !request.resolved_spawn_plan.compatibility_path_preserved) {
+    if (!request.type_name_projection_preserved ||
+        !request.capability_bundle.type_name_projection_preserved ||
+        !request.resolved_spawn_plan.type_name_projection_preserved) {
         admission.reject(
-            std::string(kTypedPlatformSpawnRejectionCompatibilityPathRequired)
+            std::string(kTypedPlatformSpawnRejectionTypeNameProjectionRequired)
         );
         admission.add_error(
-            "typed platform setup must preserve compatibility_path_preserved across request, bundle, and plan"
+            "typed platform setup must preserve type_name_projection_preserved across request, bundle, and plan"
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_path_required_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_required_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -387,7 +387,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_bundle_identity_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_bundle_identity_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -403,7 +403,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_source_type_name_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_source_type_name_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -420,7 +420,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         );
         append_runtime_evidence_ref(
             admission.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_plan_identity_guard"
+            "RuntimeFacade.apply_world_setup.type_name_projection_plan_identity_guard"
         );
         TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
         result.setup_surface = surface.setup_surface;
@@ -430,20 +430,20 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
     admission.admitted = true;
     append_runtime_evidence_ref(
         admission.evidence_refs,
-        "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge"
+        "RuntimeFacade.apply_world_setup.type_name_projection_typed_platform_spawn_bridge"
     );
     append_runtime_evidence_ref(
         admission.evidence_refs,
-        "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization"
+        "RuntimeFacade.apply_world_setup.type_name_projection_materialization"
     );
 
     TypedPlatformSpawnResult result = make_typed_platform_spawn_result(admission);
     result.setup_surface = surface.setup_surface;
-    WorldSpawnRequest legacy_request =
-        legacy_compatibility_spawn_request_from_typed_request(request);
-    legacy_request.type_name = request.resolved_spawn_plan.source_type_name;
+    WorldSpawnRequest projection_request =
+        world_spawn_request_from_type_name_projection(request);
+    projection_request.type_name = request.resolved_spawn_plan.source_type_name;
     const std::uint64_t entity_id =
-        spawn_legacy_request_through_compatibility_path(runtime, legacy_request);
+        spawn_world_request_through_type_name_projection(runtime, projection_request);
     if (entity_id == 0U) {
         result.admitted = true;
         result.materialized = false;
@@ -451,12 +451,12 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
         result.rejection_reason =
             std::string(kTypedPlatformSpawnRejectionMaterializationFailed);
         result.add_error(
-            "compatibility path materialization returned null entity for source_type_name=" +
+            "type_name projection materialization returned null entity for source_type_name=" +
             request.resolved_spawn_plan.source_type_name
         );
         append_runtime_evidence_ref(
             result.evidence_refs,
-            "RuntimeFacade.apply_world_setup.compatibility_materialization_failed"
+            "RuntimeFacade.apply_world_setup.type_name_projection_materialization_failed"
         );
         return result;
     }
@@ -466,7 +466,7 @@ TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request(
     result.entity_id = entity_id;
     append_runtime_evidence_ref(
         result.evidence_refs,
-        "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_materialized"
+        "RuntimeFacade.apply_world_setup.type_name_projection_materialized"
     );
     return result;
 }
@@ -642,7 +642,7 @@ TypedPlatformSpawnResult materialize_typed_platform_spawn_request(
             request
         );
     }
-    return materialize_compatibility_typed_platform_spawn_request(
+    return materialize_type_name_projection_typed_platform_spawn_request(
         runtime,
         request_index,
         request

@@ -75,8 +75,8 @@ Evidence:
 
 Current fact:
 
-- the contract header already carries compatibility-preserving and typed-request
-  vocabulary such as `type_name_compatibility`, `typed_platform_request`, and
+- the contract header already carries type-name projection and typed-request
+  vocabulary such as `type_name_projection`, `typed_platform_request`, and
   `resolved_spawn_plan_bridge`.
 - `RuntimeCapabilities` is not defined in this header, which matches the WP14
   boundary that keeps backend/fidelity capability projection separate from
@@ -289,7 +289,8 @@ Why this seam is safe:
 
 - it reuses already-tested source facts instead of introducing a parallel spawn
   schema;
-- it preserves the compatibility path and the legacy `type_name` surface;
+- it preserves the type-name projection path and the existing `type_name`
+  surface;
 - it keeps backend capability projection out of platform composition;
 - it avoids changing `SimulationKernel` materialization semantics before the
   typed consume bridge is proven.

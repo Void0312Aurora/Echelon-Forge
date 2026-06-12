@@ -45,14 +45,14 @@ def _compile_and_run(source: str):
   )
 
 
-def test_wp20_runtime_setup_consume_bridge_doc_records_validation_first_and_legacy_preservation() -> None:
+def test_wp20_runtime_setup_consume_bridge_doc_records_validation_first_and_projection_preservation() -> None:
   text = _wp20_doc_text()
   for required in (
     "Validation before consume",
-    "Compatibility bridge",
-    "Legacy preservation",
-    "materialization only through the preserved `source_type_name` compatibility",
-    "tests proving legacy `spawn_requests` still behave unchanged",
+    "Type-name projection bridge",
+    "Type-name projection preservation",
+    "materialization only through the preserved `source_type_name` projection",
+    "tests proving existing `spawn_requests` still behave unchanged",
   ):
     assert required in text
 
@@ -65,10 +65,10 @@ def test_wp20_runtime_facade_apply_world_setup_contains_validation_first_typed_b
     "validate_maintained_typed_platform_spawn_request(request)",
     "kTypedPlatformSpawnRejectionWorldIndexOutOfRange",
     "kTypedPlatformSpawnRejectionMaterializationFailed",
-    "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge",
-    "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization",
+    "RuntimeFacade.apply_world_setup.type_name_projection_typed_platform_spawn_bridge",
+    "RuntimeFacade.apply_world_setup.type_name_projection_materialization",
     "request.resolved_spawn_plan.source_type_name != request.source_type_name",
-    "legacy_compatibility_spawn_request_from_typed_request",
+    "world_spawn_request_from_type_name_projection",
     "RuntimeFacade.apply_world_setup.maintained_typed_setup",
     "spawn_typed_request_through_maintained_path",
   ):
@@ -103,7 +103,7 @@ def test_wp20_runtime_setup_consume_bridge_result_contract_is_fail_closed_and_or
           "BatchWorldSetupRequest.typed_platform_spawn_requests",
           "facade:typed"
         };
-        request.compatibility_path_preserved = true;
+        request.type_name_projection_preserved = true;
 
         request.capability_bundle = platform::CapabilityBundle{
           .bundle_id = "bundle:typed",
@@ -119,7 +119,7 @@ def test_wp20_runtime_setup_consume_bridge_result_contract_is_fail_closed_and_or
           },
           .template_evidence_ref = "template:typed",
           .evidence_refs = {"bundle:typed"},
-          .compatibility_path_preserved = true,
+          .type_name_projection_preserved = true,
         };
 
         request.resolved_spawn_plan = platform::ResolvedPlatformSpawnPlan{
@@ -136,7 +136,7 @@ def test_wp20_runtime_setup_consume_bridge_result_contract_is_fail_closed_and_or
           .materialization_evidence_ref = "materialization:typed",
           .evidence_refs = {"plan:typed"},
           .resolved_capabilities = request.capability_bundle.capabilities,
-          .compatibility_path_preserved = true,
+          .type_name_projection_preserved = true,
           .admitted = admitted_plan,
           .rejection_reason = admitted_plan ? "" : "resolved_plan_rejected",
           .diagnostics_reason = admitted_plan ? "" : "plan diagnostics",
@@ -210,7 +210,7 @@ def test_wp20_runtime_setup_consume_bridge_result_contract_is_fail_closed_and_or
   assert result.returncode == 0, result.stderr + result.stdout
 
 
-def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_compatibility_bridge() -> None:
+def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_type_name_projection_bridge() -> None:
   source = textwrap.dedent(
     r"""
     #include <iostream>
@@ -230,7 +230,7 @@ def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_c
         "BatchWorldSetupRequest.typed_platform_spawn_requests",
         "facade:typed"
       };
-      request.compatibility_path_preserved = true;
+      request.type_name_projection_preserved = true;
 
       request.capability_bundle = platform::CapabilityBundle{
         .bundle_id = "bundle:typed",
@@ -246,7 +246,7 @@ def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_c
         },
         .template_evidence_ref = "template:typed",
         .evidence_refs = {"bundle:typed"},
-        .compatibility_path_preserved = true,
+        .type_name_projection_preserved = true,
       };
 
       request.resolved_spawn_plan = platform::ResolvedPlatformSpawnPlan{
@@ -263,24 +263,24 @@ def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_c
         .materialization_evidence_ref = "materialization:typed",
         .evidence_refs = {"plan:typed"},
         .resolved_capabilities = request.capability_bundle.capabilities,
-        .compatibility_path_preserved = true,
+        .type_name_projection_preserved = true,
         .admitted = true,
       };
 
-      const auto compatibility_validation =
+      const auto projection_validation =
         validate_typed_platform_spawn_request(request);
-      if (!compatibility_validation.valid || compatibility_validation.fail_closed) {
-        std::cerr << "compatibility validator unexpectedly rejected bridge request\n";
+      if (!projection_validation.valid || projection_validation.fail_closed) {
+        std::cerr << "projection validator unexpectedly rejected bridge request\n";
         return 1;
       }
 
       const auto surface =
         classify_typed_platform_spawn_setup_surface(request);
-      if (!surface.mixed_typed_compatibility_bridge ||
+      if (!surface.mixed_typed_projection_bridge ||
         surface.maintained_typed_setup ||
-        surface.legacy_compatibility_request ||
+        surface.type_name_projection_request ||
         surface.setup_surface !=
-          kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge) {
+          kTypedPlatformSetupSurfaceMixedTypedProjectionBridge) {
         std::cerr << "typed setup surface classification drifted\n";
         return 1;
       }
@@ -291,18 +291,18 @@ def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_c
         !maintained_validation.fail_closed ||
         maintained_validation.rejection_reason !=
           kTypedPlatformSpawnRejectionMixedSetupSurface) {
-        std::cerr << "maintained typed setup validator did not fail closed on compatibility bridge\n";
+        std::cerr << "maintained typed setup validator did not fail closed on type_name projection bridge\n";
         return 1;
       }
 
       auto promoted = request;
-      promoted.compatibility_path_preserved = false;
-      promoted.capability_bundle.compatibility_path_preserved = false;
-      promoted.resolved_spawn_plan.compatibility_path_preserved = false;
+      promoted.type_name_projection_preserved = false;
+      promoted.capability_bundle.type_name_projection_preserved = false;
+      promoted.resolved_spawn_plan.type_name_projection_preserved = false;
       const auto promoted_surface =
         classify_typed_platform_spawn_setup_surface(promoted);
       if (!promoted_surface.maintained_typed_setup ||
-        promoted_surface.mixed_typed_compatibility_bridge ||
+        promoted_surface.mixed_typed_projection_bridge ||
         promoted_surface.setup_surface !=
           kTypedPlatformSetupSurfaceMaintainedTypedSetup) {
         std::cerr << "maintained typed setup classification drifted\n";
@@ -316,12 +316,12 @@ def test_wp22_runtime_setup_contract_distinguishes_maintained_typed_setup_from_c
         return 1;
       }
 
-      const auto legacy_validation =
+      const auto projection_required_validation =
         validate_typed_platform_spawn_request(promoted);
-      if (legacy_validation.valid ||
-        legacy_validation.rejection_reason !=
-          kTypedPlatformSpawnRejectionCompatibilityPathRequired) {
-        std::cerr << "legacy validator no longer exposes the compatibility blocker\n";
+      if (projection_required_validation.valid ||
+        projection_required_validation.rejection_reason !=
+          kTypedPlatformSpawnRejectionTypeNameProjectionRequired) {
+        std::cerr << "projection validator no longer exposes the type_name projection blocker\n";
         return 1;
       }
 

@@ -17,7 +17,7 @@
 
 ## 目的
 
-通过现有 compatibility-preserving resolved-plan bridge 消费 validated typed platform
+通过显式 type-name projection resolved-plan bridge 消费 validated typed platform
 spawn requests。
 
 ## 范围
@@ -25,10 +25,10 @@ spawn requests。
 范围内：
 
 - 在任何 spawn 前验证 typed requests；
-- 只通过 preserved `source_type_name` compatibility path 与 admitted resolved plan
-  进行 materialization；
+- 只通过 preserved `source_type_name` projection path 与 admitted resolved plan 进行
+  materialization；
 - 为 admitted、materialized 与 rejected typed requests 返回 result evidence；
-- 测试证明 legacy `spawn_requests` 行为不变。
+- 测试证明现有 `spawn_requests` 行为不变。
 
 范围外：
 
@@ -42,9 +42,9 @@ spawn requests。
 | ID | 任务 | 验收 |
 |----|------|------|
 | `C1` | Validation before consume | 每个 typed request 都先 validation，后 spawn attempt。 |
-| `C2` | Compatibility bridge | Materialization 使用 preserved `source_type_name` / resolved plan evidence，而非任意 bundle semantics。 |
+| `C2` | Type-name projection bridge | Materialization 使用 preserved `source_type_name` / resolved plan evidence，而非任意 bundle semantics。 |
 | `C3` | Result evidence | 按 B 的 ordering contract 返回 admitted/materialized/rejected typed results。 |
-| `C4` | Legacy preservation | 既有 `spawn_units_batch` 与 `apply_world_setup_batch` legacy tests 仍有效。 |
+| `C4` | Type-name projection preservation | 既有 `spawn_units_batch` 与 `apply_world_setup_batch` tests 仍有效。 |
 
 ## 建议验证
 
@@ -61,15 +61,15 @@ bash tools/maintenance/cmo_env.sh python -m pytest -q tests/runtime/facade/test_
 当前实现说明：
 
 - `RuntimeFacade::apply_world_setup()` 继续把
-  `BatchWorldSetupResult.entity_ids` 保留为 legacy `spawn_requests` 的结果通道，
+  `BatchWorldSetupResult.entity_ids` 保留为现有 `spawn_requests` 的结果通道，
   并按输入顺序单独填充 `typed_platform_spawn_results`。
 - 每个 typed request 在任何 spawn attempt 前都会先经过
   `validate_typed_platform_spawn_request()`。
 - runtime consume 仍然局限在 facade；`WorldBatchRuntime` 不新增 typed public
   spawn API。
-- bridge 只允许通过 preserved compatibility path 进行 materialization：
-  已 admitted 的 `resolved_spawn_plan` 加 preserved `source_type_name`，然后复用
-  legacy `spawn_unit(type_name)` materialization chain。
+- bridge 只允许通过 preserved type-name projection path 进行 materialization：
+  已 admitted 的 `resolved_spawn_plan` 加 preserved `source_type_name`，然后通过命名
+  projection materialization chain 复用 `spawn_unit(type_name)` 语义。
 - 本流实际使用的 runtime fail-closed reasons 为
   `typed_platform_spawn_world_index_out_of_range` 与
   `typed_platform_spawn_materialization_failed`。

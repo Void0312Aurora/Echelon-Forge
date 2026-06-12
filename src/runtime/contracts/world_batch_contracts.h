@@ -81,17 +81,17 @@ inline constexpr std::string_view kTypedPlatformSpawnRejectionInvalidResolvedPla
     "typed_platform_spawn_resolved_plan_invalid";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionWrongRequestKind =
     "typed_platform_spawn_requires_typed_platform_request_kind";
-inline constexpr std::string_view kTypedPlatformSpawnRejectionCompatibilityPathRequired =
-    "typed_platform_spawn_requires_type_name_compatibility_path";
+inline constexpr std::string_view kTypedPlatformSpawnRejectionTypeNameProjectionRequired =
+    "typed_platform_spawn_requires_type_name_projection_path";
 inline constexpr std::string_view
     kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired =
         "typed_platform_spawn_requires_maintained_typed_setup";
 inline constexpr std::string_view
-    kTypedPlatformSpawnRejectionLegacyCompatibilityRequest =
-        "typed_platform_spawn_legacy_compatibility_request";
+    kTypedPlatformSpawnRejectionTypeNameProjectionRequest =
+        "typed_platform_spawn_type_name_projection_request";
 inline constexpr std::string_view
     kTypedPlatformSpawnRejectionMixedSetupSurface =
-        "typed_platform_spawn_mixed_typed_setup_and_compatibility_surface";
+        "typed_platform_spawn_mixed_typed_setup_and_type_name_projection_surface";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionMissingEvidence =
     "typed_platform_spawn_evidence_required";
 inline constexpr std::string_view kTypedPlatformSpawnRejectionWorldIndexOutOfRange =
@@ -101,11 +101,11 @@ inline constexpr std::string_view kTypedPlatformSpawnRejectionMaterializationFai
 inline constexpr std::string_view kTypedPlatformSetupSurfaceMaintainedTypedSetup =
     "maintained_typed_setup";
 inline constexpr std::string_view
-    kTypedPlatformSetupSurfaceLegacyCompatibilityRequest =
-        "legacy_shaped_compatibility_request";
+    kTypedPlatformSetupSurfaceTypeNameProjectionRequest =
+        "type_name_projection_request";
 inline constexpr std::string_view
-    kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge =
-        "mixed_typed_setup_compatibility_bridge";
+    kTypedPlatformSetupSurfaceMixedTypedProjectionBridge =
+        "mixed_typed_setup_type_name_projection_bridge";
 inline constexpr std::string_view kTypedPlatformSetupSurfaceInvalid =
     "invalid_typed_setup_surface";
 
@@ -128,7 +128,7 @@ struct TypedPlatformSpawnRequest {
     runtime::platform_capabilities::CapabilityBundle capability_bundle;
     runtime::platform_capabilities::ResolvedPlatformSpawnPlan resolved_spawn_plan;
     std::vector<std::string> facade_evidence_refs;
-    bool compatibility_path_preserved = true;
+    bool type_name_projection_preserved = true;
 };
 
 struct TypedPlatformSpawnValidationResult {
@@ -153,8 +153,8 @@ struct TypedPlatformSpawnValidationResult {
 struct TypedPlatformSetupSurfaceEvidence {
     std::string setup_surface = std::string(kTypedPlatformSetupSurfaceInvalid);
     bool maintained_typed_setup = false;
-    bool legacy_compatibility_request = false;
-    bool mixed_typed_compatibility_bridge = false;
+    bool type_name_projection_request = false;
+    bool mixed_typed_projection_bridge = false;
     bool invalid = false;
     std::vector<std::string> reasons;
 };
@@ -262,12 +262,12 @@ validate_typed_platform_spawn_request_common(
     return result;
 }
 
-[[nodiscard]] inline bool typed_platform_spawn_preserves_compatibility_path(
+[[nodiscard]] inline bool typed_platform_spawn_preserves_type_name_projection(
     const TypedPlatformSpawnRequest& request
 ) {
-    return request.compatibility_path_preserved ||
-        request.capability_bundle.compatibility_path_preserved ||
-        request.resolved_spawn_plan.compatibility_path_preserved;
+    return request.type_name_projection_preserved ||
+        request.capability_bundle.type_name_projection_preserved ||
+        request.resolved_spawn_plan.type_name_projection_preserved;
 }
 
 [[nodiscard]] inline TypedPlatformSetupSurfaceEvidence
@@ -280,38 +280,38 @@ classify_typed_platform_spawn_setup_surface(
     const bool typed_request_kind =
         request.resolved_spawn_plan.source_request_kind ==
         platform::kPlatformSpawnRequestKindTypedPlatformRequest;
-    const bool compatibility_request_kind =
+    const bool type_name_projection_request_kind =
         request.resolved_spawn_plan.source_request_kind ==
-        platform::kPlatformSpawnRequestKindTypeNameCompatibility;
+        platform::kPlatformSpawnRequestKindTypeNameProjection;
     const bool resolved_spawn_bridge =
         request.resolved_spawn_plan.materialization_strategy ==
         platform::kPlatformMaterializationStrategyResolvedSpawnBridge;
-    const bool factory_compatibility_materialization =
+    const bool factory_projection_materialization =
         request.resolved_spawn_plan.materialization_strategy ==
-        platform::kPlatformMaterializationStrategyFactoryCompatibility;
-    const bool compatibility_path_preserved =
-        typed_platform_spawn_preserves_compatibility_path(request);
+        platform::kPlatformMaterializationStrategyFactoryProjection;
+    const bool type_name_projection_preserved =
+        typed_platform_spawn_preserves_type_name_projection(request);
 
     if (typed_request_kind) {
         evidence.reasons.push_back("typed_platform_request");
     }
-    if (compatibility_request_kind) {
-        evidence.reasons.push_back("type_name_compatibility");
+    if (type_name_projection_request_kind) {
+        evidence.reasons.push_back("type_name_projection");
     }
     if (resolved_spawn_bridge) {
         evidence.reasons.push_back("resolved_spawn_plan_bridge");
     }
-    if (factory_compatibility_materialization) {
-        evidence.reasons.push_back("factory_compatibility_materialization");
+    if (factory_projection_materialization) {
+        evidence.reasons.push_back("factory_projection_materialization");
     }
-    if (compatibility_path_preserved) {
-        evidence.reasons.push_back("compatibility_path_preserved");
+    if (type_name_projection_preserved) {
+        evidence.reasons.push_back("type_name_projection_preserved");
     }
 
     if (typed_request_kind && resolved_spawn_bridge &&
-        !factory_compatibility_materialization &&
-        !compatibility_request_kind &&
-        !compatibility_path_preserved) {
+        !factory_projection_materialization &&
+        !type_name_projection_request_kind &&
+        !type_name_projection_preserved) {
         evidence.setup_surface =
             std::string(kTypedPlatformSetupSurfaceMaintainedTypedSetup);
         evidence.maintained_typed_setup = true;
@@ -319,24 +319,24 @@ classify_typed_platform_spawn_setup_surface(
     }
 
     if (!typed_request_kind &&
-        compatibility_request_kind &&
-        factory_compatibility_materialization &&
-        compatibility_path_preserved) {
+        type_name_projection_request_kind &&
+        factory_projection_materialization &&
+        type_name_projection_preserved) {
         evidence.setup_surface = std::string(
-            kTypedPlatformSetupSurfaceLegacyCompatibilityRequest
+            kTypedPlatformSetupSurfaceTypeNameProjectionRequest
         );
-        evidence.legacy_compatibility_request = true;
+        evidence.type_name_projection_request = true;
         return evidence;
     }
 
     if ((typed_request_kind || resolved_spawn_bridge) &&
-        (compatibility_request_kind ||
-         factory_compatibility_materialization ||
-         compatibility_path_preserved)) {
+        (type_name_projection_request_kind ||
+         factory_projection_materialization ||
+         type_name_projection_preserved)) {
         evidence.setup_surface = std::string(
-            kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge
+            kTypedPlatformSetupSurfaceMixedTypedProjectionBridge
         );
-        evidence.mixed_typed_compatibility_bridge = true;
+        evidence.mixed_typed_projection_bridge = true;
         return evidence;
     }
 
@@ -352,12 +352,12 @@ validate_typed_platform_spawn_request(const TypedPlatformSpawnRequest& request) 
         return result;
     }
 
-    if (!request.compatibility_path_preserved ||
-        !request.capability_bundle.compatibility_path_preserved ||
-        !request.resolved_spawn_plan.compatibility_path_preserved) {
+    if (!request.type_name_projection_preserved ||
+        !request.capability_bundle.type_name_projection_preserved ||
+        !request.resolved_spawn_plan.type_name_projection_preserved) {
         return reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionCompatibilityPathRequired,
-            "typed platform setup must preserve the type_name compatibility path"
+            kTypedPlatformSpawnRejectionTypeNameProjectionRequired,
+            "typed platform setup must preserve the type_name projection path"
         );
     }
 
@@ -383,15 +383,15 @@ validate_maintained_typed_platform_spawn_request(
     }
 
     TypedPlatformSpawnValidationResult rejection{};
-    if (surface.legacy_compatibility_request) {
+    if (surface.type_name_projection_request) {
         rejection = reject_typed_platform_spawn_request(
-            kTypedPlatformSpawnRejectionLegacyCompatibilityRequest,
-            "typed platform setup remains a legacy-shaped compatibility request"
+            kTypedPlatformSpawnRejectionTypeNameProjectionRequest,
+            "typed platform setup remains a type_name projection request"
         );
-    } else if (surface.mixed_typed_compatibility_bridge) {
+    } else if (surface.mixed_typed_projection_bridge) {
         rejection = reject_typed_platform_spawn_request(
             kTypedPlatformSpawnRejectionMixedSetupSurface,
-            "typed platform setup mixes maintained typed setup with compatibility preservation"
+            "typed platform setup mixes maintained typed setup with type_name projection preservation"
         );
     } else {
         rejection = reject_typed_platform_spawn_request(

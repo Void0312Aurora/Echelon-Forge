@@ -65,7 +65,7 @@ def test_wp14_boundary_guard_runtime_capabilities_remains_backend_fidelity_only(
     "source_type_name",
     "capability_bundle",
     "resolved_spawn_plan",
-    "compatibility_path_preserved",
+    "type_name_projection_preserved",
     "platform capability",
   ):
     assert forbidden not in runtime_capabilities_block, (
@@ -115,7 +115,7 @@ def test_wp14_boundary_guard_examples_and_scenario_python_schema_stay_on_legacy_
   adapter = _text(RL_WORLD_BATCH_ADAPTER)
 
   assert "typed_platform_spawn_requests" not in scenario_world_setup, (
-    "Scenario Python compatibility layer must not migrate to typed_platform_spawn_requests "
+    "Scenario Python setup layer must not migrate to typed_platform_spawn_requests "
     "in the first WP14 slice"
   )
   assert "TypedPlatformSpawnRequest" not in scenario_world_setup
@@ -168,7 +168,7 @@ def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation
     for required in (
       "validate_typed_platform_spawn_request",
       "facade_evidence_refs",
-      "compatibility_path_preserved",
+      "type_name_projection_preserved",
     ):
       assert required in facade_source, (
         "RuntimeFacade::apply_world_setup may only publicize typed platform spawns "
@@ -196,7 +196,7 @@ def test_wp14_boundary_guard_additive_dto_validation_stays_fail_closed_without_r
     "validate_typed_platform_spawn_request",
     "typed_platform_spawn_requires_typed_platform_request_kind",
     "typed_platform_spawn_requires_resolved_spawn_plan",
-    "typed_platform_spawn_requires_type_name_compatibility_path",
+    "typed_platform_spawn_requires_type_name_projection_path",
     "typed_platform_spawn_resolved_plan_invalid",
     "typed_platform_spawn_evidence_required",
   ):
@@ -211,11 +211,11 @@ def test_wp14_boundary_guard_additive_dto_validation_stays_fail_closed_without_r
     "capability_bundle",
     "resolved_spawn_plan",
     "facade_evidence_refs",
-    "compatibility_path_preserved",
+    "type_name_projection_preserved",
   ):
     assert required in validate_block, (
       "Typed platform spawn validation must remain declarative and preserve the WP20 "
-      f"compatibility/evidence path; missing {required!r}"
+      f"type-name projection/evidence path; missing {required!r}"
     )
   for forbidden in (
     "spawn_unit(",
@@ -231,7 +231,7 @@ def test_wp14_boundary_guard_additive_dto_validation_stays_fail_closed_without_r
     )
 
 
-def test_wp22_boundary_guard_typed_setup_surface_classifier_distinguishes_maintained_from_compatibility() -> None:
+def test_wp22_boundary_guard_typed_setup_surface_classifier_distinguishes_maintained_from_type_name_projection() -> None:
   world_batch_contracts = _text(WORLD_BATCH_CONTRACTS)
 
   for required in (
@@ -239,10 +239,10 @@ def test_wp22_boundary_guard_typed_setup_surface_classifier_distinguishes_mainta
     "classify_typed_platform_spawn_setup_surface",
     "validate_maintained_typed_platform_spawn_request",
     "kTypedPlatformSetupSurfaceMaintainedTypedSetup",
-    "kTypedPlatformSetupSurfaceLegacyCompatibilityRequest",
-    "kTypedPlatformSetupSurfaceMixedTypedCompatibilityBridge",
+    "kTypedPlatformSetupSurfaceTypeNameProjectionRequest",
+    "kTypedPlatformSetupSurfaceMixedTypedProjectionBridge",
     "kTypedPlatformSpawnRejectionMaintainedTypedSetupRequired",
-    "kTypedPlatformSpawnRejectionLegacyCompatibilityRequest",
+    "kTypedPlatformSpawnRejectionTypeNameProjectionRequest",
     "kTypedPlatformSpawnRejectionMixedSetupSurface",
   ):
     assert required in world_batch_contracts
@@ -257,23 +257,23 @@ def test_wp22_boundary_guard_typed_setup_surface_classifier_distinguishes_mainta
   ]
   for required in (
     "typed_platform_request",
-    "type_name_compatibility",
+    "type_name_projection",
     "resolved_spawn_plan_bridge",
-    "factory_compatibility_materialization",
-    "compatibility_path_preserved",
+    "factory_projection_materialization",
+    "type_name_projection_preserved",
   ):
     assert required in classify_block, (
       "WP22 typed setup surface evidence must classify maintained typed setup "
-      f"separately from compatibility-shaped requests; missing {required!r}"
+      f"separately from type-name projection requests; missing {required!r}"
     )
 
 
-def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_without_legacy_rematerialization() -> None:
+def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_without_type_name_projection_rematerialization() -> None:
   facade_source = _text(RUNTIME_FACADE_SOURCE)
 
   apply_world_setup_block = facade_source[
     facade_source.index(
-      "TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request("
+      "TypedPlatformSpawnResult materialize_type_name_projection_typed_platform_spawn_request("
     ):
     facade_source.index("BatchWorldSetupRequest single_world_counterfactual_setup(")
   ]
@@ -293,31 +293,31 @@ def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_with
     )
   ]
   for forbidden in (
-    "legacy_compatibility_spawn_request_from_typed_request",
-    "spawn_legacy_request_through_compatibility_path",
-    "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization",
+    "world_spawn_request_from_type_name_projection",
+    "spawn_world_request_through_type_name_projection",
+    "RuntimeFacade.apply_world_setup.type_name_projection_materialization",
     "WorldSpawnRequest",
   ):
     assert forbidden not in maintained_block, (
-      "Maintained typed setup must not rematerialize through the legacy request shape; "
+      "Maintained typed setup must not rematerialize through the type-name projection request shape; "
       f"found forbidden marker {forbidden!r}"
     )
 
-  compatibility_block = apply_world_setup_block[
+  projection_block = apply_world_setup_block[
     apply_world_setup_block.index(
-      "TypedPlatformSpawnResult materialize_compatibility_typed_platform_spawn_request("
+      "TypedPlatformSpawnResult materialize_type_name_projection_typed_platform_spawn_request("
     ):
     apply_world_setup_block.index(
       "TypedPlatformSpawnResult materialize_maintained_typed_platform_spawn_request("
     )
   ]
   for required in (
-    "legacy_compatibility_spawn_request_from_typed_request",
-    "spawn_legacy_request_through_compatibility_path",
-    "RuntimeFacade.apply_world_setup.compatibility_type_name_materialization",
-    "RuntimeFacade.apply_world_setup.explicit_legacy_compatibility_typed_platform_spawn_bridge",
+    "world_spawn_request_from_type_name_projection",
+    "spawn_world_request_through_type_name_projection",
+    "RuntimeFacade.apply_world_setup.type_name_projection_materialization",
+    "RuntimeFacade.apply_world_setup.type_name_projection_typed_platform_spawn_bridge",
   ):
-    assert required in compatibility_block, (
-      "Explicit compatibility typed setup must retain the named legacy bridge; "
+    assert required in projection_block, (
+      "Explicit type_name projection typed setup must retain the named type-name projection bridge; "
       f"missing {required!r}"
     )

@@ -328,7 +328,7 @@ class DefaultUnitFactory : public IUnitFactory {
         bundle.bundle_id = make_bundle_id(type_name);
         bundle.source_type_name = std::string(type_name);
         bundle.template_evidence_ref = make_evidence_ref(type_name, "bundle_template");
-        bundle.compatibility_path_preserved = true;
+        bundle.type_name_projection_preserved = true;
         bundle.diagnostics_reason = "type_name_to_capability_bundle_template";
         bundle.evidence_refs = {
             bundle.template_evidence_ref,
@@ -549,12 +549,12 @@ class DefaultUnitFactory : public IUnitFactory {
 
         ResolvedPlatformSpawnPlan plan{};
         plan.plan_id = make_plan_id(type_name);
-        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameProjection);
         plan.source_type_name = std::string(type_name);
         plan.capability_bundle_id = bundle.bundle_id;
         plan.resolved_platform_definition_ref = make_definition_ref(type_name);
         plan.materialization_strategy =
-            std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+            std::string(kPlatformMaterializationStrategyFactoryProjection);
         plan.template_evidence_ref = bundle.template_evidence_ref;
         plan.resolution_evidence_ref = make_evidence_ref(type_name, "plan_resolution");
         plan.materialization_evidence_ref = make_evidence_ref(type_name, "factory_materialization");
@@ -562,7 +562,7 @@ class DefaultUnitFactory : public IUnitFactory {
         append_unique(plan.evidence_refs, plan.resolution_evidence_ref);
         append_unique(plan.evidence_refs, plan.materialization_evidence_ref);
         plan.resolved_capabilities = bundle.capabilities;
-        plan.compatibility_path_preserved = true;
+        plan.type_name_projection_preserved = true;
         plan.admitted = bundle_validation.valid;
         if (!bundle_validation.valid) {
             plan.rejection_reason = bundle_validation.rejection_reason;
@@ -594,10 +594,10 @@ class DefaultUnitFactory : public IUnitFactory {
 
         ResolvedPlatformSpawnPlan plan{};
         plan.plan_id = make_plan_id(type_name);
-        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        plan.source_request_kind = std::string(kPlatformSpawnRequestKindTypeNameProjection);
         plan.source_type_name = lookup_name;
         plan.capability_bundle_id = make_bundle_id(type_name);
-        plan.compatibility_path_preserved = true;
+        plan.type_name_projection_preserved = true;
         plan.admitted = false;
         plan.rejection_reason = "resolved_platform_spawn_plan_type_name_not_found";
         plan.diagnostics_reason = plan.rejection_reason;

@@ -18,18 +18,18 @@ Inputs:
 
 ## Purpose
 
-Consume validated typed platform spawn requests through the existing
-compatibility-preserving resolved-plan bridge.
+Consume validated typed platform spawn requests through the explicit
+type-name projection resolved-plan bridge.
 
 ## Scope
 
 In scope:
 
 - runtime/facade setup execution that validates typed requests before spawn;
-- materialization only through the preserved `source_type_name` compatibility
-  path and admitted resolved plan;
+- materialization only through the preserved `source_type_name` projection path
+  and admitted resolved plan;
 - result evidence for admitted, materialized, and rejected typed requests;
-- tests proving legacy `spawn_requests` still behave unchanged.
+- tests proving existing `spawn_requests` still behave unchanged.
 
 Out of scope:
 
@@ -43,9 +43,9 @@ Out of scope:
 | ID | Item | Acceptance |
 |----|------|------------|
 | `C1` | Validation before consume | Every typed request is validated before any spawn attempt. |
-| `C2` | Compatibility bridge | Materialization uses preserved `source_type_name` / resolved plan evidence, not arbitrary bundle semantics. |
+| `C2` | Type-name projection bridge | Materialization uses preserved `source_type_name` / resolved plan evidence, not arbitrary bundle semantics. |
 | `C3` | Result evidence | Admitted/materialized/rejected typed results are returned according to B's ordering contract. |
-| `C4` | Legacy preservation | Existing `spawn_units_batch` and `apply_world_setup_batch` legacy tests remain valid. |
+| `C4` | Type-name projection preservation | Existing `spawn_units_batch` and `apply_world_setup_batch` tests remain valid. |
 
 ## Suggested Validation
 
@@ -63,15 +63,16 @@ that must be exposed by D or closed by F.
 Current implementation notes:
 
 - `RuntimeFacade::apply_world_setup()` keeps `BatchWorldSetupResult.entity_ids`
-  as the legacy `spawn_requests` result channel and fills
+  as the existing `spawn_requests` result channel and fills
   `typed_platform_spawn_results` separately in input order.
 - Every typed request is passed through
   `validate_typed_platform_spawn_request()` before any spawn attempt.
 - Runtime consume remains facade-local; `WorldBatchRuntime` does not gain a new
   typed public spawn API.
-- The bridge only materializes through the preserved compatibility path:
+- The bridge only materializes through the preserved type-name projection path:
   admitted `resolved_spawn_plan` plus preserved `source_type_name`, then
-  `spawn_unit(type_name)` semantics via the legacy materialization chain.
+  `spawn_unit(type_name)` semantics through the named projection materialization
+  chain.
 - Fail-closed runtime reasons used by this stream:
   `typed_platform_spawn_world_index_out_of_range` and
   `typed_platform_spawn_materialization_failed`.

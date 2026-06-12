@@ -27,7 +27,7 @@ def _valid_capability_bundle(capability: object) -> object:
   bundle.capabilities = [capability]
   bundle.template_evidence_ref = "template:F-16C_Block50"
   bundle.evidence_refs = ["content:type_name:F-16C_Block50"]
-  bundle.compatibility_path_preserved = True
+  bundle.type_name_projection_preserved = True
   return bundle
 
 
@@ -44,7 +44,7 @@ def _valid_resolved_spawn_plan(capability: object) -> object:
   plan.materialization_evidence_ref = "materialization:factory-bridge"
   plan.evidence_refs = ["resolved:typed-spawn:lead"]
   plan.resolved_capabilities = [capability]
-  plan.compatibility_path_preserved = True
+  plan.type_name_projection_preserved = True
   plan.admitted = True
   return plan
 
@@ -68,7 +68,7 @@ def _valid_typed_platform_spawn_request() -> object:
   request.facade_evidence_refs = [
     "BatchWorldSetupRequest.typed_platform_spawn_requests"
   ]
-  request.compatibility_path_preserved = True
+  request.type_name_projection_preserved = True
   return request
 
 

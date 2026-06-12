@@ -214,15 +214,15 @@
     },
     {
       "path": "src/runtime/contracts/platform_capability_contracts.h",
-      "classification": "compatibility_wrapper",
+      "classification": "maintained_spine",
       "owner": "WP16-D",
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
-      "reason": "Spawn materialization still preserves compatibility request kinds and compatibility materialization strategies.",
+      "reason": "Platform spawn contracts now expose maintained type-name projection and typed-platform request vocabulary.",
       "evidence_markers": [
-        "kPlatformSpawnRequestKindTypeNameCompatibility",
-        "kPlatformMaterializationStrategyFactoryCompatibility",
-        "compatibility_path_preserved = true",
-        "resolved_spawn_plan_requires_type_name_compatibility_path"
+        "kPlatformSpawnRequestKindTypeNameProjection",
+        "kPlatformMaterializationStrategyFactoryProjection",
+        "type_name_projection_preserved = true",
+        "resolved_spawn_plan_requires_type_name_projection_path"
       ]
     },
     {

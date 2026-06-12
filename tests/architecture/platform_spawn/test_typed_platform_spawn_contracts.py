@@ -173,7 +173,7 @@ def test_wp20_typed_platform_spawn_helpers_preserve_seeded_identity_and_evidence
         .materialization_evidence_ref = "materialization:factory-bridge",
         .evidence_refs = {"plan:evidence", "shared:evidence"},
         .resolved_capabilities = request.capability_bundle.capabilities,
-        .compatibility_path_preserved = true,
+        .type_name_projection_preserved = true,
         .admitted = true,
       };
 
@@ -257,7 +257,7 @@ def test_wp14_additive_spawn_dto_surface_is_declared_without_replacing_legacy_sp
 
   for token in (
     "typed_platform_spawn_requires_capability_bundle",
-    "typed_platform_spawn_requires_type_name_compatibility_path",
+    "typed_platform_spawn_requires_type_name_projection_path",
   ):
     assert token in world_batch_header
 
@@ -321,7 +321,7 @@ def test_wp14_typed_platform_spawn_request_validates_and_fails_closed() -> None:
           .materialization_evidence_ref = "materialization:factory-bridge",
           .evidence_refs = {"resolved:typed-spawn:lead"},
           .resolved_capabilities = request.capability_bundle.capabilities,
-          .compatibility_path_preserved = true,
+          .type_name_projection_preserved = true,
           .admitted = true,
         };
       request.facade_evidence_refs = {"BatchWorldSetupRequest.typed_platform_spawn_requests"};
@@ -339,7 +339,7 @@ def test_wp14_typed_platform_spawn_request_validates_and_fails_closed() -> None:
 
       auto broken = request;
       broken.resolved_spawn_plan.source_request_kind =
-        std::string(platform::kPlatformSpawnRequestKindTypeNameCompatibility);
+        std::string(platform::kPlatformSpawnRequestKindTypeNameProjection);
       const auto broken_result = validate_typed_platform_spawn_request(broken);
       if (broken_result.valid || broken_result.rejection_reason !=
         kTypedPlatformSpawnRejectionWrongRequestKind) {

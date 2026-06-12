@@ -41,7 +41,7 @@ EXPECTED_CLASSIFICATIONS = {
   "python/rl/runtime/leader_world_batch_runtime.py": "compatibility_wrapper",
   "python/rl/runtime/single_world_batch_runtime.py": "compatibility_wrapper",
   "python/rl/runtime/leader_window_runtime.py": "compatibility_wrapper",
-  "src/runtime/contracts/platform_capability_contracts.h": "compatibility_wrapper",
+  "src/runtime/contracts/platform_capability_contracts.h": "maintained_spine",
   "src/core/engine/world_batch_runtime.h": "deprecated_candidate",
   "src/core/engine/world_batch_runtime.cpp": "deprecated_candidate",
   "tests/world_batch/test_world_batch_runtime.py": "deprecated_candidate",

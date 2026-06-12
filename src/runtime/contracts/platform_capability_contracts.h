@@ -17,13 +17,13 @@ inline constexpr std::string_view kCapabilityFamilySurvivability = "survivabilit
 inline constexpr std::string_view kCapabilityFamilyCommand = "command";
 inline constexpr std::string_view kCapabilityFamilyDoctrine = "doctrine";
 
-inline constexpr std::string_view kPlatformSpawnRequestKindTypeNameCompatibility =
-    "type_name_compatibility";
+inline constexpr std::string_view kPlatformSpawnRequestKindTypeNameProjection =
+    "type_name_projection";
 inline constexpr std::string_view kPlatformSpawnRequestKindTypedPlatformRequest =
     "typed_platform_request";
 
-inline constexpr std::string_view kPlatformMaterializationStrategyFactoryCompatibility =
-    "factory_compatibility_materialization";
+inline constexpr std::string_view kPlatformMaterializationStrategyFactoryProjection =
+    "factory_projection_materialization";
 inline constexpr std::string_view kPlatformMaterializationStrategyResolvedSpawnBridge =
     "resolved_spawn_plan_bridge";
 
@@ -31,8 +31,8 @@ inline constexpr std::string_view kPlatformCapabilityUnsupportedFamilyNotMaintai
     "platform_capability_family_not_maintained";
 inline constexpr std::string_view kPlatformCapabilityUnsupportedEffectNotMaterialized =
     "platform_capability_effect_not_materialized";
-inline constexpr std::string_view kPlatformCapabilityUnsupportedCompatibilityPathRequired =
-    "platform_capability_requires_compatibility_preserving_path";
+inline constexpr std::string_view kPlatformCapabilityUnsupportedTypeNameProjectionRequired =
+    "platform_capability_requires_type_name_projection_path";
 
 inline constexpr std::string_view kPlatformCapabilityRejectionMissingCapabilityId =
     "platform_capability_id_required";
@@ -96,8 +96,8 @@ inline constexpr std::string_view
     kResolvedPlatformSpawnPlanRejectionUnsupportedRequiredCapability =
         "resolved_spawn_plan_contains_unsupported_required_capability";
 inline constexpr std::string_view
-    kResolvedPlatformSpawnPlanRejectionCompatibilityPathRequired =
-        "resolved_spawn_plan_requires_type_name_compatibility_path";
+    kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired =
+        "resolved_spawn_plan_requires_type_name_projection_path";
 inline constexpr std::string_view
     kResolvedPlatformSpawnPlanRejectionMissingRejectionReason =
         "rejected_resolved_spawn_plan_requires_reason";
@@ -120,26 +120,26 @@ struct CapabilityBundle {
     std::vector<Capability> capabilities;
     std::string template_evidence_ref;
     std::vector<std::string> evidence_refs;
-    bool compatibility_path_preserved = true;
+    bool type_name_projection_preserved = true;
     std::string diagnostics_reason;
 };
 
 struct ResolvedPlatformSpawnPlan {
     std::string plan_id;
     std::string source_request_kind =
-        std::string(kPlatformSpawnRequestKindTypeNameCompatibility);
+        std::string(kPlatformSpawnRequestKindTypeNameProjection);
     std::string source_type_name;
     std::string capability_bundle_id;
     std::string resolved_platform_definition_ref;
     std::string materialization_strategy =
-        std::string(kPlatformMaterializationStrategyFactoryCompatibility);
+        std::string(kPlatformMaterializationStrategyFactoryProjection);
     std::string template_evidence_ref;
     std::string resolution_evidence_ref;
     std::string materialization_evidence_ref;
     std::vector<std::string> evidence_refs;
     std::vector<Capability> resolved_capabilities;
     std::vector<std::string> rejected_capability_ids;
-    bool compatibility_path_preserved = true;
+    bool type_name_projection_preserved = true;
     bool admitted = false;
     std::string rejection_reason;
     std::string diagnostics_reason;
@@ -195,14 +195,14 @@ struct PlatformCapabilityValidationResult {
 }
 
 [[nodiscard]] inline bool is_known_platform_spawn_request_kind(std::string_view kind) {
-    return kind == kPlatformSpawnRequestKindTypeNameCompatibility ||
+    return kind == kPlatformSpawnRequestKindTypeNameProjection ||
         kind == kPlatformSpawnRequestKindTypedPlatformRequest;
 }
 
 [[nodiscard]] inline bool is_known_platform_materialization_strategy(
     std::string_view strategy
 ) {
-    return strategy == kPlatformMaterializationStrategyFactoryCompatibility ||
+    return strategy == kPlatformMaterializationStrategyFactoryProjection ||
         strategy == kPlatformMaterializationStrategyResolvedSpawnBridge;
 }
 
@@ -368,12 +368,12 @@ struct PlatformCapabilityValidationResult {
         result.add_error("capability_bundle_id is required");
         return result;
     }
-    if (plan.source_request_kind == kPlatformSpawnRequestKindTypeNameCompatibility &&
-        !plan.compatibility_path_preserved) {
+    if (plan.source_request_kind == kPlatformSpawnRequestKindTypeNameProjection &&
+        !plan.type_name_projection_preserved) {
         result.reject(
-            std::string(kResolvedPlatformSpawnPlanRejectionCompatibilityPathRequired)
+            std::string(kResolvedPlatformSpawnPlanRejectionTypeNameProjectionRequired)
         );
-        result.add_error("type_name compatibility requests must preserve the compatibility path");
+        result.add_error("type_name projection requests must preserve the type_name projection path");
         return result;
     }
 

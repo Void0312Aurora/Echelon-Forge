@@ -204,8 +204,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("template_evidence_ref",
                 &runtime::platform_capabilities::CapabilityBundle::template_evidence_ref)
         .def_rw("evidence_refs", &runtime::platform_capabilities::CapabilityBundle::evidence_refs)
-        .def_rw("compatibility_path_preserved",
-                &runtime::platform_capabilities::CapabilityBundle::compatibility_path_preserved)
+        .def_rw("type_name_projection_preserved",
+                &runtime::platform_capabilities::CapabilityBundle::type_name_projection_preserved)
         .def_rw("diagnostics_reason",
                 &runtime::platform_capabilities::CapabilityBundle::diagnostics_reason);
 
@@ -238,9 +238,9 @@ void bind_runtime(nb::module_ &m) {
                 &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::resolved_capabilities)
         .def_rw("rejected_capability_ids",
                 &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejected_capability_ids)
-        .def_rw("compatibility_path_preserved",
+        .def_rw("type_name_projection_preserved",
                 &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::
-                    compatibility_path_preserved)
+                    type_name_projection_preserved)
         .def_rw("admitted", &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::admitted)
         .def_rw("rejection_reason",
                 &runtime::platform_capabilities::ResolvedPlatformSpawnPlan::rejection_reason)
@@ -267,8 +267,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("capability_bundle", &TypedPlatformSpawnRequest::capability_bundle)
         .def_rw("resolved_spawn_plan", &TypedPlatformSpawnRequest::resolved_spawn_plan)
         .def_rw("facade_evidence_refs", &TypedPlatformSpawnRequest::facade_evidence_refs)
-        .def_rw("compatibility_path_preserved",
-                &TypedPlatformSpawnRequest::compatibility_path_preserved);
+        .def_rw("type_name_projection_preserved",
+                &TypedPlatformSpawnRequest::type_name_projection_preserved);
 
     nb::class_<TypedPlatformSpawnValidationResult>(m, "TypedPlatformSpawnValidationResult")
         .def(nb::init<>())

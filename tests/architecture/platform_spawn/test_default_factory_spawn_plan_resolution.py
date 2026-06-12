@@ -29,7 +29,7 @@ def test_wp14_content_definition_lowering_header_exists() -> None:
   assert DEFAULT_UNIT_FACTORY_HEADER.is_file()
 
 
-def test_wp14_default_factory_static_lowering_shape_preserves_compatibility_path() -> None:
+def test_wp14_default_factory_static_lowering_shape_preserves_type_name_projection_path() -> None:
   header = DEFAULT_UNIT_FACTORY_HEADER.read_text(encoding="utf-8")
 
   for token in (
@@ -37,8 +37,8 @@ def test_wp14_default_factory_static_lowering_shape_preserves_compatibility_path
     "resolve_platform_spawn_plan",
     "validate_platform_capability_bundle_template",
     "validate_resolved_platform_spawn_plan",
-    "kPlatformSpawnRequestKindTypeNameCompatibility",
-    "kPlatformMaterializationStrategyFactoryCompatibility",
+    "kPlatformSpawnRequestKindTypeNameProjection",
+    "kPlatformMaterializationStrategyFactoryProjection",
   ):
     assert token in header
 
@@ -59,7 +59,7 @@ def test_wp14_default_factory_static_lowering_shape_preserves_compatibility_path
   ):
     assert evidence_token in header
 
-  spawn_anchor = header.index("flecs::entity spawn(flecs::world& ecs,")
+  spawn_anchor = header.index("flecs::entity spawn(")
   resolution_anchor = header.index(
     "resolve_platform_spawn_plan_for_type_name(unit_name)",
     spawn_anchor,
@@ -69,10 +69,10 @@ def test_wp14_default_factory_static_lowering_shape_preserves_compatibility_path
     resolution_anchor,
   )
   definition_anchor = header.index(
-    "const UnitDefinition& def = it->second;",
+    "const UnitDefinition &def = it->second;",
     validation_anchor,
   )
-  materialization_anchor = header.index("auto e = ecs.entity()", definition_anchor)
+  materialization_anchor = header.index("auto e =", definition_anchor)
   assert resolution_anchor < validation_anchor < definition_anchor < materialization_anchor
   assert "spawn_platform" not in header
 
@@ -122,10 +122,10 @@ def test_wp14_aircraft_bundle_and_plan_are_deterministic_and_validate() -> None:
         !plan_a.admitted ||
         plan_a.source_request_kind !=
           std::string(runtime::platform_capabilities::
-                  kPlatformSpawnRequestKindTypeNameCompatibility) ||
+                  kPlatformSpawnRequestKindTypeNameProjection) ||
         plan_a.materialization_strategy !=
           std::string(runtime::platform_capabilities::
-                  kPlatformMaterializationStrategyFactoryCompatibility)) {
+                  kPlatformMaterializationStrategyFactoryProjection)) {
         std::cerr << "resolved aircraft plan drifted\n";
         return 1;
       }
@@ -266,7 +266,7 @@ def test_wp14_spawn_path_uses_observable_type_name_plan_resolution_entrypoint() 
   header = DEFAULT_UNIT_FACTORY_HEADER.read_text(encoding="utf-8")
 
   assert "resolve_platform_spawn_plan_for_type_name" in header
-  spawn_anchor = header.index("flecs::entity spawn(flecs::world& ecs,")
+  spawn_anchor = header.index("flecs::entity spawn(")
   evidence_anchor = header.index(
     "resolve_platform_spawn_plan_for_type_name(unit_name)", spawn_anchor
   )
@@ -277,13 +277,13 @@ def test_wp14_spawn_path_uses_observable_type_name_plan_resolution_entrypoint() 
   gate_anchor = header.index(
     "if (!plan_validation.valid || !resolved_spawn_plan.admitted)", validate_anchor
   )
-  definition_anchor = header.index("const UnitDefinition& def = it->second;", gate_anchor)
-  materialization_anchor = header.index("auto e = ecs.entity()", definition_anchor)
+  definition_anchor = header.index("const UnitDefinition &def = it->second;", gate_anchor)
+  materialization_anchor = header.index("auto e =", definition_anchor)
   assert evidence_anchor < validate_anchor < gate_anchor < definition_anchor < materialization_anchor
   assert "spawn_platform" not in header
 
 
-def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_compat_path() -> None:
+def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_projection_path() -> None:
   source = textwrap.dedent(
     r"""
     #include <algorithm>
@@ -301,18 +301,18 @@ def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_compat_pa
         factory.validate_resolved_platform_spawn_plan_for_type_name("Aircraft");
 
       if (!validation.valid || !plan.admitted) {
-        std::cerr << "type_name compatibility plan should validate and admit\n";
+        std::cerr << "type_name projection plan should validate and admit\n";
         return 1;
       }
       if (plan.source_request_kind !=
-          std::string(platform::kPlatformSpawnRequestKindTypeNameCompatibility) ||
+          std::string(platform::kPlatformSpawnRequestKindTypeNameProjection) ||
         plan.source_type_name != "Aircraft" ||
-        !plan.compatibility_path_preserved) {
-        std::cerr << "type_name compatibility evidence drifted\n";
+        !plan.type_name_projection_preserved) {
+        std::cerr << "type_name projection evidence drifted\n";
         return 1;
       }
       if (plan.materialization_strategy !=
-        std::string(platform::kPlatformMaterializationStrategyFactoryCompatibility)) {
+        std::string(platform::kPlatformMaterializationStrategyFactoryProjection)) {
         std::cerr << "materialization strategy drifted\n";
         return 1;
       }
@@ -363,9 +363,9 @@ def test_wp14_resolved_spawn_plan_evidence_is_queryable_from_type_name_compat_pa
         factory.validate_resolved_platform_spawn_plan_for_type_name("Missing_Type");
       if (!missing_validation.valid ||
         missing.admitted ||
-        !missing.compatibility_path_preserved ||
+        !missing.type_name_projection_preserved ||
         missing.source_request_kind !=
-          std::string(platform::kPlatformSpawnRequestKindTypeNameCompatibility) ||
+          std::string(platform::kPlatformSpawnRequestKindTypeNameProjection) ||
         missing.rejection_reason !=
           "resolved_platform_spawn_plan_type_name_not_found") {
         std::cerr << "missing type_name rejection evidence drifted\n";
@@ -402,11 +402,11 @@ def test_wp14_resolved_spawn_plan_air_and_naval_type_names_share_materialization
           return false;
         }
         if (plan.source_request_kind !=
-            std::string(platform::kPlatformSpawnRequestKindTypeNameCompatibility) ||
-          !plan.compatibility_path_preserved ||
+            std::string(platform::kPlatformSpawnRequestKindTypeNameProjection) ||
+          !plan.type_name_projection_preserved ||
           plan.materialization_strategy !=
-            std::string(platform::kPlatformMaterializationStrategyFactoryCompatibility)) {
-          std::cerr << type_name << " drifted off the type_name compatibility chain\n";
+            std::string(platform::kPlatformMaterializationStrategyFactoryProjection)) {
+          std::cerr << type_name << " drifted off the type_name projection chain\n";
           return false;
         }
         if (plan.resolution_evidence_ref.empty() ||
