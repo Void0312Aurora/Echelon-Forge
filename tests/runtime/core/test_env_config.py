@@ -9,7 +9,6 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from python.env_config import infer_include_visual_from_train_config, resolve_env_settings # noqa: E402
-from python.runtime_compat import normalize_runtime_compatibility_enabled # noqa: E402
 
 
 def _make_args(**overrides):
@@ -25,7 +24,6 @@ def _make_args(**overrides):
     "step_info_mode": None,
     "flight_shaping_backend": None,
     "shaping_backend": None,
-    "runtime_compatibility_enabled": None,
   }
   base.update(overrides)
   return argparse.Namespace(**base)
@@ -68,7 +66,7 @@ class EnvConfigTests(unittest.TestCase):
     self.assertEqual(resolved["step_info_mode"], "terminal")
     self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
     self.assertEqual(resolved["temporal_history_len"], 16)
-    self.assertFalse(resolved["runtime_compatibility_enabled"])
+    self.assertNotIn("runtime_compatibility_enabled", resolved)
 
   def test_resolve_env_settings_accepts_domain_neutral_shaping_backend_alias(self) -> None:
     train_config = {
@@ -161,34 +159,30 @@ class EnvConfigTests(unittest.TestCase):
 
     self.assertIsNone(resolved["execution_step_runtime_mode"])
     self.assertIsNone(resolved["flight_shaping_backend"])
-    self.assertFalse(resolved["runtime_compatibility_enabled"])
+    self.assertNotIn("runtime_compatibility_enabled", resolved)
 
-  def test_resolve_env_settings_defaults_runtime_compatibility_to_false(self) -> None:
+  def test_resolve_env_settings_does_not_return_runtime_compatibility_flag(self) -> None:
     resolved = resolve_env_settings({}, _make_args())
     self.assertIsNone(resolved["execution_step_runtime_mode"])
-    self.assertFalse(resolved["runtime_compatibility_enabled"])
+    self.assertNotIn("runtime_compatibility_enabled", resolved)
 
-  def test_runtime_compatibility_enabled_rejects_ambiguous_strings(self) -> None:
-    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
-      normalize_runtime_compatibility_enabled("maybe")
-
-    with self.assertRaisesRegex(ValueError, "Unknown runtime_compatibility_enabled"):
+  def test_runtime_compatibility_enabled_key_is_retired_from_env_settings(self) -> None:
+    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled has been removed"):
       resolve_env_settings(
         {"env": {"runtime_compatibility_enabled": "legacy-ish"}},
         _make_args(),
       )
 
-  def test_resolve_env_settings_rejects_runtime_compatibility_opt_in(self) -> None:
-    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=true has been removed"):
+    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled has been removed"):
       resolve_env_settings(
         {"env": {"runtime_compatibility_enabled": "yes"}},
         _make_args(),
       )
 
-    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled=true has been removed"):
+    with self.assertRaisesRegex(ValueError, "runtime_compatibility_enabled has been removed"):
       resolve_env_settings(
         {},
-        _make_args(runtime_compatibility_enabled=True),
+        _make_args(runtime_compatibility_enabled="yes"),
       )
 
   def test_resolve_env_settings_accepts_dedicated_naval_action_mode(self) -> None:

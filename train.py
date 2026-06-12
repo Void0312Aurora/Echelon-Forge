@@ -60,7 +60,6 @@ def _load_training_dependencies() -> None:
     global _TRAINING_DEPS_LOADED
     global torch
     global PPO, DummyVecEnv, SubprocVecEnv, make_vec_env, CallbackList, CheckpointCallback
-    global UniversalEnv
     global TemporalTransformerExtractor, TransformerExtractor, TransformerVisualExtractor
     global CMODiagnosticsCallback, ScenarioCurriculumCallback, RewardPlateauEarlyStopCallback
     global HierarchicalMoEExecutionPolicy, SquashedMultiInputPolicy, AdaptiveKLPPO
@@ -83,7 +82,6 @@ def _load_training_dependencies() -> None:
         # Enable TF32 for Ampere+ GPUs (significant speedup and memory savings).
         torch_module.set_float32_matmul_precision("high")
 
-    from gym_envs.universal_env import UniversalEnv as UniversalEnv_cls
     from python.models.transformer import (
         TemporalTransformerExtractor as TemporalTransformerExtractor_cls,
         TransformerExtractor as TransformerExtractor_cls,
@@ -120,7 +118,6 @@ def _load_training_dependencies() -> None:
     make_vec_env = make_vec_env_fn
     CallbackList = CallbackList_cls
     CheckpointCallback = CheckpointCallback_cls
-    UniversalEnv = UniversalEnv_cls
     TemporalTransformerExtractor = TemporalTransformerExtractor_cls
     TransformerExtractor = TransformerExtractor_cls
     TransformerVisualExtractor = TransformerVisualExtractor_cls
@@ -695,33 +692,11 @@ def main():
                 print("World batch action preprocessing: multi_timescale_action=enabled")
             active_batched_execution_inference = False
         else:
-            # We must delay env creation for resume if we want to ensure same config?
-            # For now we assume user provides correct params for resumption.
-            if not bool(env_settings.get("runtime_compatibility_enabled", False)):
-                raise RuntimeError(
-                    "The standard UniversalEnv execution path owns a raw SimulationKernel and is "
-                    "compatibility-only; set runtime.world_batch_vec_env=true for the maintained "
-                    "production setup path. Direct raw UniversalEnv diagnostics must be run outside "
-                    "the maintained training config surface."
-                )
-            vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
-                agent_layer=agent_layer,
-                n_envs=n_envs,
-                runtime_cfg=runtime_cfg,
-                leader_batched_vec_env_cls=LeaderBatchedVecEnv,
-            )
-            vec_env = make_vec_env(
-                UniversalEnv,
-                n_envs=n_envs,
-                env_kwargs={
-                    "scenario_path": scenario_path,
-                    **env_settings,
-                },
-                seed=training_seed,
-                vec_env_cls=vec_cls,
-                vec_env_kwargs=vec_env_kwargs,
-                wrapper_class=wrapper_class,
-                wrapper_kwargs=wrapper_kwargs,
+            raise RuntimeError(
+                "The standard UniversalEnv execution path owns a raw SimulationKernel and is "
+                "retired from the maintained training config surface; set runtime.world_batch_vec_env=true "
+                "for the maintained production setup path. Direct raw UniversalEnv diagnostics must be run outside "
+                "the maintained training config surface."
             )
     elif agent_layer == "cooperative_execution":
         wrapper_class, wrapper_kwargs = get_action_wrapper_spec(train_config)

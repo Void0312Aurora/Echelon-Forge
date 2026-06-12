@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from python.mission_obs_taxonomy import VALID_MISSION_OBS_MODES
-from python.runtime_compat import normalize_runtime_compatibility_enabled as _normalize_runtime_compatibility_enabled
 
 
 VALID_ACTION_MODES = {"full", "takeoff2", "takeoff4", "naval_station3", "air_combat_hybrid_v1"}
@@ -79,6 +78,11 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
     env_cfg = train_config.get("env", {}) if isinstance(train_config, dict) else {}
     if not isinstance(env_cfg, dict):
         env_cfg = {}
+    if "runtime_compatibility_enabled" in env_cfg or getattr(args, "runtime_compatibility_enabled", None) is not None:
+        raise ValueError(
+            "env.runtime_compatibility_enabled has been removed from maintained training config paths; "
+            "use runtime.world_batch_vec_env=true for production setup or direct diagnostics-only UniversalEnv construction."
+        )
 
     include_visual = getattr(args, "include_visual", None)
     if include_visual is None:
@@ -109,14 +113,6 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         env_cfg,
         coerce=lambda value: str(value).strip().lower(),
     )
-    runtime_compatibility_enabled = _merge_config_value(
-        args,
-        "runtime_compatibility_enabled",
-        env_cfg,
-        default=False,
-        coerce=_normalize_runtime_compatibility_enabled,
-    )
-
     action_mode = action_mode.strip()
     mission_obs_mode = mission_obs_mode.strip().lower()
     step_info_mode = step_info_mode.strip().lower()
@@ -140,11 +136,6 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         raise ValueError("flight_shaping_backend='legacy' has been removed from maintained env config paths")
     if flight_shaping_backend is not None and flight_shaping_backend not in VALID_FLIGHT_SHAPING_BACKENDS:
         raise ValueError(f"Unknown flight_shaping_backend in merged env config: {flight_shaping_backend!r}")
-    if runtime_compatibility_enabled:
-        raise ValueError(
-            "env.runtime_compatibility_enabled=true has been removed from maintained training config paths; "
-            "use runtime.world_batch_vec_env=true for production setup or direct diagnostics-only UniversalEnv construction."
-        )
     return {
         "include_visual": bool(include_visual),
         "include_proprio": bool(include_proprio),
@@ -156,5 +147,4 @@ def resolve_env_settings(train_config: dict[str, Any] | None, args: Any) -> dict
         "execution_step_runtime_mode": execution_step_runtime_mode,
         "step_info_mode": step_info_mode,
         "flight_shaping_backend": flight_shaping_backend,
-        "runtime_compatibility_enabled": runtime_compatibility_enabled,
     }

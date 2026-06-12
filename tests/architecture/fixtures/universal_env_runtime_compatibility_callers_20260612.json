@@ -36,20 +36,6 @@
       ]
     },
     {
-      "path": "tests/leader/_leader_env_runtime_controls_cases.py",
-      "call_count": 1,
-      "surface": "leader env rejection guard for legacy execution config",
-      "classification": "negative_rejection_guard",
-      "disposition": "retain_negative_guard",
-      "migration_target": "none; this is a fail-closed regression guard",
-      "next_action": "Retain while env config rejection behavior exists.",
-      "evidence_markers": [
-        "test_leader_env_rejects_legacy_execution_runtime_mode_sources",
-        "\"runtime_compatibility_enabled\": True",
-        "execution_step_runtime_mode='legacy' has been removed"
-      ]
-    },
-    {
       "path": "tests/runtime/air_combat/test_air_combat_1v1_fire_missile.py",
       "call_count": 1,
       "surface": "air-combat UniversalEnv weapon-release runtime regression",
@@ -101,20 +87,6 @@
         "def _make_env",
         "AIR_COMBAT_HYBRID_V1_ACTION_MODE",
         "runtime_compatibility_enabled=True"
-      ]
-    },
-    {
-      "path": "tests/runtime/core/test_env_config.py",
-      "call_count": 1,
-      "surface": "env config rejection guard",
-      "classification": "negative_rejection_guard",
-      "disposition": "retain_negative_guard",
-      "migration_target": "none; this is a fail-closed regression guard",
-      "next_action": "Retain while training config rejects runtime compatibility opt-in.",
-      "evidence_markers": [
-        "test_runtime_compatibility_enabled_rejects_ambiguous_strings",
-        "_make_args(runtime_compatibility_enabled=True)",
-        "runtime_compatibility_enabled=true has been removed"
       ]
     },
     {

@@ -166,16 +166,18 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
         "name": "direct_override",
         "execution_train_config": None,
         "execution_step_runtime_mode": "legacy",
+        "expected_error": "execution_step_runtime_mode='legacy' has been removed",
       },
       {
         "name": "execution_config",
         "execution_train_config_payload": {
           "env": {
             "execution_step_runtime_mode": "legacy",
-            "runtime_compatibility_enabled": True,
+            "runtime_compatibility_enabled": "yes",
           }
         },
         "execution_step_runtime_mode": None,
+        "expected_error": "runtime_compatibility_enabled has been removed",
       },
     )
     for case in cases:
@@ -195,5 +197,5 @@ class LeaderEnvRuntimeControlTests(unittest.TestCase):
           env._execution_wrapper_class = None
           env._execution_wrapper_kwargs = None
 
-          with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
+          with self.assertRaisesRegex(ValueError, str(case["expected_error"])):
             LeaderTrainingEnv._resolve_execution_env_spec(env)

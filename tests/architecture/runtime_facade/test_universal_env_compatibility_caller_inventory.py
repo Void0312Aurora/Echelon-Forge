@@ -131,10 +131,7 @@ def test_inventory_keeps_rejection_guards_separate_from_raw_env_opt_ins() -> Non
     if entry["classification"] == "negative_rejection_guard"
   }
 
-  assert guard_paths == {
-    "tests/leader/_leader_env_runtime_controls_cases.py",
-    "tests/runtime/core/test_env_config.py",
-  }
+  assert guard_paths == set()
 
   for entry in _entries():
     if entry["classification"] == "negative_rejection_guard":
@@ -154,7 +151,6 @@ def test_inventory_counts_remaining_registered_surfaces() -> None:
   assert disposition_counts == {
     "retain_runtime_regression_until_world_batch_or_facade_equivalent_exists": 6,
     "retain_manual_diagnostics_until_tool_migrated_or_archived": 1,
-    "retain_negative_guard": 2,
   }
 
 
