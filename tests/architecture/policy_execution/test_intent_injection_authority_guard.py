@@ -71,7 +71,7 @@ def test_wp12_valid_maintained_belief_to_action_intent_path_is_accepted_through_
       role.information_state_source.source_observation_versions = {"global:11", "track:11"};
       role.decision_model_ref.kind = "policy";
       role.decision_model_ref.id = "blue-policy-v1";
-      role.action_interface.kind = "PilotActionAssignmentCompat";
+      role.action_interface.kind = "PilotActionAssignment";
       role.action_interface.payload_type = "pilot_action";
 
       ActionIntentPacket intent{};
@@ -82,7 +82,7 @@ def test_wp12_valid_maintained_belief_to_action_intent_path_is_accepted_through_
       intent.target.entity_id = 17;
       intent.action_family = "direct_control";
       intent.merge_policy = "last_write_wins";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.action_interface.payload_type = "pilot_action";
       intent.has_pilot_action = true;
 
@@ -146,7 +146,7 @@ def test_wp12_missing_provenance_invalid_authority_and_illegal_shortcuts_fail_cl
       role.information_state_source.source_observation_versions = {"global:11", "track:11"};
       role.decision_model_ref.kind = "policy";
       role.decision_model_ref.id = "blue-policy-v1";
-      role.action_interface.kind = "PilotActionAssignmentCompat";
+      role.action_interface.kind = "PilotActionAssignment";
       role.action_interface.payload_type = "pilot_action";
       return role;
     }
@@ -175,7 +175,7 @@ def test_wp12_missing_provenance_invalid_authority_and_illegal_shortcuts_fail_cl
       intent.target.entity_id = 17;
       intent.action_family = "direct_control";
       intent.merge_policy = "last_write_wins";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.action_interface.payload_type = "pilot_action";
       intent.has_pilot_action = true;
       return intent;
@@ -323,7 +323,7 @@ def test_wp12_timing_snapshot_metadata_and_raw_facade_bypass_fail_closed() -> No
       role.information_state_source.source_observation_versions = {"global:11", "track:11"};
       role.decision_model_ref.kind = "policy";
       role.decision_model_ref.id = "blue-policy-v1";
-      role.action_interface.kind = "PilotActionAssignmentCompat";
+      role.action_interface.kind = "PilotActionAssignment";
       role.action_interface.payload_type = "pilot_action";
       return role;
     }
@@ -352,7 +352,7 @@ def test_wp12_timing_snapshot_metadata_and_raw_facade_bypass_fail_closed() -> No
       intent.target.entity_id = 17;
       intent.action_family = "direct_control";
       intent.merge_policy = "last_write_wins";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.action_interface.payload_type = "pilot_action";
       intent.has_pilot_action = true;
       return intent;

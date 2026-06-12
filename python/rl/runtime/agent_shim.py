@@ -274,7 +274,7 @@ class AgentRole:
             "decision_model_ref": dict(self.decision_model_ref),
             "action_interface": {
                 "kind": self.action_interface,
-                "payload_type": str(self.metadata.get("payload_type", "compatibility_payload")),
+                "payload_type": str(self.metadata.get("payload_type", "payload")),
             },
         }
 
@@ -287,7 +287,7 @@ def single_agent_role(
     information_state_source: ObservationProvenance | None = None,
     decision_model_kind: str = "external_policy",
     decision_model_id: str = "caller_supplied",
-    action_interface: str = "PilotActionAssignmentCompat",
+    action_interface: str = "PilotActionAssignment",
     maintained_status: str = MAINTAINED,
 ) -> AgentRole:
     authority_scope: dict[str, Any] = {"entity_ids": [int(agent_id)]}
@@ -335,7 +335,7 @@ def roster_slot_role(
             "kind": "policy_route" if policy_route else "external_policy",
             "id": str(policy_route or "caller_supplied"),
         },
-        action_interface="PilotActionAssignmentCompat",
+        action_interface="PilotActionAssignment",
         maintained_status=maintained_status,
     )
 
@@ -355,7 +355,7 @@ class ActionIntent:
     action_family: str = "direct_control"
     target_entity_id: int | None = None
     target_world_index: int | None = None
-    payload_kind: str = "PilotActionAssignmentCompat"
+    payload_kind: str = "PilotActionAssignment"
     maintained_status: str = MAINTAINED
     diagnostics_note: str = ""
 
@@ -456,7 +456,7 @@ class CoordinationIntent:
     update_clock: str = "adapter_step"
     merge_policy: str = MERGE_LAST_WRITE_WINS
     roster_scope: Mapping[str, Any] = field(default_factory=dict)
-    payload_kind: str = "CommandChainAssignmentCompat"
+    payload_kind: str = "CommandChainAssignment"
     maintained_status: str = MAINTAINED
     diagnostics_note: str = ""
 

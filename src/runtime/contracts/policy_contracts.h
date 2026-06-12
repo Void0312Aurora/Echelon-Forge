@@ -20,7 +20,7 @@ struct ProducedIntentRef {
 };
 
 struct ActionInterfaceDescriptor {
-    std::string kind = "PilotActionAssignmentCompat";
+    std::string kind = "PilotActionAssignment";
     std::string payload_type = "pilot_action";
 };
 
@@ -29,10 +29,10 @@ struct DecisionModelRef {
     std::string id = "caller_supplied";
 };
 
-inline constexpr std::string_view kActionInterfacePilotActionAssignmentCompat =
-    "PilotActionAssignmentCompat";
-inline constexpr std::string_view kActionInterfaceCommandChainAssignmentCompat =
-    "CommandChainAssignmentCompat";
+inline constexpr std::string_view kActionInterfacePilotActionAssignment =
+    "PilotActionAssignment";
+inline constexpr std::string_view kActionInterfaceCommandChainAssignment =
+    "CommandChainAssignment";
 inline constexpr std::string_view kActionInterfacePayloadPilotAction = "pilot_action";
 inline constexpr std::string_view kActionInterfacePayloadMissionCommand = "mission_command";
 inline constexpr std::string_view kActionInterfacePayloadCoordinationIntent =
@@ -172,8 +172,8 @@ struct ActionHoldPolicy {
 }
 
 [[nodiscard]] inline bool is_known_agent_action_interface_kind(std::string_view kind) {
-    return kind == kActionInterfacePilotActionAssignmentCompat ||
-        kind == kActionInterfaceCommandChainAssignmentCompat;
+    return kind == kActionInterfacePilotActionAssignment ||
+        kind == kActionInterfaceCommandChainAssignment;
 }
 
 [[nodiscard]] inline bool is_known_agent_action_interface_payload_type(
@@ -398,17 +398,17 @@ struct AgentRoleAuthorizationResult {
     const AgentRole& role
 ) {
     if (role.authority_scope.scope == kAgentAuthorityScopePlatformControl) {
-        return role.action_interface.kind == kActionInterfacePilotActionAssignmentCompat &&
+        return role.action_interface.kind == kActionInterfacePilotActionAssignment &&
             role.action_interface.payload_type == kActionInterfacePayloadPilotAction;
     }
 
     if (role.authority_scope.scope == kAgentAuthorityScopeMissionCommand) {
-        return role.action_interface.kind == kActionInterfaceCommandChainAssignmentCompat &&
+        return role.action_interface.kind == kActionInterfaceCommandChainAssignment &&
             role.action_interface.payload_type == kActionInterfacePayloadMissionCommand;
     }
 
     if (role.authority_scope.scope == kAgentAuthorityScopeFormationCoordination) {
-        return role.action_interface.kind == kActionInterfaceCommandChainAssignmentCompat &&
+        return role.action_interface.kind == kActionInterfaceCommandChainAssignment &&
             role.action_interface.payload_type == kActionInterfacePayloadCoordinationIntent;
     }
 
@@ -439,7 +439,7 @@ struct AgentRoleAuthorizationResult {
     const CoordinationIntentPacket& intent,
     const ActionInterfaceDescriptor& action_interface
 ) {
-    if (action_interface.kind != kActionInterfaceCommandChainAssignmentCompat ||
+    if (action_interface.kind != kActionInterfaceCommandChainAssignment ||
         action_interface.payload_type != kActionInterfacePayloadCoordinationIntent) {
         return false;
     }

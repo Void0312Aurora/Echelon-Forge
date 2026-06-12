@@ -459,9 +459,9 @@ class RuntimeFacadeAdapter:
             action_request.action_intent.merge_policy = "last_write_wins"
             payload_type = "mission_command" if mission_command is not None else "pilot_action"
             interface_kind = (
-                "CommandChainAssignmentCompat"
+                "CommandChainAssignment"
                 if mission_command is not None
-                else "PilotActionAssignmentCompat"
+                else "PilotActionAssignment"
             )
             action_request.action_intent.action_interface.kind = interface_kind
             action_request.action_intent.action_interface.payload_type = payload_type

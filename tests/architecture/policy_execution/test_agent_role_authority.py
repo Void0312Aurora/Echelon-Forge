@@ -44,13 +44,13 @@ def test_valid_maintained_agent_role_authorizes_focused_action_and_coordination_
       action_role.information_state_source.maintained_status = "maintained";
       action_role.decision_model_ref.kind = "policy";
       action_role.decision_model_ref.id = "blue-policy-v1";
-      action_role.action_interface.kind = "PilotActionAssignmentCompat";
+      action_role.action_interface.kind = "PilotActionAssignment";
       action_role.action_interface.payload_type = "pilot_action";
 
       ActionIntentPacket action{};
       action.source_id = "policy:blue:17";
       action.action_family = "direct_control";
-      action.action_interface.kind = "PilotActionAssignmentCompat";
+      action.action_interface.kind = "PilotActionAssignment";
       action.action_interface.payload_type = "pilot_action";
       action.has_pilot_action = true;
 
@@ -77,7 +77,7 @@ def test_valid_maintained_agent_role_authorizes_focused_action_and_coordination_
       coordination_role.decision_model_ref.kind = "scripted_director";
       coordination_role.decision_model_ref.id = "director-v1";
       coordination_role.action_interface.kind =
-        "CommandChainAssignmentCompat";
+        "CommandChainAssignment";
       coordination_role.action_interface.payload_type =
         "coordination_intent";
 
@@ -127,13 +127,13 @@ def test_missing_unknown_or_incompatible_agent_role_combinations_fail_closed() -
         "maintained";
       missing_scope.decision_model_ref.kind = "policy";
       missing_scope.decision_model_ref.id = "blue-policy-v1";
-      missing_scope.action_interface.kind = "PilotActionAssignmentCompat";
+      missing_scope.action_interface.kind = "PilotActionAssignment";
       missing_scope.action_interface.payload_type = "pilot_action";
 
       ActionIntentPacket pilot_action{};
       pilot_action.source_id = "policy:blue:17";
       pilot_action.action_family = "direct_control";
-      pilot_action.action_interface.kind = "PilotActionAssignmentCompat";
+      pilot_action.action_interface.kind = "PilotActionAssignment";
       pilot_action.action_interface.payload_type = "pilot_action";
       pilot_action.has_pilot_action = true;
 
@@ -182,7 +182,7 @@ def test_missing_unknown_or_incompatible_agent_role_combinations_fail_closed() -
       mismatched_interface.information_state_source.maintained_status =
         "maintained";
       mismatched_interface.action_interface.kind =
-        "CommandChainAssignmentCompat";
+        "CommandChainAssignment";
       mismatched_interface.action_interface.payload_type =
         "mission_command";
       if (authorize_maintained_action_intent(

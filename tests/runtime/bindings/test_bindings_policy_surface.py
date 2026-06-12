@@ -113,7 +113,7 @@ class BindingsPolicySurfaceTests(unittest.TestCase):
     action = ef_py.ActionIntentPacket()
     self.assertEqual(action.action_family, "direct_control")
     self.assertEqual(action.merge_policy, "last_write_wins")
-    self.assertEqual(action.action_interface.kind, "PilotActionAssignmentCompat")
+    self.assertEqual(action.action_interface.kind, "PilotActionAssignment")
     self.assertFalse(bool(action.has_pilot_action))
     self.assertFalse(bool(action.has_mission_command))
 
@@ -125,7 +125,7 @@ class BindingsPolicySurfaceTests(unittest.TestCase):
     role = ef_py.AgentRole()
     self.assertEqual(role.role.role_type, "unspecified")
     self.assertEqual(role.information_state_source.maintained_status, "compatibility_adapter")
-    self.assertEqual(role.action_interface.kind, "PilotActionAssignmentCompat")
+    self.assertEqual(role.action_interface.kind, "PilotActionAssignment")
 
     belief = ef_py.DecisionBelief()
     self.assertEqual(belief.information_state_layer, "DecisionBelief")
@@ -157,7 +157,7 @@ class BindingsPolicySurfaceTests(unittest.TestCase):
     action.valid_until_s = 4.2
     action.target.world_index = 2
     action.target.entity_id = 17
-    action.action_interface.kind = "PilotActionAssignmentCompat"
+    action.action_interface.kind = "PilotActionAssignment"
     action.action_interface.payload_type = "pilot_action"
     action.has_pilot_action = True
     action.pilot_action.stick_pitch = 0.25

@@ -146,8 +146,8 @@ def test_agent_role_authority_slice_exposes_fail_closed_vocabulary_and_validator
   )
 
   for token in (
-    "kActionInterfacePilotActionAssignmentCompat",
-    "kActionInterfaceCommandChainAssignmentCompat",
+    "kActionInterfacePilotActionAssignment",
+    "kActionInterfaceCommandChainAssignment",
     "kActionInterfacePayloadPilotAction",
     "kActionInterfacePayloadMissionCommand",
     "kActionInterfacePayloadCoordinationIntent",

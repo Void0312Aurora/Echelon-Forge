@@ -169,7 +169,7 @@ def test_wp12_selected_slice_maintained_packet_belief_and_intent_can_name_legal_
       ActionIntentPacket intent{};
       intent.source_id = "policy:blue:11";
       intent.action_family = "direct_control";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.has_pilot_action = true;
 
       InformationTransformationEvidence db_to_ai{};
@@ -276,7 +276,7 @@ def test_wp12_illegal_world_truth_to_action_intent_maintained_shortcut_fails_clo
       ActionIntentPacket intent{};
       intent.source_id = "oracle:5";
       intent.action_family = "direct_control";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.has_pilot_action = true;
 
       InformationTransformationEvidence shortcut{};
@@ -339,7 +339,7 @@ def test_wp12_belief_to_action_intent_requires_valid_decision_belief_provenance(
       ActionIntentPacket intent{};
       intent.source_id = "policy:blue:11";
       intent.action_family = "direct_control";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.has_pilot_action = true;
 
       InformationTransformationEvidence db_to_ai{};
@@ -400,7 +400,7 @@ def test_wp12_diagnostics_only_world_truth_shortcut_remains_explicit_not_maintai
       ActionIntentPacket intent{};
       intent.source_id = "oracle:7";
       intent.action_family = "direct_control";
-      intent.action_interface.kind = "PilotActionAssignmentCompat";
+      intent.action_interface.kind = "PilotActionAssignment";
       intent.has_pilot_action = true;
 
       InformationTransformationEvidence shortcut{};

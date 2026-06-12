@@ -406,13 +406,13 @@ def test_agent_role_exposes_five_elements_without_runtime_dependency():
   assert schema["authority_scope"]["entity_ids"] == [42]
   assert schema["information_state_source"]["maintained_status"] == COMPATIBILITY_ADAPTER
   assert schema["decision_model_ref"]["kind"] == "scripted_controller"
-  assert schema["action_interface"] == "PilotActionAssignmentCompat"
+  assert schema["action_interface"] == "PilotActionAssignment"
 
   contract = role.as_contract()
   assert contract["role"]["role_id"] == "agent:2:42"
   assert contract["authority_scope"]["has_world_index"] is True
   assert contract["information_state_source"]["source_label"] == OBS_AGENT_OBSERVATION_COMPAT
-  assert contract["action_interface"]["kind"] == "PilotActionAssignmentCompat"
+  assert contract["action_interface"]["kind"] == "PilotActionAssignment"
 
 
 def test_roster_slot_role_keeps_role_metadata():
@@ -460,7 +460,7 @@ def test_action_intent_wrapper_does_not_mutate_assignment():
   contract = intent.as_contract()
   assert contract["source_id"] == role.role_id
   assert contract["target"] == {"world_index": 0, "entity_id": 11}
-  assert contract["action_interface"]["kind"] == "PilotActionAssignmentCompat"
+  assert contract["action_interface"]["kind"] == "PilotActionAssignment"
   assert contract["has_pilot_action"] is True
 
 
@@ -469,7 +469,7 @@ def test_coordination_intent_records_payload_fields():
     world_index=0,
     agent_id=5,
     role_type="flight_lead",
-    action_interface="CommandChainAssignmentCompat",
+    action_interface="CommandChainAssignment",
     information_state_source=observation_provenance(OBS_AGENT_OBSERVATION_COMPAT),
     maintained_status=COMPATIBILITY_ADAPTER,
   )

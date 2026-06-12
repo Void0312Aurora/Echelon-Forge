@@ -22,7 +22,7 @@ NAVAL_STATION3_SPEED_BIAS_MPS = 1.25
 NAVAL_STATION3_ACTION_DEADBAND = 0.005
 NAVAL_STATION3_ACTION_FAMILY = "naval_station_command"
 NAVAL_STATION3_TRANSPORT_ADAPTER_KIND = "naval_station3_pilot_action_transport_compat"
-NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignmentCompat"
+NAVAL_STATION3_CARRIER_INTERFACE_KIND = "PilotActionAssignment"
 NAVAL_STATION3_TRANSPORT_PAYLOAD_TYPE = "pilot_action"
 NAVAL_STATION3_TRANSPORT_DIAGNOSTICS_NOTE = (
     "PilotAction carrier is compatibility-only transport for naval_station3 and not "

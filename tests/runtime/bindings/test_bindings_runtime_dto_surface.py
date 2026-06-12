@@ -779,13 +779,13 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
     role.information_state_source.maintained_status = "maintained"
     role.decision_model_ref.kind = "policy"
     role.decision_model_ref.id = "blue-policy-v1"
-    role.action_interface.kind = "PilotActionAssignmentCompat"
+    role.action_interface.kind = "PilotActionAssignment"
     role.action_interface.payload_type = "pilot_action"
 
     action = ef_py.ActionIntentPacket()
     action.source_id = "policy:blue:17"
     action.action_family = "direct_control"
-    action.action_interface.kind = "PilotActionAssignmentCompat"
+    action.action_interface.kind = "PilotActionAssignment"
     action.action_interface.payload_type = "pilot_action"
     action.has_pilot_action = True
     action.has_mission_command = False
@@ -814,7 +814,7 @@ class BindingsRuntimeDtoSurfaceTests(unittest.TestCase):
     role.information_state_source.maintained_status = "diagnostics_only"
     role.decision_model_ref.kind = "scripted_director"
     role.decision_model_ref.id = "director-v1"
-    role.action_interface.kind = "PilotActionAssignmentCompat"
+    role.action_interface.kind = "PilotActionAssignment"
     role.action_interface.payload_type = "pilot_action"
 
     coordination = ef_py.CoordinationIntentPacket()

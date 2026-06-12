@@ -447,7 +447,7 @@ def _make_facade_window_launch() -> tuple[ef_py.RuntimeFacade, int, int, int]:
   action_request.action_intent.target.entity_id = int(blue_id)
   action_request.action_intent.action_family = "direct_control"
   action_request.action_intent.merge_policy = "last_write_wins"
-  action_request.action_intent.action_interface.kind = "PilotActionAssignmentCompat"
+  action_request.action_intent.action_interface.kind = "PilotActionAssignment"
   action_request.action_intent.action_interface.payload_type = "pilot_action"
   action_request.action_intent.has_pilot_action = True
   action_request.action_intent.pilot_action = _make_pilot_fire_action()

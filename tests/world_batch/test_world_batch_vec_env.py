@@ -1095,7 +1095,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
     self.assertEqual(len(facade.requests), 1)
     action_request = list(facade.requests[0].action_requests)[0]
     self.assertEqual(str(action_request.input_snapshot_version), "obs:0:42:7")
-    self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignmentCompat")
+    self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignment")
     self.assertEqual(str(action_request.action_intent.action_interface.payload_type), "pilot_action")
     self.assertEqual(str(action_request.action_intent.action_family), "direct_control")
 
@@ -1130,7 +1130,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
     self.assertEqual(len(facade.requests), 1)
     action_request = list(facade.requests[0].action_requests)[0]
     self.assertEqual(str(action_request.action_intent.action_family), NAVAL_STATION3_ACTION_FAMILY)
-    self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignmentCompat")
+    self.assertEqual(str(action_request.action_intent.action_interface.kind), "PilotActionAssignment")
     self.assertEqual(str(action_request.action_intent.action_interface.payload_type), "pilot_action")
 
   def test_world_batch_adapter_maintained_window_rejects_compatibility_provenance_label(self) -> None:
