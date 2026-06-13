@@ -1,8 +1,9 @@
 # A2 Target Outer-Shape And Component Geometry
 
-Status: `2026-06-13` active follow-on / TG-P6-R21 latest subcomponent
-placement promotion applied and TG-P7 runtime activation held for
-cross-region ownership. This subproject promotes the
+Status: `2026-06-13` active follow-on / TG-P7-R3 opt-in training proxy
+database generated; the default unit database and default runtime path remain
+unchanged. This
+subproject promotes the
 [Lethality Hitbox Geometry Fidelity Gap](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 into the maintained A2 follow-on surface for F-16 outer-shape, surface-component,
 legacy internal-component link, and distance-diagnostic work.
@@ -47,7 +48,7 @@ for better near-miss, continuous-rod, and fragmentation projection diagnostics.
 | F-16 audit asset | active candidate | glTF source package, extracted files, hashes, and attribution are retained | Supports outer-shape review, not true internal component boundaries |
 | Old FlightGear F-16 | rejected for mainline derivation | Archived under `assets/archive`; strong GPLv2 FlightGear source candidate | Must not enter mainline derived geometry |
 | Current hitboxes | known gap | The issue records 4 m nose-aspect near miss with no component damage | Must not be treated as true outer shape or true component layout |
-| Runtime integration | held | This subproject starts with review packets and diagnostics | No main projection-path change before review |
+| Runtime integration | opt-in training proxy ready | TG-P7-R3 materializes a separate proxy database and active training config using `runtime.database_path` | Default database and main projection path remain the control path |
 
 ## Scope
 
@@ -102,7 +103,7 @@ Out of scope:
 | `P4 Review Packet` | Generate HTML/SVG/CSV review packet. | P2/P3 data exist. | A reviewer can see outer shape, legacy boxes, components, and test points together. | pass |
 | `P5 Lethality Diagnostics` | Explain test points as outer/component distances and candidate counts. | P4 packet exists. | The 4 m nose case has geometry/direction/candidate evidence beyond "not a direct hit". | pass |
 | `P6 Fine Geometry Proxy` | Advance coarse boxes into shape-closer proxies and add the review-only handoff layer from outer hits to component damage. | P4/P5 review and diagnostics pass. | Review-only OBB, thin-prism, convex-hull candidates, mesh-derived silhouettes, surface-component candidates, semantic volume component candidates, constrained internal receiver priors, visual triage cards, distance deltas, and overlays exist. | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | planned / activation held |
+| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | TG-P7-R3 opt-in training proxy database pass |
 
 ## Task Clusters
 
@@ -126,6 +127,14 @@ Out of scope:
   [semantic_parent_child_layout_results_20260612.md](semantic_parent_child_layout_results_20260612.md)
 - Latest subcomponent promotion:
   [subcomponent_latest_promotion_results_20260613.md](subcomponent_latest_promotion_results_20260613.md)
+- Cross-region ownership split candidate:
+  [cross_region_ownership_split_results_20260613.md](cross_region_ownership_split_results_20260613.md)
+- Runtime activation candidate:
+  [target_geometry_runtime_activation_results_20260613.md](target_geometry_runtime_activation_results_20260613.md)
+- Runtime behavior regression:
+  [target_geometry_runtime_behavior_regression_results_20260613.md](target_geometry_runtime_behavior_regression_results_20260613.md)
+- Training proxy database:
+  [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md)
 
 ## Outputs And Evidence
 
@@ -248,6 +257,42 @@ Generated:
   Current HTML/SVG entrypoints:
   [index](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html),
   [manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json).
+- Cross-region ownership split candidates:
+  [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json),
+  [cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv),
+  [cross_region_ownership_split_results_20260613.md](cross_region_ownership_split_results_20260613.md).
+  TG-P6-R22 proposes parent receiver retirement decisions for `engine_core` and
+  `wing_spar_center` and emits `8` parse-ready split receiver candidates. The
+  payloads remain AABB fallback records, `runtime_active_split_component_count=0`,
+  and ownership acceptance remains false.
+- TG-P7 runtime activation candidate:
+  [target_geometry_runtime_activation_candidate_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json),
+  [target_geometry_runtime_activation_candidate_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.csv),
+  [target_geometry_runtime_activation_results_20260613.md](target_geometry_runtime_activation_results_20260613.md).
+  TG-P7-R1 converts the R22 split payload into a unit-database component patch
+  candidate for `F-16C_Block50.damage_model.hitboxes[].components`:
+  `candidate_component_count=8`,
+  `runtime_schema_parse_ready_component_count=8`,
+  `unit_database_patch_component_count=8`,
+  `parent_receiver_retirement_candidate_count=2`, and
+  `runtime_active_component_count=0`; the C++ unit-definition loader smoke test
+  parses the same split receiver geometry shape.
+- TG-P7 runtime behavior regression:
+  [target_geometry_runtime_behavior_regression_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.json),
+  [target_geometry_runtime_behavior_regression_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.csv),
+  [target_geometry_runtime_behavior_regression_results_20260613.md](target_geometry_runtime_behavior_regression_results_20260613.md).
+  TG-P7-R2 applies the component patch in memory only: base components `26`,
+  projected components `32`, retired parent components `2`, split additions
+  `8`, duplicate component names `0`, and `behavior_regression_pass=true`.
+- TG-P7 training proxy database:
+  [target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json),
+  [target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/),
+  [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md).
+  TG-P7-R3 materializes a full opt-in proxy runtime database with `32`
+  F-16 components, keeps the default database at `26`, wires
+  `runtime.database_path` through training bootstrap and `train.py`, and adds an
+  active world-batch probe config for `A2_TARGET_GEOMETRY_PROXY_F16C_R22`. A
+  local `64`-step CPU world-batch smoke completed against that proxy path.
 - Airframe silhouette constraint correction candidates:
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json),
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv).
@@ -296,6 +341,21 @@ Generated:
   `internal_component_prior_shape_promotion_count=9`,
   `cross_region_held_segment_shape_promotion_count=5`, and
   `subcomponent_shape_placement_candidate_count=0`.
+- Cross-region ownership split results:
+  [cross_region_ownership_split_results_20260613.md](cross_region_ownership_split_results_20260613.md).
+  TG-P6-R22 turns the two remaining ownership blockers into explicit accept /
+  reject / keep-held decisions before `TG-P7`; parent receiver retirement and
+  runtime activation remain unaccepted.
+- Runtime activation candidate results:
+  [target_geometry_runtime_activation_results_20260613.md](target_geometry_runtime_activation_results_20260613.md).
+  TG-P7-R1 creates a feature-flagged patch candidate with `8` parse-ready split
+  receiver records; the repository unit database is not modified and behavior
+  regression is still required before activation.
+- Runtime behavior regression results:
+  [target_geometry_runtime_behavior_regression_results_20260613.md](target_geometry_runtime_behavior_regression_results_20260613.md).
+  TG-P7-R2 corrects the patch target to
+  `damage_model.hitboxes[].components` and verifies the parent-retirement plus
+  split-addition projection in memory.
 - Human review findings:
   [human_review_findings_20260612.md](human_review_findings_20260612.md).
   R7 historical snapshot: the first visual review kept TG-P6 artifacts as
@@ -349,6 +409,9 @@ This subproject can be marked accepted only when:
 - Every current internal/system receiver has prior geometry, parent shell
   constraints, pre/post protrusion fractions, and isolated top/side/front review
   views; this layer must not be treated as true internal engineering geometry.
+- The TG-P7 proxy database is materialized separately from the default database,
+  has `32` F-16 components, has `0` duplicate component names, and is selected
+  only by an explicit `runtime.database_path` training config.
 - The 4 m nose close-to-shape case is explained as a concrete geometry,
   direction, or candidate-component issue instead of an unexplained zero-damage
   result.
@@ -358,13 +421,11 @@ This subproject can be marked accepted only when:
 ## Residuals And Next Steps
 
 - MQ-9 geometry is a later reuse target; the first round is F-16 only.
-- Runtime near-fuze projection should consume outer-shape proxies only after
-  explicit ownership is accepted, split, or deliberately held for cross-region
-  `engine_core` / `wing_spar_center` semantics. R12/R13 provide parse-ready
-  semantic shell component candidates and review-only internal receiver prior
-  candidates, but do not activate them in the F-16 unit damage model; `TG-P7`
-  is still explicitly held for the remaining ownership decision and activation
-  test.
+- Runtime near-fuze projection still does not consume the proxy in the default
+  F-16 unit damage model. TG-P7-R3 provides an opt-in training proxy database
+  with `8` active split receiver records and a default-path control that remains
+  at `26` components; local `64`-step training smoke passes, and the next
+  remaining step is active 8k proxy versus baseline comparison.
 - Structural breakup, wreck/debris, and Pk remain separate future subprojects.
 
 ## Archive

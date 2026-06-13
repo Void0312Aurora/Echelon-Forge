@@ -1,7 +1,7 @@
 # A2 目标外形与部件几何建模
 
-状态：`2026-06-13` active follow-on / TG-P6-R21 latest subcomponent
-placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继续 held。该子项目从
+状态：`2026-06-13` active follow-on / TG-P7-R3 opt-in training proxy
+database generated；默认 unit database 和默认 runtime path 仍未改变。该子项目从
 [杀伤链命中盒几何保真度缺口](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 提升而来，用于把 F-16 从少量大长方体推进到可审阅的外壳、表面部件、旧内部部件关联和距离诊断。
 
@@ -36,7 +36,7 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
 | F-16 审计资产 | active candidate | glTF 原始包、解包文件、hash 和 attribution 已保留 | 只提供外形审阅基础，不证明真实内部部件边界 |
 | 旧 FlightGear F-16 | rejected for mainline derivation | 已归档到 `assets/archive`，来源强候选为 GPL v2 FlightGear | 不进入主线派生几何 |
 | 当前命中盒 | known gap | issue 已记录 4 m 鼻向近炸无部件损伤等症状 | 不能继续当作真实外形或真实部件布局 |
-| 运行时接入 | held | 本项目先做审阅包和诊断字段 | 未经审阅前不改近炸投影主路径 |
+| 运行时接入 | opt-in training proxy ready | TG-P7-R3 已生成独立 proxy database 和使用 `runtime.database_path` 的 active training config | 默认 database 和主投影路径仍是对照路径 |
 
 ## 范围
 
@@ -75,7 +75,7 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
 | `P4 Review Packet` | 生成 HTML/SVG/CSV 审阅包 | P2/P3 数据存在 | 人能在图面上同时看见外形、旧盒、部件和测试点 | pass |
 | `P5 Lethality Diagnostics` | 将测试点解释成外壳/部件距离和候选部件数 | P4 审阅包存在 | 4 m 鼻向等样例不再只有“非直接命中”这一种解释 | pass |
 | `P6 Fine Geometry Proxy` | 把低精度盒子推进到更贴近外形的代理，并补上外形命中到部件损伤的审阅用中间层 | P4/P5 审阅和诊断通过 | review-only OBB、薄棱柱、凸包候选、mesh-derived silhouette、表面部件候选、语义体积部件候选、内部 receiver 先验约束候选、视觉复核卡片、距离差和叠加图存在 | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | planned / activation held |
+| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | TG-P7-R3 opt-in training proxy database pass |
 
 ## 任务簇
 
@@ -99,6 +99,14 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
   [semantic_parent_child_layout_results_20260612.zh.md](semantic_parent_child_layout_results_20260612.zh.md)
 - 最新子部件候选固化结果：
   [subcomponent_latest_promotion_results_20260613.zh.md](subcomponent_latest_promotion_results_20260613.zh.md)
+- 跨区 ownership 拆分候选结果：
+  [cross_region_ownership_split_results_20260613.zh.md](cross_region_ownership_split_results_20260613.zh.md)
+- 运行时激活候选结果：
+  [target_geometry_runtime_activation_results_20260613.zh.md](target_geometry_runtime_activation_results_20260613.zh.md)
+- 运行时行为回归结果：
+  [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)
+- 训练代理数据库结果：
+  [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)
 
 ## 输出和证据
 
@@ -194,6 +202,39 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
   当前 HTML/SVG 入口：
   [index](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)、
   [manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json)。
+- 跨区 ownership 拆分候选：
+  [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json)、
+  [cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv)、
+  [cross_region_ownership_split_results_20260613.zh.md](cross_region_ownership_split_results_20260613.zh.md)。
+  TG-P6-R22 为 `engine_core` 与 `wing_spar_center` 提出父级 receiver retirement 决策，并输出
+  `8` 个 parse-ready split receiver candidates。Payload 仍是 AABB fallback records，
+  `runtime_active_split_component_count=0`，ownership acceptance 仍为 false。
+- TG-P7 运行时激活候选：
+  [target_geometry_runtime_activation_candidate_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json)、
+  [target_geometry_runtime_activation_candidate_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.csv)、
+  [target_geometry_runtime_activation_results_20260613.zh.md](target_geometry_runtime_activation_results_20260613.zh.md)。
+  TG-P7-R1 将 R22 split payload 转换为
+  `F-16C_Block50.damage_model.hitboxes[].components` 的 unit-database component patch candidate：
+  `candidate_component_count=8`，`runtime_schema_parse_ready_component_count=8`，
+  `unit_database_patch_component_count=8`，
+  `parent_receiver_retirement_candidate_count=2`，
+  `runtime_active_component_count=0`；C++ unit-definition loader smoke test
+  已能解析同形态 split receiver geometry。
+- TG-P7 运行时行为回归：
+  [target_geometry_runtime_behavior_regression_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.json)、
+  [target_geometry_runtime_behavior_regression_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.csv)、
+  [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)。
+  TG-P7-R2 只在内存中应用 component patch：base components `26`，
+  projected components `32`，retired parent components `2`，split additions
+  `8`，duplicate component names `0`，`behavior_regression_pass=true`。
+- TG-P7 训练代理数据库：
+  [target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json)、
+  [target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/)、
+  [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)。
+  TG-P7-R3 生成完整 opt-in proxy runtime database：F-16 proxy components 为
+  `32`，默认 database 保持 `26`；training bootstrap 和 `train.py` 已接通
+  `runtime.database_path`，并新增 `A2_TARGET_GEOMETRY_PROXY_F16C_R22` active
+  world-batch probe config。本地 `64`-step CPU world-batch smoke 已在该 proxy path 上完成。
 - 整机 silhouette 约束修正候选：
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv)。
@@ -233,6 +274,16 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
   当前计数为 `internal_component_prior_shape_promotion_count=9`、
   `cross_region_held_segment_shape_promotion_count=5`、
   `subcomponent_shape_placement_candidate_count=0`。
+- 跨区 ownership 拆分结果：
+  [cross_region_ownership_split_results_20260613.zh.md](cross_region_ownership_split_results_20260613.zh.md)。
+  TG-P6-R22 将两个剩余 ownership blocker 整理成 `TG-P7` 前明确的 accept / reject / keep-held 决策；父级 receiver retirement 和 runtime activation 仍未接受。
+- 运行时激活候选结果：
+  [target_geometry_runtime_activation_results_20260613.zh.md](target_geometry_runtime_activation_results_20260613.zh.md)。
+  TG-P7-R1 生成带 feature flag 的 patch candidate，包含 `8` 个 parse-ready split
+  receiver records；仓库 unit database 未修改，activation 前仍需 behavior regression。
+- 运行时行为回归结果：
+  [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)。
+  TG-P7-R2 将 patch target 修正为 `damage_model.hitboxes[].components`，并在内存中验证父级退役和 split 追加投影。
 - 人工目检结论：
   [human_review_findings_20260612.zh.md](human_review_findings_20260612.zh.md)。
   R7 历史快照：第一轮目检结论把 TG-P6 复核产物保留为 review-only 证据，并因左右符号、鼻锥
@@ -271,16 +322,18 @@ placement promotion applied，TG-P7 runtime activation 因跨区 ownership 继�
   receiver 的交接状态。
 - 每个现有内部/系统 receiver 都有先验几何、父外壳约束、约束前后越界比例和独立 top/side/front
   复核视图；该层不得被当作真实内部工程几何。
+- TG-P7 proxy database 与默认 database 分离生成，F-16 components 为 `32`，
+  duplicate component names 为 `0`，并且只能由显式 `runtime.database_path`
+  training config 选择。
 - 4 m 鼻向贴近外壳样例能被解释为具体几何/方向/候选部件问题，而不是无说明的零损伤。
 - 所有文档继续拒绝真实 F-16 工程几何、真实 Pk、结构解体、残骸或具体弹种击毁声明。
 
 ## 残余和下一步
 
 - MQ-9 几何可作为后续机型复用目标，但第一轮只做 F-16。
-- 运行时近炸投影是否消费外壳代理，需要先明确接受、拆分或继续 held `engine_core` / `wing_spar_center`
-  跨区语义 ownership。R12/R13 已提供 parse-ready 语义外壳部件候选和 review-only 内部 receiver
-  先验约束候选，但未把它们激活进 F-16 unit 损伤模型；
-  当前 `TG-P7` 仍因剩余 ownership 决策和激活测试明确 held。
+- 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理。TG-P7-R3 已提供 opt-in
+  training proxy database，其中 `8` 个 split receiver records 在代理路径 active，默认对照路径仍保持
+  `26` components；本地 `64`-step training smoke 已通过，下一步剩余的是 active 8k proxy 与 baseline 对照。
 - 结构解体、碎裂/残骸和 Pk 仍是后续独立子项目，不能并入本几何子项目。
 
 ## Archive

@@ -1,0 +1,1399 @@
+{
+  "airframe": {
+    "configuration": "Conventional",
+    "drag_coefficient": 0.02,
+    "empty_mass_kg": 8570.0,
+    "height_m": 4.88,
+    "length_m": 15.06,
+    "max_fuel_kg": 3175.0,
+    "reference_area": 27.87,
+    "wingspan_m": 9.96
+  },
+  "damage_model": {
+    "hitboxes": [
+      {
+        "armor": 5.0,
+        "components": [
+          {
+            "armor": 3.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.7,
+                "system": "avionics",
+                "target_system": "avionics"
+              },
+              {
+                "edge_type": "data_path",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.6,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.8,
+              "blast_fragmentation": 1.2,
+              "continuous_rod": 0.9,
+              "fragmentation": 1.3,
+              "hit_to_kill": 1.35
+            },
+            "name": "apg68_radar_array",
+            "offset": [
+              6.55,
+              0.0,
+              -0.58
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "nose_fire_control_radar",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.95,
+              0.6,
+              0.3
+            ],
+            "system": "radar",
+            "threshold_scale": 1.3
+          },
+          {
+            "armor": 5.0,
+            "critical": true,
+            "mechanism_thresholds": {
+              "blast": 0.9,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.05,
+              "fragmentation": 1.25,
+              "hit_to_kill": 1.35
+            },
+            "name": "cockpit_crew_station",
+            "offset": [
+              5.15,
+              0.0,
+              0.1
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "cockpit_crew_station",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.9,
+              0.9,
+              0.9
+            ],
+            "system": "cockpit",
+            "threshold_scale": 1.2
+          },
+          {
+            "armor": 2.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "exposure_path",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.45,
+                "system": "cockpit",
+                "target_system": "cockpit"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.8,
+              "blast_fragmentation": 1.0,
+              "continuous_rod": 0.85,
+              "fragmentation": 1.1,
+              "hit_to_kill": 1.15
+            },
+            "name": "dedicated_canopy_surface_component",
+            "offset": [
+              3.41,
+              0.0,
+              -0.3
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "canopy_surface_receiver",
+            "redundancy_weight": 0.6,
+            "size": [
+              1.7,
+              0.75,
+              0.35
+            ],
+            "system": "cockpit",
+            "threshold_scale": 1.05
+          },
+          {
+            "armor": 4.0,
+            "critical": true,
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 0.85,
+              "fragmentation": 1.25,
+              "hit_to_kill": 1.3
+            },
+            "name": "nose_avionics_bay",
+            "offset": [
+              4.8,
+              0.0,
+              -0.25
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_avionics_bus",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.2,
+              0.8,
+              0.5
+            ],
+            "system": "avionics",
+            "threshold_scale": 1.15
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.55,
+                "system": "data_link",
+                "target_system": "data_link"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.45,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.8,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 0.85,
+              "fragmentation": 1.25,
+              "hit_to_kill": 1.3
+            },
+            "name": "iff_interrogator",
+            "offset": [
+              5.75,
+              0.0,
+              -0.44
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_identification_avionics",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.45,
+              0.45,
+              0.18
+            ],
+            "system": "avionics",
+            "threshold_scale": 1.1
+          }
+        ],
+        "offset": [
+          6.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          3.6,
+          1.0,
+          1.0
+        ],
+        "systems": [
+          "radar",
+          "cockpit"
+        ]
+      },
+      {
+        "armor": 8.0,
+        "components": [
+          {
+            "armor": 5.0,
+            "critical": true,
+            "mechanism_thresholds": {
+              "blast": 1.45,
+              "blast_fragmentation": 1.32,
+              "continuous_rod": 0.8,
+              "fragmentation": 1.2,
+              "hit_to_kill": 0.95
+            },
+            "name": "center_fuselage_fuel_cell",
+            "offset": [
+              -0.8,
+              0.0,
+              -0.25
+            ],
+            "redundancy_group": 1.0,
+            "redundancy_group_id": "fuselage_fuel_cells",
+            "redundancy_weight": 1.0,
+            "size": [
+              2.4,
+              1.0,
+              0.7
+            ],
+            "system": "fuel",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 4.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.8,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 0.85,
+              "fragmentation": 1.25,
+              "hit_to_kill": 1.3
+            },
+            "name": "mission_computer",
+            "offset": [
+              1.5,
+              0.0,
+              0.25
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_avionics_bus",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.5,
+              1.0,
+              0.6
+            ],
+            "system": "avionics",
+            "threshold_scale": 1.15
+          },
+          {
+            "armor": 4.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "data_path",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.6,
+                "system": "avionics",
+                "target_system": "avionics"
+              },
+              {
+                "edge_type": "data_path",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.5,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.8,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 0.85,
+              "fragmentation": 1.25,
+              "hit_to_kill": 1.3
+            },
+            "name": "data_link_terminal",
+            "offset": [
+              -1.8,
+              0.0,
+              0.25
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_datalink",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.0,
+              0.8,
+              0.5
+            ],
+            "system": "data_link",
+            "threshold_scale": 1.1
+          },
+          {
+            "armor": 4.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.55,
+                "system": "avionics",
+                "target_system": "avionics"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 1.0,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.4,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.25
+            },
+            "name": "flight_control_computer",
+            "offset": [
+              0.0,
+              0.45,
+              0.35
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "flight_control_computers",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.0,
+              0.35,
+              0.5
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 4.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "data_path",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.55,
+                "system": "avionics",
+                "target_system": "avionics"
+              },
+              {
+                "edge_type": "data_path",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.45,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 0.9,
+              "fragmentation": 1.2,
+              "hit_to_kill": 1.25
+            },
+            "name": "inertial_navigation_unit",
+            "offset": [
+              2.6,
+              0.0,
+              0.05
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_navigation_suite",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.7,
+              0.35
+            ],
+            "system": "navigation",
+            "threshold_scale": 1.05
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "airflow_path",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.55,
+                "system": "engine",
+                "target_system": "engine"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.9,
+              "blast_fragmentation": 1.05,
+              "continuous_rod": 0.95,
+              "fragmentation": 1.1,
+              "hit_to_kill": 1.2
+            },
+            "name": "dedicated_intake_lip_or_duct_component",
+            "offset": [
+              3.39,
+              0.0,
+              -0.64
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "engine_intake_airflow_path",
+            "redundancy_weight": 0.7,
+            "size": [
+              1.0,
+              0.55,
+              0.55
+            ],
+            "system": "engine",
+            "threshold_scale": 1.08
+          },
+          {
+            "armor": 5.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "electrical_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.45,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              },
+              {
+                "edge_type": "electrical_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.45,
+                "system": "data_link",
+                "target_system": "data_link"
+              },
+              {
+                "edge_type": "electrical_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.55,
+                "system": "mission_systems",
+                "target_system": "mission_systems"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 1.1,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.0,
+              "fragmentation": 1.1,
+              "hit_to_kill": 1.35
+            },
+            "name": "electrical_power_bus",
+            "offset": [
+              -2.8,
+              0.45,
+              0.05
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "fighter_primary_power_bus",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.9,
+              0.35,
+              0.45
+            ],
+            "system": "avionics",
+            "threshold_scale": 1.2
+          }
+        ],
+        "offset": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          7.6,
+          1.4,
+          1.2
+        ],
+        "systems": [
+          "fuel",
+          "avionics",
+          "engine"
+        ]
+      },
+      {
+        "armor": 10.0,
+        "components": [
+          {
+            "armor": 6.0,
+            "critical": false,
+            "mechanism_thresholds": {
+              "blast": 1.0,
+              "blast_fragmentation": 1.08,
+              "continuous_rod": 1.15,
+              "fragmentation": 1.05,
+              "hit_to_kill": 1.2
+            },
+            "name": "afterburner_nozzle",
+            "offset": [
+              -6.35,
+              0.0,
+              -0.5
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "engine_exhaust",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.9,
+              0.8,
+              0.32
+            ],
+            "system": "engine",
+            "threshold_scale": 1.1
+          },
+          {
+            "armor": 5.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.85,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.9,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 1.35,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "tail_hydraulic_pump",
+            "offset": [
+              -5.2,
+              0.0,
+              0.3
+            ],
+            "redundancy_group": 1.0,
+            "redundancy_group_id": "hydraulic_pumps",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.6,
+              0.4
+            ],
+            "system": "hydraulic",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 6.0,
+            "critical": true,
+            "dependencies": [
+              {
+                "edge_type": "fuel_feed",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.5,
+                "system": "fuel",
+                "target_system": "fuel"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 1.1,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 0.95,
+              "fragmentation": 1.1,
+              "hit_to_kill": 1.3
+            },
+            "name": "engine_fuel_control_unit",
+            "offset": [
+              -4.9,
+              0.0,
+              -0.25
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "engine_fuel_control",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.6,
+              0.35
+            ],
+            "system": "engine",
+            "threshold_scale": 1.15
+          },
+          {
+            "armor": 4.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.75,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.9,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 1.45,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "rudder_actuator",
+            "offset": [
+              -6.7,
+              0.0,
+              0.45
+            ],
+            "redundancy_group": 0.0,
+            "redundancy_group_id": "yaw_control_actuators",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.5,
+              0.35
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.3
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.7,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.85,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 1.45,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "left_horizontal_tail_actuator_or_surface_component",
+            "offset": [
+              -6.0,
+              -1.79,
+              -1.05
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "horizontal_tail_control_surfaces",
+            "redundancy_weight": 0.8,
+            "size": [
+              1.8,
+              1.0,
+              0.32
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.7,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 target-geometry receiver scaffold; synthetic engineering, non-authoritative",
+                "scale": 0.85,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.12,
+              "continuous_rod": 1.45,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "right_horizontal_tail_actuator_or_surface_component",
+            "offset": [
+              -6.0,
+              1.79,
+              -1.05
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "horizontal_tail_control_surfaces",
+            "redundancy_weight": 0.8,
+            "size": [
+              1.8,
+              1.0,
+              0.32
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.25
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "engine_core",
+              "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "aft_fuselage_engine",
+                "engine_nozzle"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "x",
+              "prior_shape": "capsule",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+              "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "engine_core",
+              "source_segment_id": "engine_core_afterburner_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "engine_core_afterburner_segment",
+            "offset": [
+              -5.025512,
+              0.0,
+              -0.554381
+            ],
+            "size": [
+              1.540087,
+              1.1811,
+              1.1811
+            ],
+            "system": "engine"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "engine_core",
+              "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "aft_fuselage_engine"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "",
+              "prior_shape": "ellipsoid",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "main_core_hot_section_proxy",
+              "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "engine_core",
+              "source_segment_id": "engine_core_hot_section_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "engine_core_hot_section_segment",
+            "offset": [
+              -3.693053,
+              0.0,
+              -0.554381
+            ],
+            "size": [
+              1.540087,
+              1.1811,
+              1.1811
+            ],
+            "system": "engine"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "engine_core",
+              "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "aft_fuselage_engine"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "",
+              "prior_shape": "ellipsoid",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "forward_compressor_proxy",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "engine_core",
+              "source_segment_id": "engine_core_forward_compressor_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "engine_core_forward_compressor_segment",
+            "offset": [
+              -2.352966,
+              0.0,
+              -0.554381
+            ],
+            "size": [
+              1.540087,
+              1.1811,
+              1.1811
+            ],
+            "system": "engine"
+          }
+        ],
+        "offset": [
+          -6.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          3.0,
+          1.1,
+          1.1
+        ],
+        "systems": [
+          "engine",
+          "flight_control"
+        ]
+      },
+      {
+        "armor": 3.0,
+        "components": [
+          {
+            "armor": 2.0,
+            "critical": true,
+            "mechanism_thresholds": {
+              "blast": 1.45,
+              "blast_fragmentation": 1.32,
+              "continuous_rod": 0.8,
+              "fragmentation": 1.2,
+              "hit_to_kill": 0.95
+            },
+            "name": "left_wing_fuel_cell",
+            "offset": [
+              -0.8,
+              -2.8,
+              -0.985
+            ],
+            "redundancy_group": 1.0,
+            "redundancy_group_id": "wing_fuel_cells",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.2,
+              1.2,
+              0.2
+            ],
+            "system": "fuel",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 2.0,
+            "critical": true,
+            "mechanism_thresholds": {
+              "blast": 1.45,
+              "blast_fragmentation": 1.32,
+              "continuous_rod": 0.8,
+              "fragmentation": 1.2,
+              "hit_to_kill": 0.95
+            },
+            "name": "right_wing_fuel_cell",
+            "offset": [
+              -0.8,
+              2.8,
+              -0.985
+            ],
+            "redundancy_group": 1.0,
+            "redundancy_group_id": "wing_fuel_cells",
+            "redundancy_weight": 1.0,
+            "size": [
+              1.2,
+              1.2,
+              0.2
+            ],
+            "system": "fuel",
+            "threshold_scale": 1.25
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.8,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 1.0,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.55,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "left_aileron_actuator",
+            "offset": [
+              -0.8,
+              -4.1,
+              -0.985
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "lateral_flight_control_actuators",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.9,
+              0.8,
+              0.22
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.35
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.8,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 1.0,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.55,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "right_aileron_actuator",
+            "offset": [
+              -0.8,
+              4.1,
+              -0.985
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "lateral_flight_control_actuators",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.9,
+              0.8,
+              0.22
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.35
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.7,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.85,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.5,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "left_leading_edge_flap_actuator",
+            "offset": [
+              -0.2,
+              -1.15,
+              -0.71
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "leading_edge_flap_actuators",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.5,
+              0.18
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.3
+          },
+          {
+            "armor": 3.0,
+            "critical": false,
+            "dependencies": [
+              {
+                "edge_type": "hydraulic_power",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.7,
+                "system": "hydraulic",
+                "target_system": "hydraulic"
+              },
+              {
+                "edge_type": "generic",
+                "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative",
+                "scale": 0.85,
+                "system": "flight_control",
+                "target_system": "flight_control"
+              }
+            ],
+            "mechanism_thresholds": {
+              "blast": 0.85,
+              "blast_fragmentation": 1.15,
+              "continuous_rod": 1.5,
+              "fragmentation": 1.15,
+              "hit_to_kill": 1.2
+            },
+            "name": "right_leading_edge_flap_actuator",
+            "offset": [
+              -0.2,
+              1.15,
+              -0.71
+            ],
+            "redundancy_group": 2.0,
+            "redundancy_group_id": "leading_edge_flap_actuators",
+            "redundancy_weight": 1.0,
+            "size": [
+              0.8,
+              0.5,
+              0.18
+            ],
+            "system": "flight_control",
+            "threshold_scale": 1.3
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "wing_spar_center",
+              "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "left_wing"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "",
+              "prior_shape": "ellipsoid",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "left_inner_wing_spar_proxy",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "wing_spar_center",
+              "source_segment_id": "wing_spar_center_left_inner_wing_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "wing_spar_center_left_inner_wing_segment",
+            "offset": [
+              -1.092842,
+              -1.575,
+              -0.985043
+            ],
+            "size": [
+              0.18,
+              1.85,
+              0.18
+            ],
+            "system": "wings"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "wing_spar_center",
+              "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "left_wing_root"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "y",
+              "prior_shape": "capsule",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "left_wing_root_spar_proxy",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "wing_spar_center",
+              "source_segment_id": "wing_spar_center_left_root_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "wing_spar_center_left_root_segment",
+            "offset": [
+              -1.092842,
+              -1.15,
+              -0.985043
+            ],
+            "size": [
+              0.18,
+              0.6,
+              0.18
+            ],
+            "system": "wings"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "wing_spar_center",
+              "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "center_fuselage"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "y",
+              "prior_shape": "capsule",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "center_fuselage_carrythrough_box_proxy",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "wing_spar_center",
+              "source_segment_id": "wing_spar_center_carrythrough_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "wing_spar_center_carrythrough_segment",
+            "offset": [
+              -1.092842,
+              0.0,
+              -0.985043
+            ],
+            "size": [
+              0.18,
+              1.7,
+              0.18
+            ],
+            "system": "wings"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "wing_spar_center",
+              "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "right_wing_root"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "y",
+              "prior_shape": "capsule",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "right_wing_root_spar_proxy",
+              "shape_promotion_status": "inherited_parent_prior_shape",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "wing_spar_center",
+              "source_segment_id": "wing_spar_center_right_root_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "wing_spar_center_right_root_segment",
+            "offset": [
+              -1.092842,
+              1.15,
+              -0.985043
+            ],
+            "size": [
+              0.18,
+              0.6,
+              0.18
+            ],
+            "system": "wings"
+          },
+          {
+            "critical": true,
+            "geometry": {
+              "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+              "activation_parent_component_name": "wing_spar_center",
+              "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+              "owner_region_ids": [
+                "right_wing"
+              ],
+              "primitive": "aabb",
+              "prior_axis": "",
+              "prior_shape": "ellipsoid",
+              "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+              "segment_role": "right_inner_wing_spar_proxy",
+              "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "wing_spar_center",
+              "source_segment_id": "wing_spar_center_right_inner_wing_segment"
+            },
+            "geometry_primitive": "aabb",
+            "name": "wing_spar_center_right_inner_wing_segment",
+            "offset": [
+              -1.092842,
+              1.575,
+              -0.985043
+            ],
+            "size": [
+              0.18,
+              1.85,
+              0.18
+            ],
+            "system": "wings"
+          }
+        ],
+        "offset": [
+          -0.8,
+          0.0,
+          0.0
+        ],
+        "size": [
+          3.0,
+          9.8,
+          0.35
+        ],
+        "systems": [
+          "wings",
+          "flight_control",
+          "fuel"
+        ]
+      }
+    ],
+    "vulnerability": {
+      "beam_aspect_scale": 1.18,
+      "blast_scale": 1.05,
+      "calibrated": false,
+      "calibration_status": "unvalidated",
+      "continuous_rod_scale": 1.18,
+      "deterministic_fuze_authority": false,
+      "direct_hit_scale": 1.0,
+      "evidence_dataset_ref": "",
+      "fragmentation_scale": 1.0,
+      "high_closure_scale": 1.1,
+      "hit_to_kill_scale": 1.25,
+      "low_closure_scale": 0.86,
+      "near_miss_scale": 0.82,
+      "nose_aspect_scale": 1.1,
+      "pk_authority": false,
+      "provenance": "A2-P5 synthetic fighter vulnerability scaffold; requires calibration before deterministic fuze/Pk claims",
+      "synthetic": true,
+      "tail_aspect_scale": 0.92
+    }
+  },
+  "data_link_network_id": 1,
+  "default_loadout": {
+    "1": "AIM-120C-7",
+    "2": "AIM-9X",
+    "8": "AIM-9X",
+    "9": "AIM-120C-7"
+  },
+  "engine_ref": "F110-GE-129",
+  "ew_suite_ref": "Generic_Gen4_EW",
+  "flight_model": {
+    "current_hp": 100.0,
+    "max_accel": 9.0,
+    "max_climb_rate": 254.0,
+    "max_g": 9.0,
+    "max_hp": 100.0,
+    "max_speed": 600.0,
+    "max_turn_rate": 26.0,
+    "min_speed": 80.0
+  },
+  "hardpoints": [
+    {
+      "capacity_kg": 150.0,
+      "station_id": 1,
+      "type": [
+        "Rail",
+        "Tip"
+      ]
+    },
+    {
+      "capacity_kg": 300.0,
+      "station_id": 2,
+      "type": [
+        "Pylon",
+        "Light"
+      ]
+    },
+    {
+      "capacity_kg": 1000.0,
+      "station_id": 3,
+      "type": [
+        "Pylon",
+        "Heavy"
+      ]
+    },
+    {
+      "capacity_kg": 500.0,
+      "station_id": 4,
+      "type": [
+        "Pylon",
+        "Medium"
+      ]
+    },
+    {
+      "capacity_kg": 1200.0,
+      "station_id": 5,
+      "type": [
+        "Fuselage"
+      ]
+    },
+    {
+      "capacity_kg": 500.0,
+      "station_id": 6,
+      "type": [
+        "Pylon",
+        "Medium"
+      ]
+    },
+    {
+      "capacity_kg": 1000.0,
+      "station_id": 7,
+      "type": [
+        "Pylon",
+        "Heavy"
+      ]
+    },
+    {
+      "capacity_kg": 300.0,
+      "station_id": 8,
+      "type": [
+        "Pylon",
+        "Light"
+      ]
+    },
+    {
+      "capacity_kg": 150.0,
+      "station_id": 9,
+      "type": [
+        "Rail",
+        "Tip"
+      ]
+    }
+  ],
+  "has_ammo": false,
+  "has_data_link": true,
+  "landing_gear": {
+    "can_use_unpaved": false,
+    "contact_height_m": 2.1,
+    "max_load_factor": 4.0,
+    "rolling_friction_coeff": 0.02
+  },
+  "name": "F-16C_Block50",
+  "rcs_profile_ref": "Standard_Fighter_RCS",
+  "sensor_ref": "AN/APG-68(V)9",
+  "type": "Aircraft"
+}

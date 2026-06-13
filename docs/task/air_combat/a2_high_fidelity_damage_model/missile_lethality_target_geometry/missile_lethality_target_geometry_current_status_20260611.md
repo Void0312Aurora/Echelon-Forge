@@ -1,7 +1,7 @@
 # A2 Target Geometry Current Status
 
-Status: `2026-06-13` TG-P6-R21 latest subcomponent placement promotion
-applied / TG-P7 runtime activation held for cross-region ownership. The
+Status: `2026-06-13` TG-P7-R3 opt-in training proxy database passes; default
+runtime projection and the maintained F-16 unit database remain unchanged. The
 parent entry and issue have moved F-16 geometry
 refinement from issue tracking into an executable subproject; the first
 source/axis/scale manifest, outer-region candidate, component-binding report,
@@ -12,15 +12,20 @@ component views, first visual findings record, independent subagent findings,
 R10 correction snapshot, R11 repair result, R12 semantic damage geometry
 candidate packet, R13 internal receiver prior constraint packet, R18
 subcomponent shape promotion packet, R19 subcomponent centerline placement
-packet, R20 latest subcomponent placement packet, and R21 latest subcomponent
-promotion packet are generated. The latest packet has repaired side-sign
+packet, R20 latest subcomponent placement packet, R21 latest subcomponent
+promotion packet, R22 cross-region ownership split candidate packet,
+TG-P7-R1 runtime activation candidate packet, TG-P7-R2 runtime behavior
+regression packet, and TG-P7-R3 training proxy database packet are
+generated. The latest packet has repaired side-sign
 mapping, runtime receiver components, wing component placement, radar/IFF, and
 nozzle source boxes; it now emits parse-ready semantic outer-shell volume
 component candidates, constrained internal receiver priors, promoted
 review-only subcomponent shape rules, local centerline placement candidates,
-latest subcomponent placement candidates, and promoted R21 latest placement rules,
-but active runtime projection remains held before
-`TG-P7`.
+latest subcomponent placement candidates, promoted R21 latest placement rules,
+R22 parse-ready split receiver candidates, a TG-P7-R1 feature-flagged
+`damage_model.hitboxes[].components` patch candidate, a TG-P7-R2 in-memory
+behavior regression, and a TG-P7-R3 opt-in proxy runtime database, but default
+active runtime projection remains unchanged.
 
 Chinese canonical:
 [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md).
@@ -51,6 +56,7 @@ Chinese canonical:
 | TG-P6 internal receiver prior geometry | [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json), [internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv), [internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html), [manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json) | R13 generates sphere/cylinder/capsule/ellipsoid priors for all `26` current receivers and constrains them by parent shell support bounds or cross-region unions; `post_constraint_outside_count=0`, `cross_region_held_prior_count=2`, `runtime_active_component_count=0`; current entrypoints are HTML/SVG pages plus manifest |
 | TG-P6 semantic parent-child layout | [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json), [semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv), [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html), [manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json) | R14 makes the `14` parent shell parts the primary review views and overlays all `26` receiver priors on their parent pages; R15 draws cross-region held receivers as split red segments instead of monolithic held blocks; current entrypoints are HTML/SVG pages plus manifest |
 | TG-P6 cross-region held segment split | [cross_region_held_component_segments_20260611.json](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.json), [cross_region_held_component_segments_20260611.csv](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv), [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) | R15 splits `engine_core` into `3` review-only engine segments and `wing_spar_center` into `5` review-only spar segments; `held_segment_count=8`, `outside_whole_airframe_segment_count=0`, `runtime_active_segment_count=0`, and cross-region ownership remains held |
+| TG-P6 cross-region ownership split candidates | [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json), [cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv), [scene.html](review_packets/f16c_20260611/scene.html) | R22 proposes retiring the parent `engine_core` and `wing_spar_center` receivers only if their `8` split receiver candidates are explicitly accepted and tested; `runtime_parse_ready_split_candidate_count=8`, `runtime_active_split_component_count=0`, and ownership acceptance remains false |
 | TG-P6 airframe constraint correction candidates | [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json), [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv), [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) | R16/R18 checks all `34` receiver priors / held split segments against shape-aware top/side/front whole-airframe silhouettes; after R21 latest placement promotion, `silhouette_exposure_item_count=0`, `size_or_shape_review_item_count=0`, and `runtime_active_component_count=0` |
 | TG-P6 subcomponent shape-placement candidates | [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json), [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv), [subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html) | R17 creates nominal-dimension-preserving candidate shape families; R18 promotes the first `4` zero-exposure candidates; R19 adds local centerline candidates; R20 resolves the radar/cockpit leftovers; R21 promotes the accepted latest placements into review-only rules, leaving `subcomponent_shape_placement_candidate_count=0` and `latest_candidate_total_outside_sample_count=0` |
 | TG-P6 human review findings | [human_review_findings_20260612.md](human_review_findings_20260612.md) | R7 historical snapshot: side-sign convention, nose radar/IFF boxes, engine/nozzle boxes, and surface-to-runtime-component handoff blocked `TG-P7` before R9/R10 refinement and R11 repair |
@@ -67,6 +73,10 @@ Chinese canonical:
 | TG-P6 subcomponent centerline placement implementation | [subcomponent_centerline_placement_results_20260613.md](subcomponent_centerline_placement_results_20260613.md) | R19 adds dimension-preserving local centerline candidates for the `10` remaining shape-placement items; `8` clear sampled exposure and `2` remain unresolved |
 | TG-P6 latest subcomponent placement implementation | [subcomponent_latest_placement_results_20260613.md](subcomponent_latest_placement_results_20260613.md) | R20 resolves the radar and cockpit leftovers and changes the main review legend to only gray whole-airframe wireframe plus blue latest subcomponent candidate |
 | TG-P6 latest subcomponent promotion implementation | [subcomponent_latest_promotion_results_20260613.md](subcomponent_latest_promotion_results_20260613.md) | R21 promotes the latest accepted placements into review-only prior and held-segment generation rules: `internal_component_prior_shape_promotion_count=9`, `cross_region_held_segment_shape_promotion_count=5`, `airframe_constraint_silhouette_exposure_item_count=0`, and runtime activation remains `0` |
+| TG-P6 cross-region ownership split implementation | [cross_region_ownership_split_results_20260613.md](cross_region_ownership_split_results_20260613.md) | R22 emits review-only ownership decisions and parse-ready AABB fallback split receiver records for the two remaining cross-region held parents; parent receiver retirement and runtime activation remain unaccepted |
+| TG-P7 runtime activation candidate implementation | [target_geometry_runtime_activation_results_20260613.md](target_geometry_runtime_activation_results_20260613.md), [target_geometry_runtime_activation_candidate_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json), [target_geometry_runtime_activation_candidate_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.csv) | TG-P7-R1 converts the R22 split payload into a feature-flagged `damage_model.hitboxes[].components` patch candidate: `candidate_component_count=8`, `runtime_schema_parse_ready_component_count=8`, `unit_database_patch_component_count=8`, `parent_receiver_retirement_candidate_count=2`, `runtime_active_component_count=0`, and C++ unit-definition loader parse smoke passes |
+| TG-P7 runtime behavior regression implementation | [target_geometry_runtime_behavior_regression_results_20260613.md](target_geometry_runtime_behavior_regression_results_20260613.md), [target_geometry_runtime_behavior_regression_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.json), [target_geometry_runtime_behavior_regression_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.csv) | TG-P7-R2 applies the component patch in memory only and verifies `base_component_count=26`, `projected_component_count=32`, `retired_parent_component_count=2`, `split_component_added_count=8`, `duplicate_component_name_count=0`, and `behavior_regression_pass=true` |
+| TG-P7 training proxy database implementation | [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md), [target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json), [target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/) | TG-P7-R3 materializes a full opt-in proxy runtime database and active training config: default database components `26`, proxy database components `32`, split receivers active in proxy `8`, duplicate names `0`, `runtime.database_path` wired through training bootstrap and `train.py`, repository unit database modified `false`, RuntimeFacade proxy database load passes, and local `64`-step CPU training smoke completes |
 | Stage-C guard alignment | [component_probability_surface_probe.py](../../../../../tools/maintenance/candidate_artifacts/component_probability_surface_probe.py) | The repaired beam-side component geometry now yields `surface_incidence_cos=0.0`; the Stage-C surface probe gate was synchronized so component-specific rows are selected instead of `global-fallback` |
 
 ## Current Boundary
@@ -81,28 +91,27 @@ Chinese canonical:
   receiver prior constraint generation, R14 semantic parent-child layout, R15
   cross-region held segment split, R16 airframe silhouette diagnostics, R17
   shape-placement candidates, R18 zero-exposure shape promotion, R19
-  centerline placement candidates, R20 latest placement candidates, and R21
-  latest placement promotion are
-  complete; it does not prove runtime activation is complete.
+  centerline placement candidates, R20 latest placement candidates, R21
+  latest placement promotion, R22 ownership split candidate packet, TG-P7-R1
+  runtime activation candidate packet, TG-P7-R2 in-memory behavior
+  regression packet, and TG-P7-R3 opt-in training proxy database packet are
+  complete; it does not prove default runtime activation is applied.
 - The Sketchfab model is an outer-review candidate, not a source of true
   internal component boundaries.
 - The old FlightGear F-16 is archived as a strong GPLv2 source candidate and
   must not enter mainline derived geometry.
-- Runtime near-fuze projection remains unchanged. R12-R21 only make semantic
-  volume component candidates, internal receiver priors, held split segments,
-  shape diagnostics, shape candidates, promoted review-only shape rules, and
-  centerline/latest placement rules review/parse-ready for controlled activation after review.
+- Runtime near-fuze projection remains unchanged on the default path. TG-P7-R3
+  makes the feature-flagged `damage_model.hitboxes[].components` projection
+  selectable through `runtime.database_path`; the repository unit database is
+  not modified, the default path remains at `26` components, and the proxy path
+  has `32` components.
 
 ## Next Step
 
-1. Decide whether `engine_core` should stay a cross-region boundary candidate
-   or be split into intake, aft engine bay, and nozzle receiver components.
-2. Decide whether `wing_spar_center` stays a cross-region semantic hold or is
-   split into center-fuselage, wing-root, and wing-skin receivers.
-3. Decide whether to activate the parse-ready semantic `runtime_component_json_candidate`
-   records or internal receiver prior candidates only after those ownership
-   semantics are explicitly accepted, split, or deliberately held and covered by
-   runtime tests.
+1. Run the maintained active 8k TG-P7 proxy probe.
+2. Run the matching baseline world-batch probe.
+3. Compare stability, event flow, and damage-component selection, with the
+   proxy path at `32` components and the default path at `26`.
 
 ## Validation Reminder
 
@@ -115,12 +124,16 @@ git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_l
 Current focused test:
 
 ```bash
+python -m py_compile tools/geometry/airframe_geometry_review.py python/training/bootstrap.py train.py tests/tools/test_airframe_geometry_review.py tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py
 pytest -q tests/tools/test_airframe_geometry_review.py
+pytest -q tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py
 python tools/geometry/airframe_geometry_review.py --out docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
+cmake --build build-workshop --target ef_test -j2
+./build-workshop/ef_test --test-suite=components_basic
+git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py python/training/bootstrap.py train.py tests/tools/test_airframe_geometry_review.py tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py examples/config/training/active/air_combat
 ```
 
-Broader runtime checks before any `TG-P7` activation:
+Broader runtime checks before any default-path replacement:
 
 ```bash
 cmake --build build-workshop --target ef_test -j2
@@ -128,4 +141,8 @@ cmake --build build-workshop --target ef_test -j2
 pytest -q tests/architecture/damage_model
 ```
 
-Current R21 focused result: `2 passed`; review packet regeneration completed.
+Current TG-P7-R3 focused result: Python geometry review tests `2 passed`;
+training bootstrap and entry contracts `28 passed`; C++ loader smoke `24
+passed`; review packet regeneration completed; RuntimeFacade proxy database
+load returned `runtime_load_ok=true`; local 64-step CPU proxy training smoke
+completed and wrote `/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`.

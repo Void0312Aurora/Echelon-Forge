@@ -40,6 +40,11 @@ This directory holds maintained in-progress `1v1` air-combat execution configs.
   - Runs beyond smoke length while staying small enough for frequent diagnostics.
   - Use this before any 32k/64k resume ramp to check whether early termination is still dominated by flight-stability artifacts.
 
+- [air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json](air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json)
+  - Opt-in TG-P7 target-geometry proxy probe on the maintained `WorldBatchVecEnv` path.
+  - Uses `runtime.database_path` to load the R3 proxy database while leaving the default `examples/config/database` F-16 damage model unchanged.
+  - Carries the `A2_TARGET_GEOMETRY_PROXY_F16C_R22` metadata so geometry-proxy training evidence stays separate from default damage-model authority.
+
 - [air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json)
   - Stage-0 drone weapon-employment probe using the single-frame `TransformerExtractor` reactive baseline.
   - Use it to inspect basic fire flow, repeated launches, reward, and termination behavior.

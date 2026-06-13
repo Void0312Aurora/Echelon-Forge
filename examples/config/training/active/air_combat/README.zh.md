@@ -40,6 +40,11 @@
   - 它超过 smoke 长度，但仍足够小，适合高频诊断。
   - 在进入 32k/64k resume ramp 前，先用它确认早期终止是否仍被飞行稳定性伪影主导。
 
+- [air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json](air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json)
+  - 维护中的 `WorldBatchVecEnv` 路径上的 TG-P7 目标几何代理 opt-in 探针。
+  - 通过 `runtime.database_path` 加载 R3 代理数据库，同时保持默认 `examples/config/database` 的 F-16 毁伤模型不变。
+  - 携带 `A2_TARGET_GEOMETRY_PROXY_F16C_R22` 元数据，使几何代理训练证据与默认毁伤模型 authority 分离。
+
 - [air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json](air_combat_1v1_stage0_drone_weapon_employment_world_batch_probe_v1.json)
   - 阶段零无人机武器使用探针，保留单帧 `TransformerExtractor` 作为 reactive 对照。
   - 用于观察基础开火流程、重复发射和奖励/终止链路。

@@ -1,0 +1,26 @@
+{
+    "name": "AIM-9X",
+    "type": "Missile",
+    "mass_kg": 85.0,
+    "flight_model": {
+        "max_speed": 850.0,
+        "max_g": 60.0,
+        "max_turn_rate": 60.0
+    },
+    "guidance": {
+        "type": "IR",
+        "off_boresight_cap": 90.0
+    },
+    "warhead": {
+        "type": "Frag",
+        "mass_kg": 9.4,
+        "lethal_radius": 8.0
+    },
+    "fuze": {
+        "type": "laser_proximity",
+        "trigger_radius_m": 8.0,
+        "delay_s": 0.008,
+        "reliability": 0.92,
+        "provenance": "A2 authored imaging IR proximity fuze scaffold"
+    }
+}

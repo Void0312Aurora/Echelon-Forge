@@ -221,7 +221,71 @@
 <tr><td>right_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
 </tbody>
 </table>
-	  </section>
+  </section>
+
+
+  <section>
+    <h2>Cross-Region Ownership Split Candidates</h2>
+    <p class="note">Review-only R22 ownership decision packet for the two held cross-region receivers. Candidate payloads are parse-ready AABB fallback receiver records with preserved shape metadata; no split receiver is runtime active.</p>
+    <table>
+<thead><tr><th>parent_component</th><th>recommended_decision</th><th>segments</th><th>candidate_receivers</th><th>owner_regions</th><th>silhouette_exposure_segments</th><th>parent_runtime_policy</th><th>runtime_status</th></tr></thead>
+<tbody>
+<tr><td>engine_core</td><td>split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate</td><td>3</td><td>engine_core_afterburner_segment,engine_core_hot_section_segment,engine_core_forward_compressor_segment</td><td>aft_fuselage_engine,engine_nozzle</td><td>0</td><td>retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted</td><td>not_active_pending_ownership_review_and_runtime_tests</td></tr>
+<tr><td>wing_spar_center</td><td>split_into_center_carrythrough_root_and_inner_wing_spar_receivers</td><td>5</td><td>wing_spar_center_left_inner_wing_segment,wing_spar_center_left_root_segment,wing_spar_center_carrythrough_segment,wing_spar_center_right_root_segment,wing_spar_center_right_inner_wing_segment</td><td>center_fuselage,left_wing,left_wing_root,right_wing,right_wing_root</td><td>0</td><td>retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted</td><td>not_active_pending_ownership_review_and_runtime_tests</td></tr>
+</tbody>
+</table>
+  </section>
+
+
+  <section>
+    <h2>TG-P7 Runtime Activation Candidate</h2>
+    <p class="note">TG-P7-R1 unit-database patch candidate for the eight R22 split receivers. The payload uses fields already parsed by the runtime unit loader, but it is not applied to the repository unit database and still requires behavior regression before activation.</p>
+    <p class="note">parse-ready candidates: 8; patch additions: 8; runtime active: 0</p>
+    <table>
+<thead><tr><th>candidate_component</th><th>parent_component</th><th>segment_role</th><th>owner_regions</th><th>primitive</th><th>loader_contract</th><th>runtime_status</th><th>behavior_status</th><th>feature_flag</th></tr></thead>
+<tbody>
+<tr><td>engine_core_afterburner_segment</td><td>engine_core</td><td>aft_afterburner_and_nozzle_overlap_proxy</td><td>aft_fuselage_engine,engine_nozzle</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>engine_core_hot_section_segment</td><td>engine_core</td><td>main_core_hot_section_proxy</td><td>aft_fuselage_engine</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>engine_core_forward_compressor_segment</td><td>engine_core</td><td>forward_compressor_proxy</td><td>aft_fuselage_engine</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>wing_spar_center_left_inner_wing_segment</td><td>wing_spar_center</td><td>left_inner_wing_spar_proxy</td><td>left_wing</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>wing_spar_center_left_root_segment</td><td>wing_spar_center</td><td>left_wing_root_spar_proxy</td><td>left_wing_root</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>wing_spar_center_carrythrough_segment</td><td>wing_spar_center</td><td>center_fuselage_carrythrough_box_proxy</td><td>center_fuselage</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>wing_spar_center_right_root_segment</td><td>wing_spar_center</td><td>right_wing_root_spar_proxy</td><td>right_wing_root</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+<tr><td>wing_spar_center_right_inner_wing_segment</td><td>wing_spar_center</td><td>right_inner_wing_spar_proxy</td><td>right_wing</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
+</tbody>
+</table>
+  </section>
+
+
+  <section>
+    <h2>TG-P7 Runtime Behavior Regression Candidate</h2>
+    <p class="note">TG-P7-R2 in-memory patch regression: parent receiver components are removed from their current hitbox component arrays and the eight split receiver candidates are appended to those same component arrays. The repository unit database is not modified.</p>
+    <p class="note">base components: 26; projected components: 32; retired parents: 2; split additions: 8; duplicate names: 0; pass: True</p>
+    <table>
+<thead><tr><th>parent_component</th><th>hitbox</th><th>target_path</th><th>base_hitbox_components</th><th>patched_hitbox_components</th><th>parent_absent_after_patch</th><th>split_components</th><th>split_present</th><th>duplicates</th><th>status</th></tr></thead>
+<tbody>
+<tr><td>engine_core</td><td>2</td><td>damage_model.hitboxes[2].components</td><td>7</td><td>9</td><td>True</td><td>engine_core_afterburner_segment,engine_core_hot_section_segment,engine_core_forward_compressor_segment</td><td>3</td><td>0</td><td>pass</td></tr>
+<tr><td>wing_spar_center</td><td>3</td><td>damage_model.hitboxes[3].components</td><td>7</td><td>11</td><td>True</td><td>wing_spar_center_left_inner_wing_segment,wing_spar_center_left_root_segment,wing_spar_center_carrythrough_segment,wing_spar_center_right_root_segment,wing_spar_center_right_inner_wing_segment</td><td>5</td><td>0</td><td>pass</td></tr>
+</tbody>
+</table>
+  </section>
+
+
+  <section>
+    <h2>TG-P7 Training Proxy Database</h2>
+    <p class="note">TG-P7-R3 materialized opt-in runtime database for initial training with the split-receiver proxy. The default repository database remains unchanged.</p>
+    <p class="note">default components: 26; proxy components: 32; split receivers: 8</p>
+    <table>
+<thead><tr><th>field</th><th>value</th></tr></thead>
+<tbody>
+<tr><td>default_database_component_count</td><td>26</td></tr>
+<tr><td>proxy_database_component_count</td><td>32</td></tr>
+<tr><td>split_receiver_component_count</td><td>8</td></tr>
+<tr><td>proxy_database_materialized</td><td>True</td></tr>
+<tr><td>database_path</td><td>docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613</td></tr>
+</tbody>
+</table>
+  </section>
 
 
   <section>
@@ -286,7 +350,7 @@
 <tr><td>surface_vertical_tail_skin</td><td>vertical_tail</td><td>tail_surface</td><td>thin_prism</td><td>1</td><td>1</td><td>rudder_actuator</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
 </tbody>
 </table>
-	  </section>
+  </section>
 
   <section>
     <h2>Review Point Diagnostics</h2>

@@ -251,6 +251,27 @@ def validate_declared_training_entry_env_surface(
     return None
 
 
+def resolve_declared_runtime_database_path(
+    *,
+    train_cfg_path: str,
+    runtime_cfg: dict[str, Any],
+) -> tuple[str | None, str | None]:
+    declared_database = str(runtime_cfg.get("database_path", "") or "").strip()
+    if not declared_database:
+        return None, None
+
+    database_candidates = _declared_path_candidates(declared_database, train_cfg_path)
+    existing_databases = [candidate for candidate in database_candidates if os.path.isdir(candidate)]
+    if existing_databases:
+        return existing_databases[0], None
+    return (
+        None,
+        "Error: train config runtime.database_path="
+        f"{declared_database!r} could not be resolved to an existing directory from "
+        "the repository root, train config directory, or current working directory.",
+    )
+
+
 def _load_leader_runtime_classes(agent_layer: str) -> tuple[type[Any] | None, type[Any] | None]:
     if agent_layer != "leader":
         return None, None
@@ -408,12 +429,23 @@ def prepare_training_bootstrap(args: argparse.Namespace) -> TrainingBootstrap | 
         print(env_surface_error)
         return None
 
+    runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
+    runtime_cfg = dict(runtime_cfg)
+    runtime_database_path, runtime_database_error = resolve_declared_runtime_database_path(
+        train_cfg_path=train_cfg_path,
+        runtime_cfg=runtime_cfg,
+    )
+    if runtime_database_error is not None:
+        print(runtime_database_error)
+        return None
+    if runtime_database_path is not None:
+        runtime_cfg["database_path"] = runtime_database_path
+
     layout = _prepare_experiment_layout(args, scenario_path, train_cfg_path)
     if layout is None:
         return None
     exp_dir, run_name, ckpt_dir, log_dir, exp_lock = layout
 
-    runtime_cfg = train_config.get("runtime", {}) if isinstance(train_config.get("runtime", {}), dict) else {}
     training_seed = _resolve_training_seed(args, train_config)
     if training_seed is not None:
         apply_global_seed(int(training_seed))

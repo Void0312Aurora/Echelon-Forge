@@ -541,6 +541,8 @@ def _print_test_only_preflight_runtime_summary(bootstrap) -> None:
             "World batch observation return mode: "
             f"mode={str(runtime_cfg.get('observation_return_mode', 'copy'))}"
         )
+        if runtime_cfg.get("database_path"):
+            print(f"World batch database: path={runtime_cfg.get('database_path')}")
         return
 
     if agent_layer == "cooperative_execution":
@@ -566,6 +568,8 @@ def _print_test_only_preflight_runtime_summary(bootstrap) -> None:
                 f"requested_backend={requested_visual_backend} "
                 f"effective_backend={_effective_auto_backend(requested_visual_backend, auto_default='compiled')}"
             )
+        if runtime_cfg.get("database_path"):
+            print(f"Cooperative database: path={runtime_cfg.get('database_path')}")
 
 
 def main():
@@ -634,6 +638,7 @@ def main():
                 scenario_path=scenario_path,
                 n_envs=n_envs,
                 worker_threads=world_batch_threads,
+                database_path=runtime_cfg.get("database_path"),
                 batch_observation_backend=batch_observation_backend,
                 batch_visual_backend=batch_visual_backend,
                 policy_observation_torch_bridge=policy_observation_torch_bridge,
@@ -681,6 +686,8 @@ def main():
                 "World batch observation return mode: "
                 f"mode={vec_env.observation_return_mode}"
             )
+            if runtime_cfg.get("database_path"):
+                print(f"World batch database: path={vec_env._db_path}")
             if bool(post_launch_assessment_cfg.get("enabled", False)):
                 print(
                     "Air-combat post-launch assessment: "
@@ -712,6 +719,7 @@ def main():
             scenario_path=scenario_path,
             n_envs=n_envs,
             worker_threads=runtime_cfg.get("world_batch_threads"),
+            database_path=runtime_cfg.get("database_path"),
             batch_observation_backend=batch_observation_backend,
             batch_visual_backend=batch_visual_backend,
             action_wrapper_kwargs=wrapper_kwargs if wrapper_class is MultiTimescaleActionWrapper else None,
@@ -736,6 +744,8 @@ def main():
                 f"requested_backend={batch_visual_backend} "
                 f"effective_backend={vec_env._batch_visual_backend_mode()}"
             )
+        if runtime_cfg.get("database_path"):
+            print(f"Cooperative database: path={vec_env._db_path}")
     else:
         vec_cls, vec_env_kwargs, active_batched_execution_inference = resolve_vec_env_spec(
             agent_layer=agent_layer,

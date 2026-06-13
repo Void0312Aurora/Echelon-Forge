@@ -93,6 +93,44 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
       mapping, fine_proxy, internal_prior_report, held_segment_report
     )
   )
+  ownership_split_report = (
+    airframe_geometry_review.build_cross_region_ownership_split_candidate_report(
+      mapping,
+      internal_prior_report,
+      held_segment_report,
+      airframe_constraint_report,
+    )
+  )
+  runtime_activation_report = (
+    airframe_geometry_review.build_target_geometry_runtime_activation_candidate_report(
+      mapping,
+      ownership_split_report,
+      aircraft=aircraft,
+    )
+  )
+  runtime_behavior_report = (
+    airframe_geometry_review.build_target_geometry_runtime_behavior_regression_report(
+      aircraft,
+      runtime_activation_report,
+    )
+  )
+  training_proxy_aircraft, training_proxy_operations = (
+    airframe_geometry_review.build_target_geometry_training_proxy_unit_candidate(
+      aircraft,
+      runtime_activation_report,
+    )
+  )
+  training_proxy_report = (
+    airframe_geometry_review.build_target_geometry_training_proxy_database_report(
+      aircraft,
+      runtime_activation_report,
+      runtime_behavior_report,
+      proxy_database_dir=(
+        airframe_geometry_review.DEFAULT_OUTPUT_DIR
+        / "target_geometry_training_proxy_database_20260613"
+      ),
+    )
+  )
   shape_placement_report = (
     airframe_geometry_review.build_subcomponent_shape_placement_candidate_report(
       mapping, fine_proxy, airframe_constraint_report
@@ -602,6 +640,251 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "center_shift_candidate_not_applied"
   ] is True
 
+  assert ownership_split_report["schema_version"] == (
+    "a2.target_geometry_cross_region_ownership_split_candidate.v1"
+  )
+  assert ownership_split_report["status"] == (
+    "cross_region_ownership_split_candidate_generated_review_only"
+  )
+  assert ownership_split_report["summary"]["parent_decision_count"] == 2
+  assert ownership_split_report["summary"]["split_candidate_parent_count"] == 2
+  assert ownership_split_report["summary"]["split_receiver_candidate_count"] == 8
+  assert ownership_split_report["summary"][
+    "engine_core_split_receiver_candidate_count"
+  ] == 3
+  assert ownership_split_report["summary"][
+    "wing_spar_center_split_receiver_candidate_count"
+  ] == 5
+  assert ownership_split_report["summary"][
+    "zero_silhouette_exposure_split_candidate_count"
+  ] == 8
+  assert ownership_split_report["summary"][
+    "outside_whole_airframe_split_candidate_count"
+  ] == 0
+  assert ownership_split_report["summary"][
+    "parent_receiver_retirement_required_count"
+  ] == 2
+  assert ownership_split_report["summary"][
+    "runtime_parse_ready_split_candidate_count"
+  ] == 8
+  assert ownership_split_report["summary"][
+    "runtime_active_split_component_count"
+  ] == 0
+  ownership_rows = {
+    row["parent_component_name"]: row for row in ownership_split_report["rows"]
+  }
+  engine_ownership = ownership_rows["engine_core"]
+  assert engine_ownership["recommended_ownership_decision"] == (
+    "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate"
+  )
+  assert engine_ownership["segment_count"] == 3
+  assert engine_ownership["parent_receiver_retirement_required_before_activation"] is True
+  engine_candidates = {
+    candidate["name"]: candidate
+    for entry in engine_ownership["segment_entries"]
+    for candidate in [entry["runtime_component_json_candidate"]]
+  }
+  afterburner_candidate = engine_candidates["engine_core_afterburner_segment"]
+  assert afterburner_candidate["geometry_primitive"] == "aabb"
+  assert afterburner_candidate["offset"] == afterburner_segment["geometry"][
+    "bounds"
+  ]["center"]
+  assert afterburner_candidate["geometry"]["prior_shape"] == "capsule"
+  assert afterburner_candidate["geometry"]["source_segment_id"] == (
+    "engine_core_afterburner_segment"
+  )
+  wing_ownership = ownership_rows["wing_spar_center"]
+  assert wing_ownership["recommended_ownership_decision"] == (
+    "split_into_center_carrythrough_root_and_inner_wing_spar_receivers"
+  )
+  assert wing_ownership["segment_count"] == 5
+  assert "wing_spar_center_carrythrough_segment" in wing_ownership[
+    "candidate_runtime_component_names"
+  ]
+  assert ownership_split_report["authority_boundary"][
+    "runtime_split_receiver_activation"
+  ] is False
+
+  assert runtime_activation_report["schema_version"] == (
+    "a2.target_geometry_runtime_activation_candidate.v1"
+  )
+  assert runtime_activation_report["status"] == (
+    "target_geometry_runtime_activation_candidate_generated_tg_p7_r1"
+  )
+  assert runtime_activation_report["activation_policy"]["target_unit"] == (
+    "F-16C_Block50"
+  )
+  assert runtime_activation_report["activation_policy"]["target_path"] == (
+    "damage_model.hitboxes[].components"
+  )
+  assert runtime_activation_report["activation_policy"][
+    "requires_feature_flag"
+  ] is True
+  assert runtime_activation_report["summary"]["candidate_component_count"] == 8
+  assert runtime_activation_report["summary"][
+    "runtime_schema_parse_ready_component_count"
+  ] == 8
+  assert runtime_activation_report["summary"][
+    "runtime_active_component_count"
+  ] == 0
+  assert runtime_activation_report["summary"][
+    "parent_receiver_retirement_candidate_count"
+  ] == 2
+  assert runtime_activation_report["summary"][
+    "parent_receiver_retirement_applied_count"
+  ] == 0
+  assert runtime_activation_report["summary"][
+    "aabb_fallback_component_count"
+  ] == 8
+  assert runtime_activation_report["summary"][
+    "unit_database_patch_component_count"
+  ] == 8
+  assert runtime_activation_report["summary"]["behavior_test_required_count"] == 8
+  assert runtime_activation_report["summary"]["activation_blocker_count"] == 0
+  assert runtime_activation_report["authority_boundary"][
+    "unit_database_modified"
+  ] is False
+  assert runtime_activation_report["authority_boundary"][
+    "runtime_activation_candidate"
+  ] is True
+  assert runtime_activation_report["authority_boundary"][
+    "training_proxy_feature_flag_required"
+  ] is True
+  assert len(runtime_activation_report["parent_receiver_retirement_plan"]) == 2
+  assert len(runtime_activation_report["unit_database_patch_candidate"]["add"]) == 8
+  assert (
+    len(runtime_activation_report["unit_database_patch_candidate"]["remove"]) == 2
+  )
+  assert (
+    len(runtime_activation_report["unit_database_patch_candidate"]["add_components"])
+    == 8
+  )
+  activation_rows = {
+    row["candidate_component_name"]: row
+    for row in runtime_activation_report["rows"]
+  }
+  afterburner_activation = activation_rows["engine_core_afterburner_segment"]
+  assert afterburner_activation["target_hitbox_index"] == 2
+  assert afterburner_activation["unit_database_patch_path"] == (
+    "damage_model.hitboxes[2].components"
+  )
+  assert afterburner_activation["runtime_loader_contract_status"] == (
+    "parse_ready_existing_loader_fields"
+  )
+  assert afterburner_activation["runtime_component_json_candidate"][
+    "geometry_primitive"
+  ] == "aabb"
+  assert afterburner_activation["runtime_component_json_candidate"]["offset"] == (
+    afterburner_candidate["offset"]
+  )
+  assert afterburner_activation["runtime_component_json_candidate"]["geometry"][
+    "activation_feature_flag"
+  ] == "A2_TARGET_GEOMETRY_PROXY_F16C_R22"
+  assert all(
+    row["runtime_activation_status"] == "not_applied_to_unit_database"
+    for row in runtime_activation_report["rows"]
+  )
+
+  assert runtime_behavior_report["schema_version"] == (
+    "a2.target_geometry_runtime_behavior_regression.v1"
+  )
+  assert runtime_behavior_report["status"] == (
+    "target_geometry_runtime_behavior_regression_generated_tg_p7_r2"
+  )
+  assert runtime_behavior_report["summary"]["base_component_count"] == 26
+  assert runtime_behavior_report["summary"][
+    "expected_projected_component_count"
+  ] == 32
+  assert runtime_behavior_report["summary"]["projected_component_count"] == 32
+  assert runtime_behavior_report["summary"][
+    "retired_parent_component_count"
+  ] == 2
+  assert runtime_behavior_report["summary"]["split_component_added_count"] == 8
+  assert runtime_behavior_report["summary"]["duplicate_component_name_count"] == 0
+  assert runtime_behavior_report["summary"][
+    "parent_retirement_behavior_pass_count"
+  ] == 2
+  assert runtime_behavior_report["summary"]["behavior_regression_pass"] is True
+  assert runtime_behavior_report["summary"]["runtime_active_component_count"] == 0
+  assert runtime_behavior_report["summary"]["unit_database_modified"] is False
+  assert runtime_behavior_report["authority_boundary"][
+    "runtime_behavior_regression_candidate"
+  ] is True
+  assert runtime_behavior_report["authority_boundary"]["training_path_wired"] is False
+  behavior_rows = {
+    row["parent_component_name"]: row for row in runtime_behavior_report["rows"]
+  }
+  assert behavior_rows["engine_core"]["target_hitbox_index"] == 2
+  assert behavior_rows["engine_core"]["base_hitbox_component_count"] == 7
+  assert behavior_rows["engine_core"]["patched_hitbox_component_count"] == 9
+  assert behavior_rows["engine_core"]["parent_absent_after_patch"] is True
+  assert behavior_rows["engine_core"]["split_component_present_count"] == 3
+  assert behavior_rows["wing_spar_center"]["target_hitbox_index"] == 3
+  assert behavior_rows["wing_spar_center"]["base_hitbox_component_count"] == 7
+  assert behavior_rows["wing_spar_center"]["patched_hitbox_component_count"] == 11
+  assert behavior_rows["wing_spar_center"]["split_component_present_count"] == 5
+  assert "engine_core" not in runtime_behavior_report["projected_component_names"]
+  assert "wing_spar_center" not in runtime_behavior_report[
+    "projected_component_names"
+  ]
+  assert "engine_core_afterburner_segment" in runtime_behavior_report[
+    "projected_component_names"
+  ]
+
+  assert training_proxy_report["schema_version"] == (
+    "a2.target_geometry_training_proxy_database.v1"
+  )
+  assert training_proxy_report["status"] == (
+    "target_geometry_training_proxy_database_generated_tg_p7_r3"
+  )
+  assert training_proxy_report["summary"]["default_database_component_count"] == 26
+  assert training_proxy_report["summary"]["proxy_database_component_count"] == 32
+  assert training_proxy_report["summary"]["component_count_delta"] == 6
+  assert training_proxy_report["summary"]["retired_parent_component_count"] == 2
+  assert training_proxy_report["summary"]["split_receiver_component_count"] == 8
+  assert training_proxy_report["summary"]["duplicate_component_name_count"] == 0
+  assert training_proxy_report["summary"]["behavior_regression_pass"] is True
+  assert training_proxy_report["summary"]["proxy_database_materialized"] is True
+  assert training_proxy_report["summary"]["repository_unit_database_modified"] is False
+  assert (
+    training_proxy_report["summary"]["default_runtime_split_receiver_active_count"]
+    == 0
+  )
+  assert (
+    training_proxy_report["summary"]["proxy_runtime_split_receiver_active_count"]
+    == 8
+  )
+  assert training_proxy_report["training_runtime_contract"][
+    "runtime_config_key"
+  ] == "runtime.database_path"
+  assert training_proxy_report["training_runtime_contract"][
+    "opt_in_training_config_path"
+  ].endswith(
+    "air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json"
+  )
+  assert training_proxy_report["training_runtime_contract"][
+    "training_path_wired"
+  ] is True
+  assert training_proxy_report["runtime_database"]["proxy_database_path"].endswith(
+    "target_geometry_training_proxy_database_20260613"
+  )
+  assert training_proxy_report["authority_boundary"][
+    "default_runtime_active_component"
+  ] is False
+  assert training_proxy_report["authority_boundary"][
+    "training_proxy_runtime_active_component"
+  ] is True
+  assert training_proxy_report["authority_boundary"]["training_path_wired"] is True
+  proxy_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
+    training_proxy_aircraft
+  )
+  assert len(proxy_component_names) == 32
+  assert "engine_core" not in proxy_component_names
+  assert "wing_spar_center" not in proxy_component_names
+  assert "engine_core_afterburner_segment" in proxy_component_names
+  assert "wing_spar_center_carrythrough_segment" in proxy_component_names
+  assert len(training_proxy_operations) == 10
+
   assert shape_placement_report["schema_version"] == (
     "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
   )
@@ -800,6 +1083,46 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert summary["airframe_constraint_silhouette_exposure_item_count"] == 0
   assert summary["airframe_constraint_center_shift_resolves_item_count"] == 0
   assert summary["airframe_constraint_size_or_shape_review_item_count"] == 0
+  assert summary["cross_region_ownership_parent_decision_count"] == 2
+  assert summary["cross_region_ownership_split_receiver_candidate_count"] == 8
+  assert (
+    summary["cross_region_ownership_zero_silhouette_exposure_split_candidate_count"]
+    == 8
+  )
+  assert summary["cross_region_ownership_runtime_active_split_component_count"] == 0
+  assert summary["target_geometry_runtime_activation_candidate_count"] == 8
+  assert summary["target_geometry_runtime_activation_parse_ready_count"] == 8
+  assert summary["target_geometry_runtime_activation_patch_component_count"] == 8
+  assert (
+    summary[
+      "target_geometry_runtime_activation_parent_retirement_candidate_count"
+    ]
+    == 2
+  )
+  assert summary["target_geometry_runtime_activation_runtime_active_count"] == 0
+  assert summary["target_geometry_runtime_behavior_base_component_count"] == 26
+  assert (
+    summary["target_geometry_runtime_behavior_projected_component_count"] == 32
+  )
+  assert (
+    summary["target_geometry_runtime_behavior_retired_parent_component_count"] == 2
+  )
+  assert (
+    summary["target_geometry_runtime_behavior_split_component_added_count"] == 8
+  )
+  assert (
+    summary["target_geometry_runtime_behavior_duplicate_component_name_count"] == 0
+  )
+  assert summary["target_geometry_runtime_behavior_regression_pass"] is True
+  assert (
+    summary["target_geometry_training_proxy_default_database_component_count"]
+    == 26
+  )
+  assert summary["target_geometry_training_proxy_database_component_count"] == 32
+  assert (
+    summary["target_geometry_training_proxy_split_receiver_component_count"] == 8
+  )
+  assert summary["target_geometry_training_proxy_database_materialized"] is True
   assert summary["subcomponent_shape_placement_candidate_count"] == 0
   assert summary["subcomponent_shape_placement_resolves_count"] == 0
   assert summary["subcomponent_shape_placement_unresolved_count"] == 0
@@ -895,6 +1218,13 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert result.stdout.find("internal_component_prior_review_index") >= 0
   assert result.stdout.find("semantic_parent_child_layout_parent_count") >= 0
   assert result.stdout.find("semantic_parent_child_layout_review_index") >= 0
+  assert result.stdout.find("cross_region_ownership_split_json") >= 0
+  assert result.stdout.find("cross_region_ownership_split_receiver_candidate_count") >= 0
+  assert result.stdout.find("target_geometry_training_proxy_database") >= 0
+  assert (
+    result.stdout.find("target_geometry_training_proxy_database_component_count")
+    >= 0
+  )
 
   for svg_name in ("fine_proxy_top.svg", "fine_proxy_side.svg", "fine_proxy_front.svg"):
     svg_path = tmp_path / svg_name
@@ -1086,6 +1416,145 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "inside_airframe_cross_region_ownership_held" in (
     airframe_constraint_csv_path.read_text(encoding="utf-8")
   )
+
+  ownership_split_json_path = (
+    tmp_path / "cross_region_ownership_split_candidate_20260611.json"
+  )
+  ownership_split_csv_path = (
+    tmp_path / "cross_region_ownership_split_candidate_20260611.csv"
+  )
+  assert ownership_split_json_path.is_file()
+  assert ownership_split_csv_path.is_file()
+  ownership_split_report = json.loads(
+    ownership_split_json_path.read_text(encoding="utf-8")
+  )
+  assert ownership_split_report["schema_version"] == (
+    "a2.target_geometry_cross_region_ownership_split_candidate.v1"
+  )
+  assert ownership_split_report["summary"]["split_receiver_candidate_count"] == 8
+  assert ownership_split_report["summary"][
+    "runtime_active_split_component_count"
+  ] == 0
+  ownership_split_csv = ownership_split_csv_path.read_text(encoding="utf-8")
+  assert (
+    "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate"
+    in ownership_split_csv
+  )
+  assert "wing_spar_center_carrythrough_segment" in ownership_split_csv
+
+  runtime_activation_json_path = (
+    tmp_path / "target_geometry_runtime_activation_candidate_20260613.json"
+  )
+  runtime_activation_csv_path = (
+    tmp_path / "target_geometry_runtime_activation_candidate_20260613.csv"
+  )
+  assert runtime_activation_json_path.is_file()
+  assert runtime_activation_csv_path.is_file()
+  runtime_activation_report = json.loads(
+    runtime_activation_json_path.read_text(encoding="utf-8")
+  )
+  assert runtime_activation_report["schema_version"] == (
+    "a2.target_geometry_runtime_activation_candidate.v1"
+  )
+  assert runtime_activation_report["summary"]["candidate_component_count"] == 8
+  assert runtime_activation_report["summary"][
+    "runtime_schema_parse_ready_component_count"
+  ] == 8
+  assert runtime_activation_report["summary"][
+    "runtime_active_component_count"
+  ] == 0
+  assert len(runtime_activation_report["unit_database_patch_candidate"]["add"]) == 8
+  assert runtime_activation_report["activation_policy"]["target_path"] == (
+    "damage_model.hitboxes[].components"
+  )
+  assert runtime_activation_report["rows"][0]["unit_database_patch_path"] == (
+    "damage_model.hitboxes[2].components"
+  )
+  runtime_activation_csv = runtime_activation_csv_path.read_text(encoding="utf-8")
+  assert "parse_ready_existing_loader_fields" in runtime_activation_csv
+  assert "A2_TARGET_GEOMETRY_PROXY_F16C_R22" in runtime_activation_csv
+  assert "damage_model.hitboxes[2].components" in runtime_activation_csv
+
+  runtime_behavior_json_path = (
+    tmp_path / "target_geometry_runtime_behavior_regression_20260613.json"
+  )
+  runtime_behavior_csv_path = (
+    tmp_path / "target_geometry_runtime_behavior_regression_20260613.csv"
+  )
+  assert runtime_behavior_json_path.is_file()
+  assert runtime_behavior_csv_path.is_file()
+  runtime_behavior_report = json.loads(
+    runtime_behavior_json_path.read_text(encoding="utf-8")
+  )
+  assert runtime_behavior_report["schema_version"] == (
+    "a2.target_geometry_runtime_behavior_regression.v1"
+  )
+  assert runtime_behavior_report["summary"]["base_component_count"] == 26
+  assert runtime_behavior_report["summary"]["projected_component_count"] == 32
+  assert runtime_behavior_report["summary"][
+    "retired_parent_component_count"
+  ] == 2
+  assert runtime_behavior_report["summary"]["split_component_added_count"] == 8
+  assert runtime_behavior_report["summary"]["duplicate_component_name_count"] == 0
+  assert runtime_behavior_report["summary"]["behavior_regression_pass"] is True
+  runtime_behavior_csv = runtime_behavior_csv_path.read_text(encoding="utf-8")
+  assert "engine_core,2,damage_model.hitboxes[2].components" in (
+    runtime_behavior_csv
+  )
+  assert "wing_spar_center,3,damage_model.hitboxes[3].components" in (
+    runtime_behavior_csv
+  )
+
+  training_proxy_json_path = (
+    tmp_path / "target_geometry_training_proxy_database_20260613.json"
+  )
+  training_proxy_database_dir = (
+    tmp_path / "target_geometry_training_proxy_database_20260613"
+  )
+  training_proxy_unit_path = (
+    training_proxy_database_dir / "aircraft" / "units" / "f16c_block50.json"
+  )
+  assert training_proxy_json_path.is_file()
+  assert training_proxy_database_dir.is_dir()
+  assert training_proxy_unit_path.is_file()
+  training_proxy_report = json.loads(
+    training_proxy_json_path.read_text(encoding="utf-8")
+  )
+  assert training_proxy_report["schema_version"] == (
+    "a2.target_geometry_training_proxy_database.v1"
+  )
+  assert (
+    training_proxy_report["runtime_database"]["proxy_f16c_unit_sha256"]
+    and len(training_proxy_report["runtime_database"]["proxy_f16c_unit_sha256"])
+    == 64
+  )
+  assert (
+    training_proxy_report["summary"]["default_database_component_count"] == 26
+  )
+  assert training_proxy_report["summary"]["proxy_database_component_count"] == 32
+  assert training_proxy_report["summary"]["split_receiver_component_count"] == 8
+  assert training_proxy_report["summary"]["retired_parent_component_count"] == 2
+  assert training_proxy_report["summary"]["duplicate_component_name_count"] == 0
+  assert training_proxy_report["summary"]["behavior_regression_pass"] is True
+  assert training_proxy_report["training_runtime_contract"][
+    "training_path_wired"
+  ] is True
+  assert training_proxy_report["authority_boundary"]["training_path_wired"] is True
+  proxy_unit = json.loads(training_proxy_unit_path.read_text(encoding="utf-8"))
+  proxy_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
+    proxy_unit
+  )
+  default_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
+    airframe_geometry_review._load_json(airframe_geometry_review.DEFAULT_AIRCRAFT) # noqa: SLF001
+  )
+  assert len(default_component_names) == 26
+  assert len(proxy_component_names) == 32
+  assert "engine_core" in default_component_names
+  assert "wing_spar_center" in default_component_names
+  assert "engine_core" not in proxy_component_names
+  assert "wing_spar_center" not in proxy_component_names
+  assert "engine_core_afterburner_segment" in proxy_component_names
+  assert "wing_spar_center_carrythrough_segment" in proxy_component_names
 
   shape_placement_json_path = (
     tmp_path / "subcomponent_shape_placement_candidate_20260611.json"
@@ -1382,6 +1851,18 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "wing_spar_center_carrythrough_segment" in scene
   assert "Airframe Constraint Correction Candidates" in scene
   assert "apg68_radar_array" in scene
+  assert "Cross-Region Ownership Split Candidates" in scene
+  assert (
+    "split_into_center_carrythrough_root_and_inner_wing_spar_receivers" in scene
+  )
+  assert "TG-P7 Runtime Activation Candidate" in scene
+  assert "parse-ready candidates: 8" in scene
+  assert "TG-P7 Runtime Behavior Regression Candidate" in scene
+  assert "projected components: 32" in scene
+  assert "pass: True" in scene
+  assert "TG-P7 Training Proxy Database" in scene
+  assert "proxy components: 32" in scene
+  assert "target_geometry_training_proxy_database_20260613" in scene
   assert "Subcomponent Shape Placement Candidates" in scene
   assert "subcomponent_shape_placement_views/index.html" in scene
   assert "latest resolved candidates: 0" in scene

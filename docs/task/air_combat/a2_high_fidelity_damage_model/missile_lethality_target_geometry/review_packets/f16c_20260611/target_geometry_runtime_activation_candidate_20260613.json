@@ -1,0 +1,1299 @@
+{
+  "acceptance_gate": [
+    "candidate_component_count_equals_8",
+    "runtime_schema_parse_ready_component_count_equals_8",
+    "parent_receiver_retirement_plan_exists_for_2_parents",
+    "unit_database_patch_candidate_contains_8_component_records",
+    "runtime_active_component_count_equals_0_until_explicit_activation",
+    "behavior_tests_required_before_activation"
+  ],
+  "activation_policy": {
+    "activation_mode": "unit_database_patch_candidate_not_applied",
+    "activation_scope": "f16c_block50_initial_training_geometry_proxy",
+    "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+    "parent_receiver_retirement_required_before_activation": true,
+    "requires_feature_flag": true,
+    "runtime_behavior_regression_required_before_activation": true,
+    "target_path": "damage_model.hitboxes[].components",
+    "target_unit": "F-16C_Block50"
+  },
+  "asset_ref": {
+    "audit_scene_gltf": "examples/viz/web_viz/static/assets/air/audit/f16_c_falcon_carlos_maciel/gltf/scene.gltf",
+    "manifest_schema_version": "a2.target_geometry_manifest.v1",
+    "runtime_visual_glb": "examples/viz/web_viz/static/assets/air/f16_c_falcon_carlos_maciel/f16_c_falcon_carlos_maciel.glb",
+    "source_uid": "4bc2ff75dc584af2afd0aa6bd8b79015"
+  },
+  "authority_boundary": {
+    "allowed_use": [
+      "outer_shape_review",
+      "scale_and_axis_audit",
+      "component_binding_review_input",
+      "test_point_distance_diagnostic_input"
+    ],
+    "cross_region_receiver_ownership_accepted": false,
+    "parent_receiver_retirement_accepted": false,
+    "public_size_reference_seeded_geometry": true,
+    "real_weapon_pk_authority": false,
+    "runtime_activation_candidate": true,
+    "runtime_active_component": false,
+    "runtime_collision_mesh": false,
+    "runtime_damage_model": false,
+    "runtime_schema_parse_ready_candidate": true,
+    "runtime_split_receiver_activation": false,
+    "structural_breakup_or_debris_claim": false,
+    "training_proxy_feature_flag_required": true,
+    "true_f16_engineering_geometry": false,
+    "true_internal_component_boundaries": false,
+    "true_internal_component_geometry": false,
+    "unit_database_modified": false
+  },
+  "coordinate_frame": {
+    "frame": "sim_local_m_review",
+    "origin": "center_of_audit_asset_transformed_bounds_after_registry_scale",
+    "source_axis_map": {
+      "asset_x": "sim_right",
+      "asset_y": "sim_up",
+      "asset_z_negative": "sim_forward",
+      "convention": "project_review_axis_map_v1",
+      "nose_direction": "negative_asset_z",
+      "runtime_registry_scale": 1.65,
+      "tail_engine_direction": "positive_asset_z",
+      "yaw_correction_deg": 0.0
+    },
+    "x_positive": "nose_forward",
+    "y_positive": "right_or_left_by_project_sign_review_only",
+    "z_positive": "up"
+  },
+  "generated_on": "2026-06-13",
+  "parent_receiver_retirement_plan": [
+    {
+      "candidate_runtime_component_names": [
+        "engine_core_afterburner_segment",
+        "engine_core_hot_section_segment",
+        "engine_core_forward_compressor_segment"
+      ],
+      "parent_component_name": "engine_core",
+      "parent_receiver_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+      "recommended_ownership_decision": "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate",
+      "retirement_application_status": "not_applied_pending_explicit_tg_p7_acceptance",
+      "target_component_index": 0,
+      "target_hitbox_index": 2,
+      "target_path": "damage_model.hitboxes[2].components"
+    },
+    {
+      "candidate_runtime_component_names": [
+        "wing_spar_center_left_inner_wing_segment",
+        "wing_spar_center_left_root_segment",
+        "wing_spar_center_carrythrough_segment",
+        "wing_spar_center_right_root_segment",
+        "wing_spar_center_right_inner_wing_segment"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "retirement_application_status": "not_applied_pending_explicit_tg_p7_acceptance",
+      "target_component_index": 4,
+      "target_hitbox_index": 3,
+      "target_path": "damage_model.hitboxes[3].components"
+    }
+  ],
+  "rows": [
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "engine_core_afterburner_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -5.025512,
+        0.0,
+        -0.554381
+      ],
+      "owner_region_ids": [
+        "aft_fuselage_engine",
+        "engine_nozzle"
+      ],
+      "parent_component_name": "engine_core",
+      "parent_receiver_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "engine",
+      "recommended_ownership_decision": "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "x",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+          "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_afterburner_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_afterburner_segment",
+        "offset": [
+          -5.025512,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+      "size_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "target_hitbox_index": 2,
+      "unit_database_patch_path": "damage_model.hitboxes[2].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "engine_core_hot_section_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -3.693053,
+        0.0,
+        -0.554381
+      ],
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "engine_core",
+      "parent_receiver_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "engine",
+      "recommended_ownership_decision": "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "main_core_hot_section_proxy",
+          "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_hot_section_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_hot_section_segment",
+        "offset": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "main_core_hot_section_proxy",
+      "size_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "target_hitbox_index": 2,
+      "unit_database_patch_path": "damage_model.hitboxes[2].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "engine_core_forward_compressor_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -2.352966,
+        0.0,
+        -0.554381
+      ],
+      "owner_region_ids": [
+        "aft_fuselage_engine"
+      ],
+      "parent_component_name": "engine_core",
+      "parent_receiver_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "engine",
+      "recommended_ownership_decision": "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "forward_compressor_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_forward_compressor_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_forward_compressor_segment",
+        "offset": [
+          -2.352966,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "forward_compressor_proxy",
+      "size_m": [
+        1.540087,
+        1.1811,
+        1.1811
+      ],
+      "target_hitbox_index": 2,
+      "unit_database_patch_path": "damage_model.hitboxes[2].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "wing_spar_center_left_inner_wing_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -1.092842,
+        -1.575,
+        -0.985043
+      ],
+      "owner_region_ids": [
+        "left_wing"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "wings",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "left_wing"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "left_inner_wing_spar_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_left_inner_wing_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_left_inner_wing_segment",
+        "offset": [
+          -1.092842,
+          -1.575,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.85,
+          0.18
+        ],
+        "system": "wings"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "left_inner_wing_spar_proxy",
+      "size_m": [
+        0.18,
+        1.85,
+        0.18
+      ],
+      "target_hitbox_index": 3,
+      "unit_database_patch_path": "damage_model.hitboxes[3].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "wing_spar_center_left_root_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -1.092842,
+        -1.15,
+        -0.985043
+      ],
+      "owner_region_ids": [
+        "left_wing_root"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "wings",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "left_wing_root"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "left_wing_root_spar_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_left_root_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_left_root_segment",
+        "offset": [
+          -1.092842,
+          -1.15,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          0.6,
+          0.18
+        ],
+        "system": "wings"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "left_wing_root_spar_proxy",
+      "size_m": [
+        0.18,
+        0.6,
+        0.18
+      ],
+      "target_hitbox_index": 3,
+      "unit_database_patch_path": "damage_model.hitboxes[3].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "wing_spar_center_carrythrough_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -1.092842,
+        0.0,
+        -0.985043
+      ],
+      "owner_region_ids": [
+        "center_fuselage"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "wings",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "center_fuselage"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "center_fuselage_carrythrough_box_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_carrythrough_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_carrythrough_segment",
+        "offset": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.7,
+          0.18
+        ],
+        "system": "wings"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "center_fuselage_carrythrough_box_proxy",
+      "size_m": [
+        0.18,
+        1.7,
+        0.18
+      ],
+      "target_hitbox_index": 3,
+      "unit_database_patch_path": "damage_model.hitboxes[3].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "wing_spar_center_right_root_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -1.092842,
+        1.15,
+        -0.985043
+      ],
+      "owner_region_ids": [
+        "right_wing_root"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "wings",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "right_wing_root"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "right_wing_root_spar_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_right_root_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_right_root_segment",
+        "offset": [
+          -1.092842,
+          1.15,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          0.6,
+          0.18
+        ],
+        "system": "wings"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "right_wing_root_spar_proxy",
+      "size_m": [
+        0.18,
+        0.6,
+        0.18
+      ],
+      "target_hitbox_index": 3,
+      "unit_database_patch_path": "damage_model.hitboxes[3].components"
+    },
+    {
+      "behavior_test_status": "required_before_activation",
+      "candidate_component_name": "wing_spar_center_right_inner_wing_segment",
+      "feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+      "geometry_primitive": "aabb",
+      "offset_m": [
+        -1.092842,
+        1.575,
+        -0.985043
+      ],
+      "owner_region_ids": [
+        "right_wing"
+      ],
+      "parent_component_name": "wing_spar_center",
+      "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+      "parent_system": "wings",
+      "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+      "runtime_activation_status": "not_applied_to_unit_database",
+      "runtime_component_json_candidate": {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "right_wing"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "right_inner_wing_spar_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_right_inner_wing_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_right_inner_wing_segment",
+        "offset": [
+          -1.092842,
+          1.575,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.85,
+          0.18
+        ],
+        "system": "wings"
+      },
+      "runtime_loader_contract_status": "parse_ready_existing_loader_fields",
+      "segment_role": "right_inner_wing_spar_proxy",
+      "size_m": [
+        0.18,
+        1.85,
+        0.18
+      ],
+      "target_hitbox_index": 3,
+      "unit_database_patch_path": "damage_model.hitboxes[3].components"
+    }
+  ],
+  "runtime_loader_contract": {
+    "accepted_fallback_geometry_primitive": "aabb",
+    "loader_status_required_for_activation": "parse_ready_existing_loader_fields",
+    "required_top_level_fields": [
+      "name",
+      "system",
+      "offset",
+      "size",
+      "geometry_primitive",
+      "geometry",
+      "critical"
+    ]
+  },
+  "schema_version": "a2.target_geometry_runtime_activation_candidate.v1",
+  "source_cross_region_ownership_split_schema_version": "a2.target_geometry_cross_region_ownership_split_candidate.v1",
+  "source_geometry_generated_on": "2026-06-11",
+  "status": "target_geometry_runtime_activation_candidate_generated_tg_p7_r1",
+  "summary": {
+    "aabb_fallback_component_count": 8,
+    "activation_blocker_count": 0,
+    "behavior_test_required_count": 8,
+    "candidate_component_count": 8,
+    "parent_receiver_retirement_applied_count": 0,
+    "parent_receiver_retirement_candidate_count": 2,
+    "review_status": "tg_p7_parse_ready_activation_candidate_not_applied",
+    "runtime_active_component_count": 0,
+    "runtime_schema_parse_ready_component_count": 8,
+    "unit_database_patch_component_count": 8
+  },
+  "unit_database_patch_candidate": {
+    "add": [
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine",
+            "engine_nozzle"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "x",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+          "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_afterburner_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_afterburner_segment",
+        "offset": [
+          -5.025512,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "main_core_hot_section_proxy",
+          "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_hot_section_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_hot_section_segment",
+        "offset": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "engine_core",
+          "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "aft_fuselage_engine"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "forward_compressor_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "engine_core",
+          "source_segment_id": "engine_core_forward_compressor_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "engine_core_forward_compressor_segment",
+        "offset": [
+          -2.352966,
+          0.0,
+          -0.554381
+        ],
+        "size": [
+          1.540087,
+          1.1811,
+          1.1811
+        ],
+        "system": "engine"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "left_wing"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "left_inner_wing_spar_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_left_inner_wing_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_left_inner_wing_segment",
+        "offset": [
+          -1.092842,
+          -1.575,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.85,
+          0.18
+        ],
+        "system": "wings"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "left_wing_root"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "left_wing_root_spar_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_left_root_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_left_root_segment",
+        "offset": [
+          -1.092842,
+          -1.15,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          0.6,
+          0.18
+        ],
+        "system": "wings"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "center_fuselage"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "center_fuselage_carrythrough_box_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_carrythrough_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_carrythrough_segment",
+        "offset": [
+          -1.092842,
+          0.0,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.7,
+          0.18
+        ],
+        "system": "wings"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "right_wing_root"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "y",
+          "prior_shape": "capsule",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "right_wing_root_spar_proxy",
+          "shape_promotion_status": "inherited_parent_prior_shape",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_right_root_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_right_root_segment",
+        "offset": [
+          -1.092842,
+          1.15,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          0.6,
+          0.18
+        ],
+        "system": "wings"
+      },
+      {
+        "critical": true,
+        "geometry": {
+          "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+          "activation_parent_component_name": "wing_spar_center",
+          "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+          "owner_region_ids": [
+            "right_wing"
+          ],
+          "primitive": "aabb",
+          "prior_axis": "",
+          "prior_shape": "ellipsoid",
+          "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+          "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+          "segment_role": "right_inner_wing_spar_proxy",
+          "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+          "source": "a2_cross_region_ownership_split_candidate",
+          "source_parent_component_name": "wing_spar_center",
+          "source_segment_id": "wing_spar_center_right_inner_wing_segment"
+        },
+        "geometry_primitive": "aabb",
+        "name": "wing_spar_center_right_inner_wing_segment",
+        "offset": [
+          -1.092842,
+          1.575,
+          -0.985043
+        ],
+        "size": [
+          0.18,
+          1.85,
+          0.18
+        ],
+        "system": "wings"
+      }
+    ],
+    "add_components": [
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "engine_core_afterburner_segment",
+        "operation": "append_component",
+        "parent_component_name": "engine_core",
+        "target_hitbox_index": 2,
+        "target_path": "damage_model.hitboxes[2].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "engine_core",
+            "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "aft_fuselage_engine",
+              "engine_nozzle"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "x",
+            "prior_shape": "capsule",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "aft_afterburner_and_nozzle_overlap_proxy",
+            "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "engine_core",
+            "source_segment_id": "engine_core_afterburner_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "engine_core_afterburner_segment",
+          "offset": [
+            -5.025512,
+            0.0,
+            -0.554381
+          ],
+          "size": [
+            1.540087,
+            1.1811,
+            1.1811
+          ],
+          "system": "engine"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "engine_core_hot_section_segment",
+        "operation": "append_component",
+        "parent_component_name": "engine_core",
+        "target_hitbox_index": 2,
+        "target_path": "damage_model.hitboxes[2].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "engine_core",
+            "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "aft_fuselage_engine"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "",
+            "prior_shape": "ellipsoid",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "main_core_hot_section_proxy",
+            "shape_promotion_status": "r18_promoted_from_subcomponent_shape_candidate",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "engine_core",
+            "source_segment_id": "engine_core_hot_section_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "engine_core_hot_section_segment",
+          "offset": [
+            -3.693053,
+            0.0,
+            -0.554381
+          ],
+          "size": [
+            1.540087,
+            1.1811,
+            1.1811
+          ],
+          "system": "engine"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "engine_core_forward_compressor_segment",
+        "operation": "append_component",
+        "parent_component_name": "engine_core",
+        "target_hitbox_index": 2,
+        "target_path": "damage_model.hitboxes[2].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "engine_core",
+            "activation_parent_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "aft_fuselage_engine"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "",
+            "prior_shape": "ellipsoid",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "forward_compressor_proxy",
+            "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "engine_core",
+            "source_segment_id": "engine_core_forward_compressor_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "engine_core_forward_compressor_segment",
+          "offset": [
+            -2.352966,
+            0.0,
+            -0.554381
+          ],
+          "size": [
+            1.540087,
+            1.1811,
+            1.1811
+          ],
+          "system": "engine"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center_left_inner_wing_segment",
+        "operation": "append_component",
+        "parent_component_name": "wing_spar_center",
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "wing_spar_center",
+            "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "left_wing"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "",
+            "prior_shape": "ellipsoid",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "left_inner_wing_spar_proxy",
+            "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "wing_spar_center",
+            "source_segment_id": "wing_spar_center_left_inner_wing_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "wing_spar_center_left_inner_wing_segment",
+          "offset": [
+            -1.092842,
+            -1.575,
+            -0.985043
+          ],
+          "size": [
+            0.18,
+            1.85,
+            0.18
+          ],
+          "system": "wings"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center_left_root_segment",
+        "operation": "append_component",
+        "parent_component_name": "wing_spar_center",
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "wing_spar_center",
+            "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "left_wing_root"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "y",
+            "prior_shape": "capsule",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "left_wing_root_spar_proxy",
+            "shape_promotion_status": "inherited_parent_prior_shape",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "wing_spar_center",
+            "source_segment_id": "wing_spar_center_left_root_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "wing_spar_center_left_root_segment",
+          "offset": [
+            -1.092842,
+            -1.15,
+            -0.985043
+          ],
+          "size": [
+            0.18,
+            0.6,
+            0.18
+          ],
+          "system": "wings"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center_carrythrough_segment",
+        "operation": "append_component",
+        "parent_component_name": "wing_spar_center",
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "wing_spar_center",
+            "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "center_fuselage"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "y",
+            "prior_shape": "capsule",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "center_fuselage_carrythrough_box_proxy",
+            "shape_promotion_status": "inherited_parent_prior_shape",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "wing_spar_center",
+            "source_segment_id": "wing_spar_center_carrythrough_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "wing_spar_center_carrythrough_segment",
+          "offset": [
+            -1.092842,
+            0.0,
+            -0.985043
+          ],
+          "size": [
+            0.18,
+            1.7,
+            0.18
+          ],
+          "system": "wings"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center_right_root_segment",
+        "operation": "append_component",
+        "parent_component_name": "wing_spar_center",
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "wing_spar_center",
+            "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "right_wing_root"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "y",
+            "prior_shape": "capsule",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "right_wing_root_spar_proxy",
+            "shape_promotion_status": "inherited_parent_prior_shape",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "wing_spar_center",
+            "source_segment_id": "wing_spar_center_right_root_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "wing_spar_center_right_root_segment",
+          "offset": [
+            -1.092842,
+            1.15,
+            -0.985043
+          ],
+          "size": [
+            0.18,
+            0.6,
+            0.18
+          ],
+          "system": "wings"
+        }
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center_right_inner_wing_segment",
+        "operation": "append_component",
+        "parent_component_name": "wing_spar_center",
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components",
+        "value": {
+          "critical": true,
+          "geometry": {
+            "activation_feature_flag": "A2_TARGET_GEOMETRY_PROXY_F16C_R22",
+            "activation_parent_component_name": "wing_spar_center",
+            "activation_parent_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+            "owner_region_ids": [
+              "right_wing"
+            ],
+            "primitive": "aabb",
+            "prior_axis": "",
+            "prior_shape": "ellipsoid",
+            "runtime_activation_candidate_status": "tg_p7_parse_ready_not_applied",
+            "runtime_projection_status": "parse_ready_candidate_not_runtime_active",
+            "segment_role": "right_inner_wing_spar_proxy",
+            "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
+            "source": "a2_cross_region_ownership_split_candidate",
+            "source_parent_component_name": "wing_spar_center",
+            "source_segment_id": "wing_spar_center_right_inner_wing_segment"
+          },
+          "geometry_primitive": "aabb",
+          "name": "wing_spar_center_right_inner_wing_segment",
+          "offset": [
+            -1.092842,
+            1.575,
+            -0.985043
+          ],
+          "size": [
+            0.18,
+            1.85,
+            0.18
+          ],
+          "system": "wings"
+        }
+      }
+    ],
+    "operation": "remove_parent_components_and_append_split_receivers",
+    "parent_receiver_retirement_plan": [
+      {
+        "candidate_runtime_component_names": [
+          "engine_core_afterburner_segment",
+          "engine_core_hot_section_segment",
+          "engine_core_forward_compressor_segment"
+        ],
+        "parent_component_name": "engine_core",
+        "parent_receiver_runtime_policy": "retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted",
+        "recommended_ownership_decision": "split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate",
+        "retirement_application_status": "not_applied_pending_explicit_tg_p7_acceptance",
+        "target_component_index": 0,
+        "target_hitbox_index": 2,
+        "target_path": "damage_model.hitboxes[2].components"
+      },
+      {
+        "candidate_runtime_component_names": [
+          "wing_spar_center_left_inner_wing_segment",
+          "wing_spar_center_left_root_segment",
+          "wing_spar_center_carrythrough_segment",
+          "wing_spar_center_right_root_segment",
+          "wing_spar_center_right_inner_wing_segment"
+        ],
+        "parent_component_name": "wing_spar_center",
+        "parent_receiver_runtime_policy": "retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted",
+        "recommended_ownership_decision": "split_into_center_carrythrough_root_and_inner_wing_spar_receivers",
+        "retirement_application_status": "not_applied_pending_explicit_tg_p7_acceptance",
+        "target_component_index": 4,
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components"
+      }
+    ],
+    "patch_application_status": "not_applied_to_repository_unit_database",
+    "remove": [
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "engine_core",
+        "operation": "remove_component_by_name",
+        "target_component_index": 0,
+        "target_hitbox_index": 2,
+        "target_path": "damage_model.hitboxes[2].components"
+      },
+      {
+        "application_status": "not_applied_to_repository_unit_database",
+        "component_name": "wing_spar_center",
+        "operation": "remove_component_by_name",
+        "target_component_index": 4,
+        "target_hitbox_index": 3,
+        "target_path": "damage_model.hitboxes[3].components"
+      }
+    ],
+    "target_path": "damage_model.hitboxes[].components",
+    "target_unit": "F-16C_Block50"
+  }
+}

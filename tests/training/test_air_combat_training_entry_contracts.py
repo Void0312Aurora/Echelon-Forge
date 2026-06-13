@@ -18,6 +18,10 @@ from python.rl.policy_algo.model_contracts import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AIR_COMBAT_ACTIVE_DIR = REPO_ROOT / "examples" / "config" / "training" / "active" / "air_combat"
+F16_SCRIPTED_RED_TG_P7_PROXY_CONFIG = (
+  AIR_COMBAT_ACTIVE_DIR
+  / "air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json"
+)
 STAGE1_CONFIG = AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json"
 STAGE1_TEMPORAL_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json"
@@ -71,6 +75,12 @@ STAGE1_C2_ROE_TEMPORAL_M3S2_EVENT_WINDOW_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
   / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_c2_roe_hybrid_temporal_m3s2_event_window_state_completed_world_batch_probe_v1.json"
 )
+F16_SCRIPTED_RED_SCENARIO = (
+  REPO_ROOT
+  / "scenarios"
+  / "air_combat"
+  / "air_combat_1v1_headon_sensor_smoke_v1.json"
+)
 STAGE1_SCENARIO = REPO_ROOT / "scenarios" / "air_combat" / "1v1" / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_v1.json"
 STAGE1_SHAPED_SCENARIO = (
   REPO_ROOT
@@ -92,11 +102,69 @@ def _load_json(path: Path) -> dict[str, Any]:
   return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _damage_component_names(unit: dict[str, Any]) -> list[str]:
+  return [
+    component["name"]
+    for hitbox in unit.get("damage_model", {}).get("hitboxes", [])
+    for component in hitbox.get("components", [])
+    if isinstance(component, dict) and component.get("name")
+  ]
+
+
 def _violation_dicts(config: dict[str, Any]) -> list[dict[str, Any]]:
   return [violation.as_dict() for violation in validate_training_config_contract(config)]
 
 
 class AirCombatTrainingEntryContractTests(unittest.TestCase):
+  def test_f16_tg_p7_target_geometry_proxy_config_uses_opt_in_database(self) -> None:
+    cfg = _load_json(F16_SCRIPTED_RED_TG_P7_PROXY_CONFIG)
+    runtime = cfg.get("runtime")
+    self.assertIsInstance(runtime, dict)
+    assert isinstance(runtime, dict)
+
+    self.assertEqual(cfg.get("agent_layer"), "execution")
+    self.assertTrue(bool(runtime.get("world_batch_vec_env")))
+    self.assertEqual(runtime.get("batch_observation_backend"), "compiled")
+    self.assertEqual(runtime.get("batch_visual_backend"), "compiled")
+    self.assertEqual(runtime.get("observation_return_mode"), "copy")
+    self.assertEqual(
+      runtime.get("database_path"),
+      "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+    )
+    proxy_cfg = runtime.get("target_geometry_proxy")
+    self.assertIsInstance(proxy_cfg, dict)
+    assert isinstance(proxy_cfg, dict)
+    self.assertEqual(proxy_cfg.get("feature_flag"), "A2_TARGET_GEOMETRY_PROXY_F16C_R22")
+    self.assertEqual(proxy_cfg.get("target_unit"), "F-16C_Block50")
+    self.assertEqual(int(proxy_cfg.get("default_component_count")), 26)
+    self.assertEqual(int(proxy_cfg.get("proxy_component_count")), 32)
+    self.assertEqual(int(proxy_cfg.get("split_receiver_component_count")), 8)
+    self.assertEqual(int(proxy_cfg.get("retired_parent_component_count")), 2)
+
+    proxy_manifest = _load_json(REPO_ROOT / str(proxy_cfg["source_manifest"]))
+    self.assertEqual(
+      proxy_manifest["schema_version"],
+      "a2.target_geometry_training_proxy_database.v1",
+    )
+    self.assertEqual(
+      proxy_manifest["summary"]["proxy_database_component_count"],
+      32,
+    )
+    proxy_unit_path = (
+      REPO_ROOT
+      / str(runtime["database_path"])
+      / "aircraft"
+      / "units"
+      / "f16c_block50.json"
+    )
+    self.assertTrue(proxy_unit_path.is_file())
+    proxy_component_names = _damage_component_names(_load_json(proxy_unit_path))
+    self.assertEqual(len(proxy_component_names), 32)
+    self.assertNotIn("engine_core", proxy_component_names)
+    self.assertNotIn("wing_spar_center", proxy_component_names)
+    self.assertIn("engine_core_afterburner_segment", proxy_component_names)
+    self.assertIn("wing_spar_center_carrythrough_segment", proxy_component_names)
+
   def test_stage1_bvr_probe_config_matches_maintained_world_batch_surface(self) -> None:
     cfg = _load_json(STAGE1_CONFIG)
     scenario = _load_json(STAGE1_SCENARIO)
@@ -719,6 +787,11 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
 
   def test_stage1_bvr_probe_bootstraps_on_current_execution_path(self) -> None:
     entries = [
+      (
+        "f16_tg_p7_target_geometry_proxy",
+        F16_SCRIPTED_RED_TG_P7_PROXY_CONFIG,
+        F16_SCRIPTED_RED_SCENARIO,
+      ),
       ("reactive", STAGE1_CONFIG, STAGE1_SCENARIO),
       ("temporal", STAGE1_TEMPORAL_CONFIG, STAGE1_SCENARIO),
       ("hybrid", STAGE1_HYBRID_CONFIG, STAGE1_SCENARIO),
@@ -828,6 +901,9 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
       }:
         self.assertIn("mission_obs_mode=air_combat_c2_roe_v2", proc.stdout)
+      if label == "f16_tg_p7_target_geometry_proxy":
+        self.assertIn("World batch database: path=", proc.stdout)
+        self.assertIn("target_geometry_training_proxy_database_20260613", proc.stdout)
       self.assertIn("Error: --test_only requires --resume_path", proc.stdout)
 
 

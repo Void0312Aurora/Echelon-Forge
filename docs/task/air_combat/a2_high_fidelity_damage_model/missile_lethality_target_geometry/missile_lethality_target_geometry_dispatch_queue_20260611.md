@@ -1,9 +1,9 @@
 # A2 Target Geometry Dispatch Queue
 
-Status: `2026-06-13` TG-P6-R21 complete / latest subcomponent placement
-promotion applied. This records the first-round progress plus the TG-P6
-continuation; R10 used write-scoped subagents and R11-R21 were integrated by the
-main thread.
+Status: `2026-06-13` TG-P7-R3 opt-in training proxy database generated. This
+records the first-round progress plus the TG-P6/TG-P7 continuation; R10 used
+write-scoped subagents and R11-TG-P7-R3 were integrated
+by the main thread.
 
 Chinese canonical:
 [missile_lethality_target_geometry_dispatch_queue_20260611.zh.md](missile_lethality_target_geometry_dispatch_queue_20260611.zh.md).
@@ -38,6 +38,10 @@ Chinese canonical:
 | `TG-P6-R19` | `TG-P6` | main thread | Add local centerline placement candidates for remaining exposed subcomponents. | generator/tests/review packet docs; `subcomponent_centerline_placement_results_20260613.md` | 8 of 10 remaining items clear sampled exposure; runtime activation 0; focused pytest | pass as centerline placement candidate |
 | `TG-P6-R20` | `TG-P6` | main thread | Add latest subcomponent placement candidates for remaining radar/cockpit items and simplify the review legend. | generator/tests/review packet docs; `subcomponent_latest_placement_results_20260613.md` | 10 latest candidates clear sampled exposure; runtime activation 0; focused pytest | pass as latest placement candidate |
 | `TG-P6-R21` | `TG-P6` | main thread | Promote latest accepted placements into review-only prior and held-segment generation rules. | `tools/geometry/airframe_geometry_review.py`; `tests/tools/test_airframe_geometry_review.py`; `review_packets/f16c_20260611/**`; `subcomponent_latest_promotion_results_20260613.md`; README/status/queue/task-cluster docs | internal prior promotion count 9, held segment promotion count 5, silhouette exposure count 0, shape-placement candidate count 0, runtime activation 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as latest placement promotion; `TG-P7` remains held for cross-region ownership |
+| `TG-P6-R22` | `TG-P6` | main thread | Generate review-only cross-region ownership split decisions for the two held parent receivers. | `cross_region_ownership_split_candidate_20260611.json`; `cross_region_ownership_split_candidate_20260611.csv`; `cross_region_ownership_split_results_20260613.md`; generator/tests/review packet docs | 2 parent decisions, 8 parse-ready split receiver candidates, runtime activation 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as ownership split candidate; `TG-P7` remains held for acceptance and runtime tests |
+| `TG-P7-R1` | `TG-P7` | main thread | Convert the R22 split payload into a parse-ready runtime activation patch candidate. | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.md`; generator/tests/review packet docs; C++ loader smoke test | 8 candidate receivers, 8 parse-ready existing-loader records, 8 unit-database patch additions, 2 parent retirement plans, runtime active 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; `cmake --build build-workshop --target ef_test -j2`; `./build-workshop/ef_test --test-suite=components_basic`; packet regeneration; `git diff --check` | pass as parse-ready activation candidate; superseded by R2 behavior regression and R3 training proxy database |
+| `TG-P7-R2` | `TG-P7` | main thread | Run in-memory behavior regression for parent receiver retirement versus split receiver additions. | `target_geometry_runtime_behavior_regression_20260613.json`; `target_geometry_runtime_behavior_regression_20260613.csv`; `target_geometry_runtime_behavior_regression_results_20260613.md`; generator/tests/review packet docs | base components 26, projected components 32, retired parents 2, split additions 8, duplicate names 0, behavior pass true; focused pytest; packet regeneration; `git diff --check` | pass as in-memory behavior regression; superseded by R3 opt-in training proxy database |
+| `TG-P7-R3` | `TG-P7` | main thread | Materialize the feature-flagged projection as an opt-in training proxy database and wire the maintained training path to select it. | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | default components 26, proxy components 32, split receivers active in proxy 8, duplicate names 0, repository unit database unchanged, `runtime.database_path` resolved by bootstrap, WorldBatchVecEnv path receives proxy database, RuntimeFacade proxy load smoke passes, local 64-step CPU training smoke completes; focused pytest; C++ loader smoke; packet regeneration; `git diff --check` | pass as opt-in initial training proxy; active 8k proxy versus baseline comparison pending |
 
 ## Main Thread Merge Checks
 
@@ -62,14 +66,22 @@ Chinese canonical:
   `engine_core` and `wing_spar_center` cross-region boundaries.
 - Confirm R10/R11 corrections repair radar/IFF/nozzle, side mapping, receiver
   components, and wing placement without claiming runtime integration.
+- Confirm R22 split receiver candidates are not treated as accepted damage
+  ownership, parent receiver retirement, or runtime activation.
+- Confirm TG-P7-R1 patch candidates are not treated as applied unit database
+  changes or active runtime damage receivers.
+- Confirm TG-P7-R3 proxy database activation stays opt-in through
+  `runtime.database_path`, and that the default database remains the control
+  path.
 - Confirm bounds-expansion fallback remains disabled; missing silhouettes must
   fail into review instead of being treated as precise engineering geometry.
 - Confirm parent README status is synchronized only by the main thread.
 
 ## Held Items
 
-- Runtime near-fuze projection integration: `TG-P7` is currently held until
-  `engine_core` and `wing_spar_center` cross-region ownership is accepted,
-  split, or explicitly held.
+- Runtime near-fuze projection integration: TG-P7-R3 has an opt-in training
+  proxy database, path wiring, and a passing local 64-step training smoke, but
+  the default active runtime path is still unchanged pending active 8k proxy
+  versus baseline comparison and any later acceptance decision.
 - MQ-9 geometry: wait until the F-16 toolchain is reusable.
 - Structural breakup, debris/wreck, and Pk: later standalone subprojects.

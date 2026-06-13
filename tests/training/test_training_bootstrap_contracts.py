@@ -124,6 +124,114 @@ class TrainingBootstrapContractTests(unittest.TestCase):
       self.assertTrue((output_base / "bootstrap_case" / "scenario_backup.json").exists())
       bootstrap.exp_lock.close()
 
+  def test_prepare_training_bootstrap_resolves_runtime_database_path(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      root = Path(tmpdir)
+      scenario_path = root / "scenario.json"
+      train_config_path = root / "train.json"
+      output_base = root / "runs"
+      database_path = root / "proxy_database"
+      database_path.mkdir()
+
+      scenario = {
+        "scenario_name": "bootstrap_database_path_smoke",
+        "meta": {"max_steps": 2},
+        "environment": {"time_step": 0.05, "terrain_type": "flat"},
+        "entities": [
+          {
+            "name": "Lead",
+            "type": "Aircraft",
+            "side": "Blue",
+            "is_agent": True,
+            "pos": [0.0, 0.0, 1200.0],
+            "vel": [0.0, 180.0, 0.0],
+            "heading": 90.0,
+          }
+        ],
+      }
+      train_cfg = {
+        "agent_layer": "execution",
+        "policy": "MultiInputPolicy",
+        "n_envs": 1,
+        "env": {
+          "include_proprio": True,
+          "mission_obs_mode": "basic",
+          "step_info_mode": "terminal",
+          "action_mode": "full",
+        },
+        "runtime": {
+          "world_batch_vec_env": True,
+          "database_path": "proxy_database",
+        },
+      }
+      scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
+      train_config_path.write_text(json.dumps(train_cfg, ensure_ascii=True), encoding="utf-8")
+
+      parser = build_train_arg_parser()
+      args = parser.parse_args(
+        [
+          "--scenario",
+          str(scenario_path),
+          "--train_config",
+          str(train_config_path),
+          "--output_base",
+          str(output_base),
+          "--run_name",
+          "bootstrap_database_case",
+        ]
+      )
+      bootstrap = prepare_training_bootstrap(args)
+
+      self.assertIsNotNone(bootstrap)
+      assert bootstrap is not None
+      self.assertEqual(Path(bootstrap.runtime_cfg["database_path"]), database_path.resolve())
+      bootstrap.exp_lock.close()
+
+  def test_prepare_training_bootstrap_rejects_missing_runtime_database_path(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+      root = Path(tmpdir)
+      scenario_path = root / "scenario.json"
+      train_config_path = root / "train.json"
+      output_base = root / "runs"
+
+      scenario = {
+        "scenario_name": "bootstrap_missing_database_path_smoke",
+        "environment": {"time_step": 0.05, "terrain_type": "flat"},
+        "entities": [],
+      }
+      train_cfg = {
+        "agent_layer": "execution",
+        "policy": "MultiInputPolicy",
+        "env": {
+          "include_proprio": True,
+          "mission_obs_mode": "basic",
+          "step_info_mode": "terminal",
+          "action_mode": "full",
+        },
+        "runtime": {
+          "world_batch_vec_env": True,
+          "database_path": "missing_proxy_database",
+        },
+      }
+      scenario_path.write_text(json.dumps(scenario, ensure_ascii=True), encoding="utf-8")
+      train_config_path.write_text(json.dumps(train_cfg, ensure_ascii=True), encoding="utf-8")
+
+      parser = build_train_arg_parser()
+      args = parser.parse_args(
+        [
+          "--scenario",
+          str(scenario_path),
+          "--train_config",
+          str(train_config_path),
+          "--output_base",
+          str(output_base),
+          "--run_name",
+          "bootstrap_missing_database_case",
+        ]
+      )
+
+      self.assertIsNone(prepare_training_bootstrap(args))
+
   def test_prepare_training_bootstrap_rejects_declared_scenario_mismatch(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       root = Path(tmpdir)

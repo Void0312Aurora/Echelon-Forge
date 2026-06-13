@@ -1,0 +1,27 @@
+{
+    "name": "R-77-1",
+    "type": "Missile",
+    "mass_kg": 190.0,
+    "max_flight_time_s": 45.0,
+    "flight_model": {
+        "max_speed": 1300.0,
+        "max_g": 40.0,
+        "max_turn_rate": 35.0
+    },
+    "guidance": {
+        "type": "ActiveRadar",
+        "active_seek_range": 15000.0
+    },
+    "warhead": {
+        "type": "Frag",
+        "mass_kg": 22.0,
+        "lethal_radius": 18.0
+    },
+    "fuze": {
+        "type": "radar_proximity",
+        "trigger_radius_m": 18.0,
+        "delay_s": 0.015,
+        "reliability": 0.93,
+        "provenance": "A2 authored radar proximity fuze scaffold"
+    }
+}

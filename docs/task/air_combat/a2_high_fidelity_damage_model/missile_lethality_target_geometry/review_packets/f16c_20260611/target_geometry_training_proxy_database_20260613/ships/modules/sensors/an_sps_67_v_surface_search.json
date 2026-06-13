@@ -1,0 +1,36 @@
+{
+    "name": "AN/SPS-67(V)_Surface_Search",
+    "type": "Sensor",
+    "sensor": {
+        "type": "Radar",
+        "max_range": 46300.0,
+        "fov_deg": 360.0,
+        "scan_period": 2.5,
+        "detection_prob": 0.9,
+        "bearing_noise_std": 0.25,
+        "range_noise_std": 50.0,
+        "track_memory_s": 20.0,
+        "range_power": 2.0,
+        "aspect_influence": 0.0,
+        "doppler_notch_width": 0.0,
+        "reference_snr_db": 14.0,
+        "reference_range_m": 35000.0,
+        "reference_rcs_m2": 25.0,
+        "antenna_height_m": 25.0,
+        "target_height_bias_m": 5.0,
+        "environment_domain": "SurfaceMaritime",
+        "enforce_radar_horizon": true,
+        "sea_clutter_enabled": true,
+        "sea_clutter_sensitivity": 0.45,
+        "sea_state_loss_per_level": 0.07,
+        "enable_ducting": true,
+        "ducting_gain_factor": 1.2,
+        "ducting_max_bonus_m": 12000.0
+    },
+    "_provenance": {
+        "modeling_note": "Public sources identify AN/SPS-67(V) as a two-dimensional surface-search/navigation radar. The 46.3 km range is a conservative radar-horizon runtime value for surface targets, derived from 25 m owner antenna height and 5 m target height using 3.57*(sqrt(h1)+sqrt(h2)) km; it is not a claimed maximum instrumented range. Sea-clutter and ducting fields are community-derived approximation / engineering calibration inputs for the current maritime runtime proxy, not authoritative performance disclosures.",
+        "sources": [
+            "docs/standards/naval/ship_unit_references.md"
+        ]
+    }
+}

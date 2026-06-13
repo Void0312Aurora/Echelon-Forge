@@ -1,15 +1,15 @@
 # A2 目标几何建模当前状态
 
-状态：`2026-06-13` TG-P6-R21 latest subcomponent placement promotion
-applied / TG-P7 runtime activation 因跨区 ownership 继续 held。
+状态：`2026-06-13` TG-P7-R3 opt-in training proxy database passes；
+默认 runtime projection 和维护中的 F-16 unit database 仍未改变。
 父级入口和 issue 已把 F-16 几何细化从问题记录推进到可执行子项目；第一版来源/轴向/尺度
 manifest、外壳区域候选、部件绑定报告、离线审阅页、测试点距离诊断、带 mesh-derived silhouette
 的精细代理候选包、逐区域人工审阅 dashboard、外形命中到部件损伤的表面部件候选表，以及
 可视化人工复核 triage 页面、独立部件视图、第一轮人工目检结论、五组只读 subagent 独立评估、
-R10 修正快照、R11 修复结果、R12 语义损伤几何候选包、R13 内部 receiver 先验约束包、R18 子部件形状候选固化包、R19 子部件中心线摆放候选包、R20 最新子部件摆放候选包和 R21 最新子部件候选固化包已生成；最新 packet 已修复左右映射、
+R10 修正快照、R11 修复结果、R12 语义损伤几何候选包、R13 内部 receiver 先验约束包、R18 子部件形状候选固化包、R19 子部件中心线摆放候选包、R20 最新子部件摆放候选包、R21 最新子部件候选固化包、R22 跨区 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 runtime behavior regression packet 和 TG-P7-R3 training proxy database packet 已生成；最新 packet 已修复左右映射、
 runtime receiver 组件、翼面部件位置、radar/IFF 和 nozzle 源盒，并开始输出 parse-ready
 语义外壳体积部件候选、constrained internal receiver priors、promoted review-only
-subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates 和 promoted R21 latest placement rules；active runtime projection 在 `TG-P7` 前仍 held。
+subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates、promoted R21 latest placement rules、R22 parse-ready split receiver candidates、TG-P7-R1 带 feature flag 的 `damage_model.hitboxes[].components` patch candidate、TG-P7-R2 in-memory behavior regression，以及 TG-P7-R3 opt-in proxy runtime database；默认 active runtime projection 仍未改变。
 
 英文辅文：[missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)。
 
@@ -39,6 +39,7 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
 | TG-P6 内部 receiver 先验几何 | [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json)、[internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv)、[internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html)、[manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json) | R13 为 `26` 个现有 receiver 生成 sphere/cylinder/capsule/ellipsoid 先验并用父外壳 support bounds 或跨区 union 约束；`post_constraint_outside_count=0`，`cross_region_held_prior_count=2`，`runtime_active_component_count=0`；当前入口为 HTML/SVG 页面和 manifest |
 | TG-P6 语义父子部件布局 | [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json)、[semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv)、[semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)、[manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json) | R14 将主审阅视图收敛为 `14` 个父外壳部件，并把 `26` 个 receiver prior 叠加到对应父图上；R15 将跨区 held receiver 画成红色分段，而不是单一 held 大块；当前入口为 HTML/SVG 页面和 manifest |
 | TG-P6 跨区 held 分段 | [cross_region_held_component_segments_20260611.json](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.json)、[cross_region_held_component_segments_20260611.csv](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv)、[semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) | R15 将 `engine_core` 拆成 `3` 个审阅用发动机分段，将 `wing_spar_center` 拆成 `5` 个审阅用翼梁分段；`held_segment_count=8`，`outside_whole_airframe_segment_count=0`，`runtime_active_segment_count=0`，跨区 ownership 仍保持 held |
+| TG-P6 跨区 ownership 拆分候选 | [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json)、[cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv)、[scene.html](review_packets/f16c_20260611/scene.html) | R22 建议仅在 `8` 个 split receiver candidates 被明确接受并测试后，才退役父级 `engine_core` 与 `wing_spar_center` receiver；`runtime_parse_ready_split_candidate_count=8`，`runtime_active_split_component_count=0`，ownership acceptance 仍为 false |
 | TG-P6 整机约束修正候选 | [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、[airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv)、[overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) | R16/R18 对全部 `34` 个 receiver prior / held split segment 做 shape-aware top/side/front 整机 silhouette 诊断；R21 最新候选固化后，`silhouette_exposure_item_count=0`，`size_or_shape_review_item_count=0`，`runtime_active_component_count=0` |
 | TG-P6 子部件形状/摆放候选 | [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json)、[subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv)、[subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html) | R17 生成保留名义尺寸的候选形状族；R18 固化前 `4` 个零外露候选；R19 增加局部中心线候选；R20 解决 radar/cockpit 剩余摆放；R21 将已接受的最新摆放固化到 review-only 规则，当前 `subcomponent_shape_placement_candidate_count=0`，`latest_candidate_total_outside_sample_count=0` |
 | TG-P6 人工目检结论 | [human_review_findings_20260612.zh.md](human_review_findings_20260612.zh.md) | R7 历史快照：左右符号、鼻锥 radar/IFF、发动机/喷口和表面到运行时部件交接在 R9/R10 细化和 R11 修复前曾阻塞 `TG-P7` |
@@ -55,6 +56,10 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
 | TG-P6 子部件中心线摆放实现 | [subcomponent_centerline_placement_results_20260613.zh.md](subcomponent_centerline_placement_results_20260613.zh.md) | R19 为剩余 `10` 个形状/摆放项增加保留尺寸的局部中心线候选；`8` 个清零采样外露，`2` 个仍未解决 |
 | TG-P6 最新子部件摆放实现 | [subcomponent_latest_placement_results_20260613.zh.md](subcomponent_latest_placement_results_20260613.zh.md) | R20 解决 radar 和 cockpit 剩余问题，并将主复核图例收敛为灰色整机线框加蓝色最新子部件候选 |
 | TG-P6 最新子部件候选固化实现 | [subcomponent_latest_promotion_results_20260613.zh.md](subcomponent_latest_promotion_results_20260613.zh.md) | R21 将已接受的最新摆放固化到 review-only prior 和 held-segment 生成规则：`internal_component_prior_shape_promotion_count=9`，`cross_region_held_segment_shape_promotion_count=5`，`airframe_constraint_silhouette_exposure_item_count=0`，runtime activation 仍为 `0` |
+| TG-P6 跨区 ownership 拆分实现 | [cross_region_ownership_split_results_20260613.zh.md](cross_region_ownership_split_results_20260613.zh.md) | R22 为两个剩余 cross-region held 父级 receiver 输出 review-only ownership decisions 和 parse-ready AABB fallback split receiver records；父级 receiver retirement 和 runtime activation 仍未接受 |
+| TG-P7 运行时激活候选实现 | [target_geometry_runtime_activation_results_20260613.zh.md](target_geometry_runtime_activation_results_20260613.zh.md)、[target_geometry_runtime_activation_candidate_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json)、[target_geometry_runtime_activation_candidate_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.csv) | TG-P7-R1 将 R22 split payload 转换为带 feature flag 的 `damage_model.hitboxes[].components` patch candidate：`candidate_component_count=8`，`runtime_schema_parse_ready_component_count=8`，`unit_database_patch_component_count=8`，`parent_receiver_retirement_candidate_count=2`，`runtime_active_component_count=0`，C++ unit-definition loader parse smoke 通过 |
+| TG-P7 运行时行为回归实现 | [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)、[target_geometry_runtime_behavior_regression_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.json)、[target_geometry_runtime_behavior_regression_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.csv) | TG-P7-R2 只在内存中应用 component patch 并验证：`base_component_count=26`，`projected_component_count=32`，`retired_parent_component_count=2`，`split_component_added_count=8`，`duplicate_component_name_count=0`，`behavior_regression_pass=true` |
+| TG-P7 训练代理数据库实现 | [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)、[target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json)、[target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/) | TG-P7-R3 生成完整 opt-in proxy runtime database 和 active training config：默认 database components `26`，proxy database components `32`，proxy 路径 active split receivers `8`，duplicate names `0`，`runtime.database_path` 已接入 training bootstrap 和 `train.py`，repository unit database modified `false`，RuntimeFacade proxy database load 通过，并且本地 `64`-step CPU training smoke 完成 |
 | Stage-C guard 对齐 | [component_probability_surface_probe.py](../../../../../tools/maintenance/candidate_artifacts/component_probability_surface_probe.py) | 修复后的侧向部件几何会产生 `surface_incidence_cos=0.0`；Stage-C surface probe gate 已同步，component-specific rows 不再回退到 `global-fallback` |
 
 ## 当前边界
@@ -63,19 +68,18 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
   TG-P5 测试点距离诊断、TG-P6 review-only mesh-derived 精细代理轮廓、表面部件候选、可视化 triage、
   独立部件复核视图、第一轮人工目检结论、五组 subagent 独立评估、第一轮 subagent 修正、R11 几何修复、
   R12 语义损伤几何候选、R13 内部 receiver 先验约束候选、R14 语义父子布局、R15 跨区 held
-  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选和 R21 最新摆放固化已完成，不证明 runtime activation 已完成。
+  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选、R21 最新摆放固化、R22 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 in-memory behavior regression packet 和 TG-P7-R3 opt-in training proxy database packet 已完成，不证明默认 runtime activation 已应用。
 - 当前 Sketchfab 模型只作为外形审阅候选，不提供真实内部部件边界。
 - 旧 FlightGear F-16 已归档为 GPL v2 强候选来源，不进入主线派生几何。
-- 运行时近炸投影仍按现有逻辑运行。R12-R21 只是把语义体积部件候选、内部 receiver
-  先验约束、held 分段、形状诊断、形状候选、promoted review-only 形状规则、中心线候选和最新摆放候选做成
-  review/parse-ready 形态，供审阅后受控激活。
+- 运行时近炸投影在默认路径仍按现有逻辑运行。TG-P7-R3 让带 feature flag 的
+  `damage_model.hitboxes[].components` projection 可通过 `runtime.database_path`
+  显式选择；仓库 unit database 未修改，默认路径保持 `26` components，proxy 路径为 `32` components。
 
 ## 下一步
 
-1. 决定 `engine_core` 是继续作为 cross-region boundary candidate，还是拆分为 intake、aft engine bay 和 nozzle receiver。
-2. 决定 `wing_spar_center` 是继续作为 cross-region semantic hold，还是拆分为 center-fuselage、wing-root 和 wing-skin receiver。
-3. 只有在这些 ownership 语义被明确接受、拆分或继续 held，并补齐 runtime 测试后，才考虑激活
-   parse-ready 的 `runtime_component_json_candidate` 或 internal receiver prior candidate。
+1. 运行维护中的 active 8k TG-P7 proxy probe。
+2. 运行匹配的 baseline world-batch probe。
+3. 对比稳定性、事件流和 damage-component selection，其中 proxy 路径为 `32` components，默认路径为 `26`。
 
 ## 验证提醒
 
@@ -88,12 +92,16 @@ git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_l
 当前聚焦测试：
 
 ```bash
+python -m py_compile tools/geometry/airframe_geometry_review.py python/training/bootstrap.py train.py tests/tools/test_airframe_geometry_review.py tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py
 pytest -q tests/tools/test_airframe_geometry_review.py
+pytest -q tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py
 python tools/geometry/airframe_geometry_review.py --out docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611
-git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
+cmake --build build-workshop --target ef_test -j2
+./build-workshop/ef_test --test-suite=components_basic
+git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py python/training/bootstrap.py train.py tests/tools/test_airframe_geometry_review.py tests/training/test_training_bootstrap_contracts.py tests/training/test_air_combat_training_entry_contracts.py examples/config/training/active/air_combat
 ```
 
-任何 `TG-P7` 激活前的更宽运行时检查：
+任何默认路径替换前的更宽运行时检查：
 
 ```bash
 cmake --build build-workshop --target ef_test -j2
@@ -101,4 +109,8 @@ cmake --build build-workshop --target ef_test -j2
 pytest -q tests/architecture/damage_model
 ```
 
-当前 R21 聚焦结果：`2 passed`；review packet 已重新生成。
+当前 TG-P7-R3 聚焦结果：Python geometry review tests `2 passed`；training
+bootstrap 和 entry contracts `28 passed`；C++ loader smoke `24 passed`；review
+packet 已重新生成；RuntimeFacade proxy database load 返回 `runtime_load_ok=true`；
+本地 64-step CPU proxy training smoke 已完成，并写出
+`/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`。

@@ -1,0 +1,687 @@
+{
+    "name": "Su-35S_Flanker-E",
+    "type": "Aircraft",
+    "airframe": {
+        "empty_mass_kg": 18400.0,
+        "max_fuel_kg": 11500.0,
+        "drag_coefficient": 0.03,
+        "reference_area": 62.0,
+        "length_m": 21.9,
+        "wingspan_m": 15.3,
+        "height_m": 5.9,
+        "configuration": "Flanker"
+    },
+    "health": {
+        "current_hp": 120.0,
+        "max_hp": 120.0
+    },
+    "damage_model": {
+        "vulnerability": {
+            "synthetic": true,
+            "calibrated": false,
+            "pk_authority": false,
+            "deterministic_fuze_authority": false,
+            "provenance": "A2-P5 neutral synthetic target-family vulnerability scaffold; requires calibration before deterministic fuze/Pk claims",
+            "evidence_dataset_ref": "",
+            "calibration_status": "unvalidated",
+            "blast_scale": 1.0,
+            "fragmentation_scale": 1.0,
+            "continuous_rod_scale": 1.0,
+            "hit_to_kill_scale": 1.0,
+            "nose_aspect_scale": 1.0,
+            "beam_aspect_scale": 1.0,
+            "tail_aspect_scale": 1.0,
+            "high_closure_scale": 1.0,
+            "low_closure_scale": 1.0,
+            "near_miss_scale": 1.0,
+            "direct_hit_scale": 1.0
+        },
+        "hitboxes": [
+            {
+                "offset": [8.5, 0.0, 0.0],
+                "size": [4.4, 1.2, 1.2],
+                "armor": 5.0,
+                "systems": ["radar", "cockpit"],
+                "components": [
+                    {
+                        "name": "irbis_radar_array",
+                        "system": "radar",
+                        "offset": [9.2, 0.0, 0.0],
+                        "size": [1.4, 1.0, 0.7],
+                        "armor": 3.5,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {
+                            "blast": 0.80,
+                            "fragmentation": 1.30,
+                            "blast_fragmentation": 1.20,
+                            "continuous_rod": 0.90,
+                            "hit_to_kill": 1.35
+                        },
+                        "redundancy_group_id": "nose_fire_control_radar",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.70, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.60, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "cockpit_crew_station",
+                        "system": "cockpit",
+                        "offset": [7.2, 0.0, 0.1],
+                        "size": [1.8, 1.1, 1.0],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {
+                            "blast": 0.90,
+                            "fragmentation": 1.25,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.05,
+                            "hit_to_kill": 1.35
+                        },
+                        "redundancy_group_id": "cockpit_crew_station",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "nose_avionics_bay",
+                        "system": "avionics",
+                        "offset": [6.9, 0.0, -0.25],
+                        "size": [1.4, 1.0, 0.6],
+                        "armor": 4.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.25,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 0.85,
+                            "hit_to_kill": 1.30
+                        },
+                        "redundancy_group_id": "fighter_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "irst_sensor",
+                        "system": "sensor_payload",
+                        "offset": [8.0, 0.0, 0.45],
+                        "size": [0.8, 0.8, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {
+                            "blast": 0.80,
+                            "fragmentation": 1.30,
+                            "blast_fragmentation": 1.18,
+                            "continuous_rod": 0.90,
+                            "hit_to_kill": 1.35
+                        },
+                        "redundancy_group_id": "nose_irst_sensor",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.65, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [0.0, 0.0, 0.0],
+                "size": [10.5, 2.0, 1.4],
+                "armor": 9.0,
+                "systems": ["fuel", "avionics", "data_link"],
+                "components": [
+                    {
+                        "name": "center_fuselage_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-0.6, 0.0, -0.1],
+                        "size": [3.0, 1.4, 0.9],
+                        "armor": 5.5,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 1.45,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.32,
+                            "continuous_rod": 0.80,
+                            "hit_to_kill": 0.95
+                        },
+                        "redundancy_group_id": "fuselage_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "mission_computer",
+                        "system": "avionics",
+                        "offset": [1.8, 0.0, 0.25],
+                        "size": [1.6, 1.2, 0.6],
+                        "armor": 4.5,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.25,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 0.85,
+                            "hit_to_kill": 1.30
+                        },
+                        "redundancy_group_id": "fighter_avionics_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "generic", "scale": 0.80, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "data_link_terminal",
+                        "system": "data_link",
+                        "offset": [-1.8, 0.0, 0.25],
+                        "size": [1.2, 0.9, 0.5],
+                        "armor": 4.5,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {
+                            "blast": 0.80,
+                            "fragmentation": 1.25,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 0.85,
+                            "hit_to_kill": 1.30
+                        },
+                        "redundancy_group_id": "fighter_datalink",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.60, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.50, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "flight_control_computer",
+                        "system": "flight_control",
+                        "offset": [0.0, 0.0, 0.35],
+                        "size": [1.1, 0.9, 0.5],
+                        "armor": 4.5,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.40,
+                            "hit_to_kill": 1.25
+                        },
+                        "redundancy_group_id": "flight_control_computers",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "generic", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "inertial_navigation_unit",
+                        "system": "navigation",
+                        "offset": [3.2, 0.0, 0.05],
+                        "size": [0.9, 0.8, 0.35],
+                        "armor": 4.5,
+                        "threshold_scale": 1.05,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 0.90,
+                            "hit_to_kill": 1.25
+                        },
+                        "redundancy_group_id": "fighter_navigation_suite",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "avionics", "target_system": "avionics", "edge_type": "data_path", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "data_path", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    },
+                    {
+                        "name": "electrical_power_bus",
+                        "system": "avionics",
+                        "offset": [-3.0, 0.55, 0.05],
+                        "size": [1.0, 0.45, 0.45],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {
+                            "blast": 1.10,
+                            "fragmentation": 1.10,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.00,
+                            "hit_to_kill": 1.35
+                        },
+                        "redundancy_group_id": "fighter_primary_power_bus",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "electrical_power", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "data_link", "target_system": "data_link", "edge_type": "electrical_power", "scale": 0.45, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "mission_systems", "target_system": "mission_systems", "edge_type": "electrical_power", "scale": 0.55, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": true
+                    }
+                ]
+            },
+            {
+                "offset": [-7.5, -1.4, -0.4],
+                "size": [5.0, 1.2, 1.0],
+                "armor": 12.0,
+                "systems": ["engine_left", "fuel"],
+                "components": [
+                    {
+                        "name": "left_engine_core",
+                        "system": "engine_left",
+                        "offset": [-7.5, -1.4, -0.4],
+                        "size": [2.0, 1.0, 0.8],
+                        "armor": 8.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {
+                            "blast": 1.10,
+                            "fragmentation": 1.05,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 0.95,
+                            "hit_to_kill": 1.30
+                        },
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "left_engine_fuel_feed",
+                        "system": "fuel",
+                        "offset": [-6.5, -1.4, -0.35],
+                        "size": [1.2, 0.6, 0.5],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {
+                            "blast": 1.45,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.32,
+                            "continuous_rod": 0.80,
+                            "hit_to_kill": 0.95
+                        },
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_thrust_vector_actuator",
+                        "system": "flight_control",
+                        "offset": [-9.2, -1.4, -0.15],
+                        "size": [0.9, 0.5, 0.35],
+                        "armor": 5.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {
+                            "blast": 0.90,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 1.40,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "thrust_vector_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.75, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-7.5, 1.4, -0.4],
+                "size": [5.0, 1.2, 1.0],
+                "armor": 12.0,
+                "systems": ["engine_right", "fuel"],
+                "components": [
+                    {
+                        "name": "right_engine_core",
+                        "system": "engine_right",
+                        "offset": [-7.5, 1.4, -0.4],
+                        "size": [2.0, 1.0, 0.8],
+                        "armor": 8.0,
+                        "threshold_scale": 1.15,
+                        "mechanism_thresholds": {
+                            "blast": 1.10,
+                            "fragmentation": 1.05,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 0.95,
+                            "hit_to_kill": 1.30
+                        },
+                        "redundancy_group_id": "engine_cores",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "critical": false
+                    },
+                    {
+                        "name": "right_engine_fuel_feed",
+                        "system": "fuel",
+                        "offset": [-6.5, 1.4, -0.35],
+                        "size": [1.2, 0.6, 0.5],
+                        "armor": 5.0,
+                        "threshold_scale": 1.20,
+                        "mechanism_thresholds": {
+                            "blast": 1.45,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.32,
+                            "continuous_rod": 0.80,
+                            "hit_to_kill": 0.95
+                        },
+                        "redundancy_group_id": "engine_fuel_feeds",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_thrust_vector_actuator",
+                        "system": "flight_control",
+                        "offset": [-9.2, 1.4, -0.15],
+                        "size": [0.9, 0.5, 0.35],
+                        "armor": 5.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {
+                            "blast": 0.90,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.12,
+                            "continuous_rod": 1.40,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "thrust_vector_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.75, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            },
+            {
+                "offset": [-2.0, 0.0, 0.0],
+                "size": [4.8, 15.0, 0.35],
+                "armor": 4.0,
+                "systems": ["wings", "flight_control", "fuel"],
+                "components": [
+                    {
+                        "name": "left_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-2.0, -4.4, 0.0],
+                        "size": [1.8, 1.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 1.45,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.32,
+                            "continuous_rod": 0.80,
+                            "hit_to_kill": 0.95
+                        },
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "right_wing_fuel_cell",
+                        "system": "fuel",
+                        "offset": [-2.0, 4.4, 0.0],
+                        "size": [1.8, 1.6, 0.25],
+                        "armor": 3.0,
+                        "threshold_scale": 1.25,
+                        "mechanism_thresholds": {
+                            "blast": 1.45,
+                            "fragmentation": 1.20,
+                            "blast_fragmentation": 1.32,
+                            "continuous_rod": 0.80,
+                            "hit_to_kill": 0.95
+                        },
+                        "redundancy_group_id": "wing_fuel_cells",
+                        "redundancy_group": 1.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_elevon_actuator",
+                        "system": "flight_control",
+                        "offset": [-2.0, -6.2, 0.0],
+                        "size": [1.1, 1.0, 0.22],
+                        "armor": 4.0,
+                        "threshold_scale": 1.35,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.55,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "lateral_flight_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.80, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_elevon_actuator",
+                        "system": "flight_control",
+                        "offset": [-2.0, 6.2, 0.0],
+                        "size": [1.1, 1.0, 0.22],
+                        "armor": 4.0,
+                        "threshold_scale": 1.35,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.55,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "lateral_flight_control_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.80, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 1.00, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "wing_spar_center",
+                        "system": "wings",
+                        "offset": [-2.0, 0.0, 0.0],
+                        "size": [3.8, 9.8, 0.18],
+                        "armor": 5.0,
+                        "threshold_scale": 1.10,
+                        "mechanism_thresholds": {
+                            "blast": 1.10,
+                            "fragmentation": 0.95,
+                            "blast_fragmentation": 1.05,
+                            "continuous_rod": 1.45,
+                            "hit_to_kill": 1.25
+                        },
+                        "redundancy_group_id": "primary_wing_spar",
+                        "redundancy_group": 0.0,
+                        "redundancy_weight": 1.0,
+                        "critical": true
+                    },
+                    {
+                        "name": "left_leading_edge_flap_actuator",
+                        "system": "flight_control",
+                        "offset": [-1.2, -2.8, 0.0],
+                        "size": [1.0, 0.9, 0.18],
+                        "armor": 4.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.50,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "leading_edge_flap_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    },
+                    {
+                        "name": "right_leading_edge_flap_actuator",
+                        "system": "flight_control",
+                        "offset": [-1.2, 2.8, 0.0],
+                        "size": [1.0, 0.9, 0.18],
+                        "armor": 4.0,
+                        "threshold_scale": 1.30,
+                        "mechanism_thresholds": {
+                            "blast": 0.85,
+                            "fragmentation": 1.15,
+                            "blast_fragmentation": 1.15,
+                            "continuous_rod": 1.50,
+                            "hit_to_kill": 1.20
+                        },
+                        "redundancy_group_id": "leading_edge_flap_actuators",
+                        "redundancy_group": 2.0,
+                        "redundancy_weight": 1.0,
+                        "dependencies": [
+                            {"system": "hydraulic", "target_system": "hydraulic", "edge_type": "hydraulic_power", "scale": 0.70, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"},
+                            {"system": "flight_control", "target_system": "flight_control", "edge_type": "generic", "scale": 0.85, "provenance": "A2 typed-dependency migration; synthetic engineering, non-authoritative"}
+                        ],
+                        "critical": false
+                    }
+                ]
+            }
+        ]
+    },
+    "flight_model": {
+        "max_speed": 650.0,
+        "min_speed": 70.0,
+        "max_turn_rate": 28.0,
+        "max_climb_rate": 280.0,
+        "max_accel": 10.0,
+        "max_g": 9.5
+    },
+    "engine_ref": "AL-41F1S",
+    "sensor_ref": "Irbis-E",
+    "hardpoints": [
+        {
+            "station_id": 1,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 2,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 3,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 4,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 5,
+            "type": [
+                "Fuselage"
+            ],
+            "capacity_kg": 800.0
+        },
+        {
+            "station_id": 6,
+            "type": [
+                "Fuselage"
+            ],
+            "capacity_kg": 800.0
+        },
+        {
+            "station_id": 7,
+            "type": [
+                "Pylon",
+                "Heavy"
+            ],
+            "capacity_kg": 1000.0
+        },
+        {
+            "station_id": 8,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 500.0
+        },
+        {
+            "station_id": 9,
+            "type": [
+                "Pylon"
+            ],
+            "capacity_kg": 300.0
+        },
+        {
+            "station_id": 10,
+            "type": [
+                "Rail",
+                "Tip"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 11,
+            "type": [
+                "Rail"
+            ],
+            "capacity_kg": 150.0
+        },
+        {
+            "station_id": 12,
+            "type": [
+                "Rail"
+            ],
+            "capacity_kg": 150.0
+        }
+    ],
+    "default_loadout": {
+        "1": "R-77-1",
+        "2": "R-73",
+        "11": "R-73",
+        "12": "R-77-1"
+    },
+    "ammo": {
+        "missile_count": 8,
+        "max_missile_count": 8
+    },
+    "command_link": {
+        "latency_s": 0.2,
+        "drop_prob": 0.05
+    },
+    "has_data_link": true,
+    "data_link_network_id": 2
+}

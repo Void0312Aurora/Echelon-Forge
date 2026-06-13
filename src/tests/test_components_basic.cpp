@@ -14,12 +14,15 @@
 #include "components/physics/dynamics.h"
 #include "components/command/pilot_action.h"
 #include "components/command/mission_command.h"
+#include "content/unit_definition_loader.h"
 #include "components/tasking/task_order.h"
 #include "components/tasking/leader_intent.h"
 
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -108,6 +111,67 @@ TEST_SUITE("components_basic") {
         CHECK(c.geometry_axes[2][2] == doctest::Approx(1.0));
         CHECK(c.geometry_half_extents_m[0] == doctest::Approx(0.0));
         CHECK(c.geometry_vertices_m.empty());
+    }
+
+    TEST_CASE("unit_definition_loader_parses_tg_p7_split_receiver_geometry") {
+        const std::filesystem::path path =
+            std::filesystem::temp_directory_path() /
+            "ef_tg_p7_split_receiver_geometry_test.json";
+        {
+            std::ofstream file(path);
+            file << R"json({
+  "name": "F-16C_Block50_TG_P7_Parse_Test",
+  "type": "Aircraft",
+  "damage_model": {
+    "hitboxes": [
+      {
+        "offset": [0.0, 0.0, 0.0],
+        "size": [1.0, 1.0, 1.0],
+        "components": [
+          {
+            "name": "engine_core_afterburner_segment",
+            "system": "propulsion",
+            "offset": [-5.2, 0.0, -0.2],
+            "size": [1.2, 0.5, 0.4],
+            "geometry_primitive": "aabb",
+            "geometry": {
+              "primitive": "aabb",
+              "source": "a2_cross_region_ownership_split_candidate",
+              "source_parent_component_name": "engine_core",
+              "source_segment_id": "engine_core_afterburner_segment",
+              "runtime_projection_status": "parse_ready_candidate_not_runtime_active"
+            },
+            "critical": true
+          }
+        ]
+      }
+    ]
+  }
+})json";
+        }
+
+        std::vector<UnitDefinition> definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        REQUIRE(definitions[0].damage_model.hitboxes.size() == 1);
+        REQUIRE(definitions[0].damage_model.hitboxes[0].components.size() == 1);
+
+        const DamageComponent& component =
+            definitions[0].damage_model.hitboxes[0].components[0];
+        CHECK(component.name == "engine_core_afterburner_segment");
+        CHECK(component.system == "propulsion");
+        CHECK(component.critical);
+        CHECK(component.offset_x == doctest::Approx(-5.2));
+        CHECK(component.dim_l == doctest::Approx(1.2));
+        CHECK(component.geometry_primitive == "aabb");
+        CHECK(component.geometry_source_ref ==
+              "a2_cross_region_ownership_split_candidate");
+        CHECK(component.geometry_half_extents_m[0] == doctest::Approx(0.6));
+        CHECK(component.geometry_half_extents_m[1] == doctest::Approx(0.25));
+        CHECK(component.geometry_half_extents_m[2] == doctest::Approx(0.2));
+
+        std::filesystem::remove(path);
     }
 
     // --- Side enum -------------------------------------------------------------

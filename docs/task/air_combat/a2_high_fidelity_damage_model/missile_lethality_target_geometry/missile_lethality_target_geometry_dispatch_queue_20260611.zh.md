@@ -1,8 +1,7 @@
 # A2 目标几何建模派发队列
 
-状态：`2026-06-13` TG-P6-R21 complete / latest subcomponent placement
-promotion applied。当前记录第一轮进展和 TG-P6 后续推进；R10 使用写入范围受限的
-subagent，R11-R21 由 main thread 集成。
+状态：`2026-06-13` TG-P7-R3 opt-in training proxy database generated。当前记录第一轮进展和
+TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-R3 由 main thread 集成。
 
 英文辅文：[missile_lethality_target_geometry_dispatch_queue_20260611.md](missile_lethality_target_geometry_dispatch_queue_20260611.md)。
 
@@ -36,6 +35,10 @@ subagent，R11-R21 由 main thread 集成。
 | `TG-P6-R19` | `TG-P6` | main thread | 为剩余外露子部件增加局部中心线摆放候选 | generator/tests/review packet docs; `subcomponent_centerline_placement_results_20260613.zh.md` | 剩余 10 项中 8 项清零采样外露；runtime activation 为 0；focused pytest | pass as centerline placement candidate |
 | `TG-P6-R20` | `TG-P6` | main thread | 为剩余 radar/cockpit 项增加最新子部件摆放候选，并收敛复核图例 | generator/tests/review packet docs; `subcomponent_latest_placement_results_20260613.zh.md` | 10 个 latest candidate 清零采样外露；runtime activation 为 0；focused pytest | pass as latest placement candidate |
 | `TG-P6-R21` | `TG-P6` | main thread | 将已接受的最新摆放固化到 review-only prior 和 held-segment 生成规则 | `tools/geometry/airframe_geometry_review.py`; `tests/tools/test_airframe_geometry_review.py`; `review_packets/f16c_20260611/**`; `subcomponent_latest_promotion_results_20260613.zh.md`; README/status/queue/task-cluster docs | internal prior promotion count 为 9，held segment promotion count 为 5，silhouette exposure count 为 0，shape-placement candidate count 为 0，runtime activation 为 0；`pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as latest placement promotion; `TG-P7` 仍因跨区 ownership held |
+| `TG-P6-R22` | `TG-P6` | main thread | 为两个 held 父级 receiver 生成 review-only 跨区 ownership 拆分决策 | `cross_region_ownership_split_candidate_20260611.json`; `cross_region_ownership_split_candidate_20260611.csv`; `cross_region_ownership_split_results_20260613.zh.md`; generator/tests/review packet docs | 2 个 parent decisions，8 个 parse-ready split receiver candidates，runtime activation 为 0；`pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as ownership split candidate; `TG-P7` 仍等待 acceptance 和 runtime tests |
+| `TG-P7-R1` | `TG-P7` | main thread | 将 R22 split payload 转换为 parse-ready runtime activation patch candidate | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.zh.md`; generator/tests/review packet docs; C++ loader smoke test | 8 个 candidate receivers，8 个 existing-loader parse-ready records，8 个 unit-database patch additions，2 个 parent retirement plans，runtime active 为 0；`pytest -q tests/tools/test_airframe_geometry_review.py`; `cmake --build build-workshop --target ef_test -j2`; `./build-workshop/ef_test --test-suite=components_basic`; packet regeneration; `git diff --check` | pass as parse-ready activation candidate; 已被 R2 behavior regression 和 R3 training proxy database 补全 |
+| `TG-P7-R2` | `TG-P7` | main thread | 对父级 receiver retirement 与 split receiver additions 做 in-memory behavior regression | `target_geometry_runtime_behavior_regression_20260613.json`; `target_geometry_runtime_behavior_regression_20260613.csv`; `target_geometry_runtime_behavior_regression_results_20260613.zh.md`; generator/tests/review packet docs | base components 26，projected components 32，retired parents 2，split additions 8，duplicate names 0，behavior pass true；focused pytest；packet regeneration；`git diff --check` | pass as in-memory behavior regression; 已被 R3 opt-in training proxy database 补全 |
+| `TG-P7-R3` | `TG-P7` | main thread | 将 feature-flagged projection 生成 opt-in training proxy database，并让维护中的 training path 可显式选择它 | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.zh.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | 默认 components 26，proxy components 32，proxy 路径 active split receivers 8，duplicate names 0，仓库 unit database 未改变，`runtime.database_path` 由 bootstrap 解析，WorldBatchVecEnv 收到 proxy database path，RuntimeFacade proxy load smoke 通过，本地 64-step CPU training smoke 完成；focused pytest；C++ loader smoke；packet regeneration；`git diff --check` | pass as opt-in initial training proxy; active 8k proxy 与 baseline 对照仍待执行 |
 
 ## Main Thread 合并检查
 
@@ -49,11 +52,17 @@ subagent，R11-R21 由 main thread 集成。
 - 确认独立视图包按单个部件、单个表面交接或单个测试点候选拆分，不再要求评估者从拥挤总览图里猜。
 - 确认 subagent 评估结论已吸收进汇总文档，并修正 `engine_core`、`wing_spar_center` 的跨区语义边界。
 - 确认 R10/R11 修正已修复 radar/IFF/nozzle、左右映射、receiver 组件和翼面位置，但没有声称 runtime integration。
+- 确认 R22 split receiver candidates 没有被当作已接受 damage ownership、父级 receiver retirement 或 runtime activation。
+- 确认 TG-P7-R1 patch candidates 没有被当作已应用 unit database change 或 active runtime damage receivers。
+- 确认 TG-P7-R3 proxy database activation 只通过 `runtime.database_path` opt-in，
+  默认 database 仍是对照路径。
 - 确认 bounds-expansion fallback 保持禁用；缺少轮廓时必须进入审阅，不能当作精确工程几何。
 - 确认父级 README 只由 main thread 同步状态。
 
 ## 暂缓项
 
-- Runtime 近炸投影接入：当前 `TG-P7` held，需先明确接受、拆分或继续 held `engine_core` 与 `wing_spar_center` 跨区 ownership。
+- Runtime 近炸投影接入：TG-P7-R3 已有 opt-in training proxy database、path wiring 和通过的本地
+  64-step training smoke；但默认 active runtime path 仍未改变，后续需要 active 8k proxy 与 baseline
+  对照，以及进一步 acceptance decision。
 - MQ-9 几何：等 F-16 工具链可复用后再展开。
 - 结构解体、残骸和 Pk：另建后续子项目。
