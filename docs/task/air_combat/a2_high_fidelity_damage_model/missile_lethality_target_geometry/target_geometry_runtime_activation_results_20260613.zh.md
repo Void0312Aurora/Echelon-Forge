@@ -63,7 +63,9 @@ TG-P7-R2 已确认 parent-retirement 与 split-addition projection，TG-P7-R3
 已将它生成 opt-in training proxy database：
 [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)。
 R3 还完成了本地 `64`-step proxy training smoke，R4 已完成 active 8k proxy-versus-baseline
-对照。下一步是 targeted damage-event trace inspection，而不是继续设计 patch shape。
+对照。R5 也已完成 targeted damage-event trace，并在 proxy event names 中观测到全部
+`8` 个 split receivers：
+[target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)。
 
 ## 验证
 

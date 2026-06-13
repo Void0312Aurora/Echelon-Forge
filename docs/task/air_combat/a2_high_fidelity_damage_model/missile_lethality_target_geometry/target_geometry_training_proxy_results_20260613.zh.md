@@ -63,7 +63,9 @@ geometry-informed initial agent 进入短训练/runtime probe；Pk、真实弹�
 
 TG-P7-R4 已运行维护中的 active 8k TG-P7 proxy probe 和匹配的 baseline world-batch probe：
 [target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md)。
-下一步是 targeted damage-event trace inspection，而不是再做入口 smoke。
+TG-P7-R5 也已完成 targeted damage-event trace，并在 proxy event names 中观测到全部
+`8` 个 split receivers：
+[target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)。
 
 ## 验证
 

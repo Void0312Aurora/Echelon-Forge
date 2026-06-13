@@ -47,8 +47,9 @@ top-level hitbox records。报告只在内存中应用 TG-P7-R1 candidate：
 TG-P7-R3 已将该 projection 生成 opt-in training proxy database：
 [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)。
 R3 还完成了本地 `64`-step runtime/training smoke，R4 已完成 active 8k proxy-versus-baseline
-对照，同时继续保留默认 `26` component control path。下一步是 targeted damage-event trace
-inspection。
+对照，同时继续保留默认 `26` component control path；R5 也已完成 targeted
+damage-event trace：
+[target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)。
 
 ## 验证
 

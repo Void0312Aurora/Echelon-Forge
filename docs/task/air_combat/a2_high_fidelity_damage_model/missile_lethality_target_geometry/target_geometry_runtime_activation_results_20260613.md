@@ -67,8 +67,10 @@ projection, and TG-P7-R3 has materialized it as an opt-in training proxy
 database:
 [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md).
 R3 also completed a local `64`-step proxy training smoke, and R4 completed the
-active 8k proxy-versus-baseline comparison. The next step is targeted
-damage-event trace inspection, not further patch-shape design.
+active 8k proxy-versus-baseline comparison. R5 has since completed targeted
+damage-event trace with all `8` split receivers observable in proxy event
+names:
+[target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md).
 
 ## Validation
 
