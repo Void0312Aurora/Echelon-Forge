@@ -135,6 +135,8 @@ Out of scope:
   [target_geometry_runtime_behavior_regression_results_20260613.md](target_geometry_runtime_behavior_regression_results_20260613.md)
 - Training proxy database:
   [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md)
+- Active training probe:
+  [target_geometry_training_probe_results_20260614.md](target_geometry_training_probe_results_20260614.md)
 
 ## Outputs And Evidence
 
@@ -293,6 +295,12 @@ Generated:
   `runtime.database_path` through training bootstrap and `train.py`, and adds an
   active world-batch probe config for `A2_TARGET_GEOMETRY_PROXY_F16C_R22`. A
   local `64`-step CPU world-batch smoke completed against that proxy path.
+- TG-P7 active training probe:
+  [target_geometry_training_probe_results_20260614.md](target_geometry_training_probe_results_20260614.md).
+  TG-P7-R4 runs the active `8192`-step CUDA world-batch proxy probe and the
+  matching default-database baseline. Both finish and write checkpoints; the
+  proxy run selects `target_geometry_training_proxy_database_20260613`, while
+  the baseline remains on the default database.
 - Airframe silhouette constraint correction candidates:
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json),
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv).
@@ -424,8 +432,9 @@ This subproject can be marked accepted only when:
 - Runtime near-fuze projection still does not consume the proxy in the default
   F-16 unit damage model. TG-P7-R3 provides an opt-in training proxy database
   with `8` active split receiver records and a default-path control that remains
-  at `26` components; local `64`-step training smoke passes, and the next
-  remaining step is active 8k proxy versus baseline comparison.
+  at `26` components; local `64`-step training smoke and active `8192`-step
+  proxy/baseline probes pass. The next remaining step is targeted event-trace
+  and damage-component inspection before any longer proxy training.
 - Structural breakup, wreck/debris, and Pk remain separate future subprojects.
 
 ## Archive

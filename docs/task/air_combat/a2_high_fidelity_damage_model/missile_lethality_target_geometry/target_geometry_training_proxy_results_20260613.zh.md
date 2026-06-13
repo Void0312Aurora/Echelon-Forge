@@ -61,9 +61,9 @@ geometry-informed initial agent 进入短训练/runtime probe；Pk、真实弹�
 
 ## 下一步
 
-运行维护中的 active 8k TG-P7 proxy probe 和匹配的 baseline world-batch probe，
-然后对比稳定性、事件流和 damage-component selection。本地 64-step CPU smoke 已证明 proxy
-database 可以进入训练循环。
+TG-P7-R4 已运行维护中的 active 8k TG-P7 proxy probe 和匹配的 baseline world-batch probe：
+[target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md)。
+下一步是 targeted damage-event trace inspection，而不是再做入口 smoke。
 
 ## 验证
 

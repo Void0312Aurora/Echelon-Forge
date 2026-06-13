@@ -64,10 +64,11 @@ breakup, and debris remain outside this subproject.
 
 ## Next Step
 
-Run the maintained active 8k TG-P7 proxy probe and the matching baseline
-world-batch probe, then compare stability, event flow, and damage-component
-selection. The local 64-step CPU smoke has already proved that the proxy
-database can enter the training loop.
+TG-P7-R4 has since run the maintained active 8k TG-P7 proxy probe and the
+matching baseline world-batch probe:
+[target_geometry_training_probe_results_20260614.md](target_geometry_training_probe_results_20260614.md).
+The next step is targeted damage-event trace inspection, not another entrypoint
+smoke.
 
 ## Validation
 

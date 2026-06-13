@@ -1,7 +1,7 @@
 # A2 目标几何建模派发队列
 
-状态：`2026-06-13` TG-P7-R3 opt-in training proxy database generated。当前记录第一轮进展和
-TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-R3 由 main thread 集成。
+状态：`2026-06-14` TG-P7-R4 active training probe completed。当前记录第一轮进展和
+TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-R4 由 main thread 集成。
 
 英文辅文：[missile_lethality_target_geometry_dispatch_queue_20260611.md](missile_lethality_target_geometry_dispatch_queue_20260611.md)。
 
@@ -38,7 +38,8 @@ TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-
 | `TG-P6-R22` | `TG-P6` | main thread | 为两个 held 父级 receiver 生成 review-only 跨区 ownership 拆分决策 | `cross_region_ownership_split_candidate_20260611.json`; `cross_region_ownership_split_candidate_20260611.csv`; `cross_region_ownership_split_results_20260613.zh.md`; generator/tests/review packet docs | 2 个 parent decisions，8 个 parse-ready split receiver candidates，runtime activation 为 0；`pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as ownership split candidate; `TG-P7` 仍等待 acceptance 和 runtime tests |
 | `TG-P7-R1` | `TG-P7` | main thread | 将 R22 split payload 转换为 parse-ready runtime activation patch candidate | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.zh.md`; generator/tests/review packet docs; C++ loader smoke test | 8 个 candidate receivers，8 个 existing-loader parse-ready records，8 个 unit-database patch additions，2 个 parent retirement plans，runtime active 为 0；`pytest -q tests/tools/test_airframe_geometry_review.py`; `cmake --build build-workshop --target ef_test -j2`; `./build-workshop/ef_test --test-suite=components_basic`; packet regeneration; `git diff --check` | pass as parse-ready activation candidate; 已被 R2 behavior regression 和 R3 training proxy database 补全 |
 | `TG-P7-R2` | `TG-P7` | main thread | 对父级 receiver retirement 与 split receiver additions 做 in-memory behavior regression | `target_geometry_runtime_behavior_regression_20260613.json`; `target_geometry_runtime_behavior_regression_20260613.csv`; `target_geometry_runtime_behavior_regression_results_20260613.zh.md`; generator/tests/review packet docs | base components 26，projected components 32，retired parents 2，split additions 8，duplicate names 0，behavior pass true；focused pytest；packet regeneration；`git diff --check` | pass as in-memory behavior regression; 已被 R3 opt-in training proxy database 补全 |
-| `TG-P7-R3` | `TG-P7` | main thread | 将 feature-flagged projection 生成 opt-in training proxy database，并让维护中的 training path 可显式选择它 | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.zh.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | 默认 components 26，proxy components 32，proxy 路径 active split receivers 8，duplicate names 0，仓库 unit database 未改变，`runtime.database_path` 由 bootstrap 解析，WorldBatchVecEnv 收到 proxy database path，RuntimeFacade proxy load smoke 通过，本地 64-step CPU training smoke 完成；focused pytest；C++ loader smoke；packet regeneration；`git diff --check` | pass as opt-in initial training proxy; active 8k proxy 与 baseline 对照仍待执行 |
+| `TG-P7-R3` | `TG-P7` | main thread | 将 feature-flagged projection 生成 opt-in training proxy database，并让维护中的 training path 可显式选择它 | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.zh.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | 默认 components 26，proxy components 32，proxy 路径 active split receivers 8，duplicate names 0，仓库 unit database 未改变，`runtime.database_path` 由 bootstrap 解析，WorldBatchVecEnv 收到 proxy database path，RuntimeFacade proxy load smoke 通过，本地 64-step CPU training smoke 完成；focused pytest；C++ loader smoke；packet regeneration；`git diff --check` | pass as opt-in initial training proxy; 已被 R4 active 8k proxy-versus-baseline 对照补全 |
+| `TG-P7-R4` | `TG-P7` | main thread | 在维护中的 `WorldBatchVecEnv` training path 上运行 active 8k proxy probe 和匹配 baseline probe | `target_geometry_training_probe_results_20260614.zh.md`; status/queue/task-cluster docs | proxy 和 baseline 均完成 8192 CUDA timesteps，写出 checkpoints 与 final models；proxy 打印 proxy database override，baseline 保持默认 database；不替换默认路径 | pass as active training smoke; targeted damage-event 与 split-receiver trace inspection 仍待执行 |
 
 ## Main Thread 合并检查
 
@@ -61,8 +62,8 @@ TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-
 
 ## 暂缓项
 
-- Runtime 近炸投影接入：TG-P7-R3 已有 opt-in training proxy database、path wiring 和通过的本地
-  64-step training smoke；但默认 active runtime path 仍未改变，后续需要 active 8k proxy 与 baseline
-  对照，以及进一步 acceptance decision。
+- Runtime 近炸投影接入：TG-P7-R4 已有 opt-in training proxy database、path wiring、本地 smoke
+  和 active 8k proxy/baseline 对照；但默认 active runtime path 仍未改变，后续需要 targeted
+  damage-event trace inspection 和进一步 acceptance decision。
 - MQ-9 几何：等 F-16 工具链可复用后再展开。
 - 结构解体、残骸和 Pk：另建后续子项目。

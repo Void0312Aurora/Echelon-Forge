@@ -50,9 +50,10 @@ engineering geometry.
 TG-P7-R3 has since materialized this projection as an opt-in training proxy
 database:
 [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md).
-R3 also completed a local `64`-step runtime/training smoke. The next step is
-active 8k proxy versus baseline comparison while preserving the default `26`
-component control path.
+R3 also completed a local `64`-step runtime/training smoke, and R4 completed
+the active 8k proxy-versus-baseline comparison while preserving the default
+`26` component control path. The next step is targeted damage-event trace
+inspection.
 
 ## Validation
 

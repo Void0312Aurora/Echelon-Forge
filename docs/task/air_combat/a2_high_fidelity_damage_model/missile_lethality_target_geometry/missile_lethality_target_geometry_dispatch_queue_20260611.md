@@ -1,8 +1,8 @@
 # A2 Target Geometry Dispatch Queue
 
-Status: `2026-06-13` TG-P7-R3 opt-in training proxy database generated. This
+Status: `2026-06-14` TG-P7-R4 active training probe completed. This
 records the first-round progress plus the TG-P6/TG-P7 continuation; R10 used
-write-scoped subagents and R11-TG-P7-R3 were integrated
+write-scoped subagents and R11-TG-P7-R4 were integrated
 by the main thread.
 
 Chinese canonical:
@@ -41,7 +41,8 @@ Chinese canonical:
 | `TG-P6-R22` | `TG-P6` | main thread | Generate review-only cross-region ownership split decisions for the two held parent receivers. | `cross_region_ownership_split_candidate_20260611.json`; `cross_region_ownership_split_candidate_20260611.csv`; `cross_region_ownership_split_results_20260613.md`; generator/tests/review packet docs | 2 parent decisions, 8 parse-ready split receiver candidates, runtime activation 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; packet regeneration; `git diff --check` | pass as ownership split candidate; `TG-P7` remains held for acceptance and runtime tests |
 | `TG-P7-R1` | `TG-P7` | main thread | Convert the R22 split payload into a parse-ready runtime activation patch candidate. | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.md`; generator/tests/review packet docs; C++ loader smoke test | 8 candidate receivers, 8 parse-ready existing-loader records, 8 unit-database patch additions, 2 parent retirement plans, runtime active 0; `pytest -q tests/tools/test_airframe_geometry_review.py`; `cmake --build build-workshop --target ef_test -j2`; `./build-workshop/ef_test --test-suite=components_basic`; packet regeneration; `git diff --check` | pass as parse-ready activation candidate; superseded by R2 behavior regression and R3 training proxy database |
 | `TG-P7-R2` | `TG-P7` | main thread | Run in-memory behavior regression for parent receiver retirement versus split receiver additions. | `target_geometry_runtime_behavior_regression_20260613.json`; `target_geometry_runtime_behavior_regression_20260613.csv`; `target_geometry_runtime_behavior_regression_results_20260613.md`; generator/tests/review packet docs | base components 26, projected components 32, retired parents 2, split additions 8, duplicate names 0, behavior pass true; focused pytest; packet regeneration; `git diff --check` | pass as in-memory behavior regression; superseded by R3 opt-in training proxy database |
-| `TG-P7-R3` | `TG-P7` | main thread | Materialize the feature-flagged projection as an opt-in training proxy database and wire the maintained training path to select it. | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | default components 26, proxy components 32, split receivers active in proxy 8, duplicate names 0, repository unit database unchanged, `runtime.database_path` resolved by bootstrap, WorldBatchVecEnv path receives proxy database, RuntimeFacade proxy load smoke passes, local 64-step CPU training smoke completes; focused pytest; C++ loader smoke; packet regeneration; `git diff --check` | pass as opt-in initial training proxy; active 8k proxy versus baseline comparison pending |
+| `TG-P7-R3` | `TG-P7` | main thread | Materialize the feature-flagged projection as an opt-in training proxy database and wire the maintained training path to select it. | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | default components 26, proxy components 32, split receivers active in proxy 8, duplicate names 0, repository unit database unchanged, `runtime.database_path` resolved by bootstrap, WorldBatchVecEnv path receives proxy database, RuntimeFacade proxy load smoke passes, local 64-step CPU training smoke completes; focused pytest; C++ loader smoke; packet regeneration; `git diff --check` | pass as opt-in initial training proxy; superseded by R4 active 8k proxy-versus-baseline comparison |
+| `TG-P7-R4` | `TG-P7` | main thread | Run the active 8k proxy probe and matching baseline probe on the maintained `WorldBatchVecEnv` training path. | `target_geometry_training_probe_results_20260614.md`; status/queue/task-cluster docs | proxy and baseline both complete 8192 CUDA timesteps, write checkpoints and final models, proxy prints the proxy database override, baseline stays on default database; no default-path replacement | pass as active training smoke; targeted damage-event and split-receiver trace inspection pending |
 
 ## Main Thread Merge Checks
 
@@ -79,9 +80,9 @@ Chinese canonical:
 
 ## Held Items
 
-- Runtime near-fuze projection integration: TG-P7-R3 has an opt-in training
-  proxy database, path wiring, and a passing local 64-step training smoke, but
-  the default active runtime path is still unchanged pending active 8k proxy
-  versus baseline comparison and any later acceptance decision.
+- Runtime near-fuze projection integration: TG-P7-R4 has an opt-in training
+  proxy database, path wiring, local smoke, and active 8k proxy/baseline
+  comparison, but the default active runtime path is still unchanged pending
+  targeted damage-event trace inspection and any later acceptance decision.
 - MQ-9 geometry: wait until the F-16 toolchain is reusable.
 - Structural breakup, debris/wreck, and Pk: later standalone subprojects.

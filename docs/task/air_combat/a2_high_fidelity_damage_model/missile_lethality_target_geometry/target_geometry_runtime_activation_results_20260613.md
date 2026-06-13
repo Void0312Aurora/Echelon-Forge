@@ -66,9 +66,9 @@ TG-P7-R2 has since confirmed the parent-retirement versus split-addition
 projection, and TG-P7-R3 has materialized it as an opt-in training proxy
 database:
 [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md).
-R3 also completed a local `64`-step proxy training smoke. The next step after
-that is active 8k proxy versus baseline comparison, not further patch-shape
-design.
+R3 also completed a local `64`-step proxy training smoke, and R4 completed the
+active 8k proxy-versus-baseline comparison. The next step is targeted
+damage-event trace inspection, not further patch-shape design.
 
 ## Validation
 

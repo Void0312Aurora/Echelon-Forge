@@ -107,6 +107,8 @@ database generated；默认 unit database 和默认 runtime path 仍未改变。
   [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)
 - 训练代理数据库结果：
   [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)
+- Active training probe 结果：
+  [target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md)
 
 ## 输出和证据
 
@@ -235,6 +237,11 @@ database generated；默认 unit database 和默认 runtime path 仍未改变。
   `32`，默认 database 保持 `26`；training bootstrap 和 `train.py` 已接通
   `runtime.database_path`，并新增 `A2_TARGET_GEOMETRY_PROXY_F16C_R22` active
   world-batch probe config。本地 `64`-step CPU world-batch smoke 已在该 proxy path 上完成。
+- TG-P7 active training probe：
+  [target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md)。
+  TG-P7-R4 运行 active `8192`-step CUDA world-batch proxy probe 和匹配的默认数据库
+  baseline。两者都完成并写出 checkpoints；proxy run 选择
+  `target_geometry_training_proxy_database_20260613`，baseline 仍在默认 database 上。
 - 整机 silhouette 约束修正候选：
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv)。
@@ -333,7 +340,8 @@ database generated；默认 unit database 和默认 runtime path 仍未改变。
 - MQ-9 几何可作为后续机型复用目标，但第一轮只做 F-16。
 - 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理。TG-P7-R3 已提供 opt-in
   training proxy database，其中 `8` 个 split receiver records 在代理路径 active，默认对照路径仍保持
-  `26` components；本地 `64`-step training smoke 已通过，下一步剩余的是 active 8k proxy 与 baseline 对照。
+  `26` components；本地 `64`-step training smoke 和 active `8192`-step proxy/baseline probe
+  均已通过。下一步剩余的是 targeted event-trace 与 damage-component inspection，再决定是否进入更长 proxy training。
 - 结构解体、碎裂/残骸和 Pk 仍是后续独立子项目，不能并入本几何子项目。
 
 ## Archive

@@ -1,15 +1,15 @@
 # A2 目标几何建模当前状态
 
-状态：`2026-06-13` TG-P7-R3 opt-in training proxy database passes；
+状态：`2026-06-14` TG-P7-R4 active proxy-versus-baseline training probe passes；
 默认 runtime projection 和维护中的 F-16 unit database 仍未改变。
 父级入口和 issue 已把 F-16 几何细化从问题记录推进到可执行子项目；第一版来源/轴向/尺度
 manifest、外壳区域候选、部件绑定报告、离线审阅页、测试点距离诊断、带 mesh-derived silhouette
 的精细代理候选包、逐区域人工审阅 dashboard、外形命中到部件损伤的表面部件候选表，以及
 可视化人工复核 triage 页面、独立部件视图、第一轮人工目检结论、五组只读 subagent 独立评估、
-R10 修正快照、R11 修复结果、R12 语义损伤几何候选包、R13 内部 receiver 先验约束包、R18 子部件形状候选固化包、R19 子部件中心线摆放候选包、R20 最新子部件摆放候选包、R21 最新子部件候选固化包、R22 跨区 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 runtime behavior regression packet 和 TG-P7-R3 training proxy database packet 已生成；最新 packet 已修复左右映射、
+R10 修正快照、R11 修复结果、R12 语义损伤几何候选包、R13 内部 receiver 先验约束包、R18 子部件形状候选固化包、R19 子部件中心线摆放候选包、R20 最新子部件摆放候选包、R21 最新子部件候选固化包、R22 跨区 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 runtime behavior regression packet、TG-P7-R3 training proxy database packet 和 TG-P7-R4 active training probe result 已生成；最新 packet 已修复左右映射、
 runtime receiver 组件、翼面部件位置、radar/IFF 和 nozzle 源盒，并开始输出 parse-ready
 语义外壳体积部件候选、constrained internal receiver priors、promoted review-only
-subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates、promoted R21 latest placement rules、R22 parse-ready split receiver candidates、TG-P7-R1 带 feature flag 的 `damage_model.hitboxes[].components` patch candidate、TG-P7-R2 in-memory behavior regression，以及 TG-P7-R3 opt-in proxy runtime database；默认 active runtime projection 仍未改变。
+subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates、promoted R21 latest placement rules、R22 parse-ready split receiver candidates、TG-P7-R1 带 feature flag 的 `damage_model.hitboxes[].components` patch candidate、TG-P7-R2 in-memory behavior regression、TG-P7-R3 opt-in proxy runtime database，以及 TG-P7-R4 active 8k training comparison；默认 active runtime projection 仍未改变。
 
 英文辅文：[missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)。
 
@@ -60,6 +60,7 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
 | TG-P7 运行时激活候选实现 | [target_geometry_runtime_activation_results_20260613.zh.md](target_geometry_runtime_activation_results_20260613.zh.md)、[target_geometry_runtime_activation_candidate_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json)、[target_geometry_runtime_activation_candidate_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.csv) | TG-P7-R1 将 R22 split payload 转换为带 feature flag 的 `damage_model.hitboxes[].components` patch candidate：`candidate_component_count=8`，`runtime_schema_parse_ready_component_count=8`，`unit_database_patch_component_count=8`，`parent_receiver_retirement_candidate_count=2`，`runtime_active_component_count=0`，C++ unit-definition loader parse smoke 通过 |
 | TG-P7 运行时行为回归实现 | [target_geometry_runtime_behavior_regression_results_20260613.zh.md](target_geometry_runtime_behavior_regression_results_20260613.zh.md)、[target_geometry_runtime_behavior_regression_20260613.json](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.json)、[target_geometry_runtime_behavior_regression_20260613.csv](review_packets/f16c_20260611/target_geometry_runtime_behavior_regression_20260613.csv) | TG-P7-R2 只在内存中应用 component patch 并验证：`base_component_count=26`，`projected_component_count=32`，`retired_parent_component_count=2`，`split_component_added_count=8`，`duplicate_component_name_count=0`，`behavior_regression_pass=true` |
 | TG-P7 训练代理数据库实现 | [target_geometry_training_proxy_results_20260613.zh.md](target_geometry_training_proxy_results_20260613.zh.md)、[target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json)、[target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/) | TG-P7-R3 生成完整 opt-in proxy runtime database 和 active training config：默认 database components `26`，proxy database components `32`，proxy 路径 active split receivers `8`，duplicate names `0`，`runtime.database_path` 已接入 training bootstrap 和 `train.py`，repository unit database modified `false`，RuntimeFacade proxy database load 通过，并且本地 `64`-step CPU training smoke 完成 |
+| TG-P7 active training probe | [target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md) | TG-P7-R4 完成 proxy 和 baseline 两个 active `8192`-step CUDA `WorldBatchVecEnv` 运行。Proxy final `ep_len_mean=662`、`ep_rew_mean=-282`；baseline final `ep_len_mean=677`、`ep_rew_mean=-235`。两者都在 `/tmp/cmo_tg_p7_active_probe` 下写出 checkpoints 和 final models |
 | Stage-C guard 对齐 | [component_probability_surface_probe.py](../../../../../tools/maintenance/candidate_artifacts/component_probability_surface_probe.py) | 修复后的侧向部件几何会产生 `surface_incidence_cos=0.0`；Stage-C surface probe gate 已同步，component-specific rows 不再回退到 `global-fallback` |
 
 ## 当前边界
@@ -68,7 +69,7 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
   TG-P5 测试点距离诊断、TG-P6 review-only mesh-derived 精细代理轮廓、表面部件候选、可视化 triage、
   独立部件复核视图、第一轮人工目检结论、五组 subagent 独立评估、第一轮 subagent 修正、R11 几何修复、
   R12 语义损伤几何候选、R13 内部 receiver 先验约束候选、R14 语义父子布局、R15 跨区 held
-  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选、R21 最新摆放固化、R22 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 in-memory behavior regression packet 和 TG-P7-R3 opt-in training proxy database packet 已完成，不证明默认 runtime activation 已应用。
+  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选、R21 最新摆放固化、R22 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 in-memory behavior regression packet、TG-P7-R3 opt-in training proxy database packet 和 TG-P7-R4 active training probe 已完成，不证明默认 runtime activation 已应用。
 - 当前 Sketchfab 模型只作为外形审阅候选，不提供真实内部部件边界。
 - 旧 FlightGear F-16 已归档为 GPL v2 强候选来源，不进入主线派生几何。
 - 运行时近炸投影在默认路径仍按现有逻辑运行。TG-P7-R3 让带 feature flag 的
@@ -77,9 +78,9 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
 
 ## 下一步
 
-1. 运行维护中的 active 8k TG-P7 proxy probe。
-2. 运行匹配的 baseline world-batch probe。
-3. 对比稳定性、事件流和 damage-component selection，其中 proxy 路径为 `32` components，默认路径为 `26`。
+1. 针对 proxy database 运行 targeted 或 instrumented damage-event probe。
+2. 检查 event traces 和 damage-component records，确认 split receiver selection。
+3. 决定是否安排更长 proxy training，或继续把 TG-P7 保持为 opt-in geometry experiment。
 
 ## 验证提醒
 
@@ -113,4 +114,6 @@ pytest -q tests/architecture/damage_model
 bootstrap 和 entry contracts `28 passed`；C++ loader smoke `24 passed`；review
 packet 已重新生成；RuntimeFacade proxy database load 返回 `runtime_load_ok=true`；
 本地 64-step CPU proxy training smoke 已完成，并写出
-`/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`。
+`/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`；
+active 8k proxy 和 baseline probes 均已完成，并在 `/tmp/cmo_tg_p7_active_probe`
+下写出 final models。
