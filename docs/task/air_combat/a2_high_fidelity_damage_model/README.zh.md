@@ -30,13 +30,14 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
   转成部件失效概率、失效模式和状态变化，再交给已有损伤/飞行系统传播后果，但不声明坠毁、
   结构解体、残骸、Pk 或具体弹种杀伤结论。
 - [missile_lethality_target_geometry/README.zh.md](missile_lethality_target_geometry/README.zh.md)：
-  active follow-on，从命中盒几何缺口 issue 提升而来，先为 F-16 构建可审阅的外壳区域、部件绑定和
-  距离诊断，再决定是否把外壳代理接入近炸投影；它不声明真实 F-16 工程几何、结构解体、残骸、
-  Pk 或具体弹种杀伤结论。
+  accepted / retained follow-on，从命中盒几何缺口 issue 提升而来，已为 F-16C 构建可审阅的外壳区域、
+  部件绑定、距离诊断、精细几何代理、表面/内部 receiver 先验和跨区 split receiver handoff
+  证据；它不声明真实 F-16 工程几何、默认 runtime replacement、训练收益、结构解体、残骸、Pk
+  或具体弹种杀伤结论。
 
 当前几何保真度缺口已记录到 issue 板：
 [杀伤链命中盒几何保真度缺口](../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
-该 issue 的第一轮主线执行入口已提升为
+该 issue 的第一轮主线执行入口已提升并按 geometry-only 验收门收口为
 [missile_lethality_target_geometry/README.zh.md](missile_lethality_target_geometry/README.zh.md)。
 
 后续结构解体、碎裂/残骸、Pk 或具体弹种校准需要按 `docs/agent` 标准另建子项目，

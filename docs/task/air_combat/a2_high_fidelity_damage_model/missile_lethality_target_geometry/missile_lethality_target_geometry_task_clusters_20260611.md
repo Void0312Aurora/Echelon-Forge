@@ -1,7 +1,9 @@
 # A2 Target Geometry Task Clusters
 
-Status: `2026-06-14` finite task-cluster plan with TG-P7-R6 32k opt-in
-training probe completed for [README.md](README.md).
+Status: `2026-06-14` accepted / closed geometry task-cluster record. TG-P1
+through TG-P6 satisfy the F-16C geometry-only closeout; TG-P7-R1 through R6 are
+retained as downstream handoff evidence, not as closure gates for this
+subproject.
 
 Chinese canonical:
 [missile_lethality_target_geometry_task_clusters_20260611.zh.md](missile_lethality_target_geometry_task_clusters_20260611.zh.md).
@@ -24,8 +26,8 @@ debris/wreck behavior.
 | `TG-P3` | main thread | high | Bind current component boxes to outer regions and flag anomalies. | `component_binding_report_20260611.json`; `component_binding_report_20260611.csv`; focused tests | No vulnerability-probability rewrite | schema check, out-of-envelope report check, focused pytest | Every current component has a region or explicit `needs_review` | depends on `TG-P2` | 2 | pass |
 | `TG-P4` | main thread | medium | Generate static HTML/SVG review packet. | `review_packets/f16c_20260611/scene.html`; SVG; README summary | No web app runtime integration | file existence, no network dependency, basic HTML asset checks | Packet can be opened offline and shows outer shape, legacy boxes, components, and test points | depends on `TG-P2`/`TG-P3`; completed with `TG-P5` | 2 | pass |
 | `TG-P5` | main thread | high | Emit outer/component distance diagnostics for MLF-5 test points. | review point JSON/CSV; focused tests | No real-weapon Pk rerun | CSV rows include nearest outer distance, nearest component distance, candidate count | 4 m nose case has concrete geometry evidence | depends on `TG-P2`; completed with `TG-P4` | 2 | pass |
-| `TG-P6` | main thread | high | Design finer geometry proxies and add the review-only surface-component handoff layer from outer hits to component damage. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; `fine_proxy_review_dashboard.html`; `surface_component_candidate_20260611.json`; `surface_component_candidate_20260611.csv`; `human_review_triage.html`; `component_review_views/**`; `semantic_damage_geometry_*`; `internal_component_prior_*`; `semantic_parent_child_layout_*`; `cross_region_held_component_segments_*`; `cross_region_ownership_split_candidate_*`; `airframe_constraint_correction_*`; `subcomponent_shape_placement_*`; `subcomponent_latest_promotion_results_20260613.md`; `cross_region_ownership_split_results_20260613.md`; result/status docs; proxy review notes | No high-poly GLB as per-frame collision mesh; no runtime main-path change; no true internal-structure claim | proxy schema check, mesh silhouette extraction, no bounds-expansion fallback, dashboard smoke, surface component schema check, visual triage smoke, isolated view smoke, semantic/receiver/segment schema checks, ownership split schema checks, subcomponent silhouette checks, focused pytest | Error, fit boundary, mesh-derived silhouette, surface-to-current-component candidate links, visual triage cards, isolated component views, semantic parent-child layout, held segments, R21 promoted latest placement rules, R22 ownership split candidates, and remaining `TG-P7` acceptance/test blocker are recorded | depends on `TG-P4`/`TG-P5` | 22 | pass as review candidate with R22 ownership split candidate |
-| `TG-P7` | main thread | high | Decide runtime-interface boundary and wire the initial training proxy only after tests. | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.md`; `target_geometry_runtime_behavior_regression_*`; `target_geometry_training_proxy_database_20260613*`; `target_geometry_training_proxy_results_20260613.md`; `target_geometry_training_probe_results_20260614.md`; `target_geometry_damage_event_trace_20260614.json`; `target_geometry_damage_event_trace_results_20260614.md`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.md`; training bootstrap/train entrypoints; active proxy configs; trace tool/test; README/status/queue docs | No unreviewed proxy in the default active main path; default unit database remains the control path | parser/contract checks, focused pytest, C++ loader smoke, packet regeneration, in-memory behavior regression, `runtime.database_path` contract tests, RuntimeFacade proxy database load, local training smoke, active 8k proxy/baseline comparison, targeted damage-event trace, active 32k proxy/baseline comparison | parse-ready patch candidate, in-memory behavior regression, opt-in proxy database, local 64-step training smoke, active 8k proxy/baseline comparison, all `8` split receivers observed in proxy damage-event traces, and active 32k proxy/baseline comparison complete | depends on `TG-P6` | 6 | pass as opt-in training proxy with targeted trace and 32k comparison |
+| `TG-P6` | main thread | high | Design finer geometry proxies and add the review-only surface-component handoff layer from outer hits to component damage. | `fine_geometry_proxy_candidate_20260611.json`; `fine_proxy_*.svg`; `fine_proxy_review_dashboard.html`; `surface_component_candidate_20260611.json`; `surface_component_candidate_20260611.csv`; `human_review_triage.html`; `component_review_views/**`; `semantic_damage_geometry_*`; `internal_component_prior_*`; `semantic_parent_child_layout_*`; `cross_region_held_component_segments_*`; `cross_region_ownership_split_candidate_*`; `airframe_constraint_correction_*`; `subcomponent_shape_placement_*`; `subcomponent_latest_promotion_results_20260613.md`; `cross_region_ownership_split_results_20260613.md`; result/status docs; proxy review notes | No high-poly GLB as per-frame collision mesh; no runtime main-path change; no true internal-structure claim | proxy schema check, mesh silhouette extraction, no bounds-expansion fallback, dashboard smoke, surface component schema check, visual triage smoke, isolated view smoke, semantic/receiver/segment schema checks, ownership split schema checks, subcomponent silhouette checks, focused pytest | Error/fit boundary, mesh-derived silhouettes, surface-to-current-component candidate links, visual triage cards, isolated component views, semantic parent-child layout, held segments, R21 promoted latest placement rules, and R22 ownership split candidates are recorded for geometry-only closeout | depends on `TG-P4`/`TG-P5` | 22 | accepted for F-16C fine-geometry proxy |
+| `TG-P7` | main thread | high | Produce downstream opt-in runtime/training handoff evidence. | `target_geometry_runtime_activation_candidate_20260613.json`; `target_geometry_runtime_activation_candidate_20260613.csv`; `target_geometry_runtime_activation_results_20260613.md`; `target_geometry_runtime_behavior_regression_*`; `target_geometry_training_proxy_database_20260613*`; `target_geometry_training_proxy_results_20260613.md`; `target_geometry_training_probe_results_20260614.md`; `target_geometry_damage_event_trace_20260614.json`; `target_geometry_damage_event_trace_results_20260614.md`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.md`; training bootstrap/train entrypoints; active proxy configs; trace tool/test; README/status/queue docs | No proxy in the default active main path; do not treat training comparison or trace as geometry closure gates; default unit database remains the control path | parser/contract checks, focused pytest, C++ loader smoke, packet regeneration, in-memory behavior regression, `runtime.database_path` contract tests, RuntimeFacade proxy database load, local training smoke, active 8k proxy/baseline comparison, targeted damage-event trace, active 32k proxy/baseline comparison | opt-in proxy database, trace, and same-budget training comparisons are available for a later standalone acceptance decision | depends on `TG-P6` | 6 | retained handoff evidence; not a geometry closure gate |
 
 ## Dispatch Rules
 
@@ -73,11 +75,12 @@ Each worker returns:
   table shows which current components it may affect or which links are missing.
 - Manual review has a visual-first triage page with local overlays for the
   coordinate-sign, component-placement, surface-handoff, and review-point issues.
-- TG-P7 can advance into downstream policy/reward diagnostics with a separate proxy
-  database, `runtime.database_path` opt-in, `32` proxy components, `26` default
-  components, passing loader/training-entry contracts, local proxy smoke,
-  active 8k proxy/baseline comparison, and all `8` split receivers observed in
-  targeted proxy damage-event traces, plus a completed 32k proxy/baseline comparison.
+- The semantic parent-child layout, cross-region held segments, R22 split
+  receiver candidates, whole-airframe silhouette constraints, and subcomponent
+  placement repairs form traceable handoff evidence.
+- The TG-P7 opt-in proxy database, damage-event trace, and 32k proxy/baseline
+  training probe are retained only as downstream handoff evidence; they are no
+  longer closure gates for this subproject.
 - Docs continue to reject true engineering geometry, structural breakup,
   debris/wreck, Pk, and weapon-specific kill claims.
 
@@ -86,7 +89,8 @@ Each worker returns:
 - MQ-9 geometry: later reuse target, not in the first F-16 acceptance.
 - Structural breakup and debris/wreck: later standalone subprojects.
 - Pk and real-weapon calibration: later standalone subprojects.
-- Main runtime-path replacement: TG-P7-R6 has an opt-in proxy database with a
+- Main runtime-path replacement: later standalone acceptance decision, not a
+  closure gate for this geometry subproject. TG-P7-R6 has an opt-in proxy database with a
   feature-flagged `damage_model.hitboxes[].components` projection, passing
   loader/training-entry contracts, local proxy smoke, and active 8k
   proxy/baseline comparison, plus targeted trace coverage for all `8` split
@@ -95,8 +99,9 @@ Each worker returns:
   acceptance decision.
   Side-sign, missing receiver, radar/IFF, nozzle, and wing placement blockers
   are repaired.
-- Finer geometry proxy: first F-16 mesh-derived review candidate exists with
-  bounds-expansion fallback disabled; node whitelists, surface component
-  candidates, visual triage cards, isolated component views, human findings,
-  subagent findings, subagent corrections, geometry repairs, and R22
-  cross-region ownership split decisions still gate MQ-9 and any other aircraft.
+- Finer geometry proxy: F-16C geometry-only closeout is accepted; node
+  whitelists, surface component candidates, visual triage cards, isolated
+  component views, human findings, subagent findings, subagent corrections,
+  geometry repairs, and R22 cross-region ownership split decisions can seed
+  later MQ-9 and other-airframe reuse, but this package does not continue that
+  work.

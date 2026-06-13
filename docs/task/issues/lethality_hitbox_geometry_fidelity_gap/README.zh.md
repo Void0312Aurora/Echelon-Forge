@@ -1,6 +1,6 @@
 # 杀伤链命中盒几何保真度缺口
 
-状态：`2026-06-11` 开放中 / 已提升第一轮主线子项目；A2/MLF-5 扩大方位/距离矩阵暴露当前命中盒几何和近炸投影过粗，不能支撑更高保真的导弹杀伤结论。
+状态：`2026-06-14` retained / first mainline geometry subproject accepted；A2/MLF-5 扩大方位/距离矩阵暴露的当前命中盒几何和近炸投影过粗问题，已通过 F-16C 精细几何工程代理子项目完成 geometry-only 收口。默认 runtime replacement、训练收益和杀伤结论仍不由该几何子项目声明。
 
 首次观察：`2026-06-11`，A2/MLF-5 热力图复核连续杆鼻向 4 m / 6 m 与爆破/破片尾向直接命中结果时。
 
@@ -110,7 +110,7 @@ MLF-5 热力图复核中：
 
 Sketchfab 替代候选入口：[Sketchfab F-16 替代模型短名单](sketchfab_f16_replacement_shortlist_20260611.zh.md)。主线几何候选应从 CC BY 4.0 或更宽松许可的 Sketchfab 模型重新进入，不再从 FlightGear GPL v2 资产派生。
 
-第一轮主线子项目：[A2 目标外形与部件几何建模](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/README.zh.md)。该子项目先处理 F-16 审阅包、外壳区域、部件绑定和距离诊断，再决定 runtime 近炸投影是否接入新的外壳代理。
+第一轮主线子项目：[A2 目标外形与部件几何建模](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/README.zh.md)。该子项目已按 geometry-only 验收门闭合；后续 runtime 默认路径替换、训练诊断或其他机型复用必须另行验收。
 
 ## GLB 来源状态补充
 

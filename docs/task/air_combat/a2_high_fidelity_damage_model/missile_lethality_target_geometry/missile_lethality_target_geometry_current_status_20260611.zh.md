@@ -1,15 +1,18 @@
 # A2 目标几何建模当前状态
 
-状态：`2026-06-14` TG-P7-R6 32k opt-in proxy/baseline training probe passes；
+状态：`2026-06-14` accepted / retained。F-16C 精细几何工程代理已按 geometry-only
+验收门闭合；TG-P7-R1 至 R6 的 opt-in runtime/training 材料作为下游 handoff evidence 保留，
 默认 runtime projection 和维护中的 F-16 unit database 仍未改变。
 父级入口和 issue 已把 F-16 几何细化从问题记录推进到可执行子项目；第一版来源/轴向/尺度
 manifest、外壳区域候选、部件绑定报告、离线审阅页、测试点距离诊断、带 mesh-derived silhouette
 的精细代理候选包、逐区域人工审阅 dashboard、外形命中到部件损伤的表面部件候选表，以及
 可视化人工复核 triage 页面、独立部件视图、第一轮人工目检结论、五组只读 subagent 独立评估、
 R10 修正快照、R11 修复结果、R12 语义损伤几何候选包、R13 内部 receiver 先验约束包、R18 子部件形状候选固化包、R19 子部件中心线摆放候选包、R20 最新子部件摆放候选包、R21 最新子部件候选固化包、R22 跨区 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 runtime behavior regression packet、TG-P7-R3 training proxy database packet、TG-P7-R4 active training probe result、TG-P7-R5 damage-event trace result 和 TG-P7-R6 32k training probe result 已生成；最新 packet 已修复左右映射、
-runtime receiver 组件、翼面部件位置、radar/IFF 和 nozzle 源盒，并开始输出 parse-ready
+runtime receiver 组件、翼面部件位置、radar/IFF 和 nozzle 源盒，并输出 parse-ready
 语义外壳体积部件候选、constrained internal receiver priors、promoted review-only
 subcomponent shape rules、local centerline placement candidates、latest subcomponent placement candidates、promoted R21 latest placement rules、R22 parse-ready split receiver candidates、TG-P7-R1 带 feature flag 的 `damage_model.hitboxes[].components` patch candidate、TG-P7-R2 in-memory behavior regression、TG-P7-R3 opt-in proxy runtime database、TG-P7-R4 active 8k training comparison、TG-P7-R5 targeted trace，以及 TG-P7-R6 active 32k proxy/baseline training comparison；proxy component event names 已观测到全部 `8` 个 split receivers，32k proxy/baseline 均完成，但默认 active runtime projection 仍未改变。
+
+几何验收收口：[archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md)。
 
 英文辅文：[missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)。
 
@@ -71,7 +74,7 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
   TG-P5 测试点距离诊断、TG-P6 review-only mesh-derived 精细代理轮廓、表面部件候选、可视化 triage、
   独立部件复核视图、第一轮人工目检结论、五组 subagent 独立评估、第一轮 subagent 修正、R11 几何修复、
   R12 语义损伤几何候选、R13 内部 receiver 先验约束候选、R14 语义父子布局、R15 跨区 held
-  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选、R21 最新摆放固化、R22 ownership 拆分候选包、TG-P7-R1 runtime activation candidate packet、TG-P7-R2 in-memory behavior regression packet、TG-P7-R3 opt-in training proxy database packet、TG-P7-R4 active training probe、TG-P7-R5 targeted damage-event trace 和 TG-P7-R6 32k opt-in training probe 已完成，不证明默认 runtime activation 已应用。
+  分段、R16 整机 silhouette 诊断、R17 形状/摆放候选、R18 零外露形状固化、R19 中心线摆放候选、R20 最新摆放候选、R21 最新摆放固化和 R22 ownership 拆分候选包已完成并满足 geometry-only closeout；TG-P7-R1 至 R6 作为下游 handoff evidence 保留，不作为本子项目闭合门，也不证明默认 runtime activation 已应用。
 - 当前 Sketchfab 模型只作为外形审阅候选，不提供真实内部部件边界。
 - 旧 FlightGear F-16 已归档为 GPL v2 强候选来源，不进入主线派生几何。
 - 运行时近炸投影在默认路径仍按现有逻辑运行。TG-P7-R6 保持带 feature flag 的
@@ -84,9 +87,7 @@ subcomponent shape rules、local centerline placement candidates、latest subcom
 
 ## 下一步
 
-1. 增加 split-receiver damage-event exposure 的下游 policy/reward 诊断。
-2. 选择更能激活 combat actions 的场景或动作接口继续训练。
-3. 将默认路径替换保留为后续独立验收决策。
+本子项目不再派发下一步工作。split-receiver policy/reward 诊断、训练入口调整和默认路径替换必须作为后续独立验收决策或独立子项目处理。
 
 ## 验证提醒
 

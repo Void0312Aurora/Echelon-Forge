@@ -1,7 +1,8 @@
 # A2 目标外形与部件几何建模
 
-状态：`2026-06-14` active follow-on / TG-P7-R6 32k opt-in
-proxy-versus-baseline training probe pass；默认 unit database 和默认 runtime path 仍未改变。该子项目从
+状态：`2026-06-14` accepted / retained。F-16C 精细几何工程代理已按 geometry-only
+验收门闭合，收口记录位于
+[archive/tg_f16c_fine_geometry_accepted_20260614](archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md)；默认 unit database、默认 runtime path、policy/reward 诊断和训练收益不属于本子项目验收门。该子项目从
 [杀伤链命中盒几何保真度缺口](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 提升而来，用于把 F-16 从少量大长方体推进到可审阅的外壳、表面部件、旧内部部件关联和距离诊断。
 
@@ -25,8 +26,9 @@ proxy-versus-baseline training probe pass；默认 unit database 和默认 runti
 外形、命中盒、部件盒和测试点距离被混在一起。这个子项目的目标是先把 F-16 的外壳形状、
 部件脆弱区和测试点距离变成可审阅的数据，再决定近炸投影是否接入新的外壳代理。
 
-本项目不是“还原真实 F-16 内部工程结构”。它只建立一套来源清楚、尺度可查、人工可审阅的
-低精度几何代理，用来支撑更合理的近炸、连续杆和破片投影诊断。
+本项目追求的是可作为后续杀伤链输入的工程几何代理：来源清楚、尺度可查、外形与审计网格对齐、
+部件关系可人工审阅、内部 receiver 先验受外壳约束。它不把该代理提升为真实 F-16C 厂商工程图纸、
+真实内部设备边界、真实 Pk 或具体弹种杀伤率。
 
 ## 当前状态
 
@@ -36,7 +38,8 @@ proxy-versus-baseline training probe pass；默认 unit database 和默认 runti
 | F-16 审计资产 | active candidate | glTF 原始包、解包文件、hash 和 attribution 已保留 | 只提供外形审阅基础，不证明真实内部部件边界 |
 | 旧 FlightGear F-16 | rejected for mainline derivation | 已归档到 `assets/archive`，来源强候选为 GPL v2 FlightGear | 不进入主线派生几何 |
 | 当前命中盒 | known gap | issue 已记录 4 m 鼻向近炸无部件损伤等症状 | 不能继续当作真实外形或真实部件布局 |
-| 运行时接入 | opt-in training proxy 32k pass | TG-P7-R6 在 R3/R4/R5 trainability 与 event-trace 检查后，完成 proxy/baseline 两条 `32768`-step `WorldBatchVecEnv` 对照 | 默认 database 和主投影路径仍是对照路径 |
+| 几何验收 | accepted / retained | [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md) | 只验收 F-16C 精细几何工程代理，不验收默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种结论 |
+| 下游 opt-in 代理 | retained handoff evidence | TG-P7-R1 至 R6 生成 opt-in proxy database、trace 和训练对照材料 | 不是本子项目闭合门；默认 database 和主投影路径仍是对照路径 |
 
 ## 范围
 
@@ -75,7 +78,7 @@ proxy-versus-baseline training probe pass；默认 unit database 和默认 runti
 | `P4 Review Packet` | 生成 HTML/SVG/CSV 审阅包 | P2/P3 数据存在 | 人能在图面上同时看见外形、旧盒、部件和测试点 | pass |
 | `P5 Lethality Diagnostics` | 将测试点解释成外壳/部件距离和候选部件数 | P4 审阅包存在 | 4 m 鼻向等样例不再只有“非直接命中”这一种解释 | pass |
 | `P6 Fine Geometry Proxy` | 把低精度盒子推进到更贴近外形的代理，并补上外形命中到部件损伤的审阅用中间层 | P4/P5 审阅和诊断通过 | review-only OBB、薄棱柱、凸包候选、mesh-derived silhouette、表面部件候选、语义体积部件候选、内部 receiver 先验约束候选、视觉复核卡片、距离差和叠加图存在 | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | TG-P7-R6 opt-in 32k proxy/baseline training pass |
+| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | retained downstream handoff; not a geometry closure gate |
 
 ## 任务簇
 
@@ -83,6 +86,8 @@ proxy-versus-baseline training probe pass；默认 unit database 和默认 runti
   [missile_lethality_target_geometry_task_clusters_20260611.zh.md](missile_lethality_target_geometry_task_clusters_20260611.zh.md)
 - 当前状态：
   [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md)
+- 几何验收收口：
+  [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.zh.md)
 - 第一轮派发队列：
   [missile_lethality_target_geometry_dispatch_queue_20260611.zh.md](missile_lethality_target_geometry_dispatch_queue_20260611.zh.md)
 - 精细几何代理设计草案：
@@ -347,28 +352,24 @@ proxy-versus-baseline training probe pass；默认 unit database 和默认 runti
   receiver 的交接状态。
 - 每个现有内部/系统 receiver 都有先验几何、父外壳约束、约束前后越界比例和独立 top/side/front
   复核视图；该层不得被当作真实内部工程几何。
-- TG-P7 proxy database 与默认 database 分离生成，F-16 components 为 `32`，
-  duplicate component names 为 `0`，并且只能由显式 `runtime.database_path`
-  training config 选择。
-- TG-P7 proxy damage-event trace 能在 runtime component event names 中观测到全部
-  `8` 个 split receivers，而默认 database 观测到 `0` 个 split receiver 名称。
-- TG-P7 32k opt-in proxy/baseline training probe 能在同一 `32768`-step 预算下完成，
-  且 proxy 与 baseline 只有 `runtime.database_path` 和 TG-P7 元数据差异。
+- 语义父子布局、跨区 held 分段、R22 split receiver candidates、整机 silhouette 约束和子部件摆放修正已经形成可追溯交接证据。
+- TG-P7 opt-in proxy database、damage-event trace 和 32k proxy/baseline training probe 只作为下游 handoff evidence 保留；它们不再作为本子项目闭合门。
 - 4 m 鼻向贴近外壳样例能被解释为具体几何/方向/候选部件问题，而不是无说明的零损伤。
 - 所有文档继续拒绝真实 F-16 工程几何、真实 Pk、结构解体、残骸或具体弹种击毁声明。
 
 ## 残余和下一步
 
 - MQ-9 几何可作为后续机型复用目标，但第一轮只做 F-16。
-- 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理。TG-P7-R6 已提供 opt-in
+- 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理；默认路径替换属于后续独立验收决策，不属于本几何子项目闭合门。TG-P7-R6 已提供 opt-in
   training proxy database，其中 `8` 个 split receiver records 在代理路径 event-observable，
   默认对照路径仍保持 `26` components；本地 `64`-step training smoke、active
   `8192`-step proxy/baseline probe、targeted damage-event trace 和 `32768`-step
-  proxy/baseline probe 均已通过。下一步应进入下游 policy/reward 诊断或更能激活 combat actions
-  的训练场景；默认路径替换仍需独立验收。
+  proxy/baseline probe 均已通过。这些材料作为下游 handoff evidence 保留。
 - 结构解体、碎裂/残骸和 Pk 仍是后续独立子项目，不能并入本几何子项目。
 
 ## Archive
 
-历史或被替换的状态、派发和审阅记录在出现 closeout surface 后移入
-[archive/README.zh.md](archive/README.zh.md)。
+当前几何验收收口包：
+[archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md](archive/tg_f16c_fine_geometry_accepted_20260614/README.zh.md)。
+
+归档索引：[archive/README.zh.md](archive/README.zh.md)。`review_packets/f16c_20260611/` 保留为稳定 retained evidence surface，供维护中的工具、测试和 opt-in 配置继续引用。

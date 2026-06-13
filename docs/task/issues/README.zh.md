@@ -17,10 +17,6 @@
 
 ## 活跃问题
 
-- [杀伤链命中盒几何保真度缺口](./lethality_hitbox_geometry_fidelity_gap/README.zh.md)：
-  A2/MLF-5 热力图显示，0.2 m 级贴近机体边界的鼻向连续杆近炸可能没有任何部件损伤；
-  当前目标几何仍是少量轴对齐长方体加部件盒，不能支撑更高保真的真实战机外形、
-  近炸投影、结构解体或真实弹种杀伤结论。
 - [A6 发射窗口标签密度失衡](./a6_launch_window_label_imbalance/README.zh.md)：
   L contract 下 deterministic `fire_once` argmax 不 crossing，尽管 open-window
   event probability 达到 `34.6%`。它仍是 live symptom 与 balancing requirement，但
@@ -33,6 +29,9 @@
 
 ## 保留跟踪项
 
+- [杀伤链命中盒几何保真度缺口](./lethality_hitbox_geometry_fidelity_gap/README.zh.md)：
+  F-16C 首轮精细几何工程代理已按 geometry-only 验收门闭合；该记录保留为后续默认 runtime
+  replacement、训练诊断、其他机型复用、结构解体或具体弹种结论的边界证据。
 - [RL 策略保持基线漂移](./rl_policy_hold_baseline_drift/README.zh.md)：
   N4 确定性保持探针已闭合，但 stochastic-policy acceptance 与 off-station
   curricula 仍需要这份记录作为可复用证据。

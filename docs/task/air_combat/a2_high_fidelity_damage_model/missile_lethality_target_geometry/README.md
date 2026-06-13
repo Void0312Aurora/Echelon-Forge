@@ -1,8 +1,9 @@
 # A2 Target Outer-Shape And Component Geometry
 
-Status: `2026-06-14` active follow-on / TG-P7-R6 32k opt-in
-proxy-versus-baseline training probe pass; the default unit database and
-default runtime path remain unchanged. This
+Status: `2026-06-14` accepted / retained. The F-16C fine-geometry engineering
+proxy is closed against the geometry-only acceptance gate, with the closeout
+record under
+[archive/tg_f16c_fine_geometry_accepted_20260614](archive/tg_f16c_fine_geometry_accepted_20260614/README.md); default unit database replacement, default runtime-path replacement, policy/reward diagnostics, and training benefit are not acceptance gates for this subproject. This
 subproject promotes the
 [Lethality Hitbox Geometry Fidelity Gap](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 into the maintained A2 follow-on surface for F-16 outer-shape, surface-component,
@@ -36,9 +37,11 @@ together. This subproject turns F-16 outer shape, vulnerable component regions,
 and distance diagnostics into reviewable data before any near-fuze projection
 uses the new geometry.
 
-This is not an attempt to reconstruct authoritative F-16 engineering geometry.
-It creates a source-clear, scale-checked, human-reviewable low-fidelity proxy
-for better near-miss, continuous-rod, and fragmentation projection diagnostics.
+This subproject builds an engineering geometry proxy that can feed later
+lethality-chain work: source-traced, scale-checked, audit-mesh aligned,
+human-reviewable, and constrained by an outer shell. It does not promote that
+proxy into true F-16C manufacturer geometry, true internal equipment
+boundaries, true Pk, or weapon-specific lethality.
 
 ## Current State
 
@@ -48,7 +51,8 @@ for better near-miss, continuous-rod, and fragmentation projection diagnostics.
 | F-16 audit asset | active candidate | glTF source package, extracted files, hashes, and attribution are retained | Supports outer-shape review, not true internal component boundaries |
 | Old FlightGear F-16 | rejected for mainline derivation | Archived under `assets/archive`; strong GPLv2 FlightGear source candidate | Must not enter mainline derived geometry |
 | Current hitboxes | known gap | The issue records 4 m nose-aspect near miss with no component damage | Must not be treated as true outer shape or true component layout |
-| Runtime integration | opt-in training proxy 32k pass | TG-P7-R6 completes proxy/baseline `32768`-step `WorldBatchVecEnv` comparison after R3/R4/R5 trainability and event-trace checks | Default database and main projection path remain the control path |
+| Geometry acceptance | accepted / retained | [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md) | Accepts only the F-16C fine-geometry engineering proxy; not default runtime replacement, training benefit, structural breakup, debris, Pk, or weapon-specific conclusions |
+| Downstream opt-in proxy | retained handoff evidence | TG-P7-R1 through R6 generated the opt-in proxy database, trace, and training-comparison artifacts | Not a closure gate for this subproject; the default database and main projection path remain the control path |
 
 ## Scope
 
@@ -103,7 +107,7 @@ Out of scope:
 | `P4 Review Packet` | Generate HTML/SVG/CSV review packet. | P2/P3 data exist. | A reviewer can see outer shape, legacy boxes, components, and test points together. | pass |
 | `P5 Lethality Diagnostics` | Explain test points as outer/component distances and candidate counts. | P4 packet exists. | The 4 m nose case has geometry/direction/candidate evidence beyond "not a direct hit". | pass |
 | `P6 Fine Geometry Proxy` | Advance coarse boxes into shape-closer proxies and add the review-only handoff layer from outer hits to component damage. | P4/P5 review and diagnostics pass. | Review-only OBB, thin-prism, convex-hull candidates, mesh-derived silhouettes, surface-component candidates, semantic volume component candidates, constrained internal receiver priors, visual triage cards, distance deltas, and overlays exist. | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | TG-P7-R6 opt-in 32k proxy/baseline training pass |
+| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | retained downstream handoff; not a geometry closure gate |
 
 ## Task Clusters
 
@@ -111,6 +115,8 @@ Out of scope:
   [missile_lethality_target_geometry_task_clusters_20260611.md](missile_lethality_target_geometry_task_clusters_20260611.md)
 - Current status:
   [missile_lethality_target_geometry_current_status_20260611.md](missile_lethality_target_geometry_current_status_20260611.md)
+- Geometry acceptance closeout:
+  [archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md)
 - First dispatch queue:
   [missile_lethality_target_geometry_dispatch_queue_20260611.md](missile_lethality_target_geometry_dispatch_queue_20260611.md)
 - Fine geometry proxy design draft:
@@ -436,15 +442,12 @@ This subproject can be marked accepted only when:
 - Every current internal/system receiver has prior geometry, parent shell
   constraints, pre/post protrusion fractions, and isolated top/side/front review
   views; this layer must not be treated as true internal engineering geometry.
-- The TG-P7 proxy database is materialized separately from the default database,
-  has `32` F-16 components, has `0` duplicate component names, and is selected
-  only by an explicit `runtime.database_path` training config.
-- The TG-P7 proxy damage-event trace observes all `8` split receivers in
-  runtime component event names while the default database observes `0` split
-  receiver names.
-- The TG-P7 32k opt-in proxy/baseline training probe completes under the same
-  `32768`-step budget, and the proxy/baseline configs differ only by
-  `runtime.database_path` plus TG-P7 metadata.
+- The semantic parent-child layout, cross-region held segments, R22 split
+  receiver candidates, whole-airframe silhouette constraints, and subcomponent
+  placement repairs form traceable handoff evidence.
+- The TG-P7 opt-in proxy database, damage-event trace, and 32k proxy/baseline
+  training probe are retained only as downstream handoff evidence; they are no
+  longer closure gates for this subproject.
 - The 4 m nose close-to-shape case is explained as a concrete geometry,
   direction, or candidate-component issue instead of an unexplained zero-damage
   result.
@@ -455,16 +458,21 @@ This subproject can be marked accepted only when:
 
 - MQ-9 geometry is a later reuse target; the first round is F-16 only.
 - Runtime near-fuze projection still does not consume the proxy in the default
-  F-16 unit damage model. TG-P7-R6 provides an opt-in training proxy database
+  F-16 unit damage model; default-path replacement is a later standalone
+  acceptance decision, not a closure gate for this geometry subproject.
+  TG-P7-R6 provides an opt-in training proxy database
   with `8` event-observable split receiver records and a default-path control
   that remains at `26` components; local `64`-step training smoke, active
   `8192`-step proxy/baseline probes, targeted damage-event trace, and
-  `32768`-step proxy/baseline probes pass. The next step should be downstream
-  policy/reward diagnostics or a training scenario that activates combat
-  actions before any default-path replacement.
+  `32768`-step proxy/baseline probes pass. These artifacts are retained as
+  downstream handoff evidence.
 - Structural breakup, wreck/debris, and Pk remain separate future subprojects.
 
 ## Archive
 
-Historical or superseded status, dispatch, and review records move to
-[archive/README.md](archive/README.md) after a closeout surface exists.
+Current geometry acceptance package:
+[archive/tg_f16c_fine_geometry_accepted_20260614/README.md](archive/tg_f16c_fine_geometry_accepted_20260614/README.md).
+
+Archive index: [archive/README.md](archive/README.md). The
+`review_packets/f16c_20260611/` path remains a stable retained evidence surface
+for maintained tools, tests, and opt-in configs.

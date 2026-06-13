@@ -1,8 +1,8 @@
 # A2 Target Geometry Dispatch Queue
 
-Status: `2026-06-14` TG-P7-R6 32k opt-in training probe completed. This
-records the first-round progress plus the TG-P6/TG-P7 continuation; R10 used
-write-scoped subagents and R11-TG-P7-R6 were integrated
+Status: `2026-06-14` accepted / retained dispatch record. This records the
+first-round progress, TG-P6 geometry-only closeout, and TG-P7 downstream
+handoff evidence; R10 used write-scoped subagents and R11-TG-P7-R6 were integrated
 by the main thread.
 
 Chinese canonical:
@@ -44,7 +44,7 @@ Chinese canonical:
 | `TG-P7-R3` | `TG-P7` | main thread | Materialize the feature-flagged projection as an opt-in training proxy database and wire the maintained training path to select it. | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | default components 26, proxy components 32, split receivers active in proxy 8, duplicate names 0, repository unit database unchanged, `runtime.database_path` resolved by bootstrap, WorldBatchVecEnv path receives proxy database, RuntimeFacade proxy load smoke passes, local 64-step CPU training smoke completes; focused pytest; C++ loader smoke; packet regeneration; `git diff --check` | pass as opt-in initial training proxy; superseded by R4 active 8k proxy-versus-baseline comparison |
 | `TG-P7-R4` | `TG-P7` | main thread | Run the active 8k proxy probe and matching baseline probe on the maintained `WorldBatchVecEnv` training path. | `target_geometry_training_probe_results_20260614.md`; status/queue/task-cluster docs | proxy and baseline both complete 8192 CUDA timesteps, write checkpoints and final models, proxy prints the proxy database override, baseline stays on default database; no default-path replacement | pass as active training smoke; superseded by R5 targeted trace |
 | `TG-P7-R5` | `TG-P7` | main thread | Trace fixed synthetic damage events through the default and opt-in proxy databases to prove split receiver event-name visibility. | `tools/geometry/target_geometry_damage_event_trace.py`; `tests/tools/test_target_geometry_damage_event_trace.py`; `target_geometry_damage_event_trace_20260614.json`; `target_geometry_damage_event_trace_results_20260614.md`; status/queue/task-cluster docs | proxy event names observe all 8 split receivers, default event names observe 0 split receivers, proxy retired parent rows observed 0, `all_trace_cases_pass=true`; focused pytest; generated trace JSON; no default-path replacement | pass as targeted damage-event trace; superseded by R6 32k opt-in training comparison |
-| `TG-P7-R6` | `TG-P7` | main thread | Run the 32k opt-in proxy probe and matching baseline probe on the maintained `WorldBatchVecEnv` training path. | `air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_32k_v1.json`; `air_combat_1v1_f16c_scripted_red_world_batch_probe_32k_v1.json`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.md`; tests/config docs/status/queue/task-cluster docs | proxy and baseline both complete `32768` CUDA timesteps, write 4 checkpoints and final models; proxy has database override, baseline has no database override; final diagnostics combat-action fractions remain `0.0`; no default-path replacement | pass as 32k opt-in training comparison; next step is downstream policy/reward diagnostics or a training entry that activates combat actions |
+| `TG-P7-R6` | `TG-P7` | main thread | Run the 32k opt-in proxy probe and matching baseline probe on the maintained `WorldBatchVecEnv` training path. | `air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_32k_v1.json`; `air_combat_1v1_f16c_scripted_red_world_batch_probe_32k_v1.json`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.md`; tests/config docs/status/queue/task-cluster docs | proxy and baseline both complete `32768` CUDA timesteps, write 4 checkpoints and final models; proxy has database override, baseline has no database override; final diagnostics combat-action fractions remain `0.0`; no default-path replacement | retained downstream handoff evidence; not a geometry closure gate |
 
 ## Main Thread Merge Checks
 
@@ -87,11 +87,12 @@ Chinese canonical:
 
 ## Held Items
 
-- Runtime near-fuze projection integration: TG-P7-R6 has an opt-in training
+- Runtime near-fuze projection integration: later standalone acceptance
+  decision, not a closure gate for this geometry subproject. TG-P7-R6 has an opt-in training
   proxy database, path wiring, local smoke, active 8k proxy/baseline
   comparison, and all `8` split receivers observed in targeted proxy
   damage-event traces; the 32k proxy/baseline comparison also completes. The
-  default active runtime path is still unchanged pending downstream policy/reward
-  diagnostics and any later acceptance decision.
+  default active runtime path is still unchanged. These artifacts are retained
+  as downstream handoff evidence.
 - MQ-9 geometry: wait until the F-16 toolchain is reusable.
 - Structural breakup, debris/wreck, and Pk: later standalone subprojects.

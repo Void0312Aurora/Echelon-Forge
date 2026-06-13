@@ -43,15 +43,17 @@ Current A2 follow-ons:
   to maintained damage/flight systems, but does not claim crash, structural
   breakup, debris/wreck, Pk, or weapon-specific lethality.
 - [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md):
-  active follow-on promoted from the hitbox-geometry gap issue; it first builds
-  reviewable F-16 outer regions, component bindings, and distance diagnostics,
-  then decides whether an outer-shape proxy should enter near-fuze projection.
-  It does not claim true F-16 engineering geometry, structural breakup,
-  debris/wreck, Pk, or weapon-specific lethality.
+  accepted / retained follow-on promoted from the hitbox-geometry gap issue; it
+  has built reviewable F-16C outer regions, component bindings, distance
+  diagnostics, fine geometry proxies, surface/internal receiver priors, and
+  cross-region split receiver handoff evidence. It does not claim true F-16
+  engineering geometry, default runtime replacement, training benefit,
+  structural breakup, debris/wreck, Pk, or weapon-specific lethality.
 
 The current geometry-fidelity gap is tracked on the issue board:
 [Lethality Hitbox Geometry Fidelity Gap](../../issues/lethality_hitbox_geometry_fidelity_gap/README.md).
-The first mainline execution entry for that issue is now
+The first mainline execution entry for that issue has now been closed against
+the geometry-only acceptance gate:
 [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
 
 Follow-on structural breakup, wreck/debris, Pk, or weapon-specific

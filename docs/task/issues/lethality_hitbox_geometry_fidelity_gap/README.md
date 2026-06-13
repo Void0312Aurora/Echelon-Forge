@@ -1,6 +1,6 @@
 # Lethality Hitbox Geometry Fidelity Gap
 
-Status: `2026-06-11` open / promoted to first mainline subproject; the A2/MLF-5 expanded aspect/distance matrix exposed that the current hitbox geometry and proximity projection are too coarse for higher-fidelity missile lethality claims.
+Status: `2026-06-14` retained / first mainline geometry subproject accepted; the current-hitbox geometry and proximity-projection gap exposed by the A2/MLF-5 expanded aspect/distance matrix has been closed for F-16C through the geometry-only fine-geometry engineering proxy subproject. Default runtime replacement, training benefit, and lethality conclusions are still not claimed by that geometry subproject.
 
 First observed: `2026-06-11`, while reviewing the A2/MLF-5 heatmaps for continuous-rod nose 4 m / 6 m behavior and blast/fragmentation tail direct-hit behavior.
 
@@ -110,7 +110,7 @@ Tool design entry: [Hitbox Geometry Visual Review Tool Design](geometry_visual_r
 
 Sketchfab replacement entry: [Sketchfab F-16 Replacement Shortlist](sketchfab_f16_replacement_shortlist_20260611.md). Mainline geometry candidates should restart from CC BY 4.0 or broader Sketchfab assets, not FlightGear GPL v2-derived assets.
 
-First mainline subproject: [A2 Target Outer-Shape And Component Geometry](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/README.md). It handles the F-16 review packet, outer regions, component bindings, and distance diagnostics before any runtime near-fuze projection consumes a new outer-shape proxy.
+First mainline subproject: [A2 Target Outer-Shape And Component Geometry](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/README.md). It is closed against the geometry-only acceptance gate; later default runtime replacement, training diagnostics, or other-airframe reuse require separate acceptance.
 
 ## GLB Source Status Addendum
 

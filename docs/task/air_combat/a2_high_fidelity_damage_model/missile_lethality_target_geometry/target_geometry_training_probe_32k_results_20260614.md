@@ -62,7 +62,7 @@ surface is still mostly exposing flight-stability and termination-window issues.
 ## Next Step
 
 TG-P7 now has an opt-in proxy database, active 8k probe, targeted damage-event
-trace, and 32k proxy/baseline comparison. The next work should move into
-downstream policy/reward diagnostics for split-receiver damage-event exposure,
-or continue training on a scenario/action interface that actually activates
-combat actions. Default database replacement remains a separate acceptance gate.
+trace, and 32k proxy/baseline comparison. After closeout, this page is retained
+only as downstream handoff evidence. Policy/reward diagnostics, training-entry
+adjustments, and default database replacement are no longer next steps for this
+geometry subproject.

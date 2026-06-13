@@ -1,7 +1,8 @@
 # A2 目标几何建模派发队列
 
-状态：`2026-06-14` TG-P7-R6 32k opt-in training probe completed。当前记录第一轮进展和
-TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-R6 由 main thread 集成。
+状态：`2026-06-14` accepted / retained dispatch record。当前记录第一轮进展、TG-P6
+geometry-only closeout 和 TG-P7 下游 handoff evidence；R10 使用写入范围受限的 subagent，
+R11-TG-P7-R6 由 main thread 集成。
 
 英文辅文：[missile_lethality_target_geometry_dispatch_queue_20260611.md](missile_lethality_target_geometry_dispatch_queue_20260611.md)。
 
@@ -41,7 +42,7 @@ TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-
 | `TG-P7-R3` | `TG-P7` | main thread | 将 feature-flagged projection 生成 opt-in training proxy database，并让维护中的 training path 可显式选择它 | `target_geometry_training_proxy_database_20260613.json`; `target_geometry_training_proxy_database_20260613/**`; `target_geometry_training_proxy_results_20260613.zh.md`; `tools/geometry/airframe_geometry_review.py`; `python/training/bootstrap.py`; `train.py`; active air-combat training config docs; focused tests | 默认 components 26，proxy components 32，proxy 路径 active split receivers 8，duplicate names 0，仓库 unit database 未改变，`runtime.database_path` 由 bootstrap 解析，WorldBatchVecEnv 收到 proxy database path，RuntimeFacade proxy load smoke 通过，本地 64-step CPU training smoke 完成；focused pytest；C++ loader smoke；packet regeneration；`git diff --check` | pass as opt-in initial training proxy; 已被 R4 active 8k proxy-versus-baseline 对照补全 |
 | `TG-P7-R4` | `TG-P7` | main thread | 在维护中的 `WorldBatchVecEnv` training path 上运行 active 8k proxy probe 和匹配 baseline probe | `target_geometry_training_probe_results_20260614.zh.md`; status/queue/task-cluster docs | proxy 和 baseline 均完成 8192 CUDA timesteps，写出 checkpoints 与 final models；proxy 打印 proxy database override，baseline 保持默认 database；不替换默认路径 | pass as active training smoke; superseded by R5 targeted trace |
 | `TG-P7-R5` | `TG-P7` | main thread | 通过固定 synthetic damage events 对默认和 opt-in proxy database 做 trace，证明 split receiver event-name 可观测性 | `tools/geometry/target_geometry_damage_event_trace.py`; `tests/tools/test_target_geometry_damage_event_trace.py`; `target_geometry_damage_event_trace_20260614.json`; `target_geometry_damage_event_trace_results_20260614.zh.md`; status/queue/task-cluster docs | proxy event names 观测到全部 `8` 个 split receivers，默认 event names 观测到 `0` 个 split receivers，proxy retired parent rows observed `0`，`all_trace_cases_pass=true`；focused pytest；生成 trace JSON；不替换默认路径 | pass as targeted damage-event trace; 已被 R6 32k opt-in training comparison 补全 |
-| `TG-P7-R6` | `TG-P7` | main thread | 在维护中的 `WorldBatchVecEnv` training path 上运行 32k opt-in proxy probe 和匹配 baseline probe | `air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_32k_v1.json`; `air_combat_1v1_f16c_scripted_red_world_batch_probe_32k_v1.json`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.zh.md`; tests/config docs/status/queue/task-cluster docs | proxy 和 baseline 均完成 `32768` CUDA timesteps，写出 4 个 checkpoints 与 final models；proxy 有 database override，baseline 无 database override；final diagnostics combat-action fractions 仍为 `0.0`；不替换默认路径 | pass as 32k opt-in training comparison; 下一步是下游 policy/reward 诊断或更能激活 combat actions 的训练入口 |
+| `TG-P7-R6` | `TG-P7` | main thread | 在维护中的 `WorldBatchVecEnv` training path 上运行 32k opt-in proxy probe 和匹配 baseline probe | `air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_32k_v1.json`; `air_combat_1v1_f16c_scripted_red_world_batch_probe_32k_v1.json`; `target_geometry_training_probe_32k_20260614.json`; `target_geometry_training_probe_32k_results_20260614.zh.md`; tests/config docs/status/queue/task-cluster docs | proxy 和 baseline 均完成 `32768` CUDA timesteps，写出 4 个 checkpoints 与 final models；proxy 有 database override，baseline 无 database override；final diagnostics combat-action fractions 仍为 `0.0`；不替换默认路径 | retained downstream handoff evidence; not a geometry closure gate |
 
 ## Main Thread 合并检查
 
@@ -68,9 +69,9 @@ TG-P6/TG-P7 后续推进；R10 使用写入范围受限的 subagent，R11-TG-P7-
 
 ## 暂缓项
 
-- Runtime 近炸投影接入：TG-P7-R6 已有 opt-in training proxy database、path wiring、本地 smoke、
+- Runtime 近炸投影接入：后续独立验收决策，不属于本几何子项目闭合门。TG-P7-R6 已有 opt-in training proxy database、path wiring、本地 smoke、
   active 8k proxy/baseline 对照，并且全部 `8` 个 split receivers 已在 targeted proxy
   damage-event traces 中观测到，且 32k proxy/baseline 对照已完成；但默认 active runtime path
-  仍未改变，后续需要下游 policy/reward 诊断和进一步 acceptance decision。
+  仍未改变。这些材料作为下游 handoff evidence 保留。
 - MQ-9 几何：等 F-16 工具链可复用后再展开。
 - 结构解体、残骸和 Pk：另建后续子项目。

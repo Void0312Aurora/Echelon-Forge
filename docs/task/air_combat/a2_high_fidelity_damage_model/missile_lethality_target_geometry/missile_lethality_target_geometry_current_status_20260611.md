@@ -1,7 +1,9 @@
 # A2 Target Geometry Current Status
 
-Status: `2026-06-14` TG-P7-R6 32k opt-in proxy/baseline training probe passes;
-default runtime projection and the maintained F-16 unit database remain unchanged. The
+Status: `2026-06-14` accepted / retained. The F-16C fine-geometry engineering
+proxy is closed against the geometry-only acceptance gate; TG-P7-R1 through R6
+opt-in runtime/training artifacts are retained as downstream handoff evidence,
+and default runtime projection plus the maintained F-16 unit database remain unchanged. The
 parent entry and issue have moved F-16 geometry
 refinement from issue tracking into an executable subproject; the first
 source/axis/scale manifest, outer-region candidate, component-binding report,
@@ -20,7 +22,7 @@ training probe result, TG-P7-R5 damage-event trace result, and TG-P7-R6 32k
 training probe result are
 generated. The latest packet has repaired side-sign
 mapping, runtime receiver components, wing component placement, radar/IFF, and
-nozzle source boxes; it now emits parse-ready semantic outer-shell volume
+nozzle source boxes; it emits parse-ready semantic outer-shell volume
 component candidates, constrained internal receiver priors, promoted
 review-only subcomponent shape rules, local centerline placement candidates,
 latest subcomponent placement candidates, promoted R21 latest placement rules,
@@ -32,6 +34,9 @@ active 8k training comparison, a TG-P7-R5 targeted trace, and a TG-P7-R6 active
 in proxy component event names, and both 32k runs complete, but default active
 runtime projection remains
 unchanged.
+
+Geometry acceptance closeout:
+[archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md](archive/tg_f16c_fine_geometry_accepted_20260614/target_geometry_acceptance_20260614.md).
 
 Chinese canonical:
 [missile_lethality_target_geometry_current_status_20260611.zh.md](missile_lethality_target_geometry_current_status_20260611.zh.md).
@@ -101,12 +106,10 @@ Chinese canonical:
   cross-region held segment split, R16 airframe silhouette diagnostics, R17
   shape-placement candidates, R18 zero-exposure shape promotion, R19
   centerline placement candidates, R20 latest placement candidates, R21
-  latest placement promotion, R22 ownership split candidate packet, TG-P7-R1
-  runtime activation candidate packet, TG-P7-R2 in-memory behavior
-  regression packet, TG-P7-R3 opt-in training proxy database packet, TG-P7-R4
-  active training probe, TG-P7-R5 targeted damage-event trace, and TG-P7-R6
-  32k opt-in training probe are complete;
-  it does not prove default runtime activation is applied.
+  latest placement promotion, and R22 ownership split candidate packet are
+  complete and satisfy geometry-only closeout; TG-P7-R1 through R6 are retained
+  as downstream handoff evidence, not as closure gates for this subproject, and
+  they do not prove default runtime activation is applied.
 - The Sketchfab model is an outer-review candidate, not a source of true
   internal component boundaries.
 - The old FlightGear F-16 is archived as a strong GPLv2 source candidate and
@@ -123,11 +126,10 @@ Chinese canonical:
 
 ## Next Step
 
-1. Add downstream policy/reward diagnostics for split-receiver damage-event
-   exposure.
-2. Continue training on a scenario or action interface that actually activates
-   combat actions.
-3. Keep default-path replacement as a separate later acceptance decision.
+No further work is dispatched from this subproject. Split-receiver
+policy/reward diagnostics, training-entry adjustments, and default-path
+replacement must be handled as later standalone acceptance decisions or
+separate subprojects.
 
 ## Validation Reminder
 

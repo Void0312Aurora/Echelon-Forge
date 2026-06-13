@@ -20,12 +20,6 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Active Issues
 
-- [Lethality Hitbox Geometry Fidelity Gap](./lethality_hitbox_geometry_fidelity_gap/README.md):
-  A2/MLF-5 heatmaps show that a continuous-rod nose proximity event about
-  0.2 m from the target boundary can produce no component damage; current
-  target geometry is still a small set of axis-aligned boxes plus component
-  boxes, and cannot support higher-fidelity real-aircraft shape, proximity
-  projection, structural-breakup, or weapon-specific lethality claims.
 - [A6 Launch-Window Label Density Imbalance](./a6_launch_window_label_imbalance/README.md):
   deterministic `fire_once` argmax does not cross under the L contract despite
   `34.6%` open-window event probability. It remains a live symptom and
@@ -40,6 +34,11 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Retained Tracking Items
 
+- [Lethality Hitbox Geometry Fidelity Gap](./lethality_hitbox_geometry_fidelity_gap/README.md):
+  the first F-16C fine-geometry engineering proxy is closed against the
+  geometry-only acceptance gate; this issue remains as boundary evidence for
+  later default runtime replacement, training diagnostics, other-airframe reuse,
+  structural breakup, or weapon-specific conclusions.
 - [RL Policy Hold-Baseline Drift](./rl_policy_hold_baseline_drift/README.md):
   the deterministic N4 hold probe is closed, but stochastic-policy acceptance
   and off-station curricula still need this record as reusable evidence.

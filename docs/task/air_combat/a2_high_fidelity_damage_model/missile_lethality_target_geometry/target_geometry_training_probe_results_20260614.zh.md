@@ -49,4 +49,4 @@ components。训练日志证明 runtime 稳定性和入口选择，不证明武�
 后续已完成 targeted damage-event trace 和 32k proxy/baseline maintained training comparison：
 [target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)、
 [target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)。
-下一步转入 split-receiver exposure 的下游 policy/reward 诊断，或选择更能激活 combat actions 的训练入口。
+归档收口后，本页只作为下游 handoff evidence 保留；policy/reward 诊断、训练入口调整和默认 database 替换不再作为本几何子项目的下一步。

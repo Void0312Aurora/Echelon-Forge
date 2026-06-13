@@ -60,5 +60,5 @@ Proxy 32k 的 final reward 低于 baseline 32k。该差异只记录为同预算�
 ## 下一步
 
 TG-P7 已经具备 opt-in proxy database、active 8k probe、targeted damage-event trace
-和 32k proxy/baseline 对照。下一步应转入 split-receiver damage-event exposure 的下游
-policy/reward 诊断，或使用更能触发 combat actions 的场景/动作接口继续训练。默认 database 替换仍是独立验收门。
+和 32k proxy/baseline 对照。归档收口后，本页只作为下游 handoff evidence 保留；policy/reward
+诊断、训练入口调整和默认 database 替换不再作为本几何子项目的下一步。

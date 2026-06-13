@@ -52,5 +52,6 @@ Targeted damage-event trace and the 32k proxy/baseline maintained training
 comparison have since completed:
 [target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md),
 [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md).
-The next step is downstream policy/reward diagnostics for split-receiver
-exposure, or a training entry that actually activates combat actions.
+After closeout, this page is retained only as downstream handoff evidence.
+Policy/reward diagnostics, training-entry adjustments, and default database
+replacement are no longer next steps for this geometry subproject.
