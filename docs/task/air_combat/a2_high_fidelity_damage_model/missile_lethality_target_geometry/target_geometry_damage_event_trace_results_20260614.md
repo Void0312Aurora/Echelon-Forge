@@ -58,7 +58,8 @@ layout, or default-path activation claim.
 
 ## Next Step
 
-The current model is now acceptable as an initial opt-in geometry proxy for the
-next maintained training slice. Default runtime replacement remains a separate
-acceptance decision and should wait for longer proxy training plus downstream
-policy/reward diagnostics.
+The current model has now completed the next maintained opt-in training slice
+as a 32k proxy/baseline comparison:
+[target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md).
+Default runtime replacement remains a separate acceptance decision and should
+wait for downstream policy/reward diagnostics.

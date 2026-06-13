@@ -48,6 +48,9 @@ entrypoint selection, not weapon lethality or true engineering geometry.
 
 ## Next Step
 
-Inspect event traces and damage-component records from a targeted scenario or
-instrumented probe, then decide whether TG-P7 should advance to longer proxy
-training or stay as an opt-in geometry experiment.
+Targeted damage-event trace and the 32k proxy/baseline maintained training
+comparison have since completed:
+[target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md),
+[target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md).
+The next step is downstream policy/reward diagnostics for split-receiver
+exposure, or a training entry that actually activates combat actions.

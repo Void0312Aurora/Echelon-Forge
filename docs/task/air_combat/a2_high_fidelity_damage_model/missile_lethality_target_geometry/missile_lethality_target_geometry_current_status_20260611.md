@@ -1,6 +1,6 @@
 # A2 Target Geometry Current Status
 
-Status: `2026-06-14` TG-P7-R5 split-receiver damage-event trace passes;
+Status: `2026-06-14` TG-P7-R6 32k opt-in proxy/baseline training probe passes;
 default runtime projection and the maintained F-16 unit database remain unchanged. The
 parent entry and issue have moved F-16 geometry
 refinement from issue tracking into an executable subproject; the first
@@ -16,7 +16,8 @@ packet, R20 latest subcomponent placement packet, R21 latest subcomponent
 promotion packet, R22 cross-region ownership split candidate packet,
 TG-P7-R1 runtime activation candidate packet, TG-P7-R2 runtime behavior
 regression packet, TG-P7-R3 training proxy database packet, TG-P7-R4 active
-training probe result, and TG-P7-R5 damage-event trace result are
+training probe result, TG-P7-R5 damage-event trace result, and TG-P7-R6 32k
+training probe result are
 generated. The latest packet has repaired side-sign
 mapping, runtime receiver components, wing component placement, radar/IFF, and
 nozzle source boxes; it now emits parse-ready semantic outer-shell volume
@@ -26,8 +27,9 @@ latest subcomponent placement candidates, promoted R21 latest placement rules,
 R22 parse-ready split receiver candidates, a TG-P7-R1 feature-flagged
 `damage_model.hitboxes[].components` patch candidate, a TG-P7-R2 in-memory
 behavior regression, a TG-P7-R3 opt-in proxy runtime database, a TG-P7-R4
-active 8k training comparison, and a TG-P7-R5 targeted trace with all `8`
-split receivers observable in proxy component event names, but default active
+active 8k training comparison, a TG-P7-R5 targeted trace, and a TG-P7-R6 active
+32k proxy/baseline training comparison. All `8` split receivers are observable
+in proxy component event names, and both 32k runs complete, but default active
 runtime projection remains
 unchanged.
 
@@ -83,6 +85,7 @@ Chinese canonical:
 | TG-P7 training proxy database implementation | [target_geometry_training_proxy_results_20260613.md](target_geometry_training_proxy_results_20260613.md), [target_geometry_training_proxy_database_20260613.json](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613.json), [target_geometry_training_proxy_database_20260613/](review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/) | TG-P7-R3 materializes a full opt-in proxy runtime database and active training config: default database components `26`, proxy database components `32`, split receivers active in proxy `8`, duplicate names `0`, `runtime.database_path` wired through training bootstrap and `train.py`, repository unit database modified `false`, RuntimeFacade proxy database load passes, and local `64`-step CPU training smoke completes |
 | TG-P7 active training probe | [target_geometry_training_probe_results_20260614.md](target_geometry_training_probe_results_20260614.md) | TG-P7-R4 completes active `8192`-step CUDA `WorldBatchVecEnv` runs for both the proxy and baseline configs. Proxy final `ep_len_mean=662`, `ep_rew_mean=-282`; baseline final `ep_len_mean=677`, `ep_rew_mean=-235`. Both write checkpoints and final models under `/tmp/cmo_tg_p7_active_probe` |
 | TG-P7 damage-event trace | [target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md), [target_geometry_damage_event_trace_20260614.json](review_packets/f16c_20260611/target_geometry_damage_event_trace_20260614.json) | TG-P7-R5 runs fixed synthetic blast-fragmentation debug hits against default and proxy databases. Proxy event names observe all `8` split receivers, default event names observe `0` split receivers, proxy retired parent rows observed `0`, and `all_trace_cases_pass=true` |
+| TG-P7 32k opt-in training probe | [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md), [target_geometry_training_probe_32k_20260614.json](review_packets/f16c_20260611/target_geometry_training_probe_32k_20260614.json) | TG-P7-R6 completes active `32768`-step CUDA `WorldBatchVecEnv` runs for both proxy and baseline configs. Proxy final `ep_len_mean=619.00`, `ep_rew_mean=-401.05`; baseline final `ep_len_mean=609.02`, `ep_rew_mean=-271.04`. Both write checkpoints and final models under `/tmp/cmo_tg_p7_r6_32k_probe`; the baseline has no database override |
 | Stage-C guard alignment | [component_probability_surface_probe.py](../../../../../tools/maintenance/candidate_artifacts/component_probability_surface_probe.py) | The repaired beam-side component geometry now yields `surface_incidence_cos=0.0`; the Stage-C surface probe gate was synchronized so component-specific rows are selected instead of `global-fallback` |
 
 ## Current Boundary
@@ -101,24 +104,29 @@ Chinese canonical:
   latest placement promotion, R22 ownership split candidate packet, TG-P7-R1
   runtime activation candidate packet, TG-P7-R2 in-memory behavior
   regression packet, TG-P7-R3 opt-in training proxy database packet, TG-P7-R4
-  active training probe, and TG-P7-R5 targeted damage-event trace are complete;
+  active training probe, TG-P7-R5 targeted damage-event trace, and TG-P7-R6
+  32k opt-in training probe are complete;
   it does not prove default runtime activation is applied.
 - The Sketchfab model is an outer-review candidate, not a source of true
   internal component boundaries.
 - The old FlightGear F-16 is archived as a strong GPLv2 source candidate and
   must not enter mainline derived geometry.
-- Runtime near-fuze projection remains unchanged on the default path. TG-P7-R5
-  makes the feature-flagged `damage_model.hitboxes[].components` projection
+- Runtime near-fuze projection remains unchanged on the default path. TG-P7-R6
+  keeps the feature-flagged `damage_model.hitboxes[].components` projection
   selectable through `runtime.database_path`; the repository unit database is
   not modified, the default path remains at `26` components, the proxy path has
   `32` components, and all `8` proxy split receivers have runtime component
-  event-trace coverage.
+  event-trace coverage. TG-P7-R6 additionally proves that the opt-in proxy and
+  default baseline can both complete same-budget `32768`-step training probes,
+  but the final diagnostics windows still show combat-action fractions of
+  `0.0`; this is not a learned weapon-employment or default-replacement claim.
 
 ## Next Step
 
-1. Schedule a longer opt-in proxy training slice using the TG-P7 proxy config.
-2. Add downstream policy/reward diagnostics for split-receiver damage-event
+1. Add downstream policy/reward diagnostics for split-receiver damage-event
    exposure.
+2. Continue training on a scenario or action interface that actually activates
+   combat actions.
 3. Keep default-path replacement as a separate later acceptance decision.
 
 ## Validation Reminder
@@ -158,4 +166,6 @@ load returned `runtime_load_ok=true`; local 64-step CPU proxy training smoke
 completed and wrote `/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`;
 active 8k proxy and baseline probes both completed and wrote final models under
 `/tmp/cmo_tg_p7_active_probe`; targeted TG-P7-R5 damage-event trace test `1
-passed`, with all `8` split receivers observed in proxy event names.
+passed`, with all `8` split receivers observed in proxy event names; TG-P7-R6
+32k proxy and baseline CUDA probes both completed `32768` steps and wrote final
+models.

@@ -1,8 +1,8 @@
 # A2 Target Outer-Shape And Component Geometry
 
-Status: `2026-06-14` active follow-on / TG-P7-R5 split-receiver
-damage-event trace pass; the default unit database and default runtime path
-remain unchanged. This
+Status: `2026-06-14` active follow-on / TG-P7-R6 32k opt-in
+proxy-versus-baseline training probe pass; the default unit database and
+default runtime path remain unchanged. This
 subproject promotes the
 [Lethality Hitbox Geometry Fidelity Gap](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.md)
 into the maintained A2 follow-on surface for F-16 outer-shape, surface-component,
@@ -48,7 +48,7 @@ for better near-miss, continuous-rod, and fragmentation projection diagnostics.
 | F-16 audit asset | active candidate | glTF source package, extracted files, hashes, and attribution are retained | Supports outer-shape review, not true internal component boundaries |
 | Old FlightGear F-16 | rejected for mainline derivation | Archived under `assets/archive`; strong GPLv2 FlightGear source candidate | Must not enter mainline derived geometry |
 | Current hitboxes | known gap | The issue records 4 m nose-aspect near miss with no component damage | Must not be treated as true outer shape or true component layout |
-| Runtime integration | opt-in training proxy trace pass | TG-P7-R5 observes all `8` split receivers in proxy runtime component event names after R3/R4 trainability checks | Default database and main projection path remain the control path |
+| Runtime integration | opt-in training proxy 32k pass | TG-P7-R6 completes proxy/baseline `32768`-step `WorldBatchVecEnv` comparison after R3/R4/R5 trainability and event-trace checks | Default database and main projection path remain the control path |
 
 ## Scope
 
@@ -103,7 +103,7 @@ Out of scope:
 | `P4 Review Packet` | Generate HTML/SVG/CSV review packet. | P2/P3 data exist. | A reviewer can see outer shape, legacy boxes, components, and test points together. | pass |
 | `P5 Lethality Diagnostics` | Explain test points as outer/component distances and candidate counts. | P4 packet exists. | The 4 m nose case has geometry/direction/candidate evidence beyond "not a direct hit". | pass |
 | `P6 Fine Geometry Proxy` | Advance coarse boxes into shape-closer proxies and add the review-only handoff layer from outer hits to component damage. | P4/P5 review and diagnostics pass. | Review-only OBB, thin-prism, convex-hull candidates, mesh-derived silhouettes, surface-component candidates, semantic volume component candidates, constrained internal receiver priors, visual triage cards, distance deltas, and overlays exist. | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | TG-P7-R5 opt-in proxy trace pass |
+| `P7 Runtime Interface Decision` | Decide whether the outer proxy enters near-fuze projection. | P6 proxy passes review or is explicitly held. | A tested runtime integration or held decision exists. | TG-P7-R6 opt-in 32k proxy/baseline training pass |
 
 ## Task Clusters
 
@@ -139,6 +139,8 @@ Out of scope:
   [target_geometry_training_probe_results_20260614.md](target_geometry_training_probe_results_20260614.md)
 - Damage-event trace:
   [target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md)
+- 32k opt-in training probe:
+  [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md)
 
 ## Outputs And Evidence
 
@@ -310,6 +312,14 @@ Generated:
   default and proxy databases. The proxy event surface observes all `8` split
   receivers, the default event surface observes `0` split receiver names, and
   proxy events do not fall back to retired parent receiver names.
+- TG-P7 32k opt-in training probe:
+  [target_geometry_training_probe_32k_20260614.json](review_packets/f16c_20260611/target_geometry_training_probe_32k_20260614.json),
+  [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md).
+  TG-P7-R6 adds 32k proxy/baseline active configs and completes two
+  `32768`-step CUDA `WorldBatchVecEnv` runs. The proxy run selects
+  `target_geometry_training_proxy_database_20260613` through
+  `runtime.database_path`, while the baseline run has no database override; both
+  runs write four checkpoints plus a final model.
 - Airframe silhouette constraint correction candidates:
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json),
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv).
@@ -432,6 +442,9 @@ This subproject can be marked accepted only when:
 - The TG-P7 proxy damage-event trace observes all `8` split receivers in
   runtime component event names while the default database observes `0` split
   receiver names.
+- The TG-P7 32k opt-in proxy/baseline training probe completes under the same
+  `32768`-step budget, and the proxy/baseline configs differ only by
+  `runtime.database_path` plus TG-P7 metadata.
 - The 4 m nose close-to-shape case is explained as a concrete geometry,
   direction, or candidate-component issue instead of an unexplained zero-damage
   result.
@@ -442,12 +455,13 @@ This subproject can be marked accepted only when:
 
 - MQ-9 geometry is a later reuse target; the first round is F-16 only.
 - Runtime near-fuze projection still does not consume the proxy in the default
-  F-16 unit damage model. TG-P7-R5 provides an opt-in training proxy database
+  F-16 unit damage model. TG-P7-R6 provides an opt-in training proxy database
   with `8` event-observable split receiver records and a default-path control
   that remains at `26` components; local `64`-step training smoke, active
-  `8192`-step proxy/baseline probes, and targeted damage-event trace pass. The
-  next step can be longer proxy training plus downstream policy/reward
-  diagnostics before any default-path replacement.
+  `8192`-step proxy/baseline probes, targeted damage-event trace, and
+  `32768`-step proxy/baseline probes pass. The next step should be downstream
+  policy/reward diagnostics or a training scenario that activates combat
+  actions before any default-path replacement.
 - Structural breakup, wreck/debris, and Pk remain separate future subprojects.
 
 ## Archive

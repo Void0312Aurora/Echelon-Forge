@@ -54,5 +54,6 @@ deterministic fuze、真实 F-16 内部布局，也不是默认路径激活声�
 
 ## 下一步
 
-当前模型已经可以作为下一段维护训练的 opt-in 初始几何代理。默认 runtime 替换仍是独立验收决策，
-需要等待更长 proxy training 以及下游 policy/reward 诊断。
+当前模型已经作为下一段维护训练的 opt-in 初始几何代理完成 32k proxy/baseline 对照：
+[target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)。
+默认 runtime 替换仍是独立验收决策，下一步需要下游 policy/reward 诊断。

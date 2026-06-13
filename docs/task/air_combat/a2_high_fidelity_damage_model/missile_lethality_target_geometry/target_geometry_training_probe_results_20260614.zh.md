@@ -46,5 +46,7 @@ components。训练日志证明 runtime 稳定性和入口选择，不证明武�
 
 ## 下一步
 
-检查 targeted scenario 或 instrumented probe 中的 event traces 与 damage-component
-records，然后决定 TG-P7 是进入更长 proxy training，还是继续作为 opt-in geometry experiment。
+后续已完成 targeted damage-event trace 和 32k proxy/baseline maintained training comparison：
+[target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)、
+[target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)。
+下一步转入 split-receiver exposure 的下游 policy/reward 诊断，或选择更能激活 combat actions 的训练入口。

@@ -107,3 +107,8 @@ The temporary config keeps the active proxy database path but reduces the run to
 and final model
 `/tmp/cmo_tg_p7_proxy_train_smoke/tg_p7_proxy_train_smoke_64/final_model.zip`
 were written.
+
+TG-P7-R4 has since completed the active 8k proxy/baseline comparison, TG-P7-R5
+has completed targeted damage-event trace, and TG-P7-R6 has completed the 32k
+proxy/baseline maintained training comparison:
+[target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md).

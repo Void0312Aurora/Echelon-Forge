@@ -66,6 +66,8 @@ TG-P7-R4 已运行维护中的 active 8k TG-P7 proxy probe 和匹配的 baseline
 TG-P7-R5 也已完成 targeted damage-event trace，并在 proxy event names 中观测到全部
 `8` 个 split receivers：
 [target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)。
+TG-P7-R6 已完成 32k proxy/baseline maintained training comparison：
+[target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)。
 
 ## 验证
 

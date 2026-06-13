@@ -22,6 +22,13 @@ F16_SCRIPTED_RED_TG_P7_PROXY_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR
   / "air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_v1.json"
 )
+F16_SCRIPTED_RED_BASELINE_32K_CONFIG = (
+  AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_f16c_scripted_red_world_batch_probe_32k_v1.json"
+)
+F16_SCRIPTED_RED_TG_P7_PROXY_32K_CONFIG = (
+  AIR_COMBAT_ACTIVE_DIR
+  / "air_combat_1v1_f16c_scripted_red_tg_p7_target_geometry_proxy_world_batch_probe_32k_v1.json"
+)
 STAGE1_CONFIG = AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_world_batch_probe_v1.json"
 STAGE1_TEMPORAL_CONFIG = (
   AIR_COMBAT_ACTIVE_DIR / "air_combat_1v1_stage1_bvr_nonmaneuvering_target_temporal_world_batch_probe_v1.json"
@@ -164,6 +171,39 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
     self.assertNotIn("wing_spar_center", proxy_component_names)
     self.assertIn("engine_core_afterburner_segment", proxy_component_names)
     self.assertIn("wing_spar_center_carrythrough_segment", proxy_component_names)
+
+  def test_f16_tg_p7_target_geometry_proxy_32k_pairs_with_default_baseline(self) -> None:
+    baseline = _load_json(F16_SCRIPTED_RED_BASELINE_32K_CONFIG)
+    proxy = _load_json(F16_SCRIPTED_RED_TG_P7_PROXY_32K_CONFIG)
+
+    self.assertEqual(int(baseline.get("total_timesteps")), 32768)
+    self.assertEqual(int(proxy.get("total_timesteps")), 32768)
+    self.assertEqual(int(baseline.get("save_freq")), 8192)
+    self.assertEqual(int(proxy.get("save_freq")), 8192)
+    self.assertEqual(baseline.get("agent_layer"), proxy.get("agent_layer"))
+    self.assertEqual(baseline.get("algo"), proxy.get("algo"))
+    self.assertEqual(baseline.get("policy"), proxy.get("policy"))
+    self.assertEqual(baseline.get("n_envs"), proxy.get("n_envs"))
+    self.assertEqual(baseline.get("env"), proxy.get("env"))
+    self.assertEqual(baseline.get("early_stop"), proxy.get("early_stop"))
+    self.assertEqual(baseline.get("diagnostics"), proxy.get("diagnostics"))
+    self.assertEqual(baseline.get("hmoe"), proxy.get("hmoe"))
+    self.assertEqual(baseline.get("hyperparameters"), proxy.get("hyperparameters"))
+
+    baseline_runtime = dict(baseline.get("runtime", {}))
+    proxy_runtime = dict(proxy.get("runtime", {}))
+    self.assertNotIn("database_path", baseline_runtime)
+    proxy_database_path = proxy_runtime.pop("database_path")
+    proxy_metadata = proxy_runtime.pop("target_geometry_proxy")
+    self.assertEqual(proxy_runtime, baseline_runtime)
+    self.assertEqual(
+      proxy_database_path,
+      "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
+    )
+    self.assertEqual(proxy_metadata.get("feature_flag"), "A2_TARGET_GEOMETRY_PROXY_F16C_R22")
+    self.assertEqual(int(proxy_metadata.get("default_component_count")), 26)
+    self.assertEqual(int(proxy_metadata.get("proxy_component_count")), 32)
+    self.assertEqual(int(proxy_metadata.get("split_receiver_component_count")), 8)
 
   def test_stage1_bvr_probe_config_matches_maintained_world_batch_surface(self) -> None:
     cfg = _load_json(STAGE1_CONFIG)
@@ -792,6 +832,16 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         F16_SCRIPTED_RED_TG_P7_PROXY_CONFIG,
         F16_SCRIPTED_RED_SCENARIO,
       ),
+      (
+        "f16_scripted_red_baseline_32k",
+        F16_SCRIPTED_RED_BASELINE_32K_CONFIG,
+        F16_SCRIPTED_RED_SCENARIO,
+      ),
+      (
+        "f16_tg_p7_target_geometry_proxy_32k",
+        F16_SCRIPTED_RED_TG_P7_PROXY_32K_CONFIG,
+        F16_SCRIPTED_RED_SCENARIO,
+      ),
       ("reactive", STAGE1_CONFIG, STAGE1_SCENARIO),
       ("temporal", STAGE1_TEMPORAL_CONFIG, STAGE1_SCENARIO),
       ("hybrid", STAGE1_HYBRID_CONFIG, STAGE1_SCENARIO),
@@ -901,7 +951,7 @@ class AirCombatTrainingEntryContractTests(unittest.TestCase):
         "c2_roe_hybrid_temporal_m3s2_event_window_state_completed",
       }:
         self.assertIn("mission_obs_mode=air_combat_c2_roe_v2", proc.stdout)
-      if label == "f16_tg_p7_target_geometry_proxy":
+      if label in {"f16_tg_p7_target_geometry_proxy", "f16_tg_p7_target_geometry_proxy_32k"}:
         self.assertIn("World batch database: path=", proc.stdout)
         self.assertIn("target_geometry_training_proxy_database_20260613", proc.stdout)
       self.assertIn("Error: --test_only requires --resume_path", proc.stdout)

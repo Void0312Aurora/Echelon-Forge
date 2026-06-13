@@ -1,7 +1,7 @@
 # A2 目标外形与部件几何建模
 
-状态：`2026-06-14` active follow-on / TG-P7-R5 split-receiver
-damage-event trace pass；默认 unit database 和默认 runtime path 仍未改变。该子项目从
+状态：`2026-06-14` active follow-on / TG-P7-R6 32k opt-in
+proxy-versus-baseline training probe pass；默认 unit database 和默认 runtime path 仍未改变。该子项目从
 [杀伤链命中盒几何保真度缺口](../../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)
 提升而来，用于把 F-16 从少量大长方体推进到可审阅的外壳、表面部件、旧内部部件关联和距离诊断。
 
@@ -36,7 +36,7 @@ damage-event trace pass；默认 unit database 和默认 runtime path 仍未改�
 | F-16 审计资产 | active candidate | glTF 原始包、解包文件、hash 和 attribution 已保留 | 只提供外形审阅基础，不证明真实内部部件边界 |
 | 旧 FlightGear F-16 | rejected for mainline derivation | 已归档到 `assets/archive`，来源强候选为 GPL v2 FlightGear | 不进入主线派生几何 |
 | 当前命中盒 | known gap | issue 已记录 4 m 鼻向近炸无部件损伤等症状 | 不能继续当作真实外形或真实部件布局 |
-| 运行时接入 | opt-in training proxy trace pass | TG-P7-R5 在 R3/R4 trainability 检查后，已在 proxy runtime component event names 中观测到全部 `8` 个 split receivers | 默认 database 和主投影路径仍是对照路径 |
+| 运行时接入 | opt-in training proxy 32k pass | TG-P7-R6 在 R3/R4/R5 trainability 与 event-trace 检查后，完成 proxy/baseline 两条 `32768`-step `WorldBatchVecEnv` 对照 | 默认 database 和主投影路径仍是对照路径 |
 
 ## 范围
 
@@ -75,7 +75,7 @@ damage-event trace pass；默认 unit database 和默认 runtime path 仍未改�
 | `P4 Review Packet` | 生成 HTML/SVG/CSV 审阅包 | P2/P3 数据存在 | 人能在图面上同时看见外形、旧盒、部件和测试点 | pass |
 | `P5 Lethality Diagnostics` | 将测试点解释成外壳/部件距离和候选部件数 | P4 审阅包存在 | 4 m 鼻向等样例不再只有“非直接命中”这一种解释 | pass |
 | `P6 Fine Geometry Proxy` | 把低精度盒子推进到更贴近外形的代理，并补上外形命中到部件损伤的审阅用中间层 | P4/P5 审阅和诊断通过 | review-only OBB、薄棱柱、凸包候选、mesh-derived silhouette、表面部件候选、语义体积部件候选、内部 receiver 先验约束候选、视觉复核卡片、距离差和叠加图存在 | pass as parse-ready candidate |
-| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | TG-P7-R5 opt-in proxy trace pass |
+| `P7 Runtime Interface Decision` | 决定是否把外壳代理接入近炸投影 | P6 代理通过审阅或明确 held | 形成有测试的 runtime 接入或 held 决议 | TG-P7-R6 opt-in 32k proxy/baseline training pass |
 
 ## 任务簇
 
@@ -111,6 +111,8 @@ damage-event trace pass；默认 unit database 和默认 runtime path 仍未改�
   [target_geometry_training_probe_results_20260614.zh.md](target_geometry_training_probe_results_20260614.zh.md)
 - Damage-event trace 结果：
   [target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)
+- 32k opt-in 训练探针结果：
+  [target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)
 
 ## 输出和证据
 
@@ -251,6 +253,13 @@ damage-event trace pass；默认 unit database 和默认 runtime path 仍未改�
   blast-fragmentation debug hits。Proxy event surface 观测到全部 `8` 个 split
   receivers，默认 event surface 观测到 `0` 个 split receiver 名称，且 proxy events
   没有回退到已退休 parent receiver 名称。
+- TG-P7 32k opt-in 训练探针：
+  [target_geometry_training_probe_32k_20260614.json](review_packets/f16c_20260611/target_geometry_training_probe_32k_20260614.json)、
+  [target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)。
+  TG-P7-R6 新增 32k proxy/baseline active configs，并完成两条 `32768`-step CUDA
+  `WorldBatchVecEnv` run。Proxy run 使用 `runtime.database_path` 选择
+  `target_geometry_training_proxy_database_20260613`，baseline run 无 database override；
+  两条 run 都写出四个 checkpoint 和 final model。
 - 整机 silhouette 约束修正候选：
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv)。
@@ -343,17 +352,20 @@ damage-event trace pass；默认 unit database 和默认 runtime path 仍未改�
   training config 选择。
 - TG-P7 proxy damage-event trace 能在 runtime component event names 中观测到全部
   `8` 个 split receivers，而默认 database 观测到 `0` 个 split receiver 名称。
+- TG-P7 32k opt-in proxy/baseline training probe 能在同一 `32768`-step 预算下完成，
+  且 proxy 与 baseline 只有 `runtime.database_path` 和 TG-P7 元数据差异。
 - 4 m 鼻向贴近外壳样例能被解释为具体几何/方向/候选部件问题，而不是无说明的零损伤。
 - 所有文档继续拒绝真实 F-16 工程几何、真实 Pk、结构解体、残骸或具体弹种击毁声明。
 
 ## 残余和下一步
 
 - MQ-9 几何可作为后续机型复用目标，但第一轮只做 F-16。
-- 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理。TG-P7-R5 已提供 opt-in
+- 运行时近炸投影仍未在默认 F-16 unit damage model 中消费该代理。TG-P7-R6 已提供 opt-in
   training proxy database，其中 `8` 个 split receiver records 在代理路径 event-observable，
   默认对照路径仍保持 `26` components；本地 `64`-step training smoke、active
-  `8192`-step proxy/baseline probe 和 targeted damage-event trace 均已通过。下一步可以进入更长
-  proxy training，并配套下游 policy/reward 诊断；默认路径替换仍需独立验收。
+  `8192`-step proxy/baseline probe、targeted damage-event trace 和 `32768`-step
+  proxy/baseline probe 均已通过。下一步应进入下游 policy/reward 诊断或更能激活 combat actions
+  的训练场景；默认路径替换仍需独立验收。
 - 结构解体、碎裂/残骸和 Pk 仍是后续独立子项目，不能并入本几何子项目。
 
 ## Archive
