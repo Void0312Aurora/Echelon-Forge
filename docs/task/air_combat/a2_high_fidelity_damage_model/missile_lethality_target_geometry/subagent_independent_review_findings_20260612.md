@@ -3,11 +3,11 @@
 Status: `2026-06-12` independent subagent review recorded / review-only /
 partially superseded by TG-P6-R10 corrections.
 
-This note summarizes five read-only subagent reviews based on
-[component_review_views/index.html](review_packets/f16c_20260611/component_review_views/index.html)
-and [manifest.json](review_packets/f16c_20260611/component_review_views/manifest.json).
-The reviews used isolated top/side/front views and JSON trace data, not the
-crowded overview cards.
+This note summarizes five read-only subagent reviews from an intermediate
+isolated-view packet. That intermediate packet has since been removed from the
+current final-result surface; the finding text is retained only as historical
+review context. Current containment evidence is the whole-airframe projected
+mesh contour plus the follow-up placement queue.
 
 Follow-up: [subagent_correction_results_20260612.md](subagent_correction_results_20260612.md)
 records the write-scoped correction pass. Radar/IFF and nozzle source boxes are

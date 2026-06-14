@@ -9,8 +9,7 @@ R15 将两个红色跨区 held receiver prior 拆成更小的 owner-region 审�
 | --- | --- |
 | 分段报告 | [cross_region_held_component_segments_20260611.json](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.json)、[CSV](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv) |
 | 父子布局报告 | [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json)、[CSV](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv) |
-| 复核页面 | [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) |
-| 审阅页面 | [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) |
+| 复核页面 | 中间 parent-child 视图已退役；当前可视化结果见 [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
 
 ## 计数
 

@@ -3,8 +3,8 @@
 Status: `2026-06-12` visual review recorded / runtime interface held; repaired
 items are tracked by TG-P6-R10.
 
-This note records the first visual review of
-[review_packets/f16c_20260611/human_review_triage.html](review_packets/f16c_20260611/human_review_triage.html).
+This note records the first visual review of the retired intermediate triage
+dashboard.
 It also uses:
 
 - [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json)

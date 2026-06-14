@@ -12,8 +12,8 @@ This layer is still review-only visualization and review data. It does not accep
 
 - [review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json)
 - [review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv)
-- [review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)
-- [review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json)
+- Retired intermediate parent-child layout views.
+- Current visual result: [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html)
 
 ## Legend
 

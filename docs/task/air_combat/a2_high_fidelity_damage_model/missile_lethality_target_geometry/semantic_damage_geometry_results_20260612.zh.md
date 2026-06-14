@@ -10,7 +10,7 @@
 | 切片 | 实现 | 边界 |
 | --- | --- | --- |
 | 语义体积候选 | 新增 [semantic_damage_geometry_candidate_20260611.json](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.json) 和 [semantic_damage_geometry_candidate_20260611.csv](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.csv)。packet 现在包含 `14` 个语义外壳体积部件：雷达罩、前机身蒙皮、座舱盖、中机身蒙皮、进气道、后机身/发动机舱蒙皮、喷口、左右主翼、左右翼根整流、左右平尾和垂尾。 | 仍是候选几何；`runtime_active_component_count=0`。 |
-| 独立语义视图 | 新增 [semantic_damage_geometry_views/index.html](review_packets/f16c_20260611/semantic_damage_geometry_views/index.html) 和 manifest。每个语义体积都有独立 top/side/front 页面，显示该体积 proxy 以及关联 receiver 部件盒。 | 只作审阅证据，不是碰撞网格。 |
+| 独立语义视图 | 中间语义视图已退役。每个语义体积曾有独立 top/side/front 页面，显示该体积 proxy 以及关联 receiver 部件盒。 | 只作审阅证据，不是碰撞网格。 |
 | Runtime component schema | `DamageComponent` 新增 `geometry_primitive`、source refs、OBB axes/half-extents、thin-prism 元数据和 vertices；unit loader 能读取 candidate packet 输出的嵌套 `geometry` 对象。 | 向后兼容：旧部件默认仍是 `aabb`。 |
 | Runtime component geometry 使用 | 直接命中和空间投影中的 component 距离/曝光辅助函数开始读取 OBB/thin-prism 支撑几何；`convex_hull` 在闭合 hull 审计完成前先使用 vertices 的轴对齐支撑外包。 | 不声明真实 3D hull/path intersection，也不声明真实 F-16 工程几何。 |
 

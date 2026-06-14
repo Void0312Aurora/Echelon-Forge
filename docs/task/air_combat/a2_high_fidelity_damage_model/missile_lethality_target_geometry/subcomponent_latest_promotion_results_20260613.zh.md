@@ -42,8 +42,7 @@ R21 将已经审阅过的 R19/R20 最新子部件摆放，从诊断候选层固�
 
 固化后 shape-placement report 预期为空：
 [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json)。
-视图入口保留为空队列审计轨迹：
-[subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html)。
+已退役视图入口仅作为历史审计语境记录。
 
 ## 边界
 

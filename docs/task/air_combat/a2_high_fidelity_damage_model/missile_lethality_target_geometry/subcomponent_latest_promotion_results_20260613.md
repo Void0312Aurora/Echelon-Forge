@@ -44,8 +44,7 @@ Key counts after regeneration:
 
 The shape-placement report is intentionally empty after promotion:
 [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json).
-The view index remains as an audit trace:
-[subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html).
+The retired view index is recorded as historical audit context only.
 
 ## Boundary
 

@@ -12,8 +12,8 @@ R14 把可视化主入口从 `26` 个孤立 receiver 视图改为 `14` 个基于
 
 - [review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json)
 - [review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv)
-- [review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)
-- [review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json)
+- 中间 parent-child layout 视图已退役。
+- 当前可视化结果：[whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html)
 
 ## 读图约定
 

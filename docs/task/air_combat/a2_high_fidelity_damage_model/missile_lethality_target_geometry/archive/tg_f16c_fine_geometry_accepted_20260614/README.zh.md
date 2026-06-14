@@ -28,7 +28,7 @@ review packet 保留在原稳定路径 `review_packets/f16c_20260611/`，没有�
 - 鼻向、尾向、侧向、上方、下方共 `10` 个测试点距离诊断。
 - `14` 个表面部件候选、`14` 个语义外壳体积候选和 `26` 个受约束内部 receiver prior。
 - 语义父子布局、跨区 held 分段、R22 `8` 个 split receiver candidate。
-- 整机 silhouette 约束和子部件摆放修正后的零外露证据。
+- 整机 silhouette 约束和子部件摆放修正；后续投影网格整机轮廓诊断保留 `10` 个 review-only protrusion 复核项，但不进入运行时验收路径。
 
 ## 不在本验收内
 
@@ -42,9 +42,9 @@ review packet 保留在原稳定路径 `review_packets/f16c_20260611/`，没有�
 
 验收时重新核验：
 
-```bash
-PYTHONPATH=build-workshop:. pytest -q tests/tools/test_airframe_geometry_review.py
+```powershell
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py
 git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
 ```
 
-结果：几何审阅测试 `2 passed`；diff whitespace check 无输出。
+结果：几何审阅测试 `5 passed`；diff whitespace check 无输出。

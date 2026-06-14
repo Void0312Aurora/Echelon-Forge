@@ -28,7 +28,7 @@ The review packet stays at the stable `review_packets/f16c_20260611/` path inste
 - `10` review-point distance diagnostics across nose, tail, beam, above, and below aspects.
 - `14` surface component candidates, `14` semantic shell-volume candidates, and `26` constrained internal receiver priors.
 - Semantic parent-child layout, cross-region held segments, and `8` R22 split receiver candidates.
-- Whole-airframe silhouette constraints and subcomponent placement repairs with zero remaining exposure items.
+- Whole-airframe silhouette constraints and subcomponent placement repairs, with the later projected mesh contour diagnostic now recording `0` receiver-prior protrusions after the R22 thin-prism/frustum shape correction and still sitting outside the runtime acceptance path.
 
 ## Out Of Scope
 
@@ -42,9 +42,9 @@ The review packet stays at the stable `review_packets/f16c_20260611/` path inste
 
 Rechecked for acceptance:
 
-```bash
-PYTHONPATH=build-workshop:. pytest -q tests/tools/test_airframe_geometry_review.py
+```powershell
+.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py
 git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry tools/geometry/airframe_geometry_review.py tests/tools/test_airframe_geometry_review.py
 ```
 
-Result: geometry review tests `2 passed`; diff whitespace check produced no output.
+Result: geometry review tests `5 passed`; diff whitespace check produced no output.

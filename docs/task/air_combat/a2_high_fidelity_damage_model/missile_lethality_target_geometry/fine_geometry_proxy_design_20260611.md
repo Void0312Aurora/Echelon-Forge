@@ -99,11 +99,11 @@ continuous-rod, or fragment paths.
 
 ## TG-P6-R6 Implementation Note
 
-`2026-06-12`: `human_review_triage.html` now groups the manual-review queue into
-visual cards for coordinate-sign, component-placement, surface-handoff, and
-review-point sanity issues. Each card carries local top/side/front overlays, so
-human review can start from the geometry picture instead of trying to infer the
-problem from CSV rows.
+`2026-06-12`: the retired visual-first triage dashboard grouped the
+manual-review queue into visual cards for coordinate-sign, component-placement,
+surface-handoff, and review-point sanity issues. Each card carried local
+top/side/front overlays, so human review could start from the geometry picture
+instead of trying to infer the problem from CSV rows.
 
 ## TG-P6-R7 Visual Findings Note
 
@@ -114,13 +114,13 @@ nose radar/IFF, engine/nozzle, missing runtime surface components, and
 `wing_spar_center` cross-region semantics blocked `TG-P7`; that blocker set was
 later refined by R9/R10 and superseded by the R11 repair note below.
 
-## TG-P6-R8 Isolated View Note
+## TG-P6-R8 Retired Intermediate View Note
 
-`2026-06-12`: `component_review_views/` now generates a separate page and
-top/side/front SVGs for each current component, each surface-to-single-component
-or missing-link handoff, and each review-point candidate component. The manifest
-currently records `75` review-only isolated pages after R11 regeneration, so reviewers do not have to
-infer individual relationships from crowded overview cards.
+`2026-06-12` historical snapshot: the project temporarily generated a separate
+review-only page set for component, handoff, and review-point candidate
+inspection. That intermediate view set was removed from the current packet
+during final-result contraction; current containment evidence is the
+whole-airframe projected mesh contour plus the follow-up placement queue.
 
 ## TG-P6-R9 Independent Review Note
 
