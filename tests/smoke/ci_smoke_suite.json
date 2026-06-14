@@ -28,7 +28,8 @@
     "tests/runtime/engagement/test_naval_launch_adapter.py",
     "tests/runtime/engagement/test_trace_replay_gates.py",
     "tests/runtime/facade/test_facade_step_evidence_gates.py",
-    "tests/runtime/facade/test_runtime_facade.py",
+    "tests/runtime/facade/test_runtime_facade_core.py",
+    "tests/runtime/facade/test_runtime_facade_counterfactual.py",
     "tests/runtime/link/test_command_link_qos.py",
     "tests/runtime/link/test_data_link_qos_runtime.py",
     "tests/runtime/mission/test_mission_command_air_fields_roundtrip.py",
@@ -49,6 +50,7 @@
     "tests/training/test_training_bootstrap_contracts.py",
     "tests/training/test_naval_training_entry_contracts.py",
     "tests/runtime/test_agent_shim.py",
-    "tests/world_batch/test_world_batch_runtime.py"
+    "tests/world_batch/test_world_batch_runtime_surface.py",
+    "tests/world_batch/test_batch_scenario_runtime.py"
   ]
 }
