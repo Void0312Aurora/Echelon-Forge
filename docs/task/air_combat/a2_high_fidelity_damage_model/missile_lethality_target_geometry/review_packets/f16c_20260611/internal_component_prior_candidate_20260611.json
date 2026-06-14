@@ -362,7 +362,7 @@
         "offset": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "size": [
           1.25,
@@ -383,17 +383,17 @@
           "center": [
             3.787559,
             0.0,
-            -0.62538
+            -0.67538
           ],
           "max": [
             4.412559,
             0.254,
-            -0.05038
+            -0.10038
           ],
           "min": [
             3.162559,
             -0.254,
-            -1.20038
+            -1.25038
           ],
           "span": [
             1.25,
@@ -404,7 +404,7 @@
         "center_m": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "half_extents_m": [
           0.625,
@@ -422,7 +422,7 @@
       "constraint_adjustment": {
         "airframe_projection_center_shift_m": 0.0,
         "center_shift_m": 0.0,
-        "placement_outside_fraction": 0.35489,
+        "placement_outside_fraction": 0.39837,
         "post_constraint_outside_fraction": 0.0,
         "pre_constraint_outside_fraction": 0.0,
         "required_fit_scale": 1.0,
@@ -520,17 +520,17 @@
           "center": [
             3.787559,
             0.0,
-            -0.62538
+            -0.67538
           ],
           "max": [
             4.412559,
             0.254,
-            -0.05038
+            -0.10038
           ],
           "min": [
             3.162559,
             -0.254,
-            -1.20038
+            -1.25038
           ],
           "span": [
             1.25,
@@ -541,7 +541,7 @@
         "center_m": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "half_extents_m": [
           0.625,
@@ -557,24 +557,24 @@
         "volume_m3": 0.382358
       },
       "prior_axis": "",
-      "prior_rationale": "crew station is not a single hardware box; width is anchored to public ACES II seat dimensions while length/height remain a crew-envelope estimate; R21 promotes the R20 canopy/forward-fuselage crew-envelope placement candidate because it preserves the nominal crew envelope and clears sampled silhouette exposure.",
+      "prior_rationale": "crew station is not a single hardware box; width is anchored to public ACES II seat dimensions while length/height remain a crew-envelope estimate; R21 promotes a slightly lower canopy/forward-fuselage crew-envelope placement because it preserves the nominal crew envelope and clears the projected side-view silhouette exposure.",
       "prior_shape": "ellipsoid",
       "prior_unconstrained_geometry": {
         "bounds": {
           "center": [
             3.787559,
             0.0,
-            -0.62538
+            -0.67538
           ],
           "max": [
             4.412559,
             0.254,
-            -0.05038
+            -0.10038
           ],
           "min": [
             3.162559,
             -0.254,
-            -1.20038
+            -1.25038
           ],
           "span": [
             1.25,
@@ -585,7 +585,7 @@
         "center_m": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "half_extents_m": [
           0.625,
@@ -2313,8 +2313,8 @@
         "name": "flight_control_computer",
         "offset": [
           -4.82358,
-          0.45,
-          -0.372826
+          -1e-06,
+          -0.932064
         ],
         "size": [
           0.320548,
@@ -2334,18 +2334,18 @@
         "bounds": {
           "center": [
             -4.82358,
-            0.45,
-            -0.372826
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -4.663306,
-            0.511976,
-            -0.301071
+            0.061975,
+            -0.860309
           ],
           "min": [
             -4.983854,
-            0.388024,
-            -0.444581
+            -0.061977,
+            -1.003819
           ],
           "span": [
             0.320548,
@@ -2355,8 +2355,8 @@
         },
         "center_m": [
           -4.82358,
-          0.45,
-          -0.372826
+          -1e-06,
+          -0.932064
         ],
         "half_extents_m": [
           0.160274,
@@ -2367,7 +2367,7 @@
         "volume_m3": 0.005702
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 4.877438,
+        "airframe_projection_center_shift_m": 5.011298,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -2584,7 +2584,7 @@
         "offset": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "size": [
           0.24892,
@@ -2605,17 +2605,17 @@
           "center": [
             2.6,
             0.0,
-            0.05
+            -0.1
           ],
           "max": [
             2.72446,
             0.0889,
-            0.1389
+            -0.0111
           ],
           "min": [
             2.47554,
             -0.0889,
-            -0.0389
+            -0.1889
           ],
           "span": [
             0.24892,
@@ -2626,7 +2626,7 @@
         "center_m": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "half_extents_m": [
           0.12446,
@@ -2741,17 +2741,17 @@
           "center": [
             2.6,
             0.0,
-            0.05
+            -0.1
           ],
           "max": [
             2.72446,
             0.0889,
-            0.1389
+            -0.0111
           ],
           "min": [
             2.47554,
             -0.0889,
-            -0.0389
+            -0.1889
           ],
           "span": [
             0.24892,
@@ -2762,7 +2762,7 @@
         "center_m": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "half_extents_m": [
           0.12446,
@@ -2778,24 +2778,24 @@
         "volume_m3": 0.00412
       },
       "prior_axis": "",
-      "prior_rationale": "INS receiver uses public H-764G EGI package dimensions; R18 promotes the R17 rounded-LRU ellipsoid candidate because it preserves nominal dimensions and removes whole-airframe silhouette exposure.",
+      "prior_rationale": "INS receiver uses public H-764G EGI package dimensions; R18 promotes the R17 rounded-LRU ellipsoid candidate and fixes the avionics LRU on a lower forward-fuselage shelf because it preserves nominal dimensions and removes projected side-view silhouette exposure.",
       "prior_shape": "ellipsoid",
       "prior_unconstrained_geometry": {
         "bounds": {
           "center": [
             2.6,
             0.0,
-            0.05
+            -0.1
           ],
           "max": [
             2.72446,
             0.0889,
-            0.1389
+            -0.0111
           ],
           "min": [
             2.47554,
             -0.0889,
-            -0.0389
+            -0.1889
           ],
           "span": [
             0.24892,
@@ -2806,7 +2806,7 @@
         "center_m": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "half_extents_m": [
           0.12446,
@@ -3152,9 +3152,9 @@
         "geometry_primitive": "aabb",
         "name": "electrical_power_bus",
         "offset": [
-          -2.8,
-          0.45,
-          0.05
+          -4.82358,
+          -1e-06,
+          -0.932064
         ],
         "size": [
           0.45,
@@ -3175,19 +3175,19 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -2.8,
-            0.45,
-            0.05
+            -4.82358,
+            -1e-06,
+            -0.932064
           ],
           "max": [
-            -2.575,
-            0.48,
-            0.08
+            -4.59858,
+            0.029999,
+            -0.902064
           ],
           "min": [
-            -3.025,
-            0.42,
-            0.02
+            -5.04858,
+            -0.030001,
+            -0.962064
           ],
           "span": [
             0.45,
@@ -3196,9 +3196,9 @@
           ]
         },
         "center_m": [
-          -2.8,
-          0.45,
-          0.05
+          -4.82358,
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.195,
         "half_extents_m": [
@@ -3211,7 +3211,7 @@
         "volume_m3": 0.001216
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 2.293867,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -3436,7 +3436,7 @@
         "offset": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "size": [
           4.62026,
@@ -3459,17 +3459,17 @@
           "center": [
             -3.693053,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -1.382923,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -6.003183,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             4.62026,
@@ -3480,7 +3480,7 @@
         "center_m": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "cylinder_half_length_m": 1.71958,
         "half_extents_m": [
@@ -3598,17 +3598,17 @@
           "center": [
             -3.693053,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -1.382923,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -6.003183,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             4.62026,
@@ -3619,7 +3619,7 @@
         "center_m": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "cylinder_half_length_m": 1.71958,
         "half_extents_m": [
@@ -3632,7 +3632,7 @@
         "volume_m3": 4.630739
       },
       "prior_axis": "x",
-      "prior_rationale": "engine core uses public F110-GE-129 engine length and maximum diameter; R21 promotes the rounded lower centerline capsule candidate, while ownership remains cross-region held.",
+      "prior_rationale": "engine core uses public F110-GE-129 engine length and maximum diameter; R21 promotes the rounded lower centerline capsule candidate at the aft-fuselage engine shelf, while ownership remains cross-region held.",
       "prior_shape": "capsule",
       "prior_unconstrained_geometry": {
         "axis": "x",
@@ -3641,17 +3641,17 @@
           "center": [
             -3.693053,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -1.382923,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -6.003183,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             4.62026,
@@ -3662,7 +3662,7 @@
         "center_m": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "cylinder_half_length_m": 1.71958,
         "half_extents_m": [
@@ -3713,7 +3713,7 @@
             "engine_nozzle",
             "aft_fuselage_engine"
           ],
-          "prior_shape": "ellipsoid",
+          "prior_shape": "frustum",
           "runtime_projection_status": "aabb_fallback_only_not_shape_exact",
           "source": "a2_internal_component_prior_constrained_bounds",
           "source_region_id": "engine_nozzle"
@@ -3722,8 +3722,8 @@
         "name": "afterburner_nozzle",
         "offset": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "size": [
           0.75,
@@ -3740,21 +3740,23 @@
       "component_review_status": "candidate_binding",
       "component_role": "nozzle_receiver",
       "constrained_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.375,
         "bounds": {
           "center": [
             -5.75,
-            -0.2,
-            -0.7
+            0.0,
+            -0.75
           ],
           "max": [
             -5.375,
-            0.39055,
-            -0.10945
+            0.59055,
+            -0.15945
           ],
           "min": [
             -6.125,
-            -0.79055,
-            -1.29055
+            -0.59055,
+            -1.34055
           ],
           "span": [
             0.75,
@@ -3764,21 +3766,18 @@
         },
         "center_m": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "half_extents_m": [
           0.375,
           0.59055,
           0.59055
         ],
-        "radii_m": [
-          0.375,
-          0.59055,
-          0.59055
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.547814
+        "negative_axis_radius_m": 0.45,
+        "positive_axis_radius_m": 0.59055,
+        "shape": "frustum",
+        "volume_m3": 0.641668
       },
       "constraint_adjustment": {
         "airframe_projection_center_shift_m": 0.0,
@@ -3877,21 +3876,23 @@
       },
       "placement_bounds_source": "source_region_bounds",
       "placement_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.375,
         "bounds": {
           "center": [
             -5.75,
-            -0.2,
-            -0.7
+            0.0,
+            -0.75
           ],
           "max": [
             -5.375,
-            0.39055,
-            -0.10945
+            0.59055,
+            -0.15945
           ],
           "min": [
             -6.125,
-            -0.79055,
-            -1.29055
+            -0.59055,
+            -1.34055
           ],
           "span": [
             0.75,
@@ -3901,41 +3902,40 @@
         },
         "center_m": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "half_extents_m": [
           0.375,
           0.59055,
           0.59055
         ],
-        "radii_m": [
-          0.375,
-          0.59055,
-          0.59055
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.547814
+        "negative_axis_radius_m": 0.45,
+        "positive_axis_radius_m": 0.59055,
+        "shape": "frustum",
+        "volume_m3": 0.641668
       },
-      "prior_axis": "",
-      "prior_rationale": "nozzle diameter follows public F110 maximum diameter; nozzle length remains a mesh-region estimate; R21 promotes the aft/lower/lateral ellipsoid candidate as a review-only tapered-nozzle proxy.",
-      "prior_shape": "ellipsoid",
+      "prior_axis": "x",
+      "prior_rationale": "nozzle diameter follows public F110 maximum diameter; nozzle length remains a mesh-region estimate; R22 replaces the ellipsoid with an axis-aligned tapered frustum proxy so the aft nozzle is not modeled as a closed oval volume.",
+      "prior_shape": "frustum",
       "prior_unconstrained_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.375,
         "bounds": {
           "center": [
             -5.75,
-            -0.2,
-            -0.7
+            0.0,
+            -0.75
           ],
           "max": [
             -5.375,
-            0.39055,
-            -0.10945
+            0.59055,
+            -0.15945
           ],
           "min": [
             -6.125,
-            -0.79055,
-            -1.29055
+            -0.59055,
+            -1.34055
           ],
           "span": [
             0.75,
@@ -3945,21 +3945,18 @@
         },
         "center_m": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "half_extents_m": [
           0.375,
           0.59055,
           0.59055
         ],
-        "radii_m": [
-          0.375,
-          0.59055,
-          0.59055
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.547814
+        "negative_axis_radius_m": 0.45,
+        "positive_axis_radius_m": 0.59055,
+        "shape": "frustum",
+        "volume_m3": 0.641668
       },
       "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
       "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
@@ -4548,9 +4545,9 @@
         "geometry_primitive": "aabb",
         "name": "rudder_actuator",
         "offset": [
-          -6.7,
+          -4.82358,
           0.0,
-          0.45
+          -0.372826
         ],
         "size": [
           0.08,
@@ -4571,19 +4568,19 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -6.7,
+            -4.82358,
             0.0,
-            0.45
+            -0.372826
           ],
           "max": [
-            -6.66,
+            -4.78358,
             0.04,
-            0.675
+            -0.147826
           ],
           "min": [
-            -6.74,
+            -4.86358,
             -0.04,
-            0.225
+            -0.597826
           ],
           "span": [
             0.08,
@@ -4592,9 +4589,9 @@
           ]
         },
         "center_m": [
-          -6.7,
+          -4.82358,
           0.0,
-          0.45
+          -0.372826
         ],
         "cylinder_half_length_m": 0.185,
         "half_extents_m": [
@@ -4607,7 +4604,7 @@
         "volume_m3": 0.002128
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 2.048901,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -5380,7 +5377,7 @@
           "constraint_region_ids": [
             "left_wing"
           ],
-          "prior_shape": "ellipsoid",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "aabb_fallback_only_not_shape_exact",
           "source": "a2_internal_component_prior_constrained_bounds",
           "source_region_id": "left_wing"
@@ -5388,13 +5385,13 @@
         "geometry_primitive": "aabb",
         "name": "left_wing_fuel_cell",
         "offset": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
         "size": [
-          2.0,
-          2.2,
+          1.85,
+          1.73,
           0.15
         ],
         "system": "fuel"
@@ -5409,48 +5406,64 @@
       "constrained_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            -2.3,
+            -2.075,
+            -1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            -1.2,
+            -1.15,
+            -0.82,
             -0.91
           ],
           "min": [
-            -2.4,
-            -3.4,
+            -3.0,
+            -2.55,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            -2.55
+          ],
+          [
+            -2.95,
+            -1.05
+          ],
+          [
+            -1.25,
+            -0.82
+          ],
+          [
+            -1.15,
+            -1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "constraint_adjustment": {
         "airframe_projection_center_shift_m": 0.0,
         "center_shift_m": 0.0,
-        "placement_outside_fraction": 0.0,
+        "placement_outside_fraction": 0.05939,
         "post_constraint_outside_fraction": 0.0,
         "pre_constraint_outside_fraction": 0.0,
         "required_fit_scale": 1.0,
@@ -5486,15 +5499,15 @@
       "constraint_region_ids": [
         "left_wing"
       ],
-      "constraint_status": "already_inside_whole_airframe",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
       "critical": true,
       "linked_surface_component_ids": [
         "surface_left_wing_root_fairing",
         "surface_left_wing_skin"
       ],
       "nominal_dimensions_m": [
-        2.0,
-        2.2,
+        1.85,
+        1.73,
         0.15
       ],
       "original_aabb_bounds": {
@@ -5546,87 +5559,119 @@
       "placement_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            -2.3,
+            -2.075,
+            -1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            -1.2,
+            -1.15,
+            -0.82,
             -0.91
           ],
           "min": [
-            -2.4,
-            -3.4,
+            -3.0,
+            -2.55,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            -2.55
+          ],
+          [
+            -2.95,
+            -1.05
+          ],
+          [
+            -1.25,
+            -0.82
+          ],
+          [
+            -1.15,
+            -1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "prior_axis": "",
-      "prior_rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R21 promotes the inboard/aft ellipsoid candidate as review-only conformal bladder geometry.",
-      "prior_shape": "ellipsoid",
+      "prior_rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R22 replaces the ellipsoid with a swept thin-prism footprint that follows the wing planform and stays inside the projected top contour.",
+      "prior_shape": "thin_prism",
       "prior_unconstrained_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            -2.3,
+            -2.075,
+            -1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            -1.2,
+            -1.15,
+            -0.82,
             -0.91
           ],
           "min": [
-            -2.4,
-            -3.4,
+            -3.0,
+            -2.55,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            -2.55
+          ],
+          [
+            -2.95,
+            -1.05
+          ],
+          [
+            -1.25,
+            -0.82
+          ],
+          [
+            -1.15,
+            -1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
       "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
@@ -5666,7 +5711,7 @@
           "constraint_region_ids": [
             "right_wing"
           ],
-          "prior_shape": "ellipsoid",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "aabb_fallback_only_not_shape_exact",
           "source": "a2_internal_component_prior_constrained_bounds",
           "source_region_id": "right_wing"
@@ -5674,13 +5719,13 @@
         "geometry_primitive": "aabb",
         "name": "right_wing_fuel_cell",
         "offset": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
         "size": [
-          2.0,
-          2.2,
+          1.85,
+          1.73,
           0.15
         ],
         "system": "fuel"
@@ -5695,48 +5740,64 @@
       "constrained_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            2.3,
+            -2.075,
+            1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            3.4,
+            -1.15,
+            2.55,
             -0.91
           ],
           "min": [
-            -2.4,
-            1.2,
+            -3.0,
+            0.82,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            2.55
+          ],
+          [
+            -2.95,
+            1.05
+          ],
+          [
+            -1.25,
+            0.82
+          ],
+          [
+            -1.15,
+            1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "constraint_adjustment": {
         "airframe_projection_center_shift_m": 0.0,
         "center_shift_m": 0.0,
-        "placement_outside_fraction": 0.0,
+        "placement_outside_fraction": 0.05934,
         "post_constraint_outside_fraction": 0.0,
         "pre_constraint_outside_fraction": 0.0,
         "required_fit_scale": 1.0,
@@ -5772,15 +5833,15 @@
       "constraint_region_ids": [
         "right_wing"
       ],
-      "constraint_status": "already_inside_whole_airframe",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
       "critical": true,
       "linked_surface_component_ids": [
         "surface_right_wing_root_fairing",
         "surface_right_wing_skin"
       ],
       "nominal_dimensions_m": [
-        2.0,
-        2.2,
+        1.85,
+        1.73,
         0.15
       ],
       "original_aabb_bounds": {
@@ -5832,87 +5893,119 @@
       "placement_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            2.3,
+            -2.075,
+            1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            3.4,
+            -1.15,
+            2.55,
             -0.91
           ],
           "min": [
-            -2.4,
-            1.2,
+            -3.0,
+            0.82,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            2.55
+          ],
+          [
+            -2.95,
+            1.05
+          ],
+          [
+            -1.25,
+            0.82
+          ],
+          [
+            -1.15,
+            1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "prior_axis": "",
-      "prior_rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R21 promotes the inboard/aft ellipsoid candidate as review-only conformal bladder geometry.",
-      "prior_shape": "ellipsoid",
+      "prior_rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R22 replaces the ellipsoid with a swept thin-prism footprint that follows the wing planform and stays inside the projected top contour.",
+      "prior_shape": "thin_prism",
       "prior_unconstrained_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            2.3,
+            -2.075,
+            1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            3.4,
+            -1.15,
+            2.55,
             -0.91
           ],
           "min": [
-            -2.4,
-            1.2,
+            -3.0,
+            0.82,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            2.55
+          ],
+          [
+            -2.95,
+            1.05
+          ],
+          [
+            -1.25,
+            0.82
+          ],
+          [
+            -1.15,
+            1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
       "shape_promotion_status": "r21_promoted_from_latest_subcomponent_candidate",
@@ -5960,8 +6053,8 @@
         "geometry_primitive": "aabb",
         "name": "left_aileron_actuator",
         "offset": [
-          -0.8,
-          -4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "size": [
@@ -5983,18 +6076,18 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -0.8,
-            -4.1,
+            -1.205895,
+            -1e-06,
             -0.985
           ],
           "max": [
-            -0.76,
-            -3.875,
+            -1.165895,
+            0.224999,
             -0.945
           ],
           "min": [
-            -0.84,
-            -4.325,
+            -1.245895,
+            -0.225001,
             -1.025
           ],
           "span": [
@@ -6004,8 +6097,8 @@
           ]
         },
         "center_m": [
-          -0.8,
-          -4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "cylinder_half_length_m": 0.185,
@@ -6019,7 +6112,7 @@
         "volume_m3": 0.002128
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 4.120042,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -6240,8 +6333,8 @@
         "geometry_primitive": "aabb",
         "name": "right_aileron_actuator",
         "offset": [
-          -0.8,
-          4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "size": [
@@ -6263,18 +6356,18 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -0.8,
-            4.1,
+            -1.205895,
+            -1e-06,
             -0.985
           ],
           "max": [
-            -0.76,
-            4.325,
+            -1.165895,
+            0.224999,
             -0.945
           ],
           "min": [
-            -0.84,
-            3.875,
+            -1.245895,
+            -0.225001,
             -1.025
           ],
           "span": [
@@ -6284,8 +6377,8 @@
           ]
         },
         "center_m": [
-          -0.8,
-          4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "cylinder_half_length_m": 0.185,
@@ -6299,7 +6392,7 @@
         "volume_m3": 0.002128
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 4.120043,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -6516,7 +6609,7 @@
             "left_wing",
             "right_wing"
           ],
-          "prior_shape": "capsule",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "aabb_fallback_only_not_shape_exact",
           "source": "a2_internal_component_prior_constrained_bounds",
           "source_region_id": "center_fuselage"
@@ -6524,13 +6617,13 @@
         "geometry_primitive": "aabb",
         "name": "wing_spar_center",
         "offset": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
         "size": [
-          0.18,
-          6.6,
+          0.5,
+          5.8,
           0.18
         ],
         "system": "wings"
@@ -6543,44 +6636,61 @@
       "component_review_status": "review_only_cross_region_semantic_hold",
       "component_role": "cross_region_structural_receiver",
       "constrained_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 3.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             0.0,
             -0.985043
           ],
           "max": [
-            -1.002842,
-            3.3,
+            -0.95,
+            2.9,
             -0.895043
           ],
           "min": [
-            -1.182842,
-            -3.3,
+            -1.45,
+            -2.9,
             -1.075043
           ],
           "span": [
-            0.18,
-            6.6,
+            0.5,
+            5.8,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
-        "cylinder_half_length_m": 3.21,
+        "footprint_area_m2": 2.9,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -2.9
+          ],
+          [
+            -0.95,
+            -2.9
+          ],
+          [
+            -0.95,
+            2.9
+          ],
+          [
+            -1.45,
+            2.9
+          ]
+        ],
         "half_extents_m": [
-          0.09,
-          3.3,
+          0.25,
+          2.9,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.166423
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.522
       },
       "constraint_adjustment": {
         "airframe_projection_center_shift_m": 0.0,
@@ -6635,8 +6745,8 @@
         "surface_right_wing_skin"
       ],
       "nominal_dimensions_m": [
-        0.18,
-        6.6,
+        0.5,
+        5.8,
         0.18
       ],
       "original_aabb_bounds": {
@@ -6686,87 +6796,121 @@
       },
       "placement_bounds_source": "source_region_bounds",
       "placement_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 3.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             0.0,
             -0.985043
           ],
           "max": [
-            -1.002842,
-            3.3,
+            -0.95,
+            2.9,
             -0.895043
           ],
           "min": [
-            -1.182842,
-            -3.3,
+            -1.45,
+            -2.9,
             -1.075043
           ],
           "span": [
-            0.18,
-            6.6,
+            0.5,
+            5.8,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
-        "cylinder_half_length_m": 3.21,
+        "footprint_area_m2": 2.9,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -2.9
+          ],
+          [
+            -0.95,
+            -2.9
+          ],
+          [
+            -0.95,
+            2.9
+          ],
+          [
+            -1.45,
+            2.9
+          ]
+        ],
         "half_extents_m": [
-          0.09,
-          3.3,
+          0.25,
+          2.9,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.166423
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.522
       },
-      "prior_axis": "y",
-      "prior_rationale": "wing spar center uses the existing cross-region receiver span and wing-root mesh center as a carry-through proxy; it remains held until split into true spar segments.",
-      "prior_shape": "capsule",
+      "prior_axis": "",
+      "prior_rationale": "wing spar center uses the existing cross-region receiver semantics but R22 replaces the single capsule with a symmetric thin-prism carry-through / inner-wing strip; this avoids the prior one-sided swept-strip artifact while remaining review-only pending true spar/wing-box data.",
+      "prior_shape": "thin_prism",
       "prior_unconstrained_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 3.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             0.0,
             -0.985043
           ],
           "max": [
-            -1.002842,
-            3.3,
+            -0.95,
+            2.9,
             -0.895043
           ],
           "min": [
-            -1.182842,
-            -3.3,
+            -1.45,
+            -2.9,
             -1.075043
           ],
           "span": [
-            0.18,
-            6.6,
+            0.5,
+            5.8,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
-        "cylinder_half_length_m": 3.21,
+        "footprint_area_m2": 2.9,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -2.9
+          ],
+          [
+            -0.95,
+            -2.9
+          ],
+          [
+            -0.95,
+            2.9
+          ],
+          [
+            -1.45,
+            2.9
+          ]
+        ],
         "half_extents_m": [
-          0.09,
-          3.3,
+          0.25,
+          2.9,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.166423
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.522
       },
       "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
       "shape_promotion_status": "not_promoted_from_subcomponent_shape_candidate",
@@ -6817,8 +6961,8 @@
         "name": "left_leading_edge_flap_actuator",
         "offset": [
           -0.2,
-          -1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "size": [
           0.08,
@@ -6840,18 +6984,18 @@
         "bounds": {
           "center": [
             -0.2,
-            -1.15,
-            -0.71
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -0.16,
-            -0.875,
-            -0.67
+            0.274999,
+            -0.892064
           ],
           "min": [
             -0.24,
-            -1.425,
-            -0.75
+            -0.275001,
+            -0.972064
           ],
           "span": [
             0.08,
@@ -6861,8 +7005,8 @@
         },
         "center_m": [
           -0.2,
-          -1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.235,
         "half_extents_m": [
@@ -6875,7 +7019,7 @@
         "volume_m3": 0.002631
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 1.171244,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -7098,8 +7242,8 @@
         "name": "right_leading_edge_flap_actuator",
         "offset": [
           -0.2,
-          1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "size": [
           0.08,
@@ -7121,18 +7265,18 @@
         "bounds": {
           "center": [
             -0.2,
-            1.15,
-            -0.71
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -0.16,
-            1.425,
-            -0.67
+            0.274999,
+            -0.892064
           ],
           "min": [
             -0.24,
-            0.875,
-            -0.75
+            -0.275001,
+            -0.972064
           ],
           "span": [
             0.08,
@@ -7142,8 +7286,8 @@
         },
         "center_m": [
           -0.2,
-          1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.235,
         "half_extents_m": [
@@ -7156,7 +7300,7 @@
         "volume_m3": 0.002631
       },
       "constraint_adjustment": {
-        "airframe_projection_center_shift_m": 0.0,
+        "airframe_projection_center_shift_m": 1.171245,
         "center_shift_m": 0.0,
         "placement_outside_fraction": 0.0,
         "post_constraint_outside_fraction": 0.0,
@@ -7375,14 +7519,16 @@
     "cross_region_held_prior_count": 2,
     "internal_component_prior_count": 26,
     "nominal_size_fit_issue_count": 0,
-    "parent_shell_exceed_review_count": 5,
+    "parent_shell_exceed_review_count": 7,
     "post_constraint_outside_count": 0,
     "review_status": "manual_review_required_before_activation",
     "runtime_active_component_count": 0,
     "shape_counts": {
-      "capsule": 10,
-      "ellipsoid": 10,
-      "obb": 6
+      "capsule": 9,
+      "ellipsoid": 7,
+      "frustum": 1,
+      "obb": 6,
+      "thin_prism": 3
     },
     "shape_promotion_count": 9,
     "shape_promotion_status_counts": {

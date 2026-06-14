@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="737.72" y="262.75" width="129.37" height="297.25" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="751.95" y="286.53" width="100.91" height="249.69" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="761.45" y="262.90" width="81.92" height="71.22" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>afterburner_nozzle candidate_binding</title></rect>
-<text x="765.45" y="275.90" font-size="10" font-family="monospace" fill="#7c3aed">afterburner_nozzle candidate_binding</text>
-<polygon points="743.87,411.37 745.14,436.07 748.32,459.73 753.87,481.57 761.01,500.73 770.00,516.39 780.01,528.13 791.08,535.24 802.41,537.74 813.90,535.24 824.81,528.13 834.97,516.39 843.81,500.73 851.11,481.57 856.50,459.73 859.84,436.07 860.95,411.37 859.84,386.82 856.50,363.01 851.11,341.32 843.81,322.01 834.97,306.50 824.81,294.62 813.90,287.65 802.41,285.00 791.08,287.65 780.01,294.62 770.00,306.50 761.01,322.01 753.87,341.32 747.95,361.87 745.14,386.82" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="806.44" y="415.37" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

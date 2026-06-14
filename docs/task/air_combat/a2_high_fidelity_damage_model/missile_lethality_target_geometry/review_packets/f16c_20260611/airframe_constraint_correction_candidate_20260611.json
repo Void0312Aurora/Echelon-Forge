@@ -281,17 +281,17 @@
         "center": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "max": [
           4.412559,
           0.254,
-          -0.05038
+          -0.10038
         ],
         "min": [
           3.162559,
           -0.254,
-          -1.20038
+          -1.25038
         ],
         "span": [
           1.25,
@@ -302,18 +302,16 @@
       "candidate_center_m": [
         3.787559,
         0.0,
-        -0.62538
+        -0.67538
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.96,
-        "max_outside_distance_m": 0.07545,
-        "outside_sample_count": 3,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 75,
         "views": {
           "front": {
@@ -325,25 +323,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.254,
-              -1.20038,
+              -1.25038,
               0.254,
-              -0.05038
+              -0.10038
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 22,
-            "inside_sample_fraction": 0.88,
-            "max_outside_distance_m": 0.07545,
-            "outside_sample_count": 3,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               3.162559,
-              -1.20038,
+              -1.25038,
               4.412559,
-              -0.05038
+              -0.10038
             ],
             "sample_count": 25,
             "view": "side"
@@ -375,17 +373,17 @@
           "center": [
             3.787559,
             0.0,
-            -0.62538
+            -0.67538
           ],
           "max": [
             4.412559,
             0.254,
-            -0.05038
+            -0.10038
           ],
           "min": [
             3.162559,
             -0.254,
-            -1.20038
+            -1.25038
           ],
           "span": [
             1.25,
@@ -396,7 +394,7 @@
         "center_m": [
           3.787559,
           0.0,
-          -0.62538
+          -0.67538
         ],
         "half_extents_m": [
           0.625,
@@ -412,14 +410,12 @@
         "volume_m3": 0.382358
       },
       "current_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.96,
-        "max_outside_distance_m": 0.07545,
-        "outside_sample_count": 3,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 75,
         "views": {
           "front": {
@@ -431,25 +427,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.254,
-              -1.20038,
+              -1.25038,
               0.254,
-              -0.05038
+              -0.10038
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 22,
-            "inside_sample_fraction": 0.88,
-            "max_outside_distance_m": 0.07545,
-            "outside_sample_count": 3,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               3.162559,
-              -1.20038,
+              -1.25038,
               4.412559,
-              -0.05038
+              -0.10038
             ],
             "sample_count": 25,
             "view": "side"
@@ -486,13 +482,13 @@
       "parent_component_name": "cockpit_crew_station",
       "prior_axis": "",
       "prior_shape": "ellipsoid",
-      "recommended_action": "research_size_shape_or_multi_region_placement_before_acceptance",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
       "size_basis": "public_aces_ii_seat_width_plus_crew_envelope_estimate",
       "size_evidence_level": "public_partial_dimension_engineering_envelope",
       "system": "cockpit",
-      "triage_status": "silhouette_exposure_requires_size_or_shape_review"
+      "triage_status": "inside_airframe_candidate"
     },
     {
       "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
@@ -1775,18 +1771,18 @@
       "candidate_bounds": {
         "center": [
           -4.82358,
-          0.45,
-          -0.372826
+          -1e-06,
+          -0.932064
         ],
         "max": [
           -4.663306,
-          0.511976,
-          -0.301071
+          0.061975,
+          -0.860309
         ],
         "min": [
           -4.983854,
-          0.388024,
-          -0.444581
+          -0.061977,
+          -1.003819
         ],
         "span": [
           0.320548,
@@ -1796,8 +1792,8 @@
       },
       "candidate_center_m": [
         -4.82358,
-        0.45,
-        -0.372826
+        -1e-06,
+        -0.932064
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -1817,10 +1813,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.388024,
-              -0.444581,
-              0.511976,
-              -0.301071
+              -0.061977,
+              -1.003819,
+              0.061975,
+              -0.860309
             ],
             "sample_count": 9,
             "view": "front"
@@ -1834,9 +1830,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.983854,
-              -0.444581,
+              -1.003819,
               -4.663306,
-              -0.301071
+              -0.860309
             ],
             "sample_count": 9,
             "view": "side"
@@ -1850,9 +1846,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.983854,
-              0.388024,
+              -0.061977,
               -4.663306,
-              0.511976
+              0.061975
             ],
             "sample_count": 9,
             "view": "top"
@@ -1867,18 +1863,18 @@
         "bounds": {
           "center": [
             -4.82358,
-            0.45,
-            -0.372826
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -4.663306,
-            0.511976,
-            -0.301071
+            0.061975,
+            -0.860309
           ],
           "min": [
             -4.983854,
-            0.388024,
-            -0.444581
+            -0.061977,
+            -1.003819
           ],
           "span": [
             0.320548,
@@ -1888,8 +1884,8 @@
         },
         "center_m": [
           -4.82358,
-          0.45,
-          -0.372826
+          -1e-06,
+          -0.932064
         ],
         "half_extents_m": [
           0.160274,
@@ -1916,10 +1912,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.388024,
-              -0.444581,
-              0.511976,
-              -0.301071
+              -0.061977,
+              -1.003819,
+              0.061975,
+              -0.860309
             ],
             "sample_count": 9,
             "view": "front"
@@ -1933,9 +1929,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.983854,
-              -0.444581,
+              -1.003819,
               -4.663306,
-              -0.301071
+              -0.860309
             ],
             "sample_count": 9,
             "view": "side"
@@ -1949,9 +1945,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.983854,
-              0.388024,
+              -0.061977,
               -4.663306,
-              0.511976
+              0.061975
             ],
             "sample_count": 9,
             "view": "top"
@@ -1986,17 +1982,17 @@
         "center": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "max": [
           2.72446,
           0.0889,
-          0.1389
+          -0.0111
         ],
         "min": [
           2.47554,
           -0.0889,
-          -0.0389
+          -0.1889
         ],
         "span": [
           0.24892,
@@ -2007,18 +2003,16 @@
       "candidate_center_m": [
         2.6,
         0.0,
-        0.05
+        -0.1
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.97333,
-        "max_outside_distance_m": 0.05059,
-        "outside_sample_count": 2,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 75,
         "views": {
           "front": {
@@ -2030,25 +2024,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.0889,
-              -0.0389,
+              -0.1889,
               0.0889,
-              0.1389
+              -0.0111
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 23,
-            "inside_sample_fraction": 0.92,
-            "max_outside_distance_m": 0.05059,
-            "outside_sample_count": 2,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               2.47554,
-              -0.0389,
+              -0.1889,
               2.72446,
-              0.1389
+              -0.0111
             ],
             "sample_count": 25,
             "view": "side"
@@ -2080,17 +2074,17 @@
           "center": [
             2.6,
             0.0,
-            0.05
+            -0.1
           ],
           "max": [
             2.72446,
             0.0889,
-            0.1389
+            -0.0111
           ],
           "min": [
             2.47554,
             -0.0889,
-            -0.0389
+            -0.1889
           ],
           "span": [
             0.24892,
@@ -2101,7 +2095,7 @@
         "center_m": [
           2.6,
           0.0,
-          0.05
+          -0.1
         ],
         "half_extents_m": [
           0.12446,
@@ -2117,14 +2111,12 @@
         "volume_m3": 0.00412
       },
       "current_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.97333,
-        "max_outside_distance_m": 0.05059,
-        "outside_sample_count": 2,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 75,
         "views": {
           "front": {
@@ -2136,25 +2128,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.0889,
-              -0.0389,
+              -0.1889,
               0.0889,
-              0.1389
+              -0.0111
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 23,
-            "inside_sample_fraction": 0.92,
-            "max_outside_distance_m": 0.05059,
-            "outside_sample_count": 2,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               2.47554,
-              -0.0389,
+              -0.1889,
               2.72446,
-              0.1389
+              -0.0111
             ],
             "sample_count": 25,
             "view": "side"
@@ -2190,13 +2182,13 @@
       "parent_component_name": "inertial_navigation_unit",
       "prior_axis": "",
       "prior_shape": "ellipsoid",
-      "recommended_action": "research_size_shape_or_multi_region_placement_before_acceptance",
+      "recommended_action": "no_geometry_correction_required_before_human_size_review",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
       "size_basis": "public_honeywell_h764g_egi_dimensions",
       "size_evidence_level": "public_lru_dimension",
       "system": "navigation",
-      "triage_status": "silhouette_exposure_requires_size_or_shape_review"
+      "triage_status": "inside_airframe_candidate"
     },
     {
       "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
@@ -2418,19 +2410,19 @@
       "bound_region_id": "aft_fuselage_engine",
       "candidate_bounds": {
         "center": [
-          -2.8,
-          0.45,
-          0.05
+          -4.82358,
+          -1e-06,
+          -0.932064
         ],
         "max": [
-          -2.575,
-          0.48,
-          0.08
+          -4.59858,
+          0.029999,
+          -0.902064
         ],
         "min": [
-          -3.025,
-          0.42,
-          0.02
+          -5.04858,
+          -0.030001,
+          -0.962064
         ],
         "span": [
           0.45,
@@ -2439,9 +2431,9 @@
         ]
       },
       "candidate_center_m": [
-        -2.8,
-        0.45,
-        0.05
+        -4.82358,
+        -1e-06,
+        -0.932064
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -2461,10 +2453,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.42,
-              0.02,
-              0.48,
-              0.08
+              -0.030001,
+              -0.962064,
+              0.029999,
+              -0.902064
             ],
             "sample_count": 25,
             "view": "front"
@@ -2477,10 +2469,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.025,
-              0.02,
-              -2.575,
-              0.08
+              -5.04858,
+              -0.962064,
+              -4.59858,
+              -0.902064
             ],
             "sample_count": 27,
             "view": "side"
@@ -2493,10 +2485,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.025,
-              0.42,
-              -2.575,
-              0.48
+              -5.04858,
+              -0.030001,
+              -4.59858,
+              0.029999
             ],
             "sample_count": 27,
             "view": "top"
@@ -2512,19 +2504,19 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -2.8,
-            0.45,
-            0.05
+            -4.82358,
+            -1e-06,
+            -0.932064
           ],
           "max": [
-            -2.575,
-            0.48,
-            0.08
+            -4.59858,
+            0.029999,
+            -0.902064
           ],
           "min": [
-            -3.025,
-            0.42,
-            0.02
+            -5.04858,
+            -0.030001,
+            -0.962064
           ],
           "span": [
             0.45,
@@ -2533,9 +2525,9 @@
           ]
         },
         "center_m": [
-          -2.8,
-          0.45,
-          0.05
+          -4.82358,
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.195,
         "half_extents_m": [
@@ -2564,10 +2556,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.42,
-              0.02,
-              0.48,
-              0.08
+              -0.030001,
+              -0.962064,
+              0.029999,
+              -0.902064
             ],
             "sample_count": 25,
             "view": "front"
@@ -2580,10 +2572,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.025,
-              0.02,
-              -2.575,
-              0.08
+              -5.04858,
+              -0.962064,
+              -4.59858,
+              -0.902064
             ],
             "sample_count": 27,
             "view": "side"
@@ -2596,10 +2588,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.025,
-              0.42,
-              -2.575,
-              0.48
+              -5.04858,
+              -0.030001,
+              -4.59858,
+              0.029999
             ],
             "sample_count": 27,
             "view": "top"
@@ -2634,17 +2626,17 @@
         "center": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "max": [
           -1.382923,
           0.59055,
-          0.036169
+          -0.313831
         ],
         "min": [
           -6.003183,
           -0.59055,
-          -1.144931
+          -1.494931
         ],
         "span": [
           4.62026,
@@ -2655,18 +2647,16 @@
       "candidate_center_m": [
         -3.693053,
         0.0,
-        -0.554381
+        -0.904381
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.96203,
-        "max_outside_distance_m": 0.21036,
-        "outside_sample_count": 3,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 79,
         "views": {
           "front": {
@@ -2678,25 +2668,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 24,
-            "inside_sample_fraction": 0.88889,
-            "max_outside_distance_m": 0.21036,
-            "outside_sample_count": 3,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               -6.003183,
-              -1.144931,
+              -1.494931,
               -1.382923,
-              0.036169
+              -0.313831
             ],
             "sample_count": 27,
             "view": "side"
@@ -2730,17 +2720,17 @@
           "center": [
             -3.693053,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -1.382923,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -6.003183,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             4.62026,
@@ -2751,7 +2741,7 @@
         "center_m": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "cylinder_half_length_m": 1.71958,
         "half_extents_m": [
@@ -2764,14 +2754,12 @@
         "volume_m3": 4.630739
       },
       "current_silhouette": {
-        "fully_inside_all_views": false,
-        "inside_sample_fraction": 0.96203,
-        "max_outside_distance_m": 0.21036,
-        "outside_sample_count": 3,
-        "outside_view_count": 1,
-        "outside_views": [
-          "side"
-        ],
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
         "sample_count": 79,
         "views": {
           "front": {
@@ -2783,25 +2771,25 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
           },
           "side": {
-            "exceeds_tolerance": true,
-            "fully_inside_silhouette": false,
-            "inside_sample_count": 24,
-            "inside_sample_fraction": 0.88889,
-            "max_outside_distance_m": 0.21036,
-            "outside_sample_count": 3,
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
             "projected_bounds": [
               -6.003183,
-              -1.144931,
+              -1.494931,
               -1.382923,
-              0.036169
+              -0.313831
             ],
             "sample_count": 27,
             "view": "side"
@@ -2839,13 +2827,13 @@
       "parent_component_name": "engine_core",
       "prior_axis": "x",
       "prior_shape": "capsule",
-      "recommended_action": "research_size_shape_or_multi_region_placement_before_acceptance",
+      "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
       "size_basis": "public_f110_ge_129_engine_dimensions",
       "size_evidence_level": "public_engine_dimension",
       "system": "engine",
-      "triage_status": "silhouette_exposure_requires_size_or_shape_review"
+      "triage_status": "inside_airframe_cross_region_ownership_held"
     },
     {
       "authority_boundary": "silhouette_constraint_diagnostic_and_center_shift_candidate_only",
@@ -2853,18 +2841,18 @@
       "candidate_bounds": {
         "center": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "max": [
           -5.375,
-          0.39055,
-          -0.10945
+          0.59055,
+          -0.15945
         ],
         "min": [
           -6.125,
-          -0.79055,
-          -1.29055
+          -0.59055,
+          -1.34055
         ],
         "span": [
           0.75,
@@ -2874,8 +2862,8 @@
       },
       "candidate_center_m": [
         -5.75,
-        -0.2,
-        -0.7
+        0.0,
+        -0.75
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -2885,7 +2873,7 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 43,
         "views": {
           "front": {
             "exceeds_tolerance": false,
@@ -2895,10 +2883,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.79055,
-              -1.29055,
-              0.39055,
-              -0.10945
+              -0.59055,
+              -1.34055,
+              0.59055,
+              -0.15945
             ],
             "sample_count": 25,
             "view": "front"
@@ -2906,33 +2894,33 @@
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
               -6.125,
-              -1.29055,
+              -1.34055,
               -5.375,
-              -0.10945
+              -0.15945
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
               -6.125,
-              -0.79055,
+              -0.59055,
               -5.375,
-              0.39055
+              0.59055
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -2942,21 +2930,23 @@
       "component_role": "nozzle_receiver",
       "constraint_status": "already_inside_whole_airframe",
       "current_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 0.375,
         "bounds": {
           "center": [
             -5.75,
-            -0.2,
-            -0.7
+            0.0,
+            -0.75
           ],
           "max": [
             -5.375,
-            0.39055,
-            -0.10945
+            0.59055,
+            -0.15945
           ],
           "min": [
             -6.125,
-            -0.79055,
-            -1.29055
+            -0.59055,
+            -1.34055
           ],
           "span": [
             0.75,
@@ -2966,21 +2956,18 @@
         },
         "center_m": [
           -5.75,
-          -0.2,
-          -0.7
+          0.0,
+          -0.75
         ],
         "half_extents_m": [
           0.375,
           0.59055,
           0.59055
         ],
-        "radii_m": [
-          0.375,
-          0.59055,
-          0.59055
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.547814
+        "negative_axis_radius_m": 0.45,
+        "positive_axis_radius_m": 0.59055,
+        "shape": "frustum",
+        "volume_m3": 0.641668
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -2989,7 +2976,7 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 43,
         "views": {
           "front": {
             "exceeds_tolerance": false,
@@ -2999,10 +2986,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.79055,
-              -1.29055,
-              0.39055,
-              -0.10945
+              -0.59055,
+              -1.34055,
+              0.59055,
+              -0.15945
             ],
             "sample_count": 25,
             "view": "front"
@@ -3010,33 +2997,33 @@
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
               -6.125,
-              -1.29055,
+              -1.34055,
               -5.375,
-              -0.10945
+              -0.15945
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
               -6.125,
-              -0.79055,
+              -0.59055,
               -5.375,
-              0.39055
+              0.59055
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -3053,8 +3040,8 @@
         "aft_fuselage_engine"
       ],
       "parent_component_name": "afterburner_nozzle",
-      "prior_axis": "",
-      "prior_shape": "ellipsoid",
+      "prior_axis": "x",
+      "prior_shape": "frustum",
       "recommended_action": "no_geometry_correction_required_before_human_size_review",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -3488,19 +3475,19 @@
       "bound_region_id": "vertical_tail",
       "candidate_bounds": {
         "center": [
-          -6.7,
+          -4.82358,
           0.0,
-          0.45
+          -0.372826
         ],
         "max": [
-          -6.66,
+          -4.78358,
           0.04,
-          0.675
+          -0.147826
         ],
         "min": [
-          -6.74,
+          -4.86358,
           -0.04,
-          0.225
+          -0.597826
         ],
         "span": [
           0.08,
@@ -3509,9 +3496,9 @@
         ]
       },
       "candidate_center_m": [
-        -6.7,
+        -4.82358,
         0.0,
-        0.45
+        -0.372826
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -3532,9 +3519,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.04,
-              0.225,
+              -0.597826,
               0.04,
-              0.675
+              -0.147826
             ],
             "sample_count": 27,
             "view": "front"
@@ -3547,10 +3534,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -6.74,
-              0.225,
-              -6.66,
-              0.675
+              -4.86358,
+              -0.597826,
+              -4.78358,
+              -0.147826
             ],
             "sample_count": 27,
             "view": "side"
@@ -3563,9 +3550,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -6.74,
+              -4.86358,
               -0.04,
-              -6.66,
+              -4.78358,
               0.04
             ],
             "sample_count": 25,
@@ -3582,19 +3569,19 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -6.7,
+            -4.82358,
             0.0,
-            0.45
+            -0.372826
           ],
           "max": [
-            -6.66,
+            -4.78358,
             0.04,
-            0.675
+            -0.147826
           ],
           "min": [
-            -6.74,
+            -4.86358,
             -0.04,
-            0.225
+            -0.597826
           ],
           "span": [
             0.08,
@@ -3603,9 +3590,9 @@
           ]
         },
         "center_m": [
-          -6.7,
+          -4.82358,
           0.0,
-          0.45
+          -0.372826
         ],
         "cylinder_half_length_m": 0.185,
         "half_extents_m": [
@@ -3635,9 +3622,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.04,
-              0.225,
+              -0.597826,
               0.04,
-              0.675
+              -0.147826
             ],
             "sample_count": 27,
             "view": "front"
@@ -3650,10 +3637,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -6.74,
-              0.225,
-              -6.66,
-              0.675
+              -4.86358,
+              -0.597826,
+              -4.78358,
+              -0.147826
             ],
             "sample_count": 27,
             "view": "side"
@@ -3666,9 +3653,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -6.74,
+              -4.86358,
               -0.04,
-              -6.66,
+              -4.78358,
               0.04
             ],
             "sample_count": 25,
@@ -4130,29 +4117,29 @@
       "bound_region_id": "left_wing",
       "candidate_bounds": {
         "center": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
         "max": [
-          -0.4,
-          -1.2,
+          -1.15,
+          -0.82,
           -0.91
         ],
         "min": [
-          -2.4,
-          -3.4,
+          -3.0,
+          -2.55,
           -1.06
         ],
         "span": [
-          2.0,
-          2.2,
+          1.85,
+          1.73,
           0.15
         ]
       },
       "candidate_center_m": [
-        -1.4,
-        -2.3,
+        -2.075,
+        -1.685,
         -0.985
       ],
       "candidate_center_shift_m": 0.0,
@@ -4163,54 +4150,54 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.4,
+              -2.55,
               -1.06,
-              -1.2,
+              -0.82,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
+              -3.0,
               -1.06,
-              -0.4,
+              -1.15,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
-              -3.4,
-              -0.4,
-              -1.2
+              -3.0,
+              -2.55,
+              -1.15,
+              -0.82
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -4218,47 +4205,63 @@
       "component_name": "left_wing_fuel_cell",
       "component_review_semantics": "candidate_direct_region_binding",
       "component_role": "wing_fuel_cell_receiver",
-      "constraint_status": "already_inside_whole_airframe",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
       "current_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            -2.3,
+            -2.075,
+            -1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            -1.2,
+            -1.15,
+            -0.82,
             -0.91
           ],
           "min": [
-            -2.4,
-            -3.4,
+            -3.0,
+            -2.55,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          -2.3,
+          -2.075,
+          -1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            -2.55
+          ],
+          [
+            -2.95,
+            -1.05
+          ],
+          [
+            -1.25,
+            -0.82
+          ],
+          [
+            -1.15,
+            -1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -4267,62 +4270,62 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.4,
+              -2.55,
               -1.06,
-              -1.2,
+              -0.82,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
+              -3.0,
               -1.06,
-              -0.4,
+              -1.15,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
-              -3.4,
-              -0.4,
-              -1.2
+              -3.0,
+              -2.55,
+              -1.15,
+              -0.82
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "left_wing_fuel_cell",
       "nominal_dimensions_m": [
-        2.0,
-        2.2,
+        1.85,
+        1.73,
         0.15
       ],
       "outside_sample_reduction": 0,
@@ -4331,7 +4334,7 @@
       ],
       "parent_component_name": "left_wing_fuel_cell",
       "prior_axis": "",
-      "prior_shape": "ellipsoid",
+      "prior_shape": "thin_prism",
       "recommended_action": "no_geometry_correction_required_before_human_size_review",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -4345,29 +4348,29 @@
       "bound_region_id": "right_wing",
       "candidate_bounds": {
         "center": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
         "max": [
-          -0.4,
-          3.4,
+          -1.15,
+          2.55,
           -0.91
         ],
         "min": [
-          -2.4,
-          1.2,
+          -3.0,
+          0.82,
           -1.06
         ],
         "span": [
-          2.0,
-          2.2,
+          1.85,
+          1.73,
           0.15
         ]
       },
       "candidate_center_m": [
-        -1.4,
-        2.3,
+        -2.075,
+        1.685,
         -0.985
       ],
       "candidate_center_shift_m": 0.0,
@@ -4378,54 +4381,54 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              1.2,
+              0.82,
               -1.06,
-              3.4,
+              2.55,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
+              -3.0,
               -1.06,
-              -0.4,
+              -1.15,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
-              1.2,
-              -0.4,
-              3.4
+              -3.0,
+              0.82,
+              -1.15,
+              2.55
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -4433,47 +4436,63 @@
       "component_name": "right_wing_fuel_cell",
       "component_review_semantics": "candidate_direct_region_binding",
       "component_role": "wing_fuel_cell_receiver",
-      "constraint_status": "already_inside_whole_airframe",
+      "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
       "current_geometry": {
         "bounds": {
           "center": [
-            -1.4,
-            2.3,
+            -2.075,
+            1.685,
             -0.985
           ],
           "max": [
-            -0.4,
-            3.4,
+            -1.15,
+            2.55,
             -0.91
           ],
           "min": [
-            -2.4,
-            1.2,
+            -3.0,
+            0.82,
             -1.06
           ],
           "span": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ]
         },
         "center_m": [
-          -1.4,
-          2.3,
+          -2.075,
+          1.685,
           -0.985
         ],
+        "footprint_area_m2": 2.3445,
+        "footprint_points_m": [
+          [
+            -3.0,
+            2.55
+          ],
+          [
+            -2.95,
+            1.05
+          ],
+          [
+            -1.25,
+            0.82
+          ],
+          [
+            -1.15,
+            1.95
+          ]
+        ],
         "half_extents_m": [
-          1.0,
-          1.1,
+          0.925,
+          0.865,
           0.075
         ],
-        "radii_m": [
-          1.0,
-          1.1,
-          0.075
-        ],
-        "shape": "ellipsoid",
-        "volume_m3": 0.345575
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.15,
+        "volume_m3": 0.351675
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -4482,62 +4501,62 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 75,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              1.2,
+              0.82,
               -1.06,
-              3.4,
+              2.55,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
+              -3.0,
               -1.06,
-              -0.4,
+              -1.15,
               -0.91
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.4,
-              1.2,
-              -0.4,
-              3.4
+              -3.0,
+              0.82,
+              -1.15,
+              2.55
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "right_wing_fuel_cell",
       "nominal_dimensions_m": [
-        2.0,
-        2.2,
+        1.85,
+        1.73,
         0.15
       ],
       "outside_sample_reduction": 0,
@@ -4546,7 +4565,7 @@
       ],
       "parent_component_name": "right_wing_fuel_cell",
       "prior_axis": "",
-      "prior_shape": "ellipsoid",
+      "prior_shape": "thin_prism",
       "recommended_action": "no_geometry_correction_required_before_human_size_review",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -4560,18 +4579,18 @@
       "bound_region_id": "left_wing",
       "candidate_bounds": {
         "center": [
-          -0.8,
-          -4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "max": [
-          -0.76,
-          -3.875,
+          -1.165895,
+          0.224999,
           -0.945
         ],
         "min": [
-          -0.84,
-          -4.325,
+          -1.245895,
+          -0.225001,
           -1.025
         ],
         "span": [
@@ -4581,8 +4600,8 @@
         ]
       },
       "candidate_center_m": [
-        -0.8,
-        -4.1,
+        -1.205895,
+        -1e-06,
         -0.985
       ],
       "candidate_center_shift_m": 0.0,
@@ -4603,9 +4622,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -4.325,
+              -0.225001,
               -1.025,
-              -3.875,
+              0.224999,
               -0.945
             ],
             "sample_count": 27,
@@ -4619,9 +4638,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
+              -1.245895,
               -1.025,
-              -0.76,
+              -1.165895,
               -0.945
             ],
             "sample_count": 25,
@@ -4635,10 +4654,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
-              -4.325,
-              -0.76,
-              -3.875
+              -1.245895,
+              -0.225001,
+              -1.165895,
+              0.224999
             ],
             "sample_count": 27,
             "view": "top"
@@ -4654,18 +4673,18 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -0.8,
-            -4.1,
+            -1.205895,
+            -1e-06,
             -0.985
           ],
           "max": [
-            -0.76,
-            -3.875,
+            -1.165895,
+            0.224999,
             -0.945
           ],
           "min": [
-            -0.84,
-            -4.325,
+            -1.245895,
+            -0.225001,
             -1.025
           ],
           "span": [
@@ -4675,8 +4694,8 @@
           ]
         },
         "center_m": [
-          -0.8,
-          -4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "cylinder_half_length_m": 0.185,
@@ -4706,9 +4725,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -4.325,
+              -0.225001,
               -1.025,
-              -3.875,
+              0.224999,
               -0.945
             ],
             "sample_count": 27,
@@ -4722,9 +4741,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
+              -1.245895,
               -1.025,
-              -0.76,
+              -1.165895,
               -0.945
             ],
             "sample_count": 25,
@@ -4738,10 +4757,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
-              -4.325,
-              -0.76,
-              -3.875
+              -1.245895,
+              -0.225001,
+              -1.165895,
+              0.224999
             ],
             "sample_count": 27,
             "view": "top"
@@ -4774,18 +4793,18 @@
       "bound_region_id": "right_wing",
       "candidate_bounds": {
         "center": [
-          -0.8,
-          4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "max": [
-          -0.76,
-          4.325,
+          -1.165895,
+          0.224999,
           -0.945
         ],
         "min": [
-          -0.84,
-          3.875,
+          -1.245895,
+          -0.225001,
           -1.025
         ],
         "span": [
@@ -4795,8 +4814,8 @@
         ]
       },
       "candidate_center_m": [
-        -0.8,
-        4.1,
+        -1.205895,
+        -1e-06,
         -0.985
       ],
       "candidate_center_shift_m": 0.0,
@@ -4817,9 +4836,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              3.875,
+              -0.225001,
               -1.025,
-              4.325,
+              0.224999,
               -0.945
             ],
             "sample_count": 27,
@@ -4833,9 +4852,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
+              -1.245895,
               -1.025,
-              -0.76,
+              -1.165895,
               -0.945
             ],
             "sample_count": 25,
@@ -4849,10 +4868,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
-              3.875,
-              -0.76,
-              4.325
+              -1.245895,
+              -0.225001,
+              -1.165895,
+              0.224999
             ],
             "sample_count": 27,
             "view": "top"
@@ -4868,18 +4887,18 @@
         "axis_half_extent_m": 0.225,
         "bounds": {
           "center": [
-            -0.8,
-            4.1,
+            -1.205895,
+            -1e-06,
             -0.985
           ],
           "max": [
-            -0.76,
-            4.325,
+            -1.165895,
+            0.224999,
             -0.945
           ],
           "min": [
-            -0.84,
-            3.875,
+            -1.245895,
+            -0.225001,
             -1.025
           ],
           "span": [
@@ -4889,8 +4908,8 @@
           ]
         },
         "center_m": [
-          -0.8,
-          4.1,
+          -1.205895,
+          -1e-06,
           -0.985
         ],
         "cylinder_half_length_m": 0.185,
@@ -4920,9 +4939,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              3.875,
+              -0.225001,
               -1.025,
-              4.325,
+              0.224999,
               -0.945
             ],
             "sample_count": 27,
@@ -4936,9 +4955,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
+              -1.245895,
               -1.025,
-              -0.76,
+              -1.165895,
               -0.945
             ],
             "sample_count": 25,
@@ -4952,10 +4971,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -0.84,
-              3.875,
-              -0.76,
-              4.325
+              -1.245895,
+              -0.225001,
+              -1.165895,
+              0.224999
             ],
             "sample_count": 27,
             "view": "top"
@@ -4988,28 +5007,28 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
         "max": [
-          -1.002842,
-          3.3,
+          -0.95,
+          2.9,
           -0.895043
         ],
         "min": [
-          -1.182842,
-          -3.3,
+          -1.45,
+          -2.9,
           -1.075043
         ],
         "span": [
-          0.18,
-          6.6,
+          0.5,
+          5.8,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
+        -1.2,
         0.0,
         -0.985043
       ],
@@ -5021,54 +5040,54 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.3,
+              -2.9,
               -1.075043,
-              3.3,
+              2.9,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
-              -3.3,
-              -1.002842,
-              3.3
+              -1.45,
+              -2.9,
+              -0.95,
+              2.9
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -5078,44 +5097,61 @@
       "component_role": "cross_region_structural_receiver",
       "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
       "current_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 3.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             0.0,
             -0.985043
           ],
           "max": [
-            -1.002842,
-            3.3,
+            -0.95,
+            2.9,
             -0.895043
           ],
           "min": [
-            -1.182842,
-            -3.3,
+            -1.45,
+            -2.9,
             -1.075043
           ],
           "span": [
-            0.18,
-            6.6,
+            0.5,
+            5.8,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
-        "cylinder_half_length_m": 3.21,
+        "footprint_area_m2": 2.9,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -2.9
+          ],
+          [
+            -0.95,
+            -2.9
+          ],
+          [
+            -0.95,
+            2.9
+          ],
+          [
+            -1.45,
+            2.9
+          ]
+        ],
         "half_extents_m": [
-          0.09,
-          3.3,
+          0.25,
+          2.9,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.166423
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.522
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -5124,62 +5160,62 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -3.3,
+              -2.9,
               -1.075043,
-              3.3,
+              2.9,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
-              -3.3,
-              -1.002842,
-              3.3
+              -1.45,
+              -2.9,
+              -0.95,
+              2.9
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "wing_spar_center",
       "nominal_dimensions_m": [
-        0.18,
-        6.6,
+        0.5,
+        5.8,
         0.18
       ],
       "outside_sample_reduction": 0,
@@ -5191,8 +5227,8 @@
         "right_wing"
       ],
       "parent_component_name": "wing_spar_center",
-      "prior_axis": "y",
-      "prior_shape": "capsule",
+      "prior_axis": "",
+      "prior_shape": "thin_prism",
       "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
       "record_type": "receiver_prior",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -5207,18 +5243,18 @@
       "candidate_bounds": {
         "center": [
           -0.2,
-          -1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "max": [
           -0.16,
-          -0.875,
-          -0.67
+          0.274999,
+          -0.892064
         ],
         "min": [
           -0.24,
-          -1.425,
-          -0.75
+          -0.275001,
+          -0.972064
         ],
         "span": [
           0.08,
@@ -5228,8 +5264,8 @@
       },
       "candidate_center_m": [
         -0.2,
-        -1.15,
-        -0.71
+        -1e-06,
+        -0.932064
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -5249,10 +5285,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.425,
-              -0.75,
-              -0.875,
-              -0.67
+              -0.275001,
+              -0.972064,
+              0.274999,
+              -0.892064
             ],
             "sample_count": 27,
             "view": "front"
@@ -5266,9 +5302,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -0.75,
+              -0.972064,
               -0.16,
-              -0.67
+              -0.892064
             ],
             "sample_count": 25,
             "view": "side"
@@ -5282,9 +5318,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -1.425,
+              -0.275001,
               -0.16,
-              -0.875
+              0.274999
             ],
             "sample_count": 27,
             "view": "top"
@@ -5301,18 +5337,18 @@
         "bounds": {
           "center": [
             -0.2,
-            -1.15,
-            -0.71
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -0.16,
-            -0.875,
-            -0.67
+            0.274999,
+            -0.892064
           ],
           "min": [
             -0.24,
-            -1.425,
-            -0.75
+            -0.275001,
+            -0.972064
           ],
           "span": [
             0.08,
@@ -5322,8 +5358,8 @@
         },
         "center_m": [
           -0.2,
-          -1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.235,
         "half_extents_m": [
@@ -5352,10 +5388,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.425,
-              -0.75,
-              -0.875,
-              -0.67
+              -0.275001,
+              -0.972064,
+              0.274999,
+              -0.892064
             ],
             "sample_count": 27,
             "view": "front"
@@ -5369,9 +5405,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -0.75,
+              -0.972064,
               -0.16,
-              -0.67
+              -0.892064
             ],
             "sample_count": 25,
             "view": "side"
@@ -5385,9 +5421,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -1.425,
+              -0.275001,
               -0.16,
-              -0.875
+              0.274999
             ],
             "sample_count": 27,
             "view": "top"
@@ -5421,18 +5457,18 @@
       "candidate_bounds": {
         "center": [
           -0.2,
-          1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "max": [
           -0.16,
-          1.425,
-          -0.67
+          0.274999,
+          -0.892064
         ],
         "min": [
           -0.24,
-          0.875,
-          -0.75
+          -0.275001,
+          -0.972064
         ],
         "span": [
           0.08,
@@ -5442,8 +5478,8 @@
       },
       "candidate_center_m": [
         -0.2,
-        1.15,
-        -0.71
+        -1e-06,
+        -0.932064
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -5463,10 +5499,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.875,
-              -0.75,
-              1.425,
-              -0.67
+              -0.275001,
+              -0.972064,
+              0.274999,
+              -0.892064
             ],
             "sample_count": 27,
             "view": "front"
@@ -5480,9 +5516,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -0.75,
+              -0.972064,
               -0.16,
-              -0.67
+              -0.892064
             ],
             "sample_count": 25,
             "view": "side"
@@ -5496,9 +5532,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              0.875,
+              -0.275001,
               -0.16,
-              1.425
+              0.274999
             ],
             "sample_count": 27,
             "view": "top"
@@ -5515,18 +5551,18 @@
         "bounds": {
           "center": [
             -0.2,
-            1.15,
-            -0.71
+            -1e-06,
+            -0.932064
           ],
           "max": [
             -0.16,
-            1.425,
-            -0.67
+            0.274999,
+            -0.892064
           ],
           "min": [
             -0.24,
-            0.875,
-            -0.75
+            -0.275001,
+            -0.972064
           ],
           "span": [
             0.08,
@@ -5536,8 +5572,8 @@
         },
         "center_m": [
           -0.2,
-          1.15,
-          -0.71
+          -1e-06,
+          -0.932064
         ],
         "cylinder_half_length_m": 0.235,
         "half_extents_m": [
@@ -5566,10 +5602,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              0.875,
-              -0.75,
-              1.425,
-              -0.67
+              -0.275001,
+              -0.972064,
+              0.274999,
+              -0.892064
             ],
             "sample_count": 27,
             "view": "front"
@@ -5583,9 +5619,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              -0.75,
+              -0.972064,
               -0.16,
-              -0.67
+              -0.892064
             ],
             "sample_count": 25,
             "view": "side"
@@ -5599,9 +5635,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.24,
-              0.875,
+              -0.275001,
               -0.16,
-              1.425
+              0.274999
             ],
             "sample_count": 27,
             "view": "top"
@@ -5636,17 +5672,17 @@
         "center": [
           -5.025512,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "max": [
           -4.255469,
           0.59055,
-          0.036169
+          -0.313831
         ],
         "min": [
           -5.795555,
           -0.59055,
-          -1.144931
+          -1.494931
         ],
         "span": [
           1.540086,
@@ -5657,7 +5693,7 @@
       "candidate_center_m": [
         -5.025512,
         0.0,
-        -0.554381
+        -0.904381
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -5678,9 +5714,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -5694,9 +5730,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -5.795555,
-              -1.144931,
+              -1.494931,
               -4.255469,
-              0.036169
+              -0.313831
             ],
             "sample_count": 27,
             "view": "side"
@@ -5730,17 +5766,17 @@
           "center": [
             -5.025512,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -4.255468,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -5.795555,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             1.540087,
@@ -5751,7 +5787,7 @@
         "center_m": [
           -5.025512,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "cylinder_half_length_m": 0.179493,
         "half_extents_m": [
@@ -5781,9 +5817,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -5797,9 +5833,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -5.795555,
-              -1.144931,
+              -1.494931,
               -4.255468,
-              0.036169
+              -0.313831
             ],
             "sample_count": 27,
             "view": "side"
@@ -5851,17 +5887,17 @@
         "center": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "max": [
           -2.92301,
           0.59055,
-          0.036169
+          -0.313831
         ],
         "min": [
           -4.463096,
           -0.59055,
-          -1.144931
+          -1.494931
         ],
         "span": [
           1.540086,
@@ -5872,7 +5908,7 @@
       "candidate_center_m": [
         -3.693053,
         0.0,
-        -0.554381
+        -0.904381
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -5893,9 +5929,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -5909,9 +5945,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.463096,
-              -1.144931,
+              -1.494931,
               -2.92301,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "side"
@@ -5943,17 +5979,17 @@
           "center": [
             -3.693053,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -2.92301,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -4.463096,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             1.540087,
@@ -5964,7 +6000,7 @@
         "center_m": [
           -3.693053,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "half_extents_m": [
           0.770043,
@@ -5997,9 +6033,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -6013,9 +6049,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -4.463096,
-              -1.144931,
+              -1.494931,
               -2.92301,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "side"
@@ -6066,17 +6102,17 @@
         "center": [
           -2.352966,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "max": [
           -1.582923,
           0.59055,
-          0.036169
+          -0.313831
         ],
         "min": [
           -3.123009,
           -0.59055,
-          -1.144931
+          -1.494931
         ],
         "span": [
           1.540086,
@@ -6087,7 +6123,7 @@
       "candidate_center_m": [
         -2.352966,
         0.0,
-        -0.554381
+        -0.904381
       ],
       "candidate_center_shift_m": 0.0,
       "candidate_silhouette": {
@@ -6108,9 +6144,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -6124,9 +6160,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -3.123009,
-              -1.144931,
+              -1.494931,
               -1.582923,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "side"
@@ -6158,17 +6194,17 @@
           "center": [
             -2.352966,
             0.0,
-            -0.554381
+            -0.904381
           ],
           "max": [
             -1.582923,
             0.59055,
-            0.036169
+            -0.313831
           ],
           "min": [
             -3.12301,
             -0.59055,
-            -1.144931
+            -1.494931
           ],
           "span": [
             1.540087,
@@ -6179,7 +6215,7 @@
         "center_m": [
           -2.352966,
           0.0,
-          -0.554381
+          -0.904381
         ],
         "half_extents_m": [
           0.770043,
@@ -6212,9 +6248,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -0.59055,
-              -1.144931,
+              -1.494931,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "front"
@@ -6228,9 +6264,9 @@
             "outside_sample_count": 0,
             "projected_bounds": [
               -3.12301,
-              -1.144931,
+              -1.494931,
               -1.582923,
-              0.036169
+              -0.313831
             ],
             "sample_count": 25,
             "view": "side"
@@ -6279,29 +6315,29 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
-          -1.575,
+          -1.2,
+          -1.375,
           -0.985043
         ],
         "max": [
-          -1.002842,
+          -0.95,
           -0.65,
           -0.895043
         ],
         "min": [
-          -1.182842,
-          -2.5,
+          -1.45,
+          -2.1,
           -1.075043
         ],
         "span": [
-          0.18,
-          1.85,
+          0.5,
+          1.45,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
-        -1.575,
+        -1.2,
+        -1.375,
         -0.985043
       ],
       "candidate_center_shift_m": 0.0,
@@ -6322,7 +6358,7 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.5,
+              -2.1,
               -1.075043,
               -0.65,
               -0.895043
@@ -6338,9 +6374,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
             "sample_count": 25,
@@ -6354,9 +6390,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
-              -2.5,
-              -1.002842,
+              -1.45,
+              -2.1,
+              -0.95,
               -0.65
             ],
             "sample_count": 25,
@@ -6371,43 +6407,43 @@
       "current_geometry": {
         "bounds": {
           "center": [
-            -1.092842,
-            -1.575,
+            -1.2,
+            -1.375,
             -0.985043
           ],
           "max": [
-            -1.002842,
+            -0.95,
             -0.65,
             -0.895043
           ],
           "min": [
-            -1.182842,
-            -2.5,
+            -1.45,
+            -2.1,
             -1.075043
           ],
           "span": [
-            0.18,
-            1.85,
+            0.5,
+            1.45,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
-          -1.575,
+          -1.2,
+          -1.375,
           -0.985043
         ],
         "half_extents_m": [
-          0.09,
-          0.925,
+          0.25,
+          0.725,
           0.09
         ],
         "radii_m": [
-          0.09,
-          0.925,
+          0.25,
+          0.725,
           0.09
         ],
         "shape": "ellipsoid",
-        "volume_m3": 0.031385
+        "volume_m3": 0.06833
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -6426,7 +6462,7 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -2.5,
+              -2.1,
               -1.075043,
               -0.65,
               -0.895043
@@ -6442,9 +6478,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
             "sample_count": 25,
@@ -6458,9 +6494,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
-              -2.5,
-              -1.002842,
+              -1.45,
+              -2.1,
+              -0.95,
               -0.65
             ],
             "sample_count": 25,
@@ -6470,8 +6506,8 @@
       },
       "item_id": "wing_spar_center_left_inner_wing_segment",
       "nominal_dimensions_m": [
-        0.18,
-        1.85,
+        0.5,
+        1.45,
         0.18
       ],
       "outside_sample_reduction": 0,
@@ -6494,28 +6530,28 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
+          -1.2,
           -1.15,
           -0.985043
         ],
         "max": [
-          -1.002842,
+          -0.95,
           -0.85,
           -0.895043
         ],
         "min": [
-          -1.182842,
+          -1.45,
           -1.45,
           -1.075043
         ],
         "span": [
-          0.18,
+          0.5,
           0.6,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
+        -1.2,
         -1.15,
         -0.985043
       ],
@@ -6527,12 +6563,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -6542,39 +6578,39 @@
               -0.85,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
               -1.45,
-              -1.002842,
+              -1.45,
+              -0.95,
               -0.85
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -6584,44 +6620,61 @@
       "component_role": "left_wing_root_spar_proxy",
       "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
       "current_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 0.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             -1.15,
             -0.985043
           ],
           "max": [
-            -1.002842,
+            -0.95,
             -0.85,
             -0.895043
           ],
           "min": [
-            -1.182842,
+            -1.45,
             -1.45,
             -1.075043
           ],
           "span": [
-            0.18,
+            0.5,
             0.6,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           -1.15,
           -0.985043
         ],
-        "cylinder_half_length_m": 0.21,
+        "footprint_area_m2": 0.3,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -1.45
+          ],
+          [
+            -0.95,
+            -1.45
+          ],
+          [
+            -0.95,
+            -0.85
+          ],
+          [
+            -1.45,
+            -0.85
+          ]
+        ],
         "half_extents_m": [
-          0.09,
+          0.25,
           0.3,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.013741
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.054
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -6630,12 +6683,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -6645,46 +6698,46 @@
               -0.85,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
               -1.45,
-              -1.002842,
+              -1.45,
+              -0.95,
               -0.85
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "wing_spar_center_left_root_segment",
       "nominal_dimensions_m": [
-        0.18,
+        0.5,
         0.6,
         0.18
       ],
@@ -6693,8 +6746,8 @@
         "left_wing_root"
       ],
       "parent_component_name": "wing_spar_center",
-      "prior_axis": "y",
-      "prior_shape": "capsule",
+      "prior_axis": "",
+      "prior_shape": "thin_prism",
       "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
       "record_type": "held_split_segment",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -6708,28 +6761,28 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
         "max": [
-          -1.002842,
+          -0.95,
           0.85,
           -0.895043
         ],
         "min": [
-          -1.182842,
+          -1.45,
           -0.85,
           -1.075043
         ],
         "span": [
-          0.18,
+          0.5,
           1.7,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
+        -1.2,
         0.0,
         -0.985043
       ],
@@ -6741,12 +6794,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -6756,39 +6809,39 @@
               0.85,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -0.85,
-              -1.002842,
+              -0.95,
               0.85
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -6798,44 +6851,61 @@
       "component_role": "center_fuselage_carrythrough_box_proxy",
       "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
       "current_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 0.85,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             0.0,
             -0.985043
           ],
           "max": [
-            -1.002842,
+            -0.95,
             0.85,
             -0.895043
           ],
           "min": [
-            -1.182842,
+            -1.45,
             -0.85,
             -1.075043
           ],
           "span": [
-            0.18,
+            0.5,
             1.7,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           0.0,
           -0.985043
         ],
-        "cylinder_half_length_m": 0.76,
+        "footprint_area_m2": 0.85,
+        "footprint_points_m": [
+          [
+            -1.45,
+            -0.85
+          ],
+          [
+            -0.95,
+            -0.85
+          ],
+          [
+            -0.95,
+            0.85
+          ],
+          [
+            -1.45,
+            0.85
+          ]
+        ],
         "half_extents_m": [
-          0.09,
+          0.25,
           0.85,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.041733
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.153
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -6844,12 +6914,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -6859,46 +6929,46 @@
               0.85,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -0.85,
-              -1.002842,
+              -0.95,
               0.85
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "wing_spar_center_carrythrough_segment",
       "nominal_dimensions_m": [
-        0.18,
+        0.5,
         1.7,
         0.18
       ],
@@ -6907,8 +6977,8 @@
         "center_fuselage"
       ],
       "parent_component_name": "wing_spar_center",
-      "prior_axis": "y",
-      "prior_shape": "capsule",
+      "prior_axis": "",
+      "prior_shape": "thin_prism",
       "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
       "record_type": "held_split_segment",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -6922,28 +6992,28 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
+          -1.2,
           1.15,
           -0.985043
         ],
         "max": [
-          -1.002842,
+          -0.95,
           1.45,
           -0.895043
         ],
         "min": [
-          -1.182842,
+          -1.45,
           0.85,
           -1.075043
         ],
         "span": [
-          0.18,
+          0.5,
           0.6,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
+        -1.2,
         1.15,
         -0.985043
       ],
@@ -6955,12 +7025,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -6970,39 +7040,39 @@
               1.45,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               0.85,
-              -1.002842,
+              -0.95,
               1.45
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
@@ -7012,44 +7082,61 @@
       "component_role": "right_wing_root_spar_proxy",
       "constraint_status": "cross_region_prior_constrained_inside_airframe_held",
       "current_geometry": {
-        "axis": "y",
-        "axis_half_extent_m": 0.3,
         "bounds": {
           "center": [
-            -1.092842,
+            -1.2,
             1.15,
             -0.985043
           ],
           "max": [
-            -1.002842,
+            -0.95,
             1.45,
             -0.895043
           ],
           "min": [
-            -1.182842,
+            -1.45,
             0.85,
             -1.075043
           ],
           "span": [
-            0.18,
+            0.5,
             0.6,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
+          -1.2,
           1.15,
           -0.985043
         ],
-        "cylinder_half_length_m": 0.21,
+        "footprint_area_m2": 0.3,
+        "footprint_points_m": [
+          [
+            -1.45,
+            0.85
+          ],
+          [
+            -0.95,
+            0.85
+          ],
+          [
+            -0.95,
+            1.45
+          ],
+          [
+            -1.45,
+            1.45
+          ]
+        ],
         "half_extents_m": [
-          0.09,
+          0.25,
           0.3,
           0.09
         ],
-        "radius_m": 0.09,
-        "shape": "capsule",
-        "volume_m3": 0.013741
+        "shape": "thin_prism",
+        "thickness_axis": "z",
+        "thickness_m": 0.18,
+        "volume_m3": 0.054
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -7058,12 +7145,12 @@
         "outside_sample_count": 0,
         "outside_view_count": 0,
         "outside_views": [],
-        "sample_count": 79,
+        "sample_count": 27,
         "views": {
           "front": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
@@ -7073,46 +7160,46 @@
               1.45,
               -0.895043
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "front"
           },
           "side": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 25,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
-            "sample_count": 25,
+            "sample_count": 9,
             "view": "side"
           },
           "top": {
             "exceeds_tolerance": false,
             "fully_inside_silhouette": true,
-            "inside_sample_count": 27,
+            "inside_sample_count": 9,
             "inside_sample_fraction": 1.0,
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               0.85,
-              -1.002842,
+              -0.95,
               1.45
             ],
-            "sample_count": 27,
+            "sample_count": 9,
             "view": "top"
           }
         }
       },
       "item_id": "wing_spar_center_right_root_segment",
       "nominal_dimensions_m": [
-        0.18,
+        0.5,
         0.6,
         0.18
       ],
@@ -7121,8 +7208,8 @@
         "right_wing_root"
       ],
       "parent_component_name": "wing_spar_center",
-      "prior_axis": "y",
-      "prior_shape": "capsule",
+      "prior_axis": "",
+      "prior_shape": "thin_prism",
       "recommended_action": "keep_cross_region_receiver_held_until_ownership_is_split_or_accepted",
       "record_type": "held_split_segment",
       "runtime_projection_status": "review_only_airframe_constraint_correction_candidate_not_runtime_active",
@@ -7136,29 +7223,29 @@
       "bound_region_id": "center_fuselage",
       "candidate_bounds": {
         "center": [
-          -1.092842,
-          1.575,
+          -1.2,
+          1.375,
           -0.985043
         ],
         "max": [
-          -1.002842,
-          2.5,
+          -0.95,
+          2.1,
           -0.895043
         ],
         "min": [
-          -1.182842,
+          -1.45,
           0.65,
           -1.075043
         ],
         "span": [
-          0.18,
-          1.85,
+          0.5,
+          1.45,
           0.18
         ]
       },
       "candidate_center_m": [
-        -1.092842,
-        1.575,
+        -1.2,
+        1.375,
         -0.985043
       ],
       "candidate_center_shift_m": 0.0,
@@ -7181,7 +7268,7 @@
             "projected_bounds": [
               0.65,
               -1.075043,
-              2.5,
+              2.1,
               -0.895043
             ],
             "sample_count": 25,
@@ -7195,9 +7282,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
             "sample_count": 25,
@@ -7211,10 +7298,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               0.65,
-              -1.002842,
-              2.5
+              -0.95,
+              2.1
             ],
             "sample_count": 25,
             "view": "top"
@@ -7228,43 +7315,43 @@
       "current_geometry": {
         "bounds": {
           "center": [
-            -1.092842,
-            1.575,
+            -1.2,
+            1.375,
             -0.985043
           ],
           "max": [
-            -1.002842,
-            2.5,
+            -0.95,
+            2.1,
             -0.895043
           ],
           "min": [
-            -1.182842,
+            -1.45,
             0.65,
             -1.075043
           ],
           "span": [
-            0.18,
-            1.85,
+            0.5,
+            1.45,
             0.18
           ]
         },
         "center_m": [
-          -1.092842,
-          1.575,
+          -1.2,
+          1.375,
           -0.985043
         ],
         "half_extents_m": [
-          0.09,
-          0.925,
+          0.25,
+          0.725,
           0.09
         ],
         "radii_m": [
-          0.09,
-          0.925,
+          0.25,
+          0.725,
           0.09
         ],
         "shape": "ellipsoid",
-        "volume_m3": 0.031385
+        "volume_m3": 0.06833
       },
       "current_silhouette": {
         "fully_inside_all_views": true,
@@ -7285,7 +7372,7 @@
             "projected_bounds": [
               0.65,
               -1.075043,
-              2.5,
+              2.1,
               -0.895043
             ],
             "sample_count": 25,
@@ -7299,9 +7386,9 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               -1.075043,
-              -1.002842,
+              -0.95,
               -0.895043
             ],
             "sample_count": 25,
@@ -7315,10 +7402,10 @@
             "max_outside_distance_m": 0.0,
             "outside_sample_count": 0,
             "projected_bounds": [
-              -1.182842,
+              -1.45,
               0.65,
-              -1.002842,
-              2.5
+              -0.95,
+              2.1
             ],
             "sample_count": 25,
             "view": "top"
@@ -7327,8 +7414,8 @@
       },
       "item_id": "wing_spar_center_right_inner_wing_segment",
       "nominal_dimensions_m": [
-        0.18,
-        1.85,
+        0.5,
+        1.45,
         0.18
       ],
       "outside_sample_reduction": 0,
@@ -7361,13 +7448,12 @@
     "receiver_prior_count": 26,
     "review_status": "manual_review_required_before_activation",
     "runtime_active_component_count": 0,
-    "silhouette_exposure_item_count": 3,
-    "size_or_shape_review_item_count": 3,
+    "silhouette_exposure_item_count": 0,
+    "size_or_shape_review_item_count": 0,
     "triage_status_counts": {
-      "inside_airframe_candidate": 13,
-      "inside_airframe_cross_region_ownership_held": 9,
-      "inside_airframe_low_confidence_size_review": 9,
-      "silhouette_exposure_requires_size_or_shape_review": 3
+      "inside_airframe_candidate": 15,
+      "inside_airframe_cross_region_ownership_held": 10,
+      "inside_airframe_low_confidence_size_review": 9
     }
   }
 }

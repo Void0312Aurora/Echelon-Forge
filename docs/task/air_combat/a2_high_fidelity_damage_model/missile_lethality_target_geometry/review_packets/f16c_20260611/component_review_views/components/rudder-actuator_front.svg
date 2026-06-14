@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="789.63" y="60.00" width="77.46" height="466.43" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="819.07" y="69.33" width="18.59" height="447.77" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="803.97" y="410.61" width="48.79" height="75.57" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator candidate_binding</title></rect>
-<text x="807.97" y="423.61" font-size="10" font-family="monospace" fill="#7c3aed">rudder_actuator candidate_binding</text>
-<polygon points="821.84,504.61 828.37,509.16 834.89,504.61 830.94,77.27 825.79,77.27" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="832.37" y="338.59" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

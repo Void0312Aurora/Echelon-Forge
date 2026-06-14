@@ -409,17 +409,17 @@
               "center": [
                 3.787559,
                 0.0,
-                -0.62538
+                -0.67538
               ],
               "max": [
                 4.412559,
                 0.254,
-                -0.05038
+                -0.10038
               ],
               "min": [
                 3.162559,
                 -0.254,
-                -1.20038
+                -1.25038
               ],
               "span": [
                 1.25,
@@ -430,7 +430,7 @@
             "center_m": [
               3.787559,
               0.0,
-              -0.62538
+              -0.67538
             ],
             "half_extents_m": [
               0.625,
@@ -448,7 +448,7 @@
           "constraint_adjustment": {
             "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
-            "placement_outside_fraction": 0.35489,
+            "placement_outside_fraction": 0.39837,
             "post_constraint_outside_fraction": 0.0,
             "pre_constraint_outside_fraction": 0.0,
             "required_fit_scale": 1.0,
@@ -654,17 +654,17 @@
               "center": [
                 2.6,
                 0.0,
-                0.05
+                -0.1
               ],
               "max": [
                 2.72446,
                 0.0889,
-                0.1389
+                -0.0111
               ],
               "min": [
                 2.47554,
                 -0.0889,
-                -0.0389
+                -0.1889
               ],
               "span": [
                 0.24892,
@@ -675,7 +675,7 @@
             "center_m": [
               2.6,
               0.0,
-              0.05
+              -0.1
             ],
             "half_extents_m": [
               0.12446,
@@ -1442,18 +1442,18 @@
             "bounds": {
               "center": [
                 -4.82358,
-                0.45,
-                -0.372826
+                -1e-06,
+                -0.932064
               ],
               "max": [
                 -4.663306,
-                0.511976,
-                -0.301071
+                0.061975,
+                -0.860309
               ],
               "min": [
                 -4.983854,
-                0.388024,
-                -0.444581
+                -0.061977,
+                -1.003819
               ],
               "span": [
                 0.320548,
@@ -1463,8 +1463,8 @@
             },
             "center_m": [
               -4.82358,
-              0.45,
-              -0.372826
+              -1e-06,
+              -0.932064
             ],
             "half_extents_m": [
               0.160274,
@@ -1475,7 +1475,7 @@
             "volume_m3": 0.005702
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 4.877438,
+            "airframe_projection_center_shift_m": 5.011298,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -1558,44 +1558,61 @@
           "component_review_semantics": "cross_region_structural_semantic_hold",
           "component_role": "cross_region_structural_receiver",
           "constrained_geometry": {
-            "axis": "y",
-            "axis_half_extent_m": 3.3,
             "bounds": {
               "center": [
-                -1.092842,
+                -1.2,
                 0.0,
                 -0.985043
               ],
               "max": [
-                -1.002842,
-                3.3,
+                -0.95,
+                2.9,
                 -0.895043
               ],
               "min": [
-                -1.182842,
-                -3.3,
+                -1.45,
+                -2.9,
                 -1.075043
               ],
               "span": [
-                0.18,
-                6.6,
+                0.5,
+                5.8,
                 0.18
               ]
             },
             "center_m": [
-              -1.092842,
+              -1.2,
               0.0,
               -0.985043
             ],
-            "cylinder_half_length_m": 3.21,
+            "footprint_area_m2": 2.9,
+            "footprint_points_m": [
+              [
+                -1.45,
+                -2.9
+              ],
+              [
+                -0.95,
+                -2.9
+              ],
+              [
+                -0.95,
+                2.9
+              ],
+              [
+                -1.45,
+                2.9
+              ]
+            ],
             "half_extents_m": [
-              0.09,
-              3.3,
+              0.25,
+              2.9,
               0.09
             ],
-            "radius_m": 0.09,
-            "shape": "capsule",
-            "volume_m3": 0.166423
+            "shape": "thin_prism",
+            "thickness_axis": "z",
+            "thickness_m": 0.18,
+            "volume_m3": 0.522
           },
           "constraint_adjustment": {
             "airframe_projection_center_shift_m": 0.0,
@@ -1628,49 +1645,49 @@
               "geometry": {
                 "bounds": {
                   "center": [
-                    -1.092842,
-                    -1.575,
+                    -1.2,
+                    -1.375,
                     -0.985043
                   ],
                   "max": [
-                    -1.002842,
+                    -0.95,
                     -0.65,
                     -0.895043
                   ],
                   "min": [
-                    -1.182842,
-                    -2.5,
+                    -1.45,
+                    -2.1,
                     -1.075043
                   ],
                   "span": [
-                    0.18,
-                    1.85,
+                    0.5,
+                    1.45,
                     0.18
                   ]
                 },
                 "center_m": [
-                  -1.092842,
-                  -1.575,
+                  -1.2,
+                  -1.375,
                   -0.985043
                 ],
                 "half_extents_m": [
-                  0.09,
-                  0.925,
+                  0.25,
+                  0.725,
                   0.09
                 ],
                 "radii_m": [
-                  0.09,
-                  0.925,
+                  0.25,
+                  0.725,
                   0.09
                 ],
                 "shape": "ellipsoid",
-                "volume_m3": 0.031385
+                "volume_m3": 0.06833
               },
               "inside_parent_prior_bounds": true,
               "inside_whole_airframe_bounds": true,
               "nominal_dimensions_m": [
-                0.18,
-                1.85,
+                0.5,
+                1.45,
                 0.18
               ],
               "owner_region_ids": [
@@ -1690,27 +1707,27 @@
               "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_left_inner_wing_spar_latest_centerline_ellipsoid",
               "source_parent_prior_bounds": {
                 "center": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
                 "max": [
-                  -1.002842,
-                  3.3,
+                  -0.95,
+                  2.9,
                   -0.895043
                 ],
                 "min": [
-                  -1.182842,
-                  -3.3,
+                  -1.45,
+                  -2.9,
                   -1.075043
                 ],
                 "span": [
-                  0.18,
-                  6.6,
+                  0.5,
+                  5.8,
                   0.18
                 ]
               },
-              "source_parent_segment_shape": "capsule",
+              "source_parent_segment_shape": "thin_prism",
               "whole_airframe_bounds": {
                 "center": [
                   -0.015,
@@ -1743,49 +1760,66 @@
                 0.0
               ],
               "geometry": {
-                "axis": "y",
-                "axis_half_extent_m": 0.3,
                 "bounds": {
                   "center": [
-                    -1.092842,
+                    -1.2,
                     -1.15,
                     -0.985043
                   ],
                   "max": [
-                    -1.002842,
+                    -0.95,
                     -0.85,
                     -0.895043
                   ],
                   "min": [
-                    -1.182842,
+                    -1.45,
                     -1.45,
                     -1.075043
                   ],
                   "span": [
-                    0.18,
+                    0.5,
                     0.6,
                     0.18
                   ]
                 },
                 "center_m": [
-                  -1.092842,
+                  -1.2,
                   -1.15,
                   -0.985043
                 ],
-                "cylinder_half_length_m": 0.21,
+                "footprint_area_m2": 0.3,
+                "footprint_points_m": [
+                  [
+                    -1.45,
+                    -1.45
+                  ],
+                  [
+                    -0.95,
+                    -1.45
+                  ],
+                  [
+                    -0.95,
+                    -0.85
+                  ],
+                  [
+                    -1.45,
+                    -0.85
+                  ]
+                ],
                 "half_extents_m": [
-                  0.09,
+                  0.25,
                   0.3,
                   0.09
                 ],
-                "radius_m": 0.09,
-                "shape": "capsule",
-                "volume_m3": 0.013741
+                "shape": "thin_prism",
+                "thickness_axis": "z",
+                "thickness_m": 0.18,
+                "volume_m3": 0.054
               },
               "inside_parent_prior_bounds": true,
               "inside_whole_airframe_bounds": true,
               "nominal_dimensions_m": [
-                0.18,
+                0.5,
                 0.6,
                 0.18
               ],
@@ -1797,36 +1831,36 @@
               "parent_component_review_semantics": "cross_region_structural_semantic_hold",
               "parent_prior_outside_fraction": 0.0,
               "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
-              "segment_axis": "y",
+              "segment_axis": "",
               "segment_id": "wing_spar_center_left_root_segment",
               "segment_index": 1,
               "segment_role": "left_wing_root_spar_proxy",
-              "segment_shape": "capsule",
+              "segment_shape": "thin_prism",
               "shape_promotion_status": "inherited_parent_prior_shape",
               "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
               "source_parent_prior_bounds": {
                 "center": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
                 "max": [
-                  -1.002842,
-                  3.3,
+                  -0.95,
+                  2.9,
                   -0.895043
                 ],
                 "min": [
-                  -1.182842,
-                  -3.3,
+                  -1.45,
+                  -2.9,
                   -1.075043
                 ],
                 "span": [
-                  0.18,
-                  6.6,
+                  0.5,
+                  5.8,
                   0.18
                 ]
               },
-              "source_parent_segment_shape": "capsule",
+              "source_parent_segment_shape": "thin_prism",
               "whole_airframe_bounds": {
                 "center": [
                   -0.015,
@@ -1859,49 +1893,66 @@
                 0.0
               ],
               "geometry": {
-                "axis": "y",
-                "axis_half_extent_m": 0.85,
                 "bounds": {
                   "center": [
-                    -1.092842,
+                    -1.2,
                     0.0,
                     -0.985043
                   ],
                   "max": [
-                    -1.002842,
+                    -0.95,
                     0.85,
                     -0.895043
                   ],
                   "min": [
-                    -1.182842,
+                    -1.45,
                     -0.85,
                     -1.075043
                   ],
                   "span": [
-                    0.18,
+                    0.5,
                     1.7,
                     0.18
                   ]
                 },
                 "center_m": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
-                "cylinder_half_length_m": 0.76,
+                "footprint_area_m2": 0.85,
+                "footprint_points_m": [
+                  [
+                    -1.45,
+                    -0.85
+                  ],
+                  [
+                    -0.95,
+                    -0.85
+                  ],
+                  [
+                    -0.95,
+                    0.85
+                  ],
+                  [
+                    -1.45,
+                    0.85
+                  ]
+                ],
                 "half_extents_m": [
-                  0.09,
+                  0.25,
                   0.85,
                   0.09
                 ],
-                "radius_m": 0.09,
-                "shape": "capsule",
-                "volume_m3": 0.041733
+                "shape": "thin_prism",
+                "thickness_axis": "z",
+                "thickness_m": 0.18,
+                "volume_m3": 0.153
               },
               "inside_parent_prior_bounds": true,
               "inside_whole_airframe_bounds": true,
               "nominal_dimensions_m": [
-                0.18,
+                0.5,
                 1.7,
                 0.18
               ],
@@ -1913,36 +1964,36 @@
               "parent_component_review_semantics": "cross_region_structural_semantic_hold",
               "parent_prior_outside_fraction": 0.0,
               "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
-              "segment_axis": "y",
+              "segment_axis": "",
               "segment_id": "wing_spar_center_carrythrough_segment",
               "segment_index": 2,
               "segment_role": "center_fuselage_carrythrough_box_proxy",
-              "segment_shape": "capsule",
+              "segment_shape": "thin_prism",
               "shape_promotion_status": "inherited_parent_prior_shape",
               "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
               "source_parent_prior_bounds": {
                 "center": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
                 "max": [
-                  -1.002842,
-                  3.3,
+                  -0.95,
+                  2.9,
                   -0.895043
                 ],
                 "min": [
-                  -1.182842,
-                  -3.3,
+                  -1.45,
+                  -2.9,
                   -1.075043
                 ],
                 "span": [
-                  0.18,
-                  6.6,
+                  0.5,
+                  5.8,
                   0.18
                 ]
               },
-              "source_parent_segment_shape": "capsule",
+              "source_parent_segment_shape": "thin_prism",
               "whole_airframe_bounds": {
                 "center": [
                   -0.015,
@@ -1975,49 +2026,66 @@
                 0.0
               ],
               "geometry": {
-                "axis": "y",
-                "axis_half_extent_m": 0.3,
                 "bounds": {
                   "center": [
-                    -1.092842,
+                    -1.2,
                     1.15,
                     -0.985043
                   ],
                   "max": [
-                    -1.002842,
+                    -0.95,
                     1.45,
                     -0.895043
                   ],
                   "min": [
-                    -1.182842,
+                    -1.45,
                     0.85,
                     -1.075043
                   ],
                   "span": [
-                    0.18,
+                    0.5,
                     0.6,
                     0.18
                   ]
                 },
                 "center_m": [
-                  -1.092842,
+                  -1.2,
                   1.15,
                   -0.985043
                 ],
-                "cylinder_half_length_m": 0.21,
+                "footprint_area_m2": 0.3,
+                "footprint_points_m": [
+                  [
+                    -1.45,
+                    0.85
+                  ],
+                  [
+                    -0.95,
+                    0.85
+                  ],
+                  [
+                    -0.95,
+                    1.45
+                  ],
+                  [
+                    -1.45,
+                    1.45
+                  ]
+                ],
                 "half_extents_m": [
-                  0.09,
+                  0.25,
                   0.3,
                   0.09
                 ],
-                "radius_m": 0.09,
-                "shape": "capsule",
-                "volume_m3": 0.013741
+                "shape": "thin_prism",
+                "thickness_axis": "z",
+                "thickness_m": 0.18,
+                "volume_m3": 0.054
               },
               "inside_parent_prior_bounds": true,
               "inside_whole_airframe_bounds": true,
               "nominal_dimensions_m": [
-                0.18,
+                0.5,
                 0.6,
                 0.18
               ],
@@ -2029,36 +2097,36 @@
               "parent_component_review_semantics": "cross_region_structural_semantic_hold",
               "parent_prior_outside_fraction": 0.0,
               "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
-              "segment_axis": "y",
+              "segment_axis": "",
               "segment_id": "wing_spar_center_right_root_segment",
               "segment_index": 3,
               "segment_role": "right_wing_root_spar_proxy",
-              "segment_shape": "capsule",
+              "segment_shape": "thin_prism",
               "shape_promotion_status": "inherited_parent_prior_shape",
               "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
               "source_parent_prior_bounds": {
                 "center": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
                 "max": [
-                  -1.002842,
-                  3.3,
+                  -0.95,
+                  2.9,
                   -0.895043
                 ],
                 "min": [
-                  -1.182842,
-                  -3.3,
+                  -1.45,
+                  -2.9,
                   -1.075043
                 ],
                 "span": [
-                  0.18,
-                  6.6,
+                  0.5,
+                  5.8,
                   0.18
                 ]
               },
-              "source_parent_segment_shape": "capsule",
+              "source_parent_segment_shape": "thin_prism",
               "whole_airframe_bounds": {
                 "center": [
                   -0.015,
@@ -2093,49 +2161,49 @@
               "geometry": {
                 "bounds": {
                   "center": [
-                    -1.092842,
-                    1.575,
+                    -1.2,
+                    1.375,
                     -0.985043
                   ],
                   "max": [
-                    -1.002842,
-                    2.5,
+                    -0.95,
+                    2.1,
                     -0.895043
                   ],
                   "min": [
-                    -1.182842,
+                    -1.45,
                     0.65,
                     -1.075043
                   ],
                   "span": [
-                    0.18,
-                    1.85,
+                    0.5,
+                    1.45,
                     0.18
                   ]
                 },
                 "center_m": [
-                  -1.092842,
-                  1.575,
+                  -1.2,
+                  1.375,
                   -0.985043
                 ],
                 "half_extents_m": [
-                  0.09,
-                  0.925,
+                  0.25,
+                  0.725,
                   0.09
                 ],
                 "radii_m": [
-                  0.09,
-                  0.925,
+                  0.25,
+                  0.725,
                   0.09
                 ],
                 "shape": "ellipsoid",
-                "volume_m3": 0.031385
+                "volume_m3": 0.06833
               },
               "inside_parent_prior_bounds": true,
               "inside_whole_airframe_bounds": true,
               "nominal_dimensions_m": [
-                0.18,
-                1.85,
+                0.5,
+                1.45,
                 0.18
               ],
               "owner_region_ids": [
@@ -2155,27 +2223,27 @@
               "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_right_inner_wing_spar_latest_centerline_ellipsoid",
               "source_parent_prior_bounds": {
                 "center": [
-                  -1.092842,
+                  -1.2,
                   0.0,
                   -0.985043
                 ],
                 "max": [
-                  -1.002842,
-                  3.3,
+                  -0.95,
+                  2.9,
                   -0.895043
                 ],
                 "min": [
-                  -1.182842,
-                  -3.3,
+                  -1.45,
+                  -2.9,
                   -1.075043
                 ],
                 "span": [
-                  0.18,
-                  6.6,
+                  0.5,
+                  5.8,
                   0.18
                 ]
               },
-              "source_parent_segment_shape": "capsule",
+              "source_parent_segment_shape": "thin_prism",
               "whole_airframe_bounds": {
                 "center": [
                   -0.015,
@@ -2204,8 +2272,8 @@
           "is_cross_region_held": true,
           "layout_role": "extra_receiver_overlay",
           "nominal_dimensions_m": [
-            0.18,
-            6.6,
+            0.5,
+            5.8,
             0.18
           ],
           "placement_bounds": {
@@ -2231,8 +2299,8 @@
             ]
           },
           "placement_bounds_source": "source_region_bounds",
-          "prior_axis": "y",
-          "prior_shape": "capsule",
+          "prior_axis": "",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
           "size_basis": "center_wing_box_runtime_span_with_wing_root_mesh_center",
           "size_evidence_level": "cross_region_structure_proxy_pending_true_spar_dimensions",
@@ -2581,19 +2649,19 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -2.8,
-                0.45,
-                0.05
+                -4.82358,
+                -1e-06,
+                -0.932064
               ],
               "max": [
-                -2.575,
-                0.48,
-                0.08
+                -4.59858,
+                0.029999,
+                -0.902064
               ],
               "min": [
-                -3.025,
-                0.42,
-                0.02
+                -5.04858,
+                -0.030001,
+                -0.962064
               ],
               "span": [
                 0.45,
@@ -2602,9 +2670,9 @@
               ]
             },
             "center_m": [
-              -2.8,
-              0.45,
-              0.05
+              -4.82358,
+              -1e-06,
+              -0.932064
             ],
             "cylinder_half_length_m": 0.195,
             "half_extents_m": [
@@ -2617,7 +2685,7 @@
             "volume_m3": 0.001216
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 2.293867,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -2704,17 +2772,17 @@
               "center": [
                 -3.693053,
                 0.0,
-                -0.554381
+                -0.904381
               ],
               "max": [
                 -1.382923,
                 0.59055,
-                0.036169
+                -0.313831
               ],
               "min": [
                 -6.003183,
                 -0.59055,
-                -1.144931
+                -1.494931
               ],
               "span": [
                 4.62026,
@@ -2725,7 +2793,7 @@
             "center_m": [
               -3.693053,
               0.0,
-              -0.554381
+              -0.904381
             ],
             "cylinder_half_length_m": 1.71958,
             "half_extents_m": [
@@ -2770,17 +2838,17 @@
                   "center": [
                     -5.025512,
                     0.0,
-                    -0.554381
+                    -0.904381
                   ],
                   "max": [
                     -4.255468,
                     0.59055,
-                    0.036169
+                    -0.313831
                   ],
                   "min": [
                     -5.795555,
                     -0.59055,
-                    -1.144931
+                    -1.494931
                   ],
                   "span": [
                     1.540087,
@@ -2791,7 +2859,7 @@
                 "center_m": [
                   -5.025512,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "cylinder_half_length_m": 0.179493,
                 "half_extents_m": [
@@ -2830,17 +2898,17 @@
                 "center": [
                   -3.693053,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "max": [
                   -1.382923,
                   0.59055,
-                  0.036169
+                  -0.313831
                 ],
                 "min": [
                   -6.003183,
                   -0.59055,
-                  -1.144931
+                  -1.494931
                 ],
                 "span": [
                   4.62026,
@@ -2885,17 +2953,17 @@
                   "center": [
                     -3.693053,
                     0.0,
-                    -0.554381
+                    -0.904381
                   ],
                   "max": [
                     -2.92301,
                     0.59055,
-                    0.036169
+                    -0.313831
                   ],
                   "min": [
                     -4.463096,
                     -0.59055,
-                    -1.144931
+                    -1.494931
                   ],
                   "span": [
                     1.540087,
@@ -2906,7 +2974,7 @@
                 "center_m": [
                   -3.693053,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "half_extents_m": [
                   0.770043,
@@ -2947,17 +3015,17 @@
                 "center": [
                   -3.693053,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "max": [
                   -1.382923,
                   0.59055,
-                  0.036169
+                  -0.313831
                 ],
                 "min": [
                   -6.003183,
                   -0.59055,
-                  -1.144931
+                  -1.494931
                 ],
                 "span": [
                   4.62026,
@@ -3002,17 +3070,17 @@
                   "center": [
                     -2.352966,
                     0.0,
-                    -0.554381
+                    -0.904381
                   ],
                   "max": [
                     -1.582923,
                     0.59055,
-                    0.036169
+                    -0.313831
                   ],
                   "min": [
                     -3.12301,
                     -0.59055,
-                    -1.144931
+                    -1.494931
                   ],
                   "span": [
                     1.540087,
@@ -3023,7 +3091,7 @@
                 "center_m": [
                   -2.352966,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "half_extents_m": [
                   0.770043,
@@ -3064,17 +3132,17 @@
                 "center": [
                   -3.693053,
                   0.0,
-                  -0.554381
+                  -0.904381
                 ],
                 "max": [
                   -1.382923,
                   0.59055,
-                  0.036169
+                  -0.313831
                 ],
                 "min": [
                   -6.003183,
                   -0.59055,
-                  -1.144931
+                  -1.494931
                 ],
                 "span": [
                   4.62026,
@@ -3505,21 +3573,23 @@
           "component_review_semantics": "candidate_direct_region_binding",
           "component_role": "nozzle_receiver",
           "constrained_geometry": {
+            "axis": "x",
+            "axis_half_extent_m": 0.375,
             "bounds": {
               "center": [
                 -5.75,
-                -0.2,
-                -0.7
+                0.0,
+                -0.75
               ],
               "max": [
                 -5.375,
-                0.39055,
-                -0.10945
+                0.59055,
+                -0.15945
               ],
               "min": [
                 -6.125,
-                -0.79055,
-                -1.29055
+                -0.59055,
+                -1.34055
               ],
               "span": [
                 0.75,
@@ -3529,21 +3599,18 @@
             },
             "center_m": [
               -5.75,
-              -0.2,
-              -0.7
+              0.0,
+              -0.75
             ],
             "half_extents_m": [
               0.375,
               0.59055,
               0.59055
             ],
-            "radii_m": [
-              0.375,
-              0.59055,
-              0.59055
-            ],
-            "shape": "ellipsoid",
-            "volume_m3": 0.547814
+            "negative_axis_radius_m": 0.45,
+            "positive_axis_radius_m": 0.59055,
+            "shape": "frustum",
+            "volume_m3": 0.641668
           },
           "constraint_adjustment": {
             "airframe_projection_center_shift_m": 0.0,
@@ -3593,8 +3660,8 @@
             ]
           },
           "placement_bounds_source": "source_region_bounds",
-          "prior_axis": "",
-          "prior_shape": "ellipsoid",
+          "prior_axis": "x",
+          "prior_shape": "frustum",
           "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
           "size_basis": "f110_diameter_plus_nozzle_region_length_estimate",
           "size_evidence_level": "public_engine_diameter_mesh_length_estimate",
@@ -3644,17 +3711,17 @@
               "center": [
                 -5.025512,
                 0.0,
-                -0.554381
+                -0.904381
               ],
               "max": [
                 -4.255468,
                 0.59055,
-                0.036169
+                -0.313831
               ],
               "min": [
                 -5.795555,
                 -0.59055,
-                -1.144931
+                -1.494931
               ],
               "span": [
                 1.540087,
@@ -3665,7 +3732,7 @@
             "center_m": [
               -5.025512,
               0.0,
-              -0.554381
+              -0.904381
             ],
             "cylinder_half_length_m": 0.179493,
             "half_extents_m": [
@@ -3704,17 +3771,17 @@
             "center": [
               -3.693053,
               0.0,
-              -0.554381
+              -0.904381
             ],
             "max": [
               -1.382923,
               0.59055,
-              0.036169
+              -0.313831
             ],
             "min": [
               -6.003183,
               -0.59055,
-              -1.144931
+              -1.494931
             ],
             "span": [
               4.62026,
@@ -3839,48 +3906,64 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                -1.4,
-                -2.3,
+                -2.075,
+                -1.685,
                 -0.985
               ],
               "max": [
-                -0.4,
-                -1.2,
+                -1.15,
+                -0.82,
                 -0.91
               ],
               "min": [
-                -2.4,
-                -3.4,
+                -3.0,
+                -2.55,
                 -1.06
               ],
               "span": [
-                2.0,
-                2.2,
+                1.85,
+                1.73,
                 0.15
               ]
             },
             "center_m": [
-              -1.4,
-              -2.3,
+              -2.075,
+              -1.685,
               -0.985
             ],
+            "footprint_area_m2": 2.3445,
+            "footprint_points_m": [
+              [
+                -3.0,
+                -2.55
+              ],
+              [
+                -2.95,
+                -1.05
+              ],
+              [
+                -1.25,
+                -0.82
+              ],
+              [
+                -1.15,
+                -1.95
+              ]
+            ],
             "half_extents_m": [
-              1.0,
-              1.1,
+              0.925,
+              0.865,
               0.075
             ],
-            "radii_m": [
-              1.0,
-              1.1,
-              0.075
-            ],
-            "shape": "ellipsoid",
-            "volume_m3": 0.345575
+            "shape": "thin_prism",
+            "thickness_axis": "z",
+            "thickness_m": 0.15,
+            "volume_m3": 0.351675
           },
           "constraint_adjustment": {
             "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
-            "placement_outside_fraction": 0.0,
+            "placement_outside_fraction": 0.05939,
             "post_constraint_outside_fraction": 0.0,
             "pre_constraint_outside_fraction": 0.0,
             "required_fit_scale": 1.0,
@@ -3891,14 +3974,14 @@
           "constraint_region_ids": [
             "left_wing"
           ],
-          "constraint_status": "already_inside_whole_airframe",
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
           "held_segment_count": 0,
           "held_segments": [],
           "is_cross_region_held": false,
           "layout_role": "primary_receiver_overlay",
           "nominal_dimensions_m": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ],
           "placement_bounds": {
@@ -3925,7 +4008,7 @@
           },
           "placement_bounds_source": "source_region_bounds",
           "prior_axis": "",
-          "prior_shape": "ellipsoid",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
           "size_basis": "f16_internal_fuel_capacity_partition_estimate",
           "size_evidence_level": "public_total_capacity_partition_estimate",
@@ -3965,18 +4048,18 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -0.8,
-                -4.1,
+                -1.205895,
+                -1e-06,
                 -0.985
               ],
               "max": [
-                -0.76,
-                -3.875,
+                -1.165895,
+                0.224999,
                 -0.945
               ],
               "min": [
-                -0.84,
-                -4.325,
+                -1.245895,
+                -0.225001,
                 -1.025
               ],
               "span": [
@@ -3986,8 +4069,8 @@
               ]
             },
             "center_m": [
-              -0.8,
-              -4.1,
+              -1.205895,
+              -1e-06,
               -0.985
             ],
             "cylinder_half_length_m": 0.185,
@@ -4001,7 +4084,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 4.120042,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -4091,49 +4174,49 @@
           "geometry": {
             "bounds": {
               "center": [
-                -1.092842,
-                -1.575,
+                -1.2,
+                -1.375,
                 -0.985043
               ],
               "max": [
-                -1.002842,
+                -0.95,
                 -0.65,
                 -0.895043
               ],
               "min": [
-                -1.182842,
-                -2.5,
+                -1.45,
+                -2.1,
                 -1.075043
               ],
               "span": [
-                0.18,
-                1.85,
+                0.5,
+                1.45,
                 0.18
               ]
             },
             "center_m": [
-              -1.092842,
-              -1.575,
+              -1.2,
+              -1.375,
               -0.985043
             ],
             "half_extents_m": [
-              0.09,
-              0.925,
+              0.25,
+              0.725,
               0.09
             ],
             "radii_m": [
-              0.09,
-              0.925,
+              0.25,
+              0.725,
               0.09
             ],
             "shape": "ellipsoid",
-            "volume_m3": 0.031385
+            "volume_m3": 0.06833
           },
           "inside_parent_prior_bounds": true,
           "inside_whole_airframe_bounds": true,
           "nominal_dimensions_m": [
-            0.18,
-            1.85,
+            0.5,
+            1.45,
             0.18
           ],
           "owner_region_ids": [
@@ -4153,27 +4236,27 @@
           "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_left_inner_wing_spar_latest_centerline_ellipsoid",
           "source_parent_prior_bounds": {
             "center": [
-              -1.092842,
+              -1.2,
               0.0,
               -0.985043
             ],
             "max": [
-              -1.002842,
-              3.3,
+              -0.95,
+              2.9,
               -0.895043
             ],
             "min": [
-              -1.182842,
-              -3.3,
+              -1.45,
+              -2.9,
               -1.075043
             ],
             "span": [
-              0.18,
-              6.6,
+              0.5,
+              5.8,
               0.18
             ]
           },
-          "source_parent_segment_shape": "capsule",
+          "source_parent_segment_shape": "thin_prism",
           "whole_airframe_bounds": {
             "center": [
               -0.015,
@@ -4292,48 +4375,64 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                -1.4,
-                2.3,
+                -2.075,
+                1.685,
                 -0.985
               ],
               "max": [
-                -0.4,
-                3.4,
+                -1.15,
+                2.55,
                 -0.91
               ],
               "min": [
-                -2.4,
-                1.2,
+                -3.0,
+                0.82,
                 -1.06
               ],
               "span": [
-                2.0,
-                2.2,
+                1.85,
+                1.73,
                 0.15
               ]
             },
             "center_m": [
-              -1.4,
-              2.3,
+              -2.075,
+              1.685,
               -0.985
             ],
+            "footprint_area_m2": 2.3445,
+            "footprint_points_m": [
+              [
+                -3.0,
+                2.55
+              ],
+              [
+                -2.95,
+                1.05
+              ],
+              [
+                -1.25,
+                0.82
+              ],
+              [
+                -1.15,
+                1.95
+              ]
+            ],
             "half_extents_m": [
-              1.0,
-              1.1,
+              0.925,
+              0.865,
               0.075
             ],
-            "radii_m": [
-              1.0,
-              1.1,
-              0.075
-            ],
-            "shape": "ellipsoid",
-            "volume_m3": 0.345575
+            "shape": "thin_prism",
+            "thickness_axis": "z",
+            "thickness_m": 0.15,
+            "volume_m3": 0.351675
           },
           "constraint_adjustment": {
             "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
-            "placement_outside_fraction": 0.0,
+            "placement_outside_fraction": 0.05934,
             "post_constraint_outside_fraction": 0.0,
             "pre_constraint_outside_fraction": 0.0,
             "required_fit_scale": 1.0,
@@ -4344,14 +4443,14 @@
           "constraint_region_ids": [
             "right_wing"
           ],
-          "constraint_status": "already_inside_whole_airframe",
+          "constraint_status": "placed_inside_airframe_exceeds_parent_shell_review",
           "held_segment_count": 0,
           "held_segments": [],
           "is_cross_region_held": false,
           "layout_role": "primary_receiver_overlay",
           "nominal_dimensions_m": [
-            2.0,
-            2.2,
+            1.85,
+            1.73,
             0.15
           ],
           "placement_bounds": {
@@ -4378,7 +4477,7 @@
           },
           "placement_bounds_source": "source_region_bounds",
           "prior_axis": "",
-          "prior_shape": "ellipsoid",
+          "prior_shape": "thin_prism",
           "runtime_projection_status": "runtime_schema_candidate_not_activated_prior_shape_review_required",
           "size_basis": "f16_internal_fuel_capacity_partition_estimate",
           "size_evidence_level": "public_total_capacity_partition_estimate",
@@ -4418,18 +4517,18 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -0.8,
-                4.1,
+                -1.205895,
+                -1e-06,
                 -0.985
               ],
               "max": [
-                -0.76,
-                4.325,
+                -1.165895,
+                0.224999,
                 -0.945
               ],
               "min": [
-                -0.84,
-                3.875,
+                -1.245895,
+                -0.225001,
                 -1.025
               ],
               "span": [
@@ -4439,8 +4538,8 @@
               ]
             },
             "center_m": [
-              -0.8,
-              4.1,
+              -1.205895,
+              -1e-06,
               -0.985
             ],
             "cylinder_half_length_m": 0.185,
@@ -4454,7 +4553,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 4.120043,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -4544,49 +4643,49 @@
           "geometry": {
             "bounds": {
               "center": [
-                -1.092842,
-                1.575,
+                -1.2,
+                1.375,
                 -0.985043
               ],
               "max": [
-                -1.002842,
-                2.5,
+                -0.95,
+                2.1,
                 -0.895043
               ],
               "min": [
-                -1.182842,
+                -1.45,
                 0.65,
                 -1.075043
               ],
               "span": [
-                0.18,
-                1.85,
+                0.5,
+                1.45,
                 0.18
               ]
             },
             "center_m": [
-              -1.092842,
-              1.575,
+              -1.2,
+              1.375,
               -0.985043
             ],
             "half_extents_m": [
-              0.09,
-              0.925,
+              0.25,
+              0.725,
               0.09
             ],
             "radii_m": [
-              0.09,
-              0.925,
+              0.25,
+              0.725,
               0.09
             ],
             "shape": "ellipsoid",
-            "volume_m3": 0.031385
+            "volume_m3": 0.06833
           },
           "inside_parent_prior_bounds": true,
           "inside_whole_airframe_bounds": true,
           "nominal_dimensions_m": [
-            0.18,
-            1.85,
+            0.5,
+            1.45,
             0.18
           ],
           "owner_region_ids": [
@@ -4606,27 +4705,27 @@
           "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span;R21_promoted_R19_right_inner_wing_spar_latest_centerline_ellipsoid",
           "source_parent_prior_bounds": {
             "center": [
-              -1.092842,
+              -1.2,
               0.0,
               -0.985043
             ],
             "max": [
-              -1.002842,
-              3.3,
+              -0.95,
+              2.9,
               -0.895043
             ],
             "min": [
-              -1.182842,
-              -3.3,
+              -1.45,
+              -2.9,
               -1.075043
             ],
             "span": [
-              0.18,
-              6.6,
+              0.5,
+              5.8,
               0.18
             ]
           },
-          "source_parent_segment_shape": "capsule",
+          "source_parent_segment_shape": "thin_prism",
           "whole_airframe_bounds": {
             "center": [
               -0.015,
@@ -4748,18 +4847,18 @@
             "bounds": {
               "center": [
                 -0.2,
-                -1.15,
-                -0.71
+                -1e-06,
+                -0.932064
               ],
               "max": [
                 -0.16,
-                -0.875,
-                -0.67
+                0.274999,
+                -0.892064
               ],
               "min": [
                 -0.24,
-                -1.425,
-                -0.75
+                -0.275001,
+                -0.972064
               ],
               "span": [
                 0.08,
@@ -4769,8 +4868,8 @@
             },
             "center_m": [
               -0.2,
-              -1.15,
-              -0.71
+              -1e-06,
+              -0.932064
             ],
             "cylinder_half_length_m": 0.235,
             "half_extents_m": [
@@ -4783,7 +4882,7 @@
             "volume_m3": 0.002631
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 1.171244,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -4871,49 +4970,66 @@
             0.0
           ],
           "geometry": {
-            "axis": "y",
-            "axis_half_extent_m": 0.3,
             "bounds": {
               "center": [
-                -1.092842,
+                -1.2,
                 -1.15,
                 -0.985043
               ],
               "max": [
-                -1.002842,
+                -0.95,
                 -0.85,
                 -0.895043
               ],
               "min": [
-                -1.182842,
+                -1.45,
                 -1.45,
                 -1.075043
               ],
               "span": [
-                0.18,
+                0.5,
                 0.6,
                 0.18
               ]
             },
             "center_m": [
-              -1.092842,
+              -1.2,
               -1.15,
               -0.985043
             ],
-            "cylinder_half_length_m": 0.21,
+            "footprint_area_m2": 0.3,
+            "footprint_points_m": [
+              [
+                -1.45,
+                -1.45
+              ],
+              [
+                -0.95,
+                -1.45
+              ],
+              [
+                -0.95,
+                -0.85
+              ],
+              [
+                -1.45,
+                -0.85
+              ]
+            ],
             "half_extents_m": [
-              0.09,
+              0.25,
               0.3,
               0.09
             ],
-            "radius_m": 0.09,
-            "shape": "capsule",
-            "volume_m3": 0.013741
+            "shape": "thin_prism",
+            "thickness_axis": "z",
+            "thickness_m": 0.18,
+            "volume_m3": 0.054
           },
           "inside_parent_prior_bounds": true,
           "inside_whole_airframe_bounds": true,
           "nominal_dimensions_m": [
-            0.18,
+            0.5,
             0.6,
             0.18
           ],
@@ -4925,36 +5041,36 @@
           "parent_component_review_semantics": "cross_region_structural_semantic_hold",
           "parent_prior_outside_fraction": 0.0,
           "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
-          "segment_axis": "y",
+          "segment_axis": "",
           "segment_id": "wing_spar_center_left_root_segment",
           "segment_index": 1,
           "segment_role": "left_wing_root_spar_proxy",
-          "segment_shape": "capsule",
+          "segment_shape": "thin_prism",
           "shape_promotion_status": "inherited_parent_prior_shape",
           "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
           "source_parent_prior_bounds": {
             "center": [
-              -1.092842,
+              -1.2,
               0.0,
               -0.985043
             ],
             "max": [
-              -1.002842,
-              3.3,
+              -0.95,
+              2.9,
               -0.895043
             ],
             "min": [
-              -1.182842,
-              -3.3,
+              -1.45,
+              -2.9,
               -1.075043
             ],
             "span": [
-              0.18,
-              6.6,
+              0.5,
+              5.8,
               0.18
             ]
           },
-          "source_parent_segment_shape": "capsule",
+          "source_parent_segment_shape": "thin_prism",
           "whole_airframe_bounds": {
             "center": [
               -0.015,
@@ -5074,18 +5190,18 @@
             "bounds": {
               "center": [
                 -0.2,
-                1.15,
-                -0.71
+                -1e-06,
+                -0.932064
               ],
               "max": [
                 -0.16,
-                1.425,
-                -0.67
+                0.274999,
+                -0.892064
               ],
               "min": [
                 -0.24,
-                0.875,
-                -0.75
+                -0.275001,
+                -0.972064
               ],
               "span": [
                 0.08,
@@ -5095,8 +5211,8 @@
             },
             "center_m": [
               -0.2,
-              1.15,
-              -0.71
+              -1e-06,
+              -0.932064
             ],
             "cylinder_half_length_m": 0.235,
             "half_extents_m": [
@@ -5109,7 +5225,7 @@
             "volume_m3": 0.002631
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 1.171245,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -5197,49 +5313,66 @@
             0.0
           ],
           "geometry": {
-            "axis": "y",
-            "axis_half_extent_m": 0.3,
             "bounds": {
               "center": [
-                -1.092842,
+                -1.2,
                 1.15,
                 -0.985043
               ],
               "max": [
-                -1.002842,
+                -0.95,
                 1.45,
                 -0.895043
               ],
               "min": [
-                -1.182842,
+                -1.45,
                 0.85,
                 -1.075043
               ],
               "span": [
-                0.18,
+                0.5,
                 0.6,
                 0.18
               ]
             },
             "center_m": [
-              -1.092842,
+              -1.2,
               1.15,
               -0.985043
             ],
-            "cylinder_half_length_m": 0.21,
+            "footprint_area_m2": 0.3,
+            "footprint_points_m": [
+              [
+                -1.45,
+                0.85
+              ],
+              [
+                -0.95,
+                0.85
+              ],
+              [
+                -0.95,
+                1.45
+              ],
+              [
+                -1.45,
+                1.45
+              ]
+            ],
             "half_extents_m": [
-              0.09,
+              0.25,
               0.3,
               0.09
             ],
-            "radius_m": 0.09,
-            "shape": "capsule",
-            "volume_m3": 0.013741
+            "shape": "thin_prism",
+            "thickness_axis": "z",
+            "thickness_m": 0.18,
+            "volume_m3": 0.054
           },
           "inside_parent_prior_bounds": true,
           "inside_whole_airframe_bounds": true,
           "nominal_dimensions_m": [
-            0.18,
+            0.5,
             0.6,
             0.18
           ],
@@ -5251,36 +5384,36 @@
           "parent_component_review_semantics": "cross_region_structural_semantic_hold",
           "parent_prior_outside_fraction": 0.0,
           "runtime_projection_status": "review_only_cross_region_segment_not_runtime_component",
-          "segment_axis": "y",
+          "segment_axis": "",
           "segment_id": "wing_spar_center_right_root_segment",
           "segment_index": 3,
           "segment_role": "right_wing_root_spar_proxy",
-          "segment_shape": "capsule",
+          "segment_shape": "thin_prism",
           "shape_promotion_status": "inherited_parent_prior_shape",
           "source_basis": "wing_root_and_center_fuselage_mesh_bounds_partition_existing_spar_span",
           "source_parent_prior_bounds": {
             "center": [
-              -1.092842,
+              -1.2,
               0.0,
               -0.985043
             ],
             "max": [
-              -1.002842,
-              3.3,
+              -0.95,
+              2.9,
               -0.895043
             ],
             "min": [
-              -1.182842,
-              -3.3,
+              -1.45,
+              -2.9,
               -1.075043
             ],
             "span": [
-              0.18,
-              6.6,
+              0.5,
+              5.8,
               0.18
             ]
           },
-          "source_parent_segment_shape": "capsule",
+          "source_parent_segment_shape": "thin_prism",
           "whole_airframe_bounds": {
             "center": [
               -0.015,
@@ -5817,19 +5950,19 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -6.7,
+                -4.82358,
                 0.0,
-                0.45
+                -0.372826
               ],
               "max": [
-                -6.66,
+                -4.78358,
                 0.04,
-                0.675
+                -0.147826
               ],
               "min": [
-                -6.74,
+                -4.86358,
                 -0.04,
-                0.225
+                -0.597826
               ],
               "span": [
                 0.08,
@@ -5838,9 +5971,9 @@
               ]
             },
             "center_m": [
-              -6.7,
+              -4.82358,
               0.0,
-              0.45
+              -0.372826
             ],
             "cylinder_half_length_m": 0.185,
             "half_extents_m": [
@@ -5853,7 +5986,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.0,
+            "airframe_projection_center_shift_m": 2.048901,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,

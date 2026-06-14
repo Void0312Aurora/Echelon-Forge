@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>F-16 Target Geometry Review Packet</title>
+  <title>F-16 Final Geometry Contour Result</title>
   <style>
     body {
       margin: 0;
@@ -15,10 +15,6 @@
       margin: 0 auto;
       padding: 24px;
     }
-    h1, h2 {
-      margin: 0 0 12px;
-      font-weight: 700;
-    }
     section {
       margin: 0 0 24px;
       padding: 18px;
@@ -28,19 +24,16 @@
     }
     .meta {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 8px 16px;
       font-family: monospace;
       font-size: 13px;
     }
-    .views {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
     img {
+      display: block;
       width: 100%;
       height: auto;
+      margin: 12px 0;
       border: 1px solid #cdd3dd;
       background: #ffffff;
     }
@@ -67,363 +60,28 @@
 <body>
 <main>
   <section>
-    <h1>F-16 Target Geometry Review Packet</h1>
-    <p class="note">Review-only geometry. This packet is not a runtime collision mesh, not a real F-16 engineering model, and not a real-weapon lethality claim.</p>
+    <h1>F-16 Final Geometry Contour Result</h1>
+    <p class="note">Current final visual result only. Retired intermediate component, semantic, prior, parent-child, placement, triage, and proxy-dashboard visual pages are not generated in the current packet.</p>
     <div class="meta">
       <div>generated_on: 2026-06-11</div>
       <div>source_uid: 4bc2ff75dc584af2afd0aa6bd8b79015</div>
-      <div>outer_regions: 14</div>
-      <div>components: 26</div>
-      <div>review_points: 10</div>
-      <div>needs_review_components: 0</div>
+      <div>contour_method: projected_mesh_triangle_union</div>
+      <div>tolerance_m: 0.05</div>
+      <div>exceeds_tolerance: 0/26</div>
+      <div>max_outside_m: 0</div>
     </div>
   </section>
   <section>
-    <h2>Three-View Overlay</h2>
-    <div class="views">
-      <img src="top.svg" alt="Top view geometry overlay">
-      <img src="side.svg" alt="Side view geometry overlay">
-      <img src="front.svg" alt="Front view geometry overlay">
-    </div>
-  </section>
-
-  <section>
-    <h2>Fine Geometry Proxy Overlay</h2>
-    <p class="note">TG-P6 review-only proxy candidates. Dashed rectangles show source AABB regions, dotted rectangles show support bounds, and solid polygons show mesh-derived silhouettes from filtered audit-glTF vertices.</p>
-    <p class="note"><a href="fine_proxy_review_dashboard.html">Open the per-region human review dashboard</a>.</p>
-    <p class="note"><a href="human_review_triage.html">Open the visual human review triage</a>.</p>
-    <p class="note"><a href="component_review_views/index.html">Open isolated component review views</a>.</p>
-    <p class="note"><a href="semantic_damage_geometry_views/index.html">Open isolated semantic damage geometry views</a>.</p>
-    <p class="note"><a href="semantic_parent_child_layout_views/index.html">Open 14 parent-child component layout views</a>.</p>
-    <div class="views">
-      <img src="fine_proxy_top.svg" alt="Top view fine proxy overlay">
-      <img src="fine_proxy_side.svg" alt="Side view fine proxy overlay">
-      <img src="fine_proxy_front.svg" alt="Front view fine proxy overlay">
-    </div>
-  </section>
-  <section>
-    <h2>Fine Proxy Distance Deltas</h2>
+    <h2>Whole-Airframe Projected Mesh Contour Containment</h2>
+    <p class="note">Review-only diagnostic built from the full audit glTF mesh by projecting triangle faces into each view and unioning those projected faces. Tolerance is an engineering review margin, not physical clearance. Contours: top: projected_mesh_triangle_union triangles=4504 polygons=1 pts=222; side: projected_mesh_triangle_union triangles=4504 polygons=1 pts=159; front: projected_mesh_triangle_union triangles=4504 polygons=1 pts=201.</p>
+    <p><a href="whole_airframe_contour_dashboard.html">Open final contour dashboard</a></p>
+    <img src="whole_airframe_contour_top.svg" alt="whole-airframe contour top view">
+    <img src="whole_airframe_contour_side.svg" alt="whole-airframe contour side view">
+    <img src="whole_airframe_contour_front.svg" alt="whole-airframe contour front view">
     <table>
-<thead><tr><th>point</th><th>source_region</th><th>source_dist_m</th><th>fine_region</th><th>fine_kind</th><th>fine_dist_m</th><th>delta_m</th></tr></thead>
+<thead><tr><th>item</th><th>type</th><th>shape</th><th>outside_views</th><th>outside_samples</th><th>max_outside_m</th></tr></thead>
 <tbody>
-<tr><td>nose_axis_4m</td><td>forward_fuselage</td><td>0.0</td><td>canopy</td><td>convex_hull</td><td>0.0</td><td>0.0</td></tr>
-<tr><td>nose_axis_6m</td><td>nose_radome</td><td>0.349524</td><td>nose_radome</td><td>convex_hull</td><td>0.437604</td><td>0.08808</td></tr>
-<tr><td>tail_axis_4m</td><td>aft_fuselage_engine</td><td>0.0</td><td>aft_fuselage_engine</td><td>obb</td><td>0.0</td><td>0.0</td></tr>
-<tr><td>tail_axis_6m</td><td>vertical_tail</td><td>0.088577</td><td>vertical_tail</td><td>thin_prism</td><td>0.131783</td><td>0.043206</td></tr>
-<tr><td>right_beam_4m</td><td>right_wing</td><td>0.868724</td><td>right_wing</td><td>thin_prism</td><td>0.943168</td><td>0.074444</td></tr>
-<tr><td>right_beam_6m</td><td>right_wing</td><td>1.468711</td><td>right_wing</td><td>thin_prism</td><td>1.702881</td><td>0.23417</td></tr>
-<tr><td>left_beam_4m</td><td>left_wing</td><td>0.868724</td><td>left_wing</td><td>thin_prism</td><td>0.943168</td><td>0.074444</td></tr>
-<tr><td>left_beam_6m</td><td>left_wing</td><td>1.468704</td><td>left_wing</td><td>thin_prism</td><td>1.70287</td><td>0.234166</td></tr>
-<tr><td>above_4m</td><td>center_fuselage</td><td>3.207745</td><td>center_fuselage</td><td>obb</td><td>3.302816</td><td>0.095071</td></tr>
-<tr><td>below_4m</td><td>left_wing_root</td><td>2.892347</td><td>left_wing_root</td><td>convex_hull</td><td>3.024721</td><td>0.132374</td></tr>
-</tbody>
-</table>
-  </section>
 
-
-  <section>
-    <h2>Semantic Damage Geometry Volumes</h2>
-    <p class="note">Parse-ready outer-shell volume component candidates generated from TG-P6 mesh proxies and TG-P6 surface handoffs. These are not activated in the current runtime damage model.</p>
-    <p class="note"><a href="semantic_damage_geometry_views/index.html">Open isolated semantic volume views</a>.</p>
-    <table>
-<thead><tr><th>semantic_component</th><th>outer_region</th><th>volume_role</th><th>primitive</th><th>direct_receivers</th><th>cross_region_receivers</th><th>handoff_status</th><th>runtime_status</th></tr></thead>
-<tbody>
-<tr><td>semantic_nose_radome_volume</td><td>nose_radome</td><td>radome_volume</td><td>convex_hull</td><td>apg68_radar_array,iff_interrogator</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_forward_fuselage_skin_volume</td><td>forward_fuselage</td><td>forward_fuselage_skin_volume</td><td>obb</td><td>cockpit_crew_station,inertial_navigation_unit,nose_avionics_bay</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_canopy_surface_volume</td><td>canopy</td><td>canopy_surface_volume</td><td>convex_hull</td><td>dedicated_canopy_surface_component</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_center_fuselage_skin_volume</td><td>center_fuselage</td><td>center_fuselage_skin_volume</td><td>obb</td><td>center_fuselage_fuel_cell,data_link_terminal,flight_control_computer,mission_computer</td><td>wing_spar_center</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_intake_lip_and_duct_volume</td><td>intake</td><td>intake_lip_and_duct_volume</td><td>convex_hull</td><td>dedicated_intake_lip_or_duct_component</td><td>engine_core</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_aft_engine_bay_skin_volume</td><td>aft_fuselage_engine</td><td>aft_engine_bay_skin_volume</td><td>obb</td><td>electrical_power_bus,engine_fuel_control_unit,tail_hydraulic_pump</td><td>engine_core</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_engine_nozzle_volume</td><td>engine_nozzle</td><td>engine_nozzle_volume</td><td>obb</td><td>afterburner_nozzle</td><td>engine_core</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_left_wing_skin_volume</td><td>left_wing</td><td>left_wing_skin_volume</td><td>thin_prism</td><td>left_aileron_actuator,left_wing_fuel_cell</td><td>wing_spar_center</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_right_wing_skin_volume</td><td>right_wing</td><td>right_wing_skin_volume</td><td>thin_prism</td><td>right_aileron_actuator,right_wing_fuel_cell</td><td>wing_spar_center</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_left_wing_root_fairing_volume</td><td>left_wing_root</td><td>left_wing_root_fairing_volume</td><td>convex_hull</td><td>left_leading_edge_flap_actuator</td><td>wing_spar_center</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_right_wing_root_fairing_volume</td><td>right_wing_root</td><td>right_wing_root_fairing_volume</td><td>convex_hull</td><td>right_leading_edge_flap_actuator</td><td>wing_spar_center</td><td>direct_receivers_parse_ready_cross_region_receivers_held</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_left_horizontal_tail_skin_volume</td><td>left_horizontal_tail</td><td>left_horizontal_tail_skin_volume</td><td>thin_prism</td><td>left_horizontal_tail_actuator_or_surface_component</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_right_horizontal_tail_skin_volume</td><td>right_horizontal_tail</td><td>right_horizontal_tail_skin_volume</td><td>thin_prism</td><td>right_horizontal_tail_actuator_or_surface_component</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-<tr><td>semantic_vertical_tail_skin_volume</td><td>vertical_tail</td><td>vertical_tail_skin_volume</td><td>thin_prism</td><td>rudder_actuator</td><td></td><td>direct_receivers_parse_ready</td><td>runtime_schema_parse_ready_candidate_not_activated</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Internal Component Prior Geometry</h2>
-    <p class="note">Review-only synthetic receiver geometry generated from simple priors such as sphere, cylinder, capsule, and ellipsoid, then constrained inside parent shell support bounds.</p>
-    <p class="note"><a href="internal_component_prior_views/index.html">Open isolated internal component prior views</a>.</p>
-    <table>
-<thead><tr><th>component</th><th>system</th><th>prior_shape</th><th>axis</th><th>bound_region</th><th>constraint_regions</th><th>constraint_status</th><th>pre_outside</th><th>post_outside</th><th>runtime_status</th></tr></thead>
-<tbody>
-<tr><td>apg68_radar_array</td><td>radar</td><td>ellipsoid</td><td></td><td>nose_radome</td><td>nose_radome,forward_fuselage</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>cockpit_crew_station</td><td>cockpit</td><td>ellipsoid</td><td></td><td>forward_fuselage</td><td>canopy,forward_fuselage</td><td>placed_inside_airframe_exceeds_parent_shell_review</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>dedicated_canopy_surface_component</td><td>cockpit</td><td>ellipsoid</td><td></td><td>canopy</td><td>canopy</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>nose_avionics_bay</td><td>avionics</td><td>obb</td><td></td><td>forward_fuselage</td><td>forward_fuselage</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>iff_interrogator</td><td>avionics</td><td>ellipsoid</td><td></td><td>nose_radome</td><td>nose_radome</td><td>placed_inside_airframe_exceeds_parent_shell_review</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>center_fuselage_fuel_cell</td><td>fuel</td><td>ellipsoid</td><td></td><td>center_fuselage</td><td>center_fuselage</td><td>placed_inside_airframe_exceeds_parent_shell_review</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>mission_computer</td><td>avionics</td><td>obb</td><td></td><td>center_fuselage</td><td>center_fuselage</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>data_link_terminal</td><td>data_link</td><td>obb</td><td></td><td>center_fuselage</td><td>center_fuselage</td><td>placed_inside_airframe_exceeds_parent_shell_review</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>flight_control_computer</td><td>flight_control</td><td>obb</td><td></td><td>center_fuselage</td><td>center_fuselage</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>inertial_navigation_unit</td><td>navigation</td><td>ellipsoid</td><td></td><td>forward_fuselage</td><td>forward_fuselage</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>dedicated_intake_lip_or_duct_component</td><td>engine</td><td>ellipsoid</td><td></td><td>intake</td><td>intake</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>electrical_power_bus</td><td>avionics</td><td>capsule</td><td>x</td><td>aft_fuselage_engine</td><td>aft_fuselage_engine</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>engine_core</td><td>engine</td><td>capsule</td><td>x</td><td>aft_fuselage_engine</td><td>aft_fuselage_engine,engine_nozzle,intake</td><td>cross_region_prior_constrained_inside_airframe_held</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>afterburner_nozzle</td><td>engine</td><td>ellipsoid</td><td></td><td>engine_nozzle</td><td>engine_nozzle,aft_fuselage_engine</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>tail_hydraulic_pump</td><td>hydraulic</td><td>obb</td><td></td><td>aft_fuselage_engine</td><td>aft_fuselage_engine</td><td>placed_inside_airframe_exceeds_parent_shell_review</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>engine_fuel_control_unit</td><td>engine</td><td>obb</td><td></td><td>aft_fuselage_engine</td><td>aft_fuselage_engine</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>rudder_actuator</td><td>flight_control</td><td>capsule</td><td>z</td><td>vertical_tail</td><td>vertical_tail</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>left_horizontal_tail_actuator_or_surface_component</td><td>flight_control</td><td>capsule</td><td>y</td><td>left_horizontal_tail</td><td>left_horizontal_tail</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>right_horizontal_tail_actuator_or_surface_component</td><td>flight_control</td><td>capsule</td><td>y</td><td>right_horizontal_tail</td><td>right_horizontal_tail</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>left_wing_fuel_cell</td><td>fuel</td><td>ellipsoid</td><td></td><td>left_wing</td><td>left_wing</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>right_wing_fuel_cell</td><td>fuel</td><td>ellipsoid</td><td></td><td>right_wing</td><td>right_wing</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>left_aileron_actuator</td><td>flight_control</td><td>capsule</td><td>y</td><td>left_wing</td><td>left_wing</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>right_aileron_actuator</td><td>flight_control</td><td>capsule</td><td>y</td><td>right_wing</td><td>right_wing</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>wing_spar_center</td><td>wings</td><td>capsule</td><td>y</td><td>center_fuselage</td><td>center_fuselage,left_wing_root,right_wing_root,left_wing,right_wing</td><td>cross_region_prior_constrained_inside_airframe_held</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>left_leading_edge_flap_actuator</td><td>flight_control</td><td>capsule</td><td>y</td><td>left_wing_root</td><td>left_wing_root</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-<tr><td>right_leading_edge_flap_actuator</td><td>flight_control</td><td>capsule</td><td>y</td><td>right_wing_root</td><td>right_wing_root</td><td>already_inside_whole_airframe</td><td>0.0</td><td>0.0</td><td>runtime_schema_candidate_not_activated_prior_shape_review_required</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Cross-Region Held Split Segments</h2>
-    <p class="note">Review-only split of held receivers (`engine_core`, `wing_spar_center`) into smaller owner-region segments. These red segments replace the monolithic held block in the parent-child visual views; runtime behavior is unchanged.</p>
-    <table>
-<thead><tr><th>parent_component</th><th>segment</th><th>role</th><th>owner_regions</th><th>shape</th><th>axis</th><th>dims_m</th><th>inside_airframe</th><th>runtime_status</th></tr></thead>
-<tbody>
-<tr><td>engine_core</td><td>engine_core_afterburner_segment</td><td>aft_afterburner_and_nozzle_overlap_proxy</td><td>aft_fuselage_engine,engine_nozzle</td><td>capsule</td><td>x</td><td>1.540087,1.1811,1.1811</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>engine_core</td><td>engine_core_hot_section_segment</td><td>main_core_hot_section_proxy</td><td>aft_fuselage_engine</td><td>ellipsoid</td><td></td><td>1.540087,1.1811,1.1811</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>engine_core</td><td>engine_core_forward_compressor_segment</td><td>forward_compressor_proxy</td><td>aft_fuselage_engine</td><td>ellipsoid</td><td></td><td>1.540087,1.1811,1.1811</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>wing_spar_center</td><td>wing_spar_center_left_inner_wing_segment</td><td>left_inner_wing_spar_proxy</td><td>left_wing</td><td>ellipsoid</td><td></td><td>0.18,1.85,0.18</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>wing_spar_center</td><td>wing_spar_center_left_root_segment</td><td>left_wing_root_spar_proxy</td><td>left_wing_root</td><td>capsule</td><td>y</td><td>0.18,0.6,0.18</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>wing_spar_center</td><td>wing_spar_center_carrythrough_segment</td><td>center_fuselage_carrythrough_box_proxy</td><td>center_fuselage</td><td>capsule</td><td>y</td><td>0.18,1.7,0.18</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>wing_spar_center</td><td>wing_spar_center_right_root_segment</td><td>right_wing_root_spar_proxy</td><td>right_wing_root</td><td>capsule</td><td>y</td><td>0.18,0.6,0.18</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-<tr><td>wing_spar_center</td><td>wing_spar_center_right_inner_wing_segment</td><td>right_inner_wing_spar_proxy</td><td>right_wing</td><td>ellipsoid</td><td></td><td>0.18,1.85,0.18</td><td>True</td><td>review_only_cross_region_segment_not_runtime_component</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Airframe Constraint Correction Candidates</h2>
-    <p class="note">Review-only R16 diagnostics for actual-size receiver priors and held split segments. The tool samples each item's top/side/front projected shape against the whole-airframe silhouette union and records whether a center shift alone can reduce exposure. It does not shrink dimensions or activate runtime components.</p>
-    <table>
-<thead><tr><th>item</th><th>type</th><th>shape</th><th>size_evidence</th><th>outside_views</th><th>outside_samples</th><th>candidate_outside_samples</th><th>candidate_shift_m</th><th>triage_status</th><th>recommended_action</th></tr></thead>
-<tbody>
-<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>public_partial_dimension_engineering_envelope</td><td>side</td><td>3</td><td>3</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
-<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>public_lru_dimension</td><td>side</td><td>2</td><td>2</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
-<tr><td>electrical_power_bus</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>public_engine_dimension</td><td>side</td><td>3</td><td>3</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
-<tr><td>tail_hydraulic_pump</td><td>receiver_prior</td><td>obb</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>rudder_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>left_horizontal_tail_actuator_or_surface_component</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>right_horizontal_tail_actuator_or_surface_component</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>left_aileron_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>right_aileron_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>left_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-<tr><td>right_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Whole-Airframe Alpha-Shape Contour Containment</h2>
-    <p class="note">Review-only diagnostic built from the full audit glTF mesh vertices via a per-view alpha-shape (concavities preserved) with dense perimeter sampling (AABB corners, ellipsoid 24-point ring, capsule cap rings). Tolerance 0.05 m is an engineering review margin, not physical clearance. Method: alpha_shape. Contours: top: alpha_shape alpha=0.189545 pts=34; side: alpha_shape alpha=0.189545 pts=54; front: alpha_shape alpha=0.296856 pts=47. Items exceeding tolerance: <strong>3</strong> of 34; max outside distance <strong>0.21036 m</strong>.</p>
-    <p><a href="whole_airframe_contour_dashboard.html">Open interactive dashboard</a></p>
-    <img src="whole_airframe_contour_top.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour top view"/>
-    <img src="whole_airframe_contour_side.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour side view"/>
-    <img src="whole_airframe_contour_front.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour front view"/>
-    <table>
-<thead><tr><th>item</th><th>type</th><th>shape</th><th>outside_views</th><th>outside_samples</th><th>max_outside_m</th><th>exceeds</th></tr></thead>
-<tbody>
-<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>side</td><td>3</td><td>0.21036</td><td>YES</td></tr>
-<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>side</td><td>3</td><td>0.07545</td><td>YES</td></tr>
-<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>side</td><td>2</td><td>0.05059</td><td>YES</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Cross-Region Ownership Split Candidates</h2>
-    <p class="note">Review-only R22 ownership decision packet for the two held cross-region receivers. Candidate payloads are parse-ready AABB fallback receiver records with preserved shape metadata; no split receiver is runtime active.</p>
-    <table>
-<thead><tr><th>parent_component</th><th>recommended_decision</th><th>segments</th><th>candidate_receivers</th><th>owner_regions</th><th>silhouette_exposure_segments</th><th>parent_runtime_policy</th><th>runtime_status</th></tr></thead>
-<tbody>
-<tr><td>engine_core</td><td>split_into_engine_section_receivers_and_keep_intake_duct_receiver_separate</td><td>3</td><td>engine_core_afterburner_segment,engine_core_hot_section_segment,engine_core_forward_compressor_segment</td><td>aft_fuselage_engine,engine_nozzle</td><td>0</td><td>retire_parent_engine_core_damage_receiver_when_split_receivers_are_accepted</td><td>not_active_pending_ownership_review_and_runtime_tests</td></tr>
-<tr><td>wing_spar_center</td><td>split_into_center_carrythrough_root_and_inner_wing_spar_receivers</td><td>5</td><td>wing_spar_center_left_inner_wing_segment,wing_spar_center_left_root_segment,wing_spar_center_carrythrough_segment,wing_spar_center_right_root_segment,wing_spar_center_right_inner_wing_segment</td><td>center_fuselage,left_wing,left_wing_root,right_wing,right_wing_root</td><td>0</td><td>retire_parent_wing_spar_center_damage_receiver_when_split_receivers_are_accepted</td><td>not_active_pending_ownership_review_and_runtime_tests</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>TG-P7 Runtime Activation Candidate</h2>
-    <p class="note">TG-P7-R1 unit-database patch candidate for the eight R22 split receivers. The payload uses fields already parsed by the runtime unit loader, but it is not applied to the repository unit database and still requires behavior regression before activation.</p>
-    <p class="note">parse-ready candidates: 8; patch additions: 8; runtime active: 0</p>
-    <table>
-<thead><tr><th>candidate_component</th><th>parent_component</th><th>segment_role</th><th>owner_regions</th><th>primitive</th><th>loader_contract</th><th>runtime_status</th><th>behavior_status</th><th>feature_flag</th></tr></thead>
-<tbody>
-<tr><td>engine_core_afterburner_segment</td><td>engine_core</td><td>aft_afterburner_and_nozzle_overlap_proxy</td><td>aft_fuselage_engine,engine_nozzle</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>engine_core_hot_section_segment</td><td>engine_core</td><td>main_core_hot_section_proxy</td><td>aft_fuselage_engine</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>engine_core_forward_compressor_segment</td><td>engine_core</td><td>forward_compressor_proxy</td><td>aft_fuselage_engine</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>wing_spar_center_left_inner_wing_segment</td><td>wing_spar_center</td><td>left_inner_wing_spar_proxy</td><td>left_wing</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>wing_spar_center_left_root_segment</td><td>wing_spar_center</td><td>left_wing_root_spar_proxy</td><td>left_wing_root</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>wing_spar_center_carrythrough_segment</td><td>wing_spar_center</td><td>center_fuselage_carrythrough_box_proxy</td><td>center_fuselage</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>wing_spar_center_right_root_segment</td><td>wing_spar_center</td><td>right_wing_root_spar_proxy</td><td>right_wing_root</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-<tr><td>wing_spar_center_right_inner_wing_segment</td><td>wing_spar_center</td><td>right_inner_wing_spar_proxy</td><td>right_wing</td><td>aabb</td><td>parse_ready_existing_loader_fields</td><td>not_applied_to_unit_database</td><td>required_before_activation</td><td>A2_TARGET_GEOMETRY_PROXY_F16C_R22</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>TG-P7 Runtime Behavior Regression Candidate</h2>
-    <p class="note">TG-P7-R2 in-memory patch regression: parent receiver components are removed from their current hitbox component arrays and the eight split receiver candidates are appended to those same component arrays. The repository unit database is not modified.</p>
-    <p class="note">base components: 26; projected components: 32; retired parents: 2; split additions: 8; duplicate names: 0; pass: True</p>
-    <table>
-<thead><tr><th>parent_component</th><th>hitbox</th><th>target_path</th><th>base_hitbox_components</th><th>patched_hitbox_components</th><th>parent_absent_after_patch</th><th>split_components</th><th>split_present</th><th>duplicates</th><th>status</th></tr></thead>
-<tbody>
-<tr><td>engine_core</td><td>2</td><td>damage_model.hitboxes[2].components</td><td>7</td><td>9</td><td>True</td><td>engine_core_afterburner_segment,engine_core_hot_section_segment,engine_core_forward_compressor_segment</td><td>3</td><td>0</td><td>pass</td></tr>
-<tr><td>wing_spar_center</td><td>3</td><td>damage_model.hitboxes[3].components</td><td>7</td><td>11</td><td>True</td><td>wing_spar_center_left_inner_wing_segment,wing_spar_center_left_root_segment,wing_spar_center_carrythrough_segment,wing_spar_center_right_root_segment,wing_spar_center_right_inner_wing_segment</td><td>5</td><td>0</td><td>pass</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>TG-P7 Training Proxy Database</h2>
-    <p class="note">TG-P7-R3 materialized opt-in runtime database for initial training with the split-receiver proxy. The default repository database remains unchanged.</p>
-    <p class="note">default components: 26; proxy components: 32; split receivers: 8</p>
-    <table>
-<thead><tr><th>field</th><th>value</th></tr></thead>
-<tbody>
-<tr><td>default_database_component_count</td><td>26</td></tr>
-<tr><td>proxy_database_component_count</td><td>32</td></tr>
-<tr><td>split_receiver_component_count</td><td>8</td></tr>
-<tr><td>proxy_database_materialized</td><td>True</td></tr>
-<tr><td>database_path</td><td>docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Subcomponent Shape Placement Candidates</h2>
-    <p class="note">Review-only latest subcomponent candidates for the exposed items. Nominal public or declared dimensions are preserved; older current/shape/centerline layers are trace data only, and all candidates remain inactive at runtime.</p>
-    <p class="note">latest resolved candidates: 0; latest unresolved candidates: 3; latest outside samples: 8</p>
-    <p class="note"><a href="subcomponent_shape_placement_views/index.html">Open subcomponent shape placement views</a>.</p>
-    <table>
-<thead><tr><th>item</th><th>type</th><th>current_shape</th><th>candidate_family</th><th>eval_shape</th><th>current_outside</th><th>shape_outside</th><th>centerline_outside</th><th>latest_outside</th><th>shape_reduction</th><th>centerline_incremental_reduction</th><th>latest_incremental_reduction</th><th>shape_shift_m</th><th>centerline_shift_m</th><th>latest_status</th></tr></thead>
-<tbody>
-<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>crew_envelope_ellipsoid</td><td>ellipsoid</td><td>3</td><td>3</td><td>0</td><td>4</td><td>0</td><td>3</td><td>-4</td><td>0.0</td><td>0.509902</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
-<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>current_shape_recheck</td><td>ellipsoid</td><td>2</td><td>2</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0.0</td><td>0.0</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
-<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>rounded_engine_axis_capsule</td><td>capsule</td><td>3</td><td>3</td><td>2</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0.0</td><td>0.1</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Semantic Parent-Child Component Layout</h2>
-    <p class="note">Primary visual review surface: `14` mesh-derived parent shell parts with all `26` current receiver priors overlaid inside their parent region; the `12` extra receiver slots are display overlays, not accepted runtime ownership.</p>
-    <p class="note"><a href="semantic_parent_child_layout_views/index.html">Open 14 parent-child layout views</a>.</p>
-    <table>
-<thead><tr><th>parent_component</th><th>outer_region</th><th>primitive</th><th>receiver_overlays</th><th>extra_slots</th><th>primary_receiver</th><th>extra_receivers</th><th>held_receivers</th><th>external_held_segments</th><th>runtime_status</th></tr></thead>
-<tbody>
-<tr><td>semantic_nose_radome_volume</td><td>nose_radome</td><td>convex_hull</td><td>2</td><td>1</td><td>apg68_radar_array</td><td>iff_interrogator</td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_forward_fuselage_skin_volume</td><td>forward_fuselage</td><td>obb</td><td>3</td><td>2</td><td>cockpit_crew_station</td><td>nose_avionics_bay,inertial_navigation_unit</td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_canopy_surface_volume</td><td>canopy</td><td>convex_hull</td><td>1</td><td>0</td><td>dedicated_canopy_surface_component</td><td></td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_center_fuselage_skin_volume</td><td>center_fuselage</td><td>obb</td><td>5</td><td>4</td><td>center_fuselage_fuel_cell</td><td>mission_computer,data_link_terminal,flight_control_computer,wing_spar_center</td><td>wing_spar_center</td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_intake_lip_and_duct_volume</td><td>intake</td><td>convex_hull</td><td>1</td><td>0</td><td>dedicated_intake_lip_or_duct_component</td><td></td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_aft_engine_bay_skin_volume</td><td>aft_fuselage_engine</td><td>obb</td><td>4</td><td>3</td><td>electrical_power_bus</td><td>engine_core,tail_hydraulic_pump,engine_fuel_control_unit</td><td>engine_core</td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_engine_nozzle_volume</td><td>engine_nozzle</td><td>obb</td><td>1</td><td>0</td><td>afterburner_nozzle</td><td></td><td></td><td>1</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_left_wing_skin_volume</td><td>left_wing</td><td>thin_prism</td><td>2</td><td>1</td><td>left_wing_fuel_cell</td><td>left_aileron_actuator</td><td></td><td>1</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_right_wing_skin_volume</td><td>right_wing</td><td>thin_prism</td><td>2</td><td>1</td><td>right_wing_fuel_cell</td><td>right_aileron_actuator</td><td></td><td>1</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_left_wing_root_fairing_volume</td><td>left_wing_root</td><td>convex_hull</td><td>1</td><td>0</td><td>left_leading_edge_flap_actuator</td><td></td><td></td><td>1</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_right_wing_root_fairing_volume</td><td>right_wing_root</td><td>convex_hull</td><td>1</td><td>0</td><td>right_leading_edge_flap_actuator</td><td></td><td></td><td>1</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_left_horizontal_tail_skin_volume</td><td>left_horizontal_tail</td><td>thin_prism</td><td>1</td><td>0</td><td>left_horizontal_tail_actuator_or_surface_component</td><td></td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_right_horizontal_tail_skin_volume</td><td>right_horizontal_tail</td><td>thin_prism</td><td>1</td><td>0</td><td>right_horizontal_tail_actuator_or_surface_component</td><td></td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-<tr><td>semantic_vertical_tail_skin_volume</td><td>vertical_tail</td><td>thin_prism</td><td>1</td><td>0</td><td>rudder_actuator</td><td></td><td></td><td>0</td><td>review_only_visual_layout_not_runtime_activation</td></tr>
-</tbody>
-</table>
-  </section>
-
-
-  <section>
-    <h2>Surface Component Candidates</h2>
-    <p class="note">Review-only handoff layer from outer-shape hits to current component damage records. It does not replace the runtime damage model.</p>
-    <table>
-<thead><tr><th>surface_component</th><th>outer_region</th><th>surface_role</th><th>proxy_kind</th><th>linked_components</th><th>clean_direct_links</th><th>clean_direct_components</th><th>cross_region_components</th><th>blocked_components</th><th>runtime_relation_status</th><th>status</th><th>semantics</th><th>flags</th></tr></thead>
-<tbody>
-<tr><td>surface_nose_radome</td><td>nose_radome</td><td>radome</td><td>convex_hull</td><td>2</td><td>2</td><td>apg68_radar_array,iff_interrogator</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-<tr><td>surface_forward_fuselage_skin</td><td>forward_fuselage</td><td>fuselage_skin</td><td>obb</td><td>3</td><td>3</td><td>cockpit_crew_station,inertial_navigation_unit,nose_avionics_bay</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-<tr><td>surface_canopy</td><td>canopy</td><td>canopy</td><td>convex_hull</td><td>1</td><td>1</td><td>dedicated_canopy_surface_component</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-<tr><td>surface_center_fuselage_skin</td><td>center_fuselage</td><td>fuselage_skin</td><td>obb</td><td>5</td><td>4</td><td>center_fuselage_fuel_cell,data_link_terminal,flight_control_computer,mission_computer</td><td>wing_spar_center</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_semantic_hold</td><td>cross_region_semantic_hold</td><td>cross_region_semantic_hold</td></tr>
-<tr><td>surface_intake_lip_and_duct</td><td>intake</td><td>intake</td><td>convex_hull</td><td>3</td><td>1</td><td>dedicated_intake_lip_or_duct_component</td><td>engine_core</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_boundary_candidate</td><td>cross_region_boundary_candidate_review_only</td><td>cross_region_boundary_candidate_review_only;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_aft_engine_bay_skin</td><td>aft_fuselage_engine</td><td>engine_bay_skin</td><td>obb</td><td>4</td><td>3</td><td>electrical_power_bus,engine_fuel_control_unit,tail_hydraulic_pump</td><td>engine_core</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_boundary_candidate</td><td>cross_region_boundary_candidate_review_only</td><td>cross_region_boundary_candidate_review_only</td></tr>
-<tr><td>surface_engine_nozzle</td><td>engine_nozzle</td><td>nozzle</td><td>obb</td><td>3</td><td>1</td><td>afterburner_nozzle</td><td>engine_core</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_boundary_candidate</td><td>cross_region_boundary_candidate_review_only</td><td>cross_region_boundary_candidate_review_only;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_left_wing_skin</td><td>left_wing</td><td>lifting_surface</td><td>thin_prism</td><td>4</td><td>2</td><td>left_aileron_actuator,left_wing_fuel_cell</td><td>wing_spar_center</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_semantic_hold</td><td>cross_region_semantic_hold</td><td>cross_region_semantic_hold;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_right_wing_skin</td><td>right_wing</td><td>lifting_surface</td><td>thin_prism</td><td>4</td><td>2</td><td>right_aileron_actuator,right_wing_fuel_cell</td><td>wing_spar_center</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_semantic_hold</td><td>cross_region_semantic_hold</td><td>cross_region_semantic_hold;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_left_wing_root_fairing</td><td>left_wing_root</td><td>structural_transition</td><td>convex_hull</td><td>3</td><td>1</td><td>left_leading_edge_flap_actuator</td><td>wing_spar_center</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_semantic_hold</td><td>cross_region_semantic_hold</td><td>cross_region_semantic_hold;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_right_wing_root_fairing</td><td>right_wing_root</td><td>structural_transition</td><td>convex_hull</td><td>3</td><td>1</td><td>right_leading_edge_flap_actuator</td><td>wing_spar_center</td><td></td><td>runtime_relation_review_only_candidate</td><td>review_only_cross_region_semantic_hold</td><td>cross_region_semantic_hold</td><td>cross_region_semantic_hold;expected_component_bound_elsewhere</td></tr>
-<tr><td>surface_left_horizontal_tail_skin</td><td>left_horizontal_tail</td><td>tail_surface</td><td>thin_prism</td><td>1</td><td>1</td><td>left_horizontal_tail_actuator_or_surface_component</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-<tr><td>surface_right_horizontal_tail_skin</td><td>right_horizontal_tail</td><td>tail_surface</td><td>thin_prism</td><td>1</td><td>1</td><td>right_horizontal_tail_actuator_or_surface_component</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-<tr><td>surface_vertical_tail_skin</td><td>vertical_tail</td><td>tail_surface</td><td>thin_prism</td><td>1</td><td>1</td><td>rudder_actuator</td><td></td><td></td><td>runtime_relation_review_only_candidate</td><td>candidate_surface_component</td><td>candidate_surface_component</td><td>candidate_surface_component</td></tr>
-</tbody>
-</table>
-  </section>
-
-  <section>
-    <h2>Review Point Diagnostics</h2>
-    <table>
-<thead><tr><th>index</th><th>point</th><th>local_m</th><th>outer_region</th><th>outer_dist_m</th><th>nearest_component</th><th>component_dist_m</th><th>candidate_count</th><th>interpretation</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>nose_axis_4m</td><td>[4.0, 0.0, 0.0]</td><td>forward_fuselage</td><td>0.0</td><td>dedicated_canopy_surface_component</td><td>0.125</td><td>7</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
-<tr><td>2</td><td>nose_axis_6m</td><td>[6.0, 0.0, 0.0]</td><td>nose_radome</td><td>0.349524</td><td>cockpit_crew_station</td><td>0.0</td><td>5</td><td>point_inside_component_box_review_only</td></tr>
-<tr><td>3</td><td>tail_axis_4m</td><td>[-4.0, 0.0, 0.0]</td><td>aft_fuselage_engine</td><td>0.0</td><td>engine_fuel_control_unit</td><td>0.505594</td><td>10</td><td>inside_outer_shape_with_nearby_component_candidates_review_only</td></tr>
-<tr><td>4</td><td>tail_axis_6m</td><td>[-6.0, 0.0, 0.0]</td><td>vertical_tail</td><td>0.088577</td><td>engine_core</td><td>0.0</td><td>7</td><td>point_inside_component_box_review_only</td></tr>
-<tr><td>5</td><td>right_beam_4m</td><td>[0.0, 4.0, 0.0]</td><td>right_wing</td><td>0.868724</td><td>wing_spar_center</td><td>0.7</td><td>3</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
-<tr><td>6</td><td>right_beam_6m</td><td>[0.0, 6.0, 0.0]</td><td>right_wing</td><td>1.468711</td><td>right_aileron_actuator</td><td>1.771475</td><td>1</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
-<tr><td>7</td><td>left_beam_4m</td><td>[0.0, -4.0, 0.0]</td><td>left_wing</td><td>0.868724</td><td>wing_spar_center</td><td>0.7</td><td>3</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
-<tr><td>8</td><td>left_beam_6m</td><td>[0.0, -6.0, 0.0]</td><td>left_wing</td><td>1.468704</td><td>left_aileron_actuator</td><td>1.771475</td><td>1</td><td>outside_outer_shape_but_near_component_candidate_review_only</td></tr>
-<tr><td>9</td><td>above_4m</td><td>[0.0, 0.0, 4.0]</td><td>center_fuselage</td><td>3.207745</td><td>flight_control_computer</td><td>3.411103</td><td>0</td><td>outside_outer_shape_no_near_component_candidate_review_only</td></tr>
-<tr><td>10</td><td>below_4m</td><td>[0.0, 0.0, -4.0]</td><td>left_wing_root</td><td>2.892347</td><td>left_leading_edge_flap_actuator</td><td>3.324154</td><td>0</td><td>outside_outer_shape_no_near_component_candidate_review_only</td></tr>
-</tbody>
-</table>
-  </section>
-  <section>
-    <h2>Component Binding Summary</h2>
-    <table>
-<thead><tr><th>component</th><th>system</th><th>bound_region</th><th>status</th><th>anomalies</th></tr></thead>
-<tbody>
-<tr><td>apg68_radar_array</td><td>radar</td><td>nose_radome</td><td>candidate_binding</td><td></td></tr>
-<tr><td>cockpit_crew_station</td><td>cockpit</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>dedicated_canopy_surface_component</td><td>cockpit</td><td>canopy</td><td>candidate_binding</td><td></td></tr>
-<tr><td>nose_avionics_bay</td><td>avionics</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>iff_interrogator</td><td>avionics</td><td>nose_radome</td><td>candidate_binding</td><td></td></tr>
-<tr><td>center_fuselage_fuel_cell</td><td>fuel</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>mission_computer</td><td>avionics</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>data_link_terminal</td><td>data_link</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>flight_control_computer</td><td>flight_control</td><td>center_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>inertial_navigation_unit</td><td>navigation</td><td>forward_fuselage</td><td>candidate_binding</td><td></td></tr>
-<tr><td>dedicated_intake_lip_or_duct_component</td><td>engine</td><td>intake</td><td>candidate_binding</td><td></td></tr>
-<tr><td>electrical_power_bus</td><td>avionics</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
-<tr><td>engine_core</td><td>engine</td><td>aft_fuselage_engine</td><td>review_only_cross_region_boundary_candidate</td><td></td></tr>
-<tr><td>afterburner_nozzle</td><td>engine</td><td>engine_nozzle</td><td>candidate_binding</td><td></td></tr>
-<tr><td>tail_hydraulic_pump</td><td>hydraulic</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
-<tr><td>engine_fuel_control_unit</td><td>engine</td><td>aft_fuselage_engine</td><td>candidate_binding</td><td></td></tr>
-<tr><td>rudder_actuator</td><td>flight_control</td><td>vertical_tail</td><td>candidate_binding</td><td></td></tr>
-<tr><td>left_horizontal_tail_actuator_or_surface_component</td><td>flight_control</td><td>left_horizontal_tail</td><td>candidate_binding</td><td></td></tr>
-<tr><td>right_horizontal_tail_actuator_or_surface_component</td><td>flight_control</td><td>right_horizontal_tail</td><td>candidate_binding</td><td></td></tr>
-<tr><td>left_wing_fuel_cell</td><td>fuel</td><td>left_wing</td><td>candidate_binding</td><td></td></tr>
-<tr><td>right_wing_fuel_cell</td><td>fuel</td><td>right_wing</td><td>candidate_binding</td><td></td></tr>
-<tr><td>left_aileron_actuator</td><td>flight_control</td><td>left_wing</td><td>candidate_binding</td><td></td></tr>
-<tr><td>right_aileron_actuator</td><td>flight_control</td><td>right_wing</td><td>candidate_binding</td><td></td></tr>
-<tr><td>wing_spar_center</td><td>wings</td><td>center_fuselage</td><td>review_only_cross_region_semantic_hold</td><td></td></tr>
-<tr><td>left_leading_edge_flap_actuator</td><td>flight_control</td><td>left_wing_root</td><td>candidate_binding</td><td></td></tr>
-<tr><td>right_leading_edge_flap_actuator</td><td>flight_control</td><td>right_wing_root</td><td>candidate_binding</td><td></td></tr>
 </tbody>
 </table>
   </section>

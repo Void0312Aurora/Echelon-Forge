@@ -228,7 +228,7 @@
   "runtime_database": {
     "proxy_database_path": "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613",
     "proxy_f16c_unit_path": "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_training_proxy_database_20260613/aircraft/units/f16c_block50.json",
-    "proxy_f16c_unit_sha256": "46ca8c6ab282f5be1fe02763587de9aca18563e0666a91cef604b0c68f63eadf",
+    "proxy_f16c_unit_sha256": "e51eabd4642cdeafc6e1d13621fcffb6b06ba77b21a5f9c746eec49b64ae787c",
     "source_database_path": "examples/config/database",
     "source_f16c_unit_path": "examples/config/database/aircraft/units/f16c_block50.json",
     "source_f16c_unit_sha256": "7d69b948be0d159450b3ecbf1e1d55b5fd6ded9cef3102043c71ebeb98ebcabb"
