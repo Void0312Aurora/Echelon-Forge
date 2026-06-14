@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="763.97" y="391.17" width="23.07" height="22.94" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>iff_interrogator old_aabb</title></rect>
 <text x="767.97" y="404.17" font-size="10" font-family="monospace" fill="#7c3aed">iff_interrogator old_aabb</text>
-<rect x="742.36" y="438.37" width="18.88" height="26.73" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>iff_interrogator constrained_ellipsoid</title></rect>
-<text x="746.36" y="451.37" font-size="10" font-family="monospace" fill="#0891b2">iff_interrogator constrained_ellipsoid</text>
+<rect x="224.08" y="380.71" width="18.88" height="26.73" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>iff_interrogator constrained_ellipsoid</title></rect>
+<text x="228.08" y="393.71" font-size="10" font-family="monospace" fill="#0891b2">iff_interrogator constrained_ellipsoid</text>
 <polygon points="740.18,469.80 778.92,463.83 778.92,454.73 747.73,433.68 740.18,464.47" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="761.19" y="461.30" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

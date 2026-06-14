@@ -193,19 +193,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                5.287559,
+                -4.82358,
                 0.0,
-                -0.82538
+                -0.372826
               ],
               "max": [
-                5.471709,
+                -4.63943,
                 0.0762,
-                -0.720478
+                -0.267924
               ],
               "min": [
-                5.103409,
+                -5.00773,
                 -0.0762,
-                -0.930282
+                -0.477728
               ],
               "span": [
                 0.3683,
@@ -214,9 +214,9 @@
               ]
             },
             "center_m": [
-              5.287559,
+              -4.82358,
               0.0,
-              -0.82538
+              -0.372826
             ],
             "half_extents_m": [
               0.18415,
@@ -232,7 +232,7 @@
             "volume_m3": 0.006166
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.601971,
+            "airframe_projection_center_shift_m": 10.573793,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.06876,
             "post_constraint_outside_fraction": 0.0,
@@ -533,19 +533,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                5.287559,
+                -4.82358,
                 0.0,
-                -0.82538
+                -0.372826
               ],
               "max": [
-                5.447833,
+                -4.663306,
                 0.061976,
-                -0.753625
+                -0.301071
               ],
               "min": [
-                5.127285,
+                -4.983854,
                 -0.061976,
-                -0.897135
+                -0.444581
               ],
               "span": [
                 0.320548,
@@ -554,9 +554,9 @@
               ]
             },
             "center_m": [
-              5.287559,
+              -4.82358,
               0.0,
-              -0.82538
+              -0.372826
             ],
             "half_extents_m": [
               0.160274,
@@ -567,7 +567,7 @@
             "volume_m3": 0.005702
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.754172,
+            "airframe_projection_center_shift_m": 9.624363,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -654,17 +654,17 @@
               "center": [
                 2.6,
                 0.0,
-                0.01467
+                0.05
               ],
               "max": [
                 2.72446,
                 0.0889,
-                0.10357
+                0.1389
               ],
               "min": [
                 2.47554,
                 -0.0889,
-                -0.07423
+                -0.0389
               ],
               "span": [
                 0.24892,
@@ -675,7 +675,7 @@
             "center_m": [
               2.6,
               0.0,
-              0.01467
+              0.05
             ],
             "half_extents_m": [
               0.12446,
@@ -691,7 +691,7 @@
             "volume_m3": 0.00412
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.03533,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -1203,19 +1203,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                1.68794,
+                -4.82358,
                 0.0,
-                -0.365384
+                -0.372826
               ],
               "max": [
-                1.848214,
+                -4.663306,
                 0.061976,
-                -0.293629
+                -0.301071
               ],
               "min": [
-                1.527666,
+                -4.983854,
                 -0.061976,
-                -0.437139
+                -0.444581
               ],
               "span": [
                 0.320548,
@@ -1224,9 +1224,9 @@
               ]
             },
             "center_m": [
-              1.68794,
+              -4.82358,
               0.0,
-              -0.365384
+              -0.372826
             ],
             "half_extents_m": [
               0.160274,
@@ -1237,7 +1237,7 @@
             "volume_m3": 0.005702
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.643443,
+            "airframe_projection_center_shift_m": 6.354178,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -1322,19 +1322,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                -1.29108,
+                -4.82358,
                 0.0,
-                -0.985042
+                -0.372826
               ],
               "max": [
-                -1.11963,
+                -4.65213,
                 0.09525,
-                -0.888522
+                -0.276306
               ],
               "min": [
-                -1.46253,
+                -4.99503,
                 -0.09525,
-                -1.081562
+                -0.469346
               ],
               "span": [
                 0.3429,
@@ -1343,9 +1343,9 @@
               ]
             },
             "center_m": [
-              -1.29108,
+              -4.82358,
               0.0,
-              -0.985042
+              -0.372826
             ],
             "half_extents_m": [
               0.17145,
@@ -1356,7 +1356,7 @@
             "volume_m3": 0.01261
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 1.335788,
+            "airframe_projection_center_shift_m": 3.087061,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.25442,
             "post_constraint_outside_fraction": 0.0,
@@ -1441,19 +1441,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                -0.064081,
+                -4.82358,
                 0.45,
-                -0.726398
+                -0.372826
               ],
               "max": [
-                0.096193,
+                -4.663306,
                 0.511976,
-                -0.654643
+                -0.301071
               ],
               "min": [
-                -0.224355,
+                -4.983854,
                 0.388024,
-                -0.798153
+                -0.444581
               ],
               "span": [
                 0.320548,
@@ -1462,9 +1462,9 @@
               ]
             },
             "center_m": [
-              -0.064081,
+              -4.82358,
               0.45,
-              -0.726398
+              -0.372826
             ],
             "half_extents_m": [
               0.160274,
@@ -1475,7 +1475,7 @@
             "volume_m3": 0.005702
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 1.078304,
+            "airframe_projection_center_shift_m": 4.877438,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -2582,18 +2582,18 @@
             "bounds": {
               "center": [
                 -2.8,
-                -1e-06,
-                -0.296449
+                0.45,
+                0.05
               ],
               "max": [
                 -2.575,
-                0.029999,
-                -0.266449
+                0.48,
+                0.08
               ],
               "min": [
                 -3.025,
-                -0.030001,
-                -0.326449
+                0.42,
+                0.02
               ],
               "span": [
                 0.45,
@@ -2603,8 +2603,8 @@
             },
             "center_m": [
               -2.8,
-              -1e-06,
-              -0.296449
+              0.45,
+              0.05
             ],
             "cylinder_half_length_m": 0.195,
             "half_extents_m": [
@@ -2617,7 +2617,7 @@
             "volume_m3": 0.001216
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.567915,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -3177,19 +3177,19 @@
           "constrained_geometry": {
             "bounds": {
               "center": [
-                -5.025768,
+                -5.2,
                 0.0,
-                -0.52713
+                0.3
               ],
               "max": [
-                -4.900768,
+                -5.075,
                 0.09,
-                -0.43713
+                0.39
               ],
               "min": [
-                -5.150768,
+                -5.325,
                 -0.09,
-                -0.61713
+                0.21
               ],
               "span": [
                 0.25,
@@ -3198,9 +3198,9 @@
               ]
             },
             "center_m": [
-              -5.025768,
+              -5.2,
               0.0,
-              -0.52713
+              0.3
             ],
             "half_extents_m": [
               0.125,
@@ -3211,7 +3211,7 @@
             "volume_m3": 0.0081
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.845281,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.22487,
             "post_constraint_outside_fraction": 0.0,
@@ -3965,18 +3965,18 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -2.342176,
-                -2.723827,
+                -0.8,
+                -4.1,
                 -0.985
               ],
               "max": [
-                -2.302176,
-                -2.498827,
+                -0.76,
+                -3.875,
                 -0.945
               ],
               "min": [
-                -2.382176,
-                -2.948827,
+                -0.84,
+                -4.325,
                 -1.025
               ],
               "span": [
@@ -3986,8 +3986,8 @@
               ]
             },
             "center_m": [
-              -2.342176,
-              -2.723827,
+              -0.8,
+              -4.1,
               -0.985
             ],
             "cylinder_half_length_m": 0.185,
@@ -4001,7 +4001,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 2.06692,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -4418,18 +4418,18 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -2.342168,
-                2.723775,
+                -0.8,
+                4.1,
                 -0.985
               ],
               "max": [
-                -2.302168,
-                2.948775,
+                -0.76,
+                4.325,
                 -0.945
               ],
               "min": [
-                -2.382168,
-                2.498775,
+                -0.84,
+                3.875,
                 -1.025
               ],
               "span": [
@@ -4439,8 +4439,8 @@
               ]
             },
             "center_m": [
-              -2.342168,
-              2.723775,
+              -0.8,
+              4.1,
               -0.985
             ],
             "cylinder_half_length_m": 0.185,
@@ -4454,7 +4454,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 2.066949,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -4748,18 +4748,18 @@
             "bounds": {
               "center": [
                 -0.2,
-                -1.100915,
-                -0.949957
+                -1.15,
+                -0.71
               ],
               "max": [
                 -0.16,
-                -0.825915,
-                -0.909957
+                -0.875,
+                -0.67
               ],
               "min": [
                 -0.24,
-                -1.375915,
-                -0.989957
+                -1.425,
+                -0.75
               ],
               "span": [
                 0.08,
@@ -4769,8 +4769,8 @@
             },
             "center_m": [
               -0.2,
-              -1.100915,
-              -0.949957
+              -1.15,
+              -0.71
             ],
             "cylinder_half_length_m": 0.235,
             "half_extents_m": [
@@ -4783,7 +4783,7 @@
             "volume_m3": 0.002631
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.244926,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -5074,18 +5074,18 @@
             "bounds": {
               "center": [
                 -0.2,
-                1.100914,
-                -0.949957
+                1.15,
+                -0.71
               ],
               "max": [
                 -0.16,
-                1.375914,
-                -0.909957
+                1.425,
+                -0.67
               ],
               "min": [
                 -0.24,
-                0.825914,
-                -0.989957
+                0.875,
+                -0.75
               ],
               "span": [
                 0.08,
@@ -5095,8 +5095,8 @@
             },
             "center_m": [
               -0.2,
-              1.100914,
-              -0.949957
+              1.15,
+              -0.71
             ],
             "cylinder_half_length_m": 0.235,
             "half_extents_m": [
@@ -5109,7 +5109,7 @@
             "volume_m3": 0.002631
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 0.244926,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,
@@ -5817,19 +5817,19 @@
             "axis_half_extent_m": 0.225,
             "bounds": {
               "center": [
-                -6.974901,
+                -6.7,
                 0.0,
-                1.568794
+                0.45
               ],
               "max": [
-                -6.934901,
+                -6.66,
                 0.04,
-                1.793794
+                0.675
               ],
               "min": [
-                -7.014901,
+                -6.74,
                 -0.04,
-                1.343794
+                0.225
               ],
               "span": [
                 0.08,
@@ -5838,9 +5838,9 @@
               ]
             },
             "center_m": [
-              -6.974901,
+              -6.7,
               0.0,
-              1.568794
+              0.45
             ],
             "cylinder_half_length_m": 0.185,
             "half_extents_m": [
@@ -5853,7 +5853,7 @@
             "volume_m3": 0.002128
           },
           "constraint_adjustment": {
-            "airframe_projection_center_shift_m": 1.152072,
+            "airframe_projection_center_shift_m": 0.0,
             "center_shift_m": 0.0,
             "placement_outside_fraction": 0.0,
             "post_constraint_outside_fraction": 0.0,

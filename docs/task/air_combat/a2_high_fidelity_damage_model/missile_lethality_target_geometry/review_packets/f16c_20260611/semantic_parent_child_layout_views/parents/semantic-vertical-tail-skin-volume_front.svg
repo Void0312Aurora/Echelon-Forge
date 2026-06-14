@@ -15,5 +15,5 @@
 <polygon points="609.85,447.91 609.86,468.54 633.57,477.84 745.04,513.59 745.16,512.21 745.52,508.05 633.57,458.33" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="561.08,322.41 565.27,325.09 569.46,322.41 566.93,70.19 563.62,70.19" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="561.08,322.41 565.27,325.09 569.46,322.41 566.93,70.19 563.62,70.19" fill="none" stroke="#2563eb" stroke-width="2.50"><title>parent_mesh_region</title></polygon>
-<rect x="562.76" y="117.99" width="5.01" height="57.34" rx="2.51" ry="2.51" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>rudder_actuator capsule primary</title></rect>
+<rect x="562.76" y="260.55" width="5.01" height="57.34" rx="2.51" ry="2.51" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>rudder_actuator capsule primary</title></rect>
 <text x="12" y="608" font-size="10" font-family="monospace" fill="#475569">gray=whole-airframe wireframe; blue=parent semantic region; green/cyan=actual-size receiver prior; red=held split segment</text></svg>

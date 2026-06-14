@@ -16,5 +16,5 @@
 <polygon points="438.69,322.41 443.56,325.09 448.43,322.41 445.48,70.19 441.64,70.19" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="410.54,469.80 476.57,469.80 476.30,467.13 476.04,464.47 474.30,458.52 468.64,444.89 457.24,436.60 443.56,433.68 429.88,436.60 418.48,444.89 412.82,458.52 411.08,464.47 410.81,467.13" fill="none" stroke="#2563eb" stroke-width="2.50"><title>parent_mesh_region</title></polygon>
 <rect x="416.74" y="382.77" width="53.63" height="61.50" rx="26.82" ry="30.75" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>apg68_radar_array ellipsoid primary</title></rect>
-<rect x="438.01" y="438.37" width="11.10" height="26.73" rx="5.55" ry="13.37" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>iff_interrogator ellipsoid extra</title></rect>
+<rect x="438.01" y="380.71" width="11.10" height="26.73" rx="5.55" ry="13.37" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>iff_interrogator ellipsoid extra</title></rect>
 <text x="12" y="608" font-size="10" font-family="monospace" fill="#475569">gray=whole-airframe wireframe; blue=parent semantic region; green/cyan=actual-size receiver prior; red=held split segment</text></svg>

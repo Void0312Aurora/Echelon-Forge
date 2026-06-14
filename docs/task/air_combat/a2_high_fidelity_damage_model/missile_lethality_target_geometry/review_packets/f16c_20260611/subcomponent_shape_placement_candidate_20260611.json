@@ -51,48 +51,1486 @@
   "manual_review_queue": [
     {
       "priority": "high",
-      "question": "No remaining shape-placement candidates after R21 review-only rule promotion; continue to hold runtime activation for explicit ownership decisions."
+      "question": "Review any remaining shape-placement candidates before applying them to the internal prior or held-segment rules."
+    },
+    {
+      "priority": "high",
+      "question": "For unresolved candidates, research better true dimensions, tapered cross-sections, or cross-region centerlines rather than shrinking nominal dimensions."
+    },
+    {
+      "priority": "high",
+      "question": "Review R19 centerline candidates separately; they preserve dimensions but change semantic placement and are not accepted runtime geometry."
+    },
+    {
+      "priority": "high",
+      "question": "R20 latest candidates promoted in R21 are retained here only when new exposure remains after the review-only rule update."
     },
     {
       "priority": "medium",
-      "question": "Keep runtime damage behavior unchanged until the promoted review-only rules are explicitly accepted, split, or deliberately held with tests."
+      "question": "Keep runtime damage behavior unchanged until these shape candidates are explicitly accepted."
     }
   ],
-  "rows": [],
+  "rows": [
+    {
+      "authority_boundary": "shape_design_candidate_preserves_nominal_dimensions_but_is_not_true_internal_engineering_geometry",
+      "bound_region_id": "forward_fuselage",
+      "candidate_center_shift_m": 0.0,
+      "candidate_evaluation_axis": "",
+      "candidate_evaluation_shape": "ellipsoid",
+      "candidate_geometry": {
+        "bounds": {
+          "center": [
+            3.787559,
+            0.0,
+            -0.62538
+          ],
+          "max": [
+            4.412559,
+            0.254,
+            -0.05038
+          ],
+          "min": [
+            3.162559,
+            -0.254,
+            -1.20038
+          ],
+          "span": [
+            1.25,
+            0.508,
+            1.15
+          ]
+        },
+        "center_m": [
+          3.787559,
+          0.0,
+          -0.62538
+        ],
+        "half_extents_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "radii_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.382358
+      },
+      "candidate_shape_family": "crew_envelope_ellipsoid",
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.96,
+        "max_outside_distance_m": 0.07545,
+        "outside_sample_count": 3,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.20038,
+              0.254,
+              -0.05038
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 22,
+            "inside_sample_fraction": 0.88,
+            "max_outside_distance_m": 0.07545,
+            "outside_sample_count": 3,
+            "projected_bounds": [
+              3.162559,
+              -1.20038,
+              4.412559,
+              -0.05038
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -0.254,
+              4.412559,
+              0.254
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_center_offset_m": [
+        -0.5,
+        0.0,
+        0.1
+      ],
+      "centerline_candidate_geometry": {
+        "bounds": {
+          "center": [
+            3.287559,
+            0.0,
+            -0.52538
+          ],
+          "max": [
+            3.912559,
+            0.254,
+            0.04962
+          ],
+          "min": [
+            2.662559,
+            -0.254,
+            -1.10038
+          ],
+          "span": [
+            1.25,
+            0.508,
+            1.15
+          ]
+        },
+        "center_m": [
+          3.287559,
+          0.0,
+          -0.52538
+        ],
+        "half_extents_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "radii_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.382358
+      },
+      "centerline_candidate_placement_policy": "preserve_crew_envelope_dimensions_and_test_limited_aft_upward_centerline_shift",
+      "centerline_candidate_rationale": "local silhouette search reduces exposure but cannot clear the cockpit envelope; this remains a canopy/forward-fuselage envelope modeling issue.",
+      "centerline_candidate_recommended_action": "review_centerline_semantics_before_promoting_to_prior_or_segment_rule",
+      "centerline_candidate_shift_m": 0.509902,
+      "centerline_candidate_silhouette": {
+        "fully_inside_all_views": true,
+        "inside_sample_fraction": 1.0,
+        "max_outside_distance_m": 0.0,
+        "outside_sample_count": 0,
+        "outside_view_count": 0,
+        "outside_views": [],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.10038,
+              0.254,
+              0.04962
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662559,
+              -1.10038,
+              3.912559,
+              0.04962
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.662559,
+              -0.254,
+              3.912559,
+              0.254
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_source_basis": "R19_local_centerline_search_radius_1m_step_0p1m",
+      "centerline_candidate_status": "centerline_candidate_resolves_silhouette_exposure_review_required",
+      "centerline_incremental_outside_sample_reduction": 3,
+      "centerline_outside_sample_reduction": 3,
+      "component_role": "crew_volume_receiver",
+      "current_axis": "",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            3.787559,
+            0.0,
+            -0.62538
+          ],
+          "max": [
+            4.412559,
+            0.254,
+            -0.05038
+          ],
+          "min": [
+            3.162559,
+            -0.254,
+            -1.20038
+          ],
+          "span": [
+            1.25,
+            0.508,
+            1.15
+          ]
+        },
+        "center_m": [
+          3.787559,
+          0.0,
+          -0.62538
+        ],
+        "half_extents_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "radii_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.382358
+      },
+      "current_shape": "ellipsoid",
+      "current_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.96,
+        "max_outside_distance_m": 0.07545,
+        "outside_sample_count": 3,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.20038,
+              0.254,
+              -0.05038
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 22,
+            "inside_sample_fraction": 0.88,
+            "max_outside_distance_m": 0.07545,
+            "outside_sample_count": 3,
+            "projected_bounds": [
+              3.162559,
+              -1.20038,
+              4.412559,
+              -0.05038
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              3.162559,
+              -0.254,
+              4.412559,
+              0.254
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "design_rationale": "crew station already uses an ellipsoid; remaining exposure means placement or envelope dimensions need review, not a box-to-rounding fix.",
+      "dimension_policy": "preserve_nominal_public_or_declared_prior_dimensions_no_shrink",
+      "item_id": "cockpit_crew_station",
+      "latest_candidate_center_offset_from_centerline_m": [
+        -1.0,
+        0.0,
+        0.1
+      ],
+      "latest_candidate_geometry": {
+        "bounds": {
+          "center": [
+            2.287559,
+            0.0,
+            -0.42538
+          ],
+          "max": [
+            2.912559,
+            0.254,
+            0.14962
+          ],
+          "min": [
+            1.662559,
+            -0.254,
+            -1.00038
+          ],
+          "span": [
+            1.25,
+            0.508,
+            1.15
+          ]
+        },
+        "center_m": [
+          2.287559,
+          0.0,
+          -0.42538
+        ],
+        "half_extents_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "radii_m": [
+          0.625,
+          0.254,
+          0.575
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.382358
+      },
+      "latest_candidate_incremental_shift_m": 1.004988,
+      "latest_candidate_placement_policy": "preserve_crew_envelope_dimensions_and_place_the_receiver_under_the_canopy_forward_fuselage_envelope",
+      "latest_candidate_rationale": "crew station damage is a canopy/forward-fuselage envelope, not a radome-side point receiver; the R20 cross-region centerline clears the sampled silhouettes while preserving the crew envelope dimensions.",
+      "latest_candidate_recommended_action": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "latest_candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.94667,
+        "max_outside_distance_m": 0.0938,
+        "outside_sample_count": 4,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.254,
+              -1.00038,
+              0.254,
+              0.14962
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 21,
+            "inside_sample_fraction": 0.84,
+            "max_outside_distance_m": 0.0938,
+            "outside_sample_count": 4,
+            "projected_bounds": [
+              1.662559,
+              -1.00038,
+              2.912559,
+              0.14962
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              1.662559,
+              -0.254,
+              2.912559,
+              0.254
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "latest_candidate_source_basis": "R20_cross_region_canopy_forward_fuselage_crew_envelope_search",
+      "latest_candidate_stage": "R20_canopy_forward_fuselage_crew_envelope_candidate",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "latest_candidate_total_center_offset_m": [
+        -1.5,
+        0.0,
+        0.2
+      ],
+      "latest_incremental_outside_sample_reduction": -4,
+      "latest_outside_sample_reduction": -1,
+      "nominal_dimensions_m": [
+        1.25,
+        0.508,
+        1.15
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "canopy",
+        "forward_fuselage"
+      ],
+      "parent_component_name": "cockpit_crew_station",
+      "placement_policy": "preserve_current_crew_envelope_dimensions_then_require_multi_region_cockpit_review",
+      "recommended_action": "design_new_size_or_centerline_model_before_runtime_activation",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_subcomponent_shape_candidate_not_runtime_active",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "size_basis": "public_aces_ii_seat_width_plus_crew_envelope_estimate",
+      "size_evidence_level": "public_partial_dimension_engineering_envelope",
+      "system": "cockpit"
+    },
+    {
+      "authority_boundary": "shape_design_candidate_preserves_nominal_dimensions_but_is_not_true_internal_engineering_geometry",
+      "bound_region_id": "forward_fuselage",
+      "candidate_center_shift_m": 0.0,
+      "candidate_evaluation_axis": "",
+      "candidate_evaluation_shape": "ellipsoid",
+      "candidate_geometry": {
+        "bounds": {
+          "center": [
+            2.6,
+            0.0,
+            0.05
+          ],
+          "max": [
+            2.72446,
+            0.0889,
+            0.1389
+          ],
+          "min": [
+            2.47554,
+            -0.0889,
+            -0.0389
+          ],
+          "span": [
+            0.24892,
+            0.1778,
+            0.1778
+          ]
+        },
+        "center_m": [
+          2.6,
+          0.0,
+          0.05
+        ],
+        "half_extents_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "radii_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.00412
+      },
+      "candidate_shape_family": "current_shape_recheck",
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97333,
+        "max_outside_distance_m": 0.05059,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.0389,
+              0.0889,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 23,
+            "inside_sample_fraction": 0.92,
+            "max_outside_distance_m": 0.05059,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              2.47554,
+              -0.0389,
+              2.72446,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_center_offset_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "centerline_candidate_geometry": {
+        "bounds": {
+          "center": [
+            2.6,
+            0.0,
+            0.05
+          ],
+          "max": [
+            2.72446,
+            0.0889,
+            0.1389
+          ],
+          "min": [
+            2.47554,
+            -0.0889,
+            -0.0389
+          ],
+          "span": [
+            0.24892,
+            0.1778,
+            0.1778
+          ]
+        },
+        "center_m": [
+          2.6,
+          0.0,
+          0.05
+        ],
+        "half_extents_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "radii_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.00412
+      },
+      "centerline_candidate_placement_policy": "no_centerline_candidate_available_keep_shape_candidate_for_review",
+      "centerline_candidate_rationale": "no local centerline search rule exists for this item; keep the shape candidate as the review artifact.",
+      "centerline_candidate_recommended_action": "design_new_size_cross_section_or_multi_region_centerline_model",
+      "centerline_candidate_shift_m": 0.0,
+      "centerline_candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97333,
+        "max_outside_distance_m": 0.05059,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.0389,
+              0.0889,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 23,
+            "inside_sample_fraction": 0.92,
+            "max_outside_distance_m": 0.05059,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              2.47554,
+              -0.0389,
+              2.72446,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_source_basis": "no_R19_centerline_candidate_rule",
+      "centerline_candidate_status": "centerline_candidate_does_not_reduce_exposure_requires_new_geometry",
+      "centerline_incremental_outside_sample_reduction": 0,
+      "centerline_outside_sample_reduction": 0,
+      "component_role": "small_avionics_receiver",
+      "current_axis": "",
+      "current_geometry": {
+        "bounds": {
+          "center": [
+            2.6,
+            0.0,
+            0.05
+          ],
+          "max": [
+            2.72446,
+            0.0889,
+            0.1389
+          ],
+          "min": [
+            2.47554,
+            -0.0889,
+            -0.0389
+          ],
+          "span": [
+            0.24892,
+            0.1778,
+            0.1778
+          ]
+        },
+        "center_m": [
+          2.6,
+          0.0,
+          0.05
+        ],
+        "half_extents_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "radii_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.00412
+      },
+      "current_shape": "ellipsoid",
+      "current_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97333,
+        "max_outside_distance_m": 0.05059,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.0389,
+              0.0889,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 23,
+            "inside_sample_fraction": 0.92,
+            "max_outside_distance_m": 0.05059,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              2.47554,
+              -0.0389,
+              2.72446,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "design_rationale": "no component-specific replacement rule exists yet; keep the current shape and record the residual exposure for follow-up.",
+      "dimension_policy": "preserve_nominal_public_or_declared_prior_dimensions_no_shrink",
+      "item_id": "inertial_navigation_unit",
+      "latest_candidate_center_offset_from_centerline_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latest_candidate_geometry": {
+        "bounds": {
+          "center": [
+            2.6,
+            0.0,
+            0.05
+          ],
+          "max": [
+            2.72446,
+            0.0889,
+            0.1389
+          ],
+          "min": [
+            2.47554,
+            -0.0889,
+            -0.0389
+          ],
+          "span": [
+            0.24892,
+            0.1778,
+            0.1778
+          ]
+        },
+        "center_m": [
+          2.6,
+          0.0,
+          0.05
+        ],
+        "half_extents_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "radii_m": [
+          0.12446,
+          0.0889,
+          0.0889
+        ],
+        "shape": "ellipsoid",
+        "volume_m3": 0.00412
+      },
+      "latest_candidate_incremental_shift_m": 0.0,
+      "latest_candidate_placement_policy": "no_centerline_candidate_available_keep_shape_candidate_for_review",
+      "latest_candidate_rationale": "no local centerline search rule exists for this item; keep the shape candidate as the review artifact.",
+      "latest_candidate_recommended_action": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "latest_candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97333,
+        "max_outside_distance_m": 0.05059,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 75,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.0889,
+              -0.0389,
+              0.0889,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 23,
+            "inside_sample_fraction": 0.92,
+            "max_outside_distance_m": 0.05059,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              2.47554,
+              -0.0389,
+              2.72446,
+              0.1389
+            ],
+            "sample_count": 25,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              2.47554,
+              -0.0889,
+              2.72446,
+              0.0889
+            ],
+            "sample_count": 25,
+            "view": "top"
+          }
+        }
+      },
+      "latest_candidate_source_basis": "R19_local_centerline_candidate",
+      "latest_candidate_stage": "R19_centerline_candidate",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "latest_candidate_total_center_offset_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latest_incremental_outside_sample_reduction": 0,
+      "latest_outside_sample_reduction": 0,
+      "nominal_dimensions_m": [
+        0.24892,
+        0.1778,
+        0.1778
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "forward_fuselage"
+      ],
+      "parent_component_name": "inertial_navigation_unit",
+      "placement_policy": "preserve_current_dimensions_and_shape_for_recheck",
+      "recommended_action": "design_new_size_or_centerline_model_before_runtime_activation",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_subcomponent_shape_candidate_not_runtime_active",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "size_basis": "public_honeywell_h764g_egi_dimensions",
+      "size_evidence_level": "public_lru_dimension",
+      "system": "navigation"
+    },
+    {
+      "authority_boundary": "shape_design_candidate_preserves_nominal_dimensions_but_is_not_true_internal_engineering_geometry",
+      "bound_region_id": "aft_fuselage_engine",
+      "candidate_center_shift_m": 0.0,
+      "candidate_evaluation_axis": "x",
+      "candidate_evaluation_shape": "capsule",
+      "candidate_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 2.31013,
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -1.382923,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -6.003183,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            4.62026,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "cylinder_half_length_m": 1.71958,
+        "half_extents_m": [
+          2.31013,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 4.630739
+      },
+      "candidate_shape_family": "rounded_engine_axis_capsule",
+      "candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.96203,
+        "max_outside_distance_m": 0.21036,
+        "outside_sample_count": 3,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 79,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 24,
+            "inside_sample_fraction": 0.88889,
+            "max_outside_distance_m": 0.21036,
+            "outside_sample_count": 3,
+            "projected_bounds": [
+              -6.003183,
+              -1.144931,
+              -1.382923,
+              0.036169
+            ],
+            "sample_count": 27,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 27,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_center_offset_m": [
+        0.0,
+        0.0,
+        -0.1
+      ],
+      "centerline_candidate_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 2.31013,
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.654381
+          ],
+          "max": [
+            -1.382923,
+            0.59055,
+            -0.063831
+          ],
+          "min": [
+            -6.003183,
+            -0.59055,
+            -1.244931
+          ],
+          "span": [
+            4.62026,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.654381
+        ],
+        "cylinder_half_length_m": 1.71958,
+        "half_extents_m": [
+          2.31013,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 4.630739
+      },
+      "centerline_candidate_placement_policy": "preserve_public_engine_length_and_diameter_and_test_slight_lower_centerline",
+      "centerline_candidate_rationale": "local silhouette search clears the rounded engine envelope with a small downward centerline correction, but cross-region ownership remains held.",
+      "centerline_candidate_recommended_action": "keep_centerline_candidate_as_intermediate_and_research_cross_section_or_true_centerline",
+      "centerline_candidate_shift_m": 0.1,
+      "centerline_candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97468,
+        "max_outside_distance_m": 0.11239,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 79,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.244931,
+              0.59055,
+              -0.063831
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 0.92593,
+            "max_outside_distance_m": 0.11239,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              -6.003183,
+              -1.244931,
+              -1.382923,
+              -0.063831
+            ],
+            "sample_count": 27,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 27,
+            "view": "top"
+          }
+        }
+      },
+      "centerline_candidate_source_basis": "R19_local_centerline_search_radius_1m_step_0p1m",
+      "centerline_candidate_status": "centerline_candidate_reduces_exposure_requires_followup_geometry",
+      "centerline_incremental_outside_sample_reduction": 1,
+      "centerline_outside_sample_reduction": 1,
+      "component_role": "cross_region_engine_receiver",
+      "current_axis": "x",
+      "current_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 2.31013,
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.554381
+          ],
+          "max": [
+            -1.382923,
+            0.59055,
+            0.036169
+          ],
+          "min": [
+            -6.003183,
+            -0.59055,
+            -1.144931
+          ],
+          "span": [
+            4.62026,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.554381
+        ],
+        "cylinder_half_length_m": 1.71958,
+        "half_extents_m": [
+          2.31013,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 4.630739
+      },
+      "current_shape": "capsule",
+      "current_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.96203,
+        "max_outside_distance_m": 0.21036,
+        "outside_sample_count": 3,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 79,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.144931,
+              0.59055,
+              0.036169
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 24,
+            "inside_sample_fraction": 0.88889,
+            "max_outside_distance_m": 0.21036,
+            "outside_sample_count": 3,
+            "projected_bounds": [
+              -6.003183,
+              -1.144931,
+              -1.382923,
+              0.036169
+            ],
+            "sample_count": 27,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 27,
+            "view": "top"
+          }
+        }
+      },
+      "design_rationale": "engine receiver should preserve the public F110 axial length/diameter semantics; a rounded capsule is a safer candidate than an arbitrary box.",
+      "dimension_policy": "preserve_nominal_public_or_declared_prior_dimensions_no_shrink",
+      "item_id": "engine_core",
+      "latest_candidate_center_offset_from_centerline_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "latest_candidate_geometry": {
+        "axis": "x",
+        "axis_half_extent_m": 2.31013,
+        "bounds": {
+          "center": [
+            -3.693053,
+            0.0,
+            -0.654381
+          ],
+          "max": [
+            -1.382923,
+            0.59055,
+            -0.063831
+          ],
+          "min": [
+            -6.003183,
+            -0.59055,
+            -1.244931
+          ],
+          "span": [
+            4.62026,
+            1.1811,
+            1.1811
+          ]
+        },
+        "center_m": [
+          -3.693053,
+          0.0,
+          -0.654381
+        ],
+        "cylinder_half_length_m": 1.71958,
+        "half_extents_m": [
+          2.31013,
+          0.59055,
+          0.59055
+        ],
+        "radius_m": 0.59055,
+        "shape": "capsule",
+        "volume_m3": 4.630739
+      },
+      "latest_candidate_incremental_shift_m": 0.0,
+      "latest_candidate_placement_policy": "preserve_public_engine_length_and_diameter_and_test_slight_lower_centerline",
+      "latest_candidate_rationale": "local silhouette search clears the rounded engine envelope with a small downward centerline correction, but cross-region ownership remains held.",
+      "latest_candidate_recommended_action": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "latest_candidate_silhouette": {
+        "fully_inside_all_views": false,
+        "inside_sample_fraction": 0.97468,
+        "max_outside_distance_m": 0.11239,
+        "outside_sample_count": 2,
+        "outside_view_count": 1,
+        "outside_views": [
+          "side"
+        ],
+        "sample_count": 79,
+        "views": {
+          "front": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -0.59055,
+              -1.244931,
+              0.59055,
+              -0.063831
+            ],
+            "sample_count": 25,
+            "view": "front"
+          },
+          "side": {
+            "exceeds_tolerance": true,
+            "fully_inside_silhouette": false,
+            "inside_sample_count": 25,
+            "inside_sample_fraction": 0.92593,
+            "max_outside_distance_m": 0.11239,
+            "outside_sample_count": 2,
+            "projected_bounds": [
+              -6.003183,
+              -1.244931,
+              -1.382923,
+              -0.063831
+            ],
+            "sample_count": 27,
+            "view": "side"
+          },
+          "top": {
+            "exceeds_tolerance": false,
+            "fully_inside_silhouette": true,
+            "inside_sample_count": 27,
+            "inside_sample_fraction": 1.0,
+            "max_outside_distance_m": 0.0,
+            "outside_sample_count": 0,
+            "projected_bounds": [
+              -6.003183,
+              -0.59055,
+              -1.382923,
+              0.59055
+            ],
+            "sample_count": 27,
+            "view": "top"
+          }
+        }
+      },
+      "latest_candidate_source_basis": "R19_local_centerline_candidate",
+      "latest_candidate_stage": "R19_centerline_candidate",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "latest_candidate_total_center_offset_m": [
+        0.0,
+        0.0,
+        -0.1
+      ],
+      "latest_incremental_outside_sample_reduction": 0,
+      "latest_outside_sample_reduction": 1,
+      "nominal_dimensions_m": [
+        4.62026,
+        1.1811,
+        1.1811
+      ],
+      "outside_sample_reduction": 0,
+      "owner_region_ids": [
+        "aft_fuselage_engine",
+        "engine_nozzle",
+        "intake"
+      ],
+      "parent_component_name": "engine_core",
+      "placement_policy": "preserve_public_engine_length_and_diameter_while_testing_rounded_axial_envelope",
+      "recommended_action": "design_new_size_or_centerline_model_before_runtime_activation",
+      "record_type": "receiver_prior",
+      "runtime_projection_status": "review_only_subcomponent_shape_candidate_not_runtime_active",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "size_basis": "public_f110_ge_129_engine_dimensions",
+      "size_evidence_level": "public_engine_dimension",
+      "system": "engine"
+    }
+  ],
   "schema_version": "a2.target_geometry_subcomponent_shape_placement_candidate.v1",
   "source_airframe_constraint_correction_schema_version": "a2.target_geometry_airframe_constraint_correction_candidate.v1",
   "source_fine_proxy_schema_version": "a2.target_geometry_fine_proxy_candidate.v1",
   "status": "subcomponent_shape_placement_candidate_generated_review_only",
   "summary": {
-    "candidate_no_improvement_count": 0,
+    "candidate_no_improvement_count": 3,
     "candidate_reduces_exposure_count": 0,
     "candidate_resolves_exposure_count": 0,
-    "candidate_shape_family_counts": {},
-    "candidate_total_outside_sample_count": 0,
+    "candidate_shape_family_counts": {
+      "crew_envelope_ellipsoid": 1,
+      "current_shape_recheck": 1,
+      "rounded_engine_axis_capsule": 1
+    },
+    "candidate_total_outside_sample_count": 8,
     "candidate_total_outside_sample_reduction": 0,
-    "candidate_unresolved_exposure_count": 0,
-    "centerline_candidate_count": 0,
-    "centerline_candidate_incremental_outside_sample_reduction": 0,
-    "centerline_candidate_reduces_exposure_count": 0,
-    "centerline_candidate_resolves_exposure_count": 0,
-    "centerline_candidate_status_counts": {},
-    "centerline_candidate_total_outside_sample_count": 0,
-    "centerline_candidate_total_outside_sample_reduction": 0,
-    "centerline_candidate_unresolved_exposure_count": 0,
-    "current_total_outside_sample_count": 0,
-    "latest_candidate_count": 0,
-    "latest_candidate_incremental_outside_sample_reduction": 0,
+    "candidate_unresolved_exposure_count": 3,
+    "centerline_candidate_count": 3,
+    "centerline_candidate_incremental_outside_sample_reduction": 4,
+    "centerline_candidate_reduces_exposure_count": 2,
+    "centerline_candidate_resolves_exposure_count": 1,
+    "centerline_candidate_status_counts": {
+      "centerline_candidate_does_not_reduce_exposure_requires_new_geometry": 1,
+      "centerline_candidate_reduces_exposure_requires_followup_geometry": 1,
+      "centerline_candidate_resolves_silhouette_exposure_review_required": 1
+    },
+    "centerline_candidate_total_outside_sample_count": 4,
+    "centerline_candidate_total_outside_sample_reduction": 4,
+    "centerline_candidate_unresolved_exposure_count": 2,
+    "current_total_outside_sample_count": 8,
+    "latest_candidate_count": 3,
+    "latest_candidate_incremental_outside_sample_reduction": -4,
     "latest_candidate_resolves_exposure_count": 0,
-    "latest_candidate_status_counts": {},
-    "latest_candidate_total_outside_sample_count": 0,
+    "latest_candidate_status_counts": {
+      "latest_candidate_still_exposes_silhouette_requires_geometry_model": 3
+    },
+    "latest_candidate_total_outside_sample_count": 8,
     "latest_candidate_total_outside_sample_reduction": 0,
-    "latest_candidate_unresolved_exposure_count": 0,
-    "nominal_dimension_preserved_count": 0,
+    "latest_candidate_unresolved_exposure_count": 3,
+    "nominal_dimension_preserved_count": 3,
     "review_status": "manual_review_required_before_activation",
     "runtime_active_component_count": 0,
-    "shape_design_status_counts": {},
-    "shape_placement_candidate_count": 0,
+    "shape_design_status_counts": {
+      "shape_candidate_does_not_reduce_exposure_requires_new_placement_model": 3
+    },
+    "shape_placement_candidate_count": 3,
     "source_constraint_item_count": 34,
-    "source_silhouette_exposure_item_count": 0
+    "source_silhouette_exposure_item_count": 3
   }
 }

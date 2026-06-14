@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="433.95" y="346.57" width="61.79" height="63.71" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>nose_avionics_bay old_aabb</title></rect>
 <text x="437.95" y="359.57" font-size="10" font-family="monospace" fill="#7c3aed">nose_avionics_bay old_aabb</text>
-<rect x="460.06" y="442.60" width="9.57" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>nose_avionics_bay constrained_obb</title></rect>
-<text x="464.06" y="455.60" font-size="10" font-family="monospace" fill="#0891b2">nose_avionics_bay constrained_obb</text>
+<rect x="460.06" y="384.93" width="9.57" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>nose_avionics_bay constrained_obb</title></rect>
+<text x="464.06" y="397.93" font-size="10" font-family="monospace" fill="#0891b2">nose_avionics_bay constrained_obb</text>
 <polygon points="412.66,447.21 491.45,444.89 505.16,439.44 508.86,433.96 502.61,412.30 486.64,357.92 483.21,351.11 478.71,345.64 474.20,342.04 469.52,339.61 464.85,339.05 460.17,339.61 455.49,342.04 450.98,345.64 446.48,351.11 443.06,357.92" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="474.88" y="378.34" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

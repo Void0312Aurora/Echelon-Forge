@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="116.83" y="266.93" width="41.01" height="44.60" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>rudder_actuator old_aabb</title></rect>
 <text x="120.83" y="279.93" font-size="10" font-family="monospace" fill="#7c3aed">rudder_actuator old_aabb</text>
-<rect x="121.20" y="117.99" width="4.10" height="57.34" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>rudder_actuator constrained_capsule</title></rect>
-<text x="125.20" y="130.99" font-size="10" font-family="monospace" fill="#0891b2">rudder_actuator constrained_capsule</text>
+<rect x="135.29" y="260.55" width="4.10" height="57.34" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>rudder_actuator constrained_capsule</title></rect>
+<text x="139.29" y="273.55" font-size="10" font-family="monospace" fill="#0891b2">rudder_actuator constrained_capsule</text>
 <polygon points="94.44,78.88 100.51,122.73 111.49,174.77 153.40,325.09 190.46,322.41 124.22,70.19 105.29,70.19" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="129.69" y="170.32" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="455.14" y="270.11" width="51.26" height="63.71" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>flight_control_computer old_aabb</title></rect>
 <text x="459.14" y="283.11" font-size="10" font-family="monospace" fill="#7c3aed">flight_control_computer old_aabb</text>
-<rect x="469.27" y="429.99" width="16.43" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>flight_control_computer constrained_obb</title></rect>
-<text x="473.27" y="442.99" font-size="10" font-family="monospace" fill="#0891b2">flight_control_computer constrained_obb</text>
+<rect x="225.30" y="384.93" width="16.43" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>flight_control_computer constrained_obb</title></rect>
+<text x="229.30" y="397.93" font-size="10" font-family="monospace" fill="#0891b2">flight_control_computer constrained_obb</text>
 <polygon points="399.84,396.48 443.02,435.13 574.08,447.14 597.85,447.21 604.05,412.30 603.73,403.36 602.22,367.00 596.97,339.05 402.91,388.36 400.94,391.50 400.39,393.94" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="515.45" y="405.95" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

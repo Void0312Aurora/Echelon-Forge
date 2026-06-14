@@ -16,6 +16,6 @@
 <polygon points="474.62,412.50 480.00,414.17 485.38,412.50 482.12,255.93 477.88,255.93" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="567.83,501.77 567.83,506.96 567.84,508.55 591.39,509.08 811.01,511.46 853.43,508.59 853.43,504.88 590.07,499.39" fill="none" stroke="#2563eb" stroke-width="2.50"><title>parent_mesh_region</title></polygon>
 <rect x="576.46" y="499.49" width="176.84" height="11.87" rx="88.42" ry="5.93" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>right_wing_fuel_cell ellipsoid primary</title></rect>
-<rect x="680.85" y="502.26" width="36.17" height="6.33" rx="3.16" ry="3.16" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>right_aileron_actuator capsule extra</title></rect>
+<rect x="791.48" y="502.26" width="36.17" height="6.33" rx="3.16" ry="3.16" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>right_aileron_actuator capsule extra</title></rect>
 <rect x="532.25" y="498.30" width="148.71" height="14.24" rx="74.35" ry="7.12" fill="#be123c" fill-opacity="0.52" stroke="#7f1d1d" stroke-width="2.60"><title>wing_spar_center:wing_spar_center_right_inner_wing_segment external held-segment</title></rect>
 <text x="12" y="608" font-size="10" font-family="monospace" fill="#475569">gray=whole-airframe wireframe; blue=parent semantic region; green/cyan=actual-size receiver prior; red=held split segment</text></svg>

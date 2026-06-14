@@ -15,5 +15,5 @@
 <polygon points="104.77,495.86 105.56,504.16 116.91,510.77 145.02,513.59 159.41,512.21 162.14,510.82 231.44,474.97 241.43,468.09 231.44,461.20 177.15,447.91 133.77,456.70 118.01,468.09 104.77,494.80" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="94.44,78.88 100.51,122.73 111.49,174.77 153.40,325.09 190.46,322.41 124.22,70.19 105.29,70.19" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="94.44,78.88 100.51,122.73 111.49,174.77 153.40,325.09 190.46,322.41 124.22,70.19 105.29,70.19" fill="none" stroke="#2563eb" stroke-width="2.50"><title>parent_mesh_region</title></polygon>
-<rect x="121.20" y="117.99" width="4.10" height="57.34" rx="2.05" ry="2.05" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>rudder_actuator capsule primary</title></rect>
+<rect x="135.29" y="260.55" width="4.10" height="57.34" rx="2.05" ry="2.05" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>rudder_actuator capsule primary</title></rect>
 <text x="12" y="608" font-size="10" font-family="monospace" fill="#475569">gray=whole-airframe wireframe; blue=parent semantic region; green/cyan=actual-size receiver prior; red=held split segment</text></svg>

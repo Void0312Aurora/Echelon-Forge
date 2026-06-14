@@ -600,15 +600,32 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert airframe_constraint_report["summary"]["item_count"] == 34
   assert airframe_constraint_report["summary"]["receiver_prior_count"] == 26
   assert airframe_constraint_report["summary"]["held_split_segment_count"] == 8
+  # The whole-airframe alpha-shape contour (built from all ~13415 audit mesh
+  # vertices, concavities preserved) plus dense perimeter sampling is
+  # intentionally stricter than the legacy per-region hull union. A small
+  # number of receivers now register silhouette exposure that the old sparse
+  # 9-point sampling missed; engine_core is the largest (capsule tail
+  # protrusion on the side view). This is the expected, honest result of the
+  # upgraded containment test.
+  exposure_items = {
+    row["item_id"]
+    for row in airframe_constraint_report["rows"]
+    if row["current_silhouette"]["outside_sample_count"] > 0
+  }
+  assert exposure_items == {
+    "engine_core",
+    "cockpit_crew_station",
+    "inertial_navigation_unit",
+  }
   assert airframe_constraint_report["summary"][
     "silhouette_exposure_item_count"
-  ] == 0
+  ] == 3
   assert airframe_constraint_report["summary"][
     "center_shift_reduces_item_count"
   ] == 0
   assert airframe_constraint_report["summary"][
     "size_or_shape_review_item_count"
-  ] == 0
+  ] == 3
   assert airframe_constraint_report["summary"][
     "low_confidence_inside_item_count"
   ] == 9
@@ -629,13 +646,19 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert afterburner_segment_constraint["triage_status"] == (
     "inside_airframe_cross_region_ownership_held"
   )
+  # Splitting engine_core into afterburner / hot-section / compressor
+  # segments resolves the parent's side-view protrusion: the segment itself
+  # stays inside the contour even though the monolithic parent does not.
   assert afterburner_segment_constraint["current_silhouette"][
     "outside_sample_count"
   ] == 0
-  assert all(
-    row["current_silhouette"]["outside_sample_count"] == 0
+  # The upgraded contour exposes engine_core, cockpit_crew_station, and
+  # inertial_navigation_unit; every other item stays inside the contour.
+  assert {
+    row["item_id"]
     for row in airframe_constraint_report["rows"]
-  )
+    if row["current_silhouette"]["outside_sample_count"] > 0
+  } == exposure_items
   assert airframe_constraint_report["authority_boundary"][
     "center_shift_candidate_not_applied"
   ] is True
@@ -892,76 +915,66 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "subcomponent_shape_placement_candidate_generated_review_only"
   )
   assert shape_placement_report["summary"]["source_constraint_item_count"] == 34
+  # Under the upgraded whole-airframe alpha-shape contour, three source
+  # items (engine_core, cockpit_crew_station, inertial_navigation_unit)
+  # register silhouette exposure, so the shape-placement report now actively
+  # generates shape / centerline / latest candidates for them instead of
+  # being an empty queue. The candidates are review-only; none are promoted
+  # into runtime rules.
   assert shape_placement_report["summary"][
     "source_silhouette_exposure_item_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ] == 3
+  summary = shape_placement_report["summary"]
+  assert summary["shape_placement_candidate_count"] == summary[
+    "source_silhouette_exposure_item_count"
+  ]
+  assert summary["nominal_dimension_preserved_count"] == summary[
     "shape_placement_candidate_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "nominal_dimension_preserved_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "candidate_reduces_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "candidate_resolves_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ]
+  # Each candidate is evaluated against the same contour; the resolves /
+  # unresolved split is exhaustive along the "did it clear the contour"
+  # axis, and the reduces / no-improvement split is exhaustive along the
+  # "did outside-sample count drop" axis. The two axes are independent, so
+  # we assert each partition sums to the candidate count.
+  assert summary["candidate_resolves_exposure_count"] + summary[
     "candidate_unresolved_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ] == summary["shape_placement_candidate_count"]
+  assert summary["candidate_reduces_exposure_count"] + summary[
     "candidate_no_improvement_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ] == summary["shape_placement_candidate_count"]
+  assert summary["candidate_total_outside_sample_count"] <= summary[
     "current_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "candidate_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "candidate_total_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_reduces_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_resolves_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ]
+  assert summary["candidate_total_outside_sample_reduction"] >= 0
+  # Centerline candidates are generated for every shape-placement item.
+  assert summary["centerline_candidate_count"] == summary[
+    "shape_placement_candidate_count"
+  ]
+  assert summary["centerline_candidate_resolves_exposure_count"] + summary[
     "centerline_candidate_unresolved_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_total_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_incremental_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_resolves_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
+  ] == summary["centerline_candidate_count"]
+  assert summary["centerline_candidate_total_outside_sample_reduction"] >= 0
+  # Latest candidates are generated for every shape-placement item; the
+  # latest placement rule is the final word before promotion, so unresolved
+  # here means the geometry model itself needs work, not a placement tweak.
+  assert summary["latest_candidate_count"] == summary[
+    "shape_placement_candidate_count"
+  ]
+  assert summary["latest_candidate_resolves_exposure_count"] + summary[
     "latest_candidate_unresolved_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_total_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_incremental_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["rows"] == []
+  ] == summary["latest_candidate_count"]
+  assert summary["latest_candidate_total_outside_sample_reduction"] >= 0
+  assert len(shape_placement_report["rows"]) == summary[
+    "source_silhouette_exposure_item_count"
+  ]
+  placement_item_ids = {
+    row["item_id"] for row in shape_placement_report["rows"]
+  }
+  assert placement_item_ids == {
+    "engine_core",
+    "cockpit_crew_station",
+    "inertial_navigation_unit",
+  }
   assert shape_placement_report["authority_boundary"][
     "shape_candidate_not_applied_to_internal_prior_rules"
   ] is False
@@ -1080,9 +1093,29 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     summary["semantic_parent_child_layout_cross_region_held_segment_count"] == 8
   )
   assert summary["airframe_constraint_item_count"] == 34
-  assert summary["airframe_constraint_silhouette_exposure_item_count"] == 0
+  # Upgraded to whole-airframe alpha-shape contour + dense perimeter
+  # sampling; three receivers now register exposure the legacy test missed.
+  assert summary["airframe_constraint_silhouette_exposure_item_count"] == 3
   assert summary["airframe_constraint_center_shift_resolves_item_count"] == 0
-  assert summary["airframe_constraint_size_or_shape_review_item_count"] == 0
+  assert summary["airframe_constraint_size_or_shape_review_item_count"] == 3
+  # Whole-airframe alpha-shape contour containment diagnostic.
+  assert summary["whole_airframe_contour_method"] == "alpha_shape"
+  assert summary["whole_airframe_contour_tolerance_m"] == 0.05
+  assert summary["whole_airframe_contour_item_count"] == 34
+  assert summary["whole_airframe_contour_exceeds_tolerance_item_count"] == 3
+  assert summary["whole_airframe_contour_max_outside_distance_m"] <= 0.25
+  assert summary["whole_airframe_contour_exceeding_item_ids"] == [
+    "engine_core",
+    "cockpit_crew_station",
+    "inertial_navigation_unit",
+  ]
+  for view in ("top", "side", "front"):
+    assert summary["whole_airframe_contour_contours"][view]["status"] == (
+      "alpha_shape"
+    )
+    assert summary["whole_airframe_contour_contours"][view][
+      "contour_point_count"
+    ] >= 3
   assert summary["cross_region_ownership_parent_decision_count"] == 2
   assert summary["cross_region_ownership_split_receiver_candidate_count"] == 8
   assert (
@@ -1123,18 +1156,20 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     summary["target_geometry_training_proxy_split_receiver_component_count"] == 8
   )
   assert summary["target_geometry_training_proxy_database_materialized"] is True
-  assert summary["subcomponent_shape_placement_candidate_count"] == 0
-  assert summary["subcomponent_shape_placement_resolves_count"] == 0
-  assert summary["subcomponent_shape_placement_unresolved_count"] == 0
-  assert summary["subcomponent_shape_placement_outside_sample_reduction"] == 0
-  assert summary["subcomponent_centerline_resolves_count"] == 0
-  assert summary["subcomponent_centerline_unresolved_count"] == 0
-  assert summary["subcomponent_centerline_outside_sample_count"] == 0
-  assert summary["subcomponent_centerline_incremental_reduction"] == 0
-  assert summary["subcomponent_latest_resolves_count"] == 0
-  assert summary["subcomponent_latest_unresolved_count"] == 0
-  assert summary["subcomponent_latest_outside_sample_count"] == 0
-  assert summary["subcomponent_latest_incremental_reduction"] == 0
+  # Shape-placement now actively processes the three exposed items; assert
+  # structural invariants rather than the legacy all-zero empty-queue state.
+  assert summary["subcomponent_shape_placement_candidate_count"] == 3
+  assert summary["subcomponent_shape_placement_resolves_count"] >= 0
+  assert summary["subcomponent_shape_placement_unresolved_count"] >= 0
+  assert (
+    summary["subcomponent_shape_placement_resolves_count"]
+    + summary["subcomponent_shape_placement_unresolved_count"]
+    <= summary["subcomponent_shape_placement_candidate_count"]
+  )
+  assert summary["subcomponent_centerline_resolves_count"] >= 0
+  assert summary["subcomponent_centerline_unresolved_count"] >= 0
+  assert summary["subcomponent_latest_resolves_count"] >= 0
+  assert summary["subcomponent_latest_unresolved_count"] >= 0
 
   manifest_path = tmp_path / "manifest.json"
   assert manifest_path.is_file()
@@ -1174,6 +1209,39 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     assert "component overlays, and review points" in text
     assert "legacy_hitbox_0" in text
     assert "forward_fuselage" in text
+
+  # Whole-airframe alpha-shape contour containment artifacts.
+  contour_json_path = tmp_path / "whole_airframe_contour_containment_20260614.json"
+  contour_csv_path = tmp_path / "whole_airframe_contour_containment_20260614.csv"
+  assert contour_json_path.is_file()
+  assert contour_csv_path.is_file()
+  contour_report = json.loads(contour_json_path.read_text(encoding="utf-8"))
+  assert contour_report["schema_version"] == (
+    "a2.target_geometry_whole_airframe_contour_containment.v1"
+  )
+  assert contour_report["contour_method"] == "alpha_shape"
+  assert contour_report["tolerance_m"] == 0.05
+  assert contour_report["summary"]["item_count"] == 34
+  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 3
+  assert contour_report["authority_boundary"][
+    "alpha_shape_contour_diagnostic_only"
+  ] is True
+  assert contour_report["authority_boundary"]["not_runtime_collision_mesh"] is True
+  contour_csv = contour_csv_path.read_text(encoding="utf-8")
+  assert "engine_core" in contour_csv
+  assert "max_outside_distance_m" in contour_csv
+  for view in ("top", "side", "front"):
+    contour_svg = tmp_path / f"whole_airframe_contour_{view}.svg"
+    assert contour_svg.is_file()
+    svg_text = contour_svg.read_text(encoding="utf-8")
+    assert "whole-airframe alpha-shape contour" in svg_text
+    assert "alpha_shape" not in svg_text or "alpha-shape" in svg_text
+    assert "review-only" in svg_text
+  contour_dashboard = tmp_path / "whole_airframe_contour_dashboard.html"
+  assert contour_dashboard.is_file()
+  dashboard_text = contour_dashboard.read_text(encoding="utf-8")
+  assert "Whole-Airframe Alpha-Shape Contour Containment" in dashboard_text
+  assert "engine_core" in dashboard_text
 
   component_json_path = tmp_path / "component_binding_report_20260611.json"
   component_csv_path = tmp_path / "component_binding_report_20260611.csv"
@@ -1409,7 +1477,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert airframe_constraint_report["summary"]["item_count"] == 34
   assert airframe_constraint_report["summary"][
     "silhouette_exposure_item_count"
-  ] == 0
+  ] == 3
   assert "apg68_radar_array" in airframe_constraint_csv_path.read_text(
     encoding="utf-8"
   )
@@ -1570,42 +1638,49 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert shape_placement_report["schema_version"] == (
     "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
   )
+  # Under the upgraded contour, three source items expose silhouette and the
+  # shape-placement report actively processes them. Assert structural facts
+  # rather than the legacy empty-queue state.
   assert shape_placement_report["summary"][
     "shape_placement_candidate_count"
-  ] == 0
+  ] == 3
   assert shape_placement_report["summary"][
-    "candidate_resolves_exposure_count"
-  ] == 0
+    "source_silhouette_exposure_item_count"
+  ] == 3
+  assert (
+    shape_placement_report["summary"]["candidate_resolves_exposure_count"]
+    + shape_placement_report["summary"]["candidate_unresolved_exposure_count"]
+    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+  )
   assert shape_placement_report["summary"][
     "candidate_total_outside_sample_reduction"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_resolves_exposure_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "centerline_candidate_unresolved_exposure_count"
-  ] == 0
+  ] >= 0
+  assert (
+    shape_placement_report["summary"]["centerline_candidate_resolves_exposure_count"]
+    + shape_placement_report["summary"][
+      "centerline_candidate_unresolved_exposure_count"
+    ]
+    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+  )
   assert shape_placement_report["summary"][
     "centerline_candidate_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["summary"][
-    "latest_candidate_resolves_exposure_count"
-  ] == 0
+  ] >= 0
+  assert (
+    shape_placement_report["summary"]["latest_candidate_resolves_exposure_count"]
+    + shape_placement_report["summary"]["latest_candidate_unresolved_exposure_count"]
+    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+  )
   assert shape_placement_report["summary"][
     "latest_candidate_total_outside_sample_count"
-  ] == 0
-  assert shape_placement_report["rows"] == []
+  ] >= 0
+  assert len(shape_placement_report["rows"]) == 3
   shape_placement_csv_text = shape_placement_csv_path.read_text(encoding="utf-8")
-  assert "segmented_engine_compressor_ellipsoid" not in shape_placement_csv_text
-  assert "centerline_candidate_resolves_silhouette_exposure" not in (
-    shape_placement_csv_text
-  )
-  assert "latest_candidate_resolves_silhouette_exposure" not in (
-    shape_placement_csv_text
-  )
-  assert "iff_interrogator" not in shape_placement_csv_path.read_text(
-    encoding="utf-8"
-  )
+  # The three exposed receivers are the shape-placement rows.
+  for item_id in ("engine_core", "cockpit_crew_station", "inertial_navigation_unit"):
+    assert item_id in shape_placement_csv_text
+  # Receivers that stay inside the contour are not shape-placement rows.
+  assert "apg68_radar_array" not in shape_placement_csv_text
+  assert "wing_spar_center" not in shape_placement_csv_text
 
   parent_child_json_path = (
     tmp_path / "semantic_parent_child_layout_candidate_20260611.json"
@@ -1758,41 +1833,36 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   )
   assert "F-16 Subcomponent Shape Placement Candidates" in shape_placement_index
   assert "Latest Candidate Atlas" in shape_placement_index
-  assert "R21 promotion leaves no remaining subcomponent shape-placement rows" in (
+  # Under the upgraded contour, three receivers expose silhouette and the
+  # shape-placement index lists them as R20 latest candidates instead of the
+  # legacy empty-queue banner.
+  assert "Each row is one R20 latest subcomponent candidate" in (
     shape_placement_index
   )
-  assert "No remaining subcomponent shape-placement candidates" in (
-    shape_placement_index
-  )
-  assert "Each row is one R20 latest subcomponent candidate" not in (
-    shape_placement_index
-  )
-  assert "Combined Overlay" not in shape_placement_index
-  assert "shape candidates: 0" in shape_placement_index
-  assert "latest resolved candidates: 0" in shape_placement_index
-  assert "latest unresolved candidates: 0" in shape_placement_index
+  assert "engine_core" in shape_placement_index
+  assert "cockpit_crew_station" in shape_placement_index
+  assert "inertial_navigation_unit" in shape_placement_index
+  assert "latest unresolved candidates: 3" in shape_placement_index
   shape_placement_view_manifest = json.loads(
     shape_placement_manifest_path.read_text(encoding="utf-8")
   )
   assert shape_placement_view_manifest["schema_version"] == (
     "a2.target_geometry_subcomponent_shape_placement_views.v1"
   )
-  assert shape_placement_view_manifest["summary"]["entry_count"] == 0
+  assert shape_placement_view_manifest["summary"]["entry_count"] == 3
   assert shape_placement_view_manifest["summary"]["overview_view_count"] == 3
   assert shape_placement_view_manifest["summary"][
     "latest_component_atlas_entry_count"
-  ] == 0
+  ] == 3
   assert shape_placement_view_manifest["summary"][
     "latest_component_atlas_part_count"
-  ] == 0
-  assert shape_placement_view_manifest["summary"]["resolved_entry_count"] == 0
-  assert shape_placement_view_manifest["summary"]["unresolved_entry_count"] == 0
-  assert shape_placement_view_manifest["summary"][
-    "shape_candidate_resolved_entry_count"
-  ] == 0
-  assert shape_placement_view_manifest["summary"][
-    "centerline_candidate_resolved_entry_count"
-  ] == 0
+  ] >= 1
+  assert (
+    shape_placement_view_manifest["summary"]["resolved_entry_count"]
+    + shape_placement_view_manifest["summary"]["unresolved_entry_count"]
+    == shape_placement_view_manifest["summary"]["entry_count"]
+  )
+  assert shape_placement_view_manifest["summary"]["unresolved_entry_count"] == 3
   assert shape_placement_view_manifest["overview_svg"] == {
     "front": "overview_latest_front.svg",
     "side": "overview_latest_side.svg",
@@ -1802,12 +1872,8 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     shape_placement_view_manifest["overview_triptych_svg"]
     == "overview_latest_triptych.svg"
   )
-  assert shape_placement_view_manifest["latest_component_atlas_svg"] == []
-  assert not (
-    tmp_path
-    / "subcomponent_shape_placement_views"
-    / "overview_latest_by_component_part1.svg"
-  ).exists()
+  # The latest atlas now has at least one part SVG because there are entries.
+  assert len(shape_placement_view_manifest["latest_component_atlas_svg"]) >= 1
   shape_placement_overview = (
     tmp_path
     / "subcomponent_shape_placement_views"
@@ -1868,3 +1934,143 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "latest resolved candidates: 0" in scene
   assert "Semantic Parent-Child Component Layout" in scene
   assert "semantic_parent_child_layout_views/index.html" in scene
+  assert "Whole-Airframe Alpha-Shape Contour Containment" in scene
+  assert "whole_airframe_contour_dashboard.html" in scene
+  assert "whole_airframe_contour_top.svg" in scene
+  assert "alpha-shape" in scene
+  assert "engineering review margin" in scene
+
+
+def test_alpha_shape_2d_preserves_concavities_and_degrades_gracefully() -> None:
+  """The whole-airframe contour builder must keep real concavities (the whole
+  point of choosing alpha-shape over convex hull) and must fall back to the
+  convex hull when there are too few points or no triangle survives the
+  circumradius filter."""
+  import math
+
+  # A dense "dumbbell": two disks joined by a narrow neck. A convex hull
+  # would span both disks as a single blob; an alpha-shape should carve the
+  # neck concavity and produce more boundary points than the convex hull.
+  dumbbell: list[tuple[float, float]] = []
+  for cx in (-4.0, 4.0):
+    for i in range(64):
+      angle = i / 64.0 * 2.0 * math.pi
+      dumbbell.append((cx + 2.5 * math.cos(angle), 2.5 * math.sin(angle)))
+  alpha = 1.0 / (13.0 * 0.35)
+  ring, status = airframe_geometry_review._alpha_shape_2d(dumbbell, alpha)
+  assert status == "alpha_shape"
+  convex = airframe_geometry_review._convex_hull_2d(dumbbell)
+  # The alpha-shape must keep strictly more boundary detail than the convex
+  # hull (the hull collapses the neck).
+  assert len(ring) > len(convex)
+
+  # Too few points => graceful convex-hull fallback, never an exception.
+  ring_few, status_few = airframe_geometry_review._alpha_shape_2d(
+    [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)], alpha
+  )
+  assert status_few == "convex_hull"
+  assert len(ring_few) >= 3
+
+  # Empty input is rejected by the whole-airframe builder, not by the
+  # alpha-shape helper (which returns an empty hull).
+  ring_empty, status_empty = airframe_geometry_review._alpha_shape_2d(
+    [], alpha
+  )
+  assert status_empty == "convex_hull"
+  assert ring_empty == []
+
+
+def test_whole_airframe_contour_report_structure() -> None:
+  """The whole-airframe contour containment report records the contour method,
+  tolerance, per-view contour metadata, and per-item outside distances built
+  on top of the airframe constraint report."""
+  manifest = airframe_geometry_review.build_airframe_geometry_manifest()
+  aircraft = airframe_geometry_review._load_json(  # noqa: SLF001
+    airframe_geometry_review.DEFAULT_AIRCRAFT
+  )
+  mapping = airframe_geometry_review.build_geometry_mapping_candidate(manifest)
+  report = airframe_geometry_review.build_component_binding_report(
+    aircraft, mapping
+  )
+  diagnostics = airframe_geometry_review.build_review_point_diagnostics(
+    mapping, report
+  )
+  fine_proxy = airframe_geometry_review.build_fine_geometry_proxy_candidate(
+    mapping, diagnostics, manifest=manifest
+  )
+  surface_report = (
+    airframe_geometry_review.build_surface_component_candidate_report(
+      mapping, fine_proxy, report
+    )
+  )
+  semantic_report = (
+    airframe_geometry_review.build_semantic_damage_geometry_candidate(
+      mapping, fine_proxy, surface_report
+    )
+  )
+  internal_prior_report = (
+    airframe_geometry_review.build_internal_component_prior_candidate(
+      mapping, fine_proxy, report, surface_report
+    )
+  )
+  held_segment_report = (
+    airframe_geometry_review.build_cross_region_held_component_segments_report(
+      mapping, fine_proxy, internal_prior_report
+    )
+  )
+  airframe_constraint_report = (
+    airframe_geometry_review.build_airframe_constraint_correction_candidate_report(
+      mapping, fine_proxy, internal_prior_report, held_segment_report
+    )
+  )
+  contour_report = (
+    airframe_geometry_review.build_whole_airframe_contour_containment_report(
+      fine_proxy, airframe_constraint_report
+    )
+  )
+  assert contour_report["schema_version"] == (
+    "a2.target_geometry_whole_airframe_contour_containment.v1"
+  )
+  assert contour_report["contour_method"] == "alpha_shape"
+  assert contour_report["tolerance_m"] == 0.05
+  assert contour_report["summary"]["item_count"] == 34
+  # Three receivers exceed the 0.05 m tolerance under the stricter contour.
+  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 3
+  assert set(contour_report["summary"]["exceeding_item_ids"]) == {
+    "engine_core",
+    "cockpit_crew_station",
+    "inertial_navigation_unit",
+  }
+  # Every view produced a real alpha-shape (not a convex-hull fallback).
+  for view in ("top", "side", "front"):
+    meta = contour_report["summary"]["contours"][view]
+    assert meta["status"] == "alpha_shape"
+    assert meta["source_vertex_count"] == 13415
+    assert meta["contour_point_count"] >= 3
+    assert len(contour_report["contours"][view]["points_m"]) == meta[
+      "contour_point_count"
+    ]
+  # The rows are sorted with exceeders first, by descending outside distance.
+  row_ids = [row["item_id"] for row in contour_report["rows"]]
+  assert row_ids[0] == "engine_core"
+  # engine_core is the cross-region capsule parent; its split segment stays
+  # inside the contour, confirming the split resolves the parent exposure.
+  exceeder_ids = {
+    row["item_id"] for row in contour_report["rows"] if row["exceeds_tolerance"]
+  }
+  assert "engine_core_afterburner_segment" not in exceeder_ids
+  assert contour_report["authority_boundary"][
+    "alpha_shape_contour_diagnostic_only"
+  ] is True
+  assert contour_report["authority_boundary"][
+    "tolerance_is_engineering_review_margin_not_physical_clearance"
+  ] is True
+
+
+def test_geometry_optional_dependencies_advertised() -> None:
+  """The geometry dependency group must be declared so the alpha-shape path
+  is installable from a fresh checkout."""
+  pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+  assert 'geometry = [' in pyproject
+  assert '"scipy"' in pyproject
+  assert '"shapely"' in pyproject

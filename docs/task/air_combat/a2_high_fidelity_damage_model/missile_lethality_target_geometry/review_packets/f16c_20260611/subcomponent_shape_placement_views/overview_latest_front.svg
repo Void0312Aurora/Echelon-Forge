@@ -14,4 +14,16 @@
 <polygon points="797.77,557.83 799.25,566.49 845.52,707.48 898.96,706.23 942.85,693.02 940.56,668.76 939.88,661.60" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="349.76,739.76 350.56,746.22 350.83,748.37 598.35,692.81 651.00,678.36 651.01,646.30 598.35,662.50" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="848.99,646.30 849.00,678.36 901.65,692.81 1149.17,748.37 1149.44,746.22 1150.24,739.76 901.65,662.50" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
-<polygon points="740.69,451.26 750.00,455.42 759.31,451.26 753.67,59.31 746.33,59.31" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon></svg>
+<polygon points="740.69,451.26 750.00,455.42 759.31,451.26 753.67,59.31 746.33,59.31" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
+<rect x="714.65" y="459.18" width="70.70" height="227.73" rx="35.35" ry="113.87" fill="#2563eb" fill-opacity="0.28" stroke="#1e3a8a" stroke-width="2.40"><title>1. cockpit_crew_station</title></rect>
+<rect x="737.63" y="461.30" width="24.74" height="35.21" rx="12.37" ry="17.60" fill="#2563eb" fill-opacity="0.28" stroke="#1e3a8a" stroke-width="2.40"><title>2. inertial_navigation_unit</title></rect>
+<rect x="667.81" y="501.45" width="164.37" height="233.89" rx="82.19" ry="82.19" fill="#2563eb" fill-opacity="0.28" stroke="#1e3a8a" stroke-width="2.40"><title>3. engine_core</title></rect>
+<circle cx="762.00" cy="561.04" r="12" fill="#ffffff" fill-opacity="0.92" stroke="#1e3a8a" stroke-width="1.6"><title>1</title></circle>
+<text x="762.00" y="565.24" text-anchor="middle" font-size="11" font-weight="700" font-family="monospace" fill="#1e3a8a">1</text>
+<circle cx="738.00" cy="466.91" r="12" fill="#ffffff" fill-opacity="0.92" stroke="#1e3a8a" stroke-width="1.6"><title>2</title></circle>
+<text x="738.00" y="471.11" text-anchor="middle" font-size="11" font-weight="700" font-family="monospace" fill="#1e3a8a">2</text>
+<circle cx="762.00" cy="630.39" r="12" fill="#ffffff" fill-opacity="0.92" stroke="#1e3a8a" stroke-width="1.6"><title>3</title></circle>
+<text x="762.00" y="634.59" text-anchor="middle" font-size="11" font-weight="700" font-family="monospace" fill="#1e3a8a">3</text>
+<text x="18" y="797.00" font-size="11" font-family="monospace" fill="#334155">1. cockpit_crew_station</text>
+<text x="18" y="812.00" font-size="11" font-family="monospace" fill="#334155">2. inertial_navigation_unit</text>
+<text x="18" y="827.00" font-size="11" font-family="monospace" fill="#334155">3. engine_core</text></svg>

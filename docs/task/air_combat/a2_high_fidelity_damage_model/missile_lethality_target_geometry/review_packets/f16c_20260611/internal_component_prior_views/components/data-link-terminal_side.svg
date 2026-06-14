@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="362.87" y="282.85" width="51.26" height="63.71" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>data_link_terminal old_aabb</title></rect>
 <text x="366.87" y="295.85" font-size="10" font-family="monospace" fill="#7c3aed">data_link_terminal old_aabb</text>
-<rect x="405.80" y="459.79" width="17.58" height="24.60" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>data_link_terminal constrained_obb</title></rect>
-<text x="409.80" y="472.79" font-size="10" font-family="monospace" fill="#0891b2">data_link_terminal constrained_obb</text>
+<rect x="224.73" y="381.78" width="17.58" height="24.60" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>data_link_terminal constrained_obb</title></rect>
+<text x="228.73" y="394.78" font-size="10" font-family="monospace" fill="#0891b2">data_link_terminal constrained_obb</text>
 <polygon points="399.84,396.48 443.02,435.13 574.08,447.14 597.85,447.21 604.05,412.30 603.73,403.36 602.22,367.00 596.97,339.05 402.91,388.36 400.94,391.50 400.39,393.94" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="515.45" y="405.95" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

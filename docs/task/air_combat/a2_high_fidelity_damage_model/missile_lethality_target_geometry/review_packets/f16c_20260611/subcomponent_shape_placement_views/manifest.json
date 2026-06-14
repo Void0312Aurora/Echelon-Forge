@@ -4,9 +4,69 @@
     "runtime_damage_model": false,
     "true_internal_component_geometry": false
   },
-  "entries": [],
+  "entries": [
+    {
+      "candidate_shape_family": "crew_envelope_ellipsoid",
+      "category": "subcomponent_shape_candidates",
+      "centerline_candidate_status": "centerline_candidate_resolves_silhouette_exposure_review_required",
+      "decision_needed": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "html": "components/cockpit-crew-station.html",
+      "item_id": "cockpit_crew_station",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "priority": "warning",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "slug": "cockpit-crew-station",
+      "subtitle": "R20_canopy_forward_fuselage_crew_envelope_candidate; latest outside 4",
+      "svg": {
+        "front": "components/cockpit-crew-station_front.svg",
+        "side": "components/cockpit-crew-station_side.svg",
+        "top": "components/cockpit-crew-station_top.svg"
+      },
+      "title": "cockpit_crew_station"
+    },
+    {
+      "candidate_shape_family": "current_shape_recheck",
+      "category": "subcomponent_shape_candidates",
+      "centerline_candidate_status": "centerline_candidate_does_not_reduce_exposure_requires_new_geometry",
+      "decision_needed": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "html": "components/inertial-navigation-unit.html",
+      "item_id": "inertial_navigation_unit",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "priority": "warning",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "slug": "inertial-navigation-unit",
+      "subtitle": "R19_centerline_candidate; latest outside 2",
+      "svg": {
+        "front": "components/inertial-navigation-unit_front.svg",
+        "side": "components/inertial-navigation-unit_side.svg",
+        "top": "components/inertial-navigation-unit_top.svg"
+      },
+      "title": "inertial_navigation_unit"
+    },
+    {
+      "candidate_shape_family": "rounded_engine_axis_capsule",
+      "category": "subcomponent_shape_candidates",
+      "centerline_candidate_status": "centerline_candidate_reduces_exposure_requires_followup_geometry",
+      "decision_needed": "keep_runtime_inactive_and_design_new_section_or_envelope_model",
+      "html": "components/engine-core.html",
+      "item_id": "engine_core",
+      "latest_candidate_status": "latest_candidate_still_exposes_silhouette_requires_geometry_model",
+      "priority": "warning",
+      "shape_design_status": "shape_candidate_does_not_reduce_exposure_requires_new_placement_model",
+      "slug": "engine-core",
+      "subtitle": "R19_centerline_candidate; latest outside 2",
+      "svg": {
+        "front": "components/engine-core_front.svg",
+        "side": "components/engine-core_side.svg",
+        "top": "components/engine-core_top.svg"
+      },
+      "title": "engine_core"
+    }
+  ],
   "index_html": "index.html",
-  "latest_component_atlas_svg": [],
+  "latest_component_atlas_svg": [
+    "overview_latest_by_component_part1.svg"
+  ],
   "overview_svg": {
     "front": "overview_latest_front.svg",
     "side": "overview_latest_side.svg",
@@ -16,13 +76,13 @@
   "schema_version": "a2.target_geometry_subcomponent_shape_placement_views.v1",
   "status": "subcomponent_shape_placement_views_generated_review_only",
   "summary": {
-    "centerline_candidate_resolved_entry_count": 0,
-    "entry_count": 0,
-    "latest_component_atlas_entry_count": 0,
-    "latest_component_atlas_part_count": 0,
+    "centerline_candidate_resolved_entry_count": 1,
+    "entry_count": 3,
+    "latest_component_atlas_entry_count": 3,
+    "latest_component_atlas_part_count": 1,
     "overview_view_count": 3,
     "resolved_entry_count": 0,
     "shape_candidate_resolved_entry_count": 0,
-    "unresolved_entry_count": 0
+    "unresolved_entry_count": 3
   }
 }

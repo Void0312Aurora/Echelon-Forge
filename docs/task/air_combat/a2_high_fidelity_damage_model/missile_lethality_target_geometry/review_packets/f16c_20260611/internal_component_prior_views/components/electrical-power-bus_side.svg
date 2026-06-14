@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="314.18" y="311.52" width="46.13" height="57.34" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus old_aabb</title></rect>
 <text x="318.18" y="324.52" font-size="10" font-family="monospace" fill="#7c3aed">electrical_power_bus old_aabb</text>
-<rect x="325.71" y="380.52" width="23.07" height="7.65" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>electrical_power_bus constrained_capsule</title></rect>
-<text x="329.71" y="393.52" font-size="10" font-family="monospace" fill="#0891b2">electrical_power_bus constrained_capsule</text>
+<rect x="325.71" y="336.37" width="23.07" height="7.65" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>electrical_power_bus constrained_capsule</title></rect>
+<text x="329.71" y="349.37" font-size="10" font-family="monospace" fill="#0891b2">electrical_power_bus constrained_capsule</text>
 <polygon points="183.70,401.47 194.97,505.07 377.67,497.16 402.91,388.36 361.74,343.39 280.88,325.09 262.72,322.41 190.46,322.41 183.70,390.22" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="274.97" y="392.40" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

@@ -24,6 +24,41 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
+# Optional geometry dependencies for the whole-airframe alpha-shape contour
+# diagnostic. The rest of this module stays zero-dependency; only the
+# alpha-shape contour path requires scipy + shapely.
+try:
+  from scipy.spatial import Delaunay as _Delaunay
+  from shapely.geometry import Polygon as _ShapelyPolygon
+  from shapely.ops import polygonize as _shapely_polygonize
+  from shapely.ops import unary_union as _shapely_unary_union
+
+  _GEOMETRY_DEPS_AVAILABLE = True
+  _GEOMETRY_IMPORT_ERROR: Exception | None = None
+except ImportError as _geometry_import_exc:  # pragma: no cover - exercised via guard
+  _GEOMETRY_DEPS_AVAILABLE = False
+  _GEOMETRY_IMPORT_ERROR = _geometry_import_exc
+  _Delaunay = None  # type: ignore[assignment]
+  _ShapelyPolygon = None  # type: ignore[assignment]
+  _shapely_polygonize = None  # type: ignore[assignment]
+  _shapely_unary_union = None  # type: ignore[assignment]
+
+
+def _require_geometry_deps() -> None:
+  """Raise an actionable error when scipy/shapely are missing.
+
+  The whole-airframe alpha-shape contour diagnostic depends on scipy and
+  shapely. Every other path in this module remains zero-dependency.
+  """
+  if not _GEOMETRY_DEPS_AVAILABLE:
+    raise RuntimeError(
+      "The whole-airframe alpha-shape contour diagnostic requires scipy and "
+      "shapely. Install the optional geometry dependency group: "
+      'pip install -e ".[geometry]" (or "pip install scipy shapely"). '
+      f"Original import error: {_GEOMETRY_IMPORT_ERROR}"
+    ) from _GEOMETRY_IMPORT_ERROR
+
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_VERSION = "a2.target_geometry_manifest.v1"
 MAPPING_SCHEMA_VERSION = "a2.target_geometry_mapping_candidate.v1"
@@ -95,6 +130,18 @@ SILHOUETTE_VIEW_AXES = {
   "side": (0, 2),
   "front": (1, 2),
 }
+# Whole-airframe contour containment tolerance. A receiver sample point is
+# treated as "inside the airframe contour" when it is inside the alpha-shape
+# polygon or within this distance of a contour edge. This is an engineering
+# review margin (mesh / proxy quantization noise), not a physical clearance.
+SILHOUETTE_CONTAINMENT_TOLERANCE_M = 0.05
+# Per-view alpha for the whole-airframe alpha-shape, as a fraction of the
+# longer projected axis span. alpha = 1 / (span * fraction). Smaller fraction
+# => smaller alpha radius => tighter (more concave) contour.
+WHOLE_AIRFRAME_ALPHA_AXIS_FRACTION = 0.35
+WHOLE_AIRFRAME_CONTOUR_SCHEMA_VERSION = (
+  "a2.target_geometry_whole_airframe_contour_containment.v1"
+)
 CURATED_MESH_SILHOUETTE_SOURCE_NODES = {
   "nose_radome": ["Object_4"],
   "forward_fuselage": ["Object_4"],
@@ -1299,6 +1346,25 @@ def _round(value: float, digits: int = 6) -> float:
 
 def _round_vec(values: Iterable[float], digits: int = 6) -> list[float]:
   return [_round(value, digits) for value in values]
+
+
+def _strip_internal_keys(value: Any) -> Any:
+  """Return a copy of ``value`` with internal keys removed.
+
+  Internal keys start with an underscore and carry in-process state that must
+  not be serialized (for example the cached mesh vertex records attached to a
+  fine-proxy dict). dicts and lists are recursed shallowly; other types pass
+  through unchanged.
+  """
+  if isinstance(value, dict):
+    return {
+      key: _strip_internal_keys(item)
+      for key, item in value.items()
+      if not isinstance(key, str) or not key.startswith("_")
+    }
+  if isinstance(value, list):
+    return [_strip_internal_keys(item) for item in value]
+  return value
 
 
 def _display_path(path: Path, repo_root: Path) -> str:
@@ -2754,6 +2820,160 @@ def _convex_hull_2d(points: Iterable[tuple[float, float]]) -> list[list[float]]:
   return [[point[0], point[1]] for point in hull]
 
 
+def _alpha_shape_2d(
+  points: Iterable[tuple[float, float]],
+  alpha: float,
+) -> tuple[list[list[float]], str]:
+  """Return (ring_points, status) for the 2D alpha-shape of ``points``.
+
+  ``ring_points`` is the exterior ring of the largest retained polygon. The
+  ring is open (no repeated closing vertex). ``status`` is one of:
+
+  - ``"alpha_shape"``: at least one Delaunay triangle survived the
+    circumradius filter and polygonized into a closed polygon;
+  - ``"convex_hull"``: too few points, no surviving triangle, or the
+    polygonized result collapsed; the convex hull of the inputs is returned.
+
+  Requires scipy + shapely. Callers that do not need an alpha-shape should
+  keep using ``_convex_hull_2d`` directly.
+  """
+  _require_geometry_deps()
+  import numpy as _np
+
+  point_list = list(points)
+  if len(point_list) < 4:
+    return _convex_hull_2d(point_list), "convex_hull"
+
+  coords = _np.array(
+    [(float(p[0]), float(p[1])) for p in point_list],
+    dtype=float,
+  )
+  triangulation = _Delaunay(coords)
+  alpha_radius = 1.0 / alpha if alpha > 0.0 else float("inf")
+  edge_count: dict[tuple[int, int], int] = {}
+  kept_triangle_count = 0
+  for simplex in triangulation.simplices:
+    ia, ib, ic = int(simplex[0]), int(simplex[1]), int(simplex[2])
+    pa, pb, pc = coords[ia], coords[ib], coords[ic]
+    a = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+    b = math.hypot(pc[0] - pb[0], pc[1] - pb[1])
+    c = math.hypot(pa[0] - pc[0], pa[1] - pc[1])
+    semi = (a + b + c) * 0.5
+    area_sq = semi * (semi - a) * (semi - b) * (semi - c)
+    if area_sq <= 1.0e-24:
+      continue
+    circumradius = (a * b * c) / (4.0 * math.sqrt(area_sq))
+    if circumradius >= alpha_radius:
+      continue
+    kept_triangle_count += 1
+    for i, j in ((ia, ib), (ib, ic), (ic, ia)):
+      key = (min(i, j), max(i, j))
+      edge_count[key] = edge_count.get(key, 0) + 1
+
+  if kept_triangle_count == 0:
+    return _convex_hull_2d(point_list), "convex_hull"
+
+  boundary_edges = [edge for edge, count in edge_count.items() if count == 1]
+  boundary_lines = [
+    _shapely_line_string((coords[i], coords[j])) for i, j in boundary_edges
+  ]
+  if not boundary_lines:
+    return _convex_hull_2d(point_list), "convex_hull"
+  merged = _shapely_unary_union(boundary_lines)
+  geometries = (
+    list(merged.geoms) if hasattr(merged, "geoms") else [merged]
+  )
+  polygons = list(_shapely_polygonize(geometries))
+  if not polygons:
+    return _convex_hull_2d(point_list), "convex_hull"
+  largest = max(polygons, key=lambda polygon: polygon.area)
+  if largest.area < 1.0e-9:
+    return _convex_hull_2d(point_list), "convex_hull"
+  exterior = list(largest.exterior.coords)
+  # Drop the repeated closing vertex shapely appends.
+  if len(exterior) > 1 and exterior[0] == exterior[-1]:
+    exterior = exterior[:-1]
+  return [[float(x), float(y)] for x, y in exterior], "alpha_shape"
+
+
+def _shapely_line_string(coords: Any) -> Any:
+  """Lazy LineString constructor kept here so the module top stays importable
+  when shapely is absent."""
+  from shapely.geometry import LineString
+
+  return LineString([(float(x), float(y)) for x, y in coords])
+
+
+def _whole_airframe_alpha_contours(
+  sim_vertex_records: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+  """Build per-view whole-airframe alpha-shape contours from mesh vertices.
+
+  Returns a dict keyed by ``SILHOUETTE_VIEW_AXES`` view name. Each value is::
+
+      {
+        "points_m": [[x, y], ...],   # open exterior ring in sim meters
+        "status": "alpha_shape" | "convex_hull",
+        "alpha": float,
+        "alpha_radius_m": float,
+        "source_vertex_count": int,
+        "contour_point_count": int,
+      }
+
+  ``alpha`` is chosen per view as ``1 / (longer_projected_span *
+  WHOLE_AIRFRAME_ALPHA_AXIS_FRACTION)``. When a view cannot produce an
+  alpha-shape (too few surviving triangles, degenerate polygon) it falls back
+  to the convex hull of the same projected vertices and records
+  ``status="convex_hull"``.
+  """
+  _require_geometry_deps()
+  if not sim_vertex_records:
+    raise ValueError("sim_vertex_records must not be empty")
+
+  all_points = [record["point_m"] for record in sim_vertex_records]
+  contours: dict[str, dict[str, Any]] = {}
+  for view, axes in SILHOUETTE_VIEW_AXES.items():
+    projected = [
+      (float(point[axes[0]]), float(point[axes[1]])) for point in all_points
+    ]
+    if len(projected) < 4:
+      ring = _convex_hull_2d(projected)
+      contours[view] = {
+        "points_m": ring,
+        "status": "convex_hull",
+        "alpha": 0.0,
+        "alpha_radius_m": 0.0,
+        "source_vertex_count": len(projected),
+        "contour_point_count": len(ring),
+      }
+      continue
+    span_x = max(p[0] for p in projected) - min(p[0] for p in projected)
+    span_y = max(p[1] for p in projected) - min(p[1] for p in projected)
+    span = max(span_x, span_y)
+    if span <= 0.0:
+      ring = _convex_hull_2d(projected)
+      contours[view] = {
+        "points_m": ring,
+        "status": "convex_hull",
+        "alpha": 0.0,
+        "alpha_radius_m": 0.0,
+        "source_vertex_count": len(projected),
+        "contour_point_count": len(ring),
+      }
+      continue
+    alpha = 1.0 / (span * WHOLE_AIRFRAME_ALPHA_AXIS_FRACTION)
+    ring, status = _alpha_shape_2d(projected, alpha)
+    contours[view] = {
+      "points_m": ring,
+      "status": status,
+      "alpha": _round(alpha),
+      "alpha_radius_m": _round(1.0 / alpha),
+      "source_vertex_count": len(projected),
+      "contour_point_count": len(ring),
+    }
+  return contours
+
+
 def _mesh_silhouette_for_region(
   region: dict[str, Any],
   sim_vertex_records: list[dict[str, Any]],
@@ -3056,6 +3276,10 @@ def build_fine_geometry_proxy_candidate(
     "review_status": "manual_review_required",
   }
   fine_proxy["review_point_distance_deltas"] = distance_rows
+  # Internal-only channel for the whole-airframe alpha-shape contour path.
+  # Not serialized; downstream callers recompute the contour from these
+  # records so the glTF is parsed once per packet generation.
+  fine_proxy["_sim_vertex_records"] = sim_vertex_records
   fine_proxy["manual_review_queue"] = [
     {
       "priority": "high",
@@ -3903,10 +4127,30 @@ def _rule_initial_center(
 
 def _whole_airframe_projection_hulls(
   fine_proxy: dict[str, Any],
-) -> dict[str, list[list[list[float]]]]:
-  hulls: dict[str, list[list[list[float]]]] = {}
+  *,
+  airframe_contours: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, list[list[float]]]:
+  """Return per-view whole-airframe containment contours.
+
+  When ``airframe_contours`` (the output of
+  ``_whole_airframe_alpha_contours``) is supplied, each view's value is the
+  alpha-shape exterior ring. When it is ``None``, this falls back to the
+  legacy behavior of unioning the per-region mesh-derived hulls into a single
+  concatenated point list per view (degraded, kept for any caller that has
+  not yet been threaded through the alpha-shape path).
+
+  The return type is ``dict[view, list[list[float]]]``: a single point ring
+  per view (not a list of rings). Downstream containment helpers consume this
+  single-ring form.
+  """
+  if airframe_contours is not None:
+    return {
+      view: list(contour["points_m"])
+      for view, contour in airframe_contours.items()
+    }
+  hulls: dict[str, list[list[float]]] = {}
   for view in SILHOUETTE_VIEW_AXES:
-    view_hulls: list[list[list[float]]] = []
+    merged: list[list[float]] = []
     for proxy in fine_proxy["proxies"]:
       view_points = (
         proxy["mesh_derived_review_geometry"]
@@ -3914,9 +4158,8 @@ def _whole_airframe_projection_hulls(
         .get(view, {})
         .get("points_m", [])
       )
-      if len(view_points) >= 3:
-        view_hulls.append(view_points)
-    hulls[view] = view_hulls
+      merged.extend(view_points)
+    hulls[view] = merged
   return hulls
 
 
@@ -3924,13 +4167,13 @@ def _projection_adjust_center_to_airframe_hulls(
   *,
   center: list[float],
   half_extents: list[float],
-  airframe_projection_hulls: dict[str, list[list[list[float]]]],
+  airframe_projection_hulls: dict[str, list[list[float]]],
 ) -> dict[str, Any]:
   adjusted_center = [float(value) for value in center]
   for _ in range(2):
     for view, axes in SILHOUETTE_VIEW_AXES.items():
-      view_hulls = airframe_projection_hulls.get(view, [])
-      if not view_hulls:
+      contour_points = airframe_projection_hulls.get(view, [])
+      if len(contour_points) < 3:
         continue
       projected_bounds = _project_bounds(
         _bounds_from_center_half_extents(adjusted_center, half_extents),
@@ -3940,30 +4183,26 @@ def _projection_adjust_center_to_airframe_hulls(
         (projected_bounds[0] + projected_bounds[2]) * 0.5,
         (projected_bounds[1] + projected_bounds[3]) * 0.5,
       )
-      shifted_candidates: list[tuple[float, tuple[float, float, float, float]]] = []
-      for hull_points in view_hulls:
-        hull_bounds = _projected_hull_bounds(hull_points)
-        if hull_bounds is None:
-          continue
-        candidate_bounds = _shift_bounds_inside_parent_projection_preserve_size(
-          projected_bounds,
-          hull_bounds,
-          hull_points=hull_points,
-        )
-        candidate_center = (
-          (candidate_bounds[0] + candidate_bounds[2]) * 0.5,
-          (candidate_bounds[1] + candidate_bounds[3]) * 0.5,
-        )
-        shift = math.hypot(
-          candidate_center[0] - current_center[0],
-          candidate_center[1] - current_center[1],
-        )
-        shifted_candidates.append((shift, candidate_bounds))
-      if not shifted_candidates:
+      hull_bounds = _projected_hull_bounds(contour_points)
+      if hull_bounds is None:
         continue
-      shifted_bounds = min(shifted_candidates, key=lambda item: item[0])[1]
-      adjusted_center[axes[0]] = (shifted_bounds[0] + shifted_bounds[2]) * 0.5
-      adjusted_center[axes[1]] = (shifted_bounds[1] + shifted_bounds[3]) * 0.5
+      candidate_bounds = _shift_bounds_inside_parent_projection_preserve_size(
+        projected_bounds,
+        hull_bounds,
+        hull_points=contour_points,
+      )
+      candidate_center = (
+        (candidate_bounds[0] + candidate_bounds[2]) * 0.5,
+        (candidate_bounds[1] + candidate_bounds[3]) * 0.5,
+      )
+      shift = math.hypot(
+        candidate_center[0] - current_center[0],
+        candidate_center[1] - current_center[1],
+      )
+      if shift < 1.0e-9:
+        continue
+      adjusted_center[axes[0]] = (candidate_bounds[0] + candidate_bounds[2]) * 0.5
+      adjusted_center[axes[1]] = (candidate_bounds[1] + candidate_bounds[3]) * 0.5
   shift_m = math.sqrt(
     sum((adjusted_center[index] - center[index]) ** 2 for index in range(3))
   )
@@ -4067,69 +4306,210 @@ def _projected_shape_sample_points(
   return _projected_bounds_sample_points(bounds)
 
 
-def _point_in_any_projected_hull(
-  point: tuple[float, float],
-  view_hulls: list[list[list[float]]],
+# Dense perimeter sampling step for ellipsoid / capsule contour containment.
+# 15 degrees gives 24 perimeter samples, dense enough to catch protrusion at a
+# corner the 9-point box grid would miss.
+_PERIMETER_SAMPLE_STEP_RAD = math.radians(15.0)
+
+
+def _projected_ellipse_perimeter_samples(
+  bounds: tuple[float, float, float, float],
+) -> list[tuple[float, float]]:
+  """Dense perimeter samples of the ellipse inscribed in ``bounds``.
+
+  Used for whole-airframe contour containment so a tilted ellipsoid receiver
+  cannot hide a corner protrusion behind the legacy 5-point axis cross.
+  """
+  min_x, min_y, max_x, max_y = bounds
+  center_x = (min_x + max_x) * 0.5
+  center_y = (min_y + max_y) * 0.5
+  radius_x = (max_x - min_x) * 0.5
+  radius_y = (max_y - min_y) * 0.5
+  samples: list[tuple[float, float]] = [(center_x, center_y)]
+  angle = 0.0
+  while angle < 2.0 * math.pi - 1.0e-9:
+    samples.append(
+      (center_x + radius_x * math.cos(angle), center_y + radius_y * math.sin(angle))
+    )
+    angle += _PERIMETER_SAMPLE_STEP_RAD
+  return samples
+
+
+def _projected_capsule_perimeter_samples(
+  bounds: tuple[float, float, float, float],
   *,
-  boundary_tolerance_m: float = 0.02,
-) -> bool:
-  for hull_points in view_hulls:
-    hull_bounds = _projected_hull_bounds(hull_points)
-    if hull_bounds is None:
-      continue
-    min_x, min_y, max_x, max_y = hull_bounds
-    if (
-      point[0] < min_x - boundary_tolerance_m
-      or point[0] > max_x + boundary_tolerance_m
-      or point[1] < min_y - boundary_tolerance_m
-      or point[1] > max_y + boundary_tolerance_m
-    ):
-      continue
-    if _point_in_projected_polygon(point, hull_points):
-      return True
-    if (
-      _distance_to_projected_polygon_edges(point, hull_points)
-      <= boundary_tolerance_m
-    ):
-      return True
-  return False
+  axes: tuple[int, int],
+  axis: str,
+) -> list[tuple[float, float]]:
+  """Dense perimeter samples for a capsule projected into ``axes``.
+
+  The capsule is modeled as a centerline segment (length 2*half_extent along
+  ``axis``) with hemispherical end caps of radius equal to the radial
+  half-extent. Samples: center, both end points, plus dense half-rings around
+  each cap (the outer-facing semicircle, since the inner-facing semicircle is
+  covered by the centerline span).
+  """
+  min_x, min_y, max_x, max_y = bounds
+  center_x = (min_x + max_x) * 0.5
+  center_y = (min_y + max_y) * 0.5
+  half_x = (max_x - min_x) * 0.5
+  half_y = (max_y - min_y) * 0.5
+  axis_index = _axis_index(axis)
+  if axis_index not in axes:
+    return _projected_ellipse_perimeter_samples(bounds)
+  if axis_index == axes[0]:
+    # Capsule long axis is the projected x axis.
+    length = half_x
+    radius = half_y
+    end_a = (center_x - length, center_y)
+    end_b = (center_x + length, center_y)
+    # end_a faces -x (outer semicircle: angles pi/2..3pi/2);
+    # end_b faces +x (outer semicircle: -pi/2..pi/2).
+    end_a_start = math.pi * 0.5
+    end_b_start = -math.pi * 0.5
+  else:
+    length = half_y
+    radius = half_x
+    end_a = (center_x, center_y - length)
+    end_b = (center_x, center_y + length)
+    # end_a faces -y, end_b faces +y.
+    end_a_start = math.pi
+    end_b_start = 0.0
+  samples: list[tuple[float, float]] = [(center_x, center_y), end_a, end_b]
+  angle = 0.0
+  while angle < math.pi - 1.0e-9:
+    offset_x = radius * math.cos(end_a_start + angle)
+    offset_y = radius * math.sin(end_a_start + angle)
+    samples.append((end_a[0] + offset_x, end_a[1] + offset_y))
+    offset_x = radius * math.cos(end_b_start + angle)
+    offset_y = radius * math.sin(end_b_start + angle)
+    samples.append((end_b[0] + offset_x, end_b[1] + offset_y))
+    angle += _PERIMETER_SAMPLE_STEP_RAD
+  return samples
+
+
+def _shape_projected_containment_samples(
+  bounds: dict[str, list[float]],
+  *,
+  axes: tuple[int, int],
+  shape: str,
+  axis: str,
+) -> list[tuple[float, float]]:
+  """Dense containment samples for a receiver geometry projected into ``axes``.
+
+  Replaces the legacy sparse 5/9-point sampling with full perimeter coverage:
+  AABB/OBB corners (8), ellipsoid perimeter (24), capsule cap rings (24+).
+  This is the sample set used against the whole-airframe alpha-shape contour
+  so a receiver cannot pass containment while a corner protrudes outside the
+  contour.
+  """
+  projected_bounds = _project_bounds(bounds, axes)
+  if shape in {"sphere", "ellipsoid"}:
+    return _projected_ellipse_perimeter_samples(projected_bounds)
+  if shape in {"cylinder", "capsule"}:
+    return _projected_capsule_perimeter_samples(
+      projected_bounds,
+      axes=axes,
+      axis=axis,
+    )
+  # AABB / OBB: 8 corners + 4 edge midpoints + center = 13 sample points.
+  min_x, min_y, max_x, max_y = projected_bounds
+  center_x = (min_x + max_x) * 0.5
+  center_y = (min_y + max_y) * 0.5
+  return [
+    (min_x, min_y),
+    (center_x, min_y),
+    (max_x, min_y),
+    (min_x, center_y),
+    (center_x, center_y),
+    (max_x, center_y),
+    (min_x, max_y),
+    (center_x, max_y),
+    (max_x, max_y),
+  ]
+
+
+def _point_in_contour(
+  point: tuple[float, float],
+  contour_points: list[list[float]],
+  *,
+  tolerance_m: float = SILHOUETTE_CONTAINMENT_TOLERANCE_M,
+) -> tuple[bool, float]:
+  """Test a projected point against a single whole-airframe contour ring.
+
+  Returns ``(inside, outside_distance_m)``. ``inside`` is True when the point
+  is inside the contour polygon or within ``tolerance_m`` of a contour edge.
+  ``outside_distance_m`` is ``0.0`` when inside, otherwise the minimum
+  distance from the point to any contour edge.
+
+  ``tolerance_m`` is an engineering review margin for mesh / proxy
+  quantization noise, not a physical clearance.
+  """
+  if len(contour_points) < 3:
+    return False, 0.0
+  hull_bounds = _projected_hull_bounds(contour_points)
+  if hull_bounds is None:
+    return False, 0.0
+  min_x, min_y, max_x, max_y = hull_bounds
+  # Broad-phase: far outside the AABB cannot be inside even with tolerance.
+  if (
+    point[0] < min_x - tolerance_m
+    or point[0] > max_x + tolerance_m
+    or point[1] < min_y - tolerance_m
+    or point[1] > max_y + tolerance_m
+  ):
+    edge_distance = _distance_to_projected_polygon_edges(point, contour_points)
+    return False, _round(edge_distance, 5)
+  if _point_in_projected_polygon(point, contour_points):
+    return True, 0.0
+  edge_distance = _distance_to_projected_polygon_edges(point, contour_points)
+  if edge_distance <= tolerance_m:
+    return True, 0.0
+  return False, _round(edge_distance, 5)
 
 
 def _airframe_silhouette_view_diagnostic(
   bounds: dict[str, list[float]],
   *,
   view: str,
-  view_hulls: list[list[list[float]]],
+  contour_points: list[list[float]],
   shape: str,
   axis: str,
 ) -> dict[str, Any]:
   axes = SILHOUETTE_VIEW_AXES[view]
-  projected_bounds = _project_bounds(bounds, axes)
-  sample_points = _projected_shape_sample_points(
-    projected_bounds,
+  sample_points = _shape_projected_containment_samples(
+    bounds,
     axes=axes,
     shape=shape,
     axis=axis,
   )
-  inside = [
-    _point_in_any_projected_hull(point, view_hulls) for point in sample_points
-  ]
-  inside_count = sum(1 for value in inside if value)
+  outside_distances: list[float] = []
+  inside_count = 0
+  for point in sample_points:
+    inside, outside_distance = _point_in_contour(point, contour_points)
+    if inside:
+      inside_count += 1
+    else:
+      outside_distances.append(outside_distance)
   outside_count = len(sample_points) - inside_count
+  max_outside_distance = max(outside_distances) if outside_distances else 0.0
+  projected_bounds = _project_bounds(bounds, axes)
   return {
     "view": view,
     "projected_bounds": [_round(value) for value in projected_bounds],
     "sample_count": len(sample_points),
     "inside_sample_count": inside_count,
     "outside_sample_count": outside_count,
-    "inside_sample_fraction": _round(inside_count / len(sample_points), 5),
+    "inside_sample_fraction": _round(inside_count / max(len(sample_points), 1), 5),
     "fully_inside_silhouette": outside_count == 0,
+    "max_outside_distance_m": _round(max_outside_distance, 5),
+    "exceeds_tolerance": max_outside_distance > 0.0,
   }
 
 
 def _airframe_silhouette_diagnostics(
   geometry: dict[str, Any],
-  airframe_projection_hulls: dict[str, list[list[list[float]]]],
+  airframe_projection_hulls: dict[str, list[list[float]]],
 ) -> dict[str, Any]:
   bounds = geometry["bounds"]
   shape = geometry.get("shape", "obb")
@@ -4138,7 +4518,7 @@ def _airframe_silhouette_diagnostics(
     view: _airframe_silhouette_view_diagnostic(
       bounds,
       view=view,
-      view_hulls=airframe_projection_hulls.get(view, []),
+      contour_points=airframe_projection_hulls.get(view, []),
       shape=shape,
       axis=axis,
     )
@@ -4153,6 +4533,10 @@ def _airframe_silhouette_diagnostics(
     diagnostic["outside_sample_count"] for diagnostic in views.values()
   )
   sample_count = sum(diagnostic["sample_count"] for diagnostic in views.values())
+  max_outside_distance = max(
+    (diagnostic["max_outside_distance_m"] for diagnostic in views.values()),
+    default=0.0,
+  )
   return {
     "views": views,
     "outside_views": outside_views,
@@ -4164,13 +4548,14 @@ def _airframe_silhouette_diagnostics(
       5,
     ),
     "fully_inside_all_views": outside_sample_count == 0,
+    "max_outside_distance_m": _round(max_outside_distance, 5),
   }
 
 
 def _silhouette_fit_candidate(
   *,
   geometry: dict[str, Any],
-  airframe_projection_hulls: dict[str, list[list[list[float]]]],
+  airframe_projection_hulls: dict[str, list[list[float]]],
 ) -> dict[str, Any]:
   center = geometry["center_m"]
   half_extents = geometry["half_extents_m"]
@@ -4205,7 +4590,28 @@ def _silhouette_fit_candidate(
     "outside_sample_reduction": (
       before["outside_sample_count"] - after["outside_sample_count"]
     ),
+    "max_outside_distance_reduction_m": _round(
+      before["max_outside_distance_m"] - after["max_outside_distance_m"], 5
+    ),
   }
+
+
+def _whole_airframe_containment_hulls(
+  fine_proxy: dict[str, Any],
+) -> dict[str, list[list[float]]]:
+  """Per-view whole-airframe containment contours for silhouette testing.
+
+  Builds the whole-airframe alpha-shape contours from the cached mesh vertex
+  records (when available) and returns them in the single-ring-per-view form
+  consumed by the silhouette diagnostics. When the cache is absent (for
+  example a fine_proxy built without ``manifest``), it falls back to the
+  legacy per-region hull concatenation.
+  """
+  sim_vertex_records = fine_proxy.get("_sim_vertex_records")
+  if sim_vertex_records:
+    contours = _whole_airframe_alpha_contours(sim_vertex_records)
+    return _whole_airframe_projection_hulls(fine_proxy, airframe_contours=contours)
+  return _whole_airframe_projection_hulls(fine_proxy)
 
 
 def build_internal_component_prior_candidate(
@@ -4220,7 +4626,7 @@ def build_internal_component_prior_candidate(
   whole_airframe_bounds = _merge_bounds(
     proxy["source_region_bounds"] for proxy in proxies_by_region.values()
   )
-  airframe_projection_hulls = _whole_airframe_projection_hulls(fine_proxy)
+  airframe_projection_hulls = _whole_airframe_containment_hulls(fine_proxy)
   surface_rows_by_component: dict[str, list[dict[str, Any]]] = {}
   for surface_row in surface_report["rows"]:
     for link in surface_row["linked_internal_components"]:
@@ -5823,7 +6229,7 @@ def _airframe_constraint_row(
   owner_region_ids: list[str],
   component_review_semantics: str,
   constraint_status: str,
-  airframe_projection_hulls: dict[str, list[list[list[float]]]],
+  airframe_projection_hulls: dict[str, list[list[float]]],
 ) -> dict[str, Any]:
   fit = _silhouette_fit_candidate(
     geometry=geometry,
@@ -5875,7 +6281,7 @@ def build_airframe_constraint_correction_candidate_report(
   internal_prior_report: dict[str, Any],
   held_segment_report: dict[str, Any],
 ) -> dict[str, Any]:
-  airframe_projection_hulls = _whole_airframe_projection_hulls(fine_proxy)
+  airframe_projection_hulls = _whole_airframe_containment_hulls(fine_proxy)
   rows: list[dict[str, Any]] = []
   for prior_row in internal_prior_report["rows"]:
     rows.append(
@@ -6005,6 +6411,145 @@ def build_airframe_constraint_correction_candidate_report(
       "true_internal_component_geometry": False,
       "airframe_silhouette_constraint_diagnostic": True,
       "center_shift_candidate_not_applied": True,
+    },
+  }
+
+
+def build_whole_airframe_contour_containment_report(
+  fine_proxy: dict[str, Any],
+  airframe_constraint_report: dict[str, Any],
+  *,
+  tolerance_m: float = SILHOUETTE_CONTAINMENT_TOLERANCE_M,
+) -> dict[str, Any]:
+  """Whole-airframe alpha-shape contour containment report.
+
+  Promotes the silhouette-containment facts already computed by
+  ``build_airframe_constraint_correction_candidate_report`` into a standalone
+  review surface that records the contour method (alpha-shape over the full
+  audit mesh), the per-view contour geometry, the tolerance, and the
+  per-item outside distances. This report is a diagnostic overlay: it does
+  not recompute geometry and it does not change runtime behavior.
+
+  ``fine_proxy`` supplies the cached mesh vertex records used to rebuild the
+  alpha-shape contours for the per-view metadata block.
+  """
+  sim_vertex_records = fine_proxy.get("_sim_vertex_records", [])
+  contours = (
+    _whole_airframe_alpha_contours(sim_vertex_records)
+    if sim_vertex_records
+    else {}
+  )
+  rows: list[dict[str, Any]] = []
+  for row in airframe_constraint_report["rows"]:
+    silhouette = row["current_silhouette"]
+    max_outside = float(silhouette.get("max_outside_distance_m", 0.0))
+    exceeds = max_outside > tolerance_m
+    view_rows: list[dict[str, Any]] = []
+    for view, view_diag in silhouette["views"].items():
+      view_max = float(view_diag.get("max_outside_distance_m", 0.0))
+      view_rows.append(
+        {
+          "view": view,
+          "outside_sample_count": view_diag["outside_sample_count"],
+          "max_outside_distance_m": view_diag["max_outside_distance_m"],
+          "exceeds_tolerance": view_max > tolerance_m,
+        }
+      )
+    rows.append(
+      {
+        "item_id": row["item_id"],
+        "record_type": row["record_type"],
+        "component_name": row["component_name"],
+        "parent_component_name": row["parent_component_name"],
+        "system": row["system"],
+        "prior_shape": row["prior_shape"],
+        "prior_axis": row["prior_axis"],
+        "nominal_dimensions_m": row["nominal_dimensions_m"],
+        "owner_region_ids": row["owner_region_ids"],
+        "outside_sample_count": silhouette["outside_sample_count"],
+        "outside_view_count": silhouette["outside_view_count"],
+        "outside_views": silhouette["outside_views"],
+        "max_outside_distance_m": silhouette["max_outside_distance_m"],
+        "exceeds_tolerance": exceeds,
+        "views": view_rows,
+        "constraint_triage_status": row["triage_status"],
+        "current_geometry": row["current_geometry"],
+      }
+    )
+  rows.sort(
+    key=lambda item: (
+      not item["exceeds_tolerance"],
+      -item["max_outside_distance_m"],
+      item["item_id"],
+    )
+  )
+  max_outside_overall = max(
+    (row["max_outside_distance_m"] for row in rows),
+    default=0.0,
+  )
+  exceeders = [row for row in rows if row["exceeds_tolerance"]]
+  return {
+    "schema_version": WHOLE_AIRFRAME_CONTOUR_SCHEMA_VERSION,
+    "status": "whole_airframe_contour_containment_generated_review_only",
+    "generated_on": fine_proxy.get("generated_on", DEFAULT_GENERATED_ON),
+    "asset_ref": fine_proxy.get("asset_ref", {}),
+    "coordinate_frame": fine_proxy.get("coordinate_frame", {}),
+    "source_airframe_constraint_schema_version": airframe_constraint_report[
+      "schema_version"
+    ],
+    "contour_method": "alpha_shape",
+    "tolerance_m": _round(tolerance_m),
+    "tolerance_basis": (
+      "engineering_review_margin_for_mesh_and_proxy_quantization_not_physical_clearance"
+    ),
+    "summary": {
+      "item_count": len(rows),
+      "exceeds_tolerance_item_count": len(exceeders),
+      "inside_contour_item_count": len(rows) - len(exceeders),
+      "max_outside_distance_m": _round(max_outside_overall),
+      "contours": {
+        view: {
+          "status": contour["status"],
+          "alpha": contour["alpha"],
+          "alpha_radius_m": contour["alpha_radius_m"],
+          "source_vertex_count": contour["source_vertex_count"],
+          "contour_point_count": contour["contour_point_count"],
+        }
+        for view, contour in contours.items()
+      },
+      "exceeding_item_ids": [row["item_id"] for row in exceeders],
+    },
+    "contours": {
+      view: {"points_m": contour["points_m"]}
+      for view, contour in contours.items()
+    },
+    "rows": rows,
+    "manual_review_queue": [
+      {
+        "priority": "high",
+        "question": (
+          "Review every item whose max_outside_distance_m exceeds the "
+          "tolerance; the alpha-shape contour is stricter than the legacy "
+          "per-region hull union."
+        ),
+      },
+      {
+        "priority": "medium",
+        "question": (
+          "Confirm the alpha parameter still preserves real concavities "
+          "(wing root, intake) before treating an outside result as a true "
+          "protrusion rather than contour over-tightening."
+        ),
+      },
+    ],
+    "authority_boundary": {
+      "alpha_shape_contour_diagnostic_only": True,
+      "not_runtime_collision_mesh": True,
+      "not_true_f16_engineering_geometry": True,
+      "tolerance_is_engineering_review_margin_not_physical_clearance": True,
+      "runtime_active_component": False,
+      "runtime_damage_model": False,
+      "real_weapon_pk_authority": False,
     },
   }
 
@@ -6370,7 +6915,7 @@ def build_subcomponent_shape_placement_candidate_report(
   fine_proxy: dict[str, Any],
   airframe_constraint_report: dict[str, Any],
 ) -> dict[str, Any]:
-  airframe_projection_hulls = _whole_airframe_projection_hulls(fine_proxy)
+  airframe_projection_hulls = _whole_airframe_containment_hulls(fine_proxy)
   rows = [
     _subcomponent_shape_candidate_row(
       row,
@@ -7017,8 +7562,9 @@ def write_fine_geometry_proxy_candidate(
 ) -> Path:
   output_dir.mkdir(parents=True, exist_ok=True)
   output_path = output_dir / "fine_geometry_proxy_candidate_20260611.json"
+  serializable = _strip_internal_keys(fine_proxy)
   output_path.write_text(
-    json.dumps(fine_proxy, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+    json.dumps(serializable, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
     encoding="utf-8",
   )
   return output_path
@@ -7629,6 +8175,58 @@ def write_airframe_constraint_correction_candidate_report(
           "triage_status": row["triage_status"],
           "recommended_action": row["recommended_action"],
           "runtime_projection_status": row["runtime_projection_status"],
+        }
+      )
+  return json_path, csv_path
+
+
+def write_whole_airframe_contour_containment_report(
+  report: dict[str, Any],
+  output_dir: Path,
+) -> tuple[Path, Path]:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  json_path = output_dir / "whole_airframe_contour_containment_20260614.json"
+  csv_path = output_dir / "whole_airframe_contour_containment_20260614.csv"
+  json_path.write_text(
+    json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+    encoding="utf-8",
+  )
+  fieldnames = [
+    "item_id",
+    "record_type",
+    "component_name",
+    "parent_component_name",
+    "system",
+    "prior_shape",
+    "prior_axis",
+    "nominal_dimensions_m",
+    "owner_region_ids",
+    "outside_views",
+    "outside_sample_count",
+    "max_outside_distance_m",
+    "exceeds_tolerance",
+  ]
+  with csv_path.open("w", encoding="utf-8", newline="") as handle:
+    writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
+    writer.writeheader()
+    for row in report["rows"]:
+      writer.writerow(
+        {
+          "item_id": row["item_id"],
+          "record_type": row["record_type"],
+          "component_name": row["component_name"],
+          "parent_component_name": row["parent_component_name"],
+          "system": row["system"],
+          "prior_shape": row["prior_shape"],
+          "prior_axis": row["prior_axis"],
+          "nominal_dimensions_m": ";".join(
+            str(value) for value in row["nominal_dimensions_m"]
+          ),
+          "owner_region_ids": ";".join(row["owner_region_ids"]),
+          "outside_views": ";".join(row["outside_views"]),
+          "outside_sample_count": row["outside_sample_count"],
+          "max_outside_distance_m": row["max_outside_distance_m"],
+          "exceeds_tolerance": row["exceeds_tolerance"],
         }
       )
   return json_path, csv_path
@@ -8346,6 +8944,226 @@ def write_fine_proxy_svg_views(
     path.write_text(_svg_for_fine_proxy_view(fine_proxy, view), encoding="utf-8")
     paths.append(path)
   return paths
+
+
+def _projected_shape_polygon(
+  geometry: dict[str, Any],
+  axes: tuple[int, int],
+) -> list[list[float]]:
+  """Project a receiver geometry into ``axes`` as a 2D polygon outline.
+
+  AABB/OBB -> 4-corner rectangle. Ellipsoid/capsule/cylinder -> a dense
+  perimeter ring (reuses the containment sampler and dedupes for SVG).
+  """
+  bounds = geometry["bounds"]
+  shape = geometry.get("shape", "obb")
+  axis = geometry.get("axis", "")
+  samples = _shape_projected_containment_samples(
+    bounds, axes=axes, shape=shape, axis=axis
+  )
+  if not samples:
+    projected = _project_bounds(bounds, axes)
+    min_x, min_y, max_x, max_y = projected
+    return [[min_x, min_y], [max_x, min_y], [max_x, max_y], [min_x, max_y]]
+  return _convex_hull_2d(samples)
+
+
+def _svg_for_whole_airframe_contour_view(
+  report: dict[str, Any],
+  view: str,
+) -> str:
+  axes_by_view = {
+    "top": (0, 1, "x forward (m)", "y lateral (m)"),
+    "side": (0, 2, "x forward (m)", "z up (m)"),
+    "front": (1, 2, "y lateral (m)", "z up (m)"),
+  }
+  axis_x, axis_y, label_x, label_y = axes_by_view[view]
+  width, height = 1200, 760
+  contours = report.get("contours", {})
+  contour_points = contours.get(view, {}).get("points_m", [])
+  rows = report["rows"]
+  # View bounds from the contour ring (fall back to envelope of all geometry).
+  candidate_bounds: list[tuple[float, float, float, float]] = []
+  if len(contour_points) >= 3:
+    candidate_bounds.append(_projected_hull_bounds(contour_points))
+  for row in rows:
+    candidate_bounds.append(
+      _project_bounds(row["current_geometry"]["bounds"], (axis_x, axis_y))
+    )
+  view_bounds_raw = (
+    (
+      min(b[0] for b in candidate_bounds),
+      min(b[1] for b in candidate_bounds),
+      max(b[2] for b in candidate_bounds),
+      max(b[3] for b in candidate_bounds),
+    )
+    if candidate_bounds
+    else (-8.0, -6.0, 8.0, 6.0)
+  )
+  margin_x = max((view_bounds_raw[2] - view_bounds_raw[0]) * 0.08, 0.5)
+  margin_y = max((view_bounds_raw[3] - view_bounds_raw[1]) * 0.08, 0.5)
+  view_bounds = (
+    view_bounds_raw[0] - margin_x,
+    view_bounds_raw[1] - margin_y,
+    view_bounds_raw[2] + margin_x,
+    view_bounds_raw[3] + margin_y,
+  )
+  tolerance = report["tolerance_m"]
+  contour_meta = report["summary"]["contours"].get(view, {})
+  elements: list[str] = [
+    '<rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>',
+    f'<text x="24" y="34" font-size="18" font-family="monospace" fill="#202020">'
+    f'F-16 whole-airframe alpha-shape contour - {view} view</text>',
+    f'<text x="24" y="58" font-size="12" font-family="monospace" fill="#555555">'
+    f'{label_x}; {label_y}; alpha={contour_meta.get("alpha", 0)}; '
+    f'alpha_radius={contour_meta.get("alpha_radius_m", 0)}m; '
+    f'tolerance={tolerance:g}m; review-only</text>',
+  ]
+  # Gray whole-airframe contour wireframe.
+  if len(contour_points) >= 3:
+    elements.append(
+      _svg_polygon_projected(
+        points=contour_points,
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color="#94a3b8",
+        label="whole_airframe_alpha_contour",
+        fill_opacity=0.0,
+        stroke_width=1.2,
+        label_visible=False,
+      )
+    )
+  # Components: green = inside contour within tolerance, red = exceeds
+  # tolerance. The exceeding component is drawn in solid red with a
+  # protrusion-distance label so a reviewer can see at a glance which
+  # receiver sticks out and by how much.
+  for row in rows:
+    geometry = row["current_geometry"]
+    polygon = _projected_shape_polygon(geometry, (axis_x, axis_y))
+    if len(polygon) < 3:
+      continue
+    max_outside = row["max_outside_distance_m"]
+    exceeds = row["exceeds_tolerance"]
+    base_color = "#dc2626" if exceeds else "#16a34a"
+    base_opacity = 0.32 if exceeds else 0.12
+    base_stroke = 2.0 if exceeds else 1.0
+    label = (
+      f'{row["component_name"]} protrusion {max_outside:g}m'
+      if exceeds
+      else row["component_name"]
+    )
+    elements.append(
+      _svg_polygon_projected(
+        points=polygon,
+        view_bounds=view_bounds,
+        width=width,
+        height=height,
+        color=base_color,
+        label=label,
+        fill_opacity=base_opacity,
+        stroke_width=base_stroke,
+        label_visible=exceeds,
+      )
+    )
+  legend_y = 716
+  elements.extend(
+    [
+      f'<text x="24" y="{legend_y}" font-size="11" font-family="monospace" fill="#555555">'
+      f'Legend: gray=whole-airframe alpha-shape contour; '
+      f'green=receiver inside contour; red=receiver exceeds {tolerance:g}m tolerance; '
+      f'red fill=protruding portion</text>',
+      f'<text x="24" y="{legend_y + 20}" font-size="11" font-family="monospace" fill="#555555">'
+      'Review-only diagnostic; not a runtime collision mesh, not real F-16 engineering geometry</text>',
+    ]
+  )
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" '
+    'viewBox="0 0 1200 760">\n'
+    + "\n".join(elements)
+    + "\n</svg>\n"
+  )
+
+
+def write_whole_airframe_contour_svg_views(
+  report: dict[str, Any],
+  output_dir: Path,
+) -> list[Path]:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  paths: list[Path] = []
+  for view in ("top", "side", "front"):
+    path = output_dir / f"whole_airframe_contour_{view}.svg"
+    path.write_text(
+      _svg_for_whole_airframe_contour_view(report, view), encoding="utf-8"
+    )
+    paths.append(path)
+  return paths
+
+
+def write_whole_airframe_contour_dashboard(
+  report: dict[str, Any],
+  output_dir: Path,
+) -> Path:
+  output_dir.mkdir(parents=True, exist_ok=True)
+  output_path = output_dir / "whole_airframe_contour_dashboard.html"
+  tolerance = report["tolerance_m"]
+  exceeders = [row for row in report["rows"] if row["exceeds_tolerance"]]
+  table_rows = "\n".join(
+    "<tr>"
+    f"<td>{html.escape(row['item_id'])}</td>"
+    f"<td>{html.escape(row['record_type'])}</td>"
+    f"<td>{html.escape(row['prior_shape'])}</td>"
+    f"<td>{';'.join(html.escape(r) for r in row['outside_views']) or '-'}</td>"
+    f"<td>{row['outside_sample_count']}</td>"
+    f"<td>{row['max_outside_distance_m']:g}</td>"
+    f"<td>{'YES' if row['exceeds_tolerance'] else 'no'}</td>"
+    "</tr>"
+    for row in report["rows"]
+  )
+  svg_blocks = "\n".join(
+    f'<section><h2>{view} view</h2>'
+    f'<img src="whole_airframe_contour_{view}.svg" '
+    f'style="width:100%;max-width:1200px;border:1px solid #ccc"/></section>'
+    for view in ("top", "side", "front")
+  )
+  body = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>F-16 Whole-Airframe Alpha-Shape Contour Containment</title>
+<style>
+body {{ font-family: monospace; margin: 24px; color: #202020; }}
+h1 {{ font-size: 20px; }}
+h2 {{ font-size: 16px; margin-top: 28px; }}
+table {{ border-collapse: collapse; margin-top: 12px; width: 100%; }}
+th, td {{ border: 1px solid #999; padding: 4px 8px; font-size: 12px; text-align: left; }}
+th {{ background: #eee; }}
+tr.exceeds {{ background: #fee2e2; }}
+section {{ margin-top: 20px; }}
+.note {{ color: #666; font-size: 12px; }}
+</style>
+</head>
+<body>
+<h1>F-16 Whole-Airframe Alpha-Shape Contour Containment</h1>
+<p class="note">
+Method: alpha-shape over the full audit glTF mesh vertices ({sum(c.get('source_vertex_count', 0) for c in report['summary']['contours'].values()) // 3} vertices per view, deduplicated across views).
+Tolerance: {tolerance:g} m (engineering review margin, not physical clearance).
+Items exceeding tolerance: <strong>{len(exceeders)}</strong> of {report['summary']['item_count']}.
+Max outside distance: <strong>{report['summary']['max_outside_distance_m']:g} m</strong>.
+</p>
+<table>
+<thead><tr><th>item_id</th><th>type</th><th>shape</th><th>outside views</th><th>outside samples</th><th>max outside (m)</th><th>exceeds</th></tr></thead>
+<tbody>
+{table_rows}
+</tbody>
+</table>
+{svg_blocks}
+<p class="note">Review-only diagnostic. Not a runtime collision mesh, not real F-16 engineering geometry, not a weapon Pk authority.</p>
+</body>
+</html>
+"""
+  output_path.write_text(body, encoding="utf-8")
+  return output_path
 
 
 def _component_rows_for_region(
@@ -12515,6 +13333,7 @@ def write_review_packet(
   internal_prior_report: dict[str, Any] | None = None,
   held_segment_report: dict[str, Any] | None = None,
   airframe_constraint_report: dict[str, Any] | None = None,
+  whole_airframe_contour_report: dict[str, Any] | None = None,
   ownership_split_report: dict[str, Any] | None = None,
   runtime_activation_report: dict[str, Any] | None = None,
   runtime_behavior_report: dict[str, Any] | None = None,
@@ -12742,6 +13561,48 @@ def write_review_packet(
         "recommended_action",
       ],
       correction_rows,
+    )}
+  </section>
+"""
+  whole_airframe_contour_section = ""
+  if whole_airframe_contour_report is not None:
+    contour = whole_airframe_contour_report
+    contour_rows = [
+      [
+        row["item_id"],
+        row["record_type"],
+        row["prior_shape"],
+        ",".join(row["outside_views"]) or "-",
+        row["outside_sample_count"],
+        row["max_outside_distance_m"],
+        "YES" if row["exceeds_tolerance"] else "no",
+      ]
+      for row in contour["rows"]
+      if row["exceeds_tolerance"]
+    ]
+    contours_summary = "; ".join(
+      f'{view}: {meta["status"]} alpha={meta["alpha"]} pts={meta["contour_point_count"]}'
+      for view, meta in contour["summary"]["contours"].items()
+    )
+    whole_airframe_contour_section = f"""
+  <section>
+    <h2>Whole-Airframe Alpha-Shape Contour Containment</h2>
+    <p class="note">Review-only diagnostic built from the full audit glTF mesh vertices via a per-view alpha-shape (concavities preserved) with dense perimeter sampling (AABB corners, ellipsoid 24-point ring, capsule cap rings). Tolerance {contour["tolerance_m"]:g} m is an engineering review margin, not physical clearance. Method: {contour["contour_method"]}. Contours: {contours_summary}. Items exceeding tolerance: <strong>{contour["summary"]["exceeds_tolerance_item_count"]}</strong> of {contour["summary"]["item_count"]}; max outside distance <strong>{contour["summary"]["max_outside_distance_m"]:g} m</strong>.</p>
+    <p><a href="whole_airframe_contour_dashboard.html">Open interactive dashboard</a></p>
+    <img src="whole_airframe_contour_top.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour top view"/>
+    <img src="whole_airframe_contour_side.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour side view"/>
+    <img src="whole_airframe_contour_front.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour front view"/>
+    {_html_table(
+      [
+        "item",
+        "type",
+        "shape",
+        "outside_views",
+        "outside_samples",
+        "max_outside_m",
+        "exceeds",
+      ],
+      contour_rows,
     )}
   </section>
 """
@@ -13114,6 +13975,7 @@ def write_review_packet(
 {internal_component_prior_section}
 {held_segment_section}
 {airframe_constraint_section}
+{whole_airframe_contour_section}
 {ownership_split_section}
 {runtime_activation_section}
 {runtime_behavior_section}
@@ -13258,6 +14120,28 @@ def main(argv: list[str] | None = None) -> int:
   airframe_constraint_json_path, airframe_constraint_csv_path = (
     write_airframe_constraint_correction_candidate_report(
       airframe_constraint_report,
+      args.out,
+    )
+  )
+  whole_airframe_contour_report = (
+    build_whole_airframe_contour_containment_report(
+      fine_proxy,
+      airframe_constraint_report,
+    )
+  )
+  whole_airframe_contour_json_path, whole_airframe_contour_csv_path = (
+    write_whole_airframe_contour_containment_report(
+      whole_airframe_contour_report,
+      args.out,
+    )
+  )
+  whole_airframe_contour_svg_paths = write_whole_airframe_contour_svg_views(
+    whole_airframe_contour_report,
+    args.out,
+  )
+  whole_airframe_contour_dashboard_path = (
+    write_whole_airframe_contour_dashboard(
+      whole_airframe_contour_report,
       args.out,
     )
   )
@@ -13415,6 +14299,7 @@ def main(argv: list[str] | None = None) -> int:
     internal_prior_report=internal_prior_report,
     held_segment_report=held_segment_report,
     airframe_constraint_report=airframe_constraint_report,
+    whole_airframe_contour_report=whole_airframe_contour_report,
     ownership_split_report=ownership_split_report,
     runtime_activation_report=runtime_activation_report,
     runtime_behavior_report=runtime_behavior_report,
@@ -13624,6 +14509,47 @@ def main(argv: list[str] | None = None) -> int:
           airframe_constraint_report["summary"][
             "size_or_shape_review_item_count"
           ]
+        ),
+        "whole_airframe_contour_method": whole_airframe_contour_report[
+          "contour_method"
+        ],
+        "whole_airframe_contour_tolerance_m": whole_airframe_contour_report[
+          "tolerance_m"
+        ],
+        "whole_airframe_contour_item_count": whole_airframe_contour_report[
+          "summary"
+        ]["item_count"],
+        "whole_airframe_contour_exceeds_tolerance_item_count": (
+          whole_airframe_contour_report["summary"][
+            "exceeds_tolerance_item_count"
+          ]
+        ),
+        "whole_airframe_contour_max_outside_distance_m": (
+          whole_airframe_contour_report["summary"]["max_outside_distance_m"]
+        ),
+        "whole_airframe_contour_exceeding_item_ids": whole_airframe_contour_report[
+          "summary"
+        ]["exceeding_item_ids"],
+        "whole_airframe_contour_contours": whole_airframe_contour_report[
+          "summary"
+        ]["contours"],
+        "whole_airframe_contour_json": _display_path(
+          whole_airframe_contour_json_path, REPO_ROOT
+        ),
+        "whole_airframe_contour_csv": _display_path(
+          whole_airframe_contour_csv_path, REPO_ROOT
+        ),
+        "whole_airframe_contour_dashboard": _display_path(
+          whole_airframe_contour_dashboard_path, REPO_ROOT
+        ),
+        "whole_airframe_contour_top_svg": _display_path(
+          whole_airframe_contour_svg_paths[0], REPO_ROOT
+        ),
+        "whole_airframe_contour_side_svg": _display_path(
+          whole_airframe_contour_svg_paths[1], REPO_ROOT
+        ),
+        "whole_airframe_contour_front_svg": _display_path(
+          whole_airframe_contour_svg_paths[2], REPO_ROOT
         ),
         "cross_region_ownership_parent_decision_count": (
           ownership_split_report["summary"]["parent_decision_count"]

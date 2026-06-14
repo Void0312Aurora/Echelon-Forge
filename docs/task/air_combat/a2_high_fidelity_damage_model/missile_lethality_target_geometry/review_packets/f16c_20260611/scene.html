@@ -210,7 +210,10 @@
     <table>
 <thead><tr><th>item</th><th>type</th><th>shape</th><th>size_evidence</th><th>outside_views</th><th>outside_samples</th><th>candidate_outside_samples</th><th>candidate_shift_m</th><th>triage_status</th><th>recommended_action</th></tr></thead>
 <tbody>
+<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>public_partial_dimension_engineering_envelope</td><td>side</td><td>3</td><td>3</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
+<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>public_lru_dimension</td><td>side</td><td>2</td><td>2</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
 <tr><td>electrical_power_bus</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
+<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>public_engine_dimension</td><td>side</td><td>3</td><td>3</td><td>0.0</td><td>silhouette_exposure_requires_size_or_shape_review</td><td>research_size_shape_or_multi_region_placement_before_acceptance</td></tr>
 <tr><td>tail_hydraulic_pump</td><td>receiver_prior</td><td>obb</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
 <tr><td>rudder_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
 <tr><td>left_horizontal_tail_actuator_or_surface_component</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
@@ -219,6 +222,24 @@
 <tr><td>right_aileron_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
 <tr><td>left_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
 <tr><td>right_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>low_confidence_engineering_proxy</td><td></td><td>0</td><td>0</td><td>0.0</td><td>inside_airframe_low_confidence_size_review</td><td>replace_low_confidence_engineering_proxy_with_better_size_source</td></tr>
+</tbody>
+</table>
+  </section>
+
+
+  <section>
+    <h2>Whole-Airframe Alpha-Shape Contour Containment</h2>
+    <p class="note">Review-only diagnostic built from the full audit glTF mesh vertices via a per-view alpha-shape (concavities preserved) with dense perimeter sampling (AABB corners, ellipsoid 24-point ring, capsule cap rings). Tolerance 0.05 m is an engineering review margin, not physical clearance. Method: alpha_shape. Contours: top: alpha_shape alpha=0.189545 pts=34; side: alpha_shape alpha=0.189545 pts=54; front: alpha_shape alpha=0.296856 pts=47. Items exceeding tolerance: <strong>3</strong> of 34; max outside distance <strong>0.21036 m</strong>.</p>
+    <p><a href="whole_airframe_contour_dashboard.html">Open interactive dashboard</a></p>
+    <img src="whole_airframe_contour_top.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour top view"/>
+    <img src="whole_airframe_contour_side.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour side view"/>
+    <img src="whole_airframe_contour_front.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour front view"/>
+    <table>
+<thead><tr><th>item</th><th>type</th><th>shape</th><th>outside_views</th><th>outside_samples</th><th>max_outside_m</th><th>exceeds</th></tr></thead>
+<tbody>
+<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>side</td><td>3</td><td>0.21036</td><td>YES</td></tr>
+<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>side</td><td>3</td><td>0.07545</td><td>YES</td></tr>
+<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>side</td><td>2</td><td>0.05059</td><td>YES</td></tr>
 </tbody>
 </table>
   </section>
@@ -291,12 +312,14 @@
   <section>
     <h2>Subcomponent Shape Placement Candidates</h2>
     <p class="note">Review-only latest subcomponent candidates for the exposed items. Nominal public or declared dimensions are preserved; older current/shape/centerline layers are trace data only, and all candidates remain inactive at runtime.</p>
-    <p class="note">latest resolved candidates: 0; latest unresolved candidates: 0; latest outside samples: 0</p>
+    <p class="note">latest resolved candidates: 0; latest unresolved candidates: 3; latest outside samples: 8</p>
     <p class="note"><a href="subcomponent_shape_placement_views/index.html">Open subcomponent shape placement views</a>.</p>
     <table>
 <thead><tr><th>item</th><th>type</th><th>current_shape</th><th>candidate_family</th><th>eval_shape</th><th>current_outside</th><th>shape_outside</th><th>centerline_outside</th><th>latest_outside</th><th>shape_reduction</th><th>centerline_incremental_reduction</th><th>latest_incremental_reduction</th><th>shape_shift_m</th><th>centerline_shift_m</th><th>latest_status</th></tr></thead>
 <tbody>
-
+<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>crew_envelope_ellipsoid</td><td>ellipsoid</td><td>3</td><td>3</td><td>0</td><td>4</td><td>0</td><td>3</td><td>-4</td><td>0.0</td><td>0.509902</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
+<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>current_shape_recheck</td><td>ellipsoid</td><td>2</td><td>2</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0.0</td><td>0.0</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
+<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>rounded_engine_axis_capsule</td><td>capsule</td><td>3</td><td>3</td><td>2</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0.0</td><td>0.1</td><td>latest_candidate_still_exposes_silhouette_requires_geometry_model</td></tr>
 </tbody>
 </table>
   </section>

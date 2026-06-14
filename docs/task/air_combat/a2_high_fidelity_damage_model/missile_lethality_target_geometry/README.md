@@ -147,6 +147,8 @@ Out of scope:
   [target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md)
 - 32k opt-in training probe:
   [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md)
+- Whole-airframe alpha-shape contour containment (tooling upgrade):
+  [whole_airframe_contour_containment_results_20260614.md](whole_airframe_contour_containment_results_20260614.md)
 
 ## Outputs And Evidence
 
@@ -330,12 +332,29 @@ Generated:
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json),
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv).
   TG-P6-R16 checks all `34` receiver priors and held split segments with
-  shape-aware top/side/front whole-airframe silhouette samples. After R21 latest
-  placement promotion, the packet records
-  `silhouette_exposure_item_count=0`,
-  `center_shift_reduces_item_count=0`, `size_or_shape_review_item_count=0`,
+  shape-aware top/side/front whole-airframe silhouette samples. The
+  silhouette test was since upgraded to a whole-airframe alpha-shape contour
+  with dense perimeter sampling (see the whole-airframe contour containment
+  entry below); under the stricter test the packet now records
+  `silhouette_exposure_item_count=3` (`engine_core`, `cockpit_crew_station`,
+  `inertial_navigation_unit`),
+  `center_shift_reduces_item_count=0`, `size_or_shape_review_item_count=3`,
   and `runtime_active_component_count=0`. Current latest-placement overview:
   [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg).
+- Whole-airframe alpha-shape contour containment:
+  [whole_airframe_contour_containment_20260614.json](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.json),
+  [whole_airframe_contour_containment_20260614.csv](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.csv),
+  [whole_airframe_contour_top.svg](review_packets/f16c_20260611/whole_airframe_contour_top.svg),
+  [whole_airframe_contour_side.svg](review_packets/f16c_20260611/whole_airframe_contour_side.svg),
+  [whole_airframe_contour_front.svg](review_packets/f16c_20260611/whole_airframe_contour_front.svg),
+  [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html),
+  [whole_airframe_contour_containment_results_20260614.md](whole_airframe_contour_containment_results_20260614.md).
+  Upgrades the silhouette-containment test from a per-region convex-hull
+  union with sparse 9-point sampling to a single per-view alpha-shape over
+  all `13415` audit glTF vertices (concavities preserved) with dense
+  perimeter sampling and a `0.05 m` engineering review margin. `3` of `34`
+  items exceed tolerance; the `engine_core_afterburner_segment` split stays
+  inside the contour.
 - Subcomponent shape-placement candidates:
   [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json),
   [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv),
@@ -346,11 +365,12 @@ Generated:
   prior/held-segment generation rules; TG-P6-R19 adds local centerline
   candidates; TG-P6-R20 resolves the remaining radar and cockpit placement
   issues. TG-P6-R21 promotes the latest accepted placements into the
-  review-only generation rules, so the current packet now records
-  `shape_placement_candidate_count=0`,
-  `latest_candidate_total_outside_sample_count=0`, and
-  `runtime_active_component_count=0`. The shape-placement view index remains as
-  an empty-queue audit trace.
+  review-only generation rules. After the whole-airframe alpha-shape contour
+  upgrade, `3` source items (`engine_core`, `cockpit_crew_station`,
+  `inertial_navigation_unit`) re-enter the shape-placement queue, so the
+  packet now records `shape_placement_candidate_count=3` and the view index
+  lists them as R20 latest candidates; none of the candidates is promoted
+  into runtime rules (`runtime_active_component_count=0`).
 - Subcomponent shape-promotion results:
   [subcomponent_shape_promotion_results_20260613.md](subcomponent_shape_promotion_results_20260613.md).
   TG-P6-R18 promotes `iff_interrogator`, `inertial_navigation_unit`,

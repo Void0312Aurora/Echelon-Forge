@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="437.81" y="317.90" width="54.06" height="44.60" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>inertial_navigation_unit old_aabb</title></rect>
 <text x="441.81" y="330.90" font-size="10" font-family="monospace" fill="#7c3aed">inertial_navigation_unit old_aabb</text>
-<rect x="457.98" y="333.37" width="13.73" height="22.66" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>inertial_navigation_unit constrained_ellipsoid</title></rect>
-<text x="461.98" y="346.37" font-size="10" font-family="monospace" fill="#0891b2">inertial_navigation_unit constrained_ellipsoid</text>
+<rect x="457.98" y="328.87" width="13.73" height="22.66" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>inertial_navigation_unit constrained_ellipsoid</title></rect>
+<text x="461.98" y="341.87" font-size="10" font-family="monospace" fill="#0891b2">inertial_navigation_unit constrained_ellipsoid</text>
 <polygon points="412.66,447.21 491.45,444.89 505.16,439.44 508.86,433.96 502.61,412.30 486.64,357.92 483.21,351.11 478.71,345.64 474.20,342.04 469.52,339.61 464.85,339.05 460.17,339.61 455.49,342.04 450.98,345.64 446.48,351.11 443.06,357.92" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="474.88" y="378.34" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>

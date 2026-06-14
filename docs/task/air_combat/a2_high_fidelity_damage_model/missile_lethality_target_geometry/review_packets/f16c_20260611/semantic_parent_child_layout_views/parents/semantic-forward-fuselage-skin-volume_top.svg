@@ -16,6 +16,6 @@
 <polygon points="94.44,310.00 106.19,310.66 124.22,311.37 190.46,313.47 190.46,306.53 124.22,308.63 106.19,309.34" fill="none" stroke="#94a3b8" stroke-width="1.00"><title>whole_airframe_region</title></polygon>
 <polygon points="596.97,310.00 597.21,322.24 597.85,345.07 688.41,337.10 747.73,327.88 747.73,292.12 688.41,282.90 638.17,280.42 604.05,284.61 597.21,297.76" fill="none" stroke="#2563eb" stroke-width="2.50"><title>parent_mesh_region</title></polygon>
 <rect x="642.88" y="296.81" width="64.07" height="26.37" rx="32.04" ry="13.19" fill="#16a34a" fill-opacity="0.92" stroke="#16a34a" stroke-width="2.20"><title>cockpit_crew_station ellipsoid primary</title></rect>
-<rect x="743.59" y="306.78" width="16.43" height="6.43" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>nose_avionics_bay obb extra</title></rect>
+<rect x="225.30" y="306.78" width="16.43" height="6.43" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>nose_avionics_bay obb extra</title></rect>
 <rect x="607.66" y="305.38" width="12.76" height="9.23" rx="6.38" ry="4.62" fill="#0891b2" fill-opacity="0.92" stroke="#0891b2" stroke-width="2.20"><title>inertial_navigation_unit ellipsoid extra</title></rect>
 <text x="12" y="608" font-size="10" font-family="monospace" fill="#475569">gray=whole-airframe wireframe; blue=parent semantic region; green/cyan=actual-size receiver prior; red=held split segment</text></svg>

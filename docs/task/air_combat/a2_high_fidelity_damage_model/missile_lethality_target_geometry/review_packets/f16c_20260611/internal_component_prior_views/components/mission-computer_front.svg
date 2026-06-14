@@ -5,8 +5,8 @@
 <text x="96.90" y="73.00" font-size="10" font-family="monospace" fill="#64748b">shell_constraint_bounds</text>
 <rect x="439.81" y="276.48" width="80.38" height="76.46" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>mission_computer old_aabb</title></rect>
 <text x="443.81" y="289.48" font-size="10" font-family="monospace" fill="#7c3aed">mission_computer old_aabb</text>
-<rect x="475.02" y="383.98" width="9.96" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>mission_computer constrained_obb</title></rect>
-<text x="479.02" y="396.98" font-size="10" font-family="monospace" fill="#0891b2">mission_computer constrained_obb</text>
+<rect x="475.02" y="384.93" width="9.96" height="18.29" fill="#0891b2" fill-opacity="0.18" stroke="#0891b2" stroke-width="1.40"><title>mission_computer constrained_obb</title></rect>
+<text x="479.02" y="397.93" font-size="10" font-family="monospace" fill="#0891b2">mission_computer constrained_obb</text>
 <polygon points="415.83,435.13 416.79,440.44 421.99,447.14 425.69,447.21 538.01,447.14 543.21,440.44 544.17,435.13 499.12,351.11 494.43,345.64 489.74,342.04 484.87,339.61 480.00,339.05 475.13,339.61 470.26,342.04 465.57,345.64 460.88,351.11" fill="#2563eb" fill-opacity="0.24" stroke="#2563eb" stroke-width="1.40"><title>mesh_silhouette</title></polygon>
 <text x="480.61" y="390.78" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
 <text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=parent support, gray=constraint, purple=old AABB, cyan=constrained prior, blue=mesh</text></svg>
