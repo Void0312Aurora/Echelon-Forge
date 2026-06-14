@@ -24,9 +24,9 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-# Optional geometry dependencies for the whole-airframe alpha-shape contour
-# diagnostic. The rest of this module stays zero-dependency; only the
-# alpha-shape contour path requires scipy + shapely.
+# Optional geometry dependencies for the whole-airframe contour diagnostic. The
+# rest of this module stays zero-dependency; only the projected mesh contour /
+# alpha-shape fallback path requires scipy + shapely.
 try:
   from scipy.spatial import Delaunay as _Delaunay
   from shapely.geometry import Polygon as _ShapelyPolygon
@@ -47,13 +47,13 @@ except ImportError as _geometry_import_exc:  # pragma: no cover - exercised via 
 def _require_geometry_deps() -> None:
   """Raise an actionable error when scipy/shapely are missing.
 
-  The whole-airframe alpha-shape contour diagnostic depends on scipy and
-  shapely. Every other path in this module remains zero-dependency.
+  The whole-airframe contour diagnostic depends on scipy and shapely. Every
+  other path in this module remains zero-dependency.
   """
   if not _GEOMETRY_DEPS_AVAILABLE:
     raise RuntimeError(
-      "The whole-airframe alpha-shape contour diagnostic requires scipy and "
-      "shapely. Install the optional geometry dependency group: "
+      "The whole-airframe contour diagnostic requires scipy and shapely. "
+      "Install the optional geometry dependency group: "
       'pip install -e ".[geometry]" (or "pip install scipy shapely"). '
       f"Original import error: {_GEOMETRY_IMPORT_ERROR}"
     ) from _GEOMETRY_IMPORT_ERROR
@@ -131,7 +131,7 @@ SILHOUETTE_VIEW_AXES = {
   "front": (1, 2),
 }
 # Whole-airframe contour containment tolerance. A receiver sample point is
-# treated as "inside the airframe contour" when it is inside the alpha-shape
+# treated as "inside the airframe contour" when it is inside the projected mesh
 # polygon or within this distance of a contour edge. This is an engineering
 # review margin (mesh / proxy quantization noise), not a physical clearance.
 SILHOUETTE_CONTAINMENT_TOLERANCE_M = 0.05
@@ -141,6 +141,23 @@ SILHOUETTE_CONTAINMENT_TOLERANCE_M = 0.05
 WHOLE_AIRFRAME_ALPHA_AXIS_FRACTION = 0.35
 WHOLE_AIRFRAME_CONTOUR_SCHEMA_VERSION = (
   "a2.target_geometry_whole_airframe_contour_containment.v1"
+)
+RETIRED_CURRENT_PACKET_VISUAL_DIRS = (
+  "component_review_views",
+  "semantic_damage_geometry_views",
+  "internal_component_prior_views",
+  "semantic_parent_child_layout_views",
+  "subcomponent_shape_placement_views",
+)
+RETIRED_CURRENT_PACKET_VISUAL_FILES = (
+  "top.svg",
+  "side.svg",
+  "front.svg",
+  "fine_proxy_top.svg",
+  "fine_proxy_side.svg",
+  "fine_proxy_front.svg",
+  "fine_proxy_review_dashboard.html",
+  "human_review_triage.html",
 )
 CURATED_MESH_SILHOUETTE_SOURCE_NODES = {
   "nose_radome": ["Object_4"],
@@ -556,7 +573,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "shape": "ellipsoid",
     "component_role": "crew_volume_receiver",
     "dimensions_m": [1.25, _inch(20.0), 1.15],
-    "center_m": [3.787559, 0.0, -0.62538],
+    "center_m": [3.787559, 0.0, -0.67538],
     "constraint_region_ids": ["canopy", "forward_fuselage"],
     "size_basis": "public_aces_ii_seat_width_plus_crew_envelope_estimate",
     "size_evidence_level": "public_partial_dimension_engineering_envelope",
@@ -570,14 +587,16 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "rationale": (
       "crew station is not a single hardware box; width is anchored to public "
       "ACES II seat dimensions while length/height remain a crew-envelope estimate; "
-      "R21 promotes the R20 canopy/forward-fuselage crew-envelope placement candidate "
-      "because it preserves the nominal crew envelope and clears sampled silhouette exposure."
+      "R21 promotes a slightly lower canopy/forward-fuselage crew-envelope "
+      "placement because it preserves the nominal crew envelope and clears "
+      "the projected side-view silhouette exposure."
     ),
   },
   "inertial_navigation_unit": {
     "shape": "ellipsoid",
     "component_role": "small_avionics_receiver",
     "dimensions_m": [_inch(9.8), _inch(7.0), _inch(7.0)],
+    "center_m": [2.6, 0.0, -0.1],
     "size_basis": "public_honeywell_h764g_egi_dimensions",
     "size_evidence_level": "public_lru_dimension",
     "size_source_urls": [
@@ -588,8 +607,9 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "shape_promotion_status": R18_SHAPE_PROMOTION_STATUS,
     "rationale": (
       "INS receiver uses public H-764G EGI package dimensions; R18 promotes "
-      "the R17 rounded-LRU ellipsoid candidate because it preserves nominal "
-      "dimensions and removes whole-airframe silhouette exposure."
+      "the R17 rounded-LRU ellipsoid candidate and fixes the avionics LRU on "
+      "a lower forward-fuselage shelf because it preserves nominal dimensions "
+      "and removes projected side-view silhouette exposure."
     ),
   },
   "nose_avionics_bay": {
@@ -711,7 +731,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "axis": "x",
     "component_role": "cross_region_engine_receiver",
     "dimensions_m": [_inch(181.9), _inch(46.5), _inch(46.5)],
-    "center_m": [-3.693053, 0.0, -0.554381],
+    "center_m": [-3.693053, 0.0, -0.904381],
     "center_region_ids": ["aft_fuselage_engine"],
     "center_bounds_source": "source_region_bounds",
     "airframe_projection_adjustment": False,
@@ -724,14 +744,16 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "airframe_projection_adjustment": False,
     "allow_constraint_shrink": False,
     "shape_promotion_status": R21_LATEST_PROMOTION_STATUS,
-    "rationale": "engine core uses public F110-GE-129 engine length and maximum diameter; R21 promotes the rounded lower centerline capsule candidate, while ownership remains cross-region held.",
+    "rationale": "engine core uses public F110-GE-129 engine length and maximum diameter; R21 promotes the rounded lower centerline capsule candidate at the aft-fuselage engine shelf, while ownership remains cross-region held.",
   },
   "afterburner_nozzle": {
-    "shape": "ellipsoid",
-    "axis": "",
+    "shape": "frustum",
+    "axis": "x",
     "component_role": "nozzle_receiver",
     "dimensions_m": [0.75, _inch(46.5), _inch(46.5)],
-    "center_m": [-5.75, -0.2, -0.7],
+    "negative_axis_radius_m": 0.45,
+    "positive_axis_radius_m": _inch(46.5) * 0.5,
+    "center_m": [-5.75, 0.0, -0.75],
     "constraint_region_ids": ["engine_nozzle", "aft_fuselage_engine"],
     "size_basis": "f110_diameter_plus_nozzle_region_length_estimate",
     "size_evidence_level": "public_engine_diameter_mesh_length_estimate",
@@ -743,7 +765,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "airframe_projection_adjustment": False,
     "allow_constraint_shrink": False,
     "shape_promotion_status": R21_LATEST_PROMOTION_STATUS,
-    "rationale": "nozzle diameter follows public F110 maximum diameter; nozzle length remains a mesh-region estimate; R21 promotes the aft/lower/lateral ellipsoid candidate as a review-only tapered-nozzle proxy.",
+    "rationale": "nozzle diameter follows public F110 maximum diameter; nozzle length remains a mesh-region estimate; R22 replaces the ellipsoid with an axis-aligned tapered frustum proxy so the aft nozzle is not modeled as a closed oval volume.",
   },
   "tail_hydraulic_pump": {
     "shape": "obb",
@@ -806,10 +828,16 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "rationale": "public horizontal-tail actuator dimensions were not found; this remains a low-confidence actuator proxy.",
   },
   "left_wing_fuel_cell": {
-    "shape": "ellipsoid",
+    "shape": "thin_prism",
     "component_role": "wing_fuel_cell_receiver",
     "dimensions_m": [2.0, 2.2, 0.15],
-    "center_m": [-1.4, -2.3, -0.985],
+    "center_m": [-2.075, -1.685, -0.985],
+    "footprint_points_m": [
+      [-3.0, -2.55],
+      [-2.95, -1.05],
+      [-1.25, -0.82],
+      [-1.15, -1.95],
+    ],
     "size_basis": "f16_internal_fuel_capacity_partition_estimate",
     "size_evidence_level": "public_total_capacity_partition_estimate",
     "size_source_urls": [
@@ -818,13 +846,19 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "constraint_bounds_source": "source_region_bounds",
     "allow_constraint_shrink": False,
     "shape_promotion_status": R21_LATEST_PROMOTION_STATUS,
-    "rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R21 promotes the inboard/aft ellipsoid candidate as review-only conformal bladder geometry.",
+    "rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R22 replaces the ellipsoid with a swept thin-prism footprint that follows the wing planform and stays inside the projected top contour.",
   },
   "right_wing_fuel_cell": {
-    "shape": "ellipsoid",
+    "shape": "thin_prism",
     "component_role": "wing_fuel_cell_receiver",
     "dimensions_m": [2.0, 2.2, 0.15],
-    "center_m": [-1.4, 2.3, -0.985],
+    "center_m": [-2.075, 1.685, -0.985],
+    "footprint_points_m": [
+      [-3.0, 2.55],
+      [-2.95, 1.05],
+      [-1.25, 0.82],
+      [-1.15, 1.95],
+    ],
     "size_basis": "f16_internal_fuel_capacity_partition_estimate",
     "size_evidence_level": "public_total_capacity_partition_estimate",
     "size_source_urls": [
@@ -833,7 +867,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "constraint_bounds_source": "source_region_bounds",
     "allow_constraint_shrink": False,
     "shape_promotion_status": R21_LATEST_PROMOTION_STATUS,
-    "rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R21 promotes the inboard/aft ellipsoid candidate as review-only conformal bladder geometry.",
+    "rationale": "wing fuel cell size is capacity-informed; exact F-16 wing-cell boundaries are not public in the packet source set; R22 replaces the ellipsoid with a swept thin-prism footprint that follows the wing planform and stays inside the projected top contour.",
   },
   "left_aileron_actuator": {
     "shape": "capsule",
@@ -860,14 +894,17 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "rationale": "public F-16 aileron actuator dimensions were not found; this remains a low-confidence actuator proxy.",
   },
   "wing_spar_center": {
-    "shape": "capsule",
-    "axis": "y",
+    "shape": "thin_prism",
+    "axis": "",
     "component_role": "cross_region_structural_receiver",
-    "dimensions_m": [0.18, 6.6, 0.18],
-    "center_region_ids": ["left_wing_root", "right_wing_root"],
-    "center_axis_region_ids": {
-      "z": ["left_wing", "right_wing"],
-    },
+    "dimensions_m": [0.5, 5.8, 0.18],
+    "center_m": [-1.2, 0.0, -0.985043],
+    "footprint_points_m": [
+      [-1.45, -2.9],
+      [-0.95, -2.9],
+      [-0.95, 2.9],
+      [-1.45, 2.9],
+    ],
     "center_bounds_source": "source_region_bounds",
     "airframe_projection_adjustment": False,
     "size_basis": "center_wing_box_runtime_span_with_wing_root_mesh_center",
@@ -879,7 +916,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     ],
     "constraint_bounds_source": "source_region_bounds",
     "allow_constraint_shrink": False,
-    "rationale": "wing spar center uses the existing cross-region receiver span and wing-root mesh center as a carry-through proxy; it remains held until split into true spar segments.",
+    "rationale": "wing spar center uses the existing cross-region receiver semantics but R22 replaces the single capsule with a symmetric thin-prism carry-through / inner-wing strip; this avoids the prior one-sided swept-strip artifact while remaining review-only pending true spar/wing-box data.",
   },
   "left_leading_edge_flap_actuator": {
     "shape": "capsule",
@@ -1062,13 +1099,13 @@ SUBCOMPONENT_CENTERLINE_PLACEMENT_RULES = {
     ),
   },
   "afterburner_nozzle": {
-    "center_offset_m": [0.6, -0.2, -0.2],
+    "center_offset_m": [0.6, 0.0, -0.2],
     "source_basis": "R19_local_centerline_search_radius_1m_step_0p1m",
     "placement_policy": (
-      "preserve_nozzle_dimensions_and_test_aft_lower_lateral_centerline_candidate"
+      "preserve_nozzle_dimensions_and_test_aft_lower_centerline_candidate"
     ),
     "rationale": (
-      "local silhouette search clears exposure with a larger aft/down/lateral "
+      "local silhouette search clears exposure with a larger aft/down "
       "shift; this should stay review-only until a tapered nozzle/frustum model is added."
     ),
   },
@@ -1346,6 +1383,10 @@ def _round(value: float, digits: int = 6) -> float:
 
 def _round_vec(values: Iterable[float], digits: int = 6) -> list[float]:
   return [_round(value, digits) for value in values]
+
+
+def _round_points(points: Iterable[Iterable[float]], digits: int = 6) -> list[list[float]]:
+  return [_round_vec(point, digits) for point in points]
 
 
 def _strip_internal_keys(value: Any) -> Any:
@@ -1644,6 +1685,79 @@ def extract_gltf_sim_vertex_records(
                 scale=scale,
               )
             ),
+            "node_index": node_index,
+            "node_name": node.get("name", f"node_{node_index}"),
+            "mesh_index": mesh_index,
+            "mesh_name": mesh.get("name", f"mesh_{mesh_index}"),
+          }
+        )
+  return records
+
+
+def extract_gltf_sim_triangle_records(
+  gltf_path: Path,
+  manifest: dict[str, Any],
+) -> list[dict[str, Any]]:
+  gltf = _load_json(gltf_path)
+  buffers = [_load_buffer(gltf_path, buffer_def) for buffer_def in gltf.get("buffers", [])]
+  asset_center = manifest["gltf_summary"]["transformed_bounds"]["center"]
+  scale = float(manifest["public_dimension_check"]["registry_scale"])
+  records: list[dict[str, Any]] = []
+
+  for node_index, node, world_matrix in _walk_nodes(gltf, _scene_root_nodes(gltf), _identity()):
+    mesh_index = node.get("mesh")
+    if mesh_index is None:
+      continue
+    mesh = gltf["meshes"][mesh_index]
+    for primitive in mesh.get("primitives", []):
+      if int(primitive.get("mode", TRIANGLE_MODE)) != TRIANGLE_MODE:
+        continue
+      attributes = primitive.get("attributes", {})
+      if "POSITION" not in attributes:
+        continue
+      positions = _accessor_values(
+        gltf=gltf,
+        buffers=buffers,
+        accessor_index=int(attributes["POSITION"]),
+      )
+      sim_positions = []
+      for position in positions:
+        transformed = _transform_point(
+          world_matrix,
+          (position[0], position[1], position[2]),
+        )
+        sim_positions.append(
+          _round_vec(
+            _sim_point_from_asset(
+              [transformed[0], transformed[1], transformed[2]],
+              asset_center=asset_center,
+              scale=scale,
+            )
+          )
+        )
+
+      if "indices" in primitive:
+        index_values = _accessor_values(
+          gltf=gltf,
+          buffers=buffers,
+          accessor_index=int(primitive["indices"]),
+        )
+        indices = [int(value[0]) for value in index_values]
+      else:
+        indices = list(range(len(sim_positions)))
+
+      for triangle_offset in range(0, len(indices) - 2, 3):
+        try:
+          points = [
+            sim_positions[indices[triangle_offset]],
+            sim_positions[indices[triangle_offset + 1]],
+            sim_positions[indices[triangle_offset + 2]],
+          ]
+        except IndexError:
+          continue
+        records.append(
+          {
+            "points_m": points,
             "node_index": node_index,
             "node_name": node.get("name", f"node_{node_index}"),
             "mesh_index": mesh_index,
@@ -2940,6 +3054,7 @@ def _whole_airframe_alpha_contours(
       ring = _convex_hull_2d(projected)
       contours[view] = {
         "points_m": ring,
+        "polygons_m": [ring],
         "status": "convex_hull",
         "alpha": 0.0,
         "alpha_radius_m": 0.0,
@@ -2954,6 +3069,7 @@ def _whole_airframe_alpha_contours(
       ring = _convex_hull_2d(projected)
       contours[view] = {
         "points_m": ring,
+        "polygons_m": [ring],
         "status": "convex_hull",
         "alpha": 0.0,
         "alpha_radius_m": 0.0,
@@ -2965,11 +3081,100 @@ def _whole_airframe_alpha_contours(
     ring, status = _alpha_shape_2d(projected, alpha)
     contours[view] = {
       "points_m": ring,
+      "polygons_m": [ring],
       "status": status,
       "alpha": _round(alpha),
       "alpha_radius_m": _round(1.0 / alpha),
       "source_vertex_count": len(projected),
       "contour_point_count": len(ring),
+    }
+  return contours
+
+
+def _projected_mesh_triangle_union_contours(
+  sim_triangle_records: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+  """Build per-view silhouettes from projected glTF triangle unions.
+
+  This is the human-facing whole-airframe contour path. Unlike the vertex-only
+  alpha-shape diagnostic, it projects each real mesh triangle into the view
+  plane and unions the resulting 2D polygons, so the outline follows the audit
+  mesh silhouette instead of bridging across empty projected space.
+  """
+  _require_geometry_deps()
+  if not sim_triangle_records:
+    raise ValueError("sim_triangle_records must not be empty")
+
+  contours: dict[str, dict[str, Any]] = {}
+  for view, axes in SILHOUETTE_VIEW_AXES.items():
+    projected_triangles: list[Any] = []
+    for record in sim_triangle_records:
+      triangle = [
+        (float(point[axes[0]]), float(point[axes[1]]))
+        for point in record["points_m"]
+      ]
+      polygon = _ShapelyPolygon(triangle)
+      if not polygon.is_valid or polygon.area <= 1.0e-10:
+        continue
+      projected_triangles.append(polygon)
+
+    if not projected_triangles:
+      points = [
+        (float(point[axes[0]]), float(point[axes[1]]))
+        for record in sim_triangle_records
+        for point in record["points_m"]
+      ]
+      ring = _convex_hull_2d(points)
+      contours[view] = {
+        "points_m": ring,
+        "polygons_m": [ring],
+        "status": "convex_hull",
+        "source_triangle_count": len(sim_triangle_records),
+        "polygon_count": 1 if ring else 0,
+        "contour_point_count": len(ring),
+      }
+      continue
+
+    unioned = _shapely_unary_union(projected_triangles)
+    geometries = (
+      list(unioned.geoms) if hasattr(unioned, "geoms") else [unioned]
+    )
+    polygons = [
+      geometry
+      for geometry in geometries
+      if not geometry.is_empty and getattr(geometry, "area", 0.0) > 1.0e-9
+    ]
+    if not polygons:
+      points = [
+        (float(point[axes[0]]), float(point[axes[1]]))
+        for record in sim_triangle_records
+        for point in record["points_m"]
+      ]
+      ring = _convex_hull_2d(points)
+      contours[view] = {
+        "points_m": ring,
+        "polygons_m": [ring],
+        "status": "convex_hull",
+        "source_triangle_count": len(sim_triangle_records),
+        "polygon_count": 1 if ring else 0,
+        "contour_point_count": len(ring),
+      }
+      continue
+
+    rings: list[list[list[float]]] = []
+    for polygon in sorted(polygons, key=lambda item: item.area, reverse=True):
+      exterior = list(polygon.exterior.coords)
+      if len(exterior) > 1 and exterior[0] == exterior[-1]:
+        exterior = exterior[:-1]
+      rings.append([[float(x), float(y)] for x, y in exterior])
+
+    contours[view] = {
+      "points_m": rings[0],
+      "polygons_m": rings,
+      "status": "projected_mesh_triangle_union",
+      "source_triangle_count": len(sim_triangle_records),
+      "polygon_count": len(rings),
+      "contour_point_count": sum(len(ring) for ring in rings),
     }
   return contours
 
@@ -3203,10 +3408,12 @@ def build_fine_geometry_proxy_candidate(
   audit_scene_path: Path | None = None,
 ) -> dict[str, Any]:
   sim_vertex_records: list[dict[str, Any]] = []
+  sim_triangle_records: list[dict[str, Any]] = []
   if manifest is not None:
     if audit_scene_path is None:
       audit_scene_path = REPO_ROOT / manifest["paths"]["audit_scene_gltf"]
     sim_vertex_records = extract_gltf_sim_vertex_records(audit_scene_path, manifest)
+    sim_triangle_records = extract_gltf_sim_triangle_records(audit_scene_path, manifest)
   proxies = [
     _fine_proxy_record(region, sim_vertex_records=sim_vertex_records)
     for region in mapping["outer_regions"]
@@ -3263,6 +3470,7 @@ def build_fine_geometry_proxy_candidate(
     "held_region_count": len(proxies) - mesh_silhouette_count,
     "mesh_derived_silhouette_count": mesh_silhouette_count,
     "mesh_source_vertex_count": len(sim_vertex_records),
+    "mesh_source_triangle_count": len(sim_triangle_records),
     "inflated_fallback_count": 0,
     "fallback_policy": "disabled_no_bounds_expansion",
     "proxy_kind_counts": kind_counts,
@@ -3276,10 +3484,11 @@ def build_fine_geometry_proxy_candidate(
     "review_status": "manual_review_required",
   }
   fine_proxy["review_point_distance_deltas"] = distance_rows
-  # Internal-only channel for the whole-airframe alpha-shape contour path.
-  # Not serialized; downstream callers recompute the contour from these
-  # records so the glTF is parsed once per packet generation.
+  # Internal-only channel for the whole-airframe contour path. Not serialized;
+  # downstream callers recompute the contour from these records so the glTF is
+  # parsed once per packet generation.
   fine_proxy["_sim_vertex_records"] = sim_vertex_records
+  fine_proxy["_sim_triangle_records"] = sim_triangle_records
   fine_proxy["manual_review_queue"] = [
     {
       "priority": "high",
@@ -3903,12 +4112,82 @@ def _bounds_from_center_half_extents(
   )
 
 
+def _polygon_area_2d(points: list[list[float]]) -> float:
+  if len(points) < 3:
+    return 0.0
+  area = 0.0
+  previous = points[-1]
+  for current in points:
+    area += previous[0] * current[1] - current[0] * previous[1]
+    previous = current
+  return abs(area) * 0.5
+
+
+def _footprint_bounds(
+  points: list[list[float]],
+  *,
+  z_center: float,
+  z_half_extent: float,
+) -> dict[str, list[float]]:
+  return _bounds_from_min_max(
+    [
+      min(point[0] for point in points),
+      min(point[1] for point in points),
+      z_center - z_half_extent,
+    ],
+    [
+      max(point[0] for point in points),
+      max(point[1] for point in points),
+      z_center + z_half_extent,
+    ],
+  )
+
+
+def _rule_footprint_points_for_center(
+  rule: dict[str, Any],
+  center: list[float],
+) -> list[list[float]]:
+  points = [
+    [float(point[0]), float(point[1])]
+    for point in rule.get("footprint_points_m", [])
+  ]
+  if not points:
+    return []
+  footprint_center_x = (min(point[0] for point in points) + max(point[0] for point in points)) * 0.5
+  footprint_center_y = (min(point[1] for point in points) + max(point[1] for point in points)) * 0.5
+  shift_x = float(center[0]) - footprint_center_x
+  shift_y = float(center[1]) - footprint_center_y
+  return _round_points([[point[0] + shift_x, point[1] + shift_y] for point in points])
+
+
 def _shape_half_extents(
   *,
   rule: dict[str, Any],
   component_bounds: dict[str, list[float]],
 ) -> tuple[list[float], dict[str, Any]]:
   shape = rule["shape"]
+  if shape == "thin_prism" and rule.get("footprint_points_m"):
+    points = [
+      [float(point[0]), float(point[1])]
+      for point in rule["footprint_points_m"]
+    ]
+    z_span = (
+      float(rule["dimensions_m"][2])
+      if "dimensions_m" in rule and len(rule["dimensions_m"]) >= 3
+      else max(float(component_bounds["span"][2]), 0.02)
+    )
+    half_extents = [
+      (max(point[0] for point in points) - min(point[0] for point in points)) * 0.5,
+      (max(point[1] for point in points) - min(point[1] for point in points)) * 0.5,
+      max(z_span * 0.5, 0.01),
+    ]
+    return half_extents, {
+      "shape": "thin_prism",
+      "footprint_points_m": _round_points(points),
+      "footprint_area_m2": _round(_polygon_area_2d(points)),
+      "thickness_axis": "z",
+      "thickness_m": _round(z_span),
+    }
   if "dimensions_m" in rule:
     scaled_span = [max(float(value), 0.02) for value in rule["dimensions_m"]]
   else:
@@ -3951,6 +4230,29 @@ def _shape_half_extents(
       "shape": "ellipsoid",
       "radii_m": _round_vec(half_extents),
     }
+  if shape == "frustum":
+    axis = _axis_index(rule.get("axis"))
+    negative_radius = float(
+      rule.get("negative_axis_radius_m", max(half_extents[index] for index in range(3) if index != axis))
+    )
+    positive_radius = float(
+      rule.get("positive_axis_radius_m", max(half_extents[index] for index in range(3) if index != axis))
+    )
+    return half_extents, {
+      "shape": "frustum",
+      "axis": ["x", "y", "z"][axis],
+      "axis_half_extent_m": _round(half_extents[axis]),
+      "negative_axis_radius_m": _round(negative_radius),
+      "positive_axis_radius_m": _round(positive_radius),
+    }
+  if shape == "thin_prism":
+    return half_extents, {
+      "shape": "thin_prism",
+      "footprint_points_m": [],
+      "footprint_area_m2": _round((2.0 * half_extents[0]) * (2.0 * half_extents[1])),
+      "thickness_axis": "z",
+      "thickness_m": _round(2.0 * half_extents[2]),
+    }
   return half_extents, {
     "shape": "obb",
     "half_extents_m": _round_vec(half_extents),
@@ -3961,8 +4263,50 @@ def _shape_payload_from_half_extents(
   *,
   rule: dict[str, Any],
   half_extents: list[float],
+  center: list[float] | None = None,
 ) -> dict[str, Any]:
   shape = rule["shape"]
+  if shape == "thin_prism" and rule.get("footprint_points_m"):
+    points = _rule_footprint_points_for_center(
+      rule,
+      center if center is not None else list(_footprint_bounds(
+        [[float(point[0]), float(point[1])] for point in rule["footprint_points_m"]],
+        z_center=0.0,
+        z_half_extent=half_extents[2],
+      )["center"]),
+    )
+    return {
+      "shape": "thin_prism",
+      "footprint_points_m": points,
+      "footprint_area_m2": _round(_polygon_area_2d(points)),
+      "thickness_axis": "z",
+      "thickness_m": _round(half_extents[2] * 2.0),
+    }
+  if shape == "thin_prism":
+    points: list[list[float]] = []
+    if center is not None:
+      center_x = float(center[0])
+      center_y = float(center[1])
+      points = _round_points(
+        [
+          [center_x - half_extents[0], center_y - half_extents[1]],
+          [center_x + half_extents[0], center_y - half_extents[1]],
+          [center_x + half_extents[0], center_y + half_extents[1]],
+          [center_x - half_extents[0], center_y + half_extents[1]],
+        ]
+      )
+    area = (
+      _polygon_area_2d(points)
+      if points
+      else (2.0 * half_extents[0]) * (2.0 * half_extents[1])
+    )
+    return {
+      "shape": "thin_prism",
+      "footprint_points_m": points,
+      "footprint_area_m2": _round(area),
+      "thickness_axis": "z",
+      "thickness_m": _round(half_extents[2] * 2.0),
+    }
   if shape == "sphere":
     return {
       "shape": "sphere",
@@ -3987,6 +4331,21 @@ def _shape_payload_from_half_extents(
     return {
       "shape": "ellipsoid",
       "radii_m": _round_vec(half_extents),
+    }
+  if shape == "frustum":
+    axis = _axis_index(rule.get("axis"))
+    radial_axes = [index for index in range(3) if index != axis]
+    default_radius = max(half_extents[index] for index in radial_axes)
+    return {
+      "shape": "frustum",
+      "axis": ["x", "y", "z"][axis],
+      "axis_half_extent_m": _round(half_extents[axis]),
+      "negative_axis_radius_m": _round(
+        float(rule.get("negative_axis_radius_m", default_radius))
+      ),
+      "positive_axis_radius_m": _round(
+        float(rule.get("positive_axis_radius_m", default_radius))
+      ),
     }
   return {
     "shape": "obb",
@@ -4015,6 +4374,29 @@ def _shape_volume_m3(rule: dict[str, Any], half_extents: list[float]) -> float:
       math.pi * radius**2 * (2.0 * cylinder_half_length)
       + 4.0 * math.pi * radius**3 / 3.0
     )
+  if shape == "frustum":
+    axis = _axis_index(rule.get("axis"))
+    radial_axes = [index for index in range(3) if index != axis]
+    default_radius = max(half_extents[index] for index in radial_axes)
+    negative_radius = float(rule.get("negative_axis_radius_m", default_radius))
+    positive_radius = float(rule.get("positive_axis_radius_m", default_radius))
+    length = 2.0 * half_extents[axis]
+    return (
+      math.pi
+      * length
+      * (
+        negative_radius**2
+        + negative_radius * positive_radius
+        + positive_radius**2
+      )
+      / 3.0
+    )
+  if shape == "thin_prism" and rule.get("footprint_points_m"):
+    points = [
+      [float(point[0]), float(point[1])]
+      for point in rule["footprint_points_m"]
+    ]
+    return _polygon_area_2d(points) * (2.0 * half_extents[2])
   return 8.0 * half_extents[0] * half_extents[1] * half_extents[2]
 
 
@@ -4133,11 +4515,12 @@ def _whole_airframe_projection_hulls(
   """Return per-view whole-airframe containment contours.
 
   When ``airframe_contours`` (the output of
-  ``_whole_airframe_alpha_contours``) is supplied, each view's value is the
-  alpha-shape exterior ring. When it is ``None``, this falls back to the
+  ``_projected_mesh_triangle_union_contours`` or
+  ``_whole_airframe_alpha_contours``) is supplied, each view's value is that
+  contour's primary exterior ring. When it is ``None``, this falls back to the
   legacy behavior of unioning the per-region mesh-derived hulls into a single
   concatenated point list per view (degraded, kept for any caller that has
-  not yet been threaded through the alpha-shape path).
+  not yet been threaded through the whole-airframe contour path).
 
   The return type is ``dict[view, list[list[float]]]``: a single point ring
   per view (not a list of rings). Downstream containment helpers consume this
@@ -4388,22 +4771,89 @@ def _projected_capsule_perimeter_samples(
   return samples
 
 
+def _polygon_samples(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+  if not points:
+    return []
+  samples = list(points)
+  for first, second in zip(points, points[1:] + points[:1]):
+    samples.append(((first[0] + second[0]) * 0.5, (first[1] + second[1]) * 0.5))
+  samples.append(
+    (
+      sum(point[0] for point in points) / len(points),
+      sum(point[1] for point in points) / len(points),
+    )
+  )
+  return samples
+
+
+def _projected_thin_prism_samples(
+  geometry: dict[str, Any],
+  axes: tuple[int, int],
+) -> list[tuple[float, float]]:
+  footprint = geometry.get("footprint_points_m", [])
+  if footprint and set(axes) == {0, 1}:
+    axis_x, axis_y = axes
+    index_by_axis = {0: 0, 1: 1}
+    points = [
+      (float(point[index_by_axis[axis_x]]), float(point[index_by_axis[axis_y]]))
+      for point in footprint
+    ]
+    return _polygon_samples(points)
+  return _projected_bounds_sample_points(_project_bounds(geometry["bounds"], axes))
+
+
+def _projected_frustum_samples(
+  geometry: dict[str, Any],
+  axes: tuple[int, int],
+) -> list[tuple[float, float]]:
+  bounds = geometry["bounds"]
+  axis = geometry.get("axis", "x")
+  axis_index = _axis_index(axis)
+  if axis_index not in axes:
+    return _projected_ellipse_perimeter_samples(_project_bounds(bounds, axes))
+  projected_bounds = _project_bounds(bounds, axes)
+  min_x, min_y, max_x, max_y = projected_bounds
+  center_x = (min_x + max_x) * 0.5
+  center_y = (min_y + max_y) * 0.5
+  negative_radius = float(geometry.get("negative_axis_radius_m", 0.0))
+  positive_radius = float(geometry.get("positive_axis_radius_m", negative_radius))
+  if axis_index == axes[0]:
+    points = [
+      (min_x, center_y - negative_radius),
+      (max_x, center_y - positive_radius),
+      (max_x, center_y + positive_radius),
+      (min_x, center_y + negative_radius),
+    ]
+  else:
+    points = [
+      (center_x - negative_radius, min_y),
+      (center_x - positive_radius, max_y),
+      (center_x + positive_radius, max_y),
+      (center_x + negative_radius, min_y),
+    ]
+  return _polygon_samples(points)
+
+
 def _shape_projected_containment_samples(
   bounds: dict[str, list[float]],
   *,
   axes: tuple[int, int],
   shape: str,
   axis: str,
+  geometry: dict[str, Any] | None = None,
 ) -> list[tuple[float, float]]:
-  """Dense containment samples for a receiver geometry projected into ``axes``.
+  """Shape-aware containment samples for a receiver projected into ``axes``.
 
-  Replaces the legacy sparse 5/9-point sampling with full perimeter coverage:
-  AABB/OBB corners (8), ellipsoid perimeter (24), capsule cap rings (24+).
-  This is the sample set used against the whole-airframe alpha-shape contour
-  so a receiver cannot pass containment while a corner protrudes outside the
-  contour.
+  Ellipsoid and capsule receivers use dense projected perimeter samples.
+  AABB/OBB receivers use the projected 3x3 box grid (four projected corners,
+  four projected edge midpoints, and center). This is the sample set used
+  against the whole-airframe contour.
   """
   projected_bounds = _project_bounds(bounds, axes)
+  if shape == "thin_prism" and geometry is not None:
+    return _projected_thin_prism_samples(geometry, axes)
+  if shape == "frustum" and geometry is not None:
+    return _projected_frustum_samples(geometry, axes)
   if shape in {"sphere", "ellipsoid"}:
     return _projected_ellipse_perimeter_samples(projected_bounds)
   if shape in {"cylinder", "capsule"}:
@@ -4412,7 +4862,8 @@ def _shape_projected_containment_samples(
       axes=axes,
       axis=axis,
     )
-  # AABB / OBB: 8 corners + 4 edge midpoints + center = 13 sample points.
+  # AABB / OBB: projected 3x3 grid = four corners, four edge midpoints,
+  # and center.
   min_x, min_y, max_x, max_y = projected_bounds
   center_x = (min_x + max_x) * 0.5
   center_y = (min_y + max_y) * 0.5
@@ -4469,19 +4920,21 @@ def _point_in_contour(
 
 
 def _airframe_silhouette_view_diagnostic(
-  bounds: dict[str, list[float]],
+  geometry: dict[str, Any],
   *,
   view: str,
   contour_points: list[list[float]],
   shape: str,
   axis: str,
 ) -> dict[str, Any]:
+  bounds = geometry["bounds"]
   axes = SILHOUETTE_VIEW_AXES[view]
   sample_points = _shape_projected_containment_samples(
     bounds,
     axes=axes,
     shape=shape,
     axis=axis,
+    geometry=geometry,
   )
   outside_distances: list[float] = []
   inside_count = 0
@@ -4516,7 +4969,7 @@ def _airframe_silhouette_diagnostics(
   axis = geometry.get("axis", "")
   views = {
     view: _airframe_silhouette_view_diagnostic(
-      bounds,
+      geometry,
       view=view,
       contour_points=airframe_projection_hulls.get(view, []),
       shape=shape,
@@ -4601,12 +5054,17 @@ def _whole_airframe_containment_hulls(
 ) -> dict[str, list[list[float]]]:
   """Per-view whole-airframe containment contours for silhouette testing.
 
-  Builds the whole-airframe alpha-shape contours from the cached mesh vertex
-  records (when available) and returns them in the single-ring-per-view form
-  consumed by the silhouette diagnostics. When the cache is absent (for
-  example a fine_proxy built without ``manifest``), it falls back to the
-  legacy per-region hull concatenation.
+  Builds projected mesh-triangle union contours from the cached triangle
+  records when available and returns them in the single-ring-per-view form
+  consumed by the silhouette diagnostics. If a fine_proxy was built before the
+  triangle cache existed, it falls back to the older alpha-shape vertex path;
+  if both caches are absent, it falls back to legacy per-region hull
+  concatenation.
   """
+  sim_triangle_records = fine_proxy.get("_sim_triangle_records")
+  if sim_triangle_records:
+    contours = _projected_mesh_triangle_union_contours(sim_triangle_records)
+    return _whole_airframe_projection_hulls(fine_proxy, airframe_contours=contours)
   sim_vertex_records = fine_proxy.get("_sim_vertex_records")
   if sim_vertex_records:
     contours = _whole_airframe_alpha_contours(sim_vertex_records)
@@ -4655,7 +5113,7 @@ def build_internal_component_prior_candidate(
     constraint_bounds = whole_airframe_bounds
     constraint_bounds_source = "whole_airframe_source_region_union_bounds"
     margin_m = float(rule.get("constraint_margin_m", 0.03))
-    initial_half, initial_shape_payload = _shape_half_extents(
+    initial_half, _ = _shape_half_extents(
       rule=rule,
       component_bounds=component_row["component_bounds"],
     )
@@ -4697,6 +5155,7 @@ def build_internal_component_prior_candidate(
     constrained_shape_payload = _shape_payload_from_half_extents(
       rule=rule,
       half_extents=constrained["half_extents_m"],
+      center=constrained["center_m"],
     )
     placement_outside_fraction = _outside_fraction(
       initial_bounds,
@@ -4784,14 +5243,22 @@ def build_internal_component_prior_candidate(
           5,
         ),
         "prior_unconstrained_geometry": {
-          **initial_shape_payload,
+          **_shape_payload_from_half_extents(
+            rule=rule,
+            half_extents=initial_half,
+            center=initial_center,
+          ),
           "center_m": _round_vec(initial_center),
           "half_extents_m": _round_vec(initial_half),
           "bounds": initial_bounds,
           "volume_m3": _round(_shape_volume_m3(rule, initial_half)),
         },
         "placement_geometry": {
-          **initial_shape_payload,
+          **_shape_payload_from_half_extents(
+            rule=rule,
+            half_extents=initial_half,
+            center=placement_center,
+          ),
           "center_m": _round_vec(placement_center),
           "half_extents_m": _round_vec(initial_half),
           "bounds": _bounds_from_center_half_extents(
@@ -4972,6 +5439,7 @@ def _segment_geometry_from_center_dimensions(
   payload = _shape_payload_from_half_extents(
     rule=rule,
     half_extents=half_extents,
+    center=center,
   )
   bounds = _bounds_from_center_half_extents(center, half_extents)
   return {
@@ -6421,26 +6889,36 @@ def build_whole_airframe_contour_containment_report(
   *,
   tolerance_m: float = SILHOUETTE_CONTAINMENT_TOLERANCE_M,
 ) -> dict[str, Any]:
-  """Whole-airframe alpha-shape contour containment report.
+  """Whole-airframe projected mesh contour containment report.
 
   Promotes the silhouette-containment facts already computed by
   ``build_airframe_constraint_correction_candidate_report`` into a standalone
-  review surface that records the contour method (alpha-shape over the full
-  audit mesh), the per-view contour geometry, the tolerance, and the
-  per-item outside distances. This report is a diagnostic overlay: it does
-  not recompute geometry and it does not change runtime behavior.
+  review surface that records the contour method (projected glTF triangle
+  union over the full audit mesh), the per-view contour geometry, the
+  tolerance, and the per-item outside distances. This report is a diagnostic
+  overlay: it does not change runtime behavior.
 
-  ``fine_proxy`` supplies the cached mesh vertex records used to rebuild the
-  alpha-shape contours for the per-view metadata block.
+  ``fine_proxy`` supplies cached mesh triangle records used to rebuild the
+  projected mesh contours for the per-view metadata block. Older callers that
+  only have cached vertices fall back to the previous alpha-shape path.
   """
+  sim_triangle_records = fine_proxy.get("_sim_triangle_records", [])
   sim_vertex_records = fine_proxy.get("_sim_vertex_records", [])
-  contours = (
-    _whole_airframe_alpha_contours(sim_vertex_records)
-    if sim_vertex_records
-    else {}
-  )
+  if sim_triangle_records:
+    contours = _projected_mesh_triangle_union_contours(sim_triangle_records)
+    contour_method = "projected_mesh_triangle_union"
+  elif sim_vertex_records:
+    contours = _whole_airframe_alpha_contours(sim_vertex_records)
+    contour_method = "alpha_shape"
+  else:
+    contours = {}
+    contour_method = "unavailable"
   rows: list[dict[str, Any]] = []
+  excluded_review_only_split_segment_count = 0
   for row in airframe_constraint_report["rows"]:
+    if row["record_type"] == "held_split_segment":
+      excluded_review_only_split_segment_count += 1
+      continue
     silhouette = row["current_silhouette"]
     max_outside = float(silhouette.get("max_outside_distance_m", 0.0))
     exceeds = max_outside > tolerance_m
@@ -6497,22 +6975,27 @@ def build_whole_airframe_contour_containment_report(
     "source_airframe_constraint_schema_version": airframe_constraint_report[
       "schema_version"
     ],
-    "contour_method": "alpha_shape",
+    "contour_method": contour_method,
     "tolerance_m": _round(tolerance_m),
     "tolerance_basis": (
       "engineering_review_margin_for_mesh_and_proxy_quantization_not_physical_clearance"
     ),
     "summary": {
       "item_count": len(rows),
+      "excluded_review_only_split_segment_count": (
+        excluded_review_only_split_segment_count
+      ),
       "exceeds_tolerance_item_count": len(exceeders),
       "inside_contour_item_count": len(rows) - len(exceeders),
       "max_outside_distance_m": _round(max_outside_overall),
       "contours": {
         view: {
           "status": contour["status"],
-          "alpha": contour["alpha"],
-          "alpha_radius_m": contour["alpha_radius_m"],
-          "source_vertex_count": contour["source_vertex_count"],
+          "alpha": contour.get("alpha", 0.0),
+          "alpha_radius_m": contour.get("alpha_radius_m", 0.0),
+          "source_vertex_count": contour.get("source_vertex_count", 0),
+          "source_triangle_count": contour.get("source_triangle_count", 0),
+          "polygon_count": contour.get("polygon_count", 1),
           "contour_point_count": contour["contour_point_count"],
         }
         for view, contour in contours.items()
@@ -6520,7 +7003,10 @@ def build_whole_airframe_contour_containment_report(
       "exceeding_item_ids": [row["item_id"] for row in exceeders],
     },
     "contours": {
-      view: {"points_m": contour["points_m"]}
+      view: {
+        "points_m": contour["points_m"],
+        "polygons_m": contour.get("polygons_m", [contour["points_m"]]),
+      }
       for view, contour in contours.items()
     },
     "rows": rows,
@@ -6529,23 +7015,24 @@ def build_whole_airframe_contour_containment_report(
         "priority": "high",
         "question": (
           "Review every item whose max_outside_distance_m exceeds the "
-          "tolerance; the alpha-shape contour is stricter than the legacy "
-          "per-region hull union."
+          "tolerance; the projected mesh contour is stricter than the legacy "
+          "per-region hull union and follows the audit triangle silhouette."
         ),
       },
       {
         "priority": "medium",
         "question": (
-          "Confirm the alpha parameter still preserves real concavities "
-          "(wing root, intake) before treating an outside result as a true "
-          "protrusion rather than contour over-tightening."
+          "Confirm the projected mesh silhouette still reflects the intended "
+          "audit asset orientation before treating an outside result as a true "
+          "protrusion rather than a mesh/source artifact."
         ),
       },
     ],
     "authority_boundary": {
-      "alpha_shape_contour_diagnostic_only": True,
+      "projected_mesh_contour_diagnostic_only": True,
       "not_runtime_collision_mesh": True,
       "not_true_f16_engineering_geometry": True,
+      "review_only_split_segments_excluded_from_final_surface": True,
       "tolerance_is_engineering_review_margin_not_physical_clearance": True,
       "runtime_active_component": False,
       "runtime_damage_model": False,
@@ -6626,6 +7113,7 @@ def _geometry_from_existing_half_extents(
   payload = _shape_payload_from_half_extents(
     rule=rule,
     half_extents=half_extents,
+    center=resolved_center,
   )
   bounds = _bounds_from_center_half_extents(resolved_center, half_extents)
   return {
@@ -8959,7 +9447,11 @@ def _projected_shape_polygon(
   shape = geometry.get("shape", "obb")
   axis = geometry.get("axis", "")
   samples = _shape_projected_containment_samples(
-    bounds, axes=axes, shape=shape, axis=axis
+    bounds,
+    axes=axes,
+    shape=shape,
+    axis=axis,
+    geometry=geometry,
   )
   if not samples:
     projected = _project_bounds(bounds, axes)
@@ -8980,12 +9472,19 @@ def _svg_for_whole_airframe_contour_view(
   axis_x, axis_y, label_x, label_y = axes_by_view[view]
   width, height = 1200, 760
   contours = report.get("contours", {})
-  contour_points = contours.get(view, {}).get("points_m", [])
+  contour_record = contours.get(view, {})
+  contour_points = contour_record.get("points_m", [])
+  contour_polygons = contour_record.get("polygons_m") or (
+    [contour_points] if contour_points else []
+  )
   rows = report["rows"]
   # View bounds from the contour ring (fall back to envelope of all geometry).
   candidate_bounds: list[tuple[float, float, float, float]] = []
-  if len(contour_points) >= 3:
-    candidate_bounds.append(_projected_hull_bounds(contour_points))
+  for polygon in contour_polygons:
+    if len(polygon) >= 3:
+      bounds = _projected_hull_bounds(polygon)
+      if bounds is not None:
+        candidate_bounds.append(bounds)
   for row in rows:
     candidate_bounds.append(
       _project_bounds(row["current_geometry"]["bounds"], (axis_x, axis_y))
@@ -9013,23 +9512,26 @@ def _svg_for_whole_airframe_contour_view(
   elements: list[str] = [
     '<rect x="0" y="0" width="1200" height="760" fill="#ffffff"/>',
     f'<text x="24" y="34" font-size="18" font-family="monospace" fill="#202020">'
-    f'F-16 whole-airframe alpha-shape contour - {view} view</text>',
+    f'F-16 projected audit-mesh contour - {view} view</text>',
     f'<text x="24" y="58" font-size="12" font-family="monospace" fill="#555555">'
-    f'{label_x}; {label_y}; alpha={contour_meta.get("alpha", 0)}; '
-    f'alpha_radius={contour_meta.get("alpha_radius_m", 0)}m; '
+    f'{label_x}; {label_y}; method={report["contour_method"]}; '
+    f'triangles={contour_meta.get("source_triangle_count", 0)}; '
+    f'polygons={contour_meta.get("polygon_count", 0)}; '
     f'tolerance={tolerance:g}m; review-only</text>',
   ]
-  # Gray whole-airframe contour wireframe.
-  if len(contour_points) >= 3:
+  # Gray whole-airframe mesh projection silhouette.
+  for index, polygon in enumerate(contour_polygons):
+    if len(polygon) < 3:
+      continue
     elements.append(
       _svg_polygon_projected(
-        points=contour_points,
+        points=polygon,
         view_bounds=view_bounds,
         width=width,
         height=height,
         color="#94a3b8",
-        label="whole_airframe_alpha_contour",
-        fill_opacity=0.0,
+        label=f"whole_airframe_projected_mesh_contour_{index}",
+        fill_opacity=0.10,
         stroke_width=1.2,
         label_visible=False,
       )
@@ -9070,7 +9572,7 @@ def _svg_for_whole_airframe_contour_view(
   elements.extend(
     [
       f'<text x="24" y="{legend_y}" font-size="11" font-family="monospace" fill="#555555">'
-      f'Legend: gray=whole-airframe alpha-shape contour; '
+      f'Legend: gray=projected audit-mesh silhouette; '
       f'green=receiver inside contour; red=receiver exceeds {tolerance:g}m tolerance; '
       f'red fill=protruding portion</text>',
       f'<text x="24" y="{legend_y + 20}" font-size="11" font-family="monospace" fill="#555555">'
@@ -9126,11 +9628,20 @@ def write_whole_airframe_contour_dashboard(
     f'style="width:100%;max-width:1200px;border:1px solid #ccc"/></section>'
     for view in ("top", "side", "front")
   )
+  triangle_count = max(
+    (meta.get("source_triangle_count", 0) for meta in report["summary"]["contours"].values()),
+    default=0,
+  )
+  method_label = (
+    "projected audit glTF triangle union"
+    if report["contour_method"] == "projected_mesh_triangle_union"
+    else report["contour_method"]
+  )
   body = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<title>F-16 Whole-Airframe Alpha-Shape Contour Containment</title>
+<title>F-16 Whole-Airframe Projected Mesh Contour Containment</title>
 <style>
 body {{ font-family: monospace; margin: 24px; color: #202020; }}
 h1 {{ font-size: 20px; }}
@@ -9144,9 +9655,9 @@ section {{ margin-top: 20px; }}
 </style>
 </head>
 <body>
-<h1>F-16 Whole-Airframe Alpha-Shape Contour Containment</h1>
+<h1>F-16 Whole-Airframe Projected Mesh Contour Containment</h1>
 <p class="note">
-Method: alpha-shape over the full audit glTF mesh vertices ({sum(c.get('source_vertex_count', 0) for c in report['summary']['contours'].values()) // 3} vertices per view, deduplicated across views).
+Method: {method_label} ({triangle_count} audit triangles per view).
 Tolerance: {tolerance:g} m (engineering review margin, not physical clearance).
 Items exceeding tolerance: <strong>{len(exceeders)}</strong> of {report['summary']['item_count']}.
 Max outside distance: <strong>{report['summary']['max_outside_distance_m']:g} m</strong>.
@@ -9158,7 +9669,7 @@ Max outside distance: <strong>{report['summary']['max_outside_distance_m']:g} m<
 </tbody>
 </table>
 {svg_blocks}
-<p class="note">Review-only diagnostic. Not a runtime collision mesh, not real F-16 engineering geometry, not a weapon Pk authority.</p>
+<p class="note">Review-only diagnostic. The gray outline is a projected audit-mesh silhouette, not a runtime collision mesh, not real F-16 engineering geometry, not a weapon Pk authority.</p>
 </body>
 </html>
 """
@@ -9442,7 +9953,28 @@ def _isolated_view_page(
   details: list[str],
   svg_filenames: dict[str, str],
   back_href: str,
+  banner_html: str = "",
 ) -> str:
+  banner_css = (
+    """    .stale-banner {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-left: 5px solid #ea580c;
+      border-radius: 6px;
+      color: #7c2d12;
+      line-height: 1.4;
+      margin-top: 14px;
+      padding: 10px 12px;
+    }
+    .stale-banner a {
+      color: #9a3412;
+      font-weight: 700;
+    }
+"""
+    if banner_html
+    else ""
+  )
+  banner_section = f"{banner_html.rstrip()}\n" if banner_html else ""
   return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -9502,7 +10034,7 @@ def _isolated_view_page(
       line-height: 1.35;
       margin: 4px 0 0;
     }}
-    ul {{
+{banner_css}    ul {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 5px 12px;
@@ -9545,7 +10077,7 @@ def _isolated_view_page(
     <p><a href="{html.escape(back_href)}">Back to isolated review index</a></p>
     <h1>{html.escape(title)}</h1>
     <p class="subtitle">{html.escape(subtitle)}</p>
-    <div class="decision-box">
+{banner_section}    <div class="decision-box">
       <div><strong>Review question</strong><p>{html.escape(question)}</p></div>
       <div><strong>Look at</strong><p>{html.escape(look_at)}</p></div>
       <div><strong>Decision needed</strong><p>{html.escape(decision)}</p></div>
@@ -9582,6 +10114,7 @@ def _write_isolated_review_entry(
   component_rows: list[dict[str, Any]],
   review_points: list[dict[str, Any]] | None = None,
   priority: str,
+  banner_html: str = "",
 ) -> dict[str, Any]:
   category_dir = root_dir / category
   category_dir.mkdir(parents=True, exist_ok=True)
@@ -9616,6 +10149,7 @@ def _write_isolated_review_entry(
         details=details,
         svg_filenames=svg_filenames,
         back_href="../index.html",
+        banner_html=banner_html,
       ).splitlines()
     )
     + "\n",
@@ -9639,399 +10173,6 @@ def _write_isolated_review_entry(
     "review_question": question,
     "decision_needed": decision,
   }
-
-
-def _write_isolated_review_index(root_dir: Path, entries: list[dict[str, Any]]) -> Path:
-  groups = {
-    "components": "Component Binding Views",
-    "surface_links": "Surface Handoff Component Views",
-    "review_point_candidates": "Review Point Candidate Views",
-  }
-  sections: list[str] = []
-  for category, label in groups.items():
-    category_entries = [entry for entry in entries if entry["category"] == category]
-    sections.append(
-      f"""
-      <section>
-        <h2>{html.escape(label)} <span>{len(category_entries)}</span></h2>
-        <div class="entry-grid">
-          {''.join(
-            f'<article class="{html.escape(entry["priority"])}"><h3><a href="{html.escape(entry["html"])}">{html.escape(entry["title"])}</a></h3><p>{html.escape(entry["subtitle"])}</p><p>{html.escape(entry["decision_needed"])}</p></article>'
-            for entry in category_entries
-          ) or '<p class="empty">No current entries.</p>'}
-        </div>
-      </section>
-      """
-    )
-  index_path = root_dir / "index.html"
-  body = f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>F-16 Isolated Component Review Views</title>
-  <style>
-    body {{
-      margin: 0;
-      background: #f6f7f9;
-      color: #111827;
-      font-family: Arial, sans-serif;
-    }}
-    main {{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 24px;
-    }}
-    header, section {{
-      background: #ffffff;
-      border: 1px solid #d8dde6;
-      border-radius: 6px;
-      margin: 0 0 18px;
-      padding: 18px;
-    }}
-    h1, h2, h3 {{
-      margin: 0;
-    }}
-    h1 {{
-      font-size: 26px;
-    }}
-    h2 {{
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      font-size: 20px;
-      margin-bottom: 12px;
-    }}
-    h2 span {{
-      color: #475569;
-      font-family: monospace;
-      font-size: 15px;
-    }}
-    p {{
-      color: #475569;
-      margin: 8px 0 0;
-      line-height: 1.35;
-    }}
-    .summary {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 8px 14px;
-      margin-top: 14px;
-      font-family: monospace;
-      font-size: 13px;
-    }}
-    .entry-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 12px;
-    }}
-    article {{
-      border: 1px solid #cbd5e1;
-      border-left: 5px solid #d97706;
-      border-radius: 6px;
-      padding: 12px;
-      background: #fffdf7;
-    }}
-    article.critical {{
-      border-left-color: #be123c;
-      background: #fff7f7;
-    }}
-    article.warning {{
-      border-left-color: #d97706;
-    }}
-    article.info {{
-      border-left-color: #2563eb;
-      background: #f8fbff;
-    }}
-    a {{
-      color: #1d4ed8;
-    }}
-    .empty {{
-      color: #64748b;
-      font-family: monospace;
-    }}
-  </style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>F-16 Isolated Component Review Views</h1>
-    <p>Each page isolates one component, surface-to-component handoff, or review-point candidate. These are review-only visual artifacts and are not runtime geometry.</p>
-    <div class="summary">
-      <div>total isolated views: {len(entries)}</div>
-      <div>component views: {sum(1 for entry in entries if entry["category"] == "components")}</div>
-      <div>surface-link views: {sum(1 for entry in entries if entry["category"] == "surface_links")}</div>
-      <div>review-point views: {sum(1 for entry in entries if entry["category"] == "review_point_candidates")}</div>
-      <div><a href="../human_review_triage.html">triage dashboard</a></div>
-      <div><a href="../scene.html">overview packet</a></div>
-    </div>
-  </header>
-  {''.join(sections)}
-</main>
-</body>
-</html>
-"""
-  index_path.write_text(
-    "\n".join(line.rstrip() for line in body.splitlines()) + "\n",
-    encoding="utf-8",
-  )
-  return index_path
-
-
-def write_isolated_component_review_views(
-  *,
-  fine_proxy: dict[str, Any],
-  component_report: dict[str, Any],
-  diagnostics: dict[str, Any],
-  surface_report: dict[str, Any],
-  output_dir: Path,
-) -> tuple[Path, Path]:
-  root_dir = output_dir / "component_review_views"
-  if root_dir.exists():
-    shutil.rmtree(root_dir)
-  root_dir.mkdir(parents=True, exist_ok=True)
-  proxies_by_region = {
-    proxy["source_region_id"]: proxy for proxy in fine_proxy["proxies"]
-  }
-  rows_by_component = _component_rows_by_name(component_report)
-  fine_rows_by_point = {
-    row["point_id"]: row for row in fine_proxy["review_point_distance_deltas"]
-  }
-  entries: list[dict[str, Any]] = []
-
-  for row in component_report["rows"]:
-    proxy = proxies_by_region.get(row["bound_region_id"])
-    if proxy is None:
-      continue
-    question, look_at, decision = _component_triage_prompts(row)
-    if row["review_severity"] == "hard_blocker":
-      priority = "critical"
-    elif row["review_status"] == "needs_review":
-      priority = "warning"
-    elif row["review_status"].startswith("review_only"):
-      priority = "info"
-    else:
-      priority = "info"
-    entries.append(
-      _write_isolated_review_entry(
-        root_dir=root_dir,
-        category="components",
-        slug=row["component_name"],
-        title=row["component_name"],
-        subtitle=f'component binding -> {row["bound_region_id"]}',
-        question=question,
-        look_at=look_at,
-        decision=decision,
-        details=[
-          f'component: {row["component_name"]}',
-          f'system: {row["system"]}',
-          f'bound outer region: {row["bound_region_id"]}',
-          f'review semantics: {row["review_semantics"]}',
-          f'review severity: {row["review_severity"]}',
-          f'component center distance to region: {row["center_distance_m"]} m',
-          "anomalies: " + ", ".join(row["anomalies"]),
-          "geometry observations: " + ", ".join(row["geometry_observations"]),
-          "suppressed anomalies: " + (", ".join(row["suppressed_anomalies"]) or "none"),
-          "semantic regions: " + (", ".join(row["semantic_region_ids"]) or "none"),
-          "side relation: "
-          + json.dumps(row["side_sign_relation"], sort_keys=True),
-          "blocked region binding: "
-          + json.dumps(row["blocked_region_binding"], sort_keys=True),
-          "review notes: " + " | ".join(row["review_notes"]),
-        ],
-        proxy=proxy,
-        component_rows=[row],
-        priority=priority,
-      )
-    )
-
-  for row in surface_report["rows"]:
-    if row["review_status"] == "candidate_surface_component":
-      continue
-    proxy = proxies_by_region.get(row["source_region_id"])
-    if proxy is None:
-      continue
-    question, look_at, decision = _surface_triage_prompts(row)
-    priority = (
-      "critical"
-      if row["review_semantics"]
-      in {
-        "missing_runtime_link/held",
-        "side_sign_mismatch_hard_blocker",
-        "invalid_region_binding_blocked",
-      }
-      else "warning"
-    )
-    linked_names = [
-      link["component_name"] for link in row["linked_internal_components"]
-    ]
-    for component_name in linked_names:
-      component_row = rows_by_component.get(component_name)
-      component_rows = [component_row] if component_row is not None else []
-      entries.append(
-        _write_isolated_review_entry(
-          root_dir=root_dir,
-          category="surface_links",
-          slug=f'{row["surface_component_id"]}__{component_name}',
-          title=f'{row["surface_component_id"]} -> {component_name}',
-          subtitle=f'surface handoff -> {row["source_region_id"]}',
-          question=question,
-          look_at=look_at,
-          decision=decision,
-          details=[
-            f'surface component: {row["surface_component_id"]}',
-            f'outer region: {row["source_region_id"]}',
-            f'surface role: {row["surface_role"]}',
-            f'isolated linked component: {component_name}',
-            f'review semantics: {row["review_semantics"]}',
-            f'runtime relation status: {row["runtime_relation_status"]}',
-            "clean direct components: "
-            + (", ".join(row["clean_direct_component_names"]) or "none"),
-            "cross-region semantic components: "
-            + (", ".join(row["cross_region_semantic_component_names"]) or "none"),
-            "blocked components: "
-            + (", ".join(row["blocked_component_names"]) or "none"),
-            "bad geometry components: "
-            + (", ".join(row["bad_geometry_component_names"]) or "none"),
-            "review flags: " + ", ".join(row["review_flags"]),
-            "missing runtime links: "
-            + (", ".join(row["missing_existing_runtime_component_relations"]) or "none"),
-          ],
-          proxy=proxy,
-          component_rows=component_rows,
-          priority=priority,
-        )
-      )
-    for missing in row["missing_existing_runtime_component_relations"]:
-      entries.append(
-        _write_isolated_review_entry(
-          root_dir=root_dir,
-          category="surface_links",
-          slug=f'{row["surface_component_id"]}__missing__{missing}',
-          title=f'{row["surface_component_id"]} -> missing {missing}',
-          subtitle=f'surface handoff -> {row["source_region_id"]}',
-          question=question,
-          look_at=look_at,
-          decision=decision,
-          details=[
-            f'surface component: {row["surface_component_id"]}',
-            f'outer region: {row["source_region_id"]}',
-            f'surface role: {row["surface_role"]}',
-            f'missing runtime component relation: {missing}',
-            f'review semantics: {row["review_semantics"]}',
-            f'runtime relation status: {row["runtime_relation_status"]}',
-            "review flags: " + ", ".join(row["review_flags"]),
-          ],
-          proxy=proxy,
-          component_rows=[],
-          priority="critical",
-        )
-      )
-    if not linked_names and not row["missing_existing_runtime_component_relations"]:
-      entries.append(
-        _write_isolated_review_entry(
-          root_dir=root_dir,
-          category="surface_links",
-          slug=row["surface_component_id"],
-          title=row["surface_component_id"],
-          subtitle=f'surface handoff -> {row["source_region_id"]}',
-          question=question,
-          look_at=look_at,
-          decision=decision,
-          details=[
-            f'surface component: {row["surface_component_id"]}',
-            f'outer region: {row["source_region_id"]}',
-            f'surface role: {row["surface_role"]}',
-            "linked components: none",
-            "review flags: " + ", ".join(row["review_flags"]),
-          ],
-          proxy=proxy,
-          component_rows=[],
-          priority=priority,
-        )
-      )
-
-  point_focus_ids = {
-    "nose_axis_4m",
-    "nose_axis_6m",
-    "right_beam_4m",
-    "left_beam_4m",
-    "above_4m",
-    "below_4m",
-  }
-  for row in diagnostics["rows"]:
-    if row["point_id"] not in point_focus_ids:
-      continue
-    proxy = proxies_by_region.get(row["nearest_outer_region_id"])
-    if proxy is None:
-      continue
-    question, look_at, decision = _point_triage_prompts(row)
-    fine_row = fine_rows_by_point.get(row["point_id"], {})
-    candidates = row["candidate_components"] or [
-      {"component_name": "no_near_component_candidate"}
-    ]
-    for candidate in candidates:
-      component_name = candidate["component_name"]
-      component_row = rows_by_component.get(component_name)
-      component_rows = [component_row] if component_row is not None else []
-      entries.append(
-        _write_isolated_review_entry(
-          root_dir=root_dir,
-          category="review_point_candidates",
-          slug=f'{row["point_id"]}__{component_name}',
-          title=f'{row["point_id"]} -> {component_name}',
-          subtitle="review point candidate",
-          question=question,
-          look_at=look_at,
-          decision=decision,
-          details=[
-            f'point: {row["point_id"]} at {row["point_m"]}',
-            f'nearest outer region: {row["nearest_outer_region_id"]}',
-            f'nearest outer distance: {row["nearest_outer_distance_m"]} m',
-            "nearest fine proxy: "
-            + str(fine_row.get("nearest_fine_proxy_region_id", "unknown")),
-            f'isolated candidate component: {component_name}',
-            f'nearest component: {row["nearest_component_name"]}',
-            f'nearest component distance: {row["nearest_component_distance_m"]} m',
-            f'candidate component count: {row["candidate_component_count"]}',
-            f'interpretation: {row["interpretation"]}',
-          ],
-          proxy=proxy,
-          component_rows=component_rows,
-          review_points=[row],
-          priority="critical" if "beam" in row["point_id"] else "warning",
-        )
-      )
-
-  index_path = _write_isolated_review_index(root_dir, entries)
-  manifest_path = root_dir / "manifest.json"
-  manifest = {
-    "schema_version": "a2.target_geometry_isolated_component_review_views.v1",
-    "status": "isolated_component_review_views_generated_review_only",
-    "authority_boundary": {
-      "runtime_damage_model": False,
-      "runtime_collision_mesh": False,
-      "true_internal_component_geometry": False,
-    },
-    "summary": {
-      "entry_count": len(entries),
-      "component_entry_count": sum(
-        1 for entry in entries if entry["category"] == "components"
-      ),
-      "surface_link_entry_count": sum(
-        1 for entry in entries if entry["category"] == "surface_links"
-      ),
-      "review_point_candidate_entry_count": sum(
-        1 for entry in entries if entry["category"] == "review_point_candidates"
-      ),
-    },
-    "index_html": "index.html",
-    "entries": entries,
-  }
-  manifest_path.write_text(
-    json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-    encoding="utf-8",
-  )
-  return index_path, manifest_path
 
 
 def _write_semantic_damage_geometry_index(
@@ -13093,7 +13234,6 @@ def write_human_review_triage_dashboard(
       <div>focused review points: {len(point_cards)}</div>
       <div><a href="scene.html">overview packet</a></div>
       <div><a href="fine_proxy_review_dashboard.html">region dashboard</a></div>
-      <div><a href="component_review_views/index.html">isolated component views</a></div>
     </div>
   </header>
   {section(
@@ -13344,6 +13484,126 @@ def write_review_packet(
 ) -> Path:
   output_dir.mkdir(parents=True, exist_ok=True)
   html_path = output_dir / "scene.html"
+  if whole_airframe_contour_report is not None:
+    contour = whole_airframe_contour_report
+    contours_summary = "; ".join(
+      f'{view}: {meta["status"]} triangles={meta.get("source_triangle_count", 0)} '
+      f'polygons={meta.get("polygon_count", 0)} pts={meta["contour_point_count"]}'
+      for view, meta in contour["summary"]["contours"].items()
+    )
+    contour_rows = [
+      [
+        row["item_id"],
+        row["record_type"],
+        row["prior_shape"],
+        ",".join(row["outside_views"]) or "-",
+        row["outside_sample_count"],
+        row["max_outside_distance_m"],
+      ]
+      for row in contour["rows"]
+      if row["exceeds_tolerance"]
+    ]
+    body = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>F-16 Final Geometry Contour Result</title>
+  <style>
+    body {{
+      margin: 0;
+      background: #f6f7f9;
+      color: #202124;
+      font-family: Arial, sans-serif;
+    }}
+    main {{
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+    section {{
+      margin: 0 0 24px;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid #d8dde6;
+      border-radius: 6px;
+    }}
+    .meta {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 8px 16px;
+      font-family: monospace;
+      font-size: 13px;
+    }}
+    img {{
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 12px 0;
+      border: 1px solid #cdd3dd;
+      background: #ffffff;
+    }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }}
+    th, td {{
+      border: 1px solid #d8dde6;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }}
+    th {{
+      background: #eef2f7;
+    }}
+    .note {{
+      color: #4b5563;
+      font-size: 13px;
+    }}
+  </style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>F-16 Final Geometry Contour Result</h1>
+    <p class="note">Current final visual result only. Retired intermediate component, semantic, prior, parent-child, placement, triage, and proxy-dashboard visual pages are not generated in the current packet.</p>
+    <div class="meta">
+      <div>generated_on: {html.escape(mapping["generated_on"])}</div>
+      <div>source_uid: {html.escape(manifest["source"]["uid"])}</div>
+      <div>contour_method: {html.escape(contour["contour_method"])}</div>
+      <div>tolerance_m: {contour["tolerance_m"]:g}</div>
+      <div>exceeds_tolerance: {contour["summary"]["exceeds_tolerance_item_count"]}/{contour["summary"]["item_count"]}</div>
+      <div>max_outside_m: {contour["summary"]["max_outside_distance_m"]:g}</div>
+    </div>
+  </section>
+  <section>
+    <h2>Whole-Airframe Projected Mesh Contour Containment</h2>
+    <p class="note">Review-only diagnostic built from the full audit glTF mesh by projecting triangle faces into each view and unioning those projected faces. Tolerance is an engineering review margin, not physical clearance. Contours: {html.escape(contours_summary)}.</p>
+    <p><a href="whole_airframe_contour_dashboard.html">Open final contour dashboard</a></p>
+    <img src="whole_airframe_contour_top.svg" alt="whole-airframe contour top view">
+    <img src="whole_airframe_contour_side.svg" alt="whole-airframe contour side view">
+    <img src="whole_airframe_contour_front.svg" alt="whole-airframe contour front view">
+    {_html_table(
+      [
+        "item",
+        "type",
+        "shape",
+        "outside_views",
+        "outside_samples",
+        "max_outside_m",
+      ],
+      contour_rows,
+    )}
+  </section>
+</main>
+</body>
+</html>
+"""
+    html_path.write_text(
+      "\n".join(line.rstrip() for line in body.splitlines()) + "\n",
+      encoding="utf-8",
+    )
+    return html_path
   component_rows = [
     [
       row["component_name"],
@@ -13431,7 +13691,7 @@ def write_review_packet(
   <section>
     <h2>Semantic Damage Geometry Volumes</h2>
     <p class="note">Parse-ready outer-shell volume component candidates generated from TG-P6 mesh proxies and TG-P6 surface handoffs. These are not activated in the current runtime damage model.</p>
-    <p class="note"><a href="semantic_damage_geometry_views/index.html">Open isolated semantic volume views</a>.</p>
+    <p class="note">Intermediate semantic volume pages are retained only as raw audit evidence.</p>
     {_html_table(
       [
         "semantic_component",
@@ -13468,7 +13728,7 @@ def write_review_packet(
   <section>
     <h2>Internal Component Prior Geometry</h2>
     <p class="note">Review-only synthetic receiver geometry generated from simple priors such as sphere, cylinder, capsule, and ellipsoid, then constrained inside parent shell support bounds.</p>
-    <p class="note"><a href="internal_component_prior_views/index.html">Open isolated internal component prior views</a>.</p>
+    <p class="note">Intermediate receiver-prior pages are retained only as raw audit evidence.</p>
     {_html_table(
       [
         "component",
@@ -13581,13 +13841,14 @@ def write_review_packet(
       if row["exceeds_tolerance"]
     ]
     contours_summary = "; ".join(
-      f'{view}: {meta["status"]} alpha={meta["alpha"]} pts={meta["contour_point_count"]}'
+      f'{view}: {meta["status"]} triangles={meta.get("source_triangle_count", 0)} '
+      f'polygons={meta.get("polygon_count", 0)} pts={meta["contour_point_count"]}'
       for view, meta in contour["summary"]["contours"].items()
     )
     whole_airframe_contour_section = f"""
   <section>
-    <h2>Whole-Airframe Alpha-Shape Contour Containment</h2>
-    <p class="note">Review-only diagnostic built from the full audit glTF mesh vertices via a per-view alpha-shape (concavities preserved) with dense perimeter sampling (AABB corners, ellipsoid 24-point ring, capsule cap rings). Tolerance {contour["tolerance_m"]:g} m is an engineering review margin, not physical clearance. Method: {contour["contour_method"]}. Contours: {contours_summary}. Items exceeding tolerance: <strong>{contour["summary"]["exceeds_tolerance_item_count"]}</strong> of {contour["summary"]["item_count"]}; max outside distance <strong>{contour["summary"]["max_outside_distance_m"]:g} m</strong>.</p>
+    <h2>Whole-Airframe Projected Mesh Contour Containment</h2>
+    <p class="note">Review-only diagnostic built from the full audit glTF mesh by projecting triangle faces into each view and unioning those projected faces, then testing receiver samples with shape-aware projected sampling (9-point AABB/OBB grid, ellipsoid 24-point ring, capsule cap rings). Tolerance {contour["tolerance_m"]:g} m is an engineering review margin, not physical clearance. Method: {contour["contour_method"]}. Contours: {contours_summary}. Items exceeding tolerance: <strong>{contour["summary"]["exceeds_tolerance_item_count"]}</strong> of {contour["summary"]["item_count"]}; max outside distance <strong>{contour["summary"]["max_outside_distance_m"]:g} m</strong>.</p>
     <p><a href="whole_airframe_contour_dashboard.html">Open interactive dashboard</a></p>
     <img src="whole_airframe_contour_top.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour top view"/>
     <img src="whole_airframe_contour_side.svg" style="width:100%;max-width:1200px;border:1px solid #ccc" alt="whole-airframe contour side view"/>
@@ -13775,7 +14036,7 @@ def write_review_packet(
     <h2>Subcomponent Shape Placement Candidates</h2>
     <p class="note">Review-only latest subcomponent candidates for the exposed items. Nominal public or declared dimensions are preserved; older current/shape/centerline layers are trace data only, and all candidates remain inactive at runtime.</p>
     <p class="note">latest resolved candidates: {shape_placement_report["summary"]["latest_candidate_resolves_exposure_count"]}; latest unresolved candidates: {shape_placement_report["summary"]["latest_candidate_unresolved_exposure_count"]}; latest outside samples: {shape_placement_report["summary"]["latest_candidate_total_outside_sample_count"]}</p>
-    <p class="note"><a href="subcomponent_shape_placement_views/index.html">Open subcomponent shape placement views</a>.</p>
+    <p class="note">Intermediate placement pages are retained only as raw audit evidence.</p>
     {_html_table(
       [
         "item",
@@ -13819,7 +14080,7 @@ def write_review_packet(
   <section>
     <h2>Semantic Parent-Child Component Layout</h2>
     <p class="note">Primary visual review surface: `14` mesh-derived parent shell parts with all `26` current receiver priors overlaid inside their parent region; the `12` extra receiver slots are display overlays, not accepted runtime ownership.</p>
-    <p class="note"><a href="semantic_parent_child_layout_views/index.html">Open 14 parent-child layout views</a>.</p>
+    <p class="note">Intermediate parent-child layout pages are retained only as raw audit evidence.</p>
     {_html_table(
       [
         "parent_component",
@@ -13855,11 +14116,7 @@ def write_review_packet(
   <section>
     <h2>Fine Geometry Proxy Overlay</h2>
     <p class="note">TG-P6 review-only proxy candidates. Dashed rectangles show source AABB regions, dotted rectangles show support bounds, and solid polygons show mesh-derived silhouettes from filtered audit-glTF vertices.</p>
-    <p class="note"><a href="fine_proxy_review_dashboard.html">Open the per-region human review dashboard</a>.</p>
-    <p class="note"><a href="human_review_triage.html">Open the visual human review triage</a>.</p>
-    <p class="note"><a href="component_review_views/index.html">Open isolated component review views</a>.</p>
-    <p class="note"><a href="semantic_damage_geometry_views/index.html">Open isolated semantic damage geometry views</a>.</p>
-    <p class="note"><a href="semantic_parent_child_layout_views/index.html">Open 14 parent-child component layout views</a>.</p>
+    <p class="note">Intermediate review HTML pages are retained only as raw audit evidence; the current visual result entrypoint is the whole-airframe projected mesh contour dashboard.</p>
     <div class="views">
       <img src="fine_proxy_top.svg" alt="Top view fine proxy overlay">
       <img src="fine_proxy_side.svg" alt="Side view fine proxy overlay">
@@ -14035,6 +14292,27 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     help="Print manifest JSON to stdout instead of writing manifest.json.",
   )
   return parser.parse_args(argv)
+
+
+def cleanup_retired_current_packet_visual_artifacts(output_dir: Path) -> list[Path]:
+  """Remove visual artifacts that are no longer part of the current result.
+
+  JSON/CSV machine evidence is retained, but current packet visuals are
+  deliberately contracted to the whole-airframe projected mesh contour
+  dashboard and its three SVG views.
+  """
+  removed: list[Path] = []
+  for dirname in RETIRED_CURRENT_PACKET_VISUAL_DIRS:
+    target = output_dir / dirname
+    if target.exists():
+      shutil.rmtree(target)
+      removed.append(target)
+  for filename in RETIRED_CURRENT_PACKET_VISUAL_FILES:
+    target = output_dir / filename
+    if target.exists():
+      target.unlink()
+      removed.append(target)
+  return removed
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -14227,66 +14505,8 @@ def main(argv: list[str] | None = None) -> int:
       args.out,
     )
   )
-  svg_paths = write_svg_views(
-    mapping,
-    args.out,
-    component_report=component_report,
-    diagnostics=diagnostics,
-  )
-  fine_proxy_svg_paths = write_fine_proxy_svg_views(fine_proxy, args.out)
-  fine_proxy_dashboard_path = write_fine_proxy_review_dashboard(
-    fine_proxy,
-    component_report,
-    args.out,
-    surface_report=surface_report,
-  )
-  human_review_triage_path = write_human_review_triage_dashboard(
-    fine_proxy=fine_proxy,
-    component_report=component_report,
-    diagnostics=diagnostics,
-    surface_report=surface_report,
-    output_dir=args.out,
-  )
-  isolated_review_index_path, isolated_review_manifest_path = (
-    write_isolated_component_review_views(
-      fine_proxy=fine_proxy,
-      component_report=component_report,
-      diagnostics=diagnostics,
-      surface_report=surface_report,
-      output_dir=args.out,
-    )
-  )
-  semantic_review_index_path, semantic_review_manifest_path = (
-    write_semantic_damage_geometry_review_views(
-      semantic_report=semantic_report,
-      fine_proxy=fine_proxy,
-      component_report=component_report,
-      output_dir=args.out,
-    )
-  )
-  internal_prior_review_index_path, internal_prior_review_manifest_path = (
-    write_internal_component_prior_review_views(
-      prior_report=internal_prior_report,
-      fine_proxy=fine_proxy,
-      component_report=component_report,
-      output_dir=args.out,
-    )
-  )
-  (
-    parent_child_layout_review_index_path,
-    parent_child_layout_review_manifest_path,
-  ) = write_semantic_parent_child_layout_review_views(
-    layout_report=parent_child_layout_report,
-    fine_proxy=fine_proxy,
-    output_dir=args.out,
-  )
-  (
-    shape_placement_review_index_path,
-    shape_placement_review_manifest_path,
-  ) = write_subcomponent_shape_placement_review_views(
-    shape_report=shape_placement_report,
-    fine_proxy=fine_proxy,
-    output_dir=args.out,
+  retired_visual_artifact_paths = cleanup_retired_current_packet_visual_artifacts(
+    args.out
   )
   scene_path = write_review_packet(
     manifest=manifest,
@@ -14411,44 +14631,11 @@ def main(argv: list[str] | None = None) -> int:
           REPO_ROOT,
         ),
         "scene_html": _display_path(scene_path, REPO_ROOT),
-        "svg_outputs": [_display_path(path, REPO_ROOT) for path in svg_paths],
-        "fine_proxy_svg_outputs": [
-          _display_path(path, REPO_ROOT) for path in fine_proxy_svg_paths
-        ],
-        "fine_proxy_review_dashboard": _display_path(
-          fine_proxy_dashboard_path, REPO_ROOT
+        "current_visual_result": _display_path(
+          whole_airframe_contour_dashboard_path,
+          REPO_ROOT,
         ),
-        "human_review_triage": _display_path(human_review_triage_path, REPO_ROOT),
-        "isolated_component_review_index": _display_path(
-          isolated_review_index_path, REPO_ROOT
-        ),
-        "isolated_component_review_manifest": _display_path(
-          isolated_review_manifest_path, REPO_ROOT
-        ),
-        "semantic_damage_geometry_review_index": _display_path(
-          semantic_review_index_path, REPO_ROOT
-        ),
-        "semantic_damage_geometry_review_manifest": _display_path(
-          semantic_review_manifest_path, REPO_ROOT
-        ),
-        "internal_component_prior_review_index": _display_path(
-          internal_prior_review_index_path, REPO_ROOT
-        ),
-        "internal_component_prior_review_manifest": _display_path(
-          internal_prior_review_manifest_path, REPO_ROOT
-        ),
-        "semantic_parent_child_layout_review_index": _display_path(
-          parent_child_layout_review_index_path, REPO_ROOT
-        ),
-        "semantic_parent_child_layout_review_manifest": _display_path(
-          parent_child_layout_review_manifest_path, REPO_ROOT
-        ),
-        "subcomponent_shape_placement_review_index": _display_path(
-          shape_placement_review_index_path, REPO_ROOT
-        ),
-        "subcomponent_shape_placement_review_manifest": _display_path(
-          shape_placement_review_manifest_path, REPO_ROOT
-        ),
+        "retired_visual_artifact_count": len(retired_visual_artifact_paths),
         "component_count": component_report["summary"]["component_count"],
         "component_needs_review_count": component_report["summary"][
           "needs_review_count"
@@ -14519,6 +14706,11 @@ def main(argv: list[str] | None = None) -> int:
         "whole_airframe_contour_item_count": whole_airframe_contour_report[
           "summary"
         ]["item_count"],
+        "whole_airframe_contour_excluded_review_only_split_segment_count": (
+          whole_airframe_contour_report["summary"][
+            "excluded_review_only_split_segment_count"
+          ]
+        ),
         "whole_airframe_contour_exceeds_tolerance_item_count": (
           whole_airframe_contour_report["summary"][
             "exceeds_tolerance_item_count"

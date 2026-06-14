@@ -408,13 +408,15 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert internal_prior_report["summary"]["post_constraint_outside_count"] == 0
   assert internal_prior_report["summary"]["constrained_inside_count"] == 26
   assert internal_prior_report["summary"]["nominal_size_fit_issue_count"] == 0
-  assert internal_prior_report["summary"]["parent_shell_exceed_review_count"] == 5
+  assert internal_prior_report["summary"]["parent_shell_exceed_review_count"] == 7
   assert internal_prior_report["summary"]["cross_region_held_prior_count"] == 2
   assert internal_prior_report["whole_airframe_bounds"]["span"][0] > 14.0
   assert internal_prior_report["summary"]["shape_counts"] == {
-    "capsule": 10,
-    "ellipsoid": 10,
+    "capsule": 9,
+    "ellipsoid": 7,
+    "frustum": 1,
     "obb": 6,
+    "thin_prism": 3,
   }
   assert internal_prior_report["summary"]["shape_promotion_count"] == 9
   assert internal_prior_report["summary"]["shape_promotion_status_counts"] == {
@@ -456,6 +458,25 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert inertial_prior["shape_promotion_status"] == (
     "r18_promoted_from_subcomponent_shape_candidate"
   )
+  assert inertial_prior["constrained_geometry"]["center_m"] == [2.6, 0.0, -0.1]
+  cockpit_prior = prior_rows["cockpit_crew_station"]
+  assert cockpit_prior["constrained_geometry"]["center_m"] == [
+    3.787559,
+    0.0,
+    -0.67538,
+  ]
+  afterburner_prior = prior_rows["afterburner_nozzle"]
+  assert afterburner_prior["prior_shape"] == "frustum"
+  assert afterburner_prior["prior_axis"] == "x"
+  assert afterburner_prior["constrained_geometry"]["negative_axis_radius_m"] == 0.45
+  assert afterburner_prior["constrained_geometry"]["positive_axis_radius_m"] == (
+    0.59055
+  )
+  assert afterburner_prior["constrained_geometry"]["center_m"] == [
+    -5.75,
+    0.0,
+    -0.75,
+  ]
   engine_prior = prior_rows["engine_core"]
   assert engine_prior["prior_shape"] == "capsule"
   assert engine_prior["shape_promotion_status"] == (
@@ -467,7 +488,7 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert engine_prior["constrained_geometry"]["center_m"] == [
     -3.693053,
     0.0,
-    -0.554381,
+    -0.904381,
   ]
   assert engine_prior["constraint_adjustment"][
     "airframe_projection_center_shift_m"
@@ -481,7 +502,7 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "cross_region_prior_constrained_inside_airframe_held"
   )
   wing_spar_prior = prior_rows["wing_spar_center"]
-  assert wing_spar_prior["prior_shape"] == "capsule"
+  assert wing_spar_prior["prior_shape"] == "thin_prism"
   assert set(wing_spar_prior["constraint_region_ids"]) >= {
     "center_fuselage",
     "left_wing",
@@ -490,17 +511,23 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert wing_spar_prior["constraint_status"] == (
     "cross_region_prior_constrained_inside_airframe_held"
   )
-  assert wing_spar_prior["nominal_dimensions_m"] == [0.18, 6.6, 0.18]
+  assert wing_spar_prior["nominal_dimensions_m"] == [0.5, 5.8, 0.18]
   assert wing_spar_prior["constrained_geometry"]["center_m"] == [
-    -1.092842,
+    -1.2,
     0.0,
     -0.985043,
+  ]
+  assert wing_spar_prior["constrained_geometry"]["footprint_points_m"] == [
+    [-1.45, -2.9],
+    [-0.95, -2.9],
+    [-0.95, 2.9],
+    [-1.45, 2.9],
   ]
   assert wing_spar_prior["constraint_adjustment"][
     "airframe_projection_center_shift_m"
   ] == 0.0
   left_wing_fuel_prior = prior_rows["left_wing_fuel_cell"]
-  assert left_wing_fuel_prior["prior_shape"] == "ellipsoid"
+  assert left_wing_fuel_prior["prior_shape"] == "thin_prism"
   assert left_wing_fuel_prior["shape_promotion_status"] == (
     "r21_promoted_from_latest_subcomponent_candidate"
   )
@@ -508,7 +535,18 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert left_wing_fuel_prior["size_evidence_level"] == (
     "public_total_capacity_partition_estimate"
   )
-  assert left_wing_fuel_prior["nominal_dimensions_m"] == [2.0, 2.2, 0.15]
+  assert left_wing_fuel_prior["nominal_dimensions_m"] == [1.85, 1.73, 0.15]
+  assert left_wing_fuel_prior["constrained_geometry"]["center_m"] == [
+    -2.075,
+    -1.685,
+    -0.985,
+  ]
+  assert left_wing_fuel_prior["constrained_geometry"]["footprint_points_m"] == [
+    [-3.0, -2.55],
+    [-2.95, -1.05],
+    [-1.25, -0.82],
+    [-1.15, -1.95],
+  ]
   assert left_wing_fuel_prior["constraint_adjustment"]["size_preserved"] is True
   assert left_wing_fuel_prior["constraint_adjustment"][
     "post_constraint_outside_fraction"
@@ -558,7 +596,7 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert afterburner_segment["geometry"]["center_m"] == [
     -5.025512,
     0.0,
-    -0.554381,
+    -0.904381,
   ]
   hot_segment = segment_rows["engine_core_hot_section_segment"]
   assert hot_segment["segment_shape"] == "ellipsoid"
@@ -574,14 +612,21 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   )
   carrythrough_segment = segment_rows["wing_spar_center_carrythrough_segment"]
   assert carrythrough_segment["parent_component_name"] == "wing_spar_center"
-  assert carrythrough_segment["segment_shape"] == "capsule"
-  assert carrythrough_segment["segment_axis"] == "y"
+  assert carrythrough_segment["segment_shape"] == "thin_prism"
+  assert carrythrough_segment["segment_axis"] == ""
+  assert carrythrough_segment["source_parent_segment_shape"] == "thin_prism"
   assert carrythrough_segment["owner_region_ids"] == ["center_fuselage"]
-  assert carrythrough_segment["nominal_dimensions_m"] == [0.18, 1.7, 0.18]
+  assert carrythrough_segment["nominal_dimensions_m"] == [0.5, 1.7, 0.18]
   assert carrythrough_segment["geometry"]["center_m"] == [
-    -1.092842,
+    -1.2,
     0.0,
     -0.985043,
+  ]
+  assert carrythrough_segment["geometry"]["footprint_points_m"] == [
+    [-1.45, -0.85],
+    [-0.95, -0.85],
+    [-0.95, 0.85],
+    [-1.45, 0.85],
   ]
   assert carrythrough_segment["inside_whole_airframe_bounds"] is True
   assert segment_rows["wing_spar_center_left_inner_wing_segment"][
@@ -600,32 +645,24 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert airframe_constraint_report["summary"]["item_count"] == 34
   assert airframe_constraint_report["summary"]["receiver_prior_count"] == 26
   assert airframe_constraint_report["summary"]["held_split_segment_count"] == 8
-  # The whole-airframe alpha-shape contour (built from all ~13415 audit mesh
-  # vertices, concavities preserved) plus dense perimeter sampling is
-  # intentionally stricter than the legacy per-region hull union. A small
-  # number of receivers now register silhouette exposure that the old sparse
-  # 9-point sampling missed; engine_core is the largest (capsule tail
-  # protrusion on the side view). This is the expected, honest result of the
-  # upgraded containment test.
+  # The whole-airframe containment contour projects the audit glTF mesh
+  # triangles into each view and unions the projected faces. The R22 thin-prism
+  # and frustum geometry corrections clear the previous top-view protrusions.
   exposure_items = {
     row["item_id"]
     for row in airframe_constraint_report["rows"]
     if row["current_silhouette"]["outside_sample_count"] > 0
   }
-  assert exposure_items == {
-    "engine_core",
-    "cockpit_crew_station",
-    "inertial_navigation_unit",
-  }
+  assert exposure_items == set()
   assert airframe_constraint_report["summary"][
     "silhouette_exposure_item_count"
-  ] == 3
+  ] == 0
   assert airframe_constraint_report["summary"][
     "center_shift_reduces_item_count"
   ] == 0
   assert airframe_constraint_report["summary"][
     "size_or_shape_review_item_count"
-  ] == 3
+  ] == 0
   assert airframe_constraint_report["summary"][
     "low_confidence_inside_item_count"
   ] == 9
@@ -646,14 +683,9 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert afterburner_segment_constraint["triage_status"] == (
     "inside_airframe_cross_region_ownership_held"
   )
-  # Splitting engine_core into afterburner / hot-section / compressor
-  # segments resolves the parent's side-view protrusion: the segment itself
-  # stays inside the contour even though the monolithic parent does not.
   assert afterburner_segment_constraint["current_silhouette"][
     "outside_sample_count"
   ] == 0
-  # The upgraded contour exposes engine_core, cockpit_crew_station, and
-  # inertial_navigation_unit; every other item stays inside the contour.
   assert {
     row["item_id"]
     for row in airframe_constraint_report["rows"]
@@ -915,15 +947,11 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "subcomponent_shape_placement_candidate_generated_review_only"
   )
   assert shape_placement_report["summary"]["source_constraint_item_count"] == 34
-  # Under the upgraded whole-airframe alpha-shape contour, three source
-  # items (engine_core, cockpit_crew_station, inertial_navigation_unit)
-  # register silhouette exposure, so the shape-placement report now actively
-  # generates shape / centerline / latest candidates for them instead of
-  # being an empty queue. The candidates are review-only; none are promoted
-  # into runtime rules.
+  # The shape-aware thin-prism/frustum updates leave no source exposure items,
+  # so the shape-placement follow-up queue is empty.
   assert shape_placement_report["summary"][
     "source_silhouette_exposure_item_count"
-  ] == 3
+  ] == 0
   summary = shape_placement_report["summary"]
   assert summary["shape_placement_candidate_count"] == summary[
     "source_silhouette_exposure_item_count"
@@ -970,11 +998,14 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   placement_item_ids = {
     row["item_id"] for row in shape_placement_report["rows"]
   }
-  assert placement_item_ids == {
-    "engine_core",
-    "cockpit_crew_station",
-    "inertial_navigation_unit",
-  }
+  assert placement_item_ids == set()
+  assert "left_wing_fuel_cell" not in placement_item_ids
+  assert "right_wing_fuel_cell" not in placement_item_ids
+  assert "wing_spar_center" not in placement_item_ids
+  assert "afterburner_nozzle" not in placement_item_ids
+  assert "engine_core" not in placement_item_ids
+  assert "cockpit_crew_station" not in placement_item_ids
+  assert "inertial_navigation_unit" not in placement_item_ids
   assert shape_placement_report["authority_boundary"][
     "shape_candidate_not_applied_to_internal_prior_rules"
   ] is False
@@ -1064,6 +1095,26 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   )
   stale_isolated_page.parent.mkdir(parents=True)
   stale_isolated_page.write_text("stale view from prior generation", encoding="utf-8")
+  for stale_dir in (
+    "semantic_damage_geometry_views",
+    "internal_component_prior_views",
+    "semantic_parent_child_layout_views",
+    "subcomponent_shape_placement_views",
+  ):
+    stale_path = tmp_path / stale_dir / "stale.html"
+    stale_path.parent.mkdir(parents=True)
+    stale_path.write_text("stale intermediate view", encoding="utf-8")
+  for stale_file in (
+    "top.svg",
+    "side.svg",
+    "front.svg",
+    "fine_proxy_top.svg",
+    "fine_proxy_side.svg",
+    "fine_proxy_front.svg",
+    "fine_proxy_review_dashboard.html",
+    "human_review_triage.html",
+  ):
+    (tmp_path / stale_file).write_text("stale intermediate visual", encoding="utf-8")
 
   result = subprocess.run(
     [
@@ -1093,29 +1144,35 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     summary["semantic_parent_child_layout_cross_region_held_segment_count"] == 8
   )
   assert summary["airframe_constraint_item_count"] == 34
-  # Upgraded to whole-airframe alpha-shape contour + dense perimeter
-  # sampling; three receivers now register exposure the legacy test missed.
-  assert summary["airframe_constraint_silhouette_exposure_item_count"] == 3
+  # Projected audit-mesh triangle union + shape-aware sampling now leaves no
+  # receiver prior outside the whole-airframe contour.
+  assert summary["airframe_constraint_silhouette_exposure_item_count"] == 0
   assert summary["airframe_constraint_center_shift_resolves_item_count"] == 0
-  assert summary["airframe_constraint_size_or_shape_review_item_count"] == 3
-  # Whole-airframe alpha-shape contour containment diagnostic.
-  assert summary["whole_airframe_contour_method"] == "alpha_shape"
+  assert summary["airframe_constraint_size_or_shape_review_item_count"] == 0
+  # Whole-airframe projected mesh contour containment diagnostic.
+  assert summary["whole_airframe_contour_method"] == (
+    "projected_mesh_triangle_union"
+  )
   assert summary["whole_airframe_contour_tolerance_m"] == 0.05
-  assert summary["whole_airframe_contour_item_count"] == 34
-  assert summary["whole_airframe_contour_exceeds_tolerance_item_count"] == 3
-  assert summary["whole_airframe_contour_max_outside_distance_m"] <= 0.25
-  assert summary["whole_airframe_contour_exceeding_item_ids"] == [
-    "engine_core",
-    "cockpit_crew_station",
-    "inertial_navigation_unit",
-  ]
+  assert summary["whole_airframe_contour_item_count"] == 26
+  assert (
+    summary["whole_airframe_contour_excluded_review_only_split_segment_count"]
+    == 8
+  )
+  assert summary["whole_airframe_contour_exceeds_tolerance_item_count"] == 0
+  assert summary["whole_airframe_contour_max_outside_distance_m"] == 0.0
+  assert summary["whole_airframe_contour_exceeding_item_ids"] == []
   for view in ("top", "side", "front"):
     assert summary["whole_airframe_contour_contours"][view]["status"] == (
-      "alpha_shape"
+      "projected_mesh_triangle_union"
     )
     assert summary["whole_airframe_contour_contours"][view][
+      "source_triangle_count"
+    ] == 4504
+    assert summary["whole_airframe_contour_contours"][view]["polygon_count"] == 1
+    assert summary["whole_airframe_contour_contours"][view][
       "contour_point_count"
-    ] >= 3
+    ] >= 100
   assert summary["cross_region_ownership_parent_decision_count"] == 2
   assert summary["cross_region_ownership_split_receiver_candidate_count"] == 8
   assert (
@@ -1156,20 +1213,13 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     summary["target_geometry_training_proxy_split_receiver_component_count"] == 8
   )
   assert summary["target_geometry_training_proxy_database_materialized"] is True
-  # Shape-placement now actively processes the three exposed items; assert
-  # structural invariants rather than the legacy all-zero empty-queue state.
-  assert summary["subcomponent_shape_placement_candidate_count"] == 3
-  assert summary["subcomponent_shape_placement_resolves_count"] >= 0
-  assert summary["subcomponent_shape_placement_unresolved_count"] >= 0
-  assert (
-    summary["subcomponent_shape_placement_resolves_count"]
-    + summary["subcomponent_shape_placement_unresolved_count"]
-    <= summary["subcomponent_shape_placement_candidate_count"]
-  )
-  assert summary["subcomponent_centerline_resolves_count"] >= 0
-  assert summary["subcomponent_centerline_unresolved_count"] >= 0
-  assert summary["subcomponent_latest_resolves_count"] >= 0
-  assert summary["subcomponent_latest_unresolved_count"] >= 0
+  assert summary["subcomponent_shape_placement_candidate_count"] == 0
+  assert summary["subcomponent_shape_placement_resolves_count"] == 0
+  assert summary["subcomponent_shape_placement_unresolved_count"] == 0
+  assert summary["subcomponent_centerline_resolves_count"] == 0
+  assert summary["subcomponent_centerline_unresolved_count"] == 0
+  assert summary["subcomponent_latest_resolves_count"] == 0
+  assert summary["subcomponent_latest_unresolved_count"] == 0
 
   manifest_path = tmp_path / "manifest.json"
   assert manifest_path.is_file()
@@ -1203,14 +1253,9 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert forward["source_mesh_node_candidates"]
 
   for svg_name in ("top.svg", "side.svg", "front.svg"):
-    svg_path = tmp_path / svg_name
-    assert svg_path.is_file()
-    text = svg_path.read_text(encoding="utf-8")
-    assert "component overlays, and review points" in text
-    assert "legacy_hitbox_0" in text
-    assert "forward_fuselage" in text
+    assert not (tmp_path / svg_name).exists()
 
-  # Whole-airframe alpha-shape contour containment artifacts.
+  # Whole-airframe projected mesh contour containment artifacts.
   contour_json_path = tmp_path / "whole_airframe_contour_containment_20260614.json"
   contour_csv_path = tmp_path / "whole_airframe_contour_containment_20260614.csv"
   assert contour_json_path.is_file()
@@ -1219,29 +1264,30 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert contour_report["schema_version"] == (
     "a2.target_geometry_whole_airframe_contour_containment.v1"
   )
-  assert contour_report["contour_method"] == "alpha_shape"
+  assert contour_report["contour_method"] == "projected_mesh_triangle_union"
   assert contour_report["tolerance_m"] == 0.05
-  assert contour_report["summary"]["item_count"] == 34
-  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 3
+  assert contour_report["summary"]["item_count"] == 26
+  assert contour_report["summary"]["excluded_review_only_split_segment_count"] == 8
+  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 0
   assert contour_report["authority_boundary"][
-    "alpha_shape_contour_diagnostic_only"
+    "projected_mesh_contour_diagnostic_only"
   ] is True
   assert contour_report["authority_boundary"]["not_runtime_collision_mesh"] is True
   contour_csv = contour_csv_path.read_text(encoding="utf-8")
-  assert "engine_core" in contour_csv
+  assert "left_wing_fuel_cell" in contour_csv
   assert "max_outside_distance_m" in contour_csv
   for view in ("top", "side", "front"):
     contour_svg = tmp_path / f"whole_airframe_contour_{view}.svg"
     assert contour_svg.is_file()
     svg_text = contour_svg.read_text(encoding="utf-8")
-    assert "whole-airframe alpha-shape contour" in svg_text
-    assert "alpha_shape" not in svg_text or "alpha-shape" in svg_text
+    assert "projected audit-mesh contour" in svg_text
+    assert "projected_mesh_triangle_union" in svg_text
     assert "review-only" in svg_text
   contour_dashboard = tmp_path / "whole_airframe_contour_dashboard.html"
   assert contour_dashboard.is_file()
   dashboard_text = contour_dashboard.read_text(encoding="utf-8")
-  assert "Whole-Airframe Alpha-Shape Contour Containment" in dashboard_text
-  assert "engine_core" in dashboard_text
+  assert "Whole-Airframe Projected Mesh Contour Containment" in dashboard_text
+  assert "wing_spar_center" in dashboard_text
 
   component_json_path = tmp_path / "component_binding_report_20260611.json"
   component_csv_path = tmp_path / "component_binding_report_20260611.csv"
@@ -1275,17 +1321,18 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert result.stdout.find("mesh_derived_silhouette_count") >= 0
   assert result.stdout.find("inflated_fallback_count") >= 0
   assert result.stdout.find("fine_proxy_support_volume_ratio") >= 0
-  assert result.stdout.find("fine_proxy_review_dashboard") >= 0
-  assert result.stdout.find("human_review_triage") >= 0
-  assert result.stdout.find("isolated_component_review_index") >= 0
-  assert result.stdout.find("isolated_component_review_manifest") >= 0
+  assert result.stdout.find("current_visual_result") >= 0
+  assert result.stdout.find("fine_proxy_review_dashboard") == -1
+  assert result.stdout.find("human_review_triage") == -1
+  assert result.stdout.find("isolated_component_review_index") == -1
+  assert result.stdout.find("isolated_component_review_manifest") == -1
   assert result.stdout.find("surface_component_count") >= 0
   assert result.stdout.find("semantic_damage_volume_count") >= 0
-  assert result.stdout.find("semantic_damage_geometry_review_index") >= 0
+  assert result.stdout.find("semantic_damage_geometry_review_index") == -1
   assert result.stdout.find("internal_component_prior_count") >= 0
-  assert result.stdout.find("internal_component_prior_review_index") >= 0
+  assert result.stdout.find("internal_component_prior_review_index") == -1
   assert result.stdout.find("semantic_parent_child_layout_parent_count") >= 0
-  assert result.stdout.find("semantic_parent_child_layout_review_index") >= 0
+  assert result.stdout.find("semantic_parent_child_layout_review_index") == -1
   assert result.stdout.find("cross_region_ownership_split_json") >= 0
   assert result.stdout.find("cross_region_ownership_split_receiver_candidate_count") >= 0
   assert result.stdout.find("target_geometry_training_proxy_database") >= 0
@@ -1294,79 +1341,20 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     >= 0
   )
 
-  for svg_name in ("fine_proxy_top.svg", "fine_proxy_side.svg", "fine_proxy_front.svg"):
-    svg_path = tmp_path / svg_name
-    assert svg_path.is_file()
-    text = svg_path.read_text(encoding="utf-8")
-    assert "mesh-derived fine geometry proxy candidate" in text
-    assert "mesh-derived silhouette" in text
-    assert "source AABB" in text
-    assert "runtime collision mesh" in text
-
-  dashboard_path = tmp_path / "fine_proxy_review_dashboard.html"
-  assert dashboard_path.is_file()
-  dashboard = dashboard_path.read_text(encoding="utf-8")
-  assert "F-16 Fine Proxy Human Review Dashboard" in dashboard
-  assert "hold_for_human_review" not in dashboard
-  assert "needs_human_review" not in dashboard
-  assert "candidate_accept_after_visual_check" in dashboard
-  assert "disabled_no_bounds_expansion" in dashboard
-  assert "inflated_selection_bounds" not in dashboard
-  assert "mesh_silhouette" in dashboard
-  assert "surface component: surface_nose_radome" in dashboard
-  assert "missing links: none" in dashboard
-  assert "dedicated_intake_lip_or_duct_component" in dashboard
-
-  triage_path = tmp_path / "human_review_triage.html"
-  assert triage_path.is_file()
-  triage = triage_path.read_text(encoding="utf-8")
-  assert "F-16 Human Review Triage" in triage
-  assert "Coordinate Sign Review" in triage
-  assert "Component Box Placement Review" in triage
-  assert "Surface Handoff Review" in triage
-  assert "Review Point Geometry Sanity" in triage
-  assert "Review question" in triage
-  assert "Look at" in triage
-  assert "Decision needed" in triage
-  assert "Resolve side naming before accepting this surface handoff" not in triage
-  assert "left_wing_fuel_cell" in triage
-  assert "wing_spar_center" in triage
-  assert "nose_axis_4m" in triage
-  assert "component_review_views/index.html" in triage
-
-  isolated_index_path = tmp_path / "component_review_views" / "index.html"
-  isolated_manifest_path = tmp_path / "component_review_views" / "manifest.json"
-  assert isolated_index_path.is_file()
-  assert isolated_manifest_path.is_file()
   assert not stale_isolated_page.exists()
-  isolated_index = isolated_index_path.read_text(encoding="utf-8")
-  assert "F-16 Isolated Component Review Views" in isolated_index
-  assert "Component Binding Views" in isolated_index
-  assert "Surface Handoff Component Views" in isolated_index
-  assert "Review Point Candidate Views" in isolated_index
-  isolated_manifest = json.loads(isolated_manifest_path.read_text(encoding="utf-8"))
-  assert isolated_manifest["schema_version"] == (
-    "a2.target_geometry_isolated_component_review_views.v1"
-  )
-  assert isolated_manifest["status"] == (
-    "isolated_component_review_views_generated_review_only"
-  )
-  assert isolated_manifest["summary"]["component_entry_count"] == report["summary"][
-    "component_count"
-  ]
-  assert isolated_manifest["summary"]["surface_link_entry_count"] >= 29
-  assert isolated_manifest["summary"]["review_point_candidate_entry_count"] >= 20
-  entry_paths = {entry["title"]: entry["html"] for entry in isolated_manifest["entries"]}
-  assert "left_wing_fuel_cell" in entry_paths
-  assert "cockpit_crew_station" in entry_paths
-  assert "dedicated_canopy_surface_component" in entry_paths
-  left_wing_entry = tmp_path / "component_review_views" / entry_paths[
-    "left_wing_fuel_cell"
-  ]
-  assert left_wing_entry.is_file()
-  assert "left_wing_fuel_cell isolated geometry view" in left_wing_entry.read_text(
-    encoding="utf-8"
-  )
+  for retired_path in (
+    "component_review_views",
+    "semantic_damage_geometry_views",
+    "internal_component_prior_views",
+    "semantic_parent_child_layout_views",
+    "subcomponent_shape_placement_views",
+    "fine_proxy_top.svg",
+    "fine_proxy_side.svg",
+    "fine_proxy_front.svg",
+    "fine_proxy_review_dashboard.html",
+    "human_review_triage.html",
+  ):
+    assert not (tmp_path / retired_path).exists()
 
   surface_json_path = tmp_path / "surface_component_candidate_20260611.json"
   surface_csv_path = tmp_path / "surface_component_candidate_20260611.csv"
@@ -1477,7 +1465,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert airframe_constraint_report["summary"]["item_count"] == 34
   assert airframe_constraint_report["summary"][
     "silhouette_exposure_item_count"
-  ] == 3
+  ] == 0
   assert "apg68_radar_array" in airframe_constraint_csv_path.read_text(
     encoding="utf-8"
   )
@@ -1638,19 +1626,18 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert shape_placement_report["schema_version"] == (
     "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
   )
-  # Under the upgraded contour, three source items expose silhouette and the
-  # shape-placement report actively processes them. Assert structural facts
-  # rather than the legacy empty-queue state.
+  # The R22 thin-prism/frustum shape updates clear the source exposure queue,
+  # so shape placement has no rows to process.
   assert shape_placement_report["summary"][
     "shape_placement_candidate_count"
-  ] == 3
+  ] == 0
   assert shape_placement_report["summary"][
     "source_silhouette_exposure_item_count"
-  ] == 3
+  ] == 0
   assert (
     shape_placement_report["summary"]["candidate_resolves_exposure_count"]
     + shape_placement_report["summary"]["candidate_unresolved_exposure_count"]
-    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+    == 0
   )
   assert shape_placement_report["summary"][
     "candidate_total_outside_sample_reduction"
@@ -1660,7 +1647,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     + shape_placement_report["summary"][
       "centerline_candidate_unresolved_exposure_count"
     ]
-    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+    == 0
   )
   assert shape_placement_report["summary"][
     "centerline_candidate_total_outside_sample_count"
@@ -1668,19 +1655,27 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert (
     shape_placement_report["summary"]["latest_candidate_resolves_exposure_count"]
     + shape_placement_report["summary"]["latest_candidate_unresolved_exposure_count"]
-    == shape_placement_report["summary"]["shape_placement_candidate_count"]
+    == 0
   )
   assert shape_placement_report["summary"][
     "latest_candidate_total_outside_sample_count"
   ] >= 0
-  assert len(shape_placement_report["rows"]) == 3
+  assert len(shape_placement_report["rows"]) == 0
   shape_placement_csv_text = shape_placement_csv_path.read_text(encoding="utf-8")
-  # The three exposed receivers are the shape-placement rows.
-  for item_id in ("engine_core", "cockpit_crew_station", "inertial_navigation_unit"):
-    assert item_id in shape_placement_csv_text
+  # Previously exposed receivers are now cleared and absent from the
+  # shape-placement rows.
+  for item_id in (
+    "left_wing_fuel_cell",
+    "right_wing_fuel_cell",
+    "wing_spar_center",
+  ):
+    assert item_id not in shape_placement_csv_text
   # Receivers that stay inside the contour are not shape-placement rows.
   assert "apg68_radar_array" not in shape_placement_csv_text
-  assert "wing_spar_center" not in shape_placement_csv_text
+  assert "afterburner_nozzle" not in shape_placement_csv_text
+  assert "engine_core" not in shape_placement_csv_text
+  assert "cockpit_crew_station" not in shape_placement_csv_text
+  assert "inertial_navigation_unit" not in shape_placement_csv_text
 
   parent_child_json_path = (
     tmp_path / "semantic_parent_child_layout_candidate_20260611.json"
@@ -1708,236 +1703,42 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   )
   assert "segments=5" in parent_child_csv_path.read_text(encoding="utf-8")
 
-  semantic_index_path = tmp_path / "semantic_damage_geometry_views" / "index.html"
-  semantic_manifest_path = (
-    tmp_path / "semantic_damage_geometry_views" / "manifest.json"
-  )
-  assert semantic_index_path.is_file()
-  assert semantic_manifest_path.is_file()
-  semantic_index = semantic_index_path.read_text(encoding="utf-8")
-  assert "F-16 Semantic Damage Geometry Views" in semantic_index
-  assert "semantic_nose_radome_volume" in semantic_index
-  semantic_view_manifest = json.loads(
-    semantic_manifest_path.read_text(encoding="utf-8")
-  )
-  assert semantic_view_manifest["schema_version"] == (
-    "a2.target_geometry_semantic_damage_geometry_views.v1"
-  )
-  assert semantic_view_manifest["summary"]["semantic_volume_entry_count"] == 14
-  semantic_nose_page = (
-    tmp_path
-    / "semantic_damage_geometry_views"
-    / "volumes"
-    / "semantic-nose-radome-volume.html"
-  )
-  assert semantic_nose_page.is_file()
-  assert "semantic_nose_radome_volume isolated geometry view" in (
-    semantic_nose_page.read_text(encoding="utf-8")
-  )
-
-  internal_prior_index_path = tmp_path / "internal_component_prior_views" / "index.html"
-  internal_prior_manifest_path = (
-    tmp_path / "internal_component_prior_views" / "manifest.json"
-  )
-  assert internal_prior_index_path.is_file()
-  assert internal_prior_manifest_path.is_file()
-  internal_prior_index = internal_prior_index_path.read_text(encoding="utf-8")
-  assert "F-16 Internal Component Prior Views" in internal_prior_index
-  assert "apg68_radar_array" in internal_prior_index
-  internal_prior_view_manifest = json.loads(
-    internal_prior_manifest_path.read_text(encoding="utf-8")
-  )
-  assert internal_prior_view_manifest["schema_version"] == (
-    "a2.target_geometry_internal_component_prior_views.v1"
-  )
-  assert internal_prior_view_manifest["summary"][
-    "component_prior_entry_count"
-  ] == 26
-  internal_prior_page = (
-    tmp_path
-    / "internal_component_prior_views"
-    / "components"
-    / "left-wing-fuel-cell.html"
-  )
-  assert internal_prior_page.is_file()
-  assert "left_wing_fuel_cell internal prior view" in (
-    internal_prior_page.read_text(encoding="utf-8")
-  )
-
-  parent_child_index_path = (
-    tmp_path / "semantic_parent_child_layout_views" / "index.html"
-  )
-  parent_child_manifest_path = (
-    tmp_path / "semantic_parent_child_layout_views" / "manifest.json"
-  )
-  assert parent_child_index_path.is_file()
-  assert parent_child_manifest_path.is_file()
-  parent_child_index = parent_child_index_path.read_text(encoding="utf-8")
-  assert "F-16 Semantic Parent-Child Component Layout Views" in parent_child_index
-  assert "extra receiver slots: 12" in parent_child_index
-  parent_child_view_manifest = json.loads(
-    parent_child_manifest_path.read_text(encoding="utf-8")
-  )
-  assert parent_child_view_manifest["schema_version"] == (
-    "a2.target_geometry_semantic_parent_child_layout_views.v1"
-  )
-  assert parent_child_view_manifest["summary"]["parent_entry_count"] == 14
-  assert parent_child_view_manifest["summary"][
-    "bound_receiver_component_count"
-  ] == 26
-  assert parent_child_view_manifest["summary"][
-    "cross_region_held_segment_count"
-  ] == 8
-  assert parent_child_view_manifest["summary"][
-    "cross_region_held_segment_overlay_count"
-  ] == 5
-  parent_child_page = (
-    tmp_path
-    / "semantic_parent_child_layout_views"
-    / "parents"
-    / "semantic-left-wing-skin-volume.html"
-  )
-  assert parent_child_page.is_file()
-  assert "semantic_left_wing_skin_volume parent-child layout view" in (
-    parent_child_page.read_text(encoding="utf-8")
-  )
-  parent_child_svg = (
-    tmp_path
-    / "semantic_parent_child_layout_views"
-    / "parents"
-    / "semantic-left-wing-skin-volume_top.svg"
-  ).read_text(encoding="utf-8")
-  assert "parent_mesh_region" in parent_child_svg
-  assert "whole-airframe wireframe" in parent_child_svg
-  assert "parent semantic region" in parent_child_svg
-  assert "actual-size receiver prior" in parent_child_svg
-  assert "held split segment" in parent_child_svg
-  assert "wing_spar_center_left_inner_wing_segment" in parent_child_svg
-  assert 'fill="none"' in parent_child_svg
-  assert 'fill-opacity="0.22"' not in parent_child_svg
-  assert "parent_source_region_bounds" not in parent_child_svg
-  assert "parent_support_constraint_bounds" not in parent_child_svg
-  assert "orange=source" not in parent_child_svg
-  assert "gray=parent support" not in parent_child_svg
-
-  shape_placement_index_path = (
-    tmp_path / "subcomponent_shape_placement_views" / "index.html"
-  )
-  shape_placement_manifest_path = (
-    tmp_path / "subcomponent_shape_placement_views" / "manifest.json"
-  )
-  assert shape_placement_index_path.is_file()
-  assert shape_placement_manifest_path.is_file()
-  shape_placement_index = shape_placement_index_path.read_text(
-    encoding="utf-8"
-  )
-  assert "F-16 Subcomponent Shape Placement Candidates" in shape_placement_index
-  assert "Latest Candidate Atlas" in shape_placement_index
-  # Under the upgraded contour, three receivers expose silhouette and the
-  # shape-placement index lists them as R20 latest candidates instead of the
-  # legacy empty-queue banner.
-  assert "Each row is one R20 latest subcomponent candidate" in (
-    shape_placement_index
-  )
-  assert "engine_core" in shape_placement_index
-  assert "cockpit_crew_station" in shape_placement_index
-  assert "inertial_navigation_unit" in shape_placement_index
-  assert "latest unresolved candidates: 3" in shape_placement_index
-  shape_placement_view_manifest = json.loads(
-    shape_placement_manifest_path.read_text(encoding="utf-8")
-  )
-  assert shape_placement_view_manifest["schema_version"] == (
-    "a2.target_geometry_subcomponent_shape_placement_views.v1"
-  )
-  assert shape_placement_view_manifest["summary"]["entry_count"] == 3
-  assert shape_placement_view_manifest["summary"]["overview_view_count"] == 3
-  assert shape_placement_view_manifest["summary"][
-    "latest_component_atlas_entry_count"
-  ] == 3
-  assert shape_placement_view_manifest["summary"][
-    "latest_component_atlas_part_count"
-  ] >= 1
-  assert (
-    shape_placement_view_manifest["summary"]["resolved_entry_count"]
-    + shape_placement_view_manifest["summary"]["unresolved_entry_count"]
-    == shape_placement_view_manifest["summary"]["entry_count"]
-  )
-  assert shape_placement_view_manifest["summary"]["unresolved_entry_count"] == 3
-  assert shape_placement_view_manifest["overview_svg"] == {
-    "front": "overview_latest_front.svg",
-    "side": "overview_latest_side.svg",
-    "top": "overview_latest_top.svg",
-  }
-  assert (
-    shape_placement_view_manifest["overview_triptych_svg"]
-    == "overview_latest_triptych.svg"
-  )
-  # The latest atlas now has at least one part SVG because there are entries.
-  assert len(shape_placement_view_manifest["latest_component_atlas_svg"]) >= 1
-  shape_placement_overview = (
-    tmp_path
-    / "subcomponent_shape_placement_views"
-    / "overview_latest_triptych.svg"
-  ).read_text(encoding="utf-8")
-  assert "R20 latest subcomponent candidates / top" in shape_placement_overview
-  assert "R20 latest subcomponent candidates / side" in shape_placement_overview
-  assert "R20 latest subcomponent candidates / front" in shape_placement_overview
-  assert 'transform="translate(0,0)"' in shape_placement_overview
-  assert 'transform="translate(1500,0)"' in shape_placement_overview
-  assert 'transform="translate(3000,0)"' in shape_placement_overview
-  assert "blue=latest subcomponent candidate" in shape_placement_overview
-  assert "red=current" not in shape_placement_overview
-  assert "amber/green=shape candidate" not in shape_placement_overview
-  assert "cyan/purple=R19 centerline candidate" not in shape_placement_overview
-  shape_placement_page = (
-    tmp_path
-    / "subcomponent_shape_placement_views"
-    / "components"
-    / "apg68-radar-array.html"
-  )
-  assert not shape_placement_page.exists()
+  for retired_view_dir in (
+    "semantic_damage_geometry_views",
+    "internal_component_prior_views",
+    "semantic_parent_child_layout_views",
+    "subcomponent_shape_placement_views",
+  ):
+    assert not (tmp_path / retired_view_dir).exists()
 
   scene_path = tmp_path / "scene.html"
   assert scene_path.is_file()
   scene = scene_path.read_text(encoding="utf-8")
-  assert "F-16 Target Geometry Review Packet" in scene
-  assert "nose_axis_4m" in scene
-  assert "Fine Geometry Proxy Overlay" in scene
-  assert "Surface Component Candidates" in scene
-  assert "surface_nose_radome" in scene
-  assert "mesh-derived silhouettes" in scene
-  assert "fine_proxy_review_dashboard.html" in scene
-  assert "human_review_triage.html" in scene
-  assert "component_review_views/index.html" in scene
-  assert "Semantic Damage Geometry Volumes" in scene
-  assert "semantic_damage_geometry_views/index.html" in scene
-  assert "Internal Component Prior Geometry" in scene
-  assert "internal_component_prior_views/index.html" in scene
-  assert "Cross-Region Held Split Segments" in scene
-  assert "wing_spar_center_carrythrough_segment" in scene
-  assert "Airframe Constraint Correction Candidates" in scene
-  assert "apg68_radar_array" in scene
-  assert "Cross-Region Ownership Split Candidates" in scene
-  assert (
-    "split_into_center_carrythrough_root_and_inner_wing_spar_receivers" in scene
-  )
-  assert "TG-P7 Runtime Activation Candidate" in scene
-  assert "parse-ready candidates: 8" in scene
-  assert "TG-P7 Runtime Behavior Regression Candidate" in scene
-  assert "projected components: 32" in scene
-  assert "pass: True" in scene
-  assert "TG-P7 Training Proxy Database" in scene
-  assert "proxy components: 32" in scene
-  assert "target_geometry_training_proxy_database_20260613" in scene
-  assert "Subcomponent Shape Placement Candidates" in scene
-  assert "subcomponent_shape_placement_views/index.html" in scene
-  assert "latest resolved candidates: 0" in scene
-  assert "Semantic Parent-Child Component Layout" in scene
-  assert "semantic_parent_child_layout_views/index.html" in scene
-  assert "Whole-Airframe Alpha-Shape Contour Containment" in scene
+  assert "F-16 Final Geometry Contour Result" in scene
+  assert "Current final visual result only" in scene
+  assert "fine_proxy_review_dashboard.html" not in scene
+  assert "human_review_triage.html" not in scene
+  assert "component_review_views/index.html" not in scene
+  assert "Fine Geometry Proxy Overlay" not in scene
+  assert "Surface Component Candidates" not in scene
+  assert "Semantic Damage Geometry Volumes" not in scene
+  assert "semantic_damage_geometry_views/index.html" not in scene
+  assert "Internal Component Prior Geometry" not in scene
+  assert "internal_component_prior_views/index.html" not in scene
+  assert "Cross-Region Held Split Segments" not in scene
+  assert "Airframe Constraint Correction Candidates" not in scene
+  assert "Cross-Region Ownership Split Candidates" not in scene
+  assert "TG-P7 Runtime Activation Candidate" not in scene
+  assert "TG-P7 Runtime Behavior Regression Candidate" not in scene
+  assert "TG-P7 Training Proxy Database" not in scene
+  assert "Subcomponent Shape Placement Candidates" not in scene
+  assert "subcomponent_shape_placement_views/index.html" not in scene
+  assert "Semantic Parent-Child Component Layout" not in scene
+  assert "semantic_parent_child_layout_views/index.html" not in scene
+  assert "Whole-Airframe Projected Mesh Contour Containment" in scene
   assert "whole_airframe_contour_dashboard.html" in scene
   assert "whole_airframe_contour_top.svg" in scene
-  assert "alpha-shape" in scene
+  assert "projecting triangle faces" in scene
   assert "engineering review margin" in scene
 
 
@@ -2031,36 +1832,36 @@ def test_whole_airframe_contour_report_structure() -> None:
   assert contour_report["schema_version"] == (
     "a2.target_geometry_whole_airframe_contour_containment.v1"
   )
-  assert contour_report["contour_method"] == "alpha_shape"
+  assert contour_report["contour_method"] == "projected_mesh_triangle_union"
   assert contour_report["tolerance_m"] == 0.05
-  assert contour_report["summary"]["item_count"] == 34
-  # Three receivers exceed the 0.05 m tolerance under the stricter contour.
-  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 3
-  assert set(contour_report["summary"]["exceeding_item_ids"]) == {
-    "engine_core",
-    "cockpit_crew_station",
-    "inertial_navigation_unit",
-  }
-  # Every view produced a real alpha-shape (not a convex-hull fallback).
+  assert contour_report["summary"]["item_count"] == 26
+  assert contour_report["summary"]["excluded_review_only_split_segment_count"] == 8
+  # Shape-aware thin-prism/frustum receiver projections now fit inside the
+  # projected mesh contour. Review-only split segments are still excluded from
+  # this final-result surface.
+  assert contour_report["summary"]["exceeds_tolerance_item_count"] == 0
+  assert contour_report["summary"]["exceeding_item_ids"] == []
+  assert contour_report["summary"]["max_outside_distance_m"] == 0.0
+  # Every view produced a triangle-union contour from the audit mesh.
   for view in ("top", "side", "front"):
     meta = contour_report["summary"]["contours"][view]
-    assert meta["status"] == "alpha_shape"
-    assert meta["source_vertex_count"] == 13415
-    assert meta["contour_point_count"] >= 3
+    assert meta["status"] == "projected_mesh_triangle_union"
+    assert meta["source_triangle_count"] == 4504
+    assert meta["polygon_count"] == 1
+    assert meta["contour_point_count"] >= 100
     assert len(contour_report["contours"][view]["points_m"]) == meta[
       "contour_point_count"
     ]
-  # The rows are sorted with exceeders first, by descending outside distance.
+  # The rows stay deterministic even with no exceeders.
   row_ids = [row["item_id"] for row in contour_report["rows"]]
-  assert row_ids[0] == "engine_core"
-  # engine_core is the cross-region capsule parent; its split segment stays
-  # inside the contour, confirming the split resolves the parent exposure.
+  assert row_ids[0] == "afterburner_nozzle"
   exceeder_ids = {
     row["item_id"] for row in contour_report["rows"] if row["exceeds_tolerance"]
   }
-  assert "engine_core_afterburner_segment" not in exceeder_ids
+  assert exceeder_ids == set()
+  assert "engine_core_afterburner_segment" not in row_ids
   assert contour_report["authority_boundary"][
-    "alpha_shape_contour_diagnostic_only"
+    "projected_mesh_contour_diagnostic_only"
   ] is True
   assert contour_report["authority_boundary"][
     "tolerance_is_engineering_review_margin_not_physical_clearance"
@@ -2068,8 +1869,8 @@ def test_whole_airframe_contour_report_structure() -> None:
 
 
 def test_geometry_optional_dependencies_advertised() -> None:
-  """The geometry dependency group must be declared so the alpha-shape path
-  is installable from a fresh checkout."""
+  """The geometry dependency group must be declared so contour diagnostics are
+  installable from a fresh checkout."""
   pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
   assert 'geometry = [' in pyproject
   assert '"scipy"' in pyproject
