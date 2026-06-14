@@ -740,7 +740,7 @@ class WorldBatchVecEnvTests(unittest.TestCase):
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_batch_runtime_surface_is_removed(self) -> None:
+  def test_world_batch_vec_env_batch_runtime_surface_is_removed_at_runtime(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
       scenario_path = f"{tmpdir}/inline_scenario.json"
       with open(scenario_path, "w", encoding="utf-8") as f:

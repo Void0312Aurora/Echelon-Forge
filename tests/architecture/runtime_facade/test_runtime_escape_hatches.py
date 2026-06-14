@@ -122,7 +122,7 @@ def test_leader_world_batch_runtime_keeps_batch_runtime_surface_removed() -> Non
   assert "def batch_runtime(self):" not in source
   assert ".batch_runtime" not in source
 
-def test_world_batch_vec_env_batch_runtime_surface_is_removed() -> None:
+def test_world_batch_vec_env_batch_runtime_surface_is_removed_at_source() -> None:
   source = _source()
   cooperative_source = (REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py").read_text(
     encoding="utf-8"

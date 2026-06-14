@@ -38,25 +38,9 @@ def ensure_repo_root_on_sys_path() -> None:
 
 
 def _candidate_build_dirs() -> list[Path]:
-  candidates: list[Path] = []
-  env_build_dir = os.environ.get("CMO_BUILD_DIR")
-  if env_build_dir:
-    candidates.append(repo_path(env_build_dir))
+  from python.testing.runtime import build_dirs
 
-  for name in ("build-workshop", "build-gpu", "build", "build-local-win"):
-    candidates.append(repo_path(name))
-
-  candidates.extend(sorted(REPO_ROOT.glob("build*/")))
-
-  unique: list[Path] = []
-  seen: set[Path] = set()
-  for path in candidates:
-    resolved = path.resolve()
-    if resolved in seen:
-      continue
-    seen.add(resolved)
-    unique.append(path)
-  return unique
+  return [Path(path) for path in build_dirs(str(REPO_ROOT))]
 
 
 def dependency_include_path(dependency: str) -> Path:

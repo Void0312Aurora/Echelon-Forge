@@ -1,20 +1,20 @@
 # Test Suites
 
-`tests/suites/` stores advisory suite metadata that can be reviewed and evolved without changing CI wiring.
+`tests/suites/` previously stored advisory suite/matrix metadata. The draft
+`test_system_matrix.json`, `contract_system_matrix.json`, and
+`focused_runtime_suite.json` files have been removed: they were not wired into
+any runner or CI step, and the meta-tests policing their cross-file consistency
+were enforcing documentation rather than behavior.
 
-## Files
+## Current CI Wiring
 
-- `test_system_matrix.json`
-  - Machine-readable draft matrix for mapping test surfaces to governance tiers.
-  - Tracks pytest paths and JSON contract paths together so ownership and promotion discussions have one index.
-  - Records architecture guard tiering before paths are promoted into concrete suite manifests.
-- `contract_system_matrix.json`
-  - Machine-readable draft matrix for maintained JSON contract surfaces.
-  - Tracks contract roots by capability-oriented surface, runner group, semantic tier, and cleanup priority.
-  - Separates active contract coverage under `tests/contracts/` from provenance-only archives under `tests/archive/contracts/`.
-- `focused_runtime_suite.json`
-  - Draft focused/local pytest manifest for representative runtime coverage.
-  - Compatible with `tools/runners/run_pytest_suite.py`, but not referenced by CI.
+CI runs three test surfaces, all gated through `tools/runners/`:
+
+- `tests/smoke/ci_smoke_suite.json` — the maintained pytest smoke gate.
+- `tests/smoke/ci_contract_suite.json` — the maintained JSON contract smoke gate.
+- The C++ `ctest ef_test_all` smoke target.
+
+These live under `tests/smoke/`, not `tests/suites/`.
 
 ## Tiers
 
@@ -29,23 +29,21 @@
 - `nightly`
   - Candidate long-running or broad regression coverage for scheduled automation after stabilization.
 
-CI now runs the maintained pytest smoke suite in `tests/smoke/ci_smoke_suite.json`,
-the C++ CTest smoke target, and the maintained JSON contract smoke suite in
-`tests/smoke/ci_contract_suite.json`. The suite and matrix files here remain
-governance metadata until a separate CI change explicitly promotes them.
+These tiers are advisory labels for discussing suite intent; no runner currently
+selects a tier automatically. Promotion into CI happens by editing
+`tests/smoke/ci_smoke_suite.json` or `tests/smoke/ci_contract_suite.json`
+directly.
 
-Pytest suite manifests may list directories, files, or pytest node IDs. Node IDs
-are preferred when a large guard file contains a small smoke-safe subset and a
-broader focused/local subset.
+Pytest suite manifests may list directories, files, or pytest node IDs. The CI
+smoke suite is intentionally explicit (files and node IDs only, no directory
+entries) so new tests are promoted deliberately rather than auto-discovered.
 
-Any matrix row that lists `tests/smoke/ci_smoke_suite.json` in
-`suite_membership` must also enumerate its concrete `smoke_paths`.
+Fast meta-tests under `tests/runners/test_pytest_suite_manifests.py` validate
+that smoke path entries remain resolvable and that the runtime-facade layering
+guard keeps node IDs rather than broad directory entries.
 
-Fast meta-tests under `tests/runners/` validate that suite and matrix path
-entries remain resolvable and that manual-tier architecture roots do not leak
-back into CI smoke.
-
-Architecture guard promotion should follow the matrix first. Broad source scans,
+Architecture guard promotion should add files or node IDs to
+`tests/smoke/ci_smoke_suite.json` directly. Broad source scans,
 release-package generation, retained-artifact verification, and source-admission
 workflows are local/manual by default until a cheap smoke-safe subset is split
 out and listed explicitly.

@@ -71,8 +71,8 @@
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - 运行已签入的 pytest suite manifest，例如 `tests/smoke/ci_smoke_suite.json`，并在路径过期时提前失败。
   - Suite 条目可以是目录、文件，或 `tests/foo/test_bar.py::test_case` 这类 pytest node ID；node ID 条目仍会在调用 pytest 前检查基础路径是否存在。
-- [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)
-  - 对 contract-batch runner 的薄包装，默认使用 `sim_kernel` 分组。
+- [run_contract_batches.py](runners/run_contract_batches.py)
+  - 按 `--group`（`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`）批量运行 `tests/contracts/` 下的 JSON 契约，默认运行全部已维护分组。`--default-group sim_kernel` 便捷地只选 `sim_kernel` 分组而无需拼写 `--group`。
 
 ## 维护
 

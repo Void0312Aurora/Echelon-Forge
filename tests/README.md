@@ -139,15 +139,13 @@ Run a batch runner:
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tests/runners/test_contract_batches.py --group chain --group route_generator
+cmo_python tools/runners/run_contract_batches.py --group chain --group route_generator
 
-cmo_python tests/runners/test_contract_batches.py --group unit --group same_process
+cmo_python tools/runners/run_contract_batches.py --group unit --group same_process
 
-cmo_python tests/runners/test_contract_batches.py --group sim_kernel
+cmo_python tools/runners/run_contract_batches.py --group sim_kernel
 
-cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
-
-cmo_python tools/runners/run_sim_kernel_contracts.py
+cmo_python tools/runners/run_contract_batches.py --default-group sim_kernel
 ```
 
 The `sim_kernel` default group is a convenience wrapper around `tests/contracts/unit/kernel/*.json`; it is not yet a semantic manifest that distinguishes gate, supplemental, and diagnostic contracts.
@@ -178,13 +176,16 @@ Suite tiers:
 - `nightly`
   - Candidate long-running or broad regression coverage for scheduled automation after stabilization.
 
-`tests/suites/test_system_matrix.json` and `tests/suites/focused_runtime_suite.json`
-are first-pass governance manifests only. Current CI runs the maintained pytest
-smoke suite, C++ CTest smoke target, and the maintained JSON contract smoke suite.
+`tests/suites/` previously hosted advisory governance matrices
+(`test_system_matrix.json`, `contract_system_matrix.json`) and a draft
+`focused_runtime_suite.json`. These have been removed: they were not wired into
+any runner or CI step, and their cross-file consistency was enforced by
+meta-tests rather than behavior. Current CI runs the maintained pytest smoke
+suite, C++ CTest smoke target, and the maintained JSON contract smoke suite.
 
-If a smoke path is moved during a refactor, update the checked-in suite manifest
-first. CI and top-level documentation should reference the suite runner instead
-of duplicating individual test-file paths.
+If a smoke path is moved during a refactor, update
+`tests/smoke/ci_smoke_suite.json` first. CI and top-level documentation should
+reference the suite runner instead of duplicating individual test-file paths.
 
 ## Architecture Suite Governance
 
@@ -194,13 +195,11 @@ Broad source scans, AST sweeps, release-package generation, retained-artifact
 checks, and source-admission workflows belong in `focused`, `local`, or
 `manual` tiers unless they are split into a small manifest-only smoke subset.
 
-When promoting an architecture guard, update
-`tests/suites/test_system_matrix.json` first, then the concrete suite manifest.
-The suite runner treats missing paths as hard failures, so moved architecture
-files must keep the matrix and manifests in lockstep. For node ID entries, the
-runner checks the base file path before handing the full node ID to pytest.
-Rows that list `tests/smoke/ci_smoke_suite.json` in `suite_membership` must also
-list the concrete `smoke_paths` that are allowed into CI.
+When promoting an architecture guard, add the file or node ID to
+`tests/smoke/ci_smoke_suite.json`. The suite runner treats missing paths as
+hard failures, so moved architecture files must keep the manifest in lockstep.
+For node ID entries, the runner checks the base file path before handing the
+full node ID to pytest.
 
 The removed `UniversalEnv` raw-constructor surface is tracked by
 `tests/architecture/fixtures/universal_env_runtime_compatibility_callers_20260612.json`

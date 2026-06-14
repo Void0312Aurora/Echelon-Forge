@@ -42,7 +42,6 @@ AST sweeps, generated-package checks, retained-artifact verification, and
 external/source-admission workflow gates should stay in focused, local, or
 manual tiers until they are split into a small smoke-safe subset.
 
-Record ownership and tier intent in `tests/suites/test_system_matrix.json`
-before adding architecture paths to a concrete suite manifest. The suite runner
-fails on stale paths, so file moves must update the matrix and manifests in the
-same change.
+Record ownership and tier intent before adding architecture paths to
+`tests/smoke/ci_smoke_suite.json`. The suite runner fails on stale paths, so
+file moves must update the manifest in the same change.

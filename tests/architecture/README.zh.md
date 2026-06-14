@@ -38,6 +38,5 @@
 retained-artifact 校验、外部签核或 source-admission 工作流 gate 应留在
 focused、local 或 manual tier，除非它们已拆成小型 smoke-safe 子集。
 
-将 architecture 路径加入具体 suite manifest 之前，先在
-`tests/suites/test_system_matrix.json` 记录 ownership 和 tier 意图。suite runner
-会把过期路径作为硬失败，因此移动文件时必须在同一次变更里同步 matrix 和 manifest。
+将 architecture 路径加入 `tests/smoke/ci_smoke_suite.json` 之前，先记录
+ownership 和 tier 意图。suite runner 会把过期路径作为硬失败，因此移动文件时必须在同一次变更里同步 manifest。
