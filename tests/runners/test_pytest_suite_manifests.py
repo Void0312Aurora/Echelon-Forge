@@ -4,12 +4,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tools.runners import run_pytest_suite
+from tools.runners import run_pytest_suite, run_scenario_contract
 
 
 REPO_ROOT = Path(run_pytest_suite.REPO_ROOT)
 PYTEST_SUITE_MANIFESTS = (
   REPO_ROOT / "tests" / "smoke" / "ci_smoke_suite.json",
+)
+CONTRACT_SUITE_MANIFESTS = (
+  REPO_ROOT / "tests" / "smoke" / "ci_contract_suite.json",
 )
 
 
@@ -31,6 +34,19 @@ def test_pytest_suite_manifest_entries_resolve_to_existing_base_paths() -> None:
       _, check_path = run_pytest_suite._resolve_pytest_entry(entry)
       assert Path(check_path).exists(), (
         f"{manifest_path} contains a stale pytest entry: {entry}"
+      )
+
+
+def test_contract_suite_manifest_entries_resolve_to_existing_specs() -> None:
+  for manifest_path in CONTRACT_SUITE_MANIFESTS:
+    specs = run_scenario_contract._load_suite_specs(
+      manifest_path.relative_to(REPO_ROOT).as_posix(),
+      str(REPO_ROOT),
+    )
+    assert specs, f"{manifest_path} has no specs"
+    for spec_path in specs:
+      assert Path(spec_path).exists(), (
+        f"{manifest_path} contains a stale contract spec entry: {spec_path}"
       )
 
 

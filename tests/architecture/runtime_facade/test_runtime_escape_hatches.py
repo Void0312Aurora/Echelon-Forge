@@ -64,7 +64,8 @@ def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
   actual = {}
   for path in [
     WORLD_BATCH_ADAPTER,
-    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade.py",
+    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_core.py",
+    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_counterfactual.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_export.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_live_engagement_event_capture.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_evidence_gates.py",

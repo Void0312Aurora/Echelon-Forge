@@ -62,7 +62,8 @@ def _maintained_execution_episode_compat_read_allowlist() -> set[str]:
   return {
     "python/rl/runtime/world_batch/adapter.py",
     "python/rl/runtime/world_batch/runtime_support.py",
-    "tests/world_batch/test_world_batch_vec_env.py",
+    "tests/world_batch/test_world_batch_vec_env_command_chain.py",
+    "tests/world_batch/test_world_batch_vec_env_execution_and_observation.py",
   }
 
 
@@ -81,7 +82,7 @@ def _iter_maintained_facade_guard_paths() -> list[Path]:
   return [
     *REPO_ROOT.joinpath("python", "rl", "runtime").rglob("*.py"),
     *REPO_ROOT.joinpath("tests", "runtime").rglob("*.py"),
-    REPO_ROOT / "tests" / "world_batch" / "test_world_batch_vec_env.py",
+    *REPO_ROOT.joinpath("tests", "world_batch").rglob("*.py"),
   ]
 
 

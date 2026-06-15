@@ -6,7 +6,9 @@ checks. It is not a maintained home for stable pytest regressions.
 Current status: no active pytest scripts live in this directory. The former
 stable checks were promoted into capability-owned files:
 
-- `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_lethality.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_snapshot.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_summary.py`
 - `tests/training/test_fire_timing_fault_localization_contracts.py`
 - `tests/runtime/link/test_external_proxy_backend_contracts.py`
 - `tests/runtime/bindings/test_lazy_binding_resolution.py`
