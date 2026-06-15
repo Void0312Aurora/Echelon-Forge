@@ -134,6 +134,9 @@ inline void apply_effects_result_fields(
         result.vulnerability_effect_scale_evidence_source_ref;
     effects.vulnerability_effect_scale_evidence_provenance =
         result.vulnerability_effect_scale_evidence_provenance;
+    effects.air_system_hit_flags = result.air_system_hit_flags;
+    effects.air_system_spatial_scales = result.air_system_spatial_scales;
+    effects.vulnerability_scale_trace = result.vulnerability_scale_trace;
 }
 
 }  // namespace engagement_events

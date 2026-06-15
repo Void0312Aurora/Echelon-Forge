@@ -58,7 +58,7 @@ class GeometryFixtureRuntimeMixin:
     self.assertEqual(int(nearest.header.parent_event_id), int(nearest.header.chain_id))
     self.assertEqual(int(nearest.header.munition.entity_id), missile_id)
     self.assertEqual(int(nearest.header.target.entity_id), red_id)
-    self.assertEqual(str(fuze.header.stage), "fuze_evaluation")
+    self.assertEqual(str(fuze.header.stage), "fuze")
     self.assertEqual(str(fuze.header.status), "evaluated")
     self.assertEqual(str(fuze.header.reason), "fuze_armed")
     self.assertEqual(int(fuze.header.chain_id), int(nearest.header.chain_id))

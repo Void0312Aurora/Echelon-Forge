@@ -404,6 +404,31 @@ def _assert_no_downstream_failure_or_consequence_events(case: _ComponentCutCase)
   assert list(case.events.training_projection_events) == []
 
 
+def _assert_no_platform_consequence_events(case: _ComponentCutCase) -> None:
+  assert list(case.events.structural_breakup_events) == []
+  assert list(case.events.lifecycle_transition_events) == []
+  assert list(case.events.training_projection_events) == []
+
+
+def _assert_component_damage_events_match_failed_rows(
+  case: _ComponentCutCase,
+) -> None:
+  damages = list(case.events.component_damage_events)
+  assert damages
+  rows_by_name = {str(row.component_name): row for row in case.source_rows}
+  for damage in damages:
+    row = rows_by_name[str(damage.component_name)]
+    assert float(row.component_failure_sample) <= float(
+      row.component_failure_probability
+    )
+    assert float(damage.failure_probability) == float(
+      row.component_failure_probability
+    )
+    assert float(damage.failure_sample) == float(row.component_failure_sample)
+    assert float(damage.integrity_after) == float(row.component_integrity_after)
+  _assert_no_platform_consequence_events(case)
+
+
 def _assert_component_load_rows_match_events(case: _ComponentCutCase) -> None:
   effects = case.effects
   assert case.component_loads
@@ -484,7 +509,7 @@ def test_component_center_projection_uses_spatial_load_source() -> None:
   )
 
   _assert_component_load_rows_match_events(case)
-  _assert_no_downstream_failure_or_consequence_events(case)
+  _assert_component_damage_events_match_failed_rows(case)
 
 
 def test_local_side_changes_emphasized_component_rows() -> None:
@@ -523,7 +548,7 @@ def test_non_rod_component_projection_carries_no_rod_cut_facts() -> None:
   assert float(case.effects.component_primary_mechanism_rod_cut_margin) == 0.0
 
   _assert_component_load_rows_match_events(case)
-  _assert_no_downstream_failure_or_consequence_events(case)
+  _assert_component_damage_events_match_failed_rows(case)
 
 
 def _run_profiled_diagnostic_case(family: str) -> object:

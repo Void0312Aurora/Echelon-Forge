@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <random>
 #include <string>
 
 #include <flecs.h>
@@ -23,6 +24,7 @@ public:
         flecs::world& ecs,
         const std::unique_ptr<IUnitFactory>& unit_factory,
         MissileTuning& missile_tuning,
+        std::mt19937& rng,
         IEngagementLaunchRecorder& launch_recorder,
         IEngagementEventRecorder& damage_recorder,
         IWeaponReleaseDamageBridge& damage_bridge
@@ -55,6 +57,7 @@ private:
     flecs::world& ecs_;
     const std::unique_ptr<IUnitFactory>& unit_factory_;
     MissileTuning& missile_tuning_;
+    std::mt19937& rng_;
     IEngagementLaunchRecorder& launch_recorder_;
     IEngagementEventRecorder& damage_recorder_;
     IWeaponReleaseDamageBridge& damage_bridge_;

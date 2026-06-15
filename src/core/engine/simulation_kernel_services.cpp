@@ -6,6 +6,7 @@ std::unique_ptr<IWeaponReleaseService> make_simulation_kernel_weapon_release_ser
     flecs::world& ecs,
     const std::unique_ptr<IUnitFactory>& unit_factory,
     MissileTuning& missile_tuning,
+    std::mt19937& rng,
     IEngagementLaunchRecorder& launch_recorder,
     IEngagementEventRecorder& damage_recorder,
     IWeaponReleaseDamageBridge& damage_bridge
@@ -14,6 +15,7 @@ std::unique_ptr<IWeaponReleaseService> make_simulation_kernel_weapon_release_ser
         ecs,
         unit_factory,
         missile_tuning,
+        rng,
         launch_recorder,
         damage_recorder,
         damage_bridge);

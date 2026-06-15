@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import math
 import os
@@ -96,7 +96,7 @@ def _standard_fuze_event(
       chain_id=301,
       event_id=103,
       parent_event_id=102,
-      stage="fuze_evaluation",
+      stage="fuze",
       status="evaluated",
       reason=reason,
     ),

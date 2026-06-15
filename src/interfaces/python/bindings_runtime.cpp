@@ -303,6 +303,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("producer_node_id", &LethalityChainHeader::producer_node_id)
         .def_rw("fidelity_mode", &LethalityChainHeader::fidelity_mode)
         .def_rw("evidence_level", &LethalityChainHeader::evidence_level)
+        .def_rw("observation_mode", &LethalityChainHeader::observation_mode)
+        .def_rw("consumer_visibility", &LethalityChainHeader::consumer_visibility)
         .def_rw("confidence", &LethalityChainHeader::confidence);
 
     nb::class_<NearestApproachEvent>(m, "NearestApproachEvent")
@@ -326,6 +328,9 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("delay_s", &FuzeEvaluationEvent::delay_s)
         .def_rw("reliability", &FuzeEvaluationEvent::reliability)
         .def_rw("sample", &FuzeEvaluationEvent::sample)
+        .def_rw("expected_detonation_probability",
+                &FuzeEvaluationEvent::expected_detonation_probability)
+        .def_rw("sampled_outcome", &FuzeEvaluationEvent::sampled_outcome)
         .def_rw("trigger_radius_m", &FuzeEvaluationEvent::trigger_radius_m)
         .def_rw("contact_surface_distance_m", &FuzeEvaluationEvent::contact_surface_distance_m)
         .def_rw("contact_penetration_depth_m", &FuzeEvaluationEvent::contact_penetration_depth_m)
@@ -419,7 +424,20 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("control_delta", &PlatformConsequenceEvent::control_delta)
         .def_rw("engine_delta", &PlatformConsequenceEvent::engine_delta)
         .def_rw("fuel_leak_delta", &PlatformConsequenceEvent::fuel_leak_delta)
-        .def_rw("fire_state", &PlatformConsequenceEvent::fire_state);
+        .def_rw("fire_state", &PlatformConsequenceEvent::fire_state)
+        .def_rw("aircraft_damage_state_before",
+                &PlatformConsequenceEvent::aircraft_damage_state_before)
+        .def_rw("aircraft_damage_state_after",
+                &PlatformConsequenceEvent::aircraft_damage_state_after)
+        .def_rw("aircraft_damage_state_delta",
+                &PlatformConsequenceEvent::aircraft_damage_state_delta)
+        .def_rw("air_system_hit_flags", &PlatformConsequenceEvent::air_system_hit_flags)
+        .def_rw("air_system_spatial_scales",
+                &PlatformConsequenceEvent::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace",
+                &PlatformConsequenceEvent::vulnerability_scale_trace)
+        .def_rw("loss_state_from", &PlatformConsequenceEvent::loss_state_from)
+        .def_rw("loss_state_to", &PlatformConsequenceEvent::loss_state_to);
 
     nb::class_<StructuralBreakupEvent>(m, "StructuralBreakupEvent")
         .def(nb::init<>())
@@ -785,6 +803,9 @@ void bind_runtime(nb::module_ &m) {
                 &EffectsEvent::vulnerability_effect_scale_evidence_source_ref)
         .def_rw("vulnerability_effect_scale_evidence_provenance",
                 &EffectsEvent::vulnerability_effect_scale_evidence_provenance)
+        .def_rw("air_system_hit_flags", &EffectsEvent::air_system_hit_flags)
+        .def_rw("air_system_spatial_scales", &EffectsEvent::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace", &EffectsEvent::vulnerability_scale_trace)
         .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
 
     nb::class_<DamageReport>(m, "DamageReport")

@@ -55,6 +55,7 @@ SimulationKernel::SimulationKernel()
           ecs,
           unit_factory_,
           missile_tuning_,
+          rng,
           *engagement_event_store_,
           *engagement_event_store_,
           *weapon_release_damage_bridge_)) {

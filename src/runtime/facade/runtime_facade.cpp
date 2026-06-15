@@ -1150,6 +1150,39 @@ void stable_sort_damage_reports(std::vector<DamageReport>* reports) {
     );
 }
 
+void stable_sort_platform_consequence_events(std::vector<PlatformConsequenceEvent>* events) {
+    if (events == nullptr) {
+        return;
+    }
+    std::stable_sort(
+        events->begin(),
+        events->end(),
+        [](const PlatformConsequenceEvent& lhs, const PlatformConsequenceEvent& rhs) {
+            if (lhs.header.source_time_s != rhs.header.source_time_s) {
+                return lhs.header.source_time_s < rhs.header.source_time_s;
+            }
+            return lhs.header.event_id < rhs.header.event_id;
+        }
+    );
+}
+
+template <typename EventT>
+void stable_sort_lethality_header_events(std::vector<EventT>* events) {
+    if (events == nullptr) {
+        return;
+    }
+    std::stable_sort(
+        events->begin(),
+        events->end(),
+        [](const EventT& lhs, const EventT& rhs) {
+            if (lhs.header.source_time_s != rhs.header.source_time_s) {
+                return lhs.header.source_time_s < rhs.header.source_time_s;
+            }
+            return lhs.header.event_id < rhs.header.event_id;
+        }
+    );
+}
+
 void stable_sort_diagnostics_traces(std::vector<DiagnosticsTrace>* traces) {
     if (traces == nullptr) {
         return;
@@ -1236,6 +1269,12 @@ void finalize_recent_event_metadata(
     }
     for (auto& report : packet->damage_reports) {
         ensure_manifest_node_id(report, &DamageReport::producer_node_id, kWp10EffectsDamageNodeId);
+    }
+    for (auto& event : packet->platform_consequence_events) {
+        if (event.header.producer_node_id.empty() &&
+            find_stage_node_manifest(kWp10EffectsDamageNodeId) != nullptr) {
+            event.header.producer_node_id = std::string(kWp10EffectsDamageNodeId);
+        }
     }
 }
 
@@ -1403,6 +1442,12 @@ void assign_world_index(EngagementEntityRef& ref, std::uint64_t world_index) {
     }
 }
 
+void assign_world_index(LethalityChainHeader& header, std::uint64_t world_index) {
+    assign_world_index(header.munition, world_index);
+    assign_world_index(header.shooter, world_index);
+    assign_world_index(header.target, world_index);
+}
+
 RecentEngagementEvents with_world_index(
     RecentEngagementEvents recent,
     std::uint64_t world_index
@@ -1414,8 +1459,39 @@ RecentEngagementEvents with_world_index(
         assign_world_index(event.munition, world_index);
         assign_world_index(event.target, world_index);
     }
+    for (auto& event : recent.nearest_approach_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.fuze_evaluation_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.warhead_mechanism_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.spatial_coverage_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.component_load_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.component_damage_events) {
+        assign_world_index(event.header, world_index);
+    }
     for (auto& report : recent.damage_reports) {
         assign_world_index(report.target, world_index);
+    }
+    for (auto& event : recent.platform_consequence_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.structural_breakup_events) {
+        assign_world_index(event.header, world_index);
+    }
+    for (auto& event : recent.lifecycle_transition_events) {
+        assign_world_index(event.header, world_index);
+        assign_world_index(event.wreck_entity, world_index);
+    }
+    for (auto& event : recent.training_projection_events) {
+        assign_world_index(event.header, world_index);
     }
     for (auto& trace : recent.diagnostics_traces) {
         assign_world_index(trace.munition, world_index);
@@ -1507,12 +1583,47 @@ void append_recent_engagement_events(
             recent.effects_events.begin(),
             recent.effects_events.end()
         );
+        packet.nearest_approach_events.insert(
+            packet.nearest_approach_events.end(),
+            recent.nearest_approach_events.begin(),
+            recent.nearest_approach_events.end()
+        );
+        packet.fuze_evaluation_events.insert(
+            packet.fuze_evaluation_events.end(),
+            recent.fuze_evaluation_events.begin(),
+            recent.fuze_evaluation_events.end()
+        );
+        packet.warhead_mechanism_events.insert(
+            packet.warhead_mechanism_events.end(),
+            recent.warhead_mechanism_events.begin(),
+            recent.warhead_mechanism_events.end()
+        );
+        packet.spatial_coverage_events.insert(
+            packet.spatial_coverage_events.end(),
+            recent.spatial_coverage_events.begin(),
+            recent.spatial_coverage_events.end()
+        );
+        packet.component_load_events.insert(
+            packet.component_load_events.end(),
+            recent.component_load_events.begin(),
+            recent.component_load_events.end()
+        );
+        packet.component_damage_events.insert(
+            packet.component_damage_events.end(),
+            recent.component_damage_events.begin(),
+            recent.component_damage_events.end()
+        );
     }
     if (request.include_damage_reports) {
         packet.damage_reports.insert(
             packet.damage_reports.end(),
             recent.damage_reports.begin(),
             recent.damage_reports.end()
+        );
+        packet.platform_consequence_events.insert(
+            packet.platform_consequence_events.end(),
+            recent.platform_consequence_events.begin(),
+            recent.platform_consequence_events.end()
         );
     }
     if (request.include_diagnostics_traces) {
@@ -1568,8 +1679,29 @@ double resolve_engagement_source_time(const EngagementEventPacket& packet) {
     for (const auto& event : packet.effects_events) {
         latest = std::max(latest, event.detonation_time_s);
     }
+    for (const auto& event : packet.nearest_approach_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
+    for (const auto& event : packet.fuze_evaluation_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
+    for (const auto& event : packet.warhead_mechanism_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
+    for (const auto& event : packet.spatial_coverage_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
+    for (const auto& event : packet.component_load_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
+    for (const auto& event : packet.component_damage_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
     for (const auto& report : packet.damage_reports) {
         latest = std::max(latest, report.report_time_s);
+    }
+    for (const auto& event : packet.platform_consequence_events) {
+        latest = std::max(latest, event.header.source_time_s);
     }
     for (const auto& trace : packet.diagnostics_traces) {
         latest = std::max(latest, trace.source_time_s);
@@ -1602,7 +1734,14 @@ void stable_sort_engagement_packet(EngagementEventPacket* packet) {
     stable_sort_track_packets(&packet->track_packets);
     stable_sort_launch_events(&packet->launch_events);
     stable_sort_effects_events(&packet->effects_events);
+    stable_sort_lethality_header_events(&packet->nearest_approach_events);
+    stable_sort_lethality_header_events(&packet->fuze_evaluation_events);
+    stable_sort_lethality_header_events(&packet->warhead_mechanism_events);
+    stable_sort_lethality_header_events(&packet->spatial_coverage_events);
+    stable_sort_lethality_header_events(&packet->component_load_events);
+    stable_sort_lethality_header_events(&packet->component_damage_events);
     stable_sort_damage_reports(&packet->damage_reports);
+    stable_sort_platform_consequence_events(&packet->platform_consequence_events);
     stable_sort_diagnostics_traces(&packet->diagnostics_traces);
 }
 

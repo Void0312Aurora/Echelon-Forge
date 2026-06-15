@@ -1,13 +1,17 @@
 #include "core/interfaces/guidance_model.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdint>
+#include <utility>
 
 #include "components/basic/common.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
 #include "components/systems/sensor.h"
 #include "core/interfaces/environment_model.h"
+#include "core/interfaces/engagement_event_recorder.h"
 #include "models/weapons/missile_guidance_math.h"
 #include "models/weapons/missile_guidance_types.h"
 
@@ -82,6 +86,247 @@ double positive_or_nan_safe(double candidate, double fallback) {
 
 double finite_nonnegative_or(double candidate, double fallback) {
     return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
+}
+
+std::array<double, 3> guidance_world_point_to_local_body(
+    const Transform& target_transform,
+    double world_x,
+    double world_y,
+    double world_z
+) {
+    const Math::Vector3 local = Math::world_to_body(
+        {world_x - target_transform.x, world_y - target_transform.y, world_z - target_transform.z},
+        target_transform);
+    return {local.x, -local.y, local.z};
+}
+
+bool guidance_has_stored_proximity_min_local_point(const Missile& missile) {
+    return std::isfinite(missile.proximity_min_dist_m) &&
+           std::isfinite(missile.proximity_min_local_forward_m) &&
+           std::isfinite(missile.proximity_min_local_right_m) &&
+           std::isfinite(missile.proximity_min_local_up_m);
+}
+
+std::array<double, 3> guidance_timeout_local_point(
+    const Missile& missile,
+    const Transform& target_transform,
+    const Transform& missile_transform
+) {
+    if (guidance_has_stored_proximity_min_local_point(missile)) {
+        return {
+            missile.proximity_min_local_forward_m,
+            missile.proximity_min_local_right_m,
+            missile.proximity_min_local_up_m,
+        };
+    }
+    return guidance_world_point_to_local_body(
+        target_transform,
+        missile_transform.x,
+        missile_transform.y,
+        missile_transform.z);
+}
+
+double guidance_timeout_miss_distance(
+    const Missile& missile,
+    const Transform& target_transform,
+    const Transform& missile_transform
+) {
+    if (std::isfinite(missile.proximity_min_dist_m)) {
+        return missile.proximity_min_dist_m;
+    }
+    const double dx = missile_transform.x - target_transform.x;
+    const double dy = missile_transform.y - target_transform.y;
+    const double dz = missile_transform.z - target_transform.z;
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+double guidance_closure_mps(
+    const Transform& missile_transform,
+    const Transform& target_transform,
+    const Velocity& missile_velocity,
+    const Velocity* target_velocity
+) {
+    const double target_vx = target_velocity ? target_velocity->vx : 0.0;
+    const double target_vy = target_velocity ? target_velocity->vy : 0.0;
+    const double target_vz = target_velocity ? target_velocity->vz : 0.0;
+    const double rel_vx = target_vx - missile_velocity.vx;
+    const double rel_vy = target_vy - missile_velocity.vy;
+    const double rel_vz = target_vz - missile_velocity.vz;
+    const double dx = target_transform.x - missile_transform.x;
+    const double dy = target_transform.y - missile_transform.y;
+    const double dz = target_transform.z - missile_transform.z;
+    const double range = std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (range <= 1.0e-6) {
+        return std::sqrt(rel_vx * rel_vx + rel_vy * rel_vy + rel_vz * rel_vz);
+    }
+    const double ux = dx / range;
+    const double uy = dy / range;
+    const double uz = dz / range;
+    return std::max(0.0, -(rel_vx * ux + rel_vy * uy + rel_vz * uz));
+}
+
+std::array<double, 3> guidance_velocity_axis_in_target_body(
+    const Transform& target_transform,
+    const Velocity& missile_velocity
+) {
+    const double norm = std::sqrt(missile_velocity.vx * missile_velocity.vx +
+                                  missile_velocity.vy * missile_velocity.vy +
+                                  missile_velocity.vz * missile_velocity.vz);
+    if (norm <= 1.0e-9) {
+        return {0.0, 0.0, 0.0};
+    }
+    const auto local_velocity = guidance_world_point_to_local_body(
+        target_transform,
+        target_transform.x + missile_velocity.vx,
+        target_transform.y + missile_velocity.vy,
+        target_transform.z + missile_velocity.vz);
+    return {
+        local_velocity[0] / norm,
+        local_velocity[1] / norm,
+        local_velocity[2] / norm,
+    };
+}
+
+std::string guidance_nearest_approach_aspect_bucket(double local_forward_m, double local_right_m) {
+    if (!std::isfinite(local_forward_m) || !std::isfinite(local_right_m)) {
+        return "unknown";
+    }
+    if (std::abs(local_forward_m) >= std::abs(local_right_m)) {
+        return local_forward_m >= 0.0 ? "nose" : "tail";
+    }
+    return "beam";
+}
+
+void record_missile_timeout_event(
+    flecs::world world,
+    flecs::entity missile_entity,
+    const Transform& transform,
+    const Velocity& velocity,
+    const Missile& missile,
+    double current_time
+) {
+    const EngagementEventRecorderRef* recorder_ref = world.get<EngagementEventRecorderRef>();
+    if (!recorder_ref || !recorder_ref->recorder || missile.target_id == 0) {
+        return;
+    }
+
+    flecs::entity target_entity = world.entity(missile.target_id);
+    if (!target_entity.is_valid()) {
+        return;
+    }
+    const Transform* target_transform = target_entity.get<Transform>();
+    if (!target_transform) {
+        return;
+    }
+
+    constexpr const char* kReason = "missile_max_flight_time_exceeded";
+    constexpr const char* kOutcomeState = "missile_timeout";
+    const Velocity* target_velocity = target_entity.get<Velocity>();
+    const double nearest_time =
+        std::isfinite(missile.proximity_min_time_s) ? missile.proximity_min_time_s : current_time;
+    const double miss_distance_m =
+        guidance_timeout_miss_distance(missile, *target_transform, transform);
+    const auto local_point = guidance_timeout_local_point(missile, *target_transform, transform);
+    const double closure_mps = std::max(
+        guidance_closure_mps(transform, *target_transform, velocity, target_velocity),
+        std::max(0.0, missile.filtered_closing_speed_mps));
+    const auto missile_axis = guidance_velocity_axis_in_target_body(*target_transform, velocity);
+    const double trigger_radius_m = std::isfinite(missile.fuze_profile.trigger_radius_m)
+                                        ? missile.fuze_profile.trigger_radius_m
+                                        : missile.fuse_distance;
+    const double fuze_reliability = std::clamp(missile.fuze_profile.reliability, 0.0, 1.0);
+
+    NearestApproachEvent nearest{};
+    nearest.header.stage = std::string(kLethalityChainStageNearestApproach);
+    nearest.header.status = "observed";
+    nearest.header.reason = kReason;
+    nearest.header.source_time_s = nearest_time;
+    nearest.header.fidelity_mode = "runtime";
+    nearest.header.evidence_level = "observed_runtime";
+    nearest.header.confidence = 1.0;
+    nearest.nearest_approach_time_s = nearest_time;
+    nearest.miss_distance_m = miss_distance_m;
+    nearest.local_forward_m = local_point[0];
+    nearest.local_right_m = local_point[1];
+    nearest.local_up_m = local_point[2];
+    nearest.closure_mps = closure_mps;
+    nearest.aspect_bucket =
+        guidance_nearest_approach_aspect_bucket(local_point[0], local_point[1]);
+    EngagementNearestApproachEventRecord nearest_record{};
+    nearest_record.munition_entity_id = static_cast<std::uint64_t>(missile_entity.id());
+    nearest_record.shooter_id = missile.attacker_id;
+    nearest_record.target_id = missile.target_id;
+    nearest_record.event = std::move(nearest);
+    (void)recorder_ref->recorder->record_nearest_approach_event(std::move(nearest_record));
+
+    FuzeEvaluationEvent fuze{};
+    fuze.header.stage = std::string(kLethalityChainStageFuze);
+    fuze.header.status = "evaluated";
+    fuze.header.reason = kReason;
+    fuze.header.source_time_s = current_time;
+    fuze.header.fidelity_mode = "runtime";
+    fuze.header.evidence_level = "observed_runtime";
+    fuze.header.confidence = 1.0;
+    fuze.fuze_type = fuze_profile_type(missile.fuze_profile);
+    fuze.armed = false;
+    fuze.triggered = false;
+    fuze.failure_reason = kReason;
+    fuze.delay_s = std::max(0.0, missile.fuze_profile.delay_s);
+    fuze.reliability = fuze_reliability;
+    fuze.sample = 1.0;
+    fuze.expected_detonation_probability = 0.0;
+    fuze.sampled_outcome = true;
+    fuze.trigger_radius_m = trigger_radius_m;
+    EngagementFuzeEvaluationEventRecord fuze_record{};
+    fuze_record.munition_entity_id = static_cast<std::uint64_t>(missile_entity.id());
+    fuze_record.shooter_id = missile.attacker_id;
+    fuze_record.target_id = missile.target_id;
+    fuze_record.event = std::move(fuze);
+    (void)recorder_ref->recorder->record_fuze_evaluation_event(std::move(fuze_record));
+
+    const EngagementDamageStateSnapshot snapshot =
+        recorder_ref->recorder->capture_engagement_damage_state(missile.target_id);
+    EngagementEffectsDamageEventRecord effects_record{};
+    effects_record.munition_entity_id = static_cast<std::uint64_t>(missile_entity.id());
+    effects_record.target_id = missile.target_id;
+    effects_record.before = snapshot;
+    effects_record.after = snapshot;
+    EffectsEvent& effects = effects_record.effects;
+    effects.trigger_type = std::string(kLethalityReasonMissileTimeout);
+    effects.outcome_state = kOutcomeState;
+    effects.detonation_time_s = current_time;
+    effects.nearest_approach_time_s = nearest_time;
+    effects.miss_distance_m = miss_distance_m;
+    effects.detonation_local_forward_m = local_point[0];
+    effects.detonation_local_right_m = local_point[1];
+    effects.detonation_local_up_m = local_point[2];
+    effects.detonation_heading_deg = transform.heading;
+    effects.detonation_pitch_deg = transform.pitch;
+    effects.detonation_roll_deg = transform.roll;
+    effects.closure_mps = closure_mps;
+    effects.missile_axis_forward = missile_axis[0];
+    effects.missile_axis_right = missile_axis[1];
+    effects.missile_axis_up = missile_axis[2];
+    effects.quality = 0.0;
+    effects.confidence = 0.0;
+    effects.effect_family = warhead_effect_family(missile.warhead_profile);
+    effects.warhead_mass_kg =
+        std::isfinite(missile.warhead_profile.mass_kg) ? missile.warhead_profile.mass_kg : 0.0;
+    effects.warhead_lethal_radius_m = std::isfinite(missile.warhead_profile.lethal_radius_m)
+                                          ? missile.warhead_profile.lethal_radius_m
+                                          : missile.fuse_distance;
+    effects.warhead_profile_synthetic = missile.warhead_profile.synthetic;
+    effects.damage_scalar_synthetic = missile.warhead_profile.damage_scalar_synthetic;
+    effects.fuze_type = fuze_profile_type(missile.fuze_profile);
+    effects.fuze_trigger_radius_m = trigger_radius_m;
+    effects.fuze_delay_s = std::max(0.0, missile.fuze_profile.delay_s);
+    effects.fuze_reliability = fuze_reliability;
+    effects.fuze_profile_synthetic = missile.fuze_profile.synthetic;
+    effects.fuze_signature_source = "timeout";
+    effects.fuze_target_signature = 0.0;
+    effects.fuze_signature_scale = 1.0;
+    effects.fuze_effective_reliability = 0.0;
+    (void)recorder_ref->recorder->record_effects_damage_event(std::move(effects_record));
 }
 
 void ensure_mass_state_initialized(flecs::entity missile_entity, double reference_area_m2) {
@@ -424,6 +669,7 @@ public:
         }
         if (missile.max_flight_time_s > 0.0 &&
             (current_time - missile.launch_time) > missile.max_flight_time_s) {
+            record_missile_timeout_event(world, missile_entity, transform, velocity, missile, current_time);
             missile.active = false;
             missile_entity.destruct();
             return;

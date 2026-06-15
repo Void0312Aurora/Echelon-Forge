@@ -157,7 +157,7 @@ class FuzeRuntimeMixin:
     fuze = events.fuze_evaluation_events[-1]
     effects = events.effects_events[-1]
     self.assertEqual(str(nearest.header.reason), "fuze_armed")
-    self.assertEqual(str(fuze.header.stage), "fuze_evaluation")
+    self.assertEqual(str(fuze.header.stage), "fuze")
     self.assertEqual(str(fuze.header.status), "evaluated")
     self.assertEqual(str(fuze.header.reason), "fuze_armed")
     self.assertEqual(int(fuze.header.parent_event_id), int(nearest.header.event_id))
@@ -253,7 +253,7 @@ class FuzeRuntimeMixin:
       float(effects.nearest_approach_time_s),
       delta=sim.get_time_step() + 1.0e-6,
     )
-    self.assertEqual(str(fuze.header.stage), "fuze_evaluation")
+    self.assertEqual(str(fuze.header.stage), "fuze")
     self.assertEqual(str(fuze.header.status), "evaluated")
     self.assertEqual(str(fuze.header.reason), "fuze_no_detonation")
     self.assertEqual(int(fuze.header.chain_id), int(nearest.header.chain_id))
@@ -426,7 +426,7 @@ class FuzeRuntimeMixin:
     contact_nearest = contact_events.nearest_approach_events[-1]
     contact_fuze = contact_events.fuze_evaluation_events[-1]
     self.assertEqual(str(contact_nearest.header.reason), "miss_outside_trigger_radius")
-    self.assertEqual(str(contact_fuze.header.stage), "fuze_evaluation")
+    self.assertEqual(str(contact_fuze.header.stage), "fuze")
     self.assertEqual(str(contact_fuze.header.status), "evaluated")
     self.assertEqual(str(contact_fuze.header.reason), "miss_outside_trigger_radius")
     self.assertEqual(int(contact_fuze.header.chain_id), int(contact_nearest.header.chain_id))

@@ -252,7 +252,7 @@
       ]
     },
     {
-      "path": "tests/world_batch/test_world_batch_runtime.py",
+      "path": "tests/world_batch/test_world_batch_runtime_surface.py",
       "classification": "deprecated_candidate",
       "owner": "WP16-D",
       "next_gate": "WP16-D Legacy Path Deprecation And Compatibility Gates",
@@ -264,7 +264,7 @@
       ]
     },
     {
-      "path": "tests/world_batch/test_world_batch_vec_env.py",
+      "path": "tests/world_batch/test_world_batch_vec_env_command_chain.py",
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",

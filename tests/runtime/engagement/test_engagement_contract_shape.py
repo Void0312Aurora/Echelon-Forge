@@ -86,6 +86,19 @@ def test_engagement_contract_header_exposes_cross_domain_launch_surface() -> Non
 def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> None:
   header = _header_text()
 
+  for marker in (
+    "kLethalityChainContractSchemaVersion",
+    "kLethalityChainCanonicalStages",
+    "kLethalityChainTerminalNegativeReasons",
+    "kLethalityObservationModeSampledRuntime",
+    "kLethalityObservationModeExpectedProjection",
+    "kLethalityConsumerVisibilityDiagnosticsAndTraining",
+    "kLethalityReasonFuzeNoDetonation",
+    "kLethalityReasonMissOutsideTriggerRadius",
+    "kLethalityReasonMissileTimeout",
+  ):
+    assert marker in header
+
   common_header_fields = (
     "schema_version",
     "chain_id",
@@ -102,6 +115,8 @@ def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> N
     "producer_node_id",
     "fidelity_mode",
     "evidence_level",
+    "observation_mode",
+    "consumer_visibility",
     "confidence",
   )
   _assert_fields_present(_struct_body(header, "LethalityChainHeader"), common_header_fields)
@@ -126,6 +141,8 @@ def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> N
       "delay_s",
       "reliability",
       "sample",
+      "expected_detonation_probability",
+      "sampled_outcome",
     ),
     "WarheadMechanismEvent": (
       "header",
@@ -167,7 +184,17 @@ def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> N
       "mission_capability_after",
       "mobility_capability_before",
       "mobility_capability_after",
+      "control_delta",
+      "engine_delta",
+      "fuel_leak_delta",
       "fire_state",
+      "aircraft_damage_state_before",
+      "aircraft_damage_state_after",
+      "aircraft_damage_state_delta",
+      "air_system_hit_flags",
+      "air_system_spatial_scales",
+      "vulnerability_scale_trace",
+      "loss_state_to",
     ),
     "StructuralBreakupEvent": (
       "header",
@@ -396,6 +423,9 @@ def test_engagement_contract_header_exposes_lifecycle_effects_and_damage_surface
       "vulnerability_effect_scale_evidence_row_id",
       "vulnerability_effect_scale_evidence_source_ref",
       "vulnerability_effect_scale_evidence_provenance",
+      "air_system_hit_flags",
+      "air_system_spatial_scales",
+      "vulnerability_scale_trace",
     ),
   )
   _assert_fields_present(

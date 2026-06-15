@@ -492,7 +492,7 @@ inline void damage_record_nearest_approach_event(flecs::entity munition_entity,
     }
 
     NearestApproachEvent event{};
-    event.header.stage = "nearest_approach";
+    event.header.stage = std::string(kLethalityChainStageNearestApproach);
     event.header.status = "observed";
     event.header.reason = reason;
     event.header.source_time_s =
@@ -528,7 +528,7 @@ inline void damage_record_fuze_evaluation_event(
     }
 
     FuzeEvaluationEvent event{};
-    event.header.stage = "fuze_evaluation";
+    event.header.stage = std::string(kLethalityChainStageFuze);
     event.header.status = "evaluated";
     event.header.reason = reason;
     event.header.source_time_s = current_time;
@@ -542,6 +542,8 @@ inline void damage_record_fuze_evaluation_event(
     event.delay_s = std::max(0.0, delay_s);
     event.reliability = std::clamp(reliability, 0.0, 1.0);
     event.sample = std::clamp(sample, 0.0, 1.0);
+    event.expected_detonation_probability = armed ? event.reliability : 0.0;
+    event.sampled_outcome = true;
     event.trigger_radius_m = trigger_radius_m;
     event.contact_surface_distance_m = contact_fuze ? contact_evidence.surface_distance_m : 0.0;
     event.contact_penetration_depth_m = contact_fuze ? contact_evidence.penetration_depth_m : 0.0;
@@ -893,11 +895,13 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     std::max(closure_mps, std::max(0.0, m[i].filtered_closing_speed_mps));
                 if (detonation_metric_m > effective_trigger_radius_m) {
                     damage_record_nearest_approach_event(
-                        it.entity(i), m[i], recorder_ref, "miss_outside_trigger_radius",
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonMissOutsideTriggerRadius),
                         current_time, m[i].proximity_min_time_s, min_dist, event_closure_mps);
                     damage_record_fuze_evaluation_event(
-                        it.entity(i), m[i], recorder_ref, "miss_outside_trigger_radius", false,
-                        false, current_time, m[i].fuze_profile.delay_s, fuze_reliability, 1.0,
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonMissOutsideTriggerRadius), false, false,
+                        current_time, m[i].fuze_profile.delay_s, fuze_reliability, 1.0,
                         trigger_radius_m, contact_fuze, contact_evidence, false);
                     it.entity(i).destruct();
                     continue;
@@ -916,17 +920,20 @@ inline void register_damage_system_common(flecs::world &ecs) {
 
                 if (!contact_fuze && !proximity_fuze_has_terminal_guidance_support(m[i])) {
                     damage_record_nearest_approach_event(
-                        it.entity(i), m[i], recorder_ref, "fuze_no_terminal_track", current_time,
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonFuzeNoTerminalTrack), current_time,
                         m[i].proximity_min_time_s, min_dist, event_closure_mps);
                     damage_record_fuze_evaluation_event(
-                        it.entity(i), m[i], recorder_ref, "fuze_no_terminal_track", false, false,
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonFuzeNoTerminalTrack), false, false,
                         current_time, m[i].fuze_profile.delay_s, fuze_reliability, 1.0,
                         trigger_radius_m, contact_fuze, contact_evidence, false);
                     damage_record_fuze_no_detonation_event(
                         it.entity(i), m[i], *t_pos, p[i], recorder_ref, trigger_type,
-                        "fuze_no_terminal_track", current_time, m[i].proximity_min_time_s, min_dist,
-                        trigger_radius_m, quality, 0.0, fuze_signature, contact_fuze,
-                        contact_evidence, event_closure_mps, missile_axis);
+                        std::string(kLethalityReasonFuzeNoTerminalTrack), current_time,
+                        m[i].proximity_min_time_s, min_dist, trigger_radius_m, quality, 0.0,
+                        fuze_signature, contact_fuze, contact_evidence, event_closure_mps,
+                        missile_axis);
                     it.entity(i).destruct();
                     continue;
                 }
@@ -940,30 +947,34 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const double fuze_sample = damage_rand_uniform01(m[i].rng_state);
                 if (fuze_sample > hit_prob) {
                     damage_record_nearest_approach_event(
-                        it.entity(i), m[i], recorder_ref, "fuze_no_detonation", current_time,
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonFuzeNoDetonation), current_time,
                         m[i].proximity_min_time_s, min_dist, event_closure_mps);
                     damage_record_fuze_evaluation_event(
-                        it.entity(i), m[i], recorder_ref, "fuze_no_detonation", true, false,
+                        it.entity(i), m[i], recorder_ref,
+                        std::string(kLethalityReasonFuzeNoDetonation), true, false,
                         current_time, m[i].fuze_profile.delay_s, hit_prob, fuze_sample,
                         trigger_radius_m, contact_fuze, contact_evidence,
                         contact_fuze && contact_evidence.inside_hitbox);
                     damage_record_fuze_no_detonation_event(
                         it.entity(i), m[i], *t_pos, p[i], recorder_ref, trigger_type,
-                        "fuze_no_detonation", current_time, m[i].proximity_min_time_s, min_dist,
-                        trigger_radius_m, quality, hit_prob, fuze_signature, contact_fuze,
-                        contact_evidence, event_closure_mps, missile_axis);
+                        std::string(kLethalityReasonFuzeNoDetonation), current_time,
+                        m[i].proximity_min_time_s, min_dist, trigger_radius_m, quality, hit_prob,
+                        fuze_signature, contact_fuze, contact_evidence, event_closure_mps,
+                        missile_axis);
                     it.entity(i).destruct();
                     continue;
                 }
 
                 const double fuze_delay_s = std::max(0.0, m[i].fuze_profile.delay_s);
-                damage_record_nearest_approach_event(it.entity(i), m[i], recorder_ref, "fuze_armed",
-                                                     current_time, m[i].proximity_min_time_s,
-                                                     min_dist, event_closure_mps);
+                damage_record_nearest_approach_event(
+                    it.entity(i), m[i], recorder_ref, std::string(kLethalityReasonFuzeArmed),
+                    current_time, m[i].proximity_min_time_s, min_dist, event_closure_mps);
                 damage_record_fuze_evaluation_event(
-                    it.entity(i), m[i], recorder_ref, "fuze_armed", true, true, current_time,
-                    fuze_delay_s, hit_prob, fuze_sample, trigger_radius_m, contact_fuze,
-                    contact_evidence, contact_fuze && contact_evidence.inside_hitbox);
+                    it.entity(i), m[i], recorder_ref, std::string(kLethalityReasonFuzeArmed),
+                    true, true, current_time, fuze_delay_s, hit_prob, fuze_sample,
+                    trigger_radius_m, contact_fuze, contact_evidence,
+                    contact_fuze && contact_evidence.inside_hitbox);
                 m[i].fuze_delay_armed = true;
                 m[i].fuze_nearest_approach_time_s = std::isfinite(m[i].proximity_min_time_s)
                                                         ? m[i].proximity_min_time_s

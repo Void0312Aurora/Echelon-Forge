@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import math
 import os
@@ -96,7 +96,7 @@ def _standard_fuze_event(
       chain_id=301,
       event_id=103,
       parent_event_id=102,
-      stage="fuze_evaluation",
+      stage="fuze",
       status="evaluated",
       reason=reason,
     ),
@@ -235,6 +235,55 @@ def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
   )
 
 
+def _standard_platform_consequence_event() -> SimpleNamespace:
+  return SimpleNamespace(
+    header=_header(
+      chain_id=301,
+      event_id=202,
+      parent_event_id=101,
+      stage="platform_consequence",
+      status="observed",
+      reason="generic_research_platform_consequence_projection",
+      target_id=200,
+    ),
+    mission_capability_before=0.92,
+    mission_capability_after=0.30,
+    mobility_capability_before=0.88,
+    mobility_capability_after=0.75,
+    sensor_capability_before=0.90,
+    sensor_capability_after=0.60,
+    survivability_capability_before=0.85,
+    survivability_capability_after=0.70,
+    mission_kill=True,
+    mobility_kill=False,
+    sensor_kill=False,
+    survivability_kill=False,
+    control_delta=-0.10,
+    engine_delta=-0.05,
+    fuel_leak_delta=0.20,
+    fire_state="fire=0.000000->0.200000",
+    aircraft_damage_state_before=(
+      "control=1.000000,hydraulic=1.000000,propulsion=1.000000,fire=0.000000"
+    ),
+    aircraft_damage_state_after=(
+      "control=0.900000,hydraulic=0.950000,propulsion=0.950000,fire=0.200000"
+    ),
+    aircraft_damage_state_delta=(
+      "control=-0.100000,hydraulic=-0.050000,propulsion=-0.050000,fire=0.200000"
+    ),
+    air_system_hit_flags="sensor=1,propulsion=0,control=1,structure=1",
+    air_system_spatial_scales="sensor=0.830000,propulsion=0.000000,control=0.420000,structure=0.910000",
+    vulnerability_scale_trace=(
+      "present=1,calibrated=0,pk_authority=0,deterministic_fuze_authority=0,"
+      "aspect=beam,family=1.000000,aspect_scale=1.000000,closure_mps=725.000000,"
+      "closure_scale=1.000000,miss_distance_scale=1.000000,effect_scale=1.000000,"
+      "source=profile_scale,row="
+    ),
+    loss_state_from="combat_capable",
+    loss_state_to="mission_kill",
+  )
+
+
 def _dummy_lethality_events() -> SimpleNamespace:
   effect = SimpleNamespace(
     event_id=101,
@@ -276,6 +325,10 @@ def _dummy_lethality_events() -> SimpleNamespace:
     target=_entity(200),
     source_event_id=101,
     system_health_delta=-0.35,
+    platform_damage_state_delta=(
+      "mission=-0.400000,mobility=-0.200000,"
+      "sensor=-0.350000,survivability=-0.100000"
+    ),
     mission_kill=True,
     mobility_kill=False,
     sensor_kill=True,
@@ -299,10 +352,216 @@ def _dummy_lethality_events() -> SimpleNamespace:
     spatial_coverage_events=[],
     component_load_events=[],
     component_damage_events=[],
+    platform_consequence_events=[],
   )
 
 
 class DiagnosticsProcessProbeSummaryTests(unittest.TestCase):
+  def test_platform_damage_state_delta_parser_extracts_capability_terms(self) -> None:
+    deltas = probe._parse_platform_damage_state_delta(
+      "mission=-0.400000,mobility=-0.200000,sensor=-0.350000,survivability=-0.100000"
+    )
+
+    self.assertAlmostEqual(deltas["mission_capability_delta"], -0.4, places=6)
+    self.assertAlmostEqual(deltas["mobility_capability_delta"], -0.2, places=6)
+    self.assertAlmostEqual(deltas["sensor_capability_delta"], -0.35, places=6)
+    self.assertAlmostEqual(deltas["survivability_margin_delta"], -0.1, places=6)
+
+  def test_component_load_rows_recover_candidate_failure_probability_from_effect_rows(self) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = []
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+
+    component_load = next(row for row in rows if row["stage"] == "component_load")
+    self.assertAlmostEqual(component_load["component_failure_probability"], 0.82, places=6)
+    self.assertAlmostEqual(component_load["component_failure_sample"], 0.91, places=6)
+    self.assertAlmostEqual(component_load["component_integrity_before"], 1.0, places=6)
+    self.assertAlmostEqual(component_load["component_integrity_after"], 0.68, places=6)
+    self.assertEqual(component_load["component_failure_mode"], "cut")
+
+  def test_lethality_chain_snapshot_reports_candidate_probability_without_damage_event(self) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = []
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+
+    self.assertEqual(snapshot["lethality_chain_component_damage_count"], 0)
+    self.assertEqual(
+      snapshot["lethality_chain_component_name"],
+      "right_aileron_actuator",
+    )
+    self.assertEqual(snapshot["lethality_chain_component_damage_name"], "")
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_component_failure_probability"],
+      0.82,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_component_failure_sample"],
+      0.91,
+      places=6,
+    )
+
+  def test_episode_summary_preserves_candidate_component_identity_from_chain_snapshot(self) -> None:
+    events = _dummy_lethality_events()
+    events.effects_events[0].component_mechanism_load_rows = [
+      _effect_component_damage_row(sample=0.91)
+    ]
+    events.component_load_events = [_standard_component_load_event()]
+    events.component_damage_events = []
+    chain_rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+
+    summary = probe._summarize_episode(
+      [
+        {"episode": 0, "step": 0, "target_health": 100.0, "target_range_geom_m": 8000.0},
+        {"episode": 0, "step": 1, "target_health": 100.0, "target_range_geom_m": 7900.0},
+      ],
+      lethality_chain_rows=chain_rows,
+    )
+
+    self.assertEqual(summary["lethality_chain_component_name"], "right_aileron_actuator")
+    self.assertEqual(summary["lethality_chain_component_system"], "flight_control")
+    self.assertEqual(summary["lethality_chain_component_damage_count"], 0)
+    self.assertAlmostEqual(summary["lethality_chain_component_failure_sample"], 0.91, places=6)
+
+  def test_episode_summary_final_state_ignores_vecenv_auto_reset_row(self) -> None:
+    summary = probe._summarize_episode(
+      [
+        {
+          "episode": 0,
+          "step": 0,
+          "sim_time_s": 0.0,
+          "target_health": 100.0,
+          "target_range_geom_m": 9000.0,
+          "missiles_remaining": 4,
+        },
+        {
+          "episode": 0,
+          "step": 2399,
+          "sim_time_s": 119.95,
+          "target_health": 100.0,
+          "target_range_geom_m": 103.0,
+          "missiles_remaining": 3,
+        },
+        {
+          "episode": 0,
+          "step": 2400,
+          "sim_time_s": 0.0,
+          "target_health": math.nan,
+          "target_range_geom_m": 35000.0,
+          "missiles_remaining": 4,
+          "truncated": 1,
+          "termination_reason": "combat_timeout",
+        },
+      ],
+    )
+
+    self.assertEqual(summary["steps"], 2400)
+    self.assertEqual(summary["termination_reason"], "combat_timeout")
+    self.assertTrue(summary["truncated"])
+    self.assertEqual(summary["final_missiles"], 3)
+    self.assertAlmostEqual(summary["final_target_health"], 100.0, places=6)
+
+  def test_lethality_chain_snapshot_reports_platform_capability_deltas(self) -> None:
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=_dummy_lethality_events(),
+    )
+
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+
+    self.assertAlmostEqual(snapshot["lethality_chain_system_health_delta"], -0.35, places=6)
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_mission_capability_delta"],
+      -0.4,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_mobility_capability_delta"],
+      -0.2,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_sensor_capability_delta"],
+      -0.35,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_survivability_margin_delta"],
+      -0.1,
+      places=6,
+    )
+
+  def test_standard_platform_consequence_event_supplies_before_after_trace(self) -> None:
+    events = _dummy_lethality_events()
+    events.platform_consequence_events = [_standard_platform_consequence_event()]
+
+    rows = probe._lethality_chain_rows(
+      episode=0,
+      step=12,
+      sim_time_s=0.6,
+      engagement_events=events,
+    )
+    platform_rows = [row for row in rows if row["stage"] == "platform_consequence"]
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+
+    self.assertEqual(len(platform_rows), 1)
+    self.assertEqual(platform_rows[0]["source_event_kind"], "PlatformConsequenceEvent")
+    self.assertAlmostEqual(snapshot["lethality_chain_system_health_delta"], -0.55)
+    self.assertAlmostEqual(snapshot["lethality_chain_mission_capability_before"], 0.92)
+    self.assertAlmostEqual(snapshot["lethality_chain_mission_capability_after"], 0.30)
+    self.assertAlmostEqual(snapshot["lethality_chain_mission_capability_delta"], -0.62)
+    self.assertAlmostEqual(snapshot["lethality_chain_control_delta"], -0.10)
+    self.assertEqual(
+      snapshot["lethality_chain_aircraft_damage_state_delta"],
+      "control=-0.100000,hydraulic=-0.050000,propulsion=-0.050000,fire=0.200000",
+    )
+    self.assertEqual(
+      snapshot["lethality_chain_air_system_hit_flags"],
+      "sensor=1,propulsion=0,control=1,structure=1",
+    )
+    self.assertIn("sensor=0.830000", snapshot["lethality_chain_air_system_spatial_scales"])
+    self.assertIn("effect_scale=1.000000", snapshot["lethality_chain_vulnerability_scale_trace"])
+
+    summary = probe._summarize_episode(
+      [
+        {"episode": 0, "step": 0, "target_health": 100.0, "target_range_geom_m": 8000.0},
+        {"episode": 0, "step": 1, "target_health": 100.0, "target_range_geom_m": 7900.0},
+      ],
+      lethality_chain_rows=rows,
+    )
+
+    self.assertAlmostEqual(summary["lethality_chain_mission_capability_before"], 0.92)
+    self.assertEqual(summary["lethality_chain_fire_state"], "fire=0.000000->0.200000")
+    self.assertIn("control=1", summary["lethality_chain_air_system_hit_flags"])
+
   def test_episode_summary_reports_authorized_window_policy_diagnostics(self) -> None:
     def row(
       step: int,
@@ -788,6 +1047,48 @@ class A6EventValueProcessProbeTests(unittest.TestCase):
     self.assertAlmostEqual(summary["a6_event_fire_prob_mean_open"], 0.5, places=6)
     self.assertAlmostEqual(summary["a6_event_fire_prob_max_open"], 0.75, places=6)
     self.assertEqual(summary["policy_event_mode_fire_once_count"], 2)
+
+  def test_episode_summary_reports_first_release_geometry_snapshot(self) -> None:
+    release_row = _row(
+      2,
+      state="AuthorizedReady",
+      mask=1,
+      target_range_m=9450.0,
+      target_track_age_s=1.25,
+    )
+    release_row["sim_time_s"] = 0.4
+    release_row["missile_release"] = 1
+    release_row["missile_release_delta"] = 1
+    release_row["target_health"] = 99.0
+    release_row["blue_health"] = 88.0
+
+    summary = probe._summarize_episode(
+      [
+        _row(0),
+        _row(1, state="AuthorizedReady", mask=1, target_range_m=9500.0),
+        release_row,
+        _row(3, state="FiredAssess", target_range_m=9300.0),
+      ]
+    )
+
+    self.assertEqual(summary["first_release_step"], 2)
+    self.assertAlmostEqual(summary["first_release_sim_time_s"], 0.4, places=6)
+    self.assertAlmostEqual(
+      summary["first_release_target_range_geom_m"],
+      9450.0,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      summary["first_release_target_range_track_m"],
+      9450.0,
+      places=6,
+    )
+    self.assertAlmostEqual(summary["first_release_target_track_age_s"], 1.25, places=6)
+    self.assertEqual(summary["first_release_legal_window_age_steps"], 2)
+    self.assertEqual(summary["first_release_fire_mask"], 1)
+    self.assertEqual(summary["first_release_engagement_state"], "AuthorizedReady")
+    self.assertAlmostEqual(summary["first_release_target_health"], 99.0, places=6)
+    self.assertAlmostEqual(summary["first_release_blue_health"], 88.0, places=6)
 
   def test_episode_summary_reports_a7_credit_signs_and_prewindow_cumulative_hazard(self) -> None:
     summary = probe._summarize_episode(

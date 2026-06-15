@@ -181,6 +181,9 @@ struct EffectsEventSnapshot {
     std::string vulnerability_effect_scale_evidence_row_id;
     std::string vulnerability_effect_scale_evidence_source_ref;
     std::string vulnerability_effect_scale_evidence_provenance;
+    std::string air_system_hit_flags;
+    std::string air_system_spatial_scales;
+    std::string vulnerability_scale_trace;
     std::string producer_node_id;
 };
 
@@ -444,6 +447,9 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
             snapshot.vulnerability_effect_scale_evidence_source_ref,
         .vulnerability_effect_scale_evidence_provenance =
             snapshot.vulnerability_effect_scale_evidence_provenance,
+        .air_system_hit_flags = snapshot.air_system_hit_flags,
+        .air_system_spatial_scales = snapshot.air_system_spatial_scales,
+        .vulnerability_scale_trace = snapshot.vulnerability_scale_trace,
         .producer_node_id = snapshot.producer_node_id,
     };
 }

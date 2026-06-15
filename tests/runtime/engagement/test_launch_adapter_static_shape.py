@@ -253,6 +253,9 @@ def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_con
       "vulnerability_effect_scale_evidence_row_id",
       "vulnerability_effect_scale_evidence_source_ref",
       "vulnerability_effect_scale_evidence_provenance",
+      "air_system_hit_flags",
+      "air_system_spatial_scales",
+      "vulnerability_scale_trace",
     ),
   )
   _assert_fields_present(

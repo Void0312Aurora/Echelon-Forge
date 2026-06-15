@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -462,6 +462,7 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
       "std::vector<MunitionLifecyclePacket> munition_lifecycle_packets",
       "std::vector<EffectsEvent> effects_events",
       "std::vector<DamageReport> damage_reports",
+      "std::vector<PlatformConsequenceEvent> platform_consequence_events",
       "std::vector<DiagnosticsTrace> diagnostics_traces",
     ]:
       self.assertIn(field, packet_body)
@@ -498,6 +499,23 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertIn("packet.refs = request.refs", body)
     self.assertIn("packet.trace_ids = request.trace_ids", body)
     self.assertIn("stable_sort_engagement_packet(&packet)", body)
+    self.assertIn(
+      "stable_sort_lethality_header_events(&packet->nearest_approach_events)",
+      facade_source,
+    )
+    self.assertIn(
+      "stable_sort_lethality_header_events(&packet->fuze_evaluation_events)",
+      facade_source,
+    )
+    self.assertIn("stable_sort_platform_consequence_events(&packet->platform_consequence_events)", facade_source)
+    self.assertIn("packet.nearest_approach_events.insert", facade_source)
+    self.assertIn("packet.fuze_evaluation_events.insert", facade_source)
+    self.assertIn("packet.warhead_mechanism_events.insert", facade_source)
+    self.assertIn("packet.spatial_coverage_events.insert", facade_source)
+    self.assertIn("packet.component_load_events.insert", facade_source)
+    self.assertIn("packet.component_damage_events.insert", facade_source)
+    self.assertIn("packet.platform_consequence_events.insert", facade_source)
+    self.assertIn("assign_world_index(event.header, world_index)", facade_source)
     self.assertIn("apply_export_packet_metadata(", body)
     self.assertIn("finalize_recent_event_metadata(&packet)", body)
     self.assertIn("finalize_diagnostics_ancestry(&packet)", body)

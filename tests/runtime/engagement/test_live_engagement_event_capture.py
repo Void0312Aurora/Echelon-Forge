@@ -160,6 +160,34 @@ def test_simulation_kernel_exposes_read_only_recent_engagement_events_getter() -
   assert "lhs.trace_id < rhs.trace_id" in store_impl
 
 
+def test_guidance_timeout_records_terminal_negative_event_before_destroying_missile() -> None:
+  guidance = _read("src/models/weapons/default_guidance_model.cpp")
+  store_impl = _read("src/core/engine/simulation_kernel_engagement_event_store.cpp")
+
+  assert "core/interfaces/engagement_event_recorder.h" in guidance
+  assert "void record_missile_timeout_event(" in guidance
+  assert 'constexpr const char* kOutcomeState = "missile_timeout";' in guidance
+  assert 'nearest.header.reason = kReason;' in guidance
+  assert 'fuze.failure_reason = kReason;' in guidance
+  assert "effects.trigger_type = std::string(kLethalityReasonMissileTimeout);" in guidance
+  assert "effects.outcome_state = kOutcomeState;" in guidance
+
+  timeout_block = _extract_function_block(
+    guidance,
+    "if (missile.max_flight_time_s > 0.0 &&",
+  )
+  assert (
+    "record_missile_timeout_event(world, missile_entity, transform, velocity, missile, current_time);"
+    in timeout_block
+  )
+  assert "missile_entity.destruct();" in timeout_block
+  assert timeout_block.index("record_missile_timeout_event(") < timeout_block.index(
+    "missile_entity.destruct();"
+  )
+
+  assert "effects.outcome_state != std::string(kLethalityReasonMissileTimeout)" in store_impl
+
+
 def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> None:
   recorder_header = _read("src/core/interfaces/engagement_event_recorder.h")
   store_header = _read("src/core/engine/simulation_kernel_engagement_event_store.h")
@@ -227,6 +255,8 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
   assert "const std::uint64_t target_id = record.target_id;" in store_impl
   assert "const double event_time_s = record.effects.detonation_time_s;" in store_impl
   assert "effects = std::move(record.effects);" in store_impl
+  assert "recent_engagement_events_.effects_events.push_back(effects);" in store_impl
+  assert "recent_engagement_events_.effects_events.push_back(std::move(effects))" not in store_impl
   assert "LaunchEvent event{}" in store_impl
   assert "EffectsEvent effects{}" in store_impl
   assert "DamageReport report{}" in store_impl
@@ -271,7 +301,9 @@ def test_recent_event_storage_uses_shared_monotonic_ids_and_queue_aligned_sorted
   assert "trace.trace_id = next_engagement_event_id_++;" in store_impl
   assert "const std::uint64_t effects_event_id = next_engagement_event_id_++;" in store_impl
   assert "const std::uint64_t damage_report_id = next_engagement_event_id_++;" in store_impl
+  assert "const std::uint64_t platform_consequence_event_id = next_engagement_event_id_++;" in store_impl
   assert "const std::uint64_t trace_id = next_engagement_event_id_++;" in store_impl
+  assert "recent_engagement_events_.platform_consequence_events.push_back" in store_impl
   for comparator in (
     "lhs.event_id < rhs.event_id",
     "lhs.header.event_id < rhs.header.event_id",
@@ -351,6 +383,15 @@ def _make_pilot_fire_action() -> ef_py.PilotAction:
   action.fire_weapon = True
   action.throttle = 0.8
   return action
+
+
+def _make_authorized_release_command(shooter_id: int, target_id: int) -> ef_py.MissionCommand:
+  command = ef_py.MissionCommand()
+  command.active = True
+  command.authorization_to_fire = True
+  command.assigned_target_id = int(target_id)
+  command.engagement_authority_holder_id = int(shooter_id)
+  return command
 
 
 def _make_research_warhead_profile(
@@ -451,6 +492,11 @@ def _make_facade_window_launch() -> tuple[ef_py.RuntimeFacade, int, int, int]:
   action_request.action_intent.action_interface.payload_type = "pilot_action"
   action_request.action_intent.has_pilot_action = True
   action_request.action_intent.pilot_action = _make_pilot_fire_action()
+  action_request.action_intent.has_mission_command = True
+  action_request.action_intent.mission_command = _make_authorized_release_command(
+    blue_id,
+    red_id,
+  )
   request.action_requests = [action_request]
 
   result = facade.run_wp10_window(request)
@@ -632,7 +678,7 @@ def test_profiled_air_hit_records_standard_component_load_events() -> None:
     attacker_id,
     target_id,
     -0.8,
-    4.1,
+    6.0,
     0.0,
     _make_research_warhead_profile(),
     900.0,
