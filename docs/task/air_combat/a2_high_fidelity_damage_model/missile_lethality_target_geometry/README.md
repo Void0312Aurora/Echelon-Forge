@@ -424,7 +424,7 @@ Generated:
   direct surface handoff rules. Component and surface `needs_review` counts are
   now `0`; `TG-P7` remains held only for explicit ownership of `engine_core` and
   `wing_spar_center` cross-region semantics.
-- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py`: `5 passed`.
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_manifest.py tests/tools/test_airframe_geometry_review_cli.py`: `5 passed`.
 - `./build-workshop/ef_test --test-suite=components_basic`: `23` cases passed
   after building `ef_test`.
 - `pytest -q tests/architecture/damage_model`: `177 passed`; this includes the

@@ -330,7 +330,7 @@
   R11 修复左右区域映射、翼面和翼根部件位置、座舱盖/进气道/平尾显式 receiver 组件，以及直接 surface
   handoff 规则。当前 component 和 surface `needs_review` 计数均为 `0`；`TG-P7` 只因 `engine_core`
   与 `wing_spar_center` 跨区语义 ownership 仍需明确而继续 held。
-- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_review.py`：`5 passed`。
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_manifest.py tests/tools/test_airframe_geometry_review_cli.py`：`5 passed`。
 - `./build-workshop/ef_test --test-suite=components_basic`：构建 `ef_test` 后 `23` 个 case 通过。
 - `pytest -q tests/architecture/damage_model`：`177 passed`；其中包括修复后的
   Stage-C 部件失效概率 surface probe 继续选择 component rows，而不是回退到
