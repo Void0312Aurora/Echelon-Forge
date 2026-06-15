@@ -2,18 +2,30 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from types import ModuleType
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
 from tools.diagnostics.fire_timing_fault_localization import (
     chain_breakpoint,
     learnability_audit,
     real_update,
     structural_toy,
+    window_position_sweep,
 )
 
 
-VALID_MODES = {"chain_breakpoint", "learnability_audit", "real_update", "structural_toy"}
+VALID_MODES = {
+    "chain_breakpoint",
+    "learnability_audit",
+    "real_update",
+    "structural_toy",
+    "window_position_sweep",
+}
 
 
 def _extract_mode(argv: list[str]) -> str:
@@ -59,7 +71,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "Use --mode structural_toy for the abstract grouped-stopping toy, "
         "--mode real_update for the real update-path probe, or "
         "--mode chain_breakpoint for fixed-batch breakpoint attribution, or "
-        "--mode learnability_audit for oracle fire-timing learnability checks."
+        "--mode learnability_audit for oracle fire-timing learnability checks, or "
+        "--mode window_position_sweep for legal-window launch-position effect sweeps."
     )
     return parser
 
@@ -74,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_module(real_update, mode_argv)
     if mode == "learnability_audit":
         return _run_module(learnability_audit, mode_argv)
+    if mode == "window_position_sweep":
+        return _run_module(window_position_sweep, mode_argv)
     return _run_module(chain_breakpoint, mode_argv)
 
 

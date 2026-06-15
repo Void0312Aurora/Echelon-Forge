@@ -10,6 +10,8 @@ from python.testing.runtime import ensure_repo_imports
 ensure_repo_imports()
 
 from tools.diagnostics.fire_timing_fault_localization import learnability_audit as audit # noqa: E402
+from tools.diagnostics.fire_timing_fault_localization import window_position_sweep # noqa: E402
+from tools.diagnostics import lethality_chain_contract # noqa: E402
 from tools.diagnostics.fire_timing_fault_localization.chain_breakpoint import ( # noqa: E402
   _classification_metrics,
   _edge_trigger_summary,
@@ -131,6 +133,348 @@ class AirCombatFireTimingLearnabilityAuditTests(unittest.TestCase):
     self.assertEqual(summary["target_health_drop_episode_count"], 1)
     self.assertEqual(summary["release_steps"], [5])
     self.assertEqual(summary["rejected_reason_counts"], {"no_target": 1})
+
+
+class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
+  def test_window_position_uses_standardized_lethality_chain_vocabulary(self) -> None:
+    self.assertIn("fuze", lethality_chain_contract.CANONICAL_STAGES)
+    self.assertIn("fuze", lethality_chain_contract.DIAGNOSTIC_ROW_STAGES)
+    self.assertNotIn(
+      "training_projection",
+      lethality_chain_contract.DIAGNOSTIC_ROW_STAGES,
+    )
+    self.assertIn(
+      "component_damage",
+      lethality_chain_contract.EFFECTIVE_DETONATION_STAGES,
+    )
+    self.assertIn(
+      "miss_outside_trigger_radius",
+      lethality_chain_contract.TERMINAL_NEGATIVE_REASONS,
+    )
+
+  def test_window_position_verdict_requires_geometry_and_outcome_variation(self) -> None:
+    delay_summaries = [
+      {
+        "delay_steps": 0,
+        "release_episode_count": 1,
+        "mean_release_range_geom_m": 9000.0,
+        "mean_total_reward": 100.0,
+        "mean_final_target_health": 100.0,
+        "mean_damage_consequence_reward_total": 0.0,
+        "mean_component_failure_probability": 0.05,
+        "effects_episode_count": 0,
+        "damage_episode_count": 0,
+        "effective_detonation_episode_count": 0,
+        "effective_component_damage_episode_count": 0,
+        "effective_system_consequence_episode_count": 0,
+        "mission_kill_episode_count": 0,
+        "destroyed_episode_count": 0,
+      },
+      {
+        "delay_steps": 512,
+        "release_episode_count": 1,
+        "mean_release_range_geom_m": 6200.0,
+        "mean_total_reward": 112.0,
+        "mean_final_target_health": 91.0,
+        "mean_damage_consequence_reward_total": 6.0,
+        "mean_component_failure_probability": 0.21,
+        "effects_episode_count": 1,
+        "damage_episode_count": 1,
+        "effective_detonation_episode_count": 1,
+        "effective_component_damage_episode_count": 1,
+        "effective_system_consequence_episode_count": 1,
+        "mission_kill_episode_count": 0,
+        "destroyed_episode_count": 0,
+      },
+    ]
+
+    verdict = window_position_sweep._sweep_verdict(
+      delay_summaries,
+      reward_epsilon=1.0,
+      health_epsilon=1.0,
+      system_health_delta_epsilon=0.1,
+      component_failure_probability_epsilon=0.05,
+      miss_distance_epsilon_m=1.0,
+      range_epsilon_m=500.0,
+    )
+
+    self.assertTrue(verdict["release_position_variation_observed"])
+    self.assertTrue(verdict["outcome_variation_observed"])
+    self.assertTrue(verdict["categorical_effect_change"])
+    self.assertTrue(verdict["learnability_candidate"])
+
+  def test_window_position_record_preserves_release_geometry_snapshot(self) -> None:
+    record = window_position_sweep._record_from_episode_summary(
+      delay=128,
+      payload={"mode": "legal_mask_fire", "seed": 7},
+      episode_summary={
+        "episode": 3,
+        "release_count": 1,
+        "first_release_step": 42,
+        "first_release_sim_time_s": 8.4,
+        "first_release_target_range_geom_m": 7100.0,
+        "first_release_target_range_track_m": 7050.0,
+        "first_release_target_track_age_s": 0.2,
+        "first_release_legal_window_age_steps": 12,
+        "first_release_engagement_state": "AuthorizedReady",
+        "total_reward": 22.0,
+        "final_target_health": 80.0,
+        "first_release_target_health": 100.0,
+        "effects_event_count": 1,
+        "damage_report_count": 1,
+        "lethality_chain_row_count": 7,
+        "lethality_chain_chain_count": 1,
+        "lethality_chain_stages_json": '["fuze","warhead_mechanism","spatial_coverage","component_load"]',
+        "lethality_chain_fuze_triggered": True,
+        "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_expected_detonation_probability": 0.62,
+        "lethality_chain_fuze_sampled_outcome": True,
+        "lethality_chain_projected_hitbox_count": 3,
+        "lethality_chain_component_hit_count": 1,
+        "lethality_chain_component_name": "right_aileron_actuator",
+        "lethality_chain_component_system": "flight_control",
+        "lethality_chain_component_damage_count": 0,
+        "lethality_chain_component_damage_name": "",
+        "lethality_chain_component_damage_system": "",
+        "lethality_chain_component_failure_mode": "cut",
+        "lethality_chain_component_failure_severity": 0.7,
+        "lethality_chain_component_failure_probability": 0.3,
+        "lethality_chain_component_failure_sample": 0.8,
+        "lethality_chain_component_integrity_before": 1.0,
+        "lethality_chain_component_integrity_after": 0.72,
+        "lethality_chain_system_health_delta": -20.0,
+        "lethality_chain_mission_capability_before": 1.0,
+        "lethality_chain_mission_capability_after": 0.8,
+        "lethality_chain_mission_capability_delta": -0.2,
+        "lethality_chain_mobility_capability_before": 1.0,
+        "lethality_chain_mobility_capability_after": 0.9,
+        "lethality_chain_sensor_capability_before": 1.0,
+        "lethality_chain_sensor_capability_after": 0.7,
+        "lethality_chain_survivability_margin_before": 1.0,
+        "lethality_chain_survivability_margin_after": 0.95,
+        "lethality_chain_control_delta": -0.1,
+        "lethality_chain_engine_delta": 0.0,
+        "lethality_chain_fuel_leak_delta": 0.2,
+        "lethality_chain_fire_state": "fire=0.000000->0.100000",
+        "lethality_chain_aircraft_damage_state_delta": "control=-0.100000,fire=0.100000",
+      },
+    )
+
+    self.assertEqual(record["delay_steps"], 128)
+    self.assertTrue(record["released"])
+    self.assertAlmostEqual(record["first_release_target_range_geom_m"], 7100.0)
+    self.assertAlmostEqual(record["target_health_delta_from_release"], -20.0)
+    self.assertEqual(record["lethality_chain_component_name"], "right_aileron_actuator")
+    self.assertEqual(record["lethality_chain_component_damage_count"], 0)
+    self.assertTrue(record["effective_detonation"])
+    self.assertFalse(record["effective_component_damage"])
+    self.assertTrue(record["effective_system_consequence"])
+    self.assertEqual(record["lethality_chain_fuze_failure_reason"], "")
+    self.assertEqual(record["terminal_negative_reason"], "")
+    self.assertAlmostEqual(
+      record["lethality_chain_fuze_expected_detonation_probability"],
+      0.62,
+    )
+    self.assertAlmostEqual(record["lethality_chain_component_failure_probability"], 0.3)
+    self.assertAlmostEqual(record["lethality_chain_component_failure_sample"], 0.8)
+    self.assertAlmostEqual(record["lethality_chain_mission_capability_before"], 1.0)
+    self.assertAlmostEqual(record["lethality_chain_mission_capability_after"], 0.8)
+    self.assertEqual(record["lethality_chain_aircraft_damage_state_delta"], "control=-0.100000,fire=0.100000")
+
+  def test_window_position_summary_reports_unconditional_and_release_conditional_rates(self) -> None:
+    records = [
+      {
+        "released": True,
+        "release_count": 1,
+        "delay_steps": 32,
+        "first_release_step": 10,
+        "first_release_target_range_geom_m": 1000.0,
+        "first_release_target_range_track_m": 1000.0,
+        "first_release_legal_window_age_steps": 0,
+        "total_reward": 10.0,
+        "final_target_health": 100.0,
+        "target_health_delta_from_release": 0.0,
+        "damage_consequence_reward_total": 0.0,
+        "target_damage_consequence_reward_total": 0.0,
+        "lethality_chain_miss_distance_m": 3.0,
+        "lethality_chain_closure_mps": 700.0,
+        "lethality_chain_component_name": "right_aileron_actuator",
+        "lethality_chain_component_system": "flight_control",
+        "lethality_chain_component_damage_count": 1,
+        "lethality_chain_component_damage_name": "right_aileron_actuator",
+        "lethality_chain_component_damage_system": "flight_control",
+        "lethality_chain_component_failure_mode": "cut",
+        "lethality_chain_component_failure_severity": 0.7,
+        "lethality_chain_component_failure_probability": 0.5,
+        "lethality_chain_component_failure_sample": 0.2,
+        "lethality_chain_component_integrity_before": 1.0,
+        "lethality_chain_component_integrity_after": 0.75,
+        "lethality_chain_system_health_delta": -1.0,
+        "lethality_chain_mission_capability_before": 1.0,
+        "lethality_chain_mission_capability_after": 0.0,
+        "lethality_chain_mission_capability_delta": -1.0,
+        "lethality_chain_mobility_capability_before": 1.0,
+        "lethality_chain_mobility_capability_after": 1.0,
+        "lethality_chain_mobility_capability_delta": 0.0,
+        "lethality_chain_sensor_capability_before": 1.0,
+        "lethality_chain_sensor_capability_after": 0.8,
+        "lethality_chain_sensor_capability_delta": -0.2,
+        "lethality_chain_survivability_margin_before": 1.0,
+        "lethality_chain_survivability_margin_after": 1.0,
+        "lethality_chain_survivability_margin_delta": 0.0,
+        "lethality_chain_control_delta": -0.2,
+        "lethality_chain_engine_delta": 0.0,
+        "lethality_chain_fuel_leak_delta": 0.3,
+        "lethality_chain_fire_state": "fire=0.000000->0.300000",
+        "lethality_chain_aircraft_damage_state_delta": "control=-0.200000,fire=0.300000",
+        "effects_event_count": 1,
+        "damage_report_count": 1,
+        "effective_detonation": True,
+        "effective_component_damage": True,
+        "effective_system_consequence": True,
+        "lethality_chain_row_count": 8,
+        "lethality_chain_stages_json": '["fuze","warhead_mechanism","component_damage"]',
+        "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_expected_detonation_probability": 0.8,
+        "terminal_negative_reason": "",
+        "lethality_chain_mission_kill": True,
+        "lethality_chain_destroyed": False,
+        "lethality_chain_loss_state": "mission_kill",
+        "termination_reason": "running",
+      },
+      {
+        "released": False,
+        "release_count": 0,
+        "delay_steps": 32,
+        "first_release_step": None,
+        "first_release_target_range_geom_m": float("nan"),
+        "first_release_target_range_track_m": float("nan"),
+        "first_release_legal_window_age_steps": 0,
+        "total_reward": 1.0,
+        "final_target_health": float("nan"),
+        "target_health_delta_from_release": float("nan"),
+        "damage_consequence_reward_total": 0.0,
+        "target_damage_consequence_reward_total": 0.0,
+        "lethality_chain_miss_distance_m": float("nan"),
+        "lethality_chain_closure_mps": float("nan"),
+        "lethality_chain_component_name": "",
+        "lethality_chain_component_system": "",
+        "lethality_chain_component_damage_count": 0,
+        "lethality_chain_component_damage_name": "",
+        "lethality_chain_component_damage_system": "",
+        "lethality_chain_component_failure_mode": "",
+        "lethality_chain_component_failure_severity": float("nan"),
+        "lethality_chain_component_failure_probability": float("nan"),
+        "lethality_chain_component_failure_sample": float("nan"),
+        "lethality_chain_component_integrity_before": float("nan"),
+        "lethality_chain_component_integrity_after": float("nan"),
+        "lethality_chain_system_health_delta": float("nan"),
+        "lethality_chain_mission_capability_before": float("nan"),
+        "lethality_chain_mission_capability_after": float("nan"),
+        "lethality_chain_mission_capability_delta": float("nan"),
+        "lethality_chain_mobility_capability_before": float("nan"),
+        "lethality_chain_mobility_capability_after": float("nan"),
+        "lethality_chain_mobility_capability_delta": float("nan"),
+        "lethality_chain_sensor_capability_before": float("nan"),
+        "lethality_chain_sensor_capability_after": float("nan"),
+        "lethality_chain_sensor_capability_delta": float("nan"),
+        "lethality_chain_survivability_margin_before": float("nan"),
+        "lethality_chain_survivability_margin_after": float("nan"),
+        "lethality_chain_survivability_margin_delta": float("nan"),
+        "lethality_chain_control_delta": float("nan"),
+        "lethality_chain_engine_delta": float("nan"),
+        "lethality_chain_fuel_leak_delta": float("nan"),
+        "lethality_chain_fire_state": "",
+        "lethality_chain_aircraft_damage_state_delta": "",
+        "effects_event_count": 0,
+        "damage_report_count": 0,
+        "effective_detonation": False,
+        "effective_component_damage": False,
+        "effective_system_consequence": False,
+        "lethality_chain_row_count": 0,
+        "lethality_chain_stages_json": "",
+        "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_expected_detonation_probability": float("nan"),
+        "terminal_negative_reason": "",
+        "lethality_chain_mission_kill": False,
+        "lethality_chain_destroyed": False,
+        "lethality_chain_loss_state": "",
+        "termination_reason": "running",
+      },
+    ]
+
+    summary = window_position_sweep._summarize_delay(32, records)
+
+    self.assertAlmostEqual(summary["release_rate"], 0.5)
+    self.assertAlmostEqual(summary["mission_kill_rate"], 0.5)
+    self.assertAlmostEqual(summary["mission_kill_given_release_rate"], 1.0)
+    self.assertAlmostEqual(summary["effects_given_release_rate"], 1.0)
+    self.assertAlmostEqual(summary["effective_detonation_given_release_rate"], 1.0)
+    self.assertAlmostEqual(summary["effective_component_damage_given_release_rate"], 1.0)
+    self.assertAlmostEqual(summary["effective_system_consequence_given_release_rate"], 1.0)
+    self.assertAlmostEqual(summary["mean_fuze_expected_detonation_probability"], 0.8)
+    self.assertAlmostEqual(summary["mean_component_failure_sample"], 0.2)
+    self.assertAlmostEqual(summary["mean_component_damage_count"], 0.5)
+    self.assertAlmostEqual(summary["mean_component_integrity_delta"], -0.25)
+    self.assertAlmostEqual(summary["mean_mission_capability_before"], 1.0)
+    self.assertAlmostEqual(summary["mean_mission_capability_after"], 0.0)
+    self.assertAlmostEqual(summary["mean_control_delta"], -0.2)
+    self.assertEqual(
+      summary["aircraft_damage_state_delta_counts"],
+      {"": 1, "control=-0.200000,fire=0.300000": 1},
+    )
+    self.assertEqual(
+      summary["component_name_counts"],
+      {"": 1, "right_aileron_actuator": 1},
+    )
+
+  def test_window_position_record_separates_negative_fuze_event_from_effective_damage(self) -> None:
+    record = window_position_sweep._record_from_episode_summary(
+      delay=768,
+      payload={"mode": "legal_mask_fire", "seed": 20260615},
+      episode_summary={
+        "episode": 0,
+        "release_count": 1,
+        "first_release_step": 770,
+        "first_release_sim_time_s": 38.5,
+        "first_release_target_range_geom_m": 19530.0,
+        "first_release_target_range_track_m": 19540.0,
+        "first_release_target_track_age_s": 0.1,
+        "first_release_legal_window_age_steps": 0,
+        "first_release_engagement_state": "FiredAssess",
+        "total_reward": 10.0,
+        "final_target_health": 100.0,
+        "first_release_target_health": 100.0,
+        "effects_event_count": 1,
+        "damage_report_count": 1,
+        "lethality_chain_row_count": 4,
+        "lethality_chain_chain_count": 1,
+        "lethality_chain_stages_json": '["fuze","lifecycle","nearest_approach","platform_consequence"]',
+        "lethality_chain_miss_distance_m": 5.14,
+        "lethality_chain_fuze_triggered": False,
+        "lethality_chain_fuze_failure_reason": "fuze_no_detonation",
+        "lethality_chain_fuze_expected_detonation_probability": 0.41,
+        "lethality_chain_fuze_sampled_outcome": True,
+        "lethality_chain_component_damage_count": 0,
+        "lethality_chain_system_health_delta": 0.0,
+        "lethality_chain_mission_kill": False,
+        "lethality_chain_mobility_kill": False,
+        "lethality_chain_sensor_kill": False,
+        "lethality_chain_destroyed": False,
+        "lethality_chain_loss_state": "combat_capable",
+      },
+    )
+
+    self.assertEqual(record["effects_event_count"], 1)
+    self.assertEqual(record["damage_report_count"], 1)
+    self.assertFalse(record["effective_detonation"])
+    self.assertFalse(record["effective_component_damage"])
+    self.assertFalse(record["effective_system_consequence"])
+    self.assertEqual(record["terminal_negative_reason"], "fuze_no_detonation")
+    self.assertAlmostEqual(
+      record["lethality_chain_fuze_expected_detonation_probability"],
+      0.41,
+    )
 
 
 class M3S2ChainBreakpointProbeTests(unittest.TestCase):

@@ -61,7 +61,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - Unified first-event credit-head diagnostic entry for fixed-batch fitting and online update-path isolation.
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - Unified fire-timing fault-localization entry for structural toy, real update-path, chain-breakpoint, and learnability-audit probes.
+  - Unified fire-timing fault-localization entry for structural toy, real update-path, chain-breakpoint, learnability-audit, and legal-window launch-position sweep probes.
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
   - Focused cooperative training NaN/Inf tracer that reconstructs the maintained cooperative flow and stops with a JSON report.
 - [README.md](diagnostics/README.md)

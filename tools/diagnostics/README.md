@@ -53,8 +53,9 @@ Current diagnostics and probes:
   - Unified fire-timing fault-localization entry. Use `--mode structural_toy`
     for the abstract grouped-stopping toy, `--mode real_update` for real
     update-path checks, `--mode chain_breakpoint` for fixed-batch breakpoint
-    attribution, or `--mode learnability_audit` for oracle fire-timing
-    learnability checks.
+    attribution, `--mode learnability_audit` for oracle fire-timing
+    learnability checks, or `--mode window_position_sweep` for legal-window
+    launch-position effect sweeps.
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - Minimal line-protocol TCP stub for the local `game/` Arma bridge. It acknowledges `begin_session`, consumes `host_frame`, and emits synthetic `proxy_state` payloads for `echelon_bridge.dll`.
 - `spatial_query`

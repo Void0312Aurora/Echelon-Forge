@@ -58,7 +58,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口，用于 fixed-batch fitting 和 online update-path isolation。
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint 和 learnability-audit probes。
+  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint、learnability-audit 和合法发射窗口位置扫描 probes。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
   - 聚焦 cooperative training NaN/Inf 的 tracer，会重建维护中的 cooperative flow，并在发现问题时输出 JSON 报告。
 - [README.md](diagnostics/README.md)
