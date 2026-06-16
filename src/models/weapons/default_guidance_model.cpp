@@ -560,6 +560,9 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
 void propagate_track_memory(Missile &missile, double dt, const Transform &transform,
                             const Velocity &velocity) {
     if (missile.use_kalman_seeker && missile.ekf_state.initialized) {
+        const double prev_bearing = missile.filtered_bearing_deg;
+        const double prev_elevation = missile.filtered_elevation_deg;
+
         missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params, dt);
         const double missile_world[3] = {transform.x, transform.y, transform.z};
         const double heading_rad = transform.heading * M_PI / 180.0;
@@ -572,6 +575,14 @@ void propagate_track_memory(Missile &missile, double dt, const Transform &transf
             missile.ekf_state, missile_world, heading_rad);
         missile.filtered_closing_speed_mps = missile_seeker::ekf_closing_speed_mps(
             missile.ekf_state, missile_world, mvel);
+
+        if (dt > 1.0e-6) {
+            missile.bearing_rate_deg_s = missile_guidance::shortest_angle_delta_deg(
+                                             prev_bearing, missile.filtered_bearing_deg) /
+                                         dt;
+            missile.elevation_rate_deg_s =
+                (missile.filtered_elevation_deg - prev_elevation) / dt;
+        }
     } else {
         missile.filtered_bearing_deg = missile_guidance::normalize_angle_deg(
             missile.filtered_bearing_deg + missile.bearing_rate_deg_s * dt);

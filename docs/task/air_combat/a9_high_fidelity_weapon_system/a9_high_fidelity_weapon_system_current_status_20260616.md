@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` P2 waves 1-3 complete (10 clusters pass, 4 partial). No regressions vs main (62 pre-existing failures on both). P3/P4/P5 remain planned.
+Status: `2026-06-16` P2 waves 1-6 complete (12 clusters pass, 2 partial). EKF pipeline now fully configurable (use_kalman_seeker in MissileTuning/JSON/bindings). LOS rates computed in both detection and coast paths. No regressions vs main (62 pre-existing failures on both). P3/P4/P5 remain planned.
 
 ## What Changed Since Prior Checkpoint
 
@@ -17,7 +17,7 @@ dispatch queue, and acceptance draft documents.
 | Subsystem | Current Fidelity | Target Fidelity | Status |
 |-----------|-----------------|-----------------|--------|
 | Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline + feed-forward term; acceptance items pending (APN-vs-PN comparison test, off-state identity check) |
-| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **partial** — kalman_seeker.h (EKF engine) + coordinate-frame integration in guidance model; use_kalman_seeker not yet in MissileTuning/JSON pipeline; EKF branch zeroes LOS rates (PN/APN weakened) |
+| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h (EKF engine + body↔world coordinate transforms); use_kalman_seeker in full MissileTuning/JSON/Python pipeline; LOS rates computed from frame-to-frame angle deltas in both detection and coast paths; EKF closing speed uses actual missile velocity |
 | Autopilot (G3) | Single first-order lag | Configurable-order transfer function (τ, ζ, 1/2/3) | **partial** — order=1 (legacy lag), order≥2 (state-space filter); order=3 not differentiated from order=2; tuning pipeline complete |
 | Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | **pass** — hit_to_kill coverage penalty + existing PF-R4 preserved |
 | Aerodynamics (G5) | Fixed Cd₀ per regime | Configurable Mach breakpoints + power on/off distinction | **pass** — mach_transonic_start/end + cd0_power_on_ratio in full pipeline |
