@@ -602,7 +602,8 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
             },
             "Get global maritime state as (sea_state, wave_heading_deg, wave_period_s)")
         .def("set_terrain_type", &SimulationKernel::set_terrain_type,
-             "Set terrain profile ('flat' or explicit compatibility profiles: 'legacy', 'hill', 'gaussian_hill', 'mountain')",
+             "Set terrain profile ('flat' or explicit compatibility profiles: 'legacy', 'hill', "
+             "'gaussian_hill', 'mountain')",
              nb::arg("terrain_type"))
         .def(
             "spawn_unit",

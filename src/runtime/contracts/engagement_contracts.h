@@ -19,14 +19,10 @@ inline constexpr std::string_view kLethalityChainStageLifecycle = "lifecycle";
 inline constexpr std::string_view kLethalityChainStageTrainingProjection = "training_projection";
 
 inline constexpr std::array<std::string_view, 9> kLethalityChainCanonicalStages = {
-    kLethalityChainStageNearestApproach,
-    kLethalityChainStageFuze,
-    kLethalityChainStageWarheadMechanism,
-    kLethalityChainStageSpatialCoverage,
-    kLethalityChainStageComponentLoad,
-    kLethalityChainStageComponentDamage,
-    kLethalityChainStagePlatformConsequence,
-    kLethalityChainStageLifecycle,
+    kLethalityChainStageNearestApproach,     kLethalityChainStageFuze,
+    kLethalityChainStageWarheadMechanism,    kLethalityChainStageSpatialCoverage,
+    kLethalityChainStageComponentLoad,       kLethalityChainStageComponentDamage,
+    kLethalityChainStagePlatformConsequence, kLethalityChainStageLifecycle,
     kLethalityChainStageTrainingProjection,
 };
 
@@ -35,8 +31,7 @@ inline constexpr std::string_view kLethalityReasonFuzeNoDetonation = "fuze_no_de
 inline constexpr std::string_view kLethalityReasonFuzeNoTerminalTrack = "fuze_no_terminal_track";
 inline constexpr std::string_view kLethalityReasonMissOutsideTriggerRadius =
     "miss_outside_trigger_radius";
-inline constexpr std::string_view kLethalityReasonOutsideSensorWindow =
-    "outside_sensor_window";
+inline constexpr std::string_view kLethalityReasonOutsideSensorWindow = "outside_sensor_window";
 inline constexpr std::string_view kLethalityReasonTargetNotDetected = "target_not_detected";
 inline constexpr std::string_view kLethalityReasonMissileTimeout = "missile_timeout";
 inline constexpr std::string_view kLethalityReasonPlatformConsequenceProjection =
@@ -45,22 +40,17 @@ inline constexpr std::string_view kLethalityReasonLifecycleProjection =
     "transitional_damage_report_projection";
 
 inline constexpr std::array<std::string_view, 6> kLethalityChainTerminalNegativeReasons = {
-    kLethalityReasonFuzeNoDetonation,
-    kLethalityReasonFuzeNoTerminalTrack,
-    kLethalityReasonMissOutsideTriggerRadius,
-    kLethalityReasonOutsideSensorWindow,
-    kLethalityReasonTargetNotDetected,
-    kLethalityReasonMissileTimeout,
+    kLethalityReasonFuzeNoDetonation,         kLethalityReasonFuzeNoTerminalTrack,
+    kLethalityReasonMissOutsideTriggerRadius, kLethalityReasonOutsideSensorWindow,
+    kLethalityReasonTargetNotDetected,        kLethalityReasonMissileTimeout,
 };
 
-inline constexpr std::string_view kLethalityObservationModeSampledRuntime =
-    "sampled_runtime";
+inline constexpr std::string_view kLethalityObservationModeSampledRuntime = "sampled_runtime";
 inline constexpr std::string_view kLethalityObservationModeExpectedProjection =
     "expected_projection";
 inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsAndTraining =
     "diagnostics_and_training";
-inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsOnly =
-    "diagnostics_only";
+inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsOnly = "diagnostics_only";
 
 struct EngagementEntityRef {
     std::uint64_t world_index = 0;

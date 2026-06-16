@@ -61,60 +61,50 @@ struct StageNodeManifestValidationResult {
     }
 };
 
-inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_seed();
+inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_seed();
 
 inline bool is_blank(std::string_view value) {
-    return std::all_of(value.begin(), value.end(), [](unsigned char c) {
-        return std::isspace(c) != 0;
-    });
+    return std::all_of(value.begin(), value.end(),
+                       [](unsigned char c) { return std::isspace(c) != 0; });
 }
 
-inline bool contains_value(
-    const std::vector<std::string>& items,
-    std::string_view expected
-) {
+inline bool contains_value(const std::vector<std::string> &items, std::string_view expected) {
     return std::find(items.begin(), items.end(), expected) != items.end();
 }
 
-inline bool declares_same_window_publish(const StageNodeManifest& manifest) {
+inline bool declares_same_window_publish(const StageNodeManifest &manifest) {
     return manifest.write_commit_policy == kWriteCommitPolicyStagePublish ||
-        manifest.latency_policy.find("same_window") != std::string::npos ||
-        contains_value(manifest.required_barriers, "stage_publish");
+           manifest.latency_policy.find("same_window") != std::string::npos ||
+           contains_value(manifest.required_barriers, "stage_publish");
 }
 
-inline bool declares_event_like_outputs(const StageNodeManifest& manifest) {
+inline bool declares_event_like_outputs(const StageNodeManifest &manifest) {
     return std::any_of(
-        manifest.output_packets.begin(),
-        manifest.output_packets.end(),
-        [](const std::string& packet) {
+        manifest.output_packets.begin(), manifest.output_packets.end(),
+        [](const std::string &packet) {
             constexpr std::string_view kEventSuffix = "Event";
             constexpr std::string_view kReportSuffix = "Report";
-            return (packet.size() >= kEventSuffix.size() &&
-                    packet.ends_with(kEventSuffix)) ||
-                (packet.size() >= kReportSuffix.size() &&
-                 packet.ends_with(kReportSuffix));
-        }
-    );
+            return (packet.size() >= kEventSuffix.size() && packet.ends_with(kEventSuffix)) ||
+                   (packet.size() >= kReportSuffix.size() && packet.ends_with(kReportSuffix));
+        });
 }
 
-inline bool is_maintained_scheduler_truth(const StageNodeManifest& manifest) {
+inline bool is_maintained_scheduler_truth(const StageNodeManifest &manifest) {
     return manifest.facade_visibility != kFacadeVisibilityAdapterProjection &&
-        manifest.facade_visibility != kFacadeVisibilityDiagnosticsOnly &&
-        manifest.write_commit_policy != kWriteCommitPolicyDiagnosticOnly;
+           manifest.facade_visibility != kFacadeVisibilityDiagnosticsOnly &&
+           manifest.write_commit_policy != kWriteCommitPolicyDiagnosticOnly;
 }
 
-inline bool is_wp17_selected_slice_strict_clock_domain_node(
-    const StageNodeManifest& manifest
-) {
+inline bool is_wp17_selected_slice_strict_clock_domain_node(const StageNodeManifest &manifest) {
     return manifest.node_id == "p7.fire_control_launch.v1" ||
-        manifest.node_id == "p9.effects_damage.v1" ||
-        manifest.node_id == "p10.observation_export.v1";
+           manifest.node_id == "p9.effects_damage.v1" ||
+           manifest.node_id == "p10.observation_export.v1";
 }
 
-inline std::vector<const StageNodeManifest*>
+inline std::vector<const StageNodeManifest *>
 enumerate_wp17_selected_slice_strict_clock_domain_manifests() {
-    std::vector<const StageNodeManifest*> manifests;
-    for (const auto& manifest : wp10_stage_node_manifest_registry_seed()) {
+    std::vector<const StageNodeManifest *> manifests;
+    for (const auto &manifest : wp10_stage_node_manifest_registry_seed()) {
         if (is_wp17_selected_slice_strict_clock_domain_node(manifest)) {
             manifests.push_back(&manifest);
         }
@@ -122,9 +112,8 @@ enumerate_wp17_selected_slice_strict_clock_domain_manifests() {
     return manifests;
 }
 
-inline StageNodeManifestValidationResult validate_stage_node_manifest(
-    const StageNodeManifest& manifest
-) {
+inline StageNodeManifestValidationResult
+validate_stage_node_manifest(const StageNodeManifest &manifest) {
     StageNodeManifestValidationResult result{};
 
     if (is_blank(manifest.node_id)) {
@@ -170,48 +159,36 @@ inline StageNodeManifestValidationResult validate_stage_node_manifest(
         result.add_error("facade_visibility is required");
     }
 
-    if (declares_same_window_publish(manifest) &&
-        manifest.allowed_same_window_edges.empty()) {
-        result.add_error(
-            "allowed_same_window_edges is required for same-window publish claims"
-        );
+    if (declares_same_window_publish(manifest) && manifest.allowed_same_window_edges.empty()) {
+        result.add_error("allowed_same_window_edges is required for same-window publish claims");
     }
     if (manifest.write_commit_policy == kWriteCommitPolicyStagePublish &&
         !contains_value(manifest.required_barriers, "stage_publish")) {
-        result.add_error(
-            "stage_publish manifests must declare the stage_publish barrier"
-        );
+        result.add_error("stage_publish manifests must declare the stage_publish barrier");
     }
     if (manifest.facade_visibility == kFacadeVisibilityAdapterProjection &&
         !manifest.adapter_projection_allowed) {
-        result.add_error(
-            "adapter_projection visibility requires adapter_projection_allowed"
-        );
+        result.add_error("adapter_projection visibility requires adapter_projection_allowed");
     }
     if (declares_event_like_outputs(manifest)) {
         if (manifest.event_families_emitted.empty()) {
-            result.add_error(
-                "event-emitting manifests must declare event_families_emitted"
-            );
+            result.add_error("event-emitting manifests must declare event_families_emitted");
         }
         if (manifest.diagnostic_trace_obligations.empty()) {
-            result.add_error(
-                "event-emitting manifests must declare diagnostic_trace_obligations"
-            );
+            result.add_error("event-emitting manifests must declare diagnostic_trace_obligations");
         }
     }
 
     return result;
 }
 
-inline StageNodeManifestValidationResult validate_stage_node_manifest_registry(
-    const std::vector<StageNodeManifest>& registry
-) {
+inline StageNodeManifestValidationResult
+validate_stage_node_manifest_registry(const std::vector<StageNodeManifest> &registry) {
     StageNodeManifestValidationResult result{};
     std::vector<std::string> seen_ids;
     seen_ids.reserve(registry.size());
 
-    for (const auto& manifest : registry) {
+    for (const auto &manifest : registry) {
         if (contains_value(seen_ids, manifest.node_id)) {
             result.add_error("duplicate node_id: " + manifest.node_id);
             continue;
@@ -220,7 +197,7 @@ inline StageNodeManifestValidationResult validate_stage_node_manifest_registry(
         seen_ids.push_back(manifest.node_id);
         const StageNodeManifestValidationResult manifest_result =
             validate_stage_node_manifest(manifest);
-        for (const auto& error : manifest_result.errors) {
+        for (const auto &error : manifest_result.errors) {
             result.add_error(manifest.node_id + ": " + error);
         }
     }
@@ -232,7 +209,7 @@ inline StageNodeManifestValidationResult validate_stage_node_manifest_registry(
     return result;
 }
 
-inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_seed() {
+inline const std::vector<StageNodeManifest> &wp10_stage_node_manifest_registry_seed() {
     static const std::vector<StageNodeManifest> registry = {
         StageNodeManifest{
             .node_id = "p7.fire_control_launch.v1",
@@ -250,41 +227,44 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .allowed_same_window_edges = {},
             .required_barriers = {"input_injection", "window_commit"},
             .event_families_emitted = {"fire_control_and_launch"},
-            .diagnostic_trace_obligations = {
-                "launch_request_id",
-                "launch_event_id",
-                "input_snapshot_version",
-                "barrier_id",
-                "world_id",
-            },
+            .diagnostic_trace_obligations =
+                {
+                    "launch_request_id",
+                    "launch_event_id",
+                    "input_snapshot_version",
+                    "barrier_id",
+                    "world_id",
+                },
             .facade_visibility = std::string(kFacadeVisibilityMaintainedSurface),
             .adapter_projection_allowed = false,
         },
         StageNodeManifest{
             .node_id = "p9.effects_damage.v1",
-            .semantic_stage = {
-                "P9 EffectsDamage",
-                "P9.1 NearestApproach",
-                "P9.2 FuzeEvaluation",
-                "P9.3 WarheadMechanism",
-                "P9.4 SpatialCoverage",
-                "P9.5 ComponentLoad",
-                "P9.6 ComponentDamage",
-                "P9.7 PlatformConsequence",
-            },
+            .semantic_stage =
+                {
+                    "P9 EffectsDamage",
+                    "P9.1 NearestApproach",
+                    "P9.2 FuzeEvaluation",
+                    "P9.3 WarheadMechanism",
+                    "P9.4 SpatialCoverage",
+                    "P9.5 ComponentLoad",
+                    "P9.6 ComponentDamage",
+                    "P9.7 PlatformConsequence",
+                },
             .owner_module = "src/core/engine/simulation_kernel_damage_debug_api.cpp",
             .input_packets = {"EffectsEvent", "MunitionLifecyclePacket"},
-            .output_packets = {
-                "NearestApproachEvent",
-                "FuzeEvaluationEvent",
-                "WarheadMechanismEvent",
-                "SpatialCoverageEvent",
-                "ComponentLoadEvent",
-                "ComponentDamageEvent",
-                "PlatformConsequenceEvent",
-                "DamageReport",
-                "DiagnosticsTrace",
-            },
+            .output_packets =
+                {
+                    "NearestApproachEvent",
+                    "FuzeEvaluationEvent",
+                    "WarheadMechanismEvent",
+                    "SpatialCoverageEvent",
+                    "ComponentLoadEvent",
+                    "ComponentDamageEvent",
+                    "PlatformConsequenceEvent",
+                    "DamageReport",
+                    "DiagnosticsTrace",
+                },
             .read_state_shards = {"engagement", "physics", "damage"},
             .write_state_shards = {"damage"},
             .read_snapshot_policy = std::string(kReadSnapshotPolicyCommitted),
@@ -295,17 +275,18 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .allowed_same_window_edges = {},
             .required_barriers = {"window_commit"},
             .event_families_emitted = {"lethality_chain", "effects_and_damage"},
-            .diagnostic_trace_obligations = {
-                "chain_id",
-                "event_id",
-                "parent_event_id",
-                "lethality_stage",
-                "effects_event_id",
-                "damage_report_id",
-                "source_snapshot_version",
-                "affected_entity_ref",
-                "barrier_id",
-            },
+            .diagnostic_trace_obligations =
+                {
+                    "chain_id",
+                    "event_id",
+                    "parent_event_id",
+                    "lethality_stage",
+                    "effects_event_id",
+                    "damage_report_id",
+                    "source_snapshot_version",
+                    "affected_entity_ref",
+                    "barrier_id",
+                },
             .facade_visibility = std::string(kFacadeVisibilityInternal),
             .adapter_projection_allowed = false,
         },
@@ -313,7 +294,8 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .node_id = "p10.observation_export.v1",
             .semantic_stage = {"P10 ObservationExport"},
             .owner_module = "src/runtime/facade/runtime_facade.cpp",
-            .input_packets = {"LaunchEvent", "DamageReport", "PlatformConsequenceEvent", "DiagnosticsTrace"},
+            .input_packets = {"LaunchEvent", "DamageReport", "PlatformConsequenceEvent",
+                              "DiagnosticsTrace"},
             .output_packets = {"ObservationBatchPacket", "DiagnosticsTrace"},
             .read_state_shards = {"engagement", "damage", "observation"},
             .write_state_shards = {"observation"},
@@ -325,13 +307,14 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .allowed_same_window_edges = {},
             .required_barriers = {"window_commit", "export"},
             .event_families_emitted = {"observation_and_export"},
-            .diagnostic_trace_obligations = {
-                "source_snapshot_version",
-                "export_barrier_id",
-                "observation_packet_version",
-                "launch_event_id",
-                "damage_report_id",
-            },
+            .diagnostic_trace_obligations =
+                {
+                    "source_snapshot_version",
+                    "export_barrier_id",
+                    "observation_packet_version",
+                    "launch_event_id",
+                    "damage_report_id",
+                },
             .facade_visibility = std::string(kFacadeVisibilityMaintainedExport),
             .adapter_projection_allowed = false,
         },
@@ -351,11 +334,12 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .allowed_same_window_edges = {},
             .required_barriers = {"input_injection", "export"},
             .event_families_emitted = {},
-            .diagnostic_trace_obligations = {
-                "source_id",
-                "adapter_projection_label",
-                "input_snapshot_version",
-            },
+            .diagnostic_trace_obligations =
+                {
+                    "source_id",
+                    "adapter_projection_label",
+                    "input_snapshot_version",
+                },
             .facade_visibility = std::string(kFacadeVisibilityAdapterProjection),
             .adapter_projection_allowed = true,
         },
@@ -375,11 +359,12 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
             .allowed_same_window_edges = {},
             .required_barriers = {"export"},
             .event_families_emitted = {},
-            .diagnostic_trace_obligations = {
-                "trace_id",
-                "parent_trace_id",
-                "observation_packet_version",
-            },
+            .diagnostic_trace_obligations =
+                {
+                    "trace_id",
+                    "parent_trace_id",
+                    "observation_packet_version",
+                },
             .facade_visibility = std::string(kFacadeVisibilityDiagnosticsOnly),
             .adapter_projection_allowed = false,
         },
@@ -387,9 +372,9 @@ inline const std::vector<StageNodeManifest>& wp10_stage_node_manifest_registry_s
     return registry;
 }
 
-inline std::vector<const StageNodeManifest*> enumerate_wp10_maintained_stage_node_manifests() {
-    std::vector<const StageNodeManifest*> manifests;
-    for (const auto& manifest : wp10_stage_node_manifest_registry_seed()) {
+inline std::vector<const StageNodeManifest *> enumerate_wp10_maintained_stage_node_manifests() {
+    std::vector<const StageNodeManifest *> manifests;
+    for (const auto &manifest : wp10_stage_node_manifest_registry_seed()) {
         if (is_maintained_scheduler_truth(manifest)) {
             manifests.push_back(&manifest);
         }
@@ -397,15 +382,11 @@ inline std::vector<const StageNodeManifest*> enumerate_wp10_maintained_stage_nod
     return manifests;
 }
 
-inline const StageNodeManifest* find_stage_node_manifest(std::string_view node_id) {
-    const auto& registry = wp10_stage_node_manifest_registry_seed();
+inline const StageNodeManifest *find_stage_node_manifest(std::string_view node_id) {
+    const auto &registry = wp10_stage_node_manifest_registry_seed();
     const auto it = std::find_if(
-        registry.begin(),
-        registry.end(),
-        [node_id](const StageNodeManifest& manifest) {
-            return manifest.node_id == node_id;
-        }
-    );
+        registry.begin(), registry.end(),
+        [node_id](const StageNodeManifest &manifest) { return manifest.node_id == node_id; });
     if (it == registry.end()) {
         return nullptr;
     }
@@ -422,4 +403,4 @@ validate_wp10_stage_node_manifest_registry_seed() {
     return result;
 }
 
-}  // namespace runtime::scheduler
+} // namespace runtime::scheduler

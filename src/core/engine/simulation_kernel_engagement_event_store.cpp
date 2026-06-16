@@ -106,18 +106,17 @@ std::string aircraft_damage_state_string(const EngagementDamageStateSnapshot &sn
         return "";
     }
     char state[512];
-    std::snprintf(
-        state, sizeof(state),
-        "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
-        "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
-        "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
-        snapshot.flight_control_integrity, snapshot.hydraulic_integrity,
-        snapshot.hydraulic_pressure_availability, snapshot.propulsion_integrity,
-        snapshot.fuel_system_integrity, snapshot.fuel_leak_severity,
-        snapshot.avionics_integrity, snapshot.structural_integrity,
-        snapshot.crew_effectiveness, snapshot.pilot_effectiveness,
-        snapshot.mission_crew_effectiveness, snapshot.command_navigation_integrity,
-        snapshot.fire_severity);
+    std::snprintf(state, sizeof(state),
+                  "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
+                  "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
+                  "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
+                  snapshot.flight_control_integrity, snapshot.hydraulic_integrity,
+                  snapshot.hydraulic_pressure_availability, snapshot.propulsion_integrity,
+                  snapshot.fuel_system_integrity, snapshot.fuel_leak_severity,
+                  snapshot.avionics_integrity, snapshot.structural_integrity,
+                  snapshot.crew_effectiveness, snapshot.pilot_effectiveness,
+                  snapshot.mission_crew_effectiveness, snapshot.command_navigation_integrity,
+                  snapshot.fire_severity);
     return std::string(state);
 }
 
@@ -127,24 +126,23 @@ std::string aircraft_damage_state_delta_string(const EngagementDamageStateSnapsh
         return "";
     }
     char state[512];
-    std::snprintf(
-        state, sizeof(state),
-        "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
-        "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
-        "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
-        after.flight_control_integrity - before.flight_control_integrity,
-        after.hydraulic_integrity - before.hydraulic_integrity,
-        after.hydraulic_pressure_availability - before.hydraulic_pressure_availability,
-        after.propulsion_integrity - before.propulsion_integrity,
-        after.fuel_system_integrity - before.fuel_system_integrity,
-        after.fuel_leak_severity - before.fuel_leak_severity,
-        after.avionics_integrity - before.avionics_integrity,
-        after.structural_integrity - before.structural_integrity,
-        after.crew_effectiveness - before.crew_effectiveness,
-        after.pilot_effectiveness - before.pilot_effectiveness,
-        after.mission_crew_effectiveness - before.mission_crew_effectiveness,
-        after.command_navigation_integrity - before.command_navigation_integrity,
-        after.fire_severity - before.fire_severity);
+    std::snprintf(state, sizeof(state),
+                  "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
+                  "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
+                  "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
+                  after.flight_control_integrity - before.flight_control_integrity,
+                  after.hydraulic_integrity - before.hydraulic_integrity,
+                  after.hydraulic_pressure_availability - before.hydraulic_pressure_availability,
+                  after.propulsion_integrity - before.propulsion_integrity,
+                  after.fuel_system_integrity - before.fuel_system_integrity,
+                  after.fuel_leak_severity - before.fuel_leak_severity,
+                  after.avionics_integrity - before.avionics_integrity,
+                  after.structural_integrity - before.structural_integrity,
+                  after.crew_effectiveness - before.crew_effectiveness,
+                  after.pilot_effectiveness - before.pilot_effectiveness,
+                  after.mission_crew_effectiveness - before.mission_crew_effectiveness,
+                  after.command_navigation_integrity - before.command_navigation_integrity,
+                  after.fire_severity - before.fire_severity);
     return std::string(state);
 }
 
@@ -706,11 +704,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     consequence.header.source_time_s = event_time_s;
     consequence.header.confidence = effects.confidence;
     consequence.header.reason = std::string(kLethalityReasonPlatformConsequenceProjection);
-    complete_lethality_header(consequence.header,
-                              std::string(kLethalityChainStagePlatformConsequence),
-                              "observed", event_time_s, platform_consequence_event_id,
-                              chain_id, effects_event_id, munition_entity_id, 0, target_id,
-                              current_source_frame(ecs_));
+    complete_lethality_header(
+        consequence.header, std::string(kLethalityChainStagePlatformConsequence), "observed",
+        event_time_s, platform_consequence_event_id, chain_id, effects_event_id, munition_entity_id,
+        0, target_id, current_source_frame(ecs_));
     consequence.mission_capability_before = before.mission_capability;
     consequence.mission_capability_after = after.mission_capability;
     consequence.mobility_capability_before = before.mobility_capability;
@@ -727,25 +724,22 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     consequence.propulsion_kill = after.propulsion_kill;
     consequence.forced_landing = after.forced_landing;
     consequence.crew_kill = after.crew_kill;
-    consequence.control_delta =
-        after.flight_control_integrity - before.flight_control_integrity;
+    consequence.control_delta = after.flight_control_integrity - before.flight_control_integrity;
     consequence.engine_delta = after.propulsion_integrity - before.propulsion_integrity;
     consequence.fuel_leak_delta = after.fuel_leak_severity - before.fuel_leak_severity;
     char fire_state[80];
-    std::snprintf(fire_state, sizeof(fire_state), "fire=%.6f->%.6f",
-                  before.fire_severity, after.fire_severity);
+    std::snprintf(fire_state, sizeof(fire_state), "fire=%.6f->%.6f", before.fire_severity,
+                  after.fire_severity);
     consequence.fire_state = std::string(fire_state);
     consequence.aircraft_damage_state_before = aircraft_damage_state_string(before);
     consequence.aircraft_damage_state_after = aircraft_damage_state_string(after);
-    consequence.aircraft_damage_state_delta =
-        aircraft_damage_state_delta_string(before, after);
+    consequence.aircraft_damage_state_delta = aircraft_damage_state_delta_string(before, after);
     consequence.air_system_hit_flags = effects.air_system_hit_flags;
     consequence.air_system_spatial_scales = effects.air_system_spatial_scales;
     consequence.vulnerability_scale_trace = effects.vulnerability_scale_trace;
     consequence.loss_state_from = before.loss_state;
     consequence.loss_state_to = after.entity_active ? after.loss_state : "lost";
-    recent_engagement_events_.platform_consequence_events.push_back(
-        std::move(consequence));
+    recent_engagement_events_.platform_consequence_events.push_back(std::move(consequence));
     cap_recent_events(recent_engagement_events_.platform_consequence_events,
                       kMaxRecentEngagementEvents);
 
@@ -804,10 +798,8 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
               [](const ComponentDamageEvent &lhs, const ComponentDamageEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
-    std::sort(out.platform_consequence_events.begin(),
-              out.platform_consequence_events.end(),
-              [](const PlatformConsequenceEvent &lhs,
-                 const PlatformConsequenceEvent &rhs) {
+    std::sort(out.platform_consequence_events.begin(), out.platform_consequence_events.end(),
+              [](const PlatformConsequenceEvent &lhs, const PlatformConsequenceEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
     std::sort(out.damage_reports.begin(), out.damage_reports.end(),

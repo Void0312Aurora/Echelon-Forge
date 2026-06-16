@@ -441,10 +441,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("aircraft_damage_state_delta",
                 &PlatformConsequenceEvent::aircraft_damage_state_delta)
         .def_rw("air_system_hit_flags", &PlatformConsequenceEvent::air_system_hit_flags)
-        .def_rw("air_system_spatial_scales",
-                &PlatformConsequenceEvent::air_system_spatial_scales)
-        .def_rw("vulnerability_scale_trace",
-                &PlatformConsequenceEvent::vulnerability_scale_trace)
+        .def_rw("air_system_spatial_scales", &PlatformConsequenceEvent::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace", &PlatformConsequenceEvent::vulnerability_scale_trace)
         .def_rw("loss_state_from", &PlatformConsequenceEvent::loss_state_from)
         .def_rw("loss_state_to", &PlatformConsequenceEvent::loss_state_to);
 
