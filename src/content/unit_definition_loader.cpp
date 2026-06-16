@@ -413,6 +413,7 @@ void parse_missile_tuning_json_fields(
         "midcourse_datalink_supported",
         tuning.midcourse_datalink_supported
     );
+    tuning.use_kalman_seeker = src.value("use_kalman_seeker", tuning.use_kalman_seeker);
     *out_tuning = tuning;
 }
 

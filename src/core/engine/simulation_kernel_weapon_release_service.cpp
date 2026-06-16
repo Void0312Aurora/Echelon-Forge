@@ -210,7 +210,7 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.cd0_power_on_ratio) ||
            std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
-           tuning.midcourse_datalink_supported ||
+           tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
            std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||
            tuning.has_fuze_profile;
 }
@@ -278,6 +278,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.max_launch_off_boresight_deg = src.max_launch_off_boresight_deg;
     out.lobl_required = src.lobl_required;
     out.midcourse_datalink_supported = src.midcourse_datalink_supported;
+    out.use_kalman_seeker = src.use_kalman_seeker;
     out.warhead_profile = src.warhead_profile;
     out.has_warhead_profile = src.has_warhead_profile;
     out.fuze_profile = src.fuze_profile;
@@ -360,6 +361,7 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
         base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
     if (overlay.lobl_required) base->lobl_required = true;
     if (overlay.midcourse_datalink_supported) base->midcourse_datalink_supported = true;
+    if (overlay.use_kalman_seeker) base->use_kalman_seeker = true;
     if (overlay.has_fuze_profile) {
         base->fuze_profile = overlay.fuze_profile;
         base->has_fuze_profile = true;
@@ -754,6 +756,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;
     missile.guidance_mach_transonic_end = resolved_tuning.mach_transonic_end;
     missile.guidance_cd0_power_on_ratio = resolved_tuning.cd0_power_on_ratio;
+    missile.use_kalman_seeker = resolved_tuning.use_kalman_seeker;
     missile.active = true;
     missile.warhead_profile = missile_warhead_profile;
     missile.fuze_profile = missile_fuze_profile;

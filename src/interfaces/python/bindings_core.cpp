@@ -397,6 +397,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("max_launch_off_boresight_deg", &MissileTuning::max_launch_off_boresight_deg)
         .def_rw("lobl_required", &MissileTuning::lobl_required)
         .def_rw("midcourse_datalink_supported", &MissileTuning::midcourse_datalink_supported)
+        .def_rw("use_kalman_seeker", &MissileTuning::use_kalman_seeker)
         .def_rw("warhead_profile", &MissileTuning::warhead_profile)
         .def_rw("has_warhead_profile", &MissileTuning::has_warhead_profile)
         .def_rw("fuze_profile", &MissileTuning::fuze_profile)
