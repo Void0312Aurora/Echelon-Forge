@@ -16,12 +16,12 @@ dispatch queue, and acceptance draft documents.
 
 | Subsystem | Current Fidelity | Target Fidelity | Status |
 |-----------|-----------------|-----------------|--------|
-| Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline (8 files) + APN feed-forward term in guidance law |
+| Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline + feed-forward term; acceptance items pending (APN-vs-PN comparison test, off-state identity check) |
 | Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **partial** — kalman_seeker.h (EKF engine) + coordinate-frame integration in guidance model; use_kalman_seeker not yet in MissileTuning/JSON pipeline; EKF branch zeroes LOS rates (PN/APN weakened) |
-| Autopilot (G3) | Single first-order lag | Configurable-order transfer function (τ, ζ) | **pass** — second-order state-space filter + full tuning pipeline |
+| Autopilot (G3) | Single first-order lag | Configurable-order transfer function (τ, ζ, 1/2/3) | **partial** — order=1 (legacy lag), order≥2 (state-space filter); order=3 not differentiated from order=2; tuning pipeline complete |
 | Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | **pass** — hit_to_kill coverage penalty + existing PF-R4 preserved |
 | Aerodynamics (G5) | Fixed Cd₀ per regime | Configurable Mach breakpoints + power on/off distinction | **pass** — mach_transonic_start/end + cd0_power_on_ratio in full pipeline |
-| Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Physics-based rod/velocity caps | **pass** — rod weld cap 1150 m/s + 610 m/s cutting threshold |
+| Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Physics-based fragment/rod/blast model | **partial** — C/M/E fields plumbed (profile/loader/bindings); rod physics opt-in (cap/decay/threshold) when gurney_constant_mps configured; legacy empirical formulas still default (fragment count 18*mass_kg, rod velocity 920+0.16*closure, blast 115*Z^-2); 30 pre-existing test failures in warhead/component surface |
 | Integration (G7) | — | Bindings + scenarios + diagnostics | **partial** — bindings updated; scenario JSON loader ready; no new scenario examples yet |
 
 ## Evidence Links

@@ -473,7 +473,7 @@ void initialize_runtime_state(flecs::entity missile_entity, Missile &missile,
 
 void update_track_from_detection(Missile &missile, const Detection &det, double current_time,
                                  double dt, const GuidanceResolvedTuning &tuning,
-                                 const Transform &transform) {
+                                 const Transform &transform, const Velocity &velocity) {
     // EKF path
     if (missile.use_kalman_seeker) {
         const double missile_world[3] = {transform.x, transform.y, transform.z};
@@ -493,6 +493,10 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
                                        std::max(1.0, det.range),
                                        missile_world, heading_rad);
         }
+        // Save previous angles for rate computation
+        const double prev_bearing = missile.filtered_bearing_deg;
+        const double prev_elevation = missile.filtered_elevation_deg;
+
         // Extract body-relative spherical state for guidance-law compatibility
         missile.filtered_bearing_deg = missile_seeker::ekf_filtered_bearing_deg(
             missile.ekf_state, missile_world, heading_rad);
@@ -500,13 +504,21 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
             missile.ekf_state, missile_world, heading_rad);
         missile.filtered_range_m = missile_seeker::ekf_filtered_range_m(
             missile.ekf_state, missile_world, heading_rad);
-        const double mvel[3] = {0.0, 0.0, 0.0};
+        const double mvel[3] = {velocity.vx, velocity.vy, velocity.vz};
         missile.filtered_closing_speed_mps = missile_seeker::ekf_closing_speed_mps(
             missile.ekf_state, missile_world, mvel);
-        // EKF provides Cartesian rates; bearing/elevation rates are computed
-        // in the guidance section below from filtered angles
-        missile.bearing_rate_deg_s = 0.0;
-        missile.elevation_rate_deg_s = 0.0;
+
+        // Compute body-relative LOS rates from frame-to-frame angle delta
+        if (dt > 1.0e-6 && missile.seeker_has_valid_track) {
+            missile.bearing_rate_deg_s = missile_guidance::shortest_angle_delta_deg(
+                                             prev_bearing, missile.filtered_bearing_deg) /
+                                         dt;
+            missile.elevation_rate_deg_s =
+                (missile.filtered_elevation_deg - prev_elevation) / dt;
+        } else {
+            missile.bearing_rate_deg_s = 0.0;
+            missile.elevation_rate_deg_s = 0.0;
+        }
     } else {
         // Legacy first-order smoothing path
         if (!missile.seeker_has_valid_track) {
@@ -545,12 +557,13 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
     missile.seeker_mode = static_cast<int>(MissileSeekerMode::Track);
 }
 
-void propagate_track_memory(Missile &missile, double dt, const Transform &transform) {
+void propagate_track_memory(Missile &missile, double dt, const Transform &transform,
+                            const Velocity &velocity) {
     if (missile.use_kalman_seeker && missile.ekf_state.initialized) {
         missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params, dt);
         const double missile_world[3] = {transform.x, transform.y, transform.z};
         const double heading_rad = transform.heading * M_PI / 180.0;
-        const double mvel[3] = {0.0, 0.0, 0.0};
+        const double mvel[3] = {velocity.vx, velocity.vy, velocity.vz};
         missile.filtered_bearing_deg = missile_seeker::ekf_filtered_bearing_deg(
             missile.ekf_state, missile_world, heading_rad);
         missile.filtered_elevation_deg = missile_seeker::ekf_filtered_elevation_deg(
@@ -744,11 +757,12 @@ class DefaultGuidanceModel : public IGuidanceModel {
 
         if (best_det) {
             missile.target_id = best_det->target_id;
-            update_track_from_detection(missile, *best_det, current_time, dt, tuning, transform);
+            update_track_from_detection(missile, *best_det, current_time, dt, tuning, transform,
+                                        velocity);
             missile.terminal_seeker_active = terminal_seeker_is_active(missile);
         } else if (missile.seeker_has_valid_track && missile.last_track_time_s >= 0.0 &&
                    (current_time - missile.last_track_time_s) <= tuning.track_memory_timeout_s) {
-            propagate_track_memory(missile, dt, transform);
+            propagate_track_memory(missile, dt, transform, velocity);
             missile.terminal_seeker_active = terminal_seeker_is_active(missile);
         } else {
             missile.seeker_mode = static_cast<int>(MissileSeekerMode::Ballistic);
