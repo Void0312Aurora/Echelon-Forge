@@ -30,6 +30,7 @@ struct FuzeProfile {
     double trigger_radius_m = std::numeric_limits<double>::quiet_NaN();
     double delay_s = 0.0;
     double reliability = 1.0;
+    std::string trigger_logic = "nearest_approach";
     std::string coverage_profile = "omni";
     bool synthetic = true;
     std::string provenance = "synthetic_legacy_fuse_distance";

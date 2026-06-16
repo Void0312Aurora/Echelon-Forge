@@ -344,6 +344,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("trigger_radius_m", &FuzeProfile::trigger_radius_m)
         .def_rw("delay_s", &FuzeProfile::delay_s)
         .def_rw("reliability", &FuzeProfile::reliability)
+        .def_rw("trigger_logic", &FuzeProfile::trigger_logic)
         .def_rw("coverage_profile", &FuzeProfile::coverage_profile)
         .def_rw("synthetic", &FuzeProfile::synthetic)
         .def_rw("provenance", &FuzeProfile::provenance);
@@ -1105,6 +1106,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
                 out["fuze_delay_s"] = missile->fuze_profile.delay_s;
                 out["fuze_reliability"] = missile->fuze_profile.reliability;
+                out["fuze_trigger_logic"] = missile->fuze_profile.trigger_logic;
                 out["fuze_profile_synthetic"] = missile->fuze_profile.synthetic;
                 out["fuze_provenance"] = missile->fuze_profile.provenance;
                 out["seeker_fov_deg"] = missile->seeker_fov_deg;

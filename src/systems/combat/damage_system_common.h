@@ -220,7 +220,7 @@ inline DamageFuzeSurrogateEvidence
 damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_type,
                                const DamageFuzeSignatureEvidence &signature, double quality,
                                double event_closure_mps, bool contact_fuze,
-                               bool terminal_track_valid) {
+                               bool terminal_track_valid, bool online_sensor_trigger = false) {
     DamageFuzeSurrogateEvidence evidence{};
     evidence.sensor_opportunity_score = std::clamp(quality, 0.0, 1.0);
     evidence.terminal_track_valid = contact_fuze || terminal_track_valid;
@@ -249,9 +249,15 @@ damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_t
                    0.0, 1.0);
     evidence.target_detected =
         evidence.target_detection_confidence >= evidence.target_detection_threshold;
-    evidence.detonation_point_source = missile.fuze_profile.delay_s > 0.0
-                                           ? "sensor_window_delay_solution"
-                                           : "nearest_point_fallback";
+    if (online_sensor_trigger) {
+        evidence.detonation_point_source = missile.fuze_profile.delay_s > 0.0
+                                               ? "online_sensor_delay_solution"
+                                               : "online_sensor_current_point";
+    } else {
+        evidence.detonation_point_source = missile.fuze_profile.delay_s > 0.0
+                                               ? "sensor_window_delay_solution"
+                                               : "nearest_point_fallback";
+    }
     return evidence;
 }
 
@@ -264,6 +270,10 @@ inline std::string damage_fuze_trigger_type(const Missile &missile) {
         return "timed_fuze";
     }
     return "proximity_fuze";
+}
+
+inline bool damage_fuze_uses_online_sensor_trigger(const Missile &missile) {
+    return damage_lower_ascii(missile.fuze_profile.trigger_logic) == "online_sensor";
 }
 
 inline double damage_contact_fuze_surface_tolerance_m(const Missile &missile) {
@@ -487,7 +497,9 @@ inline std::array<double, 3>
 damage_effective_detonation_world_point(const Missile &missile, const Transform &target_transform,
                                         const Transform &fallback_missile_transform,
                                         bool contact_fuze, bool timed_fuze) {
-    if (!contact_fuze && !timed_fuze && damage_has_proximity_min_local_point(missile)) {
+    const bool online_sensor_trigger = damage_fuze_uses_online_sensor_trigger(missile);
+    if (!contact_fuze && !timed_fuze && !online_sensor_trigger &&
+        damage_has_proximity_min_local_point(missile)) {
         return damage_local_body_point_to_world(
             target_transform, missile.proximity_min_local_forward_m,
             missile.proximity_min_local_right_m, missile.proximity_min_local_up_m);
@@ -774,6 +786,8 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const std::string fuze_type = damage_resolved_fuze_type(m[i]);
                 const bool contact_fuze = damage_fuze_is_contact(fuze_type);
                 const bool timed_fuze = damage_fuze_is_timed(fuze_type);
+                const bool online_sensor_trigger =
+                    !contact_fuze && damage_fuze_uses_online_sensor_trigger(m[i]);
                 const std::string trigger_type = damage_fuze_trigger_type(m[i]);
 
                 if (m[i].fuze_delay_armed) {
@@ -829,6 +843,12 @@ inline void register_damage_system_common(flecs::world &ecs) {
                                                              : current_time;
                         const auto detonation_local =
                             damage_world_point_to_local_body(*t_pos, p[i].x, p[i].y, p[i].z);
+                        const double effects_miss_distance_m =
+                            online_sensor_trigger
+                                ? std::sqrt(detonation_local[0] * detonation_local[0] +
+                                            detonation_local[1] * detonation_local[1] +
+                                            detonation_local[2] * detonation_local[2])
+                                : m[i].proximity_min_dist_m;
                         EngagementEffectsDamageEventRecord event_record{};
                         event_record.munition_entity_id =
                             static_cast<std::uint64_t>(it.entity(i).id());
@@ -845,7 +865,7 @@ inline void register_damage_system_common(flecs::world &ecs) {
                             std::isfinite(m[i].fuze_nearest_approach_time_s)
                                 ? m[i].fuze_nearest_approach_time_s
                                 : detonation_time_s;
-                        effects.miss_distance_m = m[i].proximity_min_dist_m;
+                        effects.miss_distance_m = effects_miss_distance_m;
                         effects.detonation_local_forward_m = detonation_local[0];
                         effects.detonation_local_right_m = detonation_local[1];
                         effects.detonation_local_up_m = detonation_local[2];
@@ -989,10 +1009,13 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 }
 
                 const double epsilon = 1e-3;
-                if (dist < m[i].proximity_last_dist_m - epsilon) {
+                const bool closing = dist < m[i].proximity_last_dist_m - epsilon;
+                if (closing) {
                     m[i].proximity_engaged = true;
                     m[i].proximity_last_dist_m = dist;
-                    continue;
+                    if (!online_sensor_trigger) {
+                        continue;
+                    }
                 }
 
                 if (!m[i].proximity_engaged) {
@@ -1014,6 +1037,8 @@ inline void register_damage_system_common(flecs::world &ecs) {
                                                                     target_hitboxes);
                     detonation_metric_m = contact_evidence.surface_distance_m;
                     effective_trigger_radius_m = damage_contact_fuze_surface_tolerance_m(m[i]);
+                } else if (online_sensor_trigger) {
+                    detonation_metric_m = dist;
                 }
                 const Velocity *missile_velocity = it.entity(i).get<Velocity>();
                 const Velocity *target_velocity = target_entity.get<Velocity>();
@@ -1026,6 +1051,8 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 double fuse = std::max(1e-6, effective_trigger_radius_m);
                 double quality = contact_fuze
                                      ? std::clamp(1.0 - detonation_metric_m / fuse, 0.0, 1.0)
+                                 : online_sensor_trigger
+                                     ? std::clamp(1.0 - dist / fuse, 0.0, 1.0)
                                      : std::clamp(1.0 - min_dist / fuse, 0.0, 1.0);
                 const DamageFuzeSignatureEvidence fuze_signature =
                     contact_fuze
@@ -1037,8 +1064,11 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     contact_fuze || proximity_fuze_has_terminal_guidance_support(m[i]);
                 const DamageFuzeSurrogateEvidence fuze_surrogate = damage_fuze_surrogate_evidence(
                     m[i], fuze_type, fuze_signature, quality, event_closure_mps, contact_fuze,
-                    terminal_track_valid);
+                    terminal_track_valid, online_sensor_trigger);
                 if (detonation_metric_m > effective_trigger_radius_m) {
+                    if (online_sensor_trigger && closing) {
+                        continue;
+                    }
                     damage_record_nearest_approach_event(
                         it.entity(i), m[i], recorder_ref,
                         std::string(kLethalityReasonMissOutsideTriggerRadius), current_time,
@@ -1053,6 +1083,9 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 }
 
                 if (!contact_fuze && !fuze_surrogate.terminal_track_valid) {
+                    if (online_sensor_trigger && closing) {
+                        continue;
+                    }
                     damage_record_nearest_approach_event(
                         it.entity(i), m[i], recorder_ref,
                         std::string(kLethalityReasonFuzeNoTerminalTrack), current_time,
@@ -1073,6 +1106,9 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 }
 
                 if (!contact_fuze && fuze_reliability > 0.0 && !fuze_surrogate.target_detected) {
+                    if (online_sensor_trigger && closing) {
+                        continue;
+                    }
                     const std::string detection_reason =
                         fuze_surrogate.sensor_opportunity_score <= 0.0
                             ? std::string(kLethalityReasonOutsideSensorWindow)
@@ -1136,11 +1172,17 @@ inline void register_damage_system_common(flecs::world &ecs) {
                                                         ? m[i].proximity_min_time_s
                                                         : current_time;
                 m[i].fuze_detonation_time_s = current_time + fuze_delay_s;
-                const auto detonation_world = damage_effective_detonation_world_point(
-                    m[i], *t_pos, p[i], contact_fuze, timed_fuze);
-                m[i].fuze_detonation_x = detonation_world[0];
-                m[i].fuze_detonation_y = detonation_world[1];
-                m[i].fuze_detonation_z = detonation_world[2];
+                if (online_sensor_trigger) {
+                    m[i].fuze_detonation_x = std::numeric_limits<double>::quiet_NaN();
+                    m[i].fuze_detonation_y = std::numeric_limits<double>::quiet_NaN();
+                    m[i].fuze_detonation_z = std::numeric_limits<double>::quiet_NaN();
+                } else {
+                    const auto detonation_world = damage_effective_detonation_world_point(
+                        m[i], *t_pos, p[i], contact_fuze, timed_fuze);
+                    m[i].fuze_detonation_x = detonation_world[0];
+                    m[i].fuze_detonation_y = detonation_world[1];
+                    m[i].fuze_detonation_z = detonation_world[2];
+                }
                 m[i].fuze_detonation_heading_deg = p[i].heading;
                 m[i].fuze_detonation_pitch_deg = p[i].pitch;
                 m[i].fuze_detonation_roll_deg = p[i].roll;

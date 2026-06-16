@@ -225,6 +225,92 @@ class FuzeRuntimeMixin:
       or int(effects.component_hit_count) > 0
     )
 
+  def test_online_sensor_fuze_triggers_before_legacy_nearest_point_proxy(self) -> None:
+    def run_case(trigger_logic: str) -> tuple[object, object, object]:
+      sim = _make_baseline_kernel()
+      sim.set_time_step(0.02)
+
+      profile = ef_py.FuzeProfile()
+      profile.type = "radar_proximity"
+      profile.trigger_radius_m = 35.0
+      profile.delay_s = 0.04
+      profile.reliability = 1.0
+      profile.trigger_logic = trigger_logic
+      profile.synthetic = False
+      profile.provenance = f"test_{trigger_logic}_fuze_profile"
+
+      tuning = sim.get_missile_tuning()
+      tuning.fuze_profile = profile
+      tuning.has_fuze_profile = True
+      sim.set_missile_tuning(tuning)
+
+      blue_id, red_id = _spawn_geometry_pair(
+        sim,
+        red_x=13000.0,
+        red_y=9000.0,
+        red_heading=270.0,
+        red_vx=-260.0,
+        red_vy=0.0,
+      )
+      missile_id = int(sim.fire_missile(blue_id, red_id))
+      self.assertGreater(missile_id, 0)
+
+      _drive_missile_with_truth_track(
+        sim,
+        missile_id,
+        red_id,
+        max_steps=3600,
+      )
+      events = sim.export_recent_engagement_events()
+      self.assertEqual(len(events.nearest_approach_events), 1)
+      self.assertEqual(len(events.fuze_evaluation_events), 1)
+      self.assertEqual(len(events.effects_events), 1)
+      return (
+        events.nearest_approach_events[-1],
+        events.fuze_evaluation_events[-1],
+        events.effects_events[-1],
+      )
+
+    legacy_nearest, legacy_fuze, legacy_effects = run_case("nearest_approach")
+    online_nearest, online_fuze, online_effects = run_case("online_sensor")
+
+    self.assertEqual(str(legacy_fuze.header.reason), "fuze_armed")
+    self.assertEqual(str(online_fuze.header.reason), "fuze_armed")
+    self.assertEqual(str(legacy_effects.detonation_point_source), "sensor_window_delay_solution")
+    self.assertEqual(str(online_effects.detonation_point_source), "online_sensor_delay_solution")
+    self.assertLessEqual(
+      float(online_fuze.header.source_time_s),
+      float(legacy_fuze.header.source_time_s),
+    )
+    self.assertLessEqual(
+      float(online_effects.detonation_time_s),
+      float(legacy_effects.detonation_time_s),
+    )
+    self.assertGreater(
+      float(online_effects.miss_distance_m),
+      float(legacy_effects.miss_distance_m) + 1.0,
+    )
+    self.assertLess(float(online_effects.miss_distance_m), 35.0)
+    self.assertGreater(float(online_fuze.target_detection_confidence), 0.0)
+    self.assertGreaterEqual(
+      float(online_fuze.target_detection_confidence),
+      float(online_fuze.target_detection_threshold),
+    )
+    online_detonation_local_norm = math.sqrt(
+      float(online_effects.detonation_local_forward_m) ** 2
+      + float(online_effects.detonation_local_right_m) ** 2
+      + float(online_effects.detonation_local_up_m) ** 2
+    )
+    self.assertAlmostEqual(
+      online_detonation_local_norm,
+      float(online_effects.miss_distance_m),
+      delta=1.0e-3,
+    )
+    self.assertGreater(
+      float(online_nearest.miss_distance_m),
+      float(online_effects.miss_distance_m),
+    )
+
   def test_proximity_fuze_reliability_failure_records_no_detonation(self) -> None:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
