@@ -1,8 +1,8 @@
 # A9 High-Fidelity Weapon System — Acceptance
 
-Status: `2026-06-16` **accepted_with_residuals**. 15 clusters pass, 2 partial,
-11 deferred. All forbidden claims remain refused. 3 open residuals (R2, R4,
-fragment decay). Zero regressions vs main.
+Status: `2026-06-16` **accepted_with_residuals**. 18 clusters pass, 2 partial,
+8 deferred. All forbidden claims remain refused. 2 open residuals (R2, R4).
+Zero regressions vs main.
 
 Parent: [README.md](README.md)
 

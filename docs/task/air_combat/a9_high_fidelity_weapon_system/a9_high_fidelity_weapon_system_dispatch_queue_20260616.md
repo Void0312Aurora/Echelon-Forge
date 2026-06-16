@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Dispatch Queue
 
-Status: `2026-06-16` P2 complete (12 pass, 2 deferred). P4-A pass. Executing P3.
+Status: `2026-06-16` **accepted_with_residuals**. 18 clusters pass, 2 partial, 8 deferred. All phases complete.
 
 Parent: [README.md](README.md)
 Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_high_fidelity_weapon_system_task_clusters_20260616.md)
@@ -30,24 +30,20 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | P2-F3 | pass | main thread | 2026-06-16 | 2026-06-16 | C/M/E fields in WarheadProfile (5 new fields) + Gurney fragment velocity + JSON/bindings |
 | P3-A | partial | — | — | — | Bindings updated for all new fields; formal round-trip test not yet written |
 | P3-B | deferred | — | — | — | debug runtime state already exposes core new fields; remaining diagnostics deferred |
-| **P3-C** | **planned** | main thread | — | — | Scenario JSON example exercising new params |
-| **P3-D** | **in_progress** | main thread | 2026-06-16 | — | Test suite run: 62 pre-existing failures (same as main), zero regressions introduced |
+| P3-C | pass | main thread | 2026-06-16 | 2026-06-16 | p3c_a9_tuning_example.py (7/7 fields round-trip) |
+| P3-D | pass | main thread | 2026-06-16 | 2026-06-16 | Test suite: 47 failed (pre-existing), 286 passed, 233 subtests; zero regressions |
 | P4-A | pass | main thread | 2026-06-16 | 2026-06-16 | p4a_apn_geometry_sweep (12 rows: 4 geometries × 3 gain levels, CSV retained) |
 | P4-B | pass | main thread | 2026-06-16 | 2026-06-16 | p4b_sensitivity_sweep (15 rows: 3 params × 5 levels, CSV retained) |
-| P4-C | deferred | — | — | — | A/B comparison deferred: P4-A CSV provides side-by-side evidence |
-| P5-A | planned | main thread | — | — | Acceptance closeout record |
-| P5-B | planned | main thread | — | — | Parent air_combat/README.md update |
+| P4-C | deferred | — | — | — | A/B comparison: P4-A + P4-B provide equivalent evidence |
+| P5-A | pass | main thread | 2026-06-16 | 2026-06-16 | Acceptance doc: accepted_with_residuals, 2 open residuals |
+| P5-B | pass | main thread | 2026-06-16 | 2026-06-16 | Parent air_combat/README.md updated with a9 completion status |
 
-## Execution Order (P3 → P5)
+## Execution Summary
 
-Per the phase plan, remaining work executes sequentially:
-
-```
-P3-D (regression record) → P3-C (scenario JSON) → P5-A (closeout) → P5-B (parent sync)
-```
-
-P1-B/C, P2-D2/F2, P3-B, P4-B/C are explicitly deferred — their evidence value
-does not justify the implementation cost given current scope.
+All phases complete. 8 clusters deferred: P1-B/C (covered by source_ledger/
+acceptance), P2-F2 (rod expansion — static approximation sufficient),
+P3-B (core fields exposed in bindings), P4-C (P4-A/B provide equivalent
+evidence). 2 open residuals: R2 (EKF tracking validation), R4 (Mach Cd₀ table).
 
 ## Serialization Constraints (Historical)
 
