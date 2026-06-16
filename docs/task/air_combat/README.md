@@ -74,10 +74,11 @@ still not accepted.
   fuze authority are still not released.
 - The A9 high-fidelity weapon system subproject has been created at
   [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md).
-  It plans to upgrade six weapon subsystems (guidance, seeker, autopilot, fuze
-  refinement, aerodynamics, warhead) from engineering-proxy fidelity toward
-  research-grade fidelity, while keeping all authority boundaries sealed. P0
-  boundary freeze is in progress; no implementation has started.
+  It upgrades six weapon subsystems (guidance, seeker, autopilot, fuze,
+  aerodynamics, warhead) from engineering-proxy fidelity toward research-grade
+  fidelity, while keeping all authority boundaries sealed. Status:
+  `accepted_with_residuals` — 15 clusters pass, 3 open residuals, zero
+  regressions vs main.
 - The A8 damage-effect chain now has a lightweight pointer at
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the
   full package lives under

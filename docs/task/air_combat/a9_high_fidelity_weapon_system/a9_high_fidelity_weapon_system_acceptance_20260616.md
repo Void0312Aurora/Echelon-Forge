@@ -1,8 +1,8 @@
 # A9 High-Fidelity Weapon System — Acceptance
 
-Status: `2026-06-16` acceptance review. 12 of 28 clusters pass, 2 partial.
-No gate claims `accepted` — this records which conditions are met and which
-remain open with documented residuals.
+Status: `2026-06-16` **accepted_with_residuals**. 15 clusters pass, 2 partial,
+11 deferred. All forbidden claims remain refused. 3 open residuals (R2, R4,
+fragment decay). Zero regressions vs main.
 
 Parent: [README.md](README.md)
 
