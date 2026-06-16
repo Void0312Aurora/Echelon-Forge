@@ -284,6 +284,7 @@ set(EF_TEST_SOURCES
     src/tests/test_main.cpp
     src/tests/test_simulation_kernel_smoke.cpp
     src/tests/test_components_basic.cpp
+    src/tests/test_kalman_seeker.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})

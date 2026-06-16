@@ -17,8 +17,8 @@ struct SeekerEkfState {
 };
 
 struct SeekerEkfParams {
-    double process_noise_sigma_a = 5.0;       // m/s² — Singer σ_max
-    double maneuver_tau_s = 15.0;              // Singer τ_m (target maneuver time constant)
+    double process_noise_sigma_a = 100.0;     // m/s^2 equivalent maneuver scale (~10 g target turn)
+    double maneuver_tau_s = 15.0;              // Reserved for future Singer-style maneuver decay
     double meas_noise_angle_rad = 0.003;       // rad (~0.17° ≈ 3 mrad)
     double meas_noise_range_m = 10.0;          // m
     double track_memory_timeout_s = 0.75;
@@ -96,36 +96,35 @@ inline bool mat3inv(const double A[9], double Ainv[9]) {
     return true;
 }
 
-// ── process noise: Singer model, discrete-time Q(Δt) ──
+// ── process noise: white-jerk model, discrete-time Q(dt) ──
 
 inline void singer_Q(double dt, double tau_m, double sigma_a, double Q[81]) {
-    const double a = 1.0 / std::max(0.01, tau_m);
+    (void)tau_m;  // Reserved for a future full Singer transition model.
     const double T = std::max(1.0e-6, dt);
-    const double aT = a * T;
-    const double eaT = std::exp(-aT);
-    const double eaT2 = eaT * eaT;
+    const double T2 = T * T;
+    const double T3 = T2 * T;
+    const double T4 = T3 * T;
+    const double T5 = T4 * T;
+    const double q = std::max(0.0, sigma_a) * std::max(0.0, sigma_a);
 
-    // q11 = position variance scaling
-    const double q11 = (2.0 * aT - 3.0 + 4.0 * eaT - eaT2) / (2.0 * a * a * a * a * a);
-    const double q12 = (1.0 - 2.0 * eaT + eaT2) / (2.0 * a * a * a * a);
-    const double q13 = (1.0 - eaT2) / (2.0 * a * a * a);
-    const double q22 = (2.0 * aT + 1.0 - eaT2 * (2.0 * aT + 1.0)) / (2.0 * a * a * a);
-    const double q23 = (1.0 - 2.0 * eaT + eaT2) / (2.0 * a * a);
-    const double q33 = (1.0 - eaT2) / (2.0 * a);
-
-    const double s2 = sigma_a * sigma_a;
+    const double q11 = q * T5 / 20.0;
+    const double q12 = q * T4 / 8.0;
+    const double q13 = q * T3 / 6.0;
+    const double q22 = q * T3 / 3.0;
+    const double q23 = q * T2 / 2.0;
+    const double q33 = q * T;
 
     for (int i = 0; i < 81; ++i) Q[i] = 0.0;
     for (int axis = 0; axis < 3; ++axis) {
         const int p = axis;       // position index
         const int v = 3 + axis;   // velocity index
         const int a_ = 6 + axis;  // acceleration index
-        Q[p * 9 + p] = s2 * q11;
-        Q[p * 9 + v] = s2 * q12;  Q[v * 9 + p] = s2 * q12;
-        Q[p * 9 + a_] = s2 * q13; Q[a_ * 9 + p] = s2 * q13;
-        Q[v * 9 + v] = s2 * q22;
-        Q[v * 9 + a_] = s2 * q23; Q[a_ * 9 + v] = s2 * q23;
-        Q[a_ * 9 + a_] = s2 * q33;
+        Q[p * 9 + p] = q11;
+        Q[p * 9 + v] = q12;  Q[v * 9 + p] = q12;
+        Q[p * 9 + a_] = q13; Q[a_ * 9 + p] = q13;
+        Q[v * 9 + v] = q22;
+        Q[v * 9 + a_] = q23; Q[a_ * 9 + v] = q23;
+        Q[a_ * 9 + a_] = q33;
     }
 }
 
@@ -266,11 +265,8 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
     double dz_range = range_m - r_pred;
     double innov[3] = {dz_bearing, dz_elev, dz_range};
 
-    // Convert measurement to world-frame position for H Jacobian computation
-    double meas_world[3];
-    body_rel_to_world(bearing_rad, elevation_rad, range_m, heading_rad, missile_world, meas_world);
-    double rel[3] = {meas_world[0] - missile_world[0], meas_world[1] - missile_world[1],
-                     meas_world[2] - missile_world[2]};
+    double rel[3] = {s.x[0] - missile_world[0], s.x[1] - missile_world[1],
+                     s.x[2] - missile_world[2]};
 
     // H Jacobian (world-frame)
     double H[27];
@@ -317,7 +313,7 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
     mat9x3vec(K, innov, Kinnov);
     for (int i = 0; i < 9; ++i) s.x[i] += Kinnov[i];
 
-    // P = (I - K*H) * P
+    // P = (I - K*H) * P * (I - K*H)' + K * R * K'
     double KH[81] = {};
     for (int r = 0; r < 9; ++r)
         for (int c = 0; c < 9; ++c) {
@@ -326,18 +322,47 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
             KH[r * 9 + c] = sum;
         }
 
+    double IKH[81] = {};
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 9; ++c)
+            IKH[r * 9 + c] = (r == c ? 1.0 : 0.0) - KH[r * 9 + c];
+
     double IKHP[81] = {};
     for (int r = 0; r < 9; ++r)
         for (int c = 0; c < 9; ++c) {
             double sum = 0.0;
-            for (int k = 0; k < 9; ++k) {
-                double ikh = (r == k) ? (1.0 - KH[r * 9 + k]) : -KH[r * 9 + k];
-                sum += ikh * s.P[k * 9 + c];
-            }
+            for (int k = 0; k < 9; ++k) sum += IKH[r * 9 + k] * s.P[k * 9 + c];
             IKHP[r * 9 + c] = sum;
         }
 
-    for (int i = 0; i < 81; ++i) s.P[i] = IKHP[i];
+    double joseph[81] = {};
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 9; ++c) {
+            double sum = 0.0;
+            for (int k = 0; k < 9; ++k) sum += IKHP[r * 9 + k] * IKH[c * 9 + k];
+            joseph[r * 9 + c] = sum;
+        }
+
+    double KR[27] = {};
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 3; ++c) {
+            double sum = 0.0;
+            for (int k = 0; k < 3; ++k) sum += K[r * 3 + k] * Rmeas[k * 3 + c];
+            KR[r * 3 + c] = sum;
+        }
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 9; ++c) {
+            double sum = 0.0;
+            for (int k = 0; k < 3; ++k) sum += KR[r * 3 + k] * K[c * 3 + k];
+            joseph[r * 9 + c] += sum;
+        }
+
+    for (int r = 0; r < 9; ++r)
+        for (int c = r; c < 9; ++c) {
+            double v = 0.5 * (joseph[r * 9 + c] + joseph[c * 9 + r]);
+            s.P[r * 9 + c] = v;
+            s.P[c * 9 + r] = v;
+        }
 }
 
 inline void ekf_init(SeekerEkfState &s, const SeekerEkfParams &p,
