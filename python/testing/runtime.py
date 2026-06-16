@@ -30,7 +30,7 @@ def _candidate_build_names() -> tuple[str, ...]:
     return ("build-workshop", "build-gpu", "build", "build-facade-local")
 
 
-def _has_ef_py_artifact(path: str) -> bool:
+def _ef_py_artifact_paths(path: str) -> list[str]:
     search_dirs = [path]
     if _is_windows():
         search_dirs.extend(
@@ -40,11 +40,25 @@ def _has_ef_py_artifact(path: str) -> bool:
         )
 
     patterns = ("ef_py*.pyd", "ef_py*.so", "ef_py")
+    artifacts: list[str] = []
     for search_dir in search_dirs:
         for pattern in patterns:
-            if glob(os.path.join(search_dir, pattern)):
-                return True
-    return False
+            artifacts.extend(glob(os.path.join(search_dir, pattern)))
+    return artifacts
+
+
+def _has_ef_py_artifact(path: str) -> bool:
+    return bool(_ef_py_artifact_paths(path))
+
+
+def _newest_ef_py_artifact_mtime(path: str) -> float:
+    mtimes: list[float] = []
+    for artifact in _ef_py_artifact_paths(path):
+        try:
+            mtimes.append(os.path.getmtime(artifact))
+        except OSError:
+            continue
+    return max(mtimes, default=0.0)
 
 
 def build_dirs(root: str | None = None) -> list[str]:
@@ -67,6 +81,8 @@ def build_dirs(root: str | None = None) -> list[str]:
         if os.path.isdir(normalized):
             existing.append(normalized)
     with_artifacts = [path for path in existing if _has_ef_py_artifact(path)]
+    if with_artifacts and not _is_windows():
+        with_artifacts.sort(key=_newest_ef_py_artifact_mtime, reverse=True)
     without_artifacts = [path for path in existing if path not in with_artifacts]
     return with_artifacts + without_artifacts
 

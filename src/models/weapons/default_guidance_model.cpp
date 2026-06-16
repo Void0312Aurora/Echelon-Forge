@@ -477,12 +477,13 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
     // EKF path
     if (missile.use_kalman_seeker) {
         const double missile_world[3] = {transform.x, transform.y, transform.z};
+        const double heading_rad = transform.heading * M_PI / 180.0;
         if (!missile.ekf_state.initialized) {
             missile_seeker::ekf_init(missile.ekf_state, missile.ekf_params,
                                      det.bearing * M_PI / 180.0,
                                      det.elevation * M_PI / 180.0,
                                      std::max(1.0, det.range),
-                                     missile_world, current_time);
+                                     missile_world, heading_rad, current_time);
         } else {
             missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params,
                                         current_time - missile.ekf_state.last_predict_time_s);
@@ -490,20 +491,22 @@ void update_track_from_detection(Missile &missile, const Detection &det, double 
                                        det.bearing * M_PI / 180.0,
                                        det.elevation * M_PI / 180.0,
                                        std::max(1.0, det.range),
-                                       missile_world);
+                                       missile_world, heading_rad);
         }
-        // Extract spherical state for guidance-law compatibility
-        const double mvel[3] = {0.0, 0.0, 0.0};  // missile velocity not needed for angles
+        // Extract body-relative spherical state for guidance-law compatibility
         missile.filtered_bearing_deg = missile_seeker::ekf_filtered_bearing_deg(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
         missile.filtered_elevation_deg = missile_seeker::ekf_filtered_elevation_deg(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
         missile.filtered_range_m = missile_seeker::ekf_filtered_range_m(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
+        const double mvel[3] = {0.0, 0.0, 0.0};
         missile.filtered_closing_speed_mps = missile_seeker::ekf_closing_speed_mps(
             missile.ekf_state, missile_world, mvel);
-        missile.bearing_rate_deg_s = 0.0;   // PN uses LOS rates from body-frame, EKF provides
-        missile.elevation_rate_deg_s = 0.0;  // Cartesian rates — recomputed in guidance section
+        // EKF provides Cartesian rates; bearing/elevation rates are computed
+        // in the guidance section below from filtered angles
+        missile.bearing_rate_deg_s = 0.0;
+        missile.elevation_rate_deg_s = 0.0;
     } else {
         // Legacy first-order smoothing path
         if (!missile.seeker_has_valid_track) {
@@ -546,13 +549,14 @@ void propagate_track_memory(Missile &missile, double dt, const Transform &transf
     if (missile.use_kalman_seeker && missile.ekf_state.initialized) {
         missile_seeker::ekf_predict(missile.ekf_state, missile.ekf_params, dt);
         const double missile_world[3] = {transform.x, transform.y, transform.z};
+        const double heading_rad = transform.heading * M_PI / 180.0;
         const double mvel[3] = {0.0, 0.0, 0.0};
         missile.filtered_bearing_deg = missile_seeker::ekf_filtered_bearing_deg(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
         missile.filtered_elevation_deg = missile_seeker::ekf_filtered_elevation_deg(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
         missile.filtered_range_m = missile_seeker::ekf_filtered_range_m(
-            missile.ekf_state, missile_world);
+            missile.ekf_state, missile_world, heading_rad);
         missile.filtered_closing_speed_mps = missile_seeker::ekf_closing_speed_mps(
             missile.ekf_state, missile_world, mvel);
     } else {

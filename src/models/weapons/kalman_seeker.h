@@ -56,6 +56,13 @@ inline void mat3vec(const double M[9], const double v[3], double out[3]) {
     out[2] = M[6]*v[0] + M[7]*v[1] + M[8]*v[2];
 }
 
+// K is 9x3 row-major, innov is 3-vector → 9-vector output
+inline void mat9x3vec(const double K[27], const double v[3], double out[9]) {
+    for (int r = 0; r < 9; ++r) {
+        out[r] = K[r * 3 + 0] * v[0] + K[r * 3 + 1] * v[1] + K[r * 3 + 2] * v[2];
+    }
+}
+
 // 3x3 matrix inverse (Gauss-Jordan)
 inline bool mat3inv(const double A[9], double Ainv[9]) {
     double M[9] = {A[0],A[1],A[2], A[3],A[4],A[5], A[6],A[7],A[8]};
@@ -209,17 +216,47 @@ inline void ekf_predict(SeekerEkfState &s, const SeekerEkfParams &p, double dt) 
     s.last_predict_time_s += dt;
 }
 
+// Convert body-relative bearing/elevation/range to world-frame position.
+// bearing/elevation are relative to missile body (+X forward, +Y right, +Z up).
+// heading_rad rotates body → world around Z axis.
+inline void body_rel_to_world(double bearing_rad, double elevation_rad, double range_m,
+                               double heading_rad, const double missile_world[3],
+                               double world_pos[3]) {
+    double ce = std::cos(elevation_rad);
+    double dx_body = range_m * ce * std::cos(bearing_rad);
+    double dy_body = range_m * ce * std::sin(bearing_rad);
+    double dz_body = range_m * std::sin(elevation_rad);
+    double ch = std::cos(heading_rad);
+    double sh = std::sin(heading_rad);
+    world_pos[0] = missile_world[0] + dx_body * ch - dy_body * sh;
+    world_pos[1] = missile_world[1] + dx_body * sh + dy_body * ch;
+    world_pos[2] = missile_world[2] + dz_body;
+}
+
+// Convert world-frame relative position to body-relative bearing/elevation/range.
+inline void world_to_body_rel(const double world_pos[3], const double missile_world[3],
+                               double heading_rad, double &bearing_rad, double &elevation_rad,
+                               double &range_m) {
+    double dx = world_pos[0] - missile_world[0];
+    double dy = world_pos[1] - missile_world[1];
+    double dz = world_pos[2] - missile_world[2];
+    double ch = std::cos(heading_rad);
+    double sh = std::sin(heading_rad);
+    double dx_body =  dx * ch + dy * sh;
+    double dy_body = -dx * sh + dy * ch;
+    bearing_rad = std::atan2(dy_body, dx_body);
+    double xy = std::sqrt(dx_body * dx_body + dy_body * dy_body);
+    elevation_rad = std::atan2(dz, std::max(1.0e-6, xy));
+    range_m = std::sqrt(dx_body * dx_body + dy_body * dy_body + dz * dz);
+}
+
 inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
                        double bearing_rad, double elevation_rad, double range_m,
-                       const double missile_world[3]) {
-    // Compute relative position from state
-    double rel[3] = {s.x[0] - missile_world[0], s.x[1] - missile_world[1], s.x[2] - missile_world[2]};
-
-    // Predicted measurement
-    double r_pred = norm3(rel);
+                       const double missile_world[3], double heading_rad) {
+    // Compute predicted body-relative measurement from world state
+    double bearing_pred, elev_pred, r_pred;
+    world_to_body_rel(s.x, missile_world, heading_rad, bearing_pred, elev_pred, r_pred);
     if (r_pred < 1.0) r_pred = 1.0;
-    double bearing_pred = std::atan2(rel[1], rel[0]);
-    double elev_pred = std::atan2(rel[2], std::sqrt(rel[0]*rel[0] + rel[1]*rel[1]));
 
     // Innovation
     double dz_bearing = bearing_rad - bearing_pred;
@@ -229,7 +266,13 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
     double dz_range = range_m - r_pred;
     double innov[3] = {dz_bearing, dz_elev, dz_range};
 
-    // H Jacobian
+    // Convert measurement to world-frame position for H Jacobian computation
+    double meas_world[3];
+    body_rel_to_world(bearing_rad, elevation_rad, range_m, heading_rad, missile_world, meas_world);
+    double rel[3] = {meas_world[0] - missile_world[0], meas_world[1] - missile_world[1],
+                     meas_world[2] - missile_world[2]};
+
+    // H Jacobian (world-frame)
     double H[27];
     measurement_jacobian_H(rel, H);
 
@@ -271,7 +314,7 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
 
     // x = x + K * innov
     double Kinnov[9];
-    mat3vec(K, innov, Kinnov);
+    mat9x3vec(K, innov, Kinnov);
     for (int i = 0; i < 9; ++i) s.x[i] += Kinnov[i];
 
     // P = (I - K*H) * P
@@ -299,15 +342,13 @@ inline void ekf_update(SeekerEkfState &s, const SeekerEkfParams &p,
 
 inline void ekf_init(SeekerEkfState &s, const SeekerEkfParams &p,
                      double bearing_rad, double elevation_rad, double range_m,
-                     const double missile_world[3], double current_time_s) {
-    // Initialize state from first measurement
-    double dx = range_m * std::cos(elevation_rad) * std::cos(bearing_rad);
-    double dy = range_m * std::cos(elevation_rad) * std::sin(bearing_rad);
-    double dz = range_m * std::sin(elevation_rad);
-
-    s.x[0] = missile_world[0] + dx;
-    s.x[1] = missile_world[1] + dy;
-    s.x[2] = missile_world[2] + dz;
+                     const double missile_world[3], double heading_rad, double current_time_s) {
+    // Initialize state from body-relative measurement converted to world frame
+    double world_pos[3];
+    body_rel_to_world(bearing_rad, elevation_rad, range_m, heading_rad, missile_world, world_pos);
+    s.x[0] = world_pos[0];
+    s.x[1] = world_pos[1];
+    s.x[2] = world_pos[2];
     s.x[3] = 0.0; s.x[4] = 0.0; s.x[5] = 0.0;
     s.x[6] = 0.0; s.x[7] = 0.0; s.x[8] = 0.0;
 
@@ -324,27 +365,27 @@ inline void ekf_init(SeekerEkfState &s, const SeekerEkfParams &p,
     s.last_predict_time_s = current_time_s;
 }
 
-// ── extract filtered spherical state (for PN guidance compatibility) ──
+// ── extract filtered body-relative spherical state (for PN guidance compatibility) ──
 
-inline double ekf_filtered_bearing_deg(const SeekerEkfState &s, const double missile_world[3]) {
-    double dx = s.x[0] - missile_world[0];
-    double dy = s.x[1] - missile_world[1];
-    return std::atan2(dy, dx) * 180.0 / M_PI;
+inline double ekf_filtered_bearing_deg(const SeekerEkfState &s, const double missile_world[3],
+                                        double heading_rad) {
+    double bearing_rad, elev_rad, range_m;
+    world_to_body_rel(s.x, missile_world, heading_rad, bearing_rad, elev_rad, range_m);
+    return bearing_rad * 180.0 / M_PI;
 }
 
-inline double ekf_filtered_elevation_deg(const SeekerEkfState &s, const double missile_world[3]) {
-    double dx = s.x[0] - missile_world[0];
-    double dy = s.x[1] - missile_world[1];
-    double dz = s.x[2] - missile_world[2];
-    double xy = std::sqrt(dx*dx + dy*dy);
-    return std::atan2(dz, std::max(1.0e-6, xy)) * 180.0 / M_PI;
+inline double ekf_filtered_elevation_deg(const SeekerEkfState &s, const double missile_world[3],
+                                          double heading_rad) {
+    double bearing_rad, elev_rad, range_m;
+    world_to_body_rel(s.x, missile_world, heading_rad, bearing_rad, elev_rad, range_m);
+    return elev_rad * 180.0 / M_PI;
 }
 
-inline double ekf_filtered_range_m(const SeekerEkfState &s, const double missile_world[3]) {
-    double dx = s.x[0] - missile_world[0];
-    double dy = s.x[1] - missile_world[1];
-    double dz = s.x[2] - missile_world[2];
-    return std::sqrt(dx*dx + dy*dy + dz*dz);
+inline double ekf_filtered_range_m(const SeekerEkfState &s, const double missile_world[3],
+                                    double heading_rad) {
+    double bearing_rad, elev_rad, range_m;
+    world_to_body_rel(s.x, missile_world, heading_rad, bearing_rad, elev_rad, range_m);
+    return range_m;
 }
 
 inline double ekf_closing_speed_mps(const SeekerEkfState &s, const double missile_world[3],

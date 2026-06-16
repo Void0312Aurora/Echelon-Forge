@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Dispatch Queue
 
-Status: `2026-06-16` P0 boundary freeze. No worker packets dispatched yet.
+Status: `2026-06-16` P2 waves 1-3 complete (14 of 28 clusters). 10 pass, 4 partial. P3/P4/P5 remain planned.
 
 Parent: [README.md](README.md)
 Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_high_fidelity_weapon_system_task_clusters_20260616.md)

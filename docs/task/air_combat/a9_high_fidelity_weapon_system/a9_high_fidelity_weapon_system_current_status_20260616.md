@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` P2 wave 1 implementation complete (6 clusters). P0/P1 docs open.
+Status: `2026-06-16` P2 waves 1-3 complete (10 clusters pass, 4 partial). No regressions vs main (62 pre-existing failures on both). P3/P4/P5 remain planned.
 
 ## What Changed Since Prior Checkpoint
 
@@ -17,7 +17,7 @@ dispatch queue, and acceptance draft documents.
 | Subsystem | Current Fidelity | Target Fidelity | Status |
 |-----------|-----------------|-----------------|--------|
 | Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline (8 files) + APN feed-forward term in guidance law |
-| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h (295 lines) + EKF integration with fallback |
+| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **partial** — kalman_seeker.h (EKF engine) + coordinate-frame integration in guidance model; use_kalman_seeker not yet in MissileTuning/JSON pipeline; EKF branch zeroes LOS rates (PN/APN weakened) |
 | Autopilot (G3) | Single first-order lag | Configurable-order transfer function (τ, ζ) | **pass** — second-order state-space filter + full tuning pipeline |
 | Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | **pass** — hit_to_kill coverage penalty + existing PF-R4 preserved |
 | Aerodynamics (G5) | Fixed Cd₀ per regime | Configurable Mach breakpoints + power on/off distinction | **pass** — mach_transonic_start/end + cd0_power_on_ratio in full pipeline |
@@ -73,5 +73,7 @@ dispatch queue, and acceptance draft documents.
 - ❌ `component_failure_probability_authority`: NOT claimed.
 - ❌ `stock_weapon_truth`: NOT claimed.
 - ❌ `real_weapon_pk_authority`: NOT claimed.
-- ❌ `research-grade high fidelity` as a completed claim: NOT claimed. All G1-G6
-  work is planned, not implemented. Current state is P0 boundary planning only.
+- ❌ `research-grade high fidelity` as a completed claim: NOT claimed. P2 waves
+  1-3 delivered 10 pass + 4 partial clusters; G2 is partial (EKF has known
+  coordinate-frame and pipeline gaps); G6 physics is opt-in (fields plumbed,
+  legacy formulas still default). No authority, calibration, or stock truth.
