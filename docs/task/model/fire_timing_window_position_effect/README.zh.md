@@ -88,6 +88,107 @@ Verdict 摘要：
 2. 基于 v6 字段审查 air-domain system/scales 到 platform capability delta 的阈值和权重是否物理合理。
 3. 只有在杀伤链能解释 component/system/platform 因果后，再讨论 reward 或辅助学习目标。
 
+## Damage 链归因字段
+
+2026-06-16 追加 `schema_version=fire_timing.window_position_sweep.v4` 的解释层。
+这层不改变 damage 计算，只把已有事件字段翻译成更容易读的归因字段：
+
+- `damage_chain_outcome`：这条样本最终停在什么状态，例如 `no_release`、`fuze_no_detonation`、`component_sample_rejected_but_system_consequence`、`system_consequence_below_kill_threshold`、`mission_kill`。
+- `damage_chain_blocker`：如果没有 kill，直接写出主要阻断点；如果已经 kill，则写 `kill_observed`。
+- `damage_chain_primary_channel`：优先使用实际损伤部件系统，其次使用候选部件系统；如果只有平台聚合后果，则写 `platform_consequence`。
+- `damage_chain_component_sample_gate`：说明部件概率抽样是否通过，常见值是 `sample_passed`、`sample_rejected`、`no_component_probability`。
+- `damage_chain_capability_attribution`：在 mission、mobility、sensor、survivability 中，哪一个能力下降最大。
+- `damage_chain_attribution_summary`：一行人可读解释，例如“通过哪个部件/系统、样本是否过门、哪项能力从多少降到多少”。
+
+delay 汇总中同步增加：
+
+- `damage_chain_outcome_counts`
+- `damage_chain_blocker_counts`
+- `damage_chain_primary_channel_counts`
+- `damage_chain_capability_attribution_counts`
+- `damage_chain_component_sample_gate_counts`
+
+这些字段用于回答“为什么这次没有 kill”或“为什么这次形成 kill”。它们仍然是诊断解释，不是新的物理杀伤公式，也不把当前样本均值提升为真实杀伤概率。
+
+## 近炸触发显示字段
+
+2026-06-16 追加 `schema_version=fire_timing.window_position_sweep.v5` 的近炸解释层。
+这层不改变 fuze 或 damage 计算，只把现有近炸判定过程显示出来：
+
+- `lethality_chain_fuze_trigger_radius_m`：当前样本使用的引信触发半径。
+- `lethality_chain_fuze_distance_ratio`：`miss_distance / trigger_radius`；大于 `1` 通常意味着没有进入触发半径。
+- `lethality_chain_fuze_trigger_quality`：按当前代码同源公式计算的 `1 - miss_distance / trigger_radius`，截断到 `[0, 1]`。
+- `lethality_chain_fuze_sample`：本次引信抽样值。
+- `lethality_chain_fuze_sample_gate`：抽样是否通过，常见值是 `sample_passed`、`sample_rejected`、`no_fuze_probability`、`no_fuze_sample`。
+- `lethality_chain_fuze_gate_summary`：一行人可读解释，例如“miss 3m / trigger 15m、quality 0.8、sample 是否小于期望引爆概率”。
+
+delay 汇总中同步增加 `mean_fuze_trigger_radius_m`、`mean_fuze_distance_ratio`、
+`mean_fuze_trigger_quality`、`mean_fuze_sample`、`fuze_sample_pass_given_release_rate`、
+`fuze_sample_gate_counts` 与 `fuze_gate_summary_counts`。图中的 `fuze quality`
+现在使用当前近炸公式，而不是旧版粗略的 `1/(1+miss_distance)` 代理值。
+
+解释边界：这些字段只说明“当前模型为什么触发或没触发近炸”，不证明当前近炸模型已经具备真实引信保真度。它们用于暴露问题，而不是给出现实 Pk 结论。
+
+## Seed 方差与置信度补充
+
+2026-06-15 追加了 seed-variance 输出；2026-06-16 重跑后产物升级为
+`schema_version=fire_timing.window_position_sweep.v5`。该版本在每个 delay summary
+中直接写出 Bernoulli 事件率的 Wilson 置信区间、连续指标的 sample std/SEM/95% CI、
+`seed_confidence_flags`，并补充 damage 链归因统计与近炸触发显示字段。本轮小样本使用 4 个代表性窗口位置，
+每个位置 8 个独立 seed：
+
+```powershell
+.\.venv\Scripts\python.exe tools\diagnostics\fire_timing_fault_localization_probe.py `
+  --mode window_position_sweep `
+  --episodes 8 `
+  --max_steps 2000 `
+  --delays 32,768,1024,1664 `
+  --json_out docs\task\model\fire_timing_window_position_effect\fire_timing_seed_variance_20260615.json `
+  --csv_out docs\task\model\fire_timing_window_position_effect\fire_timing_seed_variance_20260615.csv `
+  --plot_out docs\task\model\fire_timing_window_position_effect\fire_timing_seed_variance_20260615.png
+```
+
+| delay steps | seeds | mission kill\|release | 95% CI | detonation\|release | component P(fail) mean +/- SEM | system delta mean +/- SEM | high variance |
+|---:|---:|---:|---:|---:|---:|---:|---|
+| 32 | 8 | 0.625 | [0.306, 0.863] | 0.750 | 0.408 +/- 0.092 | -0.625 +/- 0.138 | yes |
+| 768 | 8 | 0.000 | [0.000, 0.324] | 0.375 | 0.950 +/- 0.000 | -0.212 +/- 0.104 | yes |
+| 1024 | 8 | 0.000 | [0.000, 0.324] | 0.750 | 0.608 +/- 0.010 | -0.434 +/- 0.095 | yes |
+| 1664 | 8 | 0.625 | [0.306, 0.863] | 0.625 | 0.465 +/- 0.098 | -0.625 +/- 0.183 | yes |
+
+v5 归因统计把“是否 kill”拆成更清楚的停点：
+
+| delay steps | damage_chain_outcome_counts | primary channel counts | capability attribution |
+|---:|---|---|---|
+| 32 | `mission_kill:5, fuze_no_detonation:2, system_consequence_below_kill_threshold:1` | `mission_systems:3, sensor_payload:3, none:2` | `mission_capability:6, none:2` |
+| 768 | `fuze_no_detonation:5, system_consequence_below_kill_threshold:3` | `sensor_payload:3, none:5` | `mission_capability:3, none:5` |
+| 1024 | `system_consequence_below_kill_threshold:6, fuze_no_detonation:2` | `propeller:4, engine:2, none:2` | `mobility_capability:4, mission_capability:2, none:2` |
+| 1664 | `mission_kill:5, fuze_no_detonation:3` | `data_link:3, wings:2, none:3` | `mission_capability:5, none:3` |
+
+v5 近炸触发统计显示：同一 delay 内 `miss/trigger` 基本由确定性轨迹给定，
+而 `fuze_sample` 决定了部分 seed 是否进入后续战斗部/损伤链。
+
+| delay steps | miss distance mean | trigger radius | miss/trigger | fuze quality | E[P(det)] | fuze sample pass\|release |
+|---:|---:|---:|---:|---:|---:|---:|
+| 32 | 4.186 m | 15.000 m | 0.279 | 0.721 | 0.770 | 0.750 |
+| 768 | 5.140 m | 15.000 m | 0.343 | 0.657 | 0.731 | 0.375 |
+| 1024 | 4.821 m | 15.000 m | 0.321 | 0.679 | 0.744 | 0.750 |
+| 1664 | 3.059 m | 15.000 m | 0.204 | 0.796 | 0.815 | 0.625 |
+
+`confidence_summary` 标记：
+
+- `high_variance_delay_steps=[32,768,1024,1664]`
+- `mission_kill_uncertain_delay_steps=[32,1664]`
+- `platform_consequence_uncertain_delay_steps=[1664]`
+- `max_mission_kill_given_release_rate_ci_width=0.557`
+- `max_system_health_delta_sem=0.183`
+
+解释边界：
+
+- 同一 delay 下的 `release_range_geom_m`、`miss_distance_m` 与 `fuze_trigger_quality` 在本轮样本中 SEM 为 `0`，说明当前 seed 方差主要不在轨迹几何，而在 fuze sample、component damage 与 platform consequence。
+- `32` 和 `1664` 的 mission-kill rate 虽然均值为 `0.625`，但 8 seed 下 95% CI 仍宽到约 `[0.306, 0.863]`；不能把这两个点解释成稳定的 kill probability 峰值。
+- `768` 和 `1024` 的 mission-kill 均为 `0`，但由于样本只有 8，Wilson 上界仍约 `0.324`；这只能说明本轮没有观察到 mission kill，不能证明真实概率接近 0。
+- 结论应表述为：当前发射窗口效应具备可观察信号，但同一发射位置下的随机后果方差足以影响 mission-kill 标签；因此后续学习/置信度分析必须把 seed 作为显式采样维度，而不能只看单 seed 或少量均值。
+
 ## 本轮修复验证
 
 - `cmake --build build-local-win --target ef_core ef_py -j2`：通过，`ef_py` 已包含新的 `PlatformConsequenceEvent` 字段。
@@ -102,5 +203,8 @@ Verdict 摘要：
 - `fire_timing_window_position_sweep_20260615.json`
 - `fire_timing_window_position_sweep_20260615.csv`
 - `fire_timing_window_position_sweep_20260615.png`：最终学习信号视图。
+- `fire_timing_seed_variance_20260615.json`
+- `fire_timing_seed_variance_20260615.csv`
+- `fire_timing_seed_variance_20260615.png`：代表性窗口点的 seed 方差/置信度视图。
 
 注：`first_release_legal_window_age_steps` 在当前 process summary 中会因为首发射行已经进入 `FiredAssess` 快照而保持为 `0`，本次结论不依赖该字段；窗口位置以 `fire_delay_steps` 和实际 release range 为准。

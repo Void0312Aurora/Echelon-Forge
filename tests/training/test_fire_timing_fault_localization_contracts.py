@@ -225,10 +225,16 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
         "lethality_chain_row_count": 7,
         "lethality_chain_chain_count": 1,
         "lethality_chain_stages_json": '["fuze","warhead_mechanism","spatial_coverage","component_load"]',
+        "lethality_chain_miss_distance_m": 3.0,
+        "lethality_chain_fuze_type": "radar_proximity",
         "lethality_chain_fuze_triggered": True,
         "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_delay_s": 0.015,
+        "lethality_chain_fuze_reliability": 0.94,
+        "lethality_chain_fuze_sample": 0.58,
         "lethality_chain_fuze_expected_detonation_probability": 0.62,
         "lethality_chain_fuze_sampled_outcome": True,
+        "lethality_chain_fuze_trigger_radius_m": 15.0,
         "lethality_chain_projected_hitbox_count": 3,
         "lethality_chain_component_hit_count": 1,
         "lethality_chain_component_name": "right_aileron_actuator",
@@ -275,10 +281,29 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
       record["lethality_chain_fuze_expected_detonation_probability"],
       0.62,
     )
+    self.assertEqual(record["lethality_chain_fuze_type"], "radar_proximity")
+    self.assertAlmostEqual(record["lethality_chain_fuze_trigger_radius_m"], 15.0)
+    self.assertAlmostEqual(record["lethality_chain_fuze_distance_ratio"], 0.2)
+    self.assertAlmostEqual(record["lethality_chain_fuze_trigger_quality"], 0.8)
+    self.assertAlmostEqual(record["lethality_chain_fuze_sample"], 0.58)
+    self.assertEqual(record["lethality_chain_fuze_sample_gate"], "sample_passed")
+    self.assertIn("miss 3.000m / trigger 15.000m", record["lethality_chain_fuze_gate_summary"])
     self.assertAlmostEqual(record["lethality_chain_component_failure_probability"], 0.3)
     self.assertAlmostEqual(record["lethality_chain_component_failure_sample"], 0.8)
     self.assertAlmostEqual(record["lethality_chain_mission_capability_before"], 1.0)
     self.assertAlmostEqual(record["lethality_chain_mission_capability_after"], 0.8)
+    self.assertEqual(
+      record["damage_chain_outcome"],
+      "component_sample_rejected_but_system_consequence",
+    )
+    self.assertEqual(
+      record["damage_chain_blocker"],
+      "component_sample_rejected_but_system_consequence",
+    )
+    self.assertEqual(record["damage_chain_primary_channel"], "flight_control")
+    self.assertEqual(record["damage_chain_capability_attribution"], "sensor_capability")
+    self.assertEqual(record["damage_chain_component_sample_gate"], "sample_rejected")
+    self.assertIn("sample 0.800>0.300", record["damage_chain_attribution_summary"])
     self.assertEqual(record["lethality_chain_aircraft_damage_state_delta"], "control=-0.100000,fire=0.100000")
 
   def test_window_position_summary_reports_unconditional_and_release_conditional_rates(self) -> None:
@@ -335,11 +360,22 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
         "lethality_chain_row_count": 8,
         "lethality_chain_stages_json": '["fuze","warhead_mechanism","component_damage"]',
         "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_sample": 0.2,
         "lethality_chain_fuze_expected_detonation_probability": 0.8,
+        "lethality_chain_fuze_trigger_radius_m": 10.0,
+        "lethality_chain_fuze_distance_ratio": 0.3,
+        "lethality_chain_fuze_trigger_quality": 0.7,
+        "lethality_chain_fuze_sample_gate": "sample_passed",
+        "lethality_chain_fuze_gate_summary": "radar_proximity",
         "terminal_negative_reason": "",
         "lethality_chain_mission_kill": True,
         "lethality_chain_destroyed": False,
         "lethality_chain_loss_state": "mission_kill",
+        "damage_chain_outcome": "mission_kill",
+        "damage_chain_blocker": "kill_observed",
+        "damage_chain_primary_channel": "flight_control",
+        "damage_chain_capability_attribution": "mission_capability",
+        "damage_chain_component_sample_gate": "sample_passed",
         "termination_reason": "running",
       },
       {
@@ -394,11 +430,22 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
         "lethality_chain_row_count": 0,
         "lethality_chain_stages_json": "",
         "lethality_chain_fuze_failure_reason": "",
+        "lethality_chain_fuze_sample": float("nan"),
         "lethality_chain_fuze_expected_detonation_probability": float("nan"),
+        "lethality_chain_fuze_trigger_radius_m": float("nan"),
+        "lethality_chain_fuze_distance_ratio": float("nan"),
+        "lethality_chain_fuze_trigger_quality": float("nan"),
+        "lethality_chain_fuze_sample_gate": "no_fuze_probability",
+        "lethality_chain_fuze_gate_summary": "no fuze observation",
         "terminal_negative_reason": "",
         "lethality_chain_mission_kill": False,
         "lethality_chain_destroyed": False,
         "lethality_chain_loss_state": "",
+        "damage_chain_outcome": "no_release",
+        "damage_chain_blocker": "no_release",
+        "damage_chain_primary_channel": "none",
+        "damage_chain_capability_attribution": "none",
+        "damage_chain_component_sample_gate": "no_component_probability",
         "termination_reason": "running",
       },
     ]
@@ -413,8 +460,21 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
     self.assertAlmostEqual(summary["effective_component_damage_given_release_rate"], 1.0)
     self.assertAlmostEqual(summary["effective_system_consequence_given_release_rate"], 1.0)
     self.assertAlmostEqual(summary["mean_fuze_expected_detonation_probability"], 0.8)
+    self.assertAlmostEqual(summary["mean_fuze_trigger_radius_m"], 10.0)
+    self.assertAlmostEqual(summary["mean_fuze_distance_ratio"], 0.3)
+    self.assertAlmostEqual(summary["mean_fuze_trigger_quality"], 0.7)
+    self.assertAlmostEqual(summary["mean_fuze_sample"], 0.2)
+    self.assertAlmostEqual(summary["fuze_sample_pass_given_release_rate"], 1.0)
     self.assertAlmostEqual(summary["mean_component_failure_sample"], 0.2)
     self.assertAlmostEqual(summary["mean_component_damage_count"], 0.5)
+    self.assertEqual(summary["seed_sample_count"], 2)
+    self.assertEqual(summary["release_rate_success_count"], 1)
+    self.assertEqual(summary["mission_kill_given_release_rate_success_count"], 1)
+    self.assertGreater(summary["release_rate_ci_width"], 0.0)
+    self.assertGreater(summary["mission_kill_given_release_rate_ci_width"], 0.0)
+    self.assertEqual(summary["component_failure_probability_sample_count"], 1)
+    self.assertTrue(summary["seed_high_variance"])
+    self.assertIn("release_rate_ci_width_wide", summary["seed_confidence_flags"])
     self.assertAlmostEqual(summary["mean_component_integrity_delta"], -0.25)
     self.assertAlmostEqual(summary["mean_mission_capability_before"], 1.0)
     self.assertAlmostEqual(summary["mean_mission_capability_after"], 0.0)
@@ -426,6 +486,19 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
     self.assertEqual(
       summary["component_name_counts"],
       {"": 1, "right_aileron_actuator": 1},
+    )
+    self.assertEqual(summary["damage_chain_outcome_counts"], {"mission_kill": 1, "no_release": 1})
+    self.assertEqual(
+      summary["damage_chain_blocker_counts"],
+      {"kill_observed": 1, "no_release": 1},
+    )
+    self.assertEqual(
+      summary["damage_chain_component_sample_gate_counts"],
+      {"no_component_probability": 1, "sample_passed": 1},
+    )
+    self.assertEqual(
+      summary["fuze_sample_gate_counts"],
+      {"no_fuze_probability": 1, "sample_passed": 1},
     )
 
   def test_window_position_record_separates_negative_fuze_event_from_effective_damage(self) -> None:
@@ -474,6 +547,44 @@ class AirCombatFireTimingWindowPositionSweepTests(unittest.TestCase):
     self.assertAlmostEqual(
       record["lethality_chain_fuze_expected_detonation_probability"],
       0.41,
+    )
+    self.assertEqual(record["damage_chain_outcome"], "fuze_no_detonation")
+    self.assertEqual(record["damage_chain_blocker"], "fuze_no_detonation")
+    self.assertEqual(record["damage_chain_primary_channel"], "none")
+    self.assertEqual(record["damage_chain_component_sample_gate"], "no_component_probability")
+    self.assertIn("blocked at fuze", record["damage_chain_attribution_summary"])
+
+  def test_window_position_confidence_summary_marks_high_seed_variance(self) -> None:
+    summary = window_position_sweep._confidence_summary(
+      [
+        {
+          "delay_steps": 32,
+          "release_episode_count": 2,
+          "seed_high_variance": True,
+          "mission_kill_given_release_rate_ci_width": 0.72,
+          "system_health_delta_sem": 0.22,
+          "mission_capability_delta_sem": 0.18,
+        },
+        {
+          "delay_steps": 768,
+          "release_episode_count": 2,
+          "seed_high_variance": False,
+          "mission_kill_given_release_rate_ci_width": 0.1,
+          "system_health_delta_sem": 0.01,
+          "mission_capability_delta_sem": 0.01,
+        },
+      ],
+      rate_ci_width_epsilon=0.5,
+      outcome_sem_epsilon=0.15,
+      range_sem_epsilon_m=500.0,
+    )
+
+    self.assertEqual(summary["high_variance_delay_steps"], [32])
+    self.assertEqual(summary["mission_kill_uncertain_delay_steps"], [32])
+    self.assertEqual(summary["platform_consequence_uncertain_delay_steps"], [32])
+    self.assertAlmostEqual(
+      summary["max_mission_kill_given_release_rate_ci_width"],
+      0.72,
     )
 
 

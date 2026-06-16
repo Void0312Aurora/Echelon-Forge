@@ -8,6 +8,7 @@ import math
 import os
 import sys
 from collections import Counter
+from statistics import NormalDist
 from types import SimpleNamespace
 from typing import Any
 
@@ -74,6 +75,115 @@ def _mean(values: list[float]) -> float:
     return float(sum(finite) / len(finite))
 
 
+def _finite_values(values: list[Any]) -> list[float]:
+    return [
+        value
+        for value in (_finite_float(item, float("nan")) for item in values)
+        if math.isfinite(value)
+    ]
+
+
+def _confidence_z(confidence_level: float) -> float:
+    level = min(0.999, max(0.5, float(confidence_level)))
+    return float(NormalDist().inv_cdf(0.5 + level / 2.0))
+
+
+def _sample_std(values: list[float]) -> float:
+    finite = _finite_values(values)
+    if len(finite) < 2:
+        return float("nan")
+    mean = sum(finite) / len(finite)
+    variance = sum((value - mean) ** 2 for value in finite) / (len(finite) - 1)
+    return float(math.sqrt(max(0.0, variance)))
+
+
+def _numeric_confidence_fields(
+    prefix: str,
+    values: list[Any],
+    *,
+    z_score: float,
+) -> dict[str, Any]:
+    finite = _finite_values(values)
+    if not finite:
+        return {
+            f"{prefix}_sample_count": 0,
+            f"{prefix}_std": float("nan"),
+            f"{prefix}_sem": float("nan"),
+            f"{prefix}_ci_low": float("nan"),
+            f"{prefix}_ci_high": float("nan"),
+            f"{prefix}_ci_width": float("nan"),
+        }
+    std = _sample_std(finite)
+    sem = std / math.sqrt(len(finite)) if math.isfinite(std) else float("nan")
+    mean = sum(finite) / len(finite)
+    ci_low = mean - z_score * sem if math.isfinite(sem) else float("nan")
+    ci_high = mean + z_score * sem if math.isfinite(sem) else float("nan")
+    return {
+        f"{prefix}_sample_count": int(len(finite)),
+        f"{prefix}_std": float(std),
+        f"{prefix}_sem": float(sem),
+        f"{prefix}_ci_low": float(ci_low),
+        f"{prefix}_ci_high": float(ci_high),
+        f"{prefix}_ci_width": (
+            float(ci_high - ci_low)
+            if math.isfinite(ci_low) and math.isfinite(ci_high)
+            else float("nan")
+        ),
+    }
+
+
+def _wilson_interval(success_count: int, sample_count: int, *, z_score: float) -> tuple[float, float]:
+    if sample_count <= 0:
+        return (float("nan"), float("nan"))
+    n = float(sample_count)
+    p = float(success_count) / n
+    z2 = z_score * z_score
+    denom = 1.0 + z2 / n
+    center = (p + z2 / (2.0 * n)) / denom
+    margin = (
+        z_score
+        * math.sqrt(max(0.0, (p * (1.0 - p) / n) + (z2 / (4.0 * n * n))))
+        / denom
+    )
+    return (float(max(0.0, center - margin)), float(min(1.0, center + margin)))
+
+
+def _binary_confidence_fields(
+    prefix: str,
+    *,
+    success_count: int,
+    sample_count: int,
+    z_score: float,
+) -> dict[str, Any]:
+    if sample_count <= 0:
+        return {
+            f"{prefix}_sample_count": 0,
+            f"{prefix}_success_count": int(success_count),
+            f"{prefix}_std": float("nan"),
+            f"{prefix}_sem": float("nan"),
+            f"{prefix}_ci_low": float("nan"),
+            f"{prefix}_ci_high": float("nan"),
+            f"{prefix}_ci_width": float("nan"),
+        }
+    p = float(success_count) / float(sample_count)
+    std = (
+        math.sqrt(p * (1.0 - p) * sample_count / (sample_count - 1))
+        if sample_count > 1
+        else float("nan")
+    )
+    sem = math.sqrt(p * (1.0 - p) / sample_count)
+    ci_low, ci_high = _wilson_interval(success_count, sample_count, z_score=z_score)
+    return {
+        f"{prefix}_sample_count": int(sample_count),
+        f"{prefix}_success_count": int(success_count),
+        f"{prefix}_std": float(std),
+        f"{prefix}_sem": float(sem),
+        f"{prefix}_ci_low": float(ci_low),
+        f"{prefix}_ci_high": float(ci_high),
+        f"{prefix}_ci_width": float(ci_high - ci_low),
+    }
+
+
 def _spread(values: list[float]) -> float:
     finite = [float(value) for value in values if math.isfinite(float(value))]
     if not finite:
@@ -136,6 +246,243 @@ def _effective_system_consequence_observed(
     return math.isfinite(system_delta) and abs(system_delta) > 1.0e-9
 
 
+def _bounded_probability(value: float) -> float:
+    if not math.isfinite(value):
+        return float("nan")
+    return float(min(1.0, max(0.0, value)))
+
+
+def _delta_from_before_after(explicit_delta: Any, before: float, after: float) -> float:
+    delta = _finite_float(explicit_delta, float("nan"))
+    if math.isfinite(delta):
+        return delta
+    if math.isfinite(before) and math.isfinite(after):
+        return float(after - before)
+    return float("nan")
+
+
+def _component_sample_gate(probability: float, sample: float) -> str:
+    bounded = _bounded_probability(probability)
+    if not math.isfinite(bounded):
+        return "no_component_probability"
+    if not math.isfinite(sample):
+        return "no_component_sample"
+    if sample <= bounded:
+        return "sample_passed"
+    return "sample_rejected"
+
+
+def _fuze_trigger_distance_ratio(miss_distance_m: float, trigger_radius_m: float) -> float:
+    if not math.isfinite(miss_distance_m) or not math.isfinite(trigger_radius_m):
+        return float("nan")
+    if trigger_radius_m <= 0.0:
+        return float("nan")
+    return float(miss_distance_m / trigger_radius_m)
+
+
+def _fuze_trigger_quality(miss_distance_m: float, trigger_radius_m: float) -> float:
+    ratio = _fuze_trigger_distance_ratio(miss_distance_m, trigger_radius_m)
+    if not math.isfinite(ratio):
+        return float("nan")
+    return _bounded_probability(1.0 - ratio)
+
+
+def _fuze_sample_gate(probability: float, sample: float) -> str:
+    bounded = _bounded_probability(probability)
+    if not math.isfinite(bounded):
+        return "no_fuze_probability"
+    if not math.isfinite(sample):
+        return "no_fuze_sample"
+    if sample <= bounded:
+        return "sample_passed"
+    return "sample_rejected"
+
+
+def _fuze_gate_summary(
+    *,
+    fuze_type: str,
+    failure_reason: str,
+    miss_distance_m: float,
+    trigger_radius_m: float,
+    trigger_quality: float,
+    probability: float,
+    sample: float,
+    sample_gate: str,
+) -> str:
+    if not fuze_type and not failure_reason and not math.isfinite(miss_distance_m):
+        return "no fuze observation"
+    type_text = fuze_type or "unknown_fuze"
+    if math.isfinite(miss_distance_m) and math.isfinite(trigger_radius_m):
+        ratio = _fuze_trigger_distance_ratio(miss_distance_m, trigger_radius_m)
+        distance_text = (
+            f"miss {_format_float(miss_distance_m)}m / "
+            f"trigger {_format_float(trigger_radius_m)}m = {_format_float(ratio)}"
+        )
+    else:
+        distance_text = "miss/trigger n/a"
+    if sample_gate in {"sample_passed", "sample_rejected"}:
+        comparator = "<=" if sample_gate == "sample_passed" else ">"
+        sample_text = (
+            f"sample {_format_float(sample)}{comparator}"
+            f"{_format_float(_bounded_probability(probability))}"
+        )
+    else:
+        sample_text = sample_gate
+    reason_text = f"; reason {failure_reason}" if failure_reason else ""
+    return (
+        f"{type_text}; {distance_text}; quality {_format_float(trigger_quality)}; "
+        f"{sample_text}{reason_text}"
+    )
+
+
+def _primary_damage_channel(
+    *,
+    component_damage_system: str,
+    component_system: str,
+    effective_system_consequence: bool,
+) -> str:
+    if component_damage_system:
+        return component_damage_system
+    if component_system:
+        return component_system
+    if effective_system_consequence:
+        return "platform_consequence"
+    return "none"
+
+
+def _capability_attribution(
+    *,
+    mission_delta: float,
+    mobility_delta: float,
+    sensor_delta: float,
+    survivability_delta: float,
+) -> str:
+    candidates = {
+        "mission_capability": mission_delta,
+        "mobility_capability": mobility_delta,
+        "sensor_capability": sensor_delta,
+        "survivability_margin": survivability_delta,
+    }
+    finite_negative = [
+        (name, value)
+        for name, value in candidates.items()
+        if math.isfinite(value) and value < -1.0e-9
+    ]
+    if not finite_negative:
+        return "none"
+    return min(finite_negative, key=lambda item: item[1])[0]
+
+
+def _damage_chain_outcome(
+    *,
+    released: bool,
+    effects_event_count: int,
+    effective_detonation: bool,
+    effective_component_damage: bool,
+    effective_system_consequence: bool,
+    fuze_failure_reason: str,
+    projected_hitbox_count: int,
+    component_hit_count: int,
+    component_name: str,
+    component_sample_gate: str,
+    mission_kill: bool,
+    mobility_kill: bool,
+    sensor_kill: bool,
+    destroyed: bool,
+) -> str:
+    if not released:
+        return "no_release"
+    if effects_event_count <= 0:
+        return "release_no_effects_event"
+    if not effective_detonation:
+        return fuze_failure_reason or "no_effective_detonation"
+    if projected_hitbox_count <= 0 and component_hit_count <= 0 and not component_name:
+        return "detonation_no_spatial_coverage"
+    if component_hit_count <= 0 and not component_name:
+        return "detonation_no_component_load"
+    if component_sample_gate == "sample_rejected" and not effective_component_damage:
+        if effective_system_consequence:
+            return "component_sample_rejected_but_system_consequence"
+        return "component_sample_rejected_no_consequence"
+    if not effective_component_damage and not effective_system_consequence:
+        return "component_load_no_damage"
+    if effective_component_damage and not effective_system_consequence:
+        return "component_damage_no_platform_consequence"
+    if destroyed:
+        return "destroyed"
+    if mobility_kill:
+        return "mobility_kill"
+    if sensor_kill:
+        return "sensor_kill"
+    if mission_kill:
+        return "mission_kill"
+    if effective_system_consequence:
+        return "system_consequence_below_kill_threshold"
+    if effective_component_damage:
+        return "component_damage_below_platform_threshold"
+    return "detonation_no_effective_damage"
+
+
+def _damage_chain_blocker(outcome: str) -> str:
+    if outcome in {"destroyed", "mobility_kill", "sensor_kill", "mission_kill"}:
+        return "kill_observed"
+    return outcome
+
+
+def _format_float(value: float) -> str:
+    return f"{value:.3f}" if math.isfinite(value) else "n/a"
+
+
+def _attribution_summary(
+    *,
+    outcome: str,
+    component_name: str,
+    component_system: str,
+    component_damage_name: str,
+    component_damage_system: str,
+    probability: float,
+    sample: float,
+    sample_gate: str,
+    capability_attribution: str,
+    mission_before: float,
+    mission_after: float,
+    mobility_before: float,
+    mobility_after: float,
+    sensor_before: float,
+    sensor_after: float,
+    survivability_before: float,
+    survivability_after: float,
+) -> str:
+    if outcome == "no_release":
+        return "blocked before release"
+    if outcome in chain_contract.TERMINAL_NEGATIVE_REASONS or outcome == "no_effective_detonation":
+        return f"blocked at fuze: {outcome}"
+    component_label = component_damage_name or component_name or "none"
+    system_label = component_damage_system or component_system or "none"
+    if sample_gate in {"sample_passed", "sample_rejected"}:
+        comparator = "<=" if sample_gate == "sample_passed" else ">"
+        sample_text = (
+            f"sample {_format_float(sample)}{comparator}"
+            f"{_format_float(_bounded_probability(probability))}"
+        )
+    else:
+        sample_text = sample_gate
+    capability_pairs = {
+        "mission_capability": (mission_before, mission_after),
+        "mobility_capability": (mobility_before, mobility_after),
+        "sensor_capability": (sensor_before, sensor_after),
+        "survivability_margin": (survivability_before, survivability_after),
+    }
+    before, after = capability_pairs.get(capability_attribution, (float("nan"), float("nan")))
+    if capability_attribution != "none":
+        capability_text = (
+            f"{capability_attribution} {_format_float(before)}->{_format_float(after)}"
+        )
+    else:
+        capability_text = "no capability threshold pressure"
+    return f"{outcome} via {component_label}/{system_label}; {sample_text}; {capability_text}"
+
+
 def _probe_namespace(args: argparse.Namespace, *, delay: int, seed: int) -> SimpleNamespace:
     return SimpleNamespace(
         scenario=str(args.scenario),
@@ -183,6 +530,7 @@ def _record_from_episode_summary(
     sensor_kill = _bool_value(episode_summary.get("lethality_chain_sensor_kill", False))
     destroyed = _bool_value(episode_summary.get("lethality_chain_destroyed", False))
     loss_state = str(episode_summary.get("lethality_chain_loss_state", "") or "")
+    effects_event_count = int(episode_summary.get("effects_event_count", 0) or 0)
     effective_detonation = _effective_detonation_observed(
         fuze_triggered=fuze_triggered,
         stages_json=chain_stages_json,
@@ -198,6 +546,164 @@ def _record_from_episode_summary(
     )
     fuze_failure_reason = str(
         episode_summary.get("lethality_chain_fuze_failure_reason", "") or ""
+    )
+    fuze_type = str(episode_summary.get("lethality_chain_fuze_type", "") or "")
+    fuze_delay_s = _finite_float(
+        episode_summary.get("lethality_chain_fuze_delay_s", float("nan"))
+    )
+    fuze_reliability = _finite_float(
+        episode_summary.get("lethality_chain_fuze_reliability", float("nan"))
+    )
+    fuze_sample = _finite_float(
+        episode_summary.get("lethality_chain_fuze_sample", float("nan"))
+    )
+    fuze_expected_probability = _finite_float(
+        episode_summary.get(
+            "lethality_chain_fuze_expected_detonation_probability",
+            float("nan"),
+        )
+    )
+    fuze_trigger_radius_m = _finite_float(
+        episode_summary.get("lethality_chain_fuze_trigger_radius_m", float("nan"))
+    )
+    miss_distance_m = _finite_float(
+        episode_summary.get("lethality_chain_miss_distance_m", float("nan"))
+    )
+    fuze_distance_ratio = _fuze_trigger_distance_ratio(
+        miss_distance_m,
+        fuze_trigger_radius_m,
+    )
+    fuze_trigger_quality = _fuze_trigger_quality(
+        miss_distance_m,
+        fuze_trigger_radius_m,
+    )
+    fuze_sample_gate = _fuze_sample_gate(fuze_expected_probability, fuze_sample)
+    fuze_gate_summary = _fuze_gate_summary(
+        fuze_type=fuze_type,
+        failure_reason=fuze_failure_reason,
+        miss_distance_m=miss_distance_m,
+        trigger_radius_m=fuze_trigger_radius_m,
+        trigger_quality=fuze_trigger_quality,
+        probability=fuze_expected_probability,
+        sample=fuze_sample,
+        sample_gate=fuze_sample_gate,
+    )
+    projected_hitbox_count = int(
+        episode_summary.get("lethality_chain_projected_hitbox_count", 0) or 0
+    )
+    component_hit_count = int(
+        episode_summary.get("lethality_chain_component_hit_count", 0) or 0
+    )
+    component_name = str(episode_summary.get("lethality_chain_component_name", "") or "")
+    component_system = str(episode_summary.get("lethality_chain_component_system", "") or "")
+    component_damage_name = str(
+        episode_summary.get("lethality_chain_component_damage_name", "") or ""
+    )
+    component_damage_system = str(
+        episode_summary.get("lethality_chain_component_damage_system", "") or ""
+    )
+    component_failure_probability = _finite_float(
+        episode_summary.get(
+            "lethality_chain_component_failure_probability",
+            float("nan"),
+        )
+    )
+    component_failure_sample = _finite_float(
+        episode_summary.get("lethality_chain_component_failure_sample", float("nan"))
+    )
+    component_sample_gate = _component_sample_gate(
+        component_failure_probability,
+        component_failure_sample,
+    )
+    mission_capability_before = _finite_float(
+        episode_summary.get("lethality_chain_mission_capability_before", float("nan"))
+    )
+    mission_capability_after = _finite_float(
+        episode_summary.get("lethality_chain_mission_capability_after", float("nan"))
+    )
+    mission_capability_delta = _delta_from_before_after(
+        episode_summary.get("lethality_chain_mission_capability_delta", float("nan")),
+        mission_capability_before,
+        mission_capability_after,
+    )
+    mobility_capability_before = _finite_float(
+        episode_summary.get("lethality_chain_mobility_capability_before", float("nan"))
+    )
+    mobility_capability_after = _finite_float(
+        episode_summary.get("lethality_chain_mobility_capability_after", float("nan"))
+    )
+    mobility_capability_delta = _delta_from_before_after(
+        episode_summary.get("lethality_chain_mobility_capability_delta", float("nan")),
+        mobility_capability_before,
+        mobility_capability_after,
+    )
+    sensor_capability_before = _finite_float(
+        episode_summary.get("lethality_chain_sensor_capability_before", float("nan"))
+    )
+    sensor_capability_after = _finite_float(
+        episode_summary.get("lethality_chain_sensor_capability_after", float("nan"))
+    )
+    sensor_capability_delta = _delta_from_before_after(
+        episode_summary.get("lethality_chain_sensor_capability_delta", float("nan")),
+        sensor_capability_before,
+        sensor_capability_after,
+    )
+    survivability_margin_before = _finite_float(
+        episode_summary.get("lethality_chain_survivability_margin_before", float("nan"))
+    )
+    survivability_margin_after = _finite_float(
+        episode_summary.get("lethality_chain_survivability_margin_after", float("nan"))
+    )
+    survivability_margin_delta = _delta_from_before_after(
+        episode_summary.get("lethality_chain_survivability_margin_delta", float("nan")),
+        survivability_margin_before,
+        survivability_margin_after,
+    )
+    primary_damage_channel = _primary_damage_channel(
+        component_damage_system=component_damage_system,
+        component_system=component_system,
+        effective_system_consequence=effective_system_consequence,
+    )
+    capability_attribution = _capability_attribution(
+        mission_delta=mission_capability_delta,
+        mobility_delta=mobility_capability_delta,
+        sensor_delta=sensor_capability_delta,
+        survivability_delta=survivability_margin_delta,
+    )
+    damage_chain_outcome = _damage_chain_outcome(
+        released=bool(release_count > 0),
+        effects_event_count=effects_event_count,
+        effective_detonation=effective_detonation,
+        effective_component_damage=effective_component_damage,
+        effective_system_consequence=effective_system_consequence,
+        fuze_failure_reason=fuze_failure_reason,
+        projected_hitbox_count=projected_hitbox_count,
+        component_hit_count=component_hit_count,
+        component_name=component_name,
+        component_sample_gate=component_sample_gate,
+        mission_kill=mission_kill,
+        mobility_kill=mobility_kill,
+        sensor_kill=sensor_kill,
+        destroyed=destroyed,
+    )
+    attribution_summary = _attribution_summary(
+        outcome=damage_chain_outcome,
+        component_name=component_name,
+        component_system=component_system,
+        component_damage_name=component_damage_name,
+        component_damage_system=component_damage_system,
+        probability=component_failure_probability,
+        sample=component_failure_sample,
+        sample_gate=component_sample_gate,
+        capability_attribution=capability_attribution,
+        mission_before=mission_capability_before,
+        mission_after=mission_capability_after,
+        mobility_before=mobility_capability_before,
+        mobility_after=mobility_capability_after,
+        sensor_before=sensor_capability_before,
+        sensor_after=sensor_capability_after,
+        survivability_before=survivability_margin_before,
+        survivability_after=survivability_margin_after,
     )
     return {
         "delay_steps": int(delay),
@@ -232,7 +738,7 @@ def _record_from_episode_summary(
             _finite_float(episode_summary.get("final_target_health", float("nan")))
             - _finite_float(episode_summary.get("first_release_target_health", float("nan")))
         ),
-        "effects_event_count": int(episode_summary.get("effects_event_count", 0) or 0),
+        "effects_event_count": effects_event_count,
         "damage_report_count": int(episode_summary.get("damage_report_count", 0) or 0),
         "first_effects_event_step": episode_summary.get("first_effects_event_step"),
         "first_damage_report_step": episode_summary.get("first_damage_report_step"),
@@ -247,9 +753,7 @@ def _record_from_episode_summary(
             episode_summary.get("target_damage_consequence_reward_total", 0.0),
             0.0,
         ),
-        "lethality_chain_miss_distance_m": _finite_float(
-            episode_summary.get("lethality_chain_miss_distance_m", float("nan"))
-        ),
+        "lethality_chain_miss_distance_m": miss_distance_m,
         "lethality_chain_closure_mps": _finite_float(
             episode_summary.get("lethality_chain_closure_mps", float("nan"))
         ),
@@ -263,59 +767,50 @@ def _record_from_episode_summary(
             episode_summary.get("lethality_chain_chain_count", 0) or 0
         ),
         "lethality_chain_stages_json": chain_stages_json,
+        "lethality_chain_fuze_type": fuze_type,
         "lethality_chain_fuze_triggered": fuze_triggered,
         "lethality_chain_fuze_failure_reason": fuze_failure_reason,
-        "lethality_chain_fuze_expected_detonation_probability": _finite_float(
-            episode_summary.get(
-                "lethality_chain_fuze_expected_detonation_probability",
-                float("nan"),
-            )
-        ),
+        "lethality_chain_fuze_delay_s": fuze_delay_s,
+        "lethality_chain_fuze_reliability": fuze_reliability,
+        "lethality_chain_fuze_sample": fuze_sample,
+        "lethality_chain_fuze_expected_detonation_probability": fuze_expected_probability,
         "lethality_chain_fuze_sampled_outcome": _bool_value(
             episode_summary.get("lethality_chain_fuze_sampled_outcome", False)
         ),
-        "lethality_chain_projected_hitbox_count": int(
-            episode_summary.get("lethality_chain_projected_hitbox_count", 0) or 0
-        ),
-        "lethality_chain_component_hit_count": int(
-            episode_summary.get("lethality_chain_component_hit_count", 0) or 0
-        ),
+        "lethality_chain_fuze_trigger_radius_m": fuze_trigger_radius_m,
+        "lethality_chain_fuze_distance_ratio": fuze_distance_ratio,
+        "lethality_chain_fuze_trigger_quality": fuze_trigger_quality,
+        "lethality_chain_fuze_sample_gate": fuze_sample_gate,
+        "lethality_chain_fuze_gate_summary": fuze_gate_summary,
+        "lethality_chain_projected_hitbox_count": projected_hitbox_count,
+        "lethality_chain_component_hit_count": component_hit_count,
         "effective_detonation": bool(effective_detonation),
         "effective_component_damage": bool(effective_component_damage),
         "effective_system_consequence": bool(effective_system_consequence),
         "terminal_negative_reason": (
             fuze_failure_reason if not effective_detonation and fuze_failure_reason else ""
         ),
-        "lethality_chain_component_name": str(
-            episode_summary.get("lethality_chain_component_name", "") or ""
-        ),
-        "lethality_chain_component_system": str(
-            episode_summary.get("lethality_chain_component_system", "") or ""
-        ),
+        "damage_chain_outcome": damage_chain_outcome,
+        "damage_chain_blocker": _damage_chain_blocker(damage_chain_outcome),
+        "damage_chain_primary_channel": primary_damage_channel,
+        "damage_chain_capability_attribution": capability_attribution,
+        "damage_chain_component_sample_gate": component_sample_gate,
+        "damage_chain_attribution_summary": attribution_summary,
+        "lethality_chain_component_name": component_name,
+        "lethality_chain_component_system": component_system,
         "lethality_chain_component_damage_count": int(
             episode_summary.get("lethality_chain_component_damage_count", 0) or 0
         ),
-        "lethality_chain_component_damage_name": str(
-            episode_summary.get("lethality_chain_component_damage_name", "") or ""
-        ),
-        "lethality_chain_component_damage_system": str(
-            episode_summary.get("lethality_chain_component_damage_system", "") or ""
-        ),
+        "lethality_chain_component_damage_name": component_damage_name,
+        "lethality_chain_component_damage_system": component_damage_system,
         "lethality_chain_component_failure_mode": str(
             episode_summary.get("lethality_chain_component_failure_mode", "") or ""
         ),
         "lethality_chain_component_failure_severity": _finite_float(
             episode_summary.get("lethality_chain_component_failure_severity", float("nan"))
         ),
-        "lethality_chain_component_failure_probability": _finite_float(
-            episode_summary.get(
-                "lethality_chain_component_failure_probability",
-                float("nan"),
-            )
-        ),
-        "lethality_chain_component_failure_sample": _finite_float(
-            episode_summary.get("lethality_chain_component_failure_sample", float("nan"))
-        ),
+        "lethality_chain_component_failure_probability": component_failure_probability,
+        "lethality_chain_component_failure_sample": component_failure_sample,
         "lethality_chain_component_integrity_before": _finite_float(
             episode_summary.get("lethality_chain_component_integrity_before", float("nan"))
         ),
@@ -325,42 +820,18 @@ def _record_from_episode_summary(
         "lethality_chain_system_health_delta": _finite_float(
             episode_summary.get("lethality_chain_system_health_delta", float("nan"))
         ),
-        "lethality_chain_mission_capability_before": _finite_float(
-            episode_summary.get("lethality_chain_mission_capability_before", float("nan"))
-        ),
-        "lethality_chain_mission_capability_after": _finite_float(
-            episode_summary.get("lethality_chain_mission_capability_after", float("nan"))
-        ),
-        "lethality_chain_mission_capability_delta": _finite_float(
-            episode_summary.get("lethality_chain_mission_capability_delta", float("nan"))
-        ),
-        "lethality_chain_mobility_capability_before": _finite_float(
-            episode_summary.get("lethality_chain_mobility_capability_before", float("nan"))
-        ),
-        "lethality_chain_mobility_capability_after": _finite_float(
-            episode_summary.get("lethality_chain_mobility_capability_after", float("nan"))
-        ),
-        "lethality_chain_mobility_capability_delta": _finite_float(
-            episode_summary.get("lethality_chain_mobility_capability_delta", float("nan"))
-        ),
-        "lethality_chain_sensor_capability_before": _finite_float(
-            episode_summary.get("lethality_chain_sensor_capability_before", float("nan"))
-        ),
-        "lethality_chain_sensor_capability_after": _finite_float(
-            episode_summary.get("lethality_chain_sensor_capability_after", float("nan"))
-        ),
-        "lethality_chain_sensor_capability_delta": _finite_float(
-            episode_summary.get("lethality_chain_sensor_capability_delta", float("nan"))
-        ),
-        "lethality_chain_survivability_margin_before": _finite_float(
-            episode_summary.get("lethality_chain_survivability_margin_before", float("nan"))
-        ),
-        "lethality_chain_survivability_margin_after": _finite_float(
-            episode_summary.get("lethality_chain_survivability_margin_after", float("nan"))
-        ),
-        "lethality_chain_survivability_margin_delta": _finite_float(
-            episode_summary.get("lethality_chain_survivability_margin_delta", float("nan"))
-        ),
+        "lethality_chain_mission_capability_before": mission_capability_before,
+        "lethality_chain_mission_capability_after": mission_capability_after,
+        "lethality_chain_mission_capability_delta": mission_capability_delta,
+        "lethality_chain_mobility_capability_before": mobility_capability_before,
+        "lethality_chain_mobility_capability_after": mobility_capability_after,
+        "lethality_chain_mobility_capability_delta": mobility_capability_delta,
+        "lethality_chain_sensor_capability_before": sensor_capability_before,
+        "lethality_chain_sensor_capability_after": sensor_capability_after,
+        "lethality_chain_sensor_capability_delta": sensor_capability_delta,
+        "lethality_chain_survivability_margin_before": survivability_margin_before,
+        "lethality_chain_survivability_margin_after": survivability_margin_after,
+        "lethality_chain_survivability_margin_delta": survivability_margin_delta,
         "lethality_chain_control_delta": _finite_float(
             episode_summary.get("lethality_chain_control_delta", float("nan"))
         ),
@@ -404,7 +875,15 @@ def _record_from_episode_summary(
     }
 
 
-def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any]:
+def _summarize_delay(
+    delay: int,
+    records: list[dict[str, Any]],
+    *,
+    confidence_level: float = 0.95,
+    rate_ci_width_epsilon: float = 0.5,
+    outcome_sem_epsilon: float = 0.15,
+    range_sem_epsilon_m: float = 500.0,
+) -> dict[str, Any]:
     released_records = [record for record in records if bool(record.get("released", False))]
     episode_count = int(len(records))
     effects_count = _count_true(records, "effects_event_count")
@@ -424,7 +903,203 @@ def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any
         count = _count_true(released_records, key)
         return float(count / len(released_records))
 
-    return {
+    z_score = _confidence_z(float(confidence_level))
+    confidence_fields: dict[str, Any] = {
+        "seed_sample_count": episode_count,
+        "seed_confidence_level": float(confidence_level),
+        "seed_confidence_z": float(z_score),
+    }
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "release_rate",
+            success_count=len(released_records),
+            sample_count=episode_count,
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "effects_given_release_rate",
+            success_count=_count_true(released_records, "effects_event_count"),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "effective_detonation_given_release_rate",
+            success_count=_count_true(released_records, "effective_detonation"),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "fuze_sample_pass_given_release_rate",
+            success_count=sum(
+                1
+                for record in released_records
+                if str(record.get("lethality_chain_fuze_sample_gate", ""))
+                == "sample_passed"
+            ),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "effective_component_damage_given_release_rate",
+            success_count=_count_true(released_records, "effective_component_damage"),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "effective_system_consequence_given_release_rate",
+            success_count=_count_true(released_records, "effective_system_consequence"),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _binary_confidence_fields(
+            "mission_kill_given_release_rate",
+            success_count=_count_true(released_records, "lethality_chain_mission_kill"),
+            sample_count=len(released_records),
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "release_range_geom_m",
+            [record.get("first_release_target_range_geom_m", float("nan")) for record in released_records],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "miss_distance_m",
+            [record.get("lethality_chain_miss_distance_m", float("nan")) for record in records],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "fuze_trigger_radius_m",
+            [
+                record.get("lethality_chain_fuze_trigger_radius_m", float("nan"))
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "fuze_distance_ratio",
+            [
+                record.get("lethality_chain_fuze_distance_ratio", float("nan"))
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "fuze_trigger_quality",
+            [
+                record.get("lethality_chain_fuze_trigger_quality", float("nan"))
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "fuze_sample",
+            [record.get("lethality_chain_fuze_sample", float("nan")) for record in records],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "component_failure_probability",
+            [
+                record.get("lethality_chain_component_failure_probability", float("nan"))
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "system_health_delta",
+            [record.get("lethality_chain_system_health_delta", float("nan")) for record in records],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "mission_capability_delta",
+            [
+                record.get("lethality_chain_mission_capability_delta", float("nan"))
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "total_reward",
+            [record.get("total_reward", float("nan")) for record in records],
+            z_score=z_score,
+        )
+    )
+    confidence_fields.update(
+        _numeric_confidence_fields(
+            "fuze_expected_detonation_probability",
+            [
+                record.get(
+                    "lethality_chain_fuze_expected_detonation_probability",
+                    float("nan"),
+                )
+                for record in records
+            ],
+            z_score=z_score,
+        )
+    )
+    confidence_flags = []
+    rate_width_fields = (
+        "release_rate_ci_width",
+        "effects_given_release_rate_ci_width",
+        "effective_detonation_given_release_rate_ci_width",
+        "effective_component_damage_given_release_rate_ci_width",
+        "effective_system_consequence_given_release_rate_ci_width",
+        "mission_kill_given_release_rate_ci_width",
+    )
+    for field in rate_width_fields:
+        if _finite_float(confidence_fields.get(field, float("nan"))) > float(rate_ci_width_epsilon):
+            confidence_flags.append(f"{field}_wide")
+    if _finite_float(confidence_fields.get("component_failure_probability_sem", float("nan"))) > float(
+        outcome_sem_epsilon
+    ):
+        confidence_flags.append("component_failure_probability_sem_high")
+    if _finite_float(confidence_fields.get("system_health_delta_sem", float("nan"))) > float(
+        outcome_sem_epsilon
+    ):
+        confidence_flags.append("system_health_delta_sem_high")
+    if _finite_float(confidence_fields.get("mission_capability_delta_sem", float("nan"))) > float(
+        outcome_sem_epsilon
+    ):
+        confidence_flags.append("mission_capability_delta_sem_high")
+    if _finite_float(confidence_fields.get("release_range_geom_m_sem", float("nan"))) > float(
+        range_sem_epsilon_m
+    ):
+        confidence_flags.append("release_range_geom_m_sem_high")
+    confidence_fields["seed_confidence_flags"] = confidence_flags
+    confidence_fields["seed_high_variance"] = bool(confidence_flags)
+
+    summary = {
         "delay_steps": int(delay),
         "episodes": episode_count,
         "release_episode_count": int(len(released_records)),
@@ -438,6 +1113,19 @@ def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any
         "effective_detonation_episode_count": effective_detonation_count,
         "effective_detonation_rate": rate(effective_detonation_count),
         "effective_detonation_given_release_rate": released_rate("effective_detonation"),
+        "fuze_sample_pass_given_release_rate": (
+            float(
+                sum(
+                    1
+                    for record in released_records
+                    if str(record.get("lethality_chain_fuze_sample_gate", ""))
+                    == "sample_passed"
+                )
+                / len(released_records)
+            )
+            if released_records
+            else float("nan")
+        ),
         "effective_component_damage_episode_count": effective_component_damage_count,
         "effective_component_damage_rate": rate(effective_component_damage_count),
         "effective_component_damage_given_release_rate": released_rate(
@@ -484,6 +1172,30 @@ def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any
         ),
         "mean_miss_distance_m": _mean(
             [float(record["lethality_chain_miss_distance_m"]) for record in records]
+        ),
+        "mean_fuze_trigger_radius_m": _mean(
+            [
+                _finite_float(record.get("lethality_chain_fuze_trigger_radius_m", float("nan")))
+                for record in records
+            ]
+        ),
+        "mean_fuze_distance_ratio": _mean(
+            [
+                _finite_float(record.get("lethality_chain_fuze_distance_ratio", float("nan")))
+                for record in records
+            ]
+        ),
+        "mean_fuze_trigger_quality": _mean(
+            [
+                _finite_float(record.get("lethality_chain_fuze_trigger_quality", float("nan")))
+                for record in records
+            ]
+        ),
+        "mean_fuze_sample": _mean(
+            [
+                _finite_float(record.get("lethality_chain_fuze_sample", float("nan")))
+                for record in records
+            ]
         ),
         "mean_fuze_expected_detonation_probability": _mean(
             [
@@ -583,10 +1295,66 @@ def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any
                 ).items()
             )
         ),
+        "fuze_sample_gate_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("lethality_chain_fuze_sample_gate", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "fuze_gate_summary_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("lethality_chain_fuze_gate_summary", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
         "terminal_negative_reason_counts": dict(
             sorted(
                 Counter(
                     str(record.get("terminal_negative_reason", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "damage_chain_outcome_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("damage_chain_outcome", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "damage_chain_blocker_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("damage_chain_blocker", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "damage_chain_primary_channel_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("damage_chain_primary_channel", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "damage_chain_capability_attribution_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("damage_chain_capability_attribution", "") or "")
+                    for record in records
+                ).items()
+            )
+        ),
+        "damage_chain_component_sample_gate_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("damage_chain_component_sample_gate", "") or "")
                     for record in records
                 ).items()
             )
@@ -638,6 +1406,8 @@ def _summarize_delay(delay: int, records: list[dict[str, Any]]) -> dict[str, Any
             sorted(Counter(str(record.get("termination_reason", "") or "") for record in records).items())
         ),
     }
+    summary.update(confidence_fields)
+    return summary
 
 
 def _sweep_verdict(
@@ -775,6 +1545,88 @@ def _sweep_verdict(
     }
 
 
+def _max_finite(rows: list[dict[str, Any]], key: str) -> float:
+    values = [_finite_float(row.get(key, float("nan"))) for row in rows]
+    finite = [value for value in values if math.isfinite(value)]
+    return float(max(finite)) if finite else float("nan")
+
+
+def _confidence_summary(
+    delay_summaries: list[dict[str, Any]],
+    *,
+    rate_ci_width_epsilon: float,
+    outcome_sem_epsilon: float,
+    range_sem_epsilon_m: float,
+) -> dict[str, Any]:
+    high_variance_rows = [
+        row
+        for row in delay_summaries
+        if bool(row.get("seed_high_variance", False))
+    ]
+    high_variance_delays = [
+        int(row.get("delay_steps", 0) or 0)
+        for row in high_variance_rows
+    ]
+    released_rows = [
+        row
+        for row in delay_summaries
+        if int(row.get("release_episode_count", 0) or 0) > 0
+    ]
+    mission_uncertain = [
+        int(row.get("delay_steps", 0) or 0)
+        for row in released_rows
+        if _finite_float(row.get("mission_kill_given_release_rate_ci_width", float("nan")))
+        > float(rate_ci_width_epsilon)
+    ]
+    consequence_uncertain = [
+        int(row.get("delay_steps", 0) or 0)
+        for row in released_rows
+        if (
+            _finite_float(row.get("system_health_delta_sem", float("nan")))
+            > float(outcome_sem_epsilon)
+            or _finite_float(row.get("mission_capability_delta_sem", float("nan")))
+            > float(outcome_sem_epsilon)
+        )
+    ]
+    return {
+        "rate_ci_width_epsilon": float(rate_ci_width_epsilon),
+        "outcome_sem_epsilon": float(outcome_sem_epsilon),
+        "range_sem_epsilon_m": float(range_sem_epsilon_m),
+        "high_variance_delay_count": int(len(high_variance_delays)),
+        "high_variance_delay_steps": high_variance_delays,
+        "mission_kill_uncertain_delay_steps": mission_uncertain,
+        "platform_consequence_uncertain_delay_steps": consequence_uncertain,
+        "max_release_rate_ci_width": _max_finite(delay_summaries, "release_rate_ci_width"),
+        "max_mission_kill_given_release_rate_ci_width": _max_finite(
+            delay_summaries,
+            "mission_kill_given_release_rate_ci_width",
+        ),
+        "max_effective_component_damage_given_release_rate_ci_width": _max_finite(
+            delay_summaries,
+            "effective_component_damage_given_release_rate_ci_width",
+        ),
+        "max_component_failure_probability_sem": _max_finite(
+            delay_summaries,
+            "component_failure_probability_sem",
+        ),
+        "max_system_health_delta_sem": _max_finite(
+            delay_summaries,
+            "system_health_delta_sem",
+        ),
+        "max_mission_capability_delta_sem": _max_finite(
+            delay_summaries,
+            "mission_capability_delta_sem",
+        ),
+        "interpretation": (
+            "Some release-window samples remain seed-sensitive; treat mean "
+            "kill-chain outcomes as low-confidence until sample count increases "
+            "or the high-variance stages are explained."
+            if high_variance_delays
+            else "No delay crossed the configured seed-variance warning thresholds."
+        ),
+    }
+
+
 def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
     delays = _parse_delays(str(args.delays))
     records: list[dict[str, Any]] = []
@@ -812,11 +1664,15 @@ def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
         _summarize_delay(
             int(delay),
             [record for record in records if int(record["delay_steps"]) == int(delay)],
+            confidence_level=float(args.confidence_level),
+            rate_ci_width_epsilon=float(args.rate_ci_width_epsilon),
+            outcome_sem_epsilon=float(args.outcome_sem_epsilon),
+            range_sem_epsilon_m=float(args.range_sem_epsilon_m),
         )
         for delay in delays
     ]
     return {
-        "schema_version": "fire_timing.window_position_sweep.v2",
+        "schema_version": "fire_timing.window_position_sweep.v5",
         "scenario": os.path.abspath(args.scenario),
         "train_config": os.path.abspath(args.train_config),
         "seed": int(args.seed),
@@ -841,10 +1697,25 @@ def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
             "effective_component_damage",
             "effective_system_consequence",
             "terminal_negative_reason",
+            "damage_chain_outcome",
+            "damage_chain_blocker",
+            "damage_chain_primary_channel",
+            "damage_chain_capability_attribution",
+            "damage_chain_component_sample_gate",
+            "damage_chain_attribution_summary",
+            "lethality_chain_fuze_type",
             "lethality_chain_fuze_triggered",
             "lethality_chain_fuze_failure_reason",
+            "lethality_chain_fuze_delay_s",
+            "lethality_chain_fuze_reliability",
+            "lethality_chain_fuze_sample",
             "lethality_chain_fuze_expected_detonation_probability",
             "lethality_chain_fuze_sampled_outcome",
+            "lethality_chain_fuze_trigger_radius_m",
+            "lethality_chain_fuze_distance_ratio",
+            "lethality_chain_fuze_trigger_quality",
+            "lethality_chain_fuze_sample_gate",
+            "lethality_chain_fuze_gate_summary",
             "lethality_chain_stages_json",
             "lethality_chain_component_name",
             "lethality_chain_component_damage_count",
@@ -865,9 +1736,19 @@ def run_sweep(args: argparse.Namespace) -> dict[str, Any]:
             "lethality_chain_air_system_spatial_scales",
             "lethality_chain_vulnerability_scale_trace",
             "lethality_chain_loss_state",
+            "seed_confidence_flags",
+            "mission_kill_given_release_rate_ci_width",
+            "component_failure_probability_sem",
+            "system_health_delta_sem",
         ],
         "records": records,
         "delay_summaries": delay_summaries,
+        "confidence_summary": _confidence_summary(
+            delay_summaries,
+            rate_ci_width_epsilon=float(args.rate_ci_width_epsilon),
+            outcome_sem_epsilon=float(args.outcome_sem_epsilon),
+            range_sem_epsilon_m=float(args.range_sem_epsilon_m),
+        ),
         "verdict": _sweep_verdict(
             delay_summaries,
             reward_epsilon=float(args.reward_epsilon),
@@ -929,6 +1810,10 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         _finite_float(row.get("mean_release_range_geom_m", float("nan"))) / 1000.0
         for row in summaries
     ]
+    release_range_sem_km = [
+        _finite_float(row.get("release_range_geom_m_sem", float("nan"))) / 1000.0
+        for row in summaries
+    ]
     rewards = [_finite_float(row.get("mean_total_reward", float("nan"))) for row in summaries]
     reward_baseline = next((value for value in rewards if math.isfinite(value)), float("nan"))
     reward_delta = [
@@ -943,11 +1828,24 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         _finite_float(row.get("mean_miss_distance_m", float("nan"))) for row in summaries
     ]
     hit_quality = [
-        1.0 / (1.0 + value) if math.isfinite(value) and value >= 0.0 else float("nan")
-        for value in miss_distance
+        _finite_float(row.get("mean_fuze_trigger_quality", float("nan")))
+        for row in summaries
     ]
+    for index, value in enumerate(hit_quality):
+        if math.isfinite(value):
+            continue
+        miss_value = miss_distance[index]
+        hit_quality[index] = (
+            1.0 / (1.0 + miss_value)
+            if math.isfinite(miss_value) and miss_value >= 0.0
+            else float("nan")
+        )
     system_damage_magnitude = [
         max(0.0, -_finite_float(row.get("mean_system_health_delta", float("nan"))))
+        for row in summaries
+    ]
+    system_damage_sem = [
+        _finite_float(row.get("system_health_delta_sem", float("nan")))
         for row in summaries
     ]
     mission_damage_magnitude = [
@@ -958,11 +1856,26 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         _finite_float(row.get("mean_component_failure_probability", float("nan")))
         for row in summaries
     ]
+    component_prob_sem = [
+        _finite_float(row.get("component_failure_probability_sem", float("nan")))
+        for row in summaries
+    ]
     fuze_expected = [
         _finite_float(row.get("mean_fuze_expected_detonation_probability", float("nan")))
         for row in summaries
     ]
+    fuze_expected_sem = [
+        _finite_float(row.get("fuze_expected_detonation_probability_sem", float("nan")))
+        for row in summaries
+    ]
+    fuze_sample = [
+        _finite_float(row.get("mean_fuze_sample", float("nan"))) for row in summaries
+    ]
     release = [_finite_float(row.get("release_rate", float("nan"))) for row in summaries]
+    fuze_sample_pass = [
+        _finite_float(row.get("fuze_sample_pass_given_release_rate", float("nan")))
+        for row in summaries
+    ]
     detonation = [
         _finite_float(row.get("effective_detonation_given_release_rate", float("nan")))
         for row in summaries
@@ -985,7 +1898,13 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         constrained_layout=True,
         gridspec_kw={"height_ratios": [1.0, 1.0, 1.25, 0.9]},
     )
-    axes[0].plot(x, release_range_km, marker="o")
+    axes[0].errorbar(
+        x,
+        release_range_km,
+        yerr=[value if math.isfinite(value) else 0.0 for value in release_range_sem_km],
+        marker="o",
+        capsize=3,
+    )
     axes[0].set_ylabel("release range\nkm")
     axes[1].bar(x, reward_delta_scaled, color="tab:green", alpha=0.78)
     axes[1].axhline(0.0, color="#111827", linewidth=0.8)
@@ -996,8 +1915,36 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         valid_y = [value for value in values if math.isfinite(value)]
         axes[2].scatter(valid_x, valid_y, label=label, color=color, marker=marker, s=58)
 
-    scatter_valid(
+    def errorbar_valid(
+        values: list[float],
+        errors: list[float],
+        *,
+        label: str,
+        color: str,
+        marker: str,
+    ) -> None:
+        valid = [
+            (pos, value, err)
+            for pos, value, err in zip(x, values, errors, strict=True)
+            if math.isfinite(value)
+        ]
+        if not valid:
+            return
+        axes[2].errorbar(
+            [item[0] for item in valid],
+            [item[1] for item in valid],
+            yerr=[item[2] if math.isfinite(item[2]) else 0.0 for item in valid],
+            label=label,
+            color=color,
+            marker=marker,
+            linestyle="none",
+            capsize=3,
+            markersize=6,
+        )
+
+    errorbar_valid(
         system_damage_magnitude,
+        system_damage_sem,
         label="system damage",
         color="tab:red",
         marker="o",
@@ -1008,28 +1955,37 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         color="tab:blue",
         marker="D",
     )
-    scatter_valid(
+    errorbar_valid(
         component_prob,
+        component_prob_sem,
         label="component P(fail)",
         color="tab:purple",
         marker="s",
     )
-    scatter_valid(
+    errorbar_valid(
         fuze_expected,
+        fuze_expected_sem,
         label="fuze E[P(det)]",
         color="tab:cyan",
         marker="x",
     )
-    scatter_valid(hit_quality, label="hit quality", color="tab:orange", marker="^")
-    axes[2].set_ylabel("auxiliary\nlearning target")
+    scatter_valid(hit_quality, label="fuze quality", color="tab:orange", marker="^")
+    scatter_valid(fuze_sample, label="fuze sample", color="tab:brown", marker="v")
+    axes[2].set_ylabel("fuze/damage\ntarget")
     axes[2].set_ylim(-0.05, 1.05)
     axes[2].legend(loc="upper left", fontsize=8, ncol=3)
 
-    event_matrix = [release, detonation, component_damage, mission_kill]
+    event_matrix = [release, fuze_sample_pass, detonation, component_damage, mission_kill]
     axes[3].imshow(event_matrix, aspect="auto", cmap="YlGnBu", vmin=0.0, vmax=1.0)
-    axes[3].set_yticks([0, 1, 2, 3])
+    axes[3].set_yticks([0, 1, 2, 3, 4])
     axes[3].set_yticklabels(
-        ["release", "detonation|rel", "component damage|rel", "mission kill|rel"]
+        [
+            "release",
+            "fuze sample pass|rel",
+            "detonation|rel",
+            "component damage|rel",
+            "mission kill|rel",
+        ]
     )
     for row_index, row_values in enumerate(event_matrix):
         for col_index, value in enumerate(row_values):
@@ -1051,7 +2007,7 @@ def render_plot(path: str, payload: dict[str, Any]) -> None:
         axis.set_xlim(-0.5, len(x) - 0.5)
     axes[3].set_xticks(x)
     axes[3].set_xticklabels(x_labels, rotation=35, ha="right")
-    fig.suptitle("Fire-window learning signals: reward vs auxiliary targets", fontsize=13)
+    fig.suptitle("Fire-window lethality-chain diagnostics", fontsize=13)
     out_path = os.path.abspath(path)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     fig.savefig(out_path, dpi=180, bbox_inches="tight")
@@ -1079,6 +2035,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--component_failure_probability_epsilon", type=float, default=0.05)
     parser.add_argument("--miss_distance_epsilon_m", type=float, default=1.0)
     parser.add_argument("--range_epsilon_m", type=float, default=500.0)
+    parser.add_argument(
+        "--confidence_level",
+        type=float,
+        default=0.95,
+        help="Confidence level for per-delay seed variance intervals.",
+    )
+    parser.add_argument(
+        "--rate_ci_width_epsilon",
+        type=float,
+        default=0.5,
+        help="Flag Bernoulli event rates whose Wilson interval width exceeds this value.",
+    )
+    parser.add_argument(
+        "--outcome_sem_epsilon",
+        type=float,
+        default=0.15,
+        help="Flag normalized outcome metrics whose standard error exceeds this value.",
+    )
+    parser.add_argument(
+        "--range_sem_epsilon_m",
+        type=float,
+        default=500.0,
+        help="Flag release-range estimates whose standard error exceeds this many meters.",
+    )
     parser.add_argument("--diagnostic_dcr_bridge", action="store_true")
     parser.add_argument("--diagnostic_dcr_bridge_target_reward", type=float, default=0.0)
     parser.add_argument("--diagnostic_dcr_bridge_self_reward", type=float, default=0.0)
