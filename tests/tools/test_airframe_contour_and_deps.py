@@ -1,8 +1,12 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from pathlib import Path
 
-from tools.geometry import airframe_geometry_review
+from tools.geometry.airframe_review import contours
+from tests.tools.airframe_review_fixtures import (
+  build_airframe_review_bundle,
+  require_airframe_geometry_extra,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -13,6 +17,8 @@ def test_alpha_shape_2d_preserves_concavities_and_degrades_gracefully() -> None:
   point of choosing alpha-shape over convex hull) and must fall back to the
   convex hull when there are too few points or no triangle survives the
   circumradius filter."""
+  require_airframe_geometry_extra()
+
   import math
 
   # A dense "dumbbell": two disks joined by a narrow neck. A convex hull
@@ -24,15 +30,15 @@ def test_alpha_shape_2d_preserves_concavities_and_degrades_gracefully() -> None:
       angle = i / 64.0 * 2.0 * math.pi
       dumbbell.append((cx + 2.5 * math.cos(angle), 2.5 * math.sin(angle)))
   alpha = 1.0 / (13.0 * 0.35)
-  ring, status = airframe_geometry_review._alpha_shape_2d(dumbbell, alpha)
+  ring, status = contours.alpha_shape_2d(dumbbell, alpha)
   assert status == "alpha_shape"
-  convex = airframe_geometry_review._convex_hull_2d(dumbbell)
+  convex = contours.convex_hull_2d(dumbbell)
   # The alpha-shape must keep strictly more boundary detail than the convex
   # hull (the hull collapses the neck).
   assert len(ring) > len(convex)
 
   # Too few points => graceful convex-hull fallback, never an exception.
-  ring_few, status_few = airframe_geometry_review._alpha_shape_2d(
+  ring_few, status_few = contours.alpha_shape_2d(
     [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)], alpha
   )
   assert status_few == "convex_hull"
@@ -40,7 +46,7 @@ def test_alpha_shape_2d_preserves_concavities_and_degrades_gracefully() -> None:
 
   # Empty input is rejected by the whole-airframe builder, not by the
   # alpha-shape helper (which returns an empty hull).
-  ring_empty, status_empty = airframe_geometry_review._alpha_shape_2d(
+  ring_empty, status_empty = contours.alpha_shape_2d(
     [], alpha
   )
   assert status_empty == "convex_hull"
@@ -51,50 +57,9 @@ def test_whole_airframe_contour_report_structure() -> None:
   """The whole-airframe contour containment report records the contour method,
   tolerance, per-view contour metadata, and per-item outside distances built
   on top of the airframe constraint report."""
-  manifest = airframe_geometry_review.build_airframe_geometry_manifest()
-  aircraft = airframe_geometry_review._load_json(  # noqa: SLF001
-    airframe_geometry_review.DEFAULT_AIRCRAFT
-  )
-  mapping = airframe_geometry_review.build_geometry_mapping_candidate(manifest)
-  report = airframe_geometry_review.build_component_binding_report(
-    aircraft, mapping
-  )
-  diagnostics = airframe_geometry_review.build_review_point_diagnostics(
-    mapping, report
-  )
-  fine_proxy = airframe_geometry_review.build_fine_geometry_proxy_candidate(
-    mapping, diagnostics, manifest=manifest
-  )
-  surface_report = (
-    airframe_geometry_review.build_surface_component_candidate_report(
-      mapping, fine_proxy, report
-    )
-  )
-  semantic_report = (
-    airframe_geometry_review.build_semantic_damage_geometry_candidate(
-      mapping, fine_proxy, surface_report
-    )
-  )
-  internal_prior_report = (
-    airframe_geometry_review.build_internal_component_prior_candidate(
-      mapping, fine_proxy, report, surface_report
-    )
-  )
-  held_segment_report = (
-    airframe_geometry_review.build_cross_region_held_component_segments_report(
-      mapping, fine_proxy, internal_prior_report
-    )
-  )
-  airframe_constraint_report = (
-    airframe_geometry_review.build_airframe_constraint_correction_candidate_report(
-      mapping, fine_proxy, internal_prior_report, held_segment_report
-    )
-  )
-  contour_report = (
-    airframe_geometry_review.build_whole_airframe_contour_containment_report(
-      fine_proxy, airframe_constraint_report
-    )
-  )
+  require_airframe_geometry_extra()
+
+  contour_report = build_airframe_review_bundle()["contour_report"]
   assert contour_report["schema_version"] == (
     "a2.target_geometry_whole_airframe_contour_containment.v1"
   )

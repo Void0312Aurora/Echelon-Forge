@@ -1,19 +1,32 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
-import json
-from pathlib import Path
-
-from tools.geometry import airframe_geometry_review
-
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
+from tools.geometry.airframe_review import component_model
+from tests.tools.airframe_review_fixtures import (
+  build_airframe_review_bundle,
+  require_airframe_geometry_extra,
+)
 
 
 def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
-  manifest = airframe_geometry_review.build_airframe_geometry_manifest()
-  aircraft = airframe_geometry_review._load_json( # noqa: SLF001
-    airframe_geometry_review.DEFAULT_AIRCRAFT
-  )
+  require_airframe_geometry_extra()
+  bundle = build_airframe_review_bundle()
+  manifest = bundle["manifest"]
+  report = bundle["component_binding_report"]
+  diagnostics = bundle["diagnostics"]
+  fine_proxy = bundle["fine_proxy"]
+  surface_report = bundle["surface_report"]
+  semantic_report = bundle["semantic_report"]
+  internal_prior_report = bundle["internal_prior_report"]
+  held_segment_report = bundle["held_segment_report"]
+  airframe_constraint_report = bundle["airframe_constraint_report"]
+  ownership_split_report = bundle["ownership_split_report"]
+  runtime_activation_report = bundle["runtime_activation_report"]
+  runtime_behavior_report = bundle["runtime_behavior_report"]
+  training_proxy_aircraft = bundle["training_proxy_aircraft"]
+  training_proxy_operations = bundle["training_proxy_operations"]
+  training_proxy_report = bundle["training_proxy_report"]
+  shape_placement_report = bundle["shape_placement_report"]
+  parent_child_layout_report = bundle["parent_child_layout_report"]
 
   assert manifest["schema_version"] == "a2.target_geometry_manifest.v1"
   assert manifest["status"] == "target_geometry_manifest_generated_review_only"
@@ -64,81 +77,6 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert manifest["authority_boundary"]["runtime_collision_mesh"] is False
   assert manifest["authority_boundary"]["real_weapon_pk_authority"] is False
 
-  mapping = airframe_geometry_review.build_geometry_mapping_candidate(manifest)
-  report = airframe_geometry_review.build_component_binding_report(aircraft, mapping)
-  diagnostics = airframe_geometry_review.build_review_point_diagnostics(mapping, report)
-  fine_proxy = airframe_geometry_review.build_fine_geometry_proxy_candidate(
-    mapping, diagnostics, manifest=manifest
-  )
-  surface_report = airframe_geometry_review.build_surface_component_candidate_report(
-    mapping, fine_proxy, report
-  )
-  semantic_report = airframe_geometry_review.build_semantic_damage_geometry_candidate(
-    mapping, fine_proxy, surface_report
-  )
-  internal_prior_report = (
-    airframe_geometry_review.build_internal_component_prior_candidate(
-      mapping, fine_proxy, report, surface_report
-    )
-  )
-  held_segment_report = (
-    airframe_geometry_review.build_cross_region_held_component_segments_report(
-      mapping, fine_proxy, internal_prior_report
-    )
-  )
-  airframe_constraint_report = (
-    airframe_geometry_review.build_airframe_constraint_correction_candidate_report(
-      mapping, fine_proxy, internal_prior_report, held_segment_report
-    )
-  )
-  ownership_split_report = (
-    airframe_geometry_review.build_cross_region_ownership_split_candidate_report(
-      mapping,
-      internal_prior_report,
-      held_segment_report,
-      airframe_constraint_report,
-    )
-  )
-  runtime_activation_report = (
-    airframe_geometry_review.build_target_geometry_runtime_activation_candidate_report(
-      mapping,
-      ownership_split_report,
-      aircraft=aircraft,
-    )
-  )
-  runtime_behavior_report = (
-    airframe_geometry_review.build_target_geometry_runtime_behavior_regression_report(
-      aircraft,
-      runtime_activation_report,
-    )
-  )
-  training_proxy_aircraft, training_proxy_operations = (
-    airframe_geometry_review.build_target_geometry_training_proxy_unit_candidate(
-      aircraft,
-      runtime_activation_report,
-    )
-  )
-  training_proxy_report = (
-    airframe_geometry_review.build_target_geometry_training_proxy_database_report(
-      aircraft,
-      runtime_activation_report,
-      runtime_behavior_report,
-      proxy_database_dir=(
-        airframe_geometry_review.DEFAULT_OUTPUT_DIR
-        / "target_geometry_training_proxy_database_20260613"
-      ),
-    )
-  )
-  shape_placement_report = (
-    airframe_geometry_review.build_subcomponent_shape_placement_candidate_report(
-      mapping, fine_proxy, airframe_constraint_report
-    )
-  )
-  parent_child_layout_report = (
-    airframe_geometry_review.build_semantic_parent_child_layout_candidate(
-      mapping, semantic_report, internal_prior_report, held_segment_report
-    )
-  )
   assert report["schema_version"] == "a2.target_geometry_component_binding_report.v1"
   assert report["status"] == "component_binding_report_generated_review_only"
   assert report["summary"]["component_count"] == 26
@@ -928,7 +866,7 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "training_proxy_runtime_active_component"
   ] is True
   assert training_proxy_report["authority_boundary"]["training_path_wired"] is True
-  proxy_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
+  proxy_component_names = component_model.damage_component_names(
     training_proxy_aircraft
   )
   assert len(proxy_component_names) == 32
