@@ -1082,4 +1082,3 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert parent_child_layout_report["authority_boundary"][
     "parent_child_damage_ownership"
   ] is False
-

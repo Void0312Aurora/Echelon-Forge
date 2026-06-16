@@ -665,4 +665,3 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "whole_airframe_contour_top.svg" in scene
   assert "projecting triangle faces" in scene
   assert "engineering review margin" in scene
-
