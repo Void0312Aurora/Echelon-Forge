@@ -1,7 +1,7 @@
 # A9 High-Fidelity Weapon System — Acceptance
 
-Status: `2026-06-16` **accepted_with_residuals**. 18 clusters pass, 2 partial,
-8 deferred. All forbidden claims remain refused. 2 open residuals (R2, R4).
+Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
+All forbidden claims remain refused. 2 open residuals (R2, R4).
 Zero regressions vs main.
 
 Parent: [README.md](README.md)
@@ -131,7 +131,7 @@ partially met with residual.
 | ID | Description | Severity | Blocks acceptance? |
 |----|-------------|----------|-------------------|
 | R1 | APN bearing-accel estimator needs low-pass filter for non-maneuvering targets | Medium | Yes (G1 partial) |
-| R2 | EKF tracking performance not quantitatively validated | Medium | Yes (G2 partial) |
+| R2 | EKF tracking performance not quantitatively validated | Medium | Yes (G0 partial) |
 | R3 | autopilot order=3 not differentiated from order=2 | Low | No |
 | R4 | Mach Cd₀ table (multi-row) deferred; single-lerp used | Low | No |
 | R5 | Gurney equation not yet active (C/M/E plumbed, legacy formulas default) | Medium | Yes (G6 partial) |

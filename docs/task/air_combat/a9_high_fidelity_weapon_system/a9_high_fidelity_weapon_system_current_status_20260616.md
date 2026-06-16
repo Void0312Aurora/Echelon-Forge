@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` **accepted_with_residuals**. 18 clusters pass, 2 partial, 8 deferred.
+Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
 2 open residuals: R2 (EKF tracking validation), R4 (Mach Cd₀ multi-row table).
 All authority claims refused. Zero regressions vs main (47 pre-existing failures,
 286 passed, 233 subtests passed).

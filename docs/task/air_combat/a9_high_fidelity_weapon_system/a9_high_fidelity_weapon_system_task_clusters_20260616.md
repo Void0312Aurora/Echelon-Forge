@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Task Clusters
 
-Status: `2026-06-16` **accepted_with_residuals**. All phases complete. 18 pass, 2 partial, 8 deferred.
+Status: `2026-06-16` **accepted_with_residuals**. All phases complete. 23 pass, 5 deferred.
 
 Parent: [README.md](README.md)
 

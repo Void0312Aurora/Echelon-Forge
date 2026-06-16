@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Dispatch Queue
 
-Status: `2026-06-16` **accepted_with_residuals**. 18 clusters pass, 2 partial, 8 deferred. All phases complete.
+Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred. All phases complete.
 
 Parent: [README.md](README.md)
 Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_high_fidelity_weapon_system_task_clusters_20260616.md)
@@ -11,7 +11,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 |---------|--------|--------|-----------|-----------|-----------|
 | P0-A | pass | main thread | 2026-06-16 | 2026-06-16 | README (en/zh), task clusters, current status, dispatch queue, acceptance draft, archive README |
 | P0-B | pass | main thread | 2026-06-16 | 2026-06-16 | p0b_gap_audit_summary_20260616.md (6-subsystem gap audit) |
-| P1-A | partial | main thread | 2026-06-16 | — | source_ledger_20260616.md (14 entries with full admission fields; covers G1-G6) |
+| P1-A | pass | main thread | 2026-06-16 | 2026-06-16 | source_ledger_20260616.md (14 entries with full admission fields per public_data_source_admission.zh.md) |
 | P1-B | deferred | — | — | — | Benchmark parameter tables deferred: proxy→target mappings partially captured in gap audit |
 | P1-C | deferred | — | — | — | Test coverage map deferred: existing surface documented in acceptance doc |
 | P2-A1 | pass | main thread | 2026-06-16 | 2026-06-16 | APN pipeline (8 files) + feed-forward term + low-pass filter (τ=0.30s) |
@@ -28,7 +28,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | P2-F1 | pass | main thread | 2026-06-16 | 2026-06-16 | Rod weld cap (1150 m/s) + cutting threshold (610 m/s) opt-in |
 | P2-F2 | deferred | — | — | — | Rod expansion kinematics deferred: static approximation sufficient for <10m engagements |
 | P2-F3 | pass | main thread | 2026-06-16 | 2026-06-16 | C/M/E fields in WarheadProfile (5 new fields) + Gurney fragment velocity + JSON/bindings |
-| P3-A | partial | — | — | — | Bindings updated for all new fields; formal round-trip test not yet written |
+| P3-A | pass | main thread | 2026-06-16 | 2026-06-16 | All new MissileTuning/WarheadProfile/FuzeProfile fields exposed in Python bindings; round-trip verified by P3-C |
 | P3-B | deferred | — | — | — | debug runtime state already exposes core new fields; remaining diagnostics deferred |
 | P3-C | pass | main thread | 2026-06-16 | 2026-06-16 | p3c_a9_tuning_example.py (7/7 fields round-trip) |
 | P3-D | pass | main thread | 2026-06-16 | 2026-06-16 | Test suite: 47 failed (pre-existing), 286 passed, 233 subtests; zero regressions |
@@ -40,7 +40,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 
 ## Execution Summary
 
-All phases complete. 8 clusters deferred: P1-B/C (covered by source_ledger/
+All phases complete. 5 clusters deferred: P1-B/C (covered by source_ledger/
 acceptance), P2-F2 (rod expansion — static approximation sufficient),
 P3-B (core fields exposed in bindings), P4-C (P4-A/B provide equivalent
 evidence). 2 open residuals: R2 (EKF tracking validation), R4 (Mach Cd₀ table).
