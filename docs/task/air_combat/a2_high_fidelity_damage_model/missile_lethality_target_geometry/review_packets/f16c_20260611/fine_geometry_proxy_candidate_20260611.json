@@ -5311,6 +5311,7 @@
     "held_region_count": 0,
     "inflated_fallback_count": 0,
     "mesh_derived_silhouette_count": 14,
+    "mesh_source_triangle_count": 4504,
     "mesh_source_vertex_count": 13415,
     "proxy_count": 14,
     "proxy_kind_counts": {

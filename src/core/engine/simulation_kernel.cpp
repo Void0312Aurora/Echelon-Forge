@@ -22,42 +22,33 @@
 namespace {
 
 class SimulationKernelWeaponReleaseDamageBridge final : public IWeaponReleaseDamageBridge {
-public:
-    explicit SimulationKernelWeaponReleaseDamageBridge(SimulationKernel& kernel)
+  public:
+    explicit SimulationKernelWeaponReleaseDamageBridge(SimulationKernel &kernel)
         : kernel_(kernel) {}
 
-    bool apply_proximity_hit(
-        std::uint64_t attacker_id,
-        std::uint64_t target_id,
-        double damage,
-        double fuse_distance
-    ) override {
+    bool apply_proximity_hit(std::uint64_t attacker_id, std::uint64_t target_id, double damage,
+                             double fuse_distance) override {
         return kernel_.debug_apply_proximity_hit(attacker_id, target_id, damage, fuse_distance);
     }
 
-private:
-    SimulationKernel& kernel_;
+  private:
+    SimulationKernel &kernel_;
 };
 
-}  // namespace
+} // namespace
 
 SimulationKernel::SimulationKernel()
     : environment_model_(make_default_environment_model()),
       unit_factory_(std::make_unique<DefaultUnitFactory>()),
-      effects_model_(make_default_effects_model()),
-      sensor_model_(make_default_sensor_model()),
-      acoustic_model_(make_default_acoustic_model()),
-      control_model_(make_default_control_model()),
+      effects_model_(make_default_effects_model()), sensor_model_(make_default_sensor_model()),
+      acoustic_model_(make_default_acoustic_model()), control_model_(make_default_control_model()),
       guidance_model_(make_default_guidance_model()),
       engagement_event_store_(std::make_unique<SimulationKernelEngagementEventStore>(ecs)),
-      weapon_release_damage_bridge_(std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)),
+      weapon_release_damage_bridge_(
+          std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)),
       weapon_release_service_(make_simulation_kernel_weapon_release_service(
-          ecs,
-          unit_factory_,
-          missile_tuning_,
-          *engagement_event_store_,
-          *engagement_event_store_,
-          *weapon_release_damage_bridge_)) {
+          ecs, unit_factory_, missile_tuning_, rng, *engagement_event_store_,
+          *engagement_event_store_, *weapon_release_damage_bridge_)) {
     register_components_and_systems();
     if (auto resupply_logic = ecs.lookup("ResupplyLogic"); resupply_logic.is_valid()) {
         ecs_enable(ecs.c_ptr(), resupply_logic.id(), false);
@@ -153,7 +144,7 @@ void SimulationKernel::set_environment_model(std::unique_ptr<IEnvironmentModel> 
     }
 }
 
-bool SimulationKernel::load_unit_definitions(const std::string& path, std::string* error) {
+bool SimulationKernel::load_unit_definitions(const std::string &path, std::string *error) {
     if (!unit_factory_) {
         if (error) *error = "Unit factory not set.";
         return false;
@@ -161,7 +152,7 @@ bool SimulationKernel::load_unit_definitions(const std::string& path, std::strin
     return unit_factory_->load_definitions(path, error);
 }
 
-void SimulationKernel::set_missile_tuning(const MissileTuning& tuning) {
+void SimulationKernel::set_missile_tuning(const MissileTuning &tuning) {
     missile_tuning_ = tuning;
 }
 
@@ -175,15 +166,16 @@ void SimulationKernel::reset(unsigned int seed) {
 
     // Reset simulation time so resets are reproducible and episode-local.
     ecs_reset_clock(ecs.c_ptr());
-    
+
     rng.seed(seed);
-    
+
     spdlog::info("Simulation Reset with seed {}", seed);
 }
 
 void SimulationKernel::step() {
     if (exact_stage_trace_frame_active_) {
-        throw std::logic_error("SimulationKernel::step() cannot run while an exact-stage trace frame is active");
+        throw std::logic_error(
+            "SimulationKernel::step() cannot run while an exact-stage trace frame is active");
     }
     // Fixed timestep update
     // We pass the fixed delta_time to progress
@@ -191,7 +183,7 @@ void SimulationKernel::step() {
     ecs.progress(time_step);
 }
 
-bool SimulationKernel::load_database(const std::string& path) {
+bool SimulationKernel::load_database(const std::string &path) {
     std::string error;
     if (unit_factory_->load_definitions(path, &error)) {
         spdlog::info("Database loaded from: {}", path);
@@ -201,10 +193,9 @@ bool SimulationKernel::load_database(const std::string& path) {
     return false;
 }
 
-flecs::entity SimulationKernel::spawn_unit(Side side, const std::string& unit_name, 
-                                           double x, double y, double z, 
-                                           double heading, double pitch, double roll,
-                                           double vx, double vy, double vz) {
+flecs::entity SimulationKernel::spawn_unit(Side side, const std::string &unit_name, double x,
+                                           double y, double z, double heading, double pitch,
+                                           double roll, double vx, double vy, double vz) {
     if (!unit_factory_) {
         spdlog::error("Unit factory not set; cannot spawn unit.");
         return flecs::entity::null();
@@ -226,9 +217,11 @@ void SimulationKernel::clear_zones() {
     }
 }
 
-void SimulationKernel::add_zone(const std::string& name, double x, double y, double width, double height, double heading, int surface_type) {
+void SimulationKernel::add_zone(const std::string &name, double x, double y, double width,
+                                double height, double heading, int surface_type) {
     if (environment_model_) {
-        environment_model_->add_zone(name, x, y, width, height, heading, (IEnvironmentModel::SurfaceType)surface_type);
+        environment_model_->add_zone(name, x, y, width, height, heading,
+                                     (IEnvironmentModel::SurfaceType)surface_type);
     }
 }
 
@@ -238,13 +231,14 @@ void SimulationKernel::set_wind(double speed_mps, double dir_from_deg, double sh
     }
 }
 
-void SimulationKernel::set_terrain_type(const std::string& terrain_type) {
+void SimulationKernel::set_terrain_type(const std::string &terrain_type) {
     if (environment_model_) {
         environment_model_->set_terrain_type(terrain_type);
     }
 }
 
-void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg, double wave_period_s) {
+void SimulationKernel::set_maritime_state(double sea_state, double wave_heading_deg,
+                                          double wave_period_s) {
     if (environment_model_) {
         environment_model_->set_maritime_state(sea_state, wave_heading_deg, wave_period_s);
     }

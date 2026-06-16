@@ -31,7 +31,8 @@ Common entry points:
 ```bash
 cmo_python -m pytest -q tests/runtime/core/test_env_config.py
 cmo_python -m pytest -q tests/runtime/engagement
-cmo_python -m pytest -q tests/runtime/facade/test_runtime_facade.py
+cmo_python -m pytest -q tests/runtime/facade/test_runtime_facade_core.py
+cmo_python -m pytest -q tests/runtime/facade/test_runtime_facade_counterfactual.py
 ```
 
 The maintained repository smoke boundary is defined separately in

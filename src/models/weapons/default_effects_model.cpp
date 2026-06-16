@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <string>
 #include <unordered_set>

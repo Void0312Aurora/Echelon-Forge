@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">front (y/z)</text>
-<rect x="401.01" y="60.00" width="282.90" height="110.30" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="440.62" y="75.44" width="203.69" height="79.41" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<polygon points="416.16,158.50 490.52,167.52 581.04,168.37 659.41,72.09 661.93,66.17 421.20,137.04 420.04,141.93" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="525.47" y="134.23" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<circle cx="742.85" cy="560.00" r="4.5" fill="#0f172a" stroke="#ffffff" stroke-width="1.2"><title>below_4m</title></circle>
-<text x="748.85" y="554.00" font-size="10" font-family="monospace" fill="#0f172a">10</text>
-<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

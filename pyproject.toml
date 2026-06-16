@@ -31,6 +31,11 @@ world-model = [
   "numpy",
   "torch",
 ]
+geometry = [
+  "numpy",
+  "scipy",
+  "shapely",
+]
 dev = [
   "gymnasium",
   "numpy",

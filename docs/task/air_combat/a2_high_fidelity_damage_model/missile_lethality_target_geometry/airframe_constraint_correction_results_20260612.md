@@ -9,7 +9,7 @@ component dimensions or placements.
 | Artifact | Result |
 | --- | --- |
 | Constraint report | [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json), [CSV](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv) |
-| Current latest-placement overview | [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) |
+| Current latest-placement overview | Retired from the current final-result surface; use [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) for the current visual result |
 | Overview packet | [scene.html](review_packets/f16c_20260611/scene.html) |
 
 ## Counts

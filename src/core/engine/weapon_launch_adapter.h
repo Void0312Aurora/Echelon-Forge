@@ -98,6 +98,15 @@ struct EffectsEventSnapshot {
     double fuze_contact_penetration_depth_m = 0.0;
     double fuze_contact_surface_tolerance_m = 0.0;
     bool fuze_contact_inside_hitbox = false;
+    std::string fuze_sensor_opportunity_source = "none";
+    double fuze_sensor_opportunity_score = 0.0;
+    bool fuze_terminal_track_valid = false;
+    bool fuze_target_detected = false;
+    std::string fuze_target_detection_source = "none";
+    double fuze_target_detection_confidence = 0.0;
+    double fuze_target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+    double fuze_mechanism_coverage_score = 0.0;
     bool direct_hitbox_intersection = false;
     std::uint32_t projected_hitbox_count = 0;
     double spatial_effect_scale = 0.0;
@@ -181,6 +190,9 @@ struct EffectsEventSnapshot {
     std::string vulnerability_effect_scale_evidence_row_id;
     std::string vulnerability_effect_scale_evidence_source_ref;
     std::string vulnerability_effect_scale_evidence_provenance;
+    std::string air_system_hit_flags;
+    std::string air_system_spatial_scales;
+    std::string vulnerability_scale_trace;
     std::string producer_node_id;
 };
 
@@ -220,17 +232,14 @@ struct DiagnosticsTraceSnapshot {
     std::uint64_t observation_packet_version = 0;
 };
 
-inline EngagementEntityRef make_entity_ref(
-    std::uint64_t world_index,
-    std::uint64_t entity_id
-) {
+inline EngagementEntityRef make_entity_ref(std::uint64_t world_index, std::uint64_t entity_id) {
     return EngagementEntityRef{
         .world_index = world_index,
         .entity_id = entity_id,
     };
 }
 
-inline LaunchRequest make_launch_request(const LaunchRequestSnapshot& snapshot) {
+inline LaunchRequest make_launch_request(const LaunchRequestSnapshot &snapshot) {
     return LaunchRequest{
         .request_id = snapshot.request_id,
         .shooter = make_entity_ref(snapshot.world_index, snapshot.shooter_entity_id),
@@ -247,7 +256,7 @@ inline LaunchRequest make_launch_request(const LaunchRequestSnapshot& snapshot) 
     };
 }
 
-inline LaunchEvent make_launch_event(const LegacyLaunchOutcomeSnapshot& snapshot) {
+inline LaunchEvent make_launch_event(const LegacyLaunchOutcomeSnapshot &snapshot) {
     return LaunchEvent{
         .event_id = snapshot.event_id,
         .request_id = snapshot.request_id,
@@ -257,15 +266,15 @@ inline LaunchEvent make_launch_event(const LegacyLaunchOutcomeSnapshot& snapshot
         .selected_munition = snapshot.selected_munition,
         .ammo_delta = snapshot.ammo_delta,
         .cooldown_delta_s = snapshot.cooldown_delta_s,
-        .spawned_munition = make_entity_ref(snapshot.world_index, snapshot.spawned_munition_entity_id),
+        .spawned_munition =
+            make_entity_ref(snapshot.world_index, snapshot.spawned_munition_entity_id),
         .has_spawned_munition = snapshot.spawned_munition_entity_id != 0,
         .event_time_s = snapshot.event_time_s,
     };
 }
 
-inline MunitionLifecyclePacket make_munition_lifecycle_packet(
-    const MunitionLifecycleSnapshot& snapshot
-) {
+inline MunitionLifecyclePacket
+make_munition_lifecycle_packet(const MunitionLifecycleSnapshot &snapshot) {
     return MunitionLifecyclePacket{
         .packet_id = snapshot.packet_id,
         .munition = make_entity_ref(snapshot.world_index, snapshot.munition_entity_id),
@@ -287,7 +296,7 @@ inline MunitionLifecyclePacket make_munition_lifecycle_packet(
     };
 }
 
-inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
+inline EffectsEvent make_effects_event(const EffectsEventSnapshot &snapshot) {
     return EffectsEvent{
         .event_id = snapshot.event_id,
         .munition = make_entity_ref(snapshot.world_index, snapshot.munition_entity_id),
@@ -327,6 +336,15 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .fuze_contact_penetration_depth_m = snapshot.fuze_contact_penetration_depth_m,
         .fuze_contact_surface_tolerance_m = snapshot.fuze_contact_surface_tolerance_m,
         .fuze_contact_inside_hitbox = snapshot.fuze_contact_inside_hitbox,
+        .fuze_sensor_opportunity_source = snapshot.fuze_sensor_opportunity_source,
+        .fuze_sensor_opportunity_score = snapshot.fuze_sensor_opportunity_score,
+        .fuze_terminal_track_valid = snapshot.fuze_terminal_track_valid,
+        .fuze_target_detected = snapshot.fuze_target_detected,
+        .fuze_target_detection_source = snapshot.fuze_target_detection_source,
+        .fuze_target_detection_confidence = snapshot.fuze_target_detection_confidence,
+        .fuze_target_detection_threshold = snapshot.fuze_target_detection_threshold,
+        .detonation_point_source = snapshot.detonation_point_source,
+        .fuze_mechanism_coverage_score = snapshot.fuze_mechanism_coverage_score,
         .direct_hitbox_intersection = snapshot.direct_hitbox_intersection,
         .projected_hitbox_count = snapshot.projected_hitbox_count,
         .spatial_effect_scale = snapshot.spatial_effect_scale,
@@ -334,13 +352,11 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
         .mechanism_exposure_scale = snapshot.mechanism_exposure_scale,
         .mechanism_effect_scale = snapshot.mechanism_effect_scale,
         .mechanism_fragment_energy_j = snapshot.mechanism_fragment_energy_j,
-        .mechanism_fragment_areal_density_per_m2 =
-            snapshot.mechanism_fragment_areal_density_per_m2,
+        .mechanism_fragment_areal_density_per_m2 = snapshot.mechanism_fragment_areal_density_per_m2,
         .mechanism_penetration_margin = snapshot.mechanism_penetration_margin,
         .mechanism_blast_overpressure_kpa = snapshot.mechanism_blast_overpressure_kpa,
         .mechanism_blast_impulse_kpa_ms = snapshot.mechanism_blast_impulse_kpa_ms,
-        .mechanism_blast_scaled_distance_m_kg13 =
-            snapshot.mechanism_blast_scaled_distance_m_kg13,
+        .mechanism_blast_scaled_distance_m_kg13 = snapshot.mechanism_blast_scaled_distance_m_kg13,
         .mechanism_rod_cut_margin = snapshot.mechanism_rod_cut_margin,
         .mechanism_surface_incidence_cos = snapshot.mechanism_surface_incidence_cos,
         .warhead_spatial_sample_count = snapshot.warhead_spatial_sample_count,
@@ -391,29 +407,22 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
             snapshot.component_primary_mechanism_rod_cut_margin,
         .component_primary_mechanism_surface_incidence_cos =
             snapshot.component_primary_mechanism_surface_incidence_cos,
-        .component_redundancy_group_availability =
-            snapshot.component_redundancy_group_availability,
-        .component_redundancy_group_member_count =
-            snapshot.component_redundancy_group_member_count,
-        .component_redundancy_group_failed_count =
-            snapshot.component_redundancy_group_failed_count,
+        .component_redundancy_group_availability = snapshot.component_redundancy_group_availability,
+        .component_redundancy_group_member_count = snapshot.component_redundancy_group_member_count,
+        .component_redundancy_group_failed_count = snapshot.component_redundancy_group_failed_count,
         .vulnerability_profile_present = snapshot.vulnerability_profile_present,
         .vulnerability_profile_synthetic = snapshot.vulnerability_profile_synthetic,
         .vulnerability_calibrated_evidence = snapshot.vulnerability_calibrated_evidence,
         .vulnerability_pk_authority = snapshot.vulnerability_pk_authority,
         .vulnerability_deterministic_fuze_authority =
             snapshot.vulnerability_deterministic_fuze_authority,
-        .vulnerability_evidence_dataset_valid =
-            snapshot.vulnerability_evidence_dataset_valid,
+        .vulnerability_evidence_dataset_valid = snapshot.vulnerability_evidence_dataset_valid,
         .vulnerability_evidence_dataset_ref = snapshot.vulnerability_evidence_dataset_ref,
         .vulnerability_calibration_status = snapshot.vulnerability_calibration_status,
         .vulnerability_provenance = snapshot.vulnerability_provenance,
-        .vulnerability_evidence_schema_version =
-            snapshot.vulnerability_evidence_schema_version,
-        .vulnerability_evidence_source_kind =
-            snapshot.vulnerability_evidence_source_kind,
-        .vulnerability_evidence_source_ref =
-            snapshot.vulnerability_evidence_source_ref,
+        .vulnerability_evidence_schema_version = snapshot.vulnerability_evidence_schema_version,
+        .vulnerability_evidence_source_kind = snapshot.vulnerability_evidence_source_kind,
+        .vulnerability_evidence_source_ref = snapshot.vulnerability_evidence_source_ref,
         .vulnerability_evidence_validation_artifact_ref =
             snapshot.vulnerability_evidence_validation_artifact_ref,
         .vulnerability_evidence_validation_manifest_schema_version =
@@ -444,11 +453,14 @@ inline EffectsEvent make_effects_event(const EffectsEventSnapshot& snapshot) {
             snapshot.vulnerability_effect_scale_evidence_source_ref,
         .vulnerability_effect_scale_evidence_provenance =
             snapshot.vulnerability_effect_scale_evidence_provenance,
+        .air_system_hit_flags = snapshot.air_system_hit_flags,
+        .air_system_spatial_scales = snapshot.air_system_spatial_scales,
+        .vulnerability_scale_trace = snapshot.vulnerability_scale_trace,
         .producer_node_id = snapshot.producer_node_id,
     };
 }
 
-inline DamageReport make_damage_report(const DamageReportSnapshot& snapshot) {
+inline DamageReport make_damage_report(const DamageReportSnapshot &snapshot) {
     return DamageReport{
         .report_id = snapshot.report_id,
         .target = make_entity_ref(snapshot.world_index, snapshot.target_entity_id),
@@ -471,7 +483,7 @@ inline DamageReport make_damage_report(const DamageReportSnapshot& snapshot) {
     };
 }
 
-inline DiagnosticsTrace make_diagnostics_trace(const DiagnosticsTraceSnapshot& snapshot) {
+inline DiagnosticsTrace make_diagnostics_trace(const DiagnosticsTraceSnapshot &snapshot) {
     return DiagnosticsTrace{
         .trace_id = snapshot.trace_id,
         .parent_trace_id = snapshot.parent_trace_id,
@@ -486,4 +498,4 @@ inline DiagnosticsTrace make_diagnostics_trace(const DiagnosticsTraceSnapshot& s
     };
 }
 
-}  // namespace engagement_adapter
+} // namespace engagement_adapter

@@ -12,8 +12,8 @@ review-only 生成规则。当前 packet 已是空 shape-placement 队列；R19 
 | --- | --- |
 | 候选 JSON | [review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json) |
 | 候选 CSV | [review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv) |
-| 复核页面 | [review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html) |
-| 当前空队列总览 | [review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) |
+| 复核页面 | 已退役中间 shape-placement 视图；当前可视化结果见 [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
+| 当前空队列总览 | 已从当前最终结果面移除 |
 
 ## 结果
 

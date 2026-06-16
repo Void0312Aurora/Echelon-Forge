@@ -2,9 +2,7 @@
 
 状态：`2026-06-12` visual review recorded / runtime interface held；已修正项目由 TG-P6-R10 追踪。
 
-本记录是对
-[review_packets/f16c_20260611/human_review_triage.html](review_packets/f16c_20260611/human_review_triage.html)
-的第一轮人工目检结论。输入同时参考：
+本记录是对已退役中间 triage dashboard 的第一轮人工目检结论。输入同时参考：
 
 - [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json)
 - [surface_component_candidate_20260611.json](review_packets/f16c_20260611/surface_component_candidate_20260611.json)

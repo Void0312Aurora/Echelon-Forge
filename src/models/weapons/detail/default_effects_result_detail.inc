@@ -1,6 +1,90 @@
 // Private fragment for default_effects_model.cpp.
 // Included inside that file's anonymous namespace; not a standalone API.
 
+std::string default_effects_air_system_hit_flags_string(const DefaultEffectsScratch& scratch) {
+    char state[512];
+    std::snprintf(
+        state, sizeof(state),
+        "sensor=%d,propulsion_or_fuel=%d,propulsion=%d,fuel=%d,control=%d,crew=%d,"
+        "pilot=%d,mission_crew=%d,command_navigation=%d,mission_or_combat=%d,"
+        "fire_suppression=%d,lateral_fuel_storage=%d,hydraulic_supply=%d,"
+        "engine_fire_zone=%d,wing_fire_zone=%d,fuselage_fire_zone=%d,mission_fire_zone=%d,"
+        "structure=%d",
+        scratch.air_sensor_hit ? 1 : 0,
+        scratch.air_propulsion_or_fuel_hit ? 1 : 0,
+        scratch.air_propulsion_hit ? 1 : 0,
+        scratch.air_fuel_hit ? 1 : 0,
+        scratch.air_control_hit ? 1 : 0,
+        scratch.air_crew_hit ? 1 : 0,
+        scratch.air_pilot_hit ? 1 : 0,
+        scratch.air_mission_crew_hit ? 1 : 0,
+        scratch.air_command_navigation_hit ? 1 : 0,
+        scratch.air_mission_or_combat_hit ? 1 : 0,
+        scratch.air_fire_suppression_hit ? 1 : 0,
+        scratch.air_lateral_fuel_storage_hit ? 1 : 0,
+        scratch.air_hydraulic_supply_hit ? 1 : 0,
+        scratch.air_engine_fire_zone_hit ? 1 : 0,
+        scratch.air_wing_fire_zone_hit ? 1 : 0,
+        scratch.air_fuselage_fire_zone_hit ? 1 : 0,
+        scratch.air_mission_fire_zone_hit ? 1 : 0,
+        scratch.air_structure_spatial_scale > 0.0 ? 1 : 0);
+    return std::string(state);
+}
+
+std::string default_effects_air_system_spatial_scales_string(const DefaultEffectsScratch& scratch) {
+    char state[640];
+    std::snprintf(
+        state, sizeof(state),
+        "sensor=%.6f,propulsion_or_fuel=%.6f,propulsion=%.6f,fuel=%.6f,"
+        "control=%.6f,crew=%.6f,pilot=%.6f,mission_crew=%.6f,"
+        "command_navigation=%.6f,mission_or_combat=%.6f,fire_suppression=%.6f,"
+        "lateral_fuel_storage=%.6f,hydraulic_supply=%.6f,engine_fire_zone=%.6f,"
+        "wing_fire_zone=%.6f,fuselage_fire_zone=%.6f,mission_fire_zone=%.6f,"
+        "structure=%.6f",
+        scratch.air_sensor_spatial_scale,
+        scratch.air_propulsion_or_fuel_spatial_scale,
+        scratch.air_propulsion_spatial_scale,
+        scratch.air_fuel_spatial_scale,
+        scratch.air_control_spatial_scale,
+        scratch.air_crew_spatial_scale,
+        scratch.air_pilot_spatial_scale,
+        scratch.air_mission_crew_spatial_scale,
+        scratch.air_command_navigation_spatial_scale,
+        scratch.air_mission_or_combat_spatial_scale,
+        scratch.air_fire_suppression_spatial_scale,
+        scratch.air_lateral_fuel_storage_spatial_scale,
+        scratch.air_hydraulic_supply_spatial_scale,
+        scratch.air_engine_fire_zone_spatial_scale,
+        scratch.air_wing_fire_zone_spatial_scale,
+        scratch.air_fuselage_fire_zone_spatial_scale,
+        scratch.air_mission_fire_zone_spatial_scale,
+        scratch.air_structure_spatial_scale);
+    return std::string(state);
+}
+
+std::string default_effects_vulnerability_scale_trace_string(const VulnerabilityAdjustment& adjustment) {
+    char state[384];
+    std::snprintf(
+        state, sizeof(state),
+        "present=%d,calibrated=%d,pk_authority=%d,deterministic_fuze_authority=%d,"
+        "aspect=%s,family=%.6f,aspect_scale=%.6f,closure_mps=%.6f,"
+        "closure_scale=%.6f,miss_distance_scale=%.6f,effect_scale=%.6f,source=%s,row=%s",
+        adjustment.profile_present ? 1 : 0,
+        adjustment.calibrated_evidence ? 1 : 0,
+        adjustment.pk_authority ? 1 : 0,
+        adjustment.deterministic_fuze_authority ? 1 : 0,
+        adjustment.aspect_bucket.c_str(),
+        adjustment.family_scale,
+        adjustment.aspect_scale,
+        adjustment.closure_mps,
+        adjustment.closure_scale,
+        adjustment.miss_distance_scale,
+        adjustment.scale,
+        adjustment.effect_scale_source.c_str(),
+        adjustment.effect_scale_evidence_row_id.c_str());
+    return std::string(state);
+}
+
 void populate_default_effects_result(
     EffectsResult& result,
     const DefaultEffectsScratch& scratch,
@@ -151,4 +235,11 @@ void populate_default_effects_result(
         scratch.sampled_vulnerability_adjustment.effect_scale_evidence_source_ref;
     result.vulnerability_effect_scale_evidence_provenance =
         scratch.sampled_vulnerability_adjustment.effect_scale_evidence_provenance;
+    result.air_system_hit_flags =
+        default_effects_air_system_hit_flags_string(scratch);
+    result.air_system_spatial_scales =
+        default_effects_air_system_spatial_scales_string(scratch);
+    result.vulnerability_scale_trace =
+        default_effects_vulnerability_scale_trace_string(
+            scratch.sampled_vulnerability_adjustment);
 }

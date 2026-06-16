@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="92.90" y="169.12" width="506.85" height="390.88" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="103.04" y="192.58" width="486.57" height="343.97" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="397.70" y="187.24" width="104.35" height="109.40" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>electrical_power_bus candidate_binding</title></rect>
-<text x="401.70" y="200.24" font-size="10" font-family="monospace" fill="#7c3aed">electrical_power_bus candidate_binding</text>
-<polygon points="102.55,358.85 128.05,556.50 541.31,541.40 598.41,333.82 505.28,248.04 322.39,213.11 281.29,208.00 117.84,208.00 102.55,337.39" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="303.96" y="337.90" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

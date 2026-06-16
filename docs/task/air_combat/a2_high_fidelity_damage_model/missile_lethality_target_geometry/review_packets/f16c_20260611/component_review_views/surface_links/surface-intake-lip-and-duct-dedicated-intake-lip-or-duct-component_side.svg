@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620"><rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
-<text x="12" y="20" font-size="13" font-family="monospace" fill="#111827">side (x/z)</text>
-<rect x="630.12" y="120.13" width="236.97" height="439.87" fill="#f59e0b" fill-opacity="0.02" stroke="#f59e0b" stroke-width="1.10" stroke-dasharray="6 4"><title>source_region_bounds</title></rect>
-<rect x="649.08" y="172.92" width="199.06" height="334.30" fill="#64748b" fill-opacity="0.02" stroke="#64748b" stroke-width="1.10" stroke-dasharray="2 3"><title>support_bounds</title></rect>
-<rect x="659.26" y="254.52" width="178.35" height="170.06" fill="#7c3aed" fill-opacity="0.08" stroke="#7c3aed" stroke-width="0.90"><title>dedicated_intake_lip_or_duct_component candidate_binding</title></rect>
-<text x="663.26" y="267.52" font-size="10" font-family="monospace" fill="#7c3aed">dedicated_intake_lip_or_duct_component candidate_binding</text>
-<polygon points="644.39,208.51 681.05,474.64 706.24,491.47 808.50,534.58 852.83,535.26 852.50,527.60 800.67,309.71 759.59,217.95 733.74,161.54 726.58,147.80 708.44,144.87 669.31,153.67" fill="#2563eb" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.60"><title>mesh_silhouette</title></polygon>
-<text x="749.32" y="329.63" font-size="10" font-family="monospace" fill="#2563eb">mesh_silhouette</text>
-<text x="12" y="606" font-size="10" font-family="monospace" fill="#475569">orange=source, gray=support, purple/red=components, blue=mesh, black=point</text></svg>

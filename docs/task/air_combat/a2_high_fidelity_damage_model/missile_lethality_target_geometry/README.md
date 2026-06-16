@@ -147,6 +147,9 @@ Out of scope:
   [target_geometry_damage_event_trace_results_20260614.md](target_geometry_damage_event_trace_results_20260614.md)
 - 32k opt-in training probe:
   [target_geometry_training_probe_32k_results_20260614.md](target_geometry_training_probe_32k_results_20260614.md)
+- Whole-airframe projected mesh contour containment (tooling upgrade):
+  [whole_airframe_contour_containment_results_20260614.md](whole_airframe_contour_containment_results_20260614.md)
+  ([Chinese canonical](whole_airframe_contour_containment_results_20260614.zh.md))
 
 ## Outputs And Evidence
 
@@ -170,10 +173,11 @@ Generated:
   TG-P2 first outer-region candidate with `14` low-fidelity review regions. It
   records that actual glTF nodes are `Object_*`, so node names alone must not
   drive classification.
-- Three-view drafts:
-  [top.svg](review_packets/f16c_20260611/top.svg),
-  [side.svg](review_packets/f16c_20260611/side.svg),
-  [front.svg](review_packets/f16c_20260611/front.svg).
+- Retired three-view drafts: the old current-packet draft SVGs were removed
+  during final-result contraction. Use
+  [scene.html](review_packets/f16c_20260611/scene.html) and
+  [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html)
+  as the current visual entrypoints.
 - Component binding reports:
   [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json),
   [component_binding_report_20260611.csv](review_packets/f16c_20260611/component_binding_report_20260611.csv).
@@ -196,20 +200,18 @@ Generated:
   runtime preconditions for `obb`, `thin_prism`, `convex_hull`, and
   `simplified_shell`.
 - Fine-geometry proxy candidate:
-  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json),
-  [fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg),
-  [fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg),
-  [fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg).
+  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json).
   TG-P6-R3 generated top/side/front convex hull silhouettes from `13,415`
   audit glTF vertices for all `14` review-only proxies. Nose, canopy, wing, and
   horizontal-tail regions are corrected against audit-mesh placement and use
   explicit source-node whitelists. `inflated_fallback_count=0`; missing vertices
   now fail review instead of expanding the region bounds.
-- Human review dashboard:
-  [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html).
-  TG-P6-R4 adds per-region cards with local top/side/front zooms, component
+- Retired human review dashboard:
+  TG-P6-R4 added per-region cards with local top/side/front zooms, component
   overlays, mesh-node selection strategy, disabled fallback policy, hull point
-  counts, review flags, and candidate/review status.
+  counts, review flags, and candidate/review status. This was an intermediate
+  QA surface and is no longer a current result entrypoint after final-result
+  contraction.
 - Surface component candidates:
   [surface_component_candidate_20260611.json](review_packets/f16c_20260611/surface_component_candidate_20260611.json),
   [surface_component_candidate_20260611.csv](review_packets/f16c_20260611/surface_component_candidate_20260611.csv).
@@ -218,44 +220,32 @@ Generated:
   R11, `0` surface components need human review, `0` runtime receiver links are
   missing, `0` surface rows are blocked by side-sign mismatch, and `8` carry
   cross-region semantic holds/candidates.
-- Visual human-review triage:
-  [human_review_triage.html](review_packets/f16c_20260611/human_review_triage.html).
-  TG-P6-R6 groups the manual-review queue into visual cards for coordinate-sign,
+- Retired visual human-review triage:
+  TG-P6-R6 grouped the manual-review queue into visual cards for coordinate-sign,
   component-placement, surface-handoff, and review-point sanity issues. Each card
   states the review question, what to look at, and the decision needed, then
   shows local top/side/front overlays so review no longer depends on reading CSV
-  rows by eye.
-- Isolated component review views:
-  [component_review_views/index.html](review_packets/f16c_20260611/component_review_views/index.html),
-  [component_review_views/manifest.json](review_packets/f16c_20260611/component_review_views/manifest.json).
-  TG-P6-R8 now regenerates `75` review-only pages: `26` current
-  component-binding views, `29` surface-to-single-component handoff views, and
-  `20` review-point candidate-component views. Each page has its own
-  top/side/front SVGs, so independent review no longer has to read crowded
-  overview cards.
+  rows by eye. This intermediate HTML view is no longer a current result
+  entrypoint.
 - Semantic damage geometry candidates:
   [semantic_damage_geometry_candidate_20260611.json](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.json),
-  [semantic_damage_geometry_candidate_20260611.csv](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.csv),
-  [semantic_damage_geometry_views/index.html](review_packets/f16c_20260611/semantic_damage_geometry_views/index.html).
+  [semantic_damage_geometry_candidate_20260611.csv](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.csv).
   TG-P6-R12 emits `14` semantic outer-shell volume components and `14`
   `runtime_component_json_candidate` records. The runtime schema and loader now
   parse the geometry fields, but `runtime_active_component_count=0`; active
   lethality behavior is unchanged until `TG-P7`.
 - Internal receiver prior geometry candidates:
   [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json),
-  [internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv),
-  [internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html).
+  [internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv).
   TG-P6-R13 generates sphere/cylinder/capsule/ellipsoid priors for all `26`
   current receivers and constrains them by parent shell support bounds or
   cross-region unions. `post_constraint_outside_count=0`,
   `cross_region_held_prior_count=2`, and `runtime_active_component_count=0`.
-  Current HTML/SVG entrypoints:
-  [index](review_packets/f16c_20260611/internal_component_prior_views/index.html),
-  [manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json).
+  The generated HTML/SVG pages are raw intermediate evidence, not current result
+  entrypoints.
 - Semantic parent-child component layout:
   [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json),
-  [semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv),
-  [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html).
+  [semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv).
   TG-P6-R14 makes the `14` geometry-modeled parent shell parts the primary
   review surface and overlays all `26` receiver priors on those parent views.
   The packet records `extra_receiver_slot_count=12`,
@@ -266,9 +256,8 @@ Generated:
   It splits `engine_core` into `3` engine segments and `wing_spar_center` into
   `5` spar segments; `held_segment_count=8`,
   `outside_whole_airframe_segment_count=0`, and runtime ownership remains held.
-  Current HTML/SVG entrypoints:
-  [index](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html),
-  [manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json).
+  The generated HTML/SVG pages are raw intermediate evidence, not current result
+  entrypoints.
 - Cross-region ownership split candidates:
   [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json),
   [cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv),
@@ -329,28 +318,45 @@ Generated:
 - Airframe silhouette constraint correction candidates:
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json),
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv).
-  TG-P6-R16 checks all `34` receiver priors and held split segments with
-  shape-aware top/side/front whole-airframe silhouette samples. After R21 latest
-  placement promotion, the packet records
-  `silhouette_exposure_item_count=0`,
-  `center_shift_reduces_item_count=0`, `size_or_shape_review_item_count=0`,
-  and `runtime_active_component_count=0`. Current latest-placement overview:
-  [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg).
+  TG-P6-R16 checks all `34` receiver priors and held split segments as a raw
+  shape-aware top/side/front whole-airframe silhouette diagnostic. The
+  silhouette test was since upgraded to a whole-airframe projected mesh contour
+  with shape-aware projected sampling (see the whole-airframe contour containment
+  entry below). After the R22 thin-prism/frustum shape corrections the packet
+  now records `silhouette_exposure_item_count=0`,
+  `center_shift_reduces_item_count=0`, `size_or_shape_review_item_count=0`, and
+  `runtime_active_component_count=0`. Held split segments are no longer part of
+  the final result surface; current containment is reported through the
+  whole-airframe contour dashboard below.
+- Whole-airframe projected mesh contour containment:
+  [whole_airframe_contour_containment_20260614.json](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.json),
+  [whole_airframe_contour_containment_20260614.csv](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.csv),
+  [whole_airframe_contour_top.svg](review_packets/f16c_20260611/whole_airframe_contour_top.svg),
+  [whole_airframe_contour_side.svg](review_packets/f16c_20260611/whole_airframe_contour_side.svg),
+  [whole_airframe_contour_front.svg](review_packets/f16c_20260611/whole_airframe_contour_front.svg),
+  [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html),
+  [whole_airframe_contour_containment_results_20260614.md](whole_airframe_contour_containment_results_20260614.md).
+  Upgrades the silhouette-containment test from a per-region convex-hull
+  union with sparse 9-point sampling to per-view projected audit-mesh triangle
+  union over `4504` glTF triangles with shape-aware projected sampling and a
+  `0.05 m` engineering review margin. The final result surface contains only
+  the `26` current receiver priors, excludes the `8` review-only held split
+  segments, and records `0` items exceeding tolerance
+  (`max_outside_distance_m=0.0`).
 - Subcomponent shape-placement candidates:
   [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json),
-  [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv),
-  [subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html).
+  [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv).
   TG-P6-R17 generated candidate shape families and placement candidates for the
   `14` R16 exposed subcomponents while preserving nominal dimensions. TG-P6-R18
   promotes the first `4` zero-exposure candidates into review-only
   prior/held-segment generation rules; TG-P6-R19 adds local centerline
   candidates; TG-P6-R20 resolves the remaining radar and cockpit placement
   issues. TG-P6-R21 promotes the latest accepted placements into the
-  review-only generation rules, so the current packet now records
+  review-only generation rules. After the R22 thin-prism/frustum shape
+  corrections the source exposure queue is empty, so the packet now records
   `shape_placement_candidate_count=0`,
-  `latest_candidate_total_outside_sample_count=0`, and
-  `runtime_active_component_count=0`. The shape-placement view index remains as
-  an empty-queue audit trace.
+  `source_silhouette_exposure_item_count=0`, and
+  `runtime_active_component_count=0`.
 - Subcomponent shape-promotion results:
   [subcomponent_shape_promotion_results_20260613.md](subcomponent_shape_promotion_results_20260613.md).
   TG-P6-R18 promotes `iff_interrogator`, `inertial_navigation_unit`,
@@ -370,10 +376,12 @@ Generated:
 - Latest subcomponent promotion results:
   [subcomponent_latest_promotion_results_20260613.md](subcomponent_latest_promotion_results_20260613.md).
   TG-P6-R21 promotes the R20 latest placements into review-only prior and
-  held-segment generation rules. Current counts are
+  held-segment generation rules. At the R21 promotion snapshot, counts were
   `internal_component_prior_shape_promotion_count=9`,
   `cross_region_held_segment_shape_promotion_count=5`, and
-  `subcomponent_shape_placement_candidate_count=0`.
+  `subcomponent_shape_placement_candidate_count=0`; the later whole-airframe
+  projected mesh contour diagnostic supersedes the current containment queue and
+  records `10` review-only follow-up candidates.
 - Cross-region ownership split results:
   [cross_region_ownership_split_results_20260613.md](cross_region_ownership_split_results_20260613.md).
   TG-P6-R22 turns the two remaining ownership blockers into explicit accept /
@@ -416,7 +424,7 @@ Generated:
   direct surface handoff rules. Component and surface `needs_review` counts are
   now `0`; `TG-P7` remains held only for explicit ownership of `engine_core` and
   `wing_spar_center` cross-region semantics.
-- `pytest -q tests/tools/test_airframe_geometry_review.py`: `2 passed`.
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_manifest.py tests/tools/test_airframe_geometry_review_cli.py`: `5 passed`.
 - `./build-workshop/ef_test --test-suite=components_basic`: `23` cases passed
   after building `ef_test`.
 - `pytest -q tests/architecture/damage_model`: `177 passed`; this includes the
@@ -435,8 +443,6 @@ This subproject can be marked accepted only when:
   distance, nearest component distance, and candidate-component count.
 - Every outer region has a review-only surface component candidate and a clear
   statement of whether its link to current internal components is reliable.
-- Every current component and high-risk handoff has an isolated top/side/front
-  review view instead of sharing a crowded mini-view with unrelated components.
 - Every semantic outer-shell volume candidate has an isolated top/side/front
   review view and an explicit direct-vs-cross-region receiver handoff status.
 - Every current internal/system receiver has prior geometry, parent shell

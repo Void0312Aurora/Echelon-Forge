@@ -66,7 +66,7 @@ def test_live_detonation_exports_standard_warhead_spatial_and_component_events()
   assert int(nearest.header.munition.entity_id) == missile_id
   assert int(nearest.header.target.entity_id) == red_id
 
-  assert str(fuze.header.stage) == "fuze_evaluation"
+  assert str(fuze.header.stage) == "fuze"
   assert str(fuze.header.reason) == "fuze_armed"
   assert int(fuze.header.chain_id) == int(launch.event_id)
   assert int(fuze.header.parent_event_id) == int(nearest.header.event_id)

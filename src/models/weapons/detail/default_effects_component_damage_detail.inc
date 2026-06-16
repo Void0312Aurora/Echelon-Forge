@@ -535,17 +535,34 @@ double component_failure_probability(
             smoothstep01((penetration_load + incidence_load) / 0.90);
         const double proximity_load_response =
             std::max({fragment_breach_response, blast_response, rod_cut_response});
-        const double proximity_exposure_response =
-            smoothstep01(std::clamp(mechanism_scale, 0.0, 1.25) / 0.30);
+        const double projection_scale = std::clamp(mechanism_scale, 0.0, 1.25);
+        const double proximity_projection_response =
+            smoothstep01((projection_scale - 0.12) / 0.58);
+        const double close_projection_response =
+            smoothstep01((projection_scale - 0.24) / 0.36);
+        const double mechanism_intensity_response =
+            smoothstep01((dominant_channel - 0.18) / 0.62);
+        const double proximity_response = std::clamp(
+            (0.65 * proximity_load_response) +
+                (0.35 * mechanism_intensity_response),
+            0.0,
+            1.0);
         const double proximity_component_response = std::clamp(
             0.92 + 0.08 * component_system_fragility_scale(system, component),
             0.86,
             1.06);
+        const double proximity_pre_damage_response = std::clamp(
+            0.86 + 0.14 * pre_damage_scale,
+            1.0,
+            1.08);
+        const double proximity_tail_ceiling =
+            0.12 + 0.52 * close_projection_response;
         const double proximity_tail =
-            0.35 *
-            proximity_load_response *
-            proximity_exposure_response *
-            proximity_component_response;
+            proximity_tail_ceiling *
+            proximity_response *
+            (0.45 + 0.55 * proximity_projection_response) *
+            proximity_component_response *
+            proximity_pre_damage_response;
         probability = std::max(probability, proximity_tail);
     }
     if (impulse > threshold) {

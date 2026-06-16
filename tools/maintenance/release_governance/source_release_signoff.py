@@ -692,7 +692,7 @@ def _report_text(artifact: dict[str, Any], manifest: dict[str, Any]) -> str:
 
 ```bash
 python3 tools/maintenance/damage_model.py release-governance source-release-signoff
-pytest -q tests/architecture/damage_model/test_release_authority_guardrails.py
+pytest -q tests/architecture/damage_model/test_release_signoff_gate.py
 ```
 """
 

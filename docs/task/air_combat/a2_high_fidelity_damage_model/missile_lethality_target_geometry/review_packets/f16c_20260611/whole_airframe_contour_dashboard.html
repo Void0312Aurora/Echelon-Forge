@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>F-16 Whole-Airframe Projected Mesh Contour Containment</title>
+<style>
+body { font-family: monospace; margin: 24px; color: #202020; }
+h1 { font-size: 20px; }
+h2 { font-size: 16px; margin-top: 28px; }
+table { border-collapse: collapse; margin-top: 12px; width: 100%; }
+th, td { border: 1px solid #999; padding: 4px 8px; font-size: 12px; text-align: left; }
+th { background: #eee; }
+tr.exceeds { background: #fee2e2; }
+section { margin-top: 20px; }
+.note { color: #666; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>F-16 Whole-Airframe Projected Mesh Contour Containment</h1>
+<p class="note">
+Method: projected audit glTF triangle union (4504 audit triangles per view).
+Tolerance: 0.05 m (engineering review margin, not physical clearance).
+Items exceeding tolerance: <strong>0</strong> of 26.
+Max outside distance: <strong>0 m</strong>.
+</p>
+<table>
+<thead><tr><th>item_id</th><th>type</th><th>shape</th><th>outside views</th><th>outside samples</th><th>max outside (m)</th><th>exceeds</th></tr></thead>
+<tbody>
+<tr><td>afterburner_nozzle</td><td>receiver_prior</td><td>frustum</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>apg68_radar_array</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>center_fuselage_fuel_cell</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>cockpit_crew_station</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>data_link_terminal</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>dedicated_canopy_surface_component</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>dedicated_intake_lip_or_duct_component</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>electrical_power_bus</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>engine_core</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>engine_fuel_control_unit</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>flight_control_computer</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>iff_interrogator</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>inertial_navigation_unit</td><td>receiver_prior</td><td>ellipsoid</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>left_aileron_actuator</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>left_horizontal_tail_actuator_or_surface_component</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>left_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>left_wing_fuel_cell</td><td>receiver_prior</td><td>thin_prism</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>mission_computer</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>nose_avionics_bay</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>right_aileron_actuator</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>right_horizontal_tail_actuator_or_surface_component</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>right_leading_edge_flap_actuator</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>right_wing_fuel_cell</td><td>receiver_prior</td><td>thin_prism</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>rudder_actuator</td><td>receiver_prior</td><td>capsule</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>tail_hydraulic_pump</td><td>receiver_prior</td><td>obb</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+<tr><td>wing_spar_center</td><td>receiver_prior</td><td>thin_prism</td><td>-</td><td>0</td><td>0</td><td>no</td></tr>
+</tbody>
+</table>
+<section><h2>top view</h2><img src="whole_airframe_contour_top.svg" style="width:100%;max-width:1200px;border:1px solid #ccc"/></section>
+<section><h2>side view</h2><img src="whole_airframe_contour_side.svg" style="width:100%;max-width:1200px;border:1px solid #ccc"/></section>
+<section><h2>front view</h2><img src="whole_airframe_contour_front.svg" style="width:100%;max-width:1200px;border:1px solid #ccc"/></section>
+<p class="note">Review-only diagnostic. The gray outline is a projected audit-mesh silhouette, not a runtime collision mesh, not real F-16 engineering geometry, not a weapon Pk authority.</p>
+</body>
+</html>

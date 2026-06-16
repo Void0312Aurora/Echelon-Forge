@@ -64,7 +64,8 @@ def test_runtime_facade_escape_hatch_allowlist_stays_explicit() -> None:
   actual = {}
   for path in [
     WORLD_BATCH_ADAPTER,
-    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade.py",
+    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_core.py",
+    REPO_ROOT / "tests" / "runtime" / "facade" / "test_runtime_facade_counterfactual.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_export.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_live_engagement_event_capture.py",
     REPO_ROOT / "tests" / "runtime" / "engagement" / "test_facade_engagement_evidence_gates.py",
@@ -122,7 +123,7 @@ def test_leader_world_batch_runtime_keeps_batch_runtime_surface_removed() -> Non
   assert "def batch_runtime(self):" not in source
   assert ".batch_runtime" not in source
 
-def test_world_batch_vec_env_batch_runtime_surface_is_removed() -> None:
+def test_world_batch_vec_env_batch_runtime_surface_is_removed_at_source() -> None:
   source = _source()
   cooperative_source = (REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py").read_text(
     encoding="utf-8"

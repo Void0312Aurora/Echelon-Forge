@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
   sys.path.insert(0, str(REPO_ROOT))
 
 from python.testing.runtime import ensure_repo_imports, resolve_repo_path
+from tools.geometry import target_geometry_lethality_matrix_probe as matrix_probe
 
 
 ensure_repo_imports()
@@ -63,63 +64,69 @@ SPLIT_RECEIVER_NAMES = (
 )
 RETIRED_PARENT_COMPONENTS = ("engine_core", "wing_spar_center")
 
-TRACE_CASES: tuple[dict[str, Any], ...] = (
+
+def _trace_case_with_standard_velocity(case: dict[str, Any]) -> dict[str, Any]:
+  local_point_m = tuple(float(value) for value in case["local_point_m"])
+  return {
+    **case,
+    "missile_velocity_body_mps": matrix_probe.missile_velocity_toward_origin(
+      local_point_m
+    ),
+  }
+
+
+TRACE_CASES: tuple[dict[str, Any], ...] = tuple(
+  _trace_case_with_standard_velocity(case)
+  for case in (
   {
     "case_id": "engine_afterburner_segment_direct_trace",
     "expected_split_receiver": "engine_core_afterburner_segment",
     "retired_parent_component": "engine_core",
-    "local_point_m": (-5.525512, -0.5, -0.304381),
-    "missile_velocity_body_mps": (250.0, 900.0, 0.0),
+    "local_point_m": (-5.775512, -0.5, -0.404381),
   },
   {
     "case_id": "engine_hot_section_spatial_trace",
     "expected_split_receiver": "engine_core_hot_section_segment",
     "retired_parent_component": "engine_core",
     "local_point_m": (-4.193053, -0.5, -1.354381),
-    "missile_velocity_body_mps": (250.0, 900.0, 0.0),
   },
   {
     "case_id": "engine_forward_compressor_spatial_trace",
     "expected_split_receiver": "engine_core_forward_compressor_segment",
     "retired_parent_component": "engine_core",
     "local_point_m": (-2.852966, -0.5, -1.354381),
-    "missile_velocity_body_mps": (250.0, 900.0, 0.0),
   },
   {
     "case_id": "left_inner_wing_spar_trace",
     "expected_split_receiver": "wing_spar_center_left_inner_wing_segment",
     "retired_parent_component": "wing_spar_center",
-    "local_point_m": (-1.292842, -2.375, -0.735043),
-    "missile_velocity_body_mps": (900.0, 250.0, 0.0),
+    "local_point_m": (-1.55, -1.7, -0.7),
   },
   {
     "case_id": "left_root_spar_trace",
     "expected_split_receiver": "wing_spar_center_left_root_segment",
     "retired_parent_component": "wing_spar_center",
-    "local_point_m": (-1.092842, -1.45, -0.885043),
-    "missile_velocity_body_mps": (900.0, 250.0, 0.0),
+    "local_point_m": (-0.85, -0.9, -1.1),
   },
   {
     "case_id": "center_carrythrough_spar_trace",
     "expected_split_receiver": "wing_spar_center_carrythrough_segment",
     "retired_parent_component": "wing_spar_center",
     "local_point_m": (-1.292842, -0.5, -1.785043),
-    "missile_velocity_body_mps": (900.0, -250.0, 0.0),
   },
   {
     "case_id": "right_root_spar_trace",
     "expected_split_receiver": "wing_spar_center_right_root_segment",
     "retired_parent_component": "wing_spar_center",
-    "local_point_m": (-1.092842, 0.9, -1.235043),
-    "missile_velocity_body_mps": (900.0, -250.0, 0.0),
+    "local_point_m": (-0.85, 0.9, -1.1),
   },
   {
     "case_id": "right_inner_wing_spar_trace",
     "expected_split_receiver": "wing_spar_center_right_inner_wing_segment",
     "retired_parent_component": "wing_spar_center",
-    "local_point_m": (-1.292842, 1.075, -1.785043),
-    "missile_velocity_body_mps": (900.0, -250.0, 0.0),
+    "local_point_m": (-1.55, 1.7, -0.7),
   },
+  )
 )
 
 

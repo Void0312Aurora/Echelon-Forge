@@ -10,8 +10,7 @@ shows one monolithic held block.
 | --- | --- |
 | Segment report | [cross_region_held_component_segments_20260611.json](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.json), [CSV](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv) |
 | Parent-child report | [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json), [CSV](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv) |
-| Review pages | [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) |
-| Review pages | [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html) |
+| Review pages | Retired intermediate parent-child views; current visual result is [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
 
 ## Counts
 

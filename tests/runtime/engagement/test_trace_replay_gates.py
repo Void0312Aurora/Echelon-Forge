@@ -65,6 +65,15 @@ def _make_pilot_fire_action() -> ef_py.PilotAction:
   return action
 
 
+def _make_authorized_release_command(shooter_id: int, target_id: int) -> ef_py.MissionCommand:
+  command = ef_py.MissionCommand()
+  command.active = True
+  command.authorization_to_fire = True
+  command.assigned_target_id = int(target_id)
+  command.engagement_authority_holder_id = int(shooter_id)
+  return command
+
+
 def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int, int]:
   facade = ef_py.RuntimeFacade(1)
   if not facade.load_database(_DB_PATH):
@@ -143,6 +152,11 @@ def _make_window_launch_packet() -> tuple[ef_py.EngagementEventPacket, int, int,
   action_request.action_intent.action_interface.payload_type = "pilot_action"
   action_request.action_intent.has_pilot_action = True
   action_request.action_intent.pilot_action = _make_pilot_fire_action()
+  action_request.action_intent.has_mission_command = True
+  action_request.action_intent.mission_command = _make_authorized_release_command(
+    shooter_id,
+    target_id,
+  )
   request.action_requests = [action_request]
 
   packet = facade.run_wp10_window(request).engagement_packet

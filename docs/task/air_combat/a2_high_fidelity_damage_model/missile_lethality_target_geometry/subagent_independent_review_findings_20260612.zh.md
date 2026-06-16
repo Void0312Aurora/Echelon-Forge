@@ -2,10 +2,9 @@
 
 状态：`2026-06-12` independent subagent review recorded / review-only / 部分项目已由 TG-P6-R10 修正接续。
 
-本记录汇总 5 个只读 subagent 基于
-[component_review_views/index.html](review_packets/f16c_20260611/component_review_views/index.html)
-及其 [manifest.json](review_packets/f16c_20260611/component_review_views/manifest.json)
-完成的独立评估。评估只使用独立 top/side/front 视图和 JSON 追溯，不依赖拥挤总览图。
+本记录汇总 5 个只读 subagent 在中间 isolated-view packet 上完成的独立评估。该中间 packet 已从当前
+最终结果面移除；本文件仅作为历史评估文字保留。当前 containment 证据以整机投影网格轮廓和后续
+placement 队列为准。
 
 后续：[subagent_correction_results_20260612.zh.md](subagent_correction_results_20260612.zh.md)
 记录写入范围受限的修正回合。radar/IFF 和 nozzle 源盒已在该回合修复；在 R10 快照时，左右符号和

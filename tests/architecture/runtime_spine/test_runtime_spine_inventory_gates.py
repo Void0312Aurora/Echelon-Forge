@@ -44,8 +44,8 @@ EXPECTED_CLASSIFICATIONS = {
   "src/runtime/contracts/platform_capability_contracts.h": "maintained_spine",
   "src/core/engine/world_batch_runtime.h": "deprecated_candidate",
   "src/core/engine/world_batch_runtime.cpp": "deprecated_candidate",
-  "tests/world_batch/test_world_batch_runtime.py": "deprecated_candidate",
-  "tests/world_batch/test_world_batch_vec_env.py": "compatibility_wrapper",
+  "tests/world_batch/test_world_batch_runtime_surface.py": "deprecated_candidate",
+  "tests/world_batch/test_world_batch_vec_env_command_chain.py": "compatibility_wrapper",
   "tests/runtime/engagement/test_facade_engagement_export.py": "diagnostics_only",
   "tests/runtime/engagement/test_diagnostics_trace_contract.py": "diagnostics_only",
   "tests/runtime/bindings/test_lazy_binding_resolution.py": "compatibility_wrapper",
@@ -58,6 +58,24 @@ EXPECTED_SELECTED_NODES = [
   "p7.fire_control_launch.v1",
   "p9.effects_damage.v1",
   "p10.observation_export.v1",
+]
+EXPECTED_P9_LETHALITY_SUBSTAGES = [
+  "P9.1 NearestApproach",
+  "P9.2 FuzeEvaluation",
+  "P9.3 WarheadMechanism",
+  "P9.4 SpatialCoverage",
+  "P9.5 ComponentLoad",
+  "P9.6 ComponentDamage",
+  "P9.7 PlatformConsequence",
+]
+EXPECTED_P9_LETHALITY_OUTPUTS = [
+  "NearestApproachEvent",
+  "FuzeEvaluationEvent",
+  "WarheadMechanismEvent",
+  "SpatialCoverageEvent",
+  "ComponentLoadEvent",
+  "ComponentDamageEvent",
+  "PlatformConsequenceEvent",
 ]
 EXPECTED_EXCLUDED_NODES = [
   "p7.launch_request_adapter_projection.v1",
@@ -160,6 +178,12 @@ def test_selected_slice_matches_runtime_window_and_manifest_clues() -> None:
     assert barrier_id in runtime_window_source or barrier_id in runtime_window_helper_source
   for node_id in EXPECTED_SELECTED_NODES + EXPECTED_EXCLUDED_NODES:
     assert node_id in manifest_source
+  for substage in EXPECTED_P9_LETHALITY_SUBSTAGES:
+    assert substage in manifest_source
+  for output_packet in EXPECTED_P9_LETHALITY_OUTPUTS:
+    assert output_packet in manifest_source
+  assert "lethality_chain" in manifest_source
+  assert "lethality_stage" in manifest_source
 
 
 def test_blocked_and_compatibility_entries_do_not_hide_maintained_default_claims() -> None:

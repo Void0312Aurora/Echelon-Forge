@@ -89,3 +89,9 @@ def assert_retained_manifest_clean(
   assert summary["sha_mismatch_total"] == 0
   assert summary["guard_true_total"] == 0
   return summary
+
+
+def write_release_json(path: Path, payload: dict[str, Any]) -> Path:
+  path.parent.mkdir(parents=True, exist_ok=True)
+  path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+  return path

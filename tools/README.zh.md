@@ -58,7 +58,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口，用于 fixed-batch fitting 和 online update-path isolation。
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint 和 learnability-audit probes。
+  - 统一的 fire-timing fault-localization 入口，用于 structural toy、real update-path、chain-breakpoint、learnability-audit 和合法发射窗口位置扫描 probes。
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
   - 聚焦 cooperative training NaN/Inf 的 tracer，会重建维护中的 cooperative flow，并在发现问题时输出 JSON 报告。
 - [README.md](diagnostics/README.md)
@@ -71,8 +71,8 @@
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - 运行已签入的 pytest suite manifest，例如 `tests/smoke/ci_smoke_suite.json`，并在路径过期时提前失败。
   - Suite 条目可以是目录、文件，或 `tests/foo/test_bar.py::test_case` 这类 pytest node ID；node ID 条目仍会在调用 pytest 前检查基础路径是否存在。
-- [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)
-  - 对 contract-batch runner 的薄包装，默认使用 `sim_kernel` 分组。
+- [run_contract_batches.py](runners/run_contract_batches.py)
+  - 按 `--group`（`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`）批量运行 `tests/contracts/` 下的 JSON 契约，默认运行全部已维护分组。`--default-group sim_kernel` 便捷地只选 `sim_kernel` 分组而无需拼写 `--group`。
 
 ## 维护
 

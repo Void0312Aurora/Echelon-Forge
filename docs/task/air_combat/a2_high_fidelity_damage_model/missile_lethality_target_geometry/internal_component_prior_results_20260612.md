@@ -19,7 +19,7 @@ shell.
 | Receiver priors | Generates `sphere`, `cylinder`, `capsule`, and `ellipsoid` priors for all `26` current receivers, with recorded shape, axis, role, and rationale. | Priors are synthetic engineering review aids, not true F-16 internal layout. |
 | Shell constraints | Each prior starts from the old component AABB center/scale, then is shifted or shrunk into semantic shell `support_bounds`. | Constraints use review support bounds, not closed physical bays. |
 | Cross-region held | `engine_core` is constrained by the intake / aft engine bay / nozzle union; `wing_spar_center` is constrained by the center fuselage / wings / wing roots union and remains held. | This proves a non-protruding candidate can be generated; it does not accept ownership. |
-| Review artifacts | Adds [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json), [CSV](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv), [isolated views](review_packets/f16c_20260611/internal_component_prior_views/index.html), and [view manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json). | `runtime_active_component_count=0`; runtime behavior is unchanged. |
+| Review artifacts | Adds [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json), [CSV](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv), and retired intermediate isolated views. | `runtime_active_component_count=0`; runtime behavior is unchanged. |
 
 ## Packet Summary
 
@@ -31,10 +31,8 @@ shell.
 
 ## Preview Entrypoints
 
-- Isolated pages:
-  [internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html)
-- View manifest:
-  [internal_component_prior_views/manifest.json](review_packets/f16c_20260611/internal_component_prior_views/manifest.json)
+- Isolated pages: retired from the current final-result surface.
+- View manifest: retired from the current final-result surface.
 
 Layer meanings:
 

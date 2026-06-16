@@ -16,8 +16,8 @@
 | 跨区分段 CSV | [review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv) |
 | 整机约束 JSON | [review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json) |
 | 剩余形状候选 JSON | [review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json) |
-| 剩余形状候选视图 | [review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html) |
-| 当前空队列总览 | [review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) |
+| 剩余形状候选视图 | 已退役中间 shape-placement 视图；当前可视化结果见 [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
+| 当前空队列总览 | 已从当前最终结果面移除 |
 
 ## 结果
 

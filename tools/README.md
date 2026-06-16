@@ -61,7 +61,7 @@
 - [event_credit_head_probe.py](diagnostics/event_credit_head_probe.py)
   - Unified first-event credit-head diagnostic entry for fixed-batch fitting and online update-path isolation.
 - [fire_timing_fault_localization_probe.py](diagnostics/fire_timing_fault_localization_probe.py)
-  - Unified fire-timing fault-localization entry for structural toy, real update-path, chain-breakpoint, and learnability-audit probes.
+  - Unified fire-timing fault-localization entry for structural toy, real update-path, chain-breakpoint, learnability-audit, and legal-window launch-position sweep probes.
 - [trace_training_nonfinite_source.py](diagnostics/trace_training_nonfinite_source.py)
   - Focused cooperative training NaN/Inf tracer that reconstructs the maintained cooperative flow and stops with a JSON report.
 - [README.md](diagnostics/README.md)
@@ -86,8 +86,8 @@
 - [run_pytest_suite.py](runners/run_pytest_suite.py)
   - Runs a checked-in pytest suite manifest such as `tests/smoke/ci_smoke_suite.json` and fails early on stale path entries.
   - Suite entries may be directories, files, or pytest node IDs such as `tests/foo/test_bar.py::test_case`; node ID entries still validate the base path before invoking pytest.
-- [run_sim_kernel_contracts.py](runners/run_sim_kernel_contracts.py)
-  - Thin wrapper around the contract-batch runner with the default `sim_kernel` group.
+- [run_contract_batches.py](runners/run_contract_batches.py)
+  - Runs grouped JSON contract batches from `tests/contracts/` by `--group` (`chain`, `unit`, `route_generator`, `same_process`, `sim_kernel`), or all maintained groups by default. The `--default-group sim_kernel` convenience selects the `sim_kernel` group without spelling `--group`.
 
 ## Maintenance
 

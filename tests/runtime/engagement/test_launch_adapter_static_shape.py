@@ -29,17 +29,23 @@ def _assert_fields_present(body: str, fields: tuple[str, ...]) -> None:
   assert not missing, f"missing fields: {', '.join(missing)}"
 
 
+def _assert_cpp_fragment(text: str, fragment: str) -> None:
+  normalized_text = re.sub(r"\s+", " ", text)
+  normalized_fragment = re.sub(r"\s+", " ", fragment)
+  assert normalized_fragment in normalized_text
+
+
 def test_weapon_launch_adapter_is_header_only_contract_converter() -> None:
   header = _text(ADAPTER_HEADER)
 
   assert '#include "runtime/contracts/engagement_contracts.h"' in header
   assert "namespace engagement_adapter" in header
-  assert "inline LaunchRequest make_launch_request" in header
-  assert "inline LaunchEvent make_launch_event" in header
-  assert "inline MunitionLifecyclePacket make_munition_lifecycle_packet" in header
-  assert "inline EffectsEvent make_effects_event" in header
-  assert "inline DamageReport make_damage_report" in header
-  assert "inline DiagnosticsTrace make_diagnostics_trace" in header
+  _assert_cpp_fragment(header, "inline LaunchRequest make_launch_request")
+  _assert_cpp_fragment(header, "inline LaunchEvent make_launch_event")
+  _assert_cpp_fragment(header, "inline MunitionLifecyclePacket make_munition_lifecycle_packet")
+  _assert_cpp_fragment(header, "inline EffectsEvent make_effects_event")
+  _assert_cpp_fragment(header, "inline DamageReport make_damage_report")
+  _assert_cpp_fragment(header, "inline DiagnosticsTrace make_diagnostics_trace")
 
 
 def test_weapon_launch_adapter_does_not_depend_on_engine_owners_or_live_fire_calls() -> None:
@@ -253,6 +259,9 @@ def test_weapon_launch_adapter_snapshots_cover_munition_effects_damage_trace_con
       "vulnerability_effect_scale_evidence_row_id",
       "vulnerability_effect_scale_evidence_source_ref",
       "vulnerability_effect_scale_evidence_provenance",
+      "air_system_hit_flags",
+      "air_system_spatial_scales",
+      "vulnerability_scale_trace",
     ),
   )
   _assert_fields_present(

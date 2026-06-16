@@ -290,6 +290,8 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "producer_node_id",
         "fidelity_mode",
         "evidence_level",
+        "observation_mode",
+        "consumer_visibility",
         "confidence",
       }.issubset(public_fields(ef_py.LethalityChainHeader()))
     )
@@ -315,6 +317,17 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "delay_s",
         "reliability",
         "sample",
+        "expected_detonation_probability",
+        "sampled_outcome",
+        "sensor_opportunity_source",
+        "sensor_opportunity_score",
+        "terminal_track_valid",
+        "target_detected",
+        "target_detection_source",
+        "target_detection_confidence",
+        "target_detection_threshold",
+        "detonation_point_source",
+        "mechanism_coverage_score",
       }.issubset(public_fields(ef_py.FuzeEvaluationEvent()))
     )
     self.assertTrue({"header", "mechanism_family"}.issubset(
@@ -329,9 +342,21 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertTrue({"header", "integrity_before", "integrity_after"}.issubset(
       public_fields(ef_py.ComponentDamageEvent())
     ))
-    self.assertTrue({"header", "mission_capability_before"}.issubset(
-      public_fields(ef_py.PlatformConsequenceEvent())
-    ))
+    self.assertTrue(
+      {
+        "header",
+        "mission_capability_before",
+        "mission_capability_after",
+        "control_delta",
+        "engine_delta",
+        "fuel_leak_delta",
+        "aircraft_damage_state_delta",
+        "air_system_hit_flags",
+        "air_system_spatial_scales",
+        "vulnerability_scale_trace",
+        "loss_state_to",
+      }.issubset(public_fields(ef_py.PlatformConsequenceEvent()))
+    )
     self.assertTrue({"header", "breakup_state"}.issubset(
       public_fields(ef_py.StructuralBreakupEvent())
     ))
@@ -380,7 +405,11 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "component_failure_probability_source",
         "component_failure_probability_weapon_family",
         "component_failure_sample",
+        "component_integrity_after",
+        "component_integrity_before",
         "component_name",
+        "component_redundancy_group_availability_after",
+        "component_redundancy_group_availability_before",
         "component_redundancy_group_id",
         "component_system",
         "component_threshold_scale",
@@ -402,6 +431,8 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertTupleEqual(
       public_fields(ef_py.EffectsEvent()),
       (
+        "air_system_hit_flags",
+        "air_system_spatial_scales",
         "closure_mps",
         "component_failure_count",
         "component_failure_probability",
@@ -439,6 +470,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "detonation_local_right_m",
         "detonation_local_up_m",
         "detonation_pitch_deg",
+        "detonation_point_source",
         "detonation_roll_deg",
         "detonation_time_s",
         "direct_hitbox_intersection",
@@ -450,11 +482,19 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "fuze_contact_surface_tolerance_m",
         "fuze_delay_s",
         "fuze_effective_reliability",
+        "fuze_mechanism_coverage_score",
         "fuze_profile_synthetic",
         "fuze_reliability",
+        "fuze_sensor_opportunity_score",
+        "fuze_sensor_opportunity_source",
         "fuze_signature_scale",
         "fuze_signature_source",
+        "fuze_target_detected",
+        "fuze_target_detection_confidence",
+        "fuze_target_detection_source",
+        "fuze_target_detection_threshold",
         "fuze_target_signature",
+        "fuze_terminal_track_valid",
         "fuze_trigger_radius_m",
         "fuze_type",
         "mechanism_armor_scale",
@@ -512,6 +552,7 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
         "vulnerability_profile_present",
         "vulnerability_profile_synthetic",
         "vulnerability_provenance",
+        "vulnerability_scale_trace",
         "warhead_lethal_radius_m",
         "warhead_mass_kg",
         "warhead_orientation_axis_forward",
@@ -975,6 +1016,9 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertEqual(str(effects.vulnerability_effect_scale_evidence_row_id), "")
     self.assertEqual(str(effects.vulnerability_effect_scale_evidence_source_ref), "")
     self.assertEqual(str(effects.vulnerability_effect_scale_evidence_provenance), "")
+    self.assertEqual(str(effects.air_system_hit_flags), "")
+    self.assertEqual(str(effects.air_system_spatial_scales), "")
+    self.assertEqual(str(effects.vulnerability_scale_trace), "")
 
   def test_nested_entity_ref_round_trips_through_dto_fields(self) -> None:
     ref = ef_py.EngagementEntityRef()

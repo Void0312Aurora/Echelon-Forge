@@ -8,7 +8,7 @@ R16 开始处理 actual-size receiver prior 的修正回路。在继续改尺寸
 | 产物 | 结果 |
 | --- | --- |
 | 约束报告 | [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、[CSV](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv) |
-| 当前 latest-placement 总览 | [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) |
+| 当前 latest-placement 总览 | 已从当前最终结果面移除；当前可视化结果见 [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
 | 总览 packet | [scene.html](review_packets/f16c_20260611/scene.html) |
 
 ## 计数

@@ -75,6 +75,13 @@ void complete_lethality_header(LethalityChainHeader &header, const std::string &
     if (header.evidence_level.empty() || header.evidence_level == "uncalibrated") {
         header.evidence_level = "engineering_assumption";
     }
+    if (header.observation_mode.empty()) {
+        header.observation_mode = std::string(kLethalityObservationModeSampledRuntime);
+    }
+    if (header.consumer_visibility.empty()) {
+        header.consumer_visibility =
+            std::string(kLethalityConsumerVisibilityDiagnosticsAndTraining);
+    }
     if (header.confidence <= 0.0) {
         header.confidence = 1.0;
     } else {
@@ -92,6 +99,51 @@ bool positive_finite(double value) {
 
 bool finite_unit_interval(double value) {
     return std::isfinite(value) && value >= 0.0 && value <= 1.0;
+}
+
+std::string aircraft_damage_state_string(const EngagementDamageStateSnapshot &snapshot) {
+    if (!snapshot.has_aircraft_damage) {
+        return "";
+    }
+    char state[512];
+    std::snprintf(state, sizeof(state),
+                  "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
+                  "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
+                  "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
+                  snapshot.flight_control_integrity, snapshot.hydraulic_integrity,
+                  snapshot.hydraulic_pressure_availability, snapshot.propulsion_integrity,
+                  snapshot.fuel_system_integrity, snapshot.fuel_leak_severity,
+                  snapshot.avionics_integrity, snapshot.structural_integrity,
+                  snapshot.crew_effectiveness, snapshot.pilot_effectiveness,
+                  snapshot.mission_crew_effectiveness, snapshot.command_navigation_integrity,
+                  snapshot.fire_severity);
+    return std::string(state);
+}
+
+std::string aircraft_damage_state_delta_string(const EngagementDamageStateSnapshot &before,
+                                               const EngagementDamageStateSnapshot &after) {
+    if (!before.has_aircraft_damage && !after.has_aircraft_damage) {
+        return "";
+    }
+    char state[512];
+    std::snprintf(state, sizeof(state),
+                  "control=%.6f,hydraulic=%.6f,hydraulic_pressure=%.6f,propulsion=%.6f,"
+                  "fuel=%.6f,fuel_leak=%.6f,avionics=%.6f,structure=%.6f,crew=%.6f,"
+                  "pilot=%.6f,mission_crew=%.6f,command_navigation=%.6f,fire=%.6f",
+                  after.flight_control_integrity - before.flight_control_integrity,
+                  after.hydraulic_integrity - before.hydraulic_integrity,
+                  after.hydraulic_pressure_availability - before.hydraulic_pressure_availability,
+                  after.propulsion_integrity - before.propulsion_integrity,
+                  after.fuel_system_integrity - before.fuel_system_integrity,
+                  after.fuel_leak_severity - before.fuel_leak_severity,
+                  after.avionics_integrity - before.avionics_integrity,
+                  after.structural_integrity - before.structural_integrity,
+                  after.crew_effectiveness - before.crew_effectiveness,
+                  after.pilot_effectiveness - before.pilot_effectiveness,
+                  after.mission_crew_effectiveness - before.mission_crew_effectiveness,
+                  after.command_navigation_integrity - before.command_navigation_integrity,
+                  after.fire_severity - before.fire_severity);
+    return std::string(state);
 }
 
 bool has_component_identity(const ComponentMechanismLoadRow &row) {
@@ -178,10 +230,24 @@ SimulationKernelEngagementEventStore::capture_engagement_damage_state(uint64_t t
         snapshot.loss_state = snapshot.hp <= 0.0 ? "lost" : "combat_capable";
     }
     if (const AircraftDamageState *aircraft = target.get<AircraftDamageState>()) {
+        snapshot.has_aircraft_damage = true;
         snapshot.forced_landing = aircraft->forced_landing_required;
         snapshot.flight_control_kill = aircraft->flight_control_kill;
         snapshot.propulsion_kill = aircraft->propulsion_kill;
         snapshot.crew_kill = aircraft->crew_kill;
+        snapshot.flight_control_integrity = aircraft->flight_control_integrity;
+        snapshot.hydraulic_integrity = aircraft->hydraulic_integrity;
+        snapshot.hydraulic_pressure_availability = aircraft->hydraulic_pressure_availability;
+        snapshot.propulsion_integrity = aircraft->propulsion_integrity;
+        snapshot.fuel_system_integrity = aircraft->fuel_system_integrity;
+        snapshot.fuel_leak_severity = aircraft->fuel_leak_severity;
+        snapshot.avionics_integrity = aircraft->avionics_integrity;
+        snapshot.structural_integrity = aircraft->structural_integrity;
+        snapshot.crew_effectiveness = aircraft->crew_effectiveness;
+        snapshot.pilot_effectiveness = aircraft->pilot_effectiveness;
+        snapshot.mission_crew_effectiveness = aircraft->mission_crew_effectiveness;
+        snapshot.command_navigation_integrity = aircraft->command_navigation_integrity;
+        snapshot.fire_severity = aircraft->fire_severity;
     }
     return snapshot;
 }
@@ -249,7 +315,7 @@ std::uint64_t SimulationKernelEngagementEventStore::record_nearest_approach_even
     event.header.event_id = event_id;
     event.header.chain_id = launch_event_id != 0 ? launch_event_id : event_id;
     event.header.parent_event_id = launch_event_id;
-    event.header.stage = "nearest_approach";
+    event.header.stage = std::string(kLethalityChainStageNearestApproach);
     if (event.header.status.empty() || event.header.status == "not_evaluated") {
         event.header.status = "observed";
     }
@@ -263,6 +329,13 @@ std::uint64_t SimulationKernelEngagementEventStore::record_nearest_approach_even
     }
     if (event.header.evidence_level.empty() || event.header.evidence_level == "uncalibrated") {
         event.header.evidence_level = "observed_runtime";
+    }
+    if (event.header.observation_mode.empty()) {
+        event.header.observation_mode = std::string(kLethalityObservationModeSampledRuntime);
+    }
+    if (event.header.consumer_visibility.empty()) {
+        event.header.consumer_visibility =
+            std::string(kLethalityConsumerVisibilityDiagnosticsAndTraining);
     }
     if (event.header.confidence <= 0.0) {
         event.header.confidence = 1.0;
@@ -309,7 +382,7 @@ std::uint64_t SimulationKernelEngagementEventStore::record_fuze_evaluation_event
     event.header.event_id = event_id;
     event.header.chain_id = launch_event_id != 0 ? launch_event_id : event_id;
     event.header.parent_event_id = nearest_event_id != 0 ? nearest_event_id : launch_event_id;
-    event.header.stage = "fuze_evaluation";
+    event.header.stage = std::string(kLethalityChainStageFuze);
     if (event.header.status.empty() || event.header.status == "not_evaluated") {
         event.header.status = "evaluated";
     }
@@ -323,6 +396,13 @@ std::uint64_t SimulationKernelEngagementEventStore::record_fuze_evaluation_event
     }
     if (event.header.evidence_level.empty() || event.header.evidence_level == "uncalibrated") {
         event.header.evidence_level = "observed_runtime";
+    }
+    if (event.header.observation_mode.empty()) {
+        event.header.observation_mode = std::string(kLethalityObservationModeSampledRuntime);
+    }
+    if (event.header.consumer_visibility.empty()) {
+        event.header.consumer_visibility =
+            std::string(kLethalityConsumerVisibilityDiagnosticsAndTraining);
     }
     if (event.header.confidence <= 0.0) {
         event.header.confidence = event.triggered ? 1.0 : std::clamp(event.reliability, 0.0, 1.0);
@@ -348,9 +428,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_warhead_mechanism_eve
                                                                  record.munition_entity_id);
 
     WarheadMechanismEvent event = std::move(record.event);
-    complete_lethality_header(event.header, "warhead_mechanism", "applied", event_time_s, event_id,
-                              launch_event_id, record.parent_event_id, record.munition_entity_id,
-                              record.shooter_id, record.target_id, current_source_frame(ecs_));
+    complete_lethality_header(event.header, std::string(kLethalityChainStageWarheadMechanism),
+                              "applied", event_time_s, event_id, launch_event_id,
+                              record.parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.warhead_mechanism_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.warhead_mechanism_events,
@@ -370,9 +451,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_spatial_coverage_even
                                                                  record.munition_entity_id);
 
     SpatialCoverageEvent event = std::move(record.event);
-    complete_lethality_header(event.header, "spatial_coverage", "projected", event_time_s, event_id,
-                              launch_event_id, record.parent_event_id, record.munition_entity_id,
-                              record.shooter_id, record.target_id, current_source_frame(ecs_));
+    complete_lethality_header(event.header, std::string(kLethalityChainStageSpatialCoverage),
+                              "projected", event_time_s, event_id, launch_event_id,
+                              record.parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.spatial_coverage_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.spatial_coverage_events,
@@ -392,9 +474,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_component_load_event(
                                                                  record.munition_entity_id);
 
     ComponentLoadEvent event = std::move(record.event);
-    complete_lethality_header(event.header, "component_load", "projected", event_time_s, event_id,
-                              launch_event_id, record.parent_event_id, record.munition_entity_id,
-                              record.shooter_id, record.target_id, current_source_frame(ecs_));
+    complete_lethality_header(event.header, std::string(kLethalityChainStageComponentLoad),
+                              "projected", event_time_s, event_id, launch_event_id,
+                              record.parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.component_load_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.component_load_events, kMaxRecentEngagementEvents);
@@ -413,9 +496,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_component_damage_even
                                                                  record.munition_entity_id);
 
     ComponentDamageEvent event = std::move(record.event);
-    complete_lethality_header(event.header, "component_damage", "sampled", event_time_s, event_id,
-                              launch_event_id, record.parent_event_id, record.munition_entity_id,
-                              record.shooter_id, record.target_id, current_source_frame(ecs_));
+    complete_lethality_header(event.header, std::string(kLethalityChainStageComponentDamage),
+                              "sampled", event_time_s, event_id, launch_event_id,
+                              record.parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.component_damage_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.component_damage_events,
@@ -435,6 +519,7 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
 
     const std::uint64_t effects_event_id = next_engagement_event_id_++;
     const std::uint64_t damage_report_id = next_engagement_event_id_++;
+    const std::uint64_t platform_consequence_event_id = next_engagement_event_id_++;
     const std::uint64_t trace_id = next_engagement_event_id_++;
     std::uint64_t launch_event_id = pending_effects_launch_event_id_;
     if (launch_event_id == 0 && munition_entity_id != 0) {
@@ -454,8 +539,12 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     effects.munition = engagement_ref(munition_entity_id);
     effects.target = engagement_ref(target_id);
 
-    const bool effects_reached_warhead_loads = effects.outcome_state != "fuze_no_detonation" &&
-                                               effects.outcome_state != "fuze_no_terminal_track";
+    const bool effects_reached_warhead_loads =
+        effects.outcome_state != std::string(kLethalityReasonFuzeNoDetonation) &&
+        effects.outcome_state != std::string(kLethalityReasonFuzeNoTerminalTrack) &&
+        effects.outcome_state != std::string(kLethalityReasonOutsideSensorWindow) &&
+        effects.outcome_state != std::string(kLethalityReasonTargetNotDetected) &&
+        effects.outcome_state != std::string(kLethalityReasonMissileTimeout);
     if (effects_reached_warhead_loads) {
         WarheadMechanismEvent warhead_event{};
         warhead_event.header.source_time_s = event_time_s;
@@ -567,7 +656,7 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
         }
     }
 
-    recent_engagement_events_.effects_events.push_back(std::move(effects));
+    recent_engagement_events_.effects_events.push_back(effects);
     while (recent_engagement_events_.effects_events.size() > kMaxRecentEngagementEvents) {
         recent_engagement_events_.effects_events.erase(
             recent_engagement_events_.effects_events.begin());
@@ -610,6 +699,49 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
         recent_engagement_events_.damage_reports.erase(
             recent_engagement_events_.damage_reports.begin());
     }
+
+    PlatformConsequenceEvent consequence{};
+    consequence.header.source_time_s = event_time_s;
+    consequence.header.confidence = effects.confidence;
+    consequence.header.reason = std::string(kLethalityReasonPlatformConsequenceProjection);
+    complete_lethality_header(
+        consequence.header, std::string(kLethalityChainStagePlatformConsequence), "observed",
+        event_time_s, platform_consequence_event_id, chain_id, effects_event_id, munition_entity_id,
+        0, target_id, current_source_frame(ecs_));
+    consequence.mission_capability_before = before.mission_capability;
+    consequence.mission_capability_after = after.mission_capability;
+    consequence.mobility_capability_before = before.mobility_capability;
+    consequence.mobility_capability_after = after.mobility_capability;
+    consequence.sensor_capability_before = before.sensor_capability;
+    consequence.sensor_capability_after = after.sensor_capability;
+    consequence.survivability_capability_before = before.survivability_margin;
+    consequence.survivability_capability_after = after.survivability_margin;
+    consequence.mission_kill = after.mission_kill;
+    consequence.mobility_kill = after.mobility_kill;
+    consequence.sensor_kill = after.sensor_kill;
+    consequence.survivability_kill = report.survivability_kill;
+    consequence.flight_control_kill = after.flight_control_kill;
+    consequence.propulsion_kill = after.propulsion_kill;
+    consequence.forced_landing = after.forced_landing;
+    consequence.crew_kill = after.crew_kill;
+    consequence.control_delta = after.flight_control_integrity - before.flight_control_integrity;
+    consequence.engine_delta = after.propulsion_integrity - before.propulsion_integrity;
+    consequence.fuel_leak_delta = after.fuel_leak_severity - before.fuel_leak_severity;
+    char fire_state[80];
+    std::snprintf(fire_state, sizeof(fire_state), "fire=%.6f->%.6f", before.fire_severity,
+                  after.fire_severity);
+    consequence.fire_state = std::string(fire_state);
+    consequence.aircraft_damage_state_before = aircraft_damage_state_string(before);
+    consequence.aircraft_damage_state_after = aircraft_damage_state_string(after);
+    consequence.aircraft_damage_state_delta = aircraft_damage_state_delta_string(before, after);
+    consequence.air_system_hit_flags = effects.air_system_hit_flags;
+    consequence.air_system_spatial_scales = effects.air_system_spatial_scales;
+    consequence.vulnerability_scale_trace = effects.vulnerability_scale_trace;
+    consequence.loss_state_from = before.loss_state;
+    consequence.loss_state_to = after.entity_active ? after.loss_state : "lost";
+    recent_engagement_events_.platform_consequence_events.push_back(std::move(consequence));
+    cap_recent_events(recent_engagement_events_.platform_consequence_events,
+                      kMaxRecentEngagementEvents);
 
     DiagnosticsTrace trace{};
     trace.trace_id = trace_id;
@@ -664,6 +796,10 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
               });
     std::sort(out.component_damage_events.begin(), out.component_damage_events.end(),
               [](const ComponentDamageEvent &lhs, const ComponentDamageEvent &rhs) {
+                  return lhs.header.event_id < rhs.header.event_id;
+              });
+    std::sort(out.platform_consequence_events.begin(), out.platform_consequence_events.end(),
+              [](const PlatformConsequenceEvent &lhs, const PlatformConsequenceEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
     std::sort(out.damage_reports.begin(), out.damage_reports.end(),

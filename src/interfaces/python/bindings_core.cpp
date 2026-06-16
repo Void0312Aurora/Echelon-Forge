@@ -602,7 +602,8 @@ void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &ker
             },
             "Get global maritime state as (sea_state, wave_heading_deg, wave_period_s)")
         .def("set_terrain_type", &SimulationKernel::set_terrain_type,
-             "Set terrain profile ('flat' or explicit compatibility profiles: 'legacy', 'hill', 'gaussian_hill', 'mountain')",
+             "Set terrain profile ('flat' or explicit compatibility profiles: 'legacy', 'hill', "
+             "'gaussian_hill', 'mountain')",
              nb::arg("terrain_type"))
         .def(
             "spawn_unit",
@@ -1117,6 +1118,15 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["fuze_contact_penetration_depth_m"] = missile->fuze_contact_penetration_depth_m;
                 out["fuze_contact_surface_tolerance_m"] = missile->fuze_contact_surface_tolerance_m;
                 out["fuze_contact_inside_hitbox"] = missile->fuze_contact_inside_hitbox;
+                out["fuze_sensor_opportunity_source"] = missile->fuze_sensor_opportunity_source;
+                out["fuze_sensor_opportunity_score"] = missile->fuze_sensor_opportunity_score;
+                out["fuze_terminal_track_valid"] = missile->fuze_terminal_track_valid;
+                out["fuze_target_detected"] = missile->fuze_target_detected;
+                out["fuze_target_detection_source"] = missile->fuze_target_detection_source;
+                out["fuze_target_detection_confidence"] = missile->fuze_target_detection_confidence;
+                out["fuze_target_detection_threshold"] = missile->fuze_target_detection_threshold;
+                out["fuze_detonation_point_source"] = missile->fuze_detonation_point_source;
+                out["fuze_mechanism_coverage_score"] = missile->fuze_mechanism_coverage_score;
                 out["p0_runtime_initialized"] = missile->p0_runtime_initialized;
                 out["seeker_has_valid_track"] = missile->seeker_has_valid_track;
                 out["seeker_has_range"] = missile->seeker_has_range;

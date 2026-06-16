@@ -17,8 +17,8 @@ as historical evidence. See
 | Cross-region segment CSV | [review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv) |
 | Airframe constraint JSON | [review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json) |
 | Remaining shape-placement JSON | [review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json) |
-| Remaining shape-placement views | [review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html) |
-| Current empty-queue overview | [review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg) |
+| Remaining shape-placement views | Retired intermediate shape-placement views; current visual result is [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html) |
+| Current empty-queue overview | Retired from the current final-result surface |
 
 ## Result
 

@@ -1,8 +1,56 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
+
+inline constexpr std::uint32_t kLethalityChainContractSchemaVersion = 1;
+
+inline constexpr std::string_view kLethalityChainStageNearestApproach = "nearest_approach";
+inline constexpr std::string_view kLethalityChainStageFuze = "fuze";
+inline constexpr std::string_view kLethalityChainStageWarheadMechanism = "warhead_mechanism";
+inline constexpr std::string_view kLethalityChainStageSpatialCoverage = "spatial_coverage";
+inline constexpr std::string_view kLethalityChainStageComponentLoad = "component_load";
+inline constexpr std::string_view kLethalityChainStageComponentDamage = "component_damage";
+inline constexpr std::string_view kLethalityChainStagePlatformConsequence = "platform_consequence";
+inline constexpr std::string_view kLethalityChainStageLifecycle = "lifecycle";
+inline constexpr std::string_view kLethalityChainStageTrainingProjection = "training_projection";
+
+inline constexpr std::array<std::string_view, 9> kLethalityChainCanonicalStages = {
+    kLethalityChainStageNearestApproach,     kLethalityChainStageFuze,
+    kLethalityChainStageWarheadMechanism,    kLethalityChainStageSpatialCoverage,
+    kLethalityChainStageComponentLoad,       kLethalityChainStageComponentDamage,
+    kLethalityChainStagePlatformConsequence, kLethalityChainStageLifecycle,
+    kLethalityChainStageTrainingProjection,
+};
+
+inline constexpr std::string_view kLethalityReasonFuzeArmed = "fuze_armed";
+inline constexpr std::string_view kLethalityReasonFuzeNoDetonation = "fuze_no_detonation";
+inline constexpr std::string_view kLethalityReasonFuzeNoTerminalTrack = "fuze_no_terminal_track";
+inline constexpr std::string_view kLethalityReasonMissOutsideTriggerRadius =
+    "miss_outside_trigger_radius";
+inline constexpr std::string_view kLethalityReasonOutsideSensorWindow = "outside_sensor_window";
+inline constexpr std::string_view kLethalityReasonTargetNotDetected = "target_not_detected";
+inline constexpr std::string_view kLethalityReasonMissileTimeout = "missile_timeout";
+inline constexpr std::string_view kLethalityReasonPlatformConsequenceProjection =
+    "generic_research_platform_consequence_projection";
+inline constexpr std::string_view kLethalityReasonLifecycleProjection =
+    "transitional_damage_report_projection";
+
+inline constexpr std::array<std::string_view, 6> kLethalityChainTerminalNegativeReasons = {
+    kLethalityReasonFuzeNoDetonation,         kLethalityReasonFuzeNoTerminalTrack,
+    kLethalityReasonMissOutsideTriggerRadius, kLethalityReasonOutsideSensorWindow,
+    kLethalityReasonTargetNotDetected,        kLethalityReasonMissileTimeout,
+};
+
+inline constexpr std::string_view kLethalityObservationModeSampledRuntime = "sampled_runtime";
+inline constexpr std::string_view kLethalityObservationModeExpectedProjection =
+    "expected_projection";
+inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsAndTraining =
+    "diagnostics_and_training";
+inline constexpr std::string_view kLethalityConsumerVisibilityDiagnosticsOnly = "diagnostics_only";
 
 struct EngagementEntityRef {
     std::uint64_t world_index = 0;
@@ -10,7 +58,7 @@ struct EngagementEntityRef {
 };
 
 struct LethalityChainHeader {
-    std::uint32_t schema_version = 1;
+    std::uint32_t schema_version = kLethalityChainContractSchemaVersion;
     std::uint64_t chain_id = 0;
     std::uint64_t event_id = 0;
     std::uint64_t parent_event_id = 0;
@@ -25,6 +73,9 @@ struct LethalityChainHeader {
     std::string producer_node_id;
     std::string fidelity_mode = "unspecified";
     std::string evidence_level = "uncalibrated";
+    std::string observation_mode = std::string(kLethalityObservationModeSampledRuntime);
+    std::string consumer_visibility =
+        std::string(kLethalityConsumerVisibilityDiagnosticsAndTraining);
     double confidence = 0.0;
 };
 
@@ -48,11 +99,22 @@ struct FuzeEvaluationEvent {
     double delay_s = 0.0;
     double reliability = 1.0;
     double sample = 1.0;
+    double expected_detonation_probability = 0.0;
+    bool sampled_outcome = true;
     double trigger_radius_m = 0.0;
     double contact_surface_distance_m = 0.0;
     double contact_penetration_depth_m = 0.0;
     double contact_surface_tolerance_m = 0.0;
     bool contact_inside_hitbox = false;
+    std::string sensor_opportunity_source = "none";
+    double sensor_opportunity_score = 0.0;
+    bool terminal_track_valid = false;
+    bool target_detected = false;
+    std::string target_detection_source = "none";
+    double target_detection_confidence = 0.0;
+    double target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+    double mechanism_coverage_score = 0.0;
     bool direct_hitbox_intersection = false;
 };
 
@@ -138,6 +200,14 @@ struct PlatformConsequenceEvent {
     double engine_delta = 0.0;
     double fuel_leak_delta = 0.0;
     std::string fire_state = "unknown";
+    std::string aircraft_damage_state_before;
+    std::string aircraft_damage_state_after;
+    std::string aircraft_damage_state_delta;
+    std::string air_system_hit_flags;
+    std::string air_system_spatial_scales;
+    std::string vulnerability_scale_trace;
+    std::string loss_state_from = "unknown";
+    std::string loss_state_to = "unknown";
 };
 
 struct StructuralBreakupEvent {
@@ -334,6 +404,15 @@ struct EffectsEvent {
     double fuze_contact_penetration_depth_m = 0.0;
     double fuze_contact_surface_tolerance_m = 0.0;
     bool fuze_contact_inside_hitbox = false;
+    std::string fuze_sensor_opportunity_source = "none";
+    double fuze_sensor_opportunity_score = 0.0;
+    bool fuze_terminal_track_valid = false;
+    bool fuze_target_detected = false;
+    std::string fuze_target_detection_source = "none";
+    double fuze_target_detection_confidence = 0.0;
+    double fuze_target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+    double fuze_mechanism_coverage_score = 0.0;
     bool direct_hitbox_intersection = false;
     std::uint32_t projected_hitbox_count = 0;
     double spatial_effect_scale = 0.0;
@@ -417,6 +496,9 @@ struct EffectsEvent {
     std::string vulnerability_effect_scale_evidence_row_id;
     std::string vulnerability_effect_scale_evidence_source_ref;
     std::string vulnerability_effect_scale_evidence_provenance;
+    std::string air_system_hit_flags;
+    std::string air_system_spatial_scales;
+    std::string vulnerability_scale_trace;
     std::string producer_node_id;
 };
 

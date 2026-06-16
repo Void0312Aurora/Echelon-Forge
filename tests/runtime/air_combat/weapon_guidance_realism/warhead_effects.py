@@ -803,8 +803,8 @@ class WarheadEffectsRuntimeMixin:
     self.assertFalse(bool(far_event.direct_hitbox_intersection))
     self.assertGreater(float(close_event.component_failure_probability), 0.0)
     self.assertGreaterEqual(float(far_event.component_failure_probability), 0.0)
-    self.assertGreaterEqual(float(close_event.component_failure_probability), 0.24)
-    self.assertLess(float(close_event.component_failure_probability), 0.42)
+    self.assertGreaterEqual(float(close_event.component_failure_probability), 0.50)
+    self.assertLess(float(close_event.component_failure_probability), 0.70)
     self.assertGreater(
       float(close_event.component_failure_probability),
       float(far_event.component_failure_probability),

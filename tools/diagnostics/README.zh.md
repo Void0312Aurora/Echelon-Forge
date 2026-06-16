@@ -42,7 +42,8 @@
   - 统一的 fire-timing fault-localization 入口。使用 `--mode structural_toy`
     运行抽象 grouped-stopping toy，使用 `--mode real_update` 检查真实 update path，
     使用 `--mode chain_breakpoint` 做 fixed-batch breakpoint attribution，
-    或使用 `--mode learnability_audit` 做 oracle fire-timing learnability 检查。
+    使用 `--mode learnability_audit` 做 oracle fire-timing learnability 检查，
+    或使用 `--mode window_position_sweep` 做合法发射窗口位置效应扫描。
 - [arma_proxy_backend_stub.py](arma_proxy_backend_stub.py)
   - 面向本地 `game/` Arma bridge 的最小行协议 TCP stub。它确认 `begin_session`，消费 `host_frame`，并为 `echelon_bridge.dll` 产出合成 `proxy_state` 载荷。
 - `spatial_query`

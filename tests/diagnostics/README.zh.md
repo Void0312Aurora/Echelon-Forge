@@ -5,7 +5,9 @@ pytest 回归的维护目录。
 
 当前状态：此目录下没有活跃 pytest 脚本。原有稳定检查已提升到对应能力域：
 
-- `tests/runtime/air_combat/test_diagnostics_probe_contracts.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_lethality.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_snapshot.py`
+- `tests/runtime/air_combat/test_diagnostics_process_probe_summary.py`
 - `tests/training/test_fire_timing_fault_localization_contracts.py`
 - `tests/runtime/link/test_external_proxy_backend_contracts.py`
 - `tests/runtime/bindings/test_lazy_binding_resolution.py`

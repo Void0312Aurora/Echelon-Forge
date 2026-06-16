@@ -1,6 +1,16 @@
 from __future__ import annotations
 
+from tools.geometry import target_geometry_lethality_matrix_probe as matrix_probe
 from tools.geometry import target_geometry_damage_event_trace as trace
+
+
+def test_tg_p7_damage_event_trace_cases_use_origin_pointing_velocity() -> None:
+  for case in trace.TRACE_CASES:
+    local_point = tuple(float(value) for value in case["local_point_m"])
+    velocity = tuple(float(value) for value in case["missile_velocity_body_mps"])
+    expected = matrix_probe.missile_velocity_toward_origin(local_point)
+    for actual_value, expected_value in zip(velocity, expected, strict=True):
+      assert abs(actual_value - expected_value) <= 1.0e-9
 
 
 def test_tg_p7_damage_event_trace_observes_all_split_receivers() -> None:

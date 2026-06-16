@@ -147,6 +147,7 @@ Optional dependency groups are declared in `pyproject.toml`:
 - `.[rl]` adds Gymnasium, Stable-Baselines3, and PyTorch for environment/runtime imports.
 - `.[train]` adds the training stack plus TensorBoard.
 - `.[world-model]` covers the world-model utilities.
+- `.[geometry]` adds SciPy and Shapely for the airframe geometry review tool's whole-airframe alpha-shape contour diagnostic.
 - `.[dev]` is a convenience superset for local development, not a locked release environment.
 
 Note: the maintained smoke workflow currently installs the small dependency set

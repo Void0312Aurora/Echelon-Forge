@@ -303,6 +303,8 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("producer_node_id", &LethalityChainHeader::producer_node_id)
         .def_rw("fidelity_mode", &LethalityChainHeader::fidelity_mode)
         .def_rw("evidence_level", &LethalityChainHeader::evidence_level)
+        .def_rw("observation_mode", &LethalityChainHeader::observation_mode)
+        .def_rw("consumer_visibility", &LethalityChainHeader::consumer_visibility)
         .def_rw("confidence", &LethalityChainHeader::confidence);
 
     nb::class_<NearestApproachEvent>(m, "NearestApproachEvent")
@@ -326,11 +328,23 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("delay_s", &FuzeEvaluationEvent::delay_s)
         .def_rw("reliability", &FuzeEvaluationEvent::reliability)
         .def_rw("sample", &FuzeEvaluationEvent::sample)
+        .def_rw("expected_detonation_probability",
+                &FuzeEvaluationEvent::expected_detonation_probability)
+        .def_rw("sampled_outcome", &FuzeEvaluationEvent::sampled_outcome)
         .def_rw("trigger_radius_m", &FuzeEvaluationEvent::trigger_radius_m)
         .def_rw("contact_surface_distance_m", &FuzeEvaluationEvent::contact_surface_distance_m)
         .def_rw("contact_penetration_depth_m", &FuzeEvaluationEvent::contact_penetration_depth_m)
         .def_rw("contact_surface_tolerance_m", &FuzeEvaluationEvent::contact_surface_tolerance_m)
         .def_rw("contact_inside_hitbox", &FuzeEvaluationEvent::contact_inside_hitbox)
+        .def_rw("sensor_opportunity_source", &FuzeEvaluationEvent::sensor_opportunity_source)
+        .def_rw("sensor_opportunity_score", &FuzeEvaluationEvent::sensor_opportunity_score)
+        .def_rw("terminal_track_valid", &FuzeEvaluationEvent::terminal_track_valid)
+        .def_rw("target_detected", &FuzeEvaluationEvent::target_detected)
+        .def_rw("target_detection_source", &FuzeEvaluationEvent::target_detection_source)
+        .def_rw("target_detection_confidence", &FuzeEvaluationEvent::target_detection_confidence)
+        .def_rw("target_detection_threshold", &FuzeEvaluationEvent::target_detection_threshold)
+        .def_rw("detonation_point_source", &FuzeEvaluationEvent::detonation_point_source)
+        .def_rw("mechanism_coverage_score", &FuzeEvaluationEvent::mechanism_coverage_score)
         .def_rw("direct_hitbox_intersection", &FuzeEvaluationEvent::direct_hitbox_intersection);
 
     nb::class_<WarheadMechanismEvent>(m, "WarheadMechanismEvent")
@@ -419,7 +433,18 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("control_delta", &PlatformConsequenceEvent::control_delta)
         .def_rw("engine_delta", &PlatformConsequenceEvent::engine_delta)
         .def_rw("fuel_leak_delta", &PlatformConsequenceEvent::fuel_leak_delta)
-        .def_rw("fire_state", &PlatformConsequenceEvent::fire_state);
+        .def_rw("fire_state", &PlatformConsequenceEvent::fire_state)
+        .def_rw("aircraft_damage_state_before",
+                &PlatformConsequenceEvent::aircraft_damage_state_before)
+        .def_rw("aircraft_damage_state_after",
+                &PlatformConsequenceEvent::aircraft_damage_state_after)
+        .def_rw("aircraft_damage_state_delta",
+                &PlatformConsequenceEvent::aircraft_damage_state_delta)
+        .def_rw("air_system_hit_flags", &PlatformConsequenceEvent::air_system_hit_flags)
+        .def_rw("air_system_spatial_scales", &PlatformConsequenceEvent::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace", &PlatformConsequenceEvent::vulnerability_scale_trace)
+        .def_rw("loss_state_from", &PlatformConsequenceEvent::loss_state_from)
+        .def_rw("loss_state_to", &PlatformConsequenceEvent::loss_state_to);
 
     nb::class_<StructuralBreakupEvent>(m, "StructuralBreakupEvent")
         .def(nb::init<>())
@@ -660,6 +685,15 @@ void bind_runtime(nb::module_ &m) {
         .def_rw("fuze_contact_penetration_depth_m", &EffectsEvent::fuze_contact_penetration_depth_m)
         .def_rw("fuze_contact_surface_tolerance_m", &EffectsEvent::fuze_contact_surface_tolerance_m)
         .def_rw("fuze_contact_inside_hitbox", &EffectsEvent::fuze_contact_inside_hitbox)
+        .def_rw("fuze_sensor_opportunity_source", &EffectsEvent::fuze_sensor_opportunity_source)
+        .def_rw("fuze_sensor_opportunity_score", &EffectsEvent::fuze_sensor_opportunity_score)
+        .def_rw("fuze_terminal_track_valid", &EffectsEvent::fuze_terminal_track_valid)
+        .def_rw("fuze_target_detected", &EffectsEvent::fuze_target_detected)
+        .def_rw("fuze_target_detection_source", &EffectsEvent::fuze_target_detection_source)
+        .def_rw("fuze_target_detection_confidence", &EffectsEvent::fuze_target_detection_confidence)
+        .def_rw("fuze_target_detection_threshold", &EffectsEvent::fuze_target_detection_threshold)
+        .def_rw("detonation_point_source", &EffectsEvent::detonation_point_source)
+        .def_rw("fuze_mechanism_coverage_score", &EffectsEvent::fuze_mechanism_coverage_score)
         .def_rw("direct_hitbox_intersection", &EffectsEvent::direct_hitbox_intersection)
         .def_rw("projected_hitbox_count", &EffectsEvent::projected_hitbox_count)
         .def_rw("spatial_effect_scale", &EffectsEvent::spatial_effect_scale)
@@ -785,6 +819,9 @@ void bind_runtime(nb::module_ &m) {
                 &EffectsEvent::vulnerability_effect_scale_evidence_source_ref)
         .def_rw("vulnerability_effect_scale_evidence_provenance",
                 &EffectsEvent::vulnerability_effect_scale_evidence_provenance)
+        .def_rw("air_system_hit_flags", &EffectsEvent::air_system_hit_flags)
+        .def_rw("air_system_spatial_scales", &EffectsEvent::air_system_spatial_scales)
+        .def_rw("vulnerability_scale_trace", &EffectsEvent::vulnerability_scale_trace)
         .def_rw("producer_node_id", &EffectsEvent::producer_node_id);
 
     nb::class_<DamageReport>(m, "DamageReport")

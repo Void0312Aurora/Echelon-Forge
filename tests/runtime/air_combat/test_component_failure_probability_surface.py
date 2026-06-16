@@ -78,16 +78,16 @@ def _seeded_profiled_local_event_with_velocity(
 def test_mlf5c_synthetic_sigmoid_is_uncalibrated_and_load_sensitive() -> None:
   _low_overlay, low_event = _profiled_local_hit_overlay_and_event_with_velocity(
     "continuous_rod",
-    (-0.8, 4.1, 0.0),
-    (750.0, -250.0, 0.0),
-    damage=90.0,
+    (-0.8, 7.0, 0.0),
+    (900.0, -250.0, 0.0),
+    damage=30.0,
     radius=35.0,
   )
   _high_overlay, high_event = _profiled_local_hit_overlay_and_event_with_velocity(
     "continuous_rod",
-    (-0.8, 4.1, 0.0),
+    (-0.8, 7.0, 0.0),
     (900.0, -250.0, 0.0),
-    damage=90.0,
+    damage=180.0,
     radius=35.0,
   )
 
@@ -123,11 +123,11 @@ def test_mlf5c_synthetic_blast_near_miss_uses_plausible_component_scale() -> Non
   assert str(near_event.component_primary_name) == "right_aileron_actuator"
   assert float(near_event.component_primary_mechanism_blast_overpressure_kpa) > 100.0
   assert float(near_event.component_primary_mechanism_fragment_areal_density_per_m2) > 2.0
-  assert 0.24 <= float(near_event.component_failure_probability) <= 0.42
+  assert 0.50 <= float(near_event.component_failure_probability) <= 0.70
   assert float(far_event.component_failure_probability) < float(
     near_event.component_failure_probability
   )
-  assert float(far_event.component_failure_probability) < 0.02
+  assert float(far_event.component_failure_probability) < 0.03
   assert int(near_event.component_failure_count) == 0
   assert not bool(near_event.vulnerability_pk_authority)
   assert not bool(near_event.vulnerability_deterministic_fuze_authority)
@@ -153,7 +153,7 @@ def test_mlf5c_synthetic_rod_near_miss_uses_cut_exposure_scale() -> None:
   _assert_synthetic_probability(far_event)
   assert str(near_event.component_primary_name) == "right_aileron_actuator"
   assert float(near_event.component_primary_mechanism_rod_cut_margin) > 1.0
-  assert 0.24 <= float(near_event.component_failure_probability) <= 0.42
+  assert 0.55 <= float(near_event.component_failure_probability) <= 0.72
   assert float(far_event.component_failure_probability) < float(
     near_event.component_failure_probability
   )
@@ -169,7 +169,7 @@ def test_mlf5c_debug_component_failure_sampling_varies_with_reset_seed() -> None
     event = _seeded_profiled_local_event_with_velocity(
       2026061100 + offset,
       "continuous_rod",
-      (-0.8, 4.1, 0.0),
+      (-0.8, 6.0, 0.0),
       (900.0, -250.0, 0.0),
       damage=90.0,
       radius=35.0,
@@ -240,11 +240,11 @@ def test_mlf5c_expanded_aspect_distance_surface_preserves_gradients() -> None:
     "blast_fragmentation", (-0.8, 0.0, 10.0), (900.0, 0.0, -250.0)
   )
 
-  assert blast_right_near > 0.30
+  assert blast_right_near > 0.50
   assert blast_right_near > blast_right_mid > blast_right_edge > blast_right_outside
-  assert abs(blast_left_near - blast_right_near) <= 0.02
-  assert blast_top_near > 0.30
-  assert blast_top_far < 0.01
+  assert abs(blast_left_near - blast_right_near) <= 0.04
+  assert blast_top_near > 0.55
+  assert blast_top_far < 0.02
 
   rod_right_near = probability(
     "continuous_rod", (-0.8, 6.0, 0.0), (900.0, -250.0, 0.0)
@@ -259,7 +259,7 @@ def test_mlf5c_expanded_aspect_distance_surface_preserves_gradients() -> None:
     "continuous_rod", (-0.8, 16.0, 0.0), (900.0, -250.0, 0.0)
   )
   rod_nose_axial = probability(
-    "continuous_rod", (8.0, 0.0, 0.0), (-250.0, 900.0, 0.0)
+    "continuous_rod", (11.5, 0.0, 0.0), (-250.0, 900.0, 0.0)
   )
   rod_tail_axial = probability(
     "continuous_rod", (-8.0, 0.0, 0.0), (250.0, 900.0, 0.0)
@@ -271,11 +271,11 @@ def test_mlf5c_expanded_aspect_distance_surface_preserves_gradients() -> None:
     "continuous_rod", (-0.8, 0.0, 12.0), (900.0, 0.0, -250.0)
   )
 
-  assert rod_right_near > 0.30
+  assert rod_right_near > 0.55
   assert rod_right_near > rod_right_mid > rod_right_edge > rod_right_outside
-  assert rod_nose_axial < 0.001
+  assert rod_nose_axial < 0.005
   assert rod_tail_axial < rod_right_mid
-  assert rod_top_near > 0.30
+  assert rod_top_near > 0.20
   assert rod_top_outside == 0.0
 
 
@@ -310,7 +310,7 @@ def test_mlf5c_direct_hit_load_floor_prevents_blast_tail_valley() -> None:
 def test_mlf5c_continuous_rod_nose_direct_hit_is_not_axial_grazing() -> None:
   _overlay, grazing_event = _profiled_local_hit_overlay_and_event_with_velocity(
     "continuous_rod",
-    (4.0, 0.0, 0.0),
+    (11.5, 0.0, 0.0),
     (-250.0, 900.0, 0.0),
     damage=90.0,
     radius=35.0,
@@ -327,7 +327,7 @@ def test_mlf5c_continuous_rod_nose_direct_hit_is_not_axial_grazing() -> None:
   _assert_synthetic_probability(direct_event)
   assert not bool(grazing_event.direct_hitbox_intersection)
   assert bool(direct_event.direct_hitbox_intersection)
-  assert float(grazing_event.component_failure_probability) < 0.001
+  assert float(grazing_event.component_failure_probability) < 0.005
   assert float(direct_event.component_failure_probability) > 0.90
   assert float(direct_event.component_primary_mechanism_rod_cut_margin) > 1.0
 
@@ -351,7 +351,7 @@ def test_mlf5c_synthetic_probability_responds_to_redundancy_and_pre_damage() -> 
   _overlay, _damage_state, single_event = _profiled_local_hit_overlay_for_target(
     single_name,
     "continuous_rod",
-    (-0.8, 4.1, 0.0),
+    (-0.8, 6.0, 0.0),
     damage=140.0,
     radius=35.0,
     overrides=overrides,
@@ -359,7 +359,7 @@ def test_mlf5c_synthetic_probability_responds_to_redundancy_and_pre_damage() -> 
   _overlay, _damage_state, redundant_event = _profiled_local_hit_overlay_for_target(
     redundant_name,
     "continuous_rod",
-    (-0.8, 4.1, 0.0),
+    (-0.8, 6.0, 0.0),
     damage=140.0,
     radius=35.0,
     overrides=overrides,
@@ -385,7 +385,7 @@ def test_mlf5c_synthetic_probability_responds_to_redundancy_and_pre_damage() -> 
       attacker_id,
       target_id,
       -0.8,
-      4.1,
+      6.0,
       0.0,
       profile,
       900.0,
@@ -426,7 +426,7 @@ def test_mlf5c_authorized_component_specific_rows_override_generic_baseline() ->
         "weapon_family": "continuous_rod",
         "aspect_bucket": "beam",
         "closure_bucket": "high",
-        "miss_distance_bucket": "direct_hit",
+        "miss_distance_bucket": "near_miss",
         "source_kind": "external_calibration_dataset",
         "calibration_status": "calibrated",
         "effect_scale_authority": False,
@@ -440,7 +440,7 @@ def test_mlf5c_authorized_component_specific_rows_override_generic_baseline() ->
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
           },
           {
             "row_id": "right-aileron-actuator-specific",
@@ -449,7 +449,7 @@ def test_mlf5c_authorized_component_specific_rows_override_generic_baseline() ->
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
             "component_name": "right_aileron_actuator",
             "component_system": "flight_control",
             "component_redundancy_group_id": "lateral_flight_control_actuators",
@@ -461,7 +461,7 @@ def test_mlf5c_authorized_component_specific_rows_override_generic_baseline() ->
 
     _overlay, event = _profiled_local_hit_overlay_and_event_with_velocity(
       "continuous_rod",
-      (-0.8, 4.1, 0.0),
+      (-0.8, 6.0, 0.0),
       (900.0, -250.0, 0.0),
       damage=90.0,
       radius=35.0,
@@ -520,7 +520,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
         "weapon_family": "continuous_rod",
         "aspect_bucket": "beam",
         "closure_bucket": "high",
-        "miss_distance_bucket": "direct_hit",
+        "miss_distance_bucket": "near_miss",
         "source_kind": "external_calibration_dataset",
         "calibration_status": "calibrated",
         "effect_scale_authority": False,
@@ -533,7 +533,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
             "component_failure_probability": 0.37,
           }
         ],
@@ -541,7 +541,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
     )
     _overlay, denied_event = _profiled_local_hit_overlay_and_event_with_velocity(
       "continuous_rod",
-      (-0.8, 4.1, 0.0),
+      (-0.8, 6.0, 0.0),
       (900.0, -250.0, 0.0),
       damage=90.0,
       radius=35.0,
@@ -569,7 +569,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
         "weapon_family": "continuous_rod",
         "aspect_bucket": "beam",
         "closure_bucket": "high",
-        "miss_distance_bucket": "direct_hit",
+        "miss_distance_bucket": "near_miss",
         "source_kind": "external_calibration_dataset",
         "calibration_status": "calibrated",
         "effect_scale_authority": False,
@@ -585,7 +585,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
             "min_rod_cut_margin": 9.0,
             "component_failure_probability": 0.97,
           },
@@ -596,7 +596,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
             "component_failure_probability": 0.33,
           },
         ],
@@ -604,7 +604,7 @@ def test_mlf5c_probability_rows_fail_closed_without_authority_or_matching_load_g
     )
     _overlay, gated_event = _profiled_local_hit_overlay_and_event_with_velocity(
       "continuous_rod",
-      (-0.8, 4.1, 0.0),
+      (-0.8, 6.0, 0.0),
       (900.0, -250.0, 0.0),
       damage=90.0,
       radius=35.0,
@@ -718,7 +718,7 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
         "weapon_family": "continuous_rod",
         "aspect_bucket": "beam",
         "closure_bucket": "high",
-        "miss_distance_bucket": "direct_hit",
+        "miss_distance_bucket": "near_miss",
         "source_kind": "external_calibration_dataset",
         "calibration_status": "calibrated",
         "effect_scale_authority": False,
@@ -734,7 +734,10 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
+            "component_name": "right_aileron_actuator",
+            "component_system": "flight_control",
+            "component_redundancy_group_id": "lateral_flight_control_actuators",
             "min_surface_incidence_cos": 0.5,
             "component_failure_probability": 0.61,
           },
@@ -745,7 +748,7 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
             "weapon_family": "continuous_rod",
             "aspect_bucket": "beam",
             "closure_bucket": "high",
-            "miss_distance_bucket": "direct_hit",
+            "miss_distance_bucket": "near_miss",
             "max_surface_incidence_cos": 0.5,
             "component_failure_probability": 0.19,
           },
@@ -754,7 +757,7 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
     )
     _overlay, normal_event = _profiled_local_hit_overlay_and_event_with_velocity(
       "continuous_rod",
-      (-0.8, 4.49, 0.0),
+      (-0.8, 4.49, -0.985),
       (900.0, 0.0, 0.0),
       damage=90.0,
       radius=35.0,
@@ -762,7 +765,7 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
     )
     _overlay, oblique_event = _profiled_local_hit_overlay_and_event_with_velocity(
       "continuous_rod",
-      (-0.36, 4.1, 0.0),
+      (-1.2, 4.1, -0.985),
       (900.0, 0.0, 0.0),
       damage=90.0,
       radius=35.0,

@@ -14,7 +14,7 @@ support bounds 约束，避免旧 AABB receiver 露出机身或翼面。
 | 子部件先验规则 | 为 `26` 个现有 receiver 生成 `sphere`、`cylinder`、`capsule`、`ellipsoid` 先验；规则记录 shape、axis、role 和 rationale。 | 先验来自工程直觉和现有配置，不是真实 F-16 内部布局。 |
 | 外壳约束 | 每个 prior 先用旧 component AABB 的中心/尺度生成，再收缩或平移进语义外壳 `support_bounds`。 | 约束使用 review support bounds，不是闭合物理舱段。 |
 | 跨区 held | `engine_core` 使用 intake / aft engine bay / nozzle 的 union 约束；`wing_spar_center` 使用 center fuselage / wings / wing roots 的 union 约束，并继续 held。 | 只证明能生成不露出的候选体，不接受 ownership。 |
-| 审阅产物 | 新增 [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json)、[CSV](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv)、[独立视图](review_packets/f16c_20260611/internal_component_prior_views/index.html) 和 [view manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json)。 | `runtime_active_component_count=0`；runtime 仍未改行为。 |
+| 审阅产物 | 新增 [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json)、[CSV](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv)，中间独立视图已退役。 | `runtime_active_component_count=0`；runtime 仍未改行为。 |
 
 ## Packet 摘要
 
@@ -26,10 +26,8 @@ support bounds 约束，避免旧 AABB receiver 露出机身或翼面。
 
 ## 预览入口
 
-- 独立页面：
-  [internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html)
-- 视图 manifest：
-  [internal_component_prior_views/manifest.json](review_packets/f16c_20260611/internal_component_prior_views/manifest.json)
+- 独立页面：已从当前最终结果面移除。
+- 视图 manifest：已从当前最终结果面移除。
 
 图层含义：
 

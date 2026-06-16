@@ -118,6 +118,8 @@
   [target_geometry_damage_event_trace_results_20260614.zh.md](target_geometry_damage_event_trace_results_20260614.zh.md)
 - 32k opt-in 训练探针结果：
   [target_geometry_training_probe_32k_results_20260614.zh.md](target_geometry_training_probe_32k_results_20260614.zh.md)
+- 整机投影网格轮廓包含性结果（工具升级）：
+  [whole_airframe_contour_containment_results_20260614.zh.md](whole_airframe_contour_containment_results_20260614.zh.md)
 
 ## 输出和证据
 
@@ -136,10 +138,9 @@
 - [review_packets/f16c_20260611/f16c_geometry_mapping_candidate_20260611.json](review_packets/f16c_20260611/f16c_geometry_mapping_candidate_20260611.json)：
   TG-P2 第一版外壳区域候选；包含 `14` 个低精度审阅区域，并记录 glTF 实际节点为 `Object_*`，
   因此不能只靠节点名自动分区。
-- 三视图草图：
-  [top.svg](review_packets/f16c_20260611/top.svg)、
-  [side.svg](review_packets/f16c_20260611/side.svg)、
-  [front.svg](review_packets/f16c_20260611/front.svg)。
+- 已退役三视图草图：旧的当前包草图 SVG 已在最终结果收缩时移除。当前可视化入口只保留
+  [scene.html](review_packets/f16c_20260611/scene.html) 和
+  [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html)。
 - 部件绑定报告：
   [component_binding_report_20260611.json](review_packets/f16c_20260611/component_binding_report_20260611.json)、
   [component_binding_report_20260611.csv](review_packets/f16c_20260611/component_binding_report_20260611.csv)。
@@ -157,62 +158,44 @@
   TG-P6 第一版精细几何代理设计，定义 `obb`、`thin_prism`、`convex_hull` 和
   `simplified_shell` 的用途、边界和运行时前置条件。
 - 精细几何代理候选：
-  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json)、
-  [fine_proxy_top.svg](review_packets/f16c_20260611/fine_proxy_top.svg)、
-  [fine_proxy_side.svg](review_packets/f16c_20260611/fine_proxy_side.svg)、
-  [fine_proxy_front.svg](review_packets/f16c_20260611/fine_proxy_front.svg)。
+  [fine_geometry_proxy_candidate_20260611.json](review_packets/f16c_20260611/fine_geometry_proxy_candidate_20260611.json)。
   TG-P6-R3 已从 `13,415` 个审计 glTF 顶点为全部 `14` 个 review-only 代理生成 top/side/front
   convex hull silhouettes；机头、座舱、主翼和平尾区域已按审计网格位置纠偏，并使用显式节点名单筛选；
   `inflated_fallback_count=0`，缺少顶点时不再放大区域硬凑轮廓。
-- 人工审阅 dashboard：
-  [fine_proxy_review_dashboard.html](review_packets/f16c_20260611/fine_proxy_review_dashboard.html)。
-  TG-P6-R4 增加逐区域卡片，包含局部 top/side/front 放大图、部件叠加、节点筛选策略、
-  fallback 禁用策略、hull 点数、review flags 和 candidate/review 状态。
+- 已退役人工审阅 dashboard：
+  TG-P6-R4 曾增加逐区域卡片，包含局部 top/side/front 放大图、部件叠加、节点筛选策略、
+  fallback 禁用策略、hull 点数、review flags 和 candidate/review 状态。该 HTML 视图属于中间 QA 面，最终结果收缩后不再作为当前结果入口。
 - 表面部件候选：
   [surface_component_candidate_20260611.json](review_packets/f16c_20260611/surface_component_candidate_20260611.json)、
   [surface_component_candidate_20260611.csv](review_packets/f16c_20260611/surface_component_candidate_20260611.csv)。
   TG-P6-R5 将 `14` 个外壳区域整理为审阅用表面部件，并列出每个表面部件可能牵连的现有内部部件。
   R11 后 `0` 个表面部件仍需人工复核，`0` 个 runtime receiver link 缺失，`0` 个 surface row 被左右符号阻塞，
   `8` 个带跨区语义 held/candidate。
-- 可视化人工复核入口：
-  [human_review_triage.html](review_packets/f16c_20260611/human_review_triage.html)。
-  TG-P6-R6 按左右符号、部件位置、表面部件交接和测试点几何 sanity 将复核项整理成视觉卡片；
-  每张卡先写明复核问题、观察位置和需要做出的决策，再给出局部 top/side/front 叠加图，复核不再依赖肉眼读 CSV。
-- 独立部件复核视图：
-  [component_review_views/index.html](review_packets/f16c_20260611/component_review_views/index.html)、
-  [component_review_views/manifest.json](review_packets/f16c_20260611/component_review_views/manifest.json)。
-  TG-P6-R8 现在重新生成 `75` 个 review-only 独立页面：`26` 个现有部件绑定视图、`29` 个表面到单个承接部件交接视图、
-  `20` 个测试点候选部件视图；每页都有单独的 top/side/front SVG，后续 subagent 评估不再需要从拥挤总览图里猜。
+- 已退役可视化人工复核入口：
+  TG-P6-R6 曾按左右符号、部件位置、表面部件交接和测试点几何 sanity 将复核项整理成视觉卡片；
+  每张卡先写明复核问题、观察位置和需要做出的决策，再给出局部 top/side/front 叠加图。该 HTML 视图不再作为当前结果入口。
 - 语义损伤几何候选：
   [semantic_damage_geometry_candidate_20260611.json](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.json)、
-  [semantic_damage_geometry_candidate_20260611.csv](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.csv)、
-  [semantic_damage_geometry_views/index.html](review_packets/f16c_20260611/semantic_damage_geometry_views/index.html)。
+  [semantic_damage_geometry_candidate_20260611.csv](review_packets/f16c_20260611/semantic_damage_geometry_candidate_20260611.csv)。
   TG-P6-R12 输出 `14` 个语义外壳体积部件和 `14` 个 `runtime_component_json_candidate`。
   Runtime schema 与 loader 已能解析这些几何字段，但 `runtime_active_component_count=0`；
   在 `TG-P7` 前不静默改变现有杀伤行为。
 - 内部 receiver 先验几何候选：
   [internal_component_prior_candidate_20260611.json](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.json)、
-  [internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv)、
-  [internal_component_prior_views/index.html](review_packets/f16c_20260611/internal_component_prior_views/index.html)。
+  [internal_component_prior_candidate_20260611.csv](review_packets/f16c_20260611/internal_component_prior_candidate_20260611.csv)。
   TG-P6-R13 为 `26` 个现有 receiver 生成 sphere/cylinder/capsule/ellipsoid 先验，并用父外壳
   support bounds 或跨区 union 约束；`post_constraint_outside_count=0`，`cross_region_held_prior_count=2`，
-  `runtime_active_component_count=0`。当前 HTML/SVG 入口：
-  [index](review_packets/f16c_20260611/internal_component_prior_views/index.html)、
-  [manifest](review_packets/f16c_20260611/internal_component_prior_views/manifest.json)。
+  `runtime_active_component_count=0`。生成的 HTML/SVG 页面仅作为原始中间证据，不再作为当前结果入口。
 - 语义父子部件布局：
   [semantic_parent_child_layout_candidate_20260611.json](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.json)、
-  [semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv)、
-  [semantic_parent_child_layout_views/index.html](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)。
+  [semantic_parent_child_layout_candidate_20260611.csv](review_packets/f16c_20260611/semantic_parent_child_layout_candidate_20260611.csv)。
   TG-P6-R14 将主审阅视图收敛为 `14` 个基于几何建模的父外壳部件，并把 `26` 个 receiver prior
   叠加到对应父图上；当前 `extra_receiver_slot_count=12`，`cross_region_held_receiver_count=2`，
   `runtime_active_component_count=0`。TG-P6-R15 进一步为两个红色 held receiver 增加审阅用分段：
   [cross_region_held_component_segments_20260611.json](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.json)、
   [cross_region_held_component_segments_20260611.csv](review_packets/f16c_20260611/cross_region_held_component_segments_20260611.csv)。
   其中 `engine_core` 被拆成 `3` 个发动机分段，`wing_spar_center` 被拆成 `5` 个翼梁分段；
-  `held_segment_count=8`，`outside_whole_airframe_segment_count=0`，runtime ownership 仍保持 held。
-  当前 HTML/SVG 入口：
-  [index](review_packets/f16c_20260611/semantic_parent_child_layout_views/index.html)、
-  [manifest](review_packets/f16c_20260611/semantic_parent_child_layout_views/manifest.json)。
+  `held_segment_count=8`，`outside_whole_airframe_segment_count=0`，runtime ownership 仍保持 held。生成的 HTML/SVG 页面仅作为原始中间证据，不再作为当前结果入口。
 - 跨区 ownership 拆分候选：
   [cross_region_ownership_split_candidate_20260611.json](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.json)、
   [cross_region_ownership_split_candidate_20260611.csv](review_packets/f16c_20260611/cross_region_ownership_split_candidate_20260611.csv)、
@@ -268,24 +251,36 @@
 - 整机 silhouette 约束修正候选：
   [airframe_constraint_correction_candidate_20260611.json](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.json)、
   [airframe_constraint_correction_candidate_20260611.csv](review_packets/f16c_20260611/airframe_constraint_correction_candidate_20260611.csv)。
-  TG-P6-R16 对全部 `34` 个 receiver prior 和 held split segment 做 shape-aware
-  top/side/front 整机 silhouette 采样。R21 最新候选固化后，当前 packet 记录：
+  TG-P6-R16 对全部 `34` 个 receiver prior 和 held split segment 做 raw
+  shape-aware top/side/front 整机 silhouette 采样。该 silhouette 检查后来升级为整机
+  投影网格轮廓加 shape-aware 投影采样；R22 thin-prism/frustum 形状修正后，当前 packet 记录：
   `silhouette_exposure_item_count=0`、`center_shift_reduces_item_count=0`、
   `size_or_shape_review_item_count=0`、`runtime_active_component_count=0`。
-  当前 latest-placement 总览：
-  [overview_latest_triptych.svg](review_packets/f16c_20260611/subcomponent_shape_placement_views/overview_latest_triptych.svg)。
+  held split segment 不再进入最终结果面；当前 containment 以整机轮廓 dashboard 为准。
+- 整机投影网格轮廓包含性：
+  [whole_airframe_contour_containment_20260614.json](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.json)、
+  [whole_airframe_contour_containment_20260614.csv](review_packets/f16c_20260611/whole_airframe_contour_containment_20260614.csv)、
+  [whole_airframe_contour_top.svg](review_packets/f16c_20260611/whole_airframe_contour_top.svg)、
+  [whole_airframe_contour_side.svg](review_packets/f16c_20260611/whole_airframe_contour_side.svg)、
+  [whole_airframe_contour_front.svg](review_packets/f16c_20260611/whole_airframe_contour_front.svg)、
+  [whole_airframe_contour_dashboard.html](review_packets/f16c_20260611/whole_airframe_contour_dashboard.html)、
+  [whole_airframe_contour_containment_results_20260614.zh.md](whole_airframe_contour_containment_results_20260614.zh.md)。
+  该工具升级把 silhouette-containment 从分区凸包并集加稀疏 9 点采样，改为
+  每视图投影 `4504` 个审计 glTF 三角面并做 union，再加 shape-aware 投影采样，
+  并使用 `0.05 m` 工程复核余量。最终结果面只含 `26` 个当前 receiver prior，
+  排除了 `8` 个 review-only held split segment；当前 `0` 项超过容差
+  （`max_outside_distance_m=0.0`）。
 - 子部件形状/摆放候选：
   [subcomponent_shape_placement_candidate_20260611.json](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.json)、
-  [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv)、
-  [subcomponent_shape_placement_views/index.html](review_packets/f16c_20260611/subcomponent_shape_placement_views/index.html)。
+  [subcomponent_shape_placement_candidate_20260611.csv](review_packets/f16c_20260611/subcomponent_shape_placement_candidate_20260611.csv)。
   TG-P6-R17 针对 R16 暴露的 `14` 个子部件生成候选形状族和候选摆放，
   保留名义尺寸不缩小；TG-P6-R18 先将 `4` 个零外露候选固化到 review-only
   prior / held-segment 生成规则；TG-P6-R19 增加局部中心线候选；TG-P6-R20
   解决剩余 radar 和 cockpit 摆放问题。TG-P6-R21 将已接受的最新摆放固化到
-  review-only 生成规则后，当前 packet 记录：
-  `shape_placement_candidate_count=0`，
-  `latest_candidate_total_outside_sample_count=0`，
-  `runtime_active_component_count=0`。shape-placement 视图入口保留为空队列审计轨迹。
+  review-only 生成规则。R22 thin-prism/frustum 形状修正后，source exposure
+  队列为空；当前 packet 记录 `shape_placement_candidate_count=0`、
+  `source_silhouette_exposure_item_count=0` 和
+  `runtime_active_component_count=0`。
 - 子部件形状候选固化结果：
   [subcomponent_shape_promotion_results_20260613.zh.md](subcomponent_shape_promotion_results_20260613.zh.md)。
   TG-P6-R18 将 `iff_interrogator`、`inertial_navigation_unit`、
@@ -301,9 +296,11 @@
 - 最新子部件候选固化结果：
   [subcomponent_latest_promotion_results_20260613.zh.md](subcomponent_latest_promotion_results_20260613.zh.md)。
   TG-P6-R21 将 R20 最新摆放固化到 review-only prior 和 held-segment 生成规则。
-  当前计数为 `internal_component_prior_shape_promotion_count=9`、
+  R21 固化快照的计数为 `internal_component_prior_shape_promotion_count=9`、
   `cross_region_held_segment_shape_promotion_count=5`、
-  `subcomponent_shape_placement_candidate_count=0`。
+  `subcomponent_shape_placement_candidate_count=0`；后续整机投影网格
+  轮廓诊断已覆盖当前 containment 队列，并记录 `10` 个 review-only follow-up
+  candidates。
 - 跨区 ownership 拆分结果：
   [cross_region_ownership_split_results_20260613.zh.md](cross_region_ownership_split_results_20260613.zh.md)。
   TG-P6-R22 将两个剩余 ownership blocker 整理成 `TG-P7` 前明确的 accept / reject / keep-held 决策；父级 receiver retirement 和 runtime activation 仍未接受。
@@ -333,7 +330,7 @@
   R11 修复左右区域映射、翼面和翼根部件位置、座舱盖/进气道/平尾显式 receiver 组件，以及直接 surface
   handoff 规则。当前 component 和 surface `needs_review` 计数均为 `0`；`TG-P7` 只因 `engine_core`
   与 `wing_spar_center` 跨区语义 ownership 仍需明确而继续 held。
-- `pytest -q tests/tools/test_airframe_geometry_review.py`：`2 passed`。
+- `.\tools\maintenance\cmo_env.ps1 python -m pytest -q tests/tools/test_airframe_geometry_manifest.py tests/tools/test_airframe_geometry_review_cli.py`：`5 passed`。
 - `./build-workshop/ef_test --test-suite=components_basic`：构建 `ef_test` 后 `23` 个 case 通过。
 - `pytest -q tests/architecture/damage_model`：`177 passed`；其中包括修复后的
   Stage-C 部件失效概率 surface probe 继续选择 component rows，而不是回退到
@@ -347,7 +344,6 @@
 - manifest 记录 GLB/glTF 双模型分工、来源、hash、坐标轴、尺度和公开尺寸误差。
 - 至少覆盖鼻向、尾向、侧向、上方和下方测试点，并输出最近外壳距离、最近部件距离和候选部件数。
 - 每个外壳区域都有审阅用表面部件候选，并能说明它和现有内部部件的关系是否可靠。
-- 每个现有部件和高风险表面交接都有独立 top/side/front 复核视图，不依赖多个部件挤在同一张小图里。
 - 每个语义外壳体积候选都有独立 top/side/front 复核视图，并明确 direct receiver 与 cross-region
   receiver 的交接状态。
 - 每个现有内部/系统 receiver 都有先验几何、父外壳约束、约束前后越界比例和独立 top/side/front

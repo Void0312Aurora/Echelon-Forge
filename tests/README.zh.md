@@ -128,15 +128,13 @@ cmo_python tools/runners/run_scenario_contract.py --suite tests/smoke/ci_contrac
 
 ```bash
 source tools/maintenance/cmo_env.sh
-cmo_python tests/runners/test_contract_batches.py --group chain --group route_generator
+cmo_python tools/runners/run_contract_batches.py --group chain --group route_generator
 
-cmo_python tests/runners/test_contract_batches.py --group unit --group same_process
+cmo_python tools/runners/run_contract_batches.py --group unit --group same_process
 
-cmo_python tests/runners/test_contract_batches.py --group sim_kernel
+cmo_python tools/runners/run_contract_batches.py --group sim_kernel
 
-cmo_python tests/runners/test_contract_batches.py --default-group sim_kernel
-
-cmo_python tools/runners/run_sim_kernel_contracts.py
+cmo_python tools/runners/run_contract_batches.py --default-group sim_kernel
 ```
 
 `sim_kernel` 默认分组只是 `tests/contracts/unit/kernel/*.json` 的便利包装；它还不是能够区分 gate、supplemental 和 diagnostic 契约的语义 manifest。
@@ -166,11 +164,9 @@ Suite tier 含义：
 - `nightly`
   - 稳定后可考虑进入定时自动化的长耗时或宽覆盖回归候选。
 
-`tests/suites/test_system_matrix.json` 和 `tests/suites/focused_runtime_suite.json`
-只是首批治理 manifest。当前 CI 会运行维护态 pytest smoke 套件、C++ CTest smoke 目标，
-以及维护态 JSON 契约 smoke 套件。
+`tests/suites/` 此前存放咨询性治理矩阵（`test_system_matrix.json`、`contract_system_matrix.json`）和草稿 `focused_runtime_suite.json`。这些文件已被移除：它们没有被任何 runner 或 CI 步骤引用，且跨文件一致性由元测试而非行为来保证。当前 CI 会运行维护态 pytest smoke 套件、C++ CTest smoke 目标，以及维护态 JSON 契约 smoke 套件。
 
-如果某个 smoke 路径在重构中被移动，先更新已签入的 suite manifest。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。对于 node ID 条目，runner 会先检查基础文件路径，再把完整 node ID 交给 pytest。矩阵中凡是在 `suite_membership` 列出 `tests/smoke/ci_smoke_suite.json` 的行，也必须列出允许进入 CI 的具体 `smoke_paths`。
+如果某个 smoke 路径在重构中被移动，先更新 `tests/smoke/ci_smoke_suite.json`。CI 和顶层文档应引用这条 suite runner，而不是重复书写单个测试文件路径。对于 node ID 条目，runner 会先检查基础文件路径，再把完整 node ID 交给 pytest。
 
 ## 依赖说明
 

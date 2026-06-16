@@ -32,6 +32,10 @@
 - [杀伤链命中盒几何保真度缺口](./lethality_hitbox_geometry_fidelity_gap/README.zh.md)：
   F-16C 首轮精细几何工程代理已按 geometry-only 验收门闭合；该记录保留为后续默认 runtime
   replacement、训练诊断、其他机型复用、结构解体或具体弹种结论的边界证据。
+- [Damage 到操控权限的传递缺口](./damage_control_authority_coupling_gap/README.zh.md)：
+  damage report 可以记录飞行员/乘员、飞控、指挥/导航或通信/数据链失效，但后续控制输入、
+  指挥链投递或数据链行为未必被禁用。该问题先暂存为后续跟踪项，不进入当前 fire-window sweep
+  核心工作。
 - [RL 策略保持基线漂移](./rl_policy_hold_baseline_drift/README.zh.md)：
   N4 确定性保持探针已闭合，但 stochastic-policy acceptance 与 off-station
   curricula 仍需要这份记录作为可复用证据。
