@@ -355,6 +355,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("guidance_update_period_s", &MissileTuning::guidance_update_period_s)
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
+        .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
         .def_rw("sensor_max_range", &MissileTuning::sensor_max_range)
         .def_rw("sensor_fov_deg", &MissileTuning::sensor_fov_deg)
         .def_rw("sensor_scan_period", &MissileTuning::sensor_scan_period)
@@ -1095,6 +1096,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_update_period_s"] = missile->guidance_update_period_s;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
+                out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
                 out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
                 out["proximity_min_time_s"] = missile->proximity_min_time_s;
                 out["proximity_last_dist_m"] = missile->proximity_last_dist_m;

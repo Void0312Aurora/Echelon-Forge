@@ -48,6 +48,12 @@ struct GuidanceResolvedTuning {
     double max_lateral_g = 0.0;
     double autopilot_tau_s = MissileGuidanceDefaults::kAutopilotTauS;
     double max_accel_response_g_per_s = MissileGuidanceDefaults::kAccelResponseGps;
+    double apn_target_accel_gain = MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
+    double cd0_power_on_ratio = MissileGuidanceDefaults::kCd0PowerOnRatio;
+    double mach_transonic_start = MissileGuidanceDefaults::kMachTransonicStart;
+    double mach_transonic_end = MissileGuidanceDefaults::kMachTransonicEnd;
+    double autopilot_damping = 1.0;
+    int autopilot_order = 1;
 };
 
 double default_propellant_mass_kg(double total_mass_kg) {
@@ -356,6 +362,10 @@ GuidanceResolvedTuning resolve_tuning(flecs::entity missile_entity, const Missil
         positive_or_nan_safe(missile.guidance_max_lateral_g, fallback_max_lateral_g(missile));
     out.autopilot_tau_s = positive_or_nan_safe(missile.guidance_autopilot_tau_s,
                                                MissileGuidanceDefaults::kAutopilotTauS);
+    out.autopilot_damping = std::isfinite(missile.autopilot_damping) && missile.autopilot_damping > 0.0
+                                ? missile.autopilot_damping
+                                : 1.0;
+    out.autopilot_order = missile.autopilot_order >= 1 ? missile.autopilot_order : 1;
     out.max_accel_response_g_per_s = positive_or_nan_safe(
         missile.guidance_max_accel_response_g_per_s, MissileGuidanceDefaults::kAccelResponseGps);
     out.cd0_subsonic =
@@ -364,6 +374,9 @@ GuidanceResolvedTuning resolve_tuning(flecs::entity missile_entity, const Missil
                                               MissileGuidanceDefaults::kCd0Supersonic);
     out.induced_drag_k = finite_nonnegative_or(missile.guidance_induced_drag_k,
                                                MissileGuidanceDefaults::kInducedDragScale);
+    out.apn_target_accel_gain =
+        finite_nonnegative_or(missile.apn_target_accel_gain,
+                              MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
     out.bearing_filter_tau_s = finite_nonnegative_or(missile.guidance_bearing_filter_tau_s,
                                                      MissileGuidanceDefaults::kTrackFilterTauS);
     out.elevation_filter_tau_s = finite_nonnegative_or(missile.guidance_elevation_filter_tau_s,
@@ -553,16 +566,23 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
     const double total_mass = std::max(1.0, mass->get_total_kg());
     const double mach = speed_of_sound > 1.0 ? speed_mps / speed_of_sound : 0.0;
     const double q_bar = 0.5 * rho * speed_mps * speed_mps;
-    const double base_cd = missile_guidance::lerp(tuning.cd0_subsonic, tuning.cd0_supersonic,
-                                                  std::clamp((mach - 0.8) / 0.6, 0.0, 1.0));
+    const double boost_end_time = missile.launch_time + tuning.boost_time_s;
+    const bool propulsion_active =
+        current_time < missile.burnout_time_s && mass->fuel_mass_kg > 1.0e-6;
+
+    const double mach_frac = std::clamp(
+        (mach - tuning.mach_transonic_start) /
+            std::max(1.0e-6, tuning.mach_transonic_end - tuning.mach_transonic_start),
+        0.0, 1.0);
+    double base_cd = missile_guidance::lerp(tuning.cd0_subsonic, tuning.cd0_supersonic, mach_frac);
+    if (propulsion_active) {
+        base_cd *= tuning.cd0_power_on_ratio;
+    }
     const double lateral_frac =
         std::clamp(lateral_accel_mps2 / std::max(1.0, tuning.max_lateral_g * kGravity), 0.0, 1.0);
     const double drag_coeff = base_cd + tuning.induced_drag_k * lateral_frac * lateral_frac;
     drag_n = q_bar * tuning.reference_area_m2 * drag_coeff;
 
-    const double boost_end_time = missile.launch_time + tuning.boost_time_s;
-    const bool propulsion_active =
-        current_time < missile.burnout_time_s && mass->fuel_mass_kg > 1.0e-6;
     if (propulsion_active) {
         const bool in_boost_phase = current_time < boost_end_time;
         thrust_n = in_boost_phase ? tuning.boost_thrust_n : tuning.sustain_thrust_n;
@@ -737,9 +757,23 @@ class DefaultGuidanceModel : public IGuidanceModel {
             std::clamp(missile.commanded_lateral_accel_mps2 - missile.achieved_lateral_accel_mps2,
                        -accel_step_limit, accel_step_limit);
         const double accel_target = missile.achieved_lateral_accel_mps2 + desired_delta;
-        const double autopilot_alpha = std::clamp(dt / (tuning.autopilot_tau_s + dt), 0.0, 1.0);
-        missile.achieved_lateral_accel_mps2 +=
-            autopilot_alpha * (accel_target - missile.achieved_lateral_accel_mps2);
+
+        if (tuning.autopilot_order >= 2) {
+            const double omega_n =
+                1.0 / std::max(0.001, tuning.autopilot_tau_s);
+            const double zeta = std::clamp(tuning.autopilot_damping, 0.1, 2.0);
+            const double x1 = missile.achieved_lateral_accel_mps2;
+            const double x2 = missile.autopilot_rate_state_mps3;
+            missile.autopilot_rate_state_mps3 =
+                x2 + dt * (omega_n * omega_n * (accel_target - x1) -
+                           2.0 * zeta * omega_n * x2);
+            missile.achieved_lateral_accel_mps2 = x1 + dt * missile.autopilot_rate_state_mps3;
+        } else {
+            const double autopilot_alpha =
+                std::clamp(dt / (tuning.autopilot_tau_s + dt), 0.0, 1.0);
+            missile.achieved_lateral_accel_mps2 +=
+                autopilot_alpha * (accel_target - missile.achieved_lateral_accel_mps2);
+        }
         missile.achieved_lateral_accel_mps2 =
             std::clamp(missile.achieved_lateral_accel_mps2, 0.0, max_lateral_accel);
 

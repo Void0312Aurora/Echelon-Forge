@@ -1,0 +1,77 @@
+# A9 High-Fidelity Weapon System — Current Status
+
+Status: `2026-06-16` P0 boundary freeze in progress. No implementation has started.
+
+## What Changed Since Prior Checkpoint
+
+Initial creation. No prior checkpoint exists.
+
+`2026-06-16` P0 revision: aligned PF baseline with PF-R4 (implementation pass)
+and PF-R5 (validation pass_with_residuals) completed status. Corrected lethality
+chain reference from "9-stage" to the full `RecentEngagementEvents` event surface
+(10 event types including `StructuralBreakupEvent`). Added source ledger,
+dispatch queue, and acceptance draft documents.
+
+## Maturity Matrix
+
+| Subsystem | Current Fidelity | Target Fidelity | Status |
+|-----------|-----------------|-----------------|--------|
+| Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | planned |
+| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | planned |
+| Autopilot (G3) | Single first-order lag | Three-loop topology (τ, ζ) | planned |
+| Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | planned (builds on PF-R4, not re-implement PF-R3) |
+| Aerodynamics (G5) | Fixed Cd₀ per regime | Mach-dependent table + induced drag | planned |
+| Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Gurney + fragment decay + rod kinematics | planned |
+| Integration (G7) | — | Bindings + scenarios + diagnostics | planned |
+
+## Evidence Links
+
+| Evidence | Type | Location |
+|----------|------|----------|
+| Current PN implementation | Code | `src/models/weapons/default_guidance_model.cpp:700-725` |
+| Current seeker filter | Code | `src/models/weapons/missile_guidance_math.h:70-84` |
+| Current autopilot | Code | `src/models/weapons/default_guidance_model.cpp:740-744` |
+| PF-R4 fuze surrogate implementation | Doc | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/proximity_fuze_runtime_implementation_20260616.md` |
+| PF-R5 fuze validation | Doc | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/validation/pf_r5_proximity_fuze_validation_20260616.md` |
+| Lethality chain event types (full surface) | Code | `src/core/engine/engagement_event_types.h` (RecentEngagementEvents) |
+| Lethality chain contract | Code | `src/runtime/contracts/engagement_contracts.h` |
+| Guidance realism tests | Test | `tests/runtime/air_combat/weapon_guidance_realism/` |
+| Source ledger (public data) | Doc | `docs/task/air_combat/a9_high_fidelity_weapon_system/p1_evidence/source_ledger_20260616.md` |
+| A2 sealed record | Doc | `docs/task/air_combat/archive/a2_high_fidelity_damage_model/README.md` |
+| Realism authority boundary | Standard | `docs/standards/foundation/realism_authority_boundary.zh.md` |
+
+## Residual Register
+
+| ID | Description | Severity | Status |
+|----|-------------|----------|--------|
+| R1 | Target maneuver prediction (IMM banks) deferred | Minor | held |
+| R2 | ECM/EW effects on seeker/fuze deferred | Minor | held |
+| R3 | Directional warhead aimpoint optimization deferred | Minor | held |
+| R4 | Real-time performance profiling deferred | Minor | held |
+| R5 | Navy/ground domain not in scope | Minor | held |
+| R6 | Authority promotion not in scope | Blocking | held |
+| R7 | All public-source data is non-authoritative | Blocking | held |
+| R8 | G4 must not regress PF-R5 residuals (pass_with_residuals) | Blocking | held |
+
+## Next Recommended Action Order
+
+1. Complete P0-B: per-subsystem gap audits (6 audits, read-only).
+   For G4 fuze, the gap audit must measure against the PF-R4 surrogate, not the
+   pre-PF-R4 nearest-distance proxy.
+2. Execute P1-B: define benchmark parameter tables (proxy value → target value).
+3. Execute P1-C: map existing test coverage, including PF-R4/PF-R5 test surface.
+4. Begin P2 implementation clusters. Recommended order:
+   G4 (fuze refinement, lowest risk, builds on PF-R4) → G1 (APN) → G2 (EKF) →
+   G5 (aero) → G3 (autopilot) → G6 (warhead).
+   See dispatch queue for serialization constraints on shared files.
+
+## Explicit Overclaim Refusals
+
+- ❌ `pk_authority`: NOT claimed. All kill probability outputs are research-grade.
+- ❌ `deterministic_fuze_authority`: NOT claimed. Fuze behavior is a non-authoritative surrogate.
+- ❌ `effect_scale_authority`: NOT claimed.
+- ❌ `component_failure_probability_authority`: NOT claimed.
+- ❌ `stock_weapon_truth`: NOT claimed.
+- ❌ `real_weapon_pk_authority`: NOT claimed.
+- ❌ `research-grade high fidelity` as a completed claim: NOT claimed. All G1-G6
+  work is planned, not implemented. Current state is P0 boundary planning only.

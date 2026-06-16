@@ -193,6 +193,17 @@ inline double damage_fuze_detection_threshold(const std::string &fuze_type) {
 inline double damage_mechanism_coverage_score(const Missile &missile, double range_score) {
     const double clamped_range = std::clamp(range_score, 0.0, 1.0);
     const std::string family = damage_lower_ascii(warhead_effect_family(missile.warhead_profile));
+
+    // hit_to_kill: primary kill mechanism is direct structural penetration.
+    // A proximity burst without direct hitbox intersection provides negligible
+    // coverage because the kinetic penetrator missed the target.  Retain a
+    // small residual (8%) for secondary blast/frag effects at very close range,
+    // and preserve full coverage when the range score indicates a near-direct
+    // hit (>=0.95, e.g. grazing contact or fuze triggering inside the hitbox).
+    if (family == "hit_to_kill") {
+        return clamped_range >= 0.95 ? clamped_range : clamped_range * 0.08;
+    }
+
     if (family != "continuous_rod" || !damage_has_proximity_min_local_point(missile)) {
         return clamped_range;
     }

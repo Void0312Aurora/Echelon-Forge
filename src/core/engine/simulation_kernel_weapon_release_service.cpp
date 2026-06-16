@@ -207,7 +207,8 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.max_accel_response_g_per_s) ||
            std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
-           tuning.midcourse_datalink_supported || tuning.has_warhead_profile ||
+           tuning.midcourse_datalink_supported ||
+           std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||
            tuning.has_fuze_profile;
 }
 
@@ -237,6 +238,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.guidance_update_period_s = src.guidance_update_period_s;
     out.max_flight_time_s = src.max_flight_time_s;
     out.nav_gain = src.nav_gain;
+    out.apn_target_accel_gain = src.apn_target_accel_gain;
     out.sensor_max_range = src.sensor_max_range;
     out.sensor_fov_deg = src.sensor_fov_deg;
     out.sensor_scan_period = src.sensor_scan_period;
@@ -292,6 +294,8 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.max_flight_time_s))
         base->max_flight_time_s = overlay.max_flight_time_s;
     if (std::isfinite(overlay.nav_gain)) base->nav_gain = overlay.nav_gain;
+    if (std::isfinite(overlay.apn_target_accel_gain))
+        base->apn_target_accel_gain = overlay.apn_target_accel_gain;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
     if (std::isfinite(overlay.sensor_fov_deg)) base->sensor_fov_deg = overlay.sensor_fov_deg;
     if (std::isfinite(overlay.sensor_scan_period))
@@ -617,6 +621,8 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const double missile_max_flight_time =
         positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
     const double missile_nav_gain = positive_or_default(resolved_tuning.nav_gain, 3.0);
+    const double missile_apn_target_accel_gain =
+        nonnegative_or_default(resolved_tuning.apn_target_accel_gain, 0.0);
 
     double sensor_max_range = missile_seeker_range;
     double sensor_fov_deg = missile_seeker_fov;
@@ -725,6 +731,7 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.launch_time = current_time;
     missile.max_flight_time_s = missile_max_flight_time;
     missile.nav_gain = missile_nav_gain;
+    missile.apn_target_accel_gain = missile_apn_target_accel_gain;
     missile.active = true;
     missile.warhead_profile = missile_warhead_profile;
     missile.fuze_profile = missile_fuze_profile;

@@ -160,6 +160,10 @@ struct Missile {
     double guidance_max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double guidance_autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double guidance_max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double apn_target_accel_gain = std::numeric_limits<double>::quiet_NaN();
+    double autopilot_rate_state_mps3 = 0.0;
+    int autopilot_order = 1;
+    double autopilot_damping = 1.0;
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;

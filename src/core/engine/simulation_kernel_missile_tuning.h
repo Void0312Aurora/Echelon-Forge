@@ -47,6 +47,7 @@ struct MissileTuning {
     double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
     bool lobl_required = false;
     bool midcourse_datalink_supported = false;
+    double apn_target_accel_gain = std::numeric_limits<double>::quiet_NaN();
     WarheadProfile warhead_profile{};
     bool has_warhead_profile = false;
     FuzeProfile fuze_profile{};

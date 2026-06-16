@@ -359,6 +359,8 @@ void parse_missile_tuning_json_fields(
         src.value("guidance_update_period_s", tuning.guidance_update_period_s);
     tuning.max_flight_time_s = src.value("max_flight_time_s", tuning.max_flight_time_s);
     tuning.nav_gain = src.value("nav_gain", tuning.nav_gain);
+    tuning.apn_target_accel_gain =
+        src.value("apn_target_accel_gain", tuning.apn_target_accel_gain);
     tuning.sensor_max_range = src.value("sensor_max_range", tuning.sensor_max_range);
     tuning.sensor_fov_deg = src.value("sensor_fov_deg", tuning.sensor_fov_deg);
     tuning.sensor_scan_period = src.value("sensor_scan_period", tuning.sensor_scan_period);
