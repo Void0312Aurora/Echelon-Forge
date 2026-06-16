@@ -39,6 +39,11 @@ whose evidence and repair path should be reusable by other worklines.
   geometry-only acceptance gate; this issue remains as boundary evidence for
   later default runtime replacement, training diagnostics, other-airframe reuse,
   structural breakup, or weapon-specific conclusions.
+- [Damage-To-Control Authority Coupling Gap](./damage_control_authority_coupling_gap/README.md):
+  damage reports can mark pilot/crew, flight-control, command/navigation, or
+  communication/data-link failures without necessarily disabling later control
+  input, command-link delivery, or data-link behavior. Parked for follow-up; it
+  is not part of the current fire-window sweep core.
 - [RL Policy Hold-Baseline Drift](./rl_policy_hold_baseline_drift/README.md):
   the deterministic N4 hold probe is closed, but stochastic-policy acceptance
   and off-station curricula still need this record as reusable evidence.
