@@ -205,6 +205,9 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.propellant_mass_kg) || std::isfinite(tuning.max_lateral_g) ||
            std::isfinite(tuning.autopilot_tau_s) ||
            std::isfinite(tuning.max_accel_response_g_per_s) ||
+           std::isfinite(tuning.mach_transonic_start) ||
+           std::isfinite(tuning.mach_transonic_end) ||
+           std::isfinite(tuning.cd0_power_on_ratio) ||
            std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
            tuning.midcourse_datalink_supported ||
@@ -265,7 +268,12 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.propellant_mass_kg = src.propellant_mass_kg;
     out.max_lateral_g = src.max_lateral_g;
     out.autopilot_tau_s = src.autopilot_tau_s;
+    out.autopilot_damping = src.autopilot_damping;
+    out.autopilot_order = src.autopilot_order;
     out.max_accel_response_g_per_s = src.max_accel_response_g_per_s;
+    out.mach_transonic_start = src.mach_transonic_start;
+    out.mach_transonic_end = src.mach_transonic_end;
+    out.cd0_power_on_ratio = src.cd0_power_on_ratio;
     out.min_launch_range_m = src.min_launch_range_m;
     out.max_launch_off_boresight_deg = src.max_launch_off_boresight_deg;
     out.lobl_required = src.lobl_required;
@@ -335,8 +343,17 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
         base->propellant_mass_kg = overlay.propellant_mass_kg;
     if (std::isfinite(overlay.max_lateral_g)) base->max_lateral_g = overlay.max_lateral_g;
     if (std::isfinite(overlay.autopilot_tau_s)) base->autopilot_tau_s = overlay.autopilot_tau_s;
+    if (std::isfinite(overlay.autopilot_damping))
+        base->autopilot_damping = overlay.autopilot_damping;
+    if (overlay.autopilot_order >= 1) base->autopilot_order = overlay.autopilot_order;
     if (std::isfinite(overlay.max_accel_response_g_per_s))
         base->max_accel_response_g_per_s = overlay.max_accel_response_g_per_s;
+    if (std::isfinite(overlay.mach_transonic_start))
+        base->mach_transonic_start = overlay.mach_transonic_start;
+    if (std::isfinite(overlay.mach_transonic_end))
+        base->mach_transonic_end = overlay.mach_transonic_end;
+    if (std::isfinite(overlay.cd0_power_on_ratio))
+        base->cd0_power_on_ratio = overlay.cd0_power_on_ratio;
     if (std::isfinite(overlay.min_launch_range_m))
         base->min_launch_range_m = overlay.min_launch_range_m;
     if (std::isfinite(overlay.max_launch_off_boresight_deg))
@@ -732,6 +749,11 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.max_flight_time_s = missile_max_flight_time;
     missile.nav_gain = missile_nav_gain;
     missile.apn_target_accel_gain = missile_apn_target_accel_gain;
+    missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
+    missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);
+    missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;
+    missile.guidance_mach_transonic_end = resolved_tuning.mach_transonic_end;
+    missile.guidance_cd0_power_on_ratio = resolved_tuning.cd0_power_on_ratio;
     missile.active = true;
     missile.warhead_profile = missile_warhead_profile;
     missile.fuze_profile = missile_fuze_profile;

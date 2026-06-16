@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` P0 boundary freeze in progress. No implementation has started.
+Status: `2026-06-16` P2 wave 1 implementation complete (6 clusters). P0/P1 docs open.
 
 ## What Changed Since Prior Checkpoint
 
@@ -16,13 +16,13 @@ dispatch queue, and acceptance draft documents.
 
 | Subsystem | Current Fidelity | Target Fidelity | Status |
 |-----------|-----------------|-----------------|--------|
-| Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | planned |
-| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | planned |
-| Autopilot (G3) | Single first-order lag | Three-loop topology (τ, ζ) | planned |
-| Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | planned (builds on PF-R4, not re-implement PF-R3) |
-| Aerodynamics (G5) | Fixed Cd₀ per regime | Mach-dependent table + induced drag | planned |
-| Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Gurney + fragment decay + rod kinematics | planned |
-| Integration (G7) | — | Bindings + scenarios + diagnostics | planned |
+| Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline (8 files) + APN feed-forward term in guidance law |
+| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h (295 lines) + EKF integration with fallback |
+| Autopilot (G3) | Single first-order lag | Configurable-order transfer function (τ, ζ) | **pass** — second-order state-space filter + full tuning pipeline |
+| Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate with mechanism-specific coverage differentiation | **pass** — hit_to_kill coverage penalty + existing PF-R4 preserved |
+| Aerodynamics (G5) | Fixed Cd₀ per regime | Configurable Mach breakpoints + power on/off distinction | **pass** — mach_transonic_start/end + cd0_power_on_ratio in full pipeline |
+| Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Physics-based rod/velocity caps | **pass** — rod weld cap 1150 m/s + 610 m/s cutting threshold |
+| Integration (G7) | — | Bindings + scenarios + diagnostics | **partial** — bindings updated; scenario JSON loader ready; no new scenario examples yet |
 
 ## Evidence Links
 

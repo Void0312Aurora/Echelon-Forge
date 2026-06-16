@@ -10,33 +10,33 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | Cluster | Status | Worker | Dispatched | Completed | Artifacts |
 |---------|--------|--------|-----------|-----------|-----------|
 | P0-A | active | main thread | 2026-06-16 | — | README, task clusters, current status |
-| P0-B | planned | — | — | — | — |
-| P1-A | planned | — | — | — | — |
+| P0-B | pass | main thread | 2026-06-16 | — | p0b_gap_audit_summary_20260616.md |
+| P1-A | partial | main thread | 2026-06-16 | — | source_ledger_20260616.md (draft; needs full admission fields) |
 | P1-B | planned | — | — | — | — |
 | P1-C | planned | — | — | — | — |
-| P2-A1 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-A2 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-B1 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-B2 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-B3 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-C1 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-C2 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-D1 | held (P0-B/P1 evidence + PF baseline guard) | — | — | — | — |
-| P2-D2 | held (P0-B/P1 evidence + PF baseline guard) | — | — | — | — |
-| P2-E1 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-E2 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-F1 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-F2 | held (P0-B/P1 evidence) | — | — | — | — |
-| P2-F3 | held (P0-B/P1 evidence) | — | — | — | — |
-| P3-A | held (P0-B/P1 evidence) | — | — | — | — |
-| P3-B | held (P0-B/P1 evidence) | — | — | — | — |
-| P3-C | held (P0-B/P1 evidence) | — | — | — | — |
-| P3-D | held (P0-B/P1 evidence) | — | — | — | — |
-| P4-A | held (P0-B/P1 evidence) | — | — | — | — |
-| P4-B | held (P0-B/P1 evidence) | — | — | — | — |
-| P4-C | held (P0-B/P1 evidence) | — | — | — | — |
-| P5-A | held (P0-B/P1 evidence) | — | — | — | — |
-| P5-B | held (P0-B/P1 evidence) | — | — | — | — |
+| P2-A1 | pass | main thread | 2026-06-16 | 2026-06-16 | apn_target_accel_gain pipeline (8 files) + APN feed-forward term |
+| P2-A2 | pass | main thread | 2026-06-16 | 2026-06-16 | target accel estimator (bearing rate derivative) |
+| P2-B1 | pass | main thread | 2026-06-16 | 2026-06-16 | kalman_seeker.h (295 lines) + EKF predict/update/init |
+| P2-B2 | planned | — | — | — | — |
+| P2-B3 | pass | main thread | 2026-06-16 | 2026-06-16 | EKF integration in update_track/propagate_track with fallback |
+| P2-C1 | pass | main thread | 2026-06-16 | 2026-06-16 | second-order autopilot (τ, ζ, order) + tuning pipeline |
+| P2-C2 | pass | main thread | 2026-06-16 | 2026-06-16 | autopilot_order/damping in MissileTuning/JSON/bindings |
+| P2-D1 | pass | main thread | 2026-06-16 | 2026-06-16 | hit_to_kill coverage penalty in damage_mechanism_coverage_score |
+| P2-D2 | planned | — | — | — | — |
+| P2-E1 | pass | main thread | 2026-06-16 | 2026-06-16 | configurable Mach breakpoints + power-on Cd0 ratio |
+| P2-E2 | pass | main thread | 2026-06-16 | 2026-06-16 | G5 params in MissileTuning/JSON/bindings pipeline |
+| P2-F1 | pass | main thread | 2026-06-16 | 2026-06-16 | rod weld cap 1150 m/s + 610 m/s cutting threshold |
+| P2-F2 | planned | — | — | — | — |
+| P2-F3 | planned | — | — | — | — |
+| P3-A | partial | — | — | — | bindings updated for wave1 params; round-trip test pending |
+| P3-B | planned | — | — | — | — |
+| P3-C | planned | — | — | — | — |
+| P3-D | planned | — | — | — | — |
+| P4-A | planned | — | — | — | — |
+| P4-B | planned | — | — | — | — |
+| P4-C | planned | — | — | — | — |
+| P5-A | planned | — | — | — | — |
+| P5-B | planned | — | — | — | — |
 
 ## Hold Reasons
 
@@ -62,8 +62,8 @@ In priority order, once P0-B and P1 are complete:
 
 These clusters share write surfaces and MUST NOT be dispatched concurrently:
 
-- **default_guidance_model.cpp**: P2-A1, P2-A2, P2-B3, P2-C1 — serial only
-- **simulation_kernel_missile_tuning.h**: P2-A1, P2-B2, P2-C2, P2-D2, P2-E2, P2-F3 — serial only
-- **weapon_common.h**: P2-A1, P2-B2, P2-D2, P2-F3 — serial only
+- **default_guidance_model.cpp**: P2-A1, P2-A2, P2-B3, P2-C1, **P2-E1** — serial only (wave 1 completed in this order)
+- **simulation_kernel_missile_tuning.h**: P2-A1, P2-B2, P2-C2, P2-D2, P2-E2, P2-F3 — serial only (wave 1: A1/C2/E2 done; B2/D2/F3 remain)
+- **weapon_common.h**: P2-A1, P2-B2, P2-D2, P2-F3 — serial only (wave 1: A1 done; B2/D2/F3 remain)
 - **damage_system_common.h**: P2-D1 — single cluster
 - **default_effects_warhead_detail.inc**: P2-F1, P2-F2 — serial within G6

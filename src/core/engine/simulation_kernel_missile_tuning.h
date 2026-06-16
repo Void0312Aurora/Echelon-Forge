@@ -42,7 +42,12 @@ struct MissileTuning {
     double propellant_mass_kg = std::numeric_limits<double>::quiet_NaN();
     double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
+    double autopilot_damping = std::numeric_limits<double>::quiet_NaN();
+    int autopilot_order = 1;
     double max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double mach_transonic_start = std::numeric_limits<double>::quiet_NaN();
+    double mach_transonic_end = std::numeric_limits<double>::quiet_NaN();
+    double cd0_power_on_ratio = std::numeric_limits<double>::quiet_NaN();
     double min_launch_range_m = std::numeric_limits<double>::quiet_NaN();
     double max_launch_off_boresight_deg = std::numeric_limits<double>::quiet_NaN();
     bool lobl_required = false;

@@ -395,8 +395,14 @@ void parse_missile_tuning_json_fields(
     tuning.propellant_mass_kg = src.value("propellant_mass_kg", tuning.propellant_mass_kg);
     tuning.max_lateral_g = src.value("max_lateral_g", tuning.max_lateral_g);
     tuning.autopilot_tau_s = src.value("autopilot_tau_s", tuning.autopilot_tau_s);
+    tuning.autopilot_damping = src.value("autopilot_damping", tuning.autopilot_damping);
+    tuning.autopilot_order = src.value("autopilot_order", tuning.autopilot_order);
     tuning.max_accel_response_g_per_s =
         src.value("max_accel_response_g_per_s", tuning.max_accel_response_g_per_s);
+    tuning.mach_transonic_start =
+        src.value("mach_transonic_start", tuning.mach_transonic_start);
+    tuning.mach_transonic_end = src.value("mach_transonic_end", tuning.mach_transonic_end);
+    tuning.cd0_power_on_ratio = src.value("cd0_power_on_ratio", tuning.cd0_power_on_ratio);
     tuning.min_launch_range_m = src.value("min_launch_range_m", tuning.min_launch_range_m);
     tuning.max_launch_off_boresight_deg = src.value(
         "max_launch_off_boresight_deg",

@@ -356,6 +356,11 @@ void bind_core(nb::module_ &m) {
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
         .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
+        .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
+        .def_rw("autopilot_order", &MissileTuning::autopilot_order)
+        .def_rw("mach_transonic_start", &MissileTuning::mach_transonic_start)
+        .def_rw("mach_transonic_end", &MissileTuning::mach_transonic_end)
+        .def_rw("cd0_power_on_ratio", &MissileTuning::cd0_power_on_ratio)
         .def_rw("sensor_max_range", &MissileTuning::sensor_max_range)
         .def_rw("sensor_fov_deg", &MissileTuning::sensor_fov_deg)
         .def_rw("sensor_scan_period", &MissileTuning::sensor_scan_period)
@@ -1097,6 +1102,12 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
                 out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
+                out["autopilot_order"] = missile->autopilot_order;
+                out["autopilot_damping"] = missile->autopilot_damping;
+                out["use_kalman_seeker"] = missile->use_kalman_seeker;
+                out["mach_transonic_start"] = missile->guidance_mach_transonic_start;
+                out["mach_transonic_end"] = missile->guidance_mach_transonic_end;
+                out["cd0_power_on_ratio"] = missile->guidance_cd0_power_on_ratio;
                 out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
                 out["proximity_min_time_s"] = missile->proximity_min_time_s;
                 out["proximity_last_dist_m"] = missile->proximity_last_dist_m;

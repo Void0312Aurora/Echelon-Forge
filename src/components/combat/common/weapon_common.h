@@ -8,6 +8,7 @@
 
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
+#include "models/weapons/kalman_seeker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";
@@ -161,9 +162,18 @@ struct Missile {
     double guidance_autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double guidance_max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
     double apn_target_accel_gain = std::numeric_limits<double>::quiet_NaN();
+    double prev_bearing_rate_deg_s = 0.0;
+    double prev_elevation_rate_deg_s = 0.0;
+    bool apn_rate_history_valid = false;
     double autopilot_rate_state_mps3 = 0.0;
     int autopilot_order = 1;
     double autopilot_damping = 1.0;
+    bool use_kalman_seeker = false;
+    missile_seeker::SeekerEkfState ekf_state{};
+    missile_seeker::SeekerEkfParams ekf_params{};
+    double guidance_mach_transonic_start = std::numeric_limits<double>::quiet_NaN();
+    double guidance_mach_transonic_end = std::numeric_limits<double>::quiet_NaN();
+    double guidance_cd0_power_on_ratio = std::numeric_limits<double>::quiet_NaN();
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
