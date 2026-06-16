@@ -18,6 +18,10 @@ deterministic fuze authority 或更广的 weapon-outcome authority。
   已归档的 MLF-1 杀伤链合同基础，只作为后续阶段的字段和边界证据。
 - [missile_lethality_geometry_fuze/README.zh.md](missile_lethality_geometry_fuze/README.zh.md)：
   已归档的 MLF-2 导弹接近几何与引信评估证据包；它证明最近点、引信评估和起爆 handoff 可观察，但不实现破片、结构解体、Pk 或具体弹种击毁结论。
+- [missile_lethality_proximity_fuze_realism/README.zh.md](missile_lethality_proximity_fuze_realism/README.zh.md)：
+  accepted-with-residuals follow-on，已把当前最近距离式近炸引信 proxy 替换为公开资料驱动、
+  非权威的 surrogate evidence 切片并完成聚焦矩阵验证。它不授权 deterministic fuze authority、Pk、
+  stock weapon truth 或具体弹种杀伤声明。
 - [missile_lethality_warhead_effects/README.zh.md](missile_lethality_warhead_effects/README.zh.md)：
   已归档的 MLF-3 证据包，聚焦起爆后的通用战斗部作用、破片/爆风载荷、空间覆盖、部件受载、
   诊断，以及“未起爆不产生载荷”的运行门；它不实现连续杆、部件失效概率、结构解体、残骸、Pk

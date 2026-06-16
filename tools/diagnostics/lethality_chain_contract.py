@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 CONTRACT_SCHEMA_VERSION = 1
-DIAGNOSTIC_ROW_SCHEMA_VERSION = 6
+DIAGNOSTIC_ROW_SCHEMA_VERSION = 7
 
 STAGE_NEAREST_APPROACH = "nearest_approach"
 STAGE_FUZE = "fuze"
@@ -49,6 +49,8 @@ REASON_FUZE_ARMED = "fuze_armed"
 REASON_FUZE_NO_DETONATION = "fuze_no_detonation"
 REASON_FUZE_NO_TERMINAL_TRACK = "fuze_no_terminal_track"
 REASON_MISS_OUTSIDE_TRIGGER_RADIUS = "miss_outside_trigger_radius"
+REASON_OUTSIDE_SENSOR_WINDOW = "outside_sensor_window"
+REASON_TARGET_NOT_DETECTED = "target_not_detected"
 REASON_MISSILE_TIMEOUT = "missile_timeout"
 REASON_PLATFORM_CONSEQUENCE_PROJECTION = "generic_research_platform_consequence_projection"
 REASON_LIFECYCLE_PROJECTION = "transitional_damage_report_projection"
@@ -58,6 +60,8 @@ TERMINAL_NEGATIVE_REASONS = frozenset(
         REASON_FUZE_NO_DETONATION,
         REASON_FUZE_NO_TERMINAL_TRACK,
         REASON_MISS_OUTSIDE_TRIGGER_RADIUS,
+        REASON_OUTSIDE_SENSOR_WINDOW,
+        REASON_TARGET_NOT_DETECTED,
         REASON_MISSILE_TIMEOUT,
     }
 )

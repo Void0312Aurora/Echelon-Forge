@@ -130,6 +130,15 @@ LETHALITY_CHAIN_ROW_FIELDS = (
     "fuze_expected_detonation_probability",
     "fuze_sampled_outcome",
     "fuze_trigger_radius_m",
+    "fuze_sensor_opportunity_source",
+    "fuze_sensor_opportunity_score",
+    "fuze_terminal_track_valid",
+    "fuze_target_detected",
+    "fuze_target_detection_source",
+    "fuze_target_detection_confidence",
+    "fuze_target_detection_threshold",
+    "detonation_point_source",
+    "fuze_mechanism_coverage_score",
     "contact_surface_distance_m",
     "contact_penetration_depth_m",
     "contact_surface_tolerance_m",
@@ -214,7 +223,13 @@ def _finite_float(value: Any, default: float = float("nan")) -> float:
 
 def _effects_event_has_warhead_load(effect: Any) -> bool:
     outcome = str(getattr(effect, "outcome_state", "") or "")
-    if outcome in {"fuze_no_detonation", "no_detonation"}:
+    if outcome in {
+        "fuze_no_detonation",
+        "fuze_no_terminal_track",
+        "outside_sensor_window",
+        "target_not_detected",
+        "no_detonation",
+    }:
         return False
     if int(getattr(effect, "component_hit_count", 0) or 0) > 0:
         return True
@@ -402,6 +417,15 @@ def _lethality_base_row(
         "fuze_expected_detonation_probability": float("nan"),
         "fuze_sampled_outcome": 0,
         "fuze_trigger_radius_m": float("nan"),
+        "fuze_sensor_opportunity_source": "",
+        "fuze_sensor_opportunity_score": float("nan"),
+        "fuze_terminal_track_valid": 0,
+        "fuze_target_detected": 0,
+        "fuze_target_detection_source": "",
+        "fuze_target_detection_confidence": float("nan"),
+        "fuze_target_detection_threshold": float("nan"),
+        "detonation_point_source": "",
+        "fuze_mechanism_coverage_score": float("nan"),
         "contact_surface_distance_m": float("nan"),
         "contact_penetration_depth_m": float("nan"),
         "contact_surface_tolerance_m": float("nan"),
@@ -638,6 +662,31 @@ def _lethality_chain_rows(
                 ),
                 "fuze_sampled_outcome": int(bool(getattr(fuze_event, "sampled_outcome", True))),
                 "fuze_trigger_radius_m": _finite_float(getattr(fuze_event, "trigger_radius_m", float("nan"))),
+                "fuze_sensor_opportunity_source": str(
+                    getattr(fuze_event, "sensor_opportunity_source", "") or ""
+                ),
+                "fuze_sensor_opportunity_score": _finite_float(
+                    getattr(fuze_event, "sensor_opportunity_score", float("nan"))
+                ),
+                "fuze_terminal_track_valid": int(
+                    bool(getattr(fuze_event, "terminal_track_valid", False))
+                ),
+                "fuze_target_detected": int(bool(getattr(fuze_event, "target_detected", False))),
+                "fuze_target_detection_source": str(
+                    getattr(fuze_event, "target_detection_source", "") or ""
+                ),
+                "fuze_target_detection_confidence": _finite_float(
+                    getattr(fuze_event, "target_detection_confidence", float("nan"))
+                ),
+                "fuze_target_detection_threshold": _finite_float(
+                    getattr(fuze_event, "target_detection_threshold", float("nan"))
+                ),
+                "detonation_point_source": str(
+                    getattr(fuze_event, "detonation_point_source", "") or ""
+                ),
+                "fuze_mechanism_coverage_score": _finite_float(
+                    getattr(fuze_event, "mechanism_coverage_score", float("nan"))
+                ),
                 "contact_surface_distance_m": _finite_float(
                     getattr(fuze_event, "contact_surface_distance_m", float("nan"))
                 ),
@@ -961,6 +1010,33 @@ def _lethality_chain_rows(
                     "fuze_trigger_radius_m": _finite_float(
                         getattr(effect, "fuze_trigger_radius_m", float("nan"))
                     ),
+                    "fuze_sensor_opportunity_source": str(
+                        getattr(effect, "fuze_sensor_opportunity_source", "") or ""
+                    ),
+                    "fuze_sensor_opportunity_score": _finite_float(
+                        getattr(effect, "fuze_sensor_opportunity_score", float("nan"))
+                    ),
+                    "fuze_terminal_track_valid": int(
+                        bool(getattr(effect, "fuze_terminal_track_valid", False))
+                    ),
+                    "fuze_target_detected": int(
+                        bool(getattr(effect, "fuze_target_detected", False))
+                    ),
+                    "fuze_target_detection_source": str(
+                        getattr(effect, "fuze_target_detection_source", "") or ""
+                    ),
+                    "fuze_target_detection_confidence": _finite_float(
+                        getattr(effect, "fuze_target_detection_confidence", float("nan"))
+                    ),
+                    "fuze_target_detection_threshold": _finite_float(
+                        getattr(effect, "fuze_target_detection_threshold", float("nan"))
+                    ),
+                    "detonation_point_source": str(
+                        getattr(effect, "detonation_point_source", "") or ""
+                    ),
+                    "fuze_mechanism_coverage_score": _finite_float(
+                        getattr(effect, "fuze_mechanism_coverage_score", float("nan"))
+                    ),
                     "direct_hitbox_intersection": int(bool(getattr(effect, "direct_hitbox_intersection", False))),
                 }
             )
@@ -1222,11 +1298,50 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         "lethality_chain_fuze_armed": int(fuze.get("fuze_armed", 0) or 0),
         "lethality_chain_fuze_triggered": int(fuze.get("fuze_triggered", 0) or 0),
         "lethality_chain_fuze_failure_reason": str(fuze.get("fuze_failure_reason", "") or ""),
+        "lethality_chain_fuze_delay_s": _finite_float(
+            fuze.get("fuze_delay_s", float("nan"))
+        ),
+        "lethality_chain_fuze_reliability": _finite_float(
+            fuze.get("fuze_reliability", float("nan"))
+        ),
+        "lethality_chain_fuze_sample": _finite_float(
+            fuze.get("fuze_sample", float("nan"))
+        ),
         "lethality_chain_fuze_expected_detonation_probability": _finite_float(
             fuze.get("fuze_expected_detonation_probability", float("nan"))
         ),
         "lethality_chain_fuze_sampled_outcome": int(
             fuze.get("fuze_sampled_outcome", 0) or 0
+        ),
+        "lethality_chain_fuze_trigger_radius_m": _finite_float(
+            fuze.get("fuze_trigger_radius_m", float("nan"))
+        ),
+        "lethality_chain_fuze_sensor_opportunity_source": str(
+            fuze.get("fuze_sensor_opportunity_source", "") or ""
+        ),
+        "lethality_chain_fuze_sensor_opportunity_score": _finite_float(
+            fuze.get("fuze_sensor_opportunity_score", float("nan"))
+        ),
+        "lethality_chain_fuze_terminal_track_valid": int(
+            fuze.get("fuze_terminal_track_valid", 0) or 0
+        ),
+        "lethality_chain_fuze_target_detected": int(
+            fuze.get("fuze_target_detected", 0) or 0
+        ),
+        "lethality_chain_fuze_target_detection_source": str(
+            fuze.get("fuze_target_detection_source", "") or ""
+        ),
+        "lethality_chain_fuze_target_detection_confidence": _finite_float(
+            fuze.get("fuze_target_detection_confidence", float("nan"))
+        ),
+        "lethality_chain_fuze_target_detection_threshold": _finite_float(
+            fuze.get("fuze_target_detection_threshold", float("nan"))
+        ),
+        "lethality_chain_detonation_point_source": str(
+            fuze.get("detonation_point_source", "") or ""
+        ),
+        "lethality_chain_fuze_mechanism_coverage_score": _finite_float(
+            fuze.get("fuze_mechanism_coverage_score", float("nan"))
         ),
         "lethality_chain_direct_hitbox_intersection": int(fuze.get("direct_hitbox_intersection", 0) or 0),
         "lethality_chain_mechanism_family": str(warhead.get("mechanism_family", "") or ""),
@@ -2908,6 +3023,54 @@ def _summarize_episode(
         "lethality_chain_fuze_triggered": bool(int(chain_snapshot.get("lethality_chain_fuze_triggered", 0) or 0)),
         "lethality_chain_fuze_failure_reason": str(
             chain_snapshot.get("lethality_chain_fuze_failure_reason", "")
+        ),
+        "lethality_chain_fuze_delay_s": float(
+            chain_snapshot.get("lethality_chain_fuze_delay_s", float("nan"))
+        ),
+        "lethality_chain_fuze_reliability": float(
+            chain_snapshot.get("lethality_chain_fuze_reliability", float("nan"))
+        ),
+        "lethality_chain_fuze_sample": float(
+            chain_snapshot.get("lethality_chain_fuze_sample", float("nan"))
+        ),
+        "lethality_chain_fuze_expected_detonation_probability": float(
+            chain_snapshot.get(
+                "lethality_chain_fuze_expected_detonation_probability",
+                float("nan"),
+            )
+        ),
+        "lethality_chain_fuze_sampled_outcome": bool(
+            int(chain_snapshot.get("lethality_chain_fuze_sampled_outcome", 0) or 0)
+        ),
+        "lethality_chain_fuze_trigger_radius_m": float(
+            chain_snapshot.get("lethality_chain_fuze_trigger_radius_m", float("nan"))
+        ),
+        "lethality_chain_fuze_sensor_opportunity_source": str(
+            chain_snapshot.get("lethality_chain_fuze_sensor_opportunity_source", "")
+        ),
+        "lethality_chain_fuze_sensor_opportunity_score": float(
+            chain_snapshot.get("lethality_chain_fuze_sensor_opportunity_score", float("nan"))
+        ),
+        "lethality_chain_fuze_terminal_track_valid": bool(
+            int(chain_snapshot.get("lethality_chain_fuze_terminal_track_valid", 0) or 0)
+        ),
+        "lethality_chain_fuze_target_detected": bool(
+            int(chain_snapshot.get("lethality_chain_fuze_target_detected", 0) or 0)
+        ),
+        "lethality_chain_fuze_target_detection_source": str(
+            chain_snapshot.get("lethality_chain_fuze_target_detection_source", "")
+        ),
+        "lethality_chain_fuze_target_detection_confidence": float(
+            chain_snapshot.get("lethality_chain_fuze_target_detection_confidence", float("nan"))
+        ),
+        "lethality_chain_fuze_target_detection_threshold": float(
+            chain_snapshot.get("lethality_chain_fuze_target_detection_threshold", float("nan"))
+        ),
+        "lethality_chain_detonation_point_source": str(
+            chain_snapshot.get("lethality_chain_detonation_point_source", "")
+        ),
+        "lethality_chain_fuze_mechanism_coverage_score": float(
+            chain_snapshot.get("lethality_chain_fuze_mechanism_coverage_score", float("nan"))
         ),
         "lethality_chain_direct_hitbox_intersection": bool(
             int(chain_snapshot.get("lethality_chain_direct_hitbox_intersection", 0) or 0)

@@ -25,6 +25,12 @@ Current A2 follow-ons:
   evaluation; it proves that nearest point, fuze evaluation, and detonation
   handoff are observable, but it does not implement fragmentation, structural
   breakup, Pk, or weapon-specific kill conclusions.
+- [missile_lethality_proximity_fuze_realism/README.md](missile_lethality_proximity_fuze_realism/README.md):
+  accepted-with-residuals follow-on that replaced the current nearest-distance
+  proximity-fuze proxy with a public-source, non-authoritative surrogate
+  evidence slice and focused matrix validation. It does not authorize
+  deterministic fuze authority, Pk, stock weapon truth, or weapon-specific
+  lethality.
 - [missile_lethality_warhead_effects/README.md](missile_lethality_warhead_effects/README.md):
   archived MLF-3 evidence package for post-detonation generic warhead effects,
   fragment/blast loads, spatial coverage, component load, diagnostics, and the

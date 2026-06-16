@@ -108,6 +108,15 @@ def _standard_fuze_event(
     reliability=0.0 if not triggered else 0.98,
     sample=0.42,
     trigger_radius_m=35.0,
+    sensor_opportunity_source="proximity_sensor_window",
+    sensor_opportunity_score=0.64,
+    terminal_track_valid=True,
+    target_detected=True,
+    target_detection_source="target_rcs_aspect",
+    target_detection_confidence=0.72,
+    target_detection_threshold=0.18,
+    detonation_point_source="nearest_point_fallback",
+    mechanism_coverage_score=0.64,
     contact_surface_distance_m=0.0,
     contact_penetration_depth_m=0.0,
     contact_surface_tolerance_m=0.0,
@@ -466,6 +475,15 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertAlmostEqual(fuze["fuze_reliability"], 0.0, places=6)
     self.assertAlmostEqual(fuze["fuze_sample"], 0.42, places=6)
     self.assertAlmostEqual(fuze["fuze_trigger_radius_m"], 35.0, places=6)
+    self.assertEqual(fuze["fuze_sensor_opportunity_source"], "proximity_sensor_window")
+    self.assertAlmostEqual(fuze["fuze_sensor_opportunity_score"], 0.64, places=6)
+    self.assertEqual(fuze["fuze_terminal_track_valid"], 1)
+    self.assertEqual(fuze["fuze_target_detected"], 1)
+    self.assertEqual(fuze["fuze_target_detection_source"], "target_rcs_aspect")
+    self.assertAlmostEqual(fuze["fuze_target_detection_confidence"], 0.72, places=6)
+    self.assertAlmostEqual(fuze["fuze_target_detection_threshold"], 0.18, places=6)
+    self.assertEqual(fuze["detonation_point_source"], "nearest_point_fallback")
+    self.assertAlmostEqual(fuze["fuze_mechanism_coverage_score"], 0.64, places=6)
 
     snapshot = probe._lethality_chain_snapshot_columns(rows)
     self.assertAlmostEqual(snapshot["lethality_chain_closure_mps"], 725.0, places=6)
@@ -473,6 +491,45 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertEqual(snapshot["lethality_chain_fuze_armed"], 1)
     self.assertEqual(snapshot["lethality_chain_fuze_triggered"], 0)
     self.assertEqual(snapshot["lethality_chain_fuze_failure_reason"], "fuze_no_detonation")
+    self.assertAlmostEqual(snapshot["lethality_chain_fuze_reliability"], 0.0, places=6)
+    self.assertAlmostEqual(snapshot["lethality_chain_fuze_sample"], 0.42, places=6)
+    self.assertAlmostEqual(snapshot["lethality_chain_fuze_trigger_radius_m"], 35.0, places=6)
+    self.assertEqual(
+      snapshot["lethality_chain_fuze_sensor_opportunity_source"],
+      "proximity_sensor_window",
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_fuze_sensor_opportunity_score"],
+      0.64,
+      places=6,
+    )
+    self.assertEqual(snapshot["lethality_chain_fuze_terminal_track_valid"], 1)
+    self.assertEqual(snapshot["lethality_chain_fuze_target_detected"], 1)
+    self.assertEqual(
+      snapshot["lethality_chain_fuze_target_detection_source"],
+      "target_rcs_aspect",
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_fuze_target_detection_confidence"],
+      0.72,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_fuze_target_detection_threshold"],
+      0.18,
+      places=6,
+    )
+    self.assertEqual(snapshot["lethality_chain_detonation_point_source"], "nearest_point_fallback")
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_fuze_mechanism_coverage_score"],
+      0.64,
+      places=6,
+    )
+    self.assertAlmostEqual(
+      snapshot["lethality_chain_fuze_expected_detonation_probability"],
+      0.0,
+      places=6,
+    )
 
   def test_standard_geometry_and_fuze_events_suppress_effects_fallback_rows(self) -> None:
     events = _dummy_lethality_events()

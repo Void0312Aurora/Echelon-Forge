@@ -118,6 +118,15 @@ struct Missile {
     double fuze_contact_penetration_depth_m = 0.0;
     double fuze_contact_surface_tolerance_m = 0.0;
     bool fuze_contact_inside_hitbox = false;
+    std::string fuze_sensor_opportunity_source = "none";
+    double fuze_sensor_opportunity_score = 0.0;
+    bool fuze_terminal_track_valid = false;
+    bool fuze_target_detected = false;
+    std::string fuze_target_detection_source = "none";
+    double fuze_target_detection_confidence = 0.0;
+    double fuze_target_detection_threshold = 0.0;
+    std::string fuze_detonation_point_source = "unknown";
+    double fuze_mechanism_coverage_score = 0.0;
 
     // P0 seeker / guidance runtime state.
     bool p0_runtime_initialized = false;

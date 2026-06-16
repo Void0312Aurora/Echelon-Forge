@@ -544,6 +544,8 @@ std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     const bool effects_reached_warhead_loads =
         effects.outcome_state != std::string(kLethalityReasonFuzeNoDetonation) &&
         effects.outcome_state != std::string(kLethalityReasonFuzeNoTerminalTrack) &&
+        effects.outcome_state != std::string(kLethalityReasonOutsideSensorWindow) &&
+        effects.outcome_state != std::string(kLethalityReasonTargetNotDetected) &&
         effects.outcome_state != std::string(kLethalityReasonMissileTimeout);
     if (effects_reached_warhead_loads) {
         WarheadMechanismEvent warhead_event{};

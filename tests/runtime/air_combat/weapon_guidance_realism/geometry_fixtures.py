@@ -51,6 +51,8 @@ class GeometryFixtureRuntimeMixin:
         "fuze_no_detonation",
         "fuze_no_terminal_track",
         "miss_outside_trigger_radius",
+        "outside_sensor_window",
+        "target_not_detected",
       },
     )
     self.assertGreater(int(nearest.header.event_id), 0)

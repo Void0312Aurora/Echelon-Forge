@@ -743,6 +743,15 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.fuze_detonation_heading_deg = std::numeric_limits<double>::quiet_NaN();
     missile.fuze_detonation_pitch_deg = std::numeric_limits<double>::quiet_NaN();
     missile.fuze_detonation_roll_deg = std::numeric_limits<double>::quiet_NaN();
+    missile.fuze_sensor_opportunity_source = "none";
+    missile.fuze_sensor_opportunity_score = 0.0;
+    missile.fuze_terminal_track_valid = false;
+    missile.fuze_target_detected = false;
+    missile.fuze_target_detection_source = "none";
+    missile.fuze_target_detection_confidence = 0.0;
+    missile.fuze_target_detection_threshold = 0.0;
+    missile.fuze_detonation_point_source = "unknown";
+    missile.fuze_mechanism_coverage_score = 0.0;
     initialize_missile_launch_runtime(missile, MissileSharedLaunchRuntimeState{
                                                    current_time,
                                                    launch_speed_mps,

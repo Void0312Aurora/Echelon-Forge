@@ -146,6 +146,17 @@ class FuzeRuntimeMixin:
             delta=sim.get_time_step() + 1.0e-6,
           )
           self.assertGreater(float(runtime["fuze_hit_probability"]), 0.0)
+          self.assertEqual(str(runtime["fuze_sensor_opportunity_source"]), "proximity_sensor_window")
+          self.assertGreater(float(runtime["fuze_sensor_opportunity_score"]), 0.0)
+          self.assertTrue(bool(runtime["fuze_terminal_track_valid"]))
+          self.assertTrue(bool(runtime["fuze_target_detected"]))
+          self.assertEqual(str(runtime["fuze_target_detection_source"]), "target_rcs_aspect")
+          self.assertGreaterEqual(
+            float(runtime["fuze_target_detection_confidence"]),
+            float(runtime["fuze_target_detection_threshold"]),
+          )
+          self.assertEqual(str(runtime["fuze_detonation_point_source"]), "sensor_window_delay_solution")
+          self.assertGreater(float(runtime["fuze_mechanism_coverage_score"]), 0.0)
 
     self.assertTrue(armed_seen)
     events = sim.export_recent_engagement_events()
@@ -164,12 +175,34 @@ class FuzeRuntimeMixin:
     self.assertTrue(bool(fuze.armed))
     self.assertTrue(bool(fuze.triggered))
     self.assertEqual(str(fuze.failure_reason), "")
+    self.assertEqual(str(fuze.sensor_opportunity_source), "proximity_sensor_window")
+    self.assertGreater(float(fuze.sensor_opportunity_score), 0.0)
+    self.assertTrue(bool(fuze.terminal_track_valid))
+    self.assertTrue(bool(fuze.target_detected))
+    self.assertEqual(str(fuze.target_detection_source), "target_rcs_aspect")
+    self.assertGreaterEqual(
+      float(fuze.target_detection_confidence),
+      float(fuze.target_detection_threshold),
+    )
+    self.assertEqual(str(fuze.detonation_point_source), "sensor_window_delay_solution")
+    self.assertGreater(float(fuze.mechanism_coverage_score), 0.0)
     self.assertEqual(str(effects.fuze_type), "radar_proximity")
     self.assertAlmostEqual(float(effects.fuze_delay_s), 0.08, delta=1.0e-6)
     self.assertEqual(str(effects.fuze_signature_source), "target_rcs_aspect")
     self.assertGreater(float(effects.fuze_target_signature), 0.0)
     self.assertGreater(float(effects.fuze_signature_scale), 0.0)
     self.assertLessEqual(float(effects.fuze_effective_reliability), 1.0)
+    self.assertEqual(str(effects.fuze_sensor_opportunity_source), "proximity_sensor_window")
+    self.assertGreater(float(effects.fuze_sensor_opportunity_score), 0.0)
+    self.assertTrue(bool(effects.fuze_terminal_track_valid))
+    self.assertTrue(bool(effects.fuze_target_detected))
+    self.assertEqual(str(effects.fuze_target_detection_source), "target_rcs_aspect")
+    self.assertGreaterEqual(
+      float(effects.fuze_target_detection_confidence),
+      float(effects.fuze_target_detection_threshold),
+    )
+    self.assertEqual(str(effects.detonation_point_source), "sensor_window_delay_solution")
+    self.assertGreater(float(effects.fuze_mechanism_coverage_score), 0.0)
     self.assertGreater(float(effects.detonation_time_s), float(effects.nearest_approach_time_s))
     self.assertAlmostEqual(
       float(effects.detonation_time_s) - float(effects.nearest_approach_time_s),
@@ -296,6 +329,84 @@ class FuzeRuntimeMixin:
     self.assertIsNotNone(damage_trace)
     assert damage_trace is not None
     self.assertEqual(int(damage_trace.damage_report_id), int(report.report_id))
+
+  def test_proximity_fuze_sensor_window_can_fail_before_detonation(self) -> None:
+    sim = _make_baseline_kernel()
+    sim.set_time_step(0.02)
+
+    profile = ef_py.FuzeProfile()
+    profile.type = "radar_proximity"
+    profile.trigger_radius_m = 8.0
+    profile.delay_s = 0.0
+    profile.reliability = 1.0
+    profile.synthetic = False
+    profile.provenance = "test_target_not_detected_record"
+
+    tuning = sim.get_missile_tuning()
+    tuning.fuze_profile = profile
+    tuning.has_fuze_profile = True
+    sim.set_missile_tuning(tuning)
+
+    blue_id, red_id = _spawn_geometry_pair(
+      sim,
+      red_x=0.0,
+      red_y=22000.0,
+      red_heading=180.0,
+      red_vx=0.0,
+      red_vy=-250.0,
+    )
+    missile_id = int(sim.fire_missile(blue_id, red_id))
+    self.assertGreater(missile_id, 0)
+
+    result = _drive_missile_with_truth_track(
+      sim,
+      missile_id,
+      red_id,
+      max_steps=3600,
+    )
+    self.assertFalse(bool(result["missile_active"]))
+    self.assertLess(float(result["proximity_min_dist_m"]), 8.0)
+
+    events = sim.export_recent_engagement_events()
+    self.assertEqual(len(events.nearest_approach_events), 1)
+    self.assertEqual(len(events.fuze_evaluation_events), 1)
+    self.assertEqual(len(events.effects_events), 1)
+    nearest = events.nearest_approach_events[-1]
+    fuze = events.fuze_evaluation_events[-1]
+    effects = events.effects_events[-1]
+
+    self.assertEqual(str(nearest.header.reason), "target_not_detected")
+    self.assertEqual(str(fuze.header.reason), "target_not_detected")
+    self.assertFalse(bool(fuze.armed))
+    self.assertFalse(bool(fuze.triggered))
+    self.assertEqual(str(fuze.failure_reason), "target_not_detected")
+    self.assertEqual(str(fuze.sensor_opportunity_source), "proximity_sensor_window")
+    self.assertGreater(float(fuze.sensor_opportunity_score), 0.0)
+    self.assertTrue(bool(fuze.terminal_track_valid))
+    self.assertFalse(bool(fuze.target_detected))
+    self.assertEqual(str(fuze.target_detection_source), "target_rcs_aspect")
+    self.assertLess(
+      float(fuze.target_detection_confidence),
+      float(fuze.target_detection_threshold),
+    )
+    self.assertEqual(str(fuze.detonation_point_source), "nearest_point_fallback")
+    self.assertGreater(float(fuze.mechanism_coverage_score), 0.0)
+
+    self.assertEqual(str(effects.outcome_state), "target_not_detected")
+    self.assertAlmostEqual(float(effects.confidence), 0.0, delta=1.0e-9)
+    self.assertEqual(str(effects.fuze_sensor_opportunity_source), "proximity_sensor_window")
+    self.assertGreater(float(effects.fuze_sensor_opportunity_score), 0.0)
+    self.assertTrue(bool(effects.fuze_terminal_track_valid))
+    self.assertFalse(bool(effects.fuze_target_detected))
+    self.assertEqual(str(effects.fuze_target_detection_source), "target_rcs_aspect")
+    self.assertLess(
+      float(effects.fuze_target_detection_confidence),
+      float(effects.fuze_target_detection_threshold),
+    )
+    self.assertEqual(str(effects.detonation_point_source), "nearest_point_fallback")
+    self.assertGreater(float(effects.fuze_mechanism_coverage_score), 0.0)
+    self.assertEqual(int(effects.component_hit_count), 0)
+    self.assertEqual(int(effects.component_failure_count), 0)
 
   def test_fuze_event_records_detonation_attitude_evidence(self) -> None:
     sim = _make_baseline_kernel()

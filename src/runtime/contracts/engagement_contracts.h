@@ -35,16 +35,21 @@ inline constexpr std::string_view kLethalityReasonFuzeNoDetonation = "fuze_no_de
 inline constexpr std::string_view kLethalityReasonFuzeNoTerminalTrack = "fuze_no_terminal_track";
 inline constexpr std::string_view kLethalityReasonMissOutsideTriggerRadius =
     "miss_outside_trigger_radius";
+inline constexpr std::string_view kLethalityReasonOutsideSensorWindow =
+    "outside_sensor_window";
+inline constexpr std::string_view kLethalityReasonTargetNotDetected = "target_not_detected";
 inline constexpr std::string_view kLethalityReasonMissileTimeout = "missile_timeout";
 inline constexpr std::string_view kLethalityReasonPlatformConsequenceProjection =
     "generic_research_platform_consequence_projection";
 inline constexpr std::string_view kLethalityReasonLifecycleProjection =
     "transitional_damage_report_projection";
 
-inline constexpr std::array<std::string_view, 4> kLethalityChainTerminalNegativeReasons = {
+inline constexpr std::array<std::string_view, 6> kLethalityChainTerminalNegativeReasons = {
     kLethalityReasonFuzeNoDetonation,
     kLethalityReasonFuzeNoTerminalTrack,
     kLethalityReasonMissOutsideTriggerRadius,
+    kLethalityReasonOutsideSensorWindow,
+    kLethalityReasonTargetNotDetected,
     kLethalityReasonMissileTimeout,
 };
 
@@ -111,6 +116,15 @@ struct FuzeEvaluationEvent {
     double contact_penetration_depth_m = 0.0;
     double contact_surface_tolerance_m = 0.0;
     bool contact_inside_hitbox = false;
+    std::string sensor_opportunity_source = "none";
+    double sensor_opportunity_score = 0.0;
+    bool terminal_track_valid = false;
+    bool target_detected = false;
+    std::string target_detection_source = "none";
+    double target_detection_confidence = 0.0;
+    double target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+    double mechanism_coverage_score = 0.0;
     bool direct_hitbox_intersection = false;
 };
 
@@ -400,6 +414,15 @@ struct EffectsEvent {
     double fuze_contact_penetration_depth_m = 0.0;
     double fuze_contact_surface_tolerance_m = 0.0;
     bool fuze_contact_inside_hitbox = false;
+    std::string fuze_sensor_opportunity_source = "none";
+    double fuze_sensor_opportunity_score = 0.0;
+    bool fuze_terminal_track_valid = false;
+    bool fuze_target_detected = false;
+    std::string fuze_target_detection_source = "none";
+    double fuze_target_detection_confidence = 0.0;
+    double fuze_target_detection_threshold = 0.0;
+    std::string detonation_point_source = "unknown";
+    double fuze_mechanism_coverage_score = 0.0;
     bool direct_hitbox_intersection = false;
     std::uint32_t projected_hitbox_count = 0;
     double spatial_effect_scale = 0.0;
