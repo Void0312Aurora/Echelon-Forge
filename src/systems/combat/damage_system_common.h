@@ -1049,11 +1049,15 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const double event_closure_mps =
                     std::max(closure_mps, std::max(0.0, m[i].filtered_closing_speed_mps));
                 double fuse = std::max(1e-6, effective_trigger_radius_m);
-                double quality = contact_fuze
-                                     ? std::clamp(1.0 - detonation_metric_m / fuse, 0.0, 1.0)
-                                 : online_sensor_trigger
-                                     ? std::clamp(1.0 - dist / fuse, 0.0, 1.0)
-                                     : std::clamp(1.0 - min_dist / fuse, 0.0, 1.0);
+                const bool online_entered_trigger_radius =
+                    online_sensor_trigger && min_dist <= effective_trigger_radius_m;
+                const double quality_metric_m =
+                    contact_fuze ? detonation_metric_m
+                    : online_sensor_trigger && !closing && online_entered_trigger_radius
+                        ? min_dist
+                    : online_sensor_trigger ? dist
+                                            : min_dist;
+                double quality = std::clamp(1.0 - quality_metric_m / fuse, 0.0, 1.0);
                 const DamageFuzeSignatureEvidence fuze_signature =
                     contact_fuze
                         ? DamageFuzeSignatureEvidence{"contact_surface", 0.0, 1.0, fuze_reliability}
@@ -1065,21 +1069,27 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const DamageFuzeSurrogateEvidence fuze_surrogate = damage_fuze_surrogate_evidence(
                     m[i], fuze_type, fuze_signature, quality, event_closure_mps, contact_fuze,
                     terminal_track_valid, online_sensor_trigger);
+                const bool online_sensor_missed_target =
+                    online_sensor_trigger && online_entered_trigger_radius &&
+                    !fuze_surrogate.target_detected;
                 if (detonation_metric_m > effective_trigger_radius_m) {
                     if (online_sensor_trigger && closing) {
                         continue;
                     }
-                    damage_record_nearest_approach_event(
-                        it.entity(i), m[i], recorder_ref,
-                        std::string(kLethalityReasonMissOutsideTriggerRadius), current_time,
-                        m[i].proximity_min_time_s, min_dist, event_closure_mps);
-                    damage_record_fuze_evaluation_event(
-                        it.entity(i), m[i], recorder_ref,
-                        std::string(kLethalityReasonMissOutsideTriggerRadius), false, false,
-                        current_time, m[i].fuze_profile.delay_s, fuze_reliability, 1.0,
-                        trigger_radius_m, contact_fuze, contact_evidence, false, fuze_surrogate);
-                    it.entity(i).destruct();
-                    continue;
+                    if (!online_sensor_missed_target) {
+                        damage_record_nearest_approach_event(
+                            it.entity(i), m[i], recorder_ref,
+                            std::string(kLethalityReasonMissOutsideTriggerRadius), current_time,
+                            m[i].proximity_min_time_s, min_dist, event_closure_mps);
+                        damage_record_fuze_evaluation_event(
+                            it.entity(i), m[i], recorder_ref,
+                            std::string(kLethalityReasonMissOutsideTriggerRadius), false, false,
+                            current_time, m[i].fuze_profile.delay_s, fuze_reliability, 1.0,
+                            trigger_radius_m, contact_fuze, contact_evidence, false,
+                            fuze_surrogate);
+                        it.entity(i).destruct();
+                        continue;
+                    }
                 }
 
                 if (!contact_fuze && !fuze_surrogate.terminal_track_valid) {
