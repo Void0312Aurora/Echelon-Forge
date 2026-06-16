@@ -72,13 +72,13 @@ still not accepted.
   blast-fragmentation package is accepted as non-authoritative evidence, and
   G4/G5 research packets are closed. Stock authority, Pk, and deterministic
   fuze authority are still not released.
-- The A9 high-fidelity weapon system subproject has been created at
+- The A9 high-fidelity weapon system subproject is complete at
   [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md).
-  It upgrades six weapon subsystems (guidance, seeker, autopilot, fuze,
-  aerodynamics, warhead) from engineering-proxy fidelity toward research-grade
-  fidelity, while keeping all authority boundaries sealed. Status:
-  `accepted_with_residuals` — 15 clusters pass, 3 open residuals, zero
-  regressions vs main.
+  Six weapon subsystems upgraded from engineering-proxy fidelity toward
+  research-grade fidelity; all authority boundaries sealed. Status:
+  `accepted_with_residuals` — 23 clusters pass, 5 deferred, 2 open residuals
+  (R2 EKF validation, R4 Mach Cd₀ table). Zero regressions vs main.
+  Archived at [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 - The A8 damage-effect chain now has a lightweight pointer at
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the
   full package lives under

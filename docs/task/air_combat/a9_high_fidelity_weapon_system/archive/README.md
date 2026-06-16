@@ -1,7 +1,7 @@
 # Archive
 
-Status: `2026-06-16` — no historical records archived yet.
+Status: `2026-06-16` — subproject complete, evidence package at
+[../../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](../../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 
-This directory will hold superseded local records after current README, status,
-or acceptance surfaces exist. See parent [README.md](../README.md) for the
-archive policy.
+Contents: acceptance boundary, authority refusals, evidence artifact index,
+C++ file inventory, test regression record.
