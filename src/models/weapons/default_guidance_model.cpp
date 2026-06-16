@@ -830,22 +830,28 @@ class DefaultGuidanceModel : public IGuidanceModel {
 
             // APN: target-acceleration feed-forward.
             // a_APN = N' * Vc * λ̇  +  apn_target_accel_gain * N' * range * λ̈
-            // where λ̈ is estimated from bearing/elevation rate derivative.
+            // where λ̈ is estimated from bearing/elevation rate derivative,
+            // low-pass filtered to suppress differentiator noise.
             if (missile.apn_target_accel_gain > 0.0 && missile.apn_rate_history_valid &&
                 dt > 1.0e-6) {
-                const double bearing_accel_rad_s2 =
+                const double raw_bearing_accel_rad_s2 =
                     (missile.bearing_rate_deg_s - missile.prev_bearing_rate_deg_s) / dt *
                     M_PI / 180.0;
-                const double elevation_accel_rad_s2 =
+                const double raw_elevation_accel_rad_s2 =
                     (missile.elevation_rate_deg_s - missile.prev_elevation_rate_deg_s) / dt *
                     M_PI / 180.0;
+                const double tau_s = MissileGuidanceDefaults::kApnAccelFilterTauS;
+                missile.filtered_bearing_accel_rad_s2 = missile_guidance::exp_smooth(
+                    missile.filtered_bearing_accel_rad_s2, raw_bearing_accel_rad_s2, tau_s, dt);
+                missile.filtered_elevation_accel_rad_s2 = missile_guidance::exp_smooth(
+                    missile.filtered_elevation_accel_rad_s2, raw_elevation_accel_rad_s2, tau_s, dt);
                 const double apn_scale =
                     MissileGuidanceDefaults::kPnGainScale * nav_gain * missile.apn_target_accel_gain;
                 const Math::Vector3 apn_body_world = Math::body_to_world(
                     {
                         0.0,
-                        -apn_scale * range_m * bearing_accel_rad_s2,
-                        apn_scale * range_m * elevation_accel_rad_s2,
+                        -apn_scale * range_m * missile.filtered_bearing_accel_rad_s2,
+                        apn_scale * range_m * missile.filtered_elevation_accel_rad_s2,
                     },
                     transform);
                 commanded_accel = commanded_accel +
@@ -881,7 +887,18 @@ class DefaultGuidanceModel : public IGuidanceModel {
             missile.autopilot_rate_state_mps3 =
                 x2 + dt * (omega_n * omega_n * (accel_target - x1) -
                            2.0 * zeta * omega_n * x2);
-            missile.achieved_lateral_accel_mps2 = x1 + dt * missile.autopilot_rate_state_mps3;
+            double second_order_out = x1 + dt * missile.autopilot_rate_state_mps3;
+
+            if (tuning.autopilot_order >= 3) {
+                // First-order actuator lag (~30 Hz bandwidth) after second-order filter.
+                const double act_alpha =
+                    std::clamp(dt / (MissileGuidanceDefaults::kActuatorTauS + dt), 0.0, 1.0);
+                missile.autopilot_actuator_state_mps2 +=
+                    act_alpha * (second_order_out - missile.autopilot_actuator_state_mps2);
+                missile.achieved_lateral_accel_mps2 = missile.autopilot_actuator_state_mps2;
+            } else {
+                missile.achieved_lateral_accel_mps2 = second_order_out;
+            }
         } else {
             const double autopilot_alpha =
                 std::clamp(dt / (tuning.autopilot_tau_s + dt), 0.0, 1.0);

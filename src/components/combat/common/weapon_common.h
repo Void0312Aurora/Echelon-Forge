@@ -170,7 +170,10 @@ struct Missile {
     double prev_bearing_rate_deg_s = 0.0;
     double prev_elevation_rate_deg_s = 0.0;
     bool apn_rate_history_valid = false;
+    double filtered_bearing_accel_rad_s2 = 0.0;
+    double filtered_elevation_accel_rad_s2 = 0.0;
     double autopilot_rate_state_mps3 = 0.0;
+    double autopilot_actuator_state_mps2 = 0.0;
     int autopilot_order = 1;
     double autopilot_damping = 1.0;
     bool use_kalman_seeker = false;

@@ -401,13 +401,39 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
         0.70,
         1.28) * closure_blast_coupling_scale(closure);
 
+    const bool has_physics_warhead =
+        std::isfinite(missile.warhead_profile.gurney_constant_mps) &&
+        std::isfinite(missile.warhead_profile.explosive_mass_kg) &&
+        std::isfinite(missile.warhead_profile.case_mass_kg);
+
     if (family == "fragmentation" || family == "blast_fragmentation") {
-        const double fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
-        const double fragment_mass_kg =
-            std::clamp((0.36 * mass_kg) / fragment_count, 0.003, 0.055);
-        const double fragment_velocity_mps =
-            std::clamp(1120.0 + 18.0 * std::sqrt(mass_kg) + 0.18 * closure, 550.0, 1850.0) *
-            (0.42 + 0.58 * radius_quality);
+        double fragment_count, fragment_mass_kg, fragment_velocity_mps;
+
+        if (has_physics_warhead) {
+            // Physics-based: use authored fragment specs or derive from case mass.
+            const double C = missile.warhead_profile.explosive_mass_kg;
+            const double M = missile.warhead_profile.case_mass_kg;
+            const double gurney = missile.warhead_profile.gurney_constant_mps;
+            const double CM_ratio = C / std::max(1.0e-6, M);
+            const double V0 = gurney * std::sqrt(CM_ratio / (1.0 + 0.5 * CM_ratio));
+
+            fragment_count = std::isfinite(missile.warhead_profile.fragment_count)
+                                 ? missile.warhead_profile.fragment_count
+                                 : std::clamp(18.0 * (C + M), 80.0, 1200.0);
+            fragment_mass_kg = std::isfinite(missile.warhead_profile.fragment_mass_kg)
+                                   ? missile.warhead_profile.fragment_mass_kg
+                                   : std::clamp((0.36 * M) / fragment_count, 0.003, 0.055);
+            fragment_velocity_mps = std::clamp(V0, 550.0, 2500.0) *
+                                    (0.42 + 0.58 * radius_quality);
+        } else {
+            // Legacy empirical formulas (backward-compatible).
+            fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
+            fragment_mass_kg =
+                std::clamp((0.36 * mass_kg) / fragment_count, 0.003, 0.055);
+            fragment_velocity_mps =
+                std::clamp(1120.0 + 18.0 * std::sqrt(mass_kg) + 0.18 * closure, 550.0, 1850.0) *
+                (0.42 + 0.58 * radius_quality);
+        }
         evidence.fragment_energy_j =
             0.5 * fragment_mass_kg * fragment_velocity_mps * fragment_velocity_mps *
             std::clamp(spatial_sample.energy_scale, 0.05, 1.20);
