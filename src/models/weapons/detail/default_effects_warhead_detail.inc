@@ -425,6 +425,19 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
                                    : std::clamp((0.36 * M) / fragment_count, 0.003, 0.055);
             fragment_velocity_mps = std::clamp(V0, 550.0, 2500.0) *
                                     (0.42 + 0.58 * radius_quality);
+            // Atmospheric decay: V(s) = V₀ · exp(-Cd·ρ·A·s / (2m))
+            // Cd≈1.0 for supersonic fragment, ρ≈1.225 kg/m³ at sea level,
+            // A derived from fragment mass assuming steel sphere (ρ_steel≈7800 kg/m³).
+            {
+                const double frag_radius_m =
+                    std::cbrt((3.0 * fragment_mass_kg) / (4.0 * M_PI * 7800.0));
+                const double frag_area_m2 = M_PI * frag_radius_m * frag_radius_m;
+                const double decay_dist_m = std::max(0.0, distance_m - 2.0);
+                const double decay_factor = std::exp(
+                    -(1.0 * 1.225 * frag_area_m2 * decay_dist_m) /
+                    (2.0 * std::max(1.0e-6, fragment_mass_kg)));
+                fragment_velocity_mps *= std::clamp(decay_factor, 0.3, 1.0);
+            }
         } else {
             // Legacy empirical formulas (backward-compatible).
             fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);

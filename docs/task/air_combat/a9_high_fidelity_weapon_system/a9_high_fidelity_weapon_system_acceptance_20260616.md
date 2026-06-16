@@ -80,8 +80,9 @@ partially met with residual.
 - [x] Fragment velocity uses Gurney equation when `has_physics_warhead` is true
   (gurney_constant_mps + explosive_mass_kg + case_mass_kg configured):
   `V0 = √(2E) · √((C/M)/(1 + C/2M))`. Legacy empirical formula preserved as default.
-- [ ] Fragment velocity decay not yet implemented — **residual**: Gurney gives
-  initial velocity; atmospheric decay `V(s) = V0·exp(-Cd·ρ·A·s/(2m))` deferred.
+- [x] Fragment velocity decay: `V(s) = V0·exp(-Cd·ρ·A·s/(2m))` with
+  Cd=1.0, ρ=1.225 kg/m³, A from fragment mass (spherical steel assumption).
+  Clamped to [0.3, 1.0] decay factor. Physics path only.
 - [x] Continuous-rod velocity cap at 1,150 m/s (opt-in: requires
   `gurney_constant_mps` configured)
 - [x] Cutting threshold at 610 m/s striking velocity (opt-in)
@@ -102,7 +103,9 @@ partially met with residual.
 - [x] P4-A geometry sweep: CSV retained (12 data points: 4 geometries × 3 gain
   levels). Head-on/tail-chase limited by missile timeout; beam/HOB confirm
   feed-forward changes trajectory.
-- [ ] P4-B parameter sensitivity: not yet executed
+- [x] P4-B parameter sensitivity: 15 rows (3 params × 5 levels). autopilot_tau_s
+  dominant (range 1581→5652m); nav_gain modest (~100m); APN gain monotonic
+  degradation vs non-maneuvering target as expected.
 - [ ] P4-C side-by-side comparison summary: not yet executed
 
 ## Documentation

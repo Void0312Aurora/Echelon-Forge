@@ -344,6 +344,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("trigger_radius_m", &FuzeProfile::trigger_radius_m)
         .def_rw("delay_s", &FuzeProfile::delay_s)
         .def_rw("reliability", &FuzeProfile::reliability)
+        .def_rw("coverage_profile", &FuzeProfile::coverage_profile)
         .def_rw("synthetic", &FuzeProfile::synthetic)
         .def_rw("provenance", &FuzeProfile::provenance);
 

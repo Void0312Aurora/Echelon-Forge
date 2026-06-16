@@ -22,7 +22,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | P2-C1 | pass | main thread | 2026-06-16 | 2026-06-16 | Second-order state-space autopilot + order=3 actuator lag (τ=0.03s) |
 | P2-C2 | pass | main thread | 2026-06-16 | 2026-06-16 | autopilot_order/damping in MissileTuning/JSON/bindings |
 | P2-D1 | pass | main thread | 2026-06-16 | 2026-06-16 | hit_to_kill coverage penalty; PF-R4 preserved |
-| P2-D2 | deferred | — | — | — | Fuze refinement params deferred: existing coverage differentiation sufficient for current scope |
+| P2-D2 | pass | main thread | 2026-06-16 | 2026-06-16 | coverage_profile field in FuzeProfile (weapon_common.h, bindings, JSON loader) |
 | P2-E1 | pass | main thread | 2026-06-16 | 2026-06-16 | Configurable Mach breakpoints + power-on Cd0 ratio |
 | P2-E2 | pass | main thread | 2026-06-16 | 2026-06-16 | G5 params in MissileTuning/JSON/bindings pipeline |
 | P2-F1 | pass | main thread | 2026-06-16 | 2026-06-16 | Rod weld cap (1150 m/s) + cutting threshold (610 m/s) opt-in |
@@ -33,7 +33,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | **P3-C** | **planned** | main thread | — | — | Scenario JSON example exercising new params |
 | **P3-D** | **in_progress** | main thread | 2026-06-16 | — | Test suite run: 62 pre-existing failures (same as main), zero regressions introduced |
 | P4-A | pass | main thread | 2026-06-16 | 2026-06-16 | p4a_apn_geometry_sweep (12 rows: 4 geometries × 3 gain levels, CSV retained) |
-| P4-B | deferred | — | — | — | Parameter sensitivity sweep deferred: P4-A provides baseline evidence |
+| P4-B | pass | main thread | 2026-06-16 | 2026-06-16 | p4b_sensitivity_sweep (15 rows: 3 params × 5 levels, CSV retained) |
 | P4-C | deferred | — | — | — | A/B comparison deferred: P4-A CSV provides side-by-side evidence |
 | P5-A | planned | main thread | — | — | Acceptance closeout record |
 | P5-B | planned | main thread | — | — | Parent air_combat/README.md update |

@@ -476,6 +476,7 @@ void parse_fuze_json_fields(
     }
     profile.delay_s = src.value("delay_s", profile.delay_s);
     profile.reliability = std::clamp(src.value("reliability", profile.reliability), 0.0, 1.0);
+    profile.coverage_profile = src.value("coverage_profile", profile.coverage_profile);
     profile.synthetic = src.value("synthetic", false);
     profile.provenance = src.value("provenance", "authored_fuze_profile");
 
