@@ -329,6 +329,11 @@ void bind_core(nb::module_ &m) {
         .def_rw("mass_kg", &WarheadProfile::mass_kg)
         .def_rw("lethal_radius_m", &WarheadProfile::lethal_radius_m)
         .def_rw("damage_scalar", &WarheadProfile::damage_scalar)
+        .def_rw("explosive_mass_kg", &WarheadProfile::explosive_mass_kg)
+        .def_rw("case_mass_kg", &WarheadProfile::case_mass_kg)
+        .def_rw("gurney_constant_mps", &WarheadProfile::gurney_constant_mps)
+        .def_rw("fragment_mass_kg", &WarheadProfile::fragment_mass_kg)
+        .def_rw("fragment_count", &WarheadProfile::fragment_count)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -1088,6 +1093,11 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["warhead_profile_synthetic"] = missile->warhead_profile.synthetic;
                 out["warhead_damage_scalar_synthetic"] =
                     missile->warhead_profile.damage_scalar_synthetic;
+                out["warhead_explosive_mass_kg"] = missile->warhead_profile.explosive_mass_kg;
+                out["warhead_case_mass_kg"] = missile->warhead_profile.case_mass_kg;
+                out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
+                out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
+                out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;

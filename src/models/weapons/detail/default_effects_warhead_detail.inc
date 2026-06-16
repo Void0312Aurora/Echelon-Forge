@@ -446,21 +446,45 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
         const double rod_count = std::clamp(3.2 * mass_kg, 24.0, 96.0);
         const double rod_segment_mass_kg =
             std::clamp((0.42 * mass_kg) / rod_count, 0.035, 0.42);
-        double rod_velocity_mps =
-            std::clamp(920.0 + 0.16 * closure, 450.0, 1150.0) *
-            (0.50 + 0.50 * radius_quality);
-        const double rod_energy_j =
-            0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
-            std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
-        const double rod_striking_velocity_mps =
-            rod_velocity_mps *
-            std::exp(-0.012 * std::max(0.0, distance_m - 3.0));
-        const double cut_capacity_mm =
-            rod_striking_velocity_mps >= 610.0
-                ? (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
-                      pattern *
-                      std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35)
-                : 0.0;
+
+        const bool has_physics_warhead =
+            std::isfinite(missile.warhead_profile.gurney_constant_mps) &&
+            std::isfinite(missile.warhead_profile.explosive_mass_kg);
+
+        double rod_velocity_mps;
+        double cut_capacity_mm;
+
+        if (has_physics_warhead) {
+            // Physics-based: weld-limited cap + striking velocity decay + cutting threshold
+            rod_velocity_mps =
+                std::clamp(920.0 + 0.16 * closure, 450.0, 1150.0) *
+                (0.50 + 0.50 * radius_quality);
+            const double rod_striking_velocity_mps =
+                rod_velocity_mps *
+                std::exp(-0.004 * std::max(0.0, distance_m - 3.0));
+            const double rod_energy_j =
+                0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
+                std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
+            cut_capacity_mm =
+                rod_striking_velocity_mps >= 610.0
+                    ? (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
+                          pattern *
+                          std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35)
+                    : 0.0;
+        } else {
+            // Legacy: original empirical formulas (backward-compatible)
+            rod_velocity_mps =
+                std::clamp(920.0 + 0.16 * closure, 450.0, 1450.0) *
+                (0.50 + 0.50 * radius_quality);
+            const double rod_energy_j =
+                0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
+                std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
+            cut_capacity_mm =
+                (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
+                pattern *
+                std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35);
+        }
+
         evidence.rod_cut_margin = std::clamp(
             (cut_capacity_mm - armor_mm) / std::max(1.0, armor_mm + 1.0),
             0.0,

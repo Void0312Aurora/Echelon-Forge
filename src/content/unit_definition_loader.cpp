@@ -494,6 +494,11 @@ void parse_warhead_json_fields(
     profile.family = normalize_warhead_family(src.value("type", profile.family));
     profile.mass_kg = src.value("mass_kg", profile.mass_kg);
     profile.lethal_radius_m = src.value("lethal_radius", profile.lethal_radius_m);
+    profile.explosive_mass_kg = src.value("explosive_mass_kg", profile.explosive_mass_kg);
+    profile.case_mass_kg = src.value("case_mass_kg", profile.case_mass_kg);
+    profile.gurney_constant_mps = src.value("gurney_constant_mps", profile.gurney_constant_mps);
+    profile.fragment_mass_kg = src.value("fragment_mass_kg", profile.fragment_mass_kg);
+    profile.fragment_count = src.value("fragment_count", profile.fragment_count);
     if (src.contains("damage") && src["damage"].is_number()) {
         profile.damage_scalar = src["damage"].get<double>();
         profile.damage_scalar_synthetic = false;

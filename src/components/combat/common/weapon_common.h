@@ -15,6 +15,11 @@ struct WarheadProfile {
     double mass_kg = std::numeric_limits<double>::quiet_NaN();
     double lethal_radius_m = std::numeric_limits<double>::quiet_NaN();
     double damage_scalar = std::numeric_limits<double>::quiet_NaN();
+    double explosive_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double case_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double gurney_constant_mps = std::numeric_limits<double>::quiet_NaN();
+    double fragment_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double fragment_count = std::numeric_limits<double>::quiet_NaN();
     bool synthetic = true;
     bool damage_scalar_synthetic = true;
     std::string provenance = "synthetic_legacy_damage";
