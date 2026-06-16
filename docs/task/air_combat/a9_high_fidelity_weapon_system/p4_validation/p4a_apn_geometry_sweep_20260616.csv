@@ -1,0 +1,13 @@
+label,geometry,apn_gain,miss_distance_m,active,max_achieved_lateral_accel_mps2
+head_on apn=0.0,head_on,0.0,12550.351303356341,False,35.70286215179867
+head_on apn=0.5,head_on,0.5,12550.351303356341,False,35.70286215179867
+head_on apn=1.0,head_on,1.0,12550.351303356341,False,35.70286215179867
+tail_chase apn=0.0,tail_chase,0.0,2443.7389597588362,False,342.0262646779384
+tail_chase apn=0.5,tail_chase,0.5,2443.7389597588362,False,342.0262646779384
+tail_chase apn=1.0,tail_chase,1.0,2443.7389597588362,False,342.0262646779384
+beam apn=0.0,beam,0.0,9.794135021247648,False,342.3277451857521
+beam apn=0.5,beam,0.5,568.4365967316227,False,343.2327499999999
+beam apn=1.0,beam,1.0,883.318178950378,False,343.2327499999999
+high_off_boresight apn=0.0,high_off_boresight,0.0,73.96299493460074,False,234.87962140968014
+high_off_boresight apn=0.5,high_off_boresight,0.5,2074.1097026902507,False,343.2327499999999
+high_off_boresight apn=1.0,high_off_boresight,1.0,2421.110222123931,False,343.2327499999999
