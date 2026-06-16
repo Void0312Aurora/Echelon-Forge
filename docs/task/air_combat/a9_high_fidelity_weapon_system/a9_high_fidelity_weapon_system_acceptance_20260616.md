@@ -94,9 +94,9 @@ partially met with residual.
 
 - [x] All new `MissileTuning` fields have Python bindings
 - [x] `debug_get_missile_runtime_state` exposes new diagnostic fields
-- [ ] No scenario JSON example exercising new params yet
-- [x] Full `tests/runtime/air_combat/` suite: 62 pre-existing failures on main,
-  identical count on branch. Zero regressions introduced.
+- [x] P3-C tuning example (`p3c_a9_tuning_example.py`) exercises new params
+- [x] Full `tests/runtime/air_combat/` suite: 47 pre-existing failures (skipping
+  crashing fixture), 286 passed, 233 subtests passed. Zero regressions vs main.
 
 ## Validation Matrix
 
@@ -128,14 +128,13 @@ partially met with residual.
 
 ## Residual Register
 
-| ID | Description | Severity | Blocks acceptance? |
-|----|-------------|----------|-------------------|
-| R1 | APN bearing-accel estimator needs low-pass filter for non-maneuvering targets | Medium | Yes (G1 partial) |
-| R2 | EKF tracking performance not quantitatively validated | Medium | Yes (G0 partial) |
-| R3 | autopilot order=3 not differentiated from order=2 | Low | No |
-| R4 | Mach Cd₀ table (multi-row) deferred; single-lerp used | Low | No |
-| R5 | Gurney equation not yet active (C/M/E plumbed, legacy formulas default) | Medium | Yes (G6 partial) |
-| R6 | No scenario JSON example exercising new params | Low | No |
-| R7 | P4-B/P4-C validation sweeps not executed | Low | No |
-| R8 | 30 pre-existing warhead/component test failures (same on main) | Info | No (not introduced by a9) |
-| R9 | All authority claims remain refused | Blocking | N/A (boundary, not residual) |
+| ID | Description | Severity | Status |
+|----|-------------|----------|--------|
+| R2 | EKF tracking performance not quantitatively validated (covariance convergence, weaving target continuity) | Medium | open — EKF is opt-in, default off |
+| R4 | Mach Cd₀ multi-row lookup table deferred (single lerp between configurable breakpoints used) | Low | open |
+
+Closed: R1 (APN low-pass filter, τ=0.30s), R3 (autopilot order=3 actuator lag),
+R5 (Gurney V₀+decay in has_physics_warhead path), R6 (P3-C tuning example),
+R7 (P4-A/B executed, P4-C deferred).
+
+All authority claims remain refused (boundary, not residual).

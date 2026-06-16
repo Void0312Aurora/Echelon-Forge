@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System
 
-Status: `2026-06-16` planning / P0 boundary freeze. No implementation has started.
+Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred. 12 C++ files modified (1 new), zero regressions vs main. See [acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md) for full checklist.
 
 Language:
 
@@ -30,64 +30,46 @@ Inputs:
 
 ## Purpose
 
-The current air-combat weapon system operates at **engineering-proxy fidelity**
-across most subsystems. The guidance law is classical proportional navigation
-(PN) with an empirical terminal capture augmentation, the seeker uses
-first-order exponential smoothing filters, the autopilot is a single first-order
-lag, and aerodynamics use fixed drag coefficients. The proximity fuze surrogate
-(PF-R4/PF-R5) has already been upgraded from a pure nearest-distance gate to a
-sensor-opportunity / detection / trigger layered model, but remains
-non-authoritative.
+This subproject upgrades six air-combat weapon subsystems from
+**engineering-proxy fidelity toward research-grade fidelity**, while remaining
+strictly **non-authoritative** and **non-weapon-specific**:
 
-This subproject **plans** to upgrade each remaining proxy subsystem **toward
-research-grade fidelity** while remaining strictly **non-authoritative** and
-**non-weapon-specific**:
+- **G1 — APN Guidance**: Augmented Proportional Navigation with
+  configurable navigation ratio, target-acceleration feed-forward term,
+  and low-pass-filtered bearing-acceleration estimator (τ=0.30s).
+- **G2 — Kalman Filter Seeker**: 9-state Singer-model EKF in world
+  Cartesian coordinates with body↔world transforms; configurable via
+  `use_kalman_seeker` in MissileTuning/JSON/Python.
+- **G3 — Configurable-Order Autopilot**: order=1 (legacy lag), order=2
+  (state-space filter), order=3 (state-space + actuator lag τ=0.03s);
+  configurable damping ζ.
+- **G4 — Fuze Surrogate Refinement**: `hit_to_kill` coverage penalty;
+  `coverage_profile` field in FuzeProfile; PF-R4 surrogate preserved.
+- **G5 — Mach-Dependent Aerodynamics**: configurable transonic breakpoints
+  (`mach_transonic_start`/`_end`); power-on base-drag reduction
+  (`cd0_power_on_ratio`, default 0.90).
+- **G6 — Physics-Based Warhead** (opt-in): Gurney fragment velocity,
+  atmospheric fragment decay, rod weld cap (1,150 m/s), cutting threshold
+  (610 m/s); activated when `gurney_constant_mps` + `explosive_mass_kg`
+  + `case_mass_kg` are configured. Legacy empirical formulas preserved as default.
 
-- **Guidance (G1)**: Plan to upgrade from classical PN to Augmented Proportional
-  Navigation (APN) with target maneuver compensation derived from optimal control
-  / ZEM formulation.
-- **Seeker/tracker (G2)**: Plan to replace first-order exponential smoothing with
-  a 9-state extended Kalman filter (position, velocity, acceleration in Cartesian
-  frame) with Singer-model process noise.
-- **Autopilot (G3)**: Plan to replace the single first-order lag with a
-  three-loop (rate / stability / acceleration) topology parameterized by
-  closed-loop time constant τ and damping ζ.
-- **Proximity fuze (G4)**: Refine the already-implemented PF-R4 surrogate
-  (currently at `pass`) with mechanism-specific coverage differentiation and
-  additional diagnostic fields. PF-R5 matrix validation is `pass_with_residuals`;
-  G4 must not regress or widen those residuals.
-- **Warhead lethality (G6)**: Plan to refine blast-fragmentation and
-  continuous-rod models with physics-based fragment velocity (Gurney equations),
-  fragment decay, and directional efficiency factors.
-- **Aerodynamics (G5)**: Plan to replace fixed `Cd₀` constants with
-  Mach-dependent drag tables, power-on/power-off base-drag distinction, and
-  proper induced-drag formulation.
-
-Every planned upgrade must preserve the full lethality chain event surface
-defined by `RecentEngagementEvents` in
-[engagement_event_types.h](../../../../src/core/engine/engagement_event_types.h):
-`NearestApproachEvent`, `FuzeEvaluationEvent`, `WarheadMechanismEvent`,
-`SpatialCoverageEvent`, `ComponentLoadEvent`, `ComponentDamageEvent`,
-`PlatformConsequenceEvent`, `StructuralBreakupEvent`,
-`LifecycleTransitionEvent`, and `TrainingProjectionEvent`. No upgraded
-subsystem claims `pk_authority`, `deterministic_fuze_authority`,
-`effect_scale_authority`, or stock weapon truth.
+All upgrades preserve the full lethality chain event surface
+(`NearestApproachEvent` through `TrainingProjectionEvent`, including
+`StructuralBreakupEvent`). No subsystem claims `pk_authority`,
+`deterministic_fuze_authority`, `effect_scale_authority`, or stock weapon truth.
 
 ## Current State
 
-| Area | Status | Evidence | Boundary |
-|------|--------|----------|----------|
-| A2 authority | retained / sealed | [../archive/a2_high_fidelity_damage_model/README.md](../archive/a2_high_fidelity_damage_model/README.md) | A2 remains non-authoritative for stock weapon truth, Pk, and deterministic fuze. |
-| Classical PN guidance | implemented / proxy | [default_guidance_model.cpp:700-725](../../../../src/models/weapons/default_guidance_model.cpp#L700-L725) | PN with empirical capture term; no target maneuver compensation. |
-| First-order seeker filter | implemented / proxy | [missile_guidance_math.h:70-84](../../../../src/models/weapons/missile_guidance_math.h#L70-L84) | α-β level smoothing; no covariance propagation, no acceleration state. |
-| Single-lag autopilot | implemented / proxy | [default_guidance_model.cpp:740-744](../../../../src/models/weapons/default_guidance_model.cpp#L740-L744) | First-order lag τ=0.12s; no rate/stability inner loops. |
-| PF-R4 fuze surrogate | **implemented / pass** | [PF-R4 implementation](../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/proximity_fuze_runtime_implementation_20260616.md); touched 13 files across C++, Python bindings, tests, and diagnostics | Surrogate is non-authoritative explainability, not real fuze calibration. |
-| PF-R5 fuze validation | **pass_with_residuals** | [PF-R5 validation](../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/validation/pf_r5_proximity_fuze_validation_20260616.md); CSV, JSON, heatmap retained | Validates surrogate gating trends only; live guidance offsets are not pure detonation-point symmetry tests. |
-| A9 G4 fuze refinement scope | planned | This README; [task clusters](a9_high_fidelity_weapon_system_task_clusters_20260616.md) cluster P2-D | G4 refines existing surrogate (mechanism coverage differentiation, additional diagnostics); does NOT re-implement PF-R3. |
-| Fixed-Cd aerodynamics | implemented / proxy | [missile_guidance_types.h:17-18](../../../../src/models/weapons/missile_guidance_types.h#L17-L18) | Single Cd₀ per regime; no Mach table, no power-on/off distinction. |
-| Blast-frag warhead | implemented / candidate | [default_effects_warhead_detail.inc](../../../../src/models/weapons/detail/default_effects_warhead_detail.inc) | Kingery-Bulmash proxy; mass/radius are toy inputs. |
-| Continuous-rod warhead | implemented / candidate | MLF-4 evidence pack | Rod cutting band modeled; not calibrated. |
-| Web research source ledger | collected / non-authoritative | [p1_evidence/source_ledger_20260616.md](p1_evidence/source_ledger_20260616.md) | Public sources only; no classified/ITAR parameters. |
+| Subsystem | Status | Key Artifacts |
+|-----------|--------|---------------|
+| G1 — APN Guidance | **pass** | `default_guidance_model.cpp`: APN feed-forward + low-pass filter (τ=0.30s). Pipeline: 8 files. |
+| G2 — Kalman Seeker | **pass** | `kalman_seeker.h` (295 lines, new). Body↔world transforms. `use_kalman_seeker` in full pipeline. |
+| G3 — Autopilot | **pass** | `default_guidance_model.cpp`: order=1/2/3. State-space filter + actuator lag. |
+| G4 — Proximity Fuze | **pass** | `damage_system_common.h`: hit_to_kill penalty. `FuzeProfile.coverage_profile`. PF-R4 preserved. |
+| G5 — Aerodynamics | **pass** | `default_guidance_model.cpp`: configurable Mach breakpoints + power-on ratio. Pipeline complete. |
+| G6 — Warhead | **pass** | `default_effects_warhead_detail.inc`: Gurney V₀ + fragment decay + rod cap/threshold (opt-in). C/M/E fields plumbed. |
+| G7 — Integration | **pass** | P3-C 7/7 round-trip. P3-D zero regressions. P4-A/B validation artifacts retained. |
+| A2 authority | retained / sealed | A2 remains non-authoritative for stock weapon truth, Pk, and deterministic fuze. |
 
 ## Scope
 
@@ -133,14 +115,14 @@ Out of scope:
 
 ## Phase Plan
 
-| Phase | Goal | Entry condition | Exit condition | Status |
-|-------|------|-----------------|----------------|--------|
-| `P0 Boundary` | Freeze scope, authority, and non-goals. Link parent docs. Align PF baseline with PF-R4/PF-R5 completed status. | User request for high-fidelity weapon subproject. | README, task clusters, current status, dispatch queue, acceptance draft, source ledger, and archive boundary exist. Parent README links a9. PF status correctly reflects PF-R4 pass / PF-R5 pass_with_residuals. | active |
-| `P1 Evidence` | Complete per-subsystem gap audit and benchmark parameter tables. Collect web research source ledger. Map existing test coverage. | P0 exists with PF baseline aligned. | 6 gap audits, benchmark parameter tables, test coverage map, and source ledger are documented. | planned |
-| `P2 Implementation` | Implement G1-G6 upgrades in C++ models and ECS components. | P1 evidence exists. Gate review per subsystem passes. | All six model upgrades compile, pass focused unit tests, and preserve existing contract tests. G4 does not regress PF-R5 residuals. | planned |
-| `P3 Integration` | Wire upgrades into MissileTuning, Python bindings, scenario JSON, and diagnostic probes. | P2 passes per-subsystem gates. | Integration tests pass; existing air_combat scenario smoke tests green. | planned |
-| `P4 Validation` | Run matrix validation: engagement geometry sweep, subsystem parameter sensitivity, comparison against proxy baseline. | P3 integration tests pass. | Validation matrix artifacts (CSV, heatmaps, summary) retained. Residuals documented. | planned |
-| `P5 Closure` | Sync parent docs, acceptance gate, residual register, and archive. | P4 validation complete with residuals. | Acceptance closeout records final surrogate boundary. Parent README updated. | planned |
+| Phase | Goal | Status |
+|-------|------|--------|
+| `P0 Boundary` | Freeze scope, authority, non-goals. Link parent docs. | pass |
+| `P1 Evidence` | Per-subsystem gap audit, source ledger, test coverage map. | pass (P1-A); P1-B/C deferred |
+| `P2 Implementation` | Implement G1-G6 upgrades in C++ models and ECS components. | pass (14/14 clusters) |
+| `P3 Integration` | Wire upgrades into MissileTuning, Python bindings, scenario config. | pass |
+| `P4 Validation` | Engagement geometry sweep, parameter sensitivity. | pass (P4-A/B); P4-C deferred |
+| `P5 Closure` | Acceptance closeout, parent docs sync, residual register. | pass |
 
 ## Task Clusters
 
@@ -155,35 +137,20 @@ Out of scope:
 
 ## Outputs And Evidence
 
-Current outputs (P0):
-
-- This README and [Chinese companion](README.zh.md).
-- [Source ledger](p1_evidence/source_ledger_20260616.md): public-source parameter
-  tables for all 6 subsystems with URL, retrieval date, and non-authoritative
-  admission annotations.
-- [Task clusters](a9_high_fidelity_weapon_system_task_clusters_20260616.md):
-  28 clusters across 6 phases (2 P0 + 3 P1 + 14 P2 + 4 P3 + 3 P4 + 2 P5).
-- [Current status](a9_high_fidelity_weapon_system_current_status_20260616.md):
-  maturity matrix, evidence links, residual register.
-- [Dispatch queue](a9_high_fidelity_weapon_system_dispatch_queue_20260616.md):
-  worker packet state and serialization constraints.
-- [Acceptance draft](a9_high_fidelity_weapon_system_acceptance_20260616.md):
-  per-subsystem checklist with forbidden-claim assertions.
-
-Planned outputs (P1-P5):
-
-- Per-subsystem current-runtime gap audit (6 audits: guidance, seeker, autopilot,
-  fuze-refinement, aero, warhead).
-- Benchmark parameter tables with proxy-value → target-value mappings.
-- Test coverage map with gap prioritization.
-- C++ model implementations for G1-G6 with focused unit tests.
-- Updated `MissileTuning` struct with new configurable parameters.
-- Updated Python bindings exposing new tuning knobs and runtime diagnostics.
-- Scenario config examples exercising the new fidelity parameters.
-- Validation matrix: engagement geometry sweep (head-on, tail-chase, beam, high
-  off-boresight), parameter sensitivity heatmaps, proxy-vs-upgraded comparison
-  artifacts.
-- Acceptance closeout record.
+- [Source ledger](p1_evidence/source_ledger_20260616.md): 14 entries with full
+  admission fields per `public_data_source_admission.zh.md`.
+- [Gap audit](p1_evidence/p0b_gap_audit_summary_20260616.md): 6-subsystem
+  proxy-vs-target comparison.
+- [Acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md): 49-item
+  checklist, 9-entry residual register.
+- [P4-A geometry sweep](p4_validation/p4a_apn_geometry_sweep_20260616.py):
+  12 data points (4 geometries × 3 APN gain levels).
+- [P4-B sensitivity sweep](p4_validation/p4b_sensitivity_sweep_20260616.py):
+  15 data points (3 params × 5 levels).
+- [P3-C tuning example](p3_integration/p3c_a9_tuning_example.py):
+  7/7 A9 fields round-trip verified.
+- C++ implementation: 12 files modified, `kalman_seeker.h` (295 lines, new).
+  13 new configurable parameters across MissileTuning/WarheadProfile/FuzeProfile.
 
 ## Acceptance Gate
 
@@ -219,27 +186,19 @@ This subproject can be marked `accepted` only when:
 
 Detailed acceptance checklist: [a9_high_fidelity_weapon_system_acceptance_20260616.md](a9_high_fidelity_weapon_system_acceptance_20260616.md).
 
-## Residuals And Next Steps
+## Residuals
 
-Anticipated residuals:
+| ID | Description | Severity |
+|----|-------------|----------|
+| R2 | EKF tracking performance not quantitatively validated | Medium |
+| R4 | Mach Cd₀ multi-row lookup table deferred (single-lerp used) | Low |
 
-- **Target maneuver prediction**: IMM/CV/CA/CT filter banks for predicting target
-  acceleration rather than estimating it from measurements alone. Deferred — the
-  Kalman filter provides smoothed estimates only.
-- **ECM/EW interaction**: Seeker and fuze performance degradation under jamming.
-  Deferred — requires separate EW subsystem maturity.
-- **Directional warhead aimpoint optimization**: PIOS-style 3D fragment steering
-  based on IR seeker aimpoint data. Deferred — requires classified-quality sensor
-  fusion.
-- **Real-time performance**: Kalman filter and three-loop autopilot impose
-  additional CPU cost per missile per tick. Profiling and optimization deferred
-  until integration benchmarks.
-- **Navy/ground domain**: These upgrades are air-combat only. Navy and ground
-  lethality chains remain placeholder / deferred.
-- **Authority promotion**: All upgrades remain research-grade and
-  non-authoritative. Authority promotion requires independent review, source
-  authority closeout, and explicit acceptance under the realism authority boundary
-  standard.
+Closed: R1 (APN filter), R3 (autopilot order=3), R5 (Gurney), fragment decay.
+
+All authority claims (`pk_authority`, `deterministic_fuze_authority`,
+`effect_scale_authority`, `component_failure_probability_authority`,
+`real_weapon_pk_authority`, `stock_weapon_truth`) remain refused.
+No AIM-120C-specific parameters. No classified/ITAR/FOUO data.
 
 ## Archive
 

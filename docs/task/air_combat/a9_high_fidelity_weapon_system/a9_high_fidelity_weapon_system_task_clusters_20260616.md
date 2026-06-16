@@ -7,14 +7,11 @@ Parent: [README.md](README.md)
 ## Boundary Decision
 
 This task-cluster plan defines the finite, bounded work packets for the a9
-high-fidelity weapon system subproject. Each cluster maps to exactly one
-implementation or validation thread. No cluster claims `pk_authority`,
-`deterministic_fuze_authority`, or stock weapon truth. All public-source data
-is annotated as non-authoritative.
-
-Clusters are designed for sequential execution within each phase, with
-parallelism allowed where noted. A cluster that exceeds its round cap must
-stop and re-scope before a follow-up wave is dispatched.
+high-fidelity weapon system subproject. **Final statuses are tracked in the
+[dispatch queue](a9_high_fidelity_weapon_system_dispatch_queue_20260616.md)
+(23 pass, 5 deferred).** The tables below retain original planning estimates
+(dependencies, write sets, round caps); the Status column reflects the
+original plan, not the final outcome.
 
 ---
 

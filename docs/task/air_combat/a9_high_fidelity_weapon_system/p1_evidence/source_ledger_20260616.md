@@ -1,8 +1,7 @@
 # A9 Source Ledger — Public-Source Data Admission
 
-Status: `2026-06-16` P1 evidence — search clues graduated to draft ledger.
-All entries are `non-authoritative`. No entry grants `pk_authority`,
-`deterministic_fuze_authority`, `effect_scale_authority`, or stock weapon truth.
+Status: `2026-06-16` P1-A pass. 14 entries with full admission fields per
+`public_data_source_admission.zh.md`. All entries are `non-authoritative`.
 
 Parent: [../README.md](../README.md)
 Standard: [public_data_source_admission.zh.md](../../../../standards/foundation/public_data_source_admission.zh.md)
