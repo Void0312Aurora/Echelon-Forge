@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Task Clusters
 
-Status: `2026-06-16` planning / P0 boundary.
+Status: `2026-06-16` P2 complete (12 pass, 2 deferred). P4-A pass. Executing P3.
 
 Parent: [README.md](README.md)
 
