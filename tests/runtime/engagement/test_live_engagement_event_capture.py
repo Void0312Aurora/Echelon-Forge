@@ -39,6 +39,12 @@ def _normalized_cpp_parameters(parameters: str) -> str:
   return re.sub(r"\s+", " ", parameters).strip()
 
 
+def _contains_cpp_fragment(text: str, fragment: str) -> bool:
+  normalized_text = re.sub(r"\s+", " ", text)
+  normalized_fragment = re.sub(r"\s+", " ", fragment)
+  return normalized_fragment in normalized_text
+
+
 def _effects_damage_recorder_signatures(text: str) -> list[tuple[str, str]]:
   return [
     (match.group("name"), _normalized_cpp_parameters(match.group("params")))
@@ -166,7 +172,7 @@ def test_guidance_timeout_records_terminal_negative_event_before_destroying_miss
 
   assert "core/interfaces/engagement_event_recorder.h" in guidance
   assert "void record_missile_timeout_event(" in guidance
-  assert 'constexpr const char* kOutcomeState = "missile_timeout";' in guidance
+  assert _contains_cpp_fragment(guidance, 'constexpr const char *kOutcomeState = "missile_timeout";')
   assert 'nearest.header.reason = kReason;' in guidance
   assert 'fuze.failure_reason = kReason;' in guidance
   assert "effects.trigger_type = std::string(kLethalityReasonMissileTimeout);" in guidance
@@ -176,12 +182,13 @@ def test_guidance_timeout_records_terminal_negative_event_before_destroying_miss
     guidance,
     "if (missile.max_flight_time_s > 0.0 &&",
   )
-  assert (
+  timeout_call = (
     "record_missile_timeout_event(world, missile_entity, transform, velocity, missile, current_time);"
-    in timeout_block
   )
+  assert _contains_cpp_fragment(timeout_block, timeout_call)
   assert "missile_entity.destruct();" in timeout_block
-  assert timeout_block.index("record_missile_timeout_event(") < timeout_block.index(
+  normalized_timeout_block = re.sub(r"\s+", " ", timeout_block)
+  assert normalized_timeout_block.index("record_missile_timeout_event(") < normalized_timeout_block.index(
     "missile_entity.destruct();"
   )
 
@@ -278,9 +285,9 @@ def test_legacy_fire_and_debug_damage_paths_record_compatible_event_dtos() -> No
   )
   assert "std::make_unique<SimulationKernelWeaponReleaseDamageBridge>(*this)" in kernel_impl
   assert "*weapon_release_damage_bridge_" in kernel_impl
-  assert "IWeaponReleaseDamageBridge& damage_bridge" in services_header
-  assert "IWeaponReleaseDamageBridge& damage_bridge" in services_impl
-  assert "IWeaponReleaseDamageBridge& damage_bridge_" in release_service_header
+  assert _contains_cpp_fragment(services_header, "IWeaponReleaseDamageBridge &damage_bridge")
+  assert _contains_cpp_fragment(services_impl, "IWeaponReleaseDamageBridge &damage_bridge")
+  assert _contains_cpp_fragment(release_service_header, "IWeaponReleaseDamageBridge &damage_bridge_")
   assert "std::function" not in release_service_header
   assert "apply_proximity_hit_(" not in release_service
   assert "damage_bridge_.apply_proximity_hit(" in release_service

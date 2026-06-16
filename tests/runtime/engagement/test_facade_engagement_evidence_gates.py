@@ -16,8 +16,16 @@ def _read_repo_text(*parts: str) -> str:
   return Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
 
 
+def _signature_match(source: str, signature: str) -> re.Match[str]:
+  pattern = r"\s+".join(re.escape(part) for part in signature.split())
+  match = re.search(pattern, source)
+  if match is None:
+    raise AssertionError(f"could not locate signature {signature}")
+  return match
+
+
 def _function_body(source: str, signature: str) -> str:
-  start = source.index(signature)
+  start = _signature_match(source, signature).start()
   body_start = source.index("{", start)
   depth = 0
   for index in range(body_start, len(source)):
