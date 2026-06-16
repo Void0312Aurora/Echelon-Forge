@@ -446,6 +446,61 @@ class MissileDynamicsRuntimeMixin:
 
     self.assertGreater(fast_achieved, slow_achieved + 80.0)
 
+  def test_third_order_autopilot_keeps_independent_filter_state(self) -> None:
+    def make_ordered_launch(order: int) -> tuple[object, int, int]:
+      sim = _make_kernel()
+      tuning = sim.get_missile_tuning()
+      tuning.nav_gain = 10.0
+      tuning.max_lateral_g = 30.0
+      tuning.max_accel_response_g_per_s = 120.0
+      tuning.autopilot_tau_s = 0.12
+      tuning.autopilot_damping = 0.7
+      tuning.autopilot_order = order
+      sim.set_missile_tuning(tuning)
+      _, red_id, missile_id = _spawn_and_fire(sim, range_m=4000.0, bearing_deg=88.0)
+      return sim, red_id, missile_id
+
+    def sample_response(sim: object, red_id: int, missile_id: int) -> tuple[float | None, float | None, float]:
+      dt = sim.get_time_step()
+      t10: float | None = None
+      t20: float | None = None
+      peak_g = 0.0
+      for step_idx in range(180):
+        time_s = step_idx * dt
+        _set_contacts(
+          sim,
+          missile_id,
+          [_make_detection(red_id, range_m=4000.0, bearing_deg=88.0, timestamp=time_s)],
+        )
+        sim.step()
+        achieved_g = float(_missile_runtime(sim, missile_id)["achieved_lateral_accel_mps2"]) / 9.80665
+        peak_g = max(peak_g, achieved_g)
+        if t10 is None and achieved_g >= 10.0:
+          t10 = time_s
+        if t20 is None and achieved_g >= 20.0:
+          t20 = time_s
+      return t10, t20, peak_g
+
+    order2_sim, order2_red, order2_id = make_ordered_launch(2)
+    order3_sim, order3_red, order3_id = make_ordered_launch(3)
+
+    _, order2_t20, order2_peak_g = sample_response(order2_sim, order2_red, order2_id)
+    order3_t10, order3_t20, order3_peak_g = sample_response(order3_sim, order3_red, order3_id)
+
+    if order2_t20 is None or order3_t10 is None or order3_t20 is None:
+      self.fail(
+        "expected order=2 and order=3 autopilots to reach 20g/10g in the "
+        f"sample window; order2_t20={order2_t20}, order3_t10={order3_t10}, "
+        f"order3_t20={order3_t20}, order2_peak={order2_peak_g:.2f}g, "
+        f"order3_peak={order3_peak_g:.2f}g"
+      )
+
+    self.assertGreater(order2_peak_g, 20.0)
+    self.assertGreater(order3_peak_g, 20.0)
+    self.assertLess(order3_t10, 1.6)
+    self.assertLess(order3_t20, 2.6)
+    self.assertLess(order3_t20, order2_t20 + 0.8)
+
   def test_shared_max_lateral_g_changes_guidance_cap(self) -> None:
     low_sim = _make_kernel()
     low_tuning = low_sim.get_missile_tuning()

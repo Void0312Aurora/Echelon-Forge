@@ -173,6 +173,7 @@ struct Missile {
     bool apn_rate_history_valid = false;
     double filtered_bearing_accel_rad_s2 = 0.0;
     double filtered_elevation_accel_rad_s2 = 0.0;
+    double autopilot_filter_state_mps2 = 0.0;
     double autopilot_rate_state_mps3 = 0.0;
     double autopilot_actuator_state_mps2 = 0.0;
     int autopilot_order = 1;
@@ -281,6 +282,9 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.current_speed_mps = std::max(0.0, state.launch_speed_mps);
     missile.commanded_lateral_accel_mps2 = 0.0;
     missile.achieved_lateral_accel_mps2 = 0.0;
+    missile.autopilot_filter_state_mps2 = 0.0;
+    missile.autopilot_rate_state_mps3 = 0.0;
+    missile.autopilot_actuator_state_mps2 = 0.0;
     missile.burnout_time_s = state.burnout_time_s;
     missile.boost_duration_s = std::max(0.0, state.boost_duration_s);
     missile.sustain_duration_s = std::max(0.0, state.sustain_duration_s);

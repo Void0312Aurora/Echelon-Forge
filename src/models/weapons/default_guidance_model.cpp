@@ -882,31 +882,43 @@ class DefaultGuidanceModel : public IGuidanceModel {
             const double omega_n =
                 1.0 / std::max(0.001, tuning.autopilot_tau_s);
             const double zeta = std::clamp(tuning.autopilot_damping, 0.1, 2.0);
-            const double x1 = missile.achieved_lateral_accel_mps2;
+            const double x1 = missile.autopilot_filter_state_mps2;
             const double x2 = missile.autopilot_rate_state_mps3;
             missile.autopilot_rate_state_mps3 =
                 x2 + dt * (omega_n * omega_n * (accel_target - x1) -
                            2.0 * zeta * omega_n * x2);
-            double second_order_out = x1 + dt * missile.autopilot_rate_state_mps3;
+            missile.autopilot_filter_state_mps2 =
+                std::clamp(x1 + dt * missile.autopilot_rate_state_mps3, 0.0,
+                           max_lateral_accel);
 
             if (tuning.autopilot_order >= 3) {
                 // First-order actuator lag (~30 Hz bandwidth) after second-order filter.
                 const double act_alpha =
                     std::clamp(dt / (MissileGuidanceDefaults::kActuatorTauS + dt), 0.0, 1.0);
                 missile.autopilot_actuator_state_mps2 +=
-                    act_alpha * (second_order_out - missile.autopilot_actuator_state_mps2);
+                    act_alpha * (missile.autopilot_filter_state_mps2 -
+                                 missile.autopilot_actuator_state_mps2);
                 missile.achieved_lateral_accel_mps2 = missile.autopilot_actuator_state_mps2;
             } else {
-                missile.achieved_lateral_accel_mps2 = second_order_out;
+                missile.autopilot_actuator_state_mps2 = missile.autopilot_filter_state_mps2;
+                missile.achieved_lateral_accel_mps2 = missile.autopilot_filter_state_mps2;
             }
         } else {
             const double autopilot_alpha =
                 std::clamp(dt / (tuning.autopilot_tau_s + dt), 0.0, 1.0);
             missile.achieved_lateral_accel_mps2 +=
                 autopilot_alpha * (accel_target - missile.achieved_lateral_accel_mps2);
+            missile.autopilot_filter_state_mps2 = missile.achieved_lateral_accel_mps2;
+            missile.autopilot_rate_state_mps3 = 0.0;
+            missile.autopilot_actuator_state_mps2 = missile.achieved_lateral_accel_mps2;
         }
         missile.achieved_lateral_accel_mps2 =
             std::clamp(missile.achieved_lateral_accel_mps2, 0.0, max_lateral_accel);
+        missile.autopilot_actuator_state_mps2 =
+            std::clamp(missile.autopilot_actuator_state_mps2, 0.0, max_lateral_accel);
+        if (tuning.autopilot_order < 3) {
+            missile.autopilot_filter_state_mps2 = missile.achieved_lateral_accel_mps2;
+        }
 
         Vec3 achieved_lateral_accel = {0.0, 0.0, 0.0};
         const double commanded_mag = missile_guidance::norm(commanded_accel);
