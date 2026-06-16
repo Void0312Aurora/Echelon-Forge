@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` P2 waves 1-6 complete (12 clusters pass, 2 partial). EKF pipeline now fully configurable (use_kalman_seeker in MissileTuning/JSON/bindings). LOS rates computed in both detection and coast paths. No regressions vs main (62 pre-existing failures on both). P3/P4/P5 remain planned.
+Status: `2026-06-16` P2 complete (14 of 14 clusters: 12 pass, 2 partial). P4-A geometry sweep complete. Acceptance review done — 5 open residuals (R1-R5), no authority claims. No regressions vs main (62 pre-existing failures on both). P4-B/P4-C/P5 remain planned.
 
 ## What Changed Since Prior Checkpoint
 

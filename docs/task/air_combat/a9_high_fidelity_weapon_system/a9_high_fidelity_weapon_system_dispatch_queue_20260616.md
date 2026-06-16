@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Dispatch Queue
 
-Status: `2026-06-16` P2 waves 1-3 complete (14 of 28 clusters). 10 pass, 4 partial. P3/P4/P5 remain planned.
+Status: `2026-06-16` P2 complete (14 of 14 P2 clusters). P4-A done. Acceptance review with 5 open residuals. 14 remaining: P4-B/C, P5-A/B, P3-B/C.
 
 Parent: [README.md](README.md)
 Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_high_fidelity_weapon_system_task_clusters_20260616.md)
