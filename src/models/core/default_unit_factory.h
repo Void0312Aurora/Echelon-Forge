@@ -1129,6 +1129,15 @@ class DefaultUnitFactory : public IUnitFactory {
                     ? default_factory_nonnegative_or(def.missile_tuning.induced_drag_k,
                                                      MissileGuidanceDefaults::kInducedDragScale)
                     : MissileGuidanceDefaults::kInducedDragScale;
+            if (def.has_missile_tuning) {
+                missile_runtime.guidance_cd0_mach_breakpoints =
+                    def.missile_tuning.cd0_mach_breakpoints;
+                missile_runtime.guidance_cd0_mach_values = def.missile_tuning.cd0_mach_values;
+                missile_runtime.guidance_induced_drag_k_mach_breakpoints =
+                    def.missile_tuning.induced_drag_k_mach_breakpoints;
+                missile_runtime.guidance_induced_drag_k_mach_values =
+                    def.missile_tuning.induced_drag_k_mach_values;
+            }
             missile_runtime.guidance_max_lateral_g =
                 def.has_missile_tuning
                     ? default_factory_positive_or(

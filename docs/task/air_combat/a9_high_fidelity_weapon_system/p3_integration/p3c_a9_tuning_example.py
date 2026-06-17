@@ -29,6 +29,10 @@ A9_FIELDS = {
     "mach_transonic_start": 0.80,
     "mach_transonic_end": 1.40,
     "cd0_power_on_ratio": 0.88,
+    "cd0_mach_breakpoints": [0.0, 0.8, 1.0, 1.2, 2.0, 3.0, 4.0],
+    "cd0_mach_values": [0.30, 0.34, 0.58, 0.52, 0.38, 0.33, 0.31],
+    "induced_drag_k_mach_breakpoints": [0.0, 0.8, 1.0, 1.2, 2.0, 3.0, 4.0],
+    "induced_drag_k_mach_values": [6.0, 7.5, 9.5, 10.5, 9.0, 8.0, 7.0],
 }
 
 

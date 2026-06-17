@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Archive Record
 
-Status: `accepted_with_residuals` on `2026-06-16`.
+Status: `accepted_with_residuals` on `2026-06-17` (R4 closed in follow-up; R2 remains open).
 Source: [../../a9_high_fidelity_weapon_system/](../../a9_high_fidelity_weapon_system/README.md)
 Branch: `feature/a9-high-fidelity-weapon-system` (13 commits, zero regressions vs main).
 
@@ -15,7 +15,7 @@ toward research-grade fidelity:
 | G2 — Kalman Seeker | 9-state Singer EKF in world Cartesian; `use_kalman_seeker` pipeline |
 | G3 — Autopilot | Configurable-order (1/2/3) with state-space filter + actuator lag |
 | G4 — Proximity Fuze | `hit_to_kill` coverage penalty; `FuzeProfile.coverage_profile` |
-| G5 — Aerodynamics | Configurable Mach breakpoints + power-on base-drag reduction |
+| G5 — Aerodynamics | Mach-indexed Cd₀/k(M) tables + power-on base-drag reduction |
 | G6 — Warhead | Gurney V₀ + fragment decay + rod cap/threshold (opt-in via C/M/E fields) |
 
 ## Cluster Summary
@@ -27,7 +27,10 @@ toward research-grade fidelity:
 | ID | Description | Severity |
 |----|-------------|----------|
 | R2 | EKF tracking performance not quantitatively validated | Medium |
-| R4 | Mach Cd₀ multi-row lookup table deferred (single-lerp used) | Low |
+
+Closed follow-up residual: R4 (Mach Cd₀/k(M) multi-row lookup tables
+implemented with engineering-proxy values; still non-authoritative and not
+weapon-specific).
 
 ## Deferred Clusters
 
@@ -57,8 +60,9 @@ No AIM-120C-specific parameters. No classified, ITAR, or FOUO data.
 | Acceptance checklist (49 items) | `a9_high_fidelity_weapon_system_acceptance_20260616.md` |
 | P4-A geometry sweep (12 rows) | `p4_validation/p4a_apn_geometry_sweep_20260616.{py,csv}` |
 | P4-B sensitivity sweep (15 rows) | `p4_validation/p4b_sensitivity_sweep_20260616.{py,csv}` |
-| P3-C tuning round-trip (7/7) | `p3_integration/p3c_a9_tuning_example.py` |
-| C++ implementation | 12 files modified, `kalman_seeker.h` (new, 295 lines) |
+| Mach aero proxy table | `p4_validation/mach_aero_table_proxy_20260617.md` |
+| P3-C tuning round-trip (11/11) | `p3_integration/p3c_a9_tuning_example.py` |
+| C++ implementation | A9 guidance/seeker/autopilot/fuze/aero/warhead implementation, including `kalman_seeker.h` |
 
 ## C++ Files Modified
 

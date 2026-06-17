@@ -391,6 +391,11 @@ void bind_core(nb::module_ &m) {
         .def_rw("cd0_subsonic", &MissileTuning::cd0_subsonic)
         .def_rw("cd0_supersonic", &MissileTuning::cd0_supersonic)
         .def_rw("induced_drag_k", &MissileTuning::induced_drag_k)
+        .def_rw("cd0_mach_breakpoints", &MissileTuning::cd0_mach_breakpoints)
+        .def_rw("cd0_mach_values", &MissileTuning::cd0_mach_values)
+        .def_rw("induced_drag_k_mach_breakpoints",
+                &MissileTuning::induced_drag_k_mach_breakpoints)
+        .def_rw("induced_drag_k_mach_values", &MissileTuning::induced_drag_k_mach_values)
         .def_rw("propellant_mass_kg", &MissileTuning::propellant_mass_kg)
         .def_rw("max_lateral_g", &MissileTuning::max_lateral_g)
         .def_rw("autopilot_tau_s", &MissileTuning::autopilot_tau_s)
@@ -1180,6 +1185,12 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_cd0_subsonic"] = missile->guidance_cd0_subsonic;
                 out["guidance_cd0_supersonic"] = missile->guidance_cd0_supersonic;
                 out["guidance_induced_drag_k"] = missile->guidance_induced_drag_k;
+                out["guidance_cd0_mach_breakpoints"] = missile->guidance_cd0_mach_breakpoints;
+                out["guidance_cd0_mach_values"] = missile->guidance_cd0_mach_values;
+                out["guidance_induced_drag_k_mach_breakpoints"] =
+                    missile->guidance_induced_drag_k_mach_breakpoints;
+                out["guidance_induced_drag_k_mach_values"] =
+                    missile->guidance_induced_drag_k_mach_values;
                 out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
                 out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
                 out["guidance_max_accel_response_g_per_s"] =

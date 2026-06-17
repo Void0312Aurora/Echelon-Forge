@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "components/combat/common/weapon_common.h"
 
@@ -39,6 +40,10 @@ struct MissileTuning {
     double cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
     double cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
     double induced_drag_k = std::numeric_limits<double>::quiet_NaN();
+    std::vector<double> cd0_mach_breakpoints;
+    std::vector<double> cd0_mach_values;
+    std::vector<double> induced_drag_k_mach_breakpoints;
+    std::vector<double> induced_drag_k_mach_values;
     double propellant_mass_kg = std::numeric_limits<double>::quiet_NaN();
     double max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();

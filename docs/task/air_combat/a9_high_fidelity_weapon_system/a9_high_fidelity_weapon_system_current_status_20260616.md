@@ -1,7 +1,7 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
-2 open residuals: R2 (EKF tracking validation), R4 (Mach Cd₀ multi-row table).
+Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
+1 open residual: R2 (EKF tracking validation).
 All authority claims refused. Zero regressions vs main (47 pre-existing failures,
 286 passed, 233 subtests passed).
 
@@ -13,19 +13,18 @@ All authority claims refused. Zero regressions vs main (47 pre-existing failures
 | Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h + body↔world transforms + use_kalman_seeker pipeline + LOS rates in detection/coast paths + closing speed from actual velocity. Tracking performance not yet quantitatively validated (R2). |
 | Autopilot (G3) | Single first-order lag | Configurable-order transfer function (1/2/3) | **pass** — order=1 (legacy lag), order=2 (state-space), order=3 (state-space + actuator lag τ=0.03s). τ/ζ in full pipeline. |
 | Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate + coverage_profile | **pass** — hit_to_kill coverage penalty; coverage_profile field in FuzeProfile; PF-R4 preserved. |
-| Aerodynamics (G5) | Fixed Cd₀ per regime | Configurable Mach breakpoints + power on/off | **pass** — mach_transonic_start/end + cd0_power_on_ratio in full pipeline. Multi-row Cd₀ table deferred (R4). |
+| Aerodynamics (G5) | Fixed Cd₀ per regime | Mach-indexed Cd₀/k(M) table + power on/off | **pass** — `cd0_mach_breakpoints`/`cd0_mach_values` and `induced_drag_k_mach_*` in full tuning/JSON/Python/runtime pipeline; invalid tables fall back to scalar lerp. |
 | Warhead (G6) | Kingery-Bulmash proxy / toy inputs | Physics-based fragment/rod model | **pass** — C/M/E fields + Gurney V₀ + fragment decay V(s) + rod cap 1150 m/s + cutting threshold 610 m/s (all opt-in via has_physics_warhead). Legacy empirical formulas preserved as default. |
-| Integration (G7) | — | Bindings + examples + diagnostics | **pass** — P3-C 7/7 fields round-trip; P3-D zero regressions; P4-A/P4-B validation artifacts retained. |
+| Integration (G7) | — | Bindings + examples + diagnostics | **pass** — P3-C 11/11 fields round-trip; P3-D zero regressions; P4-A/P4-B validation artifacts retained. |
 
 ## Residual Register
 
 | ID | Description | Severity | Blocks acceptance? |
 |----|-------------|----------|-------------------|
 | R2 | EKF tracking performance not quantitatively validated (covariance convergence, weaving target continuity) | Medium | No — EKF is opt-in, default off |
-| R4 | Mach Cd₀ multi-row lookup table deferred; current implementation uses single lerp between configurable breakpoints | Low | No — single-lerp is physically plausible |
 | — | All authority claims remain refused | Blocking | N/A — boundary, not residual |
 
-Closed residuals: R1 (APN estimator noise — low-pass filter added), R3 (autopilot order=3 — actuator lag added), R5 (Gurney not active — has_physics_warhead path implemented), fragment decay (atmospheric model added).
+Closed residuals: R1 (APN estimator noise — low-pass filter added), R3 (autopilot order=3 — actuator lag added), R4 (Mach Cd₀/k(M) table implemented with engineering-proxy values), R5 (Gurney not active — has_physics_warhead path implemented), fragment decay (atmospheric model added).
 
 ## Open Deferred Clusters
 
@@ -46,9 +45,10 @@ Closed residuals: R1 (APN estimator noise — low-pass filter added), R3 (autopi
 | Acceptance review | Doc | a9_high_fidelity_weapon_system_acceptance_20260616.md |
 | P4-A geometry sweep | Data | p4_validation/p4a_apn_geometry_sweep_20260616.{py,csv} |
 | P4-B sensitivity sweep | Data | p4_validation/p4b_sensitivity_sweep_20260616.{py,csv} |
+| Mach aero proxy table | Doc/Test | p4_validation/mach_aero_table_proxy_20260617.md |
 | P3-C tuning round-trip | Script | p3_integration/p3c_a9_tuning_example.py |
 | P3-D regression | Run | 47 failed (pre-existing), 286 passed, 233 subtests passed |
-| C++ implementation | Code | 12 files modified, kalman_seeker.h (new, 295 lines) |
+| C++ implementation | Code | A9 guidance/seeker/autopilot/fuze/aero/warhead implementation, including `kalman_seeker.h` and Mach aero tables |
 
 ## Explicit Overclaim Refusals
 

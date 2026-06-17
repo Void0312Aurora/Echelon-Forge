@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
@@ -165,6 +166,10 @@ struct Missile {
     double guidance_cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
     double guidance_cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
     double guidance_induced_drag_k = std::numeric_limits<double>::quiet_NaN();
+    std::vector<double> guidance_cd0_mach_breakpoints;
+    std::vector<double> guidance_cd0_mach_values;
+    std::vector<double> guidance_induced_drag_k_mach_breakpoints;
+    std::vector<double> guidance_induced_drag_k_mach_values;
     double guidance_max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double guidance_autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double guidance_max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
@@ -222,6 +227,10 @@ struct MissileSharedLaunchRuntimeState {
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
+    std::vector<double> cd0_mach_breakpoints;
+    std::vector<double> cd0_mach_values;
+    std::vector<double> induced_drag_k_mach_breakpoints;
+    std::vector<double> induced_drag_k_mach_values;
 };
 
 inline double clamp_missile_propellant_mass_kg(double total_mass_kg, double propellant_mass_kg) {
@@ -297,6 +306,10 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.guidance_cd0_subsonic = state.cd0_subsonic;
     missile.guidance_cd0_supersonic = state.cd0_supersonic;
     missile.guidance_induced_drag_k = state.induced_drag_k;
+    missile.guidance_cd0_mach_breakpoints = state.cd0_mach_breakpoints;
+    missile.guidance_cd0_mach_values = state.cd0_mach_values;
+    missile.guidance_induced_drag_k_mach_breakpoints = state.induced_drag_k_mach_breakpoints;
+    missile.guidance_induced_drag_k_mach_values = state.induced_drag_k_mach_values;
     missile.guidance_max_lateral_g = state.max_lateral_g;
     missile.guidance_autopilot_tau_s = state.autopilot_tau_s;
     missile.guidance_max_accel_response_g_per_s = state.max_accel_response_g_per_s;

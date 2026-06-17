@@ -1,7 +1,7 @@
 # A9 High-Fidelity Weapon System — Acceptance
 
-Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
-All forbidden claims remain refused. 2 open residuals (R2, R4).
+Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
+All forbidden claims remain refused. 1 open residual (R2).
 Zero regressions vs main.
 
 Parent: [README.md](README.md)
@@ -68,9 +68,12 @@ partially met with residual.
 - [x] Configurable Mach transonic breakpoints (`mach_transonic_start`/`_end`)
   replace hardcoded 0.8/1.4
 - [x] Power-on base-drag reduction (`cd0_power_on_ratio`, default 0.90)
-- [~] Mach-indexed Cd₀ **table** — **residual**: current implementation still
-  uses single subsonic/supersonic Cd₀ with lerp between configurable
-  breakpoints. A multi-row Mach table (`cd0_mach_table`) is deferred.
+- [x] Mach-indexed Cd₀ table implemented via `cd0_mach_breakpoints` and
+  `cd0_mach_values`; invalid/missing tables fall back to the legacy scalar
+  subsonic/supersonic lerp.
+- [x] Mach-indexed induced-drag table implemented via
+  `induced_drag_k_mach_breakpoints` and `induced_drag_k_mach_values`; missing
+  tables fall back to scalar `induced_drag_k`.
 - [x] Induced drag scales with lateral acceleration (existing behavior preserved)
 - [x] Speed profile physically plausible (no discontinuities, no negative drag)
 - [x] All G5 params in full MissileTuning/JSON/Python pipeline
@@ -131,10 +134,10 @@ partially met with residual.
 | ID | Description | Severity | Status |
 |----|-------------|----------|--------|
 | R2 | EKF tracking performance not quantitatively validated (covariance convergence, weaving target continuity) | Medium | open — EKF is opt-in, default off |
-| R4 | Mach Cd₀ multi-row lookup table deferred (single lerp between configurable breakpoints used) | Low | open |
+| R4 | Mach Cd₀ / induced-drag multi-row lookup tables | Low | closed — engineering-proxy tables implemented; non-authoritative |
 
 Closed: R1 (APN low-pass filter, τ=0.30s), R3 (autopilot order=3 actuator lag),
-R5 (Gurney V₀+decay in has_physics_warhead path), R6 (P3-C tuning example),
-R7 (P4-A/B executed, P4-C deferred).
+R4 (Mach Cd₀/k(M) tables), R5 (Gurney V₀+decay in has_physics_warhead path),
+R6 (P3-C tuning example), R7 (P4-A/B executed, P4-C deferred).
 
 All authority claims remain refused (boundary, not residual).

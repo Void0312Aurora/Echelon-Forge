@@ -202,6 +202,9 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.boost_thrust_n) || std::isfinite(tuning.sustain_thrust_n) ||
            std::isfinite(tuning.reference_area_m2) || std::isfinite(tuning.cd0_subsonic) ||
            std::isfinite(tuning.cd0_supersonic) || std::isfinite(tuning.induced_drag_k) ||
+           !tuning.cd0_mach_breakpoints.empty() || !tuning.cd0_mach_values.empty() ||
+           !tuning.induced_drag_k_mach_breakpoints.empty() ||
+           !tuning.induced_drag_k_mach_values.empty() ||
            std::isfinite(tuning.propellant_mass_kg) || std::isfinite(tuning.max_lateral_g) ||
            std::isfinite(tuning.autopilot_tau_s) ||
            std::isfinite(tuning.max_accel_response_g_per_s) ||
@@ -265,6 +268,10 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.cd0_subsonic = src.cd0_subsonic;
     out.cd0_supersonic = src.cd0_supersonic;
     out.induced_drag_k = src.induced_drag_k;
+    out.cd0_mach_breakpoints = src.cd0_mach_breakpoints;
+    out.cd0_mach_values = src.cd0_mach_values;
+    out.induced_drag_k_mach_breakpoints = src.induced_drag_k_mach_breakpoints;
+    out.induced_drag_k_mach_values = src.induced_drag_k_mach_values;
     out.propellant_mass_kg = src.propellant_mass_kg;
     out.max_lateral_g = src.max_lateral_g;
     out.autopilot_tau_s = src.autopilot_tau_s;
@@ -340,6 +347,18 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.cd0_subsonic)) base->cd0_subsonic = overlay.cd0_subsonic;
     if (std::isfinite(overlay.cd0_supersonic)) base->cd0_supersonic = overlay.cd0_supersonic;
     if (std::isfinite(overlay.induced_drag_k)) base->induced_drag_k = overlay.induced_drag_k;
+    if (!overlay.cd0_mach_breakpoints.empty()) {
+        base->cd0_mach_breakpoints = overlay.cd0_mach_breakpoints;
+    }
+    if (!overlay.cd0_mach_values.empty()) {
+        base->cd0_mach_values = overlay.cd0_mach_values;
+    }
+    if (!overlay.induced_drag_k_mach_breakpoints.empty()) {
+        base->induced_drag_k_mach_breakpoints = overlay.induced_drag_k_mach_breakpoints;
+    }
+    if (!overlay.induced_drag_k_mach_values.empty()) {
+        base->induced_drag_k_mach_values = overlay.induced_drag_k_mach_values;
+    }
     if (std::isfinite(overlay.propellant_mass_kg))
         base->propellant_mass_kg = overlay.propellant_mass_kg;
     if (std::isfinite(overlay.max_lateral_g)) base->max_lateral_g = overlay.max_lateral_g;
@@ -756,6 +775,11 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;
     missile.guidance_mach_transonic_end = resolved_tuning.mach_transonic_end;
     missile.guidance_cd0_power_on_ratio = resolved_tuning.cd0_power_on_ratio;
+    missile.guidance_cd0_mach_breakpoints = resolved_tuning.cd0_mach_breakpoints;
+    missile.guidance_cd0_mach_values = resolved_tuning.cd0_mach_values;
+    missile.guidance_induced_drag_k_mach_breakpoints =
+        resolved_tuning.induced_drag_k_mach_breakpoints;
+    missile.guidance_induced_drag_k_mach_values = resolved_tuning.induced_drag_k_mach_values;
     missile.use_kalman_seeker = resolved_tuning.use_kalman_seeker;
     missile.active = true;
     missile.warhead_profile = missile_warhead_profile;
@@ -812,6 +836,10 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
                                                    seeker_activation_range_m,
                                                    midcourse_datalink_supported,
                                                    terminal_seeker_active,
+                                                   resolved_tuning.cd0_mach_breakpoints,
+                                                   resolved_tuning.cd0_mach_values,
+                                                   resolved_tuning.induced_drag_k_mach_breakpoints,
+                                                   resolved_tuning.induced_drag_k_mach_values,
                                                });
 
     Sensor sensor{};

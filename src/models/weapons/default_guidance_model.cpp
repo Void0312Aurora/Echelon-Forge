@@ -4,7 +4,9 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <utility>
+#include <vector>
 
 #include "components/basic/common.h"
 #include "components/physics/dynamics.h"
@@ -52,6 +54,10 @@ struct GuidanceResolvedTuning {
     double cd0_power_on_ratio = MissileGuidanceDefaults::kCd0PowerOnRatio;
     double mach_transonic_start = MissileGuidanceDefaults::kMachTransonicStart;
     double mach_transonic_end = MissileGuidanceDefaults::kMachTransonicEnd;
+    std::vector<double> cd0_mach_breakpoints;
+    std::vector<double> cd0_mach_values;
+    std::vector<double> induced_drag_k_mach_breakpoints;
+    std::vector<double> induced_drag_k_mach_values;
     double autopilot_damping = 1.0;
     int autopilot_order = 1;
 };
@@ -92,6 +98,36 @@ double positive_or_nan_safe(double candidate, double fallback) {
 
 double finite_nonnegative_or(double candidate, double fallback) {
     return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
+}
+
+std::optional<double> lookup_mach_table(const std::vector<double>& breakpoints,
+                                        const std::vector<double>& values,
+                                        double mach) {
+    if (breakpoints.size() < 2 || breakpoints.size() != values.size() || !std::isfinite(mach)) {
+        return std::nullopt;
+    }
+    for (std::size_t i = 0; i < breakpoints.size(); ++i) {
+        if (!std::isfinite(breakpoints[i]) || !std::isfinite(values[i]) || values[i] <= 0.0) {
+            return std::nullopt;
+        }
+        if (i > 0 && breakpoints[i] <= breakpoints[i - 1]) {
+            return std::nullopt;
+        }
+    }
+    if (mach <= breakpoints.front()) {
+        return values.front();
+    }
+    if (mach >= breakpoints.back()) {
+        return values.back();
+    }
+    for (std::size_t i = 1; i < breakpoints.size(); ++i) {
+        if (mach <= breakpoints[i]) {
+            const double span = std::max(1.0e-6, breakpoints[i] - breakpoints[i - 1]);
+            const double frac = std::clamp((mach - breakpoints[i - 1]) / span, 0.0, 1.0);
+            return missile_guidance::lerp(values[i - 1], values[i], frac);
+        }
+    }
+    return std::nullopt;
 }
 
 std::array<double, 3> guidance_world_point_to_local_body(const Transform &target_transform,
@@ -380,6 +416,10 @@ GuidanceResolvedTuning resolve_tuning(flecs::entity missile_entity, const Missil
                                               MissileGuidanceDefaults::kCd0Supersonic);
     out.induced_drag_k = finite_nonnegative_or(missile.guidance_induced_drag_k,
                                                MissileGuidanceDefaults::kInducedDragScale);
+    out.cd0_mach_breakpoints = missile.guidance_cd0_mach_breakpoints;
+    out.cd0_mach_values = missile.guidance_cd0_mach_values;
+    out.induced_drag_k_mach_breakpoints = missile.guidance_induced_drag_k_mach_breakpoints;
+    out.induced_drag_k_mach_values = missile.guidance_induced_drag_k_mach_values;
     out.apn_target_accel_gain =
         finite_nonnegative_or(missile.apn_target_accel_gain,
                               MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
@@ -659,13 +699,20 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
         (mach - tuning.mach_transonic_start) /
             std::max(1.0e-6, tuning.mach_transonic_end - tuning.mach_transonic_start),
         0.0, 1.0);
-    double base_cd = missile_guidance::lerp(tuning.cd0_subsonic, tuning.cd0_supersonic, mach_frac);
+    double base_cd =
+        lookup_mach_table(tuning.cd0_mach_breakpoints, tuning.cd0_mach_values, mach)
+            .value_or(missile_guidance::lerp(tuning.cd0_subsonic, tuning.cd0_supersonic,
+                                             mach_frac));
     if (propulsion_active) {
         base_cd *= tuning.cd0_power_on_ratio;
     }
     const double lateral_frac =
         std::clamp(lateral_accel_mps2 / std::max(1.0, tuning.max_lateral_g * kGravity), 0.0, 1.0);
-    const double drag_coeff = base_cd + tuning.induced_drag_k * lateral_frac * lateral_frac;
+    const double induced_drag_k =
+        lookup_mach_table(tuning.induced_drag_k_mach_breakpoints,
+                          tuning.induced_drag_k_mach_values, mach)
+            .value_or(tuning.induced_drag_k);
+    const double drag_coeff = base_cd + induced_drag_k * lateral_frac * lateral_frac;
     drag_n = q_bar * tuning.reference_area_m2 * drag_coeff;
 
     if (propulsion_active) {

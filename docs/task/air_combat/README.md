@@ -76,8 +76,9 @@ still not accepted.
   [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md).
   Six weapon subsystems upgraded from engineering-proxy fidelity toward
   research-grade fidelity; all authority boundaries sealed. Status:
-  `accepted_with_residuals` — 23 clusters pass, 5 deferred, 2 open residuals
-  (R2 EKF validation, R4 Mach Cd₀ table). Zero regressions vs main.
+  `accepted_with_residuals` — 23 clusters pass, 5 deferred, 1 open residual
+  (R2 EKF validation); R4 Mach Cd₀/k(M) tables are closed with
+  engineering-proxy values. Zero regressions vs main.
   Archived at [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 - The A8 damage-effect chain now has a lightweight pointer at
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the

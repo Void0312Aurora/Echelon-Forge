@@ -224,6 +224,16 @@ mechanism shape, not new implementation.
 | authority_status | non-authoritative |
 | residual | Generic design estimates; not calibrated. |
 
+**Engineering proxy table (2026-06-17 follow-up):** A9 now accepts explicit
+Mach-indexed tables through `cd0_mach_breakpoints` / `cd0_mach_values` and
+`induced_drag_k_mach_breakpoints` / `induced_drag_k_mach_values`. The temporary
+proxy uses Mach breakpoints `[0.0, 0.8, 1.0, 1.2, 2.0, 3.0, 4.0]`, Cd₀ values
+`[0.30, 0.34, 0.58, 0.52, 0.38, 0.33, 0.31]`, and k(M) values
+`[6.0, 7.5, 9.5, 10.5, 9.0, 8.0, 7.0]`. This table follows the public-source
+shape above: low/subsonic drag, transonic peak, then supersonic decline. It is
+an engineering proxy only, not CFD, not flight-test calibration, and not
+weapon-specific.
+
 ---
 
 ## G6: Warhead Lethality

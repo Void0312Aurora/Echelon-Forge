@@ -1,6 +1,6 @@
 # A9 高保真武器系统
 
-状态：`2026-06-16` **accepted_with_residuals**。23 集群通过，5 推迟。详见英文 README 和验收文档。
+状态：`2026-06-17` **accepted_with_residuals**。23 集群通过，5 推迟，1 个开放残差（R2）。详见英文 README 和验收文档。
 
 语言：
 
@@ -29,7 +29,7 @@
 - **G2 — 卡尔曼滤波导引头**: 9 状态 Singer 模型 EKF（世界笛卡尔坐标系 + 机体↔世界转换）；通过 `use_kalman_seeker` 在 MissileTuning/JSON/Python 中可配。
 - **G3 — 可配阶数自动驾驶仪**: order=1（传统一阶滞后）、order=2（状态空间滤波器）、order=3（状态空间 + 执行器滞后 τ=0.03s）；阻尼 ζ 可配。
 - **G4 — 引信代理细化**: `hit_to_kill` 覆盖惩罚；`FuzeProfile.coverage_profile` 字段；PF-R4 代理保留。
-- **G5 — 马赫相关气动**: 可配跨音速断点；功率飞行减阻（`cd0_power_on_ratio`，默认 0.90）。
+- **G5 — 马赫相关气动**: 可配跨音速断点；功率飞行减阻（`cd0_power_on_ratio`，默认 0.90）；马赫索引 Cd₀/k(M) 工程代理表。
 - **G6 — 基于物理的战斗部**（opt-in）: Gurney 破片速度、大气衰减、连续杆焊接上限（1,150 m/s）、切割阈值（610 m/s）；配置 `gurney_constant_mps` + `explosive_mass_kg` + `case_mass_kg` 时激活。传统经验公式保留为默认。
 
 完整杀伤链事件面保留，所有权限声明拒绝。详见英文 [README.md](README.md)。
@@ -92,16 +92,17 @@
 - [差距审计](p1_evidence/p0b_gap_audit_summary_20260616.md)
 - [P4-A 几何扫描](p4_validation/p4a_apn_geometry_sweep_20260616.py)
 - [P4-B 灵敏度扫描](p4_validation/p4b_sensitivity_sweep_20260616.py)
+- [马赫气动代理表验证](p4_validation/mach_aero_table_proxy_20260617.md)
 - [P3-C 调优示例](p3_integration/p3c_a9_tuning_example.py)
 
 ## 残差
 
-| ID | 描述 | 严重度 |
-|----|------|--------|
-| R2 | EKF 跟踪性能未定量验证 | 中 |
-| R4 | 马赫 Cd₀ 多行表推迟（当前为单次 lerp） | 低 |
+| ID | 描述 | 状态 |
+|----|------|------|
+| R2 | EKF 跟踪性能未定量验证 | 开放 / 中 |
+| R4 | 马赫 Cd₀/k(M) 多行表已用工程代理值实现 | 已关闭 |
 
-已关闭: R1 (APN 滤波器), R3 (autopilot order=3), R5 (Gurney), 破片衰减。
+已关闭: R1 (APN 滤波器), R3 (autopilot order=3), R4 (马赫气动表), R5 (Gurney), 破片衰减。
 所有权限声明 (`pk_authority` 等) 保持拒绝。
 
 ## 存档

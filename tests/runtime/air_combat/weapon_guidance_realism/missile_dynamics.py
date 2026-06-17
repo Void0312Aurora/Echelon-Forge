@@ -206,6 +206,68 @@ class MissileDynamicsRuntimeMixin:
 
     self.assertGreater(sample_clean, sample_draggy + 35.0)
 
+  def test_cd0_mach_table_changes_high_speed_drag_cost(self) -> None:
+    proxy_breakpoints = [0.0, 0.8, 1.0, 1.2, 2.0, 3.0, 4.0]
+    table_cd0 = [0.80, 0.85, 1.10, 1.05, 0.95, 0.90, 0.85]
+
+    flat_sim = _make_kernel()
+    flat_tuning = flat_sim.get_missile_tuning()
+    flat_tuning.max_speed = 1800.0
+    flat_tuning.propellant_mass_kg = 24.0
+    flat_tuning.reference_area_m2 = 0.030
+    flat_tuning.boost_time_s = 1.2
+    flat_tuning.sustain_time_s = 1.2
+    flat_tuning.boost_thrust_n = 28000.0
+    flat_tuning.sustain_thrust_n = 12000.0
+    flat_tuning.cd0_subsonic = 0.24
+    flat_tuning.cd0_supersonic = 0.60
+    flat_sim.set_missile_tuning(flat_tuning)
+
+    table_sim = _make_kernel()
+    table_tuning = table_sim.get_missile_tuning()
+    table_tuning.max_speed = 1800.0
+    table_tuning.propellant_mass_kg = 24.0
+    table_tuning.reference_area_m2 = 0.030
+    table_tuning.boost_time_s = 1.2
+    table_tuning.sustain_time_s = 1.2
+    table_tuning.boost_thrust_n = 28000.0
+    table_tuning.sustain_thrust_n = 12000.0
+    table_tuning.cd0_subsonic = 0.24
+    table_tuning.cd0_supersonic = 0.24
+    table_tuning.cd0_mach_breakpoints = proxy_breakpoints
+    table_tuning.cd0_mach_values = table_cd0
+    table_sim.set_missile_tuning(table_tuning)
+
+    _, flat_red, flat_id = _spawn_and_fire(flat_sim, range_m=26000.0, bearing_deg=0.0)
+    _, table_red, table_id = _spawn_and_fire(table_sim, range_m=26000.0, bearing_deg=0.0)
+
+    runtime = _missile_runtime(table_sim, table_id)
+    self.assertEqual(list(runtime["guidance_cd0_mach_breakpoints"]), proxy_breakpoints)
+    self.assertEqual(list(runtime["guidance_cd0_mach_values"]), table_cd0)
+
+    flat_speed = 0.0
+    table_speed = 0.0
+    for step_idx in range(144):
+      t_flat = step_idx * flat_sim.get_time_step()
+      t_table = step_idx * table_sim.get_time_step()
+      _set_contacts(
+        flat_sim,
+        flat_id,
+        [_make_detection(flat_red, range_m=max(4000.0, 26000.0 - 350.0 * t_flat), bearing_deg=0.0, timestamp=t_flat)],
+      )
+      _set_contacts(
+        table_sim,
+        table_id,
+        [_make_detection(table_red, range_m=max(4000.0, 26000.0 - 350.0 * t_table), bearing_deg=0.0, timestamp=t_table)],
+      )
+      flat_sim.step()
+      table_sim.step()
+      if step_idx == 100:
+        flat_speed = _velocity_speed(flat_sim, flat_id)
+        table_speed = _velocity_speed(table_sim, table_id)
+
+    self.assertGreater(flat_speed, table_speed + 25.0)
+
   def test_shared_induced_drag_changes_turn_energy_loss(self) -> None:
     clean_sim = _make_kernel()
     clean_tuning = clean_sim.get_missile_tuning()
@@ -252,6 +314,62 @@ class MissileDynamicsRuntimeMixin:
         draggy_speed = _velocity_speed(draggy_sim, draggy_id)
 
     self.assertGreater(clean_speed, draggy_speed + 25.0)
+
+  def test_induced_drag_mach_table_changes_turn_energy_loss(self) -> None:
+    proxy_breakpoints = [0.0, 0.8, 1.0, 1.2, 2.0, 3.0, 4.0]
+    proxy_k = [6.0, 7.5, 9.5, 10.5, 9.0, 8.0, 7.0]
+
+    flat_sim = _make_kernel()
+    flat_tuning = flat_sim.get_missile_tuning()
+    flat_tuning.nav_gain = 10.0
+    flat_tuning.max_lateral_g = 24.0
+    flat_tuning.autopilot_tau_s = 0.03
+    flat_tuning.max_accel_response_g_per_s = 400.0
+    flat_tuning.reference_area_m2 = 0.020
+    flat_tuning.induced_drag_k = 1.5
+    flat_sim.set_missile_tuning(flat_tuning)
+
+    table_sim = _make_kernel()
+    table_tuning = table_sim.get_missile_tuning()
+    table_tuning.nav_gain = 10.0
+    table_tuning.max_lateral_g = 24.0
+    table_tuning.autopilot_tau_s = 0.03
+    table_tuning.max_accel_response_g_per_s = 400.0
+    table_tuning.reference_area_m2 = 0.020
+    table_tuning.induced_drag_k = 1.5
+    table_tuning.induced_drag_k_mach_breakpoints = proxy_breakpoints
+    table_tuning.induced_drag_k_mach_values = proxy_k
+    table_sim.set_missile_tuning(table_tuning)
+
+    _, flat_red, flat_id = _spawn_and_fire(flat_sim, range_m=6000.0, bearing_deg=85.0)
+    _, table_red, table_id = _spawn_and_fire(table_sim, range_m=6000.0, bearing_deg=85.0)
+
+    runtime = _missile_runtime(table_sim, table_id)
+    self.assertEqual(list(runtime["guidance_induced_drag_k_mach_breakpoints"]), proxy_breakpoints)
+    self.assertEqual(list(runtime["guidance_induced_drag_k_mach_values"]), proxy_k)
+
+    flat_speed = 0.0
+    table_speed = 0.0
+    for step_idx in range(120):
+      t_flat = step_idx * flat_sim.get_time_step()
+      t_table = step_idx * table_sim.get_time_step()
+      _set_contacts(
+        flat_sim,
+        flat_id,
+        [_make_detection(flat_red, range_m=6000.0, bearing_deg=85.0, timestamp=t_flat)],
+      )
+      _set_contacts(
+        table_sim,
+        table_id,
+        [_make_detection(table_red, range_m=6000.0, bearing_deg=85.0, timestamp=t_table)],
+      )
+      flat_sim.step()
+      table_sim.step()
+      if step_idx == 100:
+        flat_speed = _velocity_speed(flat_sim, flat_id)
+        table_speed = _velocity_speed(table_sim, table_id)
+
+    self.assertGreater(flat_speed, table_speed + 25.0)
 
   def test_shared_boost_and_sustain_thrust_change_speed_profile(self) -> None:
     low_sim = _make_kernel()

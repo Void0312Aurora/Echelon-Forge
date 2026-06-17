@@ -348,6 +348,17 @@ void parse_missile_tuning_json_fields(
 ) {
     if (!out_tuning || !src.is_object()) return;
     MissileTuningDefinition tuning = *out_tuning;
+    auto parse_vector = [&](const char* key, std::vector<double>* out_values) {
+        if (!out_values || !src.contains(key) || !src[key].is_array()) {
+            return;
+        }
+        out_values->clear();
+        for (const auto& value : src[key]) {
+            if (!value.is_number()) continue;
+            out_values->push_back(value.get<double>());
+        }
+    };
+
     tuning.max_speed = src.value("max_speed", tuning.max_speed);
     tuning.turn_rate = src.value("turn_rate", tuning.turn_rate);
     tuning.fuse_distance = src.value("fuse_distance", tuning.fuse_distance);
@@ -392,6 +403,10 @@ void parse_missile_tuning_json_fields(
     tuning.cd0_subsonic = src.value("cd0_subsonic", tuning.cd0_subsonic);
     tuning.cd0_supersonic = src.value("cd0_supersonic", tuning.cd0_supersonic);
     tuning.induced_drag_k = src.value("induced_drag_k", tuning.induced_drag_k);
+    parse_vector("cd0_mach_breakpoints", &tuning.cd0_mach_breakpoints);
+    parse_vector("cd0_mach_values", &tuning.cd0_mach_values);
+    parse_vector("induced_drag_k_mach_breakpoints", &tuning.induced_drag_k_mach_breakpoints);
+    parse_vector("induced_drag_k_mach_values", &tuning.induced_drag_k_mach_values);
     tuning.propellant_mass_kg = src.value("propellant_mass_kg", tuning.propellant_mass_kg);
     tuning.max_lateral_g = src.value("max_lateral_g", tuning.max_lateral_g);
     tuning.autopilot_tau_s = src.value("autopilot_tau_s", tuning.autopilot_tau_s);

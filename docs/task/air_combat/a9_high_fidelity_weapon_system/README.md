@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System
 
-Status: `2026-06-16` **accepted_with_residuals**. 23 clusters pass, 5 deferred. 12 C++ files modified (1 new), zero regressions vs main. See [acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md) for full checklist.
+Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred, 1 open residual (R2). Zero regressions vs main. See [acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md) for full checklist.
 
 Language:
 
@@ -47,7 +47,8 @@ strictly **non-authoritative** and **non-weapon-specific**:
   `coverage_profile` field in FuzeProfile; PF-R4 surrogate preserved.
 - **G5 — Mach-Dependent Aerodynamics**: configurable transonic breakpoints
   (`mach_transonic_start`/`_end`); power-on base-drag reduction
-  (`cd0_power_on_ratio`, default 0.90).
+  (`cd0_power_on_ratio`, default 0.90); Mach-indexed Cd₀ and k(M)
+  engineering-proxy tables.
 - **G6 — Physics-Based Warhead** (opt-in): Gurney fragment velocity,
   atmospheric fragment decay, rod weld cap (1,150 m/s), cutting threshold
   (610 m/s); activated when `gurney_constant_mps` + `explosive_mass_kg`
@@ -66,7 +67,7 @@ All upgrades preserve the full lethality chain event surface
 | G2 — Kalman Seeker | **pass** | `kalman_seeker.h` (295 lines, new). Body↔world transforms. `use_kalman_seeker` in full pipeline. |
 | G3 — Autopilot | **pass** | `default_guidance_model.cpp`: order=1/2/3. State-space filter + actuator lag. |
 | G4 — Proximity Fuze | **pass** | `damage_system_common.h`: hit_to_kill penalty. `FuzeProfile.coverage_profile`. PF-R4 preserved. |
-| G5 — Aerodynamics | **pass** | `default_guidance_model.cpp`: configurable Mach breakpoints + power-on ratio. Pipeline complete. |
+| G5 — Aerodynamics | **pass** | `default_guidance_model.cpp`: Mach-indexed Cd₀/k(M) tables + power-on ratio. Pipeline complete. |
 | G6 — Warhead | **pass** | `default_effects_warhead_detail.inc`: Gurney V₀ + fragment decay + rod cap/threshold (opt-in). C/M/E fields plumbed. |
 | G7 — Integration | **pass** | P3-C 7/7 round-trip. P3-D zero regressions. P4-A/B validation artifacts retained. |
 | A2 authority | retained / sealed | A2 remains non-authoritative for stock weapon truth, Pk, and deterministic fuze. |
@@ -147,8 +148,11 @@ Out of scope:
   12 data points (4 geometries × 3 APN gain levels).
 - [P4-B sensitivity sweep](p4_validation/p4b_sensitivity_sweep_20260616.py):
   15 data points (3 params × 5 levels).
+- [Mach aero proxy table validation](p4_validation/mach_aero_table_proxy_20260617.md):
+  Cd₀(M) and k(M) engineering-proxy table values, validation commands, and
+  non-authoritative boundary.
 - [P3-C tuning example](p3_integration/p3c_a9_tuning_example.py):
-  7/7 A9 fields round-trip verified.
+  11/11 A9 fields round-trip verified.
 - C++ implementation: 12 files modified, `kalman_seeker.h` (295 lines, new).
   13 new configurable parameters across MissileTuning/WarheadProfile/FuzeProfile.
 
@@ -188,12 +192,12 @@ Detailed acceptance checklist: [a9_high_fidelity_weapon_system_acceptance_202606
 
 ## Residuals
 
-| ID | Description | Severity |
-|----|-------------|----------|
-| R2 | EKF tracking performance not quantitatively validated | Medium |
-| R4 | Mach Cd₀ multi-row lookup table deferred (single-lerp used) | Low |
+| ID | Description | Status |
+|----|-------------|--------|
+| R2 | EKF tracking performance not quantitatively validated | open / medium |
+| R4 | Mach Cd₀/k(M) multi-row lookup tables implemented with engineering-proxy values | closed |
 
-Closed: R1 (APN filter), R3 (autopilot order=3), R5 (Gurney), fragment decay.
+Closed: R1 (APN filter), R3 (autopilot order=3), R4 (Mach tables), R5 (Gurney), fragment decay.
 
 All authority claims (`pk_authority`, `deterministic_fuze_authority`,
 `effect_scale_authority`, `component_failure_probability_authority`,
