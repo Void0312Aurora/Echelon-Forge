@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Dispatch Queue
 
-Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred. All phases complete; 1 residual remains open (R2).
+Status: `2026-06-17` **accepted**. 23 clusters pass, 5 explicitly deferred. All phases complete; 0 residuals remain open.
 
 Parent: [README.md](README.md)
 Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_high_fidelity_weapon_system_task_clusters_20260616.md)
@@ -35,7 +35,7 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 | P4-A | pass | main thread | 2026-06-16 | 2026-06-16 | p4a_apn_geometry_sweep (12 rows: 4 geometries × 3 gain levels, CSV retained) |
 | P4-B | pass | main thread | 2026-06-16 | 2026-06-16 | p4b_sensitivity_sweep (15 rows: 3 params × 5 levels, CSV retained) |
 | P4-C | deferred | — | — | — | A/B comparison: P4-A + P4-B provide equivalent evidence |
-| P5-A | pass | main thread | 2026-06-16 | 2026-06-17 | Acceptance doc: accepted_with_residuals, 1 open residual; R4 closed |
+| P5-A | pass | main thread | 2026-06-16 | 2026-06-17 | Acceptance doc: accepted; R2/R4 closed; 0 open residuals |
 | P5-B | pass | main thread | 2026-06-16 | 2026-06-16 | Parent air_combat/README.md updated with a9 completion status |
 
 ## Execution Summary
@@ -43,8 +43,9 @@ Task clusters: [a9_high_fidelity_weapon_system_task_clusters_20260616.md](a9_hig
 All phases complete. 5 clusters deferred: P1-B/C (covered by source_ledger/
 acceptance), P2-F2 (rod expansion — static approximation sufficient),
 P3-B (core fields exposed in bindings), P4-C (P4-A/B provide equivalent
-evidence). 1 open residual remains: R2 (EKF tracking validation). R4
-(Mach Cd₀/k(M) table) is closed with engineering-proxy values.
+evidence). No residual remains open. R2 (EKF tracking validation) is closed by
+focused C++ regression coverage, and R4 (Mach Cd₀/k(M) table) is closed with
+engineering-proxy values.
 
 ## Serialization Constraints (Historical)
 

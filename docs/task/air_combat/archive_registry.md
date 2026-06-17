@@ -13,7 +13,7 @@ Registration index for archived air-combat subprojects under `docs/task/air_comb
 | `a6_event_value_first_event_timing/` | Event value and first-event timing. Closed. Hazard/deadline/window labels exposed useful timing evidence but did not become current firing authority. |
 | `a7_event_value_advantage_credit_head/` | Event-Value / Advantage Credit Head. Closed. Event-credit work belongs to timing-quality research history; current launch closure belongs to M3-S2. |
 | `a8_damage_effect_chain/` | Damage effect chain. Accepted bounded slice. Missile effects → specific aircraft component damage → propulsion/fuel/sensor/fire/flight consumption path propagation. No direct crash or target-specific kill rules. |
-| `a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/` | High-fidelity weapon system. Accepted with residuals: 23 clusters pass, 5 deferred, R2 EKF quantitative validation remains open, and R4 Mach Cd₀/k(M) table support is closed with engineering-proxy values. No Pk, deterministic fuze, stock-weapon truth, or weapon-specific authority claims. |
+| `a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/` | High-fidelity weapon system. Accepted: 23 clusters pass, 5 explicitly deferred, R2 EKF quantitative validation closed by focused C++ regression coverage, and R4 Mach Cd₀/k(M) table support closed with engineering-proxy values. No Pk, deterministic fuze, stock-weapon truth, or weapon-specific authority claims. |
 
 ## Top-Level Archived Documents
 

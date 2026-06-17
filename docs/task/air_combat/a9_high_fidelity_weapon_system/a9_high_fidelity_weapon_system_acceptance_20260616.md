@@ -1,7 +1,8 @@
 # A9 High-Fidelity Weapon System — Acceptance
 
-Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
-All forbidden claims remain refused. 1 open residual (R2).
+Status: `2026-06-17` **accepted**. 23 clusters pass, 5 explicitly deferred.
+All forbidden claims remain refused. 0 open residuals; R2 closed by focused C++
+regression coverage.
 Zero regressions vs main.
 
 Parent: [README.md](README.md)
@@ -28,10 +29,10 @@ partially met with residual.
 ## G2: Kalman Filter Seeker
 
 - [x] EKF compiles as standalone model file (`kalman_seeker.h`, 295 lines)
-- [ ] EKF tracking performance not yet quantitatively validated — no covariance
-  convergence test, no weaving-target continuity test. EKF branch is opt-in
-  (`use_kalman_seeker = false` default) and all existing tests exercise the
-  legacy first-order smoothing path.
+- [x] EKF tracking performance quantitatively validated by
+  `src/tests/test_kalman_seeker.cpp`: position covariance convergence,
+  dropout/reacquire recovery, and weaving-target continuity. EKF branch remains
+  opt-in (`use_kalman_seeker = false` default).
 - [x] Fallback mode (`use_kalman_seeker = false`) preserves first-order smoothing
 - [x] Tunable parameters: `use_kalman_seeker` in full MissileTuning/JSON/
   Python pipeline; EKF params (sigma_a, tau_m, angle/range noise) have
@@ -136,11 +137,12 @@ partially met with residual.
 
 | ID | Description | Severity | Status |
 |----|-------------|----------|--------|
-| R2 | EKF tracking performance not quantitatively validated (covariance convergence, weaving target continuity) | Medium | open — EKF is opt-in, default off |
+| R2 | EKF tracking performance quantitatively validated (covariance convergence, dropout/reacquire recovery, weaving target continuity) | Medium | closed — focused C++ regression coverage; EKF remains opt-in, default off |
 | R4 | Mach Cd₀ / induced-drag multi-row lookup tables | Low | closed — engineering-proxy tables implemented; non-authoritative |
 
-Closed: R1 (APN low-pass filter, τ=0.30s), R3 (autopilot order=3 actuator lag),
-R4 (Mach Cd₀/k(M) tables), R5 (Gurney V₀+decay in has_physics_warhead path),
-R6 (P3-C tuning example), R7 (P4-A/B executed, P4-C deferred).
+Closed: R1 (APN low-pass filter, τ=0.30s), R2 (EKF quantitative validation),
+R3 (autopilot order=3 actuator lag), R4 (Mach Cd₀/k(M) tables), R5 (Gurney V₀
+and decay in has_physics_warhead path), R6 (P3-C tuning example), R7 (P4-A/B
+executed, P4-C deferred).
 
 All authority claims remain refused (boundary, not residual).

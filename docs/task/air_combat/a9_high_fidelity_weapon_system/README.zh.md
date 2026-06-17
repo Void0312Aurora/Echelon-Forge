@@ -1,6 +1,6 @@
 # A9 高保真武器系统
 
-状态：`2026-06-17` **accepted_with_residuals**。23 集群通过，5 推迟，1 个开放残差（R2）。详见英文 README 和验收文档。
+状态：`2026-06-17` **accepted**，5 个集群明确推迟，0 个开放残差。R2 EKF 跟踪验证已由聚焦 C++ 回归覆盖关闭。详见英文 README 和验收文档。
 
 语言：
 
@@ -93,16 +93,17 @@
 - [P4-A 几何扫描](p4_validation/p4a_apn_geometry_sweep_20260616.py)
 - [P4-B 灵敏度扫描](p4_validation/p4b_sensitivity_sweep_20260616.py)
 - [马赫气动代理表验证](p4_validation/mach_aero_table_proxy_20260617.md)
+- [EKF 跟踪验证](p4_validation/ekf_tracking_validation_20260617.md)
 - [P3-C 调优示例](p3_integration/p3c_a9_tuning_example.py)
 
 ## 残差
 
 | ID | 描述 | 状态 |
 |----|------|------|
-| R2 | EKF 跟踪性能未定量验证 | 开放 / 中 |
+| R2 | EKF 跟踪性能已由聚焦 C++ 测试定量验证 | 已关闭 |
 | R4 | 马赫 Cd₀/k(M) 多行表已用工程代理值实现 | 已关闭 |
 
-已关闭: R1 (APN 滤波器), R3 (autopilot order=3), R4 (马赫气动表), R5 (Gurney), 破片衰减。
+已关闭: R1 (APN 滤波器), R2 (EKF 定量验证), R3 (autopilot order=3), R4 (马赫气动表), R5 (Gurney), 破片衰减。
 所有权限声明 (`pk_authority` 等) 保持拒绝。
 
 ## 存档

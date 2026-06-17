@@ -1,7 +1,7 @@
 # A9 High-Fidelity Weapon System — Current Status
 
-Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred.
-1 open residual: R2 (EKF tracking validation).
+Status: `2026-06-17` **accepted**. 23 clusters pass, 5 explicitly deferred.
+0 open residuals; R2 EKF tracking validation is closed.
 All authority claims refused. Zero regressions vs main (47 pre-existing failures,
 286 passed, 233 subtests passed).
 
@@ -10,7 +10,7 @@ All authority claims refused. Zero regressions vs main (47 pre-existing failures
 | Subsystem | Current Fidelity | Target Fidelity | Status |
 |-----------|-----------------|-----------------|--------|
 | Guidance (G1) | Classical PN + empirical capture | APN with target maneuver compensation | **pass** — apn_target_accel_gain pipeline + feed-forward + low-pass filter (τ=0.30s). P4-A/B validated. |
-| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h + body↔world transforms + use_kalman_seeker pipeline + LOS rates in detection/coast paths + closing speed from actual velocity. Tracking performance not yet quantitatively validated (R2). |
+| Seeker (G2) | First-order exponential smoothing | 9-state EKF (Singer model) | **pass** — kalman_seeker.h + body↔world transforms + use_kalman_seeker pipeline + LOS rates in detection/coast paths + closing speed from actual velocity. R2 quantitative validation covers covariance convergence, dropout/reacquire recovery, and weaving-target continuity. |
 | Autopilot (G3) | Single first-order lag | Configurable-order transfer function (1/2/3) | **pass** — order=1 (legacy lag), order=2 (state-space), order=3 (state-space + actuator lag τ=0.03s). τ/ζ in full pipeline. |
 | Proximity Fuze (G4) | PF-R4 surrogate (pass) + PF-R5 validation (pass_with_residuals) | Refined surrogate + coverage_profile | **pass** — hit_to_kill coverage penalty; coverage_profile field in FuzeProfile; PF-R4 preserved. |
 | Aerodynamics (G5) | Fixed Cd₀ per regime | Mach-indexed Cd₀/k(M) table + power on/off | **pass** — `cd0_mach_breakpoints`/`cd0_mach_values` and `induced_drag_k_mach_*` in full tuning/JSON/Python/runtime pipeline; invalid tables fall back to scalar lerp. |
@@ -21,10 +21,10 @@ All authority claims refused. Zero regressions vs main (47 pre-existing failures
 
 | ID | Description | Severity | Blocks acceptance? |
 |----|-------------|----------|-------------------|
-| R2 | EKF tracking performance not quantitatively validated (covariance convergence, weaving target continuity) | Medium | No — EKF is opt-in, default off |
+| R2 | EKF tracking performance quantitatively validated (covariance convergence, dropout/reacquire recovery, weaving target continuity) | Medium | No — closed; EKF is opt-in, default off |
 | — | All authority claims remain refused | Blocking | N/A — boundary, not residual |
 
-Closed residuals: R1 (APN estimator noise — low-pass filter added), R3 (autopilot order=3 — actuator lag added), R4 (Mach Cd₀/k(M) table implemented with engineering-proxy values), R5 (Gurney not active — has_physics_warhead path implemented), fragment decay (atmospheric model added).
+Closed residuals: R1 (APN estimator noise — low-pass filter added), R2 (EKF quantitative validation), R3 (autopilot order=3 — actuator lag added), R4 (Mach Cd₀/k(M) table implemented with engineering-proxy values), R5 (Gurney not active — has_physics_warhead path implemented), fragment decay (atmospheric model added).
 
 ## Open Deferred Clusters
 
@@ -46,6 +46,7 @@ Closed residuals: R1 (APN estimator noise — low-pass filter added), R3 (autopi
 | P4-A geometry sweep | Data | p4_validation/p4a_apn_geometry_sweep_20260616.{py,csv} |
 | P4-B sensitivity sweep | Data | p4_validation/p4b_sensitivity_sweep_20260616.{py,csv} |
 | Mach aero proxy table | Doc/Test | p4_validation/mach_aero_table_proxy_20260617.md |
+| EKF tracking validation | Test/Doc | p4_validation/ekf_tracking_validation_20260617.md; `src/tests/test_kalman_seeker.cpp` |
 | P3-C tuning round-trip | Script | p3_integration/p3c_a9_tuning_example.py |
 | P3-D regression | Run | 47 failed (pre-existing), 286 passed, 233 subtests passed |
 | C++ implementation | Code | A9 guidance/seeker/autopilot/fuze/aero/warhead implementation, including `kalman_seeker.h` and Mach aero tables |

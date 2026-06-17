@@ -61,8 +61,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - A9 高保真武器系统子项目已在
   [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
   完成。六个武器子系统从工程代理保真度升级到研究级代理保真度；所有权限边界保持封闭。
-  状态为 `accepted_with_residuals`：23 集群通过、5 项推迟、1 个开放残差（R2 EKF 定量验证）；
-  R4 马赫 Cd₀/k(M) 表已用工程代理值关闭。相对 main 零回归。
+  状态为 `accepted`：23 集群通过、5 项明确推迟、0 个开放残差。R2 EKF 定量验证和
+  R4 马赫 Cd₀/k(M) 表已分别由聚焦回归覆盖和工程代理值关闭。相对 main 零回归。
   归档证据包位于
   [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)。
 - A8 损伤效果链现在在
@@ -89,8 +89,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   具体损伤可通过维护中的飞机系统传播，但不增加直接坠毁或特定目标击杀规则；只有明确要求校准、
   平台扩展或碎片/残留对象工作时才重开
 - 将
-  [A9 高保真武器系统](a9_high_fidelity_weapon_system/README.zh.md) 作为 accepted_with_residuals
-  record 读取：武器链保真度升级已合入；后续只针对 R2 EKF 定量验证或明确的新研究扩展开支线
+  [A9 高保真武器系统](a9_high_fidelity_weapon_system/README.zh.md) 作为 accepted record 读取：
+  武器链保真度升级已合入，R2/R4 残差已关闭；后续只针对明确的新研究扩展开支线
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外

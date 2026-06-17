@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System
 
-Status: `2026-06-17` **accepted_with_residuals**. 23 clusters pass, 5 deferred, 1 open residual (R2). Zero regressions vs main. See [acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md) for full checklist.
+Status: `2026-06-17` **accepted** with 5 explicitly deferred clusters and 0 open residuals. R2 EKF tracking validation is closed by focused C++ regression coverage. Zero regressions vs main. See [acceptance](a9_high_fidelity_weapon_system_acceptance_20260616.md) for full checklist.
 
 Language:
 
@@ -151,6 +151,9 @@ Out of scope:
 - [Mach aero proxy table validation](p4_validation/mach_aero_table_proxy_20260617.md):
   Cd₀(M) and k(M) engineering-proxy table values, validation commands, and
   non-authoritative boundary.
+- [EKF tracking validation](p4_validation/ekf_tracking_validation_20260617.md):
+  R2 closure evidence for covariance convergence, dropout/reacquire recovery,
+  and weaving-target track continuity.
 - [P3-C tuning example](p3_integration/p3c_a9_tuning_example.py):
   11/11 A9 fields round-trip verified.
 - C++ implementation: 12 files modified, `kalman_seeker.h` (295 lines, new).
@@ -194,10 +197,11 @@ Detailed acceptance checklist: [a9_high_fidelity_weapon_system_acceptance_202606
 
 | ID | Description | Status |
 |----|-------------|--------|
-| R2 | EKF tracking performance not quantitatively validated | open / medium |
+| R2 | EKF tracking performance quantitatively validated by focused C++ tests | closed |
 | R4 | Mach Cd₀/k(M) multi-row lookup tables implemented with engineering-proxy values | closed |
 
-Closed: R1 (APN filter), R3 (autopilot order=3), R4 (Mach tables), R5 (Gurney), fragment decay.
+Closed: R1 (APN filter), R2 (EKF quantitative validation), R3 (autopilot order=3),
+R4 (Mach tables), R5 (Gurney), fragment decay.
 
 All authority claims (`pk_authority`, `deterministic_fuze_authority`,
 `effect_scale_authority`, `component_failure_probability_authority`,

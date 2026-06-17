@@ -1,6 +1,6 @@
 # A9 High-Fidelity Weapon System — Archive Record
 
-Status: `accepted_with_residuals` on `2026-06-17` (R4 closed in follow-up; R2 remains open).
+Status: `accepted` on `2026-06-17` (R2 and R4 closed in follow-up; 5 clusters remain explicitly deferred).
 Source: [../../a9_high_fidelity_weapon_system/](../../a9_high_fidelity_weapon_system/README.md)
 Branch: `feature/a9-high-fidelity-weapon-system` (13 commits, zero regressions vs main).
 
@@ -22,15 +22,16 @@ toward research-grade fidelity:
 
 23 pass, 5 deferred, 0 partial (28 total).
 
-## Open Residuals
+## Residuals
 
-| ID | Description | Severity |
-|----|-------------|----------|
-| R2 | EKF tracking performance not quantitatively validated | Medium |
+No residual remains open.
 
-Closed follow-up residual: R4 (Mach Cd₀/k(M) multi-row lookup tables
-implemented with engineering-proxy values; still non-authoritative and not
-weapon-specific).
+| ID | Description | Status |
+|----|-------------|--------|
+| R2 | EKF tracking performance quantitatively validated | closed |
+| R4 | Mach Cd₀/k(M) multi-row lookup tables implemented with engineering-proxy values | closed |
+
+Both closures remain non-authoritative and not weapon-specific.
 
 ## Deferred Clusters
 
@@ -61,6 +62,7 @@ No AIM-120C-specific parameters. No classified, ITAR, or FOUO data.
 | P4-A geometry sweep (12 rows) | `p4_validation/p4a_apn_geometry_sweep_20260616.{py,csv}` |
 | P4-B sensitivity sweep (15 rows) | `p4_validation/p4b_sensitivity_sweep_20260616.{py,csv}` |
 | Mach aero proxy table | `p4_validation/mach_aero_table_proxy_20260617.md` |
+| EKF tracking validation | `p4_validation/ekf_tracking_validation_20260617.md`; `src/tests/test_kalman_seeker.cpp` |
 | P3-C tuning round-trip (11/11) | `p3_integration/p3c_a9_tuning_example.py` |
 | C++ implementation | A9 guidance/seeker/autopilot/fuze/aero/warhead implementation, including `kalman_seeker.h` |
 
