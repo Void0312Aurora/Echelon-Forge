@@ -33,9 +33,11 @@ partially met with residual.
 
 ## MLF-6C: Break-Mode Mapping (P2)
 
-- [ ] Every F-16C component is classified into exactly one structural group:
-  `wing_left`, `wing_right`, `tail_left`, `tail_right`, `vertical_tail`,
-  `engine_left`, `engine_right`, `fuselage`, or `none`.
+- [ ] Every F-16C component is classified into exactly one structural group
+  (`wing_left`, `wing_right`, `tail_left`, `tail_right`, `vertical_tail`,
+  `engine_left`, `engine_right`, `fuselage`, or `none`), except the documented
+  default-DB `wing_spar_center` cross-region case which contributes to both
+  `wing_left` and `wing_right`.
 - [ ] Each structural group has an explicit cumulative integrity-drop threshold
   that triggers its break mode.
 - [ ] Thresholds are justified by engineering rationale (not arbitrary).
@@ -92,8 +94,9 @@ partially met with residual.
 - [ ] Controlled stabilator failures produce `break_mode = tail_loss`.
 - [ ] Controlled engine-mount failures produce `break_mode = engine_detach`.
 - [ ] Controlled fuselage-longeron failures produce `break_mode = fuselage_rupture`.
-- [ ] Multi-group failures produce `break_mode = multi_axis` and
-  `breakup_state = full_breakup`.
+- [ ] Multi-group failures (3+ families) produce `break_mode = multi_axis` and
+  `breakup_state = full_breakup`. 1-family → `partial_detachment`, 2-family →
+  `partial_breakup`.
 - [ ] No-damage baseline produces zero events.
 - [ ] State irreversibility is tested: once `wing_loss` is set in
   `StructuralBreakupState` (D7), restoring `ComponentDamageState` component

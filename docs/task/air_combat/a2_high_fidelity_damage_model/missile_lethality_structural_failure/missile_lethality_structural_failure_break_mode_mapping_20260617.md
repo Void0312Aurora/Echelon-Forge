@@ -191,7 +191,49 @@ hydraulic pump, fuel control unit, flight computer, and electrical bus.
 | `nose_avionics_bay` | `avionics` | Nose avionics bay |
 | `tail_hydraulic_pump` | `hydraulic` | Hydraulic component (P2 resolved) |
 
-## 3. Break Mode Summary
+## 3. Failure-Mode Gating
+
+Not all component failures are structural. MLF-5's `component_primary_failure_mode`
+field distinguishes physically-damaging failures from purely functional ones.
+MLF-6's state machine applies a failure-mode gate before counting a component's
+integrity drop toward break-mode thresholds.
+
+### 3.1 Structurally-damaging modes (count toward thresholds)
+
+| Failure mode | Structural impact | Rationale |
+| --- | --- | --- |
+| `structural_weakening` | Direct | Component loses load-bearing capacity. Primary contributor. |
+| `puncture` | Direct | Penetration damage removes material. |
+| `cut` | Direct | Continuous-rod cutting severs structural members. |
+| `blast_deformation` | Direct | Blast pressure deforms structure beyond elastic limit. |
+
+### 3.2 Functional modes (do NOT count toward thresholds)
+
+| Failure mode | Why excluded |
+| --- | --- |
+| `fuel_leak` | Creates fire hazard and mass loss, but does not weaken structure. |
+| `electrical_loss` | Affects systems, not airframe integrity. |
+| `hydraulic_pressure_loss` | Affects control surface actuation, not structure. |
+| `data_loss` | Affects avionics/sensors, not structure. |
+| `fire_source` | Creates fire hazard; fire damage to structure is already handled by `damage_system_air.h` (SI-02), not by MLF-6. |
+
+### 3.3 Gating rule
+
+For each component in a structural group, the state machine:
+
+1. Reads `component_primary_failure_mode[name]` and `component_integrity[name]`.
+2. If `primary_failure_mode` is in the structurally-damaging set (§3.1): the
+   integrity value is compared against the group threshold.
+3. If `primary_failure_mode` is in the functional set (§3.2) or is empty/missing:
+   the integrity drop is **ignored** for break-mode purposes. The component
+   still appears in `component_integrity` with a low value (MLF-5 wrote it),
+   but MLF-6 does not count it.
+
+This ensures: a fuel cell at integrity 0.15 from a `fuel_leak` does NOT trigger
+`fuselage_rupture`, but the same fuel cell at integrity 0.15 from a `puncture`
+DOES count (the puncture physically damaged the fuselage structure).
+
+## 4. Break Mode Trigger Rules
 
 | Break mode | Trigger groups | `detached_part_ref` | Minimum failed members (default) |
 | --- | --- | --- | --- |
@@ -208,18 +250,16 @@ mode. If two groups activate in the same timestep, two events are written
 (e.g. `wing_loss` for left + `wing_loss` for right → two events, both with
 `break_mode = wing_loss`).
 
-## 4. Breakup State Determination
+## 5. Breakup State Determination
 
-`breakup_state` is derived from the set of currently-active break modes:
+`breakup_state` is derived from the set of currently-active break-mode families:
 
-| Active break modes | `breakup_state` | `airframe_breakup` |
+| Active families | `breakup_state` | `airframe_breakup` |
 | --- | --- | --- |
 | 0 | `intact` | `false` |
-| 1 mode, not `fuselage_rupture` | `partial_detachment` | `false` |
-| `fuselage_rupture` alone | `partial_breakup` | `false` |
-| 2 modes (any combination) | `partial_breakup` | `false` |
-| 3 modes | `partial_breakup` | `false` |
-| ≥4 distinct break-mode families active | `full_breakup` | `true` |
+| 1 | `partial_detachment` | `false` |
+| 2 | `partial_breakup` | `false` |
+| ≥3 | `full_breakup` | `true` |
 
 Distinct families: `wing_loss` (left and/or right count as one family),
 `tail_loss` (any tail group counts as one family), `engine_detach` (one
@@ -227,15 +267,16 @@ family), `fuselage_rupture` (one family). Maximum = 4 families.
 
 `airframe_breakup = true` only when `breakup_state == full_breakup`.
 
-### 4.1 `multi_axis` break mode
+### 5.1 `multi_axis` break mode
 
-When 3+ distinct families are active simultaneously, an additional
-`StructuralBreakupEvent` with `break_mode = multi_axis` is written. This is
-a synthetic break mode indicating the airframe is failing across multiple
-structural axes. It does not replace the individual break-mode events; both
-are emitted.
+When 3+ distinct families are active simultaneously (same threshold as
+`full_breakup`), an additional `StructuralBreakupEvent` with
+`break_mode = multi_axis` is written. `multi_axis` always coincides with
+`full_breakup`. It is a synthetic break mode indicating the airframe is
+failing across multiple structural axes; it does not replace the individual
+break-mode events.
 
-## 5. Default DB vs TG-P7 DB
+## 6. Default DB vs TG-P7 DB
 
 | Aspect | Default (26 components) | TG-P7 opt-in (32 components) |
 | --- | --- | --- |
@@ -254,7 +295,7 @@ If any TG-P7 split receiver name (S0-S7) appears in `component_integrity`,
 the TG-P7 mapping is used. Otherwise, the default mapping is used. This
 auto-detection avoids a hard dependency on the feature flag.
 
-## 6. Engineering Rationale
+## 7. Engineering Rationale
 
 ### 6.1 Threshold values
 
@@ -289,7 +330,7 @@ consequences (sensor degradation, mission kill) are handled by existing
 `damage_system_air.h` and `damage_system_common.h` paths, and will be
 extended by MLF-7.
 
-## 7. Validation Plan
+## 8. Validation Plan
 
 ```bash
 # Verify the mapping covers all 26 default components
@@ -330,7 +371,7 @@ print(f'wing_spar_center is cross-region: counted in wing_left AND wing_right')
 "
 ```
 
-## 8. Residuals
+## 9. Residuals
 
 - All thresholds are `engineering_assumption`. They should be tuned during
   P4 validation based on focused test results. The current values are a

@@ -23,7 +23,7 @@ via ECS `get<ComponentDamageState>(aircraft_entity)`:
 | Field | Type | Read by MLF-6? | Purpose in MLF-6 |
 | --- | --- | --- | --- |
 | `component_integrity` | `map<string, double>` | **YES** | Primary input. Per-component values (0.0–1.0) are compared against P2 break-mode integrity thresholds. |
-| `component_primary_failure_mode` | `map<string, string>` | **YES** | Distinguishes `structural_weakening` from `puncture`/`cut`/`fuel_leak`/etc. Only `structural_weakening` failures accumulate toward break-mode thresholds. |
+| `component_primary_failure_mode` | `map<string, string>` | **YES** | Gates break-mode accumulation. Only *structurally-damaging* failure modes (`structural_weakening`, `puncture`, `cut`, `blast_deformation`) count toward break-mode thresholds. Purely functional modes (`fuel_leak`, `electrical_loss`, `hydraulic_pressure_loss`, `data_loss`, `fire_source`) do not, even if the component's integrity drops. |
 | `component_redundancy_group` | `map<string, string>` | **YES** | Groups components sharing a structural role for cumulative damage assessment. |
 | `component_system` | `map<string, string>` | **YES** | Raw system tag from unit database. Used to classify components into structural groups (e.g. `wings` system → `wing_left`/`wing_right` group). |
 | `redundancy_group_availability` | `map<string, double>` | **cond.** | If P2 mapping uses group-level thresholds, this field is read. |
@@ -181,11 +181,11 @@ Source: `src/models/weapons/detail/default_effects_component_damage_detail.inc`
 
 | ID | File | Line | Write expression | Trigger |
 | --- | --- | --- | --- | --- |
-| SI-10 | `.../default_effects_component_damage_detail.inc` | 671 | `aircraft_damage->structural_integrity -= 0.06 + 0.10 * impulse` | Component-damage impulse on `air_structure` system — puncture mode |
-| SI-11 | `.../default_effects_component_damage_detail.inc` | 752 | `aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse` | Component-damage impulse on `air_structure` system — blast_deformation mode |
-| SI-12 | `.../default_effects_component_damage_detail.inc` | 765 | `aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse` | Component-damage impulse on `air_structure` system — same blast_deformation path, secondary context |
-| SI-13 | `.../default_effects_component_damage_detail.inc` | 768 | `aircraft_damage->structural_integrity -= 0.02 + 0.06 * impulse` | Component-damage impulse on `air_structure` system — cut mode |
-| SI-14 | `.../default_effects_component_damage_detail.inc` | 805 | `aircraft_damage->structural_integrity -= 0.035 + 0.11 * impulse` | Component-damage impulse — `structural_weakening` mode |
+| SI-10 | `.../default_effects_component_damage_detail.inc` | 671 | `aircraft_damage->structural_integrity -= 0.06 + 0.10 * impulse` | Puncture mode, `air_structure` system — component-damage impulse path |
+| SI-11 | `.../default_effects_component_damage_detail.inc` | 752 | `aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse` | Puncture mode, `air_structure` system — per-entry effects loop |
+| SI-12 | `.../default_effects_component_damage_detail.inc` | 765 | `aircraft_damage->structural_integrity -= 0.015 + 0.05 * impulse` | Cut mode, unconditional (all systems) |
+| SI-13 | `.../default_effects_component_damage_detail.inc` | 768 | `aircraft_damage->structural_integrity -= 0.02 + 0.06 * impulse` | Blast-deformation mode, unconditional (all systems) |
+| SI-14 | `.../default_effects_component_damage_detail.inc` | 805 | `aircraft_damage->structural_integrity -= 0.035 + 0.11 * impulse` | Structural-weakening mode, unconditional |
 
 ### 3.6 Observer / recording reads
 
@@ -211,11 +211,15 @@ Source: `src/models/weapons/detail/default_effects_component_damage_detail.inc`
 
 MLF-6 must leave all 14 write sites untouched.
 
-## 4. Forbidden Touch Surfaces — Concrete Write Sites
+## 4. Forbidden Touch Surfaces — Write Sites in Damage/Effects Path
 
 Per D2, D6, and the acceptance checklist, MLF-6 must not modify any field in
-the following ECS components. This section lists their declarations and every
-write site that mutates them, sourced from the current codebase.
+the following ECS components. This section lists the write sites in the
+air-combat damage/effects propagation path — the systems and models adjacent
+to where `StructuralFailureUpdate` will register (after
+`AircraftDamageStateUpdate`). Write sites in unrelated systems (propulsion
+control, sensor processing, navigation, etc.) are excluded because MLF-6 has
+no code path that would touch them.
 
 ### 4.1 FlightModel
 
