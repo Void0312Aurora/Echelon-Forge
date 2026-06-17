@@ -40,7 +40,8 @@ bool has_observation(std::string_view scenario, double t) {
 void truth_to_measurement(Vec3 truth, double &bearing_rad, double &elevation_rad, double &range_m) {
     const double world[3] = {truth.x, truth.y, truth.z};
     const double missile_world[3] = {0.0, 0.0, 0.0};
-    missile_seeker::world_to_body_rel(world, missile_world, 0.0, bearing_rad, elevation_rad, range_m);
+    missile_seeker::world_to_body_rel(world, missile_world, 0.0, bearing_rad, elevation_rad,
+                                      range_m);
 }
 
 Vec3 ekf_position(const missile_seeker::SeekerEkfState &ekf) {
@@ -79,10 +80,12 @@ ScenarioResult run_observation_scenario(std::string_view scenario) {
             truth_to_measurement(truth, bearing_rad, elevation_rad, range_m);
 
             if (!ekf.initialized) {
-                missile_seeker::ekf_init(ekf, params, bearing_rad, elevation_rad, range_m, missile_world, 0.0, t);
+                missile_seeker::ekf_init(ekf, params, bearing_rad, elevation_rad, range_m,
+                                         missile_world, 0.0, t);
             } else {
                 missile_seeker::ekf_predict(ekf, params, t - ekf.last_predict_time_s);
-                missile_seeker::ekf_update(ekf, params, bearing_rad, elevation_rad, range_m, missile_world, 0.0);
+                missile_seeker::ekf_update(ekf, params, bearing_rad, elevation_rad, range_m,
+                                           missile_world, 0.0);
             }
         } else if (ekf.initialized) {
             missile_seeker::ekf_predict(ekf, params, dt);
@@ -106,50 +109,51 @@ ScenarioResult run_observation_scenario(std::string_view scenario) {
     return result;
 }
 
-}  // namespace
+} // namespace
 
 TEST_SUITE("kalman_seeker") {
 
-TEST_CASE("process_noise_covariance_is_consistent") {
-    double Q[81] = {};
-    missile_seeker::SeekerEkfParams params;
-    missile_seeker::singer_Q(1.0 / 60.0, params.maneuver_tau_s, params.process_noise_sigma_a, Q);
+    TEST_CASE("process_noise_covariance_is_consistent") {
+        double Q[81] = {};
+        missile_seeker::SeekerEkfParams params;
+        missile_seeker::singer_Q(1.0 / 60.0, params.maneuver_tau_s, params.process_noise_sigma_a,
+                                 Q);
 
-    for (int r = 0; r < 9; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            CHECK(Q[r * 9 + c] == doctest::Approx(Q[c * 9 + r]));
+        for (int r = 0; r < 9; ++r) {
+            for (int c = 0; c < 9; ++c) {
+                CHECK(Q[r * 9 + c] == doctest::Approx(Q[c * 9 + r]));
+            }
+        }
+
+        for (int axis = 0; axis < 3; ++axis) {
+            const int p = axis;
+            const int v = 3 + axis;
+            const int a = 6 + axis;
+
+            CHECK(Q[p * 9 + p] >= 0.0);
+            CHECK(Q[v * 9 + v] >= 0.0);
+            CHECK(Q[a * 9 + a] >= 0.0);
+            CHECK(Q[p * 9 + v] * Q[p * 9 + v] <= Q[p * 9 + p] * Q[v * 9 + v] + 1.0e-12);
+            CHECK(Q[p * 9 + a] * Q[p * 9 + a] <= Q[p * 9 + p] * Q[a * 9 + a] + 1.0e-12);
+            CHECK(Q[v * 9 + a] * Q[v * 9 + a] <= Q[v * 9 + v] * Q[a * 9 + a] + 1.0e-12);
         }
     }
 
-    for (int axis = 0; axis < 3; ++axis) {
-        const int p = axis;
-        const int v = 3 + axis;
-        const int a = 6 + axis;
+    TEST_CASE("observation_update_remains_stable_for_guidance_scenarios") {
+        const ScenarioResult constant = run_observation_scenario("constant_velocity");
+        CHECK(constant.rmse_m < 15.0);
+        CHECK(constant.max_error_m < 60.0);
+        CHECK(constant.final_error_m < 20.0);
 
-        CHECK(Q[p * 9 + p] >= 0.0);
-        CHECK(Q[v * 9 + v] >= 0.0);
-        CHECK(Q[a * 9 + a] >= 0.0);
-        CHECK(Q[p * 9 + v] * Q[p * 9 + v] <= Q[p * 9 + p] * Q[v * 9 + v] + 1.0e-12);
-        CHECK(Q[p * 9 + a] * Q[p * 9 + a] <= Q[p * 9 + p] * Q[a * 9 + a] + 1.0e-12);
-        CHECK(Q[v * 9 + a] * Q[v * 9 + a] <= Q[v * 9 + v] * Q[a * 9 + a] + 1.0e-12);
+        const ScenarioResult reacquire = run_observation_scenario("dropout_reacquire");
+        CHECK(reacquire.rmse_m < 35.0);
+        CHECK(reacquire.max_error_m < 130.0);
+        CHECK(reacquire.final_error_m < 25.0);
+
+        const ScenarioResult weaving = run_observation_scenario("weaving_target");
+        CHECK(weaving.rmse_m < 40.0);
+        CHECK(weaving.max_error_m < 120.0);
+        CHECK(weaving.final_error_m < 60.0);
     }
-}
 
-TEST_CASE("observation_update_remains_stable_for_guidance_scenarios") {
-    const ScenarioResult constant = run_observation_scenario("constant_velocity");
-    CHECK(constant.rmse_m < 15.0);
-    CHECK(constant.max_error_m < 60.0);
-    CHECK(constant.final_error_m < 20.0);
-
-    const ScenarioResult reacquire = run_observation_scenario("dropout_reacquire");
-    CHECK(reacquire.rmse_m < 35.0);
-    CHECK(reacquire.max_error_m < 130.0);
-    CHECK(reacquire.final_error_m < 25.0);
-
-    const ScenarioResult weaving = run_observation_scenario("weaving_target");
-    CHECK(weaving.rmse_m < 40.0);
-    CHECK(weaving.max_error_m < 120.0);
-    CHECK(weaving.final_error_m < 60.0);
-}
-
-}  // TEST_SUITE("kalman_seeker")
+} // TEST_SUITE("kalman_seeker")

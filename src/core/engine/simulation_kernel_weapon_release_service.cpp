@@ -204,14 +204,11 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.cd0_supersonic) || std::isfinite(tuning.induced_drag_k) ||
            !tuning.cd0_mach_breakpoints.empty() || !tuning.cd0_mach_values.empty() ||
            !tuning.induced_drag_k_mach_breakpoints.empty() ||
-           !tuning.induced_drag_k_mach_values.empty() ||
-           std::isfinite(tuning.propellant_mass_kg) || std::isfinite(tuning.max_lateral_g) ||
-           std::isfinite(tuning.autopilot_tau_s) ||
+           !tuning.induced_drag_k_mach_values.empty() || std::isfinite(tuning.propellant_mass_kg) ||
+           std::isfinite(tuning.max_lateral_g) || std::isfinite(tuning.autopilot_tau_s) ||
            std::isfinite(tuning.max_accel_response_g_per_s) ||
-           std::isfinite(tuning.mach_transonic_start) ||
-           std::isfinite(tuning.mach_transonic_end) ||
-           std::isfinite(tuning.cd0_power_on_ratio) ||
-           std::isfinite(tuning.min_launch_range_m) ||
+           std::isfinite(tuning.mach_transonic_start) || std::isfinite(tuning.mach_transonic_end) ||
+           std::isfinite(tuning.cd0_power_on_ratio) || std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
            tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
            std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||

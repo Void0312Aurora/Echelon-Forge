@@ -42,8 +42,7 @@ inline LookupTableValidation positive_strict_lookup_validation() {
 }
 
 inline bool lookup_table_valid(const std::vector<double> &breakpoints,
-                               const std::vector<double> &values,
-                               double x,
+                               const std::vector<double> &values, double x,
                                const LookupTableValidation &validation = {}) {
     if (breakpoints.empty() || values.empty() || breakpoints.size() != values.size()) {
         return false;
@@ -72,11 +71,9 @@ inline bool lookup_table_valid(const std::vector<double> &breakpoints,
     return true;
 }
 
-inline std::optional<double>
-lookup_1d_optional(const std::vector<double> &breakpoints,
-                   const std::vector<double> &values,
-                   double x,
-                   const LookupTableValidation &validation = {}) {
+inline std::optional<double> lookup_1d_optional(const std::vector<double> &breakpoints,
+                                                const std::vector<double> &values, double x,
+                                                const LookupTableValidation &validation = {}) {
     if (!lookup_table_valid(breakpoints, values, x, validation)) {
         return std::nullopt;
     }
@@ -97,9 +94,7 @@ lookup_1d_optional(const std::vector<double> &breakpoints,
 }
 
 inline double lookup_1d_or(const std::vector<double> &breakpoints,
-                           const std::vector<double> &values,
-                           double x,
-                           double fallback,
+                           const std::vector<double> &values, double x, double fallback,
                            const LookupTableValidation &validation = {}) {
     return lookup_1d_optional(breakpoints, values, x, validation).value_or(fallback);
 }

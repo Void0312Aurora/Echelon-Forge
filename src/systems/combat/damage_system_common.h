@@ -1053,10 +1053,9 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     online_sensor_trigger && min_dist <= effective_trigger_radius_m;
                 const double quality_metric_m =
                     contact_fuze ? detonation_metric_m
-                    : online_sensor_trigger && !closing && online_entered_trigger_radius
-                        ? min_dist
-                    : online_sensor_trigger ? dist
-                                            : min_dist;
+                    : online_sensor_trigger && !closing && online_entered_trigger_radius ? min_dist
+                    : online_sensor_trigger                                              ? dist
+                                                                                         : min_dist;
                 double quality = std::clamp(1.0 - quality_metric_m / fuse, 0.0, 1.0);
                 const DamageFuzeSignatureEvidence fuze_signature =
                     contact_fuze
@@ -1069,9 +1068,9 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const DamageFuzeSurrogateEvidence fuze_surrogate = damage_fuze_surrogate_evidence(
                     m[i], fuze_type, fuze_signature, quality, event_closure_mps, contact_fuze,
                     terminal_track_valid, online_sensor_trigger);
-                const bool online_sensor_missed_target =
-                    online_sensor_trigger && online_entered_trigger_radius &&
-                    !fuze_surrogate.target_detected;
+                const bool online_sensor_missed_target = online_sensor_trigger &&
+                                                         online_entered_trigger_radius &&
+                                                         !fuze_surrogate.target_detected;
                 if (detonation_metric_m > effective_trigger_radius_m) {
                     if (online_sensor_trigger && closing) {
                         continue;

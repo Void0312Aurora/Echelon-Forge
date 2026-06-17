@@ -393,8 +393,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("induced_drag_k", &MissileTuning::induced_drag_k)
         .def_rw("cd0_mach_breakpoints", &MissileTuning::cd0_mach_breakpoints)
         .def_rw("cd0_mach_values", &MissileTuning::cd0_mach_values)
-        .def_rw("induced_drag_k_mach_breakpoints",
-                &MissileTuning::induced_drag_k_mach_breakpoints)
+        .def_rw("induced_drag_k_mach_breakpoints", &MissileTuning::induced_drag_k_mach_breakpoints)
         .def_rw("induced_drag_k_mach_values", &MissileTuning::induced_drag_k_mach_values)
         .def_rw("propellant_mass_kg", &MissileTuning::propellant_mass_kg)
         .def_rw("max_lateral_g", &MissileTuning::max_lateral_g)

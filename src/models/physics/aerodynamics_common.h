@@ -41,9 +41,8 @@ inline AtmosphericData standard_atmosphere_at_altitude(double altitude_m) {
                             kGravityMps2 / (kGasConstantDryAir * kTroposphereLapseRateKPerM));
     } else {
         temperature = kTropopauseTemperatureK;
-        pressure = kTropopausePressurePa *
-                   std::exp(-kGravityMps2 * (h - kTropopauseAltitudeM) /
-                            (kGasConstantDryAir * kTropopauseTemperatureK));
+        pressure = kTropopausePressurePa * std::exp(-kGravityMps2 * (h - kTropopauseAltitudeM) /
+                                                    (kGasConstantDryAir * kTropopauseTemperatureK));
     }
 
     AtmosphericData data;
@@ -85,8 +84,7 @@ inline AirRelativeFlow compute_air_relative_flow(const Transform &transform,
                           flow.velocity_mps.y * flow.velocity_mps.y +
                           flow.velocity_mps.z * flow.velocity_mps.z;
     flow.speed_mps = std::sqrt(flow.speed_sq_m2ps2);
-    flow.dynamic_pressure_pa =
-        dynamic_pressure(flow.atmosphere.air_density, flow.speed_sq_m2ps2);
+    flow.dynamic_pressure_pa = dynamic_pressure(flow.atmosphere.air_density, flow.speed_sq_m2ps2);
     flow.mach = mach_from_speed(flow.speed_mps, flow.atmosphere.speed_of_sound);
     return flow;
 }

@@ -146,8 +146,8 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
 
                     double effective_stall_progress = raw_stall_progress;
                     if (stall_state) {
-                        const double stall_memory = aero_physics::clamp01(
-                            previous_time_in_stall_s / kStallMemoryFullSeconds);
+                        const double stall_memory = aero_physics::clamp01(previous_time_in_stall_s /
+                                                                          kStallMemoryFullSeconds);
                         const double stall_recovery_rate =
                             aero_physics::lerp(kStallRecoveryRateFreshPerSec,
                                                kStallRecoveryRateDeepPerSec, stall_memory);
@@ -160,8 +160,7 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                                 std::max(raw_stall_progress, previous_effective_stall_progress -
                                                                  (stall_recovery_rate * dt));
                         }
-                        effective_stall_progress =
-                            aero_physics::clamp01(effective_stall_progress);
+                        effective_stall_progress = aero_physics::clamp01(effective_stall_progress);
                     }
 
                     // Drag Polar
@@ -169,7 +168,7 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                     // k = 0.1
                     double Cd0 = tuning.cd0_clean;
                     Cd0 += aero_physics::lookup_1d_or(tuning.mach_breakpoints,
-                                                       tuning.cd0_add_vs_mach, mach, 0.0);
+                                                      tuning.cd0_add_vs_mach, mach, 0.0);
                     // Add Stores Drag index?
                     Cd0 += props[i].current_drag_index * 0.001; // Scale factor?
 
