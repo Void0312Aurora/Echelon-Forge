@@ -24,6 +24,9 @@
   已关闭的历史 event-credit/timing packet，供未来 timing-quality research 参考。
 - [a8_damage_effect_chain/](a8_damage_effect_chain/README.zh.md)：
   已 accepted 的有边界损伤效果链 evidence packet；校准、stock 杀伤权威和碎片/残留对象残余后置。
+- [a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)：
+  已 accepted-with-residuals 的高保真武器系统 evidence packet。23 集群通过、5 项推迟、1 个开放残差
+  （R2 EKF 定量验证）；R4 马赫 Cd₀/k(M) 表已用工程代理值关闭。六个子系统 G1-G6 已升级，且相对 main 零回归。
 - [air_combat_1v1_entry_analysis_20260516.zh.md](air_combat_1v1_entry_analysis_20260516.zh.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.zh.md](air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 - [air_combat_1v1_freeze_plan_20260516.zh.md](air_combat_1v1_freeze_plan_20260516.zh.md)

@@ -31,8 +31,9 @@ Current entry:
   stock-lethality, and debris/residue residuals deferred.
 - [a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md):
   accepted-with-residuals high-fidelity weapon system. 23 clusters pass,
-  5 deferred, 2 open residuals (R2 EKF validation, R4 Mach Cd₀ table).
-  Six subsystems (G1-G6) upgraded. Zero regressions vs main.
+  5 deferred, 1 open residual (R2 EKF validation); R4 Mach Cd₀/k(M)
+  table support is closed with engineering-proxy values. Six subsystems
+  (G1-G6) upgraded. Zero regressions vs main.
 - [air_combat_1v1_entry_analysis_20260516.md](air_combat_1v1_entry_analysis_20260516.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.md](air_combat_1v1_f16c_baseline_progress_20260516.md)
 - [air_combat_1v1_freeze_plan_20260516.md](air_combat_1v1_freeze_plan_20260516.md)
