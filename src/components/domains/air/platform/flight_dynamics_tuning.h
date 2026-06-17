@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <vector>
 
 struct AeroTuning {
@@ -71,41 +70,6 @@ struct StallState {
 };
 
 namespace flight_dynamics {
-inline double clamp01(double value) {
-    return std::clamp(value, 0.0, 1.0);
-}
-
-inline double lerp(double a, double b, double t) {
-    return a + (b - a) * clamp01(t);
-}
-
-inline double smoothstep01(double x) {
-    x = clamp01(x);
-    return x * x * (3.0 - 2.0 * x);
-}
-
-inline double lookup_1d(const std::vector<double> &breakpoints, const std::vector<double> &values,
-                        double x, double fallback) {
-    if (breakpoints.empty() || values.empty() || breakpoints.size() != values.size()) {
-        return fallback;
-    }
-    if (x <= breakpoints.front()) {
-        return values.front();
-    }
-    if (x >= breakpoints.back()) {
-        return values.back();
-    }
-    for (std::size_t i = 1; i < breakpoints.size(); ++i) {
-        if (x <= breakpoints[i]) {
-            const double x0 = breakpoints[i - 1];
-            const double x1 = breakpoints[i];
-            const double t = (x - x0) / std::max(1.0e-6, x1 - x0);
-            return lerp(values[i - 1], values[i], t);
-        }
-    }
-    return values.back();
-}
-
 inline const AeroTuning &default_aero_tuning() {
     static const AeroTuning tuning = [] {
         AeroTuning value;

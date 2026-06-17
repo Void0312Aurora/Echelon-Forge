@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -14,6 +13,7 @@
 #include "components/systems/sensor.h"
 #include "core/interfaces/environment_model.h"
 #include "core/interfaces/engagement_event_recorder.h"
+#include "models/physics/aerodynamics_common.h"
 #include "models/weapons/missile_guidance_math.h"
 #include "models/weapons/missile_guidance_types.h"
 
@@ -29,7 +29,6 @@ using missile_guidance::operator-;
 using missile_guidance::operator*;
 using missile_guidance::operator/;
 
-constexpr double kSeaLevelDensity = 1.225;
 constexpr double kGravity = 9.80665;
 constexpr double kBoostMinDurationS = 0.5;
 
@@ -84,10 +83,6 @@ double fallback_max_lateral_g(const Missile &missile) {
     return std::clamp(12.0 + 0.4 * std::max(0.0, missile.turn_rate), 12.0, 35.0);
 }
 
-double positive_or(double candidate, double fallback) {
-    return candidate > 1.0e-9 ? candidate : fallback;
-}
-
 double nonnegative_or(double candidate, double fallback) {
     return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
 }
@@ -98,36 +93,6 @@ double positive_or_nan_safe(double candidate, double fallback) {
 
 double finite_nonnegative_or(double candidate, double fallback) {
     return std::isfinite(candidate) && candidate >= 0.0 ? candidate : fallback;
-}
-
-std::optional<double> lookup_mach_table(const std::vector<double>& breakpoints,
-                                        const std::vector<double>& values,
-                                        double mach) {
-    if (breakpoints.size() < 2 || breakpoints.size() != values.size() || !std::isfinite(mach)) {
-        return std::nullopt;
-    }
-    for (std::size_t i = 0; i < breakpoints.size(); ++i) {
-        if (!std::isfinite(breakpoints[i]) || !std::isfinite(values[i]) || values[i] <= 0.0) {
-            return std::nullopt;
-        }
-        if (i > 0 && breakpoints[i] <= breakpoints[i - 1]) {
-            return std::nullopt;
-        }
-    }
-    if (mach <= breakpoints.front()) {
-        return values.front();
-    }
-    if (mach >= breakpoints.back()) {
-        return values.back();
-    }
-    for (std::size_t i = 1; i < breakpoints.size(); ++i) {
-        if (mach <= breakpoints[i]) {
-            const double span = std::max(1.0e-6, breakpoints[i] - breakpoints[i - 1]);
-            const double frac = std::clamp((mach - breakpoints[i - 1]) / span, 0.0, 1.0);
-            return missile_guidance::lerp(values[i - 1], values[i], frac);
-        }
-    }
-    return std::nullopt;
 }
 
 std::array<double, 3> guidance_world_point_to_local_body(const Transform &target_transform,
@@ -665,18 +630,7 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
                                 const GuidanceResolvedTuning &tuning, double &thrust_n,
                                 double &drag_n) {
     const EnvironmentModelRef *env_ref = world.get<EnvironmentModelRef>();
-    double rho = kSeaLevelDensity;
-    double speed_of_sound = 340.29;
-    if (env_ref && env_ref->model) {
-        const AtmosphericData atmo =
-            env_ref->model->get_atmosphere_at(transform.x, transform.y, transform.z);
-        rho = atmo.air_density;
-        speed_of_sound = atmo.speed_of_sound;
-    } else {
-        const double alt_km = std::max(0.0, transform.z) / 1000.0;
-        rho = kSeaLevelDensity * std::exp(-alt_km / 7.2);
-        speed_of_sound = std::max(295.0, 340.29 - (4.0 * alt_km));
-    }
+    const AtmosphericData atmo = aero_physics::sample_atmosphere(transform, env_ref);
 
     Mass *mass = missile_entity.get_mut<Mass>();
     if (!mass) {
@@ -689,8 +643,9 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
     MassProperties *props = missile_entity.get_mut<MassProperties>();
 
     const double total_mass = std::max(1.0, mass->get_total_kg());
-    const double mach = speed_of_sound > 1.0 ? speed_mps / speed_of_sound : 0.0;
-    const double q_bar = 0.5 * rho * speed_mps * speed_mps;
+    const double mach = aero_physics::mach_from_speed(speed_mps, atmo.speed_of_sound);
+    const double q_bar =
+        aero_physics::dynamic_pressure(atmo.air_density, speed_mps * speed_mps);
     const double boost_end_time = missile.launch_time + tuning.boost_time_s;
     const bool propulsion_active =
         current_time < missile.burnout_time_s && mass->fuel_mass_kg > 1.0e-6;
@@ -700,7 +655,10 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
             std::max(1.0e-6, tuning.mach_transonic_end - tuning.mach_transonic_start),
         0.0, 1.0);
     double base_cd =
-        lookup_mach_table(tuning.cd0_mach_breakpoints, tuning.cd0_mach_values, mach)
+        aero_physics::lookup_1d_optional(tuning.cd0_mach_breakpoints,
+                                         tuning.cd0_mach_values,
+                                         mach,
+                                         aero_physics::positive_strict_lookup_validation())
             .value_or(missile_guidance::lerp(tuning.cd0_subsonic, tuning.cd0_supersonic,
                                              mach_frac));
     if (propulsion_active) {
@@ -709,8 +667,10 @@ void update_mass_and_drag_state(flecs::world world, flecs::entity missile_entity
     const double lateral_frac =
         std::clamp(lateral_accel_mps2 / std::max(1.0, tuning.max_lateral_g * kGravity), 0.0, 1.0);
     const double induced_drag_k =
-        lookup_mach_table(tuning.induced_drag_k_mach_breakpoints,
-                          tuning.induced_drag_k_mach_values, mach)
+        aero_physics::lookup_1d_optional(tuning.induced_drag_k_mach_breakpoints,
+                                         tuning.induced_drag_k_mach_values,
+                                         mach,
+                                         aero_physics::positive_strict_lookup_validation())
             .value_or(tuning.induced_drag_k);
     const double drag_coeff = base_cd + induced_drag_k * lateral_frac * lateral_frac;
     drag_n = q_bar * tuning.reference_area_m2 * drag_coeff;

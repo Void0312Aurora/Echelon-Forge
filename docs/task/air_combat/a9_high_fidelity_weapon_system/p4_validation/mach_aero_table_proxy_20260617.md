@@ -53,20 +53,30 @@ table is configured.
   overlay, runtime missile state, and `debug_get_missile_runtime_state`.
 - Invalid tables (wrong size, non-finite values, non-positive values, or
   non-increasing Mach breakpoints) fall back to the existing scalar model.
+- Follow-up common-chain refactor: aircraft and missile aero now share pure
+  1D table lookup/validation helpers; aircraft aero state, propulsion
+  atmosphere inputs, and missile drag use the same standard-atmosphere,
+  Mach, and dynamic-pressure helper functions. The aircraft and missile aero
+  models remain separate parameterizations.
 
 ## Validation
 
 Commands:
 
 - `cmake --build build --target ef_py -j2`
+- `cmake --build build --target ef_test ef_py -j2`
+- `./build/ef_test`
 - `PYTHONPATH=build pytest -q tests/runtime/air_combat/weapon_guidance_realism/test_launch_guidance_and_dynamics.py -k 'mach_table or cd0_supersonic or induced_drag'`
 - `PYTHONPATH=build pytest -q tests/runtime/air_combat/weapon_guidance_realism/test_launch_guidance_and_dynamics.py`
+- `PYTHONPATH=build pytest -q tests/runtime/air_combat/test_flight_dynamics_runtime.py tests/runtime/air_combat/test_flight_dynamics_realism_guards.py`
 - `PYTHONPATH=build python docs/task/air_combat/a9_high_fidelity_weapon_system/p3_integration/p3c_a9_tuning_example.py`
 
 Outcomes:
 
 - Mach-table focused selector: `4 passed`
 - Full launch/guidance/dynamics collector: `40 passed`
+- C++ doctest suite including shared aero helper regression: `57 passed`
+- Flight dynamics runtime/realism guard subset: `15 passed`
 - P3-C tuning example: `11/11 A9 fields round-trip PASS`
 
 The table tests prove that configured Cd0(M) and k(M) arrays reach runtime

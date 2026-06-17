@@ -77,6 +77,9 @@ partially met with residual.
 - [x] Induced drag scales with lateral acceleration (existing behavior preserved)
 - [x] Speed profile physically plausible (no discontinuities, no negative drag)
 - [x] All G5 params in full MissileTuning/JSON/Python pipeline
+- [x] Shared low-level aero utilities for 1D table lookup, standard atmosphere,
+  Mach, and dynamic pressure; aircraft and missile remain separate
+  parameterizations.
 
 ## G6: Physics-Based Warhead Refinements
 
