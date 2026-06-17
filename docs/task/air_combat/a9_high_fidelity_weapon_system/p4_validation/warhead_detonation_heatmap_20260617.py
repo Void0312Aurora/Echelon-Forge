@@ -1,11 +1,11 @@
 """A9 warhead detonation-point heatmap sweep.
 
-This script compares generic synthetic warhead families across fixed local
-detonation points around a structured F-16 target. Heatmaps mask direct-hitbox
-intersection points because those are direct impact/interior proxies, not valid
-exterior proximity-fuze detonation points. This is a validation artifact for
-directional behavior only: the profile values are not real-weapon calibration
-and should not be read as Pk.
+This script compares generic synthetic physics-profile warhead families across
+fixed local detonation points around a structured F-16 target. Heatmaps mask
+direct-hitbox intersection points because those are direct impact/interior
+proxies, not valid exterior proximity-fuze detonation points. This is a
+validation artifact for directional behavior only: the profile values are not
+real-weapon calibration and should not be read as Pk.
 
 Run:
   PYTHONPATH=build python docs/task/air_combat/a9_high_fidelity_weapon_system/p4_validation/warhead_detonation_heatmap_20260617.py
@@ -90,9 +90,14 @@ def _make_profile(family: str) -> object:
   profile.mass_kg = 12.0
   profile.lethal_radius_m = 35.0
   profile.damage_scalar = 90.0
+  profile.explosive_mass_kg = 5.5
+  profile.case_mass_kg = 6.5
+  profile.gurney_constant_mps = 2400.0
+  profile.fragment_count = 900.0
+  profile.fragment_mass_kg = 0.0026
   profile.synthetic = True
   profile.damage_scalar_synthetic = True
-  profile.provenance = "a9_heatmap_generic_research"
+  profile.provenance = "a9_heatmap_generic_physics_research"
   return profile
 
 

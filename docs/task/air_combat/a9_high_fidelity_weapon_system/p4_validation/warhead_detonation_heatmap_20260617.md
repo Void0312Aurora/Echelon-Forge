@@ -3,16 +3,20 @@
 ## Purpose
 
 This validation sweep observes how the current proximity-detonation damage
-chain responds to different target-local detonation points and generic warhead
-families. It uses the existing debug entry point
+chain responds to different target-local detonation points and generic
+physics-profile warhead families. It uses the existing debug entry point
 `debug_apply_profiled_local_proximity_hit_with_velocity`, then records the
 standard effects, warhead mechanism, component load, component damage, and
 platform consequence events.
 
-Scope boundary: all warhead profiles are generic synthetic research profiles
-with `mass_kg=12`, `lethal_radius_m=35`, and `damage_scalar=90`. The result is
-directional validation of the current model shape, not real-weapon calibration,
-Pk evidence, entity-deletion evidence, or strict lethality authority.
+Scope boundary: all warhead profiles are generic synthetic research profiles.
+They use `mass_kg=12`, `lethal_radius_m=35`, `damage_scalar=90`,
+`explosive_mass_kg=5.5`, `case_mass_kg=6.5`,
+`gurney_constant_mps=2400`, `fragment_count=900`, and
+`fragment_mass_kg=0.0026`. These values are generic order-of-magnitude inputs
+for exercising the opt-in Gurney/fragment-decay/rod-cap path, not real-weapon
+calibration, Pk evidence, entity-deletion evidence, or strict lethality
+authority.
 
 ## Sweep Setup
 
@@ -76,3 +80,22 @@ from sampling a missile detonation inside the aircraft body.
 The same results also preserve the earlier fidelity boundary. They do not prove
 realistic kill probability or calibrated weapon effects because the vulnerability
 and warhead profile are still generic synthetic assumptions.
+
+## Calibration Note
+
+This update calibrates the validation artifact by exercising the opt-in
+physics-profile path instead of relying only on legacy synthetic mass scaling:
+fragment count, fragment mass, explosive mass, casing mass, and Gurney constant
+are now present in the swept profile. The implementation also honors authored
+`fragment_count` and `fragment_mass_kg` when estimating fragmentation loads and
+sampling spatial effects.
+
+The remaining `blast_fragmentation` cutoff near the outer standoff cells is not
+evidence that the real effect radius should be that sharp. It comes from the
+current spatial-projection gate, which projects only a bounded inner fraction of
+the authored lethal radius. A simple projection-radius expansion was checked and
+rejected because it weakened existing near-miss probability guardrails while
+creating an overly strong far-tail system-damage artifact. The next calibration
+step should therefore separate weak residual load, component-failure
+probability, and platform-level system damage instead of only increasing the
+projection radius.

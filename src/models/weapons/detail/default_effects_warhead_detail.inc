@@ -266,6 +266,34 @@ double resolved_warhead_effective_mass_kg(const Missile& missile) {
     return damage_proxy_mass_kg;
 }
 
+double resolved_warhead_fragment_count(
+    const WarheadProfile& profile,
+    double effective_mass_kg
+) {
+    if (std::isfinite(profile.fragment_count) && profile.fragment_count > 0.0) {
+        return std::clamp(profile.fragment_count, 8.0, 12000.0);
+    }
+    return std::clamp(18.0 * std::max(0.1, effective_mass_kg), 80.0, 1200.0);
+}
+
+double resolved_warhead_fragment_mass_kg(
+    const WarheadProfile& profile,
+    double effective_mass_kg,
+    double fragment_count
+) {
+    if (std::isfinite(profile.fragment_mass_kg) && profile.fragment_mass_kg > 0.0) {
+        return std::clamp(profile.fragment_mass_kg, 0.0002, 0.080);
+    }
+    const double casing_mass_kg =
+        std::isfinite(profile.case_mass_kg) && profile.case_mass_kg > 0.0
+            ? profile.case_mass_kg
+            : effective_mass_kg;
+    return std::clamp(
+        (0.36 * casing_mass_kg) / std::max(1.0, fragment_count),
+        0.0002,
+        0.080);
+}
+
 double hitbox_projected_exposure_scale(const Vec3& local_imp, const Hitbox& box) {
     const Vec3 nearest = hitbox_nearest_point(local_imp, box);
     const Vec3 ray = vec3_normalize({
@@ -417,12 +445,13 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
             const double CM_ratio = C / std::max(1.0e-6, M);
             const double V0 = gurney * std::sqrt(CM_ratio / (1.0 + 0.5 * CM_ratio));
 
-            fragment_count = std::isfinite(missile.warhead_profile.fragment_count)
-                                 ? missile.warhead_profile.fragment_count
-                                 : std::clamp(18.0 * (C + M), 80.0, 1200.0);
-            fragment_mass_kg = std::isfinite(missile.warhead_profile.fragment_mass_kg)
-                                   ? missile.warhead_profile.fragment_mass_kg
-                                   : std::clamp((0.36 * M) / fragment_count, 0.003, 0.055);
+            fragment_count = resolved_warhead_fragment_count(
+                missile.warhead_profile,
+                C + M);
+            fragment_mass_kg = resolved_warhead_fragment_mass_kg(
+                missile.warhead_profile,
+                C + M,
+                fragment_count);
             fragment_velocity_mps = std::clamp(V0, 550.0, 2500.0) *
                                     (0.42 + 0.58 * radius_quality);
             // Atmospheric decay: V(s) = V₀ · exp(-Cd·ρ·A·s / (2m))
@@ -440,9 +469,13 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
             }
         } else {
             // Legacy empirical formulas (backward-compatible).
-            fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
-            fragment_mass_kg =
-                std::clamp((0.36 * mass_kg) / fragment_count, 0.003, 0.055);
+            fragment_count = resolved_warhead_fragment_count(
+                missile.warhead_profile,
+                mass_kg);
+            fragment_mass_kg = resolved_warhead_fragment_mass_kg(
+                missile.warhead_profile,
+                mass_kg,
+                fragment_count);
             fragment_velocity_mps =
                 std::clamp(1120.0 + 18.0 * std::sqrt(mass_kg) + 0.18 * closure, 550.0, 1850.0) *
                 (0.42 + 0.58 * radius_quality);
@@ -573,7 +606,9 @@ WarheadSpatialSample sample_warhead_spatial_effect(
         4.0 * M_PI * std::max(distance_m * distance_m, 1.0);
 
     if (family == "fragmentation" || family == "blast_fragmentation") {
-        const double fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
+        const double fragment_count = resolved_warhead_fragment_count(
+            missile.warhead_profile,
+            mass_kg);
         sample.sample_count = static_cast<std::uint32_t>(std::round(fragment_count));
         const double pattern_scale = std::clamp(
             (0.70 + 0.30 * axis_weight) * std::clamp(orientation_weight, 0.70, 1.18),
