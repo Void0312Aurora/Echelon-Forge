@@ -1,9 +1,11 @@
 """A9 warhead detonation-point heatmap sweep.
 
 This script compares generic synthetic warhead families across fixed local
-detonation points around a structured F-16 target. It is a validation artifact
-for directional behavior only: the profile values are not real-weapon
-calibration and should not be read as Pk.
+detonation points around a structured F-16 target. Heatmaps mask direct-hitbox
+intersection points because those are direct impact/interior proxies, not valid
+exterior proximity-fuze detonation points. This is a validation artifact for
+directional behavior only: the profile values are not real-weapon calibration
+and should not be read as Pk.
 
 Run:
   PYTHONPATH=build python docs/task/air_combat/a9_high_fidelity_weapon_system/p4_validation/warhead_detonation_heatmap_20260617.py
@@ -157,6 +159,7 @@ def _run_case(
   component_loads = list(events.component_load_events)
   component_damages = list(events.component_damage_events)
   deltas = _parse_damage_delta(report)
+  direct_hitbox_intersection = bool(effects.direct_hitbox_intersection)
 
   return {
     "slice": slice_name,
@@ -167,7 +170,8 @@ def _run_case(
     "local_right_m": float(local[1]),
     "local_up_m": float(local[2]),
     "miss_distance_m": float(effects.miss_distance_m),
-    "direct_hitbox_intersection": bool(effects.direct_hitbox_intersection),
+    "direct_hitbox_intersection": direct_hitbox_intersection,
+    "valid_proximity_point": not direct_hitbox_intersection,
     "projected_hitbox_count": int(effects.projected_hitbox_count),
     "component_hit_count": int(effects.component_hit_count),
     "component_load_count": len(component_loads),
@@ -222,12 +226,18 @@ def _write_csv(rows: list[dict[str, object]]) -> None:
     writer.writerows(rows)
 
 
+def _valid_proximity_row(row: dict[str, object]) -> bool:
+  return bool(row.get("valid_proximity_point", False))
+
+
 def _grid(rows: list[dict[str, object]], family: str, slice_name: str, metric: str) -> np.ndarray:
   grid = np.full((len(AXIS_VALUES), len(AXIS_VALUES)), np.nan, dtype=float)
   x_index = {value: index for index, value in enumerate(AXIS_VALUES)}
   y_index = {value: index for index, value in enumerate(AXIS_VALUES)}
   for row in rows:
     if row["warhead_family"] != family or row["slice"] != slice_name:
+      continue
+    if not _valid_proximity_row(row):
       continue
     grid[y_index[float(row["y_axis_m"])]][x_index[float(row["x_axis_m"])]] = float(
       row[metric]
@@ -239,7 +249,9 @@ def _metric_limits(rows: list[dict[str, object]], slice_name: str, metric: str) 
   values = [
     float(row[metric])
     for row in rows
-    if row["slice"] == slice_name and math.isfinite(float(row[metric]))
+    if row["slice"] == slice_name
+    and _valid_proximity_row(row)
+    and math.isfinite(float(row[metric]))
   ]
   if not values:
     return 0.0, 1.0
@@ -272,14 +284,16 @@ def _plot_heatmap_group(
     min(AXIS_VALUES) - extent_step / 2.0,
     max(AXIS_VALUES) + extent_step / 2.0,
   ]
+  colormap = plt.get_cmap(cmap).copy()
+  colormap.set_bad("#c8c8c8")
 
   for family_index, family in enumerate(WARHEAD_FAMILIES):
     for metric_index, (metric, title) in enumerate(metrics):
       ax = axes[family_index][metric_index]
       lower, upper = _metric_limits(rows, slice_name, metric)
       image = ax.imshow(
-        _grid(rows, family, slice_name, metric),
-        cmap=cmap,
+        np.ma.masked_invalid(_grid(rows, family, slice_name, metric)),
+        cmap=colormap,
         extent=extent,
         origin="lower",
         aspect="equal",
@@ -300,8 +314,9 @@ def _plot_heatmap_group(
       fig.colorbar(image, ax=ax, fraction=0.045, pad=0.02)
 
   fig.suptitle(
-    f"A9 generic synthetic warhead {kind} heatmap ({slice_name} slice)",
-    fontsize=12,
+    f"A9 generic synthetic warhead {kind} heatmap "
+    f"({slice_name} exterior-proximity slice; gray=direct hitbox)",
+    fontsize=11,
   )
   out = OUT_DIR / f"warhead_detonation_heatmap_{kind}_{slice_spec['figure_suffix']}_20260617.png"
   fig.savefig(out, dpi=160)
@@ -313,12 +328,25 @@ def _print_summary(rows: list[dict[str, object]]) -> None:
   print(f"Wrote {len(rows)} cases to {CSV_OUT}")
   for slice_spec in SLICES:
     slice_name = str(slice_spec["name"])
-    print(f"\n{slice_name} slice maxima:")
+    invalid_points = {
+      (
+        float(row["local_forward_m"]),
+        float(row["local_right_m"]),
+        float(row["local_up_m"]),
+      )
+      for row in rows
+      if row["slice"] == slice_name and not _valid_proximity_row(row)
+    }
+    print(
+      f"\n{slice_name} exterior-proximity slice maxima "
+      f"(masked direct-hitbox points={len(invalid_points)}):"
+    )
     for family in WARHEAD_FAMILIES:
       family_rows = [
         row
         for row in rows
         if row["slice"] == slice_name and row["warhead_family"] == family
+        and _valid_proximity_row(row)
       ]
       max_damage = max(family_rows, key=lambda row: float(row["system_damage"]))
       max_loads = max(family_rows, key=lambda row: float(row["component_load_count"]))
