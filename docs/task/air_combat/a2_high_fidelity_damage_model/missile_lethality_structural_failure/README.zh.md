@@ -19,22 +19,22 @@
 - A8 损伤效果链（已有 fire/fuel/sensor/engine 传播，MLF-7 将扩展）：
   [../../archive/a8_damage_effect_chain/README.zh.md](../../archive/a8_damage_effect_chain/README.zh.md)
 - F-16C unit database（MLF-6 必须分类的当前部件定义）：
-  [../../../../../../examples/config/database/aircraft/units/f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json)
+  [../../../../../examples/config/database/aircraft/units/f16c_block50.json](../../../../../examples/config/database/aircraft/units/f16c_block50.json)
 - 子项目创建标准：
-  [../../../../../agent/rules/subproject_creation_standard.zh.md](../../../../../agent/rules/subproject_creation_standard.zh.md)
+  [../../../../agent/rules/subproject_creation_standard.zh.md](../../../../agent/rules/subproject_creation_standard.zh.md)
 - 真实性权限边界：
-  [../../../../../standards/foundation/realism_authority_boundary.zh.md](../../../../../standards/foundation/realism_authority_boundary.zh.md)
+  [../../../../standards/foundation/realism_authority_boundary.zh.md](../../../../standards/foundation/realism_authority_boundary.zh.md)
 - 结构断裂合同（已存在，无运行时 writer）：
-  [../../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../src/runtime/contracts/engagement_contracts.h)
+  [../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)
   （`StructuralBreakupEvent`，第 213-221 行）
 - 交战事件类型：
-  [../../../../../../src/core/engine/engagement_event_types.h](../../../../../../src/core/engine/engagement_event_types.h)
+  [../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
   （`RecentEngagementEvents::structural_breakup_events`）
 - MLF-5 部件损伤状态（实时 ECS 组件，MLF-6 消费面）：
-  [../../../../../../src/components/combat/common/damage_common.h](../../../../../../src/components/combat/common/damage_common.h)
+  [../../../../../src/components/combat/common/damage_common.h](../../../../../src/components/combat/common/damage_common.h)
   （`ComponentDamageState`）
 - 飞机损伤系统（MLF-6 系统注册位置）：
-  [../../../../../../src/systems/combat/damage_system_air.h](../../../../../../src/systems/combat/damage_system_air.h)
+  [../../../../../src/systems/combat/damage_system_air.h](../../../../../src/systems/combat/damage_system_air.h)
   （`AircraftDamageStateUpdate` — 第 344 行）
 
 ## 目的
@@ -75,11 +75,12 @@ MLF-5 的 `ComponentDamageEvent` 是事后写入的诊断/记录制品。实时�
 理由：事件存储是日志，不是响应式信号。从事件行追踪累积损伤需要 MLF-6 重放历史。
 读取实时 ECS 组件天然获得每步累积状态。
 
-### D2：MLF-6 只写 `StructuralBreakupEvent`；不修改 `structural_integrity`
+### D2：MLF-6 不修改任何*已有* ECS 组件；写入*新增*组件
 
 现有 `structural_integrity` 标量完全不被 MLF-6 触及。它继续通过
 `accumulate_aircraft_structural_envelope_damage` 和 `default_effects_air_domain.h` 衰减。
-MLF-6 增加断裂事件作为平行的、部件感知的事实流。
+MLF-6 通过两个新输出增加平行的、部件感知的断裂事实流：`StructuralBreakupState` ECS 组件（D7）
+和 `StructuralBreakupEvent` 行（事件存储）。
 
 MLF-7 后续将决定：
 - 读取断裂事件并将 `structural_integrity` 设为断裂状态的函数，或
@@ -100,14 +101,36 @@ MLF-6 不创建、销毁或分离 ECS 实体。MLF-8 后续将消费这些标签
 ### D5：集成点 — 新 ECS system 注册在 `AircraftDamageStateUpdate` 之后
 
 MLF-6 注册新的 `OnUpdate` 系统（`StructuralFailureUpdate`），在同一 phase 内运行于
-`AircraftDamageStateUpdate` 之后。它读取 `ComponentDamageState`（已被损伤系统更新）并
-将 `StructuralBreakupEvent` 行写入 `RecentEngagementEvents`。除事件累加器外不修改任何 ECS 组件。
+`AircraftDamageStateUpdate` 之后。它读取 `ComponentDamageState`（已被损伤系统更新），
+写入两个输出：新增的 `StructuralBreakupState` ECS 组件（D7）和
+`RecentEngagementEvents` 中的 `StructuralBreakupEvent` 行。
 
 ### D6：失能状态交互推迟到 MLF-7
 
-MLF-6 写入 `StructuralBreakupEvent` 事实。不触及 `PlatformDamageState::loss_state`、
-`Health::current_hp` 或 `sync_platform_damage_loss_state`。`full_breakup` 是否意味着 `Lost`
+MLF-6 写入 `StructuralBreakupEvent` 事实和 `StructuralBreakupState`（D7）。
+不触及 `PlatformDamageState::loss_state`、`Health::current_hp` 或
+`sync_platform_damage_loss_state`。`full_breakup` 是否意味着 `Lost`
 是 MLF-7 的决策，不是 MLF-6 的。
+
+### D7：不可逆断裂状态存储在新增 ECS 组件 `StructuralBreakupState` 中
+
+per-airframe 不可逆状态机（D4）持久化在一个**新增**
+ECS 组件 `StructuralBreakupState` 中，挂载在飞机实体上。
+该组件持有 `breakup_state` 和活跃 `break_mode` 位掩码，
+每 tick 由 `StructuralFailureUpdate` 更新。
+
+这是唯一满足所有需求的机制：
+- **构造层面不可逆**：组件值只能向前转换；不存在 `full_breakup` → `intact` 的代码路径。
+- **world-batch 序列化存活**：作为标准 ECS 组件，无需定制逻辑即可参与快照/恢复循环。
+- **存档/恢复和回放存活**：组件是 ECS 世界状态的一部分。
+- **下游系统可查询**：MLF-7 可直接 `get<StructuralBreakupState>()`，无需解析事件存储历史。
+- **重置语义清晰**：实体销毁移除组件；实体创建从 `breakup_state = intact` 开始。
+
+`StructuralBreakupState` 不是 `structural_integrity` 的替代品；该标量继续独立存在和衰减。
+MLF-7 决定如何协调二者（D2）。
+
+该组件应定义在新头文件 `src/components/combat/structural_failure.h`
+（或与项目组件布局一致的相邻路径）中。
 
 ## 当前状态
 
@@ -128,8 +151,9 @@ MLF-6 写入 `StructuralBreakupEvent` 事实。不触及 `PlatformDamageState::l
 - **盘点**所有 `ComponentDamageState` 字段、所有当前 F-16C 部件名称，以及所有 MLF-6
   必须避开的 `structural_integrity` 写入位置（只读）。
 - **设计**部件→断裂模式映射表：哪些 F-16C 部件失效，在什么累积完整度阈值下，触发哪种断裂模式。
-- **实现**结构断裂状态机为新 ECS 系统（`StructuralFailureUpdate`），读取 `ComponentDamageState`
-  并将机体分类为 `breakup_state` + 活跃 `break_mode` 集。
+- **实现**结构断裂状态机为新 ECS 系统（`StructuralFailureUpdate`），读取 `ComponentDamageState`，
+  写入新增的 `StructuralBreakupState` ECS 组件（D7），并将机体分类为
+  `breakup_state` + 活跃 `break_mode` 集。
 - **写入** `StructuralBreakupEvent` 行到 `RecentEngagementEvents`，用 `cause_event_id`
   引用每个贡献部件组最近的 `ComponentDamageEvent::event_id`。
 - **填充** `breakup_state`、`break_mode`、`detached_part_ref`（字符串标签）、
@@ -155,7 +179,7 @@ MLF-6 写入 `StructuralBreakupEvent` 事实。不触及 `PlatformDamageState::l
 
 | 阶段 | 目标 | 入口条件 | 退出条件 | 写入面 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| `P0 Boundary` | 冻结范围、设计决策 D1-D6、禁止声明。 | 用户要求创建 MLF-6。 | README v2、任务簇、状态、派发队列、验收草案存在；父 README 链接 MLF-6。 | 仅文档 | active |
+| `P0 Boundary` | 冻结范围、设计决策 D1-D7、禁止声明。 | 用户要求创建 MLF-6。 | README v2、任务簇、状态、派发队列、验收草案存在；父 README 链接 MLF-6。 | 仅文档 | active |
 | `P1 Inventory` | 盘点所有 `ComponentDamageState` 字段、所有 F-16C 部件名称，以及 MLF-6 不得触及的 `structural_integrity` 写入位置。 | P0 完成。 | 盘点文档列出所有消费字段、所有带结构组分类的 F-16C 部件名称，以及所有禁止写入位置。 | 仅文档 | planned |
 | `P2 Break-Mode Mapping` | 设计部件→断裂模式分类表：哪些部件在什么完整度阈值下触发 wing_loss / tail_loss / engine_detach / fuselage_rupture。 | P1 盘点完成。 | 映射表存在；每个 F-16C 部件分类到恰好一个结构组或 `none`；阈值规则显式。 | 仅文档 | planned |
 | `P3 State Machine` | 实现结构断裂状态机为新 ECS 系统（`StructuralFailureUpdate`）。 | P2 映射表批准。 | 系统读取 `ComponentDamageState`，应用 P2 映射规则，内部追踪 per-airframe `breakup_state` 和活跃 `break_mode` 集。暂不写入事件。 | `src/systems/combat/structural_failure_system.h`、`src/systems/combat/structural_failure_system.cpp` | planned |
@@ -215,9 +239,11 @@ MLF-6 刻意不读不写：
 
 **P3 状态机**：
 - `StructuralFailureUpdate` 系统读取 `ComponentDamageState` 并产生正确 `breakup_state` 转换。
-- 状态不可逆且累积。
+- 状态不可逆且累积（per D4）。
 - 同一 timestep 可激活多种断裂模式。
-- 系统除事件累加器字段外不写任何 ECS 组件。
+- `StructuralBreakupState`（新增 ECS 组件，D7）写入正确的 `breakup_state` 和
+  `break_mode` 位掩码；值只能向前转换。
+- `StructuralBreakupEvent` 行在状态转换或新断裂模式激活时写入。
 
 **P4 事件 writer**：
 - 受控部件失效输入产生正确 `StructuralBreakupEvent` 行：`break_mode` 匹配 P2 分类，

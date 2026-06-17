@@ -20,22 +20,22 @@ Inputs:
 - A8 damage effect chain (existing fire/fuel/sensor/engine propagation MLF-7 will extend):
   [../../archive/a8_damage_effect_chain/README.md](../../archive/a8_damage_effect_chain/README.md)
 - F-16C unit database (current component definitions MLF-6 must classify):
-  [../../../../../../examples/config/database/aircraft/units/f16c_block50.json](../../../../../../examples/config/database/aircraft/units/f16c_block50.json)
+  [../../../../../examples/config/database/aircraft/units/f16c_block50.json](../../../../../examples/config/database/aircraft/units/f16c_block50.json)
 - Subproject creation standard:
-  [../../../../../agent/rules/subproject_creation_standard.md](../../../../../agent/rules/subproject_creation_standard.md)
+  [../../../../agent/rules/subproject_creation_standard.md](../../../../agent/rules/subproject_creation_standard.md)
 - Realism authority boundary:
-  [../../../../../standards/foundation/realism_authority_boundary.md](../../../../../standards/foundation/realism_authority_boundary.md)
+  [../../../../standards/foundation/realism_authority_boundary.md](../../../../standards/foundation/realism_authority_boundary.md)
 - Structural breakup contract (exists, no runtime writer):
-  [../../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../../src/runtime/contracts/engagement_contracts.h)
+  [../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)
   (`StructuralBreakupEvent`, lines 213-221)
 - Engagement event types:
-  [../../../../../../src/core/engine/engagement_event_types.h](../../../../../../src/core/engine/engagement_event_types.h)
+  [../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
   (`RecentEngagementEvents::structural_breakup_events`)
 - MLF-5 component damage state (live ECS component, MLF-6 consumption surface):
-  [../../../../../../src/components/combat/common/damage_common.h](../../../../../../src/components/combat/common/damage_common.h)
+  [../../../../../src/components/combat/common/damage_common.h](../../../../../src/components/combat/common/damage_common.h)
   (`ComponentDamageState`)
 - Aircraft damage system (where MLF-6 system registers):
-  [../../../../../../src/systems/combat/damage_system_air.h](../../../../../../src/systems/combat/damage_system_air.h)
+  [../../../../../src/systems/combat/damage_system_air.h](../../../../../src/systems/combat/damage_system_air.h)
   (`AircraftDamageStateUpdate` — line 344)
 
 ## Purpose
@@ -89,12 +89,13 @@ Rationale: the event store is a log, not a reactive signal. Tracking cumulative
 damage from event rows would require MLF-6 to replay history. Reading the live
 ECS component gives per-timestep cumulative state for free.
 
-### D2: MLF-6 writes `StructuralBreakupEvent` only; does not modify `structural_integrity`
+### D2: MLF-6 does not modify any *existing* ECS component; writes a *new* one
 
 The existing `structural_integrity` scalar remains untouched by MLF-6. It
 continues to degrade via `accumulate_aircraft_structural_envelope_damage` and
-`default_effects_air_domain.h`. MLF-6 adds breakup events as a parallel,
-component-aware fact stream.
+`default_effects_air_domain.h`. MLF-6 adds breakup facts as a parallel,
+component-aware stream via two new outputs: a `StructuralBreakupState` ECS
+component (D7) and `StructuralBreakupEvent` rows (event store).
 
 MLF-7 will later decide whether to:
 - Read breakup events and set `structural_integrity` as a function of breakup
@@ -121,16 +122,42 @@ the cumulative component damage warrants it.
 
 MLF-6 registers a new `OnUpdate` system (`StructuralFailureUpdate`) that runs
 after `AircraftDamageStateUpdate` in the same phase. It reads
-`ComponentDamageState` (already updated by the damage system) and writes
-`StructuralBreakupEvent` rows into `RecentEngagementEvents`. It does not mutate
-any ECS component except the event accumulator.
+`ComponentDamageState` (already updated by the damage system). It writes two
+outputs: a new ECS component `StructuralBreakupState` (D7) and
+`StructuralBreakupEvent` rows into `RecentEngagementEvents`.
 
 ### D6: Loss-state interaction is deferred to MLF-7
 
-MLF-6 writes `StructuralBreakupEvent` facts. It does not touch
-`PlatformDamageState::loss_state`, `Health::current_hp`, or
+MLF-6 writes `StructuralBreakupEvent` facts and `StructuralBreakupState` (D7).
+It does not touch `PlatformDamageState::loss_state`, `Health::current_hp`, or
 `sync_platform_damage_loss_state`. Whether `full_breakup` implies `Lost` is
 MLF-7's decision, not MLF-6's.
+
+### D7: Irreversible breakup state is stored in a new ECS component `StructuralBreakupState`
+
+The per-airframe irreversible state machine (D4) is persisted in a **new**
+ECS component `StructuralBreakupState`, attached to the aircraft entity.
+This component holds `breakup_state` and the active `break_mode` bitmask,
+and is updated each tick by `StructuralFailureUpdate`.
+
+This is the only mechanism that satisfies all requirements:
+- **Irreversible by construction**: the component values only transition forward;
+  there is no code path that reverts `full_breakup` → `intact`.
+- **Survives world-batch serialization**: as a standard ECS component, it is
+  included in snapshot/restore cycles without custom logic.
+- **Survives save/load and replay**: the component is part of the ECS world state.
+- **Queryable by downstream systems**: MLF-7 can `get<StructuralBreakupState>()`
+  without parsing event-store history.
+- **Clear reset semantics**: entity destruction removes the component; entity
+  creation starts at `breakup_state = intact`.
+
+`StructuralBreakupState` is NOT a replacement for `structural_integrity`; the
+scalar continues to exist and degrade independently. MLF-7 decides how to
+reconcile the two (D2).
+
+This component should be defined in a new header
+`src/components/combat/structural_failure.h` (or an adjacent path consistent
+with the project's component layout).
 
 ## Current State
 
@@ -153,8 +180,9 @@ In scope:
 - **Design** a component-to-break-mode mapping table: which F-16C component
   failures, at what cumulative integrity thresholds, trigger which break modes.
 - **Implement** the structural breakup state machine as a new ECS system
-  (`StructuralFailureUpdate`) that reads `ComponentDamageState` and classifies
-  the airframe into `breakup_state` + active `break_mode` set.
+  (`StructuralFailureUpdate`) that reads `ComponentDamageState`, writes a new
+  `StructuralBreakupState` ECS component (D7), and classifies the airframe
+  into `breakup_state` + active `break_mode` set.
 - **Write** `StructuralBreakupEvent` rows into `RecentEngagementEvents`, with
   `cause_event_id` referencing the most recent `ComponentDamageEvent::event_id`
   for each contributing component group.
@@ -194,7 +222,7 @@ with a narrow write set and a testable exit condition.
 | `P2 Break-Mode Mapping` | Design the component-to-break-mode classification table: which components at which integrity thresholds trigger wing_loss / tail_loss / engine_detach / fuselage_rupture. | P1 inventory complete. | Mapping table exists; each F-16C component is classified into exactly one structural group or `none`; threshold rules are explicit. | docs only | planned |
 | `P3 State Machine` | Implement the structural breakup state machine as a new ECS system (`StructuralFailureUpdate`). | P2 mapping table approved. | System reads `ComponentDamageState`, applies P2 mapping rules, and tracks per-airframe `breakup_state` and active `break_mode` set internally. No event writing yet. | `src/systems/combat/structural_failure_system.h`, `src/systems/combat/structural_failure_system.cpp` | planned |
 | `P4 Event Writer` | Write `StructuralBreakupEvent` rows into `RecentEngagementEvents` when state transitions or new break modes activate. | P3 state machine passes focused tests. | Event rows are populated with correct `breakup_state`, `break_mode`, `detached_part_ref`, `detached_part_count`, `airframe_breakup`, and `cause_event_id`. | `src/systems/combat/structural_failure_system.*`, `src/core/engine/simulation_kernel_engagement_event_store.*` | planned |
-| `P5 Diagnostics` | Add Python export path for `structural_breakup_events`. | P4 event writer passes focused tests. | Python probe exports breakup facts per `chain_id`. | `tools/diagnostics/structural_breakup_export.py` | planned |
+| `P5 Diagnostics` | Add thin Python probe on existing `StructuralBreakupEvent` bindings. | P4 event writer passes focused tests. | Python probe exports breakup facts per `chain_id` via existing facade surface; no new binding layer. | `tools/diagnostics/structural_breakup_export.py` | planned |
 | `P6 Validation` | Run focused tests for each break mode, full regression smoke, and zero-regression check vs main. | P4 + P5 pass. | Every P2 break mode has a focused C++ test; no-damage baseline produces zero events; full air_combat suite passes. | `tests/runtime/air_combat/test_structural_failure_*.cpp` | planned |
 | `P7 Closure` | Sync docs, index, archive, and residual register. | P6 passes. | Parent READMEs updated; MLF-6 accepted; residual map explicit; archive boundary clear. | docs only | planned |
 
@@ -214,7 +242,9 @@ Planned outputs (one per phase):
 - `P3`: `src/systems/combat/structural_failure_system.h` and `.cpp` — state
   machine implementation.
 - `P4`: Event writer extension to P3 code; event-store integration.
-- `P5`: `tools/diagnostics/structural_breakup_export.py` — Python probe.
+- `P5`: `tools/diagnostics/structural_breakup_export.py` — thin Python probe
+  consuming existing `StructuralBreakupEvent` facade/binding surface
+  (`bindings_runtime.cpp:449-457`, `bindings_core.cpp`). No new binding layer.
 - `P6`: `tests/runtime/air_combat/test_structural_failure_break_modes.cpp` and
   `test_structural_failure_regression.cpp`.
 
@@ -254,9 +284,12 @@ This subproject can be marked accepted only when:
 **P3 state machine**:
 - The `StructuralFailureUpdate` system reads `ComponentDamageState` and produces
   correct `breakup_state` transitions.
-- State is irreversible and cumulative.
+- State is irreversible and cumulative (per D4).
 - Multiple break modes can activate in the same timestep.
-- The system does not write any ECS component besides event accumulator fields.
+- `StructuralBreakupState` (new ECS component, D7) is written with correct
+  `breakup_state` and `break_mode` bitmask; values only transition forward.
+- `StructuralBreakupEvent` rows are written when state transitions or new
+  break modes activate.
 
 **P4 event writer**:
 - Controlled component-failure inputs produce correct `StructuralBreakupEvent`

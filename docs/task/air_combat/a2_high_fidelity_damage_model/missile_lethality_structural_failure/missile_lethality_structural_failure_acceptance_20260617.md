@@ -47,14 +47,17 @@ partially met with residual.
 - [ ] `StructuralFailureUpdate` ECS system compiles and registers after
   `AircraftDamageStateUpdate`.
 - [ ] System reads `ComponentDamageState` via ECS `get<>()`.
-- [ ] System tracks per-airframe `breakup_state` (intact → partial_detachment →
-  partial_breakup → full_breakup).
-- [ ] System tracks active `break_mode` set (wing_loss, tail_loss,
-  engine_detach, fuselage_rupture, multi_axis).
-- [ ] State is irreversible and cumulative (per D4).
+- [ ] New `StructuralBreakupState` ECS component (D7) is defined and attached
+  to aircraft entities.
+- [ ] `StructuralBreakupState` holds `breakup_state` (intact →
+  partial_detachment → partial_breakup → full_breakup) and active `break_mode`
+  bitmask.
+- [ ] State is irreversible and cumulative (per D4): component values only
+  transition forward; there is no code path reverting `full_breakup` → `intact`.
 - [ ] Multiple break modes can activate in the same timestep (per D4).
-- [ ] System does NOT write any ECS component besides internal state and
-  event accumulator fields.
+- [ ] System does NOT modify any *existing* ECS component (per D2):
+  `structural_integrity`, `FlightModel`, `Propulsion`, `Health`,
+  `PlatformDamageState` remain untouched.
 - [ ] `ef_test --test-suite=structural_failure_state` passes.
 
 ## MLF-6E: Event Writer (P4)
@@ -76,7 +79,10 @@ partially met with residual.
 
 ## MLF-6F: Diagnostics Export (P5)
 
-- [ ] Python probe exports `structural_breakup_events` per `chain_id`.
+- [ ] Thin Python probe consumes existing `StructuralBreakupEvent` and
+  `structural_breakup_events` bindings (`bindings_runtime.cpp:449-457`,
+  `bindings_core.cpp`); no new binding surface introduced.
+- [ ] Probe exports `structural_breakup_events` per `chain_id`.
 - [ ] Export includes all `StructuralBreakupEvent` fields.
 - [ ] `pytest -q tests/tools/test_structural_breakup_export.py` passes.
 
@@ -89,8 +95,9 @@ partially met with residual.
 - [ ] Multi-group failures produce `break_mode = multi_axis` and
   `breakup_state = full_breakup`.
 - [ ] No-damage baseline produces zero events.
-- [ ] State irreversibility is tested: once `wing_loss` is set, restoring
-  component integrity does not clear it.
+- [ ] State irreversibility is tested: once `wing_loss` is set in
+  `StructuralBreakupState` (D7), restoring `ComponentDamageState` component
+  integrity does not clear the `wing_loss` flag.
 
 ## MLF-6H: Zero-Regression Smoke (P7)
 

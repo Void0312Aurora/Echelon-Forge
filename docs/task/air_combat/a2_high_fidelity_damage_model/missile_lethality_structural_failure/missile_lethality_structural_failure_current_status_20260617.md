@@ -1,15 +1,17 @@
 # MLF-6 Structural Failure — Current Status
 
-Status: `2026-06-17` planning v2 — subproject corrected per P0 self-review. Six
-design decisions (D1-D6) frozen. No implementation dispatched.
+Status: `2026-06-17` planning v2.1 — D7 added for irreversible state persistence;
+diagnostics bound to existing facade surface; all relative links corrected.
+Seven design decisions (D1-D7) frozen. No implementation dispatched.
 
 ## What Changed (v1 → v2)
 
 - **Removed aerodynamics bridging from MLF-6 scope.** Flight-dynamics response to
   breakup belongs in MLF-7 per the MLF-1 contract (`damage/air` write surface).
   MLF-6 write surface is `damage/physics` only.
-- **Froze six design decisions (D1-D6):** ECS consumption path,
-  `structural_integrity` non-modification, `detached_part_ref` string semantics,
+- **Froze seven design decisions (D1-D7):** ECS consumption path,
+  non-modification of existing ECS components, new `StructuralBreakupState`
+  component for irreversible state, `detached_part_ref` string semantics,
   irreversible cumulative state machine, ECS system registration point, and
   loss-state deferral to MLF-7.
 - **Split phases from 5 to 7 (P0-P7):** added dedicated P1 Inventory,
@@ -22,6 +24,21 @@ design decisions (D1-D6) frozen. No implementation dispatched.
 - **Clarified `detached_part_ref`:** string label, not world entity reference.
   Entity creation deferred to MLF-8.
 - **Task clusters expanded from 8 to 9** to match new phase granularity.
+
+## What Changed (v2 → v2.1)
+
+- **Fixed all relative links** in README.md and README.zh.md: `examples/` and
+  `src/` paths corrected from 7 `../` to 5; `docs/` subpaths corrected from 5
+  `../` to 4.
+- **Added D7: `StructuralBreakupState` ECS component.** Irreversible per-airframe
+  breakup state is persisted in a new ECS component, not internal system state.
+  This is the only approach that survives world-batch serialization, save/load,
+  replay, and downstream queries (MLF-7).
+- **Amended D2 and D5** to reference the new component and clarify that MLF-6
+  writes a *new* ECS component while touching no *existing* ECS components.
+- **Bound diagnostics probe to existing facade surface.** P5 diagnostic tool
+  is a thin consumer of `StructuralBreakupEvent` bindings already in
+  `bindings_runtime.cpp:449-457` and `bindings_core.cpp`; no new binding layer.
 
 ## Maturity Matrix
 
