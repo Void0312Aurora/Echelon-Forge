@@ -1082,6 +1082,9 @@ class DefaultUnitFactory : public IUnitFactory {
             missile_runtime.current_speed_mps = current_speed_mps;
             missile_runtime.commanded_lateral_accel_mps2 = 0.0;
             missile_runtime.achieved_lateral_accel_mps2 = 0.0;
+            missile_runtime.autopilot_filter_state_mps2 = 0.0;
+            missile_runtime.autopilot_rate_state_mps3 = 0.0;
+            missile_runtime.autopilot_actuator_state_mps2 = 0.0;
             missile_runtime.boost_duration_s =
                 def.has_missile_tuning
                     ? default_factory_nonnegative_or(def.missile_tuning.boost_time_s,
@@ -1126,6 +1129,15 @@ class DefaultUnitFactory : public IUnitFactory {
                     ? default_factory_nonnegative_or(def.missile_tuning.induced_drag_k,
                                                      MissileGuidanceDefaults::kInducedDragScale)
                     : MissileGuidanceDefaults::kInducedDragScale;
+            if (def.has_missile_tuning) {
+                missile_runtime.guidance_cd0_mach_breakpoints =
+                    def.missile_tuning.cd0_mach_breakpoints;
+                missile_runtime.guidance_cd0_mach_values = def.missile_tuning.cd0_mach_values;
+                missile_runtime.guidance_induced_drag_k_mach_breakpoints =
+                    def.missile_tuning.induced_drag_k_mach_breakpoints;
+                missile_runtime.guidance_induced_drag_k_mach_values =
+                    def.missile_tuning.induced_drag_k_mach_values;
+            }
             missile_runtime.guidance_max_lateral_g =
                 def.has_missile_tuning
                     ? default_factory_positive_or(

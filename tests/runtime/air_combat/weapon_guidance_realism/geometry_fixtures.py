@@ -6,6 +6,7 @@ from .helpers import (
   _drive_missile_with_truth_track,
   _make_baseline_kernel,
   _relative_detection_from_truth,
+  _set_legacy_nearest_approach_fuze,
   _spawn_geometry_pair,
 )
 
@@ -14,6 +15,7 @@ class GeometryFixtureRuntimeMixin:
   def _run_controlled_geometry_case(self, **geometry: float) -> dict[str, object]:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
+    _set_legacy_nearest_approach_fuze(sim)
     blue_id, red_id = _spawn_geometry_pair(sim, **geometry)
     initial_detection = _relative_detection_from_truth(
       sim,

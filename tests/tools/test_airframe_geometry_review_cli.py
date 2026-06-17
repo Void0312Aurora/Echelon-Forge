@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import subprocess
@@ -6,12 +6,14 @@ import sys
 from pathlib import Path
 
 from tools.geometry import airframe_geometry_review
+from tests.tools.airframe_review_fixtures import require_airframe_geometry_extra
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
+  require_airframe_geometry_extra()
   stale_isolated_page = (
     tmp_path
     / "component_review_views"

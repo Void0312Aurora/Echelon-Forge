@@ -72,6 +72,14 @@ still not accepted.
   blast-fragmentation package is accepted as non-authoritative evidence, and
   G4/G5 research packets are closed. Stock authority, Pk, and deterministic
   fuze authority are still not released.
+- The A9 high-fidelity weapon system subproject is complete at
+  [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md).
+  Six weapon subsystems upgraded from engineering-proxy fidelity toward
+  research-grade fidelity; all authority boundaries sealed. Status:
+  `accepted_with_residuals` — 23 clusters pass, 5 deferred, 1 open residual
+  (R2 EKF validation); R4 Mach Cd₀/k(M) tables are closed with
+  engineering-proxy values. Zero regressions vs main.
+  Archived at [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 - The A8 damage-effect chain now has a lightweight pointer at
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the
   full package lives under
@@ -151,6 +159,8 @@ still not accepted.
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive
   [archive/a2_high_fidelity_damage_model/README.md](archive/a2_high_fidelity_damage_model/README.md)
+- High-fidelity weapon system (new subproject):
+  [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md)
 - Damage-effect chain follow-on:
   [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md)
 - High-fidelity damage-system baseline:

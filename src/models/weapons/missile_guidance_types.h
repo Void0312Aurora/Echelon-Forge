@@ -22,4 +22,10 @@ struct MissileGuidanceDefaults {
     static constexpr double kCaptureGain = 8.0;
     static constexpr double kTerminalCaptureRangeM = 6000.0;
     static constexpr double kPnGainScale = 1.2;
+    static constexpr double kDefaultApnTargetAccelGain = 0.0;
+    static constexpr double kApnAccelFilterTauS = 0.30;
+    static constexpr double kActuatorTauS = 0.03;
+    static constexpr double kMachTransonicStart = 0.80;
+    static constexpr double kMachTransonicEnd = 1.40;
+    static constexpr double kCd0PowerOnRatio = 0.90;
 };

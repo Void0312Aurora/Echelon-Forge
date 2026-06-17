@@ -12,10 +12,11 @@
 #include "components/physics/dynamics.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "core/interfaces/environment_model.h"
+#include "models/physics/aerodynamics_common.h"
 
 namespace flight_dynamics {
-constexpr double kPropulsionSeaLevelDensity = 1.225;
-constexpr double kPropulsionSeaLevelTemperatureK = 288.15;
+constexpr double kPropulsionSeaLevelDensity = aero_physics::kSeaLevelDensityKgM3;
+constexpr double kPropulsionSeaLevelTemperatureK = aero_physics::kSeaLevelTemperatureK;
 constexpr double kPropulsionForceCanonicalQuantum = 0x1p-32;
 
 struct PropulsionAtmosphereInputs {
@@ -86,37 +87,10 @@ resolve_propulsion_atmosphere_inputs(const Transform &transform, const Velocity 
                                      const AeroState *aero_state,
                                      const EnvironmentModelRef *env_ref) {
     PropulsionAtmosphereInputs inputs{};
-    double oat_temperature_k = kPropulsionSeaLevelTemperatureK;
-    double speed_of_sound = 340.29;
-    if (env_ref && env_ref->model) {
-        const AtmosphericData atm =
-            env_ref->model->get_atmosphere_at(transform.x, transform.y, transform.z);
-        inputs.sigma = atm.air_density / kPropulsionSeaLevelDensity;
-        oat_temperature_k = atm.temperature;
-        speed_of_sound = atm.speed_of_sound;
-    } else {
-        constexpr double kG = 9.80665;
-        constexpr double kR = 287.0;
-        constexpr double kL = 0.0065;
-        constexpr double kP0 = 101325.0;
-        constexpr double kGamma = 1.4;
-        constexpr double kT11 = 216.65;
-        constexpr double kP11 = 22632.1;
-
-        const double h = std::max(0.0, transform.z);
-        double pressure = kP0;
-        if (h < 11000.0) {
-            oat_temperature_k = kPropulsionSeaLevelTemperatureK - (kL * h);
-            pressure =
-                kP0 * std::pow(1.0 - (kL * h / kPropulsionSeaLevelTemperatureK), kG / (kR * kL));
-        } else {
-            oat_temperature_k = kT11;
-            pressure = kP11 * std::exp(-kG * (h - 11000.0) / (kR * kT11));
-        }
-        const double rho = pressure / (kR * oat_temperature_k);
-        inputs.sigma = rho / kPropulsionSeaLevelDensity;
-        speed_of_sound = std::sqrt(kGamma * kR * oat_temperature_k);
-    }
+    const AtmosphericData atm = aero_physics::sample_atmosphere(transform, env_ref);
+    const double oat_temperature_k = atm.temperature;
+    const double speed_of_sound = atm.speed_of_sound;
+    inputs.sigma = atm.air_density / kPropulsionSeaLevelDensity;
 
     inputs.theta = oat_temperature_k / kPropulsionSeaLevelTemperatureK;
     if (aero_state && std::isfinite(aero_state->mach_number)) {
@@ -126,9 +100,7 @@ resolve_propulsion_atmosphere_inputs(const Transform &transform, const Velocity 
 
     const double speed = std::sqrt((velocity.vx * velocity.vx) + (velocity.vy * velocity.vy) +
                                    (velocity.vz * velocity.vz));
-    if (speed_of_sound > 1.0) {
-        inputs.mach = speed / speed_of_sound;
-    }
+    inputs.mach = aero_physics::mach_from_speed(speed, speed_of_sound);
     return inputs;
 }
 

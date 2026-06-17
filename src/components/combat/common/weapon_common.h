@@ -5,15 +5,22 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"
+#include "models/weapons/kalman_seeker.h"
 
 struct WarheadProfile {
     std::string family = "blast_fragmentation";
     double mass_kg = std::numeric_limits<double>::quiet_NaN();
     double lethal_radius_m = std::numeric_limits<double>::quiet_NaN();
     double damage_scalar = std::numeric_limits<double>::quiet_NaN();
+    double explosive_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double case_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double gurney_constant_mps = std::numeric_limits<double>::quiet_NaN();
+    double fragment_mass_kg = std::numeric_limits<double>::quiet_NaN();
+    double fragment_count = std::numeric_limits<double>::quiet_NaN();
     bool synthetic = true;
     bool damage_scalar_synthetic = true;
     std::string provenance = "synthetic_legacy_damage";
@@ -24,6 +31,8 @@ struct FuzeProfile {
     double trigger_radius_m = std::numeric_limits<double>::quiet_NaN();
     double delay_s = 0.0;
     double reliability = 1.0;
+    std::string trigger_logic = "online_sensor";
+    std::string coverage_profile = "omni";
     bool synthetic = true;
     std::string provenance = "synthetic_legacy_fuse_distance";
 };
@@ -157,9 +166,30 @@ struct Missile {
     double guidance_cd0_subsonic = std::numeric_limits<double>::quiet_NaN();
     double guidance_cd0_supersonic = std::numeric_limits<double>::quiet_NaN();
     double guidance_induced_drag_k = std::numeric_limits<double>::quiet_NaN();
+    std::vector<double> guidance_cd0_mach_breakpoints;
+    std::vector<double> guidance_cd0_mach_values;
+    std::vector<double> guidance_induced_drag_k_mach_breakpoints;
+    std::vector<double> guidance_induced_drag_k_mach_values;
     double guidance_max_lateral_g = std::numeric_limits<double>::quiet_NaN();
     double guidance_autopilot_tau_s = std::numeric_limits<double>::quiet_NaN();
     double guidance_max_accel_response_g_per_s = std::numeric_limits<double>::quiet_NaN();
+    double apn_target_accel_gain = std::numeric_limits<double>::quiet_NaN();
+    double prev_bearing_rate_deg_s = 0.0;
+    double prev_elevation_rate_deg_s = 0.0;
+    bool apn_rate_history_valid = false;
+    double filtered_bearing_accel_rad_s2 = 0.0;
+    double filtered_elevation_accel_rad_s2 = 0.0;
+    double autopilot_filter_state_mps2 = 0.0;
+    double autopilot_rate_state_mps3 = 0.0;
+    double autopilot_actuator_state_mps2 = 0.0;
+    int autopilot_order = 1;
+    double autopilot_damping = 1.0;
+    bool use_kalman_seeker = false;
+    missile_seeker::SeekerEkfState ekf_state{};
+    missile_seeker::SeekerEkfParams ekf_params{};
+    double guidance_mach_transonic_start = std::numeric_limits<double>::quiet_NaN();
+    double guidance_mach_transonic_end = std::numeric_limits<double>::quiet_NaN();
+    double guidance_cd0_power_on_ratio = std::numeric_limits<double>::quiet_NaN();
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
@@ -197,6 +227,10 @@ struct MissileSharedLaunchRuntimeState {
     double seeker_activation_range_m = std::numeric_limits<double>::quiet_NaN();
     bool midcourse_datalink_supported = false;
     bool terminal_seeker_active = true;
+    std::vector<double> cd0_mach_breakpoints;
+    std::vector<double> cd0_mach_values;
+    std::vector<double> induced_drag_k_mach_breakpoints;
+    std::vector<double> induced_drag_k_mach_values;
 };
 
 inline double clamp_missile_propellant_mass_kg(double total_mass_kg, double propellant_mass_kg) {
@@ -258,6 +292,9 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.current_speed_mps = std::max(0.0, state.launch_speed_mps);
     missile.commanded_lateral_accel_mps2 = 0.0;
     missile.achieved_lateral_accel_mps2 = 0.0;
+    missile.autopilot_filter_state_mps2 = 0.0;
+    missile.autopilot_rate_state_mps3 = 0.0;
+    missile.autopilot_actuator_state_mps2 = 0.0;
     missile.burnout_time_s = state.burnout_time_s;
     missile.boost_duration_s = std::max(0.0, state.boost_duration_s);
     missile.sustain_duration_s = std::max(0.0, state.sustain_duration_s);
@@ -269,6 +306,10 @@ inline void initialize_missile_launch_runtime(Missile &missile,
     missile.guidance_cd0_subsonic = state.cd0_subsonic;
     missile.guidance_cd0_supersonic = state.cd0_supersonic;
     missile.guidance_induced_drag_k = state.induced_drag_k;
+    missile.guidance_cd0_mach_breakpoints = state.cd0_mach_breakpoints;
+    missile.guidance_cd0_mach_values = state.cd0_mach_values;
+    missile.guidance_induced_drag_k_mach_breakpoints = state.induced_drag_k_mach_breakpoints;
+    missile.guidance_induced_drag_k_mach_values = state.induced_drag_k_mach_values;
     missile.guidance_max_lateral_g = state.max_lateral_g;
     missile.guidance_autopilot_tau_s = state.autopilot_tau_s;
     missile.guidance_max_accel_response_g_per_s = state.max_accel_response_g_per_s;
