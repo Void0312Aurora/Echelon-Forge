@@ -8,6 +8,7 @@
 #include "systems/combat/damage_system_common.h"
 
 #include "components/basic/common.h"
+#include "components/command/pilot_action.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "components/combat/health.h"
 #include "components/physics/dynamics.h"
@@ -339,6 +340,91 @@ derive_aircraft_fire_suppression_from_component_state(const ComponentDamageState
             std::min(aircraft.fire_suppression_integrity, suppression_availability);
     }
 }
+
+inline bool aircraft_has_progressive_fire_or_fuel_terminal_source(
+    const AircraftDamageState &aircraft) {
+    const double fire_source =
+        std::max({std::clamp(aircraft.fire_severity, 0.0, 1.0),
+                  std::clamp(aircraft.engine_fire_zone_severity, 0.0, 1.0),
+                  std::clamp(aircraft.wing_fire_zone_severity, 0.0, 1.0),
+                  std::clamp(aircraft.fuselage_fire_zone_severity, 0.0, 1.0),
+                  std::clamp(aircraft.mission_fire_zone_severity, 0.0, 1.0),
+                  std::clamp(aircraft.smoke_heat_exposure, 0.0, 1.0)});
+    const double fuel_source =
+        std::max({std::clamp(aircraft.fuel_leak_severity, 0.0, 1.0),
+                  std::clamp(1.0 - aircraft.fuel_system_integrity, 0.0, 1.0),
+                  std::clamp(aircraft.flammable_fluid_exposure, 0.0, 1.0),
+                  std::clamp(aircraft.ignition_source_severity, 0.0, 1.0)});
+    const double burn_weakened_structure =
+        std::clamp(1.0 - aircraft.structural_integrity, 0.0, 1.0);
+    return fire_source >= 0.20 || fuel_source >= 0.35 ||
+           (burn_weakened_structure >= 0.80 && (fire_source > 0.05 || fuel_source > 0.05));
+}
+
+inline bool aircraft_loss_should_remain_observable_until_ground(flecs::entity entity,
+                                                                const KeyEntity &key,
+                                                                const AircraftDamageState *aircraft) {
+    if (!aircraft || key.type != UnitType::Aircraft) {
+        return false;
+    }
+    if (!aircraft_has_progressive_fire_or_fuel_terminal_source(*aircraft)) {
+        return false;
+    }
+    if (const GroundState *ground = entity.get<GroundState>()) {
+        if (ground->on_ground ||
+            ground->lifecycle == GroundImpactLifecycle::CrashedWreck ||
+            ground->lifecycle == GroundImpactLifecycle::DebrisFragmentResidue) {
+            return true;
+        }
+    }
+    return true;
+}
+
+inline void apply_aircraft_terminal_descent_state(flecs::entity entity,
+                                                  AircraftDamageState &aircraft,
+                                                  PlatformDamageState &platform,
+                                                  Health &health) {
+    aircraft.forced_landing_required = true;
+    aircraft.flight_control_kill = true;
+    aircraft.propulsion_kill = true;
+    aircraft.structural_integrity = std::min(aircraft.structural_integrity, 0.05);
+    aircraft.flight_control_integrity = std::min(aircraft.flight_control_integrity, 0.08);
+    aircraft.roll_control_integrity = std::min(aircraft.roll_control_integrity, 0.12);
+    aircraft.pitch_control_integrity = std::min(aircraft.pitch_control_integrity, 0.12);
+    aircraft.yaw_control_integrity = std::min(aircraft.yaw_control_integrity, 0.12);
+    aircraft.hydraulic_integrity = std::min(aircraft.hydraulic_integrity, 0.12);
+    aircraft.hydraulic_pressure_availability =
+        std::min(aircraft.hydraulic_pressure_availability, 0.12);
+    aircraft.propulsion_integrity = std::min(aircraft.propulsion_integrity, 0.05);
+    aircraft.control_asymmetry = std::max(aircraft.control_asymmetry, 0.65);
+
+    platform.mobility_capability = 0.0;
+    platform.survivability_margin = 0.0;
+    platform.loss_state = PlatformLossState::Lost;
+    health.current_hp = 0.0;
+
+    if (PilotAction *pilot = entity.get_mut<PilotAction>()) {
+        pilot->stick_pitch = 0.0;
+        pilot->stick_roll = 0.0;
+        pilot->rudder = 0.0;
+        pilot->throttle = 0.0;
+        pilot->speedbrake = 1.0f;
+        pilot->brake = 0.0;
+        pilot->brake_left = false;
+        pilot->brake_right = false;
+        pilot->active = true;
+    }
+    if (Propulsion *propulsion = entity.get_mut<Propulsion>()) {
+        propulsion->throttle_command = 0.0;
+        propulsion->throttle_state = 0.0;
+        propulsion->dry_thrust_command_n = 0.0;
+        propulsion->dry_thrust_state_n = 0.0;
+        propulsion->ab_command = 0.0;
+        propulsion->ab_state = 0.0;
+        propulsion->current_thrust_n = 0.0;
+        propulsion->afterburner_active = false;
+    }
+}
 } // namespace
 
 inline void register_aircraft_damage_system(flecs::world &ecs) {
@@ -480,8 +566,15 @@ inline void register_aircraft_damage_system(flecs::world &ecs) {
                     }
                     sync_platform_damage_loss_state(health[i], damage[i]);
                     if (damage[i].loss_state == PlatformLossState::Lost) {
-                        health[i].current_hp = 0.0;
-                        e.destruct();
+                        AircraftDamageState *aircraft = e.get_mut<AircraftDamageState>();
+                        if (aircraft_loss_should_remain_observable_until_ground(
+                                e, key[i], aircraft)) {
+                            apply_aircraft_terminal_descent_state(e, *aircraft, damage[i],
+                                                                  health[i]);
+                        } else {
+                            health[i].current_hp = 0.0;
+                            e.destruct();
+                        }
                     }
                 }
             }

@@ -212,11 +212,11 @@ void apply_default_effects_aircraft_control_hydraulic_consequence_blocks(
     }
     if (scratch.air_control_hit) {
         aircraft_damage.flight_control_integrity -= localized_effect_delta(
-            0.28, 0.24, resolved_severity, warhead_effects.control_scale, scales.control);
+            0.12, 0.14, resolved_severity, warhead_effects.control_scale, scales.control);
         aircraft_damage.hydraulic_integrity -= localized_effect_delta(
-            0.20, 0.20, resolved_severity, warhead_effects.control_scale, scales.control);
+            0.08, 0.10, resolved_severity, warhead_effects.control_scale, scales.control);
         aircraft_damage.structural_integrity -= localized_effect_delta(
-            0.05, 0.06, resolved_severity, warhead_effects.control_scale, scales.control);
+            0.035, 0.045, resolved_severity, warhead_effects.control_scale, scales.control);
         aircraft_damage.flammable_fluid_exposure += localized_effect_delta(
             0.03, 0.05, resolved_severity, warhead_effects.breach_scale, scales.control);
     }

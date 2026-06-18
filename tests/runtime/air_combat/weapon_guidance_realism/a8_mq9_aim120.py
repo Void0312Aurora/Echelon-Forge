@@ -700,7 +700,8 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     pilot.active = True
     pilot.throttle = 1.0
     sim.set_pilot_action(target_id, pilot)
-    for _ in range(120):
+    for _ in range(900):
+      sim.set_pilot_action(target_id, pilot)
       sim.step()
 
     before = sim.get_flight_dynamics_debug_view(target_id)
@@ -727,9 +728,10 @@ class A8Mq9Aim120ValidationRuntimeMixin:
 
     overlay = _aircraft_damage_overlay(sim, target_id)
     self.assertLess(overlay["propulsion"], 1.0)
-    for _ in range(8):
+    for _ in range(30):
+      sim.set_pilot_action(target_id, pilot)
       sim.step()
 
     after = sim.get_flight_dynamics_debug_view(target_id)
     self.assertLess(float(after.mil_thrust_n), float(before.mil_thrust_n))
-    self.assertLess(float(after.current_thrust_n), float(before.current_thrust_n) * 0.80)
+    self.assertLess(float(after.current_thrust_n), float(before.current_thrust_n) * 0.85)

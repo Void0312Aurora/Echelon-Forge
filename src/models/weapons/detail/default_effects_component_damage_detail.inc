@@ -657,10 +657,10 @@ void apply_component_failure_impulse(
             aircraft_damage->ignition_source_severity += 0.02 + 0.05 * impulse;
         }
         if (system_is_air_control_surface(system)) {
-            aircraft_damage->flight_control_integrity -= 0.10 + 0.14 * impulse;
-            aircraft_damage->hydraulic_integrity -= 0.08 + 0.12 * impulse;
+            aircraft_damage->flight_control_integrity -= 0.045 + 0.08 * impulse;
+            aircraft_damage->hydraulic_integrity -= 0.045 + 0.08 * impulse;
             if (system_name_matches(system, "hydraulic")) {
-                aircraft_damage->hydraulic_pressure_availability -= 0.10 + 0.18 * impulse;
+                aircraft_damage->hydraulic_pressure_availability -= 0.06 + 0.12 * impulse;
                 aircraft_damage->flammable_fluid_exposure += 0.02 + 0.06 * impulse;
             }
         }
@@ -897,6 +897,7 @@ void apply_control_axis_component_damage(
         system_name_matches(component_name, "flaperon");
     const bool elevator_like =
         system_name_matches(component_name, "elevator") ||
+        system_name_matches(component_name, "horizontal_tail") ||
         system_name_matches(component_name, "stabilator") ||
         system_name_matches(component_name, "elevon");
     const bool flap_like = system_name_matches(component_name, "flap");

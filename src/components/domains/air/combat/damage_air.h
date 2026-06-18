@@ -271,6 +271,7 @@ derive_aircraft_damage_from_component_state(const ComponentDamageState &componen
                 damage_dependency_system_name_matches(component_key, "flaperon");
             const bool elevator_like =
                 damage_dependency_system_name_matches(component_key, "elevator") ||
+                damage_dependency_system_name_matches(component_key, "horizontal_tail") ||
                 damage_dependency_system_name_matches(component_key, "stabilator") ||
                 damage_dependency_system_name_matches(component_key, "elevon");
             const bool flap_like = damage_dependency_system_name_matches(component_key, "flap");
@@ -411,28 +412,28 @@ inline void apply_damage_component_dependency_impulse(const std::string &target_
 
     if (aircraft_damage) {
         if (damage_dependency_system_is_air_control_surface(target_system)) {
-            aircraft_damage->flight_control_integrity -= 0.06 + 0.12 * bounded_impulse;
+            aircraft_damage->flight_control_integrity -= 0.025 + 0.06 * bounded_impulse;
         }
         if (control_signal_edge && damage_dependency_system_is_air_control_surface(target_system)) {
-            aircraft_damage->flight_control_integrity -= 0.03 + 0.08 * bounded_impulse;
+            aircraft_damage->flight_control_integrity -= 0.015 + 0.045 * bounded_impulse;
             aircraft_damage->control_asymmetry += 0.01 + 0.04 * bounded_impulse;
         }
         if (damage_dependency_system_name_matches(target_system, "hydraulic")) {
             aircraft_damage->hydraulic_integrity -= 0.06 + 0.14 * bounded_impulse;
             aircraft_damage->hydraulic_pressure_availability -= 0.08 + 0.18 * bounded_impulse;
-            aircraft_damage->flight_control_integrity -= 0.03 + 0.08 * bounded_impulse;
+            aircraft_damage->flight_control_integrity -= 0.015 + 0.05 * bounded_impulse;
         }
         if (hydraulic_power_edge &&
             damage_dependency_system_is_air_control_surface(target_system) &&
             !damage_dependency_system_name_matches(target_system, "hydraulic")) {
             aircraft_damage->hydraulic_pressure_availability -= 0.04 + 0.10 * bounded_impulse;
-            aircraft_damage->flight_control_integrity -= 0.02 + 0.06 * bounded_impulse;
+            aircraft_damage->flight_control_integrity -= 0.010 + 0.035 * bounded_impulse;
         }
         if (electrical_power_edge) {
             aircraft_damage->avionics_integrity -= 0.04 + 0.09 * bounded_impulse;
             aircraft_damage->command_navigation_integrity -= 0.02 + 0.06 * bounded_impulse;
             if (damage_dependency_system_is_air_control_surface(target_system)) {
-                aircraft_damage->flight_control_integrity -= 0.02 + 0.05 * bounded_impulse;
+                aircraft_damage->flight_control_integrity -= 0.010 + 0.030 * bounded_impulse;
             }
             aircraft_damage->ignition_source_severity += 0.01 + 0.04 * bounded_impulse;
         }
