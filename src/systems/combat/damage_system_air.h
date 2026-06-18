@@ -371,7 +371,7 @@ aircraft_loss_should_remain_observable_until_ground(flecs::entity entity, const 
     if (const GroundState *ground = entity.get<GroundState>()) {
         if (ground->on_ground || ground->lifecycle == GroundImpactLifecycle::CrashedWreck ||
             ground->lifecycle == GroundImpactLifecycle::DebrisFragmentResidue) {
-            return true;
+            return false;
         }
     }
     return true;

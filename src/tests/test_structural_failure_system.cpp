@@ -3,6 +3,7 @@
 #include "components/combat/health.h"
 #include "components/combat/structural_failure.h"
 #include "core/engine/simulation_kernel_engagement_event_store.h"
+#include "systems/combat/damage_system_air.h"
 #include "core/interfaces/engagement_event_recorder.h"
 #include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
@@ -583,6 +584,53 @@ TEST_SUITE("structural_consequence") {
         CHECK(engine_consequence.fuel_leak_delta == doctest::Approx(0.30));
         CHECK(engine_consequence.aircraft_damage_state_delta.find("propulsion=-0.700000") !=
               std::string::npos);
+    }
+
+} // TEST_SUITE
+
+TEST_SUITE("aircraft_damage_lifecycle") {
+
+    TEST_CASE("progressive fire loss remains observable only until ground impact") {
+        flecs::world world;
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        world.component<GroundState>();
+        world.component<PilotAction>();
+        world.component<Propulsion>();
+        world.component<Sensor>();
+        register_aircraft_damage_system(world);
+
+        AircraftDamageState aircraft_damage{};
+        aircraft_damage.fire_severity = 0.35;
+
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<Health>({0.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(aircraft_damage)
+                            .set<GroundState>({false, 0.0, 0.6, GroundImpactLifecycle::None})
+                            .set<PilotAction>(PilotAction{})
+                            .set<Propulsion>(Propulsion{})
+                            .set<Sensor>(Sensor{});
+
+        world.progress(1.0 / 60.0);
+
+        CHECK(aircraft.is_alive());
+        const AircraftDamageState *airborne_damage = aircraft.get<AircraftDamageState>();
+        REQUIRE(airborne_damage != nullptr);
+        CHECK(airborne_damage->forced_landing_required);
+        CHECK(airborne_damage->flight_control_kill);
+        const Propulsion *airborne_propulsion = aircraft.get<Propulsion>();
+        REQUIRE(airborne_propulsion != nullptr);
+        CHECK(airborne_propulsion->current_thrust_n == doctest::Approx(0.0));
+
+        aircraft.set<GroundState>({true, 0.0, 0.6, GroundImpactLifecycle::CrashedWreck});
+
+        world.progress(1.0 / 60.0);
+
+        CHECK_FALSE(aircraft.is_alive());
     }
 
 } // TEST_SUITE

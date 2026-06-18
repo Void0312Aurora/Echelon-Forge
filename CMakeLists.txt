@@ -306,6 +306,7 @@ add_test(NAME structural_failure_state COMMAND ef_test --test-suite=structural_f
 add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_failure_events)
 add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
 add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_consequence)
+add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core
