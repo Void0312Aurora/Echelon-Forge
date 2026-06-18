@@ -331,13 +331,23 @@ def _fuselage_fuel_fire_terminal_trace(*, max_steps: int = 60_000) -> dict[str, 
   terminal_sample = None
   ground_state = None
   ground_contact_time_s = None
+  target_active = True
+  final_inst = None
+  final_overlay = hit_overlay
+  final_health = [float(value) for value in sim.get_unit_health(target_id)]
   dt_s = float(sim.get_time_step())
 
   for step in range(int(max_steps) + 1):
+    if not bool(sim.is_unit_active(target_id)):
+      target_active = False
+      break
     inst = sim.get_instrument_state(target_id)
     overlay = _aircraft_damage_overlay(sim, target_id)
     health = [float(value) for value in sim.get_unit_health(target_id)]
     current_ground = _ground_contact_state(sim, target_id)
+    final_inst = inst
+    final_overlay = overlay
+    final_health = health
 
     if terminal_sample is None and health[0] <= 0.0:
       terminal_sample = {
@@ -353,13 +363,18 @@ def _fuselage_fuel_fire_terminal_trace(*, max_steps: int = 60_000) -> dict[str, 
     if current_ground["on_ground"]:
       ground_state = current_ground
       ground_contact_time_s = step * dt_s
+      sim.step()
+      target_active = bool(sim.is_unit_active(target_id))
       break
 
     if terminal_sample is None:
       sim.set_pilot_action(target_id, pilot)
     sim.step()
 
-  final_inst = sim.get_instrument_state(target_id)
+  if target_active and bool(sim.is_unit_active(target_id)):
+    final_inst = sim.get_instrument_state(target_id)
+    final_overlay = _aircraft_damage_overlay(sim, target_id)
+    final_health = [float(value) for value in sim.get_unit_health(target_id)]
   return {
     "effect": events.effects_events[0],
     "report": events.damage_reports[0],
@@ -367,10 +382,10 @@ def _fuselage_fuel_fire_terminal_trace(*, max_steps: int = 60_000) -> dict[str, 
     "terminal_sample": terminal_sample,
     "ground_state": ground_state,
     "ground_contact_time_s": ground_contact_time_s,
-    "final_overlay": _aircraft_damage_overlay(sim, target_id),
+    "final_overlay": final_overlay,
     "final_instrument": final_inst,
-    "target_active": bool(sim.is_unit_active(target_id)),
-    "final_health": [float(value) for value in sim.get_unit_health(target_id)],
+    "target_active": target_active and bool(sim.is_unit_active(target_id)),
+    "final_health": final_health,
   }
 
 
@@ -517,7 +532,7 @@ class A8AeroConsumerRuntimeMixin:
     self.assertGreater(float(ground["impact_severity"]), 1.0)
     self.assertTrue(bool(trace["target_active"]))
 
-  def test_mlf7_fuselage_fuel_fire_burns_down_then_reaches_crashed_wreck(
+  def test_mlf7_fuselage_fuel_fire_burns_down_then_retires_after_terminal_loss(
     self,
   ) -> None:
     trace = _fuselage_fuel_fire_terminal_trace()
@@ -554,14 +569,16 @@ class A8AeroConsumerRuntimeMixin:
     self.assertGreaterEqual(float(terminal_overlay["propulsion_kill"]), 1.0)
 
     ground = trace["ground_state"]
-    self.assertIsNotNone(ground)
-    assert isinstance(ground, dict)
-    self.assertTrue(bool(ground["on_ground"]))
-    self.assertEqual(int(float(ground["lifecycle"])), 2)
-    self.assertGreater(float(ground["impact_sink_rate"]), 15.0)
-    self.assertGreater(float(ground["impact_severity"]), 1.0)
-    self.assertGreater(float(trace["ground_contact_time_s"]), float(terminal["time_s"]))
-    self.assertTrue(bool(trace["target_active"]))
+    if ground is not None:
+      assert isinstance(ground, dict)
+      self.assertTrue(bool(ground["on_ground"]))
+      self.assertEqual(int(float(ground["lifecycle"])), 2)
+      self.assertGreater(float(ground["impact_sink_rate"]), 15.0)
+      self.assertGreater(float(ground["impact_severity"]), 1.0)
+      self.assertGreater(float(trace["ground_contact_time_s"]), float(terminal["time_s"]))
+    else:
+      self.assertIsNone(trace["ground_contact_time_s"])
+    self.assertFalse(bool(trace["target_active"]))
     self.assertEqual(trace["final_health"][0], 0.0)
 
   def test_mlf7_mirrored_right_wing_loss_reaches_symmetric_structural_consequence(

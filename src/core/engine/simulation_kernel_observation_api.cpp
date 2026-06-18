@@ -135,7 +135,7 @@ int SimulationKernel::get_unit_type(uint64_t entity_id) {
 }
 
 bool SimulationKernel::is_unit_active(uint64_t entity_id) {
-    return ecs.entity(entity_id).is_valid();
+    return ecs.entity(entity_id).is_alive();
 }
 
 void SimulationKernel::set_contact_list(uint64_t entity_id,
