@@ -431,6 +431,23 @@ inline void sync_platform_damage_loss_state(Health &health, PlatformDamageState 
 inline bool engagement_damage_snapshot_changed(const EngagementDamageStateSnapshot &before,
                                                const EngagementDamageStateSnapshot &after) {
     constexpr double epsilon = 1.0e-6;
+    const bool aircraft_damage_changed =
+        before.has_aircraft_damage != after.has_aircraft_damage ||
+        std::abs(before.flight_control_integrity - after.flight_control_integrity) > epsilon ||
+        std::abs(before.hydraulic_integrity - after.hydraulic_integrity) > epsilon ||
+        std::abs(before.hydraulic_pressure_availability - after.hydraulic_pressure_availability) >
+            epsilon ||
+        std::abs(before.propulsion_integrity - after.propulsion_integrity) > epsilon ||
+        std::abs(before.fuel_system_integrity - after.fuel_system_integrity) > epsilon ||
+        std::abs(before.fuel_leak_severity - after.fuel_leak_severity) > epsilon ||
+        std::abs(before.avionics_integrity - after.avionics_integrity) > epsilon ||
+        std::abs(before.structural_integrity - after.structural_integrity) > epsilon ||
+        std::abs(before.crew_effectiveness - after.crew_effectiveness) > epsilon ||
+        std::abs(before.pilot_effectiveness - after.pilot_effectiveness) > epsilon ||
+        std::abs(before.mission_crew_effectiveness - after.mission_crew_effectiveness) > epsilon ||
+        std::abs(before.command_navigation_integrity - after.command_navigation_integrity) >
+            epsilon ||
+        std::abs(before.fire_severity - after.fire_severity) > epsilon;
     return before.entity_active != after.entity_active ||
            std::abs(before.hp - after.hp) > epsilon ||
            std::abs(before.mission_capability - after.mission_capability) > epsilon ||
@@ -442,7 +459,7 @@ inline bool engagement_damage_snapshot_changed(const EngagementDamageStateSnapsh
            before.forced_landing != after.forced_landing ||
            before.flight_control_kill != after.flight_control_kill ||
            before.propulsion_kill != after.propulsion_kill || before.crew_kill != after.crew_kill ||
-           before.loss_state != after.loss_state;
+           before.loss_state != after.loss_state || aircraft_damage_changed;
 }
 
 inline std::array<double, 3> damage_world_point_to_local_body(const Transform &target_transform,

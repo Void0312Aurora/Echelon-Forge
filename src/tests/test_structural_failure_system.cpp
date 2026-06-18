@@ -534,6 +534,57 @@ TEST_SUITE("structural_consequence") {
         CHECK(after_second_tick.platform_consequence_events.size() == 1);
     }
 
+    TEST_CASE("sequential breakup records aircraft-scalar consequence after platform saturation") {
+        flecs::world world;
+        world.component<ComponentDamageState>();
+        world.component<StructuralBreakupState>();
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        SimulationKernelEngagementEventStore store(world);
+        world.set<EngagementEventRecorderRef>({&store});
+        register_structural_failure_system(world);
+        register_structural_consequence_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "wing_spar_center", 0.20, "puncture");
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<ComponentDamageState>(damage)
+                            .set<Health>({100.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(AircraftDamageState{});
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_wing_loss = store.export_recent_events_sorted();
+        REQUIRE(after_wing_loss.platform_consequence_events.size() == 1);
+        const PlatformConsequenceEvent &wing_consequence =
+            after_wing_loss.platform_consequence_events[0];
+        CHECK(wing_consequence.mobility_capability_after == doctest::Approx(0.0));
+        CHECK(wing_consequence.forced_landing);
+
+        ComponentDamageState follow_on_damage = *aircraft.get<ComponentDamageState>();
+        set_component_damage(follow_on_damage, "engine_core", 0.10, "structural_weakening");
+        aircraft.set<ComponentDamageState>(follow_on_damage);
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_engine_detach = store.export_recent_events_sorted();
+        REQUIRE(after_engine_detach.platform_consequence_events.size() == 2);
+        const PlatformConsequenceEvent &engine_consequence =
+            after_engine_detach.platform_consequence_events[1];
+        CHECK(engine_consequence.mobility_capability_before == doctest::Approx(0.0));
+        CHECK(engine_consequence.mobility_capability_after == doctest::Approx(0.0));
+        CHECK(engine_consequence.loss_state_from == "mobility_kill");
+        CHECK(engine_consequence.loss_state_to == "mobility_kill");
+        CHECK(engine_consequence.engine_delta == doctest::Approx(-0.70));
+        CHECK(engine_consequence.fuel_leak_delta == doctest::Approx(0.30));
+        CHECK(engine_consequence.aircraft_damage_state_delta.find("propulsion=-0.700000") !=
+              std::string::npos);
+    }
+
 } // TEST_SUITE
 
 TEST_SUITE("structural_failure_break_modes") {
