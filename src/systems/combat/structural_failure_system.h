@@ -502,9 +502,8 @@ inline void register_structural_failure_system(flecs::world &ecs) {
                     if (recorder_ref && recorder_ref->recorder) {
                         const std::uint64_t last_event_id =
                             structural_failure::record_structural_transition_events(
-                                *recorder_ref->recorder,
-                                static_cast<std::uint64_t>(entity.id()), prior, next,
-                                current_time);
+                                *recorder_ref->recorder, static_cast<std::uint64_t>(entity.id()),
+                                prior, next, current_time);
                         if (last_event_id != 0) {
                             next.last_breakup_event_id = last_event_id;
                         }

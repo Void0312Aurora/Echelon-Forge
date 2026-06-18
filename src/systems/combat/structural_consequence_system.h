@@ -153,9 +153,9 @@ inline void record_platform_consequence_event(IEngagementEventRecorder &recorder
         "structural_break_modes=" + std::to_string(breakup.active_break_modes);
     event.air_system_spatial_scales =
         "detached_parts=" + std::to_string(breakup.detached_part_count);
-    event.vulnerability_scale_trace = "structural_breakup_state=" +
-                                      std::string(structural_breakup_phase_name(
-                                          breakup.breakup_state));
+    event.vulnerability_scale_trace =
+        "structural_breakup_state=" +
+        std::string(structural_breakup_phase_name(breakup.breakup_state));
 
     (void)recorder.record_platform_consequence_event({
         .target_id = target_id,

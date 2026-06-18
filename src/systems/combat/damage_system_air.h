@@ -341,29 +341,27 @@ derive_aircraft_fire_suppression_from_component_state(const ComponentDamageState
     }
 }
 
-inline bool aircraft_has_progressive_fire_or_fuel_terminal_source(
-    const AircraftDamageState &aircraft) {
-    const double fire_source =
-        std::max({std::clamp(aircraft.fire_severity, 0.0, 1.0),
-                  std::clamp(aircraft.engine_fire_zone_severity, 0.0, 1.0),
-                  std::clamp(aircraft.wing_fire_zone_severity, 0.0, 1.0),
-                  std::clamp(aircraft.fuselage_fire_zone_severity, 0.0, 1.0),
-                  std::clamp(aircraft.mission_fire_zone_severity, 0.0, 1.0),
-                  std::clamp(aircraft.smoke_heat_exposure, 0.0, 1.0)});
-    const double fuel_source =
-        std::max({std::clamp(aircraft.fuel_leak_severity, 0.0, 1.0),
-                  std::clamp(1.0 - aircraft.fuel_system_integrity, 0.0, 1.0),
-                  std::clamp(aircraft.flammable_fluid_exposure, 0.0, 1.0),
-                  std::clamp(aircraft.ignition_source_severity, 0.0, 1.0)});
+inline bool
+aircraft_has_progressive_fire_or_fuel_terminal_source(const AircraftDamageState &aircraft) {
+    const double fire_source = std::max({std::clamp(aircraft.fire_severity, 0.0, 1.0),
+                                         std::clamp(aircraft.engine_fire_zone_severity, 0.0, 1.0),
+                                         std::clamp(aircraft.wing_fire_zone_severity, 0.0, 1.0),
+                                         std::clamp(aircraft.fuselage_fire_zone_severity, 0.0, 1.0),
+                                         std::clamp(aircraft.mission_fire_zone_severity, 0.0, 1.0),
+                                         std::clamp(aircraft.smoke_heat_exposure, 0.0, 1.0)});
+    const double fuel_source = std::max({std::clamp(aircraft.fuel_leak_severity, 0.0, 1.0),
+                                         std::clamp(1.0 - aircraft.fuel_system_integrity, 0.0, 1.0),
+                                         std::clamp(aircraft.flammable_fluid_exposure, 0.0, 1.0),
+                                         std::clamp(aircraft.ignition_source_severity, 0.0, 1.0)});
     const double burn_weakened_structure =
         std::clamp(1.0 - aircraft.structural_integrity, 0.0, 1.0);
     return fire_source >= 0.20 || fuel_source >= 0.35 ||
            (burn_weakened_structure >= 0.80 && (fire_source > 0.05 || fuel_source > 0.05));
 }
 
-inline bool aircraft_loss_should_remain_observable_until_ground(flecs::entity entity,
-                                                                const KeyEntity &key,
-                                                                const AircraftDamageState *aircraft) {
+inline bool
+aircraft_loss_should_remain_observable_until_ground(flecs::entity entity, const KeyEntity &key,
+                                                    const AircraftDamageState *aircraft) {
     if (!aircraft || key.type != UnitType::Aircraft) {
         return false;
     }
@@ -371,8 +369,7 @@ inline bool aircraft_loss_should_remain_observable_until_ground(flecs::entity en
         return false;
     }
     if (const GroundState *ground = entity.get<GroundState>()) {
-        if (ground->on_ground ||
-            ground->lifecycle == GroundImpactLifecycle::CrashedWreck ||
+        if (ground->on_ground || ground->lifecycle == GroundImpactLifecycle::CrashedWreck ||
             ground->lifecycle == GroundImpactLifecycle::DebrisFragmentResidue) {
             return true;
         }
@@ -382,8 +379,7 @@ inline bool aircraft_loss_should_remain_observable_until_ground(flecs::entity en
 
 inline void apply_aircraft_terminal_descent_state(flecs::entity entity,
                                                   AircraftDamageState &aircraft,
-                                                  PlatformDamageState &platform,
-                                                  Health &health) {
+                                                  PlatformDamageState &platform, Health &health) {
     aircraft.forced_landing_required = true;
     aircraft.flight_control_kill = true;
     aircraft.propulsion_kill = true;
@@ -567,8 +563,8 @@ inline void register_aircraft_damage_system(flecs::world &ecs) {
                     sync_platform_damage_loss_state(health[i], damage[i]);
                     if (damage[i].loss_state == PlatformLossState::Lost) {
                         AircraftDamageState *aircraft = e.get_mut<AircraftDamageState>();
-                        if (aircraft_loss_should_remain_observable_until_ground(
-                                e, key[i], aircraft)) {
+                        if (aircraft_loss_should_remain_observable_until_ground(e, key[i],
+                                                                                aircraft)) {
                             apply_aircraft_terminal_descent_state(e, *aircraft, damage[i],
                                                                   health[i]);
                         } else {

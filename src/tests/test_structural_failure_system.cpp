@@ -385,11 +385,11 @@ TEST_SUITE("structural_consequence") {
     TEST_CASE("multi-axis airframe breakup uses maintained lost state without entity lifecycle") {
         StructuralBreakupState breakup{};
         breakup.breakup_state = StructuralBreakupPhase::FullBreakup;
-        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::WingLoss) |
-                                     structural_break_mode_mask(StructuralBreakMode::EngineDetach) |
-                                     structural_break_mode_mask(
-                                         StructuralBreakMode::FuselageRupture) |
-                                     structural_break_mode_mask(StructuralBreakMode::MultiAxis);
+        breakup.active_break_modes =
+            structural_break_mode_mask(StructuralBreakMode::WingLoss) |
+            structural_break_mode_mask(StructuralBreakMode::EngineDetach) |
+            structural_break_mode_mask(StructuralBreakMode::FuselageRupture) |
+            structural_break_mode_mask(StructuralBreakMode::MultiAxis);
         breakup.active_structural_groups =
             structural_break_group_mask(StructuralBreakGroup::WingLeft) |
             structural_break_group_mask(StructuralBreakGroup::EngineRight) |
