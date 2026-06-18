@@ -536,6 +536,10 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
       "stable_sort_lethality_header_events(&packet->structural_breakup_events)",
       facade_source,
     )
+    self.assertIn(
+      "stable_sort_lethality_header_events(&packet->lifecycle_transition_events)",
+      facade_source,
+    )
     self.assertIn("stable_sort_platform_consequence_events(&packet->platform_consequence_events)", facade_source)
     self.assertIn("packet.nearest_approach_events.insert", facade_source)
     self.assertIn("packet.fuze_evaluation_events.insert", facade_source)
@@ -544,6 +548,7 @@ class RuntimeFacadeCoreTests(unittest.TestCase):
     self.assertIn("packet.component_load_events.insert", facade_source)
     self.assertIn("packet.component_damage_events.insert", facade_source)
     self.assertIn("packet.structural_breakup_events.insert", facade_source)
+    self.assertIn("packet.lifecycle_transition_events.insert", facade_source)
     self.assertIn("packet.platform_consequence_events.insert", facade_source)
     self.assertIn("assign_world_index(event.header, world_index)", facade_source)
     self.assertIn("apply_export_packet_metadata(", body)

@@ -939,4 +939,28 @@ def _summarize_episode(
             int(chain_snapshot.get("lethality_chain_destroyed", 0) or 0)
         ),
         "lethality_chain_loss_state": str(chain_snapshot.get("lethality_chain_loss_state", "")),
+        "lethality_chain_lifecycle_count": int(
+            chain_snapshot.get("lethality_chain_lifecycle_count", 0) or 0
+        ),
+        "lethality_chain_lifecycle_from": str(
+            chain_snapshot.get("lethality_chain_lifecycle_from", "")
+        ),
+        "lethality_chain_lifecycle_to": str(
+            chain_snapshot.get("lethality_chain_lifecycle_to", "")
+        ),
+        "lethality_chain_ground_lifecycle": str(
+            chain_snapshot.get("lethality_chain_ground_lifecycle", "")
+        ),
+        "lethality_chain_wreck_entity_id": int(
+            chain_snapshot.get("lethality_chain_wreck_entity_id", 0) or 0
+        ),
+        "lethality_chain_debris_count": int(
+            chain_snapshot.get("lethality_chain_debris_count", 0) or 0
+        ),
+        "lethality_chain_lifecycle_terminal": bool(
+            int(chain_snapshot.get("lethality_chain_lifecycle_terminal", 0) or 0)
+        ),
+        "lethality_chain_terminal_projection_id": int(
+            chain_snapshot.get("lethality_chain_terminal_projection_id", 0) or 0
+        ),
     }

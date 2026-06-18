@@ -411,6 +411,35 @@ def _assert_no_lifecycle_or_training_events(case: _ComponentCutCase) -> None:
   assert list(case.events.training_projection_events) == []
 
 
+def _assert_detached_part_lifecycle_and_no_training_events(
+  case: _ComponentCutCase,
+) -> None:
+  structural_events = list(case.events.structural_breakup_events)
+  lifecycle_events = list(case.events.lifecycle_transition_events)
+  assert structural_events
+  assert len(lifecycle_events) == len(structural_events)
+  assert list(case.events.training_projection_events) == []
+
+  structural_by_event_id = {
+    int(event.header.event_id): event for event in structural_events
+  }
+  for lifecycle in lifecycle_events:
+    parent_event_id = int(lifecycle.header.parent_event_id)
+    assert parent_event_id in structural_by_event_id
+    structural = structural_by_event_id[parent_event_id]
+
+    assert str(lifecycle.header.stage) == "lifecycle"
+    assert int(lifecycle.header.chain_id) == int(structural.header.chain_id)
+    assert str(lifecycle.header.producer_node_id) == "damage_system.structural_lifecycle"
+    assert str(lifecycle.header.consumer_visibility) == "diagnostics_only"
+    assert str(lifecycle.lifecycle_from) == "attached_airframe_part"
+    assert str(lifecycle.lifecycle_to) == "detached_part_debris_fact"
+    assert str(lifecycle.ground_lifecycle) == "unknown"
+    assert int(lifecycle.debris_count) == int(structural.detached_part_count)
+    assert not bool(lifecycle.terminal)
+    assert int(lifecycle.terminal_projection_id) == int(structural.header.event_id)
+
+
 def _assert_wing_loss_event(case: _ComponentCutCase, detached_part_ref: str) -> None:
   assert any(
     str(event.break_mode) == "wing_loss"
@@ -438,7 +467,7 @@ def _assert_component_damage_events_match_failed_rows(
     assert float(damage.failure_sample) == float(row.component_failure_sample)
     assert float(damage.integrity_after) == float(row.component_integrity_after)
   if allow_structural_breakup:
-    _assert_no_lifecycle_or_training_events(case)
+    _assert_detached_part_lifecycle_and_no_training_events(case)
   else:
     _assert_no_platform_consequence_events(case)
 
@@ -501,7 +530,7 @@ def test_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
 
   _assert_component_load_rows_match_events(case)
   _assert_wing_loss_event(case, "right_wing")
-  _assert_no_lifecycle_or_training_events(case)
+  _assert_detached_part_lifecycle_and_no_training_events(case)
 
   primary_row = _primary_source_row(case)
   assert str(case.effects.component_primary_name) == "right_aileron_actuator"
@@ -571,8 +600,8 @@ def test_local_side_changes_emphasized_component_rows() -> None:
   _assert_component_load_rows_match_events(left)
   _assert_wing_loss_event(right, "right_wing")
   _assert_wing_loss_event(left, "left_wing")
-  _assert_no_lifecycle_or_training_events(right)
-  _assert_no_lifecycle_or_training_events(left)
+  _assert_detached_part_lifecycle_and_no_training_events(right)
+  _assert_detached_part_lifecycle_and_no_training_events(left)
 
 
 def test_non_rod_component_projection_carries_no_rod_cut_facts() -> None:

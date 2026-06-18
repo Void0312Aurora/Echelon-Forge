@@ -1,6 +1,6 @@
 # A2 Missile-Lethality Archive Registry
 
-Status: `2026-06-18` local registry for completed or superseded A2
+Status: `2026-06-19` local registry for completed or superseded A2
 missile-lethality follow-ons. Physical records live under [archive/](archive/README.md);
 the parent directory keeps only live, retained, or planning entries.
 
@@ -14,3 +14,4 @@ the parent directory keeps only live, retained, or planning entries.
 | MLF-5 component failure | [archive/missile_lethality_component_failure/README.md](archive/missile_lethality_component_failure/README.md) | accepted / archived | Component failure probability, failure mode, and state-change evidence; no crash, breakup, or Pk claim |
 | MLF-6 structural failure | [archive/missile_lethality_structural_failure/README.md](archive/missile_lethality_structural_failure/README.md) | accepted / archived | Named breakup facts via `StructuralBreakupState` and `StructuralBreakupEvent`; no aero, loss-state, debris, or Pk authority |
 | MLF-7 secondary consequence coupling | [archive/missile_lethality_secondary_consequence_coupling/README.md](archive/missile_lethality_secondary_consequence_coupling/README.md) | accepted / archived | Bounded breakup consequences through maintained aircraft damage, platform damage, loss-state, and diagnostics; no debris/wreck, Pk, or calibration authority |
+| MLF-8 debris/wreck lifecycle | [archive/missile_lethality_debris_wreck_lifecycle/README.md](archive/missile_lethality_debris_wreck_lifecycle/README.md) | accepted / archived | Diagnostics-only detached-part and terminal-wreck lifecycle facts linked to MLF-6/MLF-7 evidence; no first-class debris/wreck entities, debris physics, reward authority, Pk, or calibration authority |

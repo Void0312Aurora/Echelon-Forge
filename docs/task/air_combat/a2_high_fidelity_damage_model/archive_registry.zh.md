@@ -1,6 +1,6 @@
 # A2 导弹杀伤归档注册表
 
-状态：`2026-06-18` 本地注册表，用于登记已完成或失效的 A2 missile-lethality
+状态：`2026-06-19` 本地注册表，用于登记已完成或失效的 A2 missile-lethality
 follow-on。物理记录保存在 [archive/](archive/README.zh.md)；父目录只保留仍有效、
 仍需保留在根面的项目。
 
@@ -14,3 +14,4 @@ follow-on。物理记录保存在 [archive/](archive/README.zh.md)；父目录�
 | MLF-5 部件失效 | [archive/missile_lethality_component_failure/README.zh.md](archive/missile_lethality_component_failure/README.zh.md) | accepted / archived | 部件失效概率、失效模式和状态变化证据；不声明坠毁、解体或 Pk |
 | MLF-6 结构失效 | [archive/missile_lethality_structural_failure/README.zh.md](archive/missile_lethality_structural_failure/README.zh.md) | accepted / archived | 通过 `StructuralBreakupState` 和 `StructuralBreakupEvent` 记录具名断裂事实；不释放气动、失能状态、残骸或 Pk 权威 |
 | MLF-7 二次后果耦合 | [archive/missile_lethality_secondary_consequence_coupling/README.zh.md](archive/missile_lethality_secondary_consequence_coupling/README.zh.md) | accepted / archived | 通过维护中的 aircraft damage、platform damage、loss-state 和诊断承接有边界断裂后果；不释放残骸/碎片、Pk 或校准权威 |
+| MLF-8 残骸/碎片生命周期 | [archive/missile_lethality_debris_wreck_lifecycle/README.zh.md](archive/missile_lethality_debris_wreck_lifecycle/README.zh.md) | accepted / archived | 与 MLF-6/MLF-7 证据链路关联的 diagnostics-only 脱落部件和终端残骸生命周期事实；不释放一等 debris/wreck 实体、碎片物理、reward 权威、Pk 或校准权威 |

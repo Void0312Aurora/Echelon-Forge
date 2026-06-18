@@ -140,6 +140,13 @@ def _lethality_base_row(
         "sensor_kill": 0,
         "destroyed": 0,
         "loss_state": "",
+        "lifecycle_from": "",
+        "lifecycle_to": "",
+        "ground_lifecycle": "",
+        "wreck_entity_id": 0,
+        "debris_count": 0,
+        "lifecycle_terminal": 0,
+        "terminal_projection_id": 0,
     }
     return row
 

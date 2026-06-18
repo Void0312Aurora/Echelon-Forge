@@ -119,6 +119,15 @@ struct EngagementPlatformConsequenceEventRecord {
     PlatformConsequenceEvent event{};
 };
 
+struct EngagementLifecycleTransitionEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    LifecycleTransitionEvent event{};
+};
+
 class IEngagementEventRecorder {
   public:
     virtual ~IEngagementEventRecorder() = default;
@@ -152,6 +161,9 @@ class IEngagementEventRecorder {
 
     virtual std::uint64_t
     record_platform_consequence_event(EngagementPlatformConsequenceEventRecord record) = 0;
+
+    virtual std::uint64_t
+    record_lifecycle_transition_event(EngagementLifecycleTransitionEventRecord record) = 0;
 };
 
 struct EngagementEventRecorderRef {

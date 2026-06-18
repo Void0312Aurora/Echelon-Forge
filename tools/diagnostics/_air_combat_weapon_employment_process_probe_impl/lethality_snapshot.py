@@ -229,4 +229,22 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         "lethality_chain_loss_state": str(
             platform.get("loss_state", lifecycle.get("loss_state", "")) or ""
         ),
+        "lethality_chain_lifecycle_count": int(
+            sum(
+                1
+                for row in chain_rows
+                if str(row.get("stage", "")) == chain_contract.STAGE_LIFECYCLE
+            )
+        ),
+        "lethality_chain_lifecycle_from": str(lifecycle.get("lifecycle_from", "") or ""),
+        "lethality_chain_lifecycle_to": str(lifecycle.get("lifecycle_to", "") or ""),
+        "lethality_chain_ground_lifecycle": str(lifecycle.get("ground_lifecycle", "") or ""),
+        "lethality_chain_wreck_entity_id": int(lifecycle.get("wreck_entity_id", 0) or 0),
+        "lethality_chain_debris_count": int(lifecycle.get("debris_count", 0) or 0),
+        "lethality_chain_lifecycle_terminal": int(
+            lifecycle.get("lifecycle_terminal", 0) or 0
+        ),
+        "lethality_chain_terminal_projection_id": int(
+            lifecycle.get("terminal_projection_id", 0) or 0
+        ),
     }

@@ -44,6 +44,7 @@ def _header(
   reason: str,
   munition_id: int = 501,
   target_id: int = 200,
+  consumer_visibility: str = "diagnostics_and_training",
 ) -> SimpleNamespace:
   return SimpleNamespace(
     schema_version=1,
@@ -61,6 +62,7 @@ def _header(
     producer_node_id="test",
     fidelity_mode="runtime",
     evidence_level="observed_runtime",
+    consumer_visibility=str(consumer_visibility),
     confidence=1.0,
   )
 
@@ -221,6 +223,28 @@ def _standard_component_damage_event() -> SimpleNamespace:
   )
 
 
+def _standard_lifecycle_event() -> SimpleNamespace:
+  return SimpleNamespace(
+    header=_header(
+      chain_id=301,
+      event_id=108,
+      parent_event_id=107,
+      stage="lifecycle",
+      status="projected",
+      reason="generic_research_lifecycle_projection",
+      target_id=200,
+      consumer_visibility="diagnostics_only",
+    ),
+    lifecycle_from="attached_airframe_part",
+    lifecycle_to="detached_part_debris_fact",
+    ground_lifecycle="unknown",
+    wreck_entity=_entity(0),
+    debris_count=1,
+    terminal=False,
+    terminal_projection_id=107,
+  )
+
+
 def _effect_component_damage_row(*, sample: float = 0.21) -> SimpleNamespace:
   return SimpleNamespace(
     component_name="right_aileron_actuator",
@@ -308,6 +332,7 @@ def _dummy_lethality_events() -> SimpleNamespace:
     spatial_coverage_events=[],
     component_load_events=[],
     component_damage_events=[],
+    lifecycle_transition_events=[],
   )
 
 
@@ -604,6 +629,49 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       0.82,
       places=6,
     )
+
+  def test_standard_lifecycle_event_projects_detached_part_diagnostics_row(self) -> None:
+    events = SimpleNamespace(
+      nearest_approach_events=[],
+      fuze_evaluation_events=[],
+      warhead_mechanism_events=[],
+      spatial_coverage_events=[],
+      component_load_events=[],
+      component_damage_events=[],
+      platform_consequence_events=[],
+      lifecycle_transition_events=[_standard_lifecycle_event()],
+      effects_events=[],
+      damage_reports=[],
+      diagnostics_traces=[],
+    )
+
+    rows = probe._lethality_chain_rows(
+      episode=7,
+      step=12,
+      sim_time_s=4.5,
+      engagement_events=events,
+    )
+
+    self.assertEqual(len(rows), 1)
+    lifecycle = rows[0]
+    self.assertEqual(lifecycle["stage"], "lifecycle")
+    self.assertEqual(lifecycle["source_event_kind"], "LifecycleTransitionEvent")
+    self.assertEqual(lifecycle["source_event_id"], 108)
+    self.assertEqual(lifecycle["parent_event_id"], 107)
+    self.assertEqual(lifecycle["consumer_visibility"], "diagnostics_only")
+    self.assertEqual(lifecycle["lifecycle_from"], "attached_airframe_part")
+    self.assertEqual(lifecycle["lifecycle_to"], "detached_part_debris_fact")
+    self.assertEqual(lifecycle["ground_lifecycle"], "unknown")
+    self.assertEqual(lifecycle["debris_count"], 1)
+    self.assertEqual(lifecycle["lifecycle_terminal"], 0)
+    self.assertEqual(lifecycle["terminal_projection_id"], 107)
+
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+    self.assertEqual(snapshot["lethality_chain_lifecycle_count"], 1)
+    self.assertEqual(snapshot["lethality_chain_lifecycle_from"], "attached_airframe_part")
+    self.assertEqual(snapshot["lethality_chain_lifecycle_to"], "detached_part_debris_fact")
+    self.assertEqual(snapshot["lethality_chain_debris_count"], 1)
+    self.assertEqual(snapshot["lethality_chain_lifecycle_terminal"], 0)
 
   def test_standard_warhead_spatial_and_component_events_only_suppress_same_chain_effects(self) -> None:
     events = _dummy_lethality_events()

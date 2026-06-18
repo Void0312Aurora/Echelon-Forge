@@ -108,9 +108,14 @@ def _lifecycle_transition_event(
   lifecycle_to: str = "lost",
   ground_lifecycle: str = "unknown",
   terminal: bool = True,
+  consumer_visibility: str = "diagnostics_and_training",
 ) -> SimpleNamespace:
   return SimpleNamespace(
-    header=_lethality_header(event_id, target_id),
+    header=_lethality_header(
+      event_id,
+      target_id,
+      consumer_visibility=consumer_visibility,
+    ),
     lifecycle_from="combat_capable",
     lifecycle_to=str(lifecycle_to),
     ground_lifecycle=str(ground_lifecycle),
@@ -848,6 +853,20 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
     self.assertEqual(state["lifecycle_event_id"], 8)
     self.assertEqual(state["damage_report_id"], 0)
 
+  def test_diagnostics_only_lifecycle_terminal_state_is_ignored(self) -> None:
+    loader = _loader({"air_combat_damage_terminal_enabled": True})
+    sim = _event_sim(
+      lifecycle_transition_events=[
+        _lifecycle_transition_event(consumer_visibility="diagnostics_only")
+      ]
+    )
+
+    state = combat_entity_terminal_state(loader, sim, 2)
+
+    self.assertFalse(state["neutralized"])
+    self.assertTrue(state["actionable"])
+    self.assertEqual(state["reason"], "")
+
   def test_standard_lifecycle_ground_terminal_requires_crashed_wreck_lifecycle(self) -> None:
     loader = _loader({"air_combat_damage_terminal_enabled": True})
     safe_sim = _event_sim(
@@ -879,6 +898,25 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
     self.assertFalse(crash_state["actionable"])
     self.assertEqual(crash_state["reason"], "ground_crashed_wreck")
     self.assertEqual(crash_state["ground_lifecycle"], 2)
+
+  def test_diagnostics_only_lifecycle_ground_terminal_is_ignored(self) -> None:
+    loader = _loader({"air_combat_damage_terminal_enabled": True})
+    sim = _event_sim(
+      lifecycle_transition_events=[
+        _lifecycle_transition_event(
+          lifecycle_to="ground_crashed_wreck",
+          ground_lifecycle="2",
+          terminal=True,
+          consumer_visibility="diagnostics_only",
+        )
+      ]
+    )
+
+    state = combat_entity_terminal_state(loader, sim, 2)
+
+    self.assertFalse(state["neutralized"])
+    self.assertTrue(state["actionable"])
+    self.assertEqual(state["reason"], "")
 
   def test_damage_consequence_shaping_rewards_target_deltas_once(self) -> None:
     loader = _loader(

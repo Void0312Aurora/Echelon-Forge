@@ -118,7 +118,12 @@ still not accepted.
   MLF-6 is now accepted / archived as the named-breakup fact writer, while the
   accepted / archived MLF-7 bridge projects those facts into maintained aircraft damage,
   platform damage, loss-state surfaces, and chain-linked `platform_consequence`
-  diagnostics; broad smoke is green
+  diagnostics; broad smoke is green. MLF-8 is now accepted / archived as
+  diagnostics-only detached-part and terminal-wreck lifecycle evidence:
+  [MLF-8 debris and wreck lifecycle](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.md).
+  It still does not release first-class debris/wreck entities, debris physics,
+  reward authority, Pk, calibrated debris throw, selected debris-output
+  authority, or weapon-specific lethality
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
@@ -173,6 +178,8 @@ still not accepted.
   [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md)
 - Damage-effect chain follow-on:
   [a8_damage_effect_chain/README.md](archive/a8_damage_effect_chain/README.md)
+- MLF-8 debris/wreck lifecycle accepted archive:
+  [a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.md](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.md)
 - High-fidelity damage-system baseline:
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
 

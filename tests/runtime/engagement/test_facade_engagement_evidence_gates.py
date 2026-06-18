@@ -112,6 +112,7 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
     "component_load_events",
     "component_damage_events",
     "structural_breakup_events",
+    "lifecycle_transition_events",
     "platform_consequence_events",
     "diagnostics_traces",
   ]:
@@ -138,6 +139,7 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
     assert f"packet.{populated_recent_slot}.insert" in append_body
   assert "packet.component_damage_events.insert" in append_body
   assert "packet.structural_breakup_events.insert" in append_body
+  assert "packet.lifecycle_transition_events.insert" in append_body
   assert "packet.platform_consequence_events.insert" in append_body
   assert "request.include_diagnostics_traces" in append_body
   assert "append_recent_diagnostics_traces(packet.diagnostics_traces, recent)" in append_body

@@ -360,9 +360,15 @@ class BindingsEngagementSurfaceTests(unittest.TestCase):
     self.assertTrue({"header", "breakup_state"}.issubset(
       public_fields(ef_py.StructuralBreakupEvent())
     ))
-    self.assertTrue({"header", "lifecycle_from", "lifecycle_to"}.issubset(
-      public_fields(ef_py.LifecycleTransitionEvent())
-    ))
+    self.assertTrue(
+      {
+        "header",
+        "lifecycle_from",
+        "lifecycle_to",
+        "terminal",
+        "terminal_projection_id",
+      }.issubset(public_fields(ef_py.LifecycleTransitionEvent()))
+    )
     self.assertTrue({"header", "consumed_event_ids", "fact_source"}.issubset(
       public_fields(ef_py.TrainingProjectionEvent())
     ))

@@ -3,14 +3,18 @@
 #include <flecs.h>
 #include <cmath>
 #include <iostream>
+#include <utility>
 #include "components/basic/common.h"
+#include "components/combat/structural_failure.h"
 #include "components/domains/air/command/control_input_resolution.h"
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h"
 #include "components/systems/logistics.h"   // For GroundState
 #include "components/physics/performance.h" // For LandingGear
 #include "components/physics/control_law.h" // For ControlLawState (FBW filtered inputs)
+#include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/environment_model.h"
+#include "systems/combat/mlf8_lifecycle_events.h"
 
 namespace {
 // Penalty Method Constants
@@ -69,6 +73,13 @@ inline double canonicalize_environment_scalar(double value) {
                            kEnvironmentScalarCanonicalQuantum;
     return std::abs(rounded) <= (kEnvironmentScalarCanonicalQuantum * 0.5) ? 0.0 : rounded;
 }
+
+inline void record_mlf8_terminal_wreck_lifecycle(flecs::entity entity,
+                                                 IEngagementEventRecorder *recorder,
+                                                 GroundImpactLifecycle lifecycle,
+                                                 double source_time_s) {
+    mlf8_lifecycle::record_terminal_wreck_lifecycle(entity, recorder, lifecycle, source_time_s);
+}
 } // namespace
 
 /**
@@ -89,6 +100,13 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
                 auto velocity = it.field<Velocity>(2);
                 auto mass = it.field<const Mass>(3);
                 auto ground = it.field<GroundState>(4);
+                const EngagementEventRecorderRef *recorder_ref =
+                    it.world().get<EngagementEventRecorderRef>();
+                IEngagementEventRecorder *recorder =
+                    recorder_ref ? recorder_ref->recorder : nullptr;
+                const ecs_world_info_t *world_info = ecs_get_world_info(it.world().c_ptr());
+                const double current_time =
+                    world_info ? static_cast<double>(world_info->world_time_total) : 0.0;
 
                 for (auto i : it) {
                     double m = mass[i].get_total_kg();
@@ -247,10 +265,16 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
                         (!is_offroad && v_h >= kPavedCrashSpeedMps &&
                          sink_rate_mps >= kHardLandingSinkRateMps);
                     ground[i].impact_severity = impact_severity;
+                    const GroundImpactLifecycle prior_lifecycle = ground[i].lifecycle;
                     if (ground[i].lifecycle != GroundImpactLifecycle::CrashedWreck &&
                         ground[i].lifecycle != GroundImpactLifecycle::DebrisFragmentResidue) {
                         ground[i].lifecycle = severe_impact ? GroundImpactLifecycle::CrashedWreck
                                                             : GroundImpactLifecycle::LandedAirframe;
+                        if (ground[i].lifecycle != prior_lifecycle &&
+                            mlf8_lifecycle::is_terminal_wreck_lifecycle(ground[i].lifecycle)) {
+                            record_mlf8_terminal_wreck_lifecycle(it.entity(i), recorder,
+                                                                 ground[i].lifecycle, current_time);
+                        }
                     }
                     const ResolvedAirControlInput control_input = resolve_air_control_input(
                         it.entity(i).get<PilotAction>(),
@@ -292,9 +316,16 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
                                 // Check for collapse
                                 if (gear->stress >= 1.0) {
                                     gear->collapsed = true;
+                                    const GroundImpactLifecycle prior_gear_lifecycle =
+                                        ground[i].lifecycle;
                                     ground[i].lifecycle = GroundImpactLifecycle::CrashedWreck;
                                     ground[i].impact_severity =
                                         std::max(ground[i].impact_severity, 1.0);
+                                    if (ground[i].lifecycle != prior_gear_lifecycle) {
+                                        record_mlf8_terminal_wreck_lifecycle(it.entity(i), recorder,
+                                                                             ground[i].lifecycle,
+                                                                             current_time);
+                                    }
                                 }
                             }
                         } else {

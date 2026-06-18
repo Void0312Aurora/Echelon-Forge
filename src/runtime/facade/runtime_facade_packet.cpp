@@ -521,6 +521,9 @@ void append_recent_engagement_events(EngagementEventPacket &packet,
         packet.structural_breakup_events.insert(packet.structural_breakup_events.end(),
                                                 recent.structural_breakup_events.begin(),
                                                 recent.structural_breakup_events.end());
+        packet.lifecycle_transition_events.insert(packet.lifecycle_transition_events.end(),
+                                                  recent.lifecycle_transition_events.begin(),
+                                                  recent.lifecycle_transition_events.end());
     }
     if (request.include_damage_reports) {
         packet.damage_reports.insert(packet.damage_reports.end(), recent.damage_reports.begin(),
@@ -583,6 +586,9 @@ double resolve_engagement_source_time(const EngagementEventPacket &packet) {
     for (const auto &event : packet.structural_breakup_events) {
         latest = std::max(latest, event.header.source_time_s);
     }
+    for (const auto &event : packet.lifecycle_transition_events) {
+        latest = std::max(latest, event.header.source_time_s);
+    }
     for (const auto &report : packet.damage_reports) {
         latest = std::max(latest, report.report_time_s);
     }
@@ -627,6 +633,7 @@ void stable_sort_engagement_packet(EngagementEventPacket *packet) {
     stable_sort_lethality_header_events(&packet->component_load_events);
     stable_sort_lethality_header_events(&packet->component_damage_events);
     stable_sort_lethality_header_events(&packet->structural_breakup_events);
+    stable_sort_lethality_header_events(&packet->lifecycle_transition_events);
     stable_sort_damage_reports(&packet->damage_reports);
     stable_sort_platform_consequence_events(&packet->platform_consequence_events);
     stable_sort_diagnostics_traces(&packet->diagnostics_traces);
