@@ -107,7 +107,18 @@ jobs:
           allow-bot-users: github-actions[bot]
           output-file: ${{ runner.temp }}/codex-pr-review.md
           prompt: |
-            Read and follow .github/codex/prompts/pr-review.md.
+            Review this pull request for correctness, regressions, missing tests, and security risks.
+
+            Only report high-confidence issues that should block or change the pull request.
+            Avoid style-only comments, broad refactors, speculative suggestions, and duplicate findings.
+
+            For each issue:
+
+            - cite the relevant file and line or diff hunk;
+            - explain the impact;
+            - suggest a concrete fix.
+
+            If you do not find blocking or material issues, say so clearly.
 
             This is pull request #${{ github.event.pull_request.number }} for ${{ github.repository }}.
 
@@ -199,7 +210,11 @@ jobs:
           allow-bot-users: github-actions[bot]
           output-file: ${{ runner.temp }}/codex-comment-task.md
           prompt: |
-            Read and follow .github/codex/prompts/comment-task.md.
+            Handle the requested Codex task from a GitHub issue or pull request comment.
+
+            Focus on the user's explicit request. Inspect the repository and relevant context before answering.
+            Do not modify files in this comment-task workflow. If the request needs code changes, describe the recommended change or ask the maintainer to run the manual Codex patch workflow.
+            Provide a concise answer with any important caveats.
 
             Repository: ${{ github.repository }}
             Issue or PR number: #${{ github.event.issue.number }}
@@ -334,6 +349,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET_REF: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           patch_file="${RUNNER_TEMP}/codex-manual-task/codex-manual-task.patch"
@@ -350,9 +366,14 @@ jobs:
             exit 0
           fi
 
-          base_ref="${TARGET_REF#refs/heads/}"
-          if [[ "$base_ref" == refs/* || -z "$base_ref" ]]; then
-            base_ref="${GITHUB_REF_NAME}"
+          if [[ "$TARGET_REF" == refs/heads/* ]]; then
+            base_ref="${TARGET_REF#refs/heads/}"
+          elif [[ "$TARGET_REF" == refs/* ]]; then
+            base_ref="$DEFAULT_BRANCH"
+          elif git ls-remote --exit-code --heads origin "$TARGET_REF" >/dev/null 2>&1; then
+            base_ref="$TARGET_REF"
+          else
+            base_ref="$DEFAULT_BRANCH"
           fi
 
           branch="codex/action-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
