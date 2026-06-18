@@ -29,6 +29,17 @@ LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_w
 TASKING_BRIDGE = REPO_ROOT / "python" / "rl" / "tasking" / "bridge.py"
 RUNTIME_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts"
 RUNTIME_FACADE = REPO_ROOT / "src" / "runtime" / "facade"
+RUNTIME_FACADE_SOURCE_FILES = (
+  RUNTIME_FACADE / "runtime_facade_world_setup.cpp",
+  RUNTIME_FACADE / "runtime_facade_counterfactual.cpp",
+  RUNTIME_FACADE / "runtime_facade_config.cpp",
+  RUNTIME_FACADE / "runtime_facade_query.cpp",
+  RUNTIME_FACADE / "runtime_facade_command_api.cpp",
+  RUNTIME_FACADE / "runtime_facade_execution.cpp",
+  RUNTIME_FACADE / "runtime_facade_packet.cpp",
+  RUNTIME_FACADE / "runtime_facade.cpp",
+  RUNTIME_FACADE / "runtime_facade_internal.h",
+)
 RUNTIME_BINDINGS = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
 GPU_BINDINGS = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_gpu.cpp"
 WORLD_BATCH_RUNTIME_H = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtime.h"
@@ -56,6 +67,12 @@ def _runtime_access_source() -> str:
 
 def _gpu_bindings_source() -> str:
   return GPU_BINDINGS.read_text(encoding="utf-8")
+
+
+def runtime_facade_source_text() -> str:
+  return "\n".join(
+    path.read_text(encoding="utf-8") for path in RUNTIME_FACADE_SOURCE_FILES
+  )
 
 
 def _maintained_execution_episode_compat_read_allowlist() -> set[str]:

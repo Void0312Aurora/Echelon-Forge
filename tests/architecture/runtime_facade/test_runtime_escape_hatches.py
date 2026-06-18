@@ -343,7 +343,7 @@ def test_leader_world_batch_runtime_does_not_call_runtime_facade_compatibility_q
   assert not violations, f"leader runtime escaped facade adapter layering: {violations}"
 
 def test_runtime_facade_cpp_maintained_paths_do_not_drill_through_raw_runtime_or_world() -> None:
-  source = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
+  source = runtime_facade_source_text()
 
   assert "runtime_->world_raw_quarantine(" not in source
   assert "runtime_compatibility_quarantine().world_raw_quarantine(" not in source

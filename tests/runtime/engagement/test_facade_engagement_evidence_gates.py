@@ -12,7 +12,25 @@ ensure_repo_imports()
 import ef_py # noqa: E402
 
 
+_RUNTIME_FACADE_SOURCE_PARTS = (
+  ("src", "runtime", "facade", "runtime_facade_world_setup.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_counterfactual.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_config.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_query.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_command_api.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_execution.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_packet.cpp"),
+  ("src", "runtime", "facade", "runtime_facade.cpp"),
+  ("src", "runtime", "facade", "runtime_facade_internal.h"),
+)
+
+
 def _read_repo_text(*parts: str) -> str:
+  if parts == ("src", "runtime", "facade", "runtime_facade.cpp"):
+    return "\n".join(
+      Path(resolve_repo_path(*source_parts)).read_text(encoding="utf-8")
+      for source_parts in _RUNTIME_FACADE_SOURCE_PARTS
+    )
   return Path(resolve_repo_path(*parts)).read_text(encoding="utf-8")
 
 

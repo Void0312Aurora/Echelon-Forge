@@ -12,6 +12,17 @@ WORLD_BATCH_SOURCE = REPO_ROOT / "src" / "core" / "engine" / "world_batch_runtim
 WORLD_BATCH_CONTRACTS = REPO_ROOT / "src" / "runtime" / "contracts" / "world_batch_contracts.h"
 RUNTIME_FACADE_HEADER = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.h"
 RUNTIME_FACADE_SOURCE = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp"
+RUNTIME_FACADE_SOURCE_FILES = (
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",
+)
 RUNTIME_FACADE_TYPES = REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_types.h"
 BINDINGS_CORE = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_core.cpp"
 BINDINGS_RUNTIME = REPO_ROOT / "src" / "interfaces" / "python" / "bindings_runtime.cpp"
@@ -22,6 +33,10 @@ EXAMPLES_CONFIG = REPO_ROOT / "examples" / "config"
 
 def _text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
+
+
+def _runtime_facade_source_text() -> str:
+  return "\n".join(path.read_text(encoding="utf-8") for path in RUNTIME_FACADE_SOURCE_FILES)
 
 
 def test_wp14_boundary_guard_no_public_spawn_platform_surface_exists() -> None:
@@ -146,7 +161,7 @@ def test_wp14_boundary_guard_examples_and_scenario_python_schema_stay_on_legacy_
 
 def test_wp20_boundary_guard_typed_platform_spawn_publicization_stays_validation_first() -> None:
   facade_header = _text(RUNTIME_FACADE_HEADER)
-  facade_source = _text(RUNTIME_FACADE_SOURCE)
+  facade_source = _runtime_facade_source_text()
   world_batch_header = _text(WORLD_BATCH_HEADER)
   world_batch_source = _text(WORLD_BATCH_SOURCE)
   facade_types = _text(RUNTIME_FACADE_TYPES)
@@ -269,13 +284,13 @@ def test_wp22_boundary_guard_typed_setup_surface_classifier_distinguishes_mainta
 
 
 def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_without_type_name_projection_rematerialization() -> None:
-  facade_source = _text(RUNTIME_FACADE_SOURCE)
+  facade_source = _runtime_facade_source_text()
 
   apply_world_setup_block = facade_source[
     facade_source.index(
-      "TypedPlatformSpawnResult materialize_type_name_projection_typed_platform_spawn_request("
+      "materialize_type_name_projection_typed_platform_spawn_request("
     ):
-    facade_source.index("BatchWorldSetupRequest single_world_counterfactual_setup(")
+    facade_source.index("single_world_counterfactual_setup(")
   ]
 
   assert "validate_maintained_typed_platform_spawn_request" in apply_world_setup_block
@@ -286,10 +301,10 @@ def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_with
 
   maintained_block = apply_world_setup_block[
     apply_world_setup_block.index(
-      "TypedPlatformSpawnResult materialize_maintained_typed_platform_spawn_request("
+      "materialize_maintained_typed_platform_spawn_request("
     ):
     apply_world_setup_block.index(
-      "TypedPlatformSpawnResult materialize_typed_platform_spawn_request("
+      "materialize_typed_platform_spawn_request("
     )
   ]
   for forbidden in (
@@ -305,10 +320,10 @@ def test_wp22_boundary_guard_runtime_facade_promotes_maintained_typed_setup_with
 
   projection_block = apply_world_setup_block[
     apply_world_setup_block.index(
-      "TypedPlatformSpawnResult materialize_type_name_projection_typed_platform_spawn_request("
+      "materialize_type_name_projection_typed_platform_spawn_request("
     ):
     apply_world_setup_block.index(
-      "TypedPlatformSpawnResult materialize_maintained_typed_platform_spawn_request("
+      "materialize_maintained_typed_platform_spawn_request("
     )
   ]
   for required in (

@@ -23,10 +23,25 @@ WP20_C_DOC_CANDIDATES = (
 RUNTIME_FACADE_SOURCE = (
   REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp"
 )
+RUNTIME_FACADE_SOURCE_FILES = (
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",
+)
 
 
 def _text(path: Path) -> str:
   return path.read_text(encoding="utf-8")
+
+
+def _runtime_facade_source_text() -> str:
+  return "\n".join(path.read_text(encoding="utf-8") for path in RUNTIME_FACADE_SOURCE_FILES)
 
 
 def _wp20_doc_text() -> str:
@@ -58,7 +73,7 @@ def test_wp20_runtime_setup_consume_bridge_doc_records_validation_first_and_proj
 
 
 def test_wp20_runtime_facade_apply_world_setup_contains_validation_first_typed_bridge() -> None:
-  source = _text(RUNTIME_FACADE_SOURCE)
+  source = _runtime_facade_source_text()
 
   for required in (
     "validate_typed_platform_spawn_request(request)",

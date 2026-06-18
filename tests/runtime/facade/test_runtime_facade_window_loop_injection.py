@@ -1,16 +1,45 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import textwrap
+import uuid
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FLECS_INCLUDE = REPO_ROOT / "build" / "_deps" / "flecs-src"
-FLECS_STATIC_LIB = REPO_ROOT / "build" / "_deps" / "flecs-build" / "libflecs_static.a"
+FLECS_INCLUDE_CANDIDATES = (
+  REPO_ROOT / "build-local-win" / "_deps" / "flecs-src" / "include",
+  REPO_ROOT / "build-local-win" / "_deps" / "flecs-src",
+  REPO_ROOT / "build" / "_deps" / "flecs-src" / "include",
+  REPO_ROOT / "build" / "_deps" / "flecs-src",
+)
+FLECS_STATIC_LIB_CANDIDATES = (
+  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build" / "libflecs_static.a",
+  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build" / "libflecs.dll.a",
+  REPO_ROOT / "build" / "_deps" / "flecs-build" / "libflecs_static.a",
+  REPO_ROOT / "build" / "_deps" / "flecs-build" / "libflecs.dll.a",
+)
+FLECS_RUNTIME_PATH_CANDIDATES = (
+  REPO_ROOT / "build-local-win" / "_deps" / "flecs-build",
+  REPO_ROOT / "build" / "_deps" / "flecs-build",
+)
+RUNTIME_FACADE_SOURCE_FILES = (
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_world_setup.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_counterfactual.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_config.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_query.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_command_api.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_execution.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_packet.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade.cpp",
+  REPO_ROOT / "src" / "runtime" / "facade" / "runtime_facade_internal.h",
+)
 
 
 def _repo_text(*parts: str) -> str:
+  if parts == ("src", "runtime", "facade", "runtime_facade.cpp"):
+    return "\n".join(path.read_text(encoding="utf-8") for path in RUNTIME_FACADE_SOURCE_FILES)
   return (REPO_ROOT / Path(*parts)).read_text(encoding="utf-8")
 
 
@@ -30,15 +59,19 @@ def _method_body(source: str, signature: str) -> str:
 
 
 def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
-  binary = "/tmp/runtime_facade_window_loop_injection_test_bin"
+  suffix = ".exe" if os.name == "nt" else ""
+  binary_dir = REPO_ROOT / "build-local-win" / "_cpp_snippets"
+  binary_dir.mkdir(parents=True, exist_ok=True)
+  binary = binary_dir / f"cpp_snippet_{uuid.uuid4().hex}{suffix}"
   command = [
     "g++",
     "-std=c++20",
     "-I",
     str(REPO_ROOT / "src"),
   ]
-  if FLECS_INCLUDE.is_dir():
-    command.extend(["-I", str(FLECS_INCLUDE)])
+  for include_path in FLECS_INCLUDE_CANDIDATES:
+    if include_path.is_dir():
+      command.extend(["-I", str(include_path)])
   command.extend([
     "-x",
     "c++",
@@ -46,10 +79,12 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
     "-x",
     "none",
     "-o",
-    binary,
+    str(binary),
   ])
-  if FLECS_STATIC_LIB.is_file():
-    command.append(str(FLECS_STATIC_LIB))
+  for static_lib in FLECS_STATIC_LIB_CANDIDATES:
+    if static_lib.is_file():
+      command.append(str(static_lib))
+      break
   compile_result = subprocess.run(
     command,
     input=source,
@@ -59,13 +94,26 @@ def _compile_and_run(source: str) -> subprocess.CompletedProcess[str]:
     cwd=REPO_ROOT,
   )
   assert compile_result.returncode == 0, compile_result.stderr
-  return subprocess.run(
-    [binary],
-    text=True,
-    capture_output=True,
-    check=False,
-    cwd=REPO_ROOT,
-  )
+  try:
+    env = os.environ.copy()
+    runtime_paths = [
+      str(path) for path in FLECS_RUNTIME_PATH_CANDIDATES if path.is_dir()
+    ]
+    if runtime_paths:
+      env["PATH"] = os.pathsep.join([*runtime_paths, env.get("PATH", "")])
+    return subprocess.run(
+      [str(binary)],
+      text=True,
+      capture_output=True,
+      check=False,
+      cwd=REPO_ROOT,
+      env=env,
+    )
+  finally:
+    try:
+      binary.unlink()
+    except OSError:
+      pass
 
 
 def test_runtime_facade_exposes_wp10_window_loop_api() -> None:

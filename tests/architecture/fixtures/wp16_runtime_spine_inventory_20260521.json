@@ -114,7 +114,7 @@
       ]
     },
     {
-      "path": "src/runtime/facade/runtime_facade.cpp",
+      "path": "src/runtime/facade/runtime_facade_packet.cpp",
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
@@ -122,7 +122,7 @@
       "evidence_markers": [
         "RuntimeWindowResult RuntimeFacade::run_wp10_window",
         "return execute_runtime_window(",
-        "p10.observation_export.v1",
+        "kWp10ObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
     },

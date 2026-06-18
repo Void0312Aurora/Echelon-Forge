@@ -118,6 +118,13 @@ set(EF_CORE_MISSION_SOURCES
 
 set(EF_RUNTIME_FACADE_SOURCES
     src/runtime/facade/runtime_facade.cpp
+    src/runtime/facade/runtime_facade_config.cpp
+    src/runtime/facade/runtime_facade_counterfactual.cpp
+    src/runtime/facade/runtime_facade_world_setup.cpp
+    src/runtime/facade/runtime_facade_query.cpp
+    src/runtime/facade/runtime_facade_command_api.cpp
+    src/runtime/facade/runtime_facade_execution.cpp
+    src/runtime/facade/runtime_facade_packet.cpp
 )
 
 set(EF_MODEL_DEFAULT_SOURCES
