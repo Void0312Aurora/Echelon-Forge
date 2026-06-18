@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tools.geometry.airframe_review._svg_primitives import (
+from tools.geometry.airframe_review.views._svg_primitives import (
     _svg_color,
     _svg_project_point,
     _svg_rect,
@@ -18,7 +18,7 @@ from tools.geometry.airframe_review._svg_primitives import (
     _svg_projected_prior_shape,
     _svg_clip_path_for_hull,
 )
-from tools.geometry.airframe_review._view_shared import (
+from tools.geometry.airframe_review.views._view_shared import (
     _component_rows_by_name,
     _triage_mini_view_grid,
     _triage_list,
@@ -28,30 +28,30 @@ from tools.geometry.airframe_review._view_shared import (
     _isolated_view_page,
     _write_isolated_review_entry,
 )
-from tools.geometry.airframe_review.views_fine_proxy import (
+from tools.geometry.airframe_review.views.views_fine_proxy import (
     _svg_for_fine_proxy_view,
     write_fine_proxy_svg_views,
     _projected_view_bounds_for_proxy,
     _fine_proxy_review_mini_svg,
 )
-from tools.geometry.airframe_review.views_contour import (
+from tools.geometry.airframe_review.views.views_contour import (
     _projected_shape_polygon,
     _svg_for_whole_airframe_contour_view,
     write_whole_airframe_contour_svg_views,
     write_whole_airframe_contour_dashboard,
 )
-from tools.geometry.airframe_review.views_semantic_damage import (
+from tools.geometry.airframe_review.views.views_semantic_damage import (
     _write_semantic_damage_geometry_index,
     write_semantic_damage_geometry_review_views,
 )
-from tools.geometry.airframe_review.views_internal_prior import (
+from tools.geometry.airframe_review.views.views_internal_prior import (
     _projected_view_bounds_for_internal_prior,
     _internal_prior_mini_svg,
     _write_internal_component_prior_index,
     _internal_prior_view_page,
     write_internal_component_prior_review_views,
 )
-from tools.geometry.airframe_review.views_shape_placement import (
+from tools.geometry.airframe_review.views.views_shape_placement import (
     _projected_view_bounds_for_shape_placement,
     _projected_view_bounds_for_shape_placement_overview,
     _projected_view_bounds_for_latest_component_zoom,
@@ -63,14 +63,14 @@ from tools.geometry.airframe_review.views_shape_placement import (
     _subcomponent_shape_placement_view_page,
     write_subcomponent_shape_placement_review_views,
 )
-from tools.geometry.airframe_review.views_parent_child import (
+from tools.geometry.airframe_review.views.views_parent_child import (
     _projected_view_bounds_for_parent_child_layout,
     _semantic_parent_child_layout_mini_svg,
     _write_semantic_parent_child_layout_index,
     _semantic_parent_child_layout_view_page,
     write_semantic_parent_child_layout_review_views,
 )
-from tools.geometry.airframe_review.views_triage_dashboard import (
+from tools.geometry.airframe_review.views.views_triage_dashboard import (
     _component_rows_for_region,
     _fine_proxy_review_flags,
     _fine_proxy_review_status,

@@ -6,7 +6,7 @@ import html
 from pathlib import Path
 from typing import Any, Iterable
 
-from tools.geometry.airframe_review.views_fine_proxy import _fine_proxy_review_mini_svg
+from .views_fine_proxy import _fine_proxy_review_mini_svg
 
 
 def _component_rows_by_name(

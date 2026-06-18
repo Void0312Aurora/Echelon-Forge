@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.geometry.airframe_review import projection_geometry
-from tools.geometry.airframe_review._svg_primitives import (
+from ._svg_primitives import (
     _svg_color,
     _svg_point,
     _svg_polygon,

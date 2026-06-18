@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tools.geometry.airframe_review._view_shared import _component_rows_by_name, _triage_card
-from tools.geometry.airframe_review.views_fine_proxy import _fine_proxy_review_mini_svg
+from ._view_shared import _component_rows_by_name, _triage_card
+from .views_fine_proxy import _fine_proxy_review_mini_svg
 
 
 def _component_rows_for_region(

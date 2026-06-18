@@ -9,14 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from tools.geometry.airframe_review import projection_geometry
-from tools.geometry.airframe_review._svg_primitives import (
+from ._svg_primitives import (
     _fit_view_bounds_to_screen_aspect,
     _svg_polygon_projected,
     _svg_projected_prior_shape,
     _svg_scale_bar,
     _svg_shape_label_badge,
 )
-from tools.geometry.airframe_review._view_shared import _relative_to, _review_slug, _triage_list
+from ._view_shared import _relative_to, _review_slug, _triage_list
 
 
 def _projected_view_bounds_for_shape_placement(

@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from tools.geometry.airframe_review._view_shared import (
+from ._view_shared import (
     _component_rows_by_name,
     _write_isolated_review_entry,
 )

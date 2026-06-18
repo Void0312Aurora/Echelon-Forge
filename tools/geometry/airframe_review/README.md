@@ -46,7 +46,9 @@ Current layers:
 - `projection_geometry.py`: projected-bounds, projected-shape sampling, and
   polygon containment helpers shared by builders and views.
 - `report_writers.py`: JSON/CSV artifact writers for review reports.
-- `review_views.py`: HTML/SVG review dashboards and isolated review pages.
+- `review_views.py`: compatibility re-exports for HTML/SVG review dashboards.
+- `views/`: SVG primitives, shared review-view helpers, dashboards, and isolated
+  review pages.
 - `review_packet.py`: final `scene.html` review packet writer.
 - `runtime_activation.py`: cross-region ownership split, runtime activation,
   behavior regression, and training proxy report builders.

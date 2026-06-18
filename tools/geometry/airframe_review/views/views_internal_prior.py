@@ -10,8 +10,8 @@ from typing import Any
 
 from tools.geometry.airframe_review import projection_geometry
 from tools.geometry.airframe_review.constants import CROSS_REGION_REVIEW_SEMANTICS
-from tools.geometry.airframe_review._svg_primitives import _svg_polygon_projected, _svg_rect
-from tools.geometry.airframe_review._view_shared import (
+from ._svg_primitives import _svg_polygon_projected, _svg_rect
+from ._view_shared import (
     _component_rows_by_name,
     _relative_to,
     _review_slug,

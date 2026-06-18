@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.geometry.airframe_review import contours, projection_geometry
-from tools.geometry.airframe_review._svg_primitives import _svg_polygon_projected
+from ._svg_primitives import _svg_polygon_projected
 
 
 def _projected_shape_polygon(

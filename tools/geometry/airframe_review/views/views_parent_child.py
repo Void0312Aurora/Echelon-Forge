@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from tools.geometry.airframe_review import projection_geometry
-from tools.geometry.airframe_review._svg_primitives import (
+from ._svg_primitives import (
     _svg_clip_path_for_hull,
     _svg_polygon_projected,
     _svg_projected_prior_shape,
 )
-from tools.geometry.airframe_review._view_shared import _relative_to, _review_slug, _triage_list
+from ._view_shared import _relative_to, _review_slug, _triage_list
 
 
 def _projected_view_bounds_for_parent_child_layout(
