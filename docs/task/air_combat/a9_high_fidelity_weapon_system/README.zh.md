@@ -12,7 +12,7 @@
 - 父级空战任务索引: [../README.md](../README.md)
 - A2 封存毁伤模型记录: [../archive/a2_high_fidelity_damage_model/README.md](../archive/a2_high_fidelity_damage_model/README.md)
 - A2 后续近炸引信真实性（PF-R4 通过，PF-R5 带残差通过）:
-  [../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/README.md](../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/README.md)
+  [../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md](../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md)
 - A8 毁伤效果链条: [../archive/a8_damage_effect_chain/README.md](../archive/a8_damage_effect_chain/README.md)
 - Agent 子项目标准: [../../../agent/rules/subproject_creation_standard.zh.md](../../../agent/rules/subproject_creation_standard.zh.md)
 - 真实性权限边界: [../../../standards/foundation/realism_authority_boundary.zh.md](../../../standards/foundation/realism_authority_boundary.zh.md)
@@ -108,4 +108,4 @@
 
 ## 存档
 
-存档证据包: [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)
+存档证据包: [../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)

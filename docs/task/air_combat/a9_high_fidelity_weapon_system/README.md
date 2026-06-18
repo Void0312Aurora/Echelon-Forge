@@ -12,7 +12,7 @@ Inputs:
 - Parent air-combat task index: [../README.md](../README.md)
 - A2 sealed damage-model record: [../archive/a2_high_fidelity_damage_model/README.md](../archive/a2_high_fidelity_damage_model/README.md)
 - A2 follow-on proximity fuze realism (PF-R4 pass, PF-R5 pass_with_residuals):
-  [../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/README.md](../a2_high_fidelity_damage_model/missile_lethality_proximity_fuze_realism/README.md)
+  [../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.md](../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.md)
 - A8 damage effect chain: [../archive/a8_damage_effect_chain/README.md](../archive/a8_damage_effect_chain/README.md)
 - Agent subproject standard: [../../../agent/rules/subproject_creation_standard.md](../../../agent/rules/subproject_creation_standard.md)
 - Realism authority boundary: [../../../standards/foundation/realism_authority_boundary.zh.md](../../../standards/foundation/realism_authority_boundary.zh.md)
