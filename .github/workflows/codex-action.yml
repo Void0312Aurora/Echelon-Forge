@@ -1,0 +1,436 @@
+name: codex-action
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  issue_comment:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Codex task mode.
+        type: choice
+        default: general
+        options:
+          - general
+          - patch
+          - release-prep
+      prompt:
+        description: Task prompt for Codex.
+        required: false
+        type: string
+      target_ref:
+        description: Branch, tag, or SHA to check out. Defaults to the dispatch ref.
+        required: false
+        type: string
+      sandbox:
+        description: Codex sandbox mode for manual general/patch tasks.
+        type: choice
+        default: workspace-write
+        options:
+          - read-only
+          - workspace-write
+          - danger-full-access
+      create_pr:
+        description: Create a pull request when a manual Codex task changes files.
+        type: boolean
+        default: true
+  workflow_run:
+    workflows:
+      - ci-smoke
+    types:
+      - completed
+  release:
+    types:
+      - created
+      - edited
+      - prereleased
+      - published
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: codex-action-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  CODEX_RESPONSES_API_ENDPOINT: https://cpa.void0312.com:8443/v1/responses
+  CODEX_MODEL: gpt-5.5
+  CODEX_EFFORT: xhigh
+  CODEX_ARGS: '["--config","disable_response_storage=true","--config","model_providers.codex-action-responses-proxy.service_tier=\"standard\""]'
+
+jobs:
+  pr-review:
+    name: Codex PR review
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout PR merge commit
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pre-fetch PR base and head refs
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags origin \
+            "$PR_BASE_REF" \
+            "+refs/pull/$PR_NUMBER/head"
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
+          model: ${{ env.CODEX_MODEL }}
+          effort: ${{ env.CODEX_EFFORT }}
+          codex-args: ${{ env.CODEX_ARGS }}
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+          allow-bots: true
+          allow-bot-users: github-actions[bot]
+          output-file: ${{ runner.temp }}/codex-pr-review.md
+          prompt: |
+            Read and follow .github/codex/prompts/pr-review.md.
+
+            This is pull request #${{ github.event.pull_request.number }} for ${{ github.repository }}.
+
+            Review only the changes introduced by this pull request.
+            Useful local commands include:
+
+            git log --oneline ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+            git diff --stat ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+            git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+
+            Pull request title:
+            ${{ github.event.pull_request.title }}
+
+            Pull request body:
+            ${{ github.event.pull_request.body }}
+
+      - name: Upload Codex PR review artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-pr-review-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/codex-pr-review.md
+          if-no-files-found: ignore
+
+      - name: Comment Codex PR review
+        if: steps.run_codex.outputs.final-message != ''
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
+
+  comment-task:
+    name: Codex @codex comment task
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout PR merge commit
+        if: github.event.issue.pull_request
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/merge
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout default branch
+        if: ${{ !github.event.issue.pull_request }}
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
+          model: ${{ env.CODEX_MODEL }}
+          effort: ${{ env.CODEX_EFFORT }}
+          codex-args: ${{ env.CODEX_ARGS }}
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+          allow-bots: true
+          allow-bot-users: github-actions[bot]
+          output-file: ${{ runner.temp }}/codex-comment-task.md
+          prompt: |
+            Read and follow .github/codex/prompts/comment-task.md.
+
+            Repository: ${{ github.repository }}
+            Issue or PR number: #${{ github.event.issue.number }}
+            Issue or PR title: ${{ github.event.issue.title }}
+            Comment author: ${{ github.event.comment.user.login }}
+
+            Triggering comment:
+            ----
+            ${{ github.event.comment.body }}
+
+      - name: Upload Codex comment task artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-comment-task-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-comment-task.md
+          if-no-files-found: ignore
+
+      - name: Comment Codex response
+        if: steps.run_codex.outputs.final-message != ''
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
+
+  manual-task:
+    name: Codex manual task
+    if: github.event_name == 'workflow_dispatch' && inputs.mode != 'release-prep'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
+          model: ${{ env.CODEX_MODEL }}
+          effort: ${{ env.CODEX_EFFORT }}
+          codex-args: ${{ env.CODEX_ARGS }}
+          sandbox: ${{ inputs.sandbox }}
+          safety-strategy: drop-sudo
+          allow-bots: true
+          allow-bot-users: github-actions[bot]
+          output-file: ${{ runner.temp }}/codex-manual-task.md
+          prompt: |
+            Read and follow .github/codex/prompts/manual-task.md.
+
+            Mode: ${{ inputs.mode }}
+            Target ref: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref }}
+
+            Task prompt:
+            ----
+            ${{ inputs.prompt }}
+
+      - name: Upload Codex manual task artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-manual-task-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-manual-task.md
+          if-no-files-found: ignore
+
+      - name: Create pull request from Codex changes
+        if: inputs.create_pr == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REF: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "Codex did not change files; no pull request will be created."
+            exit 0
+          fi
+
+          base_ref="${TARGET_REF#refs/heads/}"
+          if [[ "$base_ref" == refs/* || -z "$base_ref" ]]; then
+            base_ref="${GITHUB_REF_NAME}"
+          fi
+
+          branch="codex/action-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "chore: apply Codex action task"
+          git push --set-upstream origin "$branch"
+
+          if [[ -f "${RUNNER_TEMP}/codex-manual-task.md" ]]; then
+            body_file="${RUNNER_TEMP}/codex-manual-task.md"
+          else
+            body_file="$(mktemp)"
+            printf 'Codex action produced repository changes.\n' > "$body_file"
+          fi
+
+          gh pr create \
+            --base "$base_ref" \
+            --head "$branch" \
+            --title "Codex action task" \
+            --body-file "$body_file"
+
+  ci-failure-diagnosis:
+    name: Codex CI failure diagnosis
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout failed workflow head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download failed workflow logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          gh run view "$RUN_ID" --log > codex-ci-logs.txt || true
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
+          model: ${{ env.CODEX_MODEL }}
+          effort: ${{ env.CODEX_EFFORT }}
+          codex-args: ${{ env.CODEX_ARGS }}
+          sandbox: read-only
+          safety-strategy: drop-sudo
+          allow-bots: true
+          allow-bot-users: github-actions[bot]
+          output-file: ${{ runner.temp }}/codex-ci-failure.md
+          prompt: |
+            Read and follow .github/codex/prompts/ci-failure.md.
+
+            Failed workflow: ${{ github.event.workflow_run.name }}
+            Workflow run URL: ${{ github.event.workflow_run.html_url }}
+            Head branch: ${{ github.event.workflow_run.head_branch }}
+            Head SHA: ${{ github.event.workflow_run.head_sha }}
+
+            The workflow log was saved to codex-ci-logs.txt.
+
+      - name: Upload Codex CI diagnosis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-ci-failure-${{ github.event.workflow_run.id }}
+          path: |
+            ${{ runner.temp }}/codex-ci-failure.md
+            codex-ci-logs.txt
+          if-no-files-found: ignore
+
+      - name: Comment CI diagnosis on pull request
+        if: steps.run_codex.outputs.final-message != ''
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const prs = context.payload.workflow_run.pull_requests || [];
+            if (prs.length === 0) {
+              core.info("Failed workflow run is not associated with a pull request.");
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prs[0].number,
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
+
+  release-prep:
+    name: Codex release prep
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release-prep')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout release ref
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_ref != '' && inputs.target_ref || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CPA_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          responses-api-endpoint: ${{ env.CODEX_RESPONSES_API_ENDPOINT }}
+          model: ${{ env.CODEX_MODEL }}
+          effort: ${{ env.CODEX_EFFORT }}
+          codex-args: ${{ env.CODEX_ARGS }}
+          sandbox: read-only
+          safety-strategy: drop-sudo
+          allow-bots: true
+          allow-bot-users: github-actions[bot]
+          output-file: ${{ runner.temp }}/codex-release-prep.md
+          prompt: |
+            Read and follow .github/codex/prompts/release-prep.md.
+
+            Event: ${{ github.event_name }}
+            Ref: ${{ github.ref }}
+            SHA: ${{ github.sha }}
+
+            Manual prompt, if provided:
+            ----
+            ${{ github.event_name == 'workflow_dispatch' && inputs.prompt || '' }}
+
+      - name: Upload Codex release prep artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-release-prep-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-release-prep.md
+          if-no-files-found: ignore
