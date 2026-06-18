@@ -73,8 +73,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
       - name: Checkout PR merge commit
         uses: actions/checkout@v5
@@ -101,7 +101,7 @@ jobs:
           model: ${{ env.CODEX_MODEL }}
           effort: ${{ env.CODEX_EFFORT }}
           codex-args: ${{ env.CODEX_ARGS }}
-          sandbox: workspace-write
+          sandbox: read-only
           safety-strategy: drop-sudo
           allow-bots: true
           allow-bot-users: github-actions[bot]
@@ -132,11 +132,19 @@ jobs:
           path: ${{ runner.temp }}/codex-pr-review.md
           if-no-files-found: ignore
 
+  post-pr-review:
+    name: Post Codex PR review
+    needs: pr-review
+    if: github.event_name == 'pull_request' && needs.pr-review.outputs.final_message != ''
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
       - name: Comment Codex PR review
-        if: steps.run_codex.outputs.final-message != ''
         uses: actions/github-script@v7
         env:
-          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+          CODEX_FINAL_MESSAGE: ${{ needs.pr-review.outputs.final_message }}
         with:
           github-token: ${{ github.token }}
           script: |
@@ -154,8 +162,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
       - name: Checkout PR merge commit
         if: github.event.issue.pull_request
@@ -182,7 +190,7 @@ jobs:
           model: ${{ env.CODEX_MODEL }}
           effort: ${{ env.CODEX_EFFORT }}
           codex-args: ${{ env.CODEX_ARGS }}
-          sandbox: workspace-write
+          sandbox: read-only
           safety-strategy: drop-sudo
           allow-bots: true
           allow-bot-users: github-actions[bot]
@@ -207,11 +215,19 @@ jobs:
           path: ${{ runner.temp }}/codex-comment-task.md
           if-no-files-found: ignore
 
+  post-comment-task:
+    name: Post Codex comment task
+    needs: comment-task
+    if: github.event_name == 'issue_comment' && needs.comment-task.outputs.final_message != ''
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
       - name: Comment Codex response
-        if: steps.run_codex.outputs.final-message != ''
         uses: actions/github-script@v7
         env:
-          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+          CODEX_FINAL_MESSAGE: ${{ needs.comment-task.outputs.final_message }}
         with:
           github-token: ${{ github.token }}
           script: |
@@ -228,9 +244,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      contents: read
     steps:
       - name: Checkout target ref
         uses: actions/checkout@v5
@@ -271,13 +285,61 @@ jobs:
           path: ${{ runner.temp }}/codex-manual-task.md
           if-no-files-found: ignore
 
+      - name: Save Codex patch
+        if: always()
+        run: git diff --binary > "${RUNNER_TEMP}/codex-manual-task.patch"
+
+      - name: Upload Codex patch artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-manual-task-patch-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-manual-task.patch
+          if-no-files-found: ignore
+
+  create-manual-task-pr:
+    name: Create PR from manual Codex task
+    needs: manual-task
+    if: github.event_name == 'workflow_dispatch' && inputs.mode != 'release-prep' && inputs.create_pr == true && needs.manual-task.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download Codex output artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codex-manual-task-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-manual-task
+
+      - name: Download Codex patch artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codex-manual-task-patch-${{ github.run_id }}
+          path: ${{ runner.temp }}/codex-manual-task
+
       - name: Create pull request from Codex changes
-        if: inputs.create_pr == true
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET_REF: ${{ inputs.target_ref != '' && inputs.target_ref || github.ref_name }}
         run: |
           set -euo pipefail
+          patch_file="${RUNNER_TEMP}/codex-manual-task/codex-manual-task.patch"
+          if [[ ! -s "$patch_file" ]]; then
+            echo "Codex did not produce a patch; no pull request will be created."
+            exit 0
+          fi
+
+          git apply --check "$patch_file"
+          git apply "$patch_file"
+
           if [[ -z "$(git status --porcelain)" ]]; then
             echo "Codex did not change files; no pull request will be created."
             exit 0
@@ -296,8 +358,8 @@ jobs:
           git commit -m "chore: apply Codex action task"
           git -c "http.extraheader=AUTHORIZATION: bearer ${GH_TOKEN}" push --set-upstream origin "$branch"
 
-          if [[ -f "${RUNNER_TEMP}/codex-manual-task.md" ]]; then
-            body_file="${RUNNER_TEMP}/codex-manual-task.md"
+          if [[ -f "${RUNNER_TEMP}/codex-manual-task/codex-manual-task.md" ]]; then
+            body_file="${RUNNER_TEMP}/codex-manual-task/codex-manual-task.md"
           else
             body_file="$(mktemp)"
             printf 'Codex action produced repository changes.\n' > "$body_file"
@@ -317,8 +379,8 @@ jobs:
     permissions:
       actions: read
       contents: read
-      issues: write
-      pull-requests: write
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
       - name: Checkout failed workflow head
         uses: actions/checkout@v5
@@ -368,11 +430,19 @@ jobs:
             codex-ci-logs.txt
           if-no-files-found: ignore
 
+  post-ci-failure-diagnosis:
+    name: Post Codex CI failure diagnosis
+    needs: ci-failure-diagnosis
+    if: github.event_name == 'workflow_run' && needs.ci-failure-diagnosis.outputs.final_message != ''
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
       - name: Comment CI diagnosis on pull request
-        if: steps.run_codex.outputs.final-message != ''
         uses: actions/github-script@v7
         env:
-          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+          CODEX_FINAL_MESSAGE: ${{ needs.ci-failure-diagnosis.outputs.final_message }}
         with:
           github-token: ${{ github.token }}
           script: |
