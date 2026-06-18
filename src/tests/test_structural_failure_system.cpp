@@ -511,7 +511,7 @@ TEST_SUITE("structural_failure_events") {
         breakup_event.breakup_state = "partial_detachment";
         breakup_event.break_mode = "engine_detach";
         breakup_event.detached_part_ref = "engine_core";
-        store.record_structural_breakup_event({
+        const std::uint64_t breakup_event_id = store.record_structural_breakup_event({
             .target_id = target_id,
             .contributing_component_names = {"engine_core"},
             .event = breakup_event,
@@ -520,8 +520,12 @@ TEST_SUITE("structural_failure_events") {
         const RecentEngagementEvents recent = store.export_recent_events_sorted();
         REQUIRE(recent.structural_breakup_events.size() == 1);
         const StructuralBreakupEvent &recorded = recent.structural_breakup_events[0];
+        REQUIRE(recent.component_damage_events.size() == 1);
+        const ComponentDamageEvent &recorded_damage = recent.component_damage_events[0];
         CHECK(recorded.cause_event_id == component_event_id);
         CHECK(recorded.header.parent_event_id == component_event_id);
+        CHECK(recorded.header.chain_id == recorded_damage.header.chain_id);
+        CHECK(recorded.header.chain_id != breakup_event_id);
         CHECK(recorded.header.stage == "structural_breakup");
         CHECK(recorded.header.producer_node_id == "damage_system.structural_failure");
     }

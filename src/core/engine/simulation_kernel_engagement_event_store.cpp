@@ -57,6 +57,20 @@ find_recent_component_damage_event_id(const RecentEngagementEvents &events, std:
     return 0;
 }
 
+std::uint64_t find_recent_component_damage_chain_id(const RecentEngagementEvents &events,
+                                                    std::uint64_t event_id) {
+    if (event_id == 0) {
+        return 0;
+    }
+    for (auto it = events.component_damage_events.rbegin();
+         it != events.component_damage_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    return 0;
+}
+
 template <typename Event> void cap_recent_events(std::vector<Event> &events, std::size_t max_size) {
     while (events.size() > max_size) {
         events.erase(events.begin());
@@ -548,6 +562,10 @@ std::uint64_t SimulationKernelEngagementEventStore::record_structural_breakup_ev
             ? record.event.cause_event_id
             : find_recent_component_damage_event_id(recent_engagement_events_, record.target_id,
                                                     record.contributing_component_names);
+    const std::uint64_t resolved_chain_id =
+        launch_event_id != 0
+            ? launch_event_id
+            : find_recent_component_damage_chain_id(recent_engagement_events_, cause_event_id);
     const std::uint64_t parent_event_id =
         record.parent_event_id != 0 ? record.parent_event_id : cause_event_id;
 
@@ -560,9 +578,9 @@ std::uint64_t SimulationKernelEngagementEventStore::record_structural_breakup_ev
         event.header.producer_node_id = "damage_system.structural_failure";
     }
     complete_lethality_header(event.header, std::string(kLethalityChainStageStructuralBreakup),
-                              "observed", event_time_s, event_id, launch_event_id, parent_event_id,
-                              record.munition_entity_id, record.shooter_id, record.target_id,
-                              current_source_frame(ecs_));
+                              "observed", event_time_s, event_id, resolved_chain_id,
+                              parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
 
     recent_engagement_events_.structural_breakup_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.structural_breakup_events,
