@@ -63,8 +63,7 @@ inline void record_terminal_wreck_lifecycle_for_event(flecs::entity entity,
 
 inline void record_terminal_wreck_lifecycle(flecs::entity entity,
                                             IEngagementEventRecorder *recorder,
-                                            GroundImpactLifecycle lifecycle,
-                                            double source_time_s) {
+                                            GroundImpactLifecycle lifecycle, double source_time_s) {
     if (!recorder || !is_terminal_wreck_lifecycle(lifecycle)) {
         return;
     }
@@ -73,7 +72,7 @@ inline void record_terminal_wreck_lifecycle(flecs::entity entity,
         return;
     }
     record_terminal_wreck_lifecycle_for_event(entity, recorder, lifecycle, source_time_s,
-                                             breakup->last_breakup_event_id);
+                                              breakup->last_breakup_event_id);
 }
 
 } // namespace mlf8_lifecycle

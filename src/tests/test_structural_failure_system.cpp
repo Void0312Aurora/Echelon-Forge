@@ -682,8 +682,7 @@ TEST_SUITE("aircraft_damage_lifecycle") {
                             .set<Transform>({0.0, 0.0, 0.0, 0.0, 0.0, 0.0})
                             .set<Velocity>({0.0, 0.0, -20.0})
                             .set<Mass>({10000.0, 0.0, 0.0})
-                            .set<GroundState>(
-                                {false, 0.0, 0.6, GroundImpactLifecycle::None});
+                            .set<GroundState>({false, 0.0, 0.6, GroundImpactLifecycle::None});
 
         world.progress(1.0 / 60.0);
 

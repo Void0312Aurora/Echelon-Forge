@@ -78,8 +78,7 @@ inline void record_mlf8_terminal_wreck_lifecycle(flecs::entity entity,
                                                  IEngagementEventRecorder *recorder,
                                                  GroundImpactLifecycle lifecycle,
                                                  double source_time_s) {
-    mlf8_lifecycle::record_terminal_wreck_lifecycle(entity, recorder, lifecycle,
-                                                    source_time_s);
+    mlf8_lifecycle::record_terminal_wreck_lifecycle(entity, recorder, lifecycle, source_time_s);
 }
 } // namespace
 
