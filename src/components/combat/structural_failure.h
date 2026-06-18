@@ -58,15 +58,14 @@ inline bool structural_breakup_has_group(const StructuralBreakupState &state,
 
 inline std::string_view structural_breakup_phase_name(StructuralBreakupPhase state) {
     switch (state) {
-        case StructuralBreakupPhase::Intact:
-            return "intact";
-        case StructuralBreakupPhase::PartialDetachment:
-            return "partial_detachment";
-        case StructuralBreakupPhase::PartialBreakup:
-            return "partial_breakup";
-        case StructuralBreakupPhase::FullBreakup:
-            return "full_breakup";
+    case StructuralBreakupPhase::Intact:
+        return "intact";
+    case StructuralBreakupPhase::PartialDetachment:
+        return "partial_detachment";
+    case StructuralBreakupPhase::PartialBreakup:
+        return "partial_breakup";
+    case StructuralBreakupPhase::FullBreakup:
+        return "full_breakup";
     }
     return "intact";
 }
-

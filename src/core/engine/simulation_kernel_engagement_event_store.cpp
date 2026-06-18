@@ -40,17 +40,16 @@ std::uint64_t find_launch_event_id_for_munition(const RecentEngagementEvents &ev
     return 0;
 }
 
-std::uint64_t find_recent_component_damage_event_id(
-    const RecentEngagementEvents &events, std::uint64_t target_id,
-    const std::vector<std::string> &component_names) {
+std::uint64_t
+find_recent_component_damage_event_id(const RecentEngagementEvents &events, std::uint64_t target_id,
+                                      const std::vector<std::string> &component_names) {
     for (auto it = events.component_damage_events.rbegin();
          it != events.component_damage_events.rend(); ++it) {
         if (target_id != 0 && it->header.target.entity_id != target_id) {
             continue;
         }
-        if (!component_names.empty() &&
-            std::find(component_names.begin(), component_names.end(), it->component_name) ==
-                component_names.end()) {
+        if (!component_names.empty() && std::find(component_names.begin(), component_names.end(),
+                                                  it->component_name) == component_names.end()) {
             continue;
         }
         return it->header.event_id;
@@ -561,9 +560,9 @@ std::uint64_t SimulationKernelEngagementEventStore::record_structural_breakup_ev
         event.header.producer_node_id = "damage_system.structural_failure";
     }
     complete_lethality_header(event.header, std::string(kLethalityChainStageStructuralBreakup),
-                              "observed", event_time_s, event_id, launch_event_id,
-                              parent_event_id, record.munition_entity_id, record.shooter_id,
-                              record.target_id, current_source_frame(ecs_));
+                              "observed", event_time_s, event_id, launch_event_id, parent_event_id,
+                              record.munition_entity_id, record.shooter_id, record.target_id,
+                              current_source_frame(ecs_));
 
     recent_engagement_events_.structural_breakup_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.structural_breakup_events,

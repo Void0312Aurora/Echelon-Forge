@@ -20,12 +20,11 @@ inline constexpr std::string_view kLethalityChainStageLifecycle = "lifecycle";
 inline constexpr std::string_view kLethalityChainStageTrainingProjection = "training_projection";
 
 inline constexpr std::array<std::string_view, 10> kLethalityChainCanonicalStages = {
-    kLethalityChainStageNearestApproach,     kLethalityChainStageFuze,
-    kLethalityChainStageWarheadMechanism,    kLethalityChainStageSpatialCoverage,
-    kLethalityChainStageComponentLoad,       kLethalityChainStageComponentDamage,
-    kLethalityChainStageStructuralBreakup,   kLethalityChainStagePlatformConsequence,
-    kLethalityChainStageLifecycle,
-    kLethalityChainStageTrainingProjection,
+    kLethalityChainStageNearestApproach,   kLethalityChainStageFuze,
+    kLethalityChainStageWarheadMechanism,  kLethalityChainStageSpatialCoverage,
+    kLethalityChainStageComponentLoad,     kLethalityChainStageComponentDamage,
+    kLethalityChainStageStructuralBreakup, kLethalityChainStagePlatformConsequence,
+    kLethalityChainStageLifecycle,         kLethalityChainStageTrainingProjection,
 };
 
 inline constexpr std::string_view kLethalityReasonFuzeArmed = "fuze_armed";
