@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from tests.architecture.runtime_facade.helpers import *
 
 
@@ -50,7 +52,7 @@ def test_runtime_facade_does_not_include_or_call_gpu_helpers() -> None:
   assert not violations, f"RuntimeFacade must not depend on GPU helper/probe implementation: {violations}"
 
 def test_runtime_facade_capabilities_stay_independent_from_cuda_experiment_signals() -> None:
-  source = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
+  source = runtime_facade_source_text()
   capabilities_body = source.split("RuntimeCapabilities RuntimeFacade::capabilities() const noexcept {", 1)[1]
   capabilities_body = capabilities_body.split(
     "RuntimeFidelityAdmission RuntimeFacade::admit_fidelity_request(",
@@ -101,14 +103,17 @@ def test_runtime_binding_capability_surface_keeps_gpu_helper_signals_separate() 
 
 def test_backend_profile_contract_marks_gpu_helpers_export_only_and_non_promoting() -> None:
   header = (RUNTIME_CONTRACTS / "backend_profile_contracts.h").read_text(encoding="utf-8")
-  diagnostics_only_profile = header.split(
-    "BackendProfileContract{\n      .backend_profile_id =\n        std::string(kBackendProfileIdGpuHelpersDiagnosticsOnly),",
-    1,
-  )[1]
-  diagnostics_only_profile = diagnostics_only_profile.split(
-    "BackendProfileContract{\n      .backend_profile_id =\n        std::string(kBackendProfileIdGpuExactUnmaintainedCandidate),",
-    1,
-  )[0]
+  diagnostics_only_match = re.search(
+    r"BackendProfileContract\{\s*"
+    r"\.backend_profile_id\s*=\s*std::string\(kBackendProfileIdGpuHelpersDiagnosticsOnly\),"
+    r"(?P<body>.*?)"
+    r"BackendProfileContract\{\s*"
+    r"\.backend_profile_id\s*=\s*std::string\(kBackendProfileIdGpuExactUnmaintainedCandidate\),",
+    header,
+    flags=re.DOTALL,
+  )
+  assert diagnostics_only_match is not None
+  diagnostics_only_profile = diagnostics_only_match.group("body")
 
   required_markers = (
     '.sync_policy = std::string(kBackendProfileSyncPolicyExportOnly)',
@@ -157,7 +162,7 @@ def test_core_runtime_does_not_probe_gpu_for_facade_capability_projection() -> N
 def test_resident_state_candidate_stays_fail_closed_and_exports_remain_host_visible() -> None:
   contracts = (RUNTIME_CONTRACTS / "backend_profile_contracts.h").read_text(encoding="utf-8")
   facade_types = (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
-  facade_cpp = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
+  facade_cpp = runtime_facade_source_text()
 
   assert "kBackendProfileIdResidentStateUnmaintainedCandidate" in contracts
   resident_section = contracts.split("kBackendProfileIdResidentStateUnmaintainedCandidate", 1)[1]

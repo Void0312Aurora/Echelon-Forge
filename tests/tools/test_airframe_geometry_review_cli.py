@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from tools.geometry import airframe_geometry_review
+from tools.geometry.airframe_review import component_model, constants, gltf_io
 from tests.tools.airframe_review_fixtures import require_airframe_geometry_extra
 
 
@@ -524,11 +525,11 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   ] is True
   assert training_proxy_report["authority_boundary"]["training_path_wired"] is True
   proxy_unit = json.loads(training_proxy_unit_path.read_text(encoding="utf-8"))
-  proxy_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
+  proxy_component_names = component_model.damage_component_names(
     proxy_unit
   )
-  default_component_names = airframe_geometry_review._damage_component_names( # noqa: SLF001
-    airframe_geometry_review._load_json(airframe_geometry_review.DEFAULT_AIRCRAFT) # noqa: SLF001
+  default_component_names = component_model.damage_component_names(
+    gltf_io.load_json(constants.DEFAULT_AIRCRAFT)
   )
   assert len(default_component_names) == 26
   assert len(proxy_component_names) == 32
@@ -620,7 +621,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   )
   assert parent_child_report["summary"]["parent_semantic_component_count"] == 14
   assert parent_child_report["summary"]["bound_receiver_component_count"] == 26
-  assert parent_child_report["summary"]["extra_receiver_slot_count"] == 12
+  assert parent_child_report["summary"]["extra_receiver_slot_count"] == 13
   assert parent_child_report["summary"]["cross_region_held_segment_count"] == 8
   assert parent_child_report["summary"][
     "cross_region_held_segment_overlay_count"

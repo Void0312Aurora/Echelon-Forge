@@ -7,7 +7,7 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   contracts_text = (RUNTIME_CONTRACTS / "world_batch_contracts.h").read_text(encoding="utf-8")
   facade_header = (RUNTIME_FACADE / "runtime_facade.h").read_text(encoding="utf-8")
   facade_types = (RUNTIME_FACADE / "runtime_facade_types.h").read_text(encoding="utf-8")
-  facade_cpp = (RUNTIME_FACADE / "runtime_facade.cpp").read_text(encoding="utf-8")
+  facade_cpp = runtime_facade_source_text()
   bindings_runtime = RUNTIME_BINDINGS.read_text(encoding="utf-8")
   runtime_header = WORLD_BATCH_RUNTIME_H.read_text(encoding="utf-8")
 
@@ -95,10 +95,10 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert '"facade_tasking_packet"' in tasking_packet_section
   assert "kPolicySourceLabelFacadeObservationPacket" not in tasking_packet_section
 
-  observation_request_helper_section = facade_cpp.split("ObservationBatchRequest observation_request_from_step_request", 1)[1].split("TaskingBatchRequest tasking_request_from_step_request", 1)[0]
+  observation_request_helper_section = facade_cpp.split("observation_request_from_step_request", 1)[1].split("tasking_request_from_step_request", 1)[0]
   assert ".include_task_order_contracts = request.include_task_order_contracts," not in observation_request_helper_section
-  assert "TaskingBatchRequest tasking_request_from_step_request" in facade_cpp
-  tasking_request_helper_section = facade_cpp.split("TaskingBatchRequest tasking_request_from_step_request", 1)[1].split("std::uint64_t next_snapshot_version", 1)[0]
+  assert "tasking_request_from_step_request" in facade_cpp
+  tasking_request_helper_section = facade_cpp.split("tasking_request_from_step_request", 1)[1].split("next_snapshot_version", 1)[0]
   assert ".include_task_order_contracts = request.include_task_order_contracts," not in tasking_request_helper_section
   assert ".include_mission_commands = request.include_mission_commands," not in tasking_request_helper_section
   assert ".include_leader_intents = request.include_leader_intents," not in tasking_request_helper_section
@@ -107,18 +107,18 @@ def test_wp24_task_order_maintained_batch_contract_has_runtime_facade_binding_wi
   assert ".include_leader_intent_contracts = request.include_leader_intent_contracts," not in tasking_request_helper_section
   assert ".include_pilot_report_contracts = request.include_pilot_report_contracts," not in tasking_request_helper_section
 
-  export_vector_overload_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef>& refs) const", 1)[1].split("ObservationBatchPacket RuntimeFacade::export_observation_packet(const ObservationBatchRequest& request) const", 1)[0]
+  export_vector_overload_section = facade_cpp.split("RuntimeFacade::export_observation_packet(const std::vector<WorldEntityRef> &refs) const", 1)[1].split("RuntimeFacade::export_observation_packet(const ObservationBatchRequest &request) const", 1)[0]
   assert ".include_task_orders = true," not in export_vector_overload_section
   assert ".include_task_order_contracts = true," not in export_vector_overload_section
 
-  build_observation_packet_section = facade_cpp.split("ObservationBatchPacket RuntimeFacade::build_observation_packet", 1)[1].split("TaskingBatchPacket RuntimeFacade::build_tasking_packet", 1)[0]
+  build_observation_packet_section = facade_cpp.split("RuntimeFacade::build_observation_packet", 1)[1].split("RuntimeFacade::build_tasking_packet", 1)[0]
   assert "if (request.include_task_order_contracts)" not in build_observation_packet_section
   assert "packet.task_order_contracts = runtime_->get_task_orders_maintained_batch(request.refs);" not in build_observation_packet_section
   assert "packet.mission_commands = runtime_->get_mission_commands_batch(request.refs);" not in build_observation_packet_section
   assert "if (request.include_task_orders)" not in build_observation_packet_section
   assert "runtime_->get_task_orders_batch(" not in build_observation_packet_section
   assert "runtime_->get_task_orders_compatibility_batch(request.refs);" not in build_observation_packet_section
-  build_tasking_packet_section = facade_cpp.split("TaskingBatchPacket RuntimeFacade::build_tasking_packet", 1)[1]
+  build_tasking_packet_section = facade_cpp.split("RuntimeFacade::build_tasking_packet", 1)[1]
   assert "if (request.include_task_order_contracts)" in build_tasking_packet_section
   assert "if (request.include_mission_command_contracts)" in build_tasking_packet_section
   assert "if (request.include_leader_intent_contracts)" in build_tasking_packet_section
@@ -200,9 +200,7 @@ def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_
   multi_agent_runtime = (
     REPO_ROOT / "python" / "rl" / "runtime" / "multi_agent_runtime.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = (
-    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text()
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
   ).read_text(encoding="utf-8")
@@ -238,9 +236,7 @@ def test_wp24_python_command_chain_business_writes_use_maintained_contracts() ->
   command_chain_cache = (
     REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "command_chain_cache.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = (
-    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text()
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
   ).read_text(encoding="utf-8")

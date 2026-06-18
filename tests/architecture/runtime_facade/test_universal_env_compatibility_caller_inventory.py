@@ -42,7 +42,7 @@ def _is_true_constant(node: ast.AST) -> bool:
 
 
 def _runtime_compatibility_true_call_count(path: Path) -> int:
-  tree = ast.parse(path.read_text(encoding="utf-8"))
+  tree = ast.parse(path.read_text(encoding="utf-8-sig"))
   count = 0
   for node in ast.walk(tree):
     if isinstance(node, ast.Call):

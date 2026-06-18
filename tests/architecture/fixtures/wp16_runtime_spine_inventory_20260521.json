@@ -114,7 +114,7 @@
       ]
     },
     {
-      "path": "src/runtime/facade/runtime_facade.cpp",
+      "path": "src/runtime/facade/runtime_facade_packet.cpp",
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
@@ -122,7 +122,7 @@
       "evidence_markers": [
         "RuntimeWindowResult RuntimeFacade::run_wp10_window",
         "return execute_runtime_window(",
-        "p10.observation_export.v1",
+        "kWp10ObservationExportNodeId",
         "diagnostics_trace_surface_not_maintained_decision_path"
       ]
     },
@@ -144,12 +144,12 @@
       "classification": "compatibility_wrapper",
       "owner": "WP16-C",
       "next_gate": "WP16-C Facade And Batch Path Spine Migration",
-      "reason": "Maintained training entrypoint reads facade-shaped packets and exposes the facade for diagnostics while keeping the old public batch runtime surface removed.",
+      "reason": "Compatibility import shim preserves the historical world_batch_vec_env module surface while the implementation lives under python/rl/runtime/world_batch/vec_env.py.",
       "evidence_markers": [
-        "self._runtime_adapter = _RuntimeFacadeAdapter(",
-        "def runtime_facade(self):",
-        "load_compiled_scenario_for_setup_target",
-        "read_observation_packet"
+        "from python.rl.runtime.world_batch.vec_env import",
+        "WorldBatchVecEnv",
+        "_RuntimeFacadeAdapter",
+        "__all__"
       ]
     },
     {

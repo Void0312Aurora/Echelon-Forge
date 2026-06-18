@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import subprocess
 import sys
-import tempfile
 import uuid
 from collections.abc import Iterable
 from pathlib import Path
@@ -86,8 +84,10 @@ def compile_cpp_snippet(
 
   binary: Path | None = None
   if not syntax_only:
-    safe_prefix = re.sub(r"[^A-Za-z0-9_.-]+", "_", binary_prefix)
-    binary = Path(tempfile.gettempdir()) / f"{safe_prefix}_{uuid.uuid4().hex}"
+    suffix = ".exe" if os.name == "nt" else ""
+    binary_dir = repo_path("build-local-win", "_cpp_snippets")
+    binary_dir.mkdir(parents=True, exist_ok=True)
+    binary = binary_dir / f"cpp_snippet_{uuid.uuid4().hex}{suffix}"
     command.extend(["-x", "none", "-o", str(binary)])
     command.extend(str(arg) for arg in link_args)
 

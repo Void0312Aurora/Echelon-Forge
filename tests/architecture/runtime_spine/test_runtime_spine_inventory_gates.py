@@ -33,7 +33,7 @@ EXPECTED_CLASSIFICATIONS = {
   "tests/runtime/facade/test_runtime_facade_window_loop_injection.py": "maintained_spine",
   "tests/runtime/bindings/test_bindings_engagement_surface.py": "maintained_spine",
   "src/runtime/facade/runtime_facade.h": "maintained_spine",
-  "src/runtime/facade/runtime_facade.cpp": "compatibility_wrapper",
+  "src/runtime/facade/runtime_facade_packet.cpp": "compatibility_wrapper",
   "python/rl/runtime/world_batch/adapter.py": "compatibility_wrapper",
   "python/rl/runtime/world_batch_vec_env.py": "compatibility_wrapper",
   "python/rl/runtime/world_batch/runtime_access.py": "compatibility_wrapper",
