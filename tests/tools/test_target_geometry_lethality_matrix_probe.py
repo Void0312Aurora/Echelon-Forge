@@ -82,6 +82,61 @@ def test_target_geometry_lethality_matrix_probe_observes_proxy_deltas() -> None:
     for comparison in comparisons
   )
 
+  outcome = report["outcome_summary"]
+  assert outcome["status"] == "structure_damage_and_component_failure_reported"
+  assert outcome["event_run_count"] == metrics["event_run_count"]
+  assert outcome["structure_damage_event_count"] > 0
+  assert outcome["component_failure_event_count"] > 0
+  assert outcome["structural_breakup_event_count"] > 0
+  assert set(outcome["structural_breakup_event_count_by_database"]) == {
+    "default",
+    "proxy",
+  }
+  assert all(
+    ":continuous_rod:" in comparison_id
+    for comparison_id in outcome["structural_breakup_comparison_ids"]
+  )
+  assert any(
+    ":right_beam_near_7m" in comparison_id
+    for comparison_id in outcome["structural_breakup_comparison_ids"]
+  )
+  assert all(
+    ":right_beam_far_14m" not in comparison_id
+    for comparison_id in outcome["structural_breakup_comparison_ids"]
+  )
+  assert set(outcome["structure_damage_event_count_by_database"]) == {
+    "default",
+    "proxy",
+  }
+  assert set(outcome["component_failure_event_count_by_database"]) == {
+    "default",
+    "proxy",
+  }
+  assert outcome["max_structure_damage_delta"]["structure_damage_delta"] < 0.0
+  assert (
+    outcome["max_component_failure_probability"]["component_failure_probability"]
+    > 0.0
+  )
+  assert outcome["component_failure_component_names"]
+  assert len(outcome["event_rows"]) == metrics["event_run_count"]
+  assert all("structure_damage_delta" in row for row in outcome["event_rows"])
+  assert all("component_failure_observed" in row for row in outcome["event_rows"])
+  assert all(
+    "aircraft_damage_state_delta_by_system" in comparison["proxy_event"]
+    for comparison in comparisons
+  )
+  assert all(
+    "damage_reports" in comparison["proxy_event"] for comparison in comparisons
+  )
+  assert all(
+    "platform_consequence_events" in comparison["proxy_event"]
+    for comparison in comparisons
+  )
+  assert all(
+    "structural_breakup_events" in comparison["proxy_event"]
+    for comparison in comparisons
+  )
+
 
 def test_target_geometry_matrix_cases_use_origin_pointing_velocity() -> None:
   for case in probe.CASE_DEFINITIONS:
@@ -194,6 +249,53 @@ def test_target_geometry_proxy_standoff_cases_use_origin_pointing_velocity() -> 
 
   for case in cases:
     _assert_velocity_points_to_origin(case)
+
+
+def test_target_geometry_proxy_standoff_outcome_summary_exposes_damage_layers() -> None:
+  record = {
+    "case_id": "nose_standoff_0p5m",
+    "warhead_family": "blast_fragmentation",
+    "aspect": "nose",
+    "standoff_distance_m": 0.5,
+    "local_up_m": 0.0,
+    "local_point_m": [8.0, 0.0, 0.0],
+    "detonation_position_class": "external_top_contour_standoff",
+    "proxy_component_primary_name": "cockpit_crew_station",
+    "proxy_component_primary_system": "cockpit",
+    "proxy_component_primary_distance_m": 0.5,
+    "proxy_component_failure_probability": 0.6,
+    "proxy_event_max_component_failure_probability": 0.7,
+    "proxy_component_max_failure_probability_component_name": "mission_computer",
+    "proxy_component_failure_observed": True,
+    "proxy_component_damage_event_names": ["cockpit_crew_station"],
+    "proxy_system_health_delta": -0.2,
+    "proxy_structure_damage_delta": -0.1,
+    "proxy_structure_integrity_after": 0.9,
+    "proxy_structure_damage_observed": True,
+    "proxy_structural_breakup_event_count": 0,
+    "proxy_structural_breakup_observed": False,
+    "proxy_structural_breakup_modes": [],
+    "proxy_structural_breakup_part_refs": [],
+  }
+
+  summary = standoff_probe._outcome_summary([record])
+  family = summary["by_family"]["blast_fragmentation"]
+  heatmap = standoff_probe._heatmap_matrix([record])
+
+  assert summary["status"] == "standoff_aspect_distance_outcomes_reported"
+  assert summary["component_failure_observed_record_count"] == 1
+  assert summary["structure_damage_observed_record_count"] == 1
+  assert summary["structural_breakup_observed_record_count"] == 0
+  assert (
+    family["max_structure_damage_record"]["proxy_structure_damage_delta"]
+    == -0.1
+  )
+  assert family["default_z_by_standoff_distance_m"][0][
+    "mean_proxy_component_failure_probability"
+  ] == 0.6
+  assert heatmap["component_failure_observed_matrix"][0][0] is True
+  assert heatmap["structure_damage_delta_matrix"][0][0] == -0.1
+  assert heatmap["structural_breakup_observed_matrix"][0][0] is False
 
 
 def test_target_geometry_proxy_xy_grid_classifies_all_samples() -> None:

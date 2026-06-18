@@ -98,6 +98,16 @@ struct EngagementComponentDamageEventRecord {
     ComponentDamageEvent event{};
 };
 
+struct EngagementStructuralBreakupEventRecord {
+    std::uint64_t munition_entity_id = 0;
+    std::uint64_t shooter_id = 0;
+    std::uint64_t target_id = 0;
+    std::uint64_t chain_id = 0;
+    std::uint64_t parent_event_id = 0;
+    std::vector<std::string> contributing_component_names;
+    StructuralBreakupEvent event{};
+};
+
 class IEngagementEventRecorder {
   public:
     virtual ~IEngagementEventRecorder() = default;
@@ -125,6 +135,9 @@ class IEngagementEventRecorder {
 
     virtual std::uint64_t
     record_component_damage_event(EngagementComponentDamageEventRecord record) = 0;
+
+    virtual std::uint64_t
+    record_structural_breakup_event(EngagementStructuralBreakupEventRecord record) = 0;
 };
 
 struct EngagementEventRecorderRef {

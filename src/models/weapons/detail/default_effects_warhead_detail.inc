@@ -266,6 +266,34 @@ double resolved_warhead_effective_mass_kg(const Missile& missile) {
     return damage_proxy_mass_kg;
 }
 
+double resolved_warhead_fragment_count(
+    const WarheadProfile& profile,
+    double effective_mass_kg
+) {
+    if (std::isfinite(profile.fragment_count) && profile.fragment_count > 0.0) {
+        return std::clamp(profile.fragment_count, 8.0, 12000.0);
+    }
+    return std::clamp(18.0 * std::max(0.1, effective_mass_kg), 80.0, 1200.0);
+}
+
+double resolved_warhead_fragment_mass_kg(
+    const WarheadProfile& profile,
+    double effective_mass_kg,
+    double fragment_count
+) {
+    if (std::isfinite(profile.fragment_mass_kg) && profile.fragment_mass_kg > 0.0) {
+        return std::clamp(profile.fragment_mass_kg, 0.0002, 0.080);
+    }
+    const double casing_mass_kg =
+        std::isfinite(profile.case_mass_kg) && profile.case_mass_kg > 0.0
+            ? profile.case_mass_kg
+            : effective_mass_kg;
+    return std::clamp(
+        (0.36 * casing_mass_kg) / std::max(1.0, fragment_count),
+        0.0002,
+        0.080);
+}
+
 double hitbox_projected_exposure_scale(const Vec3& local_imp, const Hitbox& box) {
     const Vec3 nearest = hitbox_nearest_point(local_imp, box);
     const Vec3 ray = vec3_normalize({
@@ -401,13 +429,57 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
         0.70,
         1.28) * closure_blast_coupling_scale(closure);
 
+    const bool has_physics_warhead =
+        std::isfinite(missile.warhead_profile.gurney_constant_mps) &&
+        std::isfinite(missile.warhead_profile.explosive_mass_kg) &&
+        std::isfinite(missile.warhead_profile.case_mass_kg);
+
     if (family == "fragmentation" || family == "blast_fragmentation") {
-        const double fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
-        const double fragment_mass_kg =
-            std::clamp((0.36 * mass_kg) / fragment_count, 0.003, 0.055);
-        const double fragment_velocity_mps =
-            std::clamp(1120.0 + 18.0 * std::sqrt(mass_kg) + 0.18 * closure, 550.0, 1850.0) *
-            (0.42 + 0.58 * radius_quality);
+        double fragment_count, fragment_mass_kg, fragment_velocity_mps;
+
+        if (has_physics_warhead) {
+            // Physics-based: use authored fragment specs or derive from case mass.
+            const double C = missile.warhead_profile.explosive_mass_kg;
+            const double M = missile.warhead_profile.case_mass_kg;
+            const double gurney = missile.warhead_profile.gurney_constant_mps;
+            const double CM_ratio = C / std::max(1.0e-6, M);
+            const double V0 = gurney * std::sqrt(CM_ratio / (1.0 + 0.5 * CM_ratio));
+
+            fragment_count = resolved_warhead_fragment_count(
+                missile.warhead_profile,
+                C + M);
+            fragment_mass_kg = resolved_warhead_fragment_mass_kg(
+                missile.warhead_profile,
+                C + M,
+                fragment_count);
+            fragment_velocity_mps = std::clamp(V0, 550.0, 2500.0) *
+                                    (0.42 + 0.58 * radius_quality);
+            // Atmospheric decay: V(s) = V₀ · exp(-Cd·ρ·A·s / (2m))
+            // Cd≈1.0 for supersonic fragment, ρ≈1.225 kg/m³ at sea level,
+            // A derived from fragment mass assuming steel sphere (ρ_steel≈7800 kg/m³).
+            {
+                const double frag_radius_m =
+                    std::cbrt((3.0 * fragment_mass_kg) / (4.0 * M_PI * 7800.0));
+                const double frag_area_m2 = M_PI * frag_radius_m * frag_radius_m;
+                const double decay_dist_m = std::max(0.0, distance_m - 2.0);
+                const double decay_factor = std::exp(
+                    -(1.0 * 1.225 * frag_area_m2 * decay_dist_m) /
+                    (2.0 * std::max(1.0e-6, fragment_mass_kg)));
+                fragment_velocity_mps *= std::clamp(decay_factor, 0.3, 1.0);
+            }
+        } else {
+            // Legacy empirical formulas (backward-compatible).
+            fragment_count = resolved_warhead_fragment_count(
+                missile.warhead_profile,
+                mass_kg);
+            fragment_mass_kg = resolved_warhead_fragment_mass_kg(
+                missile.warhead_profile,
+                mass_kg,
+                fragment_count);
+            fragment_velocity_mps =
+                std::clamp(1120.0 + 18.0 * std::sqrt(mass_kg) + 0.18 * closure, 550.0, 1850.0) *
+                (0.42 + 0.58 * radius_quality);
+        }
         evidence.fragment_energy_j =
             0.5 * fragment_mass_kg * fragment_velocity_mps * fragment_velocity_mps *
             std::clamp(spatial_sample.energy_scale, 0.05, 1.20);
@@ -446,16 +518,45 @@ WarheadMechanismLoadEvidence estimate_warhead_mechanism_load(
         const double rod_count = std::clamp(3.2 * mass_kg, 24.0, 96.0);
         const double rod_segment_mass_kg =
             std::clamp((0.42 * mass_kg) / rod_count, 0.035, 0.42);
-        const double rod_velocity_mps =
-            std::clamp(920.0 + 0.16 * closure, 450.0, 1450.0) *
-            (0.50 + 0.50 * radius_quality);
-        const double rod_energy_j =
-            0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
-            std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
-        const double cut_capacity_mm =
-            (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
-            pattern *
-            std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35);
+
+        const bool has_physics_warhead =
+            std::isfinite(missile.warhead_profile.gurney_constant_mps) &&
+            std::isfinite(missile.warhead_profile.explosive_mass_kg);
+
+        double rod_velocity_mps;
+        double cut_capacity_mm;
+
+        if (has_physics_warhead) {
+            // Physics-based: weld-limited cap + striking velocity decay + cutting threshold
+            rod_velocity_mps =
+                std::clamp(920.0 + 0.16 * closure, 450.0, 1150.0) *
+                (0.50 + 0.50 * radius_quality);
+            const double rod_striking_velocity_mps =
+                rod_velocity_mps *
+                std::exp(-0.004 * std::max(0.0, distance_m - 3.0));
+            const double rod_energy_j =
+                0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
+                std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
+            cut_capacity_mm =
+                rod_striking_velocity_mps >= 610.0
+                    ? (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
+                          pattern *
+                          std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35)
+                    : 0.0;
+        } else {
+            // Legacy: original empirical formulas (backward-compatible)
+            rod_velocity_mps =
+                std::clamp(920.0 + 0.16 * closure, 450.0, 1450.0) *
+                (0.50 + 0.50 * radius_quality);
+            const double rod_energy_j =
+                0.5 * rod_segment_mass_kg * rod_velocity_mps * rod_velocity_mps *
+                std::clamp(spatial_sample.energy_scale, 0.08, 1.20);
+            cut_capacity_mm =
+                (3.0 + 0.022 * std::sqrt(std::max(0.0, rod_energy_j))) *
+                pattern *
+                std::clamp(0.60 + 0.40 * spatial_sample.hit_estimate, 0.45, 1.35);
+        }
+
         evidence.rod_cut_margin = std::clamp(
             (cut_capacity_mm - armor_mm) / std::max(1.0, armor_mm + 1.0),
             0.0,
@@ -505,7 +606,9 @@ WarheadSpatialSample sample_warhead_spatial_effect(
         4.0 * M_PI * std::max(distance_m * distance_m, 1.0);
 
     if (family == "fragmentation" || family == "blast_fragmentation") {
-        const double fragment_count = std::clamp(18.0 * mass_kg, 80.0, 1200.0);
+        const double fragment_count = resolved_warhead_fragment_count(
+            missile.warhead_profile,
+            mass_kg);
         sample.sample_count = static_cast<std::uint32_t>(std::round(fragment_count));
         const double pattern_scale = std::clamp(
             (0.70 + 0.30 * axis_weight) * std::clamp(orientation_weight, 0.70, 1.18),

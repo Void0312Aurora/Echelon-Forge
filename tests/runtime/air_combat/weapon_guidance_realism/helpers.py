@@ -18,8 +18,10 @@ import ef_py # noqa: E402
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
-def _make_kernel() -> ef_py.SimulationKernel:
+def _make_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
   sim = ef_py.SimulationKernel()
+  if seed is not None:
+    sim.reset(seed)
   if not sim.load_database(_DB_PATH):
     raise AssertionError("failed to load runtime database")
   sim.set_time_step(1.0 / 60.0)
@@ -230,8 +232,8 @@ def _drive_missile_with_truth_track(
   }
 
 
-def _make_baseline_kernel() -> ef_py.SimulationKernel:
-  sim = _make_kernel()
+def _make_baseline_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
+  sim = _make_kernel(seed)
   tuning = sim.get_missile_tuning()
   tuning.sensor_scan_period = 1.0e9
   tuning.sensor_detection_prob = 0.0
@@ -258,6 +260,27 @@ def _make_baseline_kernel() -> ef_py.SimulationKernel:
   tuning.reference_area_m2 = 0.025
   sim.set_missile_tuning(tuning)
   return sim
+
+
+def _set_legacy_nearest_approach_fuze(
+  sim: ef_py.SimulationKernel,
+  *,
+  trigger_radius_m: float = 35.0,
+  delay_s: float = 0.0,
+  reliability: float = 1.0,
+) -> None:
+  profile = ef_py.FuzeProfile()
+  profile.type = "radar_proximity"
+  profile.trigger_radius_m = trigger_radius_m
+  profile.delay_s = delay_s
+  profile.reliability = reliability
+  profile.trigger_logic = "nearest_approach"
+  profile.synthetic = False
+  profile.provenance = "test_legacy_nearest_approach_fuze"
+  tuning = sim.get_missile_tuning()
+  tuning.fuze_profile = profile
+  tuning.has_fuze_profile = True
+  sim.set_missile_tuning(tuning)
 
 
 def _spawn_geometry_pair(
@@ -326,6 +349,7 @@ def _run_miss_distance_case(
   max_steps: int = 3600,
 ) -> dict[str, float | bool]:
   sim = _make_baseline_kernel()
+  _set_legacy_nearest_approach_fuze(sim)
   blue_id, red_id = _spawn_geometry_pair(
     sim,
     red_x=red_x,

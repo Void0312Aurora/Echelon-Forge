@@ -652,6 +652,7 @@ INTERNAL_COMPONENT_PRIOR_RULES = {
     "shape": "ellipsoid",
     "component_role": "duct_receiver",
     "dimensions_m": [1.0, 0.58, 1.1],
+    "center_m": [3.39, 0.0, -0.64],
     "size_basis": "mesh_semantic_intake_region_measurement",
     "size_evidence_level": "asset_mesh_derived_duct_dimension_not_public_engineering_dimension",
     "size_source_urls": [

@@ -13,6 +13,7 @@
 | `a6_event_value_first_event_timing/` | 事件价值与首事件时机。已关闭。hazard/deadline/window labels 暴露了有用 timing evidence，但未成为当前 firing authority。 |
 | `a7_event_value_advantage_credit_head/` | Event-Value / Advantage Credit Head。已关闭。event-credit work 属于 timing-quality research history；当前 launch closure 属于 M3-S2。 |
 | `a8_damage_effect_chain/` | 损伤效果链。已 accepted 的有边界切片。missile effects → 具体飞机部位损伤 → 动力/燃油/传感器/火灾/飞行消费路径传播。不增加直接坠毁或特定目标击杀规则。 |
+| `a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/` | 高保真武器系统。accepted：23 集群通过、5 项明确推迟，R2 EKF 定量验证已由聚焦 C++ 回归覆盖关闭，R4 马赫 Cd₀/k(M) 表已用工程代理值关闭。不声明 Pk、确定性引信、库存武器真值或武器特定权威。 |
 
 ## 顶层归档文档
 

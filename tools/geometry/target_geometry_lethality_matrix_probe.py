@@ -180,12 +180,28 @@ COMPARE_FIELDS = (
   "component_primary_row_distance_m",
   "component_primary_row_effect_scale",
   "component_max_failure_probability_component_name",
+  "component_damage_event_count",
+  "component_failure_event_count",
+  "component_failure_observed",
   "component_primary_mechanism_fragment_energy_j",
   "component_primary_mechanism_fragment_areal_density_per_m2",
   "component_primary_mechanism_blast_overpressure_kpa",
   "component_primary_mechanism_blast_impulse_kpa_ms",
   "component_primary_mechanism_penetration_margin",
   "component_primary_mechanism_rod_cut_margin",
+  "damage_report_count",
+  "platform_consequence_event_count",
+  "system_health_delta",
+  "platform_damage_state_delta",
+  "structure_hit",
+  "structure_spatial_scale",
+  "structure_integrity_after",
+  "structure_damage_delta",
+  "structure_damage_observed",
+  "aircraft_damage_state_delta",
+  "structural_breakup_event_count",
+  "structural_breakup_observed",
+  "structural_breakup_modes",
   "component_mechanism_row_names",
   "component_load_event_names",
   "component_damage_event_names",
@@ -270,6 +286,38 @@ def _int_attr(obj: object, name: str) -> int:
   return int(getattr(obj, name, 0))
 
 
+def _parse_float_map(text: object) -> dict[str, float]:
+  values: dict[str, float] = {}
+  for part in str(text or "").split(","):
+    if "=" not in part:
+      continue
+    key, raw_value = part.split("=", 1)
+    key = key.strip()
+    if not key:
+      continue
+    try:
+      values[key] = float(raw_value)
+    except ValueError:
+      continue
+  return values
+
+
+def _parse_bool_map(text: object) -> dict[str, bool]:
+  values: dict[str, bool] = {}
+  for part in str(text or "").split(","):
+    if "=" not in part:
+      continue
+    key, raw_value = part.split("=", 1)
+    key = key.strip()
+    if not key:
+      continue
+    try:
+      values[key] = bool(int(float(raw_value)))
+    except ValueError:
+      values[key] = raw_value.strip().lower() in {"true", "yes", "on"}
+  return values
+
+
 def _row_summary(row: object) -> dict[str, Any]:
   return {
     "component_name": _str_attr(row, "component_name"),
@@ -333,6 +381,106 @@ def _component_damage_summary(damage: object) -> dict[str, Any]:
   }
 
 
+def _damage_report_summary(report: object) -> dict[str, Any]:
+  platform_delta = _str_attr(report, "platform_damage_state_delta")
+  return {
+    "report_id": _int_attr(report, "report_id"),
+    "source_event_id": _int_attr(report, "source_event_id"),
+    "target_id": _int_attr(getattr(report, "target", object()), "entity_id"),
+    "hp_delta": _float_attr(report, "hp_delta"),
+    "system_health_delta": _float_attr(report, "system_health_delta"),
+    "platform_damage_state_delta": platform_delta,
+    "platform_damage_state_delta_by_axis": _parse_float_map(platform_delta),
+    "mission_kill": _bool_attr(report, "mission_kill"),
+    "mobility_kill": _bool_attr(report, "mobility_kill"),
+    "sensor_kill": _bool_attr(report, "sensor_kill"),
+    "survivability_kill": _bool_attr(report, "survivability_kill"),
+    "flight_control_kill": _bool_attr(report, "flight_control_kill"),
+    "propulsion_kill": _bool_attr(report, "propulsion_kill"),
+    "forced_landing": _bool_attr(report, "forced_landing"),
+    "crew_kill": _bool_attr(report, "crew_kill"),
+    "destroyed": _bool_attr(report, "destroyed"),
+    "loss_state_from": _str_attr(report, "loss_state_from"),
+    "loss_state_to": _str_attr(report, "loss_state_to"),
+  }
+
+
+def _platform_consequence_summary(event: object) -> dict[str, Any]:
+  hit_flags = _str_attr(event, "air_system_hit_flags")
+  spatial_scales = _str_attr(event, "air_system_spatial_scales")
+  state_before = _str_attr(event, "aircraft_damage_state_before")
+  state_after = _str_attr(event, "aircraft_damage_state_after")
+  state_delta = _str_attr(event, "aircraft_damage_state_delta")
+  parsed_hit_flags = _parse_bool_map(hit_flags)
+  parsed_spatial_scales = _parse_float_map(spatial_scales)
+  parsed_state_before = _parse_float_map(state_before)
+  parsed_state_after = _parse_float_map(state_after)
+  parsed_state_delta = _parse_float_map(state_delta)
+  return {
+    "mission_capability_before": _float_attr(event, "mission_capability_before"),
+    "mission_capability_after": _float_attr(event, "mission_capability_after"),
+    "mobility_capability_before": _float_attr(event, "mobility_capability_before"),
+    "mobility_capability_after": _float_attr(event, "mobility_capability_after"),
+    "sensor_capability_before": _float_attr(event, "sensor_capability_before"),
+    "sensor_capability_after": _float_attr(event, "sensor_capability_after"),
+    "survivability_capability_before": _float_attr(
+      event, "survivability_capability_before"
+    ),
+    "survivability_capability_after": _float_attr(
+      event, "survivability_capability_after"
+    ),
+    "mission_kill": _bool_attr(event, "mission_kill"),
+    "mobility_kill": _bool_attr(event, "mobility_kill"),
+    "sensor_kill": _bool_attr(event, "sensor_kill"),
+    "survivability_kill": _bool_attr(event, "survivability_kill"),
+    "flight_control_kill": _bool_attr(event, "flight_control_kill"),
+    "propulsion_kill": _bool_attr(event, "propulsion_kill"),
+    "forced_landing": _bool_attr(event, "forced_landing"),
+    "crew_kill": _bool_attr(event, "crew_kill"),
+    "control_delta": _float_attr(event, "control_delta"),
+    "engine_delta": _float_attr(event, "engine_delta"),
+    "fuel_leak_delta": _float_attr(event, "fuel_leak_delta"),
+    "fire_state": _str_attr(event, "fire_state"),
+    "air_system_hit_flags": hit_flags,
+    "air_system_hit_flags_by_system": parsed_hit_flags,
+    "air_system_spatial_scales": spatial_scales,
+    "air_system_spatial_scales_by_system": parsed_spatial_scales,
+    "aircraft_damage_state_before": state_before,
+    "aircraft_damage_state_before_by_system": parsed_state_before,
+    "aircraft_damage_state_after": state_after,
+    "aircraft_damage_state_after_by_system": parsed_state_after,
+    "aircraft_damage_state_delta": state_delta,
+    "aircraft_damage_state_delta_by_system": parsed_state_delta,
+    "structure_hit": bool(parsed_hit_flags.get("structure", False)),
+    "structure_spatial_scale": float(parsed_spatial_scales.get("structure", 0.0)),
+    "structure_integrity_before": float(parsed_state_before.get("structure", 1.0)),
+    "structure_integrity_after": float(parsed_state_after.get("structure", 1.0)),
+    "structure_damage_delta": float(parsed_state_delta.get("structure", 0.0)),
+    "vulnerability_scale_trace": _str_attr(event, "vulnerability_scale_trace"),
+    "loss_state_from": _str_attr(event, "loss_state_from"),
+    "loss_state_to": _str_attr(event, "loss_state_to"),
+  }
+
+
+def _structural_breakup_summary(event: object) -> dict[str, Any]:
+  header = getattr(event, "header", None)
+  return {
+    "chain_id": _int_attr(header, "chain_id"),
+    "event_id": _int_attr(header, "event_id"),
+    "parent_event_id": _int_attr(header, "parent_event_id"),
+    "stage": _str_attr(header, "stage"),
+    "status": _str_attr(header, "status"),
+    "reason": _str_attr(header, "reason"),
+    "producer_node_id": _str_attr(header, "producer_node_id"),
+    "breakup_state": _str_attr(event, "breakup_state"),
+    "break_mode": _str_attr(event, "break_mode"),
+    "detached_part_ref": _str_attr(event, "detached_part_ref"),
+    "detached_part_count": _int_attr(event, "detached_part_count"),
+    "airframe_breakup": _bool_attr(event, "airframe_breakup"),
+    "cause_event_id": _int_attr(event, "cause_event_id"),
+  }
+
+
 def _empty_component_probability_row_summary() -> dict[str, Any]:
   return {
     "component_name": "",
@@ -366,6 +514,21 @@ def _max_probability_component_row(rows: list[dict[str, Any]]) -> dict[str, Any]
   return max(rows, key=lambda row: float(row["component_failure_probability"]))
 
 
+def _component_failure_event_count(damages: list[dict[str, Any]]) -> int:
+  return sum(
+    1
+    for damage in damages
+    if float(damage["integrity_after"]) < float(damage["integrity_before"])
+    or str(damage["failure_mode"]) not in {"", "none"}
+  )
+
+
+def _first_report_value(reports: list[dict[str, Any]], field: str, default: Any) -> Any:
+  if not reports:
+    return default
+  return reports[0].get(field, default)
+
+
 def _event_summary(
   *,
   database_path: Path,
@@ -394,6 +557,9 @@ def _event_summary(
   if not ok:
     raise RuntimeError("debug profiled local proximity hit failed")
 
+  # StructuralFailureUpdate consumes ComponentDamageState during ECS progress.
+  sim.step()
+
   events = sim.export_recent_engagement_events()
   if len(events.effects_events) != 1:
     raise RuntimeError("expected exactly one effects event")
@@ -407,9 +573,33 @@ def _event_summary(
   damages = [
     _component_damage_summary(damage) for damage in events.component_damage_events
   ]
+  reports = [_damage_report_summary(report) for report in events.damage_reports]
+  consequences = [
+    _platform_consequence_summary(event)
+    for event in getattr(events, "platform_consequence_events", [])
+  ]
+  breakups = [
+    _structural_breakup_summary(event)
+    for event in getattr(events, "structural_breakup_events", [])
+  ]
   primary_component_name = _str_attr(effect, "component_primary_name")
   primary_row = _component_row_for_name(rows, primary_component_name)
   max_probability_row = _max_probability_component_row(rows)
+  primary_consequence = consequences[0] if consequences else {}
+  structure_damage_delta = float(
+    primary_consequence.get("structure_damage_delta", 0.0)
+  )
+  structure_spatial_scale = float(
+    primary_consequence.get("structure_spatial_scale", 0.0)
+  )
+  structure_integrity_before = float(
+    primary_consequence.get("structure_integrity_before", 1.0)
+  )
+  structure_integrity_after = float(
+    primary_consequence.get("structure_integrity_after", 1.0)
+  )
+  component_damage_event_count = len(damages)
+  component_failure_event_count = _component_failure_event_count(damages)
   return {
     "database_path": _relative_path(database_path),
     "effect_family": _str_attr(effect, "effect_family"),
@@ -434,6 +624,12 @@ def _event_summary(
     "projected_hitbox_count": _int_attr(effect, "projected_hitbox_count"),
     "component_hit_count": _int_attr(effect, "component_hit_count"),
     "component_failure_count": _int_attr(effect, "component_failure_count"),
+    "component_damage_event_count": component_damage_event_count,
+    "component_failure_event_count": component_failure_event_count,
+    "component_failure_observed": bool(
+      _int_attr(effect, "component_failure_count") > 0
+      or component_failure_event_count > 0
+    ),
     "component_primary_name": primary_component_name,
     "component_primary_system": _str_attr(effect, "component_primary_system"),
     "component_primary_redundancy_group_id": _str_attr(
@@ -490,6 +686,49 @@ def _event_summary(
     "component_primary_mechanism_rod_cut_margin": _float_attr(
       effect, "component_primary_mechanism_rod_cut_margin"
     ),
+    "damage_report_count": len(reports),
+    "platform_consequence_event_count": len(consequences),
+    "system_health_delta": float(
+      _first_report_value(reports, "system_health_delta", 0.0)
+    ),
+    "platform_damage_state_delta": str(
+      _first_report_value(reports, "platform_damage_state_delta", "")
+    ),
+    "platform_damage_state_delta_by_axis": dict(
+      _first_report_value(reports, "platform_damage_state_delta_by_axis", {})
+    ),
+    "structure_hit": bool(primary_consequence.get("structure_hit", False)),
+    "structure_spatial_scale": structure_spatial_scale,
+    "structure_integrity_before": structure_integrity_before,
+    "structure_integrity_after": structure_integrity_after,
+    "structure_damage_delta": structure_damage_delta,
+    "structure_damage_observed": bool(
+      structure_spatial_scale > 0.0
+      or structure_damage_delta < 0.0
+      or structure_integrity_after < structure_integrity_before
+    ),
+    "aircraft_damage_state_delta": str(
+      primary_consequence.get("aircraft_damage_state_delta", "")
+    ),
+    "aircraft_damage_state_delta_by_system": dict(
+      primary_consequence.get("aircraft_damage_state_delta_by_system", {})
+    ),
+    "structural_breakup_event_count": len(breakups),
+    "structural_breakup_observed": bool(breakups),
+    "structural_breakup_modes": sorted(
+      {
+        str(event["break_mode"])
+        for event in breakups
+        if str(event["break_mode"]) and str(event["break_mode"]) != "none"
+      }
+    ),
+    "structural_breakup_part_refs": sorted(
+      {
+        str(event["detached_part_ref"])
+        for event in breakups
+        if str(event["detached_part_ref"])
+      }
+    ),
     "warhead_profile_synthetic": _bool_attr(effect, "warhead_profile_synthetic"),
     "damage_scalar_synthetic": _bool_attr(effect, "damage_scalar_synthetic"),
     "vulnerability_pk_authority": _bool_attr(effect, "vulnerability_pk_authority"),
@@ -508,6 +747,9 @@ def _event_summary(
     "component_mechanism_load_rows": rows,
     "component_load_events": loads,
     "component_damage_events": damages,
+    "damage_reports": reports,
+    "platform_consequence_events": consequences,
+    "structural_breakup_events": breakups,
   }
 
 
@@ -708,6 +950,159 @@ def _metrics(comparisons: list[dict[str, Any]]) -> dict[str, Any]:
   }
 
 
+def _outcome_rows(comparisons: list[dict[str, Any]]) -> list[dict[str, Any]]:
+  rows: list[dict[str, Any]] = []
+  for comparison in comparisons:
+    for event_key in ("default_event", "proxy_event"):
+      event = comparison[event_key]
+      rows.append(
+        {
+          "database_label": event_key.removesuffix("_event"),
+          "warhead_family": str(comparison["warhead_family"]),
+          "case_id": str(comparison["case_id"]),
+          "range_bucket": str(comparison["range_bucket"]),
+          "component_primary_name": str(event["component_primary_name"]),
+          "component_primary_system": str(event["component_primary_system"]),
+          "component_hit_count": int(event["component_hit_count"]),
+          "component_failure_count": int(event["component_failure_count"]),
+          "component_damage_event_count": int(event["component_damage_event_count"]),
+          "component_failure_event_count": int(
+            event["component_failure_event_count"]
+          ),
+          "component_failure_observed": bool(event["component_failure_observed"]),
+          "component_failure_probability": float(
+            event["component_failure_probability"]
+          ),
+          "component_damage_event_names": list(event["component_damage_event_names"]),
+          "system_health_delta": float(event["system_health_delta"]),
+          "structure_hit": bool(event["structure_hit"]),
+          "structure_spatial_scale": float(event["structure_spatial_scale"]),
+          "structure_integrity_after": float(event["structure_integrity_after"]),
+          "structure_damage_delta": float(event["structure_damage_delta"]),
+          "structure_damage_observed": bool(event["structure_damage_observed"]),
+          "aircraft_damage_state_delta": str(event["aircraft_damage_state_delta"]),
+          "structural_breakup_event_count": int(
+            event["structural_breakup_event_count"]
+          ),
+          "structural_breakup_observed": bool(event["structural_breakup_observed"]),
+          "structural_breakup_modes": list(event["structural_breakup_modes"]),
+        }
+      )
+  return rows
+
+
+def _count_by_database(rows: list[dict[str, Any]], field: str) -> dict[str, int]:
+  labels = sorted({str(row["database_label"]) for row in rows})
+  return {
+    label: sum(
+      1 for row in rows if str(row["database_label"]) == label and bool(row[field])
+    )
+    for label in labels
+  }
+
+
+def _min_row(rows: list[dict[str, Any]], field: str) -> dict[str, Any]:
+  if not rows:
+    return {}
+  return min(rows, key=lambda row: float(row[field]))
+
+
+def _max_row(rows: list[dict[str, Any]], field: str) -> dict[str, Any]:
+  if not rows:
+    return {}
+  return max(rows, key=lambda row: float(row[field]))
+
+
+def _outcome_summary(comparisons: list[dict[str, Any]]) -> dict[str, Any]:
+  rows = _outcome_rows(comparisons)
+  structural_damage_rows = [
+    row for row in rows if bool(row["structure_damage_observed"])
+  ]
+  component_failure_rows = [
+    row for row in rows if bool(row["component_failure_observed"])
+  ]
+  structural_breakup_rows = [
+    row for row in rows if bool(row["structural_breakup_observed"])
+  ]
+  max_failure_probability = _max_row(rows, "component_failure_probability")
+  max_structure_loss = _min_row(rows, "structure_damage_delta")
+  return {
+    "status": "structure_damage_and_component_failure_reported",
+    "event_run_count": len(rows),
+    "structure_damage_event_count": len(structural_damage_rows),
+    "structure_damage_event_count_by_database": _count_by_database(
+      rows, "structure_damage_observed"
+    ),
+    "structure_damage_comparison_ids": sorted(
+      (
+        f"{row['database_label']}:{row['warhead_family']}:{row['case_id']}"
+        for row in structural_damage_rows
+      )
+    ),
+    "max_structure_damage_delta": (
+      {
+        "database_label": max_structure_loss["database_label"],
+        "warhead_family": max_structure_loss["warhead_family"],
+        "case_id": max_structure_loss["case_id"],
+        "structure_damage_delta": max_structure_loss["structure_damage_delta"],
+        "structure_integrity_after": max_structure_loss[
+          "structure_integrity_after"
+        ],
+        "structure_spatial_scale": max_structure_loss["structure_spatial_scale"],
+      }
+      if max_structure_loss
+      else {}
+    ),
+    "component_failure_event_count": len(component_failure_rows),
+    "component_failure_event_count_by_database": _count_by_database(
+      rows, "component_failure_observed"
+    ),
+    "component_failure_comparison_ids": sorted(
+      (
+        f"{row['database_label']}:{row['warhead_family']}:{row['case_id']}"
+        for row in component_failure_rows
+      )
+    ),
+    "component_failure_component_names": sorted(
+      {
+        str(name)
+        for row in component_failure_rows
+        for name in row["component_damage_event_names"]
+        if str(name)
+      }
+    ),
+    "max_component_failure_probability": (
+      {
+        "database_label": max_failure_probability["database_label"],
+        "warhead_family": max_failure_probability["warhead_family"],
+        "case_id": max_failure_probability["case_id"],
+        "component_primary_name": max_failure_probability[
+          "component_primary_name"
+        ],
+        "component_primary_system": max_failure_probability[
+          "component_primary_system"
+        ],
+        "component_failure_probability": max_failure_probability[
+          "component_failure_probability"
+        ],
+      }
+      if max_failure_probability
+      else {}
+    ),
+    "structural_breakup_event_count": len(structural_breakup_rows),
+    "structural_breakup_event_count_by_database": _count_by_database(
+      rows, "structural_breakup_observed"
+    ),
+    "structural_breakup_comparison_ids": sorted(
+      (
+        f"{row['database_label']}:{row['warhead_family']}:{row['case_id']}"
+        for row in structural_breakup_rows
+      )
+    ),
+    "event_rows": rows,
+  }
+
+
 def generate_report(*, seed: int = 20260614) -> dict[str, Any]:
   _configure_runtime_log_level()
   comparisons = [
@@ -740,6 +1135,7 @@ def generate_report(*, seed: int = 20260614) -> dict[str, Any]:
       "case_ids": [str(case["case_id"]) for case in CASE_DEFINITIONS],
     },
     "metrics": _metrics(comparisons),
+    "outcome_summary": _outcome_summary(comparisons),
     "comparisons": comparisons,
   }
 

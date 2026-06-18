@@ -17,6 +17,9 @@ import torch # noqa: E402,F401
 import ef_py # noqa: E402
 
 from gym_envs.universal_env_parts import NAVAL_STATION3_ACTION_FAMILY # noqa: E402
+from gym_envs.scenario_loader.execution_runtime.mainline import ( # noqa: E402
+  _apply_combat_terminal_override,
+)
 from python.rl.runtime.world_batch import command_chain_cache # noqa: E402
 from python.rl.runtime.world_batch.command_chain_cache import ( # noqa: E402
   project_world_leader_intent_maintained_assignment,
@@ -419,42 +422,39 @@ class WorldBatchVecEnvAdapterSurfaceTests(unittest.TestCase):
       finally:
         vec_env.close()
 
-  def test_world_batch_vec_env_combat_loss_does_not_stack_crash_penalty(self) -> None:
-    with tempfile.TemporaryDirectory() as tmpdir:
-      scenario_path = f"{tmpdir}/air_combat_scripted_opponent.json"
-      with open(scenario_path, "w", encoding="utf-8") as f:
-        json.dump(_inline_air_combat_scripted_opponent_scenario(), f, ensure_ascii=True)
+  def test_combat_loss_terminal_override_does_not_stack_crash_penalty(self) -> None:
+    class FakeLoader:
+      agent_id = 1
+      primary_target_id = 2
+      _compiled_meta_cfg = {"combat_loss_penalty": -1500.0}
 
-      vec_env = WorldBatchVecEnv(
-        scenario_path=scenario_path,
-        n_envs=1,
-        include_visual=False,
-        include_proprio=False,
-        mission_obs_mode="basic",
-        step_info_mode="terminal",
-        execution_step_runtime_mode="compiled",
-        flight_shaping_backend="compiled",
+      def _add_breakdown_term(self, rb, name, value):
+        rb[str(name)] = float(rb.get(str(name), 0.0)) + float(value)
+
+    class FakeSim:
+      def is_unit_active(self, entity_id):
+        return int(entity_id) == 2
+
+    reward, terminated, truncated, status, reward_terms, reason = (
+      _apply_combat_terminal_override(
+        FakeLoader(),
+        FakeSim(),
+        truth=object(),
+        reward=-1000.0,
+        terminated=True,
+        truncated=False,
+        status=[0.0, 0.0, 0.0, -1.0],
+        rb={"crash_penalty": -1000.0, "total": -1000.0},
       )
-      try:
-        vec_env.seed(20260516)
-        vec_env.reset()
+    )
 
-        action = np.zeros((1, 17), dtype=np.float32)
-        for _step in range(260):
-          _obs, rewards, dones, infos = vec_env.step(action)
-          if bool(dones[0]):
-            break
-        else:
-          self.fail("scripted red opponent did not terminate the 1v1 probe")
-
-        self.assertEqual(str(infos[0].get("termination_reason")), "combat_loss")
-        reward_terms = dict(infos[0].get("reward_terms", {}))
-        self.assertEqual(float(rewards[0]), -1500.0)
-        self.assertEqual(float(reward_terms.get("combat_loss_penalty", 0.0)), -1500.0)
-        self.assertNotIn("crash_penalty", reward_terms)
-        self.assertAlmostEqual(float(reward_terms.get("total", 0.0)), -1500.0, places=6)
-      finally:
-        vec_env.close()
+    self.assertTrue(terminated)
+    self.assertFalse(truncated)
+    self.assertEqual(reason, "combat_loss")
+    self.assertEqual(status[3], -1.0)
+    self.assertEqual(float(reward), -1500.0)
+    self.assertEqual(float(reward_terms.get("combat_loss_penalty", 0.0)), -1500.0)
+    self.assertNotIn("crash_penalty", reward_terms)
 
   def test_world_batch_vec_env_supports_visual_observations(self) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:

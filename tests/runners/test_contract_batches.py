@@ -71,6 +71,26 @@ def test_runtime_build_dirs_prefers_artifacts_and_linux_order(tmp_path, monkeypa
   ]
 
 
+def test_runtime_build_dirs_prefers_newest_linux_artifact(tmp_path, monkeypatch) -> None:
+  runtime = importlib.import_module("python.testing.runtime")
+  monkeypatch.delenv("CMO_BUILD_DIR", raising=False)
+  monkeypatch.setattr(runtime, "_is_windows", lambda: False)
+
+  for name in ("build-workshop", "build"):
+    (tmp_path / name).mkdir()
+  stale_artifact = tmp_path / "build-workshop" / "ef_py.cpython-test.so"
+  current_artifact = tmp_path / "build" / "ef_py.cpython-test.so"
+  stale_artifact.write_text("", encoding="utf-8")
+  current_artifact.write_text("", encoding="utf-8")
+  os.utime(stale_artifact, (100.0, 100.0))
+  os.utime(current_artifact, (200.0, 200.0))
+
+  assert runtime.build_dirs(str(tmp_path))[:2] == [
+    str(tmp_path / "build"),
+    str(tmp_path / "build-workshop"),
+  ]
+
+
 def test_runtime_build_dirs_keeps_windows_local_priority(tmp_path, monkeypatch) -> None:
   runtime = importlib.import_module("python.testing.runtime")
   monkeypatch.delenv("CMO_BUILD_DIR", raising=False)

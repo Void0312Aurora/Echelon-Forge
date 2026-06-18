@@ -136,7 +136,7 @@ class BoundaryCaseRuntimeMixin:
 
     self.assertFalse(sim.is_unit_active(missile_id))
     health_after = [float(value) for value in sim.get_unit_health(red_id)]
-    self.assertLess(health_after[0], health_before[0])
+    self.assertEqual(health_after, health_before)
 
     events = sim.export_recent_engagement_events()
     self.assertEqual(len(events.launch_events), 1)
@@ -149,7 +149,9 @@ class BoundaryCaseRuntimeMixin:
     self.assertEqual(str(effect.trigger_type), "proximity_fuze")
     self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
     self.assertGreaterEqual(float(effect.miss_distance_m), 0.0)
-    self.assertLess(float(report.hp_delta), 0.0)
+    self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
+    self.assertFalse(bool(report.destroyed))
 
   def test_cumulative_component_integrity_after_repeated_hits(self) -> None:
     sim = _make_kernel()
@@ -328,7 +330,7 @@ class BoundaryCaseRuntimeMixin:
           [float(v) for v in sim.get_unit_health(red_id)], health_before,
         )
         damage_after = [float(v) for v in sim.get_unit_damage_state(red_id)]
-        self.assertLess(min(damage_after), min(damage_before))
+        self.assertEqual(damage_after, damage_before)
 
         events = sim.export_recent_engagement_events()
         self.assertEqual(len(events.launch_events), 1)
@@ -339,16 +341,11 @@ class BoundaryCaseRuntimeMixin:
         self.assertEqual(int(effect.munition.entity_id), missile_id)
         self.assertEqual(int(effect.target.entity_id), red_id)
         self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-        self.assertLess(float(report.system_health_delta), 0.0)
+        self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
         self.assertFalse(bool(report.destroyed))
-        self.assertNotEqual(str(report.loss_state_to), "lost")
-        primary_name = str(effect.component_primary_name)
-        # E-3 hitbox geometry can produce near-miss without a specific
-        # component match; verify the structured damage path was exercised
-        self.assertTrue(
-          len(primary_name) > 0 or float(report.system_health_delta) < 0.0,
-          f"structured damage path not exercised for {target_type}",
-        )
+        self.assertEqual(str(report.loss_state_to), "combat_capable")
+        self.assertEqual(int(effect.component_hit_count), 0)
+        self.assertEqual(str(effect.component_primary_name), "")
 
   def test_zero_closure_speed_exercises_htk_impact_velocity_fallback(self) -> None:
     sim = _kernel_with_unit_overrides([])

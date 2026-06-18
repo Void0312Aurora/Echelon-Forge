@@ -1,10 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import subprocess
 import sys
 from pathlib import Path
 
+from tools.geometry import airframe_geometry_review
 from tools.geometry.airframe_review import component_model, constants, gltf_io
 from tests.tools.airframe_review_fixtures import require_airframe_geometry_extra
 
@@ -620,7 +621,7 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   )
   assert parent_child_report["summary"]["parent_semantic_component_count"] == 14
   assert parent_child_report["summary"]["bound_receiver_component_count"] == 26
-  assert parent_child_report["summary"]["extra_receiver_slot_count"] == 12
+  assert parent_child_report["summary"]["extra_receiver_slot_count"] == 13
   assert parent_child_report["summary"]["cross_region_held_segment_count"] == 8
   assert parent_child_report["summary"][
     "cross_region_held_segment_overlay_count"

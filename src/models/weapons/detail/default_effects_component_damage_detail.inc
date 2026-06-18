@@ -416,6 +416,29 @@ PartFailureModeAssessment assess_part_failure_modes(
     return assessment;
 }
 
+bool is_structural_part_failure_mode(const std::string& mode) {
+    return mode == "puncture" || mode == "cut" || mode == "blast_deformation" ||
+           mode == "structural_weakening";
+}
+
+PartFailureModeAssessment structural_part_failure_modes(
+    const PartFailureModeAssessment& assessment
+) {
+    PartFailureModeAssessment structural_assessment{};
+    structural_assessment.explicit_weights = assessment.explicit_weights;
+    for (const auto& entry : assessment.entries) {
+        if (!is_structural_part_failure_mode(entry.mode)) {
+            continue;
+        }
+        structural_assessment.entries.push_back(entry);
+        if (entry.severity > structural_assessment.primary_severity) {
+            structural_assessment.primary_mode = entry.mode;
+            structural_assessment.primary_severity = entry.severity;
+        }
+    }
+    return structural_assessment;
+}
+
 double component_failure_probability(
     double severity,
     double mechanism_scale,
@@ -688,6 +711,28 @@ void apply_component_failure_impulse(
             fire_suppression_path || system_is_air_fire_suppression(system)) {
             platform_damage->survivability_margin -= 0.04 + 0.08 * impulse;
         }
+    }
+}
+
+void persist_part_failure_mode_state(
+    const DamageComponent* component,
+    const PartFailureModeAssessment& assessment,
+    ComponentDamageState* component_damage
+) {
+    if (!component || !component_damage || assessment.entries.empty()) {
+        return;
+    }
+
+    const std::string component_key = damage_component_key(*component);
+    auto& mode_severity =
+        component_damage->component_failure_mode_severity[component_key];
+    for (const auto& entry : assessment.entries) {
+        double& accumulated = mode_severity[entry.mode];
+        accumulated = std::max(accumulated, std::clamp(entry.severity, 0.0, 1.0));
+    }
+    if (!assessment.primary_mode.empty()) {
+        component_damage->component_primary_failure_mode[component_key] =
+            assessment.primary_mode;
     }
 }
 

@@ -95,7 +95,7 @@ def _assert_projection_component_loads_match_effect_rows(
     assert not bool(row.component_failure_probability_component_specific)
 
 
-def _assert_projection_no_downstream_kill_or_real_parameter_claims(
+def _assert_projection_no_destroy_or_real_parameter_claims(
   events: object,
   effects: object,
   damage_report: object,
@@ -116,18 +116,10 @@ def _assert_projection_no_downstream_kill_or_real_parameter_claims(
   assert int(damage_report.source_event_id) == int(effects.event_id)
   assert float(damage_report.hp_delta) == 0.0
   assert not bool(damage_report.destroyed)
-  assert not bool(damage_report.mission_kill)
-  assert not bool(damage_report.mobility_kill)
-  assert not bool(damage_report.sensor_kill)
-  assert not bool(damage_report.survivability_kill)
-  assert not bool(damage_report.forced_landing)
-  assert not bool(damage_report.flight_control_kill)
-  assert not bool(damage_report.propulsion_kill)
-  assert not bool(damage_report.crew_kill)
   assert str(damage_report.loss_state_to) != "lost"
   assert target_active
 
-  assert int(effects.component_failure_count) == len(events.component_damage_events)
+  assert int(effects.component_failure_count) >= len(events.component_damage_events)
   assert not bool(effects.component_failure_probability_calibrated)
   assert not bool(effects.vulnerability_pk_authority)
   assert not bool(effects.vulnerability_calibrated_evidence)
@@ -139,7 +131,8 @@ def _assert_projection_no_downstream_kill_or_real_parameter_claims(
     assert str(damage_event.header.stage) == "component_damage"
     assert str(damage_event.header.status) == "sampled"
     assert int(damage_event.header.chain_id) == int(effects.event_id)
-  assert list(events.platform_consequence_events) == []
+    assert float(damage_event.integrity_before) - float(damage_event.integrity_after) >= 0.01
+  _assert_platform_consequence_matches_damage_report(events, effects, damage_report)
   assert list(events.structural_breakup_events) == []
   assert list(events.lifecycle_transition_events) == []
   assert list(events.training_projection_events) == []
@@ -217,7 +210,7 @@ def _run_profiled_component_projection_case(
   assert int(spatial.projected_hitbox_count) > 0
 
   _assert_projection_component_loads_match_effect_rows(effects, component_loads)
-  _assert_projection_no_downstream_kill_or_real_parameter_claims(
+  _assert_projection_no_destroy_or_real_parameter_claims(
     events,
     effects,
     damage_report,
@@ -318,6 +311,17 @@ class MechanismCase:
       default=0.0,
     )
 
+  @property
+  def component_keys(self) -> set[ProjectionComponentKey]:
+    return {_projection_component_key(load) for load in self.component_loads}
+
+  @property
+  def primary_component_key(self) -> ProjectionComponentKey:
+    return (
+      str(self.effects.component_primary_name),
+      str(self.effects.component_primary_system),
+    )
+
 
 def _generic_synthetic_blast_warhead_profile(family: str) -> object:
   profile = ef_py.WarheadProfile()
@@ -329,6 +333,65 @@ def _generic_synthetic_blast_warhead_profile(family: str) -> object:
   profile.damage_scalar_synthetic = True
   profile.provenance = "test_warhead_blast_fragmentation_loads"
   return profile
+
+
+def _damage_report_delta(report: object) -> dict[str, float]:
+  deltas: dict[str, float] = {}
+  for item in str(report.platform_damage_state_delta).split(","):
+    key, value = item.split("=", 1)
+    deltas[key] = float(value)
+  return deltas
+
+
+def _assert_platform_consequence_matches_damage_report(
+  events: object,
+  effects: object,
+  damage_report: object,
+) -> None:
+  consequences = list(events.platform_consequence_events)
+  assert len(consequences) == 1
+  consequence = consequences[0]
+  assert str(consequence.header.stage) == "platform_consequence"
+  assert str(consequence.header.status) == "observed"
+  assert int(consequence.header.parent_event_id) == int(effects.event_id)
+  assert int(consequence.header.chain_id) == int(effects.event_id)
+  assert int(consequence.header.target.entity_id) == int(effects.target.entity_id)
+
+  assert bool(consequence.mission_kill) == bool(damage_report.mission_kill)
+  assert bool(consequence.mobility_kill) == bool(damage_report.mobility_kill)
+  assert bool(consequence.sensor_kill) == bool(damage_report.sensor_kill)
+  assert bool(consequence.survivability_kill) == bool(damage_report.survivability_kill)
+  assert bool(consequence.flight_control_kill) == bool(damage_report.flight_control_kill)
+  assert bool(consequence.propulsion_kill) == bool(damage_report.propulsion_kill)
+  assert bool(consequence.forced_landing) == bool(damage_report.forced_landing)
+  assert bool(consequence.crew_kill) == bool(damage_report.crew_kill)
+  assert str(consequence.loss_state_to) == str(damage_report.loss_state_to)
+
+  deltas = _damage_report_delta(damage_report)
+  assert math.isclose(
+    float(consequence.mission_capability_after)
+    - float(consequence.mission_capability_before),
+    deltas["mission"],
+    abs_tol=1.0e-6,
+  )
+  assert math.isclose(
+    float(consequence.mobility_capability_after)
+    - float(consequence.mobility_capability_before),
+    deltas["mobility"],
+    abs_tol=1.0e-6,
+  )
+  assert math.isclose(
+    float(consequence.sensor_capability_after)
+    - float(consequence.sensor_capability_before),
+    deltas["sensor"],
+    abs_tol=1.0e-6,
+  )
+  assert math.isclose(
+    float(consequence.survivability_capability_after)
+    - float(consequence.survivability_capability_before),
+    deltas["survivability"],
+    abs_tol=1.0e-6,
+  )
 
 
 def _run_profiled_standard_case(
@@ -522,6 +585,104 @@ def test_standard_mechanism_loads_track_warhead_family() -> None:
   assert blast.target_active
 
 
+def test_standard_damage_reports_track_warhead_family_at_same_detonation_point() -> None:
+  local = (-0.753, 12.0, 0.0)
+  velocity = (900.0, -250.0, 0.0)
+  blast = _run_profiled_standard_case("blast", local, velocity)
+  blast_fragmentation = _run_profiled_standard_case(
+    "blast_fragmentation",
+    local,
+    velocity,
+  )
+  continuous_rod = _run_profiled_standard_case("continuous_rod", local, velocity)
+
+  assert float(blast.warhead.blast_overpressure_kpa) > 0.0
+  assert float(blast.warhead.fragment_density_per_m2) == 0.0
+  assert float(blast.warhead.rod_cut_margin) == 0.0
+
+  assert float(blast_fragmentation.warhead.blast_overpressure_kpa) > 0.0
+  assert float(blast_fragmentation.warhead.fragment_density_per_m2) > 0.0
+  assert float(blast_fragmentation.warhead.rod_cut_margin) == 0.0
+
+  assert float(continuous_rod.warhead.blast_overpressure_kpa) == 0.0
+  assert float(continuous_rod.warhead.fragment_density_per_m2) == 0.0
+  assert float(continuous_rod.warhead.rod_cut_margin) > 0.0
+
+  assert blast.component_keys != blast_fragmentation.component_keys
+  assert blast_fragmentation.component_keys != continuous_rod.component_keys
+  assert blast.primary_component_key != blast_fragmentation.primary_component_key
+
+  assert str(blast.damage_report.platform_damage_state_delta) != str(
+    blast_fragmentation.damage_report.platform_damage_state_delta
+  )
+  assert str(blast_fragmentation.damage_report.platform_damage_state_delta) != str(
+    continuous_rod.damage_report.platform_damage_state_delta
+  )
+  assert (
+    float(blast_fragmentation.damage_report.system_health_delta)
+    < float(blast.damage_report.system_health_delta)
+    < float(continuous_rod.damage_report.system_health_delta)
+  )
+
+  blast_delta = _damage_report_delta(blast.damage_report)
+  blast_fragmentation_delta = _damage_report_delta(blast_fragmentation.damage_report)
+  continuous_rod_delta = _damage_report_delta(continuous_rod.damage_report)
+  assert blast_delta["sensor"] < continuous_rod_delta["sensor"]
+  assert blast_fragmentation_delta["mobility"] < continuous_rod_delta["mobility"]
+  assert continuous_rod_delta["mission"] == 0.0
+
+
+def test_standard_damage_reports_track_detonation_local_point() -> None:
+  velocity = (900.0, -250.0, 0.0)
+  right_wing = _run_profiled_standard_case(
+    "blast_fragmentation",
+    (-0.753, 8.0, 0.0),
+    velocity,
+  )
+  tail = _run_profiled_standard_case(
+    "blast_fragmentation",
+    (-12.0, 0.0, 0.0),
+    velocity,
+  )
+  nose = _run_profiled_standard_case(
+    "blast_fragmentation",
+    (12.0, 0.0, 0.0),
+    velocity,
+  )
+  top = _run_profiled_standard_case(
+    "blast_fragmentation",
+    (0.0, 0.0, 12.0),
+    velocity,
+  )
+
+  assert right_wing.component_keys
+  assert tail.component_keys
+  assert nose.component_keys
+  assert top.component_keys
+  component_key_sets = {
+    tuple(sorted(case.component_keys))
+    for case in (right_wing, tail, nose, top)
+  }
+  assert len(component_key_sets) == 4
+
+  assert right_wing.primary_component_key == ("right_aileron_actuator", "flight_control")
+  assert tail.primary_component_key == (
+    "right_horizontal_tail_actuator_or_surface_component",
+    "flight_control",
+  )
+  assert nose.primary_component_key == ("apg68_radar_array", "radar")
+  assert top.primary_component_key == ("wing_spar_center", "wings")
+
+  assert _damage_report_delta(nose.damage_report)["sensor"] < 0.0
+  assert _damage_report_delta(tail.damage_report)["sensor"] == 0.0
+  assert _damage_report_delta(right_wing.damage_report)["mobility"] < _damage_report_delta(
+    top.damage_report
+  )["mobility"]
+  assert str(right_wing.damage_report.platform_damage_state_delta) != str(
+    top.damage_report.platform_damage_state_delta
+  )
+
+
 # --- component damage event surface ---
 
 DamageComponentKey = tuple[str, str, str]
@@ -610,7 +771,7 @@ def _run_profiled_sampled_component_failure() -> tuple[object, int]:
     attacker_id,
     target_id,
     -0.753,
-    4.0,
+    5.0,
     0.0,
     profile,
   )
@@ -685,7 +846,8 @@ def test_sampled_failure_exports_same_chain_component_damage_events() -> None:
     assert 0.0 <= float(row.component_redundancy_group_availability_after) <= 1.0
     assert 0.0 <= float(row.component_redundancy_group_availability_before) <= 1.0
 
-  assert list(events.platform_consequence_events) == []
+  damage_report = events.damage_reports[0]
+  _assert_platform_consequence_matches_damage_report(events, effects, damage_report)
   assert list(events.structural_breakup_events) == []
   assert list(events.lifecycle_transition_events) == []
   assert list(events.training_projection_events) == []

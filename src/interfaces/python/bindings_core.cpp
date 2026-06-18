@@ -329,6 +329,11 @@ void bind_core(nb::module_ &m) {
         .def_rw("mass_kg", &WarheadProfile::mass_kg)
         .def_rw("lethal_radius_m", &WarheadProfile::lethal_radius_m)
         .def_rw("damage_scalar", &WarheadProfile::damage_scalar)
+        .def_rw("explosive_mass_kg", &WarheadProfile::explosive_mass_kg)
+        .def_rw("case_mass_kg", &WarheadProfile::case_mass_kg)
+        .def_rw("gurney_constant_mps", &WarheadProfile::gurney_constant_mps)
+        .def_rw("fragment_mass_kg", &WarheadProfile::fragment_mass_kg)
+        .def_rw("fragment_count", &WarheadProfile::fragment_count)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -339,6 +344,8 @@ void bind_core(nb::module_ &m) {
         .def_rw("trigger_radius_m", &FuzeProfile::trigger_radius_m)
         .def_rw("delay_s", &FuzeProfile::delay_s)
         .def_rw("reliability", &FuzeProfile::reliability)
+        .def_rw("trigger_logic", &FuzeProfile::trigger_logic)
+        .def_rw("coverage_profile", &FuzeProfile::coverage_profile)
         .def_rw("synthetic", &FuzeProfile::synthetic)
         .def_rw("provenance", &FuzeProfile::provenance);
 
@@ -355,6 +362,12 @@ void bind_core(nb::module_ &m) {
         .def_rw("guidance_update_period_s", &MissileTuning::guidance_update_period_s)
         .def_rw("max_flight_time_s", &MissileTuning::max_flight_time_s)
         .def_rw("nav_gain", &MissileTuning::nav_gain)
+        .def_rw("apn_target_accel_gain", &MissileTuning::apn_target_accel_gain)
+        .def_rw("autopilot_damping", &MissileTuning::autopilot_damping)
+        .def_rw("autopilot_order", &MissileTuning::autopilot_order)
+        .def_rw("mach_transonic_start", &MissileTuning::mach_transonic_start)
+        .def_rw("mach_transonic_end", &MissileTuning::mach_transonic_end)
+        .def_rw("cd0_power_on_ratio", &MissileTuning::cd0_power_on_ratio)
         .def_rw("sensor_max_range", &MissileTuning::sensor_max_range)
         .def_rw("sensor_fov_deg", &MissileTuning::sensor_fov_deg)
         .def_rw("sensor_scan_period", &MissileTuning::sensor_scan_period)
@@ -378,6 +391,10 @@ void bind_core(nb::module_ &m) {
         .def_rw("cd0_subsonic", &MissileTuning::cd0_subsonic)
         .def_rw("cd0_supersonic", &MissileTuning::cd0_supersonic)
         .def_rw("induced_drag_k", &MissileTuning::induced_drag_k)
+        .def_rw("cd0_mach_breakpoints", &MissileTuning::cd0_mach_breakpoints)
+        .def_rw("cd0_mach_values", &MissileTuning::cd0_mach_values)
+        .def_rw("induced_drag_k_mach_breakpoints", &MissileTuning::induced_drag_k_mach_breakpoints)
+        .def_rw("induced_drag_k_mach_values", &MissileTuning::induced_drag_k_mach_values)
         .def_rw("propellant_mass_kg", &MissileTuning::propellant_mass_kg)
         .def_rw("max_lateral_g", &MissileTuning::max_lateral_g)
         .def_rw("autopilot_tau_s", &MissileTuning::autopilot_tau_s)
@@ -386,6 +403,7 @@ void bind_core(nb::module_ &m) {
         .def_rw("max_launch_off_boresight_deg", &MissileTuning::max_launch_off_boresight_deg)
         .def_rw("lobl_required", &MissileTuning::lobl_required)
         .def_rw("midcourse_datalink_supported", &MissileTuning::midcourse_datalink_supported)
+        .def_rw("use_kalman_seeker", &MissileTuning::use_kalman_seeker)
         .def_rw("warhead_profile", &MissileTuning::warhead_profile)
         .def_rw("has_warhead_profile", &MissileTuning::has_warhead_profile)
         .def_rw("fuze_profile", &MissileTuning::fuze_profile)
@@ -1082,11 +1100,17 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["warhead_profile_synthetic"] = missile->warhead_profile.synthetic;
                 out["warhead_damage_scalar_synthetic"] =
                     missile->warhead_profile.damage_scalar_synthetic;
+                out["warhead_explosive_mass_kg"] = missile->warhead_profile.explosive_mass_kg;
+                out["warhead_case_mass_kg"] = missile->warhead_profile.case_mass_kg;
+                out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
+                out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
+                out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
                 out["fuze_delay_s"] = missile->fuze_profile.delay_s;
                 out["fuze_reliability"] = missile->fuze_profile.reliability;
+                out["fuze_trigger_logic"] = missile->fuze_profile.trigger_logic;
                 out["fuze_profile_synthetic"] = missile->fuze_profile.synthetic;
                 out["fuze_provenance"] = missile->fuze_profile.provenance;
                 out["seeker_fov_deg"] = missile->seeker_fov_deg;
@@ -1095,6 +1119,13 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_update_period_s"] = missile->guidance_update_period_s;
                 out["max_flight_time_s"] = missile->max_flight_time_s;
                 out["nav_gain"] = missile->nav_gain;
+                out["apn_target_accel_gain"] = missile->apn_target_accel_gain;
+                out["autopilot_order"] = missile->autopilot_order;
+                out["autopilot_damping"] = missile->autopilot_damping;
+                out["use_kalman_seeker"] = missile->use_kalman_seeker;
+                out["mach_transonic_start"] = missile->guidance_mach_transonic_start;
+                out["mach_transonic_end"] = missile->guidance_mach_transonic_end;
+                out["cd0_power_on_ratio"] = missile->guidance_cd0_power_on_ratio;
                 out["proximity_min_dist_m"] = missile->proximity_min_dist_m;
                 out["proximity_min_time_s"] = missile->proximity_min_time_s;
                 out["proximity_last_dist_m"] = missile->proximity_last_dist_m;
@@ -1153,6 +1184,12 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["guidance_cd0_subsonic"] = missile->guidance_cd0_subsonic;
                 out["guidance_cd0_supersonic"] = missile->guidance_cd0_supersonic;
                 out["guidance_induced_drag_k"] = missile->guidance_induced_drag_k;
+                out["guidance_cd0_mach_breakpoints"] = missile->guidance_cd0_mach_breakpoints;
+                out["guidance_cd0_mach_values"] = missile->guidance_cd0_mach_values;
+                out["guidance_induced_drag_k_mach_breakpoints"] =
+                    missile->guidance_induced_drag_k_mach_breakpoints;
+                out["guidance_induced_drag_k_mach_values"] =
+                    missile->guidance_induced_drag_k_mach_values;
                 out["guidance_max_lateral_g"] = missile->guidance_max_lateral_g;
                 out["guidance_autopilot_tau_s"] = missile->guidance_autopilot_tau_s;
                 out["guidance_max_accel_response_g_per_s"] =

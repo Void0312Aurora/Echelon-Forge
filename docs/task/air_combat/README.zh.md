@@ -58,6 +58,13 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
+- A9 高保真武器系统子项目已在
+  [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
+  完成。六个武器子系统从工程代理保真度升级到研究级代理保真度；所有权限边界保持封闭。
+  状态为 `accepted`：23 集群通过、5 项明确推迟、0 个开放残差。R2 EKF 定量验证和
+  R4 马赫 Cd₀/k(M) 表已分别由聚焦回归覆盖和工程代理值关闭。相对 main 零回归。
+  归档证据包位于
+  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)。
 - A8 损伤效果链现在在
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
   保留轻量指针；完整包位于
@@ -81,6 +88,15 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [A8 损伤效果链](archive/a8_damage_effect_chain/README.zh.md) 作为已归档 accepted record 读取：
   具体损伤可通过维护中的飞机系统传播，但不增加直接坠毁或特定目标击杀规则；只有明确要求校准、
   平台扩展或碎片/残留对象工作时才重开
+- 将
+  [A9 高保真武器系统](a9_high_fidelity_weapon_system/README.zh.md) 作为 accepted record 读取：
+  武器链保真度升级已合入，R2/R4 残差已关闭；后续只针对明确的新研究扩展开支线
+- 推进
+  [MLF-6 结构失效/机体断裂](a2_high_fidelity_damage_model/missile_lethality_structural_failure/README.zh.md)
+  子项目：消费 MLF-5 ECS `ComponentDamageState`，写入 `StructuralBreakupEvent`
+  具名断裂事实（不修改 `structural_integrity`、飞行动力学、失能状态；属于 MLF-7）；
+  P7 更广回归已通过（`447 passed`），MLF-6 已准备进入用户验收；archive 移动等待明确指令，
+  MLF-6 仍是 MLF-7/MLF-8 的前置瓶颈
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
@@ -130,6 +146,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [archive/a2_high_fidelity_damage_model/README.zh.md](archive/a2_high_fidelity_damage_model/README.zh.md)
 - 损伤效果链 follow-on：
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
+- 高保真武器系统：
+  [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
 

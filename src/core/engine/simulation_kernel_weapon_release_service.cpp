@@ -202,12 +202,16 @@ bool has_explicit_global_missile_tuning(const MissileTuning &tuning) {
            std::isfinite(tuning.boost_thrust_n) || std::isfinite(tuning.sustain_thrust_n) ||
            std::isfinite(tuning.reference_area_m2) || std::isfinite(tuning.cd0_subsonic) ||
            std::isfinite(tuning.cd0_supersonic) || std::isfinite(tuning.induced_drag_k) ||
-           std::isfinite(tuning.propellant_mass_kg) || std::isfinite(tuning.max_lateral_g) ||
-           std::isfinite(tuning.autopilot_tau_s) ||
+           !tuning.cd0_mach_breakpoints.empty() || !tuning.cd0_mach_values.empty() ||
+           !tuning.induced_drag_k_mach_breakpoints.empty() ||
+           !tuning.induced_drag_k_mach_values.empty() || std::isfinite(tuning.propellant_mass_kg) ||
+           std::isfinite(tuning.max_lateral_g) || std::isfinite(tuning.autopilot_tau_s) ||
            std::isfinite(tuning.max_accel_response_g_per_s) ||
-           std::isfinite(tuning.min_launch_range_m) ||
+           std::isfinite(tuning.mach_transonic_start) || std::isfinite(tuning.mach_transonic_end) ||
+           std::isfinite(tuning.cd0_power_on_ratio) || std::isfinite(tuning.min_launch_range_m) ||
            std::isfinite(tuning.max_launch_off_boresight_deg) || tuning.lobl_required ||
-           tuning.midcourse_datalink_supported || tuning.has_warhead_profile ||
+           tuning.midcourse_datalink_supported || tuning.use_kalman_seeker ||
+           std::isfinite(tuning.apn_target_accel_gain) || tuning.has_warhead_profile ||
            tuning.has_fuze_profile;
 }
 
@@ -237,6 +241,7 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.guidance_update_period_s = src.guidance_update_period_s;
     out.max_flight_time_s = src.max_flight_time_s;
     out.nav_gain = src.nav_gain;
+    out.apn_target_accel_gain = src.apn_target_accel_gain;
     out.sensor_max_range = src.sensor_max_range;
     out.sensor_fov_deg = src.sensor_fov_deg;
     out.sensor_scan_period = src.sensor_scan_period;
@@ -260,14 +265,24 @@ MissileTuning to_runtime_missile_tuning(const MissileTuningDefinition &src) {
     out.cd0_subsonic = src.cd0_subsonic;
     out.cd0_supersonic = src.cd0_supersonic;
     out.induced_drag_k = src.induced_drag_k;
+    out.cd0_mach_breakpoints = src.cd0_mach_breakpoints;
+    out.cd0_mach_values = src.cd0_mach_values;
+    out.induced_drag_k_mach_breakpoints = src.induced_drag_k_mach_breakpoints;
+    out.induced_drag_k_mach_values = src.induced_drag_k_mach_values;
     out.propellant_mass_kg = src.propellant_mass_kg;
     out.max_lateral_g = src.max_lateral_g;
     out.autopilot_tau_s = src.autopilot_tau_s;
+    out.autopilot_damping = src.autopilot_damping;
+    out.autopilot_order = src.autopilot_order;
     out.max_accel_response_g_per_s = src.max_accel_response_g_per_s;
+    out.mach_transonic_start = src.mach_transonic_start;
+    out.mach_transonic_end = src.mach_transonic_end;
+    out.cd0_power_on_ratio = src.cd0_power_on_ratio;
     out.min_launch_range_m = src.min_launch_range_m;
     out.max_launch_off_boresight_deg = src.max_launch_off_boresight_deg;
     out.lobl_required = src.lobl_required;
     out.midcourse_datalink_supported = src.midcourse_datalink_supported;
+    out.use_kalman_seeker = src.use_kalman_seeker;
     out.warhead_profile = src.warhead_profile;
     out.has_warhead_profile = src.has_warhead_profile;
     out.fuze_profile = src.fuze_profile;
@@ -292,6 +307,8 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.max_flight_time_s))
         base->max_flight_time_s = overlay.max_flight_time_s;
     if (std::isfinite(overlay.nav_gain)) base->nav_gain = overlay.nav_gain;
+    if (std::isfinite(overlay.apn_target_accel_gain))
+        base->apn_target_accel_gain = overlay.apn_target_accel_gain;
     if (std::isfinite(overlay.sensor_max_range)) base->sensor_max_range = overlay.sensor_max_range;
     if (std::isfinite(overlay.sensor_fov_deg)) base->sensor_fov_deg = overlay.sensor_fov_deg;
     if (std::isfinite(overlay.sensor_scan_period))
@@ -327,18 +344,40 @@ void overlay_missile_tuning(MissileTuning *base, const MissileTuning &overlay) {
     if (std::isfinite(overlay.cd0_subsonic)) base->cd0_subsonic = overlay.cd0_subsonic;
     if (std::isfinite(overlay.cd0_supersonic)) base->cd0_supersonic = overlay.cd0_supersonic;
     if (std::isfinite(overlay.induced_drag_k)) base->induced_drag_k = overlay.induced_drag_k;
+    if (!overlay.cd0_mach_breakpoints.empty()) {
+        base->cd0_mach_breakpoints = overlay.cd0_mach_breakpoints;
+    }
+    if (!overlay.cd0_mach_values.empty()) {
+        base->cd0_mach_values = overlay.cd0_mach_values;
+    }
+    if (!overlay.induced_drag_k_mach_breakpoints.empty()) {
+        base->induced_drag_k_mach_breakpoints = overlay.induced_drag_k_mach_breakpoints;
+    }
+    if (!overlay.induced_drag_k_mach_values.empty()) {
+        base->induced_drag_k_mach_values = overlay.induced_drag_k_mach_values;
+    }
     if (std::isfinite(overlay.propellant_mass_kg))
         base->propellant_mass_kg = overlay.propellant_mass_kg;
     if (std::isfinite(overlay.max_lateral_g)) base->max_lateral_g = overlay.max_lateral_g;
     if (std::isfinite(overlay.autopilot_tau_s)) base->autopilot_tau_s = overlay.autopilot_tau_s;
+    if (std::isfinite(overlay.autopilot_damping))
+        base->autopilot_damping = overlay.autopilot_damping;
+    if (overlay.autopilot_order >= 1) base->autopilot_order = overlay.autopilot_order;
     if (std::isfinite(overlay.max_accel_response_g_per_s))
         base->max_accel_response_g_per_s = overlay.max_accel_response_g_per_s;
+    if (std::isfinite(overlay.mach_transonic_start))
+        base->mach_transonic_start = overlay.mach_transonic_start;
+    if (std::isfinite(overlay.mach_transonic_end))
+        base->mach_transonic_end = overlay.mach_transonic_end;
+    if (std::isfinite(overlay.cd0_power_on_ratio))
+        base->cd0_power_on_ratio = overlay.cd0_power_on_ratio;
     if (std::isfinite(overlay.min_launch_range_m))
         base->min_launch_range_m = overlay.min_launch_range_m;
     if (std::isfinite(overlay.max_launch_off_boresight_deg))
         base->max_launch_off_boresight_deg = overlay.max_launch_off_boresight_deg;
     if (overlay.lobl_required) base->lobl_required = true;
     if (overlay.midcourse_datalink_supported) base->midcourse_datalink_supported = true;
+    if (overlay.use_kalman_seeker) base->use_kalman_seeker = true;
     if (overlay.has_fuze_profile) {
         base->fuze_profile = overlay.fuze_profile;
         base->has_fuze_profile = true;
@@ -617,6 +656,8 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const double missile_max_flight_time =
         positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
     const double missile_nav_gain = positive_or_default(resolved_tuning.nav_gain, 3.0);
+    const double missile_apn_target_accel_gain =
+        nonnegative_or_default(resolved_tuning.apn_target_accel_gain, 0.0);
 
     double sensor_max_range = missile_seeker_range;
     double sensor_fov_deg = missile_seeker_fov;
@@ -725,6 +766,18 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     missile.launch_time = current_time;
     missile.max_flight_time_s = missile_max_flight_time;
     missile.nav_gain = missile_nav_gain;
+    missile.apn_target_accel_gain = missile_apn_target_accel_gain;
+    missile.autopilot_order = nonnegative_or_default(resolved_tuning.autopilot_order, 1);
+    missile.autopilot_damping = positive_or_default(resolved_tuning.autopilot_damping, 1.0);
+    missile.guidance_mach_transonic_start = resolved_tuning.mach_transonic_start;
+    missile.guidance_mach_transonic_end = resolved_tuning.mach_transonic_end;
+    missile.guidance_cd0_power_on_ratio = resolved_tuning.cd0_power_on_ratio;
+    missile.guidance_cd0_mach_breakpoints = resolved_tuning.cd0_mach_breakpoints;
+    missile.guidance_cd0_mach_values = resolved_tuning.cd0_mach_values;
+    missile.guidance_induced_drag_k_mach_breakpoints =
+        resolved_tuning.induced_drag_k_mach_breakpoints;
+    missile.guidance_induced_drag_k_mach_values = resolved_tuning.induced_drag_k_mach_values;
+    missile.use_kalman_seeker = resolved_tuning.use_kalman_seeker;
     missile.active = true;
     missile.warhead_profile = missile_warhead_profile;
     missile.fuze_profile = missile_fuze_profile;
@@ -780,6 +833,10 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
                                                    seeker_activation_range_m,
                                                    midcourse_datalink_supported,
                                                    terminal_seeker_active,
+                                                   resolved_tuning.cd0_mach_breakpoints,
+                                                   resolved_tuning.cd0_mach_values,
+                                                   resolved_tuning.induced_drag_k_mach_breakpoints,
+                                                   resolved_tuning.induced_drag_k_mach_values,
                                                });
 
     Sensor sensor{};
