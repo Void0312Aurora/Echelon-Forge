@@ -16,7 +16,7 @@ Inputs:
 
 - A2 pointer: [../README.md](../README.md)
 - A2 sealed package: [../../archive/a2_high_fidelity_damage_model/README.md](../../archive/a2_high_fidelity_damage_model/README.md)
-- A8 damage-effect chain: [../../a8_damage_effect_chain/README.md](../../a8_damage_effect_chain/README.md)
+- A8 damage-effect chain: [../../archive/a8_damage_effect_chain/README.md](../../archive/a8_damage_effect_chain/README.md)
 - Current air-combat entry: [../../README.md](../../README.md)
 - Reward runtime entry: [../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 - Focused reward tests: [../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py](../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py)

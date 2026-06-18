@@ -1633,7 +1633,13 @@ class ComponentDamageRuntimeMixin:
       float(high_event.component_failure_probability),
       float(low_event.component_failure_probability),
     )
-    self.assertGreater(int(high_event.component_failure_count), 0)
+    self.assertGreaterEqual(int(high_event.component_hit_count), 1)
+    high_row = list(high_event.component_mechanism_load_rows)[0]
+    low_row = list(low_event.component_mechanism_load_rows)[0]
+    self.assertLess(
+      float(high_row.component_integrity_after),
+      float(low_row.component_integrity_after),
+    )
     self.assertLess(
       high_energy_overlay["flight_control"],
       low_energy_overlay["flight_control"],

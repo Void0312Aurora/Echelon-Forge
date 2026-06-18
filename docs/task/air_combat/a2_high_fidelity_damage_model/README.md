@@ -1,84 +1,64 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-18` archived pointer / active follow-on navigation, MLF-6 ready for user acceptance. The full project package was moved to
+Status: `2026-06-18` active follow-on index plus local archive registry. The
+sealed base A2 research/candidate package remains in the outer air-combat
+archive:
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
+Completed or superseded local MLF follow-ons have been physically moved under
+this directory's [archive/](archive/README.md) tree and are registered in
+[archive_registry.md](archive_registry.md).
 
-This path is retained only as a lightweight work statement for navigation.
+This root intentionally keeps only live, retained, or planning entries so the
+A2 follow-on surface does not flatten into a long list of completed projects.
 
-The archived A2 package closed the research/candidate profile for the
-air-combat high-fidelity damage-model line. It retains non-authoritative
-blast-fragmentation evidence, accepted G1-G5 research packets, and a structured
-aircraft damage/effects runtime record. It does not release stock authority,
-Pk authority, deterministic fuze authority, or broader weapon-outcome
-authority.
-
-Current A2 follow-ons:
+## Live / Retained Entries
 
 - [damage_consequence_reward_surface/README.md](damage_consequence_reward_surface/README.md):
-  bounded training feedback for damage consequences rather than a single kill
-  flag.
-- [missile_lethality_model_foundation/README.md](missile_lethality_model_foundation/README.md):
-  archived MLF-1 chain-contract foundation, retained as field and boundary
-  evidence for later stages.
-- [missile_lethality_geometry_fuze/README.md](missile_lethality_geometry_fuze/README.md):
-  archived MLF-2 evidence package for missile approach geometry and fuze
-  evaluation; it proves that nearest point, fuze evaluation, and detonation
-  handoff are observable, but it does not implement fragmentation, structural
-  breakup, Pk, or weapon-specific kill conclusions.
-- [missile_lethality_proximity_fuze_realism/README.md](missile_lethality_proximity_fuze_realism/README.md):
-  accepted-with-residuals follow-on that replaced the current nearest-distance
-  proximity-fuze proxy with a public-source, non-authoritative surrogate
-  evidence slice and focused matrix validation. It does not authorize
-  deterministic fuze authority, Pk, stock weapon truth, or weapon-specific
-  lethality.
-- [missile_lethality_warhead_effects/README.md](missile_lethality_warhead_effects/README.md):
-  archived MLF-3 evidence package for post-detonation generic warhead effects,
-  fragment/blast loads, spatial coverage, component load, diagnostics, and the
-  no-detonation no-load gate; it does not implement continuous rod, component
-  failure probability, structural breakup, debris/wreck, Pk, or weapon-specific
-  kill conclusions.
-- [missile_lethality_continuous_rod/README.md](missile_lethality_continuous_rod/README.md):
-  archived MLF-4 evidence package for continuous-rod and cutting-mechanism
-  facts; it proves the rod/cut exposure fact chain is observable, diagnosable,
-  and projected into component-load rows, but it does not claim component
-  failure, structural breakup, debris/wreck, Pk, or weapon-specific lethality.
-- [missile_lethality_component_failure/README.md](missile_lethality_component_failure/README.md):
-  archived MLF-5 evidence package for target component vulnerability and failure
-  facts; it turns MLF-3/MLF-4 component-load/cut-exposure facts into component
-  failure probability, failure mode, and state changes, then hands consequences
-  to maintained damage/flight systems, but does not claim crash, structural
-  breakup, debris/wreck, Pk, or weapon-specific lethality.
-- [missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md):
-  **active / ready-for-acceptance MLF-6 subproject** consuming MLF-5 component-failure state (ECS
-  `ComponentDamageState`) to write `StructuralBreakupEvent` rows with named
-  break-mode facts. It does NOT modify `structural_integrity`, flight dynamics,
-  or loss-state (those belong to MLF-7). P7 broad regression is green
-  (`447 passed`); archive movement waits for explicit user instruction. No Pk,
-  debris/wreck lifecycle, or weapon-specific lethality claims.
+  active bounded training-feedback work for damage consequences rather than a
+  single kill flag.
 - [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md):
-  accepted / retained follow-on promoted from the hitbox-geometry gap issue; it
-  has built reviewable F-16C outer regions, component bindings, distance
-  diagnostics, fine geometry proxies, surface/internal receiver priors, and
-  cross-region split receiver handoff evidence. It does not claim true F-16
-  engineering geometry, default runtime replacement, training benefit,
-  structural breakup, debris/wreck, Pk, or weapon-specific lethality.
+  accepted / retained follow-on promoted from the hitbox-geometry gap issue. It
+  keeps reviewable F-16C outer regions, component bindings, distance diagnostics,
+  fine geometry proxies, surface/internal receiver priors, and cross-region
+  split receiver handoff evidence. It does not claim true F-16 engineering
+  geometry, default runtime replacement, training benefit, structural breakup,
+  debris/wreck, Pk, or weapon-specific lethality.
+
+## Archived / Registered Entries
+
+Use [archive_registry.md](archive_registry.md) for the compact registry. The
+physical evidence packets are under [archive/](archive/README.md):
+
+- [archive/missile_lethality_model_foundation/README.md](archive/missile_lethality_model_foundation/README.md):
+  MLF-1 chain-contract foundation and phase-boundary evidence.
+- [archive/missile_lethality_geometry_fuze/README.md](archive/missile_lethality_geometry_fuze/README.md):
+  MLF-2 missile approach-geometry and fuze-evaluation evidence.
+- [archive/missile_lethality_proximity_fuze_realism/README.md](archive/missile_lethality_proximity_fuze_realism/README.md):
+  accepted-with-residuals proximity-fuze realism evidence slice.
+- [archive/missile_lethality_warhead_effects/README.md](archive/missile_lethality_warhead_effects/README.md):
+  MLF-3 generic warhead-effects, fragment/blast-load, and diagnostics evidence.
+- [archive/missile_lethality_continuous_rod/README.md](archive/missile_lethality_continuous_rod/README.md):
+  MLF-4 continuous-rod and cutting-mechanism fact evidence.
+- [archive/missile_lethality_component_failure/README.md](archive/missile_lethality_component_failure/README.md):
+  MLF-5 component vulnerability and failure-fact evidence.
+- [archive/missile_lethality_structural_failure/README.md](archive/missile_lethality_structural_failure/README.md):
+  accepted / archived MLF-6 structural-failure and airframe-breakup fact writer.
+- [archive/missile_lethality_secondary_consequence_coupling/README.md](archive/missile_lethality_secondary_consequence_coupling/README.md):
+  accepted / archived MLF-7 secondary consequence coupling. The runtime bridge
+  consumes archived MLF-6 breakup facts, writes bounded consequences into
+  maintained aircraft damage, platform damage, and loss-state surfaces, and
+  emits chain-linked `platform_consequence` diagnostics.
 
 The current geometry-fidelity gap is tracked on the issue board:
 [Lethality Hitbox Geometry Fidelity Gap](../../issues/lethality_hitbox_geometry_fidelity_gap/README.md).
-The first mainline execution entry for that issue has now been closed against
-the geometry-only acceptance gate:
+The first mainline execution entry for that issue has been closed against the
+geometry-only acceptance gate:
 [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
 
-MLF-6 (structural failure / airframe breakup) is an active / ready-for-acceptance
-subproject per `docs/agent`; it is not archived yet:
-[missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md).
-MLF-7 (secondary consequence coupling), MLF-8 (debris/wreck lifecycle),
-MLF-9 (Pk/statistical trends), and MLF-10 (calibration gates) still need
-separate follow-on subprojects. Do not continue inside the archived MLF-2, MLF-3,
-or MLF-4 packages. MLF-3/MLF-4 are archived; they do not reopen the sealed A2
-package.
-
-These follow-ons do not reopen the sealed A2 package or create A9.
+MLF-8 (debris/wreck lifecycle), MLF-9 (Pk/statistical trends), and MLF-10
+(calibration gates) still need separate follow-on subprojects. Do not continue
+inside archived MLF-1 through MLF-7 or proximity-fuze realism packages. These
+follow-ons do not reopen the sealed A2 package or create A9.
 
 Reopen this line only through an explicit authority-promotion or new research
 request. Default air-combat work continues from [../README.md](../README.md).

@@ -40,10 +40,16 @@ def _entity_ref(entity_id: int) -> SimpleNamespace:
   return SimpleNamespace(entity_id=int(entity_id), world_index=int(entity_id))
 
 
-def _lethality_header(event_id: int, target_id: int) -> SimpleNamespace:
+def _lethality_header(
+  event_id: int,
+  target_id: int,
+  *,
+  consumer_visibility: str = "diagnostics_and_training",
+) -> SimpleNamespace:
   return SimpleNamespace(
     event_id=int(event_id),
     target=_entity_ref(target_id),
+    consumer_visibility=str(consumer_visibility),
   )
 
 
@@ -68,9 +74,18 @@ def _damage_report(
   )
 
 
-def _platform_consequence_event(*, event_id: int = 7, target_id: int = 2) -> SimpleNamespace:
+def _platform_consequence_event(
+  *,
+  event_id: int = 7,
+  target_id: int = 2,
+  consumer_visibility: str = "diagnostics_and_training",
+) -> SimpleNamespace:
   return SimpleNamespace(
-    header=_lethality_header(event_id, target_id),
+    header=_lethality_header(
+      event_id,
+      target_id,
+      consumer_visibility=consumer_visibility,
+    ),
     mission_capability_before=1.0,
     mission_capability_after=0.8,
     mobility_capability_before=1.0,
@@ -795,6 +810,30 @@ class AirCombatRewardSurfaceTests(unittest.TestCase):
     self.assertEqual(set(standard_terms), set(fallback_terms))
     for key, value in fallback_terms.items():
       self.assertAlmostEqual(standard_terms[key], value, places=6)
+
+  def test_diagnostics_only_platform_consequence_event_does_not_shape_reward(self) -> None:
+    loader = _loader({"air_combat_damage_shaping_enabled": True})
+    sim = _event_sim(
+      platform_consequence_events=[
+        _platform_consequence_event(consumer_visibility="diagnostics_only")
+      ]
+    )
+    truth = SimpleNamespace(missiles_remaining=4, health=100.0)
+
+    reward, _terminated, _truncated, _status, terms, _reason = apply_air_combat_reward_surface(
+      loader,
+      sim,
+      truth,
+      reward=0.0,
+      terminated=False,
+      truncated=False,
+      status=[0.0, 0.0, 0.0, 0.0],
+      reward_breakdown={},
+    )
+
+    self.assertAlmostEqual(reward, 0.0, places=6)
+    self.assertNotIn("air_combat_target_system_damage_progress", terms)
+    self.assertNotIn("air_combat_target_mission_kill_progress", terms)
 
   def test_standard_lifecycle_terminal_state_does_not_need_damage_report(self) -> None:
     loader = _loader({"air_combat_damage_terminal_enabled": True})

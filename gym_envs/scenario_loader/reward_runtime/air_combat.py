@@ -569,6 +569,11 @@ def _platform_consequence_fact_projection(event: Any) -> dict[str, Any]:
     }
 
 
+def _event_consumer_visibility(event: Any) -> str:
+    header = getattr(event, "header", None)
+    return _normalized_token(getattr(header, "consumer_visibility", ""))
+
+
 def _lifecycle_transition_fact_projection(event: Any) -> dict[str, Any]:
     lifecycle_to = _normalized_token(getattr(event, "lifecycle_to", ""))
     return {
@@ -613,6 +618,8 @@ def _transitional_damage_report_fact_projection(report: Any) -> dict[str, Any]:
 def _standard_damage_fact_projections(events: Any) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     for event in list(getattr(events, "platform_consequence_events", []) or []):
+        if _event_consumer_visibility(event) == "diagnostics_only":
+            continue
         facts.append(_platform_consequence_fact_projection(event))
     for event in list(getattr(events, "lifecycle_transition_events", []) or []):
         facts.append(_lifecycle_transition_fact_projection(event))

@@ -12,7 +12,7 @@
 - 当前子项目指针：[../../README.zh.md](../../README.zh.md)
 - 验收记录：[target_geometry_acceptance_20260614.zh.md](target_geometry_acceptance_20260614.zh.md)
 - 稳定 review packet：[../../review_packets/f16c_20260611/](../../review_packets/f16c_20260611/)
-- 几何审阅测试：[../../../../../../../tests/tools/test_airframe_geometry_review.py](../../../../../../../tests/tools/test_airframe_geometry_review.py)
+- 几何审阅测试：`../../../../../../../tests/tools/test_airframe_geometry_review.py`
 
 ## 归档决定
 

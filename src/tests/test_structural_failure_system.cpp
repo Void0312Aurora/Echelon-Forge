@@ -1,8 +1,11 @@
 #include "components/basic/common.h"
 #include "components/combat/common/damage_common.h"
+#include "components/combat/health.h"
 #include "components/combat/structural_failure.h"
 #include "core/engine/simulation_kernel_engagement_event_store.h"
+#include "systems/combat/damage_system_air.h"
 #include "core/interfaces/engagement_event_recorder.h"
+#include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
 
 #include <doctest/doctest.h>
@@ -25,6 +28,7 @@ void set_component_damage(ComponentDamageState &damage, const std::string &name,
 
 struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     std::vector<StructuralBreakupEvent> structural_events;
+    std::vector<PlatformConsequenceEvent> platform_consequence_events;
 
     EngagementDamageStateSnapshot capture_engagement_damage_state(std::uint64_t) const override {
         return {};
@@ -62,6 +66,12 @@ struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     record_structural_breakup_event(EngagementStructuralBreakupEventRecord record) override {
         structural_events.push_back(std::move(record.event));
         return static_cast<std::uint64_t>(structural_events.size());
+    }
+
+    std::uint64_t
+    record_platform_consequence_event(EngagementPlatformConsequenceEventRecord record) override {
+        platform_consequence_events.push_back(std::move(record.event));
+        return static_cast<std::uint64_t>(platform_consequence_events.size());
     }
 };
 
@@ -253,6 +263,374 @@ TEST_SUITE("structural_failure_state") {
         CHECK(aircraft_state->breakup_state == StructuralBreakupPhase::PartialDetachment);
         CHECK(structural_breakup_has_mode(*aircraft_state, StructuralBreakMode::TailLoss));
         CHECK(missile.get<StructuralBreakupState>() == nullptr);
+    }
+
+} // TEST_SUITE
+
+TEST_SUITE("structural_consequence") {
+
+    TEST_CASE("no-breakup state produces zero consequence deltas") {
+        StructuralBreakupState breakup{};
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.structural_integrity == doctest::Approx(1.0));
+        CHECK(aircraft.flight_control_integrity == doctest::Approx(1.0));
+        CHECK(aircraft.propulsion_integrity == doctest::Approx(1.0));
+        CHECK_FALSE(aircraft.forced_landing_required);
+        CHECK(platform.mobility_capability == doctest::Approx(1.0));
+        CHECK(platform.loss_state == PlatformLossState::CombatCapable);
+        CHECK_FALSE(health.mobility_kill);
+    }
+
+    TEST_CASE("wing-loss consequence projects to maintained aircraft and platform state") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::WingLoss);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::WingLeft);
+        breakup.detached_part_count = 1u;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.structural_integrity == doctest::Approx(0.35));
+        CHECK(aircraft.roll_control_integrity == doctest::Approx(0.18));
+        CHECK(aircraft.control_asymmetry == doctest::Approx(0.78));
+        CHECK(aircraft.forced_landing_required);
+        CHECK(aircraft.flight_control_kill);
+        CHECK(platform.mobility_capability == doctest::Approx(0.0));
+        CHECK(platform.loss_state == PlatformLossState::MobilityKill);
+        CHECK(health.mobility_kill);
+    }
+
+    TEST_CASE("tail-loss consequence projects pitch yaw and mobility limits") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::TailLoss);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::TailLeft);
+        breakup.detached_part_count = 1u;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.flight_control_integrity == doctest::Approx(0.60));
+        CHECK(aircraft.pitch_control_integrity == doctest::Approx(0.45));
+        CHECK(aircraft.yaw_control_integrity == doctest::Approx(0.50));
+        CHECK(aircraft.forced_landing_required);
+        CHECK(platform.mobility_capability == doctest::Approx(0.25));
+        CHECK(platform.loss_state == PlatformLossState::MobilityKill);
+    }
+
+    TEST_CASE("engine-detach consequence projects propulsion and fuel hazards") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::EngineDetach);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::EngineRight);
+        breakup.detached_part_count = 1u;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.propulsion_integrity == doctest::Approx(0.30));
+        CHECK(aircraft.fuel_system_integrity == doctest::Approx(0.72));
+        CHECK(aircraft.fuel_leak_severity == doctest::Approx(0.30));
+        CHECK(aircraft.ignition_source_severity == doctest::Approx(0.20));
+        CHECK(platform.mobility_capability == doctest::Approx(0.25));
+        CHECK(platform.loss_state == PlatformLossState::MobilityKill);
+    }
+
+    TEST_CASE("fuselage-rupture consequence projects structural fire and crew hazards") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes =
+            structural_break_mode_mask(StructuralBreakMode::FuselageRupture);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::Fuselage);
+        breakup.detached_part_count = 1u;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.structural_integrity == doctest::Approx(0.50));
+        CHECK(aircraft.fuel_leak_severity == doctest::Approx(0.45));
+        CHECK(aircraft.fire_severity == doctest::Approx(0.15));
+        CHECK(aircraft.fuselage_fire_zone_severity == doctest::Approx(0.20));
+        CHECK(platform.mission_capability == doctest::Approx(0.35));
+        CHECK(platform.survivability_margin == doctest::Approx(0.50));
+        CHECK(platform.loss_state == PlatformLossState::MobilityKill);
+    }
+
+    TEST_CASE("multi-axis airframe breakup uses maintained lost state without entity lifecycle") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::FullBreakup;
+        breakup.active_break_modes =
+            structural_break_mode_mask(StructuralBreakMode::WingLoss) |
+            structural_break_mode_mask(StructuralBreakMode::EngineDetach) |
+            structural_break_mode_mask(StructuralBreakMode::FuselageRupture) |
+            structural_break_mode_mask(StructuralBreakMode::MultiAxis);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::WingLeft) |
+            structural_break_group_mask(StructuralBreakGroup::EngineRight) |
+            structural_break_group_mask(StructuralBreakGroup::Fuselage);
+        breakup.detached_part_count = 3u;
+        breakup.airframe_breakup = true;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.structural_integrity == doctest::Approx(0.20));
+        CHECK(aircraft.flight_control_kill);
+        CHECK(aircraft.forced_landing_required);
+        CHECK(platform.mobility_capability == doctest::Approx(0.0));
+        CHECK(platform.survivability_margin == doctest::Approx(0.0));
+        CHECK(platform.loss_state == PlatformLossState::Lost);
+        CHECK(health.mobility_kill);
+    }
+
+    TEST_CASE("irreversible structural state does not accumulate duplicate deltas") {
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::EngineDetach);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::EngineRight);
+        breakup.detached_part_count = 1u;
+
+        AircraftDamageState aircraft{};
+        PlatformDamageState platform{};
+        Health health{100.0, 100.0};
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+        const double propulsion_after_first = aircraft.propulsion_integrity;
+        const double fuel_leak_after_first = aircraft.fuel_leak_severity;
+        const double mobility_after_first = platform.mobility_capability;
+
+        structural_consequence::apply_structural_breakup_consequence(breakup, aircraft, platform,
+                                                                     health);
+
+        CHECK(aircraft.propulsion_integrity == doctest::Approx(propulsion_after_first));
+        CHECK(aircraft.fuel_leak_severity == doctest::Approx(fuel_leak_after_first));
+        CHECK(platform.mobility_capability == doctest::Approx(mobility_after_first));
+    }
+
+    TEST_CASE("ECS bridge consumes structural breakup after structural failure update") {
+        flecs::world world;
+        world.component<ComponentDamageState>();
+        world.component<StructuralBreakupState>();
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        register_structural_failure_system(world);
+        register_structural_consequence_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "wing_spar_center", 0.20, "puncture");
+        set_component_damage(damage, "engine_core", 0.10, "structural_weakening");
+        set_component_damage(damage, "center_fuselage_fuel_cell", 0.20, "blast_deformation");
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<ComponentDamageState>(damage)
+                            .set<Health>({100.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(AircraftDamageState{});
+
+        world.progress(1.0 / 60.0);
+
+        const StructuralBreakupState *breakup = aircraft.get<StructuralBreakupState>();
+        REQUIRE(breakup != nullptr);
+        CHECK(breakup->airframe_breakup);
+
+        const AircraftDamageState *aircraft_damage = aircraft.get<AircraftDamageState>();
+        REQUIRE(aircraft_damage != nullptr);
+        CHECK(aircraft_damage->structural_integrity == doctest::Approx(0.20));
+        CHECK(aircraft_damage->forced_landing_required);
+
+        const PlatformDamageState *platform = aircraft.get<PlatformDamageState>();
+        REQUIRE(platform != nullptr);
+        CHECK(platform->loss_state == PlatformLossState::Lost);
+        CHECK(platform->survivability_margin == doctest::Approx(0.0));
+        CHECK(aircraft.is_alive());
+    }
+
+    TEST_CASE("ECS bridge records chain-linked platform consequence event") {
+        flecs::world world;
+        world.component<ComponentDamageState>();
+        world.component<StructuralBreakupState>();
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        SimulationKernelEngagementEventStore store(world);
+        world.set<EngagementEventRecorderRef>({&store});
+        register_structural_failure_system(world);
+        register_structural_consequence_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "engine_core", 0.10, "structural_weakening");
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<ComponentDamageState>(damage)
+                            .set<Health>({100.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(AircraftDamageState{});
+
+        world.progress(1.0 / 60.0);
+
+        const StructuralBreakupState *breakup = aircraft.get<StructuralBreakupState>();
+        REQUIRE(breakup != nullptr);
+        CHECK(breakup->last_breakup_event_id != 0);
+
+        const RecentEngagementEvents recent = store.export_recent_events_sorted();
+        REQUIRE(recent.structural_breakup_events.size() == 1);
+        REQUIRE(recent.platform_consequence_events.size() == 1);
+        const StructuralBreakupEvent &structural = recent.structural_breakup_events[0];
+        const PlatformConsequenceEvent &consequence = recent.platform_consequence_events[0];
+
+        CHECK(consequence.header.stage == "platform_consequence");
+        CHECK(consequence.header.parent_event_id == structural.header.event_id);
+        CHECK(consequence.header.chain_id == structural.header.chain_id);
+        CHECK(consequence.header.producer_node_id == "damage_system.structural_consequence");
+        CHECK(consequence.header.consumer_visibility == "diagnostics_only");
+        CHECK(consequence.mobility_capability_before == doctest::Approx(1.0));
+        CHECK(consequence.mobility_capability_after == doctest::Approx(0.25));
+        CHECK(consequence.loss_state_from == "combat_capable");
+        CHECK(consequence.loss_state_to == "mobility_kill");
+        CHECK(consequence.forced_landing);
+        CHECK(consequence.engine_delta == doctest::Approx(-0.70));
+        CHECK(consequence.fuel_leak_delta == doctest::Approx(0.30));
+        CHECK(aircraft.is_alive());
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_second_tick = store.export_recent_events_sorted();
+        CHECK(after_second_tick.structural_breakup_events.size() == 1);
+        CHECK(after_second_tick.platform_consequence_events.size() == 1);
+    }
+
+    TEST_CASE("sequential breakup records aircraft-scalar consequence after platform saturation") {
+        flecs::world world;
+        world.component<ComponentDamageState>();
+        world.component<StructuralBreakupState>();
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        SimulationKernelEngagementEventStore store(world);
+        world.set<EngagementEventRecorderRef>({&store});
+        register_structural_failure_system(world);
+        register_structural_consequence_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "wing_spar_center", 0.20, "puncture");
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<ComponentDamageState>(damage)
+                            .set<Health>({100.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(AircraftDamageState{});
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_wing_loss = store.export_recent_events_sorted();
+        REQUIRE(after_wing_loss.platform_consequence_events.size() == 1);
+        const PlatformConsequenceEvent &wing_consequence =
+            after_wing_loss.platform_consequence_events[0];
+        CHECK(wing_consequence.mobility_capability_after == doctest::Approx(0.0));
+        CHECK(wing_consequence.forced_landing);
+
+        ComponentDamageState follow_on_damage = *aircraft.get<ComponentDamageState>();
+        set_component_damage(follow_on_damage, "engine_core", 0.10, "structural_weakening");
+        aircraft.set<ComponentDamageState>(follow_on_damage);
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_engine_detach = store.export_recent_events_sorted();
+        REQUIRE(after_engine_detach.platform_consequence_events.size() == 2);
+        const PlatformConsequenceEvent &engine_consequence =
+            after_engine_detach.platform_consequence_events[1];
+        CHECK(engine_consequence.mobility_capability_before == doctest::Approx(0.0));
+        CHECK(engine_consequence.mobility_capability_after == doctest::Approx(0.0));
+        CHECK(engine_consequence.loss_state_from == "mobility_kill");
+        CHECK(engine_consequence.loss_state_to == "mobility_kill");
+        CHECK(engine_consequence.engine_delta == doctest::Approx(-0.70));
+        CHECK(engine_consequence.fuel_leak_delta == doctest::Approx(0.30));
+        CHECK(engine_consequence.aircraft_damage_state_delta.find("propulsion=-0.700000") !=
+              std::string::npos);
+    }
+
+} // TEST_SUITE
+
+TEST_SUITE("aircraft_damage_lifecycle") {
+
+    TEST_CASE("progressive fire loss remains observable only until ground impact") {
+        flecs::world world;
+        world.component<KeyEntity>();
+        world.component<Health>();
+        world.component<PlatformDamageState>();
+        world.component<AircraftDamageState>();
+        world.component<GroundState>();
+        world.component<PilotAction>();
+        world.component<Propulsion>();
+        world.component<Sensor>();
+        register_aircraft_damage_system(world);
+
+        AircraftDamageState aircraft_damage{};
+        aircraft_damage.fire_severity = 0.35;
+
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<Health>({0.0, 100.0})
+                            .set<PlatformDamageState>(PlatformDamageState{})
+                            .set<AircraftDamageState>(aircraft_damage)
+                            .set<GroundState>({false, 0.0, 0.6, GroundImpactLifecycle::None})
+                            .set<PilotAction>(PilotAction{})
+                            .set<Propulsion>(Propulsion{})
+                            .set<Sensor>(Sensor{});
+
+        world.progress(1.0 / 60.0);
+
+        CHECK(aircraft.is_alive());
+        const AircraftDamageState *airborne_damage = aircraft.get<AircraftDamageState>();
+        REQUIRE(airborne_damage != nullptr);
+        CHECK(airborne_damage->forced_landing_required);
+        CHECK(airborne_damage->flight_control_kill);
+        const Propulsion *airborne_propulsion = aircraft.get<Propulsion>();
+        REQUIRE(airborne_propulsion != nullptr);
+        CHECK(airborne_propulsion->current_thrust_n == doctest::Approx(0.0));
+
+        aircraft.set<GroundState>({true, 0.0, 0.6, GroundImpactLifecycle::CrashedWreck});
+
+        world.progress(1.0 / 60.0);
+
+        CHECK_FALSE(aircraft.is_alive());
     }
 
 } // TEST_SUITE
