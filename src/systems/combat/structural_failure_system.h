@@ -14,7 +14,9 @@
 #include "components/basic/common.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/structural_failure.h"
+#include "components/systems/logistics.h"
 #include "core/interfaces/engagement_event_recorder.h"
+#include "systems/combat/mlf8_lifecycle_events.h"
 
 namespace structural_failure {
 
@@ -531,16 +533,24 @@ inline void register_structural_failure_system(flecs::world &ecs) {
                     StructuralBreakupState next =
                         structural_failure::evaluate_structural_breakup_state(component_damage[i],
                                                                               prior);
-                    if (recorder_ref && recorder_ref->recorder) {
-                        const std::uint64_t last_event_id =
-                            structural_failure::record_structural_transition_events(
-                                *recorder_ref->recorder, static_cast<std::uint64_t>(entity.id()),
-                                prior, next, current_time);
+                    IEngagementEventRecorder *recorder =
+                        recorder_ref ? recorder_ref->recorder : nullptr;
+                    std::uint64_t last_event_id = 0;
+                    if (recorder) {
+                        last_event_id = structural_failure::record_structural_transition_events(
+                            *recorder, static_cast<std::uint64_t>(entity.id()), prior, next,
+                            current_time);
                         if (last_event_id != 0) {
                             next.last_breakup_event_id = last_event_id;
                         }
                     }
                     entity.set<StructuralBreakupState>(next);
+                    const GroundState *ground = entity.get<GroundState>();
+                    if (recorder && last_event_id != 0 && ground &&
+                        mlf8_lifecycle::is_terminal_wreck_lifecycle(ground->lifecycle)) {
+                        mlf8_lifecycle::record_terminal_wreck_lifecycle_for_event(
+                            entity, recorder, ground->lifecycle, current_time, last_event_id);
+                    }
                 }
             }
         });

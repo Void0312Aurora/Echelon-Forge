@@ -85,6 +85,33 @@ struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     }
 };
 
+struct FlatTestEnvironment final : IEnvironmentModel {
+    AtmosphericData get_atmosphere_at(double, double, double) override {
+        return {1.225, 340.0, 101325.0, 288.15, {0.0, 0.0, 0.0}};
+    }
+
+    double get_terrain_elevation(double, double) override { return 0.0; }
+
+    bool check_line_of_sight(double, double, double, double, double, double) override {
+        return true;
+    }
+
+    double get_weather_attenuation(double, double, double, double, double, double, int) override {
+        return 0.0;
+    }
+
+    Vec3 get_sun_direction() override { return {0.0, 0.0, 1.0}; }
+
+    TerrainCell get_terrain_at(double, double) override {
+        return {0.0, SurfaceType::Concrete, 1.0, 0.0, 0.0, 0.0};
+    }
+
+    void clear_zones() override {}
+
+    void add_zone(const std::string &, double, double, double, double, double,
+                  SurfaceType) override {}
+};
+
 struct StructuralStepResult {
     StructuralBreakupState state{};
     std::vector<StructuralBreakupEvent> events;
@@ -635,6 +662,55 @@ TEST_SUITE("aircraft_damage_lifecycle") {
         CHECK(event.debris_count == 0);
         CHECK(event.terminal);
         CHECK(event.terminal_projection_id == 77);
+    }
+
+    TEST_CASE("same tick ground impact and structural breakup records terminal wreck lifecycle") {
+        flecs::world world;
+        FlatTestEnvironment environment;
+        SimulationKernelEngagementEventStore store(world);
+        world.set<EngagementEventRecorderRef>({&store});
+        register_ground_contact_system(world, &environment);
+        register_structural_failure_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "wing_spar_center", 0.20, "puncture");
+
+        auto aircraft = world.entity()
+                            .set<KeyEntity>({UnitType::Aircraft})
+                            .set<ComponentDamageState>(damage)
+                            .set<ForceAccumulator>(ForceAccumulator{})
+                            .set<Transform>({0.0, 0.0, 0.0, 0.0, 0.0, 0.0})
+                            .set<Velocity>({0.0, 0.0, -20.0})
+                            .set<Mass>({10000.0, 0.0, 0.0})
+                            .set<GroundState>(
+                                {false, 0.0, 0.6, GroundImpactLifecycle::None});
+
+        world.progress(1.0 / 60.0);
+
+        const GroundState *ground = aircraft.get<GroundState>();
+        REQUIRE(ground != nullptr);
+        CHECK(ground->lifecycle == GroundImpactLifecycle::CrashedWreck);
+
+        const RecentEngagementEvents recent = store.export_recent_events_sorted();
+        REQUIRE(recent.structural_breakup_events.size() == 2);
+        REQUIRE(recent.lifecycle_transition_events.size() == 3);
+        const std::uint64_t terminal_parent_event_id =
+            recent.structural_breakup_events.back().header.event_id;
+
+        const LifecycleTransitionEvent *terminal = nullptr;
+        for (const LifecycleTransitionEvent &event : recent.lifecycle_transition_events) {
+            if (event.terminal) {
+                terminal = &event;
+            }
+        }
+        REQUIRE(terminal != nullptr);
+        CHECK(terminal->header.parent_event_id == terminal_parent_event_id);
+        CHECK(terminal->header.producer_node_id == "damage_system.ground_lifecycle");
+        CHECK(terminal->header.consumer_visibility == "diagnostics_only");
+        CHECK(terminal->lifecycle_from == "lost_airframe_observable");
+        CHECK(terminal->lifecycle_to == "ground_crashed_wreck");
+        CHECK(terminal->ground_lifecycle == "crashed_wreck");
+        CHECK(terminal->terminal_projection_id == terminal_parent_event_id);
     }
 
     TEST_CASE("progressive fire loss remains observable only until ground impact") {

@@ -67,7 +67,9 @@ debris physics, reward authority, calibrated lethality, or Pk.
 ## MLF-8F: Validation Evidence
 
 - [x] C++ structural lanes cover no-breakup, single detached part, multi-axis
-  detached lifecycle, terminal wreck helper behavior, and no duplicate rows.
+  detached lifecycle, terminal wreck helper behavior, registered
+  GroundContact-before-StructuralFailure same-tick impact/breakup ordering, and
+  no duplicate rows.
 - [x] Python runtime lanes cover facade, binding, engagement contract,
   diagnostics probe, continuous-rod integration, and reward non-leakage.
 - [x] Geometry/edge-case smoke remains green after the MLF-8 branch-specific

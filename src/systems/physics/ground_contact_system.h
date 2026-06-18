@@ -14,6 +14,7 @@
 #include "components/physics/control_law.h" // For ControlLawState (FBW filtered inputs)
 #include "core/interfaces/engagement_event_recorder.h"
 #include "core/interfaces/environment_model.h"
+#include "systems/combat/mlf8_lifecycle_events.h"
 
 namespace {
 // Penalty Method Constants
@@ -73,55 +74,12 @@ inline double canonicalize_environment_scalar(double value) {
     return std::abs(rounded) <= (kEnvironmentScalarCanonicalQuantum * 0.5) ? 0.0 : rounded;
 }
 
-inline bool is_terminal_wreck_lifecycle(GroundImpactLifecycle lifecycle) {
-    return lifecycle == GroundImpactLifecycle::CrashedWreck ||
-           lifecycle == GroundImpactLifecycle::DebrisFragmentResidue;
-}
-
-inline const char *ground_lifecycle_name(GroundImpactLifecycle lifecycle) {
-    switch (lifecycle) {
-    case GroundImpactLifecycle::CrashedWreck:
-        return "crashed_wreck";
-    case GroundImpactLifecycle::DebrisFragmentResidue:
-        return "debris_fragment_residue";
-    case GroundImpactLifecycle::LandedAirframe:
-        return "landed_airframe";
-    case GroundImpactLifecycle::None:
-        break;
-    }
-    return "none";
-}
-
 inline void record_mlf8_terminal_wreck_lifecycle(flecs::entity entity,
                                                  IEngagementEventRecorder *recorder,
                                                  GroundImpactLifecycle lifecycle,
                                                  double source_time_s) {
-    if (!recorder || !is_terminal_wreck_lifecycle(lifecycle)) {
-        return;
-    }
-    const StructuralBreakupState *breakup = entity.get<StructuralBreakupState>();
-    if (!breakup || breakup->last_breakup_event_id == 0) {
-        return;
-    }
-
-    LifecycleTransitionEvent event{};
-    event.header.source_time_s = source_time_s;
-    event.header.confidence = 1.0;
-    event.header.reason = "generic_research_terminal_wreck_lifecycle_projection";
-    event.header.producer_node_id = "damage_system.ground_lifecycle";
-    event.header.consumer_visibility = std::string(kLethalityConsumerVisibilityDiagnosticsOnly);
-    event.lifecycle_from = "lost_airframe_observable";
-    event.lifecycle_to = "ground_crashed_wreck";
-    event.ground_lifecycle = ground_lifecycle_name(lifecycle);
-    event.debris_count = 0;
-    event.terminal = true;
-    event.terminal_projection_id = breakup->last_breakup_event_id;
-
-    (void)recorder->record_lifecycle_transition_event({
-        .target_id = static_cast<std::uint64_t>(entity.id()),
-        .parent_event_id = breakup->last_breakup_event_id,
-        .event = std::move(event),
-    });
+    mlf8_lifecycle::record_terminal_wreck_lifecycle(entity, recorder, lifecycle,
+                                                    source_time_s);
 }
 } // namespace
 
@@ -314,7 +272,7 @@ inline void register_ground_contact_system(flecs::world &ecs, IEnvironmentModel 
                         ground[i].lifecycle = severe_impact ? GroundImpactLifecycle::CrashedWreck
                                                             : GroundImpactLifecycle::LandedAirframe;
                         if (ground[i].lifecycle != prior_lifecycle &&
-                            is_terminal_wreck_lifecycle(ground[i].lifecycle)) {
+                            mlf8_lifecycle::is_terminal_wreck_lifecycle(ground[i].lifecycle)) {
                             record_mlf8_terminal_wreck_lifecycle(it.entity(i), recorder,
                                                                  ground[i].lifecycle, current_time);
                         }

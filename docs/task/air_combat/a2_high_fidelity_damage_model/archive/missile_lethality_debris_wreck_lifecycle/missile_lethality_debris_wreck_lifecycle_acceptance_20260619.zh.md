@@ -56,7 +56,8 @@ P5 聚焦验证、P6 broader smoke 和 P7 归档同步均已完成。
 ## MLF-8F：验证证据
 
 - [x] C++ structural lanes 覆盖 no-breakup、单脱落部件、multi-axis detached lifecycle、
-  terminal wreck helper 和无重复行。
+  terminal wreck helper、真实 GroundContact-before-StructuralFailure 同 tick
+  impact/breakup 顺序和无重复行。
 - [x] Python runtime lanes 覆盖 facade、binding、engagement contract、diagnostics probe、
   continuous-rod integration 和 reward non-leakage。
 - [x] MLF-8 分支修正 fuze expectation 后，geometry/edge-case smoke 仍然为绿。
