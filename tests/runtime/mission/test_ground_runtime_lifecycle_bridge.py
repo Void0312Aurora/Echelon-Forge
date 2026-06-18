@@ -99,7 +99,7 @@ class GroundRuntimeLifecycleBridgeTests(unittest.TestCase):
 class GroundRuntimeSourceBridgeTests(unittest.TestCase):
   def test_batch_envs_use_tasking_bridge_for_command_chain_sync(self) -> None:
     runtime_paths = [
-      REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py",
+      REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "vec_env.py",
       REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py",
     ]
     for path in runtime_paths:

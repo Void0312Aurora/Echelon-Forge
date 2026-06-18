@@ -165,9 +165,7 @@ def test_wp24_legacy_runtime_and_backend_inputs_stay_retired() -> None:
   )
 
 def test_wp24_public_vec_env_runtime_compatibility_flag_is_absent_from_maintained_adapters() -> None:
-  world_batch_source = (
-    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  world_batch_source = world_batch_vec_env_source_text()
   cooperative_source = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
   ).read_text(encoding="utf-8")

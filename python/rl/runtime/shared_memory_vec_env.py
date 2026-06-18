@@ -153,9 +153,18 @@ class SharedMemorySubprocVecEnv(VecEnv):
         self.closed = False
         n_envs = len(env_fns)
 
+        available_start_methods = mp.get_all_start_methods()
         if start_method is None:
-            forkserver_available = "forkserver" in mp.get_all_start_methods()
-            start_method = "forkserver" if forkserver_available else "spawn"
+            start_method = "forkserver" if "forkserver" in available_start_methods else "spawn"
+        elif start_method not in available_start_methods:
+            fallback_start_method = "forkserver" if "forkserver" in available_start_methods else "spawn"
+            warnings.warn(
+                f"multiprocessing start_method={start_method!r} is unavailable on this platform; "
+                f"using {fallback_start_method!r}.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            start_method = fallback_start_method
         ctx = mp.get_context(start_method)
 
         self.remotes, self.work_remotes = zip(*[ctx.Pipe() for _ in range(n_envs)])

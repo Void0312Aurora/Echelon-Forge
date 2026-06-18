@@ -23,6 +23,16 @@ from gym_envs.scenario_loader.runtime_state import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WORLD_BATCH_VEC_ENV = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
+WORLD_BATCH_VEC_ENV_IMPL = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch"
+WORLD_BATCH_VEC_ENV_SOURCE_FILES = (
+  WORLD_BATCH_VEC_ENV_IMPL / "_vec_env_support.py",
+  WORLD_BATCH_VEC_ENV_IMPL / "_visual_backend_mixin.py",
+  WORLD_BATCH_VEC_ENV_IMPL / "_observation_mixin.py",
+  WORLD_BATCH_VEC_ENV_IMPL / "_execution_episode_mixin.py",
+  WORLD_BATCH_VEC_ENV_IMPL / "_air_combat_post_launch_mixin.py",
+  WORLD_BATCH_VEC_ENV_IMPL / "vec_env.py",
+  WORLD_BATCH_VEC_ENV,
+)
 WORLD_BATCH_ADAPTER = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "adapter.py"
 WORLD_BATCH_RUNTIME_ACCESS = REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "runtime_access.py"
 LEADER_WORLD_BATCH_RUNTIME = REPO_ROOT / "python" / "rl" / "runtime" / "leader_world_batch_runtime.py"
@@ -50,7 +60,7 @@ UNIVERSAL_ENV = REPO_ROOT / "gym_envs" / "universal_env.py"
 
 
 def _source() -> str:
-  return WORLD_BATCH_VEC_ENV.read_text(encoding="utf-8")
+  return world_batch_vec_env_source_text()
 
 
 def _adapter_source() -> str:
@@ -72,6 +82,12 @@ def _gpu_bindings_source() -> str:
 def runtime_facade_source_text() -> str:
   return "\n".join(
     path.read_text(encoding="utf-8") for path in RUNTIME_FACADE_SOURCE_FILES
+  )
+
+
+def world_batch_vec_env_source_text() -> str:
+  return "\n".join(
+    path.read_text(encoding="utf-8") for path in WORLD_BATCH_VEC_ENV_SOURCE_FILES
   )
 
 
@@ -138,6 +154,10 @@ def _compat_batch_runtime_consumer_allowlist() -> set[str]:
 
 def _wp22_loader_sim_guard_scope() -> dict[str, tuple[str, ...]]:
   return {
+    "python/rl/runtime/world_batch/vec_env.py": (
+      "handle.loader.sim,",
+      "handle.loader.sim)",
+    ),
     "python/rl/runtime/world_batch_vec_env.py": (
       "handle.loader.sim,",
       "handle.loader.sim)",

@@ -200,9 +200,7 @@ def test_wp24_python_maintained_observation_consumers_do_not_read_compatibility_
   multi_agent_runtime = (
     REPO_ROOT / "python" / "rl" / "runtime" / "multi_agent_runtime.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = (
-    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text()
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
   ).read_text(encoding="utf-8")
@@ -238,9 +236,7 @@ def test_wp24_python_command_chain_business_writes_use_maintained_contracts() ->
   command_chain_cache = (
     REPO_ROOT / "python" / "rl" / "runtime" / "world_batch" / "command_chain_cache.py"
   ).read_text(encoding="utf-8")
-  world_batch_vec_env = (
-    REPO_ROOT / "python" / "rl" / "runtime" / "world_batch_vec_env.py"
-  ).read_text(encoding="utf-8")
+  world_batch_vec_env = world_batch_vec_env_source_text()
   cooperative_vec_env = (
     REPO_ROOT / "python" / "rl" / "runtime" / "cooperative_world_batch_vec_env.py"
   ).read_text(encoding="utf-8")
