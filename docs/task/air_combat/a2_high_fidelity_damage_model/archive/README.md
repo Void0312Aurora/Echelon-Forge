@@ -27,3 +27,6 @@ Current entry:
 - [missile_lethality_secondary_consequence_coupling/](missile_lethality_secondary_consequence_coupling/README.md):
   MLF-7 accepted secondary-consequence bridge from breakup facts into maintained
   aircraft/platform damage and diagnostics.
+- [missile_lethality_debris_wreck_lifecycle/](missile_lethality_debris_wreck_lifecycle/README.md):
+  MLF-8 accepted diagnostics-only detached-part and terminal-wreck lifecycle
+  evidence.

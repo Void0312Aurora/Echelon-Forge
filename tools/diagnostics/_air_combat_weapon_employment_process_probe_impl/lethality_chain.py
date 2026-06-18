@@ -151,6 +151,7 @@ def _lethality_chain_rows(
     standard_component_keys: set[tuple[int, int]] = set()
     standard_component_damage_keys: set[tuple[int, int]] = set()
     standard_platform_keys: set[tuple[int, int]] = set()
+    standard_lifecycle_keys: set[tuple[int, int]] = set()
 
     for nearest_event in list(getattr(engagement_events, "nearest_approach_events", []) or []):
         base_kwargs = _lethality_header_base_kwargs(
@@ -544,6 +545,35 @@ def _lethality_chain_rows(
             (int(row.get("chain_id", 0) or 0), int(row.get("target_id", 0) or 0))
         )
 
+    for lifecycle_event in list(getattr(engagement_events, "lifecycle_transition_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=lifecycle_event,
+            stage=chain_contract.STAGE_LIFECYCLE,
+            source_event_kind="LifecycleTransitionEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "lifecycle_from": str(getattr(lifecycle_event, "lifecycle_from", "") or ""),
+                "lifecycle_to": str(getattr(lifecycle_event, "lifecycle_to", "") or ""),
+                "ground_lifecycle": str(getattr(lifecycle_event, "ground_lifecycle", "") or ""),
+                "wreck_entity_id": _entity_id(getattr(lifecycle_event, "wreck_entity", None)),
+                "debris_count": int(getattr(lifecycle_event, "debris_count", 0) or 0),
+                "lifecycle_terminal": int(bool(getattr(lifecycle_event, "terminal", False))),
+                "terminal_projection_id": _event_id(
+                    lifecycle_event,
+                    "terminal_projection_id",
+                ),
+            }
+        )
+        rows.append(row)
+        standard_lifecycle_keys.add(
+            (int(row.get("chain_id", 0) or 0), int(row.get("target_id", 0) or 0))
+        )
+
     for effect in list(getattr(engagement_events, "effects_events", []) or []):
         effect_id = _event_id(effect, "event_id")
         trace = trace_by_effect.get(effect_id)
@@ -835,15 +865,17 @@ def _lethality_chain_rows(
             )
             rows.append(platform)
 
-        lifecycle = _lethality_base_row(stage=chain_contract.STAGE_LIFECYCLE, **base_kwargs)
-        lifecycle.update(
-            {
-                "damage_report_id": report_id,
-                "destroyed": int(bool(getattr(report, "destroyed", False))),
-                "loss_state": str(getattr(report, "loss_state_to", "") or ""),
-            }
-        )
-        rows.append(lifecycle)
+        lifecycle_key = (int(chain_id), int(target_id))
+        if lifecycle_key not in standard_lifecycle_keys:
+            lifecycle = _lethality_base_row(stage=chain_contract.STAGE_LIFECYCLE, **base_kwargs)
+            lifecycle.update(
+                {
+                    "damage_report_id": report_id,
+                    "destroyed": int(bool(getattr(report, "destroyed", False))),
+                    "loss_state": str(getattr(report, "loss_state_to", "") or ""),
+                }
+            )
+            rows.append(lifecycle)
 
     return rows
 

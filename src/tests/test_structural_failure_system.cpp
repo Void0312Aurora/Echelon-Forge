@@ -7,6 +7,7 @@
 #include "core/interfaces/engagement_event_recorder.h"
 #include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
+#include "systems/physics/ground_contact_system.h"
 
 #include <doctest/doctest.h>
 #include <flecs.h>
@@ -29,6 +30,7 @@ void set_component_damage(ComponentDamageState &damage, const std::string &name,
 struct CapturingStructuralRecorder final : IEngagementEventRecorder {
     std::vector<StructuralBreakupEvent> structural_events;
     std::vector<PlatformConsequenceEvent> platform_consequence_events;
+    std::vector<LifecycleTransitionEvent> lifecycle_transition_events;
 
     EngagementDamageStateSnapshot capture_engagement_damage_state(std::uint64_t) const override {
         return {};
@@ -64,6 +66,7 @@ struct CapturingStructuralRecorder final : IEngagementEventRecorder {
 
     std::uint64_t
     record_structural_breakup_event(EngagementStructuralBreakupEventRecord record) override {
+        record.event.header.event_id = static_cast<std::uint64_t>(structural_events.size() + 1);
         structural_events.push_back(std::move(record.event));
         return static_cast<std::uint64_t>(structural_events.size());
     }
@@ -73,11 +76,19 @@ struct CapturingStructuralRecorder final : IEngagementEventRecorder {
         platform_consequence_events.push_back(std::move(record.event));
         return static_cast<std::uint64_t>(platform_consequence_events.size());
     }
+
+    std::uint64_t
+    record_lifecycle_transition_event(EngagementLifecycleTransitionEventRecord record) override {
+        record.event.header.parent_event_id = record.parent_event_id;
+        lifecycle_transition_events.push_back(std::move(record.event));
+        return static_cast<std::uint64_t>(lifecycle_transition_events.size());
+    }
 };
 
 struct StructuralStepResult {
     StructuralBreakupState state{};
     std::vector<StructuralBreakupEvent> events;
+    std::vector<LifecycleTransitionEvent> lifecycle_events;
 };
 
 StructuralStepResult run_single_aircraft_structural_step(const ComponentDamageState &damage) {
@@ -99,6 +110,7 @@ StructuralStepResult run_single_aircraft_structural_step(const ComponentDamageSt
         result.state = *state;
     }
     result.events = recorder.structural_events;
+    result.lifecycle_events = recorder.lifecycle_transition_events;
     return result;
 }
 
@@ -511,8 +523,10 @@ TEST_SUITE("structural_consequence") {
         const RecentEngagementEvents recent = store.export_recent_events_sorted();
         REQUIRE(recent.structural_breakup_events.size() == 1);
         REQUIRE(recent.platform_consequence_events.size() == 1);
+        REQUIRE(recent.lifecycle_transition_events.size() == 1);
         const StructuralBreakupEvent &structural = recent.structural_breakup_events[0];
         const PlatformConsequenceEvent &consequence = recent.platform_consequence_events[0];
+        const LifecycleTransitionEvent &lifecycle = recent.lifecycle_transition_events[0];
 
         CHECK(consequence.header.stage == "platform_consequence");
         CHECK(consequence.header.parent_event_id == structural.header.event_id);
@@ -526,6 +540,9 @@ TEST_SUITE("structural_consequence") {
         CHECK(consequence.forced_landing);
         CHECK(consequence.engine_delta == doctest::Approx(-0.70));
         CHECK(consequence.fuel_leak_delta == doctest::Approx(0.30));
+        CHECK(lifecycle.header.parent_event_id == structural.header.event_id);
+        CHECK(lifecycle.header.chain_id == structural.header.chain_id);
+        CHECK(lifecycle.header.consumer_visibility == "diagnostics_only");
         CHECK(aircraft.is_alive());
 
         world.progress(1.0 / 60.0);
@@ -533,6 +550,7 @@ TEST_SUITE("structural_consequence") {
         const RecentEngagementEvents after_second_tick = store.export_recent_events_sorted();
         CHECK(after_second_tick.structural_breakup_events.size() == 1);
         CHECK(after_second_tick.platform_consequence_events.size() == 1);
+        CHECK(after_second_tick.lifecycle_transition_events.size() == 1);
     }
 
     TEST_CASE("sequential breakup records aircraft-scalar consequence after platform saturation") {
@@ -589,6 +607,35 @@ TEST_SUITE("structural_consequence") {
 } // TEST_SUITE
 
 TEST_SUITE("aircraft_damage_lifecycle") {
+
+    TEST_CASE("terminal wreck lifecycle helper records only chain-linked structural aircraft") {
+        flecs::world world;
+        world.component<StructuralBreakupState>();
+        CapturingStructuralRecorder recorder;
+        StructuralBreakupState breakup{};
+        breakup.breakup_state = StructuralBreakupPhase::PartialDetachment;
+        breakup.active_break_modes = structural_break_mode_mask(StructuralBreakMode::WingLoss);
+        breakup.active_structural_groups =
+            structural_break_group_mask(StructuralBreakGroup::WingLeft);
+        breakup.detached_part_count = 1;
+        breakup.last_breakup_event_id = 77;
+        auto aircraft = world.entity().set<StructuralBreakupState>(breakup);
+
+        record_mlf8_terminal_wreck_lifecycle(aircraft, &recorder,
+                                             GroundImpactLifecycle::CrashedWreck, 12.5);
+
+        REQUIRE(recorder.lifecycle_transition_events.size() == 1);
+        const LifecycleTransitionEvent &event = recorder.lifecycle_transition_events[0];
+        CHECK(event.header.parent_event_id == 77);
+        CHECK(event.header.producer_node_id == "damage_system.ground_lifecycle");
+        CHECK(event.header.consumer_visibility == "diagnostics_only");
+        CHECK(event.lifecycle_from == "lost_airframe_observable");
+        CHECK(event.lifecycle_to == "ground_crashed_wreck");
+        CHECK(event.ground_lifecycle == "crashed_wreck");
+        CHECK(event.debris_count == 0);
+        CHECK(event.terminal);
+        CHECK(event.terminal_projection_id == 77);
+    }
 
     TEST_CASE("progressive fire loss remains observable only until ground impact") {
         flecs::world world;
@@ -730,11 +777,16 @@ TEST_SUITE("structural_failure_break_modes") {
         CHECK(structural_breakup_has_mode(result.state, StructuralBreakMode::MultiAxis));
         CHECK(result.state.airframe_breakup);
         REQUIRE(result.events.size() == 5);
+        REQUIRE(result.lifecycle_events.size() == result.events.size());
         const StructuralBreakupEvent &multi_axis = result.events.back();
+        const LifecycleTransitionEvent &multi_axis_lifecycle = result.lifecycle_events.back();
         CHECK(multi_axis.breakup_state == "full_breakup");
         CHECK(multi_axis.break_mode == "multi_axis");
         CHECK(multi_axis.detached_part_ref == "multi_axis");
         CHECK(multi_axis.airframe_breakup);
+        CHECK(multi_axis_lifecycle.header.parent_event_id == multi_axis.header.event_id);
+        CHECK(multi_axis_lifecycle.lifecycle_to == "detached_part_debris_fact");
+        CHECK(multi_axis_lifecycle.debris_count == multi_axis.detached_part_count);
     }
 
     TEST_CASE("no-damage baseline produces zero structural breakup events") {
@@ -744,6 +796,7 @@ TEST_SUITE("structural_failure_break_modes") {
         CHECK(result.state.breakup_state == StructuralBreakupPhase::Intact);
         CHECK(result.state.active_break_modes == 0u);
         CHECK(result.events.empty());
+        CHECK(result.lifecycle_events.empty());
     }
 
     TEST_CASE("wing_loss remains irreversible after component integrity is restored") {
@@ -798,6 +851,7 @@ TEST_SUITE("structural_failure_events") {
 
         world.progress(1.0 / 60.0);
         REQUIRE(recorder.structural_events.size() == 2);
+        REQUIRE(recorder.lifecycle_transition_events.size() == 2);
         CHECK(recorder.structural_events[0].breakup_state == "partial_detachment");
         CHECK(recorder.structural_events[0].break_mode == "wing_loss");
         CHECK(recorder.structural_events[0].detached_part_ref == "left_wing");
@@ -809,6 +863,7 @@ TEST_SUITE("structural_failure_events") {
 
         world.progress(1.0 / 60.0);
         CHECK(recorder.structural_events.size() == 2);
+        CHECK(recorder.lifecycle_transition_events.size() == 2);
 
         ComponentDamageState damage_with_engine = damage;
         set_component_damage(damage_with_engine, "engine_core", 0.10, "structural_weakening");
@@ -816,12 +871,16 @@ TEST_SUITE("structural_failure_events") {
 
         world.progress(1.0 / 60.0);
         REQUIRE(recorder.structural_events.size() == 3);
+        REQUIRE(recorder.lifecycle_transition_events.size() == 3);
         CHECK(recorder.structural_events[2].break_mode == "engine_detach");
         CHECK(recorder.structural_events[2].detached_part_ref == "engine_core");
         CHECK(recorder.structural_events[2].detached_part_count == 3);
+        CHECK(recorder.lifecycle_transition_events[2].header.parent_event_id ==
+              recorder.structural_events[2].header.event_id);
 
         world.progress(1.0 / 60.0);
         CHECK(recorder.structural_events.size() == 3);
+        CHECK(recorder.lifecycle_transition_events.size() == 3);
     }
 
     TEST_CASE("undamaged aircraft writes no structural breakup events") {
@@ -863,10 +922,15 @@ TEST_SUITE("structural_failure_events") {
         world.progress(1.0 / 60.0);
 
         REQUIRE(recorder.structural_events.size() == 5);
+        REQUIRE(recorder.lifecycle_transition_events.size() == 5);
         const StructuralBreakupEvent &multi_axis = recorder.structural_events.back();
+        const LifecycleTransitionEvent &multi_axis_lifecycle =
+            recorder.lifecycle_transition_events.back();
         CHECK(multi_axis.breakup_state == "full_breakup");
         CHECK(multi_axis.break_mode == "multi_axis");
         CHECK(multi_axis.airframe_breakup);
+        CHECK(multi_axis_lifecycle.header.parent_event_id == multi_axis.header.event_id);
+        CHECK(multi_axis_lifecycle.debris_count == multi_axis.detached_part_count);
     }
 
     TEST_CASE("event store assigns structural breakup cause from recent component damage") {
@@ -906,6 +970,46 @@ TEST_SUITE("structural_failure_events") {
         CHECK(recorded.header.chain_id != breakup_event_id);
         CHECK(recorded.header.stage == "structural_breakup");
         CHECK(recorded.header.producer_node_id == "damage_system.structural_failure");
+    }
+
+    TEST_CASE("structural breakup emits diagnostics-only detached-part lifecycle event") {
+        flecs::world world;
+        world.component<ComponentDamageState>();
+        world.component<StructuralBreakupState>();
+        world.component<KeyEntity>();
+        SimulationKernelEngagementEventStore store(world);
+        world.set<EngagementEventRecorderRef>({&store});
+        register_structural_failure_system(world);
+
+        ComponentDamageState damage{};
+        set_component_damage(damage, "engine_core", 0.10, "structural_weakening");
+        world.entity().set<KeyEntity>({UnitType::Aircraft}).set<ComponentDamageState>(damage);
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents recent = store.export_recent_events_sorted();
+        REQUIRE(recent.structural_breakup_events.size() == 1);
+        REQUIRE(recent.lifecycle_transition_events.size() == 1);
+        const StructuralBreakupEvent &structural = recent.structural_breakup_events[0];
+        const LifecycleTransitionEvent &lifecycle = recent.lifecycle_transition_events[0];
+
+        CHECK(lifecycle.header.stage == "lifecycle");
+        CHECK(lifecycle.header.parent_event_id == structural.header.event_id);
+        CHECK(lifecycle.header.chain_id == structural.header.chain_id);
+        CHECK(lifecycle.header.producer_node_id == "damage_system.structural_lifecycle");
+        CHECK(lifecycle.header.consumer_visibility == "diagnostics_only");
+        CHECK(lifecycle.lifecycle_from == "attached_airframe_part");
+        CHECK(lifecycle.lifecycle_to == "detached_part_debris_fact");
+        CHECK(lifecycle.ground_lifecycle == "unknown");
+        CHECK(lifecycle.debris_count == structural.detached_part_count);
+        CHECK_FALSE(lifecycle.terminal);
+        CHECK(lifecycle.terminal_projection_id == structural.header.event_id);
+
+        world.progress(1.0 / 60.0);
+
+        const RecentEngagementEvents after_second_tick = store.export_recent_events_sorted();
+        CHECK(after_second_tick.structural_breakup_events.size() == 1);
+        CHECK(after_second_tick.lifecycle_transition_events.size() == 1);
     }
 
 } // TEST_SUITE

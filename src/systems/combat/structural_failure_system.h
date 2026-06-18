@@ -431,6 +431,34 @@ record_structural_breakup_event(IEngagementEventRecorder &recorder, std::uint64_
     });
 }
 
+inline void record_detached_part_lifecycle_event(IEngagementEventRecorder &recorder,
+                                                 std::uint64_t target_id,
+                                                 const StructuralBreakupState &next,
+                                                 std::uint64_t structural_event_id,
+                                                 double source_time_s) {
+    if (structural_event_id == 0 || next.detached_part_count == 0) {
+        return;
+    }
+    LifecycleTransitionEvent event{};
+    event.header.source_time_s = source_time_s;
+    event.header.confidence = 1.0;
+    event.header.reason = "generic_research_detached_part_lifecycle_projection";
+    event.header.producer_node_id = "damage_system.structural_lifecycle";
+    event.header.consumer_visibility = std::string(kLethalityConsumerVisibilityDiagnosticsOnly);
+    event.lifecycle_from = "attached_airframe_part";
+    event.lifecycle_to = "detached_part_debris_fact";
+    event.ground_lifecycle = "unknown";
+    event.debris_count = next.detached_part_count;
+    event.terminal = false;
+    event.terminal_projection_id = structural_event_id;
+
+    (void)recorder.record_lifecycle_transition_event({
+        .target_id = target_id,
+        .parent_event_id = structural_event_id,
+        .event = std::move(event),
+    });
+}
+
 inline std::uint64_t record_structural_transition_events(IEngagementEventRecorder &recorder,
                                                          std::uint64_t target_id,
                                                          const StructuralBreakupState &prior,
@@ -456,6 +484,8 @@ inline std::uint64_t record_structural_transition_events(IEngagementEventRecorde
                 source_time_s);
             event_id != 0) {
             last_event_id = event_id;
+            record_detached_part_lifecycle_event(recorder, target_id, next, event_id,
+                                                 source_time_s);
         }
     }
 
@@ -467,6 +497,8 @@ inline std::uint64_t record_structural_transition_events(IEngagementEventRecorde
                 source_time_s);
             event_id != 0) {
             last_event_id = event_id;
+            record_detached_part_lifecycle_event(recorder, target_id, next, event_id,
+                                                 source_time_s);
         }
     }
     return last_event_id;

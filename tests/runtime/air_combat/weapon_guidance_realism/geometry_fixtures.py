@@ -12,7 +12,12 @@ from .helpers import (
 
 
 class GeometryFixtureRuntimeMixin:
-  def _run_controlled_geometry_case(self, **geometry: float) -> dict[str, object]:
+  def _run_controlled_geometry_case(
+    self,
+    *,
+    expected_fuze_reason: str = "fuze_armed",
+    **geometry: float,
+  ) -> dict[str, object]:
     sim = _make_baseline_kernel()
     sim.set_time_step(0.02)
     _set_legacy_nearest_approach_fuze(sim)
@@ -64,14 +69,24 @@ class GeometryFixtureRuntimeMixin:
     self.assertEqual(int(nearest.header.target.entity_id), red_id)
     self.assertEqual(str(fuze.header.stage), "fuze")
     self.assertEqual(str(fuze.header.status), "evaluated")
-    self.assertEqual(str(fuze.header.reason), "fuze_armed")
+    self.assertEqual(str(nearest.header.reason), expected_fuze_reason)
+    self.assertEqual(str(fuze.header.reason), expected_fuze_reason)
     self.assertEqual(int(fuze.header.chain_id), int(nearest.header.chain_id))
     self.assertEqual(int(fuze.header.parent_event_id), int(nearest.header.event_id))
     self.assertEqual(int(fuze.header.munition.entity_id), missile_id)
     self.assertEqual(int(fuze.header.target.entity_id), red_id)
-    self.assertTrue(bool(fuze.armed))
-    self.assertTrue(bool(fuze.triggered))
-    self.assertEqual(str(fuze.failure_reason), "")
+    if expected_fuze_reason == "fuze_armed":
+      self.assertTrue(bool(fuze.armed))
+      self.assertTrue(bool(fuze.triggered))
+      self.assertEqual(str(fuze.failure_reason), "")
+    elif expected_fuze_reason == "fuze_no_detonation":
+      self.assertTrue(bool(fuze.armed))
+      self.assertFalse(bool(fuze.triggered))
+      self.assertEqual(str(fuze.failure_reason), expected_fuze_reason)
+      self.assertEqual(str(effects.outcome_state), expected_fuze_reason)
+    else:
+      self.assertFalse(bool(fuze.triggered))
+      self.assertEqual(str(fuze.failure_reason), expected_fuze_reason)
     self.assertGreater(float(fuze.trigger_radius_m), 0.0)
     self.assertGreaterEqual(float(fuze.sample), 0.0)
     self.assertLessEqual(float(fuze.sample), 1.0)
@@ -184,6 +199,7 @@ class GeometryFixtureRuntimeMixin:
       red_vy=0.0,
     )
     head_on_high = self._run_controlled_geometry_case(
+      expected_fuze_reason="fuze_no_detonation",
       red_x=0.0,
       red_y=9000.0,
       red_heading=180.0,

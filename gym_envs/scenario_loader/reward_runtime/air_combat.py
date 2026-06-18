@@ -622,6 +622,8 @@ def _standard_damage_fact_projections(events: Any) -> list[dict[str, Any]]:
             continue
         facts.append(_platform_consequence_fact_projection(event))
     for event in list(getattr(events, "lifecycle_transition_events", []) or []):
+        if _event_consumer_visibility(event) == "diagnostics_only":
+            continue
         facts.append(_lifecycle_transition_fact_projection(event))
     facts.sort(key=lambda item: int(item.get("event_id", 0) or 0))
     return facts
@@ -761,6 +763,7 @@ def _standard_lifecycle_terminal_state(
         event
         for event in list(getattr(events, "lifecycle_transition_events", []) or [])
         if _header_target_id(event) == int(entity_id or 0)
+        and _event_consumer_visibility(event) != "diagnostics_only"
     ]
     if not lifecycle_events:
         return False, {}

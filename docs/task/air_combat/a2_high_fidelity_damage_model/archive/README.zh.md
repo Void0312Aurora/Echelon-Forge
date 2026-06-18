@@ -27,3 +27,5 @@
 - [missile_lethality_secondary_consequence_coupling/](missile_lethality_secondary_consequence_coupling/README.zh.md)：
   MLF-7 已验收的二次后果桥接，把断裂事实接入维护中的 aircraft/platform
   damage 和诊断。
+- [missile_lethality_debris_wreck_lifecycle/](missile_lethality_debris_wreck_lifecycle/README.zh.md)：
+  MLF-8 已验收的 diagnostics-only 脱落部件和终端残骸生命周期证据。

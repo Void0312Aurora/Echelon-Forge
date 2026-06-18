@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 CONTRACT_SCHEMA_VERSION = 1
-DIAGNOSTIC_ROW_SCHEMA_VERSION = 7
+DIAGNOSTIC_ROW_SCHEMA_VERSION = 8
 
 STAGE_NEAREST_APPROACH = "nearest_approach"
 STAGE_FUZE = "fuze"

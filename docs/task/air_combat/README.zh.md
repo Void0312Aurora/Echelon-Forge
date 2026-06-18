@@ -98,7 +98,11 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [MLF-7 二次后果耦合](a2_high_fidelity_damage_model/archive/missile_lethality_secondary_consequence_coupling/README.zh.md)；
   MLF-6 已作为具名断裂事实写入器 accepted / archived，accepted / archived MLF-7 bridge 已把这些事实
   投影到维护中的 aircraft damage、platform damage、loss-state 表面和链路关联的
-  `platform_consequence` 诊断；更广 smoke 已绿
+  `platform_consequence` 诊断；更广 smoke 已绿。MLF-8 现已作为 diagnostics-only
+  脱落部件和终端残骸生命周期证据 accepted / archived：
+  [MLF-8 残骸和碎片生命周期](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.zh.md)。
+  它仍不释放一等 debris/wreck 实体、碎片物理、reward 权威、Pk、校准碎片抛散、
+  selected debris-output 权威或具体弹种杀伤结论
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
@@ -148,6 +152,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [archive/a2_high_fidelity_damage_model/README.zh.md](archive/a2_high_fidelity_damage_model/README.zh.md)
 - 损伤效果链 follow-on：
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
+- MLF-8 残骸/碎片生命周期已验收归档：
+  [a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.zh.md](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.zh.md)
 - 高保真武器系统：
   [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
 - 高保真毁伤系统基线：

@@ -211,6 +211,8 @@ def test_engagement_contract_header_exposes_mlf1b_lethality_chain_surface() -> N
       "ground_lifecycle",
       "wreck_entity",
       "debris_count",
+      "terminal",
+      "terminal_projection_id",
     ),
     "TrainingProjectionEvent": (
       "header",

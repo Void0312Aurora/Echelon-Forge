@@ -182,6 +182,13 @@ LETHALITY_CHAIN_ROW_FIELDS = (
     "sensor_kill",
     "destroyed",
     "loss_state",
+    "lifecycle_from",
+    "lifecycle_to",
+    "ground_lifecycle",
+    "wreck_entity_id",
+    "debris_count",
+    "lifecycle_terminal",
+    "terminal_projection_id",
 )
 
 

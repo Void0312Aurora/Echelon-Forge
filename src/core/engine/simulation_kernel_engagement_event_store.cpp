@@ -82,6 +82,12 @@ std::uint64_t find_recent_lethality_event_chain_id(const RecentEngagementEvents 
             return it->header.chain_id;
         }
     }
+    for (auto it = events.platform_consequence_events.rbegin();
+         it != events.platform_consequence_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
     for (auto it = events.component_damage_events.rbegin();
          it != events.component_damage_events.rend(); ++it) {
         if (it->header.event_id == event_id) {
@@ -691,6 +697,43 @@ std::uint64_t SimulationKernelEngagementEventStore::record_platform_consequence_
     return event_id;
 }
 
+std::uint64_t SimulationKernelEngagementEventStore::record_lifecycle_transition_event(
+    EngagementLifecycleTransitionEventRecord record) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    std::uint64_t resolved_chain_id = record.chain_id;
+    if (resolved_chain_id == 0) {
+        resolved_chain_id =
+            find_recent_lethality_event_chain_id(recent_engagement_events_, record.parent_event_id);
+    }
+    if (resolved_chain_id == 0) {
+        resolved_chain_id =
+            find_launch_event_id_for_munition(recent_engagement_events_, record.munition_entity_id);
+    }
+
+    LifecycleTransitionEvent event = std::move(record.event);
+    if (event.terminal_projection_id == 0) {
+        event.terminal_projection_id = record.parent_event_id;
+    }
+    if (event.header.reason.empty()) {
+        event.header.reason = "generic_research_lifecycle_projection";
+    }
+    if (event.header.producer_node_id.empty()) {
+        event.header.producer_node_id = "damage_system.lifecycle_transition";
+    }
+    complete_lethality_header(event.header, std::string(kLethalityChainStageLifecycle), "observed",
+                              event_time_s, event_id, resolved_chain_id, record.parent_event_id,
+                              record.munition_entity_id, record.shooter_id, record.target_id,
+                              current_source_frame(ecs_));
+
+    recent_engagement_events_.lifecycle_transition_events.push_back(std::move(event));
+    cap_recent_events(recent_engagement_events_.lifecycle_transition_events,
+                      kMaxRecentEngagementEvents);
+    return event_id;
+}
+
 std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     EngagementEffectsDamageEventRecord record) {
     const std::uint64_t munition_entity_id = record.munition_entity_id;
@@ -988,6 +1031,10 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
               });
     std::sort(out.platform_consequence_events.begin(), out.platform_consequence_events.end(),
               [](const PlatformConsequenceEvent &lhs, const PlatformConsequenceEvent &rhs) {
+                  return lhs.header.event_id < rhs.header.event_id;
+              });
+    std::sort(out.lifecycle_transition_events.begin(), out.lifecycle_transition_events.end(),
+              [](const LifecycleTransitionEvent &lhs, const LifecycleTransitionEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
     std::sort(out.damage_reports.begin(), out.damage_reports.end(),
