@@ -18,8 +18,10 @@ import ef_py # noqa: E402
 _DB_PATH = resolve_repo_path("examples", "config", "database")
 
 
-def _make_kernel() -> ef_py.SimulationKernel:
+def _make_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
   sim = ef_py.SimulationKernel()
+  if seed is not None:
+    sim.reset(seed)
   if not sim.load_database(_DB_PATH):
     raise AssertionError("failed to load runtime database")
   sim.set_time_step(1.0 / 60.0)
@@ -230,8 +232,8 @@ def _drive_missile_with_truth_track(
   }
 
 
-def _make_baseline_kernel() -> ef_py.SimulationKernel:
-  sim = _make_kernel()
+def _make_baseline_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
+  sim = _make_kernel(seed)
   tuning = sim.get_missile_tuning()
   tuning.sensor_scan_period = 1.0e9
   tuning.sensor_detection_prob = 0.0

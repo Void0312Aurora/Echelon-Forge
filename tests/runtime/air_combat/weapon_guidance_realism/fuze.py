@@ -5,7 +5,7 @@ from .helpers import *
 
 class FuzeRuntimeMixin:
   def test_global_fuze_profile_override_flows_into_runtime_and_effects_event(self) -> None:
-    sim = _make_baseline_kernel()
+    sim = _make_baseline_kernel(seed=2026061000)
 
     profile = ef_py.FuzeProfile()
     profile.type = "laser_proximity"
@@ -230,7 +230,7 @@ class FuzeRuntimeMixin:
 
   def test_online_sensor_fuze_triggers_before_legacy_nearest_point_proxy(self) -> None:
     def run_case(trigger_logic: str) -> tuple[object, object, object]:
-      sim = _make_baseline_kernel()
+      sim = _make_baseline_kernel(seed=2026061000)
       sim.set_time_step(0.02)
 
       profile = ef_py.FuzeProfile()
@@ -315,7 +315,7 @@ class FuzeRuntimeMixin:
     )
 
   def test_proximity_fuze_reliability_failure_records_no_detonation(self) -> None:
-    sim = _make_baseline_kernel()
+    sim = _make_baseline_kernel(seed=2026061000)
     sim.set_time_step(0.02)
 
     profile = ef_py.FuzeProfile()
@@ -494,7 +494,7 @@ class FuzeRuntimeMixin:
     self.assertEqual(int(effects.component_failure_count), 0)
 
   def test_fuze_event_records_detonation_attitude_evidence(self) -> None:
-    sim = _make_baseline_kernel()
+    sim = _make_baseline_kernel(seed=2026061000)
     sim.set_time_step(0.02)
 
     profile = ef_py.FuzeProfile()

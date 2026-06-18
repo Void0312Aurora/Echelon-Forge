@@ -40,6 +40,37 @@ std::uint64_t find_launch_event_id_for_munition(const RecentEngagementEvents &ev
     return 0;
 }
 
+std::uint64_t
+find_recent_component_damage_event_id(const RecentEngagementEvents &events, std::uint64_t target_id,
+                                      const std::vector<std::string> &component_names) {
+    for (auto it = events.component_damage_events.rbegin();
+         it != events.component_damage_events.rend(); ++it) {
+        if (target_id != 0 && it->header.target.entity_id != target_id) {
+            continue;
+        }
+        if (!component_names.empty() && std::find(component_names.begin(), component_names.end(),
+                                                  it->component_name) == component_names.end()) {
+            continue;
+        }
+        return it->header.event_id;
+    }
+    return 0;
+}
+
+std::uint64_t find_recent_component_damage_chain_id(const RecentEngagementEvents &events,
+                                                    std::uint64_t event_id) {
+    if (event_id == 0) {
+        return 0;
+    }
+    for (auto it = events.component_damage_events.rbegin();
+         it != events.component_damage_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    return 0;
+}
+
 template <typename Event> void cap_recent_events(std::vector<Event> &events, std::size_t max_size) {
     while (events.size() > max_size) {
         events.erase(events.begin());
@@ -159,8 +190,17 @@ bool has_positive_component_load(const ComponentMechanismLoadRow &row) {
            positive_finite(row.mechanism_rod_cut_margin);
 }
 
+bool has_material_component_integrity_drop(const ComponentMechanismLoadRow &row) {
+    if (!std::isfinite(row.component_integrity_before) ||
+        !std::isfinite(row.component_integrity_after)) {
+        return false;
+    }
+    return row.component_integrity_before - row.component_integrity_after >= 0.01;
+}
+
 bool is_component_damage_candidate(const ComponentMechanismLoadRow &row) {
     return has_component_identity(row) && has_positive_component_load(row) &&
+           has_material_component_integrity_drop(row) &&
            positive_finite(row.component_failure_probability) &&
            finite_unit_interval(row.component_failure_sample) &&
            row.component_failure_sample <= clamp_unit_interval(row.component_failure_probability);
@@ -507,6 +547,47 @@ std::uint64_t SimulationKernelEngagementEventStore::record_component_damage_even
     return event_id;
 }
 
+std::uint64_t SimulationKernelEngagementEventStore::record_structural_breakup_event(
+    EngagementStructuralBreakupEventRecord record) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    const std::uint64_t launch_event_id =
+        record.chain_id != 0 ? record.chain_id
+                             : find_launch_event_id_for_munition(recent_engagement_events_,
+                                                                 record.munition_entity_id);
+    const std::uint64_t cause_event_id =
+        record.event.cause_event_id != 0
+            ? record.event.cause_event_id
+            : find_recent_component_damage_event_id(recent_engagement_events_, record.target_id,
+                                                    record.contributing_component_names);
+    const std::uint64_t resolved_chain_id =
+        launch_event_id != 0
+            ? launch_event_id
+            : find_recent_component_damage_chain_id(recent_engagement_events_, cause_event_id);
+    const std::uint64_t parent_event_id =
+        record.parent_event_id != 0 ? record.parent_event_id : cause_event_id;
+
+    StructuralBreakupEvent event = std::move(record.event);
+    event.cause_event_id = cause_event_id;
+    if (event.header.reason.empty()) {
+        event.header.reason = "generic_research_structural_breakup_projection";
+    }
+    if (event.header.producer_node_id.empty()) {
+        event.header.producer_node_id = "damage_system.structural_failure";
+    }
+    complete_lethality_header(event.header, std::string(kLethalityChainStageStructuralBreakup),
+                              "observed", event_time_s, event_id, resolved_chain_id,
+                              parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
+
+    recent_engagement_events_.structural_breakup_events.push_back(std::move(event));
+    cap_recent_events(recent_engagement_events_.structural_breakup_events,
+                      kMaxRecentEngagementEvents);
+    return event_id;
+}
+
 std::uint64_t SimulationKernelEngagementEventStore::record_effects_damage_event(
     EngagementEffectsDamageEventRecord record) {
     const std::uint64_t munition_entity_id = record.munition_entity_id;
@@ -796,6 +877,10 @@ RecentEngagementEvents SimulationKernelEngagementEventStore::export_recent_event
               });
     std::sort(out.component_damage_events.begin(), out.component_damage_events.end(),
               [](const ComponentDamageEvent &lhs, const ComponentDamageEvent &rhs) {
+                  return lhs.header.event_id < rhs.header.event_id;
+              });
+    std::sort(out.structural_breakup_events.begin(), out.structural_breakup_events.end(),
+              [](const StructuralBreakupEvent &lhs, const StructuralBreakupEvent &rhs) {
                   return lhs.header.event_id < rhs.header.event_id;
               });
     std::sort(out.platform_consequence_events.begin(), out.platform_consequence_events.end(),

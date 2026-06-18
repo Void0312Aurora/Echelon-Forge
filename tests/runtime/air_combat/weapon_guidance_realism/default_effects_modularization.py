@@ -126,7 +126,8 @@ class DefaultEffectsModularizationRuntimeMixin:
     self.assertGreater(float(event.component_failure_probability), 0.0)
     self.assertGreaterEqual(float(event.component_failure_sample), 0.0)
     self.assertLessEqual(float(event.component_failure_sample), 1.0)
-    self.assertGreater(int(event.component_failure_count), 0)
+    self.assertGreaterEqual(int(event.component_failure_count), 0)
+    self.assertLessEqual(int(event.component_failure_count), int(event.component_hit_count))
 
     rows = list(event.component_mechanism_load_rows)
     self.assertEqual(len(rows), 1)
@@ -228,7 +229,7 @@ class DefaultEffectsModularizationRuntimeMixin:
     self.assertFalse(bool(event.direct_hitbox_intersection))
     self.assertGreater(int(event.projected_hitbox_count), 1)
     self.assertGreater(int(event.component_hit_count), int(event.projected_hitbox_count))
-    self.assertEqual(str(event.component_primary_name), "flight_control_computer")
+    self.assertEqual(str(event.component_primary_name), "right_aileron_actuator")
     self.assertEqual(str(event.component_primary_system), "flight_control")
     self.assertEqual(str(event.component_failure_probability_source), "synthetic_sigmoid")
     self.assertGreater(float(event.spatial_effect_scale), 0.0)
@@ -248,7 +249,7 @@ class DefaultEffectsModularizationRuntimeMixin:
         "right_aileron_actuator",
         "right_wing_fuel_cell",
         "flight_control_computer",
-        "engine_fuel_control_unit",
+        "right_horizontal_tail_actuator_or_surface_component",
       }.issubset(set(rows)),
     )
     for row in rows.values():

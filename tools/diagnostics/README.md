@@ -44,6 +44,10 @@ Current diagnostics and probes:
   - Automates a `visual_downsample` train/eval matrix for visual execution policies and aggregates end metrics by factor.
 - [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
   - Scoped air-combat weapon-employment process probe for debug traces, lethality-chain rows, and hybrid action metrics through a batch=1 `WorldBatchVecEnv` adapter.
+- [structural_breakup_export.py](structural_breakup_export.py)
+  - Thin MLF-6 structural-breakup event export helper. It consumes existing
+    `StructuralBreakupEvent` / `structural_breakup_events` binding objects and
+    normalizes rows plus per-chain summaries without adding a new binding layer.
 - [event_credit_head_probe.py](event_credit_head_probe.py)
   - Unified first-event credit-head diagnostic entry. Use `--mode offline_fit`
     for fixed-batch supervised fitting, or `--mode online_update` for

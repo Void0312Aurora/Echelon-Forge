@@ -10,7 +10,7 @@ from tests.runtime.air_combat.weapon_guidance_realism.helpers import (
 
 
 def _run_live_structured_air_detonation() -> tuple[object, int, int, int]:
-  sim = _make_baseline_kernel()
+  sim = _make_baseline_kernel(seed=2026061000)
   blue_id, red_id = _spawn_geometry_pair(
     sim,
     red_x=13000.0,

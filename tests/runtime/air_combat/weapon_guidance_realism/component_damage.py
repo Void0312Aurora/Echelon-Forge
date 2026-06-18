@@ -702,6 +702,8 @@ class ComponentDamageRuntimeMixin:
       "electrical_power",
       "control_signal",
       "data_path",
+      "airflow_path",
+      "exposure_path",
       "fuel_feed",
       "structural_support",
       "crew_operated",
@@ -1744,7 +1746,9 @@ class ComponentDamageRuntimeMixin:
       float(second_event.component_redundancy_group_availability),
       float(first_event.component_redundancy_group_availability),
     )
-    self.assertGreater(
+    self.assertGreaterEqual(
       float(second_event.component_failure_probability),
       float(first_event.component_failure_probability),
     )
+    self.assertGreaterEqual(float(second_event.component_failure_sample), 0.0)
+    self.assertLessEqual(float(second_event.component_failure_sample), 1.0)

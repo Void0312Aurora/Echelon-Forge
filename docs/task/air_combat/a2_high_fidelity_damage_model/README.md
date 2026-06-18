@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-11` archived pointer / active follow-on navigation. The full project package was moved to
+Status: `2026-06-18` archived pointer / active follow-on navigation, MLF-6 ready for user acceptance. The full project package was moved to
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
 
 This path is retained only as a lightweight work statement for navigation.
@@ -48,6 +48,13 @@ Current A2 follow-ons:
   failure probability, failure mode, and state changes, then hands consequences
   to maintained damage/flight systems, but does not claim crash, structural
   breakup, debris/wreck, Pk, or weapon-specific lethality.
+- [missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md):
+  **active / ready-for-acceptance MLF-6 subproject** consuming MLF-5 component-failure state (ECS
+  `ComponentDamageState`) to write `StructuralBreakupEvent` rows with named
+  break-mode facts. It does NOT modify `structural_integrity`, flight dynamics,
+  or loss-state (those belong to MLF-7). P7 broad regression is green
+  (`447 passed`); archive movement waits for explicit user instruction. No Pk,
+  debris/wreck lifecycle, or weapon-specific lethality claims.
 - [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md):
   accepted / retained follow-on promoted from the hitbox-geometry gap issue; it
   has built reviewable F-16C outer regions, component bindings, distance
@@ -62,13 +69,14 @@ The first mainline execution entry for that issue has now been closed against
 the geometry-only acceptance gate:
 [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
 
-Follow-on structural breakup, wreck/debris, Pk, or weapon-specific
-calibration need separate `docs/agent` subprojects and must not continue inside
-the archived MLF-2, MLF-3, or MLF-4 packages. The continuous-rod fact chain is
-archived; component-failure evidence is now traceable through the MLF-5 archive
-pointer above. Structural breakup, wreck/debris, Pk, or weapon-specific
-calibration still need follow-on subprojects. MLF-3/MLF-4 are archived; they do
-not reopen the sealed A2 package.
+MLF-6 (structural failure / airframe breakup) is an active / ready-for-acceptance
+subproject per `docs/agent`; it is not archived yet:
+[missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md).
+MLF-7 (secondary consequence coupling), MLF-8 (debris/wreck lifecycle),
+MLF-9 (Pk/statistical trends), and MLF-10 (calibration gates) still need
+separate follow-on subprojects. Do not continue inside the archived MLF-2, MLF-3,
+or MLF-4 packages. MLF-3/MLF-4 are archived; they do not reopen the sealed A2
+package.
 
 These follow-ons do not reopen the sealed A2 package or create A9.
 

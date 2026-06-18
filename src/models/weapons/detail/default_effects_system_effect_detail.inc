@@ -245,6 +245,16 @@ void sample_default_effects_component_failure(
             component_row->component_redundancy_group_availability_after =
                 component_sample.group_availability_after;
         }
+        const bool persist_expected_structural_rod_mode =
+            failure_family == "continuous_rod" &&
+            mechanism_load.rod_cut_margin > 0.0 &&
+            mechanism_scale * resolved_component_scale >= 0.08;
+        if (persist_expected_structural_rod_mode) {
+            persist_part_failure_mode_state(
+                component,
+                structural_part_failure_modes(part_failure_modes),
+                context.component_damage);
+        }
         const std::string component_key = damage_component_key(*component);
         const double primary_priority = component_primary_priority_score(
             failure_probability,

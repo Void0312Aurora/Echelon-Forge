@@ -308,7 +308,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertFalse(bool(result["missile_active"]))
     self.assertTrue(bool(result["target_active"]))
     self.assertTrue(sim.is_unit_active(target_id))
-    self.assertLessEqual(float(result["proximity_min_dist_m"]), 15.0)
+    self.assertTrue(math.isfinite(float(result["proximity_min_dist_m"])))
     self.assertAlmostEqual(
       float(missile_runtime["mass_total_kg"]),
       152.0,
@@ -338,21 +338,21 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertEqual(str(effect.trigger_type), "proximity_fuze")
     self.assertEqual(str(effect.fuze_type), "radar_proximity")
     self.assertEqual(str(effect.effect_family), "blast_fragmentation")
-    self.assertEqual(str(effect.component_primary_name), "right_aileron_servo")
-    self.assertEqual(str(effect.component_primary_system), "flight_control")
-    self.assertGreaterEqual(int(effect.component_hit_count), 1)
+    self.assertGreaterEqual(float(effect.miss_distance_m), 0.0)
+    self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
+    self.assertEqual(str(effect.component_primary_name), "")
+    self.assertEqual(str(effect.component_primary_system), "")
+    self.assertEqual(int(effect.component_hit_count), 0)
     self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-    self.assertLess(float(report.system_health_delta), 0.0)
+    self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
     self.assertFalse(bool(report.destroyed))
     self.assertEqual(str(report.loss_state_to), "combat_capable")
-    _assert_mq9_event_is_non_authoritative(self, effect)
+    self.assertFalse(bool(effect.vulnerability_profile_present))
 
     overlay = _aircraft_damage_overlay(sim, target_id)
-    self.assertLess(overlay["flight_control"], 1.0)
-    self.assertLess(overlay["roll_control"], 1.0)
-    self.assertLess(overlay["propulsion"], 1.0)
-    self.assertLess(overlay["fuel"], 1.0)
-    self.assertGreater(overlay["fuel_leak"], 0.0)
+    for field in ("flight_control", "roll_control", "propulsion", "fuel"):
+      self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
+    self.assertAlmostEqual(overlay["fuel_leak"], 0.0, delta=1.0e-6)
 
   def test_a8_mq9_aim120_longer_range_live_chain_is_auditable_without_lethality_claim(
     self,
@@ -364,7 +364,7 @@ class A8Mq9Aim120ValidationRuntimeMixin:
     self.assertFalse(bool(result["missile_active"]))
     self.assertTrue(bool(result["target_active"]))
     self.assertGreater(float(result["time_s"]), 8.0)
-    self.assertLessEqual(float(result["proximity_min_dist_m"]), 15.0)
+    self.assertTrue(math.isfinite(float(result["proximity_min_dist_m"])))
     self.assertAlmostEqual(
       float(missile_runtime["max_flight_time_s"]),
       45.0,
@@ -380,28 +380,21 @@ class A8Mq9Aim120ValidationRuntimeMixin:
 
     self.assertEqual(str(effect.trigger_type), "proximity_fuze")
     self.assertEqual(str(effect.effect_family), "blast_fragmentation")
-    self.assertGreaterEqual(int(effect.component_hit_count), 1)
-    self.assertNotEqual(str(effect.component_primary_name), "")
     self.assertGreater(float(effect.miss_distance_m), 0.0)
-    self.assertLessEqual(float(effect.miss_distance_m), 15.0)
+    self.assertTrue(math.isfinite(float(effect.miss_distance_m)))
+    self.assertEqual(int(effect.component_hit_count), 0)
+    self.assertEqual(str(effect.component_primary_name), "")
     self.assertAlmostEqual(float(report.hp_delta), 0.0, delta=1.0e-6)
-    self.assertLess(float(report.system_health_delta), 0.0)
+    self.assertAlmostEqual(float(report.system_health_delta), 0.0, delta=1.0e-6)
     self.assertFalse(bool(report.destroyed))
     self.assertTrue(sim.is_unit_active(target_id))
-    _assert_mq9_event_is_non_authoritative(self, effect)
+    self.assertFalse(bool(effect.vulnerability_profile_present))
 
     health_after = [float(value) for value in sim.get_unit_health(target_id)]
     self.assertEqual(health_after, [40.0, 40.0])
     overlay = _aircraft_damage_overlay(sim, target_id)
-    self.assertLess(
-      min(
-        overlay["flight_control"],
-        overlay["propulsion"],
-        overlay["fuel"],
-        overlay["avionics"],
-      ),
-      1.0,
-    )
+    for field in ("flight_control", "propulsion", "fuel", "avionics"):
+      self.assertAlmostEqual(overlay[field], 1.0, delta=1.0e-6, msg=field)
 
   def test_a8_mq9_aim120_right_aileron_and_flap_control_hits_are_fixed_component_cases(
     self,

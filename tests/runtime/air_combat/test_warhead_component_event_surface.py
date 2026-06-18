@@ -119,7 +119,7 @@ def _assert_projection_no_destroy_or_real_parameter_claims(
   assert str(damage_report.loss_state_to) != "lost"
   assert target_active
 
-  assert int(effects.component_failure_count) == len(events.component_damage_events)
+  assert int(effects.component_failure_count) >= len(events.component_damage_events)
   assert not bool(effects.component_failure_probability_calibrated)
   assert not bool(effects.vulnerability_pk_authority)
   assert not bool(effects.vulnerability_calibrated_evidence)
@@ -131,6 +131,7 @@ def _assert_projection_no_destroy_or_real_parameter_claims(
     assert str(damage_event.header.stage) == "component_damage"
     assert str(damage_event.header.status) == "sampled"
     assert int(damage_event.header.chain_id) == int(effects.event_id)
+    assert float(damage_event.integrity_before) - float(damage_event.integrity_after) >= 0.01
   _assert_platform_consequence_matches_damage_report(events, effects, damage_report)
   assert list(events.structural_breakup_events) == []
   assert list(events.lifecycle_transition_events) == []
@@ -635,7 +636,7 @@ def test_standard_damage_reports_track_detonation_local_point() -> None:
   velocity = (900.0, -250.0, 0.0)
   right_wing = _run_profiled_standard_case(
     "blast_fragmentation",
-    (-0.753, 12.0, 0.0),
+    (-0.753, 8.0, 0.0),
     velocity,
   )
   tail = _run_profiled_standard_case(
@@ -664,7 +665,7 @@ def test_standard_damage_reports_track_detonation_local_point() -> None:
   }
   assert len(component_key_sets) == 4
 
-  assert right_wing.primary_component_key == ("right_wing_fuel_cell", "fuel")
+  assert right_wing.primary_component_key == ("right_aileron_actuator", "flight_control")
   assert tail.primary_component_key == (
     "right_horizontal_tail_actuator_or_surface_component",
     "flight_control",

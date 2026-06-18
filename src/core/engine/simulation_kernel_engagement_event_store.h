@@ -36,6 +36,9 @@ class SimulationKernelEngagementEventStore final : public IEngagementEventRecord
     std::uint64_t
     record_component_damage_event(EngagementComponentDamageEventRecord record) override;
 
+    std::uint64_t
+    record_structural_breakup_event(EngagementStructuralBreakupEventRecord record) override;
+
     std::uint64_t record_legacy_launch_event(std::uint64_t shooter_id, std::uint64_t target_id,
                                              std::uint64_t spawned_munition_id,
                                              const std::string &selected_launcher,

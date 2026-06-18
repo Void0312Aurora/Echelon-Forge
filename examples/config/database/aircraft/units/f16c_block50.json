@@ -34,15 +34,15 @@
         },
         "hitboxes": [
             {
-                "offset": [6.0, 0.0, 0.0],
-                "size": [3.6, 1.0, 1.0],
+                "offset": [5.6, 0.0, 0.0],
+                "size": [4.4, 1.0, 1.2],
                 "armor": 5.0,
                 "systems": ["radar", "cockpit"],
                 "components": [
                     {
                         "name": "apg68_radar_array",
                         "system": "radar",
-                        "offset": [6.55, 0.0, -0.58],
+                        "offset": [6.55, 0.0, 0.0],
                         "size": [0.95, 0.6, 0.3],
                         "armor": 3.0,
                         "threshold_scale": 1.30,
@@ -266,7 +266,7 @@
                     {
                         "name": "dedicated_intake_lip_or_duct_component",
                         "system": "engine",
-                        "offset": [3.39, 0.0, -0.64],
+                        "offset": [3.39, 0.0, 0.0],
                         "size": [1.00, 0.55, 0.55],
                         "armor": 3.0,
                         "threshold_scale": 1.08,
@@ -313,7 +313,7 @@
             },
             {
                 "offset": [-6.0, 0.0, 0.0],
-                "size": [3.0, 1.1, 1.1],
+                "size": [3.0, 4.0, 2.2],
                 "armor": 10.0,
                 "systems": ["engine", "flight_control"],
                 "components": [
@@ -479,7 +479,7 @@
                     {
                         "name": "left_wing_fuel_cell",
                         "system": "fuel",
-                        "offset": [-0.8, -2.8, -0.985],
+                        "offset": [-0.8, -2.8, 0.0],
                         "size": [1.2, 1.2, 0.20],
                         "armor": 2.0,
                         "threshold_scale": 1.25,
@@ -498,7 +498,7 @@
                     {
                         "name": "right_wing_fuel_cell",
                         "system": "fuel",
-                        "offset": [-0.8, 2.8, -0.985],
+                        "offset": [-0.8, 2.8, 0.0],
                         "size": [1.2, 1.2, 0.20],
                         "armor": 2.0,
                         "threshold_scale": 1.25,
@@ -517,7 +517,7 @@
                     {
                         "name": "left_aileron_actuator",
                         "system": "flight_control",
-                        "offset": [-0.8, -4.1, -0.985],
+                        "offset": [-0.8, -4.1, 0.0],
                         "size": [0.9, 0.8, 0.22],
                         "armor": 3.0,
                         "threshold_scale": 1.35,
@@ -540,7 +540,7 @@
                     {
                         "name": "right_aileron_actuator",
                         "system": "flight_control",
-                        "offset": [-0.8, 4.1, -0.985],
+                        "offset": [-0.8, 4.1, 0.0],
                         "size": [0.9, 0.8, 0.22],
                         "armor": 3.0,
                         "threshold_scale": 1.35,
@@ -582,7 +582,7 @@
                     {
                         "name": "left_leading_edge_flap_actuator",
                         "system": "flight_control",
-                        "offset": [-0.2, -1.15, -0.71],
+                        "offset": [-0.2, -1.15, 0.0],
                         "size": [0.8, 0.5, 0.18],
                         "armor": 3.0,
                         "threshold_scale": 1.30,
@@ -605,7 +605,7 @@
                     {
                         "name": "right_leading_edge_flap_actuator",
                         "system": "flight_control",
-                        "offset": [-0.2, 1.15, -0.71],
+                        "offset": [-0.2, 1.15, 0.0],
                         "size": [0.8, 0.5, 0.18],
                         "armor": 3.0,
                         "threshold_scale": 1.30,

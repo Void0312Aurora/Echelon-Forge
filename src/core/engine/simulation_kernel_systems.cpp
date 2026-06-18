@@ -2,6 +2,7 @@
 #include "simulation_kernel_engagement_event_store.h"
 
 #include "components/combat/scoring.h"
+#include "components/combat/structural_failure.h"
 #include "components/domains/air/combat/damage_air.h"
 #include "components/combat/common/damage_common.h"
 #include "components/combat/health.h"
@@ -37,6 +38,7 @@
 #include "systems/combat/damage_system_naval.h"
 #include "systems/combat/guidance_system.h"
 #include "systems/combat/pilot_weapon_release_system.h"
+#include "systems/combat/structural_failure_system.h"
 #include "systems/core/operation_system.h"
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
 #include "systems/domains/naval/naval_logistics_system.h"
@@ -152,6 +154,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<HitboxConfig>();
     ecs.component<SystemHealth>();
     ecs.component<ComponentDamageState>();
+    ecs.component<StructuralBreakupState>();
     ecs.component<PlatformDamageState>();
     ecs.component<AircraftDamageState>();
     ecs.component<AircraftDamageBaseline>();
@@ -213,6 +216,7 @@ void SimulationKernel::register_components_and_systems() {
     register_instrument_system(ecs);    // Phase 6.6: Instruments (Read Physics & Sensor State)
     register_damage_system_common(ecs); // Phase 7: Damage/Effects
     register_aircraft_damage_system(ecs);
+    register_structural_failure_system(ecs);
     register_naval_damage_system(ecs);
     register_ground_damage_system(ecs);
     register_ew_system(ecs);              // Phase 8: EW Actions

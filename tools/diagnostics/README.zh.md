@@ -34,6 +34,10 @@
   - 自动执行 `visual_downsample` 训练/评估矩阵，用于视觉执行策略，并按因子聚合最终指标。
 - [air_combat_weapon_employment_process_probe.py](air_combat_weapon_employment_process_probe.py)
   - 受限 air-combat 武器使用过程 probe，通过 batch=1 `WorldBatchVecEnv` adapter 输出 debug trace、lethality-chain 行与 hybrid action metrics。
+- [structural_breakup_export.py](structural_breakup_export.py)
+  - 轻量 MLF-6 结构断裂事件导出 helper。它消费现有
+    `StructuralBreakupEvent` / `structural_breakup_events` 绑定对象，规范化
+    rows 和 per-chain summaries，不新增绑定层。
 - [event_credit_head_probe.py](event_credit_head_probe.py)
   - 统一的 first-event credit-head 诊断入口。使用 `--mode offline_fit`
     运行 fixed-batch supervised fit，或使用 `--mode online_update`
