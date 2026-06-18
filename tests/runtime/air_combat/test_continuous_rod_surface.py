@@ -358,6 +358,7 @@ def _run_component_cut_case(
   family: str,
   local: tuple[float, float, float],
   velocity: tuple[float, float, float] = (900.0, -250.0, 0.0),
+  step_after_hit: bool = False,
 ) -> _ComponentCutCase:
   sim = ef_py.SimulationKernel()
   sim.reset(20260611)
@@ -376,6 +377,9 @@ def _run_component_cut_case(
     float(velocity[2]),
   )
   assert ok
+
+  if step_after_hit:
+    sim.step()
 
   events = sim.export_recent_engagement_events()
   assert len(events.effects_events) == 1
@@ -396,21 +400,29 @@ def _run_component_cut_case(
   )
 
 
-def _assert_no_downstream_failure_or_consequence_events(case: _ComponentCutCase) -> None:
-  assert list(case.events.component_damage_events) == []
-  assert list(case.events.structural_breakup_events) == []
-  assert list(case.events.lifecycle_transition_events) == []
-  assert list(case.events.training_projection_events) == []
-
-
 def _assert_no_platform_consequence_events(case: _ComponentCutCase) -> None:
   assert list(case.events.structural_breakup_events) == []
   assert list(case.events.lifecycle_transition_events) == []
   assert list(case.events.training_projection_events) == []
 
 
+def _assert_no_lifecycle_or_training_events(case: _ComponentCutCase) -> None:
+  assert list(case.events.lifecycle_transition_events) == []
+  assert list(case.events.training_projection_events) == []
+
+
+def _assert_wing_loss_event(case: _ComponentCutCase, detached_part_ref: str) -> None:
+  assert any(
+    str(event.break_mode) == "wing_loss"
+    and str(event.detached_part_ref) == detached_part_ref
+    for event in case.events.structural_breakup_events
+  )
+
+
 def _assert_component_damage_events_match_failed_rows(
   case: _ComponentCutCase,
+  *,
+  allow_structural_breakup: bool = False,
 ) -> None:
   damages = list(case.events.component_damage_events)
   assert damages
@@ -425,7 +437,10 @@ def _assert_component_damage_events_match_failed_rows(
     )
     assert float(damage.failure_sample) == float(row.component_failure_sample)
     assert float(damage.integrity_after) == float(row.component_integrity_after)
-  _assert_no_platform_consequence_events(case)
+  if allow_structural_breakup:
+    _assert_no_lifecycle_or_training_events(case)
+  else:
+    _assert_no_platform_consequence_events(case)
 
 
 def _assert_component_load_rows_match_events(case: _ComponentCutCase) -> None:
@@ -468,7 +483,11 @@ def _primary_source_row(case: _ComponentCutCase) -> object:
 
 
 def test_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
-  case = _run_component_cut_case("continuous_rod", (-0.753, 7.1, -0.985))
+  case = _run_component_cut_case(
+    "continuous_rod",
+    (-0.753, 7.1, -0.985),
+    step_after_hit=True,
+  )
 
   assert str(case.effects.effect_family) == "continuous_rod"
   assert {str(row.component_name) for row in case.source_rows} == {
@@ -481,7 +500,8 @@ def test_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
   assert all(float(load.rod_cut_margin) > 0.0 for load in case.component_loads)
 
   _assert_component_load_rows_match_events(case)
-  _assert_no_downstream_failure_or_consequence_events(case)
+  _assert_wing_loss_event(case, "right_wing")
+  _assert_no_lifecycle_or_training_events(case)
 
   primary_row = _primary_source_row(case)
   assert str(case.effects.component_primary_name) == "right_aileron_actuator"
@@ -491,7 +511,11 @@ def test_spatial_component_rows_expose_continuous_rod_cut_facts() -> None:
 
 
 def test_component_center_projection_uses_spatial_load_source() -> None:
-  case = _run_component_cut_case("continuous_rod", (-0.8, 4.1, -0.985))
+  case = _run_component_cut_case(
+    "continuous_rod",
+    (-0.8, 4.1, -0.985),
+    step_after_hit=True,
+  )
 
   assert str(case.effects.effect_family) == "continuous_rod"
   assert [str(row.component_name) for row in case.source_rows] == [
@@ -503,17 +527,30 @@ def test_component_center_projection_uses_spatial_load_source() -> None:
   assert all(not bool(load.direct_hit) for load in case.component_loads)
   assert str(case.effects.component_primary_name) == "right_aileron_actuator"
   assert float(case.effects.component_primary_mechanism_rod_cut_margin) > 0.0
-  assert float(case.component_loads[0].rod_cut_margin) == float(
+  primary_row = _primary_source_row(case)
+  assert float(primary_row.mechanism_rod_cut_margin) == float(
     case.effects.component_primary_mechanism_rod_cut_margin
   )
 
   _assert_component_load_rows_match_events(case)
-  _assert_component_damage_events_match_failed_rows(case)
+  _assert_component_damage_events_match_failed_rows(
+    case,
+    allow_structural_breakup=True,
+  )
+  _assert_wing_loss_event(case, "right_wing")
 
 
 def test_local_side_changes_emphasized_component_rows() -> None:
-  right = _run_component_cut_case("continuous_rod", (-0.753, 7.1, -0.985))
-  left = _run_component_cut_case("continuous_rod", (-0.753, -7.1, -0.985))
+  right = _run_component_cut_case(
+    "continuous_rod",
+    (-0.753, 7.1, -0.985),
+    step_after_hit=True,
+  )
+  left = _run_component_cut_case(
+    "continuous_rod",
+    (-0.753, -7.1, -0.985),
+    step_after_hit=True,
+  )
 
   assert str(right.effects.component_primary_name) == "right_aileron_actuator"
   assert str(left.effects.component_primary_name) == "left_aileron_actuator"
@@ -532,8 +569,10 @@ def test_local_side_changes_emphasized_component_rows() -> None:
 
   _assert_component_load_rows_match_events(right)
   _assert_component_load_rows_match_events(left)
-  _assert_no_downstream_failure_or_consequence_events(right)
-  _assert_no_downstream_failure_or_consequence_events(left)
+  _assert_wing_loss_event(right, "right_wing")
+  _assert_wing_loss_event(left, "left_wing")
+  _assert_no_lifecycle_or_training_events(right)
+  _assert_no_lifecycle_or_training_events(left)
 
 
 def test_non_rod_component_projection_carries_no_rod_cut_facts() -> None:

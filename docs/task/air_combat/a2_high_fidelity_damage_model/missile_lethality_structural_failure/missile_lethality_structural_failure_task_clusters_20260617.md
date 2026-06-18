@@ -1,10 +1,10 @@
 # MLF-6 Structural Failure — Task Clusters
 
-Status: `2026-06-18` v8 finite task-cluster plan. P1/P2, P3, P4, P5,
-and P6 focused validation are complete; P7 is complete after obsolete-oracle
-updates and the full air_combat/world_batch lane is green. Archive movement is
-held only by explicit user instruction. Matches [README.md](README.md) phase
-plan (P0-P7).
+Status: `2026-06-18` v10 finite task-cluster plan. P1/P2, P3, P4, P5,
+P6 focused validation, P7 broad regression, and the v10 near-field continuous
+rod / cumulative wing-loss calibration are complete. Archive movement is held
+only by explicit user instruction. Matches [README.md](README.md) phase plan
+(P0-P7).
 
 ## Boundary Decision
 

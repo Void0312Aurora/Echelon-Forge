@@ -1,11 +1,13 @@
 # MLF-6 Structural Failure — Acceptance
 
-Status: `2026-06-18` v8 ready-for-acceptance gate. P1/P2 design inputs,
+Status: `2026-06-18` v10 ready-for-acceptance gate. P1/P2 design inputs,
 P3 state machine evidence, P4 event-writer evidence, P5 diagnostic export
 evidence, P6 focused validation evidence, and P7 broad-regression evidence
 are collected. P7 obsolete-oracle updates now produce a clean full
-air_combat/world_batch lane (`447 passed`). Archive movement is withheld until
-explicit user instruction.
+air_combat/world_batch lane (`447 passed`). v10 additionally validates that
+continuous-rod beam-side proxy standoff cases produce `wing_loss` through
+`4 m`, while `8 m` and `14 m` remain non-breakup. Archive movement is withheld
+until explicit user instruction.
 
 ## Acceptance Scope
 
@@ -45,6 +47,8 @@ below. `[x]` = met. `[~]` = intentionally held by instruction.
 - [x] Each structural group has an explicit cumulative integrity-drop threshold
   that triggers its break mode.
 - [x] Thresholds are justified by engineering rationale (not arbitrary).
+- [x] Near-field cumulative wing-loss rule handles close continuous-rod `cut`
+  damage without relaxing all break-mode thresholds.
 - [x] Mapping table is a design doc only; no implementation without explicit
   approval.
 
@@ -77,7 +81,9 @@ below. `[x]` = met. `[~]` = intentionally held by instruction.
 - [x] `detached_part_count` increments correctly when new parts detach.
 - [x] `airframe_breakup` is `true` only when `breakup_state == full_breakup`.
 - [x] `cause_event_id` references the most recent `ComponentDamageEvent::event_id`
-  for the contributing component group.
+  for the contributing component group when such an event row exists. Near-field
+  deterministic cut-state breakups may report `0` when the stochastic
+  component-damage event row was not emitted.
 - [x] No-damage baseline produces zero events (no false positives).
 - [x] System does NOT modify `structural_integrity`, `FlightModel`, `Propulsion`,
   `Health`, or `PlatformDamageState` (per D2).
@@ -102,6 +108,8 @@ below. `[x]` = met. `[~]` = intentionally held by instruction.
   `breakup_state = full_breakup`. 1-family → `partial_detachment`, 2-family →
   `partial_breakup`.
 - [x] No-damage baseline produces zero events.
+- [x] Close continuous-rod wing-side cumulative cut damage produces `wing_loss`;
+  functional cumulative wing damage still produces zero structural events.
 - [x] State irreversibility is tested: once `wing_loss` is set in
   `StructuralBreakupState` (D7), restoring `ComponentDamageState` component
   integrity does not clear the `wing_loss` flag.
@@ -120,7 +128,7 @@ below. `[x]` = met. `[~]` = intentionally held by instruction.
 ## MLF-6I: Acceptance And Archive (P7)
 
 - [x] This acceptance checklist is complete and ready for user acceptance.
-- [x] Current status doc reflects the v8 ready-for-acceptance state.
+- [x] Current status doc reflects the v10 near-field cumulative calibration.
 - [x] Dispatch queue is closed for implementation packets.
 - [x] Parent A2 README keeps MLF-6 at active / ready-for-acceptance status.
 - [x] Air combat README retains MLF-6 as active follow-on work.
@@ -149,3 +157,4 @@ below. `[x]` = met. `[~]` = intentionally held by instruction.
 | MLF6-R2 | P5 diagnostics probe was not implemented yet. | low | closed by v5 focused export tests |
 | MLF6-R3 | P7 full air_combat/world_batch regression smoke was initially red. | medium | closed by v8: `447 passed` |
 | MLF6-R4 | Archive movement is intentionally withheld until explicit user instruction. | medium | held / no archive by request |
+| MLF6-R5 | Close continuous-rod proxy standoff initially produced structure-damage deltas but zero breakup events. | medium | closed by v10: 43 standoff breakup records total; continuous_rod = 40, beam-side `0.5/1/2/4 m` records break, `8/14 m` records do not |

@@ -1,11 +1,12 @@
 # MLF-6 Structural Failure — Current Status
 
-Status: `2026-06-18` active v8 ready-for-acceptance — P1/P2 corrected, P3 state
+Status: `2026-06-18` active v10 ready-for-acceptance — P1/P2 corrected, P3 state
 machine implemented, P4 event writer connected to the event store/facade,
 P5 diagnostic export implemented, P6 focused validation complete, and P7
-broader regression is green after obsolete-oracle updates. Archive movement is
-still withheld per user instruction; this package is ready for user acceptance,
-not yet archived.
+broader regression is green after obsolete-oracle updates. v10 corrects the
+continuous-rod near-field structural cut path and refreshes the retained
+standoff/heatmap evidence. Archive movement is still withheld per user
+instruction; this package is ready for user acceptance, not yet archived.
 Seven design decisions (D1-D7) frozen.
 
 ## What Changed (v1 → v2)
@@ -123,18 +124,69 @@ Seven design decisions (D1-D7) frozen.
   archival, so the package remains active / ready-for-acceptance until explicit
   user acceptance/archive instruction.
 
+## What Changed (v8 → v9)
+
+- **Calibrated near-field cumulative wing-loss for close rod cuts.** The wing
+  rule now keeps the deep-failure 0.25 threshold and adds a same-side weighted
+  cumulative rule: 2+ structurally-damaging wing members with at least 0.05
+  weighted loss each and at least 0.20 weighted total. This first pass still
+  relied mostly on generic integrity loss and exposed the close-rod residual
+  that v10 closes.
+- **Connected geometry standoff probes to post-hit structural events.**
+  `target_geometry_lethality_matrix_probe.py` now advances one ECS step after
+  a debug proximity hit, allowing `StructuralFailureUpdate` to write
+  `StructuralBreakupEvent` rows before the report exports recent events.
+- **Rebuilt the retained standoff report and heatmaps.** The initial v9 run made
+  the structural-event layer visible but was still too conservative for
+  continuous-rod standoff beyond the closest beam cells, which is why the v10
+  cut-mode-severity fix was required.
+- **Focused validation remains green.**
+  `ctest --test-dir build-workshop -R structural_failure --output-on-failure`
+  passes 3/3; `PYTHONPATH=build-workshop:. pytest -q tests/tools/test_target_geometry_lethality_matrix_probe.py tests/tools/test_target_geometry_damage_event_trace.py`
+  passes 11/11.
+
+## What Changed (v9 → v10)
+
+- **Fixed the continuous-rod near-field structural path.** The default effects
+  model now persists expected structural cut-mode state for continuous-rod
+  component rows even when the stochastic component-damage event row is not
+  emitted. The final chain keeps the baseline narrow continuous-rod spatial
+  projection; the fix is carried by structural mode state, not by widening the
+  projected component set.
+- **Made MLF-6 consume structural mode severity, not just generic integrity
+  loss.** The near-field cumulative wing-loss rule now uses
+  `max(1 - integrity, structural_mode_loss(mode, severity))`, so close rod
+  cuts are not erased by the generic probability-scaled integrity formula.
+  `cut` maps to `0.28 * severity` before the rule's 1.40x near-field weight.
+- **Rebuilt retained standoff evidence.**
+  `target_geometry_proxy_standoff_grid_probe_20260615.json` now reports 43
+  structural-breakup records: 3 blast-fragmentation records and 40
+  continuous-rod records. Continuous-rod breakups are beam-side `wing_loss`
+  records at `0.5/1/2/4 m`; `8 m` and `14 m` remain non-breakup.
+- **Rebuilt the smaller lethality matrix report.**
+  `target_geometry_lethality_matrix_probe_20260614.json` now reports 10
+  structural-breakup events, all in continuous-rod wing-side cases
+  (`right_beam_near_7m`, `left_beam_near_7m`, direct aileron/fuel cases);
+  `right_beam_far_14m` remains non-breakup.
+- **Updated runtime/tool oracles to the new structural behavior.**
+  `test_continuous_rod_surface.py` now expects wing-side continuous-rod
+  structural events after one ECS step, and the lethality matrix test now
+  accepts continuous-rod structural breakups while preserving the 14 m
+  far-field non-breakup guard.
+
 ## Maturity Matrix
 
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | MLF-6 boundary (P0) | active | [README.md](README.md) v2, D1-D7 frozen, [task clusters](missile_lethality_structural_failure_task_clusters_20260617.md), [dispatch queue](missile_lethality_structural_failure_dispatch_queue_20260617.md), [acceptance gate](missile_lethality_structural_failure_acceptance_20260617.md) | Scope remains frozen |
 | MLF-6 component inventory (P1) | complete | [component inventory](missile_lethality_structural_failure_component_inventory_20260617.md); write-count validation passes | Read-only doc |
-| MLF-6 break-mode mapping (P2) | complete | [break-mode mapping](missile_lethality_structural_failure_break_mode_mapping_20260617.md); default 26 + TG-P7 32 coverage validation passes | Design doc; consumed by P3 |
+| MLF-6 break-mode mapping (P2) | complete / v10 calibrated | [break-mode mapping](missile_lethality_structural_failure_break_mode_mapping_20260617.md); default 26 + TG-P7 32 coverage validation passes; near-field cumulative wing-loss rule documents mode-severity contribution | Design doc; consumed by P3 |
 | MLF-6 state machine (P3) | complete | `src/components/combat/structural_failure.h`, `src/systems/combat/structural_failure_system.h`, `src/tests/test_structural_failure_system.cpp`; `ef_test --test-suite=structural_failure_state` passes | Writes only new `StructuralBreakupState` |
 | MLF-6 event writer (P4) | complete | `src/systems/combat/structural_failure_system.h`, `src/core/engine/simulation_kernel_engagement_event_store.*`, `src/runtime/facade/runtime_facade.cpp`; `ef_test --test-suite=structural_failure_events` | Event-store extension of P3 |
 | MLF-6 diagnostics (P5) | complete | `tools/diagnostics/structural_breakup_export.py`, `tests/tools/test_structural_breakup_export.py`; `pytest -q tests/tools/test_structural_breakup_export.py` | Python probe; existing bindings only |
 | MLF-6 focused tests (P6) | complete | `structural_failure_break_modes`; `ctest --test-dir build-workshop -R structural_failure --output-on-failure` | Focused C++ coverage |
 | MLF-6 regression (P7) | complete / ready for acceptance | `PYTHONPATH=build-workshop:. pytest -q tests/runtime/air_combat/ tests/world_batch/` → `447 passed`; focused MLF-6 lanes green | No archive movement until explicit user instruction |
+| MLF-6 geometry standoff validation | complete / v10 focused evidence | `target_geometry_proxy_standoff_grid_probe_20260615.json`: 43 structural-breakup records; blast_fragmentation = 3, continuous_rod = 40; continuous_rod beam-side `0.5/1/2/4 m` records break, `8/14 m` records do not | Engineering proxy only; no real weapon structural-kill authority |
 | `StructuralBreakupEvent` contract | active / writer connected | `engagement_contracts.h`, `structural_failure_system.h` | Contract populated by P4; no aero/loss coupling |
 | `structural_breakup_events` vector | active / populated and exportable | `engagement_event_types.h`, `simulation_kernel_engagement_event_store.cpp`, `runtime_facade.cpp`, `structural_breakup_export.py` | Collector stores breakup facts; P7 broad regression is green; MLF-6 still does not consume aero/loss-state authority |
 | `ComponentDamageState` (ECS) | active / MLF-6 read surface | `damage_common.h` | MLF-6 reads; does not mutate |

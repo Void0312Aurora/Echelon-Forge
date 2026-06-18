@@ -773,8 +773,10 @@ def test_mlf5c_mechanism_load_buckets_can_select_fragment_density_and_surface_in
       database_path=db_dir,
     )
 
-  assert float(normal_event.mechanism_surface_incidence_cos) > 0.5
-  assert float(oblique_event.mechanism_surface_incidence_cos) < 0.5
+  normal_row = _row_for_component(normal_event, "right_aileron_actuator")
+  oblique_row = _row_for_component(oblique_event, "right_aileron_actuator")
+  assert float(normal_row.mechanism_surface_incidence_cos) > 0.5
+  assert float(oblique_row.mechanism_surface_incidence_cos) < 0.5
   assert float(normal_event.component_failure_probability) == 0.61
   assert float(oblique_event.component_failure_probability) == 0.19
   assert str(normal_event.component_failure_probability_evidence_row_id) == (

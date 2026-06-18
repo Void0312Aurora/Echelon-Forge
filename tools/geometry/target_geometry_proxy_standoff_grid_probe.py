@@ -86,7 +86,11 @@ ASPECT_DIRECTIONS: tuple[tuple[str, tuple[float, float]], ...] = (
 
 
 def _relative_path(path: Path) -> str:
-  return str(path.resolve().relative_to(REPO_ROOT))
+  resolved = path.resolve()
+  try:
+    return str(resolved.relative_to(REPO_ROOT))
+  except ValueError:
+    return str(resolved)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -477,6 +481,23 @@ def _event_record(
     "proxy_component_failure_count": int(event["component_failure_count"]),
     "proxy_projected_hitbox_count": int(event["projected_hitbox_count"]),
     "proxy_direct_hitbox_intersection": bool(event["direct_hitbox_intersection"]),
+    "proxy_component_damage_event_count": int(event["component_damage_event_count"]),
+    "proxy_component_failure_event_count": int(event["component_failure_event_count"]),
+    "proxy_component_failure_observed": bool(event["component_failure_observed"]),
+    "proxy_component_damage_event_names": list(event["component_damage_event_names"]),
+    "proxy_system_health_delta": float(event["system_health_delta"]),
+    "proxy_structure_hit": bool(event["structure_hit"]),
+    "proxy_structure_spatial_scale": float(event["structure_spatial_scale"]),
+    "proxy_structure_integrity_after": float(event["structure_integrity_after"]),
+    "proxy_structure_damage_delta": float(event["structure_damage_delta"]),
+    "proxy_structure_damage_observed": bool(event["structure_damage_observed"]),
+    "proxy_aircraft_damage_state_delta": str(event["aircraft_damage_state_delta"]),
+    "proxy_structural_breakup_event_count": int(
+      event["structural_breakup_event_count"]
+    ),
+    "proxy_structural_breakup_observed": bool(event["structural_breakup_observed"]),
+    "proxy_structural_breakup_modes": list(event["structural_breakup_modes"]),
+    "proxy_structural_breakup_part_refs": list(event["structural_breakup_part_refs"]),
   }
 
 
@@ -504,12 +525,20 @@ def _heatmap_matrix(
   primary_distance_matrix: list[list[float | None]] = []
   event_max_matrix: list[list[float | None]] = []
   event_max_component_matrix: list[list[str]] = []
+  component_failure_observed_matrix: list[list[bool | None]] = []
+  structure_damage_delta_matrix: list[list[float | None]] = []
+  structure_damage_observed_matrix: list[list[bool | None]] = []
+  structural_breakup_observed_matrix: list[list[bool | None]] = []
   for aspect in aspects:
     values: list[float | None] = []
     primaries: list[str] = []
     primary_distances: list[float | None] = []
     event_max_values: list[float | None] = []
     event_max_components: list[str] = []
+    component_failure_observed_values: list[bool | None] = []
+    structure_damage_delta_values: list[float | None] = []
+    structure_damage_observed_values: list[bool | None] = []
+    structural_breakup_observed_values: list[bool | None] = []
     for distance in distances:
       record = by_cell.get((aspect, distance))
       if record is None:
@@ -518,6 +547,10 @@ def _heatmap_matrix(
         primary_distances.append(None)
         event_max_values.append(None)
         event_max_components.append("")
+        component_failure_observed_values.append(None)
+        structure_damage_delta_values.append(None)
+        structure_damage_observed_values.append(None)
+        structural_breakup_observed_values.append(None)
       else:
         values.append(float(record["proxy_component_failure_probability"]))
         primaries.append(str(record["proxy_component_primary_name"]))
@@ -528,11 +561,27 @@ def _heatmap_matrix(
         event_max_components.append(
           str(record["proxy_component_max_failure_probability_component_name"])
         )
+        component_failure_observed_values.append(
+          bool(record["proxy_component_failure_observed"])
+        )
+        structure_damage_delta_values.append(
+          float(record["proxy_structure_damage_delta"])
+        )
+        structure_damage_observed_values.append(
+          bool(record["proxy_structure_damage_observed"])
+        )
+        structural_breakup_observed_values.append(
+          bool(record["proxy_structural_breakup_observed"])
+        )
     matrix.append(values)
     primary_matrix.append(primaries)
     primary_distance_matrix.append(primary_distances)
     event_max_matrix.append(event_max_values)
     event_max_component_matrix.append(event_max_components)
+    component_failure_observed_matrix.append(component_failure_observed_values)
+    structure_damage_delta_matrix.append(structure_damage_delta_values)
+    structure_damage_observed_matrix.append(structure_damage_observed_values)
+    structural_breakup_observed_matrix.append(structural_breakup_observed_values)
   return {
     "aspects": aspects,
     "standoff_distances_m": distances,
@@ -542,6 +591,10 @@ def _heatmap_matrix(
     "primary_component_distance_m_matrix": primary_distance_matrix,
     "event_max_probability_matrix": event_max_matrix,
     "event_max_probability_component_matrix": event_max_component_matrix,
+    "component_failure_observed_matrix": component_failure_observed_matrix,
+    "structure_damage_delta_matrix": structure_damage_delta_matrix,
+    "structure_damage_observed_matrix": structure_damage_observed_matrix,
+    "structural_breakup_observed_matrix": structural_breakup_observed_matrix,
   }
 
 
@@ -632,6 +685,197 @@ def _xy_position_class_matrix(cases: list[dict[str, Any]]) -> dict[str, Any]:
     "inside_component_names_matrix": component_names_matrix,
     "inside_hitbox_names_matrix": hitbox_names_matrix,
     "top_contour_signed_distance_m_matrix": signed_distance_matrix,
+  }
+
+
+def _mean(values: list[float]) -> float:
+  return sum(values) / len(values) if values else math.nan
+
+
+def _compact_outcome_record(record: dict[str, Any]) -> dict[str, Any]:
+  return {
+    "case_id": str(record["case_id"]),
+    "warhead_family": str(record["warhead_family"]),
+    "aspect": str(record["aspect"]),
+    "standoff_distance_m": float(record["standoff_distance_m"]),
+    "local_up_m": float(record["local_up_m"]),
+    "local_point_m": [float(value) for value in record["local_point_m"]],
+    "detonation_position_class": str(record["detonation_position_class"]),
+    "proxy_component_primary_name": str(record["proxy_component_primary_name"]),
+    "proxy_component_primary_system": str(record["proxy_component_primary_system"]),
+    "proxy_component_failure_probability": float(
+      record["proxy_component_failure_probability"]
+    ),
+    "proxy_event_max_component_failure_probability": float(
+      record["proxy_event_max_component_failure_probability"]
+    ),
+    "proxy_component_failure_observed": bool(
+      record["proxy_component_failure_observed"]
+    ),
+    "proxy_component_damage_event_names": list(
+      record["proxy_component_damage_event_names"]
+    ),
+    "proxy_system_health_delta": float(record["proxy_system_health_delta"]),
+    "proxy_structure_damage_delta": float(record["proxy_structure_damage_delta"]),
+    "proxy_structure_integrity_after": float(
+      record["proxy_structure_integrity_after"]
+    ),
+    "proxy_structure_damage_observed": bool(
+      record["proxy_structure_damage_observed"]
+    ),
+    "proxy_structural_breakup_event_count": int(
+      record["proxy_structural_breakup_event_count"]
+    ),
+    "proxy_structural_breakup_modes": list(record["proxy_structural_breakup_modes"]),
+    "proxy_structural_breakup_part_refs": list(
+      record["proxy_structural_breakup_part_refs"]
+    ),
+  }
+
+
+def _aggregate_rows(
+  records: list[dict[str, Any]],
+  *,
+  field: str,
+  levels: list[float | str],
+) -> list[dict[str, Any]]:
+  rows: list[dict[str, Any]] = []
+  for level in levels:
+    level_records = [record for record in records if record[field] == level]
+    if not level_records:
+      continue
+    primary_probabilities = [
+      float(record["proxy_component_failure_probability"])
+      for record in level_records
+    ]
+    event_probabilities = [
+      float(record["proxy_event_max_component_failure_probability"])
+      for record in level_records
+    ]
+    structure_deltas = [
+      float(record["proxy_structure_damage_delta"]) for record in level_records
+    ]
+    rows.append(
+      {
+        field: level,
+        "record_count": len(level_records),
+        "mean_proxy_component_failure_probability": _mean(primary_probabilities),
+        "max_proxy_component_failure_probability": max(primary_probabilities),
+        "mean_proxy_event_max_component_failure_probability": _mean(
+          event_probabilities
+        ),
+        "max_proxy_event_max_component_failure_probability": max(event_probabilities),
+        "mean_proxy_structure_damage_delta": _mean(structure_deltas),
+        "min_proxy_structure_damage_delta": min(structure_deltas),
+        "component_failure_observed_count": sum(
+          1
+          for record in level_records
+          if bool(record["proxy_component_failure_observed"])
+        ),
+        "structure_damage_observed_count": sum(
+          1
+          for record in level_records
+          if bool(record["proxy_structure_damage_observed"])
+        ),
+        "structural_breakup_observed_count": sum(
+          1
+          for record in level_records
+          if bool(record["proxy_structural_breakup_observed"])
+        ),
+      }
+    )
+  return rows
+
+
+def _outcome_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
+  by_family: dict[str, dict[str, Any]] = {}
+  aspects = [aspect for aspect, _direction in ASPECT_DIRECTIONS]
+  distances = [float(value) for value in STANDOFF_DISTANCES_M]
+  for family in WARHEAD_FAMILIES:
+    family_records = [
+      record for record in records if str(record["warhead_family"]) == family
+    ]
+    if not family_records:
+      continue
+    default_z_records = [
+      record
+      for record in family_records
+      if abs(float(record["local_up_m"]) - DEFAULT_LOCAL_UP_M) <= 1.0e-9
+    ]
+    top_primary = max(
+      family_records,
+      key=lambda record: float(record["proxy_component_failure_probability"]),
+    )
+    top_event = max(
+      family_records,
+      key=lambda record: float(
+        record["proxy_event_max_component_failure_probability"]
+      ),
+    )
+    top_structure_loss = min(
+      family_records,
+      key=lambda record: float(record["proxy_structure_damage_delta"]),
+    )
+    by_family[family] = {
+      "record_count": len(family_records),
+      "default_z_record_count": len(default_z_records),
+      "component_failure_observed_record_count": sum(
+        1
+        for record in family_records
+        if bool(record["proxy_component_failure_observed"])
+      ),
+      "structure_damage_observed_record_count": sum(
+        1
+        for record in family_records
+        if bool(record["proxy_structure_damage_observed"])
+      ),
+      "structural_breakup_observed_record_count": sum(
+        1
+        for record in family_records
+        if bool(record["proxy_structural_breakup_observed"])
+      ),
+      "max_primary_component_failure_probability_record": _compact_outcome_record(
+        top_primary
+      ),
+      "max_event_component_failure_probability_record": _compact_outcome_record(
+        top_event
+      ),
+      "max_structure_damage_record": _compact_outcome_record(top_structure_loss),
+      "by_standoff_distance_m": _aggregate_rows(
+        family_records,
+        field="standoff_distance_m",
+        levels=distances,
+      ),
+      "by_aspect": _aggregate_rows(
+        family_records,
+        field="aspect",
+        levels=aspects,
+      ),
+      "default_z_by_standoff_distance_m": _aggregate_rows(
+        default_z_records,
+        field="standoff_distance_m",
+        levels=distances,
+      ),
+      "default_z_by_aspect": _aggregate_rows(
+        default_z_records,
+        field="aspect",
+        levels=aspects,
+      ),
+    }
+  return {
+    "status": "standoff_aspect_distance_outcomes_reported",
+    "record_count": len(records),
+    "warhead_family_count": len(by_family),
+    "component_failure_observed_record_count": sum(
+      1 for record in records if bool(record["proxy_component_failure_observed"])
+    ),
+    "structure_damage_observed_record_count": sum(
+      1 for record in records if bool(record["proxy_structure_damage_observed"])
+    ),
+    "structural_breakup_observed_record_count": sum(
+      1 for record in records if bool(record["proxy_structural_breakup_observed"])
+    ),
+    "by_family": by_family,
   }
 
 
@@ -755,6 +999,16 @@ def generate_report(*, seed: int = 20260615) -> dict[str, Any]:
       "proxy_component_primary_name",
       "proxy_component_primary_rod_cut_margin",
       "proxy_component_primary_fragment_energy_j",
+      "proxy_component_failure_observed",
+      "proxy_component_failure_event_count",
+      "proxy_component_damage_event_names",
+      "proxy_system_health_delta",
+      "proxy_structure_damage_delta",
+      "proxy_structure_integrity_after",
+      "proxy_structure_damage_observed",
+      "proxy_structural_breakup_event_count",
+      "proxy_structural_breakup_observed",
+      "proxy_structural_breakup_part_refs",
       "detonation_position_class",
       "inside_component_names",
       "inside_hitbox_names",
@@ -800,7 +1054,17 @@ def generate_report(*, seed: int = 20260615) -> dict[str, Any]:
       "probability_source_values": sorted(
         {str(row["proxy_component_failure_probability_source"]) for row in records}
       ),
+      "component_failure_observed_record_count": sum(
+        1 for row in records if bool(row["proxy_component_failure_observed"])
+      ),
+      "structure_damage_observed_record_count": sum(
+        1 for row in records if bool(row["proxy_structure_damage_observed"])
+      ),
+      "structural_breakup_observed_record_count": sum(
+        1 for row in records if bool(row["proxy_structural_breakup_observed"])
+      ),
     },
+    "outcome_summary": _outcome_summary(records),
     "standoff_grid_cases": grid_cases,
     "centerline_z_cases": centerline_z_cases,
     "xy_grid_cases": xy_grid_cases,

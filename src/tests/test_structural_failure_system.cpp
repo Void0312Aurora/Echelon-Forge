@@ -15,9 +15,12 @@
 namespace {
 
 void set_component_damage(ComponentDamageState &damage, const std::string &name, double integrity,
-                          const std::string &mode) {
+                          const std::string &mode, double mode_severity = -1.0) {
     damage.component_integrity[name] = integrity;
     damage.component_primary_failure_mode[name] = mode;
+    if (mode_severity >= 0.0) {
+        damage.component_failure_mode_severity[name][mode] = mode_severity;
+    }
 }
 
 struct CapturingStructuralRecorder final : IEngagementEventRecorder {
@@ -107,6 +110,20 @@ TEST_CASE("functional component failure does not trigger structural breakup") {
     CHECK_FALSE(state.airframe_breakup);
 }
 
+TEST_CASE("functional cumulative wing damage does not trigger structural breakup") {
+    ComponentDamageState damage{};
+    set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
+    set_component_damage(damage, "left_aileron_actuator", 0.70, "hydraulic_pressure_loss");
+    set_component_damage(damage, "left_wing_fuel_cell", 0.70, "fuel_leak");
+
+    const StructuralBreakupState state =
+        structural_failure::evaluate_structural_breakup_state(damage);
+
+    CHECK(state.breakup_state == StructuralBreakupPhase::Intact);
+    CHECK_FALSE(structural_breakup_has_mode(state, StructuralBreakMode::WingLoss));
+    CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingLeft));
+}
+
 TEST_CASE("default shared wing spar activates both wing groups as one family") {
     ComponentDamageState damage{};
     set_component_damage(damage, "wing_spar_center", 0.20, "puncture");
@@ -153,6 +170,38 @@ TEST_CASE("TG-P7 split receivers select split mapping without parent components"
     CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingRight));
     CHECK(structural_breakup_has_mode(state, StructuralBreakMode::WingLoss));
     CHECK(structural_breakup_has_mode(state, StructuralBreakMode::EngineDetach));
+}
+
+TEST_CASE("TG-P7 near-field cumulative wing damage produces wing_loss") {
+    ComponentDamageState damage{};
+    set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
+    set_component_damage(damage, "left_aileron_actuator", 0.94, "cut");
+    set_component_damage(damage, "left_wing_fuel_cell", 0.915, "cut");
+
+    const StructuralBreakupState state =
+        structural_failure::evaluate_structural_breakup_state(damage);
+
+    CHECK(state.breakup_state == StructuralBreakupPhase::PartialDetachment);
+    CHECK(structural_breakup_has_mode(state, StructuralBreakMode::WingLoss));
+    CHECK(structural_breakup_has_group(state, StructuralBreakGroup::WingLeft));
+    CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingRight));
+    CHECK_FALSE(state.airframe_breakup);
+}
+
+TEST_CASE("TG-P7 rod cut severity produces wing_loss despite high component integrity") {
+    ComponentDamageState damage{};
+    set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
+    set_component_damage(damage, "left_aileron_actuator", 0.986, "cut", 0.31);
+    set_component_damage(damage, "left_wing_fuel_cell", 0.992, "cut", 0.27);
+
+    const StructuralBreakupState state =
+        structural_failure::evaluate_structural_breakup_state(damage);
+
+    CHECK(state.breakup_state == StructuralBreakupPhase::PartialDetachment);
+    CHECK(structural_breakup_has_mode(state, StructuralBreakMode::WingLoss));
+    CHECK(structural_breakup_has_group(state, StructuralBreakGroup::WingLeft));
+    CHECK_FALSE(structural_breakup_has_group(state, StructuralBreakGroup::WingRight));
+    CHECK_FALSE(state.airframe_breakup);
 }
 
 TEST_CASE("breakup state is irreversible when component damage later disappears") {
@@ -224,6 +273,22 @@ TEST_CASE("controlled wing spar failure produces wing_loss events") {
     CHECK(result.events[0].detached_part_ref == "left_wing");
     CHECK(result.events[1].break_mode == "wing_loss");
     CHECK(result.events[1].detached_part_ref == "right_wing");
+}
+
+TEST_CASE("near-field cumulative wing damage writes wing_loss event") {
+    ComponentDamageState damage{};
+    set_component_damage(damage, "wing_spar_center_left_inner_wing_segment", 1.00, "none");
+    set_component_damage(damage, "left_aileron_actuator", 0.94, "cut");
+    set_component_damage(damage, "left_wing_fuel_cell", 0.915, "cut");
+
+    const StructuralStepResult result = run_single_aircraft_structural_step(damage);
+
+    CHECK(result.state.breakup_state == StructuralBreakupPhase::PartialDetachment);
+    CHECK(structural_breakup_has_group(result.state, StructuralBreakGroup::WingLeft));
+    CHECK_FALSE(structural_breakup_has_group(result.state, StructuralBreakGroup::WingRight));
+    REQUIRE(result.events.size() == 1);
+    CHECK(result.events[0].break_mode == "wing_loss");
+    CHECK(result.events[0].detached_part_ref == "left_wing");
 }
 
 TEST_CASE("controlled stabilator failure produces tail_loss event") {

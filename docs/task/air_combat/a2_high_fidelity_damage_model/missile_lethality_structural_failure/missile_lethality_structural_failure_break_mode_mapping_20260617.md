@@ -1,9 +1,10 @@
 # MLF-6 P2 Break-Mode Mapping
 
-Status: `2026-06-17` v2 design — component-to-break-mode classification with
-explicit integrity thresholds, failure-mode gating, TG-P7/default surface
-selection, and 3-family full-breakup threshold. Consumes P1 inventory. Feeds
-P3 state machine implementation.
+Status: `2026-06-18` v3 design — component-to-break-mode classification with
+explicit deep-failure thresholds, near-field cumulative wing-loss thresholds,
+failure-mode gating, TG-P7/default surface selection, and 3-family
+full-breakup threshold. Consumes P1 inventory. Feeds P3 state machine
+implementation.
 
 ## Purpose
 
@@ -45,13 +46,29 @@ Five P1 tentative classifications are resolved here:
 | Contributing | `left_wing_fuel_cell` | ✓ | ✓ |
 | **Total members** | | **4** | **5** |
 
-**Threshold**: component integrity ≤ **0.25** → "structurally failed" for this group.
+**Deep-failure threshold**: component integrity ≤ **0.25** → "structurally
+failed" for this group.
+
+**Near-field cumulative threshold**: if structurally-damaging modes reduce at
+least **2** same-side wing members by **0.05** weighted structural loss each,
+and their total same-side weighted structural loss is ≥ **0.20**, the wing
+group triggers `wing_loss`. Near-field structural loss is computed from
+`max(1 - component_integrity, structural_mode_loss(mode, severity))`, so
+continuous-rod cut severity can drive structural breakup even when the generic
+probability-scaled integrity drop remains small. `cut` is weighted **1.40x** in
+this near-field cumulative rule, with `structural_mode_loss(cut) =
+0.28 * severity`, to represent rod severing being structurally more severe than
+the same raw generic degradation. This captures close
+continuous-rod / strong near-fuze cases where multiple load-bearing-adjacent
+members are cut or punctured without any single member falling all the way below
+the deep-failure threshold.
 
 **Trigger rule**:
 - Default DB: `wing_spar_center` failed → `wing_loss` immediately (primary member).
   OR 2+ contributing members failed → `wing_loss`.
 - TG-P7 DB: either S3 or S4 failed → `wing_loss` immediately (primary).
   OR 2+ contributing members failed → `wing_loss`.
+- Either surface: near-field cumulative threshold met → `wing_loss`.
 
 **Break mode**: `wing_loss`. `detached_part_ref` = `"left_wing"`.
 
@@ -65,7 +82,9 @@ Five P1 tentative classifications are resolved here:
 | Contributing | `right_wing_fuel_cell` | ✓ | ✓ |
 | **Total members** | | **4** | **5** |
 
-**Threshold**: same as wing_left (0.25).
+**Thresholds**: same as wing_left (deep-failure 0.25; near-field cumulative
+weighted structural loss ≥0.20 with 2+ same-side members losing at least 0.05
+weighted loss each).
 
 **Trigger rule**: same structure as wing_left.
 
@@ -226,7 +245,9 @@ For each component in a structural group, the state machine:
 
 1. Reads `component_primary_failure_mode[name]` and `component_integrity[name]`.
 2. If `primary_failure_mode` is in the structurally-damaging set (§3.1): the
-   integrity value is compared against the group threshold.
+   integrity value is compared against the deep-failure group threshold and,
+   for wing groups, its weighted structural loss may also count toward the
+   near-field cumulative threshold.
 3. If `primary_failure_mode` is in the functional set (§3.2) or is empty/missing:
    the integrity drop is **ignored** for break-mode purposes. The component
    still appears in `component_integrity` with a low value (MLF-5 wrote it),
@@ -240,8 +261,8 @@ DOES count (the puncture physically damaged the fuselage structure).
 
 | Break mode | Trigger groups | `detached_part_ref` | Minimum failed members (default) |
 | --- | --- | --- | --- |
-| `wing_loss` | `wing_left` | `"left_wing"` | 1 primary OR 2 contributing |
-| `wing_loss` | `wing_right` | `"right_wing"` | 1 primary OR 2 contributing |
+| `wing_loss` | `wing_left` | `"left_wing"` | 1 primary OR 2 contributing OR near-field cumulative |
+| `wing_loss` | `wing_right` | `"right_wing"` | 1 primary OR 2 contributing OR near-field cumulative |
 | `tail_loss` | `tail_left` | `"left_stabilator"` | 1 (sole member) |
 | `tail_loss` | `tail_right` | `"right_stabilator"` | 1 (sole member) |
 | `tail_loss` | `vertical_tail` | `"vertical_stabilizer"` | 1 (sole member) |
@@ -314,6 +335,16 @@ All thresholds are `evidence_level = engineering_assumption`. They are chosen to
   integrity, the spar can no longer carry flight loads. Same for rudder.
 - **0.30 (fuel cell)**: Fuel cells are thin-walled; rupture at 30% integrity
   is plausible as a structural breach.
+- **Wing near-field cumulative: 2+ members with ≥0.05 individual weighted loss
+  and ≥0.20 total same-side weighted loss**: a close continuous-rod or strong
+  proximity burst can cut multiple wing-side load paths without pushing any
+  single receiver below 0.25 in one timestep. The rule consumes both generic
+  integrity loss and persisted structural mode severity; `cut` receives a
+  1.40x weight only in this cumulative wing rule, so rod severing can cross the
+  structural threshold at close standoff while single-component or functional
+  losses still do not. The cumulative rule is still gated by
+  structurally-damaging modes, so `fuel_leak`, `hydraulic_pressure_loss`, and
+  other functional modes do not trigger wing breakup.
 
 ### 7.2 Contributing-only components
 

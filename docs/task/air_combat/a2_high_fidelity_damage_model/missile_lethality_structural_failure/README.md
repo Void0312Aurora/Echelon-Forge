@@ -1,11 +1,14 @@
 # MLF-6 Structural Failure And Airframe Breakup
 
-Status: `2026-06-18` active — v8 ready for user acceptance, not archived. P1/P2
+Status: `2026-06-18` active — v10 ready for user acceptance, not archived. P1/P2
 design, P3 state machine, P4 event writer, P5 diagnostics export, P6 focused
 validation, and P7 broader regression are implemented with evidence. P7 now
 passes the full `tests/runtime/air_combat/` + `tests/world_batch/` lane after
-obsolete-oracle updates. Archive movement is withheld until explicit user
-instruction.
+obsolete-oracle updates. v10 additionally fixes the close continuous-rod
+near-field model so structural cut-mode severity is visible to the breakup
+state machine and retained proxy standoff reports show beam-side wing-loss
+events through 4 m, while 8 m and 14 m remain non-breakup. Archive movement is
+withheld until explicit user instruction.
 
 Language:
 
@@ -170,6 +173,7 @@ with the project's component layout).
 | MLF-5 component damage | accepted / archived | `ComponentDamageState` ECS component maintains cumulative per-component integrity, redundancy availability, and failure modes | Does not claim structural breakup |
 | `StructuralBreakupEvent` contract | active / writer connected | `engagement_contracts.h` — `breakup_state`, `break_mode`, `detached_part_ref`, `detached_part_count`, `airframe_breakup`, `cause_event_id`; `structural_failure_system.h` writes transition events | MLF-6 facts only; no aero/loss coupling |
 | `structural_breakup_events` vector | active / populated by P4 writer | `engagement_event_types.h`; `simulation_kernel_engagement_event_store.cpp`; facade + Python bindings pass through; `tools/diagnostics/structural_breakup_export.py` exports rows; `structural_failure_break_modes` validates break-mode coverage | Collector stores breakup facts; P7 broad regression is green; MLF-6 still does not consume aero/loss-state authority |
+| Near-field cumulative wing-loss rule | active / calibrated in v10 | `structural_failure_system.h`; `structural_failure_state`, `structural_failure_break_modes`, and `test_continuous_rod_surface.py`; `target_geometry_proxy_standoff_grid_probe_20260615.json` reports 43 structural breakup records: blast_fragmentation 3, continuous_rod 40; continuous_rod beam-side 0.5/1/2/4 m records break, 8/14 m records do not | Engineering proxy only; no real weapon structural-kill or Pk authority |
 | `structural_integrity` scalar | active / untouched by MLF-6 | `damage_air.h:114`; degrades via `accumulate_aircraft_structural_envelope_damage` and `default_effects_air_domain.h` | MLF-6 does not read or write this field |
 | `ComponentDamageState` (ECS) | active / MLF-6 consumption surface | `damage_common.h:171-` — `component_integrity`, `component_failure_mode`, `redundancy_group_availability`, `has_fire_suppression_components` | MLF-6 reads this; does not mutate it |
 | Flight dynamics | active / deferred to MLF-7 | `aerodynamics_system.h:219` clamps by `structural_integrity` | MLF-6 does not modify aero |

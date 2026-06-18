@@ -1,9 +1,13 @@
 # MLF-6 结构失效与机体断裂
 
-状态：`2026-06-18` active — v8 ready for user acceptance，尚未归档。P1/P2
+状态：`2026-06-18` active — v10 ready for user acceptance，尚未归档。P1/P2
 设计、P3 状态机、P4 事件 writer、P5 诊断导出、P6 聚焦验证和 P7 更广回归
 均已实现并有证据。P7 旧 oracle 更新后，完整 `tests/runtime/air_combat/` +
-`tests/world_batch/` lane 已通过。归档移动仍等待用户明确指令。
+`tests/world_batch/` lane 已通过。v10 进一步修正 close continuous-rod
+近场模型，让结构性 cut-mode severity 能被断裂状态机消费；保留的 proxy
+standoff 报告现在显示 beam 侧 `0.5/1/2/4 m` 会产生 wing_loss，`8/14 m`
+不产生断裂。
+归档移动仍等待用户明确指令。
 
 语言：
 
@@ -142,6 +146,7 @@ MLF-7 决定如何协调二者（D2）。
 | MLF-5 部件损伤 | accepted / 已归档 | `ComponentDamageState` ECS 组件维护每部件累积完整度、冗余可用性和失效模式 | 不声明结构断裂 |
 | `StructuralBreakupEvent` 合同 | 活跃 / writer 已接入 | `engagement_contracts.h` — `breakup_state`、`break_mode`、`detached_part_ref`、`detached_part_count`、`airframe_breakup`、`cause_event_id`；`structural_failure_system.h` 写入转换事件 | 仅写 MLF-6 事实；不做气动/失能耦合 |
 | `structural_breakup_events` 向量 | 活跃 / 由 P4 writer 填充 | `engagement_event_types.h`；`simulation_kernel_engagement_event_store.cpp`；facade + Python 绑定已传递；`tools/diagnostics/structural_breakup_export.py` 导出 rows；`structural_failure_break_modes` 验证断裂模式覆盖 | 收集断裂事实；P7 更广回归已通过；MLF-6 仍不消费气动/失能状态权威 |
+| 近场累计 wing_loss 规则 | 活跃 / v10 已校准 | `structural_failure_system.h`；`structural_failure_state`、`structural_failure_break_modes` 和 `test_continuous_rod_surface.py`；`target_geometry_proxy_standoff_grid_probe_20260615.json` 报告 43 条结构断裂记录：blast_fragmentation 3 条、continuous_rod 40 条；continuous_rod beam 侧 `0.5/1/2/4 m` 断裂，`8/14 m` 不断裂 | 仅工程代理；没有真实武器结构杀伤或 Pk 权威 |
 | `structural_integrity` 标量 | 活跃 / MLF-6 不触及 | `damage_air.h:114`；通过 `accumulate_aircraft_structural_envelope_damage` 和 `default_effects_air_domain.h` 衰减 | MLF-6 不读不写此字段 |
 | `ComponentDamageState`（ECS） | 活跃 / MLF-6 消费面 | `damage_common.h:171-` — `component_integrity`、`component_failure_mode`、`redundancy_group_availability`、`has_fire_suppression_components` | MLF-6 只读；不修改 |
 | 飞行动力学 | 活跃 / 推迟到 MLF-7 | `aerodynamics_system.h:219` 按 `structural_integrity` 钳制 | MLF-6 不修改气动 |

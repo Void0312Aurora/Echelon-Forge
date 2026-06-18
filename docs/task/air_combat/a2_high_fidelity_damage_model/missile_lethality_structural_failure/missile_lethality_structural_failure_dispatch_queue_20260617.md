@@ -1,6 +1,6 @@
 # MLF-6 Structural Failure — Dispatch Queue
 
-Status: `2026-06-18` v8 queue closed for implementation. P1/P2, P3, P4, P5, P6 focused validation, and P7 broad regression are complete. Archive movement remains withheld until explicit user instruction.
+Status: `2026-06-18` v10 queue closed for implementation. P1/P2, P3, P4, P5, P6 focused validation, P7 broad regression, and near-field continuous-rod / cumulative wing-loss calibration are complete. Archive movement remains withheld until explicit user instruction.
 
 Parent task clusters: [missile_lethality_structural_failure_task_clusters_20260617.md](missile_lethality_structural_failure_task_clusters_20260617.md)
 
