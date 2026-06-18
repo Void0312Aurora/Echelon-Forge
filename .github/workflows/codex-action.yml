@@ -157,7 +157,10 @@ jobs:
 
   comment-task:
     name: Codex @codex comment task
-    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')
+    if: >-
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '@codex') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -287,7 +290,9 @@ jobs:
 
       - name: Save Codex patch
         if: always()
-        run: git diff --binary > "${RUNNER_TEMP}/codex-manual-task.patch"
+        run: |
+          git add -A
+          git diff --cached --binary > "${RUNNER_TEMP}/codex-manual-task.patch"
 
       - name: Upload Codex patch artifact
         if: always()
@@ -430,33 +435,21 @@ jobs:
             codex-ci-logs.txt
           if-no-files-found: ignore
 
-  post-ci-failure-diagnosis:
-    name: Post Codex CI failure diagnosis
+  summarize-ci-failure-diagnosis:
+    name: Summarize Codex CI failure diagnosis
     needs: ci-failure-diagnosis
     if: github.event_name == 'workflow_run' && needs.ci-failure-diagnosis.outputs.final_message != ''
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
     steps:
-      - name: Comment CI diagnosis on pull request
-        uses: actions/github-script@v7
+      - name: Write CI diagnosis summary
         env:
           CODEX_FINAL_MESSAGE: ${{ needs.ci-failure-diagnosis.outputs.final_message }}
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const prs = context.payload.workflow_run.pull_requests || [];
-            if (prs.length === 0) {
-              core.info("Failed workflow run is not associated with a pull request.");
-              return;
-            }
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prs[0].number,
-              body: process.env.CODEX_FINAL_MESSAGE,
-            });
+        run: |
+          {
+            echo "## Codex CI Failure Diagnosis"
+            echo
+            printf '%s\n' "$CODEX_FINAL_MESSAGE"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   release-prep:
     name: Codex release prep
