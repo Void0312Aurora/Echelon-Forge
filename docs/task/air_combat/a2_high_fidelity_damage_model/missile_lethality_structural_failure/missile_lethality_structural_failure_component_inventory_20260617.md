@@ -1,17 +1,18 @@
 # MLF-6 P1 Component Inventory
 
-Status: `2026-06-17` v2 — corrected: added `.inc` write sites (5 missed), raw
-system tags restored, wing_spar_center double-count resolved, forbidden-surface
-write sites concretely listed. Read-only inventory for MLF-6B.
+Status: `2026-06-17` v3 — corrected: added `.inc` write sites (5 missed), raw
+system tags restored, wing_spar_center double-count resolved, failure-mode gate
+aligned with P2, and forbidden-surface scope narrowed to the adjacent
+damage/effects propagation path. Read-only inventory for MLF-6B.
 
 Three deliverables:
 
 1. Every `ComponentDamageState` field MLF-6 will read at runtime.
 2. Every F-16C component name with raw JSON `system` and structural group
    classification.
-3. Every `structural_integrity` write site MLF-6 must NOT touch, including
-   every `FlightModel`, `Propulsion`, `Health`, and `PlatformDamageState` write
-   site MLF-6 must NOT touch.
+3. Every `structural_integrity` write site MLF-6 must NOT touch, plus the
+   adjacent damage/effects propagation writes to `FlightModel`, `Propulsion`,
+   `Health`, and `PlatformDamageState` that MLF-6 must also leave untouched.
 
 ## 1. ComponentDamageState — Runtime Read Surface
 
@@ -126,7 +127,7 @@ resolved by the TG-P7 split.
 | `vertical_tail` | 1 | 1 | `tail_loss` |
 | `engine_right` | 1 + afterburner_nozzle (tentative) | 4 | `engine_detach` |
 | `fuselage` | 2 (center fuel cell, intake duct) | 3 (+ S5 carrythrough) | `fuselage_rupture` |
-| `none` | 12 | 13 | — |
+| `none` | 12 | 12 | — |
 
 Notes:
 - `wing_left` and `wing_right` counts include wing-adjacent flight_control
@@ -329,25 +330,44 @@ print(f'Raw system tags: {sorted(systems)}')
 "
 
 # Verify structural_integrity write count
-echo "Expected: 14 write sites across 4 files"
-grep -c 'structural_integrity\s*-=' src/systems/combat/damage_system_air.h src/components/domains/air/combat/damage_air.h src/models/domains/air/default_effects_air_domain.h src/models/weapons/detail/default_effects_component_damage_detail.inc 2>/dev/null
+python3 - <<'PY'
+from pathlib import Path
+import re
+
+files = [
+    Path('src/systems/combat/damage_system_air.h'),
+    Path('src/components/domains/air/combat/damage_air.h'),
+    Path('src/models/domains/air/default_effects_air_domain.h'),
+    Path('src/models/weapons/detail/default_effects_component_damage_detail.inc'),
+]
+pattern = re.compile(r'structural_integrity\s*(?:[-+*/]?=)')
+matches = []
+for path in files:
+    for lineno, line in enumerate(path.read_text().splitlines(), 1):
+        if pattern.search(line) and 'double structural_integrity' not in line:
+            matches.append((str(path), lineno, line.strip()))
+assert len(matches) == 14, f'Expected 14 write sites, got {len(matches)}: {matches}'
+print('structural_integrity write sites: 14 — OK')
+PY
 ```
 
 ## 6. Residuals
 
 - `wing_spar_center` (default DB) is a cross-region monolithic component. It is
-  the **only** component that contributes to two structural groups. P2 must
-  define how shared components contribute to multi-group break-mode thresholds.
-  The TG-P7 split resolves this for the opt-in surface.
+  the **only** component that contributes to two structural groups. P2 resolves
+  this as a documented default-DB exception; P3 must preserve that behavior
+  while using TG-P7 split receivers when they are present.
 - `engine_left` is empty on F-16C (single engine). P2 mapping and P3 state
   machine must handle this without error.
-- 5 tentative structural group classifications are flagged for P2 resolution
-  (afterburner_nozzle, intake_duct, tail_hydraulic_pump, engine_fuel_control_unit,
-  wing_spar_center_carrythrough).
-- P2 must define mapping for both default (26) and TG-P7 opt-in (32) surfaces.
+- The five P1 tentative structural group classifications are resolved in P2:
+  afterburner_nozzle, intake_duct, tail_hydraulic_pump, engine_fuel_control_unit,
+  and wing_spar_center_carrythrough.
+- P2 defines mapping for both default (26) and TG-P7 opt-in (32) surfaces; P3
+  must select the mapping by component-key presence.
 - Dependency cascades (e.g. engine fire → spar weakening) are deferred to MLF-7.
-- `SI-11` and `SI-12` are on the same code path (blast_deformation mode). If
-  they are semantically identical, P2 may count them as one logical write site;
-  the inventory conservatively lists every `-=` occurrence.
+- `SI-10` is the generic air-structure component-damage impulse path; `SI-11`
+  through `SI-14` are per-entry puncture, cut, blast-deformation, and
+  structural-weakening paths. The inventory conservatively lists every write
+  site, including `=` writes such as dependency caps and sanitization clamps.
 - `Propulsion` was incorrectly cited as `forces.h` in P1 v1; corrected to
   `dynamics.h` in v2.

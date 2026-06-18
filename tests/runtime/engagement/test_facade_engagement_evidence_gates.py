@@ -87,6 +87,13 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
     "munition_lifecycle_packets",
     "effects_events",
     "damage_reports",
+    "nearest_approach_events",
+    "fuze_evaluation_events",
+    "warhead_mechanism_events",
+    "spatial_coverage_events",
+    "component_load_events",
+    "component_damage_events",
+    "structural_breakup_events",
     "platform_consequence_events",
     "diagnostics_traces",
   ]:
@@ -111,6 +118,8 @@ def test_engagement_event_packet_producer_coverage_and_deferred_slots_are_explic
   for populated_recent_slot in ["launch_events", "effects_events", "damage_reports"]:
     assert f"request.include_{populated_recent_slot}" in append_body
     assert f"packet.{populated_recent_slot}.insert" in append_body
+  assert "packet.component_damage_events.insert" in append_body
+  assert "packet.structural_breakup_events.insert" in append_body
   assert "packet.platform_consequence_events.insert" in append_body
   assert "request.include_diagnostics_traces" in append_body
   assert "append_recent_diagnostics_traces(packet.diagnostics_traces, recent)" in append_body

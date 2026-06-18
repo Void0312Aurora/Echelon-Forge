@@ -134,7 +134,7 @@ def _stabilized_mq9_after_optional_right_aileron_damage(
 
 
 class A8AeroConsumerRuntimeMixin:
-  def test_a8_wing_control_damage_reaches_neutral_aero_response_without_kill_verdict(
+  def test_a8_wing_control_damage_reaches_neutral_aero_response_with_mobility_verdict(
     self,
   ) -> None:
     baseline_inst, baseline_overlay, _baseline_report = (
@@ -147,8 +147,10 @@ class A8AeroConsumerRuntimeMixin:
     self.assertIsNotNone(damaged_report)
     assert damaged_report is not None
     self.assertFalse(bool(damaged_report.destroyed))
-    self.assertEqual(str(damaged_report.loss_state_to), "combat_capable")
-    self.assertFalse(bool(damaged_report.forced_landing))
+    self.assertEqual(str(damaged_report.loss_state_to), "mobility_kill")
+    self.assertTrue(bool(damaged_report.forced_landing))
+    self.assertTrue(bool(damaged_report.mobility_kill))
+    self.assertFalse(bool(damaged_report.flight_control_kill))
     self.assertLess(damaged_overlay["flight_control"], baseline_overlay["flight_control"])
     self.assertLess(damaged_overlay["roll_control"], baseline_overlay["roll_control"])
     self.assertGreater(damaged_overlay["control_asymmetry"], baseline_overlay["control_asymmetry"])

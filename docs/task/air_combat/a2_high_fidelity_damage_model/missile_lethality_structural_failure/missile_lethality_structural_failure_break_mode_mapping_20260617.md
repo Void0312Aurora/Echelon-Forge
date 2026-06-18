@@ -1,15 +1,18 @@
 # MLF-6 P2 Break-Mode Mapping
 
-Status: `2026-06-17` v1 design — component-to-break-mode classification with
-explicit integrity thresholds. Consumes P1 inventory. Feeds P3 state machine
-implementation.
+Status: `2026-06-17` v2 design — component-to-break-mode classification with
+explicit integrity thresholds, failure-mode gating, TG-P7/default surface
+selection, and 3-family full-breakup threshold. Consumes P1 inventory. Feeds
+P3 state machine implementation.
 
 ## Purpose
 
 Define the exact mapping from F-16C component integrity values (read from ECS
 `ComponentDamageState`) to MLF-6 break modes and breakup states. Every F-16C
-component is classified into exactly one structural group or `none`. Each
-group has an explicit integrity threshold and trigger rule.
+component is classified into exactly one structural group or `none`, except
+the documented default-DB `wing_spar_center` cross-region component which
+contributes to both wing groups. Each group has an explicit integrity threshold
+and trigger rule.
 
 All thresholds are **engineering assumptions** (`evidence_level =
 engineering_assumption`), not real F-16 structural data. They are designed to:
@@ -297,7 +300,7 @@ auto-detection avoids a hard dependency on the feature flag.
 
 ## 7. Engineering Rationale
 
-### 6.1 Threshold values
+### 7.1 Threshold values
 
 All thresholds are `evidence_level = engineering_assumption`. They are chosen to:
 
@@ -312,7 +315,7 @@ All thresholds are `evidence_level = engineering_assumption`. They are chosen to
 - **0.30 (fuel cell)**: Fuel cells are thin-walled; rupture at 30% integrity
   is plausible as a structural breach.
 
-### 6.2 Contributing-only components
+### 7.2 Contributing-only components
 
 Control surface actuators (`aileron_actuator`, `flap_actuator`) are classified
 as "contributing" rather than "primary" because:
@@ -322,7 +325,7 @@ as "contributing" rather than "primary" because:
   degradation indicate the wing is structurally compromised.
 - A single actuator failure alone does NOT mean the wing falls off.
 
-### 6.3 No threshold for `none`-group components
+### 7.3 No threshold for `none`-group components
 
 Avionics, sensors, and non-structural components have no integrity threshold
 because their failure does not cause structural breakup. Their failure
@@ -333,17 +336,37 @@ extended by MLF-7.
 ## 8. Validation Plan
 
 ```bash
-# Verify the mapping covers all 26 default components
-python3 -c "
+python3 - <<'PY'
 import json
-with open('examples/config/database/aircraft/units/f16c_block50.json') as f:
+
+unit_path = 'examples/config/database/aircraft/units/f16c_block50.json'
+split_path = 'docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_target_geometry/review_packets/f16c_20260611/target_geometry_runtime_activation_candidate_20260613.json'
+
+with open(unit_path) as f:
     db = json.load(f)
-names = set()
+default_names = set()
 for hb in db.get('damage_model', {}).get('hitboxes', []):
     for c in hb.get('components', []):
-        names.add(c['name'])
-# All 26 must be classified
-classified = {
+        default_names.add(c['name'])
+assert len(default_names) == 26, f'Expected 26 default components, got {len(default_names)}'
+
+with open(split_path) as f:
+    split_doc = json.load(f)
+split_names = {row['candidate_component_name'] for row in split_doc['rows']}
+retired_parents = {entry['parent_component_name'] for entry in split_doc['parent_receiver_retirement_plan']}
+assert split_names == {
+    'engine_core_afterburner_segment',
+    'engine_core_hot_section_segment',
+    'engine_core_forward_compressor_segment',
+    'wing_spar_center_left_inner_wing_segment',
+    'wing_spar_center_left_root_segment',
+    'wing_spar_center_carrythrough_segment',
+    'wing_spar_center_right_root_segment',
+    'wing_spar_center_right_inner_wing_segment',
+}, split_names
+assert retired_parents == {'engine_core', 'wing_spar_center'}, retired_parents
+
+default_classified = {
     'wing_left': ['wing_spar_center', 'left_aileron_actuator', 'left_leading_edge_flap_actuator', 'left_wing_fuel_cell'],
     'wing_right': ['wing_spar_center', 'right_aileron_actuator', 'right_leading_edge_flap_actuator', 'right_wing_fuel_cell'],
     'tail_left': ['left_horizontal_tail_actuator_or_surface_component'],
@@ -357,18 +380,41 @@ classified = {
              'inertial_navigation_unit', 'mission_computer', 'nose_avionics_bay',
              'tail_hydraulic_pump'],
 }
-all_classified = set()
-for group, comps in classified.items():
-    for c in comps:
-        all_classified.add(c)
-missing = names - all_classified
-extra = all_classified - names
-assert not missing, f'Missing from classification: {missing}'
-assert not extra, f'Extra in classification: {extra}'
-# wing_spar_center counted twice (cross-region), that's expected
-print(f'All {len(names)} components classified — OK')
-print(f'wing_spar_center is cross-region: counted in wing_left AND wing_right')
-"
+
+tg_p7_names = (default_names - retired_parents) | split_names
+assert len(tg_p7_names) == 32, f'Expected 32 TG-P7 effective components, got {len(tg_p7_names)}'
+tg_p7_classified = {
+    'wing_left': ['wing_spar_center_left_inner_wing_segment', 'wing_spar_center_left_root_segment',
+                  'left_aileron_actuator', 'left_leading_edge_flap_actuator', 'left_wing_fuel_cell'],
+    'wing_right': ['wing_spar_center_right_root_segment', 'wing_spar_center_right_inner_wing_segment',
+                   'right_aileron_actuator', 'right_leading_edge_flap_actuator', 'right_wing_fuel_cell'],
+    'tail_left': ['left_horizontal_tail_actuator_or_surface_component'],
+    'tail_right': ['right_horizontal_tail_actuator_or_surface_component'],
+    'vertical_tail': ['rudder_actuator'],
+    'engine_right': ['engine_core_afterburner_segment', 'engine_core_hot_section_segment',
+                     'engine_core_forward_compressor_segment', 'afterburner_nozzle'],
+    'fuselage': ['center_fuselage_fuel_cell', 'dedicated_intake_lip_or_duct_component',
+                 'wing_spar_center_carrythrough_segment'],
+    'none': ['apg68_radar_array', 'cockpit_crew_station', 'data_link_terminal',
+             'dedicated_canopy_surface_component', 'electrical_power_bus',
+             'engine_fuel_control_unit', 'flight_control_computer', 'iff_interrogator',
+             'inertial_navigation_unit', 'mission_computer', 'nose_avionics_bay',
+             'tail_hydraulic_pump'],
+}
+
+def assert_covered(expected, classified, label):
+    all_classified = {name for comps in classified.values() for name in comps}
+    missing = expected - all_classified
+    extra = all_classified - expected
+    assert not missing, f'{label}: missing from classification: {missing}'
+    assert not extra, f'{label}: extra in classification: {extra}'
+
+assert_covered(default_names, default_classified, 'default')
+assert_covered(tg_p7_names, tg_p7_classified, 'TG-P7')
+print('Default mapping covers 26 components — OK')
+print('TG-P7 mapping covers 32 effective components with retired parents removed — OK')
+print('Default wing_spar_center cross-region exception is intentional')
+PY
 ```
 
 ## 9. Residuals
@@ -380,13 +426,14 @@ print(f'wing_spar_center is cross-region: counted in wing_left AND wing_right')
   uncertain rule. P4 should test whether nozzle-only damage ever occurs in
   practice without core damage; if not, the co-condition can be simplified.
 - `wing_spar_center` (default DB) triggering both `wing_loss` modes
-  simultaneously may be too aggressive. If P4 shows this produces excessive
-  full_breakup events from single hits, consider requiring an additional
-  contributing-member failure on each side.
-- Breakup state → `airframe_breakup` mapping (4 families = full_breakup) is
-  conservative. A real F-16 with both wings lost should already be
-  `full_breakup` even without engine detachment. P4 may adjust the threshold
-  downward (e.g. 2 families = full_breakup).
+  simultaneously may be too aggressive. Since left and right `wing_loss` still
+  count as one family, this does not by itself produce `full_breakup`; if P4
+  shows excessive dual-wing detachments from single hits, consider requiring an
+  additional contributing-member failure on each side.
+- Breakup state → `airframe_breakup` mapping uses 3+ active families for
+  `full_breakup`. This is an engineering assumption: less severe than requiring
+  all four families, but still avoids classifying isolated wing or tail loss as
+  complete airframe breakup. P4 may tune this only with focused evidence.
 - TG-P7 auto-detection by component name presence is a design choice; if
   component names are not stable across database versions, fall back to
   explicit feature-flag reading.

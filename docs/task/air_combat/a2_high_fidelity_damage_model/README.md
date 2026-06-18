@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-17` archived pointer / active follow-on navigation, MLF-6 scaffolded. The full project package was moved to
+Status: `2026-06-18` archived pointer / active follow-on navigation, MLF-6 ready for user acceptance. The full project package was moved to
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
 
 This path is retained only as a lightweight work statement for navigation.
@@ -49,11 +49,12 @@ Current A2 follow-ons:
   to maintained damage/flight systems, but does not claim crash, structural
   breakup, debris/wreck, Pk, or weapon-specific lethality.
 - [missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md):
-  **active MLF-6 subproject** consuming MLF-5 component-failure state (ECS
+  **active / ready-for-acceptance MLF-6 subproject** consuming MLF-5 component-failure state (ECS
   `ComponentDamageState`) to write `StructuralBreakupEvent` rows with named
   break-mode facts. It does NOT modify `structural_integrity`, flight dynamics,
-  or loss-state (those belong to MLF-7). No Pk, debris/wreck lifecycle, or
-  weapon-specific lethality claims.
+  or loss-state (those belong to MLF-7). P7 broad regression is green
+  (`447 passed`); archive movement waits for explicit user instruction. No Pk,
+  debris/wreck lifecycle, or weapon-specific lethality claims.
 - [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md):
   accepted / retained follow-on promoted from the hitbox-geometry gap issue; it
   has built reviewable F-16C outer regions, component bindings, distance
@@ -68,8 +69,8 @@ The first mainline execution entry for that issue has now been closed against
 the geometry-only acceptance gate:
 [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
 
-MLF-6 (structural failure / airframe breakup) has been scaffolded as an active
-subproject per `docs/agent`:
+MLF-6 (structural failure / airframe breakup) is an active / ready-for-acceptance
+subproject per `docs/agent`; it is not archived yet:
 [missile_lethality_structural_failure/README.md](missile_lethality_structural_failure/README.md).
 MLF-7 (secondary consequence coupling), MLF-8 (debris/wreck lifecycle),
 MLF-9 (Pk/statistical trends), and MLF-10 (calibration gates) still need

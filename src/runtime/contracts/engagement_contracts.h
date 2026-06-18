@@ -14,15 +14,17 @@ inline constexpr std::string_view kLethalityChainStageWarheadMechanism = "warhea
 inline constexpr std::string_view kLethalityChainStageSpatialCoverage = "spatial_coverage";
 inline constexpr std::string_view kLethalityChainStageComponentLoad = "component_load";
 inline constexpr std::string_view kLethalityChainStageComponentDamage = "component_damage";
+inline constexpr std::string_view kLethalityChainStageStructuralBreakup = "structural_breakup";
 inline constexpr std::string_view kLethalityChainStagePlatformConsequence = "platform_consequence";
 inline constexpr std::string_view kLethalityChainStageLifecycle = "lifecycle";
 inline constexpr std::string_view kLethalityChainStageTrainingProjection = "training_projection";
 
-inline constexpr std::array<std::string_view, 9> kLethalityChainCanonicalStages = {
+inline constexpr std::array<std::string_view, 10> kLethalityChainCanonicalStages = {
     kLethalityChainStageNearestApproach,     kLethalityChainStageFuze,
     kLethalityChainStageWarheadMechanism,    kLethalityChainStageSpatialCoverage,
     kLethalityChainStageComponentLoad,       kLethalityChainStageComponentDamage,
-    kLethalityChainStagePlatformConsequence, kLethalityChainStageLifecycle,
+    kLethalityChainStageStructuralBreakup,   kLethalityChainStagePlatformConsequence,
+    kLethalityChainStageLifecycle,
     kLethalityChainStageTrainingProjection,
 };
 

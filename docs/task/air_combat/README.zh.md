@@ -95,7 +95,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [MLF-6 结构失效/机体断裂](a2_high_fidelity_damage_model/missile_lethality_structural_failure/README.zh.md)
   子项目：消费 MLF-5 ECS `ComponentDamageState`，写入 `StructuralBreakupEvent`
   具名断裂事实（不修改 `structural_integrity`、飞行动力学、失能状态；属于 MLF-7）；
-  MLF-6 是 MLF-7/MLF-8 的前置瓶颈
+  P7 更广回归已通过（`447 passed`），MLF-6 已准备进入用户验收；archive 移动等待明确指令，
+  MLF-6 仍是 MLF-7/MLF-8 的前置瓶颈
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外

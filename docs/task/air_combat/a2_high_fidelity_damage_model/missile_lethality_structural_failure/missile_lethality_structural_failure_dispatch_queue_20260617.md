@@ -1,7 +1,6 @@
 # MLF-6 Structural Failure — Dispatch Queue
 
-Status: `2026-06-17` v2 planning queue, corrected per P0 self-review. No packets
-dispatched yet.
+Status: `2026-06-18` v8 queue closed for implementation. P1/P2, P3, P4, P5, P6 focused validation, and P7 broad regression are complete. Archive movement remains withheld until explicit user instruction.
 
 Parent task clusters: [missile_lethality_structural_failure_task_clusters_20260617.md](missile_lethality_structural_failure_task_clusters_20260617.md)
 
@@ -9,14 +8,14 @@ Parent task clusters: [missile_lethality_structural_failure_task_clusters_202606
 
 | Packet | Cluster | Suggested owner | Write set | Goal | Status |
 | --- | --- | --- | --- | --- | --- |
-| `MLF-6B-X1` | `MLF-6B Component Inventory` | read-only worker | docs inventory packet only | Inventory every `ComponentDamageState` field, every F-16C component name, and every `structural_integrity` write site MLF-6 must NOT touch. | planned |
-| `MLF-6C-X1` | `MLF-6C Break-Mode Mapping` | main thread | design doc only | Classify every F-16C component into structural groups; define integrity thresholds per group. | planned |
-| `MLF-6D-W1` | `MLF-6D State Machine` | implementation worker | `src/systems/combat/structural_failure_system.h`, `src/systems/combat/structural_failure_system.cpp`, CMakeLists.txt | Implement `StructuralFailureUpdate` ECS system: read `ComponentDamageState`, track `breakup_state` and `break_mode`. No event writing. | planned |
-| `MLF-6E-W1` | `MLF-6E Event Writer` | implementation worker (same as 6D preferred) | `src/systems/combat/structural_failure_system.*`, `src/core/engine/simulation_kernel_engagement_event_store.*` | Write `StructuralBreakupEvent` rows on state transitions or new break modes. | planned |
-| `MLF-6F-W1` | `MLF-6F Diagnostics Export` | diagnostics worker | `tools/diagnostics/structural_breakup_export.py` | Thin Python probe on existing `StructuralBreakupEvent` bindings (`bindings_runtime.cpp:449-457`, `bindings_core.cpp`). No new binding surface. | planned |
-| `MLF-6G-W1` | `MLF-6G Focused Tests` | main thread or test worker | `tests/runtime/air_combat/test_structural_failure_break_modes.cpp`, `tests/runtime/air_combat/test_structural_failure_regression.cpp` | Focused C++ tests for every break mode. | planned |
-| `MLF-6H-C1` | `MLF-6H Zero-Regression Smoke` | main thread | test execution only | Run full air_combat and world_batch suites; confirm zero regressions. | planned |
-| `MLF-6I-C1` | `MLF-6I Acceptance And Archive` | main thread | docs/index/archive | Summarize evidence, update status, sync parent READMEs. | planned |
+| `MLF-6B-X1` | `MLF-6B Component Inventory` | main thread | docs inventory packet only | Inventory every `ComponentDamageState` field, every F-16C component name, and every `structural_integrity` write site MLF-6 must NOT touch. | complete |
+| `MLF-6C-X1` | `MLF-6C Break-Mode Mapping` | main thread | design doc only | Classify every F-16C component into structural groups; define integrity thresholds per group. | complete |
+| `MLF-6D-W1` | `MLF-6D State Machine` | main thread | `src/components/combat/structural_failure.h`, `src/systems/combat/structural_failure_system.h`, `src/core/engine/simulation_kernel_systems.cpp`, `src/tests/test_structural_failure_system.cpp`, CMakeLists.txt | Implement `StructuralFailureUpdate` ECS system: read `ComponentDamageState`, track `breakup_state` and `break_mode`. No event writing. | complete |
+| `MLF-6E-W1` | `MLF-6E Event Writer` | implementation worker (same as 6D preferred) | `src/systems/combat/structural_failure_system.h`, `src/core/interfaces/engagement_event_recorder.h`, `src/core/engine/simulation_kernel_engagement_event_store.*`, `src/runtime/facade/runtime_facade.cpp`, `src/tests/test_structural_failure_system.cpp` | Write `StructuralBreakupEvent` rows on state transitions or new break modes. | complete |
+| `MLF-6F-W1` | `MLF-6F Diagnostics Export` | diagnostics worker | `tools/diagnostics/structural_breakup_export.py`, `tests/tools/test_structural_breakup_export.py` | Thin Python probe on existing `StructuralBreakupEvent` bindings (`bindings_runtime.cpp:449-457`, `bindings_core.cpp`). No new binding surface. | complete |
+| `MLF-6G-W1` | `MLF-6G Focused Tests` | main thread or test worker | `src/tests/test_structural_failure_system.cpp`, `CMakeLists.txt` | Focused C++ tests for every break mode. | complete |
+| `MLF-6H-C1` | `MLF-6H Zero-Regression Smoke` | main thread | test execution and obsolete-oracle updates | Run full air_combat and world_batch suites; confirm zero regressions. Current lane: `447 passed`. | complete |
+| `MLF-6I-C1` | `MLF-6I Acceptance And Archive` | main thread | docs/index only; no archive movement | Summarize evidence, update status, sync parent READMEs; keep archive movement out until explicit instruction. | complete / no archive |
 
 ## Dispatch Notes
 
@@ -26,8 +25,9 @@ Parent task clusters: [missile_lethality_structural_failure_task_clusters_202606
   is a thin extension of the state machine's internal tracking.
 - `MLF-6F-W1` and `MLF-6G-W1` can run in parallel after 6E completes (different
   write surfaces: Python tools vs C++ tests).
-- `MLF-6H-C1` is serial after 6E + 6F + 6G.
-- `MLF-6I-C1` is last, serial.
+- `MLF-6H-C1` was executed after 6E + 6F + 6G and now has a clean full-suite
+  pass for the P7 lane.
+- `MLF-6I-C1` keeps no-archive status until explicit user instruction.
 - Each cluster has a round cap in the task cluster table. If exceeded, stop and
   re-scope.
 - Follow [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).

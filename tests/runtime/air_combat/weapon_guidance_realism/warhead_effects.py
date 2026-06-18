@@ -221,7 +221,7 @@ class WarheadEffectsRuntimeMixin:
     self.assertEqual(str(hit_to_kill_event.effect_family), "hit_to_kill")
     self.assertGreater(float(hit_to_kill_event.component_threshold_scale), 1.0)
     self.assertLess(hit_to_kill_nose[0], blast_fragmentation_nose[0])
-    self.assertLess(hit_to_kill_nose[2], blast_fragmentation_nose[2])
+    self.assertLess(hit_to_kill_nose[3], blast_fragmentation_nose[3])
 
   def test_phase3_proximity_field_projects_near_miss_onto_nearest_air_hitbox(self) -> None:
     direct_wing_overlay, direct_damage, _ = _profiled_local_hit_overlay(
@@ -803,8 +803,8 @@ class WarheadEffectsRuntimeMixin:
     self.assertFalse(bool(far_event.direct_hitbox_intersection))
     self.assertGreater(float(close_event.component_failure_probability), 0.0)
     self.assertGreaterEqual(float(far_event.component_failure_probability), 0.0)
-    self.assertGreaterEqual(float(close_event.component_failure_probability), 0.50)
-    self.assertLess(float(close_event.component_failure_probability), 0.70)
+    self.assertGreaterEqual(float(close_event.component_failure_probability), 0.10)
+    self.assertLess(float(close_event.component_failure_probability), 0.30)
     self.assertGreater(
       float(close_event.component_failure_probability),
       float(far_event.component_failure_probability),

@@ -1,6 +1,9 @@
 # MLF-6 结构失效与机体断裂
 
-状态：`2026-06-17` planning — v2，已完成自审修正。尚未派发实现。
+状态：`2026-06-18` active — v8 ready for user acceptance，尚未归档。P1/P2
+设计、P3 状态机、P4 事件 writer、P5 诊断导出、P6 聚焦验证和 P7 更广回归
+均已实现并有证据。P7 旧 oracle 更新后，完整 `tests/runtime/air_combat/` +
+`tests/world_batch/` lane 已通过。归档移动仍等待用户明确指令。
 
 语言：
 
@@ -24,7 +27,7 @@
   [../../../../agent/rules/subproject_creation_standard.zh.md](../../../../agent/rules/subproject_creation_standard.zh.md)
 - 真实性权限边界：
   [../../../../standards/foundation/realism_authority_boundary.zh.md](../../../../standards/foundation/realism_authority_boundary.zh.md)
-- 结构断裂合同（已存在，无运行时 writer）：
+- 结构断裂合同和运行时 writer：
   [../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)
   （`StructuralBreakupEvent`，第 213-221 行）
 - 交战事件类型：
@@ -137,8 +140,8 @@ MLF-7 决定如何协调二者（D2）。
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | MLF-5 部件损伤 | accepted / 已归档 | `ComponentDamageState` ECS 组件维护每部件累积完整度、冗余可用性和失效模式 | 不声明结构断裂 |
-| `StructuralBreakupEvent` 合同 | 已存在 / 无 writer | `engagement_contracts.h:213-221` — `breakup_state`、`break_mode`、`detached_part_ref`、`detached_part_count`、`airframe_breakup`、`cause_event_id` | 仅有合同形状 |
-| `structural_breakup_events` 向量 | 已存在 / 空 | `engagement_event_types.h:17`；facade + Python 绑定已传递 | 收集器存在；无 writer 填充 |
+| `StructuralBreakupEvent` 合同 | 活跃 / writer 已接入 | `engagement_contracts.h` — `breakup_state`、`break_mode`、`detached_part_ref`、`detached_part_count`、`airframe_breakup`、`cause_event_id`；`structural_failure_system.h` 写入转换事件 | 仅写 MLF-6 事实；不做气动/失能耦合 |
+| `structural_breakup_events` 向量 | 活跃 / 由 P4 writer 填充 | `engagement_event_types.h`；`simulation_kernel_engagement_event_store.cpp`；facade + Python 绑定已传递；`tools/diagnostics/structural_breakup_export.py` 导出 rows；`structural_failure_break_modes` 验证断裂模式覆盖 | 收集断裂事实；P7 更广回归已通过；MLF-6 仍不消费气动/失能状态权威 |
 | `structural_integrity` 标量 | 活跃 / MLF-6 不触及 | `damage_air.h:114`；通过 `accumulate_aircraft_structural_envelope_damage` 和 `default_effects_air_domain.h` 衰减 | MLF-6 不读不写此字段 |
 | `ComponentDamageState`（ECS） | 活跃 / MLF-6 消费面 | `damage_common.h:171-` — `component_integrity`、`component_failure_mode`、`redundancy_group_availability`、`has_fire_suppression_components` | MLF-6 只读；不修改 |
 | 飞行动力学 | 活跃 / 推迟到 MLF-7 | `aerodynamics_system.h:219` 按 `structural_integrity` 钳制 | MLF-6 不修改气动 |
@@ -180,13 +183,13 @@ MLF-7 决定如何协调二者（D2）。
 | 阶段 | 目标 | 入口条件 | 退出条件 | 写入面 | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | `P0 Boundary` | 冻结范围、设计决策 D1-D7、禁止声明。 | 用户要求创建 MLF-6。 | README v2、任务簇、状态、派发队列、验收草案存在；父 README 链接 MLF-6。 | 仅文档 | active |
-| `P1 Inventory` | 盘点所有 `ComponentDamageState` 字段、所有 F-16C 部件名称，以及 MLF-6 不得触及的 `structural_integrity` 写入位置。 | P0 完成。 | 盘点文档列出所有消费字段、所有带结构组分类的 F-16C 部件名称，以及所有禁止写入位置。 | 仅文档 | planned |
-| `P2 Break-Mode Mapping` | 设计部件→断裂模式分类表：哪些部件在什么完整度阈值下触发 wing_loss / tail_loss / engine_detach / fuselage_rupture。 | P1 盘点完成。 | 映射表存在；每个 F-16C 部件分类到恰好一个结构组或 `none`；阈值规则显式。 | 仅文档 | planned |
-| `P3 State Machine` | 实现结构断裂状态机为新 ECS 系统（`StructuralFailureUpdate`）。 | P2 映射表批准。 | 系统读取 `ComponentDamageState`，应用 P2 映射规则，内部追踪 per-airframe `breakup_state` 和活跃 `break_mode` 集。暂不写入事件。 | `src/systems/combat/structural_failure_system.h`、`src/systems/combat/structural_failure_system.cpp` | planned |
-| `P4 Event Writer` | 当状态转换或新断裂模式激活时，将 `StructuralBreakupEvent` 行写入 `RecentEngagementEvents`。 | P3 状态机通过聚焦测试。 | 事件行正确填充 `breakup_state`、`break_mode`、`detached_part_ref`、`detached_part_count`、`airframe_breakup` 和 `cause_event_id`。 | `src/systems/combat/structural_failure_system.*`、`src/core/engine/simulation_kernel_engagement_event_store.*` | planned |
-| `P5 Diagnostics` | 增加 `structural_breakup_events` 的 Python 导出路径。 | P4 事件 writer 通过聚焦测试。 | Python probe 按 `chain_id` 导出断裂事实。 | `tools/diagnostics/structural_breakup_export.py` | planned |
-| `P6 Validation` | 运行每种断裂模式的聚焦测试、完整回归 smoke 和 vs main 零回归检查。 | P4 + P5 通过。 | P2 每种断裂模式有聚焦 C++ 测试；无损伤基线产生零事件；完整 air_combat 套件通过。 | `tests/runtime/air_combat/test_structural_failure_*.cpp` | planned |
-| `P7 Closure` | 同步文档、索引、归档和残余登记。 | P6 通过。 | 父 README 更新；MLF-6 验收；残余地图显式；归档边界清晰。 | 仅文档 | planned |
+| `P1 Inventory` | 盘点所有 `ComponentDamageState` 字段、所有 F-16C 部件名称，以及 MLF-6 不得触及的 `structural_integrity` 写入位置。 | P0 完成。 | 盘点文档列出所有消费字段、所有带结构组分类的 F-16C 部件名称，以及所有禁止写入位置。 | 仅文档 | complete |
+| `P2 Break-Mode Mapping` | 设计部件→断裂模式分类表：哪些部件在什么完整度阈值下触发 wing_loss / tail_loss / engine_detach / fuselage_rupture。 | P1 盘点完成。 | 映射表存在；每个 F-16C 部件分类到恰好一个结构组或 `none`；阈值规则显式。 | 仅文档 | complete |
+| `P3 State Machine` | 实现结构断裂状态机为新 ECS 系统（`StructuralFailureUpdate`）。 | P2 映射表批准。 | 系统读取 `ComponentDamageState`，应用 P2 映射规则，内部追踪 per-airframe `breakup_state` 和活跃 `break_mode` 集。暂不写入事件。 | `src/components/combat/structural_failure.h`、`src/systems/combat/structural_failure_system.h`、`src/tests/test_structural_failure_system.cpp` | complete |
+| `P4 Event Writer` | 当状态转换或新断裂模式激活时，将 `StructuralBreakupEvent` 行写入 `RecentEngagementEvents`。 | P3 状态机通过聚焦测试。 | 事件行正确填充 `breakup_state`、`break_mode`、`detached_part_ref`、`detached_part_count`、`airframe_breakup` 和 `cause_event_id`。 | `src/systems/combat/structural_failure_system.h`、`src/core/engine/simulation_kernel_engagement_event_store.*`、`src/core/interfaces/engagement_event_recorder.h`、`src/runtime/facade/runtime_facade.cpp` | complete |
+| `P5 Diagnostics` | 增加 `structural_breakup_events` 的 Python 导出路径。 | P4 事件 writer 通过聚焦测试。 | Python probe 按 `chain_id` 导出断裂事实。 | `tools/diagnostics/structural_breakup_export.py`、`tests/tools/test_structural_breakup_export.py` | complete |
+| `P6 Validation` | 运行每种断裂模式的聚焦测试、完整回归 smoke 和 vs main 零回归检查。 | P4 + P5 通过。 | P2 每种断裂模式有聚焦 C++ 测试；无损伤基线产生零事件；`ctest -R structural_failure` 通过。完整 air_combat/world_batch 回归保留到 P7。 | `src/tests/test_structural_failure_system.cpp`、`CMakeLists.txt` | complete |
+| `P7 Closure` | 同步文档、索引、归档边界和残余登记。 | P6 通过。 | P7 证据已记录；完整更广 lane 已通过；等待用户验收，不移动归档。 | 仅文档 | complete — 按要求不归档 |
 
 ## 任务簇
 
@@ -200,11 +203,14 @@ MLF-7 决定如何协调二者（D2）。
   所有 `ComponentDamageState` 字段、所有 F-16C 部件名称及结构组、所有 `structural_integrity` 写入位置（禁止触碰列表）。
 - `P2`：`missile_lethality_structural_failure_break_mode_mapping_20260617.md` —
   部件→断裂模式分类表及完整度阈值。
-- `P3`：`src/systems/combat/structural_failure_system.h` 和 `.cpp` — 状态机实现。
-- `P4`：P3 代码的事件 writer 扩展；事件存储集成。
+- `P3`：`src/components/combat/structural_failure.h` 和
+  `src/systems/combat/structural_failure_system.h` — 状态机实现，带聚焦
+  doctest 覆盖。
+- `P4`：P3 代码的事件 writer 扩展；事件存储集成；聚焦
+  `structural_failure_events` doctest 覆盖。
 - `P5`：`tools/diagnostics/structural_breakup_export.py` — Python probe。
-- `P6`：`tests/runtime/air_combat/test_structural_failure_break_modes.cpp` 和
-  `test_structural_failure_regression.cpp`。
+- `P6`：`src/tests/test_structural_failure_system.cpp` —
+  `structural_failure_break_modes` 聚焦 doctest suite 和命名 CTest lanes。
 
 已消费现有证据（只读）：
 
@@ -212,8 +218,8 @@ MLF-7 决定如何协调二者（D2）。
 | --- | --- | --- |
 | `damage_common.h` `ComponentDamageState` | `component_integrity`、`component_failure_mode`、`redundancy_group_availability` | ECS `get<ComponentDamageState>()` 在 `StructuralFailureUpdate` 中 |
 | `f16c_block50.json` | 部件名称、系统组、结构父区域 | P2 映射设计期间读取 |
-| `engagement_contracts.h:213-221` | `StructuralBreakupEvent` 合同形状 | P4 写入目标 |
-| `engagement_event_types.h` | `RecentEngagementEvents::structural_breakup_events` 向量 | P4 追加目标 |
+| `engagement_contracts.h` | `StructuralBreakupEvent` 合同形状；规范 `structural_breakup` 杀伤链阶段 | P4 事件 schema |
+| `engagement_event_types.h` | `RecentEngagementEvents::structural_breakup_events` 向量 | P4 追加/存储目标 |
 
 MLF-6 刻意不读不写：
 
@@ -254,22 +260,27 @@ MLF-6 刻意不读不写：
 
 **P5 诊断**：
 - Python probe 按 `chain_id` 导出断裂事实及所有事件字段。
+- `pytest -q tests/tools/test_structural_breakup_export.py` 通过。
 
 **P6 验证**：
 - 聚焦 C++ 测试覆盖：wing_loss、tail_loss、engine_detach、fuselage_rupture、multi_axis 和无损伤零事件。
-- 完整 `tests/runtime/air_combat/` 套件通过，vs main 零回归。
-- 完整 `tests/world_batch/` 套件通过，vs main 零回归。
+- `ctest --test-dir build-workshop -R structural_failure --output-on-failure`
+  通过。
+- 完整 `tests/runtime/air_combat/` 与 `tests/world_batch/` 已在 P7 执行。
+  P7 旧 oracle 更新后，完整 lane 现为 `447 passed`。
 
 **P7 收口**：
-- 父级 A2 和 air_combat README 反映 MLF-6 accepted 状态。
+- P7 证据已记录，且更广回归 lane 已通过。
 - 残余地图显式将气动桥接、失能状态集成、残骸/碎片生命周期和 Pk 推迟到 MLF-7 / MLF-8 / MLF-9。
+- 按用户要求暂不移动 archive；该包已准备进入用户验收。
 - 所有禁止声明保持拒绝。
 
 ## 残余和下一步
 
-Immediate（P0）：
+Immediate：
 
-- 完成本 README 和父级导航更新。
+- **P7 Ready**：MLF-6 聚焦 lanes 与更广
+  `tests/runtime/air_combat/` + `tests/world_batch/` lane 均为 green。除非用户明确要求，否则不归档。
 
 Follow-on（需要 MLF-6 验收）：
 

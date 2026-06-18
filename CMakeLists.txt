@@ -286,14 +286,18 @@ set(EF_TEST_SOURCES
     src/tests/test_components_basic.cpp
     src/tests/test_aero_physics_common.cpp
     src/tests/test_kalman_seeker.cpp
+    src/tests/test_structural_failure_system.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
 target_link_libraries(ef_test PRIVATE ef_core ef_gpu_experiments doctest::doctest)
 target_include_directories(ef_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-# Single CTest entry that runs all doctest suites
+# CTest entries for all doctest suites plus focused structural-failure lanes.
 add_test(NAME ef_test_all COMMAND ef_test)
+add_test(NAME structural_failure_state COMMAND ef_test --test-suite=structural_failure_state)
+add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_failure_events)
+add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core

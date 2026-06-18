@@ -1,7 +1,10 @@
 # MLF-6 Structural Failure — Task Clusters
 
-Status: `2026-06-17` v2 finite task-cluster plan, corrected per P0 self-review.
-Matches [README.md](README.md) v2 phase plan (P0-P7).
+Status: `2026-06-18` v8 finite task-cluster plan. P1/P2, P3, P4, P5,
+and P6 focused validation are complete; P7 is complete after obsolete-oracle
+updates and the full air_combat/world_batch lane is green. Archive movement is
+held only by explicit user instruction. Matches [README.md](README.md) phase
+plan (P0-P7).
 
 ## Boundary Decision
 
@@ -31,15 +34,15 @@ It must not:
 
 | Cluster | Owner | Model / reasoning | Goal | Write set | Non-goals | Validation | Closure gate | Dependency / parallel | Round cap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `MLF-6A Boundary And Index` | main thread | n/a | Create MLF-6 v2 subproject with frozen D1-D6 decisions, corrected phase plan, task clusters, status, dispatch queue, acceptance draft, and parent navigation. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/**`, `docs/task/air_combat/a2_high_fidelity_damage_model/README*.md`, `docs/task/air_combat/README*.md` | runtime edits, probe implementation, worker dispatch | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure docs/task/air_combat/a2_high_fidelity_damage_model/README*.md docs/task/air_combat/README*.md` | future agents can resume MLF-6 independently; README v2 with D1-D6 frozen | first, serial | 2 | active |
-| `MLF-6B Component Inventory` | main thread or read-only worker | n/a | Inventory every `ComponentDamageState` field MLF-6 will read, every F-16C component name from `f16c_block50.json` and TG-P7 split receivers, and every `structural_integrity` write site MLF-6 must NOT touch. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/missile_lethality_structural_failure_component_inventory_20260617.md` | runtime edits | doc diff check; referenced paths exist; every F-16C component listed with system group and structural parent region | inventory doc complete; ready for P2 mapping design | after 6A; serial | 1 | planned |
-| `MLF-6C Break-Mode Mapping` | main thread | n/a | Design the component→break-mode classification table: each F-16C component classified into `wing_left`, `wing_right`, `tail_left`, `tail_right`, `vertical_tail`, `engine_left`, `engine_right`, `fuselage`, or `none`. Each structural group has an explicit cumulative integrity-drop threshold. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/missile_lethality_structural_failure_break_mode_mapping_20260617.md` | runtime edits | doc review; every component classified; no component is in two structural groups; thresholds are justified by engineering rationale | mapping table approved; ready for P3 implementation | after 6B; serial | 2 | planned |
-| `MLF-6D State Machine` | implementation worker | n/a | Implement `StructuralFailureUpdate` ECS system: reads `ComponentDamageState`, applies P2 mapping rules, tracks per-airframe `breakup_state` and active `break_mode` set internally. Does NOT write events yet. Registers after `AircraftDamageStateUpdate`. | `src/systems/combat/structural_failure_system.h`, `src/systems/combat/structural_failure_system.cpp`, CMakeLists.txt (new target or existing lib) | event writing, aerodynamics changes, structural_integrity changes, entity creation/deletion | `ef_test --test-suite=structural_failure_state`; `ef_py` build | controlled ComponentDamageState inputs produce correct breakup_state and break_mode set; state is irreversible and cumulative; no ECS mutation beyond internal system state | after 6C; serial | 3 | planned |
-| `MLF-6E Event Writer` | implementation worker (same as 6D or serial handoff) | n/a | Extend `StructuralFailureUpdate` to write `StructuralBreakupEvent` rows into `RecentEngagementEvents` when state transitions or new break modes activate. Populate all contract fields. | `src/systems/combat/structural_failure_system.*`, `src/core/engine/simulation_kernel_engagement_event_store.*`, `src/core/engine/engagement_event_types.h` | aerodynamics, structural_integrity, loss-state, entity creation | `ef_test --test-suite=structural_failure_events`; `ef_py` build | controlled inputs produce correct StructuralBreakupEvent rows with traceable cause_event_id; no-damage baseline produces zero events; airframe_breakup only true for full_breakup | after 6D; serial | 3 | planned |
-| `MLF-6F Diagnostics Export` | diagnostics worker | n/a | Add thin Python diagnostic probe consuming existing `StructuralBreakupEvent` and `structural_breakup_events` bindings (`bindings_runtime.cpp:449-457`, `bindings_core.cpp:540-`). No new binding surface; no duplicate export pipeline. | `tools/diagnostics/structural_breakup_export.py` | new bindings, rewrite of existing diagnostics, aerodynamics, structural_integrity | `pytest -q tests/tools/test_structural_breakup_export.py` | probe exports breakup_state, break_mode, detached_part_ref, detached_part_count, airframe_breakup, cause_event_id per chain_id via existing facade/binding surface | after 6E; can parallel with 6G test authoring | 2 | planned |
-| `MLF-6G Focused Tests` | main thread or test worker | n/a | Write focused C++ tests: wing_loss, tail_loss, engine_detach, fuselage_rupture, multi_axis, and no-damage zero-event. | `tests/runtime/air_combat/test_structural_failure_break_modes.cpp`, `tests/runtime/air_combat/test_structural_failure_regression.cpp` | scenario-level tests, training tests, Python tests | `ctest --test-dir build-workshop -R structural_failure --output-on-failure` | every P2 break mode has a passing C++ test; zero-event baseline passes | after 6E; can parallel with 6F | 2 | planned |
-| `MLF-6H Zero-Regression Smoke` | main thread | n/a | Run full air_combat and world_batch test suites; confirm zero regressions vs main. | test execution only (no code changes) | new features, scope expansion | `ctest --test-dir build-workshop -R ef_test_all --output-on-failure`; `pytest -q tests/runtime/air_combat/ tests/world_batch/` | zero regressions; all existing tests pass | after 6E+6F+6G; serial | 2 | planned |
-| `MLF-6I Acceptance And Archive` | main thread | n/a | Summarize evidence, update status, sync parent READMEs, prepare archive boundary, write residual map. | docs/index/archive in this subproject; A2 README; air_combat README | overclaiming real-weapon structural kill, Pk, debris lifecycle, or aerodynamics authority | docs diff check + referenced focused tests pass | accepted/held state matches evidence; MLF-7/MLF-8 residuals explicit | after 6H; serial | 1 | planned |
+| `MLF-6A Boundary And Index` | main thread | n/a | Create MLF-6 v2 subproject with frozen D1-D7 decisions, corrected phase plan, task clusters, status, dispatch queue, acceptance draft, and parent navigation. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/**`, `docs/task/air_combat/a2_high_fidelity_damage_model/README*.md`, `docs/task/air_combat/README*.md` | runtime edits, probe implementation, worker dispatch | `git diff --check -- docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure docs/task/air_combat/a2_high_fidelity_damage_model/README*.md docs/task/air_combat/README*.md` | future agents can resume MLF-6 independently; README v2 with D1-D7 frozen | first, serial | 2 | complete |
+| `MLF-6B Component Inventory` | main thread | n/a | Inventory every `ComponentDamageState` field MLF-6 will read, every F-16C component name from `f16c_block50.json` and TG-P7 split receivers, and every `structural_integrity` write site MLF-6 must NOT touch. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/missile_lethality_structural_failure_component_inventory_20260617.md` | runtime edits | doc diff check; referenced paths exist; every F-16C component listed with system group and structural parent region | inventory doc complete; ready for P2 mapping design | after 6A; serial | 1 | complete |
+| `MLF-6C Break-Mode Mapping` | main thread | n/a | Design the component→break-mode classification table: each F-16C component classified into `wing_left`, `wing_right`, `tail_left`, `tail_right`, `vertical_tail`, `engine_left`, `engine_right`, `fuselage`, or `none`. Each structural group has an explicit cumulative integrity-drop threshold. | `docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_structural_failure/missile_lethality_structural_failure_break_mode_mapping_20260617.md` | runtime edits | doc review; every component classified; no component is in two structural groups except the documented default-DB `wing_spar_center` cross-region case; thresholds are justified by engineering rationale | mapping table approved; ready for P3 implementation | after 6B; serial | 2 | complete |
+| `MLF-6D State Machine` | main thread | n/a | Implement `StructuralFailureUpdate` ECS system: reads `ComponentDamageState`, applies P2 mapping rules, tracks per-airframe `breakup_state` and active `break_mode` set internally. Does NOT write events yet. Registers after `AircraftDamageStateUpdate`. | `src/components/combat/structural_failure.h`, `src/systems/combat/structural_failure_system.h`, `src/core/engine/simulation_kernel_systems.cpp`, `src/tests/test_structural_failure_system.cpp`, CMakeLists.txt | event writing, aerodynamics changes, structural_integrity changes, entity creation/deletion | `ef_test --test-suite=structural_failure_state`; `ctest --test-dir build-workshop -R ef_test_all --output-on-failure` | controlled ComponentDamageState inputs produce correct breakup_state and break_mode set; state is irreversible and cumulative; no ECS mutation beyond new `StructuralBreakupState` | after 6C; serial | 3 | complete |
+| `MLF-6E Event Writer` | implementation worker (same as 6D or serial handoff) | n/a | Extend `StructuralFailureUpdate` to write `StructuralBreakupEvent` rows into `RecentEngagementEvents` when state transitions or new break modes activate. Populate all contract fields. | `src/systems/combat/structural_failure_system.h`, `src/core/interfaces/engagement_event_recorder.h`, `src/core/engine/simulation_kernel_engagement_event_store.*`, `src/runtime/facade/runtime_facade.cpp`, `src/tests/test_structural_failure_system.cpp` | aerodynamics, structural_integrity, loss-state, entity creation | `ef_test --test-suite=structural_failure_events`; facade/contract Python guards | controlled inputs produce correct StructuralBreakupEvent rows with traceable cause_event_id; no-damage baseline produces zero events; airframe_breakup only true for full_breakup | after 6D; serial | 3 | complete |
+| `MLF-6F Diagnostics Export` | diagnostics worker | n/a | Add thin Python diagnostic probe consuming existing `StructuralBreakupEvent` and `structural_breakup_events` bindings (`bindings_runtime.cpp:449-457`, `bindings_core.cpp:540-`). No new binding surface; no duplicate export pipeline. | `tools/diagnostics/structural_breakup_export.py`, `tests/tools/test_structural_breakup_export.py` | new bindings, rewrite of existing diagnostics, aerodynamics, structural_integrity | `pytest -q tests/tools/test_structural_breakup_export.py` | probe exports breakup_state, break_mode, detached_part_ref, detached_part_count, airframe_breakup, cause_event_id per chain_id via existing facade/binding surface | after 6E; can parallel with 6G test authoring | 2 | complete |
+| `MLF-6G Focused Tests` | main thread or test worker | n/a | Write focused C++ tests: wing_loss, tail_loss, engine_detach, fuselage_rupture, multi_axis, and no-damage zero-event. | `src/tests/test_structural_failure_system.cpp`, `CMakeLists.txt` | scenario-level tests, training tests, Python tests | `ctest --test-dir build-workshop -R structural_failure --output-on-failure` | every P2 break mode has a passing C++ test; zero-event baseline passes | after 6E; can parallel with 6F | 2 | complete |
+| `MLF-6H Zero-Regression Smoke` | main thread | n/a | Run full air_combat and world_batch test suites; confirm zero regressions vs main. | test execution and obsolete-oracle test updates only | new features, scope expansion | `ctest --test-dir build-workshop -R ef_test_all --output-on-failure`; `PYTHONPATH=build-workshop:. pytest -q tests/runtime/air_combat/ tests/world_batch/` → `447 passed` | focused MLF-6 lanes green; broad air_combat/world_batch lane green | after 6E+6F+6G; serial | 2 | complete |
+| `MLF-6I Acceptance And Archive` | main thread | n/a | Summarize evidence, update status, sync parent READMEs, prepare archive boundary, write residual map. | docs/index in this subproject; no archive movement without user instruction | overclaiming real-weapon structural kill, Pk, debris lifecycle, or aerodynamics authority | docs diff check + referenced focused tests pass | ready-for-acceptance state matches evidence; MLF-7/MLF-8 residuals explicit; no archive movement | after 6H; serial | 1 | complete / no archive |
 
 ## Dispatch Rules
 
@@ -109,27 +112,31 @@ cmo_python -m pytest -q \
 
 ## Acceptance Criteria
 
-- [ ] `MLF-6A`: README v2 with D1-D6 frozen; parent navigation complete.
-- [ ] `MLF-6B`: Component inventory lists every `ComponentDamageState` field,
+- [x] `MLF-6A`: README v2 with D1-D7 frozen; parent navigation complete.
+- [x] `MLF-6B`: Component inventory lists every `ComponentDamageState` field,
   every F-16C component with structural group, and every forbidden write site.
-- [ ] `MLF-6C`: Break-mode mapping table classifies every F-16C component;
+- [x] `MLF-6C`: Break-mode mapping table classifies every F-16C component;
   integrity thresholds are explicit and justified.
-- [ ] `MLF-6D`: State machine produces correct `breakup_state` and `break_mode`
+- [x] `MLF-6D`: State machine produces correct `breakup_state` and `break_mode`
   from controlled `ComponentDamageState` inputs; state is irreversible.
-- [ ] `MLF-6E`: `StructuralBreakupEvent` rows are correct and traceable;
+- [x] `MLF-6E`: `StructuralBreakupEvent` rows are correct and traceable;
   no-damage baseline produces zero events; `airframe_breakup` only for
   `full_breakup`.
-- [ ] `MLF-6F`: Python probe exports breakup facts per `chain_id`.
-- [ ] `MLF-6G`: Every P2 break mode has a passing focused C++ test.
-- [ ] `MLF-6H`: Zero regressions in full air_combat and world_batch suites.
-- [ ] `MLF-6I`: Parent READMEs updated; residual map explicit; archive boundary
-  clear; all forbidden claims refused.
+- [x] `MLF-6F`: Python probe exports breakup facts per `chain_id`.
+- [x] `MLF-6G`: Every P2 break mode has a passing focused C++ test.
+- [x] `MLF-6H`: Full air_combat/world_batch suites are green after
+  obsolete-oracle updates.
+- [x] `MLF-6I`: Residual map and no-archive boundary are explicit; package is
+  ready for user acceptance.
 
 ## Residual Map
 
 Immediate:
 
-- None; subproject in planning phase.
+- `MLF-6H`: broader air_combat/world_batch regression smoke is green:
+  `447 passed`.
+- `MLF-6I`: archive movement is intentionally withheld until explicit user
+  instruction.
 
 Follow-on (explicitly deferred to named MLF phases):
 
