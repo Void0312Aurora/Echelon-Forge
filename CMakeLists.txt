@@ -305,6 +305,7 @@ add_test(NAME ef_test_all COMMAND ef_test)
 add_test(NAME structural_failure_state COMMAND ef_test --test-suite=structural_failure_state)
 add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_failure_events)
 add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
+add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_consequence)
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core

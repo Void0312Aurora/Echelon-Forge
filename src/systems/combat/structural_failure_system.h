@@ -411,7 +411,7 @@ evaluate_structural_breakup_state(const ComponentDamageState &component_damage,
     return next;
 }
 
-inline void
+inline std::uint64_t
 record_structural_breakup_event(IEngagementEventRecorder &recorder, std::uint64_t target_id,
                                 const StructuralBreakupState &next, StructuralBreakMode mode,
                                 const std::string &detached_part_ref,
@@ -424,18 +424,18 @@ record_structural_breakup_event(IEngagementEventRecorder &recorder, std::uint64_
     event.detached_part_ref = detached_part_ref;
     event.detached_part_count = next.detached_part_count;
     event.airframe_breakup = next.airframe_breakup;
-    (void)recorder.record_structural_breakup_event({
+    return recorder.record_structural_breakup_event({
         .target_id = target_id,
         .contributing_component_names = std::move(component_names),
         .event = std::move(event),
     });
 }
 
-inline void record_structural_transition_events(IEngagementEventRecorder &recorder,
-                                                std::uint64_t target_id,
-                                                const StructuralBreakupState &prior,
-                                                const StructuralBreakupState &next,
-                                                double source_time_s) {
+inline std::uint64_t record_structural_transition_events(IEngagementEventRecorder &recorder,
+                                                         std::uint64_t target_id,
+                                                         const StructuralBreakupState &prior,
+                                                         const StructuralBreakupState &next,
+                                                         double source_time_s) {
     const std::uint32_t new_groups =
         next.active_structural_groups & ~prior.active_structural_groups;
     static constexpr std::array<StructuralBreakGroup, 7> kGroups = {
@@ -445,21 +445,31 @@ inline void record_structural_transition_events(IEngagementEventRecorder &record
         StructuralBreakGroup::Fuselage,
     };
 
+    std::uint64_t last_event_id = 0;
     for (const StructuralBreakGroup group : kGroups) {
         if ((new_groups & structural_break_group_mask(group)) == 0u) {
             continue;
         }
-        record_structural_breakup_event(recorder, target_id, next, break_mode_for_group(group),
-                                        detached_part_ref_for_group(group),
-                                        component_names_for_group(group), source_time_s);
+        if (const std::uint64_t event_id = record_structural_breakup_event(
+                recorder, target_id, next, break_mode_for_group(group),
+                detached_part_ref_for_group(group), component_names_for_group(group),
+                source_time_s);
+            event_id != 0) {
+            last_event_id = event_id;
+        }
     }
 
     const bool multi_axis_new = structural_breakup_has_mode(next, StructuralBreakMode::MultiAxis) &&
                                 !structural_breakup_has_mode(prior, StructuralBreakMode::MultiAxis);
     if (multi_axis_new) {
-        record_structural_breakup_event(recorder, target_id, next, StructuralBreakMode::MultiAxis,
-                                        "multi_axis", {}, source_time_s);
+        if (const std::uint64_t event_id = record_structural_breakup_event(
+                recorder, target_id, next, StructuralBreakMode::MultiAxis, "multi_axis", {},
+                source_time_s);
+            event_id != 0) {
+            last_event_id = event_id;
+        }
     }
+    return last_event_id;
 }
 
 } // namespace structural_failure
@@ -486,15 +496,20 @@ inline void register_structural_failure_system(flecs::world &ecs) {
                             entity.get<StructuralBreakupState>()) {
                         prior = *existing;
                     }
-                    const StructuralBreakupState next =
+                    StructuralBreakupState next =
                         structural_failure::evaluate_structural_breakup_state(component_damage[i],
                                                                               prior);
-                    entity.set<StructuralBreakupState>(next);
                     if (recorder_ref && recorder_ref->recorder) {
-                        structural_failure::record_structural_transition_events(
-                            *recorder_ref->recorder, static_cast<std::uint64_t>(entity.id()), prior,
-                            next, current_time);
+                        const std::uint64_t last_event_id =
+                            structural_failure::record_structural_transition_events(
+                                *recorder_ref->recorder,
+                                static_cast<std::uint64_t>(entity.id()), prior, next,
+                                current_time);
+                        if (last_event_id != 0) {
+                            next.last_breakup_event_id = last_event_id;
+                        }
                     }
+                    entity.set<StructuralBreakupState>(next);
                 }
             }
         });

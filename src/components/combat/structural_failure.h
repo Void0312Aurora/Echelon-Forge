@@ -36,6 +36,7 @@ struct StructuralBreakupState {
     std::uint32_t active_structural_groups = 0;
     std::uint32_t detached_part_count = 0;
     bool airframe_breakup = false;
+    std::uint64_t last_breakup_event_id = 0;
 };
 
 inline constexpr std::uint32_t structural_break_mode_mask(StructuralBreakMode mode) {

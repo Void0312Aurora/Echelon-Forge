@@ -71,6 +71,44 @@ std::uint64_t find_recent_component_damage_chain_id(const RecentEngagementEvents
     return 0;
 }
 
+std::uint64_t find_recent_lethality_event_chain_id(const RecentEngagementEvents &events,
+                                                   std::uint64_t event_id) {
+    if (event_id == 0) {
+        return 0;
+    }
+    for (auto it = events.structural_breakup_events.rbegin();
+         it != events.structural_breakup_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    for (auto it = events.component_damage_events.rbegin();
+         it != events.component_damage_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    for (auto it = events.component_load_events.rbegin(); it != events.component_load_events.rend();
+         ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    for (auto it = events.spatial_coverage_events.rbegin();
+         it != events.spatial_coverage_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    for (auto it = events.warhead_mechanism_events.rbegin();
+         it != events.warhead_mechanism_events.rend(); ++it) {
+        if (it->header.event_id == event_id) {
+            return it->header.chain_id;
+        }
+    }
+    return 0;
+}
+
 template <typename Event> void cap_recent_events(std::vector<Event> &events, std::size_t max_size) {
     while (events.size() > max_size) {
         events.erase(events.begin());
@@ -584,6 +622,71 @@ std::uint64_t SimulationKernelEngagementEventStore::record_structural_breakup_ev
 
     recent_engagement_events_.structural_breakup_events.push_back(std::move(event));
     cap_recent_events(recent_engagement_events_.structural_breakup_events,
+                      kMaxRecentEngagementEvents);
+    return event_id;
+}
+
+std::uint64_t SimulationKernelEngagementEventStore::record_platform_consequence_event(
+    EngagementPlatformConsequenceEventRecord record) {
+    const double event_time_s = record.event.header.source_time_s;
+    reset_if_event_clock_rewound(event_time_s);
+
+    const std::uint64_t event_id = next_engagement_event_id_++;
+    std::uint64_t resolved_chain_id = record.chain_id;
+    if (resolved_chain_id == 0) {
+        resolved_chain_id =
+            find_recent_lethality_event_chain_id(recent_engagement_events_, record.parent_event_id);
+    }
+    if (resolved_chain_id == 0) {
+        resolved_chain_id =
+            find_launch_event_id_for_munition(recent_engagement_events_, record.munition_entity_id);
+    }
+
+    const EngagementDamageStateSnapshot &before = record.before;
+    const EngagementDamageStateSnapshot &after = record.after;
+    PlatformConsequenceEvent event = std::move(record.event);
+    if (event.header.reason.empty()) {
+        event.header.reason = std::string(kLethalityReasonPlatformConsequenceProjection);
+    }
+    if (event.header.producer_node_id.empty()) {
+        event.header.producer_node_id = "damage_system.platform_consequence";
+    }
+    complete_lethality_header(event.header, std::string(kLethalityChainStagePlatformConsequence),
+                              "observed", event_time_s, event_id, resolved_chain_id,
+                              record.parent_event_id, record.munition_entity_id, record.shooter_id,
+                              record.target_id, current_source_frame(ecs_));
+
+    event.mission_capability_before = before.mission_capability;
+    event.mission_capability_after = after.mission_capability;
+    event.mobility_capability_before = before.mobility_capability;
+    event.mobility_capability_after = after.mobility_capability;
+    event.sensor_capability_before = before.sensor_capability;
+    event.sensor_capability_after = after.sensor_capability;
+    event.survivability_capability_before = before.survivability_margin;
+    event.survivability_capability_after = after.survivability_margin;
+    event.mission_kill = after.mission_kill;
+    event.mobility_kill = after.mobility_kill;
+    event.sensor_kill = after.sensor_kill;
+    event.survivability_kill = after.survivability_margin <= 0.0 || !after.entity_active;
+    event.flight_control_kill = after.flight_control_kill;
+    event.propulsion_kill = after.propulsion_kill;
+    event.forced_landing = after.forced_landing;
+    event.crew_kill = after.crew_kill;
+    event.control_delta = after.flight_control_integrity - before.flight_control_integrity;
+    event.engine_delta = after.propulsion_integrity - before.propulsion_integrity;
+    event.fuel_leak_delta = after.fuel_leak_severity - before.fuel_leak_severity;
+    char fire_state[80];
+    std::snprintf(fire_state, sizeof(fire_state), "fire=%.6f->%.6f", before.fire_severity,
+                  after.fire_severity);
+    event.fire_state = std::string(fire_state);
+    event.aircraft_damage_state_before = aircraft_damage_state_string(before);
+    event.aircraft_damage_state_after = aircraft_damage_state_string(after);
+    event.aircraft_damage_state_delta = aircraft_damage_state_delta_string(before, after);
+    event.loss_state_from = before.loss_state;
+    event.loss_state_to = after.entity_active ? after.loss_state : "lost";
+
+    recent_engagement_events_.platform_consequence_events.push_back(std::move(event));
+    cap_recent_events(recent_engagement_events_.platform_consequence_events,
                       kMaxRecentEngagementEvents);
     return event_id;
 }

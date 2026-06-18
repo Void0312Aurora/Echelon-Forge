@@ -38,6 +38,7 @@
 #include "systems/combat/damage_system_naval.h"
 #include "systems/combat/guidance_system.h"
 #include "systems/combat/pilot_weapon_release_system.h"
+#include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
 #include "systems/core/operation_system.h"
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
@@ -217,6 +218,7 @@ void SimulationKernel::register_components_and_systems() {
     register_damage_system_common(ecs); // Phase 7: Damage/Effects
     register_aircraft_damage_system(ecs);
     register_structural_failure_system(ecs);
+    register_structural_consequence_system(ecs);
     register_naval_damage_system(ecs);
     register_ground_damage_system(ecs);
     register_ew_system(ecs);              // Phase 8: EW Actions
