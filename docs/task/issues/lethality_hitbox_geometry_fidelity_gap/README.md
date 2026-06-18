@@ -85,11 +85,11 @@ The same review also found an overly weak blast/fragmentation tail direct-hit pa
 ## Related Domain Context
 
 - A2 MLF-5 archive pointer:
-  [docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_component_failure/README.md](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_component_failure/README.md)
+  [docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_component_failure/README.md](../../air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_component_failure/README.md)
 - MLF-5 expanded aspect/distance matrix:
-  [missile_lethality_component_failure_expanded_matrix_20260611.md](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.md)
+  [missile_lethality_component_failure_expanded_matrix_20260611.md](../../air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_expanded_matrix_20260611.md)
 - MLF-5 visual summary:
-  [missile_lethality_component_failure_visual_summary_20260611.md](../../air_combat/a2_high_fidelity_damage_model/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.md)
+  [missile_lethality_component_failure_visual_summary_20260611.md](../../air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_component_failure/archive/mlf_5_component_failure_accepted_20260611/missile_lethality_component_failure_visual_summary_20260611.md)
 - Current F-16 geometry data:
   [examples/config/database/aircraft/units/f16c_block50.json](../../../../examples/config/database/aircraft/units/f16c_block50.json)
 - Current MQ-9 geometry data:

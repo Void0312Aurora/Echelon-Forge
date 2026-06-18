@@ -12,7 +12,7 @@ Entrypoints:
 - Current subproject pointer: [../../README.md](../../README.md)
 - Acceptance record: [target_geometry_acceptance_20260614.md](target_geometry_acceptance_20260614.md)
 - Stable review packet: [../../review_packets/f16c_20260611/](../../review_packets/f16c_20260611/)
-- Geometry review test: [../../../../../../../tests/tools/test_airframe_geometry_review.py](../../../../../../../tests/tools/test_airframe_geometry_review.py)
+- Geometry review test: `../../../../../../../tests/tools/test_airframe_geometry_review.py`
 
 ## Archive Decision
 

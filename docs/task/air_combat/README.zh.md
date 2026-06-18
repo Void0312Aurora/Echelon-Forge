@@ -68,7 +68,7 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - A8 损伤效果链现在在
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
   保留轻量指针；完整包位于
-  [archive/archive/a8_damage_effect_chain/](archive/archive/a8_damage_effect_chain/README.zh.md)。
+  [archive/a8_damage_effect_chain/](archive/a8_damage_effect_chain/README.zh.md)。
   它已作为有边界切片验收并归档：起爆后的效果可转成具体飞机部位损伤，并通过已有动力、
   燃油、传感器、火灾和飞行消费路径表现出来。已验收证据覆盖动力、一段翼面/操纵气动响应、
   燃油泄漏/质量响应、更完整火灾后果检查、数据链任务/传感器后果，以及窄的地面接触生命周期状态；
@@ -91,12 +91,14 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - 将
   [A9 高保真武器系统](a9_high_fidelity_weapon_system/README.zh.md) 作为 accepted record 读取：
   武器链保真度升级已合入，R2/R4 残差已关闭；后续只针对明确的新研究扩展开支线
-- 推进
-  [MLF-6 结构失效/机体断裂](a2_high_fidelity_damage_model/missile_lethality_structural_failure/README.zh.md)
-  子项目：消费 MLF-5 ECS `ComponentDamageState`，写入 `StructuralBreakupEvent`
-  具名断裂事实（不修改 `structural_integrity`、飞行动力学、失能状态；属于 MLF-7）；
-  P7 更广回归已通过（`447 passed`），MLF-6 已准备进入用户验收；archive 移动等待明确指令，
-  MLF-6 仍是 MLF-7/MLF-8 的前置瓶颈
+- 通过本地 A2 archive 注册表读取导弹杀伤结构证据：
+  [A2 MLF 归档注册表](a2_high_fidelity_damage_model/archive_registry.zh.md)、
+  [MLF-6 结构失效/机体断裂](a2_high_fidelity_damage_model/archive/missile_lethality_structural_failure/README.zh.md)
+  和
+  [MLF-7 二次后果耦合](a2_high_fidelity_damage_model/archive/missile_lethality_secondary_consequence_coupling/README.zh.md)；
+  MLF-6 已作为具名断裂事实写入器 accepted / archived，accepted / archived MLF-7 bridge 已把这些事实
+  投影到维护中的 aircraft damage、platform damage、loss-state 表面和链路关联的
+  `platform_consequence` 诊断；更广 smoke 已绿
 - 保持当前 blast-fragmentation candidate 包非权威验收边界，不把 test-local descriptor
   演练上卷成 stock authority
 - 在 `1v1` 指标稳定前，继续把 `2v2` 和双边 self-play 排除在本阶段范围外
@@ -135,11 +137,11 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - A4 reward/routing 证据：
   [archive/a4_authorized_first_shot_training_signal/README.zh.md](archive/a4_authorized_first_shot_training_signal/README.zh.md)
   及 reward 证据：
-  [a4_authorized_first_shot_reward_probe_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.zh.md)
+  [a4_authorized_first_shot_reward_probe_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.zh.md)
   和 routing 证据：
-  [a4_authorized_first_shot_routing_probe_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.zh.md)
+  [a4_authorized_first_shot_routing_probe_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_routing_probe_20260603.zh.md)
   以及 binary diagnostics：
-  [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](archive/archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
+  [a4_authorized_first_shot_binary_diagnostics_20260603.zh.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_binary_diagnostics_20260603.zh.md)
 - 高真实度毁伤模型封存记录：
   [a2_high_fidelity_damage_model/README.zh.md](a2_high_fidelity_damage_model/README.zh.md)
   与完整归档
@@ -149,7 +151,7 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
 - 高保真武器系统：
   [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
 - 高保真毁伤系统基线：
-  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
+  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
 
 历史带日期快照现统一放入 [archive/README.zh.md](archive/README.zh.md)。
 

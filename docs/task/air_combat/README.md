@@ -41,26 +41,26 @@ still not accepted.
   training stage, not Stage-2 outcome or batch firing acceptance.
 - The repeated-launch issue routes through the accepted bounded
   C2/ROE layer in
-  [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md):
+  [a3_c2_roe_release_discipline/README.md](archive/a3_c2_roe_release_discipline/README.md):
   policy-visible weapons-control status, target identity, fire authorization,
   single-shot-then-assess / salvo / reattack permission, and mission-observation
   constraints are wired. A3 remains the legality/discipline authority, not the
   current firing-closure package.
 - Closed historical firing-learning line:
-  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md):
+  [a4_authorized_first_shot_training_signal/README.md](archive/a4_authorized_first_shot_training_signal/README.md):
   A4 is closed in place. Its retained conclusion is that reward shaping,
   routing, diagnostics, and an opportunity penalty did not solve firing.
 - Closed historical structural event-action line:
-  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md):
+  [a5_constrained_event_action_model/README.md](archive/a5_constrained_event_action_model/README.md):
   A5 is closed in place. It contributed the constrained `hold/fire_once` surface
   and the later weapon-arm action-frame fix used by M3-S2.
 - Closed historical first-event timing line:
-  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md):
+  [a6_event_value_first_event_timing/README.md](archive/a6_event_value_first_event_timing/README.md):
   A6 is closed in place. Its retained conclusion is that hazard/deadline/window
   labels exposed useful timing evidence but did not become the current firing
   authority.
 - Closed historical event-credit/timing line:
-  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md):
+  [a7_event_value_advantage_credit_head/README.md](archive/a7_event_value_advantage_credit_head/README.md):
   A7 is closed in place. Its retained conclusion is that event-credit work is
   timing-quality research history, while current launch closure belongs to M3-S2.
 - The high-fidelity damage-model line now has a lightweight pointer at
@@ -82,7 +82,7 @@ still not accepted.
   regressions vs main.
   Archived at [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 - The A8 damage-effect chain now has a lightweight pointer at
-  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md); the
+  [a8_damage_effect_chain/README.md](archive/a8_damage_effect_chain/README.md); the
   full package lives under
   [archive/a8_damage_effect_chain/](archive/a8_damage_effect_chain/README.md).
   It is archived as an accepted bounded slice that turns detonation effects into
@@ -106,10 +106,19 @@ still not accepted.
   record; only explicit follow-on requests should open `G4/G5 authority` or new
   research expansion work
 - read
-  [A8 damage-effect chain](a8_damage_effect_chain/README.md) as an archived
+  [A8 damage-effect chain](archive/a8_damage_effect_chain/README.md) as an archived
   accepted record for concrete damage propagation through maintained aircraft
   systems, without adding direct crash or special-target kill rules; reopen only
   for explicit calibration, platform expansion, or debris/residue object work
+- read missile-lethality structural evidence through the local A2 archive registry:
+  [A2 MLF archive registry](a2_high_fidelity_damage_model/archive_registry.md),
+  [MLF-6 structural failure](a2_high_fidelity_damage_model/archive/missile_lethality_structural_failure/README.md),
+  and
+  [MLF-7 secondary consequence coupling](a2_high_fidelity_damage_model/archive/missile_lethality_secondary_consequence_coupling/README.md):
+  MLF-6 is now accepted / archived as the named-breakup fact writer, while the
+  accepted / archived MLF-7 bridge projects those facts into maintained aircraft damage,
+  platform damage, loss-state surfaces, and chain-linked `platform_consequence`
+  diagnostics; broad smoke is green
 - preserve the non-authoritative boundary of the current blast-fragmentation
   candidate package; test-local descriptor exercises are not stock authority
 - keep `2v2` and bilateral self-play out of scope until `1v1` metrics stabilize
@@ -139,17 +148,17 @@ still not accepted.
 - A1 Stage-2 C2/ROE entry and short train:
   [a1_stage2_c2_roe_entry_and_short_train_20260608.md](a1_1v1_realism_gradient/a1_stage2_c2_roe_entry_and_short_train_20260608.md)
 - C2/ROE release-discipline accepted layer:
-  [a3_c2_roe_release_discipline/README.md](a3_c2_roe_release_discipline/README.md)
+  [a3_c2_roe_release_discipline/README.md](archive/a3_c2_roe_release_discipline/README.md)
 - Current bounded firing closure:
   [M3-S2 fire-timing learnability archive](../model/archive/m3_s2_fire_timing_learnability_audit/README.md)
 - Closed historical firing-learning records:
-  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md),
-  [a5_constrained_event_action_model/README.md](a5_constrained_event_action_model/README.md),
-  [a6_event_value_first_event_timing/README.md](a6_event_value_first_event_timing/README.md),
+  [a4_authorized_first_shot_training_signal/README.md](archive/a4_authorized_first_shot_training_signal/README.md),
+  [a5_constrained_event_action_model/README.md](archive/a5_constrained_event_action_model/README.md),
+  [a6_event_value_first_event_timing/README.md](archive/a6_event_value_first_event_timing/README.md),
   and
-  [a7_event_value_advantage_credit_head/README.md](a7_event_value_advantage_credit_head/README.md)
+  [a7_event_value_advantage_credit_head/README.md](archive/a7_event_value_advantage_credit_head/README.md)
 - A4 reward/routing evidence:
-  [a4_authorized_first_shot_training_signal/README.md](a4_authorized_first_shot_training_signal/README.md)
+  [a4_authorized_first_shot_training_signal/README.md](archive/a4_authorized_first_shot_training_signal/README.md)
   and reward evidence:
   [a4_authorized_first_shot_reward_probe_20260603.md](archive/a4_authorized_first_shot_training_signal/a4_authorized_first_shot_reward_probe_20260603.md)
   plus routing evidence:
@@ -163,8 +172,8 @@ still not accepted.
 - High-fidelity weapon system (new subproject):
   [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md)
 - Damage-effect chain follow-on:
-  [a8_damage_effect_chain/README.md](a8_damage_effect_chain/README.md)
+  [a8_damage_effect_chain/README.md](archive/a8_damage_effect_chain/README.md)
 - High-fidelity damage-system baseline:
-  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat_damage_model_evaluation_20260522.md)
+  [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
 
 Historical dated snapshots now live under [archive/README.md](archive/README.md).

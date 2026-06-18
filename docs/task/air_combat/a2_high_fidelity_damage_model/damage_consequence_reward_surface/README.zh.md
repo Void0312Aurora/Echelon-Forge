@@ -14,7 +14,7 @@ diagnostics-only bridge 已具备。受控 fixed-fire bridge 能报告 release/e
 
 - A2 指针：[../README.zh.md](../README.zh.md)
 - A2 封存包：[../../archive/a2_high_fidelity_damage_model/README.zh.md](../../archive/a2_high_fidelity_damage_model/README.zh.md)
-- A8 损伤效果链：[../../a8_damage_effect_chain/README.zh.md](../../a8_damage_effect_chain/README.zh.md)
+- A8 损伤效果链：[../../archive/a8_damage_effect_chain/README.zh.md](../../archive/a8_damage_effect_chain/README.zh.md)
 - 空战当前入口：[../../README.zh.md](../../README.zh.md)
 - 奖励 runtime 入口：[../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py](../../../../../gym_envs/scenario_loader/reward_runtime/air_combat.py)
 - 聚焦奖励测试：[../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py](../../../../../tests/runtime/air_combat/test_air_combat_reward_surface.py)
