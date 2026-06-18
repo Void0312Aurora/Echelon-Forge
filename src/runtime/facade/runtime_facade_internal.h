@@ -137,7 +137,8 @@ inline bool runtime_string_blank(const std::string &value) {
                                         [](unsigned char c) { return std::isspace(c) != 0; });
 }
 
-inline void append_runtime_evidence_ref(std::vector<std::string> &evidence_refs, const std::string &ref) {
+inline void append_runtime_evidence_ref(std::vector<std::string> &evidence_refs,
+                                        const std::string &ref) {
     if (runtime_string_blank(ref)) {
         return;
     }

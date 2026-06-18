@@ -8,7 +8,6 @@ namespace {
 
 using namespace runtime_facade_internal;
 
-
 runtime::fidelity::FidelityProfileRequest
 fidelity_contract_request_from_facade(const RuntimeFidelityRequest &request) {
     return runtime::fidelity::FidelityProfileRequest{
