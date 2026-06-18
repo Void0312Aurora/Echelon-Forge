@@ -14,7 +14,7 @@ from tools.geometry.airframe_review import review_views
 
 
 def test_airframe_review_constants_are_subdomain_authority() -> None:
-  assert constants.REPO_ROOT.name == "CMO"
+  assert constants.REPO_ROOT == Path(__file__).resolve().parents[2]
   assert constants.DEFAULT_AIRCRAFT.is_file()
   assert constants.DEFAULT_AUDIT_SCENE.is_file()
   assert constants.DEFAULT_OUTPUT_DIR.parts[-3:] == (
