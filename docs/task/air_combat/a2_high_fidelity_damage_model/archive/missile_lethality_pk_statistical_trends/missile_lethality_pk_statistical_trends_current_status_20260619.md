@@ -28,7 +28,7 @@ of kill.
 | Structural row surface | P2 initial pass | Process probe row contract now exposes `structural_breakup`; focused diagnostics tests pass | Row exposure does not change damage physics |
 | Trend extraction | P3 initial pass | `tools/diagnostics/mlf9_statistical_trends.py`, `tests/tools/test_mlf9_statistical_trends.py`, trend harness result doc | Row summarization only; no runtime physics or calibration promotion |
 | Report integration | P4 initial pass | Process probe embeds `mlf9_statistical_trends` and can write `--mlf9_report_json_out`; report integration result doc | Diagnostics/report artifact only; no reward/training/calibration consumer |
-| Validation | P5 pass | Focused validation reports `50 passed`, clean `git diff --check`, and 0 missing local Markdown links | Validation covers simulation/report behavior only, not real Pk |
+| Validation | P5 pass | Focused validation reports `53 passed`, clean `git diff --check`, and 0 missing local Markdown links | Validation covers simulation/report behavior only, not real Pk |
 | Closeout | P6 pass | Acceptance record and parent indexes mark the slice accepted / archived | Old active path is a compatibility pointer |
 | Calibration | held | MLF-10 reserved | No real weapon or target-specific probability |
 

@@ -100,7 +100,7 @@ MLF-9 把可回放的导弹杀伤链转成有边界的统计趋势证据。它�
   `tests/tools/test_mlf9_statistical_trends.py`。
 - 通过 `mlf9_statistical_trends` payload 和可选 `--mlf9_report_json_out` 暴露的
   process-probe retained report integration。
-- P5 focused validation 报告 `50 passed`、diff whitespace clean，以及 MLF-9/A2 docs
+- P5 focused validation 报告 `53 passed`、diff whitespace clean，以及 MLF-9/A2 docs
   集合本地 Markdown 链接 0 缺失。
 - P6 acceptance record 将 deterministic simulation-trend/report 切片标记为
   accepted / archived，并继续 hold real-world Pk/calibration。

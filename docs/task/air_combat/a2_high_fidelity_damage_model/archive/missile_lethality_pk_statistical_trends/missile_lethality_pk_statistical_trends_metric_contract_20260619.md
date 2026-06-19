@@ -34,6 +34,10 @@ test fixture with the same fields. Rows must carry:
 - `munition_id`, `target_id`
 - `evidence_level`, `observation_mode`, `consumer_visibility`
 
+Diagnostic chain rows use schema version `9`. The trend sample identity is
+`(episode, chain_id)`, because `chain_id` can repeat after independent episode
+resets.
+
 For MLF-9 v1, the accepted stage set is:
 
 1. `nearest_approach`
@@ -54,7 +58,7 @@ feedback.
 
 | Denominator | Definition | Allowed use | Not allowed |
 | --- | --- | --- | --- |
-| `chain_count` | Distinct `chain_id` values in the report population | Overall sample size | Claiming independent real-world trials unless fixture generation proves independence |
+| `chain_count` | Distinct `(episode, chain_id)` identities in the report population | Overall sample size | Claiming independent real-world trials unless fixture generation proves independence |
 | `released_chain_count` | Chains with a launch/effects source row or explicit fixture release marker | Given-release rates | Using it as real shot count |
 | `detonated_chain_count` | Chains with effective warhead/spatial/component-load rows and no terminal negative fuze reason | Given-effective-detonation rates | Treating synthetic fuze outcome as real fuze reliability |
 | `component_damage_chain_count` | Chains with at least one `component_damage` row | Structural or consequence rates conditional on component damage | Claiming component damage probability is calibrated |
@@ -97,11 +101,15 @@ explicit interval method already used by diagnostics tooling. The report must
 state:
 
 - sample count;
-- confidence level;
+- confidence level and the matching normal quantile used for `confidence_z`;
 - interval method;
 - whether high-variance flags were triggered;
 - whether samples came from deterministic fixtures, seed sweeps, or live probe
   episodes.
+
+Confidence levels must satisfy `0 < confidence_level < 1`; arbitrary valid
+levels use the corresponding normal quantile rather than coarse threshold
+mapping.
 
 ## P3 Implementation Gate
 

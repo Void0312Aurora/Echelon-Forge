@@ -10,7 +10,8 @@ Companion:
 `tools/diagnostics/mlf9_statistical_trends.py` now provides a deterministic
 row-level trend summarizer for MLF-9. It consumes an explicit list of
 `lethality_chain_rows` or a JSON object containing that field, groups rows by
-`chain_id`, derives chain records, and emits bounded simulation trend summaries.
+`(episode, chain_id)`, derives chain records, and emits bounded simulation trend
+summaries.
 
 The implementation is intentionally downstream-only. It does not change fuze,
 warhead, component, structural, consequence, lifecycle, reward, deletion, or
@@ -21,8 +22,11 @@ calibration behavior.
 The summary payload includes:
 
 - `schema_version`: `mlf9.statistical_trends.v1`.
-- `confidence_level`, `confidence_z`, and `interval_method`.
+- `confidence_level`, the matching normal-quantile `confidence_z`, and
+  `interval_method`.
 - `group_by`, `chain_count`, and one entry per requested group.
+- `chain_identities` for each group so repeated `chain_id` values across
+  episodes remain visible.
 - denominator counts for chain, released, detonated, component-damage,
   structural-breakup, and platform-consequence chains.
 - outcome counts for fuze negatives, effective component damage, structural

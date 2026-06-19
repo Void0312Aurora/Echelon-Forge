@@ -54,7 +54,7 @@ directory.
 ## Results
 
 - `py_compile`: pass.
-- Focused pytest: `50 passed`.
+- Focused pytest: `53 passed`.
 - `git diff --check`: pass.
 - Local Markdown link inspection: `20 markdown files; missing local links: 0`.
 

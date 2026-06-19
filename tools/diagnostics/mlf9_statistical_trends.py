@@ -7,6 +7,7 @@ import math
 import os
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from statistics import NormalDist
 from typing import Any
 
 from tools.diagnostics import lethality_chain_contract as chain_contract
@@ -55,6 +56,13 @@ def _chain_id(row: dict[str, Any]) -> int:
         return 0
 
 
+def _episode(row: dict[str, Any]) -> int:
+    try:
+        return int(row.get("episode", 0) or 0)
+    except Exception:
+        return 0
+
+
 def normalize_group_by(group_by: str | Sequence[str] | None) -> tuple[str, ...]:
     if group_by is None:
         return DEFAULT_GROUP_BY
@@ -67,17 +75,23 @@ def normalize_group_by(group_by: str | Sequence[str] | None) -> tuple[str, ...]:
     return fields
 
 
+def validate_confidence_level(confidence_level: Any) -> float:
+    level = _finite_float(confidence_level)
+    if not math.isfinite(level) or not (0.0 < level < 1.0):
+        raise ValueError("confidence_level must be finite and satisfy 0 < level < 1")
+    return level
+
+
+def parse_confidence_level(value: str) -> float:
+    try:
+        return validate_confidence_level(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+
+
 def _confidence_z(confidence_level: float) -> float:
-    level = float(confidence_level)
-    if level >= 0.995:
-        return 2.807
-    if level >= 0.99:
-        return 2.576
-    if level >= 0.95:
-        return 1.960
-    if level >= 0.90:
-        return 1.645
-    return 1.960
+    level = validate_confidence_level(confidence_level)
+    return NormalDist().inv_cdf((1.0 + level) / 2.0)
 
 
 def _wilson_interval(success_count: int, sample_count: int, z_score: float) -> tuple[float, float]:
@@ -115,7 +129,8 @@ def _first_nonempty(values: Iterable[Any]) -> str:
     return ""
 
 
-def _chain_record(chain_id: int, rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
+def _chain_record(chain_key: tuple[int, int], rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    episode, chain_id = chain_key
     stages = {str(row.get("stage", "") or "") for row in rows}
     reasons = {str(row.get("reason", "") or "") for row in rows}
     fuze_rows = [row for row in rows if str(row.get("stage", "")) == chain_contract.STAGE_FUZE]
@@ -162,6 +177,7 @@ def _chain_record(chain_id: int, rows: Sequence[dict[str, Any]]) -> dict[str, An
         for row in lifecycle_rows
     )
     return {
+        "episode": int(episode),
         "chain_id": int(chain_id),
         "row_count": int(len(rows)),
         "miss_distance_m": miss_distance_m,
@@ -189,13 +205,13 @@ def _chain_record(chain_id: int, rows: Sequence[dict[str, Any]]) -> dict[str, An
 
 
 def chain_records(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
-    grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    grouped: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         chain_id = _chain_id(row)
         if chain_id <= 0:
             continue
-        grouped[chain_id].append(dict(row))
-    return [_chain_record(chain_id, grouped[chain_id]) for chain_id in sorted(grouped)]
+        grouped[(_episode(row), chain_id)].append(dict(row))
+    return [_chain_record(chain_key, grouped[chain_key]) for chain_key in sorted(grouped)]
 
 
 def _group_key(record: dict[str, Any], group_by: Sequence[str]) -> tuple[tuple[str, str], ...]:
@@ -255,7 +271,8 @@ def summarize_trends(
     for record in records:
         grouped[_group_key(record, tuple(group_by))].append(record)
 
-    z_score = _confidence_z(float(confidence_level))
+    confidence_level = validate_confidence_level(confidence_level)
+    z_score = _confidence_z(confidence_level)
     groups: list[dict[str, Any]] = []
     for key in sorted(grouped):
         group_records = grouped[key]
@@ -290,6 +307,13 @@ def summarize_trends(
             {
                 "group": dict(key),
                 "chain_ids": [int(record["chain_id"]) for record in group_records],
+                "chain_identities": [
+                    {
+                        "episode": int(record["episode"]),
+                        "chain_id": int(record["chain_id"]),
+                    }
+                    for record in group_records
+                ],
                 "denominator_counts": denominator_counts,
                 "outcome_counts": outcome_counts,
                 "rates": rates,
@@ -299,7 +323,7 @@ def summarize_trends(
     return {
         "schema_version": SCHEMA_VERSION,
         "status": "simulation_trend_summary",
-        "confidence_level": float(confidence_level),
+        "confidence_level": confidence_level,
         "confidence_z": float(z_score),
         "interval_method": INTERVAL_METHOD,
         "sample_source": str(sample_source),
@@ -339,7 +363,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="all",
         help="Comma-separated group fields, e.g. miss_distance_bucket,break_mode.",
     )
-    parser.add_argument("--confidence_level", type=float, default=0.95)
+    parser.add_argument("--confidence_level", type=parse_confidence_level, default=0.95)
     parser.add_argument("--sample_source", default="explicit_rows")
     parser.add_argument("--report_surface", default="standalone_diagnostics_artifact")
     return parser

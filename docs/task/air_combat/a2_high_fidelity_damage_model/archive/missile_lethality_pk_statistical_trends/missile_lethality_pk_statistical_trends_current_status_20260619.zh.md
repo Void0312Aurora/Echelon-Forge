@@ -25,7 +25,7 @@ diagnostics rows，使 `structural_breakup` 能和 component damage、consequenc
 | Structural row surface | P2 initial pass | Process probe row contract 现在暴露 `structural_breakup`；聚焦 diagnostics tests 通过 | Row exposure 不改变 damage physics |
 | 趋势提取 | P3 initial pass | `tools/diagnostics/mlf9_statistical_trends.py`、`tests/tools/test_mlf9_statistical_trends.py`、trend harness result doc | 仅做 row summarization；不提升 runtime physics 或 calibration |
 | 报告集成 | P4 initial pass | Process probe 嵌入 `mlf9_statistical_trends`，并可写出 `--mlf9_report_json_out`；report integration result doc | 仅为 diagnostics/report artifact；不进入 reward/training/calibration consumer |
-| 验证 | P5 pass | Focused validation 报告 `50 passed`、`git diff --check` clean、本地 Markdown 链接 0 缺失 | 验证只覆盖 simulation/report behavior，不覆盖现实 Pk |
+| 验证 | P5 pass | Focused validation 报告 `53 passed`、`git diff --check` clean、本地 Markdown 链接 0 缺失 | 验证只覆盖 simulation/report behavior，不覆盖现实 Pk |
 | 收口 | P6 pass | Acceptance record 和父级索引将切片标记为 accepted / archived | 旧 active 路径是兼容指针 |
 | 校准 | held | MLF-10 保留 | 不声明真实武器或具体目标概率 |
 

@@ -541,7 +541,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="all",
         help="Comma-separated MLF-9 trend grouping fields.",
     )
-    parser.add_argument("--mlf9_confidence_level", type=float, default=0.95)
+    parser.add_argument(
+        "--mlf9_confidence_level",
+        type=mlf9_statistical_trends.parse_confidence_level,
+        default=0.95,
+    )
     parser.add_argument("--json_out", default="")
     parser.add_argument("--plot_out", default="")
     return parser

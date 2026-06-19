@@ -57,8 +57,8 @@ Held:
 
 - [x] `tools/diagnostics/mlf9_statistical_trends.py` consumes explicit row lists
   or JSON objects containing `lethality_chain_rows`.
-- [x] It groups by chain, derives denominator/outcome counts, and emits bounded
-  rate records.
+- [x] It groups by `(episode, chain_id)`, derives denominator/outcome counts,
+  and emits bounded rate records.
 - [x] Focused tests cover deterministic fixture summaries, grouping, intervals,
   and non-claim flags.
 
@@ -74,9 +74,9 @@ Held:
 ## P5 Focused Validation
 
 - [x] `py_compile` passed for the MLF-9 diagnostics/probe/test files.
-- [x] Focused pytest reported `50 passed`.
+- [x] Focused pytest reported `53 passed`.
 - [x] `git diff --check` passed.
-- [x] Local Markdown link inspection covered 22 files with 0 missing local
+- [x] Local Markdown link inspection covered 30 files with 0 missing local
   links.
 
 ## P6 Closeout

@@ -418,6 +418,7 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       engagement_events=_dummy_lethality_events(),
     )
 
+    self.assertEqual(probe.LETHALITY_CHAIN_SCHEMA_VERSION, 9)
     self.assertEqual([row["stage"] for row in rows], list(probe.LETHALITY_CHAIN_STAGES))
     for row in rows:
       for field in probe.LETHALITY_CHAIN_ROW_FIELDS:

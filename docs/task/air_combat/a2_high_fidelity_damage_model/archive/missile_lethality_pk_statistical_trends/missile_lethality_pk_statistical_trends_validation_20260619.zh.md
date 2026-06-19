@@ -52,7 +52,7 @@ git diff --check -- \
 ## 结果
 
 - `py_compile`：pass。
-- 聚焦 pytest：`50 passed`。
+- 聚焦 pytest：`53 passed`。
 - `git diff --check`：pass。
 - 本地 Markdown 链接检查：`20 markdown files; missing local links: 0`。
 

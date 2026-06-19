@@ -48,5 +48,5 @@ PYTHONPATH=build-workshop:. pytest -q \
 | `2026-06-19` | `MLF9-Q2` | initial pass | Metric contract defines row source, denominators, outcome buckets, grouping fields, and uncertainty labels; diagnostics row surface now exposes `structural_breakup`; focused validation reports `47 passed`. |
 | `2026-06-19` | `MLF9-Q3` | initial pass | `tools/diagnostics/mlf9_statistical_trends.py` summarizes explicit row fixtures into bounded trend payloads; `tests/tools/test_mlf9_statistical_trends.py` reports `2 passed`. |
 | `2026-06-19` | `MLF9-Q4` | initial pass | Process probe embeds `mlf9_statistical_trends` and can write `--mlf9_report_json_out`; focused integration validation reports `3 passed`. |
-| `2026-06-19` | `MLF9-Q5` | pass | Focused validation reports `50 passed`, clean `git diff --check`, and 0 missing local Markdown links over 20 docs. |
+| `2026-06-19` | `MLF9-Q5` | pass | Focused validation reports `53 passed`, clean `git diff --check`, and 0 missing local Markdown links over 30 docs. |
 | `2026-06-19` | `MLF9-Q6` | pass | Acceptance record marks the bounded simulation-trend/report slice accepted / archived; real-world Pk and calibration remain held; old active path is a compatibility pointer. |

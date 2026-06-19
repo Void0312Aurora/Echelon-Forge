@@ -32,6 +32,9 @@ rate 都只能读成：
 - `munition_id`、`target_id`
 - `evidence_level`、`observation_mode`、`consumer_visibility`
 
+Diagnostic chain rows 使用 schema version `9`。趋势样本身份是
+`(episode, chain_id)`，因为独立 episode reset 后 `chain_id` 可以重复。
+
 MLF-9 v1 接受的 stage set 是：
 
 1. `nearest_approach`
@@ -51,7 +54,7 @@ MLF-9 v1 接受的 stage set 是：
 
 | Denominator | Definition | Allowed use | Not allowed |
 | --- | --- | --- | --- |
-| `chain_count` | 报告 population 内不同 `chain_id` 数量 | 总样本量 | 除非 fixture generation 证明独立性，否则不得称为真实独立试验 |
+| `chain_count` | 报告 population 内不同 `(episode, chain_id)` 身份数量 | 总样本量 | 除非 fixture generation 证明独立性，否则不得称为真实独立试验 |
 | `released_chain_count` | 有 launch/effects source row 或显式 fixture release marker 的链 | given-release rate | 不得当作真实发射次数 |
 | `detonated_chain_count` | 有有效 warhead/spatial/component-load 行，且没有 terminal negative fuze reason 的链 | given-effective-detonation rate | 不得把 synthetic fuze outcome 当作真实引信可靠性 |
 | `component_damage_chain_count` | 至少有一条 `component_damage` row 的链 | component damage 条件下的 structural / consequence rate | 不得声明 component damage probability 已校准 |
@@ -92,10 +95,13 @@ MLF-9 v1 接受的 stage set 是：
 报告必须写明：
 
 - sample count；
-- confidence level；
+- confidence level，以及用于 `confidence_z` 的匹配 normal quantile；
 - interval method；
 - high-variance flags 是否触发；
 - 样本来自 deterministic fixtures、seed sweeps 还是 live probe episodes。
+
+Confidence level 必须满足 `0 < confidence_level < 1`；任意合法 level 使用对应
+normal quantile，不再用粗阈值映射。
 
 ## P3 实现门
 

@@ -44,5 +44,5 @@ PYTHONPATH=build-workshop:. pytest -q \
 | `2026-06-19` | `MLF9-Q2` | initial pass | Metric contract 定义 row source、denominators、outcome buckets、grouping fields 和 uncertainty labels；diagnostics row surface 现在暴露 `structural_breakup`；聚焦验证 `47 passed`。 |
 | `2026-06-19` | `MLF9-Q3` | initial pass | `tools/diagnostics/mlf9_statistical_trends.py` 将显式 row fixtures 摘要为有边界 trend payload；`tests/tools/test_mlf9_statistical_trends.py` 报告 `2 passed`。 |
 | `2026-06-19` | `MLF9-Q4` | initial pass | Process probe 嵌入 `mlf9_statistical_trends`，并可写出 `--mlf9_report_json_out`；focused integration validation 报告 `3 passed`。 |
-| `2026-06-19` | `MLF9-Q5` | pass | Focused validation 报告 `50 passed`、`git diff --check` clean，以及 20 个 docs 本地 Markdown 链接 0 缺失。 |
+| `2026-06-19` | `MLF9-Q5` | pass | Focused validation 报告 `53 passed`、`git diff --check` clean，以及 30 个 docs 本地 Markdown 链接 0 缺失。 |
 | `2026-06-19` | `MLF9-Q6` | pass | Acceptance record 将有边界 simulation-trend/report 切片标记为 accepted / archived；real-world Pk 和 calibration 继续 held；旧 active 路径是兼容指针。 |

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import math
+from statistics import NormalDist
 
+import pytest
 from tools.diagnostics import mlf9_statistical_trends as mlf9
 
 
@@ -71,6 +73,10 @@ def test_mlf9_summary_reports_denominators_outcomes_and_non_claims():
     group = payload["groups"][0]
 
     assert payload["schema_version"] == "mlf9.statistical_trends.v1"
+    assert math.isclose(
+        payload["confidence_z"],
+        NormalDist().inv_cdf((1.0 + payload["confidence_level"]) / 2.0),
+    )
     assert payload["sample_source"] == "controlled_fixture_rows"
     assert payload["report_surface"] == "unit_test_retained_artifact"
     assert payload["source_row_count"] == len(_fixture_rows())
@@ -99,6 +105,60 @@ def test_mlf9_summary_reports_denominators_outcomes_and_non_claims():
     assert terminal_given_structural["success_count"] == 1
     assert terminal_given_structural["sample_count"] == 1
     assert terminal_given_structural["rate"] == 1.0
+
+
+def test_mlf9_summary_keeps_duplicate_chain_ids_separate_across_episodes():
+    rows = [
+        _row(301, "nearest_approach", episode=0, event_id=1, source_event_id=1),
+        _row(301, "fuze", episode=0, event_id=2, source_event_id=2, fuze_triggered=1),
+        _row(
+            301,
+            "nearest_approach",
+            episode=1,
+            event_id=11,
+            source_event_id=11,
+            miss_distance_m=18.0,
+        ),
+        _row(
+            301,
+            "fuze",
+            episode=1,
+            event_id=12,
+            source_event_id=12,
+            fuze_triggered=0,
+            reason="fuze_no_detonation",
+        ),
+    ]
+
+    payload = mlf9.summarize_trends(rows)
+    group = payload["groups"][0]
+
+    assert payload["chain_count"] == 2
+    assert group["denominator_counts"]["chain_count"] == 2
+    assert group["outcome_counts"]["fuze_negative"] == 1
+    assert group["chain_ids"] == [301, 301]
+    assert group["chain_identities"] == [
+        {"episode": 0, "chain_id": 301},
+        {"episode": 1, "chain_id": 301},
+    ]
+
+
+def test_mlf9_summary_rejects_invalid_confidence_levels():
+    with pytest.raises(ValueError, match="confidence_level"):
+        mlf9.summarize_trends(_fixture_rows(), confidence_level=1.5)
+
+    with pytest.raises(ValueError, match="confidence_level"):
+        mlf9.summarize_trends(_fixture_rows(), confidence_level=0.0)
+
+
+def test_mlf9_summary_uses_requested_confidence_level_exactly():
+    payload = mlf9.summarize_trends(_fixture_rows(), confidence_level=0.975)
+
+    assert payload["confidence_level"] == 0.975
+    assert math.isclose(
+        payload["confidence_z"],
+        NormalDist().inv_cdf((1.0 + 0.975) / 2.0),
+    )
 
 
 def test_mlf9_summary_can_group_by_miss_distance_bucket_and_break_mode():

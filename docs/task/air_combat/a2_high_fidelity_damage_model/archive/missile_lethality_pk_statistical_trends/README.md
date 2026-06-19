@@ -114,7 +114,7 @@ Out of scope:
   `tests/tools/test_mlf9_statistical_trends.py`.
 - Process-probe retained report integration through `mlf9_statistical_trends`
   payloads and optional `--mlf9_report_json_out`.
-- P5 focused validation reports `50 passed`, clean diff whitespace, and 0
+- P5 focused validation reports `53 passed`, clean diff whitespace, and 0
   missing local Markdown links over the MLF-9/A2 docs set.
 - P6 acceptance record marks the deterministic simulation-trend/report slice
   accepted / archived and leaves real-world Pk/calibration held.

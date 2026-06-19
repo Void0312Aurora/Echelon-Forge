@@ -8,8 +8,8 @@
 ## 结果
 
 `tools/diagnostics/mlf9_statistical_trends.py` 现在提供 MLF-9 的确定性行级趋势摘要器。
-它消费显式 `lethality_chain_rows` 列表，或包含该字段的 JSON 对象，按 `chain_id`
-聚合行，派生 chain records，并输出有边界的仿真趋势摘要。
+它消费显式 `lethality_chain_rows` 列表，或包含该字段的 JSON 对象，按
+`(episode, chain_id)` 聚合行，派生 chain records，并输出有边界的仿真趋势摘要。
 
 该实现刻意保持在下游。它不改变引信、战斗部、部件、结构、后果、生命周期、奖励、
 删除或校准行为。
@@ -19,8 +19,9 @@
 摘要 payload 包含：
 
 - `schema_version`：`mlf9.statistical_trends.v1`。
-- `confidence_level`、`confidence_z` 和 `interval_method`。
+- `confidence_level`、匹配 normal quantile 的 `confidence_z` 和 `interval_method`。
 - `group_by`、`chain_count`，以及每个请求分组的条目。
+- 每个 group 的 `chain_identities`，使跨 episode 重复的 `chain_id` 仍然可见。
 - chain、released、detonated、component-damage、structural-breakup 和
   platform-consequence chain 的分母计数。
 - fuze negative、effective component damage、structural breakup、airframe breakup、

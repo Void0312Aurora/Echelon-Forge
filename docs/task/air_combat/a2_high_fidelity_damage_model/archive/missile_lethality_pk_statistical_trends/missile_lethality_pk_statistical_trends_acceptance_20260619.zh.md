@@ -53,7 +53,8 @@ MLF-9 外。
 
 - [x] `tools/diagnostics/mlf9_statistical_trends.py` 消费显式 row lists 或包含
   `lethality_chain_rows` 的 JSON 对象。
-- [x] 它按 chain 分组，派生 denominator/outcome counts，并输出有边界 rate records。
+- [x] 它按 `(episode, chain_id)` 分组，派生 denominator/outcome counts，并输出有边界
+  rate records。
 - [x] 聚焦测试覆盖 deterministic fixture summaries、grouping、intervals 和 non-claim flags。
 
 ## P4 Report Integration
@@ -68,9 +69,9 @@ MLF-9 外。
 ## P5 Focused Validation
 
 - [x] MLF-9 diagnostics/probe/test files 的 `py_compile` 通过。
-- [x] 聚焦 pytest 报告 `50 passed`。
+- [x] 聚焦 pytest 报告 `53 passed`。
 - [x] `git diff --check` 通过。
-- [x] 本地 Markdown 链接检查覆盖 22 个文件，0 个本地链接缺失。
+- [x] 本地 Markdown 链接检查覆盖 30 个文件，0 个本地链接缺失。
 
 ## P6 Closeout
 
