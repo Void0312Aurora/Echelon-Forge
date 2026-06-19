@@ -1,8 +1,7 @@
 # MLF-10 Current Status
 
-Status: `2026-06-19` active P0 boundary surface. MLF-10 is open as the
-calibration-gate follow-on after MLF-9, but no calibration authority is accepted
-yet.
+Status: `2026-06-19` P0-P6 complete. Gate infrastructure is accepted / retained;
+no calibration authority is accepted.
 
 ## Decision
 
@@ -23,21 +22,41 @@ does not treat them as already released real-world calibration.
 
 ## Active Boundary
 
-- No runtime parameter retuning in P0.
+- No runtime parameter retuning before a contract admits a narrower claim.
 - No claim that current engineering proxies are real AIM-120C/F-16C/MQ-9 truth.
 - No admission of public-output data without source-rights and provenance review.
 - No edits inside archived MLF packages except link-only maintenance.
 
-## Next Packet
+## P1 Result
 
-Run `MLF10-P1` inventory. The first useful output is a table that classifies
-each calibration-like value or artifact as:
+The
+[calibration-like evidence inventory](missile_lethality_calibration_gates_inventory_20260619.md)
+classifies the current evidence families. No evidence is admitted. Stage B is a
+contract-ready candidate; Stage C, TP-21, BEC-O, Pk, and deterministic fuze
+remain blocked.
 
-- `engineering_proxy`
-- `retained_non_authoritative`
-- `calibration_candidate`
-- `admitted`
-- `rejected`
-- `blocked`
+## P2 Result
 
-No code implementation should start until that inventory is written.
+The
+[calibration admission contract](missile_lethality_calibration_admission_contract_20260619.md)
+defines the evidence manifest, evidence record, field-specific authority
+decision, and retained report schemas. Pk, deterministic fuze, reward, and
+entity deletion are fixed blocked fields in v1.
+
+## P3/P4 Result
+
+The audit tool and focused tests are implemented. The retained repository
+manifest produces seven decisions: one engineering proxy, one retained
+non-authoritative report, four blocked candidates/evidence records, one
+rejected source category, and zero admitted records.
+
+## P5/P6 Result
+
+Focused validation passed with `18 passed`, deterministic report regeneration,
+clean diff whitespace, and zero missing local Markdown links. The gate
+infrastructure is accepted / retained. Calibration authority remains held.
+
+## Reopen Condition
+
+Reopen only for new evidence, a replacement signoff packet, or an explicit
+authority-promotion request.

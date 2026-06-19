@@ -1,7 +1,7 @@
 # MLF-10 当前状态
 
-状态：`2026-06-19` active P0 boundary surface。MLF-10 已作为 MLF-9 之后的
-calibration-gate follow-on 打开，但目前没有任何 calibration authority 被验收。
+状态：`2026-06-19` P0-P6 complete。Gate infrastructure 已 accepted / retained；
+没有任何 calibration authority 被验收。
 
 ## 决策
 
@@ -21,21 +21,36 @@ MLF-10 把这些当作 audit inputs，而不是当作已经释放的真实世界
 
 ## 当前边界
 
-- P0 不调 runtime 参数。
+- 在 contract 接纳更窄 claim 前不调 runtime 参数。
 - 不声明当前工程代理值是真实 AIM-120C/F-16C/MQ-9 truth。
 - 没有 source-rights 和 provenance review 前，不接纳 public-output data。
 - 不回写已归档 MLF 包；除非只是修断链。
 
-## 下一 Packet
+## P1 结果
 
-执行 `MLF10-P1` inventory。第一个有用输出是一张表，把每个 calibration-like value 或
-artifact 分类为：
+[类校准证据盘点](missile_lethality_calibration_gates_inventory_20260619.zh.md)
+已完成当前证据族分类。当前没有任何 evidence 被 admitted。Stage B 已具备 contract-ready
+candidate 形状；Stage C、TP-21、BEC-O、Pk 和 deterministic fuze 继续 blocked。
 
-- `engineering_proxy`
-- `retained_non_authoritative`
-- `calibration_candidate`
-- `admitted`
-- `rejected`
-- `blocked`
+## P2 结果
 
-在这张 inventory 写出来之前，不应启动代码实现。
+[校准准入契约](missile_lethality_calibration_admission_contract_20260619.zh.md)
+已定义 evidence manifest、evidence record、逐字段 authority decision 和 retained
+report schemas。Pk、deterministic fuze、reward 和 entity deletion 在 v1 中固定 blocked。
+
+## P3/P4 结果
+
+Audit tool 和 focused tests 已实现。Retained repository manifest 产生 7 条 decision：
+1 条 engineering proxy、1 条 retained non-authoritative report、4 条 blocked
+candidate/evidence、1 条 rejected source category，以及 0 条 admitted。
+
+## P5/P6 结果
+
+聚焦验证以 `18 passed`、确定性 report regeneration、clean diff whitespace 和零缺失本地
+Markdown 链接通过。Gate infrastructure 已 accepted / retained；calibration authority
+继续 held。
+
+## 重开条件
+
+只有在出现新 evidence、replacement signoff packet 或明确 authority-promotion request
+时才重开。

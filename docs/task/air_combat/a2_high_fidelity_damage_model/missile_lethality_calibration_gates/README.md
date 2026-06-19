@@ -1,9 +1,10 @@
 # MLF-10 Calibration Gates
 
-Status: `2026-06-19` active boundary and planning surface for missile-lethality
-calibration gates. MLF-10 starts from the premise that the project already has
-many calibrated or calibration-like engineering proxies, but it does not treat
-them as released real-world authority until an explicit gate admits them.
+Status: `2026-06-19` accepted / retained calibration-gate infrastructure;
+calibration authority held. MLF-10 starts from the premise that the project
+already has many calibrated or calibration-like engineering proxies, but it
+does not treat them as released real-world authority until an explicit gate
+admits them.
 
 Language:
 
@@ -86,13 +87,13 @@ Out of scope:
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | Open MLF-10 and freeze non-claims. | MLF-9 accepted / archived. | README, current status, dispatch queue, and task clusters exist. | active |
-| `P1 Calibration Inventory` | Map existing calibrated-looking values and retained source gates. | P0 docs exist. | Inventory separates engineering proxy, retained evidence, candidate, and authority blockers. | planned |
-| `P2 Admission Contract` | Define source/provenance/uncertainty/denominator gate schema. | P1 inventory complete. | Contract can reject or admit evidence without runtime parameter changes. | planned |
-| `P3 Audit Tooling` | Produce deterministic audit reports over retained evidence and MLF-9 trend artifacts. | P2 contract available. | Focused tests cover pass, fail-closed, and retained-non-authoritative cases. | planned |
-| `P4 Report Integration` | Expose gate reports as retained diagnostics artifacts. | P3 tool exists. | Reports are consumable without implying stock authority. | planned |
-| `P5 Validation` | Run focused validation and local link checks. | P4 reports available. | Validation records accepted/held boundaries and residuals. | planned |
-| `P6 Closure` | Accept gate infrastructure or hold/re-scope calibration authority. | P5 evidence exists. | Parent indexes and archive registry are consistent with the decision. | planned |
+| `P0 Boundary` | Open MLF-10 and freeze non-claims. | MLF-9 accepted / archived. | README, current status, dispatch queue, and task clusters exist. | complete |
+| `P1 Calibration Inventory` | Map existing calibrated-looking values and retained source gates. | P0 docs exist. | Inventory separates engineering proxy, retained evidence, candidate, and authority blockers. | complete |
+| `P2 Admission Contract` | Define source/provenance/uncertainty/denominator gate schema. | P1 inventory complete. | Contract can reject or admit evidence without runtime parameter changes. | complete |
+| `P3 Audit Tooling` | Produce deterministic audit reports over retained evidence and MLF-9 trend artifacts. | P2 contract available. | Focused tests cover pass, fail-closed, and retained-non-authoritative cases. | complete |
+| `P4 Report Integration` | Expose gate reports as retained diagnostics artifacts. | P3 tool exists. | Reports are consumable without implying stock authority. | complete |
+| `P5 Validation` | Run focused validation and local link checks. | P4 reports available. | Validation records accepted/held boundaries and residuals. | complete |
+| `P6 Closure` | Accept gate infrastructure or hold/re-scope calibration authority. | P5 evidence exists. | Parent indexes and archive registry are consistent with the decision. | complete |
 
 ## Task Clusters
 
@@ -102,6 +103,18 @@ Out of scope:
   [missile_lethality_calibration_gates_current_status_20260619.md](missile_lethality_calibration_gates_current_status_20260619.md)
 - Dispatch queue:
   [missile_lethality_calibration_gates_dispatch_queue_20260619.md](missile_lethality_calibration_gates_dispatch_queue_20260619.md)
+- Calibration-like evidence inventory:
+  [missile_lethality_calibration_gates_inventory_20260619.md](missile_lethality_calibration_gates_inventory_20260619.md)
+- Calibration admission contract:
+  [missile_lethality_calibration_admission_contract_20260619.md](missile_lethality_calibration_admission_contract_20260619.md)
+- Admission audit tooling:
+  [missile_lethality_calibration_gates_audit_tooling_20260619.md](missile_lethality_calibration_gates_audit_tooling_20260619.md)
+- Retained report integration:
+  [missile_lethality_calibration_gates_report_integration_20260619.md](missile_lethality_calibration_gates_report_integration_20260619.md)
+- Focused validation:
+  [missile_lethality_calibration_gates_validation_20260619.md](missile_lethality_calibration_gates_validation_20260619.md)
+- Acceptance record:
+  [missile_lethality_calibration_gates_acceptance_20260619.md](missile_lethality_calibration_gates_acceptance_20260619.md)
 
 ## Outputs And Evidence
 
@@ -110,6 +123,8 @@ Out of scope:
   audit tooling, report integration, validation, and closure.
 - A current-status record that treats existing model tuning as audit input, not
   as already-released authority.
+- A P1 inventory that classifies existing evidence without changing runtime
+  behavior or admitting authority.
 
 ## Acceptance Gate
 
@@ -127,16 +142,12 @@ This subproject can be marked accepted only when:
 
 ## Residuals And Next Steps
 
-- Immediate next step: run `P1 Calibration Inventory` over existing retained A2
-  calibration artifacts, MLF-6 structural proxy thresholds, MLF-8 lifecycle
-  residuals, proximity-fuze realism residuals, and MLF-9 trend outputs.
-- Later: implement a small admission-audit report only after the inventory and
-  contract name the accepted schema.
+- Immediate work is complete for the current evidence set.
 - Held: any actual runtime parameter retuning, selected public-output
   admission, or stock weapon/target calibration.
 
 ## Archive
 
-No MLF-10 records are archived yet. Superseded drafts move to
-[archive/README.md](archive/README.md) only after a replacement current-status
-or acceptance record exists.
+MLF-10 is accepted / retained rather than physically archived because future
+authority-promotion work should reuse the gate surface. Superseded records move
+to [archive/README.md](archive/README.md) only after a replacement exists.

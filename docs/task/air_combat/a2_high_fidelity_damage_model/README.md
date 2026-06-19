@@ -24,11 +24,11 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   geometry, default runtime replacement, training benefit, structural breakup,
   debris/wreck, Pk, or weapon-specific lethality.
 - [missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md):
-  active MLF-10 calibration-gate follow-on. It inventories existing
-  calibration-like engineering proxies, retained source gates, residuals, and
-  MLF-9 trends before any runtime parameter retuning. It does not release real
-  Pk, deterministic fuze, stock weapon/target lethality, reward authority, or
-  entity-deletion authority.
+  accepted / retained MLF-10 calibration-gate infrastructure. It inventories
+  existing evidence, defines a fail-closed admission contract, and retains a
+  deterministic current-repository report with zero admitted records. It does
+  not release real Pk, deterministic fuze, stock weapon/target lethality,
+  reward authority, entity-deletion authority, or runtime parameter retuning.
 
 ## Archived / Registered Entries
 
@@ -81,7 +81,8 @@ MLF-9 (Pk/statistical trends) is accepted and archived:
 [archive/missile_lethality_pk_statistical_trends/README.md](archive/missile_lethality_pk_statistical_trends/README.md).
 The old active path is only a compatibility pointer:
 [missile_lethality_pk_statistical_trends/README.md](missile_lethality_pk_statistical_trends/README.md).
-MLF-10 (calibration gates) is open as an independent subproject:
+MLF-10 (calibration gates) is accepted / retained for future authority-promotion
+work:
 [missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md).
 Do not continue inside archived MLF-1 through MLF-9 or proximity-fuze realism
 packages. These follow-ons do not reopen the sealed A2 package or create A9.

@@ -1,0 +1,378 @@
+{
+  "schema_version": "mlf10.calibration_evidence_manifest.v1",
+  "manifest_id": "mlf10_current_repository_evidence_20260619",
+  "status": "retained_non_authoritative_current_repository_evidence",
+  "non_claims": [
+    "real_world_pk",
+    "deterministic_fuze_reliability",
+    "reward_authority",
+    "entity_deletion_authority",
+    "out_of_scope_weapon_truth",
+    "out_of_scope_target_truth"
+  ],
+  "evidence_records": [
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-MLF6-STRUCTURAL-PROXY",
+      "evidence_class": "engineering_proxy",
+      "source_kind": "engineering_runtime_proxy",
+      "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_structural_failure/README.md",
+      "provenance": "Maintained repository runtime, diagnostics probes, and regression evidence for near-field structural thresholds and cumulative wing-loss behavior.",
+      "rights_status": "repository_local",
+      "source_gate_status": "not_applicable",
+      "validation_status": "regression_passed",
+      "scope": {
+        "target_type": "repository_aircraft_proxy",
+        "weapon_family": "repository_missile_proxy",
+        "mechanism_family": "structural_failure_proxy",
+        "aspect_bucket": "controlled_probe_scope",
+        "closure_bucket": "controlled_probe_scope",
+        "miss_distance_bucket": "controlled_probe_scope"
+      },
+      "population": {
+        "identity": "controlled runtime probes and regression cases",
+        "denominator_name": "controlled_case_count",
+        "sample_count": 1,
+        "filters": "repository-maintained MLF-6 validation cases",
+        "independence_assumption": "regression cases are not operational trials"
+      },
+      "uncertainty": {
+        "method": "not_calibration_uncertainty",
+        "coverage": "test and probe variation only",
+        "residuals": [
+          "real weapon and target calibration absent"
+        ]
+      },
+      "independent_review": {
+        "status": "not_applicable",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {},
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "engineering proxy only"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-MLF9-SYNTHETIC-TRENDS",
+      "evidence_class": "retained_non_authoritative",
+      "source_kind": "synthetic_simulation_report",
+      "source_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_pk_statistical_trends/missile_lethality_pk_statistical_trends_validation_20260619.md",
+      "provenance": "Deterministic trend reports generated from explicit simulation rows with named denominators and Wilson-style intervals.",
+      "rights_status": "repository_local",
+      "source_gate_status": "not_applicable",
+      "validation_status": "simulation_trend_passed",
+      "scope": {
+        "target_type": "synthetic_simulation_population",
+        "weapon_family": "synthetic_simulation_population",
+        "mechanism_family": "replay_row_trend",
+        "aspect_bucket": "report_defined",
+        "closure_bucket": "report_defined",
+        "miss_distance_bucket": "report_defined"
+      },
+      "population": {
+        "identity": "episode and chain_id simulation identities",
+        "denominator_name": "report_named_chain_denominator",
+        "sample_count": 1,
+        "filters": "explicit report filters",
+        "independence_assumption": "fixture and seed provenance declared; no real-world independence claim"
+      },
+      "uncertainty": {
+        "method": "wilson_interval",
+        "coverage": "report-defined simulation interval",
+        "residuals": [
+          "synthetic source population"
+        ]
+      },
+      "independent_review": {
+        "status": "not_applicable",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {},
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "real-world calibration population absent"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-STAGE-B-EFFECT-SCALE",
+      "evidence_class": "calibration_candidate",
+      "source_kind": "validated_physics_surrogate",
+      "source_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_record_stage_b_effect_scale_20260530.zh.md",
+      "provenance": "Author-side scoped surrogate package with retained manifests, fixed-seed benchmark snapshots, scope probes, criteria, and uncertainty review records.",
+      "rights_status": "candidate_only",
+      "source_gate_status": "fail_closed",
+      "validation_status": "candidate",
+      "scope": {
+        "target_type": "F-16C_Block50",
+        "weapon_family": "AIM-120C-class",
+        "mechanism_family": "blast_fragmentation",
+        "aspect_bucket": "beam",
+        "closure_bucket": "high",
+        "miss_distance_bucket": "near_miss_0_35m"
+      },
+      "population": {
+        "identity": "author-side fixed-seed Stage B benchmark population",
+        "denominator_name": "stage_b_candidate_case_count",
+        "sample_count": 18,
+        "filters": "scope manifest beam high near_miss_0_35m",
+        "independence_assumption": "benchmark and input separation recorded; release-grade independent review incomplete"
+      },
+      "uncertainty": {
+        "method": "seed_window_cv",
+        "coverage": "narrow author-side Stage B review input",
+        "residuals": [
+          "release-grade uncertainty review incomplete"
+        ]
+      },
+      "independent_review": {
+        "status": "pending",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {
+        "effect_scale_authority": true
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "RES-001 source rights release-grade closeout incomplete",
+        "RES-002 release-grade identity incomplete",
+        "RES-005 fragment mechanism fail-closed",
+        "RES-006 blast mechanism fail-closed",
+        "independent review incomplete"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-STAGE-C-COMPONENT-PROBABILITY",
+      "evidence_class": "blocked",
+      "source_kind": "validated_physics_surrogate",
+      "source_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/validation_review_readiness_gate_stage_c_component_probability_20260530.zh.md",
+      "provenance": "Author-side component fragility candidate surface with test-local component rows, retained packs, and fixed-seed repeatability.",
+      "rights_status": "candidate_only",
+      "source_gate_status": "fail_closed",
+      "validation_status": "blocked",
+      "scope": {
+        "target_type": "F-16C_Block50",
+        "weapon_family": "AIM-120C-class",
+        "mechanism_family": "blast_fragmentation",
+        "aspect_bucket": "beam",
+        "closure_bucket": "high",
+        "miss_distance_bucket": "near_miss_0_35m"
+      },
+      "population": {
+        "identity": "test-local right_aileron_actuator candidate rows",
+        "denominator_name": "stage_c_candidate_component_case_count",
+        "sample_count": 3,
+        "filters": "component-specific load-gate band",
+        "independence_assumption": "independent fragility truth absent"
+      },
+      "uncertainty": {
+        "method": "fixed_seed_repeatability",
+        "coverage": "repeatability only",
+        "residuals": [
+          "probability uncertainty coverage missing"
+        ]
+      },
+      "independent_review": {
+        "status": "blocked",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {
+        "component_failure_probability_authority": true
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "RES-003 geometry truth incomplete",
+        "RES-005 fragment mechanism fail-closed",
+        "RES-006 blast mechanism fail-closed",
+        "RES-009 independent fragility truth absent",
+        "RES-011 probability uncertainty coverage missing",
+        "RES-012 result-level independence incomplete"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-TP21-SELECTED-DEBRIS",
+      "evidence_class": "blocked",
+      "source_kind": "external_calibration_dataset",
+      "source_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md#res-005",
+      "provenance": "Retained TP-21 source payload and fail-closed selected-case admission records.",
+      "rights_status": "candidate_only",
+      "source_gate_status": "fail_closed",
+      "validation_status": "not_run",
+      "scope": {
+        "target_type": "candidate_debris_comparison_scope",
+        "weapon_family": "blast_fragmentation_method_reference",
+        "mechanism_family": "fragment_debris",
+        "aspect_bucket": "selected_case_pending",
+        "closure_bucket": "selected_case_pending",
+        "miss_distance_bucket": "selected_case_pending"
+      },
+      "population": {
+        "identity": "reviewer-selected debris cases missing",
+        "denominator_name": "selected_case_count",
+        "sample_count": 0,
+        "filters": "selected case locator and output preimage required",
+        "independence_assumption": "independent reviewer signoff missing"
+      },
+      "uncertainty": {
+        "method": "",
+        "coverage": "",
+        "residuals": [
+          "selected outputs missing"
+        ]
+      },
+      "independent_review": {
+        "status": "blocked",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {
+        "component_failure_probability_authority": true
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "RES-005 selected case locator missing",
+        "selected output preimage sha256 missing",
+        "allowed-output signoff missing",
+        "authority-boundary signoff missing"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-BECO-RECALCULATED-BLAST",
+      "evidence_class": "blocked",
+      "source_kind": "external_calibration_dataset",
+      "source_ref": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/residual_register.zh.md#res-006",
+      "provenance": "Retained BEC-O payload and nine recalculated candidate outputs whose hashes differ from cached anchors.",
+      "rights_status": "candidate_only",
+      "source_gate_status": "fail_closed",
+      "validation_status": "blocked",
+      "scope": {
+        "target_type": "candidate_blast_comparison_scope",
+        "weapon_family": "blast_fragmentation_method_reference",
+        "mechanism_family": "blast",
+        "aspect_bucket": "selected_case_scope",
+        "closure_bucket": "selected_case_scope",
+        "miss_distance_bucket": "selected_case_scope"
+      },
+      "population": {
+        "identity": "nine recalculated selected outputs",
+        "denominator_name": "recalculated_output_count",
+        "sample_count": 9,
+        "filters": "cached versus recalculated selected output comparison",
+        "independence_assumption": "independent lineage and replacement review missing"
+      },
+      "uncertainty": {
+        "method": "replacement_tolerance_pending",
+        "coverage": "9 of 9 cached anchors mismatch",
+        "residuals": [
+          "numeric tolerance policy signoff missing"
+        ]
+      },
+      "independent_review": {
+        "status": "blocked",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {
+        "effect_scale_authority": true
+      },
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "RES-006 independent lineage review missing",
+        "allowed-output signoff missing",
+        "replacement-anchor signoff missing"
+      ]
+    },
+    {
+      "schema_version": "mlf10.calibration_evidence.v1",
+      "evidence_id": "MLF10-CURRENT-REJECTED-SOURCE-CATEGORY",
+      "evidence_class": "rejected",
+      "source_kind": "rejected",
+      "source_ref": "docs/standards/foundation/public_data_source_admission.md#rejected-sources",
+      "provenance": "Policy category for restricted, leaked, unstable, untraceable, rights-unclear, or scope-mismatched material.",
+      "rights_status": "rejected",
+      "source_gate_status": "rejected",
+      "validation_status": "rejected",
+      "scope": {
+        "target_type": "not_eligible",
+        "weapon_family": "not_eligible",
+        "mechanism_family": "not_eligible",
+        "aspect_bucket": "not_eligible",
+        "closure_bucket": "not_eligible",
+        "miss_distance_bucket": "not_eligible"
+      },
+      "population": {
+        "identity": "not eligible",
+        "denominator_name": "not eligible",
+        "sample_count": 0,
+        "filters": "rejected source category",
+        "independence_assumption": "not eligible"
+      },
+      "uncertainty": {
+        "method": "not eligible",
+        "coverage": "not eligible",
+        "residuals": []
+      },
+      "independent_review": {
+        "status": "rejected",
+        "reviewer_ref": ""
+      },
+      "authority_requests": {},
+      "non_claims": [
+        "real_world_pk",
+        "deterministic_fuze_reliability",
+        "reward_authority",
+        "entity_deletion_authority",
+        "out_of_scope_weapon_truth",
+        "out_of_scope_target_truth"
+      ],
+      "residuals": [
+        "source is ineligible for consumption"
+      ]
+    }
+  ]
+}

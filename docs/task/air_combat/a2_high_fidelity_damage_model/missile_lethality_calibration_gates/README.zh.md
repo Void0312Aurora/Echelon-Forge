@@ -1,8 +1,8 @@
 # MLF-10 校准门
 
-状态：`2026-06-19` active boundary and planning surface，用于导弹杀伤校准门。
-MLF-10 的起点是：项目里已经有不少“校准味道”的工程代理值和调试结果，但它们在显式
-gate 放行前，仍不能被读成真实世界权威。
+状态：`2026-06-19` accepted / retained calibration-gate infrastructure；
+calibration authority held。MLF-10 的起点是：项目里已经有不少“校准味道”的工程代理值
+和调试结果，但它们在显式 gate 放行前，仍不能被读成真实世界权威。
 
 语言：
 
@@ -77,13 +77,13 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
 
 | Phase | Goal | Entry condition | Exit condition | Status |
 | --- | --- | --- | --- | --- |
-| `P0 Boundary` | 打开 MLF-10 并冻结禁止声明。 | MLF-9 accepted / archived。 | README、current status、dispatch queue 和 task clusters 存在。 | active |
-| `P1 Calibration Inventory` | 映射已有 calibration-like values 和 retained source gates。 | P0 docs 存在。 | Inventory 区分 engineering proxy、retained evidence、candidate 和 authority blocker。 | planned |
-| `P2 Admission Contract` | 定义 source/provenance/uncertainty/denominator gate schema。 | P1 inventory 完成。 | Contract 可拒绝或接纳证据，且不需要先改 runtime 参数。 | planned |
-| `P3 Audit Tooling` | 对 retained evidence 和 MLF-9 trend artifacts 产出确定性 audit reports。 | P2 contract 可用。 | 聚焦测试覆盖 pass、fail-closed 和 retained-non-authoritative cases。 | planned |
-| `P4 Report Integration` | 将 gate reports 暴露为 retained diagnostics artifacts。 | P3 tool 存在。 | Reports 可消费但不暗示 stock authority。 | planned |
-| `P5 Validation` | 执行聚焦验证和本地链接检查。 | P4 reports 可用。 | Validation 记录 accepted/held boundaries 和 residuals。 | planned |
-| `P6 Closure` | 接受 gate infrastructure 或 hold/re-scope calibration authority。 | P5 证据存在。 | 父级索引和 archive registry 与结论一致。 | planned |
+| `P0 Boundary` | 打开 MLF-10 并冻结禁止声明。 | MLF-9 accepted / archived。 | README、current status、dispatch queue 和 task clusters 存在。 | complete |
+| `P1 Calibration Inventory` | 映射已有 calibration-like values 和 retained source gates。 | P0 docs 存在。 | Inventory 区分 engineering proxy、retained evidence、candidate 和 authority blocker。 | complete |
+| `P2 Admission Contract` | 定义 source/provenance/uncertainty/denominator gate schema。 | P1 inventory 完成。 | Contract 可拒绝或接纳证据，且不需要先改 runtime 参数。 | complete |
+| `P3 Audit Tooling` | 对 retained evidence 和 MLF-9 trend artifacts 产出确定性 audit reports。 | P2 contract 可用。 | 聚焦测试覆盖 pass、fail-closed 和 retained-non-authoritative cases。 | complete |
+| `P4 Report Integration` | 将 gate reports 暴露为 retained diagnostics artifacts。 | P3 tool 存在。 | Reports 可消费但不暗示 stock authority。 | complete |
+| `P5 Validation` | 执行聚焦验证和本地链接检查。 | P4 reports 可用。 | Validation 记录 accepted/held boundaries 和 residuals。 | complete |
+| `P6 Closure` | 接受 gate infrastructure 或 hold/re-scope calibration authority。 | P5 证据存在。 | 父级索引和 archive registry 与结论一致。 | complete |
 
 ## 任务簇
 
@@ -93,6 +93,18 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
   [missile_lethality_calibration_gates_current_status_20260619.md](missile_lethality_calibration_gates_current_status_20260619.md)
 - Dispatch queue：
   [missile_lethality_calibration_gates_dispatch_queue_20260619.md](missile_lethality_calibration_gates_dispatch_queue_20260619.md)
+- 类校准证据盘点：
+  [missile_lethality_calibration_gates_inventory_20260619.zh.md](missile_lethality_calibration_gates_inventory_20260619.zh.md)
+- 校准准入契约：
+  [missile_lethality_calibration_admission_contract_20260619.zh.md](missile_lethality_calibration_admission_contract_20260619.zh.md)
+- 准入审计工具：
+  [missile_lethality_calibration_gates_audit_tooling_20260619.zh.md](missile_lethality_calibration_gates_audit_tooling_20260619.zh.md)
+- Retained report 集成：
+  [missile_lethality_calibration_gates_report_integration_20260619.zh.md](missile_lethality_calibration_gates_report_integration_20260619.zh.md)
+- 聚焦验证：
+  [missile_lethality_calibration_gates_validation_20260619.zh.md](missile_lethality_calibration_gates_validation_20260619.zh.md)
+- 验收记录：
+  [missile_lethality_calibration_gates_acceptance_20260619.zh.md](missile_lethality_calibration_gates_acceptance_20260619.zh.md)
 
 ## 输出和证据
 
@@ -100,6 +112,7 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
 - 有限任务簇计划，覆盖 calibration inventory、admission contract、audit tooling、
   report integration、validation 和 closure。
 - current-status 记录：已有模型调参是 audit input，不是已释放 authority。
+- P1 证据盘点：在不改变 runtime 行为或接纳 authority 的前提下完成现有证据分类。
 
 ## 验收门
 
@@ -115,15 +128,12 @@ MLF-10 判断已有导弹杀伤证据应如何被读取为 calibration evidence�
 
 ## 残余和下一步
 
-- 立即下一步：执行 `P1 Calibration Inventory`，覆盖已有 retained A2 calibration
-  artifacts、MLF-6 structural proxy thresholds、MLF-8 lifecycle residuals、
-  近炸引信现实性 residuals 和 MLF-9 trend outputs。
-- 后续：只有在 inventory 和 contract 命名 accepted schema 后，才实现小型 admission-audit
-  report。
+- 当前 evidence set 下的立即工作已完成。
 - Held：实际 runtime 参数重调、selected public-output admission 或 stock weapon/target
   calibration。
 
 ## 归档
 
-MLF-10 暂无归档记录。只有在存在替代 current-status 或 acceptance record 后，过期草案才移动到
+MLF-10 以 accepted / retained 状态保留，不物理归档，以便未来 authority-promotion
+复用 gate surface。只有在存在替代记录后，过期材料才移动到
 [archive/README.zh.md](archive/README.zh.md)。
