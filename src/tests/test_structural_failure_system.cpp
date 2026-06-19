@@ -5,6 +5,7 @@
 #include "core/engine/simulation_kernel_engagement_event_store.h"
 #include "systems/combat/damage_system_air.h"
 #include "core/interfaces/engagement_event_recorder.h"
+#include "systems/combat/damage_system_common.h"
 #include "systems/combat/structural_consequence_system.h"
 #include "systems/combat/structural_failure_system.h"
 #include "systems/physics/ground_contact_system.h"
@@ -302,6 +303,44 @@ TEST_SUITE("structural_failure_state") {
         CHECK(aircraft_state->breakup_state == StructuralBreakupPhase::PartialDetachment);
         CHECK(structural_breakup_has_mode(*aircraft_state, StructuralBreakMode::TailLoss));
         CHECK(missile.get<StructuralBreakupState>() == nullptr);
+    }
+
+} // TEST_SUITE
+
+TEST_SUITE("proximity_fuze") {
+
+    TEST_CASE("nearest approach interpolation catches between-frame crossing") {
+        Missile missile{};
+        Transform target_prev{};
+        target_prev.x = 0.0;
+        target_prev.y = 0.0;
+        target_prev.z = 0.0;
+        Transform missile_prev{};
+        missile_prev.x = 20.0;
+        missile_prev.y = 0.0;
+        missile_prev.z = 0.0;
+        const double previous_dist = 20.0;
+
+        damage_record_proximity_min_point(missile, target_prev, missile_prev, 0.0,
+                                          previous_dist);
+        damage_store_proximity_sample(missile, target_prev, missile_prev, 0.0, previous_dist);
+
+        Transform target_now{};
+        target_now.x = 0.0;
+        target_now.y = 0.0;
+        target_now.z = 0.0;
+        Transform missile_now{};
+        missile_now.x = -20.0;
+        missile_now.y = 0.0;
+        missile_now.z = 0.0;
+
+        CHECK(damage_record_proximity_segment_min_point(missile, target_now, missile_now, 0.05,
+                                                        20.0));
+        CHECK(missile.proximity_min_dist_m == doctest::Approx(0.0).epsilon(1.0e-9));
+        CHECK(missile.proximity_min_time_s == doctest::Approx(0.025).epsilon(1.0e-9));
+        CHECK(missile.proximity_min_local_forward_m == doctest::Approx(0.0).epsilon(1.0e-9));
+        CHECK(missile.proximity_min_local_right_m == doctest::Approx(0.0).epsilon(1.0e-9));
+        CHECK(missile.proximity_min_local_up_m == doctest::Approx(0.0).epsilon(1.0e-9));
     }
 
 } // TEST_SUITE

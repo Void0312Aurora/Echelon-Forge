@@ -146,6 +146,8 @@ def _lethality_chain_rows(
     rows: list[dict[str, Any]] = []
     standard_nearest_keys: set[tuple[int, int]] = set()
     standard_fuze_keys: set[tuple[int, int]] = set()
+    standard_nearest_munition_ids: set[int] = set()
+    standard_fuze_munition_ids: set[int] = set()
     standard_warhead_keys: set[tuple[int, int]] = set()
     standard_spatial_keys: set[tuple[int, int]] = set()
     standard_component_keys: set[tuple[int, int]] = set()
@@ -187,6 +189,7 @@ def _lethality_chain_rows(
         standard_nearest_keys.add(
             (int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0))
         )
+        standard_nearest_munition_ids.add(int(row.get("munition_id", 0) or 0))
 
     for fuze_event in list(getattr(engagement_events, "fuze_evaluation_events", []) or []):
         base_kwargs = _lethality_header_base_kwargs(
@@ -267,6 +270,7 @@ def _lethality_chain_rows(
         standard_fuze_keys.add(
             (int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0))
         )
+        standard_fuze_munition_ids.add(int(row.get("munition_id", 0) or 0))
 
     for warhead_event in list(getattr(engagement_events, "warhead_mechanism_events", []) or []):
         base_kwargs = _lethality_header_base_kwargs(
@@ -629,7 +633,10 @@ def _lethality_chain_rows(
         }
         fallback_key = (int(chain_id), int(munition_id))
 
-        if fallback_key not in standard_nearest_keys:
+        has_standard_nearest = fallback_key in standard_nearest_keys or (
+            munition_id > 0 and int(munition_id) in standard_nearest_munition_ids
+        )
+        if not has_standard_nearest:
             nearest = _lethality_base_row(
                 stage=chain_contract.STAGE_NEAREST_APPROACH,
                 **base_kwargs,
@@ -656,7 +663,10 @@ def _lethality_chain_rows(
             )
             rows.append(nearest)
 
-        if fallback_key not in standard_fuze_keys:
+        has_standard_fuze = fallback_key in standard_fuze_keys or (
+            munition_id > 0 and int(munition_id) in standard_fuze_munition_ids
+        )
+        if not has_standard_fuze:
             fuze = _lethality_base_row(stage=chain_contract.STAGE_FUZE, **base_kwargs)
             fuze.update(
                 {
@@ -924,13 +934,44 @@ def _append_unique_lethality_chain_rows(
     seen: set[tuple[int, int, int, str, str, int]],
     rows: list[dict[str, Any]],
 ) -> None:
+    standard_source_by_stage = {
+        chain_contract.STAGE_NEAREST_APPROACH: "NearestApproachEvent",
+        chain_contract.STAGE_FUZE: "FuzeEvaluationEvent",
+    }
+
+    def same_episode_munition_stage(lhs: dict[str, Any], rhs: dict[str, Any]) -> bool:
+        return (
+            int(lhs.get("episode", 0) or 0) == int(rhs.get("episode", 0) or 0)
+            and int(lhs.get("munition_id", 0) or 0) == int(rhs.get("munition_id", 0) or 0)
+            and str(lhs.get("stage", "") or "") == str(rhs.get("stage", "") or "")
+        )
+
     for row in rows:
+        stage = str(row.get("stage", "") or "")
+        source_event_kind = str(row.get("source_event_kind", "") or "")
+        standard_source = standard_source_by_stage.get(stage)
+        if standard_source:
+            if source_event_kind == "EffectsEvent" and any(
+                same_episode_munition_stage(existing, row)
+                and str(existing.get("source_event_kind", "") or "") == standard_source
+                for existing in out
+            ):
+                continue
+            if source_event_kind == standard_source:
+                out[:] = [
+                    existing
+                    for existing in out
+                    if not (
+                        same_episode_munition_stage(existing, row)
+                        and str(existing.get("source_event_kind", "") or "") == "EffectsEvent"
+                    )
+                ]
         key = (
             int(row.get("episode", 0) or 0),
             int(row.get("chain_id", 0) or 0),
             int(row.get("event_id", 0) or 0),
-            str(row.get("stage", "") or ""),
-            str(row.get("source_event_kind", "") or ""),
+            stage,
+            source_event_kind,
             int(row.get("source_event_id", 0) or 0),
         )
         if key in seen:

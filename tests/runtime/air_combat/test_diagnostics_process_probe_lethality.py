@@ -618,6 +618,76 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertEqual(fuze_rows[0]["fuze_triggered"], 1)
     self.assertEqual(fuze_rows[0]["fuze_failure_reason"], "")
 
+  def test_standard_geometry_and_fuze_events_suppress_effects_fallback_by_munition_id(
+    self,
+  ) -> None:
+    events = _dummy_lethality_events()
+    events.nearest_approach_events = [_standard_nearest_event(reason="fuze_armed")]
+    events.fuze_evaluation_events = [_standard_fuze_event(reason="fuze_armed", triggered=True)]
+    events.diagnostics_traces = []
+
+    rows = probe._lethality_chain_rows(
+      episode=7,
+      step=12,
+      sim_time_s=4.5,
+      engagement_events=events,
+    )
+
+    nearest_rows = [row for row in rows if row["stage"] == "nearest_approach"]
+    fuze_rows = [row for row in rows if row["stage"] == "fuze"]
+    self.assertEqual(len(nearest_rows), 1)
+    self.assertEqual(nearest_rows[0]["source_event_kind"], "NearestApproachEvent")
+    self.assertAlmostEqual(nearest_rows[0]["miss_distance_m"], 12.5, places=6)
+    self.assertEqual(len(fuze_rows), 1)
+    self.assertEqual(fuze_rows[0]["source_event_kind"], "FuzeEvaluationEvent")
+    self.assertAlmostEqual(fuze_rows[0]["fuze_sample"], 0.42, places=6)
+
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+    self.assertAlmostEqual(snapshot["lethality_chain_miss_distance_m"], 12.5, places=6)
+    self.assertAlmostEqual(snapshot["lethality_chain_fuze_sample"], 0.42, places=6)
+
+  def test_accumulated_standard_geometry_and_fuze_rows_suppress_later_effects_fallback(
+    self,
+  ) -> None:
+    standard_rows = probe._lethality_chain_rows(
+      episode=7,
+      step=12,
+      sim_time_s=4.5,
+      engagement_events=SimpleNamespace(
+        nearest_approach_events=[_standard_nearest_event(reason="fuze_armed")],
+        fuze_evaluation_events=[_standard_fuze_event(reason="fuze_armed", triggered=True)],
+        effects_events=[],
+        damage_reports=[],
+        diagnostics_traces=[],
+      ),
+    )
+    fallback_rows = probe._lethality_chain_rows(
+      episode=7,
+      step=13,
+      sim_time_s=4.55,
+      engagement_events=_dummy_lethality_events(),
+    )
+
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[int, int, int, str, str, int]] = set()
+    probe._append_unique_lethality_chain_rows(rows, seen, standard_rows)
+    probe._append_unique_lethality_chain_rows(rows, seen, fallback_rows)
+
+    nearest_rows = [row for row in rows if row["stage"] == "nearest_approach"]
+    fuze_rows = [row for row in rows if row["stage"] == "fuze"]
+    self.assertEqual([row["source_event_kind"] for row in nearest_rows], ["NearestApproachEvent"])
+    self.assertEqual([row["source_event_kind"] for row in fuze_rows], ["FuzeEvaluationEvent"])
+    self.assertTrue(
+      any(
+        row["stage"] == "warhead_mechanism" and row["source_event_kind"] == "EffectsEvent"
+        for row in rows
+      )
+    )
+
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+    self.assertAlmostEqual(snapshot["lethality_chain_miss_distance_m"], 12.5, places=6)
+    self.assertAlmostEqual(snapshot["lethality_chain_fuze_sample"], 0.42, places=6)
+
   def test_standard_warhead_spatial_and_component_events_suppress_effects_fallback_rows(self) -> None:
     events = _dummy_lethality_events()
     events.warhead_mechanism_events = [_standard_warhead_event()]
