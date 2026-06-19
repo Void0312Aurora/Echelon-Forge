@@ -38,7 +38,7 @@ python -m pytest -q -p no:cacheprovider \
   tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
-Result: `18 passed`.
+Result: `7 passed`.
 
 The retained report was regenerated to `Temp/mlf10-validation-report.json` and
 compared byte-for-byte with

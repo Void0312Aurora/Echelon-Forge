@@ -1,6 +1,6 @@
 # MLF-10 当前状态
 
-状态：`2026-06-19` P0-P6 complete。Gate infrastructure 已 accepted / retained；
+状态：`2026-06-19` P0-P6 complete。Gate infrastructure 已 accepted / archived；
 没有任何 calibration authority 被验收。
 
 ## 决策
@@ -46,8 +46,8 @@ candidate/evidence、1 条 rejected source category，以及 0 条 admitted。
 
 ## P5/P6 结果
 
-聚焦验证以 `18 passed`、确定性 report regeneration、clean diff whitespace 和零缺失本地
-Markdown 链接通过。Gate infrastructure 已 accepted / retained；calibration authority
+聚焦验证以 `7 passed`、确定性 report regeneration、clean diff whitespace 和零缺失本地
+Markdown 链接通过。Gate infrastructure 已 accepted / archived；calibration authority
 继续 held。
 
 ## 重开条件

@@ -8,9 +8,9 @@ Chinese companion:
 ## Implementation
 
 - Tool:
-  [mlf10_calibration_admission.py](../../../../../tools/diagnostics/mlf10_calibration_admission.py)
+  [mlf10_calibration_admission.py](../../../../../../tools/diagnostics/mlf10_calibration_admission.py)
 - Focused tests:
-  [test_mlf10_calibration_admission.py](../../../../../tests/tools/test_mlf10_calibration_admission.py)
+  [test_mlf10_calibration_admission.py](../../../../../../tests/tools/test_mlf10_calibration_admission.py)
 - Contract:
   [missile_lethality_calibration_admission_contract_20260619.md](missile_lethality_calibration_admission_contract_20260619.md)
 

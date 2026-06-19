@@ -38,7 +38,7 @@ python -m pytest -q -p no:cacheprovider \
   tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
-结果：`18 passed`。
+结果：`7 passed`。
 
 Retained report 已重新生成到 `Temp/mlf10-validation-report.json`，并与
 [mlf10_calibration_admission_report_20260619.json](mlf10_calibration_admission_report_20260619.json)

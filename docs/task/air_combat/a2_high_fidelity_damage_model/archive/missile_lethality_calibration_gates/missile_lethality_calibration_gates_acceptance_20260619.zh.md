@@ -1,6 +1,6 @@
 # MLF-10 验收记录
 
-状态：`2026-06-19` accepted / retained gate infrastructure；calibration
+状态：`2026-06-19` accepted / archived gate infrastructure；calibration
 authority held。
 
 英文主文：
@@ -45,12 +45,11 @@ MLF-10 验收以下基础设施：
 
 ## 收口决策
 
-Gate infrastructure 以 accepted / retained 状态保留在 A2 follow-on 根目录。它不做
-物理归档，因为未来 authority-promotion 工作应复用同一 contract、tool 和当前 evidence
-manifest surface。
+Gate infrastructure 已验收，并物理归档到 A2 父级本地 archive 下。原 active 路径
+只保留为旧任务链接的轻量兼容指针。
 
-A2 archive registry 继续只登记物理归档的 evidence package。因此 MLF-10 不会被伪造为
-一条 archived calibration result。
+A2 archive registry 将 MLF-10 登记为 accepted / archived 的 calibration gate
+package；calibration authority 继续 held。
 
 只有在出现新 evidence、replacement signoff packet 或明确 authority-promotion request
 时才重开 MLF-10。任何 authority decision 改变前必须重新生成报告。

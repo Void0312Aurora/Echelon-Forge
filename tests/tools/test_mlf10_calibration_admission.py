@@ -12,6 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CURRENT_MANIFEST = (
     REPO_ROOT
     / "docs/task/air_combat/a2_high_fidelity_damage_model"
+    / "archive"
     / "missile_lethality_calibration_gates"
     / "mlf10_calibration_evidence_manifest_20260619.json"
 )

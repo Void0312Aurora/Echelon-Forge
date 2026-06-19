@@ -32,3 +32,5 @@ Current entry:
   evidence.
 - [missile_lethality_pk_statistical_trends/](missile_lethality_pk_statistical_trends/README.md):
   MLF-9 accepted bounded Pk/statistical simulation-trend evidence.
+- [missile_lethality_calibration_gates/](missile_lethality_calibration_gates/README.md):
+  MLF-10 accepted fail-closed calibration-gate evidence and report contract.

@@ -1,6 +1,6 @@
 # MLF-10 Acceptance Record
 
-Status: `2026-06-19` accepted / retained gate infrastructure; calibration
+Status: `2026-06-19` accepted / archived gate infrastructure; calibration
 authority held.
 
 Chinese companion:
@@ -46,13 +46,12 @@ The following remain held:
 
 ## Closure Decision
 
-The gate infrastructure is accepted and retained at the live A2 follow-on root.
-It is intentionally not physically archived because future authority-promotion
-work should reuse the same contract, tool, and current-evidence manifest
-surface.
+The gate infrastructure is accepted and physically archived under the parent
+A2 local archive. The original active path is kept only as a lightweight
+compatibility pointer for older task links.
 
-The A2 archive registry remains a registry of physically archived evidence
-packages. MLF-10 is therefore not added as an archived calibration result.
+The A2 archive registry records MLF-10 as an accepted / archived calibration
+gate package with calibration authority held.
 
 Reopening MLF-10 requires new evidence, a replacement signoff packet, or an
 explicit authority-promotion request. A new report must be generated before any

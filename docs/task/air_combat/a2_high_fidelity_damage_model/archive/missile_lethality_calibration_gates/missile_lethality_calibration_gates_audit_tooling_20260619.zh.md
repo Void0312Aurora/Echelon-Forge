@@ -8,9 +8,9 @@
 ## 实现
 
 - 工具：
-  [mlf10_calibration_admission.py](../../../../../tools/diagnostics/mlf10_calibration_admission.py)
+  [mlf10_calibration_admission.py](../../../../../../tools/diagnostics/mlf10_calibration_admission.py)
 - 聚焦测试：
-  [test_mlf10_calibration_admission.py](../../../../../tests/tools/test_mlf10_calibration_admission.py)
+  [test_mlf10_calibration_admission.py](../../../../../../tests/tools/test_mlf10_calibration_admission.py)
 - 契约：
   [missile_lethality_calibration_admission_contract_20260619.zh.md](missile_lethality_calibration_admission_contract_20260619.zh.md)
 

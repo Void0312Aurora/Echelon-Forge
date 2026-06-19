@@ -18,11 +18,6 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   F-16C 外壳区域、部件绑定、距离诊断、精细几何代理、表面/内部 receiver
   先验和跨区 split receiver handoff 证据。它不声明真实 F-16 工程几何、
   默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种杀伤结论。
-- [missile_lethality_calibration_gates/README.zh.md](missile_lethality_calibration_gates/README.zh.md)：
-  accepted / retained 的 MLF-10 校准门基础设施。它盘点现有 evidence，定义
-  fail-closed admission contract，并保留一份零 admitted records 的确定性当前仓库报告。
-  它不释放 real Pk、deterministic fuze、stock weapon/target lethality、reward
-  authority、entity-deletion authority，也不执行 runtime 参数重调。
 
 ## 已归档 / 已注册入口
 
@@ -55,6 +50,12 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   accepted / archived 的 MLF-9 Pk / 统计趋势证据。它通过显式 metric contract
   消费可回放 MLF-5 到 MLF-8 仿真事实，并暴露有边界 diagnostics trend reports；
   真实弹种 Pk、具体目标杀伤率、reward 权威和校准权威仍保持拒绝。
+- [archive/missile_lethality_calibration_gates/README.zh.md](archive/missile_lethality_calibration_gates/README.zh.md)：
+  accepted / archived 的 MLF-10 校准门基础设施。它盘点现有 evidence，定义
+  fail-closed admission contract，并保留一份零 admitted records 的确定性当前仓库报告。
+  它不释放 real Pk、deterministic fuze、stock weapon/target lethality、reward
+  authority、entity-deletion authority、calibration authority，也不执行 runtime
+  参数重调。
 
 当前几何保真度缺口已记录到 issue 板：
 [杀伤链命中盒几何保真度缺口](../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
@@ -69,9 +70,11 @@ MLF-9（Pk/统计趋势）已验收并归档：
 [archive/missile_lethality_pk_statistical_trends/README.zh.md](archive/missile_lethality_pk_statistical_trends/README.zh.md)。
 旧 active 路径仅保留兼容指针：
 [missile_lethality_pk_statistical_trends/README.zh.md](missile_lethality_pk_statistical_trends/README.zh.md)。
-MLF-10（校准门）已 accepted / retained，供未来 authority-promotion 工作复用：
+MLF-10（校准门）已验收并归档：
+[archive/missile_lethality_calibration_gates/README.zh.md](archive/missile_lethality_calibration_gates/README.zh.md)。
+旧 active 路径仅保留兼容指针：
 [missile_lethality_calibration_gates/README.zh.md](missile_lethality_calibration_gates/README.zh.md)。
-不得继续写入已归档的 MLF-1 到 MLF-9 或近炸引信现实性包。这些 follow-on 不重开已封存
+不得继续写入已归档的 MLF-1 到 MLF-10 或近炸引信现实性包。这些 follow-on 不重开已封存
 A2 包，也不创建 A9。
 
 只有在明确 authority-promotion 或新 research 请求下才重开本线。默认空战工作继续从

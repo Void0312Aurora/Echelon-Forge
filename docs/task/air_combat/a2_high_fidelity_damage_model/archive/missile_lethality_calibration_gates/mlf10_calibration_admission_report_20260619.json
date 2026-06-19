@@ -2,7 +2,7 @@
   "schema_version": "mlf10.calibration_admission_report.v1",
   "status": "calibration_admission_audit_complete",
   "source_manifest_schema_version": "mlf10.calibration_evidence_manifest.v1",
-  "source_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
+  "source_manifest_ref": "docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json",
   "report_surface": "mlf10_retained_diagnostics_artifact",
   "record_count": 7,
   "decision_counts": {

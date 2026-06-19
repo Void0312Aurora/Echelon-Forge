@@ -1,6 +1,6 @@
 # MLF-10 Current Status
 
-Status: `2026-06-19` P0-P6 complete. Gate infrastructure is accepted / retained;
+Status: `2026-06-19` P0-P6 complete. Gate infrastructure is accepted / archived;
 no calibration authority is accepted.
 
 ## Decision
@@ -52,9 +52,9 @@ rejected source category, and zero admitted records.
 
 ## P5/P6 Result
 
-Focused validation passed with `18 passed`, deterministic report regeneration,
+Focused validation passed with `7 passed`, deterministic report regeneration,
 clean diff whitespace, and zero missing local Markdown links. The gate
-infrastructure is accepted / retained. Calibration authority remains held.
+infrastructure is accepted / archived. Calibration authority remains held.
 
 ## Reopen Condition
 
