@@ -46,6 +46,10 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   accepted / archived 的 MLF-8 残骸和碎片生命周期证据。runtime 记录与已验收
   MLF-6/MLF-7 证据链路关联的 diagnostics-only 脱落部件和终端残骸生命周期事实；
   一等 debris/wreck 实体、碎片物理、reward 权威、Pk 和校准权威仍保持拒绝。
+- [archive/missile_lethality_pk_statistical_trends/README.zh.md](archive/missile_lethality_pk_statistical_trends/README.zh.md)：
+  accepted / archived 的 MLF-9 Pk / 统计趋势证据。它通过显式 metric contract
+  消费可回放 MLF-5 到 MLF-8 仿真事实，并暴露有边界 diagnostics trend reports；
+  真实弹种 Pk、具体目标杀伤率、reward 权威和校准权威仍保持拒绝。
 
 当前几何保真度缺口已记录到 issue 板：
 [杀伤链命中盒几何保真度缺口](../../issues/lethality_hitbox_geometry_fidelity_gap/README.zh.md)。
@@ -56,9 +60,12 @@ MLF-8（残骸/碎片生命周期）已验收并归档：
 [archive/missile_lethality_debris_wreck_lifecycle/README.zh.md](archive/missile_lethality_debris_wreck_lifecycle/README.zh.md)。
 旧 active 路径仅保留兼容指针：
 [missile_lethality_debris_wreck_lifecycle/README.zh.md](missile_lethality_debris_wreck_lifecycle/README.zh.md)。
-MLF-9（Pk/统计趋势）和 MLF-10（校准门）仍需后续独立子项目。不得继续写入
-已归档的 MLF-1 到 MLF-8 或近炸引信现实性包。这些 follow-on 不重开已封存
-A2 包，也不创建 A9。
+MLF-9（Pk/统计趋势）已验收并归档：
+[archive/missile_lethality_pk_statistical_trends/README.zh.md](archive/missile_lethality_pk_statistical_trends/README.zh.md)。
+旧 active 路径仅保留兼容指针：
+[missile_lethality_pk_statistical_trends/README.zh.md](missile_lethality_pk_statistical_trends/README.zh.md)。
+MLF-10（校准门）仍需后续独立子项目。不得继续写入已归档的 MLF-1 到 MLF-9 或近炸引信现实性包。
+这些 follow-on 不重开已封存 A2 包，也不创建 A9。
 
 只有在明确 authority-promotion 或新 research 请求下才重开本线。默认空战工作继续从
 [../README.zh.md](../README.zh.md) 进入。

@@ -23,6 +23,7 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
     spatial = last_stage(chain_contract.STAGE_SPATIAL_COVERAGE) or {}
     component = last_stage(chain_contract.STAGE_COMPONENT_LOAD) or {}
     component_damage = last_stage(chain_contract.STAGE_COMPONENT_DAMAGE) or {}
+    structural = last_stage(chain_contract.STAGE_STRUCTURAL_BREAKUP) or {}
     platform = last_stage(chain_contract.STAGE_PLATFORM_CONSEQUENCE) or {}
     lifecycle = last_stage(chain_contract.STAGE_LIFECYCLE) or {}
     component_failure = component_damage or component
@@ -155,6 +156,25 @@ def _lethality_chain_snapshot_columns(chain_rows: list[dict[str, Any]]) -> dict[
         ),
         "lethality_chain_component_failure_sample": _finite_float(
             component_failure.get("component_failure_sample", float("nan"))
+        ),
+        "lethality_chain_structural_breakup_count": int(
+            sum(
+                1
+                for row in chain_rows
+                if str(row.get("stage", "")) == chain_contract.STAGE_STRUCTURAL_BREAKUP
+            )
+        ),
+        "lethality_chain_breakup_state": str(structural.get("breakup_state", "") or ""),
+        "lethality_chain_break_mode": str(structural.get("break_mode", "") or ""),
+        "lethality_chain_detached_part_ref": str(
+            structural.get("detached_part_ref", "") or ""
+        ),
+        "lethality_chain_detached_part_count": int(
+            structural.get("detached_part_count", 0) or 0
+        ),
+        "lethality_chain_airframe_breakup": int(structural.get("airframe_breakup", 0) or 0),
+        "lethality_chain_structural_cause_event_id": int(
+            structural.get("cause_event_id", 0) or 0
         ),
         "lethality_chain_damage_report_id": int(
             platform.get("damage_report_id", lifecycle.get("damage_report_id", 0)) or 0

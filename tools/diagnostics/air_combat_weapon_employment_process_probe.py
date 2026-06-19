@@ -110,6 +110,7 @@ from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.snapshot
 from tools.diagnostics._air_combat_weapon_employment_process_probe_impl.summarize import (
     _summarize_episode,
 )
+from tools.diagnostics import mlf9_statistical_trends
 
 __all__ = (
     "A5_FIRE_MASK_COMPONENT_NAMES",
@@ -435,12 +436,25 @@ def run_probe(args: argparse.Namespace) -> dict[str, Any]:
             _controlled_consequence_bridge_record(summary) for summary in episode_summaries
         ],
     }
+    mlf9_report = mlf9_statistical_trends.summarize_trends(
+        lethality_chain_rows,
+        group_by=mlf9_statistical_trends.normalize_group_by(
+            getattr(args, "mlf9_group_by", "all")
+        ),
+        confidence_level=float(getattr(args, "mlf9_confidence_level", 0.95)),
+        sample_source="process_probe_lethality_chain_rows",
+        report_surface="process_probe_retained_diagnostics_artifact",
+    )
+    payload["mlf9_statistical_trends"] = mlf9_report
     if args.csv_out:
         write_csv(args.csv_out, rows)
         payload["csv_out"] = os.path.abspath(args.csv_out)
     if args.chain_csv_out:
         write_csv(args.chain_csv_out, lethality_chain_rows)
         payload["chain_csv_out"] = os.path.abspath(args.chain_csv_out)
+    if getattr(args, "mlf9_report_json_out", ""):
+        write_json(str(args.mlf9_report_json_out), mlf9_report)
+        payload["mlf9_report_json_out"] = os.path.abspath(str(args.mlf9_report_json_out))
     if args.json_out:
         write_json(args.json_out, payload)
     if args.plot_out:
@@ -517,6 +531,21 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--csv_out", default="")
     parser.add_argument("--chain_csv_out", default="")
+    parser.add_argument(
+        "--mlf9_report_json_out",
+        default="",
+        help="Optional retained diagnostics-only MLF-9 trend report JSON path.",
+    )
+    parser.add_argument(
+        "--mlf9_group_by",
+        default="all",
+        help="Comma-separated MLF-9 trend grouping fields.",
+    )
+    parser.add_argument(
+        "--mlf9_confidence_level",
+        type=mlf9_statistical_trends.parse_confidence_level,
+        default=0.95,
+    )
     parser.add_argument("--json_out", default="")
     parser.add_argument("--plot_out", default="")
     return parser
