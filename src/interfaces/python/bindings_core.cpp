@@ -18,6 +18,7 @@
 #include "components/command/legacy_command_bridge.h"
 #include "components/physics/dynamics.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
+#include "components/physics/control_surface.h"
 #include "components/physics/forces.h"
 #include "components/physics/instruments.h"
 #include "components/physics/performance.h"
@@ -124,6 +125,12 @@ struct FlightDynamicsDebugView {
     double mil_thrust_n = 0.0;
     double ab_thrust_n = 0.0;
     double fuel_leak_rate_kg_s = 0.0;
+    double elevator_cmd = 0.0;
+    double aileron_cmd = 0.0;
+    double rudder_cmd = 0.0;
+    double elevator_deflection = 0.0;
+    double aileron_deflection = 0.0;
+    double rudder_deflection = 0.0;
 };
 
 void bind_simulation_kernel_maintained_surface(nb::class_<SimulationKernel> &kernel);
@@ -513,7 +520,13 @@ void bind_core(nb::module_ &m) {
         .def_ro("current_thrust_n", &FlightDynamicsDebugView::current_thrust_n)
         .def_ro("mil_thrust_n", &FlightDynamicsDebugView::mil_thrust_n)
         .def_ro("ab_thrust_n", &FlightDynamicsDebugView::ab_thrust_n)
-        .def_ro("fuel_leak_rate_kg_s", &FlightDynamicsDebugView::fuel_leak_rate_kg_s);
+        .def_ro("fuel_leak_rate_kg_s", &FlightDynamicsDebugView::fuel_leak_rate_kg_s)
+        .def_ro("elevator_cmd", &FlightDynamicsDebugView::elevator_cmd)
+        .def_ro("aileron_cmd", &FlightDynamicsDebugView::aileron_cmd)
+        .def_ro("rudder_cmd", &FlightDynamicsDebugView::rudder_cmd)
+        .def_ro("elevator_deflection", &FlightDynamicsDebugView::elevator_deflection)
+        .def_ro("aileron_deflection", &FlightDynamicsDebugView::aileron_deflection)
+        .def_ro("rudder_deflection", &FlightDynamicsDebugView::rudder_deflection);
 
     nb::class_<AgentObservation>(m, "AgentObservation")
         .def_ro("sim_time", &AgentObservation::sim_time)
@@ -896,6 +909,14 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 if (const Mass *mass = e.get<Mass>()) {
                     out.fuel_leak_rate_kg_s = mass->fuel_leak_rate_kg_s;
                 }
+                if (const ControlSurfaceState *surf = e.get<ControlSurfaceState>()) {
+                    out.elevator_cmd = surf->elevator_cmd;
+                    out.aileron_cmd = surf->aileron_cmd;
+                    out.rudder_cmd = surf->rudder_cmd;
+                    out.elevator_deflection = surf->elevator_pos;
+                    out.aileron_deflection = surf->aileron_pos;
+                    out.rudder_deflection = surf->rudder_pos;
+                }
                 return out;
             },
             "Get flight-dynamics debug state (AoA-rate, stall, propulsion spool)",
@@ -1132,6 +1153,13 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["proximity_min_local_forward_m"] = missile->proximity_min_local_forward_m;
                 out["proximity_min_local_right_m"] = missile->proximity_min_local_right_m;
                 out["proximity_min_local_up_m"] = missile->proximity_min_local_up_m;
+                out["proximity_last_sample_time_s"] = missile->proximity_last_sample_time_s;
+                out["proximity_last_missile_x_m"] = missile->proximity_last_missile_x_m;
+                out["proximity_last_missile_y_m"] = missile->proximity_last_missile_y_m;
+                out["proximity_last_missile_z_m"] = missile->proximity_last_missile_z_m;
+                out["proximity_last_target_x_m"] = missile->proximity_last_target_x_m;
+                out["proximity_last_target_y_m"] = missile->proximity_last_target_y_m;
+                out["proximity_last_target_z_m"] = missile->proximity_last_target_z_m;
                 out["proximity_engaged"] = missile->proximity_engaged;
                 out["fuze_delay_armed"] = missile->fuze_delay_armed;
                 out["fuze_nearest_approach_time_s"] = missile->fuze_nearest_approach_time_s;

@@ -44,6 +44,7 @@
 #include "systems/domains/naval/naval_mission_weapon_release_system.h"
 #include "systems/domains/naval/naval_logistics_system.h"
 #include "systems/domains/air/aero_state_system.h"
+#include "systems/domains/air/actuator_system.h"
 #include "systems/domains/air/aerodynamics_system.h"
 #include "systems/domains/air/control_system.h"
 #include "systems/physics/force_clear_system.h"
@@ -114,6 +115,7 @@ void SimulationKernel::register_components_and_systems() {
     ecs.component<ForceAccumulator>();
     ecs.component<AeroState>();
     ecs.component<ControlLawState>();
+    ecs.component<ControlSurfaceState>();
     ecs.component<Inertia>();
     ecs.component<AngularVelocity>();
     ecs.component<GroundState>();
@@ -192,7 +194,9 @@ void SimulationKernel::register_components_and_systems() {
     flight_dynamics::register_propulsion_system(
         ecs); // Phase 3.3: Propulsion runtime state (throttle/spool/thrust/fuel basis)
     register_force_system(ecs);        // Phase 3.4: Forces (gravity + propulsion thrust projection)
-    register_aerodynamics_system(ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques)
+    flight_dynamics::register_actuator_system(
+        ecs); // Phase 3.45: Actuators (control-surface commands -> lagged deflections)
+    register_aerodynamics_system(ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques + control-surface moments)
     register_ground_contact_system(
         ecs, environment_model_.get()); // Phase 3.6: Ground contact/friction/pitch damping
     register_rotational_integration_system(

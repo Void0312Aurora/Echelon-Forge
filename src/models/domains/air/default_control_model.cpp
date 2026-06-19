@@ -6,6 +6,9 @@
 #include "components/command/mission_command.h"
 #include "components/command/pilot_action.h"
 #include "components/physics/control_law.h"
+#include "components/physics/control_surface.h"
+#include "components/physics/instruments.h"
+#include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/physics/dynamics.h"
 #include "components/physics/forces.h"
 #include "components/systems/logistics.h"
@@ -263,11 +266,6 @@ class DefaultControlModel : public IControlModel {
             const double stick_yaw_f = std::clamp(ctl.stick_yaw_filt, -1.0, 1.0);
 
             const bool on_ground = ground ? ground->on_ground : false;
-            const double q_bar = std::max(0.0, aero->dynamic_pressure);
-            // Limit effective dynamic pressure for control authority scheduling at high speed.
-            // Prevents unrealistically stiff controls and training instabilities.
-            const double q_bar_eff = std::min(q_bar, 9000.0);
-
             // Ground directional-control protection:
             // At high speed on the runway, full-scale rudder pedal input should not directly map
             // to max yaw commands (prevents runway departure from a single saturated action).
@@ -306,20 +304,89 @@ class DefaultControlModel : public IControlModel {
             double q_cmd = stick_pitch_f * kQMaxRadS;
             double r_cmd = stick_yaw_cmd * kRMaxRadS;
 
-            // F-16-style directional stability augmentation:
-            // - damp sideslip (beta)
-            // - damp yaw rate
-            // This uses only physical state and prevents RL or scripted policies from turning
-            // rudder exploration into an unrecoverable dutch-roll / slip oscillation.
+            // Pitch-axis g-command outer loop (F-16-style normal-acceleration
+            // command). With the physical-surface path a neutral stick that only
+            // damps pitch rate cannot sustain level flight: a statically stable
+            // airframe trims toward zero AoA, sinks, and diverges. Instead, map
+            // stick to a commanded normal load factor (center = 1 g) and close
+            // the loop on the measured Nz (InstrumentState.g_load_normal, a
+            // sensor-like signal from the previous frame) to synthesize the
+            // pitch-rate command. The inner rate loop and every envelope
+            // protection below are unchanged. Airborne and FBW-on only; on the
+            // ground or with FBW off we keep the direct rate command so takeoff
+            // rotation and the RL "off" mode behave exactly as before.
+            const AeroTuning *pitch_tuning_attached = entity.get<AeroTuning>();
+            const AeroTuning &pitch_tuning =
+                (pitch_tuning_attached && pitch_tuning_attached->enabled)
+                    ? *pitch_tuning_attached
+                    : flight_dynamics::default_aero_tuning();
+            if (pitch_tuning.fbw_g_command_enabled && !on_ground && !fbw_off_for_rl) {
+                const double g_neutral = pitch_tuning.fbw_g_command_neutral;
+                double g_cmd = g_neutral;
+                if (stick_pitch_f >= 0.0) {
+                    g_cmd = g_neutral +
+                            stick_pitch_f * (pitch_tuning.fbw_g_command_max - g_neutral);
+                } else {
+                    g_cmd = g_neutral +
+                            (-stick_pitch_f) * (pitch_tuning.fbw_g_command_min - g_neutral);
+                }
+                double measured_nz = g_neutral;
+                if (const InstrumentState *inst = entity.get<InstrumentState>()) {
+                    measured_nz = inst->g_load_normal;
+                }
+                if (!std::isfinite(measured_nz)) {
+                    measured_nz = g_neutral;
+                }
+                q_cmd = pitch_tuning.fbw_pitch_rate_per_g_err * (g_cmd - measured_nz);
+                q_cmd = std::clamp(q_cmd, -kQMaxRadS, kQMaxRadS);
+                ctl.dbg_g_cmd = g_cmd;
+                ctl.dbg_measured_nz = measured_nz;
+                ctl.dbg_q_cmd = q_cmd;
+                ctl.dbg_g_branch_active = 1.0;
+            } else {
+                ctl.dbg_g_branch_active = 0.0;
+            }
+
+            // F-16-style directional stability augmentation with turn coordination:
+            // - feed-forward the body yaw rate required for a coordinated turn at the
+            //   current bank angle, r_turn = (g/V) * sin(phi) * cos(theta);
+            // - damp sideslip (beta) back toward zero;
+            // - damp yaw-rate ERROR relative to the coordinated rate, not the absolute
+            //   rate, so the damper no longer fights the natural turn yaw rate (which
+            //   was the source of the roll-induced sideslip).
+            // This uses only physical state (bank, pitch, speed, beta, yaw rate) and
+            // prevents RL or scripted policies from turning rudder exploration into an
+            // unrecoverable dutch-roll / slip oscillation, while keeping pure-stick
+            // banked turns coordinated (beta ~ 0).
             if (!on_ground && !fbw_off_for_rl) {
                 const double beta_rad = to_radians(aero->sideslip_angle);
-                double beta_gain = 1.10;
+                const double phi_rad = to_radians(transform.roll);
+                const double theta_rad = to_radians(transform.pitch);
+                const double speed = std::sqrt(velocity.vx * velocity.vx +
+                                               velocity.vy * velocity.vy +
+                                               velocity.vz * velocity.vz);
+                const double v_eff = std::max(50.0, speed);
+                // Manual/RL stick inputs expose the physical control-surface
+                // sign directly: a positive internal rudder command drives beta
+                // negative, so negative beta needs a negative rudder correction
+                // instead of the pre-refactor direct-torque sign. The mission
+                // autopilot path keeps the coordinated-turn feed-forward used by
+                // the existing cruise/heading guards; those commands are already
+                // generated as bank-to-heading guidance rather than raw roll
+                // exploration.
+                const double r_turn = (9.80665 / v_eff) * std::sin(phi_rad) * std::cos(theta_rad);
+                double beta_gain = 2.0;
                 double yaw_rate_gain = 0.55;
                 if (fbw_relaxed_for_rl) {
                     beta_gain *= 0.7;
                     yaw_rate_gain *= 0.7;
                 }
-                r_cmd += (-beta_gain * beta_rad) + (-yaw_rate_gain * ang_vel->r);
+                if (rl_mode) {
+                    r_cmd += (beta_gain * beta_rad) - (yaw_rate_gain * ang_vel->r);
+                } else {
+                    r_cmd += r_turn + (-beta_gain * beta_rad) +
+                             (-yaw_rate_gain * (ang_vel->r - r_turn));
+                }
                 r_cmd = std::clamp(r_cmd, -kRMaxRadS, kRMaxRadS);
             }
 
@@ -351,8 +418,18 @@ class DefaultControlModel : public IControlModel {
                     double scale = 1.0 - protect_gain * std::clamp(t, 0.0, 1.0);
                     q_cmd *= scale;
                 }
+                constexpr double kPitchRecoverySoftDeg = 35.0;
+                if (transform.pitch > kPitchRecoverySoftDeg && stick_pitch_f < -0.05) {
+                    const double t =
+                        std::clamp((transform.pitch - kPitchRecoverySoftDeg) /
+                                       (kPitchHardDeg - kPitchRecoverySoftDeg),
+                                   0.0, 1.0);
+                    const double base_recovery_q = fbw_relaxed_for_rl ? -0.14 : -0.22;
+                    const double extra_recovery_q = fbw_relaxed_for_rl ? -0.08 : -0.18;
+                    q_cmd = std::min(q_cmd, base_recovery_q + extra_recovery_q * t);
+                }
                 if (transform.pitch > kPitchHardDeg) {
-                    const double q_hard = fbw_relaxed_for_rl ? -0.10 : -0.2;
+                    const double q_hard = fbw_relaxed_for_rl ? -0.16 : -0.35;
                     q_cmd = std::min(q_cmd, q_hard);
                 }
             }
@@ -375,17 +452,68 @@ class DefaultControlModel : public IControlModel {
                 q_cmd = std::min(q_cmd, q_hard);
             }
 
-            // Rate-command control moments: M = q_bar * K * (rate_cmd - rate)
-            // Gains are tuned so that at takeoff q_bar (~3000 Pa) we can rotate a ~15t aircraft.
-            constexpr double kRollGain = 40.0;
-            constexpr double kPitchGain = 60.0;
-            constexpr double kYawGain = 20.0;
+            // Rate-command fly-by-wire, realized through physical control surfaces.
+            // The law converts each axis rate error into a normalized surface
+            // command; the actuator system lags it into an actual deflection, and
+            // the aerodynamics system turns deflection into a moment scaled by
+            // dynamic pressure and Mach. This replaces the previous direct
+            // q_bar*gain torque synthesis so control authority emerges from the
+            // same aero path as the rest of the moments (and so battle damage can
+            // act on surface effectiveness rather than on a synthetic torque).
+            //
+            // Gains are chosen so a moderate rate error saturates the surface,
+            // giving a crisp rate-command response. Authority at takeoff q_bar is
+            // preserved by the elevator effectiveness derivative (see AeroTuning),
+            // not by these gains.
+            // Inner-loop rate-command gains (rate error [rad/s] -> normalized
+            // surface command). These must stay low enough that normal maneuver
+            // rate errors keep the surface in its LINEAR range. With the physical
+            // actuator lag (per-frame step dt/(tau+dt) ~= 0.33) a hot proportional
+            // gain turns the surface into a bang-bang relay and the lagged loop
+            // limit-cycles (pitch PIO that couples into roll and departs). Tuned
+            // so a full-scale rate error gives roughly full deflection, leaving
+            // partial deflection for the typical sub-scale errors, so the body's
+            // natural Cm_q / Cl_p / Cn_r damping closes a well-damped loop.
+            constexpr double kRollCmdGain = 1.2;
+            constexpr double kPitchCmdGain = 0.9;
+            constexpr double kYawCmdGain = 1.2;
 
-            const double tau_roll = (p_cmd - ang_vel->p) * (kRollGain * q_bar_eff);
-            const double tau_pitch = (q_cmd - ang_vel->q) * (kPitchGain * q_bar_eff);
-            const double tau_yaw = (r_cmd - ang_vel->r) * (kYawGain * q_bar_eff);
+            auto &surfaces = entity.ensure<ControlSurfaceState>();
+            const double aileron_cmd =
+                std::clamp(kRollCmdGain * (p_cmd - ang_vel->p), -1.0, 1.0);
+            surfaces.aileron_cmd = aileron_cmd;
+            surfaces.elevator_cmd = std::clamp(kPitchCmdGain * (q_cmd - ang_vel->q), -1.0, 1.0);
+            ctl.dbg_q_cmd_final = q_cmd;
+            ctl.dbg_elevator_cmd = surfaces.elevator_cmd;
 
-            forces->add_torque(tau_roll, tau_pitch, tau_yaw);
+            // Aileron-rudder interconnect (ARI): feed the aileron command forward
+            // into the rudder to cancel adverse yaw at its source, the way a real
+            // FBW system does. The reactive beta/yaw-rate damper above only
+            // corrects sideslip after it appears, and with the physical actuator
+            // lag on the rudder that reactive-only loop leaves a real, smoothly
+            // growing sideslip during sustained rolling. The interconnect is a
+            // pure feed-forward from a physical command (no god state). Manual/RL
+            // roll commands use the beta-correcting physical-surface sign above;
+            // mission/autopilot bank commands keep the existing coordinated-turn
+            // sign convention for cruise stability.
+            double rudder_cmd = kYawCmdGain * (r_cmd - ang_vel->r);
+            if (!on_ground && !fbw_off_for_rl) {
+                const AeroTuning *attached_tuning = entity.get<AeroTuning>();
+                const AeroTuning &ari_tuning =
+                    (attached_tuning && attached_tuning->enabled)
+                        ? *attached_tuning
+                        : flight_dynamics::default_aero_tuning();
+                double ari_gain = ari_tuning.ari_rudder_cmd_per_aileron_cmd;
+                if (fbw_relaxed_for_rl) {
+                    ari_gain *= 0.7;
+                }
+                if (rl_mode) {
+                    rudder_cmd -= ari_gain * aileron_cmd;
+                } else {
+                    rudder_cmd += ari_gain * aileron_cmd;
+                }
+            }
+            surfaces.rudder_cmd = std::clamp(rudder_cmd, -1.0, 1.0);
         }
 
         // --- 4. Secondary Systems (Gear) ---
