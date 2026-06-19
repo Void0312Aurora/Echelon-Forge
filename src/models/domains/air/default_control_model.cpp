@@ -476,14 +476,19 @@ class DefaultControlModel : public IControlModel {
             // so a full-scale rate error gives roughly full deflection, leaving
             // partial deflection for the typical sub-scale errors, so the body's
             // natural Cm_q / Cl_p / Cn_r damping closes a well-damped loop.
-            constexpr double kRollCmdGain = 1.2;
-            constexpr double kPitchCmdGain = 0.9;
-            constexpr double kYawCmdGain = 1.2;
+            const AeroTuning *attached_control_tuning = entity.get<AeroTuning>();
+            const AeroTuning &control_tuning =
+                (attached_control_tuning && attached_control_tuning->enabled)
+                    ? *attached_control_tuning
+                    : flight_dynamics::default_aero_tuning();
+            const double roll_cmd_gain = control_tuning.fbw_aileron_cmd_per_rate_err;
+            const double pitch_cmd_gain = control_tuning.fbw_elevator_cmd_per_rate_err;
+            const double yaw_cmd_gain = control_tuning.fbw_rudder_cmd_per_rate_err;
 
             auto &surfaces = entity.ensure<ControlSurfaceState>();
-            const double aileron_cmd = std::clamp(kRollCmdGain * (p_cmd - ang_vel->p), -1.0, 1.0);
+            const double aileron_cmd = std::clamp(roll_cmd_gain * (p_cmd - ang_vel->p), -1.0, 1.0);
             surfaces.aileron_cmd = aileron_cmd;
-            surfaces.elevator_cmd = std::clamp(kPitchCmdGain * (q_cmd - ang_vel->q), -1.0, 1.0);
+            surfaces.elevator_cmd = std::clamp(pitch_cmd_gain * (q_cmd - ang_vel->q), -1.0, 1.0);
             ctl.dbg_q_cmd_final = q_cmd;
             ctl.dbg_elevator_cmd = surfaces.elevator_cmd;
 
@@ -497,13 +502,9 @@ class DefaultControlModel : public IControlModel {
             // roll commands use the beta-correcting physical-surface sign above;
             // mission/autopilot bank commands keep the existing coordinated-turn
             // sign convention for cruise stability.
-            double rudder_cmd = kYawCmdGain * (r_cmd - ang_vel->r);
+            double rudder_cmd = yaw_cmd_gain * (r_cmd - ang_vel->r);
             if (!on_ground && !fbw_off_for_rl) {
-                const AeroTuning *attached_tuning = entity.get<AeroTuning>();
-                const AeroTuning &ari_tuning = (attached_tuning && attached_tuning->enabled)
-                                                   ? *attached_tuning
-                                                   : flight_dynamics::default_aero_tuning();
-                double ari_gain = ari_tuning.ari_rudder_cmd_per_aileron_cmd;
+                double ari_gain = control_tuning.ari_rudder_cmd_per_aileron_cmd;
                 if (fbw_relaxed_for_rl) {
                     ari_gain *= 0.7;
                 }

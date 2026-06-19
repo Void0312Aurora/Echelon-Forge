@@ -115,8 +115,7 @@ TEST_SUITE("components_basic") {
 
     TEST_CASE("unit_definition_loader_parses_tg_p7_split_receiver_geometry") {
         const std::filesystem::path path =
-            std::filesystem::temp_directory_path() /
-            "ef_tg_p7_split_receiver_geometry_test.json";
+            std::filesystem::temp_directory_path() / "ef_tg_p7_split_receiver_geometry_test.json";
         {
             std::ofstream file(path);
             file << R"json({
@@ -157,19 +156,81 @@ TEST_SUITE("components_basic") {
         REQUIRE(definitions[0].damage_model.hitboxes.size() == 1);
         REQUIRE(definitions[0].damage_model.hitboxes[0].components.size() == 1);
 
-        const DamageComponent& component =
-            definitions[0].damage_model.hitboxes[0].components[0];
+        const DamageComponent &component = definitions[0].damage_model.hitboxes[0].components[0];
         CHECK(component.name == "engine_core_afterburner_segment");
         CHECK(component.system == "propulsion");
         CHECK(component.critical);
         CHECK(component.offset_x == doctest::Approx(-5.2));
         CHECK(component.dim_l == doctest::Approx(1.2));
         CHECK(component.geometry_primitive == "aabb");
-        CHECK(component.geometry_source_ref ==
-              "a2_cross_region_ownership_split_candidate");
+        CHECK(component.geometry_source_ref == "a2_cross_region_ownership_split_candidate");
         CHECK(component.geometry_half_extents_m[0] == doctest::Approx(0.6));
         CHECK(component.geometry_half_extents_m[1] == doctest::Approx(0.25));
         CHECK(component.geometry_half_extents_m[2] == doctest::Approx(0.2));
+
+        std::filesystem::remove(path);
+    }
+
+    TEST_CASE("unit_definition_loader_parses_control_surface_aero_tuning_fields") {
+        const std::filesystem::path path =
+            std::filesystem::temp_directory_path() / "ef_control_surface_aero_tuning_test.json";
+        {
+            std::ofstream file(path);
+            file << R"json({
+  "name": "Control_Surface_Aero_Tuning_Parse_Test",
+  "type": "Aircraft",
+  "aero_tuning": {
+    "enabled": true,
+    "elevator_max_deflection_deg": 24.0,
+    "aileron_max_deflection_deg": 18.0,
+    "rudder_max_deflection_deg": 27.0,
+    "cm_delta_e_per_rad": 1.1,
+    "cl_delta_a_per_rad": 0.08,
+    "cn_delta_r_per_rad": 0.12,
+    "fbw_elevator_cmd_per_rate_err": 0.7,
+    "fbw_aileron_cmd_per_rate_err": 1.1,
+    "fbw_rudder_cmd_per_rate_err": 1.3,
+    "ari_rudder_cmd_per_aileron_cmd": 0.2,
+    "fbw_g_command_enabled": false,
+    "fbw_g_command_neutral": 1.05,
+    "fbw_g_command_max": 7.5,
+    "fbw_g_command_min": -1.5,
+    "fbw_pitch_rate_per_g_err": 0.25,
+    "control_effectiveness_scale_vs_mach": [1.0, 0.85, 0.6],
+    "actuator_tau_elevator_s": 0.11,
+    "actuator_tau_aileron_s": 0.09,
+    "actuator_tau_rudder_s": 0.13
+  }
+})json";
+        }
+
+        std::vector<UnitDefinition> definitions;
+        std::string error;
+        REQUIRE(load_unit_definitions_json(path.string(), definitions, &error));
+        REQUIRE(definitions.size() == 1);
+        REQUIRE(definitions[0].airframe.has_tuning);
+
+        const AeroTuning &tuning = definitions[0].airframe.tuning;
+        CHECK(tuning.elevator_max_deflection_deg == doctest::Approx(24.0));
+        CHECK(tuning.aileron_max_deflection_deg == doctest::Approx(18.0));
+        CHECK(tuning.rudder_max_deflection_deg == doctest::Approx(27.0));
+        CHECK(tuning.cm_delta_e_per_rad == doctest::Approx(1.1));
+        CHECK(tuning.cl_delta_a_per_rad == doctest::Approx(0.08));
+        CHECK(tuning.cn_delta_r_per_rad == doctest::Approx(0.12));
+        CHECK(tuning.fbw_elevator_cmd_per_rate_err == doctest::Approx(0.7));
+        CHECK(tuning.fbw_aileron_cmd_per_rate_err == doctest::Approx(1.1));
+        CHECK(tuning.fbw_rudder_cmd_per_rate_err == doctest::Approx(1.3));
+        CHECK(tuning.ari_rudder_cmd_per_aileron_cmd == doctest::Approx(0.2));
+        CHECK_FALSE(tuning.fbw_g_command_enabled);
+        CHECK(tuning.fbw_g_command_neutral == doctest::Approx(1.05));
+        CHECK(tuning.fbw_g_command_max == doctest::Approx(7.5));
+        CHECK(tuning.fbw_g_command_min == doctest::Approx(-1.5));
+        CHECK(tuning.fbw_pitch_rate_per_g_err == doctest::Approx(0.25));
+        REQUIRE(tuning.control_effectiveness_scale_vs_mach.size() == 3);
+        CHECK(tuning.control_effectiveness_scale_vs_mach[1] == doctest::Approx(0.85));
+        CHECK(tuning.actuator_tau_elevator_s == doctest::Approx(0.11));
+        CHECK(tuning.actuator_tau_aileron_s == doctest::Approx(0.09));
+        CHECK(tuning.actuator_tau_rudder_s == doctest::Approx(0.13));
 
         std::filesystem::remove(path);
     }

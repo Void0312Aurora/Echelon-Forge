@@ -36,10 +36,9 @@
 
 namespace {
 
-// Build a world with the aerodynamics system registered, spawn one aircraft at a
-// fixed flight state with a fixed elevator deflection, step once, and return the
-// pitch torque produced. `pitch_integrity` controls the pitch-axis control
-// damage (1.0 = intact).
+// Use SimulationKernel's registered world to avoid Flecs component symbol
+// collisions, but run only the Aerodynamics stage so AeroState and
+// ControlSurfaceState remain the fixed probe inputs.
 struct TorqueProbe {
     double pitch_torque = 0.0;
     double roll_torque = 0.0;
@@ -65,8 +64,11 @@ TorqueProbe run_surface_torque_probe(double elevator_pos, double aileron_pos, do
     props.chord_m = 3.45;
 
     Velocity vel{};
-    vel.vx = 200.0;
-    vel.vy = 0.0;
+    // Heading 0 is north (+Y). Keep velocity aligned with heading so
+    // ComputeAeroState preserves beta=0 instead of generating sideslip moments
+    // that could masquerade as roll/yaw surface effects.
+    vel.vx = 0.0;
+    vel.vy = 200.0;
     vel.vz = 0.0;
 
     Transform tf{};
@@ -80,6 +82,9 @@ TorqueProbe run_surface_torque_probe(double elevator_pos, double aileron_pos, do
     AngularVelocity ang{}; // zero rates: no Cm_q / Cl_p / Cn_r damping terms
 
     ControlSurfaceState surfaces{};
+    surfaces.elevator_cmd = elevator_pos;
+    surfaces.aileron_cmd = aileron_pos;
+    surfaces.rudder_cmd = rudder_pos;
     surfaces.elevator_pos = elevator_pos;
     surfaces.aileron_pos = aileron_pos;
     surfaces.rudder_pos = rudder_pos;
@@ -101,7 +106,7 @@ TorqueProbe run_surface_torque_probe(double elevator_pos, double aileron_pos, do
                  .set<ControlSurfaceState>(surfaces)
                  .set<AircraftDamageState>(damage);
 
-    world.progress(1.0 / 60.0);
+    REQUIRE(kernel.run_exact_stage_direct("ComputeAerodynamics"));
 
     TorqueProbe out;
     if (const ForceAccumulator *f = e.get<ForceAccumulator>()) {
@@ -138,15 +143,19 @@ TEST_CASE("M5: degraded pitch control integrity reduces elevator pitch moment") 
 TEST_CASE("M5: degraded roll control integrity reduces aileron roll moment") {
     const TorqueProbe intact = run_surface_torque_probe(0.0, 0.5, 0.0, 1.0, 1.0, 1.0);
     const TorqueProbe damaged = run_surface_torque_probe(0.0, 0.5, 0.0, 1.0, 0.25, 1.0);
+    const TorqueProbe no_surface = run_surface_torque_probe(0.0, 0.0, 0.0, 1.0, 0.25, 1.0);
 
     CHECK(std::abs(damaged.roll_torque) < std::abs(intact.roll_torque));
     CHECK(std::abs(damaged.roll_torque) > 0.0);
+    CHECK(std::abs(no_surface.roll_torque) < 1.0e-6);
 }
 
 TEST_CASE("M5: degraded yaw control integrity reduces rudder yaw moment") {
     const TorqueProbe intact = run_surface_torque_probe(0.0, 0.0, 0.5, 1.0, 1.0, 1.0);
     const TorqueProbe damaged = run_surface_torque_probe(0.0, 0.0, 0.5, 1.0, 1.0, 0.25);
+    const TorqueProbe no_surface = run_surface_torque_probe(0.0, 0.0, 0.0, 1.0, 1.0, 0.25);
 
     CHECK(std::abs(damaged.yaw_torque) < std::abs(intact.yaw_torque));
     CHECK(std::abs(damaged.yaw_torque) > 0.0);
+    CHECK(std::abs(no_surface.yaw_torque) < 1.0e-6);
 }

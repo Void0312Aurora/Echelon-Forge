@@ -216,6 +216,34 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     tuning.post_stall_damp_floor = src.value("post_stall_damp_floor", tuning.post_stall_damp_floor);
     tuning.aoa_rate_pitch_break_gain =
         src.value("aoa_rate_pitch_break_gain", tuning.aoa_rate_pitch_break_gain);
+    tuning.elevator_max_deflection_deg =
+        src.value("elevator_max_deflection_deg", tuning.elevator_max_deflection_deg);
+    tuning.aileron_max_deflection_deg =
+        src.value("aileron_max_deflection_deg", tuning.aileron_max_deflection_deg);
+    tuning.rudder_max_deflection_deg =
+        src.value("rudder_max_deflection_deg", tuning.rudder_max_deflection_deg);
+    tuning.cm_delta_e_per_rad = src.value("cm_delta_e_per_rad", tuning.cm_delta_e_per_rad);
+    tuning.cl_delta_a_per_rad = src.value("cl_delta_a_per_rad", tuning.cl_delta_a_per_rad);
+    tuning.cn_delta_r_per_rad = src.value("cn_delta_r_per_rad", tuning.cn_delta_r_per_rad);
+    tuning.fbw_elevator_cmd_per_rate_err =
+        src.value("fbw_elevator_cmd_per_rate_err", tuning.fbw_elevator_cmd_per_rate_err);
+    tuning.fbw_aileron_cmd_per_rate_err =
+        src.value("fbw_aileron_cmd_per_rate_err", tuning.fbw_aileron_cmd_per_rate_err);
+    tuning.fbw_rudder_cmd_per_rate_err =
+        src.value("fbw_rudder_cmd_per_rate_err", tuning.fbw_rudder_cmd_per_rate_err);
+    tuning.ari_rudder_cmd_per_aileron_cmd =
+        src.value("ari_rudder_cmd_per_aileron_cmd", tuning.ari_rudder_cmd_per_aileron_cmd);
+    tuning.fbw_g_command_enabled = src.value("fbw_g_command_enabled", tuning.fbw_g_command_enabled);
+    tuning.fbw_g_command_neutral = src.value("fbw_g_command_neutral", tuning.fbw_g_command_neutral);
+    tuning.fbw_g_command_max = src.value("fbw_g_command_max", tuning.fbw_g_command_max);
+    tuning.fbw_g_command_min = src.value("fbw_g_command_min", tuning.fbw_g_command_min);
+    tuning.fbw_pitch_rate_per_g_err =
+        src.value("fbw_pitch_rate_per_g_err", tuning.fbw_pitch_rate_per_g_err);
+    tuning.actuator_tau_elevator_s =
+        src.value("actuator_tau_elevator_s", tuning.actuator_tau_elevator_s);
+    tuning.actuator_tau_aileron_s =
+        src.value("actuator_tau_aileron_s", tuning.actuator_tau_aileron_s);
+    tuning.actuator_tau_rudder_s = src.value("actuator_tau_rudder_s", tuning.actuator_tau_rudder_s);
 
     auto parse_vector = [&](const char *key, std::vector<double> *out_values) {
         if (!out_values || !src.contains(key) || !src[key].is_array()) {
@@ -234,6 +262,8 @@ void parse_aero_tuning_json_fields(const nlohmann::json &src, AeroTuning *out_tu
     parse_vector("induced_drag_scale_vs_mach", &tuning.induced_drag_scale_vs_mach);
     parse_vector("cm_alpha_scale_vs_mach", &tuning.cm_alpha_scale_vs_mach);
     parse_vector("stall_alpha_delta_deg_vs_mach", &tuning.stall_alpha_delta_deg_vs_mach);
+    parse_vector("control_effectiveness_scale_vs_mach",
+                 &tuning.control_effectiveness_scale_vs_mach);
 
     *out_tuning = tuning;
 }

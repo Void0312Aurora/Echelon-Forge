@@ -49,12 +49,12 @@ struct AeroTuning {
     double cn_delta_r_per_rad = 0.13;
 
     // FBW proportional gain mapping a body-rate error (rad/s) onto a normalized
-    // surface command. Sized so that moderate rate errors approach full surface
-    // travel, preserving the rate-command feel of the prior FBW while routing it
-    // through a physical, q-bar/Mach-scaled surface.
-    double fbw_elevator_cmd_per_rate_err = 3.0;
-    double fbw_aileron_cmd_per_rate_err = 2.0;
-    double fbw_rudder_cmd_per_rate_err = 2.5;
+    // surface command. Tuned low enough that normal maneuver errors keep the
+    // physical actuator loop in its linear range instead of becoming a
+    // bang-bang surface relay.
+    double fbw_elevator_cmd_per_rate_err = 0.9;
+    double fbw_aileron_cmd_per_rate_err = 1.2;
+    double fbw_rudder_cmd_per_rate_err = 1.2;
 
     // Aileron-rudder interconnect (ARI). Feeds the aileron command forward into
     // the rudder command to trim out the transient sideslip peak during a roll
