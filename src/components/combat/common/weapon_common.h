@@ -103,6 +103,13 @@ struct Missile {
     double proximity_min_local_forward_m = std::numeric_limits<double>::quiet_NaN();
     double proximity_min_local_right_m = std::numeric_limits<double>::quiet_NaN();
     double proximity_min_local_up_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_sample_time_s = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_missile_x_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_missile_y_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_missile_z_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_target_x_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_target_y_m = std::numeric_limits<double>::quiet_NaN();
+    double proximity_last_target_z_m = std::numeric_limits<double>::quiet_NaN();
     bool proximity_engaged = false;
     bool fuze_delay_armed = false;
     double fuze_nearest_approach_time_s = std::numeric_limits<double>::quiet_NaN();

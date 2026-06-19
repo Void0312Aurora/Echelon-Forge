@@ -29,6 +29,7 @@ from python.mission_obs_taxonomy import mission_observation_has_field
 
 from ._adaptive_kl_support import (
     _A7FirstEventRolloutRow,
+    _TrainEpochStats,
     _air_combat_c2_roe_mode_from_dim,
     _mission_column,
 )
@@ -437,6 +438,38 @@ class _A6FirstEventMixin:
             )
         self._record_a6_first_event_curriculum_seeds(labels, episode_id)
         return labels
+
+
+    def _record_a6_first_event_logs(self, epoch_stats: "_TrainEpochStats") -> None:
+        self.logger.record(
+            "a6/hazard_loss",
+            float(np.mean(epoch_stats.first_event_hazard_losses)) if epoch_stats.first_event_hazard_losses else 0.0,
+        )
+        self.logger.record("a6/hazard_coef", float(self.a6_first_event_hazard_coef))
+        self.logger.record(
+            "a6/curriculum_coef", float(self._current_a6_first_event_curriculum_coef())
+        )
+        self.logger.record("a6/deadline_weight", float(self.a6_first_event_deadline_weight))
+        self.logger.record(
+            "a6/launch_window_enabled", float(self.a6_first_event_launch_window_enabled)
+        )
+        self.logger.record(
+            "a6/launch_window_prewindow_hold_weight",
+            float(self.a6_first_event_launch_window_prewindow_hold_weight),
+        )
+        self.logger.record(
+            "a6/active_count_mean",
+            float(np.mean(epoch_stats.first_event_hazard_active_counts))
+            if epoch_stats.first_event_hazard_active_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a6/target_positive_frac",
+            float(np.mean(epoch_stats.first_event_hazard_positive_fracs))
+            if epoch_stats.first_event_hazard_positive_fracs
+            else 0.0,
+        )
+
 
 
 # Suppress unused-import warnings for symbols re-exported transitively.

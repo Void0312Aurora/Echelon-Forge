@@ -8,6 +8,7 @@
 #include "components/physics/forces.h"
 #include "components/physics/dynamics.h" // For MassProperties (RefArea)
 #include "components/physics/aero_tables.h"
+#include "components/physics/control_surface.h"
 #include "components/domains/air/platform/flight_dynamics_tuning.h"
 #include "components/physics/performance.h"  // For LandingGear
 #include "components/command/pilot_action.h" // For PilotAction (flaps/speedbrake)
@@ -394,6 +395,31 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                             std::clamp(1.0 - 0.5 * effective_stall_progress, 0.35, 1.0);
                         Cl_mom += 0.035 * control_asymmetry * asymmetry_gate;
                         Cn_mom += 0.014 * control_asymmetry * asymmetry_gate;
+                    }
+
+                    // --- 4. Control-Surface Moments ---
+                    // Physical control path: actual surface deflection (advanced by the actuator
+                    // system) produces control moments through effectiveness derivatives. Authority
+                    // scales naturally with dynamic pressure (q*S*...) and fades at high Mach.
+                    // Damage acts on surface effectiveness here (not as a downstream torque scale),
+                    // so a degraded surface physically produces less moment.
+                    if (const ControlSurfaceState *surf = it.entity(i).get<ControlSurfaceState>()) {
+                        const double ctrl_eff_scale = aero_physics::lookup_1d_or(
+                            tuning.mach_breakpoints, tuning.control_effectiveness_scale_vs_mach,
+                            mach, 1.0);
+                        const double elev_rad = Math::to_radians(
+                            surf->elevator_pos * tuning.elevator_max_deflection_deg);
+                        const double ail_rad =
+                            Math::to_radians(surf->aileron_pos * tuning.aileron_max_deflection_deg);
+                        const double rud_rad =
+                            Math::to_radians(surf->rudder_pos * tuning.rudder_max_deflection_deg);
+
+                        Cm +=
+                            pitch_authority * ctrl_eff_scale * tuning.cm_delta_e_per_rad * elev_rad;
+                        Cl_mom +=
+                            roll_authority * ctrl_eff_scale * tuning.cl_delta_a_per_rad * ail_rad;
+                        Cn_mom +=
+                            yaw_authority * ctrl_eff_scale * tuning.cn_delta_r_per_rad * rud_rad;
                     }
 
                     // Convert Coefficients to Torque

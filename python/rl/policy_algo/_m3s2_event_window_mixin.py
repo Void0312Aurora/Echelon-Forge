@@ -983,4 +983,648 @@ class _M3S2EventWindowMixin:
         return last_loss
 
 
+    def _record_m3s2_window_classifier_logs(self, m3s2_window_classifier_loss) -> None:
+        classifier_loss = m3s2_window_classifier_loss or self._m3s2_last_window_classifier_loss
+        self.logger.record(
+            "m3s2/window_classifier_coef", float(self.m3s2_window_classifier_coef)
+        )
+        self.logger.record(
+            "m3s2/window_classifier_loss",
+            float(classifier_loss.loss.detach().cpu().item())
+            if classifier_loss is not None
+            else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_unscaled_loss",
+            float(classifier_loss.unscaled_loss.detach().cpu().item())
+            if classifier_loss is not None
+            else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_balanced_bce_loss",
+            float(classifier_loss.balanced_bce_loss.detach().cpu().item())
+            if classifier_loss is not None
+            else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_prewindow_logit_ceiling_loss",
+            (
+                float(classifier_loss.prewindow_logit_ceiling_loss.detach().cpu().item())
+                if classifier_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_quality_logit_floor_loss",
+            (
+                float(classifier_loss.quality_logit_floor_loss.detach().cpu().item())
+                if classifier_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_grad_norm",
+            float(self._m3s2_last_window_classifier_grad_norm),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_group_count",
+            float(classifier_loss.group_count) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_active_count",
+            float(classifier_loss.active_count) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_positive_count",
+            float(classifier_loss.positive_count) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_negative_count",
+            float(classifier_loss.negative_count) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_positive_logit_mean",
+            float(classifier_loss.positive_logit_mean) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_negative_logit_mean",
+            float(classifier_loss.negative_logit_mean) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_positive_prob_mean",
+            float(classifier_loss.positive_prob_mean) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_negative_prob_mean",
+            float(classifier_loss.negative_prob_mean) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_accuracy",
+            float(classifier_loss.accuracy) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_prewindow_logit_ceiling_coef",
+            float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_prewindow_logit_ceiling",
+            float(self.m3s2_window_classifier_prewindow_logit_ceiling),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_quality_logit_floor_coef",
+            float(self.m3s2_window_classifier_quality_logit_floor_coef),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_quality_logit_floor",
+            float(self.m3s2_window_classifier_quality_logit_floor),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_detach_latent",
+            float(self.m3s2_window_classifier_detach_latent),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_input_standardization_enabled",
+            float(
+                getattr(
+                    self.policy, "_m3_window_classifier_input_standardization_enabled", False
+                )
+            ),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_input_standardization_momentum",
+            float(
+                getattr(
+                    self.policy, "_m3_window_classifier_input_standardization_momentum", 0.0
+                )
+            ),
+        )
+        initialized = getattr(
+            self.policy,
+            "m3_window_classifier_input_standardization_initialized",
+            None,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_input_standardization_initialized",
+            (float(initialized.detach().cpu().item()) if initialized is not None else 0.0),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_separate_update_enabled",
+            float(self.m3s2_window_classifier_separate_update_enabled),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_dedicated_optimizer_enabled",
+            float(self.m3s2_window_classifier_dedicated_optimizer_enabled),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_separate_update_steps",
+            int(self.m3s2_window_classifier_separate_update_steps),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_enabled",
+            float(self.m3s2_window_classifier_replay_enabled),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_storage_observation",
+            float(self.m3s2_window_classifier_replay_storage == "observation"),
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_used",
+            float(classifier_loss.replay_used) if classifier_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_positive_count",
+            float(classifier_loss.replay_positive_count)
+            if classifier_loss is not None
+            else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_negative_count",
+            float(classifier_loss.replay_negative_count)
+            if classifier_loss is not None
+            else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_classifier_replay_batch_size",
+            int(self.m3s2_window_classifier_replay_batch_size),
+        )
+
+    def _record_m3s2_fire_boundary_logs(self, m3s2_fire_boundary_loss) -> None:
+        fire_boundary_loss = m3s2_fire_boundary_loss or self._m3s2_last_fire_boundary_loss
+        active_count = (
+            float(fire_boundary_loss.active_count) if fire_boundary_loss is not None else 0.0
+        )
+        boundary_cross_count = (
+            float(fire_boundary_loss.boundary_cross_count)
+            if fire_boundary_loss is not None
+            else 0.0
+        )
+        boundary_cross_in_window_count = (
+            float(fire_boundary_loss.boundary_cross_in_window_count)
+            if fire_boundary_loss is not None
+            else 0.0
+        )
+        self.logger.record("m3s2/fb_coef", float(self.m3s2_fire_boundary_coef))
+        self.logger.record(
+            "m3s2/fb_loss",
+            (
+                float(fire_boundary_loss.loss.detach().cpu().item())
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_unscaled_loss",
+            (
+                float(fire_boundary_loss.unscaled_loss.detach().cpu().item())
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_bce_loss",
+            (
+                float(fire_boundary_loss.balanced_bce_loss.detach().cpu().item())
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_neg_ceiling_loss",
+            (
+                float(fire_boundary_loss.negative_logit_ceiling_loss.detach().cpu().item())
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_pos_floor_loss",
+            (
+                float(fire_boundary_loss.positive_logit_floor_loss.detach().cpu().item())
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record("m3s2/fb_grad_norm", float(self._m3s2_last_fire_boundary_grad_norm))
+        self.logger.record(
+            "m3s2/fb_group_count",
+            float(fire_boundary_loss.group_count) if fire_boundary_loss is not None else 0.0,
+        )
+        self.logger.record("m3s2/fb_active_count", active_count)
+        self.logger.record(
+            "m3s2/fb_positive_count",
+            float(fire_boundary_loss.positive_count) if fire_boundary_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/fb_negative_count",
+            float(fire_boundary_loss.negative_count) if fire_boundary_loss is not None else 0.0,
+        )
+        self.logger.record(
+            "m3s2/fb_pos_logit_mean",
+            (
+                float(fire_boundary_loss.executable_positive_logit_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_neg_logit_mean",
+            (
+                float(fire_boundary_loss.executable_negative_logit_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_pos_prob_mean",
+            (
+                float(fire_boundary_loss.executable_positive_prob_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_neg_prob_mean",
+            (
+                float(fire_boundary_loss.executable_negative_prob_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_direct_pos_delta_mean",
+            (
+                float(fire_boundary_loss.direct_head_positive_delta_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_direct_neg_delta_mean",
+            (
+                float(fire_boundary_loss.direct_head_negative_delta_mean)
+                if fire_boundary_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_accuracy",
+            float(fire_boundary_loss.accuracy) if fire_boundary_loss is not None else 0.0,
+        )
+        self.logger.record("m3s2/fb_cross_count", boundary_cross_count)
+        self.logger.record(
+            "m3s2/fb_cross_ratio",
+            boundary_cross_count / active_count if active_count > 0.0 else 0.0,
+        )
+        self.logger.record("m3s2/fb_cross_in_window_count", boundary_cross_in_window_count)
+        self.logger.record(
+            "m3s2/fb_cross_in_window_ratio",
+            (
+                boundary_cross_in_window_count / boundary_cross_count
+                if boundary_cross_count > 0.0
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/fb_separate_update_enabled",
+            float(self.m3s2_fire_boundary_separate_update_enabled),
+        )
+        self.logger.record(
+            "m3s2/fb_dedicated_optimizer_enabled",
+            float(self.m3s2_fire_boundary_dedicated_optimizer_enabled),
+        )
+        self.logger.record(
+            "m3s2/fb_separate_update_steps",
+            int(self.m3s2_fire_boundary_separate_update_steps),
+        )
+        self.logger.record(
+            "m3s2/fb_neg_ceiling_coef",
+            float(self.m3s2_fire_boundary_negative_logit_ceiling_coef),
+        )
+        self.logger.record(
+            "m3s2/fb_neg_ceiling",
+            float(self.m3s2_fire_boundary_negative_logit_ceiling),
+        )
+        self.logger.record(
+            "m3s2/fb_pos_floor_coef",
+            float(self.m3s2_fire_boundary_positive_logit_floor_coef),
+        )
+        self.logger.record(
+            "m3s2/fb_pos_floor",
+            float(self.m3s2_fire_boundary_positive_logit_floor),
+        )
+        self.logger.record(
+            "m3s2/fb_support_collect_enabled",
+            float(self.m3s2_fire_boundary_support_preserving_collect_enabled),
+        )
+        self.logger.record(
+            "m3s2/fb_support_hold_quality_enabled",
+            float(self.m3s2_fire_boundary_support_preserving_hold_quality_enabled),
+        )
+
+    def _record_m3s2_event_window_logs(self, m3s2_event_window_loss) -> None:
+        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        stats = m3s2_event_window_loss.stats if m3s2_event_window_loss is not None else None
+        diagnostics = getattr(
+            self,
+            "_m3s2_last_event_window_diagnostics",
+            _M3S1GroupedStoppingDiagnostics(),
+        )
+        active_row_count = float(stats.active_row_count) if stats else 0.0
+        boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
+        boundary_cross_in_window_count = (
+            float(stats.boundary_cross_in_window_count) if stats else 0.0
+        )
+        closed_mask_stop_attempt_count = (
+            float(stats.closed_mask_stop_attempt_count) if stats else 0.0
+        )
+        closed_mask_row_count = float(diagnostics.closed_mask_row_count)
+        self.logger.record("m3s2/event_window_coef", float(self.m3s2_event_window_coef))
+        self.logger.record(
+            "m3s2/event_window_loss",
+            (
+                float(m3s2_event_window_loss.loss.detach().cpu().item())
+                if m3s2_event_window_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/event_window_unscaled_loss",
+            (
+                float(m3s2_event_window_loss.unscaled_loss.detach().cpu().item())
+                if m3s2_event_window_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/event_window_grad_norm", float(self._m3s2_last_event_window_grad_norm)
+        )
+        self.logger.record(
+            "m3s2/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
+        )
+        self.logger.record(
+            "m3s2/grouped_active_group_count", float(stats.active_group_count) if stats else 0.0
+        )
+        self.logger.record("m3s2/grouped_row_count", float(stats.row_count) if stats else 0.0)
+        self.logger.record(
+            "m3s2/grouped_active_row_count", float(stats.active_row_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/window_group_count", float(stats.window_group_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/no_window_group_count", float(stats.no_window_group_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/early_prefix_group_count",
+            float(stats.early_prefix_group_count) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/right_censor_group_count",
+            float(stats.right_censor_group_count) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/hazard_window_mass", float(stats.mean_p_window) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/hazard_early_mass", float(stats.mean_p_early) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/hazard_deadline_mass", float(stats.mean_p_deadline) if stats else 0.0
+        )
+        self.logger.record("m3s2/no_event_mass", float(stats.mean_p_none) if stats else 0.0)
+        self.logger.record(
+            "m3s2/quality_delay", float(stats.mean_quality_delay) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s2/q_boundary_logit",
+            float(stats.mean_quality_boundary_logit) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/q_boundary_loss",
+            float(stats.mean_quality_boundary_margin_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/q_pre_margin",
+            float(stats.mean_quality_prewindow_logit_margin) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/q_pre_margin_loss",
+            float(stats.mean_quality_prewindow_margin_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/window_balanced_bce_loss",
+            float(stats.mean_window_balanced_bce_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_hazard_mean",
+            float(stats.mean_prewindow_hazard_mean) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_hazard_max",
+            float(stats.mean_prewindow_hazard_max) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_hazard_target",
+            float(stats.mean_prewindow_hazard_target) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_hazard_scale_loss",
+            float(stats.mean_prewindow_hazard_scale_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/quality_hazard_target",
+            float(stats.mean_quality_hazard_target) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/quality_hazard_target_loss",
+            float(stats.mean_quality_hazard_target_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_logit_ceiling",
+            float(stats.mean_prewindow_logit_ceiling) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/prewindow_logit_ceiling_loss",
+            float(stats.mean_prewindow_logit_ceiling_loss) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/quality_logit_floor",
+            float(stats.mean_quality_logit_floor) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s2/quality_logit_floor_loss",
+            float(stats.mean_quality_logit_floor_loss) if stats else 0.0,
+        )
+        self.logger.record("m3s2/event_logit_delta_mean", float(diagnostics.stop_logit_mean))
+        self.logger.record(
+            "m3s2/event_logit_delta_window_mean", float(diagnostics.stop_logit_desirable_mean)
+        )
+        self.logger.record(
+            "m3s2/event_logit_delta_prewindow_mean",
+            float(diagnostics.stop_logit_prewindow_mean),
+        )
+        self.logger.record(
+            "m3s2/event_logit_delta_no_window_mean",
+            float(diagnostics.stop_logit_no_window_mean),
+        )
+        self.logger.record(
+            "m3s2/event_logit_delta_closed_mask_mean",
+            float(diagnostics.stop_logit_closed_mask_mean),
+        )
+        self.logger.record("m3s2/event_logit_delta_count", float(diagnostics.stop_logit_count))
+        self.logger.record(
+            "m3s2/event_logit_delta_window_count", float(diagnostics.stop_logit_desirable_count)
+        )
+        self.logger.record(
+            "m3s2/event_logit_delta_prewindow_count",
+            float(diagnostics.stop_logit_prewindow_count),
+        )
+        self.logger.record(
+            "m3s2/event_logit_delta_no_window_count",
+            float(diagnostics.stop_logit_no_window_count),
+        )
+        self.logger.record("m3s2/boundary_cross_count", boundary_cross_count)
+        self.logger.record(
+            "m3s2/boundary_cross_ratio",
+            boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
+        )
+        self.logger.record(
+            "m3s2/boundary_cross_in_window_count", boundary_cross_in_window_count
+        )
+        self.logger.record(
+            "m3s2/boundary_cross_in_window_ratio",
+            (
+                boundary_cross_in_window_count / boundary_cross_count
+                if boundary_cross_count > 0.0
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/closed_mask_stop_attempt_count", closed_mask_stop_attempt_count
+        )
+        self.logger.record("m3s2/closed_mask_row_count", closed_mask_row_count)
+        self.logger.record(
+            "m3s2/closed_mask_stop_attempt_ratio",
+            (
+                closed_mask_stop_attempt_count / closed_mask_row_count
+                if closed_mask_row_count > 0.0
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s2/accepted_event_count",
+            float(sidecar.accepted_event_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s2/one_shot_violation_count",
+            float(sidecar.one_shot_violation_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s2/closed_mask_accepted_event_count",
+            float(sidecar.closed_mask_accepted_event_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s2/event_window_separate_update_enabled",
+            float(self.m3s2_event_window_separate_update_enabled),
+        )
+        self.logger.record(
+            "m3s2/event_window_dedicated_optimizer_enabled",
+            float(self.m3s2_event_window_dedicated_optimizer_enabled),
+        )
+        self.logger.record(
+            "m3s2/event_window_use_stopping_head",
+            float(self.m3s2_event_window_use_stopping_head),
+        )
+        self.logger.record(
+            "m3s2/event_window_separate_update_steps",
+            int(self.m3s2_event_window_separate_update_steps),
+        )
+        self.logger.record(
+            "m3s2/event_window_delay_coef", float(self.m3s2_event_window_delay_coef)
+        )
+        self.logger.record(
+            "m3s2/event_window_deadline_coef", float(self.m3s2_event_window_deadline_coef)
+        )
+        self.logger.record(
+            "m3s2/event_window_deadline_steps", int(self.m3s2_event_window_deadline_steps)
+        )
+        self.logger.record(
+            "m3s2/event_window_early_survival_coef",
+            float(self.m3s2_event_window_early_survival_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_q_boundary_coef",
+            float(self.m3s2_event_window_quality_boundary_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_q_boundary_logit",
+            float(self.m3s2_event_window_quality_boundary_logit),
+        )
+        self.logger.record(
+            "m3s2/ew_contrast_coef",
+            float(self.m3s2_event_window_contrastive_margin_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_contrast_margin",
+            float(self.m3s2_event_window_contrastive_margin),
+        )
+        self.logger.record(
+            "m3s2/ew_balanced_bce_coef",
+            float(self.m3s2_event_window_balanced_bce_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_prewindow_hazard_scale_coef",
+            float(self.m3s2_event_window_prewindow_hazard_scale_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_prewindow_hazard_target",
+            float(self.m3s2_event_window_prewindow_hazard_target),
+        )
+        self.logger.record(
+            "m3s2/ew_quality_hazard_target_coef",
+            float(self.m3s2_event_window_quality_hazard_target_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_quality_hazard_target",
+            float(self.m3s2_event_window_quality_hazard_target),
+        )
+        self.logger.record(
+            "m3s2/ew_prewindow_logit_ceiling_coef",
+            float(self.m3s2_event_window_prewindow_logit_ceiling_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_prewindow_logit_ceiling",
+            float(self.m3s2_event_window_prewindow_logit_ceiling),
+        )
+        self.logger.record(
+            "m3s2/ew_quality_logit_floor_coef",
+            float(self.m3s2_event_window_quality_logit_floor_coef),
+        )
+        self.logger.record(
+            "m3s2/ew_quality_logit_floor",
+            float(self.m3s2_event_window_quality_logit_floor),
+        )
+        self.logger.record(
+            "m3s2/support_preserving_collect_enabled",
+            float(self._m3s2_support_preserving_collect_enabled()),
+        )
+        self.logger.record(
+            "m3s2/support_preserving_hold_quality_enabled",
+            float(self.m3s2_event_window_support_preserving_hold_quality_enabled),
+        )
+        self.logger.record(
+            "m3s2/support_preserving_hold_count",
+            float(self._m3s2_support_preserving_collect_hold_count),
+        )
+        self.logger.record(
+            "m3s2/support_preserving_candidate_count",
+            float(self._m3s2_support_preserving_collect_candidate_count),
+        )
+        self.logger.record(
+            "m3s2/support_preserving_quality_count",
+            float(self._m3s2_support_preserving_collect_quality_count),
+        )
+
+
+
 _ = (Any, M3S1_CENSOR_EARLY_EVENT_PREFIX)  # suppress unused-import

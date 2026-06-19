@@ -61,35 +61,35 @@
       "exists": true,
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/mechanism_comparison_hashes_20260531/mechanism_comparison_hashes.json",
       "schema_version": "a2.mechanism_comparison_hashes.v1",
-      "sha256": "9735308ddffa2f63be635760746f82e03132507de2fa45fe52a238bcbb62b080",
+      "sha256": "2e4edadbc5e34a95c764be645442dd4e26de9b2c3f67c2431fc083bbd3e044d3",
       "status": "partial_fail_closed_mechanism_comparison_hash_manifest"
     },
     "provenance_identity_review_gate": {
       "exists": true,
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/provenance_identity_review_20260531/provenance_identity_review_gate.json",
       "schema_version": "a2.provenance_identity_review_gate.v1",
-      "sha256": "25e53d4d68c18762efe46a8698b3a64ca106bd0785bdaf2a12d93d554b5ddc45",
+      "sha256": "c59c6184c602a3dc78242dba08252f7dbafa0b2cf9b82b21940b6342bd00096d",
       "status": "blocked_non_authoritative_provenance_identity_review_gate"
     },
     "source_artifact_pack_manifest": {
       "exists": true,
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_artifact_pack_manifest.json",
       "schema_version": "a2.provenance_identity_retained_source_artifact_pack.v1",
-      "sha256": "b9236a44b0feb6002d6550b13f378506dcd5adaf179e07451e1e417b611af388",
+      "sha256": "98eedda50aa37395337ed5d5aeb969371014a944dcec3bbadf11b6cac4c728a9",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_payload_pack": {
       "exists": true,
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_payload_pack_20260531/source_payload_pack.json",
       "schema_version": "a2.source_payload_pack.v1",
-      "sha256": "43d9f4c76d9508d486fac575487f2df81cce8b7c87f5bbf344865d08de9b10ec",
+      "sha256": "d280771f895221fecc4ce105c8775508d6d9ec9b99c7d01d09fd965558e81d73",
       "status": "partial_payloads_retained_release_review_blocked"
     },
     "source_rights_output_policy_gate": {
       "exists": true,
       "relative_path": "docs/task/air_combat/archive/a2_high_fidelity_damage_model/calibration/vps_candidate_f16c_aim120c_blastfrag_beam_high_nearmiss_0_35m/retained_artifacts/source_rights_output_policy_20260531/source_rights_output_policy_gate.json",
       "schema_version": "a2.source_rights_output_policy_gate.v1",
-      "sha256": "5ebef7cfb6d5939bfd9c4adec6bc1a62ea42ae6238ebcefa1cad46a570490bc3",
+      "sha256": "b640383afaa05c288c8614acbb1173c377eea49ea8b6918ec3bc0af9fd4766d2",
       "status": "blocked_release_candidate_rights_supported_policy_fail_closed"
     }
   },

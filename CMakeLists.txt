@@ -225,7 +225,16 @@ if (EF_ENABLE_CUDA_EXPERIMENTS)
     )
 endif()
 
-target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(ef_py PRIVATE
+        -Wl,--start-group
+        ef_core
+        ef_gpu_experiments
+        -Wl,--end-group
+    )
+else()
+    target_link_libraries(ef_py PRIVATE ef_gpu_experiments)
+endif()
 
 add_executable(ef_gpu_visual_phase0_probe
     src/tools/experimental/gpu_phase0/gpu_visual_phase0_probe.cpp
@@ -294,6 +303,7 @@ set(EF_TEST_SOURCES
     src/tests/test_aero_physics_common.cpp
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
+    src/tests/test_control_surface_damage_coupling.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})

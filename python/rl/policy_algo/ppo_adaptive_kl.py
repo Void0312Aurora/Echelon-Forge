@@ -54,6 +54,7 @@ from ._adaptive_kl_support import (  # noqa: F401  (re-export)
     _M3S1GroupedStoppingSidecarGroup,
     _M3S2FireBoundaryLoss,
     _M3S2WindowClassifierLoss,
+    _TrainEpochStats,
     _air_combat_c2_roe_mode_from_dim,
     _mission_column,
 )
@@ -865,130 +866,15 @@ class AdaptiveKLPPO(
         else:
             clip_range_vf = None
 
-        entropy_losses = []
-        pg_losses, value_losses = [], []
-        action_mean_regularization_losses = []
-        first_event_hazard_losses = []
-        first_event_hazard_active_counts = []
-        first_event_hazard_positive_fracs = []
-        first_event_credit_losses = []
-        first_event_credit_value_losses = []
-        first_event_credit_delta_align_losses = []
-        first_event_credit_active_counts = []
-        first_event_credit_positive_fracs = []
-        first_event_credit_advantage_means = []
-        first_event_credit_projection_active_counts = []
-        first_event_credit_projection_candidate_counts = []
-        first_event_credit_projection_unsupported_counts = []
-        first_event_credit_projection_advantage_means = []
-        first_event_credit_projection_delta_means = []
-        first_event_credit_source_shadow_counts = []
-        first_event_credit_source_deadline_counts = []
-        first_event_credit_source_early_counts = []
-        first_event_credit_source_prewindow_counts = []
-        first_event_credit_source_legal_open_quality_counts = []
-        first_event_credit_source_legal_open_quality_positive_counts = []
-        first_event_credit_source_deadline_positive_counts = []
-        first_event_credit_source_shadow_positive_counts = []
-        first_event_credit_source_legal_open_quality_advantage_means = []
-        first_event_credit_separate_update_grad_norms = []
-        first_event_credit_separate_update_counts = []
-        first_event_policy_margin_losses = []
-        first_event_policy_margin_active_counts = []
-        first_event_policy_margin_positive_fracs = []
-        first_event_policy_margin_delta_means = []
-        first_event_policy_margin_delta_positive_fracs = []
-        first_event_policy_margin_projection_active_counts = []
-        first_event_policy_margin_projection_delta_means = []
-        first_event_policy_margin_separate_update_grad_norms = []
-        first_event_policy_margin_separate_update_counts = []
-        clip_fractions = []
-
-        approx_kl_divs = []
+        # Per-epoch logging accumulators, owned by an explicit container. The
+        # optimization loop appends to ``stats.*`` and the per-subdomain
+        # ``_record_*_logs`` mixin methods read from it.
+        stats = _TrainEpochStats()
         continue_training = True
         m3s2_window_classifier_loss: _M3S2WindowClassifierLoss | None = None
         m3s2_fire_boundary_loss: _M3S2FireBoundaryLoss | None = None
         m3s2_event_window_loss: M3S1GroupedStoppingLoss | None = None
         m3s1_grouped_stopping_loss: M3S1GroupedStoppingLoss | None = None
-
-        def _append_first_event_credit_stats(
-            credit_loss: FirstEventCreditLoss,
-            *,
-            total_loss=None,
-            value_loss=None,
-            delta_align_loss=None,
-        ) -> None:
-            first_event_credit_losses.append(
-                float((credit_loss.loss if total_loss is None else total_loss).detach().cpu())
-            )
-            first_event_credit_value_losses.append(
-                float((credit_loss.value_loss if value_loss is None else value_loss).detach().cpu())
-            )
-            first_event_credit_delta_align_losses.append(
-                float(
-                    (credit_loss.delta_align_loss if delta_align_loss is None else delta_align_loss)
-                    .detach()
-                    .cpu()
-                )
-            )
-            first_event_credit_active_counts.append(int(credit_loss.active_count))
-            first_event_credit_positive_fracs.append(float(credit_loss.positive_frac))
-            first_event_credit_advantage_means.append(float(credit_loss.advantage_mean))
-            first_event_credit_projection_active_counts.append(
-                int(credit_loss.projection_active_count)
-            )
-            first_event_credit_projection_candidate_counts.append(
-                int(credit_loss.projection_candidate_count)
-            )
-            first_event_credit_projection_unsupported_counts.append(
-                int(credit_loss.projection_unsupported_count)
-            )
-            first_event_credit_projection_advantage_means.append(
-                float(credit_loss.projection_advantage_mean)
-            )
-            first_event_credit_projection_delta_means.append(
-                float(credit_loss.projection_delta_mean)
-            )
-            first_event_credit_source_shadow_counts.append(int(credit_loss.source_shadow_count))
-            first_event_credit_source_deadline_counts.append(int(credit_loss.source_deadline_count))
-            first_event_credit_source_early_counts.append(
-                int(credit_loss.source_early_accepted_count)
-            )
-            first_event_credit_source_prewindow_counts.append(
-                int(credit_loss.source_prewindow_count)
-            )
-            first_event_credit_source_legal_open_quality_counts.append(
-                int(credit_loss.source_legal_open_quality_count)
-            )
-            first_event_credit_source_legal_open_quality_positive_counts.append(
-                int(credit_loss.source_legal_open_quality_positive_count)
-            )
-            first_event_credit_source_deadline_positive_counts.append(
-                int(credit_loss.source_deadline_positive_count)
-            )
-            first_event_credit_source_shadow_positive_counts.append(
-                int(credit_loss.source_shadow_positive_count)
-            )
-            first_event_credit_source_legal_open_quality_advantage_means.append(
-                float(credit_loss.source_legal_open_quality_advantage_mean)
-            )
-
-        def _append_first_event_policy_margin_stats(
-            margin_loss: FirstEventPolicyMarginLoss,
-        ) -> None:
-            first_event_policy_margin_losses.append(float(margin_loss.loss.detach().cpu()))
-            first_event_policy_margin_active_counts.append(int(margin_loss.active_count))
-            first_event_policy_margin_positive_fracs.append(float(margin_loss.positive_frac))
-            first_event_policy_margin_delta_means.append(float(margin_loss.delta_mean))
-            first_event_policy_margin_delta_positive_fracs.append(
-                float(margin_loss.delta_positive_frac)
-            )
-            first_event_policy_margin_projection_active_counts.append(
-                int(margin_loss.projection_active_count)
-            )
-            first_event_policy_margin_projection_delta_means.append(
-                float(margin_loss.projection_delta_mean)
-            )
 
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
@@ -1000,11 +886,11 @@ class AdaptiveKLPPO(
                     else (None, 0.0)
                 )
                 if separate_policy_margin_loss is not None:
-                    first_event_policy_margin_separate_update_grad_norms.append(
+                    stats.first_event_policy_margin_separate_update_grad_norms.append(
                         float(separate_policy_margin_grad_norm)
                     )
-                    first_event_policy_margin_separate_update_counts.append(1)
-                    _append_first_event_policy_margin_stats(separate_policy_margin_loss)
+                    stats.first_event_policy_margin_separate_update_counts.append(1)
+                    stats.append_first_event_policy_margin_stats(separate_policy_margin_loss)
 
                 actions = rollout_data.actions
                 if isinstance(self.action_space, spaces.Discrete):
@@ -1029,9 +915,9 @@ class AdaptiveKLPPO(
                 policy_loss = -th.min(policy_loss_1, policy_loss_2).mean()
 
                 # Logging
-                pg_losses.append(policy_loss.item())
+                stats.pg_losses.append(policy_loss.item())
                 clip_fraction = th.mean((th.abs(ratio - 1) > clip_range).float()).item()
-                clip_fractions.append(clip_fraction)
+                stats.clip_fractions.append(clip_fraction)
 
                 # Value loss
                 if clip_range_vf is None:
@@ -1041,14 +927,14 @@ class AdaptiveKLPPO(
                         values - rollout_data.old_values, -clip_range_vf, clip_range_vf
                     )
                 value_loss = F.mse_loss(rollout_data.returns, values_pred)
-                value_losses.append(value_loss.item())
+                stats.value_losses.append(value_loss.item())
 
                 # Entropy loss
                 if entropy is None:
                     entropy_loss = -th.mean(-log_prob)
                 else:
                     entropy_loss = -th.mean(entropy)
-                entropy_losses.append(entropy_loss.item())
+                stats.entropy_losses.append(entropy_loss.item())
 
                 # Approximate reverse KL (with gradient)
                 log_ratio = log_prob - rollout_data.old_log_prob
@@ -1062,7 +948,7 @@ class AdaptiveKLPPO(
                     actions,
                 )
                 if action_mean_regularization_loss is not None:
-                    action_mean_regularization_losses.append(
+                    stats.action_mean_regularization_losses.append(
                         float(action_mean_regularization_loss.detach().cpu())
                     )
                     loss = (
@@ -1072,13 +958,13 @@ class AdaptiveKLPPO(
                     )
                 first_event_hazard_loss = self._first_event_hazard_loss(rollout_data)
                 if first_event_hazard_loss is not None:
-                    first_event_hazard_losses.append(
+                    stats.first_event_hazard_losses.append(
                         float(first_event_hazard_loss.loss.detach().cpu())
                     )
-                    first_event_hazard_active_counts.append(
+                    stats.first_event_hazard_active_counts.append(
                         int(first_event_hazard_loss.active_count)
                     )
-                    first_event_hazard_positive_fracs.append(
+                    stats.first_event_hazard_positive_fracs.append(
                         float(first_event_hazard_loss.positive_frac)
                     )
                     loss = loss + first_event_hazard_loss.loss
@@ -1087,7 +973,7 @@ class AdaptiveKLPPO(
                         rollout_data
                     )
                     if first_event_policy_margin_loss is not None:
-                        _append_first_event_policy_margin_stats(first_event_policy_margin_loss)
+                        stats.append_first_event_policy_margin_stats(first_event_policy_margin_loss)
                         loss = loss + first_event_policy_margin_loss.loss
                 separate_credit_loss, separate_credit_grad_norm = (
                     self._first_event_credit_separate_value_update(rollout_data)
@@ -1095,10 +981,10 @@ class AdaptiveKLPPO(
                     else (None, 0.0)
                 )
                 if separate_credit_loss is not None:
-                    first_event_credit_separate_update_grad_norms.append(
+                    stats.first_event_credit_separate_update_grad_norms.append(
                         float(separate_credit_grad_norm)
                     )
-                    first_event_credit_separate_update_counts.append(1)
+                    stats.first_event_credit_separate_update_counts.append(1)
                 first_event_credit_loss = self._first_event_credit_loss(
                     rollout_data,
                     value_coef=0.0 if self.a7_event_credit_separate_update_enabled else None,
@@ -1112,7 +998,7 @@ class AdaptiveKLPPO(
                     if separate_credit_loss is not None:
                         total_credit_loss = total_credit_loss + separate_credit_loss.loss.detach()
                         value_credit_loss = separate_credit_loss.value_loss
-                    _append_first_event_credit_stats(
+                    stats.append_first_event_credit_stats(
                         first_event_credit_loss,
                         total_loss=total_credit_loss,
                         value_loss=value_credit_loss,
@@ -1120,12 +1006,12 @@ class AdaptiveKLPPO(
                     )
                     loss = loss + first_event_credit_loss.loss
                 elif separate_credit_loss is not None:
-                    _append_first_event_credit_stats(separate_credit_loss)
+                    stats.append_first_event_credit_stats(separate_credit_loss)
 
                 # Early stopping based on observed KL (same criterion as SB3 PPO)
                 with th.no_grad():
                     approx_kl_div = float(approx_kl.detach().cpu().numpy())
-                approx_kl_divs.append(approx_kl_div)
+                stats.approx_kl_divs.append(approx_kl_div)
                 if self.target_kl is not None and approx_kl_div > 1.5 * float(self.target_kl):
                     continue_training = False
                     if self.verbose >= 1:
@@ -1154,17 +1040,17 @@ class AdaptiveKLPPO(
             self._to_numpy_flat(self.rollout_buffer.returns),
         )
 
-        mean_kl = float(np.mean(approx_kl_divs)) if len(approx_kl_divs) > 0 else None
+        mean_kl = float(np.mean(stats.approx_kl_divs)) if len(stats.approx_kl_divs) > 0 else None
         self._adapt_kl_controls(mean_kl)
 
         # Logs
-        self.logger.record("train/entropy_loss", float(np.mean(entropy_losses)))
-        self.logger.record("train/policy_gradient_loss", float(np.mean(pg_losses)))
-        self.logger.record("train/value_loss", float(np.mean(value_losses)))
+        self.logger.record("train/entropy_loss", float(np.mean(stats.entropy_losses)))
+        self.logger.record("train/policy_gradient_loss", float(np.mean(stats.pg_losses)))
+        self.logger.record("train/value_loss", float(np.mean(stats.value_losses)))
         self.logger.record(
-            "train/approx_kl", float(np.mean(approx_kl_divs)) if len(approx_kl_divs) > 0 else 0.0
+            "train/approx_kl", float(np.mean(stats.approx_kl_divs)) if len(stats.approx_kl_divs) > 0 else 0.0
         )
-        self.logger.record("train/clip_fraction", float(np.mean(clip_fractions)))
+        self.logger.record("train/clip_fraction", float(np.mean(stats.clip_fractions)))
         self.logger.record("train/loss", float(loss.item()))
         self.logger.record("train/explained_variance", float(explained_var))
         if hasattr(self.policy, "log_std"):
@@ -1172,1125 +1058,28 @@ class AdaptiveKLPPO(
         if self.action_mean_regularization_coef > 0.0:
             self.logger.record(
                 "train/action_mean_regularization_loss",
-                float(np.mean(action_mean_regularization_losses))
-                if action_mean_regularization_losses
+                float(np.mean(stats.action_mean_regularization_losses))
+                if stats.action_mean_regularization_losses
                 else 0.0,
             )
             self.logger.record(
                 "train/action_mean_regularization_coef", float(self.action_mean_regularization_coef)
             )
         if self._a6_first_event_enabled():
-            self.logger.record(
-                "a6/hazard_loss",
-                float(np.mean(first_event_hazard_losses)) if first_event_hazard_losses else 0.0,
-            )
-            self.logger.record("a6/hazard_coef", float(self.a6_first_event_hazard_coef))
-            self.logger.record(
-                "a6/curriculum_coef", float(self._current_a6_first_event_curriculum_coef())
-            )
-            self.logger.record("a6/deadline_weight", float(self.a6_first_event_deadline_weight))
-            self.logger.record(
-                "a6/launch_window_enabled", float(self.a6_first_event_launch_window_enabled)
-            )
-            self.logger.record(
-                "a6/launch_window_prewindow_hold_weight",
-                float(self.a6_first_event_launch_window_prewindow_hold_weight),
-            )
-            self.logger.record(
-                "a6/active_count_mean",
-                float(np.mean(first_event_hazard_active_counts))
-                if first_event_hazard_active_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a6/target_positive_frac",
-                float(np.mean(first_event_hazard_positive_fracs))
-                if first_event_hazard_positive_fracs
-                else 0.0,
-            )
+            self._record_a6_first_event_logs(stats)
         if self._m3s2_window_classifier_enabled():
-            classifier_loss = m3s2_window_classifier_loss or self._m3s2_last_window_classifier_loss
-            self.logger.record(
-                "m3s2/window_classifier_coef", float(self.m3s2_window_classifier_coef)
-            )
-            self.logger.record(
-                "m3s2/window_classifier_loss",
-                float(classifier_loss.loss.detach().cpu().item())
-                if classifier_loss is not None
-                else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_unscaled_loss",
-                float(classifier_loss.unscaled_loss.detach().cpu().item())
-                if classifier_loss is not None
-                else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_balanced_bce_loss",
-                float(classifier_loss.balanced_bce_loss.detach().cpu().item())
-                if classifier_loss is not None
-                else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_prewindow_logit_ceiling_loss",
-                (
-                    float(classifier_loss.prewindow_logit_ceiling_loss.detach().cpu().item())
-                    if classifier_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_quality_logit_floor_loss",
-                (
-                    float(classifier_loss.quality_logit_floor_loss.detach().cpu().item())
-                    if classifier_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_grad_norm",
-                float(self._m3s2_last_window_classifier_grad_norm),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_group_count",
-                float(classifier_loss.group_count) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_active_count",
-                float(classifier_loss.active_count) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_positive_count",
-                float(classifier_loss.positive_count) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_negative_count",
-                float(classifier_loss.negative_count) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_positive_logit_mean",
-                float(classifier_loss.positive_logit_mean) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_negative_logit_mean",
-                float(classifier_loss.negative_logit_mean) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_positive_prob_mean",
-                float(classifier_loss.positive_prob_mean) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_negative_prob_mean",
-                float(classifier_loss.negative_prob_mean) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_accuracy",
-                float(classifier_loss.accuracy) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_prewindow_logit_ceiling_coef",
-                float(self.m3s2_window_classifier_prewindow_logit_ceiling_coef),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_prewindow_logit_ceiling",
-                float(self.m3s2_window_classifier_prewindow_logit_ceiling),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_quality_logit_floor_coef",
-                float(self.m3s2_window_classifier_quality_logit_floor_coef),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_quality_logit_floor",
-                float(self.m3s2_window_classifier_quality_logit_floor),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_detach_latent",
-                float(self.m3s2_window_classifier_detach_latent),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_input_standardization_enabled",
-                float(
-                    getattr(
-                        self.policy, "_m3_window_classifier_input_standardization_enabled", False
-                    )
-                ),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_input_standardization_momentum",
-                float(
-                    getattr(
-                        self.policy, "_m3_window_classifier_input_standardization_momentum", 0.0
-                    )
-                ),
-            )
-            initialized = getattr(
-                self.policy,
-                "m3_window_classifier_input_standardization_initialized",
-                None,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_input_standardization_initialized",
-                (float(initialized.detach().cpu().item()) if initialized is not None else 0.0),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_separate_update_enabled",
-                float(self.m3s2_window_classifier_separate_update_enabled),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_dedicated_optimizer_enabled",
-                float(self.m3s2_window_classifier_dedicated_optimizer_enabled),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_separate_update_steps",
-                int(self.m3s2_window_classifier_separate_update_steps),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_enabled",
-                float(self.m3s2_window_classifier_replay_enabled),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_storage_observation",
-                float(self.m3s2_window_classifier_replay_storage == "observation"),
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_used",
-                float(classifier_loss.replay_used) if classifier_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_positive_count",
-                float(classifier_loss.replay_positive_count)
-                if classifier_loss is not None
-                else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_negative_count",
-                float(classifier_loss.replay_negative_count)
-                if classifier_loss is not None
-                else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_classifier_replay_batch_size",
-                int(self.m3s2_window_classifier_replay_batch_size),
-            )
+            self._record_m3s2_window_classifier_logs(m3s2_window_classifier_loss)
         if self._m3s2_fire_boundary_enabled():
-            fire_boundary_loss = m3s2_fire_boundary_loss or self._m3s2_last_fire_boundary_loss
-            active_count = (
-                float(fire_boundary_loss.active_count) if fire_boundary_loss is not None else 0.0
-            )
-            boundary_cross_count = (
-                float(fire_boundary_loss.boundary_cross_count)
-                if fire_boundary_loss is not None
-                else 0.0
-            )
-            boundary_cross_in_window_count = (
-                float(fire_boundary_loss.boundary_cross_in_window_count)
-                if fire_boundary_loss is not None
-                else 0.0
-            )
-            self.logger.record("m3s2/fb_coef", float(self.m3s2_fire_boundary_coef))
-            self.logger.record(
-                "m3s2/fb_loss",
-                (
-                    float(fire_boundary_loss.loss.detach().cpu().item())
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_unscaled_loss",
-                (
-                    float(fire_boundary_loss.unscaled_loss.detach().cpu().item())
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_bce_loss",
-                (
-                    float(fire_boundary_loss.balanced_bce_loss.detach().cpu().item())
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_neg_ceiling_loss",
-                (
-                    float(fire_boundary_loss.negative_logit_ceiling_loss.detach().cpu().item())
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_pos_floor_loss",
-                (
-                    float(fire_boundary_loss.positive_logit_floor_loss.detach().cpu().item())
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record("m3s2/fb_grad_norm", float(self._m3s2_last_fire_boundary_grad_norm))
-            self.logger.record(
-                "m3s2/fb_group_count",
-                float(fire_boundary_loss.group_count) if fire_boundary_loss is not None else 0.0,
-            )
-            self.logger.record("m3s2/fb_active_count", active_count)
-            self.logger.record(
-                "m3s2/fb_positive_count",
-                float(fire_boundary_loss.positive_count) if fire_boundary_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/fb_negative_count",
-                float(fire_boundary_loss.negative_count) if fire_boundary_loss is not None else 0.0,
-            )
-            self.logger.record(
-                "m3s2/fb_pos_logit_mean",
-                (
-                    float(fire_boundary_loss.executable_positive_logit_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_neg_logit_mean",
-                (
-                    float(fire_boundary_loss.executable_negative_logit_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_pos_prob_mean",
-                (
-                    float(fire_boundary_loss.executable_positive_prob_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_neg_prob_mean",
-                (
-                    float(fire_boundary_loss.executable_negative_prob_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_direct_pos_delta_mean",
-                (
-                    float(fire_boundary_loss.direct_head_positive_delta_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_direct_neg_delta_mean",
-                (
-                    float(fire_boundary_loss.direct_head_negative_delta_mean)
-                    if fire_boundary_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_accuracy",
-                float(fire_boundary_loss.accuracy) if fire_boundary_loss is not None else 0.0,
-            )
-            self.logger.record("m3s2/fb_cross_count", boundary_cross_count)
-            self.logger.record(
-                "m3s2/fb_cross_ratio",
-                boundary_cross_count / active_count if active_count > 0.0 else 0.0,
-            )
-            self.logger.record("m3s2/fb_cross_in_window_count", boundary_cross_in_window_count)
-            self.logger.record(
-                "m3s2/fb_cross_in_window_ratio",
-                (
-                    boundary_cross_in_window_count / boundary_cross_count
-                    if boundary_cross_count > 0.0
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/fb_separate_update_enabled",
-                float(self.m3s2_fire_boundary_separate_update_enabled),
-            )
-            self.logger.record(
-                "m3s2/fb_dedicated_optimizer_enabled",
-                float(self.m3s2_fire_boundary_dedicated_optimizer_enabled),
-            )
-            self.logger.record(
-                "m3s2/fb_separate_update_steps",
-                int(self.m3s2_fire_boundary_separate_update_steps),
-            )
-            self.logger.record(
-                "m3s2/fb_neg_ceiling_coef",
-                float(self.m3s2_fire_boundary_negative_logit_ceiling_coef),
-            )
-            self.logger.record(
-                "m3s2/fb_neg_ceiling",
-                float(self.m3s2_fire_boundary_negative_logit_ceiling),
-            )
-            self.logger.record(
-                "m3s2/fb_pos_floor_coef",
-                float(self.m3s2_fire_boundary_positive_logit_floor_coef),
-            )
-            self.logger.record(
-                "m3s2/fb_pos_floor",
-                float(self.m3s2_fire_boundary_positive_logit_floor),
-            )
-            self.logger.record(
-                "m3s2/fb_support_collect_enabled",
-                float(self.m3s2_fire_boundary_support_preserving_collect_enabled),
-            )
-            self.logger.record(
-                "m3s2/fb_support_hold_quality_enabled",
-                float(self.m3s2_fire_boundary_support_preserving_hold_quality_enabled),
-            )
+            self._record_m3s2_fire_boundary_logs(m3s2_fire_boundary_loss)
         if self._m3s2_event_window_enabled():
-            sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
-            stats = m3s2_event_window_loss.stats if m3s2_event_window_loss is not None else None
-            diagnostics = getattr(
-                self,
-                "_m3s2_last_event_window_diagnostics",
-                _M3S1GroupedStoppingDiagnostics(),
-            )
-            active_row_count = float(stats.active_row_count) if stats else 0.0
-            boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
-            boundary_cross_in_window_count = (
-                float(stats.boundary_cross_in_window_count) if stats else 0.0
-            )
-            closed_mask_stop_attempt_count = (
-                float(stats.closed_mask_stop_attempt_count) if stats else 0.0
-            )
-            closed_mask_row_count = float(diagnostics.closed_mask_row_count)
-            self.logger.record("m3s2/event_window_coef", float(self.m3s2_event_window_coef))
-            self.logger.record(
-                "m3s2/event_window_loss",
-                (
-                    float(m3s2_event_window_loss.loss.detach().cpu().item())
-                    if m3s2_event_window_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/event_window_unscaled_loss",
-                (
-                    float(m3s2_event_window_loss.unscaled_loss.detach().cpu().item())
-                    if m3s2_event_window_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/event_window_grad_norm", float(self._m3s2_last_event_window_grad_norm)
-            )
-            self.logger.record(
-                "m3s2/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
-            )
-            self.logger.record(
-                "m3s2/grouped_active_group_count", float(stats.active_group_count) if stats else 0.0
-            )
-            self.logger.record("m3s2/grouped_row_count", float(stats.row_count) if stats else 0.0)
-            self.logger.record(
-                "m3s2/grouped_active_row_count", float(stats.active_row_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/window_group_count", float(stats.window_group_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/no_window_group_count", float(stats.no_window_group_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/early_prefix_group_count",
-                float(stats.early_prefix_group_count) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/right_censor_group_count",
-                float(stats.right_censor_group_count) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/hazard_window_mass", float(stats.mean_p_window) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/hazard_early_mass", float(stats.mean_p_early) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/hazard_deadline_mass", float(stats.mean_p_deadline) if stats else 0.0
-            )
-            self.logger.record("m3s2/no_event_mass", float(stats.mean_p_none) if stats else 0.0)
-            self.logger.record(
-                "m3s2/quality_delay", float(stats.mean_quality_delay) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s2/q_boundary_logit",
-                float(stats.mean_quality_boundary_logit) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/q_boundary_loss",
-                float(stats.mean_quality_boundary_margin_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/q_pre_margin",
-                float(stats.mean_quality_prewindow_logit_margin) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/q_pre_margin_loss",
-                float(stats.mean_quality_prewindow_margin_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/window_balanced_bce_loss",
-                float(stats.mean_window_balanced_bce_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_hazard_mean",
-                float(stats.mean_prewindow_hazard_mean) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_hazard_max",
-                float(stats.mean_prewindow_hazard_max) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_hazard_target",
-                float(stats.mean_prewindow_hazard_target) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_hazard_scale_loss",
-                float(stats.mean_prewindow_hazard_scale_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/quality_hazard_target",
-                float(stats.mean_quality_hazard_target) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/quality_hazard_target_loss",
-                float(stats.mean_quality_hazard_target_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_logit_ceiling",
-                float(stats.mean_prewindow_logit_ceiling) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/prewindow_logit_ceiling_loss",
-                float(stats.mean_prewindow_logit_ceiling_loss) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/quality_logit_floor",
-                float(stats.mean_quality_logit_floor) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s2/quality_logit_floor_loss",
-                float(stats.mean_quality_logit_floor_loss) if stats else 0.0,
-            )
-            self.logger.record("m3s2/event_logit_delta_mean", float(diagnostics.stop_logit_mean))
-            self.logger.record(
-                "m3s2/event_logit_delta_window_mean", float(diagnostics.stop_logit_desirable_mean)
-            )
-            self.logger.record(
-                "m3s2/event_logit_delta_prewindow_mean",
-                float(diagnostics.stop_logit_prewindow_mean),
-            )
-            self.logger.record(
-                "m3s2/event_logit_delta_no_window_mean",
-                float(diagnostics.stop_logit_no_window_mean),
-            )
-            self.logger.record(
-                "m3s2/event_logit_delta_closed_mask_mean",
-                float(diagnostics.stop_logit_closed_mask_mean),
-            )
-            self.logger.record("m3s2/event_logit_delta_count", float(diagnostics.stop_logit_count))
-            self.logger.record(
-                "m3s2/event_logit_delta_window_count", float(diagnostics.stop_logit_desirable_count)
-            )
-            self.logger.record(
-                "m3s2/event_logit_delta_prewindow_count",
-                float(diagnostics.stop_logit_prewindow_count),
-            )
-            self.logger.record(
-                "m3s2/event_logit_delta_no_window_count",
-                float(diagnostics.stop_logit_no_window_count),
-            )
-            self.logger.record("m3s2/boundary_cross_count", boundary_cross_count)
-            self.logger.record(
-                "m3s2/boundary_cross_ratio",
-                boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
-            )
-            self.logger.record(
-                "m3s2/boundary_cross_in_window_count", boundary_cross_in_window_count
-            )
-            self.logger.record(
-                "m3s2/boundary_cross_in_window_ratio",
-                (
-                    boundary_cross_in_window_count / boundary_cross_count
-                    if boundary_cross_count > 0.0
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/closed_mask_stop_attempt_count", closed_mask_stop_attempt_count
-            )
-            self.logger.record("m3s2/closed_mask_row_count", closed_mask_row_count)
-            self.logger.record(
-                "m3s2/closed_mask_stop_attempt_ratio",
-                (
-                    closed_mask_stop_attempt_count / closed_mask_row_count
-                    if closed_mask_row_count > 0.0
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s2/accepted_event_count",
-                float(sidecar.accepted_event_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s2/one_shot_violation_count",
-                float(sidecar.one_shot_violation_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s2/closed_mask_accepted_event_count",
-                float(sidecar.closed_mask_accepted_event_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s2/event_window_separate_update_enabled",
-                float(self.m3s2_event_window_separate_update_enabled),
-            )
-            self.logger.record(
-                "m3s2/event_window_dedicated_optimizer_enabled",
-                float(self.m3s2_event_window_dedicated_optimizer_enabled),
-            )
-            self.logger.record(
-                "m3s2/event_window_use_stopping_head",
-                float(self.m3s2_event_window_use_stopping_head),
-            )
-            self.logger.record(
-                "m3s2/event_window_separate_update_steps",
-                int(self.m3s2_event_window_separate_update_steps),
-            )
-            self.logger.record(
-                "m3s2/event_window_delay_coef", float(self.m3s2_event_window_delay_coef)
-            )
-            self.logger.record(
-                "m3s2/event_window_deadline_coef", float(self.m3s2_event_window_deadline_coef)
-            )
-            self.logger.record(
-                "m3s2/event_window_deadline_steps", int(self.m3s2_event_window_deadline_steps)
-            )
-            self.logger.record(
-                "m3s2/event_window_early_survival_coef",
-                float(self.m3s2_event_window_early_survival_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_q_boundary_coef",
-                float(self.m3s2_event_window_quality_boundary_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_q_boundary_logit",
-                float(self.m3s2_event_window_quality_boundary_logit),
-            )
-            self.logger.record(
-                "m3s2/ew_contrast_coef",
-                float(self.m3s2_event_window_contrastive_margin_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_contrast_margin",
-                float(self.m3s2_event_window_contrastive_margin),
-            )
-            self.logger.record(
-                "m3s2/ew_balanced_bce_coef",
-                float(self.m3s2_event_window_balanced_bce_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_prewindow_hazard_scale_coef",
-                float(self.m3s2_event_window_prewindow_hazard_scale_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_prewindow_hazard_target",
-                float(self.m3s2_event_window_prewindow_hazard_target),
-            )
-            self.logger.record(
-                "m3s2/ew_quality_hazard_target_coef",
-                float(self.m3s2_event_window_quality_hazard_target_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_quality_hazard_target",
-                float(self.m3s2_event_window_quality_hazard_target),
-            )
-            self.logger.record(
-                "m3s2/ew_prewindow_logit_ceiling_coef",
-                float(self.m3s2_event_window_prewindow_logit_ceiling_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_prewindow_logit_ceiling",
-                float(self.m3s2_event_window_prewindow_logit_ceiling),
-            )
-            self.logger.record(
-                "m3s2/ew_quality_logit_floor_coef",
-                float(self.m3s2_event_window_quality_logit_floor_coef),
-            )
-            self.logger.record(
-                "m3s2/ew_quality_logit_floor",
-                float(self.m3s2_event_window_quality_logit_floor),
-            )
-            self.logger.record(
-                "m3s2/support_preserving_collect_enabled",
-                float(self._m3s2_support_preserving_collect_enabled()),
-            )
-            self.logger.record(
-                "m3s2/support_preserving_hold_quality_enabled",
-                float(self.m3s2_event_window_support_preserving_hold_quality_enabled),
-            )
-            self.logger.record(
-                "m3s2/support_preserving_hold_count",
-                float(self._m3s2_support_preserving_collect_hold_count),
-            )
-            self.logger.record(
-                "m3s2/support_preserving_candidate_count",
-                float(self._m3s2_support_preserving_collect_candidate_count),
-            )
-            self.logger.record(
-                "m3s2/support_preserving_quality_count",
-                float(self._m3s2_support_preserving_collect_quality_count),
-            )
+            self._record_m3s2_event_window_logs(m3s2_event_window_loss)
         if self._m3s1_grouped_stopping_enabled():
-            sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
-            stats = (
-                m3s1_grouped_stopping_loss.stats if m3s1_grouped_stopping_loss is not None else None
-            )
-            diagnostics = getattr(
-                self,
-                "_m3s1_last_grouped_stopping_diagnostics",
-                _M3S1GroupedStoppingDiagnostics(),
-            )
-            active_row_count = float(stats.active_row_count) if stats else 0.0
-            boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
-            boundary_cross_in_window_count = (
-                float(stats.boundary_cross_in_window_count) if stats else 0.0
-            )
-            closed_mask_stop_attempt_count = (
-                float(stats.closed_mask_stop_attempt_count) if stats else 0.0
-            )
-            closed_mask_row_count = float(diagnostics.closed_mask_row_count)
-            self.logger.record("m3s1/grouped_stopping_coef", float(self.m3s1_grouped_stopping_coef))
-            self.logger.record(
-                "m3s1/grouped_stopping_loss",
-                (
-                    float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
-                    if m3s1_grouped_stopping_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s1/grouped_stopping_unscaled_loss",
-                (
-                    float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
-                    if m3s1_grouped_stopping_loss is not None
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s1/grouped_stopping_grad_norm", float(self._m3s1_last_grouped_stopping_grad_norm)
-            )
-            self.logger.record(
-                "m3s1/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
-            )
-            self.logger.record(
-                "m3s1/grouped_active_group_count", float(stats.active_group_count) if stats else 0.0
-            )
-            self.logger.record("m3s1/grouped_row_count", float(stats.row_count) if stats else 0.0)
-            self.logger.record(
-                "m3s1/grouped_active_row_count", float(stats.active_row_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s1/window_group_count", float(stats.window_group_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s1/no_window_group_count", float(stats.no_window_group_count) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s1/early_prefix_group_count",
-                float(stats.early_prefix_group_count) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s1/right_censor_group_count",
-                float(stats.right_censor_group_count) if stats else 0.0,
-            )
-            self.logger.record(
-                "m3s1/grouped_labels_reached_loss",
-                1.0 if stats and stats.active_group_count > 0 else 0.0,
-            )
-            self.logger.record(
-                "m3s1/hazard_desirable_mass", float(stats.mean_p_window) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s1/hazard_early_mass", float(stats.mean_p_early) if stats else 0.0
-            )
-            self.logger.record(
-                "m3s1/hazard_deadline_mass", float(stats.mean_p_deadline) if stats else 0.0
-            )
-            self.logger.record("m3s1/no_event_mass", float(stats.mean_p_none) if stats else 0.0)
-            self.logger.record(
-                "m3s1/quality_delay", float(stats.mean_quality_delay) if stats else 0.0
-            )
-            self.logger.record("m3s1/stop_logit_mean", float(diagnostics.stop_logit_mean))
-            self.logger.record(
-                "m3s1/stop_logit_desirable_mean", float(diagnostics.stop_logit_desirable_mean)
-            )
-            self.logger.record(
-                "m3s1/stop_logit_prewindow_mean", float(diagnostics.stop_logit_prewindow_mean)
-            )
-            self.logger.record(
-                "m3s1/stop_logit_no_window_mean", float(diagnostics.stop_logit_no_window_mean)
-            )
-            self.logger.record(
-                "m3s1/stop_logit_closed_mask_mean", float(diagnostics.stop_logit_closed_mask_mean)
-            )
-            self.logger.record("m3s1/stop_logit_count", float(diagnostics.stop_logit_count))
-            self.logger.record(
-                "m3s1/stop_logit_desirable_count", float(diagnostics.stop_logit_desirable_count)
-            )
-            self.logger.record(
-                "m3s1/stop_logit_prewindow_count", float(diagnostics.stop_logit_prewindow_count)
-            )
-            self.logger.record(
-                "m3s1/stop_logit_no_window_count", float(diagnostics.stop_logit_no_window_count)
-            )
-            self.logger.record(
-                "m3s1/event_logit_delta_diagnostic_mean",
-                float(diagnostics.event_logit_delta_diagnostic_mean),
-            )
-            self.logger.record(
-                "m3s1/event_logit_delta_diagnostic_count",
-                float(diagnostics.event_logit_delta_diagnostic_count),
-            )
-            self.logger.record("m3s1/boundary_cross_count", boundary_cross_count)
-            self.logger.record(
-                "m3s1/boundary_cross_ratio",
-                boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
-            )
-            self.logger.record(
-                "m3s1/boundary_cross_in_window_count",
-                boundary_cross_in_window_count,
-            )
-            self.logger.record(
-                "m3s1/boundary_cross_in_window_ratio",
-                (
-                    boundary_cross_in_window_count / boundary_cross_count
-                    if boundary_cross_count > 0.0
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s1/closed_mask_stop_attempt_count",
-                closed_mask_stop_attempt_count,
-            )
-            self.logger.record("m3s1/closed_mask_row_count", closed_mask_row_count)
-            self.logger.record(
-                "m3s1/closed_mask_stop_attempt_ratio",
-                (
-                    closed_mask_stop_attempt_count / closed_mask_row_count
-                    if closed_mask_row_count > 0.0
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "m3s1/accepted_event_count",
-                float(sidecar.accepted_event_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s1/one_shot_violation_count",
-                float(sidecar.one_shot_violation_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s1/closed_mask_accepted_event_count",
-                float(sidecar.closed_mask_accepted_event_count) if sidecar else 0.0,
-            )
-            self.logger.record(
-                "m3s1/grouped_stopping_detach_latent",
-                float(self.m3s1_grouped_stopping_detach_latent),
-            )
+            self._record_m3s1_grouped_stopping_logs(m3s1_grouped_stopping_loss)
         if self._a7_event_credit_enabled():
-            self.logger.record(
-                "a7/event_credit_loss",
-                float(np.mean(first_event_credit_losses)) if first_event_credit_losses else 0.0,
-            )
-            self.logger.record(
-                "a7/event_credit_value_loss",
-                float(np.mean(first_event_credit_value_losses))
-                if first_event_credit_value_losses
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/event_credit_delta_align_loss",
-                (
-                    float(np.mean(first_event_credit_delta_align_losses))
-                    if first_event_credit_delta_align_losses
-                    else 0.0
-                ),
-            )
-            self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
-            self.logger.record(
-                "a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef)
-            )
-            self.logger.record(
-                "a7/event_credit_delta_align_positive_only",
-                float(self.a7_event_credit_delta_align_positive_only),
-            )
-            self.logger.record(
-                "a7/evc_separate_update_enabled",
-                float(self.a7_event_credit_separate_update_enabled),
-            )
-            self.logger.record(
-                "a7/evc_separate_update_max_grad_norm",
-                float(self.a7_event_credit_separate_update_max_grad_norm),
-            )
-            self.logger.record(
-                "a7/evc_separate_update_count_mean",
-                (
-                    float(np.mean(first_event_credit_separate_update_counts))
-                    if first_event_credit_separate_update_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_separate_update_grad_norm_mean",
-                (
-                    float(np.mean(first_event_credit_separate_update_grad_norms))
-                    if first_event_credit_separate_update_grad_norms
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_cross_rollout_context_rows",
-                float(getattr(self, "_a7_cross_rollout_last_context_row_count", 0)),
-            )
-            self.logger.record(
-                "a7/evc_carried_shadow_pending_envs",
-                float(getattr(self, "_a7_cross_rollout_last_carried_shadow_pending_envs", 0)),
-            )
-            self.logger.record(
-                "a7/evc_carried_shadow_positive_count_mean",
-                float(getattr(self, "_a7_cross_rollout_last_carried_shadow_positive_count", 0)),
-            )
-            self.logger.record(
-                "a7/evc_cross_rollout_first_event_count_mean",
-                float(getattr(self, "_a7_cross_rollout_last_first_event_count", 0)),
-            )
-            self.logger.record(
-                "a7/event_credit_legal_open_quality_weight",
-                float(self.a7_event_credit_legal_open_quality_weight),
-            )
-            self.logger.record(
-                "a7/evc_proj_enabled",
-                float(self.a7_event_credit_legal_projection_enabled),
-            )
-            self.logger.record(
-                "a7/evc_proj_value_coef",
-                float(self.a7_event_credit_projection_value_coef),
-            )
-            self.logger.record(
-                "a7/evc_proj_delta_coef",
-                float(self.a7_event_credit_projection_delta_align_coef),
-            )
-            self.logger.record(
-                "a7/event_credit_active_count_mean",
-                float(np.mean(first_event_credit_active_counts))
-                if first_event_credit_active_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/event_credit_target_positive_frac",
-                float(np.mean(first_event_credit_positive_fracs))
-                if first_event_credit_positive_fracs
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/event_credit_advantage_mean",
-                float(np.mean(first_event_credit_advantage_means))
-                if first_event_credit_advantage_means
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_proj_active_count_mean",
-                (
-                    float(np.mean(first_event_credit_projection_active_counts))
-                    if first_event_credit_projection_active_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_proj_candidate_count_mean",
-                (
-                    float(np.mean(first_event_credit_projection_candidate_counts))
-                    if first_event_credit_projection_candidate_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_proj_unsupported_count_mean",
-                (
-                    float(np.mean(first_event_credit_projection_unsupported_counts))
-                    if first_event_credit_projection_unsupported_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_src_shadow_count_mean",
-                float(np.mean(first_event_credit_source_shadow_counts))
-                if first_event_credit_source_shadow_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_deadline_count_mean",
-                float(np.mean(first_event_credit_source_deadline_counts))
-                if first_event_credit_source_deadline_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_early_count_mean",
-                float(np.mean(first_event_credit_source_early_counts))
-                if first_event_credit_source_early_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_pre_count_mean",
-                float(np.mean(first_event_credit_source_prewindow_counts))
-                if first_event_credit_source_prewindow_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_legal_open_quality_count_mean",
-                float(np.mean(first_event_credit_source_legal_open_quality_counts))
-                if first_event_credit_source_legal_open_quality_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_legal_open_quality_positive_count_mean",
-                float(np.mean(first_event_credit_source_legal_open_quality_positive_counts))
-                if first_event_credit_source_legal_open_quality_positive_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_deadline_positive_count_mean",
-                float(np.mean(first_event_credit_source_deadline_positive_counts))
-                if first_event_credit_source_deadline_positive_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_shadow_positive_count_mean",
-                float(np.mean(first_event_credit_source_shadow_positive_counts))
-                if first_event_credit_source_shadow_positive_counts
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_src_legal_open_quality_advantage_mean",
-                float(np.mean(first_event_credit_source_legal_open_quality_advantage_means))
-                if first_event_credit_source_legal_open_quality_advantage_means
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/evc_proj_advantage_mean",
-                (
-                    float(np.mean(first_event_credit_projection_advantage_means))
-                    if first_event_credit_projection_advantage_means
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/evc_proj_delta_mean",
-                (
-                    float(np.mean(first_event_credit_projection_delta_means))
-                    if first_event_credit_projection_delta_means
-                    else 0.0
-                ),
-            )
+            self._record_a7_event_credit_logs(stats)
 
         if self._a7_event_policy_margin_enabled():
-            self.logger.record(
-                "a7/event_policy_margin_loss",
-                float(np.mean(first_event_policy_margin_losses))
-                if first_event_policy_margin_losses
-                else 0.0,
-            )
-            self.logger.record(
-                "a7/event_policy_margin_coef", float(self.a7_event_policy_margin_coef)
-            )
-            self.logger.record("a7/event_policy_margin", float(self.a7_event_policy_margin))
-            self.logger.record(
-                "a7/event_policy_projection_margin_coef",
-                float(self.a7_event_policy_projection_margin_coef),
-            )
-            self.logger.record(
-                "a7/event_policy_separate_update_enabled",
-                float(self.a7_event_policy_separate_update_enabled),
-            )
-            self.logger.record(
-                "a7/event_policy_separate_update_max_grad_norm",
-                float(self.a7_event_policy_separate_update_max_grad_norm),
-            )
-            self.logger.record(
-                "a7/event_policy_separate_update_steps",
-                int(self.a7_event_policy_separate_update_steps),
-            )
-            self.logger.record(
-                "a7/event_policy_separate_update_count_mean",
-                (
-                    float(np.mean(first_event_policy_margin_separate_update_counts))
-                    if first_event_policy_margin_separate_update_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_separate_update_grad_norm_mean",
-                (
-                    float(np.mean(first_event_policy_margin_separate_update_grad_norms))
-                    if first_event_policy_margin_separate_update_grad_norms
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_active_count_mean",
-                (
-                    float(np.mean(first_event_policy_margin_active_counts))
-                    if first_event_policy_margin_active_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_target_positive_frac",
-                (
-                    float(np.mean(first_event_policy_margin_positive_fracs))
-                    if first_event_policy_margin_positive_fracs
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_delta_mean",
-                (
-                    float(np.mean(first_event_policy_margin_delta_means))
-                    if first_event_policy_margin_delta_means
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_delta_positive_frac",
-                (
-                    float(np.mean(first_event_policy_margin_delta_positive_fracs))
-                    if first_event_policy_margin_delta_positive_fracs
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_projection_active_count_mean",
-                (
-                    float(np.mean(first_event_policy_margin_projection_active_counts))
-                    if first_event_policy_margin_projection_active_counts
-                    else 0.0
-                ),
-            )
-            self.logger.record(
-                "a7/event_policy_margin_projection_delta_mean",
-                (
-                    float(np.mean(first_event_policy_margin_projection_delta_means))
-                    if first_event_policy_margin_projection_delta_means
-                    else 0.0
-                ),
-            )
+            self._record_a7_event_policy_margin_logs(stats)
 
         self.logger.record("train/n_updates", int(self._n_updates), exclude="tensorboard")
         self.logger.record("train/clip_range", float(clip_range))

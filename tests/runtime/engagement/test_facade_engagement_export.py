@@ -363,6 +363,7 @@ class FacadeEngagementExportTests(unittest.TestCase):
 
     setup = ef_py.BatchWorldSetupRequest()
     setup.seeds = [101, 202]
+    setup.time_steps = [0.05]
     setup.spawn_requests = [
       _spawn_request(
         world_index=1,
