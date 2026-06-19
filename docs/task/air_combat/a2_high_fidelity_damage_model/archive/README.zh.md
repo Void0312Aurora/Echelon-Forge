@@ -29,3 +29,5 @@
   damage 和诊断。
 - [missile_lethality_debris_wreck_lifecycle/](missile_lethality_debris_wreck_lifecycle/README.zh.md)：
   MLF-8 已验收的 diagnostics-only 脱落部件和终端残骸生命周期证据。
+- [missile_lethality_pk_statistical_trends/](missile_lethality_pk_statistical_trends/README.zh.md)：
+  MLF-9 已验收的有边界 Pk / 统计仿真趋势证据。

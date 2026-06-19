@@ -150,6 +150,7 @@ def _lethality_chain_rows(
     standard_spatial_keys: set[tuple[int, int]] = set()
     standard_component_keys: set[tuple[int, int]] = set()
     standard_component_damage_keys: set[tuple[int, int]] = set()
+    standard_structural_keys: set[tuple[int, int]] = set()
     standard_platform_keys: set[tuple[int, int]] = set()
     standard_lifecycle_keys: set[tuple[int, int]] = set()
 
@@ -451,6 +452,35 @@ def _lethality_chain_rows(
         rows.append(row)
         standard_component_damage_keys.add(
             (int(row.get("chain_id", 0) or 0), int(row.get("munition_id", 0) or 0))
+        )
+
+    for structural_event in list(getattr(engagement_events, "structural_breakup_events", []) or []):
+        base_kwargs = _lethality_header_base_kwargs(
+            episode=episode,
+            step=step,
+            sim_time_s=sim_time_s,
+            event=structural_event,
+            stage=chain_contract.STAGE_STRUCTURAL_BREAKUP,
+            source_event_kind="StructuralBreakupEvent",
+        )
+        row = _lethality_base_row(**base_kwargs)
+        row.update(
+            {
+                "breakup_state": str(getattr(structural_event, "breakup_state", "") or ""),
+                "break_mode": str(getattr(structural_event, "break_mode", "") or ""),
+                "detached_part_ref": str(
+                    getattr(structural_event, "detached_part_ref", "") or ""
+                ),
+                "detached_part_count": int(
+                    getattr(structural_event, "detached_part_count", 0) or 0
+                ),
+                "airframe_breakup": int(bool(getattr(structural_event, "airframe_breakup", False))),
+                "cause_event_id": _event_id(structural_event, "cause_event_id"),
+            }
+        )
+        rows.append(row)
+        standard_structural_keys.add(
+            (int(row.get("chain_id", 0) or 0), int(row.get("target_id", 0) or 0))
         )
 
     for platform_event in list(getattr(engagement_events, "platform_consequence_events", []) or []):
@@ -877,7 +907,16 @@ def _lethality_chain_rows(
             )
             rows.append(lifecycle)
 
-    return rows
+    stage_order = {stage: index for index, stage in enumerate(chain_contract.CANONICAL_STAGES)}
+    return sorted(
+        rows,
+        key=lambda row: (
+            int(row.get("chain_id", 0) or 0),
+            stage_order.get(str(row.get("stage", "") or ""), len(stage_order)),
+            int(row.get("event_id", 0) or 0),
+            int(row.get("source_event_id", 0) or 0),
+        ),
+    )
 
 
 def _append_unique_lethality_chain_rows(

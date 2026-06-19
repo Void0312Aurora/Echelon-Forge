@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import json
 import os
 import tempfile
 import unittest
@@ -377,6 +378,7 @@ class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
       probe._build_env = lambda *_args, **_kwargs: DummyEnv()
       with tempfile.TemporaryDirectory() as tmpdir:
         chain_csv_out = os.path.join(tmpdir, "chain.csv")
+        mlf9_report_json_out = os.path.join(tmpdir, "mlf9_report.json")
         payload = probe.run_probe(
           Namespace(
             scenario="dummy.json",
@@ -394,16 +396,23 @@ class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
             stochastic=False,
             csv_out="",
             chain_csv_out=chain_csv_out,
+            mlf9_report_json_out=mlf9_report_json_out,
+            mlf9_group_by="miss_distance_bucket,break_mode",
+            mlf9_confidence_level=0.95,
             json_out="",
             plot_out="",
           )
         )
 
         self.assertIn("lethality_chain_rows", payload)
-        self.assertEqual(len(payload["lethality_chain_rows"]), len(probe.LETHALITY_CHAIN_STAGES))
+        chain_stages = {str(row.get("stage", "")) for row in payload["lethality_chain_rows"]}
+        self.assertIn("nearest_approach", chain_stages)
+        self.assertIn("fuze", chain_stages)
+        self.assertIn("component_damage", chain_stages)
+        self.assertIn("platform_consequence", chain_stages)
         self.assertEqual(
           payload["episode_summaries"][0]["lethality_chain_row_count"],
-          len(probe.LETHALITY_CHAIN_STAGES),
+          len(payload["lethality_chain_rows"]),
         )
         self.assertEqual(payload["episode_summaries"][0]["lethality_chain_chain_count"], 1)
         self.assertTrue(os.path.exists(chain_csv_out))
@@ -413,6 +422,26 @@ class DiagnosticsProcessProbeSnapshotTests(unittest.TestCase):
         self.assertIn("stage", header)
         self.assertNotIn("last_effect_miss_distance_m", header)
         self.assertNotIn("last_damage_report_id", header)
+        self.assertIn("mlf9_statistical_trends", payload)
+        mlf9_report = payload["mlf9_statistical_trends"]
+        self.assertEqual(mlf9_report["schema_version"], "mlf9.statistical_trends.v1")
+        self.assertEqual(mlf9_report["sample_source"], "process_probe_lethality_chain_rows")
+        self.assertEqual(
+          mlf9_report["report_surface"],
+          "process_probe_retained_diagnostics_artifact",
+        )
+        self.assertEqual(mlf9_report["authority_boundary"]["real_world_pk"], False)
+        self.assertEqual(mlf9_report["authority_boundary"]["reward_authority"], False)
+        self.assertEqual(mlf9_report["authority_boundary"]["calibration_authority"], False)
+        self.assertEqual(mlf9_report["source_row_count"], len(payload["lethality_chain_rows"]))
+        self.assertTrue(os.path.exists(mlf9_report_json_out))
+        with open(mlf9_report_json_out, "r", encoding="utf-8") as f:
+          disk_report = json.load(f)
+        self.assertEqual(disk_report["schema_version"], mlf9_report["schema_version"])
+        self.assertEqual(disk_report["sample_source"], mlf9_report["sample_source"])
+        self.assertEqual(disk_report["report_surface"], mlf9_report["report_surface"])
+        self.assertEqual(disk_report["source_row_count"], mlf9_report["source_row_count"])
+        self.assertEqual(disk_report["authority_boundary"], mlf9_report["authority_boundary"])
     finally:
       probe._build_env = old_build_env
 

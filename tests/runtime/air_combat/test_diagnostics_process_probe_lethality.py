@@ -223,6 +223,26 @@ def _standard_component_damage_event() -> SimpleNamespace:
   )
 
 
+def _standard_structural_breakup_event() -> SimpleNamespace:
+  return SimpleNamespace(
+    header=_header(
+      chain_id=301,
+      event_id=109,
+      parent_event_id=107,
+      stage="structural_breakup",
+      status="observed",
+      reason="generic_research_structural_breakup_projection",
+      target_id=200,
+    ),
+    breakup_state="partial_detachment",
+    break_mode="wing_loss",
+    detached_part_ref="right_wing",
+    detached_part_count=1,
+    airframe_breakup=False,
+    cause_event_id=107,
+  )
+
+
 def _standard_lifecycle_event() -> SimpleNamespace:
   return SimpleNamespace(
     header=_header(
@@ -332,6 +352,7 @@ def _dummy_lethality_events() -> SimpleNamespace:
     spatial_coverage_events=[],
     component_load_events=[],
     component_damage_events=[],
+    structural_breakup_events=[_standard_structural_breakup_event()],
     lifecycle_transition_events=[],
   )
 
@@ -407,7 +428,13 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       self.assertEqual(row["chain_id"], 301)
       self.assertEqual(row["munition_id"], 501)
       self.assertEqual(row["target_id"], 200)
-      expected_status = "sampled" if row["stage"] == "component_damage" else "projected"
+      expected_status = (
+        "sampled"
+        if row["stage"] == "component_damage"
+        else "observed"
+        if row["stage"] == "structural_breakup"
+        else "projected"
+      )
       self.assertEqual(row["status"], expected_status)
 
     nearest = next(row for row in rows if row["stage"] == "nearest_approach")
@@ -442,6 +469,17 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
     self.assertAlmostEqual(component_damage["component_integrity_after"], 0.68, places=6)
     self.assertAlmostEqual(component_damage["component_failure_probability"], 0.82, places=6)
     self.assertAlmostEqual(component_damage["component_failure_sample"], 0.21, places=6)
+
+    structural = next(row for row in rows if row["stage"] == "structural_breakup")
+    self.assertEqual(structural["source_event_kind"], "StructuralBreakupEvent")
+    self.assertEqual(structural["source_event_id"], 109)
+    self.assertEqual(structural["parent_event_id"], 107)
+    self.assertEqual(structural["breakup_state"], "partial_detachment")
+    self.assertEqual(structural["break_mode"], "wing_loss")
+    self.assertEqual(structural["detached_part_ref"], "right_wing")
+    self.assertEqual(structural["detached_part_count"], 1)
+    self.assertEqual(structural["airframe_breakup"], 0)
+    self.assertEqual(structural["cause_event_id"], 107)
 
     platform = next(row for row in rows if row["stage"] == "platform_consequence")
     self.assertEqual(platform["parent_event_id"], 101)
@@ -629,6 +667,54 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       0.82,
       places=6,
     )
+    self.assertEqual(snapshot["lethality_chain_structural_breakup_count"], 1)
+    self.assertEqual(snapshot["lethality_chain_break_mode"], "wing_loss")
+    self.assertEqual(snapshot["lethality_chain_detached_part_ref"], "right_wing")
+    self.assertEqual(snapshot["lethality_chain_detached_part_count"], 1)
+
+  def test_standard_structural_breakup_event_projects_chain_row(self) -> None:
+    events = SimpleNamespace(
+      nearest_approach_events=[],
+      fuze_evaluation_events=[],
+      warhead_mechanism_events=[],
+      spatial_coverage_events=[],
+      component_load_events=[],
+      component_damage_events=[],
+      structural_breakup_events=[_standard_structural_breakup_event()],
+      platform_consequence_events=[],
+      lifecycle_transition_events=[],
+      effects_events=[],
+      damage_reports=[],
+      diagnostics_traces=[],
+    )
+
+    rows = probe._lethality_chain_rows(
+      episode=7,
+      step=12,
+      sim_time_s=4.5,
+      engagement_events=events,
+    )
+
+    self.assertEqual(len(rows), 1)
+    structural = rows[0]
+    self.assertEqual(structural["stage"], "structural_breakup")
+    self.assertEqual(structural["source_event_kind"], "StructuralBreakupEvent")
+    self.assertEqual(structural["source_event_id"], 109)
+    self.assertEqual(structural["parent_event_id"], 107)
+    self.assertEqual(structural["breakup_state"], "partial_detachment")
+    self.assertEqual(structural["break_mode"], "wing_loss")
+    self.assertEqual(structural["detached_part_ref"], "right_wing")
+    self.assertEqual(structural["detached_part_count"], 1)
+    self.assertEqual(structural["airframe_breakup"], 0)
+    self.assertEqual(structural["cause_event_id"], 107)
+
+    snapshot = probe._lethality_chain_snapshot_columns(rows)
+    self.assertEqual(snapshot["lethality_chain_structural_breakup_count"], 1)
+    self.assertEqual(snapshot["lethality_chain_breakup_state"], "partial_detachment")
+    self.assertEqual(snapshot["lethality_chain_break_mode"], "wing_loss")
+    self.assertEqual(snapshot["lethality_chain_detached_part_ref"], "right_wing")
+    self.assertEqual(snapshot["lethality_chain_detached_part_count"], 1)
+    self.assertEqual(snapshot["lethality_chain_structural_cause_event_id"], 107)
 
   def test_standard_lifecycle_event_projects_detached_part_diagnostics_row(self) -> None:
     events = SimpleNamespace(
@@ -638,6 +724,7 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
       spatial_coverage_events=[],
       component_load_events=[],
       component_damage_events=[],
+      structural_breakup_events=[],
       platform_consequence_events=[],
       lifecycle_transition_events=[_standard_lifecycle_event()],
       effects_events=[],
@@ -779,6 +866,7 @@ class DiagnosticsProcessProbeLethalityTests(unittest.TestCase):
 
   def test_untriggered_component_failure_sample_does_not_create_damage_stage(self) -> None:
     events = _dummy_lethality_events()
+    events.structural_breakup_events = []
     events.effects_events[0].component_mechanism_load_rows = [
       _effect_component_damage_row(sample=0.99)
     ]

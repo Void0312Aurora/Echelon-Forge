@@ -30,3 +30,5 @@ Current entry:
 - [missile_lethality_debris_wreck_lifecycle/](missile_lethality_debris_wreck_lifecycle/README.md):
   MLF-8 accepted diagnostics-only detached-part and terminal-wreck lifecycle
   evidence.
+- [missile_lethality_pk_statistical_trends/](missile_lethality_pk_statistical_trends/README.md):
+  MLF-9 accepted bounded Pk/statistical simulation-trend evidence.
