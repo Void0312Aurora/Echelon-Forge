@@ -510,15 +510,13 @@ inline bool damage_has_proximity_last_sample(const Missile &missile) {
 
 inline void damage_record_proximity_min_world_point(Missile &missile,
                                                     const Transform &target_transform,
-                                                    double missile_world_x,
-                                                    double missile_world_y,
-                                                    double missile_world_z,
-                                                    double current_time,
+                                                    double missile_world_x, double missile_world_y,
+                                                    double missile_world_z, double current_time,
                                                     double distance_m) {
     missile.proximity_min_dist_m = distance_m;
     missile.proximity_min_time_s = current_time;
-    const auto local_point = damage_world_point_to_local_body(
-        target_transform, missile_world_x, missile_world_y, missile_world_z);
+    const auto local_point = damage_world_point_to_local_body(target_transform, missile_world_x,
+                                                              missile_world_y, missile_world_z);
     missile.proximity_min_local_forward_m = local_point[0];
     missile.proximity_min_local_right_m = local_point[1];
     missile.proximity_min_local_up_m = local_point[2];
@@ -528,14 +526,12 @@ inline void damage_record_proximity_min_point(Missile &missile, const Transform 
                                               const Transform &missile_transform,
                                               double current_time, double distance_m) {
     damage_record_proximity_min_world_point(missile, target_transform, missile_transform.x,
-                                            missile_transform.y, missile_transform.z,
-                                            current_time, distance_m);
+                                            missile_transform.y, missile_transform.z, current_time,
+                                            distance_m);
 }
 
-inline void damage_store_proximity_sample(Missile &missile,
-                                          const Transform &target_transform,
-                                          const Transform &missile_transform,
-                                          double current_time,
+inline void damage_store_proximity_sample(Missile &missile, const Transform &target_transform,
+                                          const Transform &missile_transform, double current_time,
                                           double distance_m) {
     missile.proximity_last_sample_time_s = current_time;
     missile.proximity_last_missile_x_m = missile_transform.x;
@@ -600,10 +596,8 @@ inline bool damage_record_proximity_segment_min_point(Missile &missile,
         segment[0] * segment[0] + segment[1] * segment[1] + segment[2] * segment[2];
     double tau = 1.0;
     if (segment_len_sq > 1.0e-12) {
-        const double dot =
-            previous_relative[0] * segment[0] +
-            previous_relative[1] * segment[1] +
-            previous_relative[2] * segment[2];
+        const double dot = previous_relative[0] * segment[0] + previous_relative[1] * segment[1] +
+                           previous_relative[2] * segment[2];
         tau = std::clamp(-dot / segment_len_sq, 0.0, 1.0);
     }
 
@@ -612,19 +606,17 @@ inline bool damage_record_proximity_segment_min_point(Missile &missile,
         previous_relative[1] + segment[1] * tau,
         previous_relative[2] + segment[2] * tau,
     };
-    const double closest_distance_m =
-        std::sqrt(closest_relative[0] * closest_relative[0] +
-                  closest_relative[1] * closest_relative[1] +
-                  closest_relative[2] * closest_relative[2]);
+    const double closest_distance_m = std::sqrt(closest_relative[0] * closest_relative[0] +
+                                                closest_relative[1] * closest_relative[1] +
+                                                closest_relative[2] * closest_relative[2]);
     if (!(closest_distance_m < missile.proximity_min_dist_m)) {
         return false;
     }
 
     const double previous_time = missile.proximity_last_sample_time_s;
-    const double closest_time_s =
-        std::isfinite(previous_time)
-            ? previous_time + (current_time - previous_time) * tau
-            : current_time;
+    const double closest_time_s = std::isfinite(previous_time)
+                                      ? previous_time + (current_time - previous_time) * tau
+                                      : current_time;
     const std::array<double, 3> closest_missile{
         previous_missile[0] + (current_missile[0] - previous_missile[0]) * tau,
         previous_missile[1] + (current_missile[1] - previous_missile[1]) * tau,
@@ -640,8 +632,8 @@ inline bool damage_record_proximity_segment_min_point(Missile &missile,
     target_at_closest.y = closest_target[1];
     target_at_closest.z = closest_target[2];
     damage_record_proximity_min_world_point(missile, target_at_closest, closest_missile[0],
-                                            closest_missile[1], closest_missile[2],
-                                            closest_time_s, closest_distance_m);
+                                            closest_missile[1], closest_missile[2], closest_time_s,
+                                            closest_distance_m);
     return true;
 }
 
@@ -1341,8 +1333,7 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 m[i].fuze_nearest_approach_time_s = std::isfinite(m[i].proximity_min_time_s)
                                                         ? m[i].proximity_min_time_s
                                                         : current_time;
-                m[i].fuze_detonation_time_s =
-                    m[i].fuze_nearest_approach_time_s + fuze_delay_s;
+                m[i].fuze_detonation_time_s = m[i].fuze_nearest_approach_time_s + fuze_delay_s;
                 if (online_sensor_trigger) {
                     m[i].fuze_detonation_x = std::numeric_limits<double>::quiet_NaN();
                     m[i].fuze_detonation_y = std::numeric_limits<double>::quiet_NaN();

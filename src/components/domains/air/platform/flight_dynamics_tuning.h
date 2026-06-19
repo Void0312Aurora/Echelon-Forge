@@ -83,9 +83,9 @@ struct AeroTuning {
     // only the sensor-like normal load factor (InstrumentState.g_load_normal),
     // never god state.
     bool fbw_g_command_enabled = true;
-    double fbw_g_command_neutral = 1.0;   // g held at center stick
-    double fbw_g_command_max = 8.0;        // g at full aft stick
-    double fbw_g_command_min = -2.0;       // g at full forward stick
+    double fbw_g_command_neutral = 1.0;     // g held at center stick
+    double fbw_g_command_max = 8.0;         // g at full aft stick
+    double fbw_g_command_min = -2.0;        // g at full forward stick
     double fbw_pitch_rate_per_g_err = 0.30; // (rad/s) pitch-rate cmd per g of error
 
     // Control effectiveness fades at high Mach (transonic/supersonic loss of

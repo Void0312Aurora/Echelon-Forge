@@ -188,8 +188,11 @@ class DefaultControlModel : public IControlModel {
 
             const double heading_err =
                 normalize_angle(reference_heading_deg - lateral_reference_deg);
+            // Navigation heading increases clockwise, while the rotational system maps a positive
+            // bank/yaw coordination into decreasing heading. Convert the heading error into the
+            // physical bank sign expected by the control-surface path.
             const double target_bank =
-                std::clamp(heading_err * heading_to_bank_gain, -bank_limit_deg, bank_limit_deg);
+                std::clamp(-heading_err * heading_to_bank_gain, -bank_limit_deg, bank_limit_deg);
             const double bank_err = target_bank - transform.roll;
             stick_roll = std::clamp(bank_err * bank_to_stick_gain, -1.0, 1.0);
 
@@ -215,7 +218,7 @@ class DefaultControlModel : public IControlModel {
         } else if (has_control_state) {
             const double heading_err =
                 normalize_angle(control_state->lagged_heading_deg - transform.heading);
-            const double target_bank = std::clamp(heading_err * 2.0, -45.0, 45.0);
+            const double target_bank = std::clamp(-heading_err * 2.0, -45.0, 45.0);
             const double bank_err = target_bank - transform.roll;
             stick_roll = std::clamp(bank_err * 0.05, -1.0, 1.0);
 
@@ -324,11 +327,11 @@ class DefaultControlModel : public IControlModel {
                 const double g_neutral = pitch_tuning.fbw_g_command_neutral;
                 double g_cmd = g_neutral;
                 if (stick_pitch_f >= 0.0) {
-                    g_cmd = g_neutral +
-                            stick_pitch_f * (pitch_tuning.fbw_g_command_max - g_neutral);
+                    g_cmd =
+                        g_neutral + stick_pitch_f * (pitch_tuning.fbw_g_command_max - g_neutral);
                 } else {
-                    g_cmd = g_neutral +
-                            (-stick_pitch_f) * (pitch_tuning.fbw_g_command_min - g_neutral);
+                    g_cmd =
+                        g_neutral + (-stick_pitch_f) * (pitch_tuning.fbw_g_command_min - g_neutral);
                 }
                 double measured_nz = g_neutral;
                 if (const InstrumentState *inst = entity.get<InstrumentState>()) {
@@ -362,9 +365,9 @@ class DefaultControlModel : public IControlModel {
                 const double beta_rad = to_radians(aero->sideslip_angle);
                 const double phi_rad = to_radians(transform.roll);
                 const double theta_rad = to_radians(transform.pitch);
-                const double speed = std::sqrt(velocity.vx * velocity.vx +
-                                               velocity.vy * velocity.vy +
-                                               velocity.vz * velocity.vz);
+                const double speed =
+                    std::sqrt(velocity.vx * velocity.vx + velocity.vy * velocity.vy +
+                              velocity.vz * velocity.vz);
                 const double v_eff = std::max(50.0, speed);
                 // Manual/RL stick inputs expose the physical control-surface
                 // sign directly: a positive internal rudder command drives beta
@@ -384,8 +387,8 @@ class DefaultControlModel : public IControlModel {
                 if (rl_mode) {
                     r_cmd += (beta_gain * beta_rad) - (yaw_rate_gain * ang_vel->r);
                 } else {
-                    r_cmd += r_turn + (-beta_gain * beta_rad) +
-                             (-yaw_rate_gain * (ang_vel->r - r_turn));
+                    r_cmd +=
+                        r_turn + (-beta_gain * beta_rad) + (-yaw_rate_gain * (ang_vel->r - r_turn));
                 }
                 r_cmd = std::clamp(r_cmd, -kRMaxRadS, kRMaxRadS);
             }
@@ -420,10 +423,9 @@ class DefaultControlModel : public IControlModel {
                 }
                 constexpr double kPitchRecoverySoftDeg = 35.0;
                 if (transform.pitch > kPitchRecoverySoftDeg && stick_pitch_f < -0.05) {
-                    const double t =
-                        std::clamp((transform.pitch - kPitchRecoverySoftDeg) /
-                                       (kPitchHardDeg - kPitchRecoverySoftDeg),
-                                   0.0, 1.0);
+                    const double t = std::clamp((transform.pitch - kPitchRecoverySoftDeg) /
+                                                    (kPitchHardDeg - kPitchRecoverySoftDeg),
+                                                0.0, 1.0);
                     const double base_recovery_q = fbw_relaxed_for_rl ? -0.14 : -0.22;
                     const double extra_recovery_q = fbw_relaxed_for_rl ? -0.08 : -0.18;
                     q_cmd = std::min(q_cmd, base_recovery_q + extra_recovery_q * t);
@@ -479,8 +481,7 @@ class DefaultControlModel : public IControlModel {
             constexpr double kYawCmdGain = 1.2;
 
             auto &surfaces = entity.ensure<ControlSurfaceState>();
-            const double aileron_cmd =
-                std::clamp(kRollCmdGain * (p_cmd - ang_vel->p), -1.0, 1.0);
+            const double aileron_cmd = std::clamp(kRollCmdGain * (p_cmd - ang_vel->p), -1.0, 1.0);
             surfaces.aileron_cmd = aileron_cmd;
             surfaces.elevator_cmd = std::clamp(kPitchCmdGain * (q_cmd - ang_vel->q), -1.0, 1.0);
             ctl.dbg_q_cmd_final = q_cmd;
@@ -499,10 +500,9 @@ class DefaultControlModel : public IControlModel {
             double rudder_cmd = kYawCmdGain * (r_cmd - ang_vel->r);
             if (!on_ground && !fbw_off_for_rl) {
                 const AeroTuning *attached_tuning = entity.get<AeroTuning>();
-                const AeroTuning &ari_tuning =
-                    (attached_tuning && attached_tuning->enabled)
-                        ? *attached_tuning
-                        : flight_dynamics::default_aero_tuning();
+                const AeroTuning &ari_tuning = (attached_tuning && attached_tuning->enabled)
+                                                   ? *attached_tuning
+                                                   : flight_dynamics::default_aero_tuning();
                 double ari_gain = ari_tuning.ari_rudder_cmd_per_aileron_cmd;
                 if (fbw_relaxed_for_rl) {
                     ari_gain *= 0.7;

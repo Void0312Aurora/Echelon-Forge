@@ -321,8 +321,7 @@ TEST_SUITE("proximity_fuze") {
         missile_prev.z = 0.0;
         const double previous_dist = 20.0;
 
-        damage_record_proximity_min_point(missile, target_prev, missile_prev, 0.0,
-                                          previous_dist);
+        damage_record_proximity_min_point(missile, target_prev, missile_prev, 0.0, previous_dist);
         damage_store_proximity_sample(missile, target_prev, missile_prev, 0.0, previous_dist);
 
         Transform target_now{};

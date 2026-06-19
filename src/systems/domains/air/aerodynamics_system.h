@@ -407,16 +407,19 @@ inline void register_aerodynamics_system(flecs::world &ecs) {
                         const double ctrl_eff_scale = aero_physics::lookup_1d_or(
                             tuning.mach_breakpoints, tuning.control_effectiveness_scale_vs_mach,
                             mach, 1.0);
-                        const double elev_rad =
-                            Math::to_radians(surf->elevator_pos * tuning.elevator_max_deflection_deg);
+                        const double elev_rad = Math::to_radians(
+                            surf->elevator_pos * tuning.elevator_max_deflection_deg);
                         const double ail_rad =
                             Math::to_radians(surf->aileron_pos * tuning.aileron_max_deflection_deg);
                         const double rud_rad =
                             Math::to_radians(surf->rudder_pos * tuning.rudder_max_deflection_deg);
 
-                        Cm += pitch_authority * ctrl_eff_scale * tuning.cm_delta_e_per_rad * elev_rad;
-                        Cl_mom += roll_authority * ctrl_eff_scale * tuning.cl_delta_a_per_rad * ail_rad;
-                        Cn_mom += yaw_authority * ctrl_eff_scale * tuning.cn_delta_r_per_rad * rud_rad;
+                        Cm +=
+                            pitch_authority * ctrl_eff_scale * tuning.cm_delta_e_per_rad * elev_rad;
+                        Cl_mom +=
+                            roll_authority * ctrl_eff_scale * tuning.cl_delta_a_per_rad * ail_rad;
+                        Cn_mom +=
+                            yaw_authority * ctrl_eff_scale * tuning.cn_delta_r_per_rad * rud_rad;
                     }
 
                     // Convert Coefficients to Torque

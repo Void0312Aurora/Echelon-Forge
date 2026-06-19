@@ -193,10 +193,11 @@ void SimulationKernel::register_components_and_systems() {
     register_aero_state_system(ecs);     // Phase 3.2: Aero State (AoA/beta/q)
     flight_dynamics::register_propulsion_system(
         ecs); // Phase 3.3: Propulsion runtime state (throttle/spool/thrust/fuel basis)
-    register_force_system(ecs);        // Phase 3.4: Forces (gravity + propulsion thrust projection)
+    register_force_system(ecs); // Phase 3.4: Forces (gravity + propulsion thrust projection)
     flight_dynamics::register_actuator_system(
         ecs); // Phase 3.45: Actuators (control-surface commands -> lagged deflections)
-    register_aerodynamics_system(ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques + control-surface moments)
+    register_aerodynamics_system(
+        ecs); // Phase 3.5: Aerodynamics (lift/drag + aero torques + control-surface moments)
     register_ground_contact_system(
         ecs, environment_model_.get()); // Phase 3.6: Ground contact/friction/pitch damping
     register_rotational_integration_system(
