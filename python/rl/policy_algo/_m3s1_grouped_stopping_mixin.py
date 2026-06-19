@@ -387,4 +387,164 @@ class _M3S1GroupedStoppingMixin:
         return grouped_loss
 
 
+    def _record_m3s1_grouped_stopping_logs(self, m3s1_grouped_stopping_loss) -> None:
+        sidecar = getattr(self, "_m3s1_grouped_stopping_sidecar", None)
+        stats = (
+            m3s1_grouped_stopping_loss.stats if m3s1_grouped_stopping_loss is not None else None
+        )
+        diagnostics = getattr(
+            self,
+            "_m3s1_last_grouped_stopping_diagnostics",
+            _M3S1GroupedStoppingDiagnostics(),
+        )
+        active_row_count = float(stats.active_row_count) if stats else 0.0
+        boundary_cross_count = float(stats.boundary_cross_count) if stats else 0.0
+        boundary_cross_in_window_count = (
+            float(stats.boundary_cross_in_window_count) if stats else 0.0
+        )
+        closed_mask_stop_attempt_count = (
+            float(stats.closed_mask_stop_attempt_count) if stats else 0.0
+        )
+        closed_mask_row_count = float(diagnostics.closed_mask_row_count)
+        self.logger.record("m3s1/grouped_stopping_coef", float(self.m3s1_grouped_stopping_coef))
+        self.logger.record(
+            "m3s1/grouped_stopping_loss",
+            (
+                float(m3s1_grouped_stopping_loss.loss.detach().cpu().item())
+                if m3s1_grouped_stopping_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s1/grouped_stopping_unscaled_loss",
+            (
+                float(m3s1_grouped_stopping_loss.unscaled_loss.detach().cpu().item())
+                if m3s1_grouped_stopping_loss is not None
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s1/grouped_stopping_grad_norm", float(self._m3s1_last_grouped_stopping_grad_norm)
+        )
+        self.logger.record(
+            "m3s1/grouped_sidecar_group_count", float(len(sidecar.groups)) if sidecar else 0.0
+        )
+        self.logger.record(
+            "m3s1/grouped_active_group_count", float(stats.active_group_count) if stats else 0.0
+        )
+        self.logger.record("m3s1/grouped_row_count", float(stats.row_count) if stats else 0.0)
+        self.logger.record(
+            "m3s1/grouped_active_row_count", float(stats.active_row_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s1/window_group_count", float(stats.window_group_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s1/no_window_group_count", float(stats.no_window_group_count) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s1/early_prefix_group_count",
+            float(stats.early_prefix_group_count) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s1/right_censor_group_count",
+            float(stats.right_censor_group_count) if stats else 0.0,
+        )
+        self.logger.record(
+            "m3s1/grouped_labels_reached_loss",
+            1.0 if stats and stats.active_group_count > 0 else 0.0,
+        )
+        self.logger.record(
+            "m3s1/hazard_desirable_mass", float(stats.mean_p_window) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s1/hazard_early_mass", float(stats.mean_p_early) if stats else 0.0
+        )
+        self.logger.record(
+            "m3s1/hazard_deadline_mass", float(stats.mean_p_deadline) if stats else 0.0
+        )
+        self.logger.record("m3s1/no_event_mass", float(stats.mean_p_none) if stats else 0.0)
+        self.logger.record(
+            "m3s1/quality_delay", float(stats.mean_quality_delay) if stats else 0.0
+        )
+        self.logger.record("m3s1/stop_logit_mean", float(diagnostics.stop_logit_mean))
+        self.logger.record(
+            "m3s1/stop_logit_desirable_mean", float(diagnostics.stop_logit_desirable_mean)
+        )
+        self.logger.record(
+            "m3s1/stop_logit_prewindow_mean", float(diagnostics.stop_logit_prewindow_mean)
+        )
+        self.logger.record(
+            "m3s1/stop_logit_no_window_mean", float(diagnostics.stop_logit_no_window_mean)
+        )
+        self.logger.record(
+            "m3s1/stop_logit_closed_mask_mean", float(diagnostics.stop_logit_closed_mask_mean)
+        )
+        self.logger.record("m3s1/stop_logit_count", float(diagnostics.stop_logit_count))
+        self.logger.record(
+            "m3s1/stop_logit_desirable_count", float(diagnostics.stop_logit_desirable_count)
+        )
+        self.logger.record(
+            "m3s1/stop_logit_prewindow_count", float(diagnostics.stop_logit_prewindow_count)
+        )
+        self.logger.record(
+            "m3s1/stop_logit_no_window_count", float(diagnostics.stop_logit_no_window_count)
+        )
+        self.logger.record(
+            "m3s1/event_logit_delta_diagnostic_mean",
+            float(diagnostics.event_logit_delta_diagnostic_mean),
+        )
+        self.logger.record(
+            "m3s1/event_logit_delta_diagnostic_count",
+            float(diagnostics.event_logit_delta_diagnostic_count),
+        )
+        self.logger.record("m3s1/boundary_cross_count", boundary_cross_count)
+        self.logger.record(
+            "m3s1/boundary_cross_ratio",
+            boundary_cross_count / active_row_count if active_row_count > 0.0 else 0.0,
+        )
+        self.logger.record(
+            "m3s1/boundary_cross_in_window_count",
+            boundary_cross_in_window_count,
+        )
+        self.logger.record(
+            "m3s1/boundary_cross_in_window_ratio",
+            (
+                boundary_cross_in_window_count / boundary_cross_count
+                if boundary_cross_count > 0.0
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s1/closed_mask_stop_attempt_count",
+            closed_mask_stop_attempt_count,
+        )
+        self.logger.record("m3s1/closed_mask_row_count", closed_mask_row_count)
+        self.logger.record(
+            "m3s1/closed_mask_stop_attempt_ratio",
+            (
+                closed_mask_stop_attempt_count / closed_mask_row_count
+                if closed_mask_row_count > 0.0
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "m3s1/accepted_event_count",
+            float(sidecar.accepted_event_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s1/one_shot_violation_count",
+            float(sidecar.one_shot_violation_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s1/closed_mask_accepted_event_count",
+            float(sidecar.closed_mask_accepted_event_count) if sidecar else 0.0,
+        )
+        self.logger.record(
+            "m3s1/grouped_stopping_detach_latent",
+            float(self.m3s1_grouped_stopping_detach_latent),
+        )
+
+
+
 _ = Any  # suppress unused-import

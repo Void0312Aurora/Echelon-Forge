@@ -28,7 +28,7 @@ from .first_event_hazard import (
 )
 from .first_event_projection import project_air_combat_c2_roe_legal_open_observations
 
-from ._adaptive_kl_support import _A7FirstEventRolloutRow
+from ._adaptive_kl_support import _A7FirstEventRolloutRow, _TrainEpochStats
 
 
 class _A7EventCreditMixin:
@@ -799,6 +799,296 @@ class _A7EventCreditMixin:
         self.policy.optimizer.step()
         self.policy.optimizer.zero_grad(set_to_none=True)
         return credit_loss, grad_norm
+
+
+    def _record_a7_event_credit_logs(self, epoch_stats: "_TrainEpochStats") -> None:
+        self.logger.record(
+            "a7/event_credit_loss",
+            float(np.mean(epoch_stats.first_event_credit_losses)) if epoch_stats.first_event_credit_losses else 0.0,
+        )
+        self.logger.record(
+            "a7/event_credit_value_loss",
+            float(np.mean(epoch_stats.first_event_credit_value_losses))
+            if epoch_stats.first_event_credit_value_losses
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/event_credit_delta_align_loss",
+            (
+                float(np.mean(epoch_stats.first_event_credit_delta_align_losses))
+                if epoch_stats.first_event_credit_delta_align_losses
+                else 0.0
+            ),
+        )
+        self.logger.record("a7/event_credit_value_coef", float(self.a7_event_credit_value_coef))
+        self.logger.record(
+            "a7/event_credit_delta_align_coef", float(self.a7_event_credit_delta_align_coef)
+        )
+        self.logger.record(
+            "a7/event_credit_delta_align_positive_only",
+            float(self.a7_event_credit_delta_align_positive_only),
+        )
+        self.logger.record(
+            "a7/evc_separate_update_enabled",
+            float(self.a7_event_credit_separate_update_enabled),
+        )
+        self.logger.record(
+            "a7/evc_separate_update_max_grad_norm",
+            float(self.a7_event_credit_separate_update_max_grad_norm),
+        )
+        self.logger.record(
+            "a7/evc_separate_update_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_separate_update_counts))
+                if epoch_stats.first_event_credit_separate_update_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_separate_update_grad_norm_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_separate_update_grad_norms))
+                if epoch_stats.first_event_credit_separate_update_grad_norms
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_cross_rollout_context_rows",
+            float(getattr(self, "_a7_cross_rollout_last_context_row_count", 0)),
+        )
+        self.logger.record(
+            "a7/evc_carried_shadow_pending_envs",
+            float(getattr(self, "_a7_cross_rollout_last_carried_shadow_pending_envs", 0)),
+        )
+        self.logger.record(
+            "a7/evc_carried_shadow_positive_count_mean",
+            float(getattr(self, "_a7_cross_rollout_last_carried_shadow_positive_count", 0)),
+        )
+        self.logger.record(
+            "a7/evc_cross_rollout_first_event_count_mean",
+            float(getattr(self, "_a7_cross_rollout_last_first_event_count", 0)),
+        )
+        self.logger.record(
+            "a7/event_credit_legal_open_quality_weight",
+            float(self.a7_event_credit_legal_open_quality_weight),
+        )
+        self.logger.record(
+            "a7/evc_proj_enabled",
+            float(self.a7_event_credit_legal_projection_enabled),
+        )
+        self.logger.record(
+            "a7/evc_proj_value_coef",
+            float(self.a7_event_credit_projection_value_coef),
+        )
+        self.logger.record(
+            "a7/evc_proj_delta_coef",
+            float(self.a7_event_credit_projection_delta_align_coef),
+        )
+        self.logger.record(
+            "a7/event_credit_active_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_active_counts))
+            if epoch_stats.first_event_credit_active_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/event_credit_target_positive_frac",
+            float(np.mean(epoch_stats.first_event_credit_positive_fracs))
+            if epoch_stats.first_event_credit_positive_fracs
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/event_credit_advantage_mean",
+            float(np.mean(epoch_stats.first_event_credit_advantage_means))
+            if epoch_stats.first_event_credit_advantage_means
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_proj_active_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_projection_active_counts))
+                if epoch_stats.first_event_credit_projection_active_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_proj_candidate_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_projection_candidate_counts))
+                if epoch_stats.first_event_credit_projection_candidate_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_proj_unsupported_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_projection_unsupported_counts))
+                if epoch_stats.first_event_credit_projection_unsupported_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_src_shadow_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_shadow_counts))
+            if epoch_stats.first_event_credit_source_shadow_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_deadline_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_deadline_counts))
+            if epoch_stats.first_event_credit_source_deadline_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_early_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_early_counts))
+            if epoch_stats.first_event_credit_source_early_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_pre_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_prewindow_counts))
+            if epoch_stats.first_event_credit_source_prewindow_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_legal_open_quality_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_legal_open_quality_counts))
+            if epoch_stats.first_event_credit_source_legal_open_quality_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_legal_open_quality_positive_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_legal_open_quality_positive_counts))
+            if epoch_stats.first_event_credit_source_legal_open_quality_positive_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_deadline_positive_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_deadline_positive_counts))
+            if epoch_stats.first_event_credit_source_deadline_positive_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_shadow_positive_count_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_shadow_positive_counts))
+            if epoch_stats.first_event_credit_source_shadow_positive_counts
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_src_legal_open_quality_advantage_mean",
+            float(np.mean(epoch_stats.first_event_credit_source_legal_open_quality_advantage_means))
+            if epoch_stats.first_event_credit_source_legal_open_quality_advantage_means
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/evc_proj_advantage_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_projection_advantage_means))
+                if epoch_stats.first_event_credit_projection_advantage_means
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/evc_proj_delta_mean",
+            (
+                float(np.mean(epoch_stats.first_event_credit_projection_delta_means))
+                if epoch_stats.first_event_credit_projection_delta_means
+                else 0.0
+            ),
+        )
+
+    def _record_a7_event_policy_margin_logs(self, epoch_stats: "_TrainEpochStats") -> None:
+        self.logger.record(
+            "a7/event_policy_margin_loss",
+            float(np.mean(epoch_stats.first_event_policy_margin_losses))
+            if epoch_stats.first_event_policy_margin_losses
+            else 0.0,
+        )
+        self.logger.record(
+            "a7/event_policy_margin_coef", float(self.a7_event_policy_margin_coef)
+        )
+        self.logger.record("a7/event_policy_margin", float(self.a7_event_policy_margin))
+        self.logger.record(
+            "a7/event_policy_projection_margin_coef",
+            float(self.a7_event_policy_projection_margin_coef),
+        )
+        self.logger.record(
+            "a7/event_policy_separate_update_enabled",
+            float(self.a7_event_policy_separate_update_enabled),
+        )
+        self.logger.record(
+            "a7/event_policy_separate_update_max_grad_norm",
+            float(self.a7_event_policy_separate_update_max_grad_norm),
+        )
+        self.logger.record(
+            "a7/event_policy_separate_update_steps",
+            int(self.a7_event_policy_separate_update_steps),
+        )
+        self.logger.record(
+            "a7/event_policy_separate_update_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_separate_update_counts))
+                if epoch_stats.first_event_policy_margin_separate_update_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_separate_update_grad_norm_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_separate_update_grad_norms))
+                if epoch_stats.first_event_policy_margin_separate_update_grad_norms
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_active_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_active_counts))
+                if epoch_stats.first_event_policy_margin_active_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_target_positive_frac",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_positive_fracs))
+                if epoch_stats.first_event_policy_margin_positive_fracs
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_delta_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_delta_means))
+                if epoch_stats.first_event_policy_margin_delta_means
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_delta_positive_frac",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_delta_positive_fracs))
+                if epoch_stats.first_event_policy_margin_delta_positive_fracs
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_projection_active_count_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_projection_active_counts))
+                if epoch_stats.first_event_policy_margin_projection_active_counts
+                else 0.0
+            ),
+        )
+        self.logger.record(
+            "a7/event_policy_margin_projection_delta_mean",
+            (
+                float(np.mean(epoch_stats.first_event_policy_margin_projection_delta_means))
+                if epoch_stats.first_event_policy_margin_projection_delta_means
+                else 0.0
+            ),
+        )
+
 
 
 _ = Any  # suppress unused-import
