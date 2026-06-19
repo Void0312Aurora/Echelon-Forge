@@ -60,6 +60,13 @@ physical evidence packets are under [archive/](archive/README.md):
   contract and exposes bounded diagnostics trend reports, while refusing real
   weapon-specific Pk, target-specific lethality, reward authority, and
   calibration authority.
+- [archive/missile_lethality_calibration_gates/README.md](archive/missile_lethality_calibration_gates/README.md):
+  accepted / archived MLF-10 calibration-gate infrastructure. It inventories
+  existing evidence, defines a fail-closed admission contract, and retains a
+  deterministic current-repository report with zero admitted records. It does
+  not release real Pk, deterministic fuze, stock weapon/target lethality,
+  reward authority, entity-deletion authority, calibration authority, or
+  runtime parameter retuning.
 
 The current geometry-fidelity gap is tracked on the issue board:
 [Lethality Hitbox Geometry Fidelity Gap](../../issues/lethality_hitbox_geometry_fidelity_gap/README.md).
@@ -75,9 +82,12 @@ MLF-9 (Pk/statistical trends) is accepted and archived:
 [archive/missile_lethality_pk_statistical_trends/README.md](archive/missile_lethality_pk_statistical_trends/README.md).
 The old active path is only a compatibility pointer:
 [missile_lethality_pk_statistical_trends/README.md](missile_lethality_pk_statistical_trends/README.md).
-MLF-10 (calibration gates) still needs a later independent subproject. Do not
-continue inside archived MLF-1 through MLF-9 or proximity-fuze realism packages.
-These follow-ons do not reopen the sealed A2 package or create A9.
+MLF-10 (calibration gates) is accepted and archived:
+[archive/missile_lethality_calibration_gates/README.md](archive/missile_lethality_calibration_gates/README.md).
+The old active path is only a compatibility pointer:
+[missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md).
+Do not continue inside archived MLF-1 through MLF-10 or proximity-fuze realism
+packages. These follow-ons do not reopen the sealed A2 package or create A9.
 
 Reopen this line only through an explicit authority-promotion or new research
 request. Default air-combat work continues from [../README.md](../README.md).

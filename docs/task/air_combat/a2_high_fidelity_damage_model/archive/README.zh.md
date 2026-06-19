@@ -31,3 +31,5 @@
   MLF-8 已验收的 diagnostics-only 脱落部件和终端残骸生命周期证据。
 - [missile_lethality_pk_statistical_trends/](missile_lethality_pk_statistical_trends/README.zh.md)：
   MLF-9 已验收的有边界 Pk / 统计仿真趋势证据。
+- [missile_lethality_calibration_gates/](missile_lethality_calibration_gates/README.zh.md)：
+  MLF-10 已验收的 fail-closed 校准门证据和报告契约。
