@@ -23,6 +23,12 @@ A2 follow-on surface does not flatten into a long list of completed projects.
   split receiver handoff evidence. It does not claim true F-16 engineering
   geometry, default runtime replacement, training benefit, structural breakup,
   debris/wreck, Pk, or weapon-specific lethality.
+- [missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md):
+  active MLF-10 calibration-gate follow-on. It inventories existing
+  calibration-like engineering proxies, retained source gates, residuals, and
+  MLF-9 trends before any runtime parameter retuning. It does not release real
+  Pk, deterministic fuze, stock weapon/target lethality, reward authority, or
+  entity-deletion authority.
 
 ## Archived / Registered Entries
 
@@ -75,9 +81,10 @@ MLF-9 (Pk/statistical trends) is accepted and archived:
 [archive/missile_lethality_pk_statistical_trends/README.md](archive/missile_lethality_pk_statistical_trends/README.md).
 The old active path is only a compatibility pointer:
 [missile_lethality_pk_statistical_trends/README.md](missile_lethality_pk_statistical_trends/README.md).
-MLF-10 (calibration gates) still needs a later independent subproject. Do not
-continue inside archived MLF-1 through MLF-9 or proximity-fuze realism packages.
-These follow-ons do not reopen the sealed A2 package or create A9.
+MLF-10 (calibration gates) is open as an independent subproject:
+[missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md).
+Do not continue inside archived MLF-1 through MLF-9 or proximity-fuze realism
+packages. These follow-ons do not reopen the sealed A2 package or create A9.
 
 Reopen this line only through an explicit authority-promotion or new research
 request. Default air-combat work continues from [../README.md](../README.md).

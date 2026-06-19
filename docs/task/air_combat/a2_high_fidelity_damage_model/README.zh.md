@@ -18,6 +18,11 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
   F-16C 外壳区域、部件绑定、距离诊断、精细几何代理、表面/内部 receiver
   先验和跨区 split receiver handoff 证据。它不声明真实 F-16 工程几何、
   默认 runtime replacement、训练收益、结构解体、残骸、Pk 或具体弹种杀伤结论。
+- [missile_lethality_calibration_gates/README.zh.md](missile_lethality_calibration_gates/README.zh.md)：
+  active 的 MLF-10 校准门 follow-on。它在任何 runtime 参数重调之前，先盘点已有
+  calibration-like engineering proxies、retained source gates、residuals 和 MLF-9
+  trends。它不释放 real Pk、deterministic fuze、stock weapon/target lethality、
+  reward authority 或 entity-deletion authority。
 
 ## 已归档 / 已注册入口
 
@@ -64,8 +69,10 @@ MLF-9（Pk/统计趋势）已验收并归档：
 [archive/missile_lethality_pk_statistical_trends/README.zh.md](archive/missile_lethality_pk_statistical_trends/README.zh.md)。
 旧 active 路径仅保留兼容指针：
 [missile_lethality_pk_statistical_trends/README.zh.md](missile_lethality_pk_statistical_trends/README.zh.md)。
-MLF-10（校准门）仍需后续独立子项目。不得继续写入已归档的 MLF-1 到 MLF-9 或近炸引信现实性包。
-这些 follow-on 不重开已封存 A2 包，也不创建 A9。
+MLF-10（校准门）已作为独立子项目打开：
+[missile_lethality_calibration_gates/README.zh.md](missile_lethality_calibration_gates/README.zh.md)。
+不得继续写入已归档的 MLF-1 到 MLF-9 或近炸引信现实性包。这些 follow-on 不重开已封存
+A2 包，也不创建 A9。
 
 只有在明确 authority-promotion 或新 research 请求下才重开本线。默认空战工作继续从
 [../README.zh.md](../README.zh.md) 进入。
