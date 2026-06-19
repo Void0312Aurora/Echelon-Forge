@@ -90,7 +90,17 @@ def _positive_int(value: Any) -> int:
 
 def _requested_authorities(record: Mapping[str, Any]) -> list[str]:
     requests = _mapping(record.get("authority_requests"))
-    return [field for field in AUTHORITY_FIELDS if bool(requests.get(field, False))]
+    return [field for field in AUTHORITY_FIELDS if requests.get(field) is True]
+
+
+def _authority_request_blockers(record: Mapping[str, Any]) -> list[str]:
+    requests = _mapping(record.get("authority_requests"))
+    blockers = [
+        f"authority_request_not_boolean:{field}"
+        for field in AUTHORITY_FIELDS
+        if field in requests and not isinstance(requests[field], bool)
+    ]
+    return sorted(set(blockers))
 
 
 def _scope_blockers(scope: Mapping[str, Any]) -> list[str]:
@@ -136,6 +146,8 @@ def _common_authority_blockers(
     blockers = list(manifest_blockers)
     if _string(record.get("schema_version")) != RECORD_SCHEMA_VERSION:
         blockers.append("record_schema_version_invalid")
+    if not _string(record.get("evidence_id")):
+        blockers.append("evidence_id_missing")
     if _string(record.get("source_kind")) not in AUTHORITY_ELIGIBLE_SOURCE_KINDS:
         blockers.append("source_kind_not_authority_eligible")
     if not _string(record.get("source_ref")):
@@ -186,6 +198,8 @@ def audit_evidence_record(
 ) -> dict[str, Any]:
     normalized = dict(record)
     evidence_id = _string(normalized.get("evidence_id")) or "missing_evidence_id"
+    authority_requests = _mapping(normalized.get("authority_requests"))
+    request_blockers = _authority_request_blockers(normalized)
     requested = _requested_authorities(normalized)
     residuals = _string_list(normalized.get("residuals"))
     authority_decisions: dict[str, dict[str, Any]] = {}
@@ -211,13 +225,21 @@ def audit_evidence_record(
         normalized,
         manifest_blockers=manifest_blockers,
     )
+    common_blockers = sorted(set(common_blockers + request_blockers))
     admitted_fields: list[str] = []
     all_blockers: list[str] = []
     for field in AUTHORITY_FIELDS:
         is_requested = field in requested
         reasons: list[str] = []
         decision = "not_requested"
-        if is_requested:
+        malformed_request = field in authority_requests and not isinstance(
+            authority_requests[field], bool
+        )
+        if malformed_request:
+            reasons.append(f"authority_request_not_boolean:{field}")
+            decision = "blocked"
+            all_blockers.extend(reasons)
+        elif is_requested:
             if field in FORBIDDEN_AUTHORITY_FIELDS:
                 reasons.append(f"authority_forbidden_in_v1:{field}")
             else:
@@ -249,18 +271,30 @@ def audit_evidence_record(
             classification = "admitted"
             gate_status = "passed"
     else:
-        input_class = _string(normalized.get("evidence_class"))
-        if input_class == "engineering_proxy":
-            classification = "engineering_proxy"
-        elif input_class == "calibration_candidate":
-            classification = "calibration_candidate"
-        elif input_class == "blocked":
+        if all_blockers:
             classification = "blocked"
+            gate_status = "fail_closed"
         else:
-            classification = "retained_non_authoritative"
-        gate_status = "not_requested" if classification != "blocked" else "fail_closed"
-        if classification == "blocked":
-            all_blockers.extend(residuals or ["evidence_marked_blocked"])
+            input_class = _string(normalized.get("evidence_class"))
+            if input_class == "engineering_proxy":
+                classification = "engineering_proxy"
+            elif input_class == "calibration_candidate":
+                classification = "calibration_candidate"
+            elif input_class == "blocked":
+                classification = "blocked"
+            else:
+                classification = "retained_non_authoritative"
+            gate_status = "not_requested" if classification != "blocked" else "fail_closed"
+            if classification == "blocked":
+                all_blockers.extend(residuals or ["evidence_marked_blocked"])
+
+    if classification != "admitted":
+        demotion_reasons = sorted(set(all_blockers))
+        admitted_fields = []
+        for decision in authority_decisions.values():
+            if decision["decision"] == "admitted":
+                decision["decision"] = "blocked"
+                decision["reasons"] = demotion_reasons
 
     return {
         "evidence_id": evidence_id,
@@ -309,6 +343,7 @@ def audit_manifest(
             "scope": decision["scope"],
         }
         for decision in decisions
+        if decision.get("classification") == "admitted" and decision.get("gate_status") == "passed"
         for field in decision.get("admitted_authority_fields", [])
     ]
     decision_counts = {name: int(counts.get(name, 0)) for name in CLASSIFICATIONS}
@@ -345,7 +380,7 @@ def _load_manifest(path: str) -> dict[str, Any]:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Audit MLF-10 calibration evidence with fail-closed defaults.",
+        description="Audit calibration evidence with fail-closed defaults.",
     )
     parser.add_argument("--manifest_json", required=True)
     parser.add_argument("--json_out", default="")

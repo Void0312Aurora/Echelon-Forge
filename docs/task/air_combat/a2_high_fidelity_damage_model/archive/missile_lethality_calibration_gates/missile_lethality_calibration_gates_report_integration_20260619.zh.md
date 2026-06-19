@@ -15,7 +15,7 @@
 生成命令：
 
 ```text
-python tools/diagnostics/mlf10_calibration_admission.py \
+python tools/diagnostics/calibration_admission_audit.py \
   --manifest_json docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_evidence_manifest_20260619.json \
   --json_out docs/task/air_combat/a2_high_fidelity_damage_model/archive/missile_lethality_calibration_gates/mlf10_calibration_admission_report_20260619.json \
   --report_surface mlf10_retained_diagnostics_artifact

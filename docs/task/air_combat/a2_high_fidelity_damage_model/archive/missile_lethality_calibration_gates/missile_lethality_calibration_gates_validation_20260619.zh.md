@@ -22,9 +22,9 @@ entity deletion。
 
 ```text
 python -m py_compile \
-  tools/diagnostics/mlf10_calibration_admission.py \
+  tools/diagnostics/calibration_admission_audit.py \
   tools/diagnostics/mlf9_statistical_trends.py \
-  tests/tools/test_mlf10_calibration_admission.py \
+  tests/tools/test_calibration_admission_audit.py \
   tests/tools/test_mlf9_statistical_trends.py
 ```
 
@@ -33,19 +33,19 @@ python -m py_compile \
 ```text
 python -m pytest -q -p no:cacheprovider \
   --basetemp Temp/mlf10-validation-pytest \
-  tests/tools/test_mlf10_calibration_admission.py \
+  tests/tools/test_calibration_admission_audit.py \
   tests/tools/test_mlf9_statistical_trends.py \
   tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
-结果：`7 passed`。
+结果：`21 passed`。
 
 Retained report 已重新生成到 `Temp/mlf10-validation-report.json`，并与
 [mlf10_calibration_admission_report_20260619.json](mlf10_calibration_admission_report_20260619.json)
 逐字节比较。结果：match。
 
-`git diff --check` 通过。本地 Markdown 验证覆盖 18 个 MLF-10 和父级索引 Markdown
-文件，`missing_local_links=0`。
+`git diff --check` 通过。本地 Markdown 验证覆盖 20 个 archive Markdown 文件和
+132 个本地链接，`missing_local_links=0`。
 
 ## 当前证据判定
 

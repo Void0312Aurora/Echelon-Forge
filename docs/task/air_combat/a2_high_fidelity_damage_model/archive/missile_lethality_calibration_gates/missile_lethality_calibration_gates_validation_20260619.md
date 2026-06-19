@@ -22,9 +22,9 @@ retuning, reward authority, or entity deletion.
 
 ```text
 python -m py_compile \
-  tools/diagnostics/mlf10_calibration_admission.py \
+  tools/diagnostics/calibration_admission_audit.py \
   tools/diagnostics/mlf9_statistical_trends.py \
-  tests/tools/test_mlf10_calibration_admission.py \
+  tests/tools/test_calibration_admission_audit.py \
   tests/tools/test_mlf9_statistical_trends.py
 ```
 
@@ -33,20 +33,20 @@ Result: pass.
 ```text
 python -m pytest -q -p no:cacheprovider \
   --basetemp Temp/mlf10-validation-pytest \
-  tests/tools/test_mlf10_calibration_admission.py \
+  tests/tools/test_calibration_admission_audit.py \
   tests/tools/test_mlf9_statistical_trends.py \
   tests/architecture/damage_model/test_source_admission_audit.py
 ```
 
-Result: `7 passed`.
+Result: `21 passed`.
 
 The retained report was regenerated to `Temp/mlf10-validation-report.json` and
 compared byte-for-byte with
 [mlf10_calibration_admission_report_20260619.json](mlf10_calibration_admission_report_20260619.json).
 Result: match.
 
-`git diff --check` passed. Local Markdown validation covered 18 MLF-10 and
-parent-index Markdown files with `missing_local_links=0`.
+`git diff --check` passed. Local Markdown validation covered 20 archive
+Markdown files and 132 local links with `missing_local_links=0`.
 
 ## Current Evidence Decision
 

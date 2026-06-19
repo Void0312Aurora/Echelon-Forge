@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools.diagnostics import mlf10_calibration_admission as mlf10
+from tools.diagnostics import calibration_admission_audit as audit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -19,7 +19,7 @@ CURRENT_MANIFEST = (
 
 
 def _non_claims() -> list[str]:
-    return list(mlf10.REQUIRED_NON_CLAIMS)
+    return list(audit.REQUIRED_NON_CLAIMS)
 
 
 def _scope() -> dict[str, str]:
@@ -35,7 +35,7 @@ def _scope() -> dict[str, str]:
 
 def _base_record(evidence_id: str) -> dict[str, object]:
     return {
-        "schema_version": mlf10.RECORD_SCHEMA_VERSION,
+        "schema_version": audit.RECORD_SCHEMA_VERSION,
         "evidence_id": evidence_id,
         "evidence_class": "calibration_candidate",
         "source_kind": "validated_physics_surrogate",
@@ -69,21 +69,21 @@ def _base_record(evidence_id: str) -> dict[str, object]:
 
 def _manifest(*records: dict[str, object]) -> dict[str, object]:
     return {
-        "schema_version": mlf10.MANIFEST_SCHEMA_VERSION,
+        "schema_version": audit.MANIFEST_SCHEMA_VERSION,
         "manifest_id": "test_manifest",
         "non_claims": _non_claims(),
         "evidence_records": list(records),
     }
 
 
-def test_mlf10_admits_only_eligible_field_after_every_gate_passes() -> None:
+def test_admits_only_eligible_field_after_every_gate_passes() -> None:
     record = _base_record("ADMIT-001")
     record["authority_requests"] = {"effect_scale_authority": True}
 
-    report = mlf10.audit_manifest(_manifest(record))
+    report = audit.audit_manifest(_manifest(record))
     decision = report["decisions"][0]
 
-    assert report["schema_version"] == mlf10.REPORT_SCHEMA_VERSION
+    assert report["schema_version"] == audit.REPORT_SCHEMA_VERSION
     assert report["decision_counts"]["admitted"] == 1
     assert decision["classification"] == "admitted"
     assert decision["authority_decisions"]["effect_scale_authority"]["decision"] == "admitted"
@@ -97,7 +97,7 @@ def test_mlf10_admits_only_eligible_field_after_every_gate_passes() -> None:
     assert report["authority_boundary"]["real_world_pk"] is False
 
 
-def test_mlf10_keeps_engineering_proxy_and_synthetic_report_non_authoritative() -> None:
+def test_keeps_engineering_proxy_and_synthetic_report_non_authoritative() -> None:
     proxy = _base_record("PROXY-001")
     proxy.update(
         {
@@ -119,7 +119,7 @@ def test_mlf10_keeps_engineering_proxy_and_synthetic_report_non_authoritative() 
         }
     )
 
-    report = mlf10.audit_manifest(_manifest(retained, proxy))
+    report = audit.audit_manifest(_manifest(retained, proxy))
 
     assert [item["evidence_id"] for item in report["decisions"]] == [
         "MLF9-001",
@@ -130,7 +130,7 @@ def test_mlf10_keeps_engineering_proxy_and_synthetic_report_non_authoritative() 
     assert report["decision_counts"]["admitted"] == 0
 
 
-def test_mlf10_fails_closed_for_missing_rights_and_forbidden_authority() -> None:
+def test_fails_closed_for_missing_rights_and_forbidden_authority() -> None:
     record = _base_record("BLOCK-001")
     record["rights_status"] = "candidate_only"
     record["authority_requests"] = {
@@ -138,7 +138,7 @@ def test_mlf10_fails_closed_for_missing_rights_and_forbidden_authority() -> None
         "pk_authority": True,
     }
 
-    report = mlf10.audit_manifest(_manifest(record))
+    report = audit.audit_manifest(_manifest(record))
     decision = report["decisions"][0]
 
     assert decision["classification"] == "blocked"
@@ -150,7 +150,58 @@ def test_mlf10_fails_closed_for_missing_rights_and_forbidden_authority() -> None
     assert report["admitted_authorities"] == []
 
 
-def test_mlf10_rejects_ineligible_source_without_trusting_input_admitted_label() -> None:
+def test_blocks_mixed_eligible_and_forbidden_authority_without_publishing_grant() -> None:
+    record = _base_record("MIXED-001")
+    record["authority_requests"] = {
+        "effect_scale_authority": True,
+        "pk_authority": True,
+    }
+
+    report = audit.audit_manifest(_manifest(record))
+    decision = report["decisions"][0]
+
+    assert decision["classification"] == "blocked"
+    assert decision["gate_status"] == "fail_closed"
+    assert decision["admitted_authority_fields"] == []
+    assert report["admitted_authorities"] == []
+    assert decision["authority_decisions"]["effect_scale_authority"]["decision"] == "blocked"
+    assert (
+        "authority_forbidden_in_v1:pk_authority"
+        in decision["authority_decisions"]["effect_scale_authority"]["reasons"]
+    )
+
+
+def test_non_boolean_authority_request_fails_closed_without_truthy_admission() -> None:
+    record = _base_record("BADBOOL-001")
+    record["authority_requests"] = {"effect_scale_authority": "false"}
+
+    report = audit.audit_manifest(_manifest(record))
+    decision = report["decisions"][0]
+
+    assert decision["classification"] == "blocked"
+    assert decision["gate_status"] == "fail_closed"
+    assert "authority_request_not_boolean:effect_scale_authority" in decision["blocking_reasons"]
+    assert decision["authority_decisions"]["effect_scale_authority"]["requested"] is False
+    assert decision["authority_decisions"]["effect_scale_authority"]["decision"] == "blocked"
+    assert report["admitted_authorities"] == []
+
+
+def test_missing_evidence_id_fails_closed_before_authority_grant() -> None:
+    record = _base_record("")
+    record["authority_requests"] = {"effect_scale_authority": True}
+
+    report = audit.audit_manifest(_manifest(record))
+    decision = report["decisions"][0]
+
+    assert decision["evidence_id"] == "missing_evidence_id"
+    assert decision["classification"] == "blocked"
+    assert decision["gate_status"] == "fail_closed"
+    assert "evidence_id_missing" in decision["blocking_reasons"]
+    assert decision["authority_decisions"]["effect_scale_authority"]["decision"] == "blocked"
+    assert report["admitted_authorities"] == []
+
+
+def test_rejects_ineligible_source_without_trusting_input_admitted_label() -> None:
     record = _base_record("REJECT-001")
     record.update(
         {
@@ -160,28 +211,26 @@ def test_mlf10_rejects_ineligible_source_without_trusting_input_admitted_label()
         }
     )
 
-    decision = mlf10.audit_manifest(_manifest(record))["decisions"][0]
+    decision = audit.audit_manifest(_manifest(record))["decisions"][0]
 
     assert decision["classification"] == "rejected"
     assert decision["authority_decisions"]["effect_scale_authority"]["decision"] == "rejected"
 
 
-def test_mlf10_manifest_missing_non_claim_fails_closed() -> None:
+def test_manifest_missing_non_claim_fails_closed() -> None:
     record = _base_record("BLOCK-002")
     record["authority_requests"] = {"component_failure_probability_authority": True}
     manifest = _manifest(record)
-    manifest["non_claims"] = [
-        claim for claim in _non_claims() if claim != "real_world_pk"
-    ]
+    manifest["non_claims"] = [claim for claim in _non_claims() if claim != "real_world_pk"]
 
-    report = mlf10.audit_manifest(manifest)
+    report = audit.audit_manifest(manifest)
 
     assert "manifest_non_claim_missing:real_world_pk" in report["manifest_blocking_reasons"]
     assert report["decisions"][0]["classification"] == "blocked"
     assert report["decision_counts"]["admitted"] == 0
 
 
-def test_mlf10_cli_writes_retained_report(tmp_path: Path) -> None:
+def test_cli_writes_retained_report(tmp_path: Path) -> None:
     record = _base_record("CLI-001")
     record.update(
         {
@@ -198,7 +247,7 @@ def test_mlf10_cli_writes_retained_report(tmp_path: Path) -> None:
     subprocess.run(
         [
             sys.executable,
-            "tools/diagnostics/mlf10_calibration_admission.py",
+            "tools/diagnostics/calibration_admission_audit.py",
             "--manifest_json",
             str(manifest_path),
             "--json_out",
@@ -215,10 +264,10 @@ def test_mlf10_cli_writes_retained_report(tmp_path: Path) -> None:
     assert report["decision_counts"]["admitted"] == 0
 
 
-def test_mlf10_current_repository_manifest_remains_fail_closed() -> None:
+def test_current_repository_manifest_remains_fail_closed() -> None:
     manifest = json.loads(CURRENT_MANIFEST.read_text(encoding="utf-8"))
 
-    report = mlf10.audit_manifest(
+    report = audit.audit_manifest(
         manifest,
         manifest_ref=CURRENT_MANIFEST.relative_to(REPO_ROOT).as_posix(),
         report_surface="current_repository_regression",

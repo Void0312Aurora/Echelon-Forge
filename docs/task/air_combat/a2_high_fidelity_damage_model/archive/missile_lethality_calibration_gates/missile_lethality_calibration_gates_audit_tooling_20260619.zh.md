@@ -8,9 +8,9 @@
 ## 实现
 
 - 工具：
-  [mlf10_calibration_admission.py](../../../../../../tools/diagnostics/mlf10_calibration_admission.py)
+  [calibration_admission_audit.py](../../../../../../tools/diagnostics/calibration_admission_audit.py)
 - 聚焦测试：
-  [test_mlf10_calibration_admission.py](../../../../../../tests/tools/test_mlf10_calibration_admission.py)
+  [test_calibration_admission_audit.py](../../../../../../tests/tools/test_calibration_admission_audit.py)
 - 契约：
   [missile_lethality_calibration_admission_contract_20260619.zh.md](missile_lethality_calibration_admission_contract_20260619.zh.md)
 
@@ -27,6 +27,9 @@
 - retained MLF-9-style synthetic reports；
 - fail-closed rights 和 source gates；
 - v1 禁止的 Pk request；
+- eligible 和 forbidden authority 混合请求时不发布 grant；
+- 非布尔 authority request 值；
+- 缺失 evidence identifier；
 - rejected sources；
 - manifest-level non-claim failure；
 - CLI retained-report 输出；
@@ -36,15 +39,15 @@
 
 ```text
 python -m py_compile \
-  tools/diagnostics/mlf10_calibration_admission.py \
-  tests/tools/test_mlf10_calibration_admission.py
+  tools/diagnostics/calibration_admission_audit.py \
+  tests/tools/test_calibration_admission_audit.py
 
 python -m pytest -q -p no:cacheprovider \
   --basetemp Temp/mlf10-pytest-current \
-  tests/tools/test_mlf10_calibration_admission.py
+  tests/tools/test_calibration_admission_audit.py
 ```
 
-结果：`7 passed`。
+结果：`10 passed`。
 
 ## 边界
 

@@ -8,9 +8,9 @@ Chinese companion:
 ## Implementation
 
 - Tool:
-  [mlf10_calibration_admission.py](../../../../../../tools/diagnostics/mlf10_calibration_admission.py)
+  [calibration_admission_audit.py](../../../../../../tools/diagnostics/calibration_admission_audit.py)
 - Focused tests:
-  [test_mlf10_calibration_admission.py](../../../../../../tests/tools/test_mlf10_calibration_admission.py)
+  [test_calibration_admission_audit.py](../../../../../../tests/tools/test_calibration_admission_audit.py)
 - Contract:
   [missile_lethality_calibration_admission_contract_20260619.md](missile_lethality_calibration_admission_contract_20260619.md)
 
@@ -28,6 +28,9 @@ Focused fixtures cover:
 - retained MLF-9-style synthetic reports;
 - fail-closed rights and source gates;
 - v1-forbidden Pk requests;
+- mixed eligible and forbidden authority requests without publishing a grant;
+- non-boolean authority request values;
+- missing evidence identifiers;
 - rejected sources;
 - manifest-level non-claim failures;
 - CLI retained-report output;
@@ -37,15 +40,15 @@ Focused fixtures cover:
 
 ```text
 python -m py_compile \
-  tools/diagnostics/mlf10_calibration_admission.py \
-  tests/tools/test_mlf10_calibration_admission.py
+  tools/diagnostics/calibration_admission_audit.py \
+  tests/tools/test_calibration_admission_audit.py
 
 python -m pytest -q -p no:cacheprovider \
   --basetemp Temp/mlf10-pytest-current \
-  tests/tools/test_mlf10_calibration_admission.py
+  tests/tools/test_calibration_admission_audit.py
 ```
 
-Result: `7 passed`.
+Result: `10 passed`.
 
 ## Boundary
 
