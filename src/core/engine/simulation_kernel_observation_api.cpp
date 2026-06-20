@@ -44,7 +44,7 @@ TrackClass classify_observation_contact(const Alliance *owner_alliance,
 
 std::vector<double> SimulationKernel::get_unit_position(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         const Transform *t = e.get<Transform>();
         if (t) {
             return {t->x, t->y, t->z};
@@ -59,7 +59,7 @@ RecentEngagementEvents SimulationKernel::export_recent_engagement_events() const
 
 std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         const Velocity *v = e.get<Velocity>();
         if (v) {
             return {v->vx, v->vy, v->vz};
@@ -70,7 +70,7 @@ std::vector<double> SimulationKernel::get_unit_velocity(uint64_t entity_id) {
 
 double SimulationKernel::get_unit_heading(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return 0.0;
     }
 
@@ -95,7 +95,7 @@ double SimulationKernel::get_unit_heading(uint64_t entity_id) {
 
 std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         const ContactList *c = e.get<ContactList>();
         if (c) {
             return c->contacts;
@@ -106,7 +106,7 @@ std::vector<Detection> SimulationKernel::get_detections(uint64_t entity_id) {
 
 InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const InstrumentState *inst = e.get<InstrumentState>()) {
             return *inst;
         }
@@ -116,7 +116,7 @@ InstrumentState SimulationKernel::get_instrument_state(uint64_t entity_id) {
 
 EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const EGI *egi = e.get<EGI>()) {
             return *egi;
         }
@@ -126,7 +126,7 @@ EGI SimulationKernel::get_egi_state(uint64_t entity_id) {
 
 int SimulationKernel::get_unit_type(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return 0;
     }
 
@@ -141,7 +141,7 @@ bool SimulationKernel::is_unit_active(uint64_t entity_id) {
 void SimulationKernel::set_contact_list(uint64_t entity_id,
                                         const std::vector<Detection> &detections) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         ContactList contacts{};
         contacts.contacts = detections;
         const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
@@ -160,7 +160,7 @@ void SimulationKernel::set_contact_list(uint64_t entity_id,
 
 void SimulationKernel::set_unit_ammo(uint64_t entity_id, int missiles_remaining, int max_missiles) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         spdlog::warn("Attempted to set ammo for invalid entity ID: {}", entity_id);
         return;
     }
@@ -172,7 +172,7 @@ void SimulationKernel::set_unit_ammo(uint64_t entity_id, int missiles_remaining,
 void SimulationKernel::set_weapon_cooldown(uint64_t entity_id, double cooldown_s,
                                            double last_fire_time) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         spdlog::warn("Attempted to set weapon cooldown for invalid entity ID: {}", entity_id);
         return;
     }
@@ -181,7 +181,7 @@ void SimulationKernel::set_weapon_cooldown(uint64_t entity_id, double cooldown_s
 
 double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         const Sensor *s = e.get<Sensor>();
         if (s) return s->last_scan_time;
         const Sonar *sonar = e.get<Sonar>();
@@ -192,7 +192,7 @@ double SimulationKernel::debug_get_last_scan_time(uint64_t entity_id) {
 
 int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         const ContactList *c = e.get<ContactList>();
         if (c) return static_cast<int>(c->contacts.size());
     }
@@ -201,7 +201,7 @@ int SimulationKernel::debug_get_contact_count(uint64_t entity_id) {
 
 std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) return {};
+    if (!e.is_alive()) return {};
 
     const Mass *mass = e.get<Mass>();
     const MassProperties *props = e.get<MassProperties>();
@@ -215,7 +215,7 @@ std::vector<double> SimulationKernel::debug_get_mass_state(uint64_t entity_id) {
 
 std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) return {0.0, 0.0};
+    if (!e.is_alive()) return {0.0, 0.0};
 
     if (const Health *h = e.get<Health>()) {
         return {h->current_hp, h->max_hp};
@@ -225,7 +225,7 @@ std::vector<double> SimulationKernel::get_unit_health(uint64_t entity_id) {
 
 std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) return {0.0, 0.0, 0.0, 0.0};
+    if (!e.is_alive()) return {0.0, 0.0, 0.0, 0.0};
 
     if (const PlatformDamageState *state = e.get<PlatformDamageState>()) {
         return {
@@ -240,7 +240,7 @@ std::vector<double> SimulationKernel::get_unit_damage_state(uint64_t entity_id) 
 
 std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return {};
     }
 
@@ -286,7 +286,7 @@ std::vector<double> SimulationKernel::debug_get_aircraft_damage_state(uint64_t e
 std::vector<double>
 SimulationKernel::debug_get_aircraft_vulnerability_evidence_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return {};
     }
 
@@ -307,7 +307,7 @@ SimulationKernel::debug_get_aircraft_vulnerability_evidence_state(uint64_t entit
 std::vector<double>
 SimulationKernel::debug_get_aircraft_vulnerability_authority_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return {};
     }
 
@@ -329,7 +329,7 @@ SimulationKernel::debug_get_aircraft_vulnerability_authority_state(uint64_t enti
 
 std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) return {};
+    if (!e.is_alive()) return {};
 
     const NavalWeaponSystem *system = e.get<NavalWeaponSystem>();
     if (!system) return {};
@@ -355,7 +355,7 @@ std::vector<double> SimulationKernel::debug_get_naval_weapon_counts(uint64_t ent
 
 std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const FuelSystem *f = e.get<FuelSystem>()) {
             return {f->internal_fuel_kg, f->max_internal_fuel_kg, f->external_fuel_kg,
                     f->max_external_fuel_kg};
@@ -366,7 +366,7 @@ std::vector<double> SimulationKernel::get_unit_fuel(uint64_t entity_id) {
 
 std::vector<double> SimulationKernel::debug_get_naval_stores(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const NavalStores *stores = e.get<NavalStores>()) {
             return {
                 stores->fuel_units_current,      stores->fuel_units_max,
@@ -380,7 +380,7 @@ std::vector<double> SimulationKernel::debug_get_naval_stores(uint64_t entity_id)
 
 std::vector<double> SimulationKernel::debug_get_logistics_node(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const LogisticsNode *node = e.get<LogisticsNode>()) {
             return {
                 node->supply_radius_m,
@@ -400,7 +400,7 @@ std::vector<double> SimulationKernel::debug_get_logistics_node(uint64_t entity_i
 
 std::vector<double> SimulationKernel::debug_get_resupply_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const ResupplyState *state = e.get<ResupplyState>()) {
             const bool active =
                 (state->kind == ResupplyKind::NavalUnderway &&
@@ -423,7 +423,7 @@ std::vector<double> SimulationKernel::debug_get_resupply_state(uint64_t entity_i
 
 std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const DataLink *link = e.get<DataLink>()) {
             return {
                 static_cast<double>(link->max_reports_per_update),
@@ -444,7 +444,7 @@ std::vector<double> SimulationKernel::debug_get_data_link_state(uint64_t entity_
 
 std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) {
+    if (!e.is_alive()) {
         return {};
     }
 
@@ -469,7 +469,7 @@ std::vector<double> SimulationKernel::debug_get_ground_contact_state(uint64_t en
 
 std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const CommQueue *q = e.get<CommQueue>()) {
             return q->inbox;
         }
@@ -479,7 +479,7 @@ std::vector<CommPacket> SimulationKernel::get_unit_messages(uint64_t entity_id) 
 
 std::uint64_t SimulationKernel::debug_get_embarked_helo(uint64_t entity_id) const {
     auto e = ecs.entity(entity_id);
-    if (e.is_valid()) {
+    if (e.is_alive()) {
         if (const EmbarkedAirOps *ops = e.get<EmbarkedAirOps>()) {
             return ops->active_helo_entity_id;
         }
@@ -517,7 +517,7 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
     obs.total_reward = 0.0;
 
     auto e = ecs.entity(entity_id);
-    if (!e.is_valid()) return obs; // Empty
+    if (!e.is_alive()) return obs; // Empty
 
     // Time
     const ecs_world_info_t *info = ecs_get_world_info(ecs.c_ptr());
@@ -608,7 +608,9 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
                 } else {
                     track.source = 1; // Radar (Default)
                 }
-                const Alliance *target_alliance = ecs.entity(det.target_id).get<Alliance>();
+                const auto target_e = ecs.entity(det.target_id);
+                const Alliance *target_alliance =
+                    target_e.is_alive() ? target_e.get<Alliance>() : nullptr;
                 track.classification =
                     static_cast<int>(classify_observation_contact(owner_alliance, target_alliance));
                 track.status = 0; // Tentative
@@ -633,7 +635,7 @@ AgentObservation SimulationKernel::get_agent_observation(uint64_t entity_id) con
             // Note: In real life, RWR measures specific emitter parameters.
             // Here we simulate the result of that measurement.
             auto source_e = ecs.entity(source_id);
-            if (!source_e.is_valid()) continue;
+            if (!source_e.is_alive()) continue;
 
             const Transform *source_t = source_e.get<Transform>();
             if (!source_t) continue;

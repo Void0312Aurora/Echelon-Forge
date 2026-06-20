@@ -304,6 +304,8 @@ set(EF_TEST_SOURCES
     src/tests/test_kalman_seeker.cpp
     src/tests/test_structural_failure_system.cpp
     src/tests/test_control_surface_damage_coupling.cpp
+    src/tests/test_world_batch_runtime.cpp
+    src/tests/test_default_effects_model.cpp
 )
 
 add_executable(ef_test ${EF_TEST_SOURCES})
@@ -317,6 +319,9 @@ add_test(NAME structural_failure_events COMMAND ef_test --test-suite=structural_
 add_test(NAME structural_failure_break_modes COMMAND ef_test --test-suite=structural_failure_break_modes)
 add_test(NAME structural_consequence COMMAND ef_test --test-suite=structural_consequence)
 add_test(NAME aircraft_damage_lifecycle COMMAND ef_test --test-suite=aircraft_damage_lifecycle)
+add_test(NAME world_batch_runtime COMMAND ef_test --test-suite=world_batch_runtime)
+add_test(NAME default_effects_model COMMAND ef_test --test-suite=default_effects_model)
+set_tests_properties(default_effects_model PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 set(EF_PROJECT_WARNING_TARGETS
     ef_core

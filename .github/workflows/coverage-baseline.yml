@@ -1,0 +1,70 @@
+name: coverage-baseline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  coverage-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build
+
+      - name: Create virtual environment
+        run: |
+          python -m venv .venv
+          ./.venv/bin/python -m pip install --upgrade pip -c requirements/constraints-smoke.txt
+          ./.venv/bin/python -m pip install -c requirements/constraints-smoke.txt pytest numpy gymnasium coverage gcovr
+
+      - name: Configure coverage build
+        run: |
+          cmake -S . -B build-coverage -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_FLAGS="--coverage -O0 -g" \
+            -DCMAKE_CXX_FLAGS="--coverage -O0 -g" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+            -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+
+      - name: Build instrumented targets
+        run: |
+          cmake --build build-coverage --target ef_core ef_py ef_test -j2
+
+      - name: Run C++ tests for gcov data
+        run: |
+          ctest --test-dir build-coverage -R ef_test_all --output-on-failure
+
+      - name: Generate retained coverage reports
+        run: |
+          source tools/maintenance/cmo_env.sh
+          CMO_BUILD_DIR=build-coverage cmo_python tools/runners/measure_test_coverage.py \
+            --suite tests/smoke/ci_smoke_suite.json \
+            --output-dir coverage-reports \
+            --cpp-object-dir build-coverage
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-baseline-reports
+          path: coverage-reports
+          if-no-files-found: warn
