@@ -73,6 +73,8 @@
   - Suite 条目可以是目录、文件，或 `tests/foo/test_bar.py::test_case` 这类 pytest node ID；node ID 条目仍会在调用 pytest 前检查基础路径是否存在。
 - [run_contract_batches.py](runners/run_contract_batches.py)
   - 按 `--group`（`chain`、`unit`、`route_generator`、`same_process`、`sim_kernel`）批量运行 `tests/contracts/` 下的 JSON 契约，默认运行全部已维护分组。`--default-group sim_kernel` 便捷地只选 `sim_kernel` 分组而无需拼写 `--group`。
+- [measure_test_coverage.py](runners/measure_test_coverage.py)
+  - 从已签入的 pytest suite manifest 生成可保留的 Python `coverage` 与可选 C++ `gcovr` 报告。C++ 报告应使用覆盖率插桩的 CMake 构建，让 Python 测试经插桩 `ef_py` 运行，避免只得到 doctest-only 覆盖率。
 
 ## 维护
 
@@ -129,6 +131,23 @@ source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
   tests/contracts/unit/config/env_config_resolution.json
+```
+
+生成可保留的 smoke 覆盖率报告：
+
+```bash
+cmake -S . -B build-coverage -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_FLAGS="--coverage -O0 -g" \
+  -DCMAKE_CXX_FLAGS="--coverage -O0 -g" \
+  -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+  -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+cmake --build build-coverage --target ef_core ef_py ef_test -j4
+ctest --test-dir build-coverage -R ef_test_all --output-on-failure
+source tools/maintenance/cmo_env.sh
+CMO_BUILD_DIR=build-coverage cmo_python tools/runners/measure_test_coverage.py \
+  --suite tests/smoke/ci_smoke_suite.json \
+  --output-dir coverage-reports \
+  --cpp-object-dir build-coverage
 ```
 
 运行受限 naval station policy gate：

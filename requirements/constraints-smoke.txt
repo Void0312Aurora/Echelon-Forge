@@ -10,6 +10,8 @@
 
 # Current CI smoke/lint direct installs.
 pytest>=7.4,<9
+coverage>=7.4,<8
+gcovr>=8,<9
 ruff>=0.6.9,<0.7
 numpy>=1.24,<2; python_version < "3.9"
 numpy>=1.26,<3; python_version >= "3.9"

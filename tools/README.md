@@ -88,6 +88,8 @@
   - Suite entries may be directories, files, or pytest node IDs such as `tests/foo/test_bar.py::test_case`; node ID entries still validate the base path before invoking pytest.
 - [run_contract_batches.py](runners/run_contract_batches.py)
   - Runs grouped JSON contract batches from `tests/contracts/` by `--group` (`chain`, `unit`, `route_generator`, `same_process`, `sim_kernel`), or all maintained groups by default. The `--default-group sim_kernel` convenience selects the `sim_kernel` group without spelling `--group`.
+- [measure_test_coverage.py](runners/measure_test_coverage.py)
+  - Generates retained Python `coverage` and optional C++ `gcovr` reports from a checked-in pytest suite manifest. Use a coverage-instrumented CMake build for C++ reports so Python tests exercise the instrumented `ef_py` binding instead of reporting doctest-only coverage.
 
 ## Maintenance
 
@@ -144,6 +146,23 @@ source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/run_scenario_contract.py --spec \
   tests/contracts/route_generator/route_generator_v1.json \
   tests/contracts/unit/config/env_config_resolution.json
+```
+
+Generate retained smoke coverage reports:
+
+```bash
+cmake -S . -B build-coverage -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_FLAGS="--coverage -O0 -g" \
+  -DCMAKE_CXX_FLAGS="--coverage -O0 -g" \
+  -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+  -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+cmake --build build-coverage --target ef_core ef_py ef_test -j4
+ctest --test-dir build-coverage -R ef_test_all --output-on-failure
+source tools/maintenance/cmo_env.sh
+CMO_BUILD_DIR=build-coverage cmo_python tools/runners/measure_test_coverage.py \
+  --suite tests/smoke/ci_smoke_suite.json \
+  --output-dir coverage-reports \
+  --cpp-object-dir build-coverage
 ```
 
 Run the scoped naval station policy gate:
