@@ -68,6 +68,32 @@ def test_build_audit_excludes_archive_and_counts_smoke_surfaces(tmp_path: Path) 
   )
 
 
+def test_class_test_methods_are_not_double_counted(tmp_path: Path) -> None:
+  _write(
+    tmp_path / "tests/runtime/test_class_cases.py",
+    "\n".join(
+      [
+        "class TestRuntimeCases:",
+        "  def test_method_case(self):",
+        "    assert True",
+        "",
+        "def test_top_level_case():",
+        "  assert True",
+        "",
+      ]
+    ),
+  )
+
+  stats = audit_test_system.analyze_python_test_file(
+    tmp_path,
+    "tests/runtime/test_class_cases.py",
+    pytest_smoke_files=set(),
+  )
+
+  assert stats["test_items"] == 2
+  assert stats["max_test_item_asserts"] == 1
+
+
 def test_analyze_python_test_file_flags_literal_heavy_source_scan(
   tmp_path: Path,
 ) -> None:

@@ -134,7 +134,7 @@ def _looks_like_unittest_base(base: ast.AST) -> bool:
 
 def _test_item_rows(tree: ast.AST) -> list[dict[str, Any]]:
   rows: list[dict[str, Any]] = []
-  for node in ast.walk(tree):
+  for node in getattr(tree, "body", []):
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith(
       "test_"
     ):

@@ -35,7 +35,7 @@ manual/local governance checks.
 | Area | Status | Evidence | Boundary |
 | --- | --- | --- | --- |
 | Audit tooling | accepted for current slice | [audit_test_system.py](../../../../tools/runners/audit_test_system.py), [test_audit_test_system.py](../../../../tests/runners/test_audit_test_system.py) | Static audit only; it does not replace pytest collection or coverage reports. |
-| Active pytest surface | inventoried / residual tracked | Audit summary: 341 active tracked test files, 255 active tracked Python files, 151 risk-flagged Python files; pytest working-tree collect: 2000 tests. | Counts exclude `archive` paths but do not prove semantic redundancy by themselves. |
+| Active pytest surface | inventoried / residual tracked | Audit summary: 343 active tracked test files, 256 active tracked Python files, 1990 corrected static test items, 152 risk-flagged Python files; pytest working-tree collect: 2000 tests. | Counts exclude `archive` paths but do not prove semantic redundancy by themselves. |
 | Smoke promotion | accepted for current slice | Audit summary: 51 pytest smoke entries across 49 files, 10 JSON contract smoke specs; smoke suite remained green. | Smoke membership is a gate decision, not a full coverage statement. |
 | Coverage baseline | accepted as scoped evidence | Current local `.coverage` over Python roots: 34376 statements, 11916 missed, 65% covered. | Does not cover C++ `src/`, branch coverage, or every Python business surface. |
 | Test simplification | accepted with tracked residuals | Two largest `tests/tools` airframe geometry tests and ten high-risk damage-model files are split into smaller semantic tests. | Airframe behavior and remaining literal/source-scan concentration are tracked in the residual issue. |

@@ -30,7 +30,7 @@ blockers are tracked in
 | Branch and task surface | accepted current slice | `codex/test-system-governance`; this subproject. | Branch existence does not imply whole-project test health. |
 | Audit runner | pass for initial slice | `tools/runners/audit_test_system.py`; `tests/runners/test_audit_test_system.py`. | Static analysis only; pytest collection remains separate evidence. |
 | Runner validation | pass | `cmo_python -m pytest -q tests/runners` reported 27 passed. | Does not run full active test tree. |
-| Risk inventory | active | Audit markdown reported 151 risk-flagged Python files, 16 hidden mixin test files, and 5 mixin wrapper files. | Risk flags are triage signals, not deletion instructions. |
+| Risk inventory | active | Corrected audit markdown reported 152 risk-flagged Python files, 16 hidden mixin test files, and 5 mixin wrapper files. | Risk flags are triage signals, not deletion instructions. |
 | Coverage interpretation | pass for P1-B | Current local `.coverage` records 34376 statements, 11916 missed, 65% covered. | Does not prove C++ or whole-project coverage. |
 | Test simplification | accepted with tracked residuals | `tests/tools` airframe tests and ten `tests/architecture/damage_model` files were split into smaller semantic checks. | Airframe dependency-complete behavior and damage-model literal/source-scan concentration are retained in the residual issue. |
 
@@ -47,15 +47,15 @@ Closeout headline values:
 
 | Metric | Value |
 | --- | ---: |
-| Active test files | 341 |
-| Active Python files | 255 |
-| `test_*.py` files | 211 |
-| Static test items | 3145 |
+| Active test files | 343 |
+| Active Python files | 256 |
+| `test_*.py` files | 212 |
+| Static test items | 1990 |
 | Pytest smoke entries | 51 |
 | Pytest smoke files | 49 |
 | Contract JSON files | 59 |
 | Contract smoke specs | 10 |
-| Risk-flagged Python files | 151 |
+| Risk-flagged Python files | 152 |
 | Hidden mixin test files | 16 |
 | Mixin wrapper files | 5 |
 
@@ -73,7 +73,7 @@ Measured values:
 
 | Evidence source | Value | Boundary |
 | --- | ---: | --- |
-| Static active tracked audit | 341 active tracked test files; 3145 AST test items | Excludes archive paths and untracked files. |
+| Static active tracked audit | 343 active tracked test files; 1990 corrected AST test items | Excludes archive paths and untracked files. |
 | Pytest working-tree collection | 2000 tests collected | Includes current working-tree tests; no execution. |
 | Local Python `.coverage` | 34376 statements, 11916 missed, 65% covered | Python only; no branch arcs or C++ coverage acceptance. |
 | C++ coverage | not measured | Requires coverage build objects and `gcovr`. |
@@ -292,7 +292,7 @@ cmo_python -m ruff check tests/architecture/damage_model/test_provenance_identit
 # All checks passed
 
 cmo_python tools/runners/audit_test_system.py --format json --limit 300
-# Static test items: 3145; no `tests/architecture/damage_model` file reports `oversized_test_item`.
+# Static test items: 1990; no `tests/architecture/damage_model` file reports `oversized_test_item`.
 ```
 
 The `test_component_fragility_validation.py` update also corrected stale
@@ -394,7 +394,7 @@ cmo_python -m pytest --collect-only -q tests --ignore=tests/archive
 # 2000 tests collected
 
 cmo_python tools/runners/audit_test_system.py --format markdown --limit 20
-# Active test files: 341; static test items: 3145; risk-flagged Python files: 151
+# Active test files: 343; static test items: 1990; risk-flagged Python files: 152
 
 cmo_python -m coverage report --skip-empty
 # TOTAL 34376 statements, 11916 missed, 65% covered

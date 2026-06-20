@@ -24,7 +24,8 @@ source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/audit_test_system.py --format json
 ```
 
-Initial observed headline values:
+Initial pre-fix observed headline values, retained as provenance rather than
+current audit evidence:
 
 | Metric | Value |
 | --- | ---: |
@@ -45,12 +46,13 @@ Closeout refresh:
 ```bash
 source tools/maintenance/cmo_env.sh
 cmo_python tools/runners/audit_test_system.py --format markdown --limit 20
-# Active test files: 341; static test items: 3145; risk-flagged Python files: 151
+# Active test files: 343; static test items: 1990; risk-flagged Python files: 152
 ```
 
-Interpret the `3064` AST item value above as the initial P1-B snapshot. The
-accepted closeout snapshot uses `3145` static test items after the P2 structural
-splits landed.
+Interpret the `3064` AST item value above as the initial P1-B snapshot from
+the pre-fix audit runner. The accepted closeout snapshot uses the corrected
+`1990` static test items after `_test_item_rows()` stopped double-counting
+class test methods.
 
 Interpretation:
 

@@ -45,7 +45,7 @@ wrapper/mixin collection 面补充文档。
 
 | 表面 | 证据 | 边界 |
 | --- | --- | --- |
-| 活跃审计 | 341 个已追踪活跃 test 文件、255 个已追踪活跃 Python 文件、151 个风险标记 Python 文件。 | 仅为静态审计，不能证明语义冗余或覆盖充分。 |
+| 活跃审计 | 343 个已追踪活跃 test 文件、256 个已追踪活跃 Python 文件、1990 个修正后静态 test item、152 个风险标记 Python 文件。 | 仅为静态审计，不能证明语义冗余或覆盖充分。 |
 | Pytest collection | `tests --ignore=tests/archive` 下 `2000 tests collected`。 | 仅 collection；仍有既有 Eventlet 与 nanobind side-effect 诊断。 |
 | 当前验收 focused 批次 | runner、拆分 tools、拆分 damage-model 与 suite-manifest 测试为 `205 passed, 30 skipped`。 | skip 来自既有 optional airframe dependency 边界。 |
 | Smoke suite | `340 passed, 41 subtests passed`。 | 不包含失败的 `weapon_guidance_realism` 包。 |

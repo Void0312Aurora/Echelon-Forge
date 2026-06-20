@@ -51,7 +51,7 @@ Measured facts from the `2026-06-21` closeout pass:
 
 | Surface | Evidence | Boundary |
 | --- | --- | --- |
-| Active audit | 341 active tracked test files, 255 active tracked Python files, 151 risk-flagged Python files. | Static audit only; does not prove semantic redundancy or coverage sufficiency. |
+| Active audit | 343 active tracked test files, 256 active tracked Python files, 1990 corrected static test items, 152 risk-flagged Python files. | Static audit only; does not prove semantic redundancy or coverage sufficiency. |
 | Pytest collection | `2000 tests collected` with `tests --ignore=tests/archive`. | Collection only; emitted existing Eventlet and nanobind side-effect diagnostics. |
 | Current accepted focused batch | `205 passed, 30 skipped` for runner, split tools, split damage-model, and suite-manifest tests. | Skips are the existing optional airframe dependency boundary. |
 | Smoke suite | `340 passed, 41 subtests passed`. | Does not include failing `weapon_guidance_realism` package. |

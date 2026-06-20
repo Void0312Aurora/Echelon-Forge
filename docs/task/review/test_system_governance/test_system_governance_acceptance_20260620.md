@@ -238,8 +238,9 @@ cmo_python -m ruff check tests/architecture/damage_model/test_provenance_identit
 # All checks passed
 
 source tools/maintenance/cmo_env.sh
-cmo_python tools/runners/audit_test_system.py --format json --limit 300
-# Static test items: 3145; no `tests/architecture/damage_model` file reports `oversized_test_item`.
+cmo_python tools/runners/audit_test_system.py --format markdown --limit 5
+# Active test files: 343; static test items: 1990; risk-flagged Python files: 152.
+# No `tests/architecture/damage_model` file reports `oversized_test_item`.
 
 source tools/maintenance/cmo_env.sh
 cmo_python -m pytest --collect-only -q tests/runtime/air_combat/weapon_guidance_realism

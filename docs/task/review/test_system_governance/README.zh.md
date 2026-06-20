@@ -32,7 +32,7 @@
 | 区域 | 状态 | 证据 | 边界 |
 | --- | --- | --- | --- |
 | 审计工具 | 当前切片已验收 | [audit_test_system.py](../../../../tools/runners/audit_test_system.py), [test_audit_test_system.py](../../../../tests/runners/test_audit_test_system.py) | 只做静态审计，不替代 pytest collection 或 coverage 报告。 |
-| 活跃 pytest 面 | 已盘点 / 残余已追踪 | 审计摘要：341 个已追踪活跃 test 文件、255 个已追踪活跃 Python 文件、151 个风险标记 Python 文件；pytest 工作树 collect：2000 个测试。 | 这些数排除了 `archive`，但不能单独证明语义冗余。 |
+| 活跃 pytest 面 | 已盘点 / 残余已追踪 | 审计摘要：343 个已追踪活跃 test 文件、256 个已追踪活跃 Python 文件、1990 个修正后静态 test item、152 个风险标记 Python 文件；pytest 工作树 collect：2000 个测试。 | 这些数排除了 `archive`，但不能单独证明语义冗余。 |
 | smoke 提升 | 当前切片已验收 | 审计摘要：51 个 pytest smoke entry、49 个文件、10 个 JSON contract smoke spec；smoke suite 保持通过。 | smoke membership 是 gate 决策，不是完整覆盖声明。 |
 | coverage 基线 | 作为 scoped evidence 已验收 | 当前本地 `.coverage` 覆盖 Python roots：34376 statements，11916 missed，65%。 | 不覆盖 C++ `src/`、branch coverage，也不代表所有 Python 业务面。 |
 | 测试精简 | 已验收并保留残余 | 两个最大的 `tests/tools` airframe geometry 测试和十个高风险 damage-model 文件已拆成更小的语义测试。 | Airframe 行为和剩余 literal/source-scan 集中由残余 issue 追踪。 |
