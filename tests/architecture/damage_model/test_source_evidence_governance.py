@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from tests.architecture.helpers import (
   PYTHON_EXECUTABLE,
@@ -30,9 +33,30 @@ from tools.maintenance.external_signoff_evidence import ( # noqa: E402
 from tools.maintenance.retained_artifacts import manifest_integrity as integrity # noqa: E402
 
 
-def test_source_payload_pack_current_repo_is_partial(tmp_path: Path) -> None:
-  artifact = payload_pack.write_source_payload_pack(output_dir=tmp_path)
+@pytest.fixture(scope="module")
+def source_payload_pack_bundle(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> tuple[dict[str, Any], Path]:
+  output_dir = tmp_path_factory.mktemp("source_payload_pack")
+  artifact = payload_pack.write_source_payload_pack(output_dir=output_dir)
+  return artifact, output_dir
 
+
+@pytest.fixture(scope="module")
+def source_rights_policy_bundle(
+  tmp_path_factory: pytest.TempPathFactory,
+) -> tuple[dict[str, Any], Path]:
+  output_dir = tmp_path_factory.mktemp("source_rights_policy")
+  artifact = output_policy.write_retained_source_rights_output_policy_gate(
+    output_dir=output_dir
+  )
+  return artifact, output_dir
+
+
+def test_source_payload_pack_records_partial_current_repo_identity(
+  source_payload_pack_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_payload_pack_bundle
   assert artifact["schema_version"] == "a2.source_payload_pack.v1"
   assert artifact["status"] == "partial_payloads_retained_release_review_blocked"
   assert artifact["residual_gate_results"] == {
@@ -53,8 +77,14 @@ def test_source_payload_pack_current_repo_is_partial(tmp_path: Path) -> None:
   assert artifact["source_payload_pack_decision"]["all_retained_payload_hashes_match"] is True
   assert artifact["source_payload_pack_decision"]["release_grade_rights_reviewed"] is False
 
+
+def test_source_payload_pack_retains_expected_payload_inventory(
+  source_payload_pack_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_payload_pack_bundle
   retained = artifact["retained_payload_inventory"]
   retained_by_label = {row["source_artifact_label"]: row for row in retained}
+
   assert list(retained_by_label) == ["TP-20 PDF", "BEC-O-V1.xlsx", "TP-21 PDF"]
   assert retained_by_label["TP-20 PDF"]["actual_sha256"] == EXPECTED_TP20_SHA256
   assert retained_by_label["BEC-O-V1.xlsx"]["actual_sha256"] == EXPECTED_BECO_SHA256
@@ -68,7 +98,13 @@ def test_source_payload_pack_current_repo_is_partial(tmp_path: Path) -> None:
   assert all(row["benchmark_consumed_for_release"] is False for row in retained)
   assert artifact["missing_payloads"] == []
 
+
+def test_source_payload_pack_records_rights_and_benchmark_boundaries(
+  source_payload_pack_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_payload_pack_bundle
   policy = artifact["rights_allowed_output_policy_status"]
+
   assert policy["rights_review_status"] == (
     "public_distribution_statement_supported_candidate_not_signed_off"
   )
@@ -106,18 +142,24 @@ def test_source_payload_pack_current_repo_is_partial(tmp_path: Path) -> None:
     guards_key="non_authoritative_guards",
   )
 
-  retained_beco = tmp_path / "payloads" / "BEC-O-V1.xlsx"
+
+def test_source_payload_pack_writes_retained_payloads_and_manifest(
+  source_payload_pack_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  _artifact, output_dir = source_payload_pack_bundle
+  retained_beco = output_dir / "payloads" / "BEC-O-V1.xlsx"
+
   assert retained_beco.exists()
   assert payload_pack._sha256_file(retained_beco) == EXPECTED_BECO_SHA256
-  retained_tp20 = tmp_path / "payloads" / "TP-20.pdf"
-  retained_tp21 = tmp_path / "payloads" / "TP-21.pdf"
+  retained_tp20 = output_dir / "payloads" / "TP-20.pdf"
+  retained_tp21 = output_dir / "payloads" / "TP-21.pdf"
   assert retained_tp20.exists()
   assert retained_tp21.exists()
   assert payload_pack._sha256_file(retained_tp20) == EXPECTED_TP20_SHA256
   assert payload_pack._sha256_file(retained_tp21) == EXPECTED_TP21_SHA256
 
   source_manifest = json.loads(
-    (tmp_path / payload_pack.SOURCE_ARTIFACT_PACK_MANIFEST_FILENAME).read_text(
+    (output_dir / payload_pack.SOURCE_ARTIFACT_PACK_MANIFEST_FILENAME).read_text(
       encoding="utf-8"
     )
   )
@@ -243,11 +285,10 @@ def test_source_payload_pack_cli_writes_retained_json(
   )
 
 
-def test_source_rights_output_policy_current_repo_is_blocked_release_candidate(tmp_path: Path) -> None:
-  artifact = output_policy.write_retained_source_rights_output_policy_gate(
-    output_dir=tmp_path
-  )
-
+def test_source_rights_output_policy_records_blocked_release_candidate_identity(
+  source_rights_policy_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_rights_policy_bundle
   assert artifact["schema_version"] == "a2.source_rights_output_policy_gate.v1"
   assert artifact["status"] == (
     "blocked_release_candidate_rights_supported_policy_fail_closed"
@@ -275,7 +316,13 @@ def test_source_rights_output_policy_current_repo_is_blocked_release_candidate(t
     "authority_boundary_signoff_missing",
   ]
 
+
+def test_source_rights_output_policy_freezes_allowed_output_policy(
+  source_rights_policy_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_rights_policy_bundle
   policy = artifact["allowed_output_policy"]
+
   assert policy["policy_status"] == "release_candidate_fail_closed_policy_frozen"
   assert policy["policy_frozen_by_this_gate"] is True
   assert policy["release_grade_satisfied"] is False
@@ -289,10 +336,16 @@ def test_source_rights_output_policy_current_repo_is_blocked_release_candidate(t
     "forbidden_consume_outputs"
   ]
 
+
+def test_source_rights_output_policy_retains_payload_rights_inventory(
+  source_rights_policy_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_rights_policy_bundle
   by_label = {
     row["source_artifact_label"]: row
     for row in artifact["payload_rights_inventory"]
   }
+
   assert list(by_label) == ["TP-20 PDF", "BEC-O-V1.xlsx", "TP-21 PDF"]
   assert by_label["TP-20 PDF"]["actual_sha256"] == EXPECTED_TP20_SHA256
   assert by_label["BEC-O-V1.xlsx"]["actual_sha256"] == EXPECTED_BECO_SHA256
@@ -335,9 +388,15 @@ def test_source_rights_output_policy_current_repo_is_blocked_release_candidate(t
     "copy_forbidden_outputs"
   ]
 
+
+def test_source_rights_output_policy_lists_required_release_signoffs(
+  source_rights_policy_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  artifact, _output_dir = source_rights_policy_bundle
   signoff_fields = [
     row["field"] for row in artifact["required_release_signoff_fields"]
   ]
+
   assert signoff_fields == [
     "rights_reviewer_identity",
     "rights_review_decision",
@@ -352,9 +411,15 @@ def test_source_rights_output_policy_current_repo_is_blocked_release_candidate(t
     guards_key="non_authoritative_guards",
   )
 
+
+def test_source_rights_output_policy_writes_retained_manifest(
+  source_rights_policy_bundle: tuple[dict[str, Any], Path],
+) -> None:
+  _artifact, output_dir = source_rights_policy_bundle
   manifest = json.loads(
-    (tmp_path / output_policy.RETAINED_MANIFEST_FILENAME).read_text()
+    (output_dir / output_policy.RETAINED_MANIFEST_FILENAME).read_text()
   )
+
   assert manifest["schema_version"] == (
     "a2.source_rights_output_policy_retained_manifest.v1"
   )

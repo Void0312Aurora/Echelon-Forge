@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
+import pytest
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path, read_json
 from tests.architecture.damage_model.helpers import run_maintenance_cli
 
@@ -10,10 +12,17 @@ ensure_repo_root_on_sys_path()
 from tools.maintenance.release_governance import provenance_closeout as closeout_gate  # noqa: E402
 
 
-def test_release_provenance_closeout_gate_current_repo_is_blocked() -> None:
-  artifact = closeout_gate.generate_release_provenance_closeout_gate(
+@pytest.fixture(scope="module")
+def release_provenance_closeout_artifact() -> dict[str, Any]:
+  return closeout_gate.generate_release_provenance_closeout_gate(
     repo_root=REPO_ROOT
   )
+
+
+def test_release_provenance_closeout_gate_records_blocked_decision(
+  release_provenance_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = release_provenance_closeout_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -35,6 +44,12 @@ def test_release_provenance_closeout_gate_current_repo_is_blocked() -> None:
   assert decision["release_closeout_blocked"] is True
   assert decision["author_side_subitems_recorded"] is True
   assert decision["authority_release_included"] is False
+
+
+def test_release_provenance_closeout_gate_records_check_contract(
+  release_provenance_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = release_provenance_closeout_artifact
 
   assert [row["check_id"] for row in artifact["closeout_checks"]] == [
     "CLOSEOUT-RES001-001",
@@ -61,6 +76,12 @@ def test_release_provenance_closeout_gate_current_repo_is_blocked() -> None:
     "blocked_release_grade_evidence_missing",
     "blocked_release_grade_evidence_missing",
   ]
+
+
+def test_release_provenance_closeout_gate_records_res001_author_evidence(
+  release_provenance_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = release_provenance_closeout_artifact
 
   retained_source = artifact["closeout_checks"][0]
   assert retained_source["observed_author_side_evidence"][
@@ -92,6 +113,12 @@ def test_release_provenance_closeout_gate_current_repo_is_blocked() -> None:
   assert benchmark["observed_author_side_evidence"]["release_consumed_artifact_ids"] == []
   assert "comparison-output hashes" in benchmark["blocking_summary"]
 
+
+def test_release_provenance_closeout_gate_records_res002_identity_evidence(
+  release_provenance_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = release_provenance_closeout_artifact
+
   identity = artifact["closeout_checks"][3]
   identity_evidence = identity["observed_author_side_evidence"]
   assert identity_evidence["worktree_state"] == (
@@ -116,6 +143,12 @@ def test_release_provenance_closeout_gate_current_repo_is_blocked() -> None:
   assert retained_evidence["stage_c_retained_origin_summary"][
     "stock_runtime_authority_present"
   ] is False
+
+
+def test_release_provenance_closeout_gate_records_residual_trace_and_guards(
+  release_provenance_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = release_provenance_closeout_artifact
 
   assert artifact["residual_condition_trace"] == [
     {

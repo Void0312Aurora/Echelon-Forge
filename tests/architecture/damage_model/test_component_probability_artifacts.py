@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
@@ -19,13 +22,32 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_probability_surface_probe as surface_probe,
 )
 
-# Component probability surface probe
 
-def test_component_probability_surface_probe_is_candidate_non_authoritative(
-) -> None:
-  artifact = surface_probe.generate_stage_c_component_probability_surface_probe(
+@pytest.fixture(scope="module")
+def surface_probe_artifact() -> dict[str, Any]:
+  return surface_probe.generate_stage_c_component_probability_surface_probe(
     repo_root=REPO_ROOT
   )
+
+
+@pytest.fixture(scope="module")
+def snapshot_artifact() -> dict[str, Any]:
+  return snapshot.generate_stage_c_component_probability_snapshot(repo_root=REPO_ROOT)
+
+
+@pytest.fixture(scope="module")
+def result_pack_artifact() -> dict[str, Any]:
+  return result_pack.generate_stage_c_component_probability_result_pack(
+    repo_root=REPO_ROOT
+  )
+
+
+# Component probability surface probe
+
+def test_component_probability_surface_probe_records_candidate_identity(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -40,7 +62,13 @@ def test_component_probability_surface_probe_is_candidate_non_authoritative(
     == "candidate_non_authoritative_stage_c_component_probability_surface_probe"
   )
 
+
+def test_component_probability_surface_probe_records_scope_and_descriptor(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
   scope = artifact["scope"]
+
   assert scope["target_type"] == "F-16C_Block50"
   assert scope["weapon_class"] == "AIM-120C-class"
   assert scope["weapon_family"] == "blast_fragmentation"
@@ -62,7 +90,13 @@ def test_component_probability_surface_probe_is_candidate_non_authoritative(
   assert descriptor["component_specific_row_count"] == 3
   assert descriptor["global_fallback_row_id"] == "global-fallback"
 
+
+def test_component_probability_surface_probe_is_deterministic_against_stock_baseline(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
   determinism = artifact["determinism_summary"]
+
   assert determinism["probe_labels_are_fixed"] == ["inner", "middle", "outer"]
   assert determinism["probe_local_points_are_fixed"] == [
     [-0.753, 5.5, 0.0],
@@ -94,7 +128,13 @@ def test_component_probability_surface_probe_is_candidate_non_authoritative(
   assert stock_baseline["all_probability_sources_are_synthetic_sigmoid"] is True
   assert stock_baseline["any_calibrated_component_probability"] is False
 
+
+def test_component_probability_surface_probe_locks_component_scope_and_rows(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
   scope_audit = artifact["component_scope_audit"]
+
   assert scope_audit["candidate_component_name"] == "right_aileron_actuator"
   assert scope_audit["candidate_component_system"] == "flight_control"
   assert (
@@ -126,7 +166,13 @@ def test_component_probability_surface_probe_is_candidate_non_authoritative(
   assert all(row["selected_row_matches_component_specific_scope"] for row in rows)
   assert all(row["selected_row_covers_primary_loads"] for row in rows)
 
+
+def test_component_probability_surface_probe_records_metrics_and_repeatability(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
   metrics = artifact["metrics"]
+
   assert metrics["primary_component_identity_stable_pass"] is True
   assert metrics["component_specific_precedence_pass"] is True
   assert metrics["selected_rows_cover_primary_loads_pass"] is True
@@ -148,7 +194,13 @@ def test_component_probability_surface_probe_is_candidate_non_authoritative(
   assert repeatability["penetration_margin"]["cv"] <= 0.05
   assert repeatability["blast_impulse_kpa_ms"]["cv"] <= 0.05
 
+
+def test_component_probability_surface_probe_preserves_candidate_boundaries(
+  surface_probe_artifact: dict[str, Any],
+) -> None:
+  artifact = surface_probe_artifact
   findings = artifact["current_findings"]
+
   assert "three-point component-specific surface probe" in findings[0]
   assert "decrease monotonically" in findings[1]
   assert "does not close fragility truth" in findings[2]
@@ -182,9 +234,10 @@ def test_component_probability_surface_probe_cli_writes_json(
 
 # Component probability snapshot and result pack
 
-def test_component_probability_snapshot_is_candidate_non_authoritative(
+def test_component_probability_snapshot_records_candidate_identity(
+  snapshot_artifact: dict[str, Any],
 ) -> None:
-  artifact = snapshot.generate_stage_c_component_probability_snapshot(repo_root=REPO_ROOT)
+  artifact = snapshot_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -196,7 +249,13 @@ def test_component_probability_snapshot_is_candidate_non_authoritative(
     == "candidate_non_authoritative_stage_c_component_probability_snapshot"
   )
 
+
+def test_component_probability_snapshot_records_scope_and_summary(
+  snapshot_artifact: dict[str, Any],
+) -> None:
+  artifact = snapshot_artifact
   scope = artifact["scope"]
+
   assert scope["target_type"] == "F-16C_Block50"
   assert scope["weapon_class"] == "AIM-120C-class"
   assert scope["weapon_family"] == "blast_fragmentation"
@@ -221,7 +280,13 @@ def test_component_probability_snapshot_is_candidate_non_authoritative(
   assert summary["primary_release_scope"] == "component_failure_probability_authority_only"
   assert summary["review_status"] == "author_snapshot_only_pending_independent_review"
 
+
+def test_component_probability_snapshot_records_criteria_and_baseline_event(
+  snapshot_artifact: dict[str, Any],
+) -> None:
+  artifact = snapshot_artifact
   criteria_rows = artifact["criteria_evaluation"]
+
   assert len(criteria_rows) == 23
   assert all(row["pass"] for row in criteria_rows)
   assert criteria_rows[0]["criteria_id"] == "BFM-CRIT-CP-001"
@@ -234,7 +299,13 @@ def test_component_probability_snapshot_is_candidate_non_authoritative(
   assert baseline["component_primary_mechanism_penetration_margin"] > 0.0
   assert baseline["component_primary_mechanism_blast_impulse_kpa_ms"] > 0.0
 
+
+def test_component_probability_snapshot_records_candidate_probability_row(
+  snapshot_artifact: dict[str, Any],
+) -> None:
+  artifact = snapshot_artifact
   component_snapshot = artifact["component_probability_snapshot"]
+
   assert component_snapshot["descriptor_status"] == (
     "test_local_component_specific_probability_candidate"
   )
@@ -246,7 +317,13 @@ def test_component_probability_snapshot_is_candidate_non_authoritative(
   assert component_snapshot["row"]["min_fragment_energy_j"] > 0.0
   assert component_snapshot["row"]["min_blast_impulse_kpa_ms"] > 0.0
 
+
+def test_component_probability_snapshot_embeds_surface_probe_summary(
+  snapshot_artifact: dict[str, Any],
+) -> None:
+  artifact = snapshot_artifact
   surface_probe = artifact["surface_probe_summary"]
+
   assert surface_probe["status"] == (
     "candidate_non_authoritative_stage_c_component_probability_surface_probe"
   )
@@ -280,7 +357,13 @@ def test_component_probability_snapshot_is_candidate_non_authoritative(
     is True
   )
 
+
+def test_component_probability_snapshot_preserves_candidate_boundaries(
+  snapshot_artifact: dict[str, Any],
+) -> None:
+  artifact = snapshot_artifact
   findings = artifact["current_findings"]
+
   assert "bind a component-specific probability row" in findings[0]
   assert "three-point candidate component-probability surface probe" in findings[1]
   assert "synthetic component probability" in findings[2]
@@ -309,11 +392,10 @@ def test_component_probability_snapshot_cli_writes_json(
   assert_authority_guards_false(artifact, guards_key="non_authoritative_guards")
 
 
-def test_component_probability_result_pack_is_candidate_non_authoritative(
+def test_component_probability_result_pack_records_candidate_identity(
+  result_pack_artifact: dict[str, Any],
 ) -> None:
-  artifact = result_pack.generate_stage_c_component_probability_result_pack(
-    repo_root=REPO_ROOT
-  )
+  artifact = result_pack_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -325,7 +407,13 @@ def test_component_probability_result_pack_is_candidate_non_authoritative(
     == "candidate_non_authoritative_stage_c_component_probability_result_pack"
   )
 
+
+def test_component_probability_result_pack_records_scope_and_hashes(
+  result_pack_artifact: dict[str, Any],
+) -> None:
+  artifact = result_pack_artifact
   scope = artifact["scope"]
+
   assert scope["target_type"] == "F-16C_Block50"
   assert scope["weapon_class"] == "AIM-120C-class"
   assert scope["weapon_family"] == "blast_fragmentation"
@@ -340,7 +428,13 @@ def test_component_probability_result_pack_is_candidate_non_authoritative(
   ]
   assert all(len(row["sha256"]) == 64 for row in artifact_hashes)
 
+
+def test_component_probability_result_pack_records_result_table_summary(
+  result_pack_artifact: dict[str, Any],
+) -> None:
+  artifact = result_pack_artifact
   result_summary = artifact["result_table_summary"]
+
   assert result_summary["all_hard_gates_pass_in_current_snapshot"] is True
   assert result_summary["failed_criteria_ids"] == []
   assert result_summary["reviewed_checks"] == [
@@ -359,7 +453,13 @@ def test_component_probability_result_pack_is_candidate_non_authoritative(
     == "author_result_pack_only_pending_independent_review"
   )
 
+
+def test_component_probability_result_pack_records_probability_and_scope_audit(
+  result_pack_artifact: dict[str, Any],
+) -> None:
+  artifact = result_pack_artifact
   probability = artifact["component_probability_result_summary"]
+
   assert probability["baseline_component_probability_source"] == "synthetic_sigmoid"
   assert probability["candidate_component_name"] == "right_aileron_actuator"
   assert probability["candidate_component_system"] == "flight_control"
@@ -385,7 +485,13 @@ def test_component_probability_result_pack_is_candidate_non_authoritative(
     "scope_guard_interpretation"
   ]
 
+
+def test_component_probability_result_pack_records_fragility_surface_summary(
+  result_pack_artifact: dict[str, Any],
+) -> None:
+  artifact = result_pack_artifact
   fragility_surface = artifact["fragility_surface_summary"]
+
   assert (
     fragility_surface["surface_probe_status"]
     == "candidate_non_authoritative_stage_c_component_probability_surface_probe"
@@ -410,7 +516,13 @@ def test_component_probability_result_pack_is_candidate_non_authoritative(
     is True
   )
 
+
+def test_component_probability_result_pack_preserves_stage_b_and_independence_boundaries(
+  result_pack_artifact: dict[str, Any],
+) -> None:
+  artifact = result_pack_artifact
   upstream = artifact["upstream_stage_b_dependency_summary"]
+
   assert upstream["dependency_role"] == (
     "separate_upstream_effect_scale_authority_track"
   )

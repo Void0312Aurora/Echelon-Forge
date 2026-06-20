@@ -4,6 +4,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from tests.architecture.damage_model.helpers import (
   assert_authority_guards_false,
@@ -25,6 +28,13 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   scope_boundary_probe as boundary_probe,
   validation_scaffold as scaffold,
 )
+
+CandidateBundle = dict[str, Any]
+
+
+@pytest.fixture(scope="module")
+def candidate_bundle_artifact() -> CandidateBundle:
+  return bundle.generate_candidate_bundle(repo_root=REPO_ROOT)
 
 
 def test_validation_scaffold_current_repo_is_non_authoritative() -> None:
@@ -772,8 +782,10 @@ def test_runtime_aligned_authority_exercise_cli_writes_json(tmp_path: Path) -> N
 
 
 # Candidate bundle aggregates evidence without promoting authority.
-def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -> None:
-  artifact = bundle.generate_candidate_bundle(repo_root=REPO_ROOT)
+def test_candidate_bundle_identity_scope_and_review_inputs(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   assert artifact["bundle_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -817,6 +829,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
   for entry in source_groups:
     assert (REPO_ROOT / entry["ledger_ref"]).exists()
     assert len(entry["selected_source_ids"]) >= 4
+
+
+def test_candidate_bundle_residual_statuses_close_research_not_authority(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   residual_statuses = artifact["residual_statuses"]
   assert residual_statuses["RES-001"] == (
@@ -892,6 +910,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
     "RES-014",
   ]
 
+
+def test_candidate_bundle_acceptance_gates_preserve_release_blocks(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
+
   acceptance_gates = artifact["residual_acceptance_gate_summaries"]
   res003_gate = acceptance_gates["res003_target_geometry_closeout"]
   assert res003_gate["status"] == (
@@ -946,6 +970,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
   assert res006_gate["allowed_output_signoff_present"] is False
   assert res006_gate["tolerance_policy_admitted"] is False
   assert res006_gate["authority_guards_all_false"] is True
+
+
+def test_candidate_bundle_validation_acceptance_summaries_stay_non_authoritative(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   validation_summary = artifact["validation_scaffold_summary"]
   assert validation_summary["validation_status"] == "not_run"
@@ -1012,6 +1042,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
     "BFM-DEF-CP-003",
     "BFM-DEF-CP-004",
   ]
+
+
+def test_candidate_bundle_scope_probe_and_stage_b_snapshot_summaries(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   scope_summary = artifact["validation_scope_and_independence_summary"]
   assert scope_summary["scope_manifest_status"] == "frozen_pre_run_stage_b_effect_scale_only"
@@ -1096,6 +1132,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
   assert stage_b_snapshot_summary["fragment_energy_cv"] <= 0.05
   assert stage_b_snapshot_summary["penetration_margin_cv"] <= 0.05
 
+
+def test_candidate_bundle_stage_c_probability_artifact_summaries_stay_review_only(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
+
   stage_c_snapshot_summary = artifact[
     "validation_stage_c_component_probability_snapshot_summary"
   ]
@@ -1160,6 +1202,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
   assert stage_c_result_pack_summary["surface_probability_monotonic_pass"] is True
   assert stage_c_result_pack_summary["surface_anchor_probability_cv"] <= 0.05
 
+
+def test_candidate_bundle_stage_c_review_and_provenance_gates_stay_blocked(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
+
   stage_c_review_gate_summary = artifact[
     "validation_stage_c_component_probability_review_gate_summary"
   ]
@@ -1213,6 +1261,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
     "RES-002",
     "RES-013/014-boundary",
   ]
+
+
+def test_candidate_bundle_stage_c_retained_and_release_summaries(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   stage_c_retained_pack_summary = artifact[
     "validation_stage_c_component_probability_retained_artifact_pack_summary"
@@ -1275,6 +1329,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
     "RES-011",
     "RES-013/014-boundary",
   ]
+
+
+def test_candidate_bundle_stage_b_retained_review_and_identity_summaries(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   retained_pack_summary = artifact["validation_retained_artifact_pack_summary"]
   assert retained_pack_summary["status"] == "author_retained_candidate_artifacts_only"
@@ -1343,6 +1403,12 @@ def test_candidate_bundle_current_repo_is_non_authoritative_and_review_ready() -
   )
   assert identity_summary["retained_artifact_manifest_ref"].endswith("manifest.json")
   assert identity_summary["retained_artifact_count"] == 4
+
+
+def test_candidate_bundle_geometry_warhead_and_runtime_exercise_summaries(
+  candidate_bundle_artifact: CandidateBundle,
+) -> None:
+  artifact = candidate_bundle_artifact
 
   geometry_summary = artifact["target_geometry_assumption_summary"]
   assert geometry_summary["author_status"] == "frozen_for_stage_b_review_only"

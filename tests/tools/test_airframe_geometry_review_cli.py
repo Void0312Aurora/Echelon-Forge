@@ -4,6 +4,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from tools.geometry import airframe_geometry_review
 from tools.geometry.airframe_review import component_model, constants, gltf_io
@@ -11,10 +14,13 @@ from tests.tools.airframe_review_fixtures import require_airframe_geometry_extra
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+CLIRun = dict[str, Any]
 
 
-def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
+@pytest.fixture(scope="module")
+def airframe_geometry_cli_run(tmp_path_factory: Any) -> CLIRun:
   require_airframe_geometry_extra()
+  tmp_path = tmp_path_factory.mktemp("airframe_geometry_review")
   stale_isolated_page = (
     tmp_path
     / "component_review_views"
@@ -57,7 +63,19 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     text=True,
   )
 
-  summary = json.loads(result.stdout)
+  return {
+    "result": result,
+    "stale_isolated_page": stale_isolated_page,
+    "summary": json.loads(result.stdout),
+    "tmp_path": tmp_path,
+  }
+
+
+def test_airframe_geometry_review_cli_summary_reports_candidate_counts(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  summary = airframe_geometry_cli_run["summary"]
+
   assert summary["status"] == "target_geometry_manifest_generated_review_only"
   assert summary["triangle_count"] == 4504
   assert summary["component_count"] == 26
@@ -149,6 +167,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert summary["subcomponent_latest_resolves_count"] == 0
   assert summary["subcomponent_latest_unresolved_count"] == 0
 
+
+def test_airframe_geometry_review_cli_writes_manifest_and_mapping(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+
   manifest_path = tmp_path / "manifest.json"
   assert manifest_path.is_file()
   manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -182,6 +206,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
 
   for svg_name in ("top.svg", "side.svg", "front.svg"):
     assert not (tmp_path / svg_name).exists()
+
+
+def test_airframe_geometry_review_cli_writes_contour_containment_artifacts(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   # Whole-airframe projected mesh contour containment artifacts.
   contour_json_path = tmp_path / "whole_airframe_contour_containment_20260614.json"
@@ -217,6 +247,13 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "Whole-Airframe Projected Mesh Contour Containment" in dashboard_text
   assert "wing_spar_center" in dashboard_text
 
+
+def test_airframe_geometry_review_cli_writes_component_diagnostics_and_proxy(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+  result = airframe_geometry_cli_run["result"]
+
   component_json_path = tmp_path / "component_binding_report_20260611.json"
   component_csv_path = tmp_path / "component_binding_report_20260611.csv"
   assert component_json_path.is_file()
@@ -238,8 +275,11 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "nose_axis_4m" in diagnostics_csv_path.read_text(encoding="utf-8")
 
   fine_proxy_path = tmp_path / "fine_geometry_proxy_candidate_20260611.json"
+  mapping_path = tmp_path / "f16c_geometry_mapping_candidate_20260611.json"
   assert fine_proxy_path.is_file()
+  assert mapping_path.is_file()
   fine_proxy = json.loads(fine_proxy_path.read_text(encoding="utf-8"))
+  mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
   assert fine_proxy["schema_version"] == "a2.target_geometry_fine_proxy_candidate.v1"
   assert fine_proxy["summary"]["proxy_count"] == len(mapping["outer_regions"])
   assert fine_proxy["summary"]["total_proxy_support_volume_ratio"] < 0.75
@@ -269,6 +309,13 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     >= 0
   )
 
+
+def test_airframe_geometry_review_cli_removes_retired_intermediate_artifacts(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+  stale_isolated_page = airframe_geometry_cli_run["stale_isolated_page"]
+
   assert not stale_isolated_page.exists()
   for retired_path in (
     "component_review_views",
@@ -283,6 +330,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     "human_review_triage.html",
   ):
     assert not (tmp_path / retired_path).exists()
+
+
+def test_airframe_geometry_review_cli_writes_surface_and_semantic_reports(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   surface_json_path = tmp_path / "surface_component_candidate_20260611.json"
   surface_csv_path = tmp_path / "surface_component_candidate_20260611.csv"
@@ -315,6 +368,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "direct_receivers_parse_ready_cross_region_receivers_held" in (
     semantic_csv_path.read_text(encoding="utf-8")
   )
+
+
+def test_airframe_geometry_review_cli_writes_internal_prior_and_held_segments(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   internal_prior_json_path = (
     tmp_path / "internal_component_prior_candidate_20260611.json"
@@ -376,6 +435,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     held_segment_csv_path.read_text(encoding="utf-8")
   )
 
+
+def test_airframe_geometry_review_cli_writes_constraint_and_ownership_reports(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+
   airframe_constraint_json_path = (
     tmp_path / "airframe_constraint_correction_candidate_20260611.json"
   )
@@ -425,6 +490,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     in ownership_split_csv
   )
   assert "wing_spar_center_carrythrough_segment" in ownership_split_csv
+
+
+def test_airframe_geometry_review_cli_writes_runtime_activation_and_behavior_reports(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   runtime_activation_json_path = (
     tmp_path / "target_geometry_runtime_activation_candidate_20260613.json"
@@ -489,6 +560,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     runtime_behavior_csv
   )
 
+
+def test_airframe_geometry_review_cli_materializes_training_proxy_database(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+
   training_proxy_json_path = (
     tmp_path / "target_geometry_training_proxy_database_20260613.json"
   )
@@ -539,6 +616,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "wing_spar_center" not in proxy_component_names
   assert "engine_core_afterburner_segment" in proxy_component_names
   assert "wing_spar_center_carrythrough_segment" in proxy_component_names
+
+
+def test_airframe_geometry_review_cli_writes_empty_shape_placement_queue(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   shape_placement_json_path = (
     tmp_path / "subcomponent_shape_placement_candidate_20260611.json"
@@ -605,6 +688,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
   assert "cockpit_crew_station" not in shape_placement_csv_text
   assert "inertial_navigation_unit" not in shape_placement_csv_text
 
+
+def test_airframe_geometry_review_cli_writes_parent_child_layout_report(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
+
   parent_child_json_path = (
     tmp_path / "semantic_parent_child_layout_candidate_20260611.json"
   )
@@ -638,6 +727,12 @@ def test_airframe_geometry_review_cli_writes_manifest(tmp_path: Path) -> None:
     "subcomponent_shape_placement_views",
   ):
     assert not (tmp_path / retired_view_dir).exists()
+
+
+def test_airframe_geometry_review_cli_writes_final_scene_without_retired_links(
+  airframe_geometry_cli_run: CLIRun,
+) -> None:
+  tmp_path = airframe_geometry_cli_run["tmp_path"]
 
   scene_path = tmp_path / "scene.html"
   assert scene_path.is_file()

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -17,11 +18,35 @@ from tools.maintenance.candidate_artifacts import ( # noqa: E402
   component_fragility_validation_prep as prep,
 )
 
+Artifact = dict[str, Any]
 
-def test_component_probability_review_readiness_gate_is_blocked() -> None:
-  artifact = readiness_gate.generate_stage_c_component_probability_review_readiness_gate(
+
+@pytest.fixture(scope="module")
+def component_probability_review_artifact() -> Artifact:
+  return readiness_gate.generate_stage_c_component_probability_review_readiness_gate(
     repo_root=REPO_ROOT
   )
+
+
+@pytest.fixture(scope="module")
+def fragility_validation_prep_artifact() -> Artifact:
+  return prep.generate_stage_c_fragility_validation_prep(repo_root=REPO_ROOT)
+
+
+@pytest.fixture(scope="module")
+def fragility_review_gate_artifact() -> Artifact:
+  return review_gate.generate_stage_c_fragility_review_gate(repo_root=REPO_ROOT)
+
+
+@pytest.fixture(scope="module")
+def fragility_benchmark_artifact() -> Artifact:
+  return benchmark.generate_stage_c_fragility_benchmark(repo_root=REPO_ROOT)
+
+
+def test_component_probability_review_readiness_gate_identity_and_inputs(
+  component_probability_review_artifact: Artifact,
+) -> None:
+  artifact = component_probability_review_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -95,6 +120,12 @@ def test_component_probability_review_readiness_gate_is_blocked() -> None:
   assert candidate["component_redundancy_group_id"] == "lateral_flight_control_actuators"
   assert candidate["component_failure_probability"] == 0.67
   assert candidate["baseline_component_probability_source"] == "synthetic_sigmoid"
+
+
+def test_component_probability_review_readiness_gate_blockers_and_boundaries(
+  component_probability_review_artifact: Artifact,
+) -> None:
+  artifact = component_probability_review_artifact
 
   satisfied = artifact["satisfied_conditions"]
   assert [row["condition_id"] for row in satisfied] == [
@@ -181,8 +212,10 @@ def test_component_probability_review_readiness_gate_cli_writes_json(
   assert artifact["blocking_conditions"][0]["blocker_id"] == "BLOCK-CP-001"
 
 
-def test_fragility_validation_prep_blocks_target_residuals() -> None:
-  artifact = prep.generate_stage_c_fragility_validation_prep(repo_root=REPO_ROOT)
+def test_fragility_validation_prep_blocks_target_residuals(
+  fragility_validation_prep_artifact: Artifact,
+) -> None:
+  artifact = fragility_validation_prep_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -230,8 +263,10 @@ def test_fragility_validation_prep_blocks_target_residuals() -> None:
   )
 
 
-def test_fragility_validation_prep_matrix_and_closeout_plan() -> None:
-  artifact = prep.generate_stage_c_fragility_validation_prep(repo_root=REPO_ROOT)
+def test_fragility_validation_prep_matrix_and_closeout_plan(
+  fragility_validation_prep_artifact: Artifact,
+) -> None:
+  artifact = fragility_validation_prep_artifact
 
   matrix = artifact["fragility_validation_matrix"]
   assert [row["matrix_id"] for row in matrix] == [
@@ -294,8 +329,10 @@ def test_fragility_validation_prep_matrix_and_closeout_plan() -> None:
   assert all(row["residual_id"] == "RES-011" for row in plan)
 
 
-def test_fragility_validation_prep_interlocks_authority() -> None:
-  artifact = prep.generate_stage_c_fragility_validation_prep(repo_root=REPO_ROOT)
+def test_fragility_validation_prep_interlocks_authority(
+  fragility_validation_prep_artifact: Artifact,
+) -> None:
+  artifact = fragility_validation_prep_artifact
 
   replacement = artifact[
     "baseline_synthetic_sigmoid_vs_candidate_evidence_row_replacement_path"
@@ -385,8 +422,10 @@ def test_fragility_validation_prep_cli_writes_json(tmp_path: Path) -> None:
   )
 
 
-def test_fragility_review_gate_blocks_residuals() -> None:
-  artifact = review_gate.generate_stage_c_fragility_review_gate(repo_root=REPO_ROOT)
+def test_fragility_review_gate_blocks_residuals(
+  fragility_review_gate_artifact: Artifact,
+) -> None:
+  artifact = fragility_review_gate_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -465,8 +504,10 @@ def test_fragility_review_gate_blocks_residuals() -> None:
   )
 
 
-def test_fragility_review_gate_passes_only_review_subchecks() -> None:
-  artifact = review_gate.generate_stage_c_fragility_review_gate(repo_root=REPO_ROOT)
+def test_fragility_review_gate_passes_only_review_subchecks(
+  fragility_review_gate_artifact: Artifact,
+) -> None:
+  artifact = fragility_review_gate_artifact
 
   retained_benchmark = artifact["retained_benchmark_artifact_review"]
   assert retained_benchmark["review_result"] == "blocked"
@@ -540,8 +581,10 @@ def test_fragility_review_gate_passes_only_review_subchecks() -> None:
   )
 
 
-def test_fragility_review_gate_closeout_boundaries() -> None:
-  artifact = review_gate.generate_stage_c_fragility_review_gate(repo_root=REPO_ROOT)
+def test_fragility_review_gate_closeout_boundaries(
+  fragility_review_gate_artifact: Artifact,
+) -> None:
+  artifact = fragility_review_gate_artifact
 
   formal = artifact["formal_result_closeout_review"]
   assert formal["review_result"] == "blocked"
@@ -655,8 +698,10 @@ def test_fragility_review_gate_cli_writes_json_and_retained(
   assert manifest["replacement_allowed"] is False
 
 
-def test_fragility_benchmark_blocks_residuals_without_truth() -> None:
-  artifact = benchmark.generate_stage_c_fragility_benchmark(repo_root=REPO_ROOT)
+def test_fragility_benchmark_blocks_residuals_without_truth(
+  fragility_benchmark_artifact: Artifact,
+) -> None:
+  artifact = fragility_benchmark_artifact
 
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
@@ -724,8 +769,10 @@ def test_fragility_benchmark_blocks_residuals_without_truth() -> None:
   assert residuals["RES-012"]["blocking_condition_ids"] == ["BLOCK-CP-001"]
 
 
-def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
-  artifact = benchmark.generate_stage_c_fragility_benchmark(repo_root=REPO_ROOT)
+def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid(
+  fragility_benchmark_artifact: Artifact,
+) -> None:
+  artifact = fragility_benchmark_artifact
 
   curve = artifact["benchmark_candidate_curve"]
   assert curve["curve_id"] == "RIGHT-AILERON-ACTUATOR-STAGE-C-CANDIDATE-001"
@@ -769,7 +816,7 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
   ]
   assert [row["candidate_probability"] for row in rows] == [0.52, 0.37, 0.21]
   assert [row["synthetic_sigmoid_probability"] for row in rows] == pytest.approx(
-    [0.35168000000000005, 0.35168000000000005, 0.35168000000000005]
+    [0.17289200648782854, 0.1710962556841057, 0.16989812081797678]
   )
   assert all(
     row["synthetic_sigmoid_probability_source"] == "synthetic_sigmoid"
@@ -782,10 +829,10 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
     for row in rows
   )
   assert rows[0]["candidate_minus_synthetic_sigmoid"] == pytest.approx(
-    0.16831999999999997
+    0.3471079935121715
   )
   assert rows[2]["candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
-    0.5971337579617834
+    1.2360348601205957
   )
 
   metrics = comparison["metrics"]
@@ -793,22 +840,33 @@ def test_fragility_benchmark_compares_candidate_to_synthetic_sigmoid() -> None:
   assert metrics["metric_role"] == (
     "candidate_vs_synthetic_baseline_delta_only_not_calibration_truth"
   )
-  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is False
+  assert metrics["all_candidate_probabilities_exceed_synthetic_sigmoid"] is True
   assert metrics["mean_candidate_probability"] == pytest.approx(
     0.3666666666666667
   )
   assert metrics["mean_synthetic_sigmoid_probability"] == pytest.approx(
-    0.35168000000000005
+    0.17129546099663698
   )
   assert metrics["mean_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
-    0.10943999999999998
+    0.19537120567002966
+  )
+  assert metrics["max_absolute_difference_vs_synthetic_sigmoid"] == pytest.approx(
+    0.3471079935121715
+  )
+  assert metrics["min_candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
+    1.2360348601205957
+  )
+  assert metrics["max_candidate_to_synthetic_sigmoid_ratio"] == pytest.approx(
+    3.007657847019131
   )
   assert metrics["replacement_allowed"] is False
   assert "cannot prove accuracy" in metrics["calibration_interpretation"]
 
 
-def test_fragility_benchmark_uncertainty_and_independence_fail_closed() -> None:
-  artifact = benchmark.generate_stage_c_fragility_benchmark(repo_root=REPO_ROOT)
+def test_fragility_benchmark_uncertainty_and_independence_fail_closed(
+  fragility_benchmark_artifact: Artifact,
+) -> None:
+  artifact = fragility_benchmark_artifact
 
   uncertainty = artifact["uncertainty_calibration_metrics"]
   assert uncertainty["metric_status"] == (

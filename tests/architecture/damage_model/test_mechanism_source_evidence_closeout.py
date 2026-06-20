@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tests.architecture.helpers import REPO_ROOT, ensure_repo_root_on_sys_path
 from tests.architecture.damage_model.helpers import (
   HEX64,
@@ -30,6 +32,11 @@ def _matrix_by_lineage(artifact: dict[str, object]) -> dict[str, dict[str, objec
   rows = artifact["source_consumption_validation_matrix"]
   assert isinstance(rows, list)
   return {str(row["lineage_id"]): row for row in rows}
+
+
+@pytest.fixture(scope="module")
+def mechanism_source_closeout_artifact() -> dict[str, Any]:
+  return gate.generate_mechanism_source_closeout_gate(repo_root=REPO_ROOT)
 
 
 def test_mechanism_benchmark_evidence_current_repo_fails_closed() -> None:
@@ -359,9 +366,10 @@ def test_mechanism_comparison_hashes_cli_writes_retained_manifest(
   assert not any(manifest["non_authoritative_guards"].values())
 
 
-def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -> None:
-  artifact = gate.generate_mechanism_source_closeout_gate(repo_root=REPO_ROOT)
-
+def test_mechanism_source_closeout_gate_records_blocked_review_ready_identity(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
   assert artifact["package_id"] == (
     "a2_candidate_vps_f16c_block50_aim120c_blast_fragmentation_"
     "beam_high_near_miss_0_35m_v0"
@@ -396,6 +404,12 @@ def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -
   assert decision["closed_residual_ids_by_this_gate"] == []
   assert decision["authority_release_included"] is False
 
+
+def test_mechanism_source_closeout_gate_records_fail_closed_closeout_checks(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
+
   assert [row["check_id"] for row in artifact["closeout_checks"]] == [
     "CLOSEOUT-RES003-001",
     "CLOSEOUT-RES003-002",
@@ -412,7 +426,13 @@ def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -
     "blocked_release_grade_evidence_missing"
   }
 
+
+def test_mechanism_source_closeout_gate_records_res003_res004_author_side_evidence(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
   res003 = artifact["closeout_checks"][0]
+
   assert "F16-TG-SRC-012" in res003["observed_author_side_evidence"][
     "source_evidence"
   ]["present_source_ids"]
@@ -432,7 +452,13 @@ def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -
   ]["rejected_pin_ids"]
   assert "variant-specific warhead mass" in res004["blocking_summary"]
 
+
+def test_mechanism_source_closeout_gate_records_res005_res006_author_side_evidence(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
   res005 = artifact["closeout_checks"][5]
+
   assert res005["observed_author_side_evidence"]["bm005_audit_outcome"] == (
     "candidate_hygiene_only_not_independent_validation"
   )
@@ -449,6 +475,12 @@ def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -
     "source_evidence"
   ]["rejected_or_pending_source_ids"]
   assert "retained comparison outputs" in res006["blocking_summary"]
+
+
+def test_mechanism_source_closeout_gate_records_residual_condition_trace(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
 
   assert artifact["residual_condition_trace"] == [
     {
@@ -502,9 +534,10 @@ def test_mechanism_source_closeout_gate_current_repo_is_blocked_review_ready() -
   ]
 
 
-def test_mechanism_source_closeout_gate_keeps_authority_guards_false() -> None:
-  artifact = gate.generate_mechanism_source_closeout_gate(repo_root=REPO_ROOT)
-
+def test_mechanism_source_closeout_gate_keeps_authority_guards_false(
+  mechanism_source_closeout_artifact: dict[str, Any],
+) -> None:
+  artifact = mechanism_source_closeout_artifact
   guards = artifact["non_authoritative_guards"]
   assert guards["stock_descriptor_created"] is False
   assert guards["stock_database_authority_granted"] is False

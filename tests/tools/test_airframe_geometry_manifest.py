@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import Any
+
+import pytest
+
 from tools.geometry.airframe_review import component_model
 from tests.tools.airframe_review_fixtures import (
   build_airframe_review_bundle,
@@ -7,26 +11,19 @@ from tests.tools.airframe_review_fixtures import (
 )
 
 
-def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
+ReviewBundle = dict[str, Any]
+
+
+@pytest.fixture(scope="module")
+def airframe_review_bundle() -> ReviewBundle:
   require_airframe_geometry_extra()
-  bundle = build_airframe_review_bundle()
-  manifest = bundle["manifest"]
-  report = bundle["component_binding_report"]
-  diagnostics = bundle["diagnostics"]
-  fine_proxy = bundle["fine_proxy"]
-  surface_report = bundle["surface_report"]
-  semantic_report = bundle["semantic_report"]
-  internal_prior_report = bundle["internal_prior_report"]
-  held_segment_report = bundle["held_segment_report"]
-  airframe_constraint_report = bundle["airframe_constraint_report"]
-  ownership_split_report = bundle["ownership_split_report"]
-  runtime_activation_report = bundle["runtime_activation_report"]
-  runtime_behavior_report = bundle["runtime_behavior_report"]
-  training_proxy_aircraft = bundle["training_proxy_aircraft"]
-  training_proxy_operations = bundle["training_proxy_operations"]
-  training_proxy_report = bundle["training_proxy_report"]
-  shape_placement_report = bundle["shape_placement_report"]
-  parent_child_layout_report = bundle["parent_child_layout_report"]
+  return build_airframe_review_bundle()
+
+
+def test_f16_geometry_manifest_records_source_axis_and_damage_bounds(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  manifest = airframe_review_bundle["manifest"]
 
   assert manifest["schema_version"] == "a2.target_geometry_manifest.v1"
   assert manifest["status"] == "target_geometry_manifest_generated_review_only"
@@ -76,6 +73,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert damage_geometry["public_dimension_error_percent"]["height_m"] < -70.0
   assert manifest["authority_boundary"]["runtime_collision_mesh"] is False
   assert manifest["authority_boundary"]["real_weapon_pk_authority"] is False
+
+
+def test_f16_component_binding_report_tracks_review_states(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  report = airframe_review_bundle["component_binding_report"]
 
   assert report["schema_version"] == "a2.target_geometry_component_binding_report.v1"
   assert report["status"] == "component_binding_report_generated_review_only"
@@ -132,6 +135,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "side_sign_mismatch"
   ] is False
 
+
+def test_f16_review_point_diagnostics_keep_axis_landmarks(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  diagnostics = airframe_review_bundle["diagnostics"]
+
   assert diagnostics["schema_version"] == (
     "a2.target_geometry_review_point_diagnostics.v1"
   )
@@ -146,6 +155,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "engine_core",
     "rudder_actuator",
   }
+
+
+def test_f16_fine_proxy_candidates_preserve_mesh_silhouettes(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  fine_proxy = airframe_review_bundle["fine_proxy"]
 
   assert fine_proxy["schema_version"] == "a2.target_geometry_fine_proxy_candidate.v1"
   assert fine_proxy["status"] == "fine_geometry_proxy_candidate_generated_review_only"
@@ -186,6 +201,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   fine_rows = {row["point_id"]: row for row in fine_proxy["review_point_distance_deltas"]}
   assert fine_rows["nose_axis_4m"]["nearest_fine_proxy_region_id"]
   assert "fine_minus_source_distance_delta_m" in fine_rows["above_4m"]
+
+
+def test_f16_surface_component_candidates_keep_runtime_boundaries(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  surface_report = airframe_review_bundle["surface_report"]
 
   assert surface_report["schema_version"] == (
     "a2.target_geometry_surface_component_candidate.v1"
@@ -284,6 +305,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert surface_report["authority_boundary"]["runtime_damage_model"] is False
   assert surface_report["authority_boundary"]["true_surface_component_boundaries"] is False
 
+
+def test_f16_semantic_damage_geometry_candidates_stay_parse_ready_only(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  semantic_report = airframe_review_bundle["semantic_report"]
+
   assert semantic_report["schema_version"] == (
     "a2.target_geometry_semantic_damage_geometry_candidate.v1"
   )
@@ -333,6 +360,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   ] is True
   assert semantic_report["authority_boundary"]["runtime_active_component"] is False
 
+
+def test_f16_internal_component_prior_summary_preserves_review_boundaries(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  internal_prior_report = airframe_review_bundle["internal_prior_report"]
+
   assert internal_prior_report["schema_version"] == (
     "a2.target_geometry_internal_component_prior_candidate.v1"
   )
@@ -363,6 +396,13 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert internal_prior_report["summary"]["size_evidence_level_counts"][
     "public_lru_dimension"
   ] >= 2
+
+
+def test_f16_internal_component_prior_promotes_avionics_shapes(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  internal_prior_report = airframe_review_bundle["internal_prior_report"]
+
   prior_rows = {
     row["component_name"]: row for row in internal_prior_report["rows"]
   }
@@ -395,6 +435,16 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "r18_promoted_from_subcomponent_shape_candidate"
   )
   assert inertial_prior["constrained_geometry"]["center_m"] == [2.6, 0.0, -0.1]
+
+
+def test_f16_internal_component_prior_constrains_engine_spar_and_fuel(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  internal_prior_report = airframe_review_bundle["internal_prior_report"]
+  prior_rows = {
+    row["component_name"]: row for row in internal_prior_report["rows"]
+  }
+
   cockpit_prior = prior_rows["cockpit_crew_station"]
   assert cockpit_prior["constrained_geometry"]["center_m"] == [
     3.787559,
@@ -491,6 +541,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "true_internal_component_geometry"
   ] is False
 
+
+def test_f16_held_cross_region_segments_stay_inside_airframe_bounds(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  held_segment_report = airframe_review_bundle["held_segment_report"]
+
   assert held_segment_report["schema_version"] == (
     "a2.target_geometry_cross_region_held_component_segments.v1"
   )
@@ -572,6 +628,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     "owner_region_ids"
   ] == ["right_wing"]
 
+
+def test_f16_airframe_constraint_corrections_clear_silhouette_exposure(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  airframe_constraint_report = airframe_review_bundle["airframe_constraint_report"]
+
   assert airframe_constraint_report["schema_version"] == (
     "a2.target_geometry_airframe_constraint_correction_candidate.v1"
   )
@@ -630,6 +692,17 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert airframe_constraint_report["authority_boundary"][
     "center_shift_candidate_not_applied"
   ] is True
+
+
+def test_f16_cross_region_ownership_split_candidates_retire_parents(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  ownership_split_report = airframe_review_bundle["ownership_split_report"]
+  held_segment_report = airframe_review_bundle["held_segment_report"]
+  segment_rows = {
+    row["segment_id"]: row for row in held_segment_report["rows"]
+  }
+  afterburner_segment = segment_rows["engine_core_afterburner_segment"]
 
   assert ownership_split_report["schema_version"] == (
     "a2.target_geometry_cross_region_ownership_split_candidate.v1"
@@ -695,6 +768,23 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert ownership_split_report["authority_boundary"][
     "runtime_split_receiver_activation"
   ] is False
+
+
+def test_f16_runtime_activation_candidate_remains_feature_flagged(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  runtime_activation_report = airframe_review_bundle["runtime_activation_report"]
+  ownership_split_report = airframe_review_bundle["ownership_split_report"]
+  ownership_rows = {
+    row["parent_component_name"]: row for row in ownership_split_report["rows"]
+  }
+  engine_ownership = ownership_rows["engine_core"]
+  engine_candidates = {
+    candidate["name"]: candidate
+    for entry in engine_ownership["segment_entries"]
+    for candidate in [entry["runtime_component_json_candidate"]]
+  }
+  afterburner_candidate = engine_candidates["engine_core_afterburner_segment"]
 
   assert runtime_activation_report["schema_version"] == (
     "a2.target_geometry_runtime_activation_candidate.v1"
@@ -776,6 +866,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
     for row in runtime_activation_report["rows"]
   )
 
+
+def test_f16_runtime_behavior_projection_replaces_cross_region_parents(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  runtime_behavior_report = airframe_review_bundle["runtime_behavior_report"]
+
   assert runtime_behavior_report["schema_version"] == (
     "a2.target_geometry_runtime_behavior_regression.v1"
   )
@@ -821,6 +917,14 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert "engine_core_afterburner_segment" in runtime_behavior_report[
     "projected_component_names"
   ]
+
+
+def test_f16_training_proxy_database_materializes_split_receivers(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  training_proxy_aircraft = airframe_review_bundle["training_proxy_aircraft"]
+  training_proxy_operations = airframe_review_bundle["training_proxy_operations"]
+  training_proxy_report = airframe_review_bundle["training_proxy_report"]
 
   assert training_proxy_report["schema_version"] == (
     "a2.target_geometry_training_proxy_database.v1"
@@ -875,6 +979,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert "engine_core_afterburner_segment" in proxy_component_names
   assert "wing_spar_center_carrythrough_segment" in proxy_component_names
   assert len(training_proxy_operations) == 10
+
+
+def test_f16_shape_placement_queue_is_empty_after_promoted_geometry_rules(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  shape_placement_report = airframe_review_bundle["shape_placement_report"]
 
   assert shape_placement_report["schema_version"] == (
     "a2.target_geometry_subcomponent_shape_placement_candidate.v1"
@@ -954,6 +1064,12 @@ def test_f16_geometry_manifest_records_dual_model_axis_and_scale() -> None:
   assert shape_placement_report["authority_boundary"][
     "latest_candidate_promoted_to_internal_prior_or_segment_rules"
   ] is True
+
+
+def test_f16_parent_child_layout_retains_receiver_overlay_boundaries(
+  airframe_review_bundle: ReviewBundle,
+) -> None:
+  parent_child_layout_report = airframe_review_bundle["parent_child_layout_report"]
 
   assert parent_child_layout_report["schema_version"] == (
     "a2.target_geometry_semantic_parent_child_layout_candidate.v1"
