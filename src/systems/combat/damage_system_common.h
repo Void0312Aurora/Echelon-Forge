@@ -229,8 +229,7 @@ damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_t
     evidence.target_detection_threshold =
         contact_fuze ? 0.0 : damage_fuze_detection_threshold(fuze_type);
     evidence.mechanism_coverage_score =
-        contact_fuze ? 1.0
-                     : damage_mechanism_coverage_score(missile, mechanism_range_quality);
+        contact_fuze ? 1.0 : damage_mechanism_coverage_score(missile, mechanism_range_quality);
 
     if (contact_fuze) {
         evidence.sensor_opportunity_source = "contact_surface";
@@ -263,9 +262,8 @@ damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_t
     return evidence;
 }
 
-inline double damage_fuze_detonation_probability(
-    bool contact_fuze, double fuze_reliability,
-    const DamageFuzeSurrogateEvidence &surrogate) {
+inline double damage_fuze_detonation_probability(bool contact_fuze, double fuze_reliability,
+                                                 const DamageFuzeSurrogateEvidence &surrogate) {
     const double reliability = std::clamp(fuze_reliability, 0.0, 1.0);
     if (contact_fuze) {
         return reliability;
@@ -1276,17 +1274,18 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     quality_metric_m = detonation_metric_m;
                 }
                 const double sensor_opportunity_score =
-                    contact_fuze ? std::clamp(1.0 - quality_metric_m /
-                                                        std::max(1.0e-6, effective_trigger_radius_m),
-                                              0.0, 1.0)
-                                 : damage_proximity_sensor_opportunity_score(
-                                       quality_metric_m, reliable_trigger_radius_m,
-                                       effective_trigger_radius_m);
-                const double quality =
-                    contact_fuze ? sensor_opportunity_score
-                                 : damage_proximity_mechanism_range_quality(
-                                       quality_metric_m, reliable_trigger_radius_m,
-                                       effective_trigger_radius_m);
+                    contact_fuze
+                        ? std::clamp(1.0 - quality_metric_m /
+                                               std::max(1.0e-6, effective_trigger_radius_m),
+                                     0.0, 1.0)
+                        : damage_proximity_sensor_opportunity_score(quality_metric_m,
+                                                                    reliable_trigger_radius_m,
+                                                                    effective_trigger_radius_m);
+                const double quality = contact_fuze
+                                           ? sensor_opportunity_score
+                                           : damage_proximity_mechanism_range_quality(
+                                                 quality_metric_m, reliable_trigger_radius_m,
+                                                 effective_trigger_radius_m);
                 const DamageFuzeSignatureEvidence fuze_signature =
                     contact_fuze
                         ? DamageFuzeSignatureEvidence{"contact_surface", 0.0, 1.0, fuze_reliability}

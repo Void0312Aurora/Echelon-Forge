@@ -347,9 +347,8 @@ void bind_core(nb::module_ &m) {
         .def_rw("projection_min_effect_scale", &WarheadProfile::projection_min_effect_scale)
         .def_rw("projection_max_effect_scale", &WarheadProfile::projection_max_effect_scale)
         .def_rw("projection_falloff_exponent", &WarheadProfile::projection_falloff_exponent)
-        .def_rw(
-            "projection_max_projected_hitboxes",
-            &WarheadProfile::projection_max_projected_hitboxes)
+        .def_rw("projection_max_projected_hitboxes",
+                &WarheadProfile::projection_max_projected_hitboxes)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -1234,8 +1233,7 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["target_track_az_mps2"] = missile->target_track_az_mps2;
                 out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
                 out["guidance_lead_blend"] = missile->guidance_lead_blend;
-                out["guidance_apn_lateral_accel_mps2"] =
-                    missile->guidance_apn_lateral_accel_mps2;
+                out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
                 out["current_speed_mps"] = missile->current_speed_mps;
                 out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
                 out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
@@ -1358,8 +1356,8 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
         .def(
             "debug_set_unit_truth_state",
             [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
-               double heading_deg, double pitch_deg, double roll_deg, double vx_mps,
-               double vy_mps, double vz_mps) {
+               double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,
+               double vz_mps) {
                 auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
                 if (!e.is_valid()) {
                     throw std::invalid_argument("Invalid entity ID for debug_set_unit_truth_state");
@@ -1372,8 +1370,8 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
             },
             "Debug diagnostics-only override of entity transform and velocity truth state",
             nb::arg("entity_id"), nb::arg("x_m"), nb::arg("y_m"), nb::arg("z_m"),
-            nb::arg("heading_deg"), nb::arg("pitch_deg"), nb::arg("roll_deg"),
-            nb::arg("vx_mps"), nb::arg("vy_mps"), nb::arg("vz_mps"))
+            nb::arg("heading_deg"), nb::arg("pitch_deg"), nb::arg("roll_deg"), nb::arg("vx_mps"),
+            nb::arg("vy_mps"), nb::arg("vz_mps"))
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
         .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,

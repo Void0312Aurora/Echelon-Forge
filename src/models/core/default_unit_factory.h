@@ -1059,11 +1059,10 @@ class DefaultUnitFactory : public IUnitFactory {
                     : 3.0,
                 true};
             missile_runtime.apn_target_accel_gain =
-                def.has_missile_tuning
-                    ? default_factory_nonnegative_or(
-                          def.missile_tuning.apn_target_accel_gain,
-                          MissileGuidanceDefaults::kDefaultApnTargetAccelGain)
-                    : MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
+                def.has_missile_tuning ? default_factory_nonnegative_or(
+                                             def.missile_tuning.apn_target_accel_gain,
+                                             MissileGuidanceDefaults::kDefaultApnTargetAccelGain)
+                                       : MissileGuidanceDefaults::kDefaultApnTargetAccelGain;
             missile_runtime.warhead_profile =
                 def.has_missile_tuning && def.missile_tuning.has_warhead_profile
                     ? def.missile_tuning.warhead_profile
