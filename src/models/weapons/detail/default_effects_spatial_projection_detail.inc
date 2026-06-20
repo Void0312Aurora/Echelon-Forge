@@ -16,9 +16,25 @@ void apply_default_effects_spatial_projection(
         candidates.reserve(hitboxes.hitboxes.size());
         const double spatial_radius_m =
             resolve_spatial_projection_radius_m(missile, warhead_projection);
+        const auto component_has_direct_hit_row = [&](const DamageComponent &component) {
+            const std::string component_name = damage_component_key(component);
+            const std::string redundancy_group_id =
+                damage_component_redundancy_group_key(component);
+            for (const ComponentMechanismLoadRow &row : scratch.component_mechanism_load_rows) {
+                if (row.direct_hit && row.component_name == component_name &&
+                    row.component_system == component.system &&
+                    row.component_redundancy_group_id == redundancy_group_id) {
+                    return true;
+                }
+            }
+            return false;
+        };
         const auto make_component_projection_candidate =
             [&](const Hitbox &parent_box, const DamageComponent &component,
                 SpatialProjectionCandidate *out_candidate) {
+                if (component_has_direct_hit_row(component)) {
+                    return false;
+                }
                 const double distance_m = component_surface_distance(local_imp, component);
                 if (distance_m > spatial_radius_m) {
                     return false;

@@ -543,9 +543,23 @@ def test_blast_fragmentation_direct_centerline_keeps_near_field_projection() -> 
   assert bool(direct.effects.direct_hitbox_intersection)
   assert not bool(one_meter_near_field.effects.direct_hitbox_intersection)
   assert int(direct.effects.projected_hitbox_count) > 0
-  assert float(direct.damage_report.system_health_delta) <= float(
-    one_meter_near_field.damage_report.system_health_delta
-  )
+  direct_rows = [
+    row
+    for row in direct.effects.component_mechanism_load_rows
+    if str(row.component_name) or str(row.component_system)
+  ]
+  rows_by_component = {
+    (
+      str(row.component_name),
+      str(row.component_system),
+      str(row.component_redundancy_group_id),
+    ): row
+    for row in direct_rows
+  }
+  assert len(rows_by_component) == len(direct_rows)
+  assert any(bool(row.direct_hit) for row in direct_rows)
+  assert any(not bool(row.direct_hit) for row in direct_rows)
+  assert float(direct.damage_report.system_health_delta) < 0.0
   assert float(direct.effects.spatial_effect_scale) >= float(
     one_meter_near_field.effects.spatial_effect_scale
   )
