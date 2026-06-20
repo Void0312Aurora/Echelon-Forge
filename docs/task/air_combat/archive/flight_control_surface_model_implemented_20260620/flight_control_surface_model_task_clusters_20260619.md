@@ -34,7 +34,7 @@ It must not:
 - Every worker packet maps to exactly one cluster above.
 - Keep acceptance/closure clusters serial.
 - If a cluster exceeds its round cap, stop and re-scope.
-- Follow [Subagent Usage Policy](../../../standards/governance/subagent_usage_policy.md).
+- Follow [Subagent Usage Policy](../../../../standards/governance/subagent_usage_policy.md).
 
 ## Worker Packet Requirements
 

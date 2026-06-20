@@ -1,7 +1,9 @@
 # 空战归档
 
 仍处于活跃状态的 `1v1` 空战工作线的历史带日期快照。
-原任务路径已经降为轻量指针的 completed subproject packet 也保存在这里。
+已完成子项目证据包物理存放在本目录，并在父级
+[归档注册表](../archive_registry.zh.md) 中登记，避免完成工作继续堆在 active
+目录平面上。
 
 当前入口：
 
@@ -27,6 +29,10 @@
 - [a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)：
   已 accepted 的高保真武器系统 evidence packet。23 集群通过、5 项明确推迟、0 个开放残差。
   R2 EKF 定量验证和 R4 马赫 Cd₀/k(M) 表均已关闭。六个子系统 G1-G6 已升级，且相对 main 零回归。
+- [flight_control_surface_model_implemented_20260620/](flight_control_surface_model_implemented_20260620/README.md)：
+  implemented / validation-green 的飞行控制面机制记录。它恢复维护路径上的
+  `stick -> actuator -> surface deflection -> aero control moment` 链路，并让
+  损伤通过控制面效能承载；不声明飞测校准权威。
 - [air_combat_1v1_entry_analysis_20260516.zh.md](air_combat_1v1_entry_analysis_20260516.zh.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.zh.md](air_combat_1v1_f16c_baseline_progress_20260516.zh.md)
 - [air_combat_1v1_freeze_plan_20260516.zh.md](air_combat_1v1_freeze_plan_20260516.zh.md)

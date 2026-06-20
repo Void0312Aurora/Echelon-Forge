@@ -1,6 +1,6 @@
 # Flight Control Surface Model
 
-Status: `2026-06-20` `implemented / validation green` — platform-level FDM
+Status: `2026-06-20` `archived / implemented / validation green` — platform-level FDM
 mechanism completion: the broken
 `stick -> actuator -> control-surface deflection -> aerodynamic control moment`
 causal chain is closed for the maintained runtime. Not combat-specific; placed
@@ -14,10 +14,10 @@ Language:
 
 Inputs:
 
-- [air_combat task track](../README.md)
-- [task root](../../README.md)
-- [Gradient Realism Principles](../../../standards/foundation/gradient_realism_principles.md)
-- [Realism Authority Boundary](../../../standards/foundation/realism_authority_boundary.zh.md)
+- [air_combat task track](../../README.md)
+- [task root](../../../README.md)
+- [Gradient Realism Principles](../../../../standards/foundation/gradient_realism_principles.md)
+- [Realism Authority Boundary](../../../../standards/foundation/realism_authority_boundary.zh.md)
 - Code entries:
   - `src/models/domains/air/default_control_model.cpp` (FBW law, now writes
     physical surface commands)
@@ -51,7 +51,7 @@ surface to carry the effect.
 This subproject restored the causal chain so control authority is produced by
 surface deflection acting through dynamic pressure and Mach, and so control
 degradation has a physical carrier. Per
-[Gradient Realism Principles](../../../standards/foundation/gradient_realism_principles.md),
+[Gradient Realism Principles](../../../../standards/foundation/gradient_realism_principles.md),
 this strengthens causal structure and consequence chains; it does not by itself
 raise any scenario's claimed gradient level.
 
@@ -132,4 +132,6 @@ This subproject can be marked accepted only when:
 
 ## Archive
 
-No superseded records yet.
+This is the physical archive packet for the completed flight-control-surface
+mechanism slice. The parent registry entry is
+[../../archive_registry.md](../../archive_registry.md).

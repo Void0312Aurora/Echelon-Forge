@@ -1,8 +1,9 @@
 # Air Combat Archive
 
 Historical dated snapshots for the still-active `1v1` air-combat workline.
-Completed subproject packets are also stored here when their original task path
-has been reduced to a lightweight pointer.
+Completed subproject packets are physically stored here and registered in the
+parent [archive registry](../archive_registry.md), so completed work does not
+remain as a flat active-directory list.
 
 Current entry:
 
@@ -33,6 +34,11 @@ Current entry:
   accepted high-fidelity weapon system. 23 clusters pass, 5 explicitly
   deferred, 0 open residuals. R2 EKF validation and R4 Mach Cd₀/k(M) table
   support are closed. Six subsystems (G1-G6) upgraded. Zero regressions vs main.
+- [flight_control_surface_model_implemented_20260620/](flight_control_surface_model_implemented_20260620/README.md):
+  implemented / validation-green flight-control-surface mechanism record.
+  Restores the maintained `stick -> actuator -> surface deflection -> aero
+  control moment` path, with damage coupling through surface effectiveness and
+  no flight-test calibration authority claim.
 - [air_combat_1v1_entry_analysis_20260516.md](air_combat_1v1_entry_analysis_20260516.md)
 - [air_combat_1v1_f16c_baseline_progress_20260516.md](air_combat_1v1_f16c_baseline_progress_20260516.md)
 - [air_combat_1v1_freeze_plan_20260516.md](air_combat_1v1_freeze_plan_20260516.md)

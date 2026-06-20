@@ -1,6 +1,6 @@
 # A2 High-Fidelity Damage Model
 
-Status: `2026-06-19` active follow-on index plus local archive registry. The
+Status: `2026-06-20` active follow-on index plus local archive registry. The
 sealed base A2 research/candidate package remains in the outer air-combat
 archive:
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.md).
@@ -74,18 +74,10 @@ The first mainline execution entry for that issue has been closed against the
 geometry-only acceptance gate:
 [missile_lethality_target_geometry/README.md](missile_lethality_target_geometry/README.md).
 
-MLF-8 (debris/wreck lifecycle) is accepted and archived:
-[archive/missile_lethality_debris_wreck_lifecycle/README.md](archive/missile_lethality_debris_wreck_lifecycle/README.md).
-The old active path is only a compatibility pointer:
-[missile_lethality_debris_wreck_lifecycle/README.md](missile_lethality_debris_wreck_lifecycle/README.md).
-MLF-9 (Pk/statistical trends) is accepted and archived:
-[archive/missile_lethality_pk_statistical_trends/README.md](archive/missile_lethality_pk_statistical_trends/README.md).
-The old active path is only a compatibility pointer:
-[missile_lethality_pk_statistical_trends/README.md](missile_lethality_pk_statistical_trends/README.md).
-MLF-10 (calibration gates) is accepted and archived:
-[archive/missile_lethality_calibration_gates/README.md](archive/missile_lethality_calibration_gates/README.md).
-The old active path is only a compatibility pointer:
-[missile_lethality_calibration_gates/README.md](missile_lethality_calibration_gates/README.md).
+MLF-8, MLF-9, and MLF-10 are accepted and archived under [archive/](archive/README.md);
+their old active compatibility pointer directories were removed on
+`2026-06-20` so the root remains limited to live or retained follow-ons. Use the
+local [archive registry](archive_registry.md) for those records.
 Do not continue inside archived MLF-1 through MLF-10 or proximity-fuze realism
 packages. These follow-ons do not reopen the sealed A2 package or create A9.
 

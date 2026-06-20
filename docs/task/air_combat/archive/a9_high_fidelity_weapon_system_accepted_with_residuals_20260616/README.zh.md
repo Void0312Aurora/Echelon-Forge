@@ -1,6 +1,6 @@
 # A9 高保真武器系统
 
-状态：`2026-06-17` **accepted**，5 个集群明确推迟，0 个开放残差。R2 EKF 跟踪验证已由聚焦 C++ 回归覆盖关闭。详见英文 README 和验收文档。
+状态：`2026-06-20` **archived / accepted**，5 个集群明确推迟，0 个开放残差。R2 EKF 跟踪验证已由聚焦 C++ 回归覆盖关闭。详见英文 README 和验收文档。
 
 语言：
 
@@ -9,17 +9,17 @@
 
 输入：
 
-- 父级空战任务索引: [../README.md](../README.md)
-- A2 封存毁伤模型记录: [../archive/a2_high_fidelity_damage_model/README.md](../archive/a2_high_fidelity_damage_model/README.md)
+- 父级空战任务索引: [../../README.zh.md](../../README.zh.md)
+- A2 封存毁伤模型记录: [../a2_high_fidelity_damage_model/README.zh.md](../a2_high_fidelity_damage_model/README.zh.md)
 - A2 后续近炸引信真实性（PF-R4 通过，PF-R5 带残差通过）:
-  [../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md](../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md)
-- A8 毁伤效果链条: [../archive/a8_damage_effect_chain/README.md](../archive/a8_damage_effect_chain/README.md)
-- Agent 子项目标准: [../../../agent/rules/subproject_creation_standard.zh.md](../../../agent/rules/subproject_creation_standard.zh.md)
-- 真实性权限边界: [../../../standards/foundation/realism_authority_boundary.zh.md](../../../standards/foundation/realism_authority_boundary.zh.md)
-- 公开数据源准入: [../../../standards/foundation/public_data_source_admission.zh.md](../../../standards/foundation/public_data_source_admission.zh.md)
-- 杀伤链合同（C++）: [../../../../src/runtime/contracts/engagement_contracts.h](../../../../src/runtime/contracts/engagement_contracts.h)
-- 杀伤链合同（Python）: [../../../../tools/diagnostics/lethality_chain_contract.py](../../../../tools/diagnostics/lethality_chain_contract.py)
-- 交战事件类型: [../../../../src/core/engine/engagement_event_types.h](../../../../src/core/engine/engagement_event_types.h)
+  [../../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md](../../a2_high_fidelity_damage_model/archive/missile_lethality_proximity_fuze_realism/README.zh.md)
+- A8 毁伤效果链条: [../a8_damage_effect_chain/README.md](../a8_damage_effect_chain/README.md)
+- Agent 子项目标准: [../../../../agent/rules/subproject_creation_standard.zh.md](../../../../agent/rules/subproject_creation_standard.zh.md)
+- 真实性权限边界: [../../../../standards/foundation/realism_authority_boundary.zh.md](../../../../standards/foundation/realism_authority_boundary.zh.md)
+- 公开数据源准入: [../../../../standards/foundation/public_data_source_admission.zh.md](../../../../standards/foundation/public_data_source_admission.zh.md)
+- 杀伤链合同（C++）: [../../../../../src/runtime/contracts/engagement_contracts.h](../../../../../src/runtime/contracts/engagement_contracts.h)
+- 杀伤链合同（Python）: [../../../../../tools/diagnostics/lethality_chain_contract.py](../../../../../tools/diagnostics/lethality_chain_contract.py)
+- 交战事件类型: [../../../../../src/core/engine/engagement_event_types.h](../../../../../src/core/engine/engagement_event_types.h)
 
 ## 目的
 
@@ -108,4 +108,6 @@
 
 ## 存档
 
-存档证据包: [../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](../archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)
+本目录是已完成 A9 子项目的物理归档证据包。父级注册表项见
+[../../archive_registry.zh.md](../../archive_registry.zh.md)，紧凑闭合记录见
+[archive_record_20260617.md](archive_record_20260617.md)。

@@ -69,7 +69,7 @@ Commands:
 - `PYTHONPATH=build pytest -q tests/runtime/air_combat/weapon_guidance_realism/test_launch_guidance_and_dynamics.py -k 'mach_table or cd0_supersonic or induced_drag'`
 - `PYTHONPATH=build pytest -q tests/runtime/air_combat/weapon_guidance_realism/test_launch_guidance_and_dynamics.py`
 - `PYTHONPATH=build pytest -q tests/runtime/air_combat/test_flight_dynamics_runtime.py tests/runtime/air_combat/test_flight_dynamics_realism_guards.py`
-- `PYTHONPATH=build python docs/task/air_combat/a9_high_fidelity_weapon_system/p3_integration/p3c_a9_tuning_example.py`
+- `PYTHONPATH=build python docs/task/air_combat/archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/p3_integration/p3c_a9_tuning_example.py`
 
 Outcomes:
 

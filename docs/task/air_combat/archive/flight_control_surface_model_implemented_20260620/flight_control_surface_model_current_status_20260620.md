@@ -8,7 +8,7 @@ Parent: [README.md](README.md)
 
 Inputs:
 
-- [Gradient realism principles](../../../standards/foundation/gradient_realism_principles.md)
+- [Gradient realism principles](../../../../standards/foundation/gradient_realism_principles.md)
   (regression rule: a scenario that still runs but is dominated by departure
   must not claim flight-stability realism until restored).
 - Mechanism tests: `tests/runtime/air_combat/test_control_surface_mechanism.py`
@@ -128,7 +128,7 @@ aerodynamics/tuning path:
 
 Empirically, on manual/RL roll inputs the realized surface gives
 `rud_d > 0 -> beta < 0`. The yaw coordination block in the control law
-([default_control_model.cpp](../../../../src/models/domains/air/default_control_model.cpp)
+([default_control_model.cpp](../../../../../src/models/domains/air/default_control_model.cpp)
 lines ~366-387) was **not updated to the new surface sign** for that control
 source. The manual/RL beta correction and ARI feed-forward were still written
 against the pre-refactor torque-sign convention.

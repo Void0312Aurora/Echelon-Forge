@@ -72,15 +72,15 @@ still not accepted.
   blast-fragmentation package is accepted as non-authoritative evidence, and
   G4/G5 research packets are closed. Stock authority, Pk, and deterministic
   fuze authority are still not released.
-- The A9 high-fidelity weapon system subproject is complete at
-  [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md).
+- The A9 high-fidelity weapon system subproject is complete and physically
+  archived at
+  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
   Six weapon subsystems upgraded from engineering-proxy fidelity toward
   research-grade fidelity; all authority boundaries sealed. Status:
   `accepted` — 23 clusters pass, 5 explicitly deferred, 0 open residuals.
   R2 EKF validation and R4 Mach Cd₀/k(M) tables are closed with focused
   regression coverage and engineering-proxy values, respectively. Zero
   regressions vs main.
-  Archived at [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md).
 - The A8 damage-effect chain now has a lightweight pointer at
   [a8_damage_effect_chain/README.md](archive/a8_damage_effect_chain/README.md); the
   full package lives under
@@ -93,8 +93,8 @@ still not accepted.
   narrow ground-contact lifecycle state with debris/residue objects deferred.
   It still does not add a direct crash rule, special MQ-9 kill rule, Pk claim,
   deterministic fuze claim, or stock AIM-120C lethality claim.
-- The flight control-surface model subproject is at
-  [flight_control_surface_model/README.md](flight_control_surface_model/README.md).
+- The flight control-surface model subproject is physically archived at
+  [archive/flight_control_surface_model_implemented_20260620/README.md](archive/flight_control_surface_model_implemented_20260620/README.md).
   Platform-level FDM mechanism completion (not combat-specific): it closes the
   broken `stick -> surface command -> actuator dynamics -> deflection ->
   control moment` causal chain by adding a `ControlSurfaceState` physical
@@ -102,7 +102,7 @@ still not accepted.
   the aerodynamics moment model, so control authority emerges from the same
   q_bar/Mach-scaled aero path as the rest of the moments and battle damage acts
   on surface effectiveness rather than on a synthetic torque scale. Status:
-  `active` — the surface mechanism is wired, observable, and GREEN (4 mechanism
+  `implemented / validation green` — the surface mechanism is wired, observable, and GREEN (4 mechanism
   tests + 4 M5 damage-coupling doctests), the full flight-dynamics guard suite
   passes 15/15 with no thresholds relaxed, and two control-loop bugs surfaced by
   the physical actuator lag (a pitch PIO limit-cycle from over-hot rate gains and
@@ -126,6 +126,10 @@ still not accepted.
   accepted record for concrete damage propagation through maintained aircraft
   systems, without adding direct crash or special-target kill rules; reopen only
   for explicit calibration, platform expansion, or debris/residue object work
+- read
+  [A9 high-fidelity weapon system](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)
+  as an archived accepted record for weapon-chain fidelity upgrades; reopen only
+  for explicit new research expansion
 - read missile-lethality structural evidence through the local A2 archive registry:
   [A2 MLF archive registry](a2_high_fidelity_damage_model/archive_registry.md),
   [MLF-6 structural failure](a2_high_fidelity_damage_model/archive/missile_lethality_structural_failure/README.md),
@@ -190,8 +194,10 @@ still not accepted.
   [a2_high_fidelity_damage_model/README.md](a2_high_fidelity_damage_model/README.md)
   and full archive
   [archive/a2_high_fidelity_damage_model/README.md](archive/a2_high_fidelity_damage_model/README.md)
-- High-fidelity weapon system (new subproject):
-  [a9_high_fidelity_weapon_system/README.md](a9_high_fidelity_weapon_system/README.md)
+- High-fidelity weapon system accepted archive:
+  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)
+- Flight control-surface model implemented archive:
+  [archive/flight_control_surface_model_implemented_20260620/README.md](archive/flight_control_surface_model_implemented_20260620/README.md)
 - Damage-effect chain follow-on:
   [a8_damage_effect_chain/README.md](archive/a8_damage_effect_chain/README.md)
 - MLF-8 debris/wreck lifecycle accepted archive:

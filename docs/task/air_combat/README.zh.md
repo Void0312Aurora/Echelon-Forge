@@ -58,13 +58,11 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   该线已在 research / candidate profile 下封存归档：structured-aircraft damage/effects
   runtime 进入维护路径，blast-fragmentation 候选包非权威验收通过，G4/G5 research
   packet 已收口；stock authority、Pk 与 deterministic fuze 仍未放行。
-- A9 高保真武器系统子项目已在
-  [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
-  完成。六个武器子系统从工程代理保真度升级到研究级代理保真度；所有权限边界保持封闭。
+- A9 高保真武器系统子项目已完成并物理归档到
+  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.zh.md)。
+  六个武器子系统从工程代理保真度升级到研究级代理保真度；所有权限边界保持封闭。
   状态为 `accepted`：23 集群通过、5 项明确推迟、0 个开放残差。R2 EKF 定量验证和
   R4 马赫 Cd₀/k(M) 表已分别由聚焦回归覆盖和工程代理值关闭。相对 main 零回归。
-  归档证据包位于
-  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.md)。
 - A8 损伤效果链现在在
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
   保留轻量指针；完整包位于
@@ -89,7 +87,8 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   具体损伤可通过维护中的飞机系统传播，但不增加直接坠毁或特定目标击杀规则；只有明确要求校准、
   平台扩展或碎片/残留对象工作时才重开
 - 将
-  [A9 高保真武器系统](a9_high_fidelity_weapon_system/README.zh.md) 作为 accepted record 读取：
+  [A9 高保真武器系统](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.zh.md)
+  作为 accepted record 读取：
   武器链保真度升级已合入，R2/R4 残差已关闭；后续只针对明确的新研究扩展开支线
 - 通过本地 A2 archive 注册表读取导弹杀伤结构证据：
   [A2 MLF 归档注册表](a2_high_fidelity_damage_model/archive_registry.zh.md)、
@@ -154,8 +153,10 @@ M3-S2 包在 A5 weapon-arm action-frame fix 后验收：
   [archive/a8_damage_effect_chain/README.zh.md](archive/a8_damage_effect_chain/README.zh.md)
 - MLF-8 残骸/碎片生命周期已验收归档：
   [a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.zh.md](a2_high_fidelity_damage_model/archive/missile_lethality_debris_wreck_lifecycle/README.zh.md)
-- 高保真武器系统：
-  [a9_high_fidelity_weapon_system/README.zh.md](a9_high_fidelity_weapon_system/README.zh.md)
+- 高保真武器系统 accepted 归档：
+  [archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.zh.md](archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/README.zh.md)
+- 飞行控制面模型 implemented 归档：
+  [archive/flight_control_surface_model_implemented_20260620/README.md](archive/flight_control_surface_model_implemented_20260620/README.md)
 - 高保真毁伤系统基线：
   [air_combat_damage_model_evaluation_20260522.md](../../forward/air_combat/air_combat_damage_model_evaluation_20260522.md)
 

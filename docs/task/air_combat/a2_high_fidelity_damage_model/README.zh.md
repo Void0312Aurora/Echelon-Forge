@@ -1,6 +1,6 @@
 # A2 高真实度空战毁伤模型
 
-状态：`2026-06-19` active follow-on 索引 + 本地 archive 注册表。已封存的
+状态：`2026-06-20` active follow-on 索引 + 本地 archive 注册表。已封存的
 A2 基础 research/candidate 包仍保留在外层空战归档：
 [archive/a2_high_fidelity_damage_model](../archive/a2_high_fidelity_damage_model/README.zh.md)。
 已完成或失效的本地 MLF follow-on 已物理移动到本目录
@@ -62,18 +62,9 @@ A2 基础 research/candidate 包仍保留在外层空战归档：
 该 issue 的第一轮主线执行入口已按 geometry-only 验收门收口为
 [missile_lethality_target_geometry/README.zh.md](missile_lethality_target_geometry/README.zh.md)。
 
-MLF-8（残骸/碎片生命周期）已验收并归档：
-[archive/missile_lethality_debris_wreck_lifecycle/README.zh.md](archive/missile_lethality_debris_wreck_lifecycle/README.zh.md)。
-旧 active 路径仅保留兼容指针：
-[missile_lethality_debris_wreck_lifecycle/README.zh.md](missile_lethality_debris_wreck_lifecycle/README.zh.md)。
-MLF-9（Pk/统计趋势）已验收并归档：
-[archive/missile_lethality_pk_statistical_trends/README.zh.md](archive/missile_lethality_pk_statistical_trends/README.zh.md)。
-旧 active 路径仅保留兼容指针：
-[missile_lethality_pk_statistical_trends/README.zh.md](missile_lethality_pk_statistical_trends/README.zh.md)。
-MLF-10（校准门）已验收并归档：
-[archive/missile_lethality_calibration_gates/README.zh.md](archive/missile_lethality_calibration_gates/README.zh.md)。
-旧 active 路径仅保留兼容指针：
-[missile_lethality_calibration_gates/README.zh.md](missile_lethality_calibration_gates/README.zh.md)。
+MLF-8、MLF-9 和 MLF-10 均已验收并归档到 [archive/](archive/README.zh.md)；
+旧 active 兼容指针目录已在 `2026-06-20` 移除，使根目录只保留 live 或 retained
+follow-on。读取这些记录时使用本地 [archive registry](archive_registry.zh.md)。
 不得继续写入已归档的 MLF-1 到 MLF-10 或近炸引信现实性包。这些 follow-on 不重开已封存
 A2 包，也不创建 A9。
 

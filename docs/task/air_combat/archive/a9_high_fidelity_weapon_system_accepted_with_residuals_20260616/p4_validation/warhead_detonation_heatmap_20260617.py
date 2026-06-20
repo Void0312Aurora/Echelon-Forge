@@ -8,7 +8,7 @@ validation artifact for directional behavior only: the profile values are not
 real-weapon calibration and should not be read as Pk.
 
 Run:
-  PYTHONPATH=build python docs/task/air_combat/a9_high_fidelity_weapon_system/p4_validation/warhead_detonation_heatmap_20260617.py
+  PYTHONPATH=build python docs/task/air_combat/archive/a9_high_fidelity_weapon_system_accepted_with_residuals_20260616/p4_validation/warhead_detonation_heatmap_20260617.py
 
 Outputs:
   warhead_detonation_heatmap_20260617.csv

@@ -4,7 +4,7 @@ Status: `2026-06-16` P1-A pass. 14 entries with full admission fields per
 `public_data_source_admission.zh.md`. All entries are `non-authoritative`.
 
 Parent: [../README.md](../README.md)
-Standard: [public_data_source_admission.zh.md](../../../../standards/foundation/public_data_source_admission.zh.md)
+Standard: [public_data_source_admission.zh.md](../../../../../standards/foundation/public_data_source_admission.zh.md)
 
 ## Ledger Schema
 
