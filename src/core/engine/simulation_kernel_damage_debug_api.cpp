@@ -189,6 +189,9 @@ build_debug_effects_damage_event_record(const DebugEffectsDamageEventRecordInput
 
 bool SimulationKernel::debug_apply_proximity_hit(uint64_t attacker_id, uint64_t target_id,
                                                  double damage, double fuse_distance) {
+    if (attacker_id == 0 || target_id == 0) {
+        return false;
+    }
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_valid() || !target.is_valid()) {
@@ -280,6 +283,9 @@ bool SimulationKernel::debug_apply_local_proximity_hit(uint64_t attacker_id, uin
                                                        double local_forward_m, double local_right_m,
                                                        double local_up_m, double damage,
                                                        double fuse_distance) {
+    if (attacker_id == 0 || target_id == 0) {
+        return false;
+    }
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_valid() || !target.is_valid()) {
@@ -371,6 +377,9 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity(
     uint64_t attacker_id, uint64_t target_id, double local_forward_m, double local_right_m,
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps) {
+    if (attacker_id == 0 || target_id == 0) {
+        return false;
+    }
     const auto target = ecs.entity(target_id);
     const Transform *target_transform = target.is_alive() ? target.get<Transform>() : nullptr;
     return debug_apply_profiled_local_proximity_hit_with_velocity_and_attitude(
@@ -386,6 +395,9 @@ bool SimulationKernel::debug_apply_profiled_local_proximity_hit_with_velocity_an
     double local_up_m, const WarheadProfile &warhead_profile, double missile_vx_mps,
     double missile_vy_mps, double missile_vz_mps, double detonation_heading_deg,
     double detonation_pitch_deg, double detonation_roll_deg) {
+    if (attacker_id == 0 || target_id == 0) {
+        return false;
+    }
     auto attacker = ecs.entity(attacker_id);
     auto target = ecs.entity(target_id);
     if (!attacker.is_alive() || !target.is_alive()) {
