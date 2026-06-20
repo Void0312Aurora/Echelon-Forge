@@ -75,6 +75,15 @@ def _venv_tool(name: str) -> str | None:
     return shutil.which(name)
 
 
+def _python_module_tool(name: str) -> list[str] | None:
+    executable = _venv_tool(name)
+    if executable:
+        return [executable]
+    if _module_available(name):
+        return [sys.executable, "-m", name]
+    return None
+
+
 def _run(
     cmd: list[str],
     *,
@@ -192,7 +201,7 @@ def _cpp_coverage(
     filters: list[str],
     excludes: list[str],
 ) -> list[dict[str, Any]]:
-    gcovr = _venv_tool("gcovr")
+    gcovr = _python_module_tool("gcovr")
     if not gcovr:
         raise UnavailableCoverageReportError(
             "gcovr is not installed; install the smoke coverage dependencies first"
@@ -204,7 +213,7 @@ def _cpp_coverage(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     base_cmd = [
-        gcovr,
+        *gcovr,
         "-r",
         str(REPO_ROOT),
         "--object-directory",

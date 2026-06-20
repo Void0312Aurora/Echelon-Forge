@@ -94,3 +94,14 @@ def test_main_records_unavailable_cpp_report_when_requested(
   assert metadata["results"][0]["name"] == "cpp-gcovr"
   assert metadata["results"][0]["returncode"] == 0
   assert metadata["results"][0]["skipped"]
+
+
+def test_python_module_tool_falls_back_to_current_interpreter(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  monkeypatch.setattr(measure_test_coverage, "_venv_tool", lambda _name: None)
+  monkeypatch.setattr(measure_test_coverage, "_module_available", lambda _name: True)
+
+  command = measure_test_coverage._python_module_tool("gcovr")
+
+  assert command == [sys.executable, "-m", "gcovr"]
