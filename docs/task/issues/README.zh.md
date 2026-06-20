@@ -17,6 +17,10 @@
 
 ## 活跃问题
 
+- [测试系统残余治理](./test_system_residual_governance/README.zh.md)：
+  当前测试系统治理切片验收后的保留 follow-on gate，覆盖依赖完整环境下的
+  airframe 行为验证、damage-model 剩余 literal/source-scan 集中、失败的
+  `weapon_guidance_realism`，以及 Python/C++ coverage 边界拆分。
 - [A6 发射窗口标签密度失衡](./a6_launch_window_label_imbalance/README.zh.md)：
   L contract 下 deterministic `fire_once` argmax 不 crossing，尽管 open-window
   event probability 达到 `34.6%`。它仍是 live symptom 与 balancing requirement，但

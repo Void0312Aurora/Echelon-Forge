@@ -20,6 +20,11 @@ whose evidence and repair path should be reusable by other worklines.
 
 ## Active Issues
 
+- [Test System Residual Governance](./test_system_residual_governance/README.md):
+  retained follow-on gate for test-system residuals after the scoped governance
+  slice: dependency-complete airframe behavior, remaining damage-model
+  literal/source-scan concentration, failing `weapon_guidance_realism`, and
+  Python/C++ coverage boundary separation.
 - [A6 Launch-Window Label Density Imbalance](./a6_launch_window_label_imbalance/README.md):
   deterministic `fire_once` argmax does not cross under the L contract despite
   `34.6%` open-window event probability. It remains a live symptom and
