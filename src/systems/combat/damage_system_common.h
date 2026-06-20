@@ -218,18 +218,19 @@ inline double damage_mechanism_coverage_score(const Missile &missile, double ran
 
 inline DamageFuzeSurrogateEvidence
 damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_type,
-                               const DamageFuzeSignatureEvidence &signature, double quality,
+                               const DamageFuzeSignatureEvidence &signature,
+                               double sensor_opportunity_score, double mechanism_range_quality,
                                double event_closure_mps, bool contact_fuze,
                                bool terminal_track_valid, bool online_sensor_trigger = false) {
     DamageFuzeSurrogateEvidence evidence{};
-    evidence.sensor_opportunity_score = std::clamp(quality, 0.0, 1.0);
+    evidence.sensor_opportunity_score = std::clamp(sensor_opportunity_score, 0.0, 1.0);
     evidence.terminal_track_valid = contact_fuze || terminal_track_valid;
     evidence.target_detection_source = contact_fuze ? "contact_surface" : signature.source;
     evidence.target_detection_threshold =
         contact_fuze ? 0.0 : damage_fuze_detection_threshold(fuze_type);
     evidence.mechanism_coverage_score =
         contact_fuze ? 1.0
-                     : damage_mechanism_coverage_score(missile, evidence.sensor_opportunity_score);
+                     : damage_mechanism_coverage_score(missile, mechanism_range_quality);
 
     if (contact_fuze) {
         evidence.sensor_opportunity_source = "contact_surface";
@@ -242,9 +243,10 @@ damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_t
     const double closing_score =
         event_closure_mps > 1.0e-6 ? std::clamp(event_closure_mps / 150.0, 0.5, 1.0) : 1.0;
     const double signature_score = std::clamp(signature.signature_scale / 1.25, 0.0, 1.0);
+    const double range_window_score = evidence.sensor_opportunity_score;
     evidence.sensor_opportunity_source = "proximity_sensor_window";
     evidence.target_detection_confidence =
-        std::clamp(evidence.sensor_opportunity_score * signature_score * closing_score *
+        std::clamp(range_window_score * signature_score * closing_score *
                        (evidence.terminal_track_valid ? 1.0 : 0.0),
                    0.0, 1.0);
     evidence.target_detected =
@@ -259,6 +261,19 @@ damage_fuze_surrogate_evidence(const Missile &missile, const std::string &fuze_t
                                                : "nearest_point_fallback";
     }
     return evidence;
+}
+
+inline double damage_fuze_detonation_probability(
+    bool contact_fuze, double fuze_reliability,
+    const DamageFuzeSurrogateEvidence &surrogate) {
+    const double reliability = std::clamp(fuze_reliability, 0.0, 1.0);
+    if (contact_fuze) {
+        return reliability;
+    }
+    if (!surrogate.terminal_track_valid || !surrogate.target_detected) {
+        return 0.0;
+    }
+    return reliability * std::clamp(surrogate.sensor_opportunity_score, 0.0, 1.0);
 }
 
 inline std::string damage_fuze_trigger_type(const Missile &missile) {
@@ -282,6 +297,52 @@ inline double damage_contact_fuze_surface_tolerance_m(const Missile &missile) {
         return authored_trigger;
     }
     return 0.25;
+}
+
+inline double damage_soft_proximity_trigger_radius_m(const Missile &missile,
+                                                     double trigger_radius_m) {
+    const double reliable_radius_m = std::max(1.0e-6, trigger_radius_m);
+    double soft_radius_m = reliable_radius_m;
+    const WarheadProfile &warhead = missile.warhead_profile;
+    if (std::isfinite(warhead.projection_max_radius_m) && warhead.projection_max_radius_m > 0.0) {
+        soft_radius_m = std::max(soft_radius_m, warhead.projection_max_radius_m);
+    }
+    if (std::isfinite(warhead.lethal_radius_m) && warhead.lethal_radius_m > 0.0) {
+        soft_radius_m = std::max(soft_radius_m, warhead.lethal_radius_m);
+    }
+
+    const double max_tail_radius_m = std::max(reliable_radius_m, reliable_radius_m + 25.0);
+    return std::clamp(soft_radius_m, reliable_radius_m, max_tail_radius_m);
+}
+
+inline double damage_proximity_sensor_opportunity_score(double miss_distance_m,
+                                                        double reliable_radius_m,
+                                                        double soft_radius_m) {
+    if (!std::isfinite(miss_distance_m)) {
+        return 0.0;
+    }
+    const double reliable = std::max(1.0e-6, reliable_radius_m);
+    const double soft = std::max(reliable, soft_radius_m);
+    if (miss_distance_m <= reliable) {
+        return 1.0;
+    }
+    if (miss_distance_m >= soft || soft <= reliable + 1.0e-6) {
+        return 0.0;
+    }
+    const double tail_fraction = (soft - miss_distance_m) / (soft - reliable);
+    return std::clamp(tail_fraction * tail_fraction, 0.0, 1.0);
+}
+
+inline double damage_proximity_mechanism_range_quality(double miss_distance_m,
+                                                       double reliable_radius_m,
+                                                       double soft_radius_m) {
+    if (!std::isfinite(miss_distance_m)) {
+        return 0.0;
+    }
+    const double reliable = std::max(1.0e-6, reliable_radius_m);
+    const double soft = std::max(reliable, soft_radius_m);
+    const double quality_radius_m = soft > reliable + 1.0e-6 ? soft : reliable;
+    return std::clamp(1.0 - miss_distance_m / quality_radius_m, 0.0, 1.0);
 }
 
 inline std::array<double, 3> damage_world_point_to_local_body(const Transform &target_transform,
@@ -1176,9 +1237,10 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const double trigger_radius_m = std::isfinite(m[i].fuze_profile.trigger_radius_m)
                                                     ? m[i].fuze_profile.trigger_radius_m
                                                     : m[i].fuse_distance;
+                const double reliable_trigger_radius_m = std::max(1.0e-6, trigger_radius_m);
                 const double fuze_reliability = std::clamp(m[i].fuze_profile.reliability, 0.0, 1.0);
                 double detonation_metric_m = min_dist;
-                double effective_trigger_radius_m = trigger_radius_m;
+                double effective_trigger_radius_m = reliable_trigger_radius_m;
                 DamageContactFuzeEvidence contact_evidence{};
                 if (contact_fuze) {
                     contact_evidence = damage_contact_fuze_evidence(*t_pos, p[i].x, p[i].y, p[i].z,
@@ -1187,6 +1249,11 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     effective_trigger_radius_m = damage_contact_fuze_surface_tolerance_m(m[i]);
                 } else if (online_sensor_trigger) {
                     detonation_metric_m = dist;
+                    effective_trigger_radius_m =
+                        damage_soft_proximity_trigger_radius_m(m[i], reliable_trigger_radius_m);
+                } else {
+                    effective_trigger_radius_m =
+                        damage_soft_proximity_trigger_radius_m(m[i], reliable_trigger_radius_m);
                 }
                 const bool opening_after_closest =
                     std::isfinite(previous_dist) && dist > previous_dist + epsilon;
@@ -1204,12 +1271,22 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     damage_closure_mps(p[i], *t_pos, missile_velocity, target_velocity);
                 const double event_closure_mps =
                     std::max(closure_mps, std::max(0.0, m[i].filtered_closing_speed_mps));
-                double fuse = std::max(1e-6, effective_trigger_radius_m);
                 double quality_metric_m = min_dist;
                 if (contact_fuze || online_sensor_trigger) {
                     quality_metric_m = detonation_metric_m;
                 }
-                double quality = std::clamp(1.0 - quality_metric_m / fuse, 0.0, 1.0);
+                const double sensor_opportunity_score =
+                    contact_fuze ? std::clamp(1.0 - quality_metric_m /
+                                                        std::max(1.0e-6, effective_trigger_radius_m),
+                                              0.0, 1.0)
+                                 : damage_proximity_sensor_opportunity_score(
+                                       quality_metric_m, reliable_trigger_radius_m,
+                                       effective_trigger_radius_m);
+                const double quality =
+                    contact_fuze ? sensor_opportunity_score
+                                 : damage_proximity_mechanism_range_quality(
+                                       quality_metric_m, reliable_trigger_radius_m,
+                                       effective_trigger_radius_m);
                 const DamageFuzeSignatureEvidence fuze_signature =
                     contact_fuze
                         ? DamageFuzeSignatureEvidence{"contact_surface", 0.0, 1.0, fuze_reliability}
@@ -1219,8 +1296,8 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 const bool terminal_track_valid =
                     contact_fuze || proximity_fuze_has_terminal_guidance_support(m[i]);
                 const DamageFuzeSurrogateEvidence fuze_surrogate = damage_fuze_surrogate_evidence(
-                    m[i], fuze_type, fuze_signature, quality, event_closure_mps, contact_fuze,
-                    terminal_track_valid, online_sensor_trigger);
+                    m[i], fuze_type, fuze_signature, sensor_opportunity_score, quality,
+                    event_closure_mps, contact_fuze, terminal_track_valid, online_sensor_trigger);
                 const bool online_sensor_missed_target = online_sensor_trigger &&
                                                          online_entered_trigger_radius &&
                                                          !fuze_surrogate.target_detected;
@@ -1291,15 +1368,10 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     continue;
                 }
 
-                const double evasion = resolved_compatibility_damage_evasion(target_entity);
-
-                const double base_hit =
-                    contact_fuze ? 1.0 : 0.35 + 0.65 * fuze_surrogate.mechanism_coverage_score;
-                double hit_prob = std::clamp(base_hit * fuze_signature.effective_reliability *
-                                                 (contact_fuze ? 1.0 : (1.0 - 0.3 * evasion)),
-                                             0.0, contact_fuze ? 1.0 : 0.98);
+                const double detonation_probability = damage_fuze_detonation_probability(
+                    contact_fuze, fuze_reliability, fuze_surrogate);
                 const double fuze_sample = damage_rand_uniform01(m[i].rng_state);
-                if (fuze_sample > hit_prob) {
+                if (fuze_sample > detonation_probability) {
                     damage_record_nearest_approach_event(
                         it.entity(i), m[i], recorder_ref,
                         std::string(kLethalityReasonFuzeNoDetonation), current_time,
@@ -1307,15 +1379,15 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     damage_record_fuze_evaluation_event(
                         it.entity(i), m[i], recorder_ref,
                         std::string(kLethalityReasonFuzeNoDetonation), true, false, current_time,
-                        m[i].fuze_profile.delay_s, hit_prob, fuze_sample, trigger_radius_m,
-                        contact_fuze, contact_evidence,
+                        m[i].fuze_profile.delay_s, detonation_probability, fuze_sample,
+                        trigger_radius_m, contact_fuze, contact_evidence,
                         contact_fuze && contact_evidence.inside_hitbox, fuze_surrogate);
                     damage_record_fuze_no_detonation_event(
                         it.entity(i), m[i], *t_pos, p[i], recorder_ref, trigger_type,
                         std::string(kLethalityReasonFuzeNoDetonation), current_time,
-                        m[i].proximity_min_time_s, min_dist, trigger_radius_m, quality, hit_prob,
-                        fuze_signature, contact_fuze, contact_evidence, event_closure_mps,
-                        missile_axis, fuze_surrogate);
+                        m[i].proximity_min_time_s, min_dist, trigger_radius_m, quality,
+                        detonation_probability, fuze_signature, contact_fuze, contact_evidence,
+                        event_closure_mps, missile_axis, fuze_surrogate);
                     it.entity(i).destruct();
                     continue;
                 }
@@ -1326,9 +1398,9 @@ inline void register_damage_system_common(flecs::world &ecs) {
                     current_time, m[i].proximity_min_time_s, min_dist, event_closure_mps);
                 damage_record_fuze_evaluation_event(
                     it.entity(i), m[i], recorder_ref, std::string(kLethalityReasonFuzeArmed), true,
-                    true, current_time, fuze_delay_s, hit_prob, fuze_sample, trigger_radius_m,
-                    contact_fuze, contact_evidence, contact_fuze && contact_evidence.inside_hitbox,
-                    fuze_surrogate);
+                    true, current_time, fuze_delay_s, detonation_probability, fuze_sample,
+                    trigger_radius_m, contact_fuze, contact_evidence,
+                    contact_fuze && contact_evidence.inside_hitbox, fuze_surrogate);
                 m[i].fuze_delay_armed = true;
                 m[i].fuze_nearest_approach_time_s = std::isfinite(m[i].proximity_min_time_s)
                                                         ? m[i].proximity_min_time_s
@@ -1349,7 +1421,7 @@ inline void register_damage_system_common(flecs::world &ecs) {
                 m[i].fuze_detonation_pitch_deg = p[i].pitch;
                 m[i].fuze_detonation_roll_deg = p[i].roll;
                 m[i].fuze_quality = quality;
-                m[i].fuze_hit_probability = hit_prob;
+                m[i].fuze_hit_probability = detonation_probability;
                 m[i].fuze_signature_source = fuze_signature.source;
                 m[i].fuze_target_signature = fuze_signature.target_signature;
                 m[i].fuze_signature_scale = fuze_signature.signature_scale;

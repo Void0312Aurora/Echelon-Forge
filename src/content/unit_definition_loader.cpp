@@ -506,6 +506,23 @@ void parse_warhead_json_fields(const nlohmann::json &src, MissileTuningDefinitio
     profile.gurney_constant_mps = src.value("gurney_constant_mps", profile.gurney_constant_mps);
     profile.fragment_mass_kg = src.value("fragment_mass_kg", profile.fragment_mass_kg);
     profile.fragment_count = src.value("fragment_count", profile.fragment_count);
+    profile.projection_radius_fraction =
+        src.value("projection_radius_fraction", profile.projection_radius_fraction);
+    profile.projection_min_radius_m =
+        src.value("projection_min_radius_m", profile.projection_min_radius_m);
+    profile.projection_max_radius_m =
+        src.value("projection_max_radius_m", profile.projection_max_radius_m);
+    profile.projection_min_effect_scale =
+        src.value("projection_min_effect_scale", profile.projection_min_effect_scale);
+    profile.projection_max_effect_scale =
+        src.value("projection_max_effect_scale", profile.projection_max_effect_scale);
+    profile.projection_falloff_exponent =
+        src.value("projection_falloff_exponent", profile.projection_falloff_exponent);
+    if (src.contains("projection_max_projected_hitboxes") &&
+        src["projection_max_projected_hitboxes"].is_number_unsigned()) {
+        profile.projection_max_projected_hitboxes =
+            src["projection_max_projected_hitboxes"].get<std::uint32_t>();
+    }
     if (src.contains("damage") && src["damage"].is_number()) {
         profile.damage_scalar = src["damage"].get<double>();
         profile.damage_scalar_synthetic = false;

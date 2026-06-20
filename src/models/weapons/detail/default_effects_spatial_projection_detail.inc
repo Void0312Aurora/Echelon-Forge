@@ -16,15 +16,14 @@ void apply_default_effects_spatial_projection(
     ResolveSystemSeverity&& resolve_system_severity,
     ApplySystemEffect&& apply_system_effect
 ) {
-    if (structured_air_target && !scratch.structure_hit && !hitboxes.hitboxes.empty()) {
+    const bool broad_spatial_projection =
+        warhead_uses_broad_spatial_projection(missile.warhead_profile);
+    if (structured_air_target && (!scratch.structure_hit || broad_spatial_projection) &&
+        !hitboxes.hitboxes.empty()) {
         std::vector<SpatialProjectionCandidate> candidates;
         candidates.reserve(hitboxes.hitboxes.size());
         const double spatial_radius_m =
             resolve_spatial_projection_radius_m(missile, warhead_projection);
-        const bool broad_spatial_projection =
-            warhead_effect_family(missile.warhead_profile) == "blast" ||
-            warhead_effect_family(missile.warhead_profile) == "fragmentation" ||
-            warhead_effect_family(missile.warhead_profile) == "blast_fragmentation";
         const auto make_component_projection_candidate = [&](
             const Hitbox& parent_box,
             const DamageComponent& component,

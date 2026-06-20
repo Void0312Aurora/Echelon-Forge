@@ -203,6 +203,32 @@ WarheadSpatialProjectionProfile make_warhead_spatial_projection_profile(const Wa
         out.max_projected_hitboxes = 1;
     }
 
+    if (std::isfinite(profile.projection_radius_fraction)) {
+        out.radius_fraction = std::clamp(profile.projection_radius_fraction, 0.05, 2.0);
+    }
+    if (std::isfinite(profile.projection_min_radius_m)) {
+        out.min_radius_m = std::clamp(profile.projection_min_radius_m, 0.0, 100.0);
+    }
+    if (std::isfinite(profile.projection_max_radius_m)) {
+        out.max_radius_m = std::clamp(profile.projection_max_radius_m, out.min_radius_m, 100.0);
+    }
+    if (std::isfinite(profile.projection_min_effect_scale)) {
+        out.min_effect_scale = std::clamp(profile.projection_min_effect_scale, 0.0, 1.0);
+    }
+    if (std::isfinite(profile.projection_max_effect_scale)) {
+        out.max_effect_scale =
+            std::clamp(profile.projection_max_effect_scale, out.min_effect_scale, 1.5);
+    }
+    if (std::isfinite(profile.projection_falloff_exponent)) {
+        out.falloff_exponent = std::clamp(profile.projection_falloff_exponent, 0.25, 4.0);
+    }
+    if (profile.projection_max_projected_hitboxes > 0) {
+        out.max_projected_hitboxes = std::clamp<std::size_t>(
+            profile.projection_max_projected_hitboxes,
+            1,
+            12);
+    }
+
     return out;
 }
 
@@ -234,6 +260,28 @@ double projected_spatial_effect_scale(
             (projection.max_effect_scale - projection.min_effect_scale) * shaped_quality,
         projection.min_effect_scale,
         projection.max_effect_scale);
+}
+
+bool warhead_uses_broad_spatial_projection(const WarheadProfile& profile) {
+    const std::string family = warhead_effect_family(profile);
+    return family == "blast" || family == "fragmentation" || family == "blast_fragmentation";
+}
+
+double broad_warhead_near_field_effect_floor(
+    const WarheadProfile& profile,
+    double distance_m,
+    double radius_m,
+    const WarheadSpatialProjectionProfile& projection
+) {
+    if (!warhead_uses_broad_spatial_projection(profile) || !std::isfinite(distance_m) ||
+        radius_m <= 0.0) {
+        return projection.min_effect_scale;
+    }
+    const double near_field_radius_m = std::min(2.0, std::max(0.5, 0.25 * radius_m));
+    if (distance_m <= near_field_radius_m) {
+        return 0.95 * projection.max_effect_scale;
+    }
+    return projection.min_effect_scale;
 }
 
 double resolved_warhead_effective_mass_kg(const Missile& missile) {
@@ -874,15 +922,19 @@ bool make_default_effects_spatial_projection_candidate(
             0.10 * spatial_sample.energy_scale,
         0.35,
         1.20);
+    const double base_spatial_effect_scale =
+        projected_spatial_effect_scale(distance_m, spatial_radius_m, projection);
+    const double near_field_effect_floor = broad_warhead_near_field_effect_floor(
+        missile.warhead_profile,
+        distance_m,
+        spatial_radius_m,
+        projection);
     *out_candidate = SpatialProjectionCandidate{
         .box = owning_box,
         .component = component,
         .distance_m = distance_m,
         .effect_scale = std::clamp(
-            projected_spatial_effect_scale(
-                distance_m,
-                spatial_radius_m,
-                projection) *
+            std::max(base_spatial_effect_scale, near_field_effect_floor) *
                 axis_weight *
                 orientation_weight *
                 armor_scale *

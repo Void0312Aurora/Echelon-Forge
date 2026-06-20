@@ -9,7 +9,11 @@
     },
     "guidance": {
         "type": "IR",
-        "off_boresight_cap": 90.0
+        "off_boresight_cap": 90.0,
+        "nav_gain": 5.0,
+        "apn_target_accel_gain": 0.5,
+        "autopilot_tau_s": 0.03,
+        "max_accel_response_g_per_s": 600.0
     },
     "warhead": {
         "type": "Frag",

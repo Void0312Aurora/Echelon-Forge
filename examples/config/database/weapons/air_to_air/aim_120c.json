@@ -10,12 +10,23 @@
     },
     "guidance": {
         "type": "ActiveRadar",
-        "active_seek_range": 16000.0
+        "active_seek_range": 16000.0,
+        "nav_gain": 4.0,
+        "apn_target_accel_gain": 0.5,
+        "autopilot_tau_s": 0.04,
+        "max_accel_response_g_per_s": 500.0
     },
     "warhead": {
-        "type": "Frag",
-        "mass_kg": 20.0,
-        "lethal_radius": 15.0
+        "type": "blast_fragmentation",
+        "mass_kg": 18.144,
+        "lethal_radius": 15.0,
+        "damage": 180.0,
+        "explosive_mass_kg": 7.257,
+        "case_mass_kg": 10.887,
+        "projection_radius_fraction": 0.60,
+        "projection_max_radius_m": 20.0,
+        "projection_max_projected_hitboxes": 3,
+        "provenance": "Public 40 lb AMRAAM blast-fragmentation warhead and WDU-41/B 16 lb NEWQD anchor; engineering surrogate split/projection."
     },
     "fuze": {
         "type": "radar_proximity",

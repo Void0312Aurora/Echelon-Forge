@@ -274,11 +274,11 @@ SimulationKernelEngagementEventStore::SimulationKernelEngagementEventStore(flecs
 void SimulationKernelEngagementEventStore::reset_if_event_clock_rewound(double event_time_s) {
     const ecs_world_info_t *info = ecs_get_world_info(ecs_.c_ptr());
     const std::int64_t frame_count = info ? info->frame_count_total : 0;
-    if (event_time_s < recent_engagement_event_epoch_time_s_ ||
-        frame_count < recent_engagement_event_epoch_frame_) {
+    if (frame_count < recent_engagement_event_epoch_frame_) {
         clear();
     }
-    recent_engagement_event_epoch_time_s_ = event_time_s;
+    recent_engagement_event_epoch_time_s_ =
+        std::max(recent_engagement_event_epoch_time_s_, event_time_s);
     recent_engagement_event_epoch_frame_ = frame_count;
 }
 
