@@ -217,6 +217,8 @@ make_warhead_spatial_projection_profile(const WarheadProfile &profile) {
         out.max_projected_hitboxes =
             std::clamp<std::size_t>(profile.projection_max_projected_hitboxes, 1, 12);
     }
+    out.max_radius_m = std::max(out.max_radius_m, out.min_radius_m);
+    out.max_effect_scale = std::max(out.max_effect_scale, out.min_effect_scale);
 
     return out;
 }

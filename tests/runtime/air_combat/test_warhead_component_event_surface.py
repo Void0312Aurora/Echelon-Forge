@@ -399,6 +399,18 @@ def _run_profiled_standard_case(
   local: tuple[float, float, float],
   velocity: tuple[float, float, float],
 ) -> MechanismCase:
+  return _run_profiled_standard_profile_case(
+    _generic_synthetic_blast_warhead_profile(family),
+    local,
+    velocity,
+  )
+
+
+def _run_profiled_standard_profile_case(
+  profile: object,
+  local: tuple[float, float, float],
+  velocity: tuple[float, float, float],
+) -> MechanismCase:
   sim = ef_py.SimulationKernel()
   sim.reset(20260610)
   assert sim.load_database(_DB_PATH)
@@ -410,7 +422,7 @@ def _run_profiled_standard_case(
     float(local[0]),
     float(local[1]),
     float(local[2]),
-    _generic_synthetic_blast_warhead_profile(family),
+    profile,
     float(velocity[0]),
     float(velocity[1]),
     float(velocity[2]),
@@ -525,6 +537,23 @@ def test_standard_mechanism_loads_track_range_and_miss_distance() -> None:
   )
   assert far.max_component_fragment_density < near.max_component_fragment_density
   assert far.max_component_overpressure < near.max_component_overpressure
+
+
+def test_projection_minimum_overrides_preserve_runtime_bounds() -> None:
+  profile = _generic_synthetic_blast_warhead_profile("blast_fragmentation")
+  profile.projection_min_radius_m = 50.0
+  profile.projection_min_effect_scale = 1.0
+
+  result = _run_profiled_standard_profile_case(
+    profile,
+    (-0.753, 30.0, 0.0),
+    (900.0, -250.0, 0.0),
+  )
+
+  assert not bool(result.effects.direct_hitbox_intersection)
+  assert int(result.effects.projected_hitbox_count) > 0
+  assert float(result.effects.spatial_effect_scale) >= 1.0
+  assert all(float(load.effect_scale) >= 1.0 for load in result.component_loads)
 
 
 def test_blast_fragmentation_direct_centerline_keeps_near_field_projection() -> None:
