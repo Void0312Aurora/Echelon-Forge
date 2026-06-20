@@ -656,8 +656,8 @@ flecs::entity SimulationKernelWeaponReleaseService::fire_missile(uint64_t attack
     const double missile_max_flight_time =
         positive_or_default(resolved_tuning.max_flight_time_s, 15.0);
     const double missile_nav_gain = positive_or_default(resolved_tuning.nav_gain, 3.0);
-    const double missile_apn_target_accel_gain =
-        nonnegative_or_default(resolved_tuning.apn_target_accel_gain, 0.0);
+    const double missile_apn_target_accel_gain = nonnegative_or_default(
+        resolved_tuning.apn_target_accel_gain, MissileGuidanceDefaults::kDefaultApnTargetAccelGain);
 
     double sensor_max_range = missile_seeker_range;
     double sensor_fov_deg = missile_seeker_fov;

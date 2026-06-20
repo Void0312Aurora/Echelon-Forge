@@ -341,6 +341,14 @@ void bind_core(nb::module_ &m) {
         .def_rw("gurney_constant_mps", &WarheadProfile::gurney_constant_mps)
         .def_rw("fragment_mass_kg", &WarheadProfile::fragment_mass_kg)
         .def_rw("fragment_count", &WarheadProfile::fragment_count)
+        .def_rw("projection_radius_fraction", &WarheadProfile::projection_radius_fraction)
+        .def_rw("projection_min_radius_m", &WarheadProfile::projection_min_radius_m)
+        .def_rw("projection_max_radius_m", &WarheadProfile::projection_max_radius_m)
+        .def_rw("projection_min_effect_scale", &WarheadProfile::projection_min_effect_scale)
+        .def_rw("projection_max_effect_scale", &WarheadProfile::projection_max_effect_scale)
+        .def_rw("projection_falloff_exponent", &WarheadProfile::projection_falloff_exponent)
+        .def_rw("projection_max_projected_hitboxes",
+                &WarheadProfile::projection_max_projected_hitboxes)
         .def_rw("synthetic", &WarheadProfile::synthetic)
         .def_rw("damage_scalar_synthetic", &WarheadProfile::damage_scalar_synthetic)
         .def_rw("provenance", &WarheadProfile::provenance);
@@ -1126,6 +1134,20 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["warhead_gurney_constant_mps"] = missile->warhead_profile.gurney_constant_mps;
                 out["warhead_fragment_mass_kg"] = missile->warhead_profile.fragment_mass_kg;
                 out["warhead_fragment_count"] = missile->warhead_profile.fragment_count;
+                out["warhead_projection_radius_fraction"] =
+                    missile->warhead_profile.projection_radius_fraction;
+                out["warhead_projection_min_radius_m"] =
+                    missile->warhead_profile.projection_min_radius_m;
+                out["warhead_projection_max_radius_m"] =
+                    missile->warhead_profile.projection_max_radius_m;
+                out["warhead_projection_min_effect_scale"] =
+                    missile->warhead_profile.projection_min_effect_scale;
+                out["warhead_projection_max_effect_scale"] =
+                    missile->warhead_profile.projection_max_effect_scale;
+                out["warhead_projection_falloff_exponent"] =
+                    missile->warhead_profile.projection_falloff_exponent;
+                out["warhead_projection_max_projected_hitboxes"] =
+                    missile->warhead_profile.projection_max_projected_hitboxes;
                 out["warhead_provenance"] = missile->warhead_profile.provenance;
                 out["fuze_type"] = missile->fuze_profile.type;
                 out["fuze_trigger_radius_m"] = missile->fuze_profile.trigger_radius_m;
@@ -1198,6 +1220,20 @@ void bind_simulation_kernel_diagnostics_introspection_surface(
                 out["elevation_rate_deg_s"] = missile->elevation_rate_deg_s;
                 out["last_track_time_s"] = missile->last_track_time_s;
                 out["track_memory_timeout_s"] = missile->track_memory_timeout_s;
+                out["target_kinematics_valid"] = missile->target_kinematics_valid;
+                out["target_kinematics_time_s"] = missile->target_kinematics_time_s;
+                out["target_track_x_m"] = missile->target_track_x_m;
+                out["target_track_y_m"] = missile->target_track_y_m;
+                out["target_track_z_m"] = missile->target_track_z_m;
+                out["target_track_vx_mps"] = missile->target_track_vx_mps;
+                out["target_track_vy_mps"] = missile->target_track_vy_mps;
+                out["target_track_vz_mps"] = missile->target_track_vz_mps;
+                out["target_track_ax_mps2"] = missile->target_track_ax_mps2;
+                out["target_track_ay_mps2"] = missile->target_track_ay_mps2;
+                out["target_track_az_mps2"] = missile->target_track_az_mps2;
+                out["guidance_lead_time_s"] = missile->guidance_lead_time_s;
+                out["guidance_lead_blend"] = missile->guidance_lead_blend;
+                out["guidance_apn_lateral_accel_mps2"] = missile->guidance_apn_lateral_accel_mps2;
                 out["current_speed_mps"] = missile->current_speed_mps;
                 out["commanded_lateral_accel_mps2"] = missile->commanded_lateral_accel_mps2;
                 out["achieved_lateral_accel_mps2"] = missile->achieved_lateral_accel_mps2;
@@ -1317,6 +1353,25 @@ void bind_simulation_kernel_diagnostics_override_surface(nb::class_<SimulationKe
         .def("set_contact_list", &SimulationKernel::set_contact_list,
              "Override the ContactList for a unit or missile", nb::arg("entity_id"),
              nb::arg("detections"))
+        .def(
+            "debug_set_unit_truth_state",
+            [](SimulationKernel &self, uint64_t entity_id, double x_m, double y_m, double z_m,
+               double heading_deg, double pitch_deg, double roll_deg, double vx_mps, double vy_mps,
+               double vz_mps) {
+                auto e = diagnostics_legacy_binding_entity_quarantine_lookup(self, entity_id);
+                if (!e.is_valid()) {
+                    throw std::invalid_argument("Invalid entity ID for debug_set_unit_truth_state");
+                }
+                // Diagnostics-only truth override for deterministic runtime tests. Keep this
+                // quarantined from the maintained command surface: scripted scenarios use it to
+                // remove unrelated platform-control drift while validating weapons behavior.
+                e.set<Transform>({x_m, y_m, z_m, heading_deg, pitch_deg, roll_deg});
+                e.set<Velocity>({vx_mps, vy_mps, vz_mps});
+            },
+            "Debug diagnostics-only override of entity transform and velocity truth state",
+            nb::arg("entity_id"), nb::arg("x_m"), nb::arg("y_m"), nb::arg("z_m"),
+            nb::arg("heading_deg"), nb::arg("pitch_deg"), nb::arg("roll_deg"), nb::arg("vx_mps"),
+            nb::arg("vy_mps"), nb::arg("vz_mps"))
         .def("set_missile_tuning", &SimulationKernel::set_missile_tuning,
              "Override missile parameters for diagnostics", nb::arg("tuning"))
         .def("get_missile_tuning", &SimulationKernel::get_missile_tuning, nb::rv_policy::copy,

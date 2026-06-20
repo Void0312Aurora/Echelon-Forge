@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import unittest
 
+import pytest
+
 from python.testing.runtime import ensure_repo_imports
 
 
@@ -27,6 +29,78 @@ def _make_args(**overrides):
   }
   base.update(overrides)
   return argparse.Namespace(**base)
+
+
+# Single env input normalizes to a single resolved field; one assertion shape.
+@pytest.mark.parametrize(
+  ("env", "field", "expected"),
+  [
+    pytest.param(
+      {"include_proprio": True, "mission_obs_mode": "naval_screen_station_v1",
+       "action_mode": "naval_station3", "shaping_backend": " GPU_HOST "},
+      "flight_shaping_backend",
+      "gpu_host",
+      id="domain_neutral_shaping_backend_alias",
+    ),
+    pytest.param(
+      {"mission_obs_mode": "AIR_COMBAT_C2_ROE_V1"},
+      "mission_obs_mode",
+      "air_combat_c2_roe_v1",
+      id="air_combat_c2_roe_mission_obs_mode",
+    ),
+    pytest.param(
+      {"action_mode": "naval_station3"},
+      "action_mode",
+      "naval_station3",
+      id="dedicated_naval_action_mode",
+    ),
+    pytest.param(
+      {"action_mode": "air_combat_hybrid_v1"},
+      "action_mode",
+      "air_combat_hybrid_v1",
+      id="air_combat_hybrid_action_mode",
+    ),
+  ],
+)
+def test_resolve_env_settings_normalizes_single_field(env, field, expected) -> None:
+  resolved = resolve_env_settings({"env": env}, _make_args())
+  assert resolved[field] == expected
+
+
+# A removed/unknown value must raise ValueError with a specific message.
+@pytest.mark.parametrize(
+  ("env", "args_overrides", "message"),
+  [
+    pytest.param(
+      {"execution_step_runtime_mode": "legacy"}, {},
+      "execution_step_runtime_mode='legacy' has been removed",
+      id="legacy_runtime_mode",
+    ),
+    pytest.param(
+      {"flight_shaping_backend": "legacy"}, {},
+      "flight_shaping_backend='legacy' has been removed",
+      id="legacy_flight_shaping_backend",
+    ),
+    pytest.param(
+      {"execution_step_runtime_mode": "bad-mode"}, {},
+      "Unknown execution_step_runtime_mode",
+      id="invalid_runtime_mode",
+    ),
+    pytest.param(
+      {"flight_shaping_backend": "bad-backend"}, {},
+      "Unknown flight_shaping_backend",
+      id="invalid_flight_shaping_backend",
+    ),
+    pytest.param(
+      {"shaping_backend": "bad-backend"}, {},
+      "Unknown flight_shaping_backend",
+      id="invalid_shaping_backend_alias",
+    ),
+  ],
+)
+def test_resolve_env_settings_rejects_value(env, args_overrides, message) -> None:
+  with pytest.raises(ValueError, match=message):
+    resolve_env_settings({"env": env}, _make_args(**args_overrides))
 
 
 class EnvConfigTests(unittest.TestCase):
@@ -68,27 +142,6 @@ class EnvConfigTests(unittest.TestCase):
     self.assertEqual(resolved["temporal_history_len"], 16)
     self.assertNotIn("runtime_compatibility_enabled", resolved)
 
-  def test_resolve_env_settings_accepts_domain_neutral_shaping_backend_alias(self) -> None:
-    train_config = {
-      "env": {
-        "include_proprio": True,
-        "mission_obs_mode": "naval_screen_station_v1",
-        "action_mode": "naval_station3",
-        "shaping_backend": " GPU_HOST ",
-      }
-    }
-
-    resolved = resolve_env_settings(train_config, _make_args())
-    self.assertEqual(resolved["flight_shaping_backend"], "gpu_host")
-
-  def test_resolve_env_settings_accepts_air_combat_c2_roe_mission_obs_mode(self) -> None:
-    resolved = resolve_env_settings(
-      {"env": {"mission_obs_mode": "AIR_COMBAT_C2_ROE_V1"}},
-      _make_args(),
-    )
-
-    self.assertEqual(resolved["mission_obs_mode"], "air_combat_c2_roe_v1")
-
   def test_resolve_env_settings_prefers_canonical_backend_over_alias(self) -> None:
     train_config = {
       "env": {
@@ -118,28 +171,6 @@ class EnvConfigTests(unittest.TestCase):
       _make_args(temporal_history_len=8),
     )
     self.assertEqual(resolved["temporal_history_len"], 8)
-
-  def test_resolve_env_settings_rejects_legacy_runtime_mode(self) -> None:
-    with self.assertRaisesRegex(ValueError, "execution_step_runtime_mode='legacy' has been removed"):
-      resolve_env_settings(
-        {
-          "env": {
-            "execution_step_runtime_mode": "legacy",
-          }
-        },
-        _make_args(),
-      )
-
-  def test_resolve_env_settings_rejects_legacy_flight_shaping_backend(self) -> None:
-    with self.assertRaisesRegex(ValueError, "flight_shaping_backend='legacy' has been removed"):
-      resolve_env_settings(
-        {
-          "env": {
-            "flight_shaping_backend": "legacy",
-          }
-        },
-        _make_args(),
-      )
 
   def test_resolve_env_settings_allows_empty_optional_override_to_clear_env_value(self) -> None:
     train_config = {
@@ -183,39 +214,6 @@ class EnvConfigTests(unittest.TestCase):
       resolve_env_settings(
         {},
         _make_args(runtime_compatibility_enabled="yes"),
-      )
-
-  def test_resolve_env_settings_accepts_dedicated_naval_action_mode(self) -> None:
-    resolved = resolve_env_settings(
-      {"env": {"action_mode": "naval_station3"}},
-      _make_args(),
-    )
-    self.assertEqual(resolved["action_mode"], "naval_station3")
-
-  def test_resolve_env_settings_accepts_air_combat_hybrid_action_mode(self) -> None:
-    resolved = resolve_env_settings(
-      {"env": {"action_mode": "air_combat_hybrid_v1"}},
-      _make_args(),
-    )
-    self.assertEqual(resolved["action_mode"], "air_combat_hybrid_v1")
-
-  def test_resolve_env_settings_rejects_invalid_optional_runtime_mode(self) -> None:
-    with self.assertRaisesRegex(ValueError, "Unknown execution_step_runtime_mode"):
-      resolve_env_settings(
-        {"env": {"execution_step_runtime_mode": "bad-mode"}},
-        _make_args(),
-      )
-
-    with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
-      resolve_env_settings(
-        {"env": {"flight_shaping_backend": "bad-backend"}},
-        _make_args(),
-      )
-
-    with self.assertRaisesRegex(ValueError, "Unknown flight_shaping_backend"):
-      resolve_env_settings(
-        {"env": {"shaping_backend": "bad-backend"}},
-        _make_args(),
       )
 
 
