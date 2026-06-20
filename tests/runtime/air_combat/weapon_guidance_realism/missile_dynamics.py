@@ -37,6 +37,7 @@ class MissileDynamicsRuntimeMixin:
     self.assertAlmostEqual(float(runtime["filtered_range_m"]), 30000.0, delta=1.0e-6)
     self.assertAlmostEqual(float(runtime["current_speed_mps"]), 250.0, delta=1.0e-6)
     self.assertAlmostEqual(float(runtime["burnout_time_s"]), 3.2, delta=1.0e-6)
+    self.assertAlmostEqual(float(runtime["apn_target_accel_gain"]), 0.5, delta=1.0e-6)
 
   def test_shared_burn_window_changes_guidance_speed_profile(self) -> None:
     short_sim = _make_kernel()
@@ -667,6 +668,177 @@ class MissileDynamicsRuntimeMixin:
 
     self.assertLess(low_peak_g, 9.5)
     self.assertGreater(high_peak_g, low_peak_g + 12.0)
+
+  def test_augmented_guidance_leads_maneuvering_target_track(self) -> None:
+    def run_case(apn_gain: float) -> dict[str, float]:
+      sim = _make_baseline_kernel(seed=20260620)
+      tuning = sim.get_missile_tuning()
+      tuning.apn_target_accel_gain = apn_gain
+      tuning.fuse_distance = 5.0
+      tuning.nav_gain = 3.0
+      tuning.max_lateral_g = 35.0
+      tuning.autopilot_tau_s = 0.08
+      tuning.max_accel_response_g_per_s = 120.0
+      tuning.boost_time_s = 3.0
+      tuning.sustain_time_s = 0.0
+      tuning.max_flight_time_s = 35.0
+      sim.set_missile_tuning(tuning)
+
+      blue_id, red_id = _spawn_geometry_pair(
+        sim,
+        red_x=0.0,
+        red_y=14000.0,
+        red_heading=180.0,
+        red_vx=0.0,
+        red_vy=-250.0,
+      )
+      missile_id = int(sim.fire_missile(blue_id, red_id))
+      self.assertGreater(missile_id, 0)
+
+      dt = float(sim.get_time_step())
+      min_dist_m = math.inf
+      max_lead_blend = 0.0
+      max_apn_g = 0.0
+      max_achieved_g = 0.0
+      for step_idx in range(1400):
+        if step_idx == 20:
+          sim.set_command(red_id, 95.0, 300.0, 5000.0)
+        if not sim.is_unit_active(missile_id):
+          break
+        missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
+        target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
+        min_dist_m = min(min_dist_m, math.dist(missile_pos, target_pos))
+        _set_contacts(
+          sim,
+          missile_id,
+          [
+            _relative_detection_from_truth(
+              sim,
+              missile_id,
+              red_id,
+              timestamp=step_idx * dt,
+              local_sensor_hit=True,
+            )
+          ],
+        )
+        sim.step()
+        if not sim.is_unit_active(missile_id):
+          break
+        runtime = _missile_runtime(sim, missile_id)
+        max_lead_blend = max(max_lead_blend, float(runtime["guidance_lead_blend"]))
+        max_apn_g = max(
+          max_apn_g,
+          float(runtime["guidance_apn_lateral_accel_mps2"]) / 9.80665,
+        )
+        max_achieved_g = max(
+          max_achieved_g,
+          float(runtime["achieved_lateral_accel_mps2"]) / 9.80665,
+        )
+
+      return {
+        "min_dist_m": float(min_dist_m),
+        "max_lead_blend": float(max_lead_blend),
+        "max_apn_g": float(max_apn_g),
+        "max_achieved_g": float(max_achieved_g),
+      }
+
+    disabled = run_case(0.0)
+    augmented = run_case(0.5)
+
+    self.assertGreater(disabled["min_dist_m"], 20.0)
+    self.assertLess(augmented["min_dist_m"], disabled["min_dist_m"] - 5.0)
+    self.assertLess(augmented["min_dist_m"], 15.0)
+    self.assertGreater(augmented["max_lead_blend"], 0.10)
+    self.assertGreater(augmented["max_apn_g"], 0.5)
+    self.assertLess(augmented["max_achieved_g"], 36.5)
+
+  def test_mirrored_launch_bearings_stay_symmetric_with_kinematic_target(self) -> None:
+    def run_case(range_m: float, bearing_deg: float) -> float:
+      sim = _make_database_kernel(seed=20260621)
+      profile = ef_py.FuzeProfile()
+      profile.type = "radar_proximity"
+      profile.trigger_radius_m = 15.0
+      profile.delay_s = 0.0
+      profile.reliability = 1.0
+      profile.trigger_logic = "nearest_approach"
+      profile.synthetic = False
+      profile.provenance = "test_aim120_mirrored_launch_window"
+
+      tuning = ef_py.MissileTuning()
+      tuning.sensor_scan_period = 1.0e9
+      tuning.sensor_detection_prob = 0.0
+      tuning.sensor_track_memory_s = 0.0
+      tuning.seeker_fov_deg = 180.0
+      tuning.seeker_lock_range = 1.0e6
+      tuning.fuse_distance = 15.0
+      tuning.max_flight_time_s = 45.0
+      tuning.fuze_profile = profile
+      tuning.has_fuze_profile = True
+      sim.set_missile_tuning(tuning)
+
+      bearing_rad = math.radians(bearing_deg)
+      initial_x = range_m * math.sin(bearing_rad)
+      initial_y = range_m * math.cos(bearing_rad)
+      target_vx = 0.0
+      target_vy = -250.0
+      blue_id, red_id = _spawn_geometry_pair(
+        sim,
+        red_x=initial_x,
+        red_y=initial_y,
+        red_heading=180.0,
+        red_vx=target_vx,
+        red_vy=target_vy,
+      )
+      _select_weapon_station(sim, blue_id, 1)
+      missile_id = int(sim.fire_missile(blue_id, red_id))
+      self.assertGreater(missile_id, 0)
+
+      dt = float(sim.get_time_step())
+      min_dist_m = math.inf
+      for step_idx in range(4200):
+        time_s = step_idx * dt
+        _set_unit_truth_state(
+          sim,
+          red_id,
+          x=initial_x + target_vx * time_s,
+          y=initial_y + target_vy * time_s,
+          z=5000.0,
+          heading=180.0,
+          vx=target_vx,
+          vy=target_vy,
+        )
+        if not sim.is_unit_active(missile_id):
+          break
+        missile_pos = tuple(float(value) for value in sim.get_unit_position(missile_id))
+        target_pos = tuple(float(value) for value in sim.get_unit_position(red_id))
+        min_dist_m = min(min_dist_m, math.dist(missile_pos, target_pos))
+        _set_contacts(
+          sim,
+          missile_id,
+          [
+            _relative_detection_from_truth(
+              sim,
+              missile_id,
+              red_id,
+              timestamp=time_s,
+              local_sensor_hit=True,
+            )
+          ],
+        )
+        sim.step()
+
+      runtime = _missile_runtime(sim, missile_id) if sim.is_unit_active(missile_id) else {}
+      proximity_min = float(runtime.get("proximity_min_dist_m", min_dist_m)) if runtime else min_dist_m
+      return min(min_dist_m, proximity_min)
+
+    for range_m, bearing_deg in ((16000.0, 20.0), (8000.0, 30.0)):
+      with self.subTest(range_m=range_m, bearing_deg=bearing_deg):
+        left_min_m = run_case(range_m, -bearing_deg)
+        right_min_m = run_case(range_m, bearing_deg)
+
+        self.assertLess(left_min_m, 15.0)
+        self.assertLess(right_min_m, 15.0)
+        self.assertLess(abs(left_min_m - right_min_m), 0.5)
 
   def test_bounded_lateral_accel_and_response_lag(self) -> None:
     sim = _make_kernel()

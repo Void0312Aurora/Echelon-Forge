@@ -15,13 +15,35 @@ class LaunchGuidanceRuntimeMixin:
     self.assertAlmostEqual(float(aim120["max_speed_mps"]), 1372.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["turn_rate_deg_s"]), 30.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["guidance_max_lateral_g"]), 35.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["nav_gain"]), 4.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["apn_target_accel_gain"]), 0.5, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["guidance_autopilot_tau_s"]), 0.04, delta=1.0e-6)
+    self.assertAlmostEqual(
+      float(aim120["guidance_max_accel_response_g_per_s"]),
+      500.0,
+      delta=1.0e-6,
+    )
     self.assertAlmostEqual(float(aim120["fuse_distance_m"]), 15.0, delta=1.0e-6)
     self.assertEqual(str(aim120["warhead_family"]), "blast_fragmentation")
-    self.assertAlmostEqual(float(aim120["warhead_mass_kg"]), 20.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["warhead_mass_kg"]), 18.144, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["warhead_lethal_radius_m"]), 15.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["warhead_damage_scalar"]), 180.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["warhead_explosive_mass_kg"]), 7.257, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim120["warhead_case_mass_kg"]), 10.887, delta=1.0e-6)
+    self.assertAlmostEqual(
+      float(aim120["warhead_projection_radius_fraction"]),
+      0.60,
+      delta=1.0e-6,
+    )
+    self.assertAlmostEqual(
+      float(aim120["warhead_projection_max_radius_m"]),
+      20.0,
+      delta=1.0e-6,
+    )
+    self.assertEqual(int(aim120["warhead_projection_max_projected_hitboxes"]), 3)
     self.assertFalse(bool(aim120["warhead_profile_synthetic"]))
-    self.assertTrue(bool(aim120["warhead_damage_scalar_synthetic"]))
+    self.assertFalse(bool(aim120["warhead_damage_scalar_synthetic"]))
+    self.assertIn("WDU-41/B", str(aim120["warhead_provenance"]))
     self.assertEqual(str(aim120["fuze_type"]), "radar_proximity")
     self.assertAlmostEqual(float(aim120["fuze_trigger_radius_m"]), 15.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim120["fuze_delay_s"]), 0.015, delta=1.0e-6)
@@ -40,6 +62,14 @@ class LaunchGuidanceRuntimeMixin:
     self.assertAlmostEqual(float(aim9x["max_speed_mps"]), 850.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim9x["turn_rate_deg_s"]), 60.0, delta=1.0e-6)
     self.assertAlmostEqual(float(aim9x["guidance_max_lateral_g"]), 60.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim9x["nav_gain"]), 5.0, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim9x["apn_target_accel_gain"]), 0.5, delta=1.0e-6)
+    self.assertAlmostEqual(float(aim9x["guidance_autopilot_tau_s"]), 0.03, delta=1.0e-6)
+    self.assertAlmostEqual(
+      float(aim9x["guidance_max_accel_response_g_per_s"]),
+      600.0,
+      delta=1.0e-6,
+    )
     self.assertAlmostEqual(float(aim9x["fuse_distance_m"]), 8.0, delta=1.0e-6)
     self.assertEqual(str(aim9x["warhead_family"]), "blast_fragmentation")
     self.assertAlmostEqual(float(aim9x["warhead_mass_kg"]), 9.4, delta=1.0e-6)
@@ -558,8 +588,11 @@ class LaunchGuidanceRuntimeMixin:
 
     self.assertLess(float(cases["head_on"]["proximity_min_dist_m"]), 50.0)
     self.assertGreater(float(cases["tail_chase"]["proximity_min_dist_m"]), 5000.0)
-    self.assertGreater(float(cases["beam"]["proximity_min_dist_m"]), 250.0)
-    self.assertLess(float(cases["beam"]["proximity_min_dist_m"]), 1000.0)
+    self.assertGreater(
+      float(cases["beam"]["proximity_min_dist_m"]),
+      float(cases["head_on"]["proximity_min_dist_m"]) + 10.0,
+    )
+    self.assertLess(float(cases["beam"]["proximity_min_dist_m"]), 250.0)
     self.assertLess(float(cases["high_off_boresight"]["proximity_min_dist_m"]), 5.0)
     self.assertGreater(
       float(cases["head_on"]["max_achieved_lateral_accel_mps2"]),

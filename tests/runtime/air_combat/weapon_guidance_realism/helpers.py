@@ -42,6 +42,16 @@ def _make_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
   return sim
 
 
+def _make_database_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
+  sim = ef_py.SimulationKernel()
+  if seed is not None:
+    sim.reset(seed)
+  if not sim.load_database(_DB_PATH):
+    raise AssertionError("failed to load runtime database")
+  sim.set_time_step(1.0 / 60.0)
+  return sim
+
+
 def _spawn_pair(sim: ef_py.SimulationKernel) -> tuple[int, int]:
   blue_id = int(
     sim.spawn_unit(
@@ -103,6 +113,41 @@ def _make_detection(
 
 def _set_contacts(sim: ef_py.SimulationKernel, entity_id: int, contacts: list[ef_py.Detection]) -> None:
   sim.set_contact_list(int(entity_id), contacts)
+
+
+def _select_weapon_station(sim: ef_py.SimulationKernel, entity_id: int, station_id: int) -> None:
+  pilot = ef_py.PilotAction()
+  pilot.active = True
+  pilot.weapon_select_id = int(station_id)
+  sim.set_pilot_action(int(entity_id), pilot)
+
+
+def _set_unit_truth_state(
+  sim: ef_py.SimulationKernel,
+  entity_id: int,
+  *,
+  x: float,
+  y: float,
+  z: float,
+  heading: float,
+  vx: float,
+  vy: float,
+  vz: float = 0.0,
+  pitch: float = 0.0,
+  roll: float = 0.0,
+) -> None:
+  sim.debug_set_unit_truth_state(
+    int(entity_id),
+    float(x),
+    float(y),
+    float(z),
+    float(heading),
+    float(pitch),
+    float(roll),
+    float(vx),
+    float(vy),
+    float(vz),
+  )
 
 
 def _velocity_speed(sim: ef_py.SimulationKernel, entity_id: int) -> float:
@@ -246,6 +291,7 @@ def _make_baseline_kernel(seed: int | None = None) -> ef_py.SimulationKernel:
   tuning.autopilot_tau_s = 0.04
   tuning.max_accel_response_g_per_s = 500.0
   tuning.nav_gain = 4.0
+  tuning.apn_target_accel_gain = 0.0
   tuning.fuse_distance = 35.0
   tuning.damage = 1.0
   tuning.max_flight_time_s = 45.0
@@ -1210,10 +1256,7 @@ def _spawn_and_fire_with_station(
   elevation_deg: float = 0.0,
 ) -> tuple[int, int, int]:
   blue_id, red_id = _spawn_pair(sim)
-  pilot = ef_py.PilotAction()
-  pilot.active = True
-  pilot.weapon_select_id = int(station_id)
-  sim.set_pilot_action(blue_id, pilot)
+  _select_weapon_station(sim, blue_id, station_id)
   _set_contacts(
     sim,
     blue_id,
